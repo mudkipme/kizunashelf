@@ -184,6 +184,88 @@ app.get("/api/relations", async (c) => {
   });
 });
 
+app.get("/api/relation-groups", async (c) => {
+  const library = await getLibrary();
+  const groups = relationFields(library).map((field) => buildRelationFieldSummary(library, field));
+
+  return c.json({
+    generatedAt: library.generatedAt,
+    fields: groups.filter((group) => group.edgeCount > 0),
+  });
+});
+
+app.get("/api/relation-groups/:field", async (c) => {
+  const library = await getLibrary();
+  const field = c.req.param("field");
+  const q = c.req.query("q")?.trim().toLocaleLowerCase();
+  const pageSize = clampNumber(Number(c.req.query("pageSize") ?? 40), 1, 100);
+  const requestedPage = clampNumber(Number(c.req.query("page") ?? 1), 1, Number.MAX_SAFE_INTEGER);
+  const targets = buildRelationTargets(library, field).filter((target) => {
+    if (!q) return true;
+    return [target.targetTitle, target.targetId, target.targetTypeLabel]
+      .filter(Boolean)
+      .some((value) => value!.toLocaleLowerCase().includes(q));
+  });
+  const total = targets.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, totalPages);
+  const start = (page - 1) * pageSize;
+
+  return c.json({
+    generatedAt: library.generatedAt,
+    field,
+    edgeCount: outgoingRelations(library, field).length,
+    uniqueTargets: buildRelationTargets(library, field).length,
+    targets: targets.slice(start, start + pageSize),
+    total,
+    page,
+    pageSize,
+    totalPages,
+  });
+});
+
+app.get("/api/relation-groups/:field/:target", async (c) => {
+  const library = await getLibrary();
+  const field = c.req.param("field");
+  const target = c.req.param("target");
+  const relations = outgoingRelations(library, field).filter(
+    (relation) => relation.targetId === target || relation.targetTitle === target,
+  );
+
+  if (relations.length === 0) {
+    return c.json({ error: "Relation target not found" }, 404);
+  }
+
+  const targetSummary = buildRelationTargetSummary(library, targetKey(relations[0]), relations);
+  const entityById = summaryById(library);
+  const groups = countBy(
+    relations
+      .map((relation) => entityById.get(relation.sourceId))
+      .filter((entity): entity is EntitySummary => Boolean(entity)),
+    (entity) => entity.typeLabel,
+  ).map((group) => ({
+    typeLabel: group.name,
+    count: group.count,
+    items: sortEntities(
+      relations
+        .map((relation) => entityById.get(relation.sourceId))
+        .filter(
+          (entity): entity is EntitySummary => entity !== undefined && entity.typeLabel === group.name,
+        ),
+      "title",
+      "asc",
+    ),
+  }));
+
+  return c.json({
+    generatedAt: library.generatedAt,
+    field,
+    target: targetSummary,
+    groups,
+    total: relations.length,
+  });
+});
+
 if (serveStaticWeb) {
   app.get("*", async (c, next) => {
     if (c.req.path.startsWith("/api/")) return next();
@@ -242,6 +324,89 @@ function sortEntities(
   });
 
   return sorted;
+}
+
+function relationFields(library: Library): string[] {
+  const fields = new Set(library.config.relationshipFields);
+  for (const relation of library.relations) {
+    if (relation.direction === "out") fields.add(relation.field);
+  }
+  return [...fields].sort((a, b) => a.localeCompare(b, "zh-Hans-CN", { numeric: true }));
+}
+
+function outgoingRelations(library: Library, field?: string) {
+  return library.relations.filter(
+    (relation) => relation.direction === "out" && (!field || relation.field === field),
+  );
+}
+
+function buildRelationFieldSummary(library: Library, field: string) {
+  const relations = outgoingRelations(library, field);
+  const targets = buildRelationTargets(library, field);
+  const sources = new Set(relations.map((relation) => relation.sourceId));
+
+  return {
+    field,
+    edgeCount: relations.length,
+    sourceCount: sources.size,
+    uniqueTargets: targets.length,
+    resolvedTargets: targets.filter((target) => Boolean(target.targetId)).length,
+    topTargets: targets.slice(0, 8),
+  };
+}
+
+function buildRelationTargets(library: Library, field: string) {
+  const grouped = new Map<string, typeof library.relations>();
+  for (const relation of outgoingRelations(library, field)) {
+    const key = targetKey(relation);
+    const items = grouped.get(key) ?? [];
+    items.push(relation);
+    grouped.set(key, items);
+  }
+
+  return [...grouped.entries()]
+    .map(([key, relations]) => buildRelationTargetSummary(library, key, relations))
+    .sort((a, b) => {
+      if (a.count !== b.count) return b.count - a.count;
+      return compareString(a.targetTitle, b.targetTitle);
+    });
+}
+
+function buildRelationTargetSummary(
+  library: Library,
+  key: string,
+  relations: typeof library.relations,
+) {
+  const entityById = summaryById(library);
+  const first = relations[0];
+  const targetEntity = first.targetId ? entityById.get(first.targetId) : undefined;
+  const sources = relations
+    .map((relation) => entityById.get(relation.sourceId))
+    .filter((entity): entity is EntitySummary => Boolean(entity));
+
+  return {
+    key,
+    targetTitle: targetEntity?.title ?? first.targetTitle,
+    targetId: first.targetId,
+    targetType: targetEntity?.type ?? first.targetType,
+    targetTypeLabel: targetEntity?.typeLabel ?? typeLabel(library, first.targetType),
+    count: relations.length,
+    sourceTypes: countBy(sources, (entity) => entity.typeLabel),
+    examples: sortEntities(sources, "title", "asc").slice(0, 5),
+  };
+}
+
+function targetKey(relation: { targetId?: string; targetTitle: string }) {
+  return relation.targetId ?? relation.targetTitle;
+}
+
+function summaryById(library: Library) {
+  return new Map(library.summaries.map((entity) => [entity.id, entity]));
+}
+
+function typeLabel(library: Library, type: string | undefined) {
+  if (!type) return undefined;
+  return library.config.types.find((item) => item.id === type)?.label ?? type;
 }
 
 function buildHomeSection(library: Library, section: HomeSectionConfig) {

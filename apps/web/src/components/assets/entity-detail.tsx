@@ -6,7 +6,7 @@ import { EntityCover } from "@/components/assets/entity-cover";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { relationKey } from "@/lib/relations";
+import { relationKey, relationTargetHref } from "@/lib/relations";
 import type { Entity, Relation } from "@/types/api";
 
 export function EntityDetail({
@@ -81,7 +81,19 @@ export function EntityDetail({
                   <div className="text-xs font-medium text-muted-foreground">{group.field}</div>
                   <div className="flex min-w-0 flex-wrap gap-1">
                     {group.items.map((relation) =>
-                      relation.targetId ? (
+                      relation.direction === "out" ? (
+                        <Button
+                          key={relationKey(relation)}
+                          variant="outline"
+                          size="sm"
+                          className="h-auto min-h-8 max-w-full justify-start whitespace-normal break-all text-left leading-5"
+                          asChild
+                        >
+                          <Link to={relationTargetHref(relation.field, relation)}>
+                            {relation.targetTitle}
+                          </Link>
+                        </Button>
+                      ) : relation.targetId ? (
                         <Button
                           key={relationKey(relation)}
                           variant="outline"

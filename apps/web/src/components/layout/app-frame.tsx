@@ -8,17 +8,15 @@ import { cn } from "@/lib/utils";
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="flex h-12 items-center gap-3 border-b px-4">
-        <Link to="/" className="flex items-center gap-3">
-          <BoxesIcon className="text-muted-foreground" />
+      <header className="flex min-h-12 flex-wrap items-center gap-2 border-b px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-4">
+        <Link to="/" className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none">
+          <BoxesIcon className="shrink-0 text-muted-foreground" />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">KizunaShelf</span>
-            <span className="block truncate text-xs text-muted-foreground">
-              Obsidian Taxonomy read-only asset graph
-            </span>
+            <span className="block text-xs leading-4 text-muted-foreground">A personal memory graph</span>
           </span>
         </Link>
-        <nav className="flex items-center gap-1">
+        <nav className="order-3 flex w-full min-w-0 items-center gap-1 overflow-x-auto sm:order-none sm:w-auto">
           <NavLink
             to="/"
             className={({ isActive }) =>
@@ -41,9 +39,22 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           >
             Library
           </NavLink>
+          <NavLink
+            to="/relations"
+            className={({ isActive }) =>
+              cn(
+                "rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground",
+                isActive && "bg-accent text-foreground",
+              )
+            }
+          >
+            Relations
+          </NavLink>
         </nav>
-        <div className="flex-1" />
-        <Badge variant="secondary">v0.1 MVP</Badge>
+        <div className="hidden flex-1 sm:block" />
+        <Badge variant="secondary" className="ml-auto sm:ml-0">
+          v0.1 MVP
+        </Badge>
       </header>
 
       {error ? (

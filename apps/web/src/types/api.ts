@@ -93,3 +93,52 @@ export type EntityListResponse = {
   pageSize: number;
   totalPages: number;
 };
+
+export type RelationTargetSummary = {
+  key: string;
+  targetTitle: string;
+  targetId?: string;
+  targetType?: string;
+  targetTypeLabel?: string;
+  count: number;
+  sourceTypes: Array<{ name: string; count: number }>;
+  examples: EntitySummary[];
+};
+
+export type RelationFieldSummary = {
+  field: string;
+  edgeCount: number;
+  sourceCount: number;
+  uniqueTargets: number;
+  resolvedTargets: number;
+  topTargets: RelationTargetSummary[];
+};
+
+export type RelationGroupsResponse = {
+  generatedAt: string;
+  fields: RelationFieldSummary[];
+};
+
+export type RelationFieldResponse = {
+  generatedAt: string;
+  field: string;
+  edgeCount: number;
+  uniqueTargets: number;
+  targets: RelationTargetSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type RelationTargetResponse = {
+  generatedAt: string;
+  field: string;
+  target: RelationTargetSummary;
+  groups: Array<{
+    typeLabel: string;
+    count: number;
+    items: EntitySummary[];
+  }>;
+  total: number;
+};

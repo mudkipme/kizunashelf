@@ -34,6 +34,16 @@ export function relationKey(relation: Relation) {
   return `${relation.field}-${relation.targetTitle}-${relation.direction}-${relation.targetId ?? ""}`;
 }
 
+export function relationFieldHref(field: string) {
+  return `/relations/${encodeURIComponent(field)}`;
+}
+
+export function relationTargetHref(field: string, target: { targetId?: string; targetTitle: string }) {
+  return `/relations/${encodeURIComponent(field)}/${encodeURIComponent(
+    target.targetId ?? target.targetTitle,
+  )}`;
+}
+
 function relationTypeLabel(type: string | undefined) {
   if (!type) return "Unknown";
   return relationTypeLabels[type] ?? titleCase(type);
