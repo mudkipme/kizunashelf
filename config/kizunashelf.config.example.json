@@ -1,0 +1,170 @@
+{
+  "vaultRoot": "/var/home/mudkip/Containers/obsidian/config/Obsidian/Mudkip",
+  "taxonomyRoot": "Taxonomy",
+  "types": [
+    {
+      "id": "anime",
+      "label": "Anime",
+      "path": "Anime",
+      "fields": {
+        "title": ["title", "jp_title", "title_original"],
+        "image": ["cover_url"],
+        "status": ["status"],
+        "date": ["season", "finish at", "release_date"],
+        "externalRefs": ["bgm_url"]
+      }
+    },
+    {
+      "id": "games",
+      "label": "Games",
+      "path": "Games",
+      "fields": {
+        "title": ["title", "title_ja", "title_en"],
+        "subtitle": ["title_en"],
+        "image": ["cover_url"],
+        "status": ["status"],
+        "date": ["complete date", "release date"],
+        "externalRefs": ["igdb_url", "backloggd_url"]
+      }
+    },
+    {
+      "id": "movie",
+      "label": "Movie",
+      "path": "Movie",
+      "fields": {
+        "title": ["title", "title_original", "jp_title"],
+        "image": ["cover_url"],
+        "status": ["status"],
+        "date": ["finish at", "release_date"],
+        "externalRefs": ["bgm_url", "thetvdb_url"]
+      }
+    },
+    {
+      "id": "drama",
+      "label": "Drama",
+      "path": "Drama",
+      "fields": {
+        "title": ["title", "title_original"],
+        "image": ["cover_url"],
+        "status": ["status"],
+        "date": ["finish at", "season", "release_date"],
+        "externalRefs": ["thetvdb_url"]
+      }
+    },
+    {
+      "id": "music",
+      "label": "Music",
+      "path": "Music",
+      "fields": {
+        "title": ["title"],
+        "image": ["cover_url"],
+        "status": ["status"],
+        "date": ["date", "release_date"],
+        "externalRefs": ["bgm_url", "musicbrainz_url", "vgmdb_url", "itunes_url"]
+      }
+    },
+    {
+      "id": "cd",
+      "label": "CD",
+      "path": "CD",
+      "fields": {
+        "title": ["title"],
+        "image": ["cover_url"],
+        "status": ["owned", "status"],
+        "date": ["release_date", "date"],
+        "externalRefs": ["bgm_url", "musicbrainz_url", "vgmdb_url", "itunes_url"]
+      }
+    },
+    {
+      "id": "event",
+      "label": "Event",
+      "path": "Event",
+      "fields": {
+        "title": ["title"],
+        "subtitle": ["location"],
+        "status": ["attended", "status"],
+        "date": ["date"],
+        "externalRefs": ["bgm_url", "event_url"]
+      }
+    },
+    {
+      "id": "books",
+      "label": "Books",
+      "path": "Books",
+      "fields": {
+        "title": ["title", "jp_title"],
+        "image": ["cover_url"],
+        "status": ["status"],
+        "date": ["finish at", "release_date"],
+        "externalRefs": ["bgm_url"]
+      }
+    },
+    {
+      "id": "blu-ray",
+      "label": "Blu-Ray",
+      "path": "Blu-Ray",
+      "fields": {
+        "title": ["title"],
+        "image": ["cover_url"],
+        "status": ["owned", "status"],
+        "date": ["release_date", "date"],
+        "externalRefs": ["bgm_url"]
+      }
+    },
+    {
+      "id": "artist",
+      "label": "Artist",
+      "path": "Artist",
+      "fields": {
+        "title": ["title", "name"],
+        "image": ["avatar_url", "cover_url"],
+        "status": ["status"],
+        "externalRefs": ["bgm_url", "musicbrainz_url"]
+      }
+    },
+    {
+      "id": "characters",
+      "label": "Characters",
+      "path": "Characters",
+      "fields": {
+        "title": ["title", "name"],
+        "image": ["avatar_url", "cover_url"],
+        "status": ["status"],
+        "externalRefs": ["bgm_url"]
+      }
+    },
+    {
+      "id": "franchise",
+      "label": "Franchise",
+      "path": "Franchise",
+      "fields": {
+        "title": ["title"],
+        "image": ["cover_url"],
+        "status": ["status"],
+        "externalRefs": ["bgm_url"]
+      }
+    }
+  ],
+  "relationshipFields": [
+    "franchise",
+    "artist",
+    "artists",
+    "groups",
+    "character",
+    "characters",
+    "performer",
+    "performers",
+    "voice_by",
+    "anime",
+    "movie",
+    "drama",
+    "game",
+    "games",
+    "music",
+    "cd",
+    "event",
+    "books",
+    "blu-ray",
+    "related"
+  ]
+}

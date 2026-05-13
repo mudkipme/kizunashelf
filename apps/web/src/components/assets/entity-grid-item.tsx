@@ -1,0 +1,37 @@
+import { Link } from "react-router-dom";
+
+import { Badge } from "@/components/ui/badge";
+import type { EntitySummary } from "@/types/api";
+
+export function EntityGridItem({ entity }: { entity: EntitySummary }) {
+  return (
+    <Link
+      to={`/entities/${encodeURIComponent(entity.id)}`}
+      className="flex min-h-64 flex-col overflow-hidden rounded-md border bg-background transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+    >
+      <div className="flex aspect-[4/3] items-center justify-center bg-muted">
+        {entity.image ? (
+          <img src={entity.image} alt="" className="size-full object-cover" loading="lazy" />
+        ) : (
+          <span className="text-sm font-medium text-muted-foreground">{entity.typeLabel}</span>
+        )}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Badge variant="outline">{entity.typeLabel}</Badge>
+          {entity.status ? (
+            <span className="truncate text-xs text-muted-foreground">{entity.status}</span>
+          ) : null}
+        </div>
+        <div className="line-clamp-2 text-sm font-medium leading-5">{entity.title}</div>
+        {entity.summary ? (
+          <div className="line-clamp-3 text-xs leading-5 text-muted-foreground">{entity.summary}</div>
+        ) : null}
+        <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span className="truncate">{entity.date ?? entity.basename}</span>
+          <span className="shrink-0">{entity.relationCount} links</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
