@@ -37,7 +37,39 @@ export type Relation = {
 
 export type ConfigResponse = {
   taxonomyRoot: string;
+  home?: HomeConfig;
   types: TypeConfig[];
+};
+
+export type HomeSectionConfig = {
+  id: string;
+  title: string;
+  type: string;
+  status?: string | string[];
+  limit?: number;
+  sort?: string;
+  direction?: "asc" | "desc";
+};
+
+export type HomeConfig = {
+  title?: string;
+  sections?: HomeSectionConfig[];
+};
+
+export type HomeSectionResponse = Omit<HomeSectionConfig, "status"> & {
+  typeLabel: string;
+  status: string[];
+  limit: number;
+  sort: string;
+  direction: "asc" | "desc";
+  total: number;
+  items: EntitySummary[];
+};
+
+export type HomeResponse = {
+  generatedAt: string;
+  title: string;
+  sections: HomeSectionResponse[];
 };
 
 export type StatsResponse = {

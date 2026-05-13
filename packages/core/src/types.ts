@@ -13,11 +13,27 @@ export type EntityTypeConfig = {
   };
 };
 
+export type HomeSectionConfig = {
+  id: string;
+  title: string;
+  type: string;
+  status?: string | string[];
+  limit?: number;
+  sort?: string;
+  direction?: "asc" | "desc";
+};
+
+export type HomeConfig = {
+  title?: string;
+  sections?: HomeSectionConfig[];
+};
+
 export type KizunaConfig = {
   vaultRoot: string;
   taxonomyRoot: string;
   types: EntityTypeConfig[];
   relationshipFields: string[];
+  home?: HomeConfig;
 };
 
 export type EntitySummary = {

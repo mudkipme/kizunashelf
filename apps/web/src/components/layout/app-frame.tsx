@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { BoxesIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
   return (
@@ -17,6 +18,30 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
             </span>
           </span>
         </Link>
+        <nav className="flex items-center gap-1">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              cn(
+                "rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground",
+                isActive && "bg-accent text-foreground",
+              )
+            }
+          >
+            Home
+          </NavLink>
+          <NavLink
+            to="/library"
+            className={({ isActive }) =>
+              cn(
+                "rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground",
+                isActive && "bg-accent text-foreground",
+              )
+            }
+          >
+            Library
+          </NavLink>
+        </nav>
         <div className="flex-1" />
         <Badge variant="secondary">v0.1 MVP</Badge>
       </header>

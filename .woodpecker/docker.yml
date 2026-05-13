@@ -1,0 +1,46 @@
+steps:
+  check:
+    image: node:24-alpine
+    commands:
+      - corepack enable
+      - pnpm install --frozen-lockfile
+      - pnpm typecheck
+      - pnpm build
+
+  docker:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      registry: docker-registry.metagross.mudkip.me
+      repo: docker-registry.metagross.mudkip.me/${CI_REPO_OWNER}/${CI_REPO_NAME}
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+      tags:
+        - latest
+        - ${CI_COMMIT_SHA}
+      username:
+        from_secret: nexus_username
+      password:
+        from_secret: nexus_password
+      mtu: 1400
+    when:
+      - event: push
+        branch: ${CI_REPO_DEFAULT_BRANCH}
+
+  docker-tag:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      registry: docker-registry.metagross.mudkip.me
+      repo: docker-registry.metagross.mudkip.me/${CI_REPO_OWNER}/${CI_REPO_NAME}
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+      tags:
+        - ${CI_COMMIT_TAG}
+      username:
+        from_secret: nexus_username
+      password:
+        from_secret: nexus_password
+      mtu: 1400
+    when:
+      - event: tag

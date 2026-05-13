@@ -1,0 +1,9 @@
+.git
+.woodpecker
+node_modules
+**/node_modules
+**/dist
+.cache
+.DS_Store
+*.log
+*.tsbuildinfo

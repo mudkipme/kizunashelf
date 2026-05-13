@@ -1,6 +1,38 @@
 {
   "vaultRoot": "/var/home/mudkip/Containers/obsidian/config/Obsidian/Mudkip",
   "taxonomyRoot": "Taxonomy",
+  "home": {
+    "title": "Home",
+    "sections": [
+      {
+        "id": "watching-anime",
+        "title": "Watching Anime",
+        "type": "anime",
+        "status": "Watching",
+        "limit": 12,
+        "sort": "date",
+        "direction": "desc"
+      },
+      {
+        "id": "watching-drama",
+        "title": "Watching Drama",
+        "type": "drama",
+        "status": "Watching",
+        "limit": 12,
+        "sort": "date",
+        "direction": "desc"
+      },
+      {
+        "id": "playing-games",
+        "title": "Playing Games",
+        "type": "games",
+        "status": "Playing",
+        "limit": 12,
+        "sort": "title",
+        "direction": "asc"
+      }
+    ]
+  },
   "types": [
     {
       "id": "anime",
