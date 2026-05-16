@@ -40,6 +40,28 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
             Library
           </NavLink>
           <NavLink
+            to="/calendar"
+            className={({ isActive }) =>
+              cn(
+                "rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground",
+                isActive && "bg-accent text-foreground",
+              )
+            }
+          >
+            Calendar
+          </NavLink>
+          <NavLink
+            to="/statistics"
+            className={({ isActive }) =>
+              cn(
+                "rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground",
+                isActive && "bg-accent text-foreground",
+              )
+            }
+          >
+            Statistics
+          </NavLink>
+          <NavLink
             to="/relations"
             className={({ isActive }) =>
               cn(

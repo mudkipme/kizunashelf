@@ -1,6 +1,13 @@
 {
   "vaultRoot": "/var/home/mudkip/Containers/obsidian/config/Obsidian/Mudkip",
   "taxonomyRoot": "Taxonomy",
+  "dailyNotes": {
+    "paths": [
+      "Daily Notes"
+    ],
+    "datePattern": "^(\\d{4}-\\d{2}-\\d{2})\\.md$",
+    "snippetMaxLength": 260
+  },
   "home": {
     "title": "Home",
     "sections": [
@@ -39,11 +46,25 @@
       "label": "Anime",
       "path": "Anime",
       "fields": {
-        "title": ["title", "jp_title", "title_original"],
-        "image": ["cover_url"],
-        "status": ["status"],
-        "date": ["season", "finish at", "release_date"],
-        "externalRefs": ["bgm_url"]
+        "title": [
+          "title",
+          "jp_title",
+          "title_original"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "date": [
+          "season",
+          "finish at",
+          "release_date"
+        ],
+        "externalRefs": [
+          "bgm_url"
+        ]
       }
     },
     {
@@ -51,12 +72,28 @@
       "label": "Games",
       "path": "Games",
       "fields": {
-        "title": ["title", "title_ja", "title_en"],
-        "subtitle": ["title_en"],
-        "image": ["cover_url"],
-        "status": ["status"],
-        "date": ["complete date", "release date"],
-        "externalRefs": ["igdb_url", "backloggd_url"]
+        "title": [
+          "title",
+          "title_ja",
+          "title_en"
+        ],
+        "subtitle": [
+          "title_en"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "date": [
+          "complete date",
+          "release_date"
+        ],
+        "externalRefs": [
+          "igdb_url",
+          "backloggd_url"
+        ]
       }
     },
     {
@@ -64,11 +101,25 @@
       "label": "Movie",
       "path": "Movie",
       "fields": {
-        "title": ["title", "title_original", "jp_title"],
-        "image": ["cover_url"],
-        "status": ["status"],
-        "date": ["finish at", "release_date"],
-        "externalRefs": ["bgm_url", "thetvdb_url"]
+        "title": [
+          "title",
+          "title_original",
+          "jp_title"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "date": [
+          "finish at",
+          "release_date"
+        ],
+        "externalRefs": [
+          "bgm_url",
+          "thetvdb_url"
+        ]
       }
     },
     {
@@ -76,11 +127,24 @@
       "label": "Drama",
       "path": "Drama",
       "fields": {
-        "title": ["title", "title_original"],
-        "image": ["cover_url"],
-        "status": ["status"],
-        "date": ["finish at", "season", "release_date"],
-        "externalRefs": ["thetvdb_url"]
+        "title": [
+          "title",
+          "title_original"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "date": [
+          "finish at",
+          "season",
+          "release_date"
+        ],
+        "externalRefs": [
+          "thetvdb_url"
+        ]
       }
     },
     {
@@ -88,11 +152,25 @@
       "label": "Music",
       "path": "Music",
       "fields": {
-        "title": ["title"],
-        "image": ["cover_url"],
-        "status": ["status"],
-        "date": ["date", "release_date"],
-        "externalRefs": ["bgm_url", "musicbrainz_url", "vgmdb_url", "itunes_url"]
+        "title": [
+          "title"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "date": [
+          "date",
+          "release_date"
+        ],
+        "externalRefs": [
+          "bgm_url",
+          "musicbrainz_url",
+          "vgmdb_url",
+          "itunes_url"
+        ]
       }
     },
     {
@@ -100,11 +178,26 @@
       "label": "CD",
       "path": "CD",
       "fields": {
-        "title": ["title"],
-        "image": ["cover_url"],
-        "status": ["owned", "status"],
-        "date": ["release_date", "date"],
-        "externalRefs": ["bgm_url", "musicbrainz_url", "vgmdb_url", "itunes_url"]
+        "title": [
+          "title"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "owned",
+          "status"
+        ],
+        "date": [
+          "release_date",
+          "date"
+        ],
+        "externalRefs": [
+          "bgm_url",
+          "musicbrainz_url",
+          "vgmdb_url",
+          "itunes_url"
+        ]
       }
     },
     {
@@ -112,11 +205,23 @@
       "label": "Event",
       "path": "Event",
       "fields": {
-        "title": ["title"],
-        "subtitle": ["location"],
-        "status": ["attended", "status"],
-        "date": ["date"],
-        "externalRefs": ["bgm_url", "event_url"]
+        "title": [
+          "title"
+        ],
+        "subtitle": [
+          "location"
+        ],
+        "status": [
+          "attended",
+          "status"
+        ],
+        "date": [
+          "date"
+        ],
+        "externalRefs": [
+          "bgm_url",
+          "event_url"
+        ]
       }
     },
     {
@@ -124,11 +229,23 @@
       "label": "Books",
       "path": "Books",
       "fields": {
-        "title": ["title", "jp_title"],
-        "image": ["cover_url"],
-        "status": ["status"],
-        "date": ["finish at", "release_date"],
-        "externalRefs": ["bgm_url"]
+        "title": [
+          "title",
+          "jp_title"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "date": [
+          "finish at",
+          "release_date"
+        ],
+        "externalRefs": [
+          "bgm_url"
+        ]
       }
     },
     {
@@ -136,11 +253,23 @@
       "label": "Blu-Ray",
       "path": "Blu-Ray",
       "fields": {
-        "title": ["title"],
-        "image": ["cover_url"],
-        "status": ["owned", "status"],
-        "date": ["release_date", "date"],
-        "externalRefs": ["bgm_url"]
+        "title": [
+          "title"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "owned",
+          "status"
+        ],
+        "date": [
+          "release_date",
+          "date"
+        ],
+        "externalRefs": [
+          "bgm_url"
+        ]
       }
     },
     {
@@ -148,10 +277,21 @@
       "label": "Artist",
       "path": "Artist",
       "fields": {
-        "title": ["title", "name"],
-        "image": ["avatar_url", "cover_url"],
-        "status": ["status"],
-        "externalRefs": ["bgm_url", "musicbrainz_url"]
+        "title": [
+          "title",
+          "name"
+        ],
+        "image": [
+          "avatar_url",
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "externalRefs": [
+          "bgm_url",
+          "musicbrainz_url"
+        ]
       }
     },
     {
@@ -159,10 +299,20 @@
       "label": "Characters",
       "path": "Characters",
       "fields": {
-        "title": ["title", "name"],
-        "image": ["avatar_url", "cover_url"],
-        "status": ["status"],
-        "externalRefs": ["bgm_url"]
+        "title": [
+          "title",
+          "name"
+        ],
+        "image": [
+          "avatar_url",
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "externalRefs": [
+          "bgm_url"
+        ]
       }
     },
     {
@@ -170,10 +320,18 @@
       "label": "Franchise",
       "path": "Franchise",
       "fields": {
-        "title": ["title"],
-        "image": ["cover_url"],
-        "status": ["status"],
-        "externalRefs": ["bgm_url"]
+        "title": [
+          "title"
+        ],
+        "image": [
+          "cover_url"
+        ],
+        "status": [
+          "status"
+        ],
+        "externalRefs": [
+          "bgm_url"
+        ]
       }
     }
   ],

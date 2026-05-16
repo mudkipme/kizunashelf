@@ -28,12 +28,19 @@ export type HomeConfig = {
   sections?: HomeSectionConfig[];
 };
 
+export type DailyNotesConfig = {
+  paths?: string[];
+  datePattern?: string;
+  snippetMaxLength?: number;
+};
+
 export type KizunaConfig = {
   vaultRoot: string;
   taxonomyRoot: string;
   types: EntityTypeConfig[];
   relationshipFields: string[];
   home?: HomeConfig;
+  dailyNotes?: DailyNotesConfig;
 };
 
 export type EntitySummary = {

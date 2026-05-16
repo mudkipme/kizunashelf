@@ -142,3 +142,103 @@ export type RelationTargetResponse = {
   }>;
   total: number;
 };
+
+export type AnalyticsCoverageMetric = {
+  name: string;
+  count: number;
+  missing: number;
+  total: number;
+  percent: number;
+};
+
+export type AnalyticsTimelineYear = {
+  year: number;
+  count: number;
+  byType: Array<{ name: string; count: number }>;
+  examples: EntitySummary[];
+};
+
+export type AnalyticsRelationHub = RelationTargetSummary & {
+  fields: Array<{ name: string; count: number }>;
+};
+
+export type AnalyticsResponse = {
+  generatedAt: string;
+  totals: {
+    entities: number;
+    relations: number;
+    unresolvedRelations: number;
+    datedEntities: number;
+    connectedEntities: number;
+  };
+  distributions: {
+    byType: Array<{ id: string; label: string; count: number }>;
+    byStatus: Array<{ name: string; count: number }>;
+    byRelationField: Array<{ name: string; count: number }>;
+    bySourceTargetType: Array<{ name: string; count: number }>;
+  };
+  coverage: AnalyticsCoverageMetric[];
+  timeline: {
+    totalDated: number;
+    years: AnalyticsTimelineYear[];
+    seasons: Array<{ name: string; count: number }>;
+    months: Array<{ name: string; count: number }>;
+  };
+  relations: {
+    topFields: RelationFieldSummary[];
+    topTargets: AnalyticsRelationHub[];
+    unresolved: {
+      count: number;
+      examples: Relation[];
+    };
+  };
+  dataQuality: {
+    missingCover: EntitySummary[];
+    missingExternalRefs: EntitySummary[];
+    missingSummary: EntitySummary[];
+    isolated: EntitySummary[];
+  };
+};
+
+export type CalendarSnippet = {
+  text: string;
+  heading?: string;
+  line: number;
+};
+
+export type CalendarEntry = {
+  id: string;
+  date: string;
+  source: "taxonomy" | "daily-note";
+  entity: EntitySummary;
+  rawDate?: string;
+  notePath?: string;
+  snippets?: CalendarSnippet[];
+};
+
+export type CalendarDay = {
+  date: string;
+  entries: CalendarEntry[];
+  counts: {
+    total: number;
+    taxonomy: number;
+    dailyNotes: number;
+  };
+};
+
+export type CalendarResponse = {
+  generatedAt: string;
+  year: number;
+  month: number;
+  filters: {
+    type?: string;
+    source: "all" | "taxonomy" | "daily-note";
+  };
+  totals: {
+    entries: number;
+    taxonomy: number;
+    dailyNotes: number;
+    daysWithEntries: number;
+  };
+  days: CalendarDay[];
+};
