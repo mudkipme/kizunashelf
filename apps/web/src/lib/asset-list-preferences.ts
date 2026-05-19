@@ -89,6 +89,8 @@ export function preferencesFromSearchParams(params: URLSearchParams): AssetListP
 }
 
 function normalizePreferences(preferences: Partial<AssetListPreferences> | undefined): AssetListPreferences {
+  const sort = preferences?.sort ?? defaults.sort;
+
   return {
     status: preferences?.status || defaults.status,
     refs: preferences?.refs === "with" || preferences?.refs === "without" ? preferences.refs : defaults.refs,
@@ -97,11 +99,11 @@ function normalizePreferences(preferences: Partial<AssetListPreferences> | undef
         ? preferences.cover
         : defaults.cover,
     sort:
-      preferences?.sort === "date" ||
-      preferences?.sort === "status" ||
-      preferences?.sort === "relations" ||
-      preferences?.sort === "path"
-        ? preferences.sort
+      sort.startsWith("date:") ||
+      sort === "status" ||
+      sort === "relations" ||
+      sort === "path"
+        ? sort
         : defaults.sort,
     direction: preferences?.direction === "desc" ? "desc" : defaults.direction,
     view: preferences?.view === "grid" ? "grid" : defaults.view,

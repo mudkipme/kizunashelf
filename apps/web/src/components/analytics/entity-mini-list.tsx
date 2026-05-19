@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { EntityDateList } from "@/components/assets/entity-date-list";
 import { Badge } from "@/components/ui/badge";
 import type { EntitySummary } from "@/types/api";
 
@@ -14,7 +15,7 @@ export function EntityMiniList({ items }: { items: EntitySummary[] }) {
         >
           <Badge variant="outline">{entity.typeLabel}</Badge>
           <span className="min-w-0 truncate">{entity.title}</span>
-          {entity.date ? <span className="shrink-0 text-muted-foreground">{entity.date}</span> : null}
+          <EntityDateList entity={entity} compact />
         </Link>
       ))}
     </div>

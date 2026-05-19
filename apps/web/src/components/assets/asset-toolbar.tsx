@@ -62,7 +62,11 @@ export function AssetToolbar({
       <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
       <Select value={sort} onChange={(event) => onSortChange(event.target.value)}>
         <option value={defaultSort}>Sort by title</option>
-        <option value="date">Sort by date</option>
+        {stats?.dateFields.map((field) => (
+          <option key={field} value={`date:${field}`}>
+            Sort by {field}
+          </option>
+        ))}
         <option value="status">Sort by status</option>
         <option value="relations">Sort by links</option>
         <option value="path">Sort by path</option>

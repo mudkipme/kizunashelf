@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { EntityDateList } from "@/components/assets/entity-date-list";
 import { Badge } from "@/components/ui/badge";
 import type { EntitySummary } from "@/types/api";
 
@@ -28,7 +29,9 @@ export function EntityGridItem({ entity }: { entity: EntitySummary }) {
           <div className="line-clamp-3 text-xs leading-5 text-muted-foreground">{entity.summary}</div>
         ) : null}
         <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span className="truncate">{entity.date ?? entity.basename}</span>
+          <span className="min-w-0">
+            {entity.dates.length > 0 ? <EntityDateList entity={entity} compact /> : entity.basename}
+          </span>
           <span className="shrink-0">{entity.relationCount} links</span>
         </div>
       </div>

@@ -17,7 +17,7 @@
         "type": "anime",
         "status": "Watching",
         "limit": 12,
-        "sort": "date",
+        "sort": "date:season",
         "direction": "desc"
       },
       {
@@ -26,7 +26,7 @@
         "type": "drama",
         "status": "Watching",
         "limit": 12,
-        "sort": "date",
+        "sort": "date:season",
         "direction": "desc"
       },
       {
@@ -158,9 +158,6 @@
         "image": [
           "cover_url"
         ],
-        "status": [
-          "status"
-        ],
         "date": [
           "date",
           "release_date"
@@ -285,9 +282,6 @@
           "avatar_url",
           "cover_url"
         ],
-        "status": [
-          "status"
-        ],
         "externalRefs": [
           "bgm_url",
           "musicbrainz_url"
@@ -307,9 +301,6 @@
           "avatar_url",
           "cover_url"
         ],
-        "status": [
-          "status"
-        ],
         "externalRefs": [
           "bgm_url"
         ]
@@ -325,9 +316,6 @@
         ],
         "image": [
           "cover_url"
-        ],
-        "status": [
-          "status"
         ],
         "externalRefs": [
           "bgm_url"

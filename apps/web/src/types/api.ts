@@ -11,13 +11,18 @@ export type EntitySummary = {
   title: string;
   subtitle?: string;
   status?: string;
-  date?: string;
+  dates: EntityDateValue[];
   image?: string;
   summary?: string;
   path: string;
   basename: string;
   externalRefs: Record<string, string>;
   relationCount: number;
+};
+
+export type EntityDateValue = {
+  field: string;
+  value: string;
 };
 
 export type Entity = EntitySummary & {
@@ -77,6 +82,7 @@ export type StatsResponse = {
   total: number;
   relations: number;
   byType: Array<{ id: string; label: string; count: number }>;
+  dateFields: string[];
   byStatus: Array<{ name: string; count: number }>;
   topRelations: EntitySummary[];
 };
@@ -84,6 +90,32 @@ export type StatsResponse = {
 export type EntityDetailResponse = {
   entity: Entity;
   relations: Relation[];
+};
+
+export type EntityDateMetadataEntry = {
+  id: string;
+  field: string;
+  value: string;
+  date?: string;
+};
+
+export type EntityDateDailyNoteEntry = {
+  id: string;
+  date: string;
+  notePath: string;
+  snippets: CalendarSnippet[];
+};
+
+export type EntityDatesResponse = {
+  generatedAt: string;
+  entityId: string;
+  totals: {
+    metadata: number;
+    dailyNotes: number;
+    snippets: number;
+  };
+  metadata: EntityDateMetadataEntry[];
+  dailyNotes: EntityDateDailyNoteEntry[];
 };
 
 export type EntityListResponse = {
@@ -211,6 +243,7 @@ export type CalendarEntry = {
   date: string;
   source: "taxonomy" | "daily-note";
   entity: EntitySummary;
+  dateField?: string;
   rawDate?: string;
   notePath?: string;
   snippets?: CalendarSnippet[];

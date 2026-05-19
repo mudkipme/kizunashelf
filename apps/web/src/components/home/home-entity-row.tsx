@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { Badge } from "@/components/ui/badge";
 import type { EntitySummary } from "@/types/api";
@@ -18,7 +19,7 @@ export function HomeEntityRow({ entity }: { entity: EntitySummary }) {
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           {entity.subtitle ? <span className="truncate">{entity.subtitle}</span> : null}
-          {entity.date ? <span className="shrink-0">{entity.date}</span> : null}
+          <EntityDateList entity={entity} compact />
           <span className="ml-auto shrink-0">{entity.relationCount} links</span>
         </span>
       </span>

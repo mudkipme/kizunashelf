@@ -7,13 +7,14 @@ import { EntityDetail } from "@/components/assets/entity-detail";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
 import { groupRelations } from "@/lib/relations";
-import type { EntityDetailResponse } from "@/types/api";
+import type { EntityDatesResponse, EntityDetailResponse } from "@/types/api";
 
 export function EntityPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [state, setState] = useState<{
     detail?: EntityDetailResponse;
+    dates?: EntityDatesResponse;
     loading: boolean;
     error?: string;
   }>({ loading: true });
@@ -21,8 +22,12 @@ export function EntityPage() {
   useEffect(() => {
     if (!id) return;
     setState({ loading: true });
-    void fetchJson<EntityDetailResponse>(`/api/entities/${encodeURIComponent(id)}`).then(
-      (detail) => setState({ detail, loading: false }),
+    const encodedId = encodeURIComponent(id);
+    void Promise.all([
+      fetchJson<EntityDetailResponse>(`/api/entities/${encodedId}`),
+      fetchJson<EntityDatesResponse>(`/api/entities/${encodedId}/dates`),
+    ]).then(
+      ([detail, dates]) => setState({ detail, dates, loading: false }),
       (error: unknown) => setState({ loading: false, error: errorMessage(error) }),
     );
   }, [id]);
@@ -50,6 +55,7 @@ export function EntityPage() {
             entity={entity}
             relations={state.detail?.relations ?? []}
             relationGroups={relationGroups}
+            dates={state.dates}
           />
         ) : (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">

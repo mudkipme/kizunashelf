@@ -20,7 +20,9 @@ export function CalendarEntryItem({ entry }: { entry: CalendarEntry }) {
       </div>
 
       {entry.rawDate ? (
-        <div className="mt-2 text-xs text-muted-foreground">Date field: {entry.rawDate}</div>
+        <div className="mt-2 text-xs text-muted-foreground">
+          {entry.dateField ?? "date"}: {entry.rawDate}
+        </div>
       ) : null}
 
       {entry.notePath ? (

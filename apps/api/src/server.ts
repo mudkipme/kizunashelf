@@ -77,6 +77,8 @@ app.get("/api/stats", async (c) => {
       ? library.summaries.filter((entity) => entity.type === type)
       : library.summaries;
   const ids = new Set(summaries.map((entity) => entity.id));
+  const statusTrackedTypeIds = getStatusTrackedTypeIds(library);
+  const statusSummaries = summaries.filter((entity) => statusTrackedTypeIds.has(entity.type));
 
   return c.json({
     generatedAt: library.generatedAt,
@@ -87,7 +89,11 @@ app.get("/api/stats", async (c) => {
       label: type.label,
       count: library.entities.filter((entity) => entity.type === type.id).length,
     })),
-    byStatus: countBy(summaries, (entity) => entity.status ?? "Unknown"),
+    dateFields:
+      type && type !== "all"
+        ? (library.config.types.find((item) => item.id === type)?.fields.date ?? [])
+        : [],
+    byStatus: countBy(statusSummaries, (entity) => entity.status ?? "Unknown"),
     topRelations: [...summaries]
       .sort((a, b) => b.relationCount - a.relationCount)
       .slice(0, 12),
@@ -175,6 +181,18 @@ app.get("/api/entities", async (c) => {
     pageSize,
     totalPages,
   });
+});
+
+app.get("/api/entities/:id/dates", async (c) => {
+  const library = await getLibrary();
+  const id = c.req.param("id");
+  const entity = library.entities.find((item) => item.id === id);
+
+  if (!entity) {
+    return c.json({ error: "Entity not found" }, 404);
+  }
+
+  return c.json(await buildEntityDates(library, entity));
 });
 
 app.get("/api/entities/:id", async (c) => {
@@ -337,7 +355,14 @@ function sortEntities(
   const sorted = [...entities].sort((a, b) => {
     if (sort === "title") return compareString(a.title, b.title) * multiplier;
     if (sort === "status") return compareString(a.status, b.status) * multiplier;
-    if (sort === "date") return compareString(a.date, b.date) * multiplier;
+    if (sort.startsWith("date:")) {
+      const field = sort.slice("date:".length);
+      return compareOptionalString(
+        entityDateSortValue(a, field),
+        entityDateSortValue(b, field),
+        direction,
+      );
+    }
     if (sort === "relations") return (a.relationCount - b.relationCount) * multiplier;
     if (sort === "path") return compareString(a.path, b.path) * multiplier;
 
@@ -349,15 +374,34 @@ function sortEntities(
   return sorted;
 }
 
+function entityDateSortValue(entity: EntitySummary, field: string) {
+  return dateSortKey(entity.dates.find((item) => item.field === field)?.value);
+}
+
+function compareOptionalString(
+  a: string | undefined,
+  b: string | undefined,
+  direction: "asc" | "desc",
+) {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  return compareString(a, b) * (direction === "asc" ? 1 : -1);
+}
+
 function buildAnalytics(library: Library) {
   const summaries = library.summaries;
+  const statusTrackedTypeIds = getStatusTrackedTypeIds(library);
+  const statusSummaries = summaries.filter((entity) => statusTrackedTypeIds.has(entity.type));
   const outgoing = outgoingRelations(library);
   const unresolved = outgoing.filter((relation) => !relation.targetId);
-  const dated = summaries
-    .map((entity) => ({ entity, date: parseEntityDate(entity.date) }))
-    .filter((item): item is { entity: EntitySummary; date: ParsedEntityDate } =>
-      Boolean(item.date),
-    );
+  const dated = summaries.flatMap((entity) =>
+    entity.dates
+      .map((item) => parseEntityDate(item.value))
+      .filter((date): date is ParsedEntityDate => Boolean(date))
+      .map((date) => ({ entity, date })),
+  );
+  const datedEntityIds = new Set(dated.map((item) => item.entity.id));
   const withCover = summaries.filter((entity) => Boolean(entity.image));
   const withRefs = summaries.filter((entity) => Object.keys(entity.externalRefs).length > 0);
   const withSummary = summaries.filter((entity) => Boolean(entity.summary));
@@ -369,7 +413,7 @@ function buildAnalytics(library: Library) {
       entities: summaries.length,
       relations: outgoing.length,
       unresolvedRelations: unresolved.length,
-      datedEntities: dated.length,
+      datedEntities: datedEntityIds.size,
       connectedEntities: connected.length,
     },
     distributions: {
@@ -378,7 +422,7 @@ function buildAnalytics(library: Library) {
         label: type.label,
         count: summaries.filter((entity) => entity.type === type.id).length,
       })),
-      byStatus: countBy(summaries, (entity) => entity.status ?? "Unknown"),
+      byStatus: countBy(statusSummaries, (entity) => entity.status ?? "Unknown"),
       byRelationField: countBy(outgoing, (relation) => relation.field).slice(0, 16),
       bySourceTargetType: relationTypePairs(library).slice(0, 16),
     },
@@ -416,9 +460,18 @@ function buildAnalytics(library: Library) {
   };
 }
 
+function getStatusTrackedTypeIds(library: Library) {
+  return new Set(
+    library.config.types
+      .filter((type) => Boolean(type.fields.status?.length))
+      .map((type) => type.id),
+  );
+}
+
 type ParsedEntityDate = {
   year: number;
   month?: number;
+  day?: number;
   season?: string;
 };
 
@@ -429,19 +482,58 @@ const seasonOrder = new Map([
   ["秋季", 3],
 ]);
 
+const seasonEndDate = new Map([
+  ["冬季", { month: 3, day: 31 }],
+  ["春季", { month: 6, day: 30 }],
+  ["夏季", { month: 9, day: 30 }],
+  ["秋季", { month: 12, day: 31 }],
+]);
+
 function parseEntityDate(value: string | undefined): ParsedEntityDate | undefined {
   if (!value) return undefined;
+  const exact = exactDateParts(value);
+  if (exact) {
+    return {
+      year: exact.year,
+      month: exact.month,
+      day: exact.day,
+      season: seasonForMonth(exact.month),
+    };
+  }
+
   const year = value.match(/\b(19|20)\d{2}\b/)?.[0] ?? value.match(/(19|20)\d{2}年/)?.[0];
   if (!year) return undefined;
   const parsedYear = Number(year.slice(0, 4));
   const month = value.match(/\b(19|20)\d{2}[-/.](\d{1,2})/)?.[2];
+  const parsedMonth = month ? clampNumber(Number(month), 1, 12) : undefined;
   const season = value.match(/年(春季|夏季|秋季|冬季)/)?.[1];
 
   return {
     year: parsedYear,
-    month: month ? clampNumber(Number(month), 1, 12) : undefined,
-    season,
+    month: parsedMonth,
+    season: season ?? (parsedMonth ? seasonForMonth(parsedMonth) : undefined),
   };
+}
+
+function dateSortKey(value: string | undefined) {
+  if (!value) return undefined;
+
+  const exact = parseExactDate(value);
+  if (exact) return exact;
+
+  const parsed = parseEntityDate(value);
+  if (!parsed?.season) return value;
+
+  const end = seasonEndDate.get(parsed.season);
+  if (!end) return value;
+  return normalizeDate(parsed.year, end.month, end.day) ?? value;
+}
+
+function seasonForMonth(month: number) {
+  if (month <= 3) return "冬季";
+  if (month <= 6) return "春季";
+  if (month <= 9) return "夏季";
+  return "秋季";
 }
 
 function buildCoverageMetric<T>(name: string, count: number, items: T[]) {
@@ -491,7 +583,9 @@ function buildTimeline(dated: Array<{ entity: EntitySummary; date: ParsedEntityD
       year,
       count: entities.length,
       byType: countBy(entities, (entity) => entity.typeLabel),
-      examples: sortEntities(entities, "date", "desc").slice(0, 6),
+      examples: [...entities]
+        .sort((a, b) => compareString(dateSortKey(b.dates[0]?.value), dateSortKey(a.dates[0]?.value)))
+        .slice(0, 6),
     }));
 
   return {
@@ -538,9 +632,24 @@ type CalendarEntry = {
   date: string;
   source: Exclude<CalendarSource, "all">;
   entity: EntitySummary;
+  dateField?: string;
   rawDate?: string;
   notePath?: string;
   snippets?: CalendarSnippet[];
+};
+
+type EntityDateMetadataEntry = {
+  id: string;
+  field: string;
+  value: string;
+  date?: string;
+};
+
+type EntityDateDailyNoteEntry = {
+  id: string;
+  date: string;
+  notePath: string;
+  snippets: CalendarSnippet[];
 };
 
 const dailyNoteDatePattern = /^(?<date>\d{4}-\d{2}-\d{2})\.md$/;
@@ -574,20 +683,128 @@ async function buildCalendar(library: Library, options: CalendarBuildOptions) {
 }
 
 function taxonomyCalendarEntries(library: Library, options: CalendarBuildOptions): CalendarEntry[] {
-  return library.summaries
+  const summaries = summaryById(library);
+
+  return library.entities
     .filter((entity) => !options.type || entity.type === options.type)
-    .map((entity) => ({ entity, date: parseExactDate(entity.date) }))
-    .filter((item): item is { entity: EntitySummary; date: string } => {
-      if (!item.date) return false;
-      return isInMonth(item.date, options.year, options.month);
-    })
-    .map(({ entity, date }) => ({
-      id: `taxonomy:${date}:${entity.id}`,
-      date,
-      source: "taxonomy",
-      entity,
-      rawDate: entity.date,
-    }));
+    .flatMap((entity) =>
+      metadataDateEntries(library, entity)
+        .filter((item) => item.date && isInMonth(item.date, options.year, options.month))
+        .map((item) => ({
+          id: `taxonomy:${item.field}:${item.date}:${entity.id}`,
+          date: item.date!,
+          source: "taxonomy" as const,
+          entity: summaries.get(entity.id) ?? entity,
+          dateField: item.field,
+          rawDate: item.value,
+        })),
+    )
+    .filter((entry, index, entries) => {
+      return entries.findIndex((item) => item.id === entry.id) === index;
+    });
+}
+
+async function buildEntityDates(
+  library: Library,
+  entity: Library["entities"][number],
+) {
+  const metadata = metadataDateEntries(library, entity);
+  const dailyNotes = await entityDailyNoteEntries(library, entity);
+
+  return {
+    generatedAt: library.generatedAt,
+    entityId: entity.id,
+    totals: {
+      metadata: metadata.length,
+      dailyNotes: dailyNotes.length,
+      snippets: dailyNotes.reduce((total, item) => total + item.snippets.length, 0),
+    },
+    metadata,
+    dailyNotes,
+  };
+}
+
+function metadataDateEntries(
+  library: Library,
+  entity: Library["entities"][number],
+): EntityDateMetadataEntry[] {
+  const type = library.config.types.find((item) => item.id === entity.type);
+  const fields = type?.fields.date ?? [];
+  const seen = new Set<string>();
+  const entries: EntityDateMetadataEntry[] = [];
+
+  for (const item of entity.dates) {
+    if (fields.length > 0 && !fields.includes(item.field)) continue;
+    const key = `${item.field}\u0000${item.value}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    entries.push({
+      id: `metadata:${item.field}:${entries.length}`,
+      field: item.field,
+      value: item.value,
+      date: parseExactDate(item.value),
+    });
+  }
+
+  return entries.sort((a, b) => {
+    const dateCompare = compareString(b.date ?? b.value, a.date ?? a.value);
+    if (dateCompare !== 0) return dateCompare;
+    return compareString(a.field, b.field);
+  });
+}
+
+async function entityDailyNoteEntries(
+  library: Library,
+  entity: EntitySummary,
+): Promise<EntityDateDailyNoteEntry[]> {
+  const dailyFiles = await dailyNoteFiles(library);
+  const byBasename = entityBasenameIndex(library);
+  const grouped = new Map<string, EntityDateDailyNoteEntry>();
+  const snippetMaxLength = clampNumber(
+    Number(library.config.dailyNotes?.snippetMaxLength ?? 260),
+    80,
+    600,
+  );
+
+  for (const file of dailyFiles) {
+    const raw = await readFile(file.absolutePath, "utf8");
+    const blocks = mentionBlocks(stripFrontmatter(raw));
+
+    for (const block of blocks) {
+      const links = [...block.text.matchAll(wikilinkPattern)];
+      const mentionsEntity = links.some((link) => {
+        const target = link[1];
+        if (!target) return false;
+        return findEntityForWikilink(target, library, byBasename)?.id === entity.id;
+      });
+      if (!mentionsEntity) continue;
+
+      const entry =
+        grouped.get(file.date) ??
+        ({
+          id: `daily-note:${file.date}:${entity.id}`,
+          date: file.date,
+          notePath: file.relativePath,
+          snippets: [],
+        } satisfies EntityDateDailyNoteEntry);
+      const snippet = {
+        text: cleanMentionSnippet(block.text, snippetMaxLength),
+        heading: block.heading,
+        line: block.line,
+      };
+      if (!entry.snippets.some((item) => item.text === snippet.text)) {
+        entry.snippets.push(snippet);
+      }
+      grouped.set(file.date, entry);
+    }
+  }
+
+  return [...grouped.values()]
+    .map((entry) => ({
+      ...entry,
+      snippets: entry.snippets.slice(0, 5),
+    }))
+    .sort((a, b) => compareString(b.date, a.date));
 }
 
 async function dailyNoteCalendarEntries(
@@ -645,7 +862,7 @@ async function dailyNoteCalendarEntries(
   }));
 }
 
-async function dailyNoteFiles(library: Library, year: number, month: number) {
+async function dailyNoteFiles(library: Library, year?: number, month?: number) {
   const paths = library.config.dailyNotes?.paths?.length
     ? library.config.dailyNotes.paths
     : ["Daily Notes"];
@@ -669,6 +886,7 @@ async function dailyNoteFiles(library: Library, year: number, month: number) {
         date: string;
       } => {
         if (!item) return false;
+        if (year === undefined || month === undefined) return true;
         return isInMonth(item.date, year, month);
       },
     );
@@ -709,14 +927,20 @@ function safeRegExp(value: string | undefined) {
 }
 
 function parseExactDate(value: string | undefined): string | undefined {
+  const parts = exactDateParts(value);
+  return parts ? normalizeDate(parts.year, parts.month, parts.day) : undefined;
+}
+
+function exactDateParts(value: string | undefined) {
   if (!value) return undefined;
   const match = exactDatePattern.exec(value);
   if (!match) return undefined;
 
-  const year = Number(match[1] ?? match[4]);
-  const month = Number(match[2] ?? match[5]);
-  const day = Number(match[3] ?? match[6]);
-  return normalizeDate(year, month, day);
+  return {
+    year: Number(match[1] ?? match[4]),
+    month: Number(match[2] ?? match[5]),
+    day: Number(match[3] ?? match[6]),
+  };
 }
 
 function normalizeDate(year: number, month: number, day: number) {

@@ -64,7 +64,7 @@ function toSummary(entity: Entity): EntitySummary {
     title: entity.title,
     subtitle: entity.subtitle,
     status: entity.status,
-    date: entity.date,
+    dates: entity.dates,
     image: entity.image,
     summary: entity.summary,
     path: entity.path,
@@ -117,7 +117,7 @@ async function readEntitiesForType(
         title,
         subtitle: firstString(parsed.frontmatter, typeConfig.fields.subtitle),
         status: firstString(parsed.frontmatter, typeConfig.fields.status),
-        date: firstString(parsed.frontmatter, typeConfig.fields.date),
+        dates: dateValues(parsed.frontmatter, typeConfig.fields.date),
         image: firstString(parsed.frontmatter, typeConfig.fields.image),
         summary: extractSummary(parsed.body),
         path: relativePath,
@@ -170,6 +170,21 @@ function externalRefs(
   return refs;
 }
 
+function dateValues(
+  frontmatter: Record<string, unknown>,
+  keys: string[] | undefined,
+): Array<{ field: string; value: string }> {
+  const dates: Array<{ field: string; value: string }> = [];
+
+  for (const field of keys ?? []) {
+    for (const value of normalizeValues(frontmatter[field])) {
+      dates.push({ field, value });
+    }
+  }
+
+  return dates;
+}
+
 function firstString(
   frontmatter: Record<string, unknown>,
   keys: string[] | undefined,
@@ -193,6 +208,13 @@ function normalizeValue(value: unknown): string | undefined {
   }
   if (typeof value === "string") return stripWikilink(value);
   return undefined;
+}
+
+function normalizeValues(value: unknown): string[] {
+  if (value === undefined || value === null || value === "") return [];
+  if (Array.isArray(value)) return value.flatMap((item) => normalizeValues(item));
+  const normalized = normalizeValue(value);
+  return normalized ? [normalized] : [];
 }
 
 function stripWikilink(value: string): string {

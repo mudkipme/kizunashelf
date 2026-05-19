@@ -66,6 +66,18 @@ export function LibraryPage() {
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [queryInput, setQueryInput] = useState(query);
+  const effectiveSort =
+    stats.category &&
+    sort.startsWith("date:") &&
+    !stats.category.dateFields.includes(sort.slice("date:".length))
+      ? defaultSort
+      : sort;
+  const effectiveStatus =
+    stats.category &&
+    selectedStatus !== allStatuses &&
+    !stats.category.byStatus.some((item) => item.name === selectedStatus)
+      ? allStatuses
+      : selectedStatus;
 
   useEffect(() => {
     void loadGlobalStats();
@@ -101,6 +113,18 @@ export function LibraryPage() {
   }, [selectedType]);
 
   useEffect(() => {
+    if (!stats.category || !sort.startsWith("date:")) return;
+    if (stats.category.dateFields.includes(sort.slice("date:".length))) return;
+    setQueryParam("sort", defaultSort, defaultSort);
+  }, [stats.category, sort]);
+
+  useEffect(() => {
+    if (!stats.category || selectedStatus === allStatuses) return;
+    if (stats.category.byStatus.some((item) => item.name === selectedStatus)) return;
+    setQueryParam("status", allStatuses, allStatuses);
+  }, [stats.category, selectedStatus]);
+
+  useEffect(() => {
     if (!stats.global || !selectedType || !searchParams.has("type")) return;
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
   }, [stats.global, selectedType, selectedStatus, refs, cover, sort, direction, view]);
@@ -124,15 +148,15 @@ export function LibraryPage() {
   useEffect(() => {
     void loadEntities({
       type: selectedType,
-      status: selectedStatus,
+      status: effectiveStatus,
       refs,
       cover,
-      sort,
+      sort: effectiveSort,
       direction,
       q: query,
       page,
     });
-  }, [selectedType, selectedStatus, refs, cover, sort, direction, query, page]);
+  }, [selectedType, effectiveStatus, refs, cover, effectiveSort, direction, query, page]);
 
   async function loadGlobalStats() {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
@@ -233,10 +257,10 @@ export function LibraryPage() {
             </div>
             <AssetToolbar
               stats={stats.category}
-              status={selectedStatus}
+              status={effectiveStatus}
               refs={refs}
               cover={cover}
-              sort={sort}
+              sort={effectiveSort}
               direction={direction}
               view={view}
               onStatusChange={(value) => setQueryParam("status", value, allStatuses)}

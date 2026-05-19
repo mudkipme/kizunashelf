@@ -43,6 +43,11 @@ export type KizunaConfig = {
   dailyNotes?: DailyNotesConfig;
 };
 
+export type EntityDateValue = {
+  field: string;
+  value: string;
+};
+
 export type EntitySummary = {
   id: string;
   type: string;
@@ -50,7 +55,7 @@ export type EntitySummary = {
   title: string;
   subtitle?: string;
   status?: string;
-  date?: string;
+  dates: EntityDateValue[];
   image?: string;
   summary?: string;
   path: string;

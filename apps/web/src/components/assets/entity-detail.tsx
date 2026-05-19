@@ -1,22 +1,25 @@
-import { BookOpenIcon, CircleDotIcon, FileTextIcon, LinkIcon } from "lucide-react";
+import { BookOpenIcon, CalendarDaysIcon, CircleDotIcon, FileTextIcon, LinkIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
+import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { relationKey, relationTargetHref } from "@/lib/relations";
-import type { Entity, Relation } from "@/types/api";
+import type { Entity, EntityDatesResponse, Relation } from "@/types/api";
 
 export function EntityDetail({
   entity,
   relations,
   relationGroups,
+  dates,
 }: {
   entity: Entity;
   relations: Relation[];
   relationGroups: Array<{ field: string; items: Relation[] }>;
+  dates?: EntityDatesResponse;
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -71,6 +74,10 @@ export function EntityDetail({
           ) : (
             <EmptyLine>No external refs</EmptyLine>
           )}
+        </DetailSection>
+
+        <DetailSection title="Dates" icon={<CalendarDaysIcon />}>
+          <EntityDates dates={dates} />
         </DetailSection>
 
         <DetailSection title="Relations" icon={<CircleDotIcon />}>
