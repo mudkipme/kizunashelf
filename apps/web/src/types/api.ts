@@ -1,64 +1,27 @@
-export type TypeConfig = {
-  id: string;
-  label: string;
-  path: string;
-};
+import type {
+  Entity,
+  EntitySummary,
+  EntityTypeConfig,
+  HomeConfig,
+  HomeSectionConfig,
+  Relation,
+} from "@kizunashelf/core";
 
-export type EntitySummary = {
-  id: string;
-  type: string;
-  typeLabel: string;
-  title: string;
-  subtitle?: string;
-  status?: string;
-  dates: EntityDateValue[];
-  image?: string;
-  summary?: string;
-  path: string;
-  basename: string;
-  externalRefs: Record<string, string>;
-  relationCount: number;
-};
+export type {
+  Entity,
+  EntityDateValue,
+  EntitySummary,
+  HomeConfig,
+  HomeSectionConfig,
+  Relation,
+} from "@kizunashelf/core";
 
-export type EntityDateValue = {
-  field: string;
-  value: string;
-};
-
-export type Entity = EntitySummary & {
-  frontmatter: Record<string, unknown>;
-  body: string;
-  raw: string;
-};
-
-export type Relation = {
-  sourceId: string;
-  targetId?: string;
-  targetTitle: string;
-  targetType?: string;
-  field: string;
-  direction: "out" | "in";
-};
+export type TypeConfig = Pick<EntityTypeConfig, "id" | "label" | "path">;
 
 export type ConfigResponse = {
   taxonomyRoot: string;
   home?: HomeConfig;
   types: TypeConfig[];
-};
-
-export type HomeSectionConfig = {
-  id: string;
-  title: string;
-  type: string;
-  status?: string | string[];
-  limit?: number;
-  sort?: string;
-  direction?: "asc" | "desc";
-};
-
-export type HomeConfig = {
-  title?: string;
-  sections?: HomeSectionConfig[];
 };
 
 export type HomeSectionResponse = Omit<HomeSectionConfig, "status"> & {

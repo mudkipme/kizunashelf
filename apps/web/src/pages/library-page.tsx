@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { SearchIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
-import { fetchJson, errorMessage } from "@/api/client";
+import { fetchJson, errorMessage, isAbortError } from "@/api/client";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
@@ -80,7 +80,9 @@ export function LibraryPage() {
       : selectedStatus;
 
   useEffect(() => {
-    void loadGlobalStats();
+    const controller = new AbortController();
+    void loadGlobalStats(controller.signal);
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -109,7 +111,9 @@ export function LibraryPage() {
 
   useEffect(() => {
     if (!selectedType) return;
-    void loadCategoryStats(selectedType);
+    const controller = new AbortController();
+    void loadCategoryStats(selectedType, controller.signal);
+    return () => controller.abort();
   }, [selectedType]);
 
   useEffect(() => {
@@ -146,6 +150,7 @@ export function LibraryPage() {
   }, [queryInput]);
 
   useEffect(() => {
+    const controller = new AbortController();
     void loadEntities({
       type: selectedType,
       status: effectiveStatus,
@@ -155,24 +160,29 @@ export function LibraryPage() {
       direction,
       q: query,
       page,
-    });
+    }, controller.signal);
+    return () => controller.abort();
   }, [selectedType, effectiveStatus, refs, cover, effectiveSort, direction, query, page]);
 
-  async function loadGlobalStats() {
+  async function loadGlobalStats(signal: AbortSignal) {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
     try {
-      const global = await fetchJson<StatsResponse>("/api/stats");
+      const global = await fetchJson<StatsResponse>("/api/stats", { signal });
       setStats((current) => ({ ...current, global, loading: false }));
     } catch (error) {
+      if (isAbortError(error)) return;
       setStats((current) => ({ ...current, loading: false, error: errorMessage(error) }));
     }
   }
 
-  async function loadCategoryStats(type: string) {
+  async function loadCategoryStats(type: string, signal: AbortSignal) {
     try {
-      const category = await fetchJson<StatsResponse>(`/api/stats?type=${encodeURIComponent(type)}`);
+      const category = await fetchJson<StatsResponse>(`/api/stats?type=${encodeURIComponent(type)}`, {
+        signal,
+      });
       setStats((current) => ({ ...current, category, error: undefined }));
     } catch (error) {
+      if (isAbortError(error)) return;
       setStats((current) => ({ ...current, error: errorMessage(error) }));
     }
   }
@@ -186,7 +196,7 @@ export function LibraryPage() {
     direction: string;
     q: string;
     page: number;
-  }) {
+  }, signal: AbortSignal) {
     setList((current) => ({ ...current, loading: true, error: undefined }));
     const params = new URLSearchParams({
       type: filters.type,
@@ -201,7 +211,7 @@ export function LibraryPage() {
     if (filters.q.trim()) params.set("q", filters.q.trim());
 
     try {
-      const result = await fetchJson<EntityListResponse>(`/api/entities?${params}`);
+      const result = await fetchJson<EntityListResponse>(`/api/entities?${params}`, { signal });
       setList({ ...result, entities: result.items, loading: false });
       if (result.page !== filters.page) {
         const next = new URLSearchParams(searchParams);
@@ -209,6 +219,7 @@ export function LibraryPage() {
         setSearchParams(next, { replace: true });
       }
     } catch (error) {
+      if (isAbortError(error)) return;
       setList((current) => ({ ...current, loading: false, error: errorMessage(error) }));
     }
   }

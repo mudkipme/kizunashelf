@@ -1,6 +1,7 @@
 {
   "vaultRoot": "/var/home/mudkip/Containers/obsidian/config/Obsidian/Mudkip",
   "taxonomyRoot": "Taxonomy",
+  "readConcurrency": 32,
   "dailyNotes": {
     "paths": [
       "Daily Notes"

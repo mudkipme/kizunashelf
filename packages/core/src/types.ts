@@ -39,6 +39,7 @@ export type KizunaConfig = {
   taxonomyRoot: string;
   types: EntityTypeConfig[];
   relationshipFields: string[];
+  readConcurrency?: number;
   home?: HomeConfig;
   dailyNotes?: DailyNotesConfig;
 };

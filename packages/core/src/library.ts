@@ -19,6 +19,7 @@ type ParsedMarkdown = {
 
 const summaryHeadingPattern = /^##\s+(摘要|概览|简介|Summary)\s*$/im;
 const wikilinkPattern = /\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]+)?\]\]/g;
+const defaultReadConcurrency = 32;
 
 export async function readLibrary(config: KizunaConfig): Promise<Library> {
   const entities = await readEntities(config);
@@ -75,8 +76,9 @@ function toSummary(entity: Entity): EntitySummary {
 }
 
 async function readEntities(config: KizunaConfig): Promise<Entity[]> {
+  const readLimit = createLimiter(normalizeReadConcurrency(config.readConcurrency));
   const nested = await Promise.all(
-    config.types.map((typeConfig) => readEntitiesForType(config, typeConfig)),
+    config.types.map((typeConfig) => readEntitiesForType(config, typeConfig, readLimit)),
   );
 
   return nested.flat().sort((a, b) => {
@@ -88,6 +90,7 @@ async function readEntities(config: KizunaConfig): Promise<Entity[]> {
 async function readEntitiesForType(
   config: KizunaConfig,
   typeConfig: EntityTypeConfig,
+  readLimit: <T>(task: () => Promise<T>) => Promise<T>,
 ): Promise<Entity[]> {
   const absoluteDir = join(config.vaultRoot, config.taxonomyRoot, typeConfig.path);
   let entries: string[];
@@ -102,7 +105,7 @@ async function readEntitiesForType(
   }
 
   return Promise.all(
-    entries.map(async (entry) => {
+    entries.map((entry) => readLimit(async () => {
       const absolutePath = join(absoluteDir, entry);
       const raw = await readFile(absolutePath, "utf8");
       const parsed = parseMarkdown(raw);
@@ -128,8 +131,40 @@ async function readEntitiesForType(
         body: parsed.body,
         raw,
       };
-    }),
+    })),
   );
+}
+
+function normalizeReadConcurrency(value: number | undefined) {
+  if (value === undefined || !Number.isFinite(value)) return defaultReadConcurrency;
+  return Math.floor(Math.min(256, Math.max(1, value)));
+}
+
+function createLimiter(concurrency: number) {
+  let active = 0;
+  const queue: Array<() => void> = [];
+
+  function runNext() {
+    const next = queue.shift();
+    if (!next || active >= concurrency) return;
+    active += 1;
+    next();
+  }
+
+  return async function limit<T>(task: () => Promise<T>): Promise<T> {
+    if (active >= concurrency) {
+      await new Promise<void>((resolve) => queue.push(resolve));
+    } else {
+      active += 1;
+    }
+
+    try {
+      return await task();
+    } finally {
+      active -= 1;
+      runNext();
+    }
+  };
 }
 
 function parseMarkdown(raw: string): ParsedMarkdown {
