@@ -7,3 +7,4 @@ dist/
 !.env.example
 .agents
 /config/kizunashelf.config.json
+.antigravitycli/
