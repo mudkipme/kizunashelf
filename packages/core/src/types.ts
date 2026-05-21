@@ -1,48 +1,57 @@
-export type EntityTypeConfig = {
-  id: string;
-  label: string;
-  path: string;
-  fields: {
-    title?: string[];
-    subtitle?: string[];
-    image?: string[];
-    status?: string[];
-    date?: string[];
-    externalRefs?: string[];
-    relations?: string[];
-  };
-};
+import { z } from "zod";
 
-export type HomeSectionConfig = {
-  id: string;
-  title: string;
-  type: string;
-  status?: string | string[];
-  limit?: number;
-  sort?: string;
-  direction?: "asc" | "desc";
-};
+export const EntityFieldsSchema = z.object({
+  title: z.array(z.string()).optional(),
+  subtitle: z.array(z.string()).optional(),
+  image: z.array(z.string()).optional(),
+  status: z.array(z.string()).optional(),
+  date: z.array(z.string()).optional(),
+  externalRefs: z.array(z.string()).optional(),
+  relations: z.array(z.string()).optional(),
+});
 
-export type HomeConfig = {
-  title?: string;
-  sections?: HomeSectionConfig[];
-};
+export const EntityTypeConfigSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  path: z.string(),
+  fields: EntityFieldsSchema,
+});
+export type EntityTypeConfig = z.infer<typeof EntityTypeConfigSchema>;
 
-export type DailyNotesConfig = {
-  paths?: string[];
-  datePattern?: string;
-  snippetMaxLength?: number;
-};
+export const HomeSectionConfigSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  type: z.string(),
+  status: z.union([z.string(), z.array(z.string())]).optional(),
+  limit: z.number().int().positive().optional(),
+  sort: z.string().optional(),
+  direction: z.enum(["asc", "desc"]).optional(),
+});
+export type HomeSectionConfig = z.infer<typeof HomeSectionConfigSchema>;
 
-export type KizunaConfig = {
-  vaultRoot: string;
-  taxonomyRoot: string;
-  types: EntityTypeConfig[];
-  relationshipFields: string[];
-  readConcurrency?: number;
-  home?: HomeConfig;
-  dailyNotes?: DailyNotesConfig;
-};
+export const HomeConfigSchema = z.object({
+  title: z.string().optional(),
+  sections: z.array(HomeSectionConfigSchema).optional(),
+});
+export type HomeConfig = z.infer<typeof HomeConfigSchema>;
+
+export const DailyNotesConfigSchema = z.object({
+  paths: z.array(z.string()).optional(),
+  datePattern: z.string().optional(),
+  snippetMaxLength: z.number().int().positive().optional(),
+});
+export type DailyNotesConfig = z.infer<typeof DailyNotesConfigSchema>;
+
+export const KizunaConfigSchema = z.object({
+  vaultRoot: z.string(),
+  taxonomyRoot: z.string(),
+  types: z.array(EntityTypeConfigSchema),
+  relationshipFields: z.array(z.string()),
+  readConcurrency: z.number().int().positive().optional(),
+  home: HomeConfigSchema.optional(),
+  dailyNotes: DailyNotesConfigSchema.optional(),
+});
+export type KizunaConfig = z.infer<typeof KizunaConfigSchema>;
 
 export type EntityDateValue = {
   field: string;
