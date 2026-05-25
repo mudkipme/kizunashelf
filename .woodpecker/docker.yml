@@ -22,7 +22,7 @@ steps:
         from_secret: nexus_username
       password:
         from_secret: nexus_password
-      mtu: 1400
+      mtu: 1350
     when:
       - event: push
         branch: ${CI_REPO_DEFAULT_BRANCH}
@@ -41,6 +41,6 @@ steps:
         from_secret: nexus_username
       password:
         from_secret: nexus_password
-      mtu: 1400
+      mtu: 1350
     when:
       - event: tag

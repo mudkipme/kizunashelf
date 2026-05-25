@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 import { fetchJson, errorMessage, isAbortError } from "@/api/client";
@@ -9,7 +9,10 @@ import { EntityListItem } from "@/components/assets/entity-list-item";
 import { LibrarySidebar } from "@/components/assets/library-sidebar";
 import { PaginationBar } from "@/components/assets/pagination-bar";
 import { AppFrame } from "@/components/layout/app-frame";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   allOptions,
   allStatuses,
@@ -66,6 +69,8 @@ export function LibraryPage() {
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [queryInput, setQueryInput] = useState(query);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const selectedTypeStats = stats.global?.byType.find((type) => type.id === selectedType);
   const effectiveSort =
     stats.category &&
     sort.startsWith("date:") &&
@@ -249,24 +254,65 @@ export function LibraryPage() {
 
   return (
     <AppFrame error={stats.error ?? list.error}>
-      <div className="grid min-h-[calc(100vh-3rem)] grid-cols-1 md:grid-cols-[220px_minmax(420px,1fr)]">
-        <LibrarySidebar
-          stats={stats.global}
-          selectedType={selectedType}
-          onSelectType={selectType}
-        />
+      <div className="grid min-h-[calc(100vh-3rem)] grid-cols-1 overflow-hidden md:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="hidden md:block">
+          <LibrarySidebar
+            stats={stats.global}
+            selectedType={selectedType}
+            onSelectType={selectType}
+          />
+        </div>
 
-        <section className="min-h-[520px]">
+        <section className="min-w-0">
           <div className="flex h-full flex-col">
+            <div className="border-b px-3 py-2 md:hidden">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-md border bg-card px-3 py-2">
+                  <div className="text-[11px] uppercase text-muted-foreground">Entries</div>
+                  <div className="mt-1 text-lg font-semibold tabular-nums">
+                    {(selectedTypeStats?.count ?? list.total).toLocaleString()}
+                  </div>
+                </div>
+                <div className="rounded-md border bg-card px-3 py-2">
+                  <div className="text-[11px] uppercase text-muted-foreground">Relations</div>
+                  <div className="mt-1 text-lg font-semibold tabular-nums">
+                    {(stats.category?.relations ?? stats.global?.relations ?? 0).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Select
+                  value={selectedType}
+                  onChange={(event) => selectType(event.target.value)}
+                  className="min-w-0 flex-1"
+                  aria-label="Type"
+                >
+                  {stats.global?.byType.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.label} ({type.count})
+                    </option>
+                  ))}
+                </Select>
+                {selectedTypeStats ? (
+                  <Badge variant="secondary" className="shrink-0">
+                    {selectedTypeStats.label}
+                  </Badge>
+                ) : null}
+              </div>
+            </div>
+
             <div className="flex items-center gap-2 border-b p-3">
               <SearchIcon className="text-muted-foreground" />
               <Input
                 value={queryInput}
                 onChange={(event) => setQueryInput(event.target.value)}
                 placeholder="Search title, summary, path"
+                className="min-w-0"
               />
             </div>
+
             <AssetToolbar
+              className="hidden md:flex"
               stats={stats.category}
               status={effectiveStatus}
               refs={refs}
@@ -281,6 +327,98 @@ export function LibraryPage() {
               onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
               onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
             />
+
+            <div className="border-b px-3 py-2 md:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-between"
+                onClick={() => setMobileFiltersOpen((open) => !open)}
+                aria-expanded={mobileFiltersOpen}
+              >
+                <span className="flex items-center gap-2">
+                  <SlidersHorizontalIcon data-icon="inline-start" />
+                  Filters
+                </span>
+                <span className="text-muted-foreground">
+                  {effectiveStatus !== allStatuses || refs !== allOptions || cover !== allOptions
+                    ? "Active"
+                    : "Default"}
+                </span>
+              </Button>
+              {mobileFiltersOpen ? (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <Select
+                    value={effectiveStatus}
+                    onChange={(event) => setQueryParam("status", event.target.value, allStatuses)}
+                    aria-label="Status"
+                    className="min-w-0"
+                  >
+                    <option value={allStatuses}>All statuses</option>
+                    {stats.category?.byStatus.map((item) => (
+                      <option key={item.name} value={item.name}>
+                        {item.name} ({item.count})
+                      </option>
+                    ))}
+                  </Select>
+                  <Select
+                    value={refs}
+                    onChange={(event) => setQueryParam("refs", event.target.value)}
+                    aria-label="Refs"
+                    className="min-w-0"
+                  >
+                    <option value={allOptions}>Any refs</option>
+                    <option value="with">With refs</option>
+                    <option value="without">Without refs</option>
+                  </Select>
+                  <Select
+                    value={cover}
+                    onChange={(event) => setQueryParam("cover", event.target.value)}
+                    aria-label="Cover"
+                    className="min-w-0"
+                  >
+                    <option value={allOptions}>Any cover</option>
+                    <option value="with">With cover</option>
+                    <option value="without">Without cover</option>
+                  </Select>
+                  <Select
+                    value={effectiveSort}
+                    onChange={(event) => setQueryParam("sort", event.target.value, defaultSort)}
+                    aria-label="Sort"
+                    className="min-w-0"
+                  >
+                    <option value={defaultSort}>Sort by title</option>
+                    {stats.category?.dateFields.map((field) => (
+                      <option key={field} value={`date:${field}`}>
+                        Sort by {field}
+                      </option>
+                    ))}
+                    <option value="status">Sort by status</option>
+                    <option value="relations">Sort by links</option>
+                    <option value="path">Sort by path</option>
+                  </Select>
+                  <Select
+                    value={direction}
+                    onChange={(event) => setQueryParam("direction", event.target.value, defaultDirection)}
+                    aria-label="Direction"
+                    className="min-w-0"
+                  >
+                    <option value={defaultDirection}>Ascending</option>
+                    <option value="desc">Descending</option>
+                  </Select>
+                  <Select
+                    value={view}
+                    onChange={(event) => setQueryParam("view", event.target.value, defaultView, false)}
+                    aria-label="View"
+                    className="min-w-0"
+                  >
+                    <option value="list">List view</option>
+                    <option value="grid">Grid view</option>
+                  </Select>
+                </div>
+              ) : null}
+            </div>
+
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs text-muted-foreground">
               <span>
                 {list.total} entries

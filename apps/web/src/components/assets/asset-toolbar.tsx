@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { allOptions, allStatuses, defaultDirection, defaultSort } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
 export function AssetToolbar({
+  className,
   stats,
   status,
   refs,
@@ -21,6 +23,7 @@ export function AssetToolbar({
   onDirectionChange,
   onViewChange,
 }: {
+  className?: string;
   stats?: StatsResponse;
   status: string;
   refs: string;
@@ -36,7 +39,7 @@ export function AssetToolbar({
   onViewChange: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
+    <div className={cn("flex flex-wrap items-center gap-2 border-b px-3 py-2", className)}>
       <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
         <SlidersHorizontalIcon />
         Filters
