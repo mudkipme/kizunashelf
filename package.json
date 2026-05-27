@@ -5,12 +5,18 @@
   "type": "module",
   "packageManager": "pnpm@10.28.0",
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
-    "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "serve": "pnpm --filter @kizunashelf/api serve"
+    "dev": "concurrently -k -n api,web \"pnpm dev:api\" \"pnpm dev:web\"",
+    "dev:api": "cargo run -p kizunashelf --bin kizunashelf-api",
+    "dev:web": "pnpm --filter @kizunashelf/web dev",
+    "build": "pnpm contract:generate && pnpm -r build && cargo build -p kizunashelf",
+    "typecheck": "pnpm -r typecheck && cargo check",
+    "test": "cargo test",
+    "contract:generate": "pnpm --filter @kizunashelf/api-contract generate",
+    "serve": "cargo run -p kizunashelf --bin kizunashelf-api"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
+    "orval": "^8.13.0",
     "typescript": "^5.9.3"
   }
 }

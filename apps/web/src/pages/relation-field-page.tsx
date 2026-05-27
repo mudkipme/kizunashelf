@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ApiResponseSchemas } from "@kizunashelf/api-contract";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
@@ -56,8 +57,9 @@ export function RelationFieldPage() {
     if (query.trim()) params.set("q", query.trim());
 
     try {
-      const data = await fetchJson<RelationFieldResponse>(
+      const data = await fetchJson(
         `/api/relation-groups/${encodeURIComponent(field)}?${params}`,
+        ApiResponseSchemas.relationField,
       );
       setState({ data, loading: false });
       if (data.page !== page) {

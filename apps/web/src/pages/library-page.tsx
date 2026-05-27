@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ApiResponseSchemas } from "@kizunashelf/api-contract";
 import { SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
@@ -28,7 +29,7 @@ import {
   readAssetListPreferences,
   writeAssetListPreferences,
 } from "@/lib/asset-list-preferences";
-import type { EntityListResponse, EntitySummary, StatsResponse } from "@/types/api";
+import type { EntitySummary, StatsResponse } from "@/types/api";
 
 type StatsState = {
   global?: StatsResponse;
@@ -172,7 +173,7 @@ export function LibraryPage() {
   async function loadGlobalStats(signal: AbortSignal) {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
     try {
-      const global = await fetchJson<StatsResponse>("/api/stats", { signal });
+      const global = await fetchJson("/api/stats", ApiResponseSchemas.stats, { signal });
       setStats((current) => ({ ...current, global, loading: false }));
     } catch (error) {
       if (isAbortError(error)) return;
@@ -182,9 +183,11 @@ export function LibraryPage() {
 
   async function loadCategoryStats(type: string, signal: AbortSignal) {
     try {
-      const category = await fetchJson<StatsResponse>(`/api/stats?type=${encodeURIComponent(type)}`, {
-        signal,
-      });
+      const category = await fetchJson(
+        `/api/stats?type=${encodeURIComponent(type)}`,
+        ApiResponseSchemas.stats,
+        { signal },
+      );
       setStats((current) => ({ ...current, category, error: undefined }));
     } catch (error) {
       if (isAbortError(error)) return;
@@ -216,7 +219,9 @@ export function LibraryPage() {
     if (filters.q.trim()) params.set("q", filters.q.trim());
 
     try {
-      const result = await fetchJson<EntityListResponse>(`/api/entities?${params}`, { signal });
+      const result = await fetchJson(`/api/entities?${params}`, ApiResponseSchemas.entities, {
+        signal,
+      });
       setList({ ...result, entities: result.items, loading: false });
       if (result.page !== filters.page) {
         const next = new URLSearchParams(searchParams);

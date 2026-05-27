@@ -9,8 +9,8 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@kizunashelf/api-contract": "workspace:*",
     "@radix-ui/react-slot": "^1.2.4",
-    "@kizunashelf/core": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.554.0",
@@ -20,6 +20,7 @@
     "react-router-dom": "^7.10.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.0",
+    "zod": "^4.4.3",
     "zustand": "^5.0.13"
   },
   "devDependencies": {

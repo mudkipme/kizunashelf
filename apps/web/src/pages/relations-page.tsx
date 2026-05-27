@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ApiResponseSchemas } from "@kizunashelf/api-contract";
 
 import { fetchJson, errorMessage } from "@/api/client";
 import { AppFrame } from "@/components/layout/app-frame";
@@ -21,7 +22,7 @@ export function RelationsPage() {
   async function loadRelations() {
     setState({ loading: true });
     try {
-      const data = await fetchJson<RelationGroupsResponse>("/api/relation-groups");
+      const data = await fetchJson("/api/relation-groups", ApiResponseSchemas.relationGroups);
       setState({ data, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });
