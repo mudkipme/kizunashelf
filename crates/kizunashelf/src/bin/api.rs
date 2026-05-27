@@ -30,6 +30,7 @@ async fn main() -> Result<()> {
         config_path,
         cache_ttl: Duration::from_millis(cache_ttl),
         web_dist_path,
+        load_on_blocking_thread: false,
     });
     let address: SocketAddr = format!("{host}:{port}").parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;

@@ -5,8 +5,10 @@ use kizunashelf::api::{router, ApiOptions};
 use serde_json::Value;
 use std::env;
 use std::ffi::OsStr;
+use std::fs::{create_dir_all, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
+use std::time::{Duration, Instant, SystemTime};
 use tauri::{Manager, State};
 use tokio::time::timeout;
 use tower::ServiceExt;
@@ -21,6 +23,8 @@ async fn api_request(
     method: String,
     url: String,
 ) -> Result<Value, String> {
+    let started_at = Instant::now();
+    app_log(format!("api request start: {method} {url}"));
     let method = method
         .parse::<Method>()
         .map_err(|error| format!("Invalid method {method}: {error}"))?;
@@ -36,31 +40,54 @@ async fn api_request(
         ),
     )
     .await
-    .map_err(|_| format!("Desktop API request timed out while loading {request_url}"))?
+    .map_err(|_| {
+        let message = format!("Desktop API request timed out while loading {request_url}");
+        app_log(&message);
+        message
+    })?
     .map_err(|error| error.to_string())?;
     let status = response.status();
     let bytes = body::to_bytes(response.into_body(), usize::MAX)
         .await
         .map_err(|error| error.to_string())?;
-    let value = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
+    eprintln!(
+        "{}",
         format!(
+            "kizunashelf desktop api request end: {request_url} {} in {:?}",
+            status.as_u16(),
+            started_at.elapsed()
+        )
+    );
+    app_log(format!(
+        "api request end: {request_url} {} in {:?}",
+        status.as_u16(),
+        started_at.elapsed()
+    ));
+    let value = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
+        let message = format!(
             "API returned invalid JSON: {error}: {}",
             String::from_utf8_lossy(&bytes)
-        )
+        );
+        app_log(&message);
+        message
     })?;
 
     if status.is_success() {
         Ok(value)
     } else {
-        Err(api_error_message(status, value))
+        let message = api_error_message(status, value);
+        app_log(format!("api request error: {request_url}: {message}"));
+        Err(message)
     }
 }
 
 pub fn run() {
+    app_log("desktop app starting");
     tauri::Builder::default()
         .setup(|app| {
             let config_path = discover_config_path()
                 .map_err(|error| Box::<dyn std::error::Error>::from(error))?;
+            app_log(format!("config: {}", config_path.display()));
             let cache_ttl = env::var("KIZUNASHELF_CACHE_TTL_MS")
                 .ok()
                 .and_then(|ttl| ttl.parse::<u64>().ok())
@@ -70,6 +97,7 @@ pub fn run() {
                     config_path,
                     cache_ttl: Duration::from_millis(cache_ttl),
                     web_dist_path: None,
+                    load_on_blocking_thread: true,
                 }),
             });
             Ok(())
@@ -77,6 +105,41 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![api_request])
         .run(tauri::generate_context!())
         .expect("failed to run KizunaShelf desktop app");
+}
+
+fn app_log(message: impl AsRef<str>) {
+    let Some(path) = log_path() else {
+        return;
+    };
+    if let Some(parent) = path.parent() {
+        let _ = create_dir_all(parent);
+    }
+    let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) else {
+        return;
+    };
+    let _ = writeln!(
+        file,
+        "{:?} {}",
+        SystemTime::now(),
+        message.as_ref().replace('\n', "\\n")
+    );
+}
+
+fn log_path() -> Option<PathBuf> {
+    if cfg!(target_os = "macos") {
+        env::var_os("HOME")
+            .filter(|value| !value.is_empty())
+            .map(|home| Path::new(&home).join("Library/Logs/KizunaShelf/desktop.log"))
+    } else {
+        env::var_os("XDG_STATE_HOME")
+            .filter(|value| !value.is_empty())
+            .or_else(|| {
+                env::var_os("HOME")
+                    .filter(|value| !value.is_empty())
+                    .map(|home| Path::new(&home).join(".local/state").into_os_string())
+            })
+            .map(|state_home| Path::new(&state_home).join("kizunashelf/desktop.log"))
+    }
 }
 
 fn api_error_message(status: StatusCode, value: Value) -> String {

@@ -483,12 +483,16 @@ pub fn compare_string(a: &str, b: &str) -> std::cmp::Ordering {
     if a.is_ascii() && b.is_ascii() {
         return a.cmp(b);
     }
+    collator().compare(a, b)
+}
+
+fn collator() -> &'static icu_collator::CollatorBorrowed<'static> {
     use icu_collator::{options::CollatorOptions, CollatorBorrowed};
     use icu_locale_core::locale;
-    let collator =
-        CollatorBorrowed::try_new(locale!("zh-Hans-CN").into(), CollatorOptions::default())
-            .unwrap();
-    collator.compare(a, b)
+    static COLLATOR: OnceLock<CollatorBorrowed<'static>> = OnceLock::new();
+    COLLATOR.get_or_init(|| {
+        CollatorBorrowed::try_new(locale!("zh-Hans-CN").into(), CollatorOptions::default()).unwrap()
+    })
 }
 
 pub fn compare_optional_string(a: Option<&str>, b: Option<&str>) -> std::cmp::Ordering {

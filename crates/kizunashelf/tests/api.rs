@@ -300,6 +300,7 @@ impl TestServer {
                 config_path,
                 cache_ttl: Duration::from_millis(0),
                 web_dist_path: None,
+                load_on_blocking_thread: false,
             }),
             _temp: temp,
         }
