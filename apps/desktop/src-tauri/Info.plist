@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>KizunaShelf reads your Obsidian vault from Documents to build the local library.</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>KizunaShelf reads your Obsidian vault from Desktop if your config points there.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>KizunaShelf reads your Obsidian vault from Downloads if your config points there.</string>
+  </dict>
+</plist>

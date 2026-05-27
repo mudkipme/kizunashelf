@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use regex::Regex;
 use serde_json::{Map, Number, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::io::ErrorKind;
 use std::path::Path;
 use std::sync::OnceLock;
 use tokio::fs;
@@ -19,6 +20,7 @@ pub async fn load_config(config_path: impl AsRef<Path>) -> Result<KizunaConfig> 
 }
 
 pub async fn read_library(config: KizunaConfig) -> Result<Library> {
+    validate_library_roots(&config).await?;
     let mut entities = read_entities(&config).await?;
     let relations = build_relations(&config, &entities);
     let mut relation_count_by_id: HashMap<String, u32> = HashMap::new();
@@ -65,6 +67,29 @@ pub async fn read_library_from_config(config_path: impl AsRef<Path>) -> Result<L
     read_library(config).await
 }
 
+async fn validate_library_roots(config: &KizunaConfig) -> Result<()> {
+    let vault_root = Path::new(&config.vault_root);
+    let vault_metadata = fs::metadata(vault_root)
+        .await
+        .with_context(|| format!("failed to access vault root {}", vault_root.display()))?;
+    if !vault_metadata.is_dir() {
+        anyhow::bail!("vault root is not a directory: {}", vault_root.display());
+    }
+
+    let taxonomy_root = vault_root.join(&config.taxonomy_root);
+    let taxonomy_metadata = fs::metadata(&taxonomy_root)
+        .await
+        .with_context(|| format!("failed to access taxonomy root {}", taxonomy_root.display()))?;
+    if !taxonomy_metadata.is_dir() {
+        anyhow::bail!(
+            "taxonomy root is not a directory: {}",
+            taxonomy_root.display()
+        );
+    }
+
+    Ok(())
+}
+
 fn summary_for(entity: &Entity) -> EntitySummary {
     entity.summary.clone()
 }
@@ -93,7 +118,15 @@ async fn read_entities_for_type(
         .join(&type_config.path);
     let mut entries = match fs::read_dir(&absolute_dir).await {
         Ok(entries) => entries,
-        Err(_) => return Ok(Vec::new()),
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!(
+                    "failed to read taxonomy directory {}",
+                    absolute_dir.display()
+                )
+            });
+        }
     };
     let mut file_names = Vec::new();
     while let Some(entry) = entries.next_entry().await? {
@@ -506,10 +539,56 @@ fn markdown_link_regex() -> &'static Regex {
 
 #[cfg(test)]
 mod tests {
-    use super::compare_string;
+    use super::{compare_string, read_library};
+    use crate::types::{EntityFields, EntityTypeConfig, KizunaConfig};
 
     #[test]
     fn compare_string_supports_non_english_collation_without_system_icu_data() {
         assert!(compare_string("星旅", "月城").is_ne());
+    }
+
+    #[tokio::test]
+    async fn read_library_errors_when_vault_root_is_missing() {
+        let temp = tempfile::tempdir().unwrap();
+        let config = test_config(temp.path().join("missing").to_string_lossy().as_ref());
+
+        let error = read_library(config).await.unwrap_err().to_string();
+
+        assert!(error.contains("failed to access vault root"));
+    }
+
+    #[tokio::test]
+    async fn read_library_errors_when_taxonomy_root_is_missing() {
+        let temp = tempfile::tempdir().unwrap();
+        let config = test_config(temp.path().to_string_lossy().as_ref());
+
+        let error = read_library(config).await.unwrap_err().to_string();
+
+        assert!(error.contains("failed to access taxonomy root"));
+    }
+
+    fn test_config(vault_root: &str) -> KizunaConfig {
+        KizunaConfig {
+            vault_root: vault_root.to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            relationship_fields: Vec::new(),
+            read_concurrency: None,
+            home: None,
+            daily_notes: None,
+            types: vec![EntityTypeConfig {
+                id: "anime".to_string(),
+                label: "Anime".to_string(),
+                path: "Anime".to_string(),
+                fields: EntityFields {
+                    title: vec!["title".to_string()],
+                    subtitle: Vec::new(),
+                    image: Vec::new(),
+                    status: Vec::new(),
+                    date: Vec::new(),
+                    external_refs: Vec::new(),
+                    relations: Vec::new(),
+                },
+            }],
+        }
     }
 }

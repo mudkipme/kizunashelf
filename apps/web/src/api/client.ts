@@ -24,6 +24,7 @@ export async function fetchJson<TSchema extends z.ZodType>(
 }
 
 export function errorMessage(error: unknown) {
+  if (typeof error === "string") return error;
   return error instanceof Error ? error.message : "Unknown error";
 }
 
@@ -39,6 +40,9 @@ async function fetchTauriJson(url: string, init?: RequestInit) {
   const method = init?.method ?? "GET";
   if (method.toUpperCase() !== "GET") {
     throw new Error(`Unsupported desktop API method: ${method}`);
+  }
+  if (init?.signal?.aborted) {
+    throw new DOMException("The operation was aborted", "AbortError");
   }
   const invoke = await getTauriInvoke();
   return invoke<unknown>("api_request", { method, url });

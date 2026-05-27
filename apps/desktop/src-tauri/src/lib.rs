@@ -8,6 +8,7 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tauri::{Manager, State};
+use tokio::time::timeout;
 use tower::ServiceExt;
 
 struct DesktopState {
@@ -23,18 +24,20 @@ async fn api_request(
     let method = method
         .parse::<Method>()
         .map_err(|error| format!("Invalid method {method}: {error}"))?;
-    let response = state
-        .api
-        .clone()
-        .oneshot(
+    let request_url = url.clone();
+    let response = timeout(
+        Duration::from_secs(120),
+        state.api.clone().oneshot(
             Request::builder()
                 .method(method)
                 .uri(url)
                 .body(Body::empty())
                 .map_err(|error| error.to_string())?,
-        )
-        .await
-        .map_err(|error| error.to_string())?;
+        ),
+    )
+    .await
+    .map_err(|_| format!("Desktop API request timed out while loading {request_url}"))?
+    .map_err(|error| error.to_string())?;
     let status = response.status();
     let bytes = body::to_bytes(response.into_body(), usize::MAX)
         .await
