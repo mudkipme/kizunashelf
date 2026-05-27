@@ -2,9 +2,12 @@ use crate::calendar::{
     build_calendar, build_entity_dates, CalendarBuildOptions, CalendarSource, EntityDatesResponse,
 };
 use crate::contract::{
-    AnalyticsResponse, CalendarResponse, ConfigResponse, EntityDetailResponse, EntityListResponse,
-    ErrorResponse, HealthResponse, HomeResponse, RelationFieldResponse, RelationGroupsResponse,
-    RelationListResponse, RelationTargetResponse, StatsResponse, TypeConfigResponse, TypeCount,
+    AnalyticsCoverageMetric, AnalyticsDataQuality, AnalyticsDistributions, AnalyticsRelations,
+    AnalyticsResponse, AnalyticsTimeline, AnalyticsTimelineYear, AnalyticsTotals,
+    AnalyticsUnresolvedRelations, CalendarResponse, ConfigResponse, EntityDetailResponse,
+    EntityListResponse, ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse,
+    RelationFieldResponse, RelationGroupsResponse, RelationListResponse, RelationTargetGroup,
+    RelationTargetResponse, StatsResponse, TypeConfigResponse, TypeCount,
 };
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
 use crate::library::{compare_string, read_library_from_config};
@@ -26,7 +29,6 @@ use axum::response::{IntoResponse, Response};
 use axum::{Json, Router};
 use schemars::JsonSchema;
 use serde::Deserialize;
-use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -249,7 +251,7 @@ async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
     }))
 }
 
-async fn home(State(state): State<AppState>) -> ApiResult<Value> {
+async fn home(State(state): State<AppState>) -> ApiResult<HomeResponse> {
     let library = get_library(&state).await?;
     let sections = library
         .config
@@ -261,11 +263,16 @@ async fn home(State(state): State<AppState>) -> ApiResult<Value> {
         .map(|section| build_home_section(&library, section))
         .collect::<Vec<_>>();
 
-    Ok(Json(json!({
-        "generatedAt": library.generated_at,
-        "title": library.config.home.as_ref().and_then(|home| home.title.clone()).unwrap_or_else(|| "Home".to_string()),
-        "sections": sections,
-    })))
+    Ok(Json(HomeResponse {
+        generated_at: library.generated_at.clone(),
+        title: library
+            .config
+            .home
+            .as_ref()
+            .and_then(|home| home.title.clone())
+            .unwrap_or_else(|| "Home".to_string()),
+        sections,
+    }))
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -350,7 +357,7 @@ async fn stats(
     }))
 }
 
-async fn analytics(State(state): State<AppState>) -> ApiResult<Value> {
+async fn analytics(State(state): State<AppState>) -> ApiResult<AnalyticsResponse> {
     let library = get_library(&state).await?;
     Ok(Json(build_analytics(&library)))
 }
@@ -367,7 +374,7 @@ struct CalendarQuery {
 async fn calendar(
     State(state): State<AppState>,
     Query(query): Query<CalendarQuery>,
-) -> ApiResult<Value> {
+) -> ApiResult<CalendarResponse> {
     let library = get_library(&state).await?;
     let now = chrono::Utc::now();
     let year = clamp_number(
@@ -523,7 +530,7 @@ struct EntityPath {
 async fn entity_dates(
     State(state): State<AppState>,
     Path(path): Path<EntityPath>,
-) -> ApiResult<Value> {
+) -> ApiResult<EntityDatesResponse> {
     let library = get_library(&state).await?;
     let Some(entity) = library
         .entities
@@ -532,9 +539,7 @@ async fn entity_dates(
     else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    Ok(Json(serde_json::to_value(
-        build_entity_dates(&library, entity).await?,
-    )?))
+    Ok(Json(build_entity_dates(&library, entity).await?))
 }
 
 async fn entity_detail(
@@ -585,18 +590,18 @@ async fn relations(
     }))
 }
 
-async fn relation_groups(State(state): State<AppState>) -> ApiResult<Value> {
+async fn relation_groups(State(state): State<AppState>) -> ApiResult<RelationGroupsResponse> {
     let library = get_library(&state).await?;
     let entity_by_id = summary_by_id(&library);
     let fields: Vec<_> = relation_fields(&library)
         .iter()
         .map(|field| build_relation_field_summary_with_index(&library, &entity_by_id, field))
-        .filter(|group| group["edgeCount"].as_u64().unwrap_or_default() > 0)
+        .filter(|group| group.edge_count > 0)
         .collect();
-    Ok(Json(json!({
-        "generatedAt": library.generated_at,
-        "fields": fields,
-    })))
+    Ok(Json(RelationGroupsResponse {
+        generated_at: library.generated_at.clone(),
+        fields,
+    }))
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -616,7 +621,7 @@ async fn relation_group_field(
     State(state): State<AppState>,
     Path(path): Path<RelationFieldPath>,
     Query(query): Query<RelationFieldQuery>,
-) -> ApiResult<Value> {
+) -> ApiResult<RelationFieldResponse> {
     let library = get_library(&state).await?;
     let field = path.field;
     let q = query
@@ -633,10 +638,14 @@ async fn relation_group_field(
             let Some(q) = q.as_ref() else {
                 return true;
             };
-            ["targetTitle", "targetId", "targetTypeLabel"]
-                .iter()
-                .filter_map(|key| target.get(*key).and_then(|value| value.as_str()))
-                .any(|value| value.to_lowercase().contains(q))
+            [
+                Some(target.target_title.as_str()),
+                target.target_id.as_deref(),
+                target.target_type_label.as_deref(),
+            ]
+            .into_iter()
+            .flatten()
+            .any(|value| value.to_lowercase().contains(q))
         })
         .collect::<Vec<_>>();
     let total = targets.len();
@@ -651,17 +660,17 @@ async fn relation_group_field(
         .take(page_size as usize)
         .collect();
 
-    Ok(Json(json!({
-        "generatedAt": library.generated_at,
-        "field": field,
-        "edgeCount": edge_count,
-        "uniqueTargets": unique_targets,
-        "targets": targets,
-        "total": total,
-        "page": page,
-        "pageSize": page_size,
-        "totalPages": total_pages,
-    })))
+    Ok(Json(RelationFieldResponse {
+        generated_at: library.generated_at.clone(),
+        field,
+        edge_count,
+        unique_targets,
+        targets,
+        total,
+        page,
+        page_size,
+        total_pages,
+    }))
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -673,7 +682,7 @@ struct RelationTargetPath {
 async fn relation_group_target(
     State(state): State<AppState>,
     Path(path): Path<RelationTargetPath>,
-) -> ApiResult<Value> {
+) -> ApiResult<RelationTargetResponse> {
     let library = get_library(&state).await?;
     let field = path.field;
     let target = path.target;
@@ -705,31 +714,31 @@ async fn relation_group_target(
                 .filter(|entity| entity.type_label == group.name)
                 .cloned()
                 .collect::<Vec<_>>();
-            json!({
-                "typeLabel": group.name,
-                "count": group.count,
-                "items": sort_entities(items, "title", SortDirection::Asc),
-            })
+            RelationTargetGroup {
+                type_label: group.name,
+                count: group.count,
+                items: sort_entities(items, "title", SortDirection::Asc),
+            }
         })
         .collect::<Vec<_>>();
 
-    Ok(Json(json!({
-        "generatedAt": library.generated_at,
-        "field": field,
-        "target": target_summary,
-        "groups": groups,
-        "total": relations.len(),
-    })))
+    Ok(Json(RelationTargetResponse {
+        generated_at: library.generated_at.clone(),
+        field,
+        target: target_summary,
+        groups,
+        total: relations.len(),
+    }))
 }
 
-fn build_home_section(library: &Library, section: &HomeSectionConfig) -> Value {
+fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSectionResponse {
     let entity_type = library
         .config
         .types
         .iter()
         .find(|item| item.id == section.entity_type);
     let statuses = normalize_statuses(section);
-    let limit = clamp_number(section.limit.unwrap_or(12) as f64, 1, 48) as usize;
+    let limit = clamp_number(section.limit.unwrap_or(12) as f64, 1, 48) as u32;
     let direction = if section.direction == Some(crate::types::SortDirection::Desc) {
         SortDirection::Desc
     } else {
@@ -752,34 +761,30 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> Value {
         .collect();
     filtered = sort_entities(filtered, sort, direction);
     let total = filtered.len();
-    let items = filtered.into_iter().take(limit).collect::<Vec<_>>();
+    let items = filtered
+        .into_iter()
+        .take(limit as usize)
+        .collect::<Vec<_>>();
 
-    let mut value = serde_json::Map::new();
-    value.insert("id".to_string(), section.id.clone().into());
-    value.insert("title".to_string(), section.title.clone().into());
-    value.insert("type".to_string(), section.entity_type.clone().into());
-    value.insert("status".to_string(), json!(statuses));
-    value.insert("limit".to_string(), json!(limit));
-    value.insert("sort".to_string(), sort.into());
-    value.insert(
-        "direction".to_string(),
-        if direction == SortDirection::Desc {
+    HomeSectionResponse {
+        id: section.id.clone(),
+        title: section.title.clone(),
+        entity_type: section.entity_type.clone(),
+        type_label: entity_type
+            .map(|entity_type| entity_type.label.clone())
+            .unwrap_or_else(|| section.entity_type.clone()),
+        status: statuses,
+        limit,
+        sort: sort.to_string(),
+        direction: if direction == SortDirection::Desc {
             "desc"
         } else {
             "asc"
         }
-        .into(),
-    );
-    value.insert(
-        "typeLabel".to_string(),
-        entity_type
-            .map(|entity_type| entity_type.label.clone())
-            .unwrap_or_else(|| section.entity_type.clone())
-            .into(),
-    );
-    value.insert("total".to_string(), json!(total));
-    value.insert("items".to_string(), json!(items));
-    Value::Object(value)
+        .to_string(),
+        total,
+        items,
+    }
 }
 
 fn normalize_statuses(section: &HomeSectionConfig) -> Vec<String> {
@@ -795,7 +800,7 @@ fn normalize_statuses(section: &HomeSectionConfig) -> Vec<String> {
     }
 }
 
-fn build_analytics(library: &Library) -> Value {
+fn build_analytics(library: &Library) -> AnalyticsResponse {
     let summaries = &library.summaries;
     let status_tracked_type_ids = get_status_tracked_type_ids(library);
     let status_summaries: Vec<_> = summaries
@@ -807,7 +812,7 @@ fn build_analytics(library: &Library) -> Value {
     let unresolved: Vec<_> = outgoing
         .iter()
         .filter(|relation| relation.target_id.is_none())
-        .cloned()
+        .map(|relation| (*relation).to_owned())
         .collect();
     let dated: Vec<_> = summaries
         .iter()
@@ -841,61 +846,112 @@ fn build_analytics(library: &Library) -> Value {
         .count();
 
     let entity_by_id = summary_by_id(library);
-    json!({
-        "generatedAt": library.generated_at,
-        "totals": {
-            "entities": summaries.len(),
-            "relations": outgoing.len(),
-            "unresolvedRelations": unresolved.len(),
-            "datedEntities": dated_entity_ids.len(),
-            "connectedEntities": connected_count,
+    AnalyticsResponse {
+        generated_at: library.generated_at.clone(),
+        totals: AnalyticsTotals {
+            entities: summaries.len(),
+            relations: outgoing.len(),
+            unresolved_relations: unresolved.len(),
+            dated_entities: dated_entity_ids.len(),
+            connected_entities: connected_count,
         },
-        "distributions": {
-            "byType": library.config.types.iter().map(|entity_type| json!({
-                "id": entity_type.id,
-                "label": entity_type.label,
-                "count": summaries.iter().filter(|entity| entity.entity_type == entity_type.id).count(),
-            })).collect::<Vec<_>>(),
-            "byStatus": count_by(&status_summaries, |entity| entity.status.clone().unwrap_or_else(|| "Unknown".to_string())),
-            "byRelationField": count_by(&outgoing, |relation| relation.field.clone()).into_iter().take(16).collect::<Vec<Count>>(),
-            "bySourceTargetType": relation_type_pairs(library).into_iter().take(16).collect::<Vec<_>>(),
+        distributions: AnalyticsDistributions {
+            by_type: library
+                .config
+                .types
+                .iter()
+                .map(|entity_type| TypeCount {
+                    id: entity_type.id.clone(),
+                    label: entity_type.label.clone(),
+                    count: summaries
+                        .iter()
+                        .filter(|entity| entity.entity_type == entity_type.id)
+                        .count(),
+                })
+                .collect(),
+            by_status: count_by(&status_summaries, |entity| {
+                entity
+                    .status
+                    .clone()
+                    .unwrap_or_else(|| "Unknown".to_string())
+            }),
+            by_relation_field: count_by(&outgoing, |relation| relation.field.clone())
+                .into_iter()
+                .take(16)
+                .collect::<Vec<Count>>(),
+            by_source_target_type: relation_type_pairs(library).into_iter().take(16).collect(),
         },
-        "coverage": [
+        coverage: vec![
             build_coverage_metric("Cover", with_cover_count, summaries.len()),
             build_coverage_metric("External refs", with_refs_count, summaries.len()),
             build_coverage_metric("Summary", with_summary_count, summaries.len()),
             build_coverage_metric("Relations", connected_count, summaries.len()),
-            build_coverage_metric("Resolved relation targets", outgoing.len() - unresolved.len(), outgoing.len()),
+            build_coverage_metric(
+                "Resolved relation targets",
+                outgoing.len() - unresolved.len(),
+                outgoing.len(),
+            ),
         ],
-        "timeline": build_timeline(dated),
-        "relations": {
-            "topFields": relation_fields(library).iter().map(|field| build_relation_field_summary_with_index(library, &entity_by_id, field)).filter(|field| field["edgeCount"].as_u64().unwrap_or_default() > 0).take(12).collect::<Vec<_>>(),
-            "topTargets": build_relation_hubs(library).into_iter().take(12).collect::<Vec<_>>(),
-            "unresolved": {
-                "count": unresolved.len(),
-                "examples": unresolved.into_iter().take(12).collect::<Vec<_>>(),
+        timeline: build_timeline(dated),
+        relations: AnalyticsRelations {
+            top_fields: relation_fields(library)
+                .iter()
+                .map(|field| build_relation_field_summary_with_index(library, &entity_by_id, field))
+                .filter(|field| field.edge_count > 0)
+                .take(12)
+                .collect(),
+            top_targets: build_relation_hubs(library).into_iter().take(12).collect(),
+            unresolved: AnalyticsUnresolvedRelations {
+                count: unresolved.len(),
+                examples: unresolved.into_iter().take(12).collect(),
             },
         },
-        "dataQuality": {
-            "missingCover": summaries.iter().filter(|entity| entity.image.is_none()).take(12).collect::<Vec<_>>(),
-            "missingExternalRefs": summaries.iter().filter(|entity| entity.external_refs.is_empty()).take(12).collect::<Vec<_>>(),
-            "missingSummary": summaries.iter().filter(|entity| entity.summary.is_none()).take(12).collect::<Vec<_>>(),
-            "isolated": summaries.iter().filter(|entity| entity.relation_count == 0).take(12).collect::<Vec<_>>(),
+        data_quality: AnalyticsDataQuality {
+            missing_cover: summaries
+                .iter()
+                .filter(|entity| entity.image.is_none())
+                .take(12)
+                .cloned()
+                .collect(),
+            missing_external_refs: summaries
+                .iter()
+                .filter(|entity| entity.external_refs.is_empty())
+                .take(12)
+                .cloned()
+                .collect(),
+            missing_summary: summaries
+                .iter()
+                .filter(|entity| entity.summary.is_none())
+                .take(12)
+                .cloned()
+                .collect(),
+            isolated: summaries
+                .iter()
+                .filter(|entity| entity.relation_count == 0)
+                .take(12)
+                .cloned()
+                .collect(),
         },
-    })
+    }
 }
 
-fn build_coverage_metric(name: &str, count: usize, total: usize) -> Value {
-    json!({
-        "name": name,
-        "count": count,
-        "missing": total - count,
-        "total": total,
-        "percent": if total == 0 { 0 } else { ((count as f64 / total as f64) * 100.0).round() as i64 },
-    })
+fn build_coverage_metric(name: &str, count: usize, total: usize) -> AnalyticsCoverageMetric {
+    AnalyticsCoverageMetric {
+        name: name.to_string(),
+        count,
+        missing: total - count,
+        total,
+        percent: if total == 0 {
+            0
+        } else {
+            ((count as f64 / total as f64) * 100.0).round() as i64
+        },
+    }
 }
 
-fn build_timeline(dated: Vec<(EntitySummary, crate::dates::ParsedEntityDate)>) -> Value {
+fn build_timeline(
+    dated: Vec<(EntitySummary, crate::dates::ParsedEntityDate)>,
+) -> AnalyticsTimeline {
     let mut by_year: HashMap<i32, Vec<EntitySummary>> = HashMap::new();
     let mut by_season: HashMap<String, (i32, String, Vec<EntitySummary>)> = HashMap::new();
     let mut by_month: HashMap<String, Vec<EntitySummary>> = HashMap::new();
@@ -931,12 +987,12 @@ fn build_timeline(dated: Vec<(EntitySummary, crate::dates::ParsedEntityDate)>) -
                         .unwrap_or_default(),
                 )
             });
-            json!({
-                "year": year,
-                "count": entities.len(),
-                "byType": by_type,
-                "examples": entities.into_iter().take(6).collect::<Vec<_>>(),
-            })
+            AnalyticsTimelineYear {
+                year,
+                count: entities.len(),
+                by_type,
+                examples: entities.into_iter().take(6).collect(),
+            }
         })
         .collect::<Vec<_>>();
 
@@ -948,7 +1004,10 @@ fn build_timeline(dated: Vec<(EntitySummary, crate::dates::ParsedEntityDate)>) -
     let seasons = seasons
         .into_iter()
         .take(12)
-        .map(|(name, (_, _, entities))| json!({ "name": name, "count": entities.len() }))
+        .map(|(name, (_, _, entities))| Count {
+            name,
+            count: entities.len(),
+        })
         .collect::<Vec<_>>();
 
     let mut months: Vec<_> = by_month.into_iter().collect();
@@ -956,15 +1015,18 @@ fn build_timeline(dated: Vec<(EntitySummary, crate::dates::ParsedEntityDate)>) -
     let months = months
         .into_iter()
         .take(18)
-        .map(|(name, entities)| json!({ "name": name, "count": entities.len() }))
+        .map(|(name, entities)| Count {
+            name,
+            count: entities.len(),
+        })
         .collect::<Vec<_>>();
 
-    json!({
-        "totalDated": dated.len(),
-        "years": years,
-        "seasons": seasons,
-        "months": months,
-    })
+    AnalyticsTimeline {
+        total_dated: dated.len(),
+        years,
+        seasons,
+        months,
+    }
 }
 
 type ApiResult<T> = Result<Json<T>, ApiError>;

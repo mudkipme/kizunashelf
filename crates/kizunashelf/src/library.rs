@@ -7,9 +7,14 @@ use regex::Regex;
 use serde_json::{Map, Number, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::io::ErrorKind;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use tokio::fs;
+use tokio::sync::Semaphore;
+use tokio::task::JoinSet;
+
+const DEFAULT_READ_CONCURRENCY: usize = 8;
+const MAX_READ_CONCURRENCY: usize = 16;
 
 pub async fn load_config(config_path: impl AsRef<Path>) -> Result<KizunaConfig> {
     let path = config_path.as_ref();
@@ -137,40 +142,76 @@ async fn read_entities_for_type(
         }
     }
 
-    let mut entities = Vec::new();
+    let concurrency = effective_read_concurrency(config);
+    let semaphore = std::sync::Arc::new(Semaphore::new(concurrency));
+    let mut tasks = JoinSet::new();
     for entry in file_names {
         let absolute_path = absolute_dir.join(&entry);
-        let raw = fs::read_to_string(&absolute_path).await?;
-        let parsed = parse_markdown(&raw);
-        let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
-        let title = first_string(&parsed.frontmatter, &type_config.fields.title)
-            .unwrap_or_else(|| note_basename.clone());
-        let relative_path = relative_path(Path::new(&config.vault_root), &absolute_path);
-
-        let summary = EntitySummary {
-            id: format!("{}:{note_basename}", type_config.id),
-            entity_type: type_config.id.clone(),
-            type_label: type_config.label.clone(),
-            title,
-            subtitle: first_string(&parsed.frontmatter, &type_config.fields.subtitle),
-            status: first_string(&parsed.frontmatter, &type_config.fields.status),
-            dates: date_values(&parsed.frontmatter, &type_config.fields.date),
-            image: first_string(&parsed.frontmatter, &type_config.fields.image),
-            summary: extract_summary(&parsed.body),
-            path: relative_path,
-            basename: note_basename,
-            external_refs: external_refs(&parsed.frontmatter, &type_config.fields.external_refs),
-            relation_count: 0,
-        };
-
-        entities.push(Entity {
-            summary,
-            frontmatter: parsed.frontmatter,
-            body: parsed.body,
-            raw,
+        let permit = semaphore
+            .clone()
+            .acquire_owned()
+            .await
+            .context("failed to acquire read concurrency permit")?;
+        let vault_root = config.vault_root.clone();
+        let type_config = type_config.clone();
+        tasks.spawn(async move {
+            let _permit = permit;
+            read_entity_file(vault_root, type_config, entry, absolute_path).await
         });
     }
+
+    let mut entities = Vec::new();
+    while let Some(result) = tasks.join_next().await {
+        entities.push(result.context("entity read task failed")??);
+    }
     Ok(entities)
+}
+
+async fn read_entity_file(
+    vault_root: String,
+    type_config: EntityTypeConfig,
+    entry: String,
+    absolute_path: PathBuf,
+) -> Result<Entity> {
+    let raw = fs::read_to_string(&absolute_path)
+        .await
+        .with_context(|| format!("failed to read entity {}", absolute_path.display()))?;
+    let parsed = parse_markdown(&raw);
+    let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
+    let title = first_string(&parsed.frontmatter, &type_config.fields.title)
+        .unwrap_or_else(|| note_basename.clone());
+    let relative_path = relative_path(Path::new(&vault_root), &absolute_path);
+
+    let summary = EntitySummary {
+        id: format!("{}:{note_basename}", type_config.id),
+        entity_type: type_config.id.clone(),
+        type_label: type_config.label.clone(),
+        title,
+        subtitle: first_string(&parsed.frontmatter, &type_config.fields.subtitle),
+        status: first_string(&parsed.frontmatter, &type_config.fields.status),
+        dates: date_values(&parsed.frontmatter, &type_config.fields.date),
+        image: first_string(&parsed.frontmatter, &type_config.fields.image),
+        summary: extract_summary(&parsed.body),
+        path: relative_path,
+        basename: note_basename,
+        external_refs: external_refs(&parsed.frontmatter, &type_config.fields.external_refs),
+        relation_count: 0,
+    };
+
+    Ok(Entity {
+        summary,
+        frontmatter: parsed.frontmatter,
+        body: parsed.body,
+        raw,
+    })
+}
+
+fn effective_read_concurrency(config: &KizunaConfig) -> usize {
+    config
+        .read_concurrency
+        .map(|value| value as usize)
+        .unwrap_or(DEFAULT_READ_CONCURRENCY)
+        .clamp(1, MAX_READ_CONCURRENCY)
 }
 
 struct ParsedMarkdown {

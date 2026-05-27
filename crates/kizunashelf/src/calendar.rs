@@ -1,3 +1,4 @@
+use crate::contract::{CalendarFilters, CalendarResponse, CalendarTotals};
 use crate::dates::{clamp_number, is_in_month, normalize_date, parse_exact_date};
 use crate::library::{compare_string, wikilink_regex};
 use crate::relations::summary_by_id;
@@ -116,7 +117,7 @@ pub struct EntityDatesTotals {
 pub async fn build_calendar(
     library: &Library,
     options: CalendarBuildOptions,
-) -> Result<serde_json::Value> {
+) -> Result<CalendarResponse> {
     let mut entries = Vec::new();
     if options.source != CalendarSource::DailyNote {
         entries.extend(taxonomy_calendar_entries(library, &options));
@@ -127,33 +128,33 @@ pub async fn build_calendar(
     entries.sort_by(compare_calendar_entries);
     let days = calendar_days(options.year, options.month, &entries);
 
-    let mut filters = serde_json::Map::new();
-    if let Some(entity_type) = &options.entity_type {
-        filters.insert("type".to_string(), entity_type.clone().into());
-    }
-    filters.insert(
-        "source".to_string(),
-        match options.source {
-            CalendarSource::All => "all",
-            CalendarSource::Taxonomy => "taxonomy",
-            CalendarSource::DailyNote => "daily-note",
-        }
-        .into(),
-    );
-
-    Ok(serde_json::json!({
-        "generatedAt": library.generated_at,
-        "year": options.year,
-        "month": options.month,
-        "filters": filters,
-        "totals": {
-            "entries": entries.len(),
-            "taxonomy": entries.iter().filter(|entry| entry.source == CalendarEntrySource::Taxonomy).count(),
-            "dailyNotes": entries.iter().filter(|entry| entry.source == CalendarEntrySource::DailyNote).count(),
-            "daysWithEntries": days.iter().filter(|day| !day.entries.is_empty()).count(),
+    Ok(CalendarResponse {
+        generated_at: library.generated_at.clone(),
+        year: options.year,
+        month: options.month,
+        filters: CalendarFilters {
+            entity_type: options.entity_type.clone(),
+            source: match options.source {
+                CalendarSource::All => "all",
+                CalendarSource::Taxonomy => "taxonomy",
+                CalendarSource::DailyNote => "daily-note",
+            }
+            .to_string(),
         },
-        "days": days,
-    }))
+        totals: CalendarTotals {
+            entries: entries.len(),
+            taxonomy: entries
+                .iter()
+                .filter(|entry| entry.source == CalendarEntrySource::Taxonomy)
+                .count(),
+            daily_notes: entries
+                .iter()
+                .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
+                .count(),
+            days_with_entries: days.iter().filter(|day| !day.entries.is_empty()).count(),
+        },
+        days,
+    })
 }
 
 pub async fn build_entity_dates(library: &Library, entity: &Entity) -> Result<EntityDatesResponse> {

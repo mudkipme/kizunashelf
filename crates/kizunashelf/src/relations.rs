@@ -1,9 +1,10 @@
+use crate::contract::{AnalyticsRelationHub, RelationFieldSummary, RelationTargetSummary};
 use crate::library::compare_string;
 use crate::types::{EntitySummary, Library, Relation, RelationDirection};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
-pub fn build_relation_hubs(library: &Library) -> Vec<serde_json::Value> {
+pub fn build_relation_hubs(library: &Library) -> Vec<AnalyticsRelationHub> {
     let entity_by_id = summary_by_id(library);
     let mut grouped: HashMap<String, Vec<&Relation>> = HashMap::new();
     for relation in outgoing_relations(library, None) {
@@ -16,25 +17,19 @@ pub fn build_relation_hubs(library: &Library) -> Vec<serde_json::Value> {
     let mut hubs: Vec<_> = grouped
         .into_iter()
         .map(|(key, relations)| {
-            let mut value =
+            let target =
                 build_relation_target_summary_with_index(library, &entity_by_id, &key, &relations);
-            value.as_object_mut().unwrap().insert(
-                "fields".to_string(),
-                serde_json::to_value(count_by(&relations, |relation| relation.field.clone()))
-                    .unwrap(),
-            );
-            value
+            AnalyticsRelationHub {
+                target,
+                fields: count_by(&relations, |relation| relation.field.clone()),
+            }
         })
         .collect();
     hubs.sort_by(|a, b| {
-        let count_a = a["count"].as_u64().unwrap_or_default();
-        let count_b = b["count"].as_u64().unwrap_or_default();
-        count_b.cmp(&count_a).then_with(|| {
-            compare_string(
-                a["targetTitle"].as_str().unwrap_or_default(),
-                b["targetTitle"].as_str().unwrap_or_default(),
-            )
-        })
+        b.target
+            .count
+            .cmp(&a.target.count)
+            .then_with(|| compare_string(&a.target.target_title, &b.target.target_title))
     });
     hubs
 }
@@ -87,7 +82,7 @@ pub fn outgoing_relations<'a>(library: &'a Library, field: Option<&str>) -> Vec<
         .collect()
 }
 
-pub fn build_relation_field_summary(library: &Library, field: &str) -> serde_json::Value {
+pub fn build_relation_field_summary(library: &Library, field: &str) -> RelationFieldSummary {
     let entity_by_id = summary_by_id(library);
     build_relation_field_summary_with_index(library, &entity_by_id, field)
 }
@@ -96,7 +91,7 @@ pub fn build_relation_field_summary_with_index(
     library: &Library,
     entity_by_id: &HashMap<&str, &EntitySummary>,
     field: &str,
-) -> serde_json::Value {
+) -> RelationFieldSummary {
     let relations = outgoing_relations(library, Some(field));
     let targets = build_relation_targets_from_relations(library, &entity_by_id, &relations);
     let sources: HashSet<_> = relations
@@ -104,17 +99,20 @@ pub fn build_relation_field_summary_with_index(
         .map(|relation| &relation.source_id)
         .collect();
 
-    serde_json::json!({
-        "field": field,
-        "edgeCount": relations.len(),
-        "sourceCount": sources.len(),
-        "uniqueTargets": targets.len(),
-        "resolvedTargets": targets.iter().filter(|target| target.get("targetId").is_some()).count(),
-        "topTargets": targets.into_iter().take(8).collect::<Vec<_>>(),
-    })
+    RelationFieldSummary {
+        field: field.to_string(),
+        edge_count: relations.len(),
+        source_count: sources.len(),
+        unique_targets: targets.len(),
+        resolved_targets: targets
+            .iter()
+            .filter(|target| target.target_id.is_some())
+            .count(),
+        top_targets: targets.into_iter().take(8).collect(),
+    }
 }
 
-pub fn build_relation_targets(library: &Library, field: &str) -> Vec<serde_json::Value> {
+pub fn build_relation_targets(library: &Library, field: &str) -> Vec<RelationTargetSummary> {
     let entity_by_id = summary_by_id(library);
     let relations = outgoing_relations(library, Some(field));
     build_relation_targets_from_relations(library, &entity_by_id, &relations)
@@ -124,7 +122,7 @@ fn build_relation_targets_from_relations<'a>(
     library: &'a Library,
     entity_by_id: &HashMap<&'a str, &'a EntitySummary>,
     relations: &[&'a Relation],
-) -> Vec<serde_json::Value> {
+) -> Vec<RelationTargetSummary> {
     let mut grouped: HashMap<String, Vec<&Relation>> = HashMap::new();
     for relation in relations {
         grouped
@@ -140,14 +138,9 @@ fn build_relation_targets_from_relations<'a>(
         })
         .collect();
     targets.sort_by(|a, b| {
-        let count_a = a["count"].as_u64().unwrap_or_default();
-        let count_b = b["count"].as_u64().unwrap_or_default();
-        count_b.cmp(&count_a).then_with(|| {
-            compare_string(
-                a["targetTitle"].as_str().unwrap_or_default(),
-                b["targetTitle"].as_str().unwrap_or_default(),
-            )
-        })
+        b.count
+            .cmp(&a.count)
+            .then_with(|| compare_string(&a.target_title, &b.target_title))
     });
     targets
 }
@@ -156,7 +149,7 @@ pub fn build_relation_target_summary(
     library: &Library,
     key: &str,
     relations: &[&Relation],
-) -> serde_json::Value {
+) -> RelationTargetSummary {
     let entity_by_id = summary_by_id(library);
     build_relation_target_summary_with_index(library, &entity_by_id, key, relations)
 }
@@ -166,7 +159,7 @@ fn build_relation_target_summary_with_index(
     entity_by_id: &HashMap<&str, &EntitySummary>,
     key: &str,
     relations: &[&Relation],
-) -> serde_json::Value {
+) -> RelationTargetSummary {
     let first = &relations[0];
     let target_entity = first
         .target_id
@@ -181,41 +174,25 @@ fn build_relation_target_summary_with_index(
         })
         .collect();
 
-    let mut object = serde_json::Map::new();
-    object.insert("key".to_string(), key.into());
-    object.insert(
-        "targetTitle".to_string(),
-        target_entity
-            .map(|entity| entity.title.as_str())
-            .unwrap_or(&first.target_title)
-            .into(),
-    );
-    if let Some(target_id) = &first.target_id {
-        object.insert("targetId".to_string(), target_id.clone().into());
-    }
-    if let Some(target_type) = target_entity
+    let target_type = target_entity
         .map(|entity| entity.entity_type.clone())
-        .or_else(|| first.target_type.clone())
-    {
-        object.insert("targetType".to_string(), target_type.into());
-    }
-    if let Some(target_type_label) = target_entity
+        .or_else(|| first.target_type.clone());
+    let target_type_label = target_entity
         .map(|entity| entity.type_label.clone())
-        .or_else(|| type_label(library, first.target_type.as_ref()))
-    {
-        object.insert("targetTypeLabel".to_string(), target_type_label.into());
-    }
-    object.insert("count".to_string(), relations.len().into());
-    object.insert(
-        "sourceTypes".to_string(),
-        serde_json::to_value(count_by(&sources, |entity| entity.type_label.clone())).unwrap(),
-    );
+        .or_else(|| type_label(library, first.target_type.as_ref()));
     sources = sort_entities(sources, "title", SortDirection::Asc);
-    object.insert(
-        "examples".to_string(),
-        serde_json::to_value(sources.into_iter().take(5).collect::<Vec<_>>()).unwrap(),
-    );
-    serde_json::Value::Object(object)
+    RelationTargetSummary {
+        key: key.to_string(),
+        target_title: target_entity
+            .map(|entity| entity.title.clone())
+            .unwrap_or_else(|| first.target_title.clone()),
+        target_id: first.target_id.clone(),
+        target_type,
+        target_type_label,
+        count: relations.len(),
+        source_types: count_by(&sources, |entity| entity.type_label.clone()),
+        examples: sources.into_iter().take(5).collect(),
+    }
 }
 
 pub fn target_key(relation: &Relation) -> &str {
