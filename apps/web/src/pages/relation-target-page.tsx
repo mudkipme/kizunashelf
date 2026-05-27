@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ApiResponseSchemas } from "@kizunashelf/api-contract";
 import { ArrowLeftIcon, ExternalLinkIcon } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
@@ -27,8 +28,9 @@ export function RelationTargetPage() {
   async function loadTarget() {
     setState({ loading: true });
     try {
-      const data = await fetchJson<RelationTargetResponse>(
+      const data = await fetchJson(
         `/api/relation-groups/${encodeURIComponent(field)}/${encodeURIComponent(target)}`,
+        ApiResponseSchemas.relationTarget,
       );
       setState({ data, loading: false });
     } catch (error) {

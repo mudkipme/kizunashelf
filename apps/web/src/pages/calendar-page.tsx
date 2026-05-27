@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ApiResponseSchemas } from "@kizunashelf/api-contract";
 import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
@@ -40,7 +41,7 @@ export function CalendarPage() {
 
   async function loadConfig() {
     try {
-      const config = await fetchJson<ConfigResponse>("/api/config");
+      const config = await fetchJson("/api/config", ApiResponseSchemas.config);
       setState((current) => ({ ...current, config }));
     } catch (error) {
       setState((current) => ({ ...current, error: errorMessage(error) }));
@@ -57,7 +58,7 @@ export function CalendarPage() {
     if (type !== "all") params.set("type", type);
 
     try {
-      const data = await fetchJson<CalendarResponse>(`/api/calendar?${params}`);
+      const data = await fetchJson(`/api/calendar?${params}`, ApiResponseSchemas.calendar);
       setState((current) => ({ ...current, data, loading: false }));
     } catch (error) {
       setState((current) => ({ ...current, loading: false, error: errorMessage(error) }));

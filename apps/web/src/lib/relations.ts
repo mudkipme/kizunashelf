@@ -38,13 +38,16 @@ export function relationFieldHref(field: string) {
   return `/relations/${encodeURIComponent(field)}`;
 }
 
-export function relationTargetHref(field: string, target: { targetId?: string; targetTitle: string }) {
+export function relationTargetHref(
+  field: string,
+  target: { targetId?: string | null; targetTitle: string },
+) {
   return `/relations/${encodeURIComponent(field)}/${encodeURIComponent(
     target.targetId ?? target.targetTitle,
   )}`;
 }
 
-function relationTypeLabel(type: string | undefined) {
+function relationTypeLabel(type: string | null | undefined) {
   if (!type) return "Unknown";
   return relationTypeLabels[type] ?? titleCase(type);
 }

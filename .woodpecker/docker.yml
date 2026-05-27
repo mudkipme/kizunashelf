@@ -1,9 +1,11 @@
 steps:
   check:
-    image: node:24-alpine
+    image: rust:1-alpine
     commands:
-      - corepack enable
+      - apk add --no-cache build-base ca-certificates nodejs npm
+      - npm install -g pnpm@10.28.0
       - pnpm install --frozen-lockfile
+      - pnpm test
       - pnpm typecheck
       - pnpm build
 

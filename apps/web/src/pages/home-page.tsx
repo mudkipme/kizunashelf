@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ApiResponseSchemas } from "@kizunashelf/api-contract";
 import { Link } from "react-router-dom";
 
 import { fetchJson, errorMessage } from "@/api/client";
@@ -23,7 +24,7 @@ export function HomePage() {
   async function loadHome() {
     setHome({ loading: true });
     try {
-      const data = await fetchJson<HomeResponse>("/api/home");
+      const data = await fetchJson("/api/home", ApiResponseSchemas.home);
       setHome({ data, loading: false });
     } catch (error) {
       setHome({ loading: false, error: errorMessage(error) });

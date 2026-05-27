@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ApiResponseSchemas } from "@kizunashelf/api-contract";
 import { Link } from "react-router-dom";
 
 import { fetchJson, errorMessage } from "@/api/client";
@@ -29,7 +30,7 @@ export function StatisticsPage() {
   async function loadAnalytics() {
     setState({ loading: true });
     try {
-      const data = await fetchJson<AnalyticsResponse>("/api/analytics");
+      const data = await fetchJson("/api/analytics", ApiResponseSchemas.analytics);
       setState({ data, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });
