@@ -480,10 +480,7 @@ pub fn to_summary(entity: &Entity) -> EntitySummary {
 }
 
 pub fn compare_string(a: &str, b: &str) -> std::cmp::Ordering {
-    if a.is_ascii() && b.is_ascii() {
-        return a.cmp(b);
-    }
-    collator().compare(a, b)
+    collator().compare(a, b).then_with(|| a.cmp(b))
 }
 
 fn collator() -> &'static icu_collator::CollatorBorrowed<'static> {
@@ -549,6 +546,39 @@ mod tests {
     #[test]
     fn compare_string_supports_non_english_collation_without_system_icu_data() {
         assert!(compare_string("星旅", "月城").is_ne());
+    }
+
+    #[test]
+    fn compare_string_is_total_for_mixed_ascii_and_non_ascii_values() {
+        let values = [
+            "Anime",
+            "anime",
+            "Zeta",
+            "zeta",
+            "アニメ",
+            "星旅",
+            "月城",
+            " Pokémon",
+            "Pokemon",
+            "ポケモン",
+            "音乐",
+            "Music",
+        ];
+
+        for a in values {
+            assert_eq!(compare_string(a, a), std::cmp::Ordering::Equal);
+            for b in values {
+                assert_eq!(compare_string(a, b), compare_string(b, a).reverse());
+                for c in values {
+                    if compare_string(a, b).is_le() && compare_string(b, c).is_le() {
+                        assert!(
+                            compare_string(a, c).is_le(),
+                            "compare_string is not transitive for {a:?}, {b:?}, {c:?}"
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[tokio::test]
