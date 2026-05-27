@@ -40,7 +40,6 @@ pub struct ApiOptions {
     pub config_path: PathBuf,
     pub cache_ttl: Duration,
     pub web_dist_path: Option<PathBuf>,
-    pub load_on_blocking_thread: bool,
 }
 
 #[derive(Clone)]
@@ -214,15 +213,7 @@ async fn get_library(state: &AppState) -> Result<Library> {
             return Ok(cached.library.clone());
         }
     }
-    let library = if state.options.load_on_blocking_thread {
-        let config_path = state.options.config_path.clone();
-        let runtime = tokio::runtime::Handle::current();
-        tokio::task::spawn_blocking(move || runtime.block_on(read_library_from_config(config_path)))
-            .await
-            .map_err(anyhow::Error::from)?
-    } else {
-        read_library_from_config(&state.options.config_path).await
-    }?;
+    let library = read_library_from_config(&state.options.config_path).await?;
     *cache = Some(CachedLibrary {
         library: library.clone(),
         cached_at: Instant::now(),

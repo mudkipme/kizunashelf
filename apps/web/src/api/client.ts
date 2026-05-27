@@ -2,8 +2,6 @@ import type { z } from "zod";
 
 type TauriInvoke = <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
 
-const desktopRequestTimeoutMs = 120_000;
-
 declare global {
   interface Window {
     __TAURI_INTERNALS__?: unknown;
@@ -47,25 +45,10 @@ async function fetchTauriJson(url: string, init?: RequestInit) {
     throw new DOMException("The operation was aborted", "AbortError");
   }
   const invoke = await getTauriInvoke();
-  return withTimeout(
-    invoke<unknown>("api_request", { method, url }),
-    desktopRequestTimeoutMs,
-    `Desktop API request timed out while loading ${url}`,
-  );
+  return invoke<unknown>("api_request", { method, url });
 }
 
 async function getTauriInvoke(): Promise<TauriInvoke> {
   const module = await import("@tauri-apps/api/core");
   return module.invoke as TauriInvoke;
-}
-
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
-  });
-
-  return Promise.race([promise, timeoutPromise]).finally(() => {
-    if (timeoutId !== undefined) clearTimeout(timeoutId);
-  });
 }
