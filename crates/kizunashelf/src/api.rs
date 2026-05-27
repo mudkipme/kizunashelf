@@ -9,7 +9,7 @@ use crate::contract::{
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
 use crate::library::{compare_string, read_library_from_config};
 use crate::relations::{
-    build_relation_field_summary, build_relation_hubs, build_relation_target_summary,
+    build_relation_field_summary_with_index, build_relation_hubs, build_relation_target_summary,
     build_relation_targets, count_by, get_status_tracked_type_ids, outgoing_relations,
     relation_fields, relation_type_pairs, sort_entities, summary_by_id, target_key, Count,
     SortDirection,
@@ -50,7 +50,7 @@ struct AppState {
 
 #[derive(Clone)]
 struct CachedLibrary {
-    library: Library,
+    library: Arc<Library>,
     cached_at: Instant,
 }
 
@@ -206,16 +206,16 @@ fn api_router() -> ApiRouter<AppState> {
         )
 }
 
-async fn get_library(state: &AppState) -> Result<Library> {
+async fn get_library(state: &AppState) -> Result<Arc<Library>> {
     let mut cache = state.cache.lock().await;
     if let Some(cached) = cache.as_ref() {
         if cached.cached_at.elapsed() < state.options.cache_ttl {
-            return Ok(cached.library.clone());
+            return Ok(Arc::clone(&cached.library));
         }
     }
-    let library = read_library_from_config(&state.options.config_path).await?;
+    let library = Arc::new(read_library_from_config(&state.options.config_path).await?);
     *cache = Some(CachedLibrary {
-        library: library.clone(),
+        library: Arc::clone(&library),
         cached_at: Instant::now(),
     });
     Ok(library)
@@ -225,7 +225,7 @@ async fn health(State(state): State<AppState>) -> ApiResult<HealthResponse> {
     let library = get_library(&state).await?;
     Ok(Json(HealthResponse {
         ok: true,
-        generated_at: library.generated_at,
+        generated_at: library.generated_at.clone(),
         entity_count: library.entities.len(),
         relation_count: library.relations.len(),
     }))
@@ -587,9 +587,10 @@ async fn relations(
 
 async fn relation_groups(State(state): State<AppState>) -> ApiResult<Value> {
     let library = get_library(&state).await?;
+    let entity_by_id = summary_by_id(&library);
     let fields: Vec<_> = relation_fields(&library)
         .iter()
-        .map(|field| build_relation_field_summary(&library, field))
+        .map(|field| build_relation_field_summary_with_index(&library, &entity_by_id, field))
         .filter(|group| group["edgeCount"].as_u64().unwrap_or_default() > 0)
         .collect();
     Ok(Json(json!({
@@ -623,7 +624,10 @@ async fn relation_group_field(
         .as_ref()
         .map(|q| q.trim().to_lowercase())
         .filter(|q| !q.is_empty());
-    let mut targets = build_relation_targets(&library, &field)
+    let edge_count = outgoing_relations(&library, Some(&field)).len();
+    let mut targets = build_relation_targets(&library, &field);
+    let unique_targets = targets.len();
+    targets = targets
         .into_iter()
         .filter(|target| {
             let Some(q) = q.as_ref() else {
@@ -650,8 +654,8 @@ async fn relation_group_field(
     Ok(Json(json!({
         "generatedAt": library.generated_at,
         "field": field,
-        "edgeCount": outgoing_relations(&library, Some(&field)).len(),
-        "uniqueTargets": build_relation_targets(&library, &field).len(),
+        "edgeCount": edge_count,
+        "uniqueTargets": unique_targets,
         "targets": targets,
         "total": total,
         "page": page,
@@ -678,7 +682,6 @@ async fn relation_group_target(
         .filter(|relation| {
             relation.target_id.as_deref() == Some(&target) || relation.target_title == target
         })
-        .cloned()
         .collect::<Vec<_>>();
     if relations.is_empty() {
         return Err(ApiError::not_found("Relation target not found"));
@@ -688,7 +691,11 @@ async fn relation_group_target(
     let entity_by_id = summary_by_id(&library);
     let source_entities: Vec<_> = relations
         .iter()
-        .filter_map(|relation| entity_by_id.get(&relation.source_id).cloned())
+        .filter_map(|relation| {
+            entity_by_id
+                .get(relation.source_id.as_str())
+                .map(|entity| (*entity).clone())
+        })
         .collect();
     let groups = count_by(&source_entities, |entity| entity.type_label.clone())
         .into_iter()
@@ -801,7 +808,6 @@ fn build_analytics(library: &Library) -> Value {
         .iter()
         .filter(|relation| relation.target_id.is_none())
         .cloned()
-        .cloned()
         .collect();
     let dated: Vec<_> = summaries
         .iter()
@@ -817,27 +823,24 @@ fn build_analytics(library: &Library) -> Value {
         .collect();
     let dated_entity_ids: std::collections::HashSet<_> =
         dated.iter().map(|(entity, _)| entity.id.clone()).collect();
-    let with_cover: Vec<_> = summaries
+    let with_cover_count = summaries
         .iter()
         .filter(|entity| entity.image.is_some())
-        .cloned()
-        .collect();
-    let with_refs: Vec<_> = summaries
+        .count();
+    let with_refs_count = summaries
         .iter()
         .filter(|entity| !entity.external_refs.is_empty())
-        .cloned()
-        .collect();
-    let with_summary: Vec<_> = summaries
+        .count();
+    let with_summary_count = summaries
         .iter()
         .filter(|entity| entity.summary.is_some())
-        .cloned()
-        .collect();
-    let connected: Vec<_> = summaries
+        .count();
+    let connected_count = summaries
         .iter()
         .filter(|entity| entity.relation_count > 0)
-        .cloned()
-        .collect();
+        .count();
 
+    let entity_by_id = summary_by_id(library);
     json!({
         "generatedAt": library.generated_at,
         "totals": {
@@ -845,7 +848,7 @@ fn build_analytics(library: &Library) -> Value {
             "relations": outgoing.len(),
             "unresolvedRelations": unresolved.len(),
             "datedEntities": dated_entity_ids.len(),
-            "connectedEntities": connected.len(),
+            "connectedEntities": connected_count,
         },
         "distributions": {
             "byType": library.config.types.iter().map(|entity_type| json!({
@@ -858,15 +861,15 @@ fn build_analytics(library: &Library) -> Value {
             "bySourceTargetType": relation_type_pairs(library).into_iter().take(16).collect::<Vec<_>>(),
         },
         "coverage": [
-            build_coverage_metric("Cover", with_cover.len(), summaries.len()),
-            build_coverage_metric("External refs", with_refs.len(), summaries.len()),
-            build_coverage_metric("Summary", with_summary.len(), summaries.len()),
-            build_coverage_metric("Relations", connected.len(), summaries.len()),
+            build_coverage_metric("Cover", with_cover_count, summaries.len()),
+            build_coverage_metric("External refs", with_refs_count, summaries.len()),
+            build_coverage_metric("Summary", with_summary_count, summaries.len()),
+            build_coverage_metric("Relations", connected_count, summaries.len()),
             build_coverage_metric("Resolved relation targets", outgoing.len() - unresolved.len(), outgoing.len()),
         ],
         "timeline": build_timeline(dated),
         "relations": {
-            "topFields": relation_fields(library).iter().map(|field| build_relation_field_summary(library, field)).filter(|field| field["edgeCount"].as_u64().unwrap_or_default() > 0).take(12).collect::<Vec<_>>(),
+            "topFields": relation_fields(library).iter().map(|field| build_relation_field_summary_with_index(library, &entity_by_id, field)).filter(|field| field["edgeCount"].as_u64().unwrap_or_default() > 0).take(12).collect::<Vec<_>>(),
             "topTargets": build_relation_hubs(library).into_iter().take(12).collect::<Vec<_>>(),
             "unresolved": {
                 "count": unresolved.len(),

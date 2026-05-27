@@ -199,8 +199,8 @@ fn taxonomy_calendar_entries(
                     date,
                     source: CalendarEntrySource::Taxonomy,
                     entity: summaries
-                        .get(&entity.summary.id)
-                        .cloned()
+                        .get(entity.summary.id.as_str())
+                        .map(|summary| (*summary).clone())
                         .unwrap_or_else(|| entity.summary.clone()),
                     date_field: Some(item.field),
                     raw_date: Some(item.value),
