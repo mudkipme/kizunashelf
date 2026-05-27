@@ -503,3 +503,13 @@ fn markdown_link_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| Regex::new(r"\[[^\]]+\]\([^)]+\)").unwrap())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::compare_string;
+
+    #[test]
+    fn compare_string_supports_non_english_collation_without_system_icu_data() {
+        assert!(compare_string("星旅", "月城").is_ne());
+    }
+}

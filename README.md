@@ -13,6 +13,17 @@ pnpm dev
 
 `pnpm dev` starts the Rust API and Vite together. Vite proxies `/api` to the Rust server on port `8787`. Use `pnpm dev:api` and `pnpm dev:web` if you want separate terminals.
 
+## Desktop
+
+```bash
+pnpm dev:desktop
+pnpm build:desktop
+```
+
+The desktop app uses Tauri and calls the Rust API router in-process, so it does not open an HTTP listener. On startup it looks for `kizunashelf.config.json` in `KIZUNASHELF_CONFIG`, `$XDG_CONFIG_HOME`, `~/.config`, `$XDG_CONFIG_DIR`, `$XDG_CONFIG_DIRS`, and on macOS also under `~/Library/Application Support`. If none of those files exist, startup fails with the searched paths.
+
+Linux desktop builds require Tauri's WebKitGTK system packages. On Fedora-like systems install `webkit2gtk4.1-devel`, `openssl-devel`, `libappindicator-gtk3-devel`, `librsvg2-devel`, and `libxdo-devel`; see the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for other distributions.
+
 After building, run the production server with:
 
 ```bash

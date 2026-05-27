@@ -1,0 +1,16 @@
+[package]
+name = "kizunashelf-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+build = "build.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.6.2", features = [] }
+
+[dependencies]
+axum = "0.8.7"
+kizunashelf = { path = "../../../crates/kizunashelf" }
+serde_json = { version = "1.0.147", features = ["preserve_order"] }
+tauri = { version = "2.11.2", features = [] }
+tower = { version = "0.5.2", features = ["util"] }

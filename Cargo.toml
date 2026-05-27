@@ -1,5 +1,6 @@
 [workspace]
-members = ["crates/kizunashelf"]
+members = ["apps/desktop/src-tauri", "crates/kizunashelf"]
+default-members = ["crates/kizunashelf"]
 resolver = "2"
 
 [workspace.package]
