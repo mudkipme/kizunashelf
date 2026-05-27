@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { ApiResponseSchemas } from "@kizunashelf/api-contract";
+import { getRelationGroups } from "@kizunashelf/api-contract";
 
-import { fetchJson, errorMessage } from "@/api/client";
+import { apiFetch, errorMessage } from "@/api/client";
 import { AppFrame } from "@/components/layout/app-frame";
 import { RelationFieldCard } from "@/components/relations/relation-field-card";
 import type { RelationGroupsResponse } from "@/types/api";
@@ -22,7 +22,7 @@ export function RelationsPage() {
   async function loadRelations() {
     setState({ loading: true });
     try {
-      const data = await fetchJson("/api/relation-groups", ApiResponseSchemas.relationGroups);
+      const data = await getRelationGroups(undefined, apiFetch);
       setState({ data, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });

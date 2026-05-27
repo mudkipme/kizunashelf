@@ -11,6 +11,6 @@ tauri-build = { version = "2.6.2", features = [] }
 [dependencies]
 axum = "0.8.7"
 kizunashelf = { path = "../../../crates/kizunashelf" }
-serde_json = { version = "1.0.147", features = ["preserve_order"] }
+serde = { version = "1.0.228", features = ["derive"] }
 tauri = { version = "2.11.2", features = [] }
 tower = { version = "0.5.2", features = ["util"] }

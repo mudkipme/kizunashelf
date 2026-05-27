@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { ApiResponseSchemas } from "@kizunashelf/api-contract";
+import { getAnalytics } from "@kizunashelf/api-contract";
 import { Link } from "react-router-dom";
 
-import { fetchJson, errorMessage } from "@/api/client";
+import { apiFetch, errorMessage } from "@/api/client";
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
 import { BarList } from "@/components/analytics/bar-list";
 import { CoverageList } from "@/components/analytics/coverage-list";
@@ -30,7 +30,7 @@ export function StatisticsPage() {
   async function loadAnalytics() {
     setState({ loading: true });
     try {
-      const data = await fetchJson("/api/analytics", ApiResponseSchemas.analytics);
+      const data = await getAnalytics(undefined, apiFetch);
       setState({ data, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });

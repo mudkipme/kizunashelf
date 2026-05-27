@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { ApiResponseSchemas } from "@kizunashelf/api-contract";
+import { getRelationGroup } from "@kizunashelf/api-contract";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
-import { fetchJson, errorMessage } from "@/api/client";
+import { apiFetch, errorMessage } from "@/api/client";
 import { PaginationBar } from "@/components/assets/pagination-bar";
 import { AppFrame } from "@/components/layout/app-frame";
 import { RelationTargetRow } from "@/components/relations/relation-target-row";
@@ -50,16 +50,16 @@ export function RelationFieldPage() {
 
   async function loadField() {
     setState((current) => ({ ...current, loading: true, error: undefined }));
-    const params = new URLSearchParams({
-      page: String(page),
-      pageSize: String(pageSize),
-    });
-    if (query.trim()) params.set("q", query.trim());
-
     try {
-      const data = await fetchJson(
-        `/api/relation-groups/${encodeURIComponent(field)}?${params}`,
-        ApiResponseSchemas.relationField,
+      const data = await getRelationGroup(
+        field,
+        {
+          page,
+          pageSize,
+          ...(query.trim() ? { q: query.trim() } : {}),
+        },
+        undefined,
+        apiFetch,
       );
       setState({ data, loading: false });
       if (data.page !== page) {

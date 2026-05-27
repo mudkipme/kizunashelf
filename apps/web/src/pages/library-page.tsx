@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { ApiResponseSchemas } from "@kizunashelf/api-contract";
+import { getEntities, getStats } from "@kizunashelf/api-contract";
 import { SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
-import { fetchJson, errorMessage, isAbortError } from "@/api/client";
+import { apiFetch, errorMessage, isAbortError } from "@/api/client";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
@@ -173,7 +173,7 @@ export function LibraryPage() {
   async function loadGlobalStats(signal: AbortSignal) {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
     try {
-      const global = await fetchJson("/api/stats", ApiResponseSchemas.stats, { signal });
+      const global = await getStats(undefined, { signal }, apiFetch);
       setStats((current) => ({ ...current, global, loading: false }));
     } catch (error) {
       if (isAbortError(error)) return;
@@ -183,11 +183,7 @@ export function LibraryPage() {
 
   async function loadCategoryStats(type: string, signal: AbortSignal) {
     try {
-      const category = await fetchJson(
-        `/api/stats?type=${encodeURIComponent(type)}`,
-        ApiResponseSchemas.stats,
-        { signal },
-      );
+      const category = await getStats({ type }, { signal }, apiFetch);
       setStats((current) => ({ ...current, category, error: undefined }));
     } catch (error) {
       if (isAbortError(error)) return;
@@ -206,22 +202,22 @@ export function LibraryPage() {
     page: number;
   }, signal: AbortSignal) {
     setList((current) => ({ ...current, loading: true, error: undefined }));
-    const params = new URLSearchParams({
-      type: filters.type,
-      page: String(filters.page),
-      pageSize: String(pageSize),
-      sort: filters.sort,
-      direction: filters.direction,
-    });
-    if (filters.status !== allStatuses) params.set("status", filters.status);
-    if (filters.refs !== allOptions) params.set("refs", filters.refs);
-    if (filters.cover !== allOptions) params.set("cover", filters.cover);
-    if (filters.q.trim()) params.set("q", filters.q.trim());
-
     try {
-      const result = await fetchJson(`/api/entities?${params}`, ApiResponseSchemas.entities, {
-        signal,
-      });
+      const result = await getEntities(
+        {
+          type: filters.type,
+          page: filters.page,
+          pageSize,
+          sort: filters.sort,
+          direction: filters.direction,
+          ...(filters.status !== allStatuses ? { status: filters.status } : {}),
+          ...(filters.refs !== allOptions ? { refs: filters.refs } : {}),
+          ...(filters.cover !== allOptions ? { cover: filters.cover } : {}),
+          ...(filters.q.trim() ? { q: filters.q.trim() } : {}),
+        },
+        { signal },
+        apiFetch,
+      );
       setList({ ...result, entities: result.items, loading: false });
       if (result.page !== filters.page) {
         const next = new URLSearchParams(searchParams);

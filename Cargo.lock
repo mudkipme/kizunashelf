@@ -1799,7 +1799,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "kizunashelf",
- "serde_json",
+ "serde",
  "tauri",
  "tauri-build",
  "tower",

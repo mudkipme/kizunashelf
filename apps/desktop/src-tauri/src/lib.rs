@@ -1,8 +1,7 @@
 use axum::body::{self, Body};
-use axum::http::{Method, Request, StatusCode};
+use axum::http::{header, Method, Request};
 use axum::Router;
 use kizunashelf::api::{router, ApiOptions};
-use serde_json::Value;
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
@@ -14,12 +13,20 @@ struct DesktopState {
     api: Router,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DesktopApiResponse {
+    status: u16,
+    body: String,
+    content_type: Option<String>,
+}
+
 #[tauri::command]
 async fn api_request(
     state: State<'_, DesktopState>,
     method: String,
     url: String,
-) -> Result<Value, String> {
+) -> Result<DesktopApiResponse, String> {
     let method = method
         .parse::<Method>()
         .map_err(|error| format!("Invalid method {method}: {error}"))?;
@@ -35,22 +42,24 @@ async fn api_request(
         )
         .await
         .map_err(|error| error.to_string())?;
-    let status = response.status();
-    let bytes = body::to_bytes(response.into_body(), usize::MAX)
+    let (parts, body) = response.into_parts();
+    let status = parts.status;
+    let content_type = parts
+        .headers
+        .get(header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .map(str::to_owned);
+    let bytes = body::to_bytes(body, usize::MAX)
         .await
         .map_err(|error| error.to_string())?;
-    let value = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
-        format!(
-            "API returned invalid JSON: {error}: {}",
-            String::from_utf8_lossy(&bytes)
-        )
-    })?;
+    let body = String::from_utf8(bytes.to_vec())
+        .map_err(|error| format!("API returned non-UTF-8 response: {error}"))?;
 
-    if status.is_success() {
-        Ok(value)
-    } else {
-        Err(api_error_message(status, value))
-    }
+    Ok(DesktopApiResponse {
+        status: status.as_u16(),
+        body,
+        content_type,
+    })
 }
 
 pub fn run() {
@@ -74,14 +83,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![api_request])
         .run(tauri::generate_context!())
         .expect("failed to run KizunaShelf desktop app");
-}
-
-fn api_error_message(status: StatusCode, value: Value) -> String {
-    value
-        .get("error")
-        .and_then(Value::as_str)
-        .map(|message| format!("{} {message}", status.as_u16()))
-        .unwrap_or_else(|| format!("{} {value}", status.as_u16()))
 }
 
 fn discover_config_path() -> Result<PathBuf, String> {

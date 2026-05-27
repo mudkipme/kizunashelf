@@ -1,51 +1,62 @@
 import {
-  GetAnalyticsResponse,
-  GetCalendarResponse,
-  GetConfigResponse,
-  GetEntitiesResponse,
-  GetEntityDatesResponse,
-  GetEntityResponse,
-  GetHealthResponse,
-  GetHomeResponse,
-  GetRelationGroupResponse,
-  GetRelationGroupsResponse,
-  GetRelationsResponse,
-  GetRelationTargetResponse,
-  GetStatsResponse,
-} from "./generated.js";
-import type { z } from "zod";
+  AnalyticsResponse as AnalyticsResponseSchema,
+} from "./generated/analyticsResponse.zod.js";
+import { CalendarResponse as CalendarResponseSchema } from "./generated/calendarResponse.zod.js";
+import { ConfigResponse as ConfigResponseSchema } from "./generated/configResponse.zod.js";
+import { EntityDatesResponse as EntityDatesResponseSchema } from "./generated/entityDatesResponse.zod.js";
+import { EntityDetailResponse as EntityDetailResponseSchema } from "./generated/entityDetailResponse.zod.js";
+import { EntityListResponse as EntityListResponseSchema } from "./generated/entityListResponse.zod.js";
+import { HealthResponse as HealthResponseSchema } from "./generated/healthResponse.zod.js";
+import { HomeResponse as HomeResponseSchema } from "./generated/homeResponse.zod.js";
+import { RelationFieldResponse as RelationFieldResponseSchema } from "./generated/relationFieldResponse.zod.js";
+import { RelationGroupsResponse as RelationGroupsResponseSchema } from "./generated/relationGroupsResponse.zod.js";
+import { RelationListResponse as RelationListResponseSchema } from "./generated/relationListResponse.zod.js";
+import { RelationTargetResponse as RelationTargetResponseSchema } from "./generated/relationTargetResponse.zod.js";
+import { StatsResponse as StatsResponseSchema } from "./generated/statsResponse.zod.js";
+import type { AnalyticsResponse } from "./generated/analyticsResponse.zod.js";
+import type { CalendarResponse } from "./generated/calendarResponse.zod.js";
+import type { ConfigResponse } from "./generated/configResponse.zod.js";
+import type { EntityDatesResponse } from "./generated/entityDatesResponse.zod.js";
+import type { EntityDetailResponse } from "./generated/entityDetailResponse.zod.js";
+import type { EntityListResponse } from "./generated/entityListResponse.zod.js";
+import type { HomeResponse } from "./generated/homeResponse.zod.js";
+import type { RelationGroupsResponse } from "./generated/relationGroupsResponse.zod.js";
 
-export * from "./generated.js";
+export * from "./generated/client.js";
+export * from "./generated/analyticsResponse.zod.js";
+export * from "./generated/calendarResponse.zod.js";
+export * from "./generated/configResponse.zod.js";
+export * from "./generated/entityDatesResponse.zod.js";
+export * from "./generated/entityDetailResponse.zod.js";
+export * from "./generated/entityListResponse.zod.js";
+export * from "./generated/getCalendarParams.zod.js";
+export * from "./generated/getEntitiesParams.zod.js";
+export * from "./generated/getRelationGroupParams.zod.js";
+export * from "./generated/getRelationsParams.zod.js";
+export * from "./generated/getStatsParams.zod.js";
+export * from "./generated/healthResponse.zod.js";
+export * from "./generated/homeResponse.zod.js";
+export * from "./generated/relationFieldResponse.zod.js";
+export * from "./generated/relationGroupsResponse.zod.js";
+export * from "./generated/relationListResponse.zod.js";
+export * from "./generated/relationTargetResponse.zod.js";
+export * from "./generated/statsResponse.zod.js";
 
 export const ApiResponseSchemas = {
-  health: GetHealthResponse,
-  config: GetConfigResponse,
-  home: GetHomeResponse,
-  stats: GetStatsResponse,
-  analytics: GetAnalyticsResponse,
-  entities: GetEntitiesResponse,
-  entityDetail: GetEntityResponse,
-  entityDates: GetEntityDatesResponse,
-  relations: GetRelationsResponse,
-  relationGroups: GetRelationGroupsResponse,
-  relationField: GetRelationGroupResponse,
-  relationTarget: GetRelationTargetResponse,
-  calendar: GetCalendarResponse,
+  health: HealthResponseSchema,
+  config: ConfigResponseSchema,
+  home: HomeResponseSchema,
+  stats: StatsResponseSchema,
+  analytics: AnalyticsResponseSchema,
+  entities: EntityListResponseSchema,
+  entityDetail: EntityDetailResponseSchema,
+  entityDates: EntityDatesResponseSchema,
+  relations: RelationListResponseSchema,
+  relationGroups: RelationGroupsResponseSchema,
+  relationField: RelationFieldResponseSchema,
+  relationTarget: RelationTargetResponseSchema,
+  calendar: CalendarResponseSchema,
 } as const;
-
-export type HealthResponse = z.infer<typeof GetHealthResponse>;
-export type ConfigResponse = z.infer<typeof GetConfigResponse>;
-export type HomeResponse = z.infer<typeof GetHomeResponse>;
-export type StatsResponse = z.infer<typeof GetStatsResponse>;
-export type AnalyticsResponse = z.infer<typeof GetAnalyticsResponse>;
-export type EntityListResponse = z.infer<typeof GetEntitiesResponse>;
-export type EntityDetailResponse = z.infer<typeof GetEntityResponse>;
-export type EntityDatesResponse = z.infer<typeof GetEntityDatesResponse>;
-export type RelationListResponse = z.infer<typeof GetRelationsResponse>;
-export type RelationGroupsResponse = z.infer<typeof GetRelationGroupsResponse>;
-export type RelationFieldResponse = z.infer<typeof GetRelationGroupResponse>;
-export type RelationTargetResponse = z.infer<typeof GetRelationTargetResponse>;
-export type CalendarResponse = z.infer<typeof GetCalendarResponse>;
 
 export type Entity = EntityDetailResponse["entity"];
 export type EntitySummary = EntityListResponse["items"][number];

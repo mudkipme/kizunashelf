@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { ApiResponseSchemas } from "@kizunashelf/api-contract";
+import { getHome } from "@kizunashelf/api-contract";
 import { Link } from "react-router-dom";
 
-import { fetchJson, errorMessage } from "@/api/client";
+import { apiFetch, errorMessage } from "@/api/client";
 import { HomeSection } from "@/components/home/home-section";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export function HomePage() {
   async function loadHome() {
     setHome({ loading: true });
     try {
-      const data = await fetchJson("/api/home", ApiResponseSchemas.home);
+      const data = await getHome(undefined, apiFetch);
       setHome({ data, loading: false });
     } catch (error) {
       setHome({ loading: false, error: errorMessage(error) });

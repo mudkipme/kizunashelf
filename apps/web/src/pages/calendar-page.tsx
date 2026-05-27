@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ApiResponseSchemas } from "@kizunashelf/api-contract";
+import { getCalendar, getConfig } from "@kizunashelf/api-contract";
 import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
-import { fetchJson, errorMessage } from "@/api/client";
+import { apiFetch, errorMessage } from "@/api/client";
 import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { CalendarEntryItem } from "@/components/calendar/calendar-entry-item";
 import { AppFrame } from "@/components/layout/app-frame";
@@ -41,7 +41,7 @@ export function CalendarPage() {
 
   async function loadConfig() {
     try {
-      const config = await fetchJson("/api/config", ApiResponseSchemas.config);
+      const config = await getConfig(undefined, apiFetch);
       setState((current) => ({ ...current, config }));
     } catch (error) {
       setState((current) => ({ ...current, error: errorMessage(error) }));
@@ -50,15 +50,17 @@ export function CalendarPage() {
 
   async function loadCalendar() {
     setState((current) => ({ ...current, loading: true, error: undefined }));
-    const params = new URLSearchParams({
-      year: String(year),
-      month: String(month),
-      source,
-    });
-    if (type !== "all") params.set("type", type);
-
     try {
-      const data = await fetchJson(`/api/calendar?${params}`, ApiResponseSchemas.calendar);
+      const data = await getCalendar(
+        {
+          year,
+          month,
+          source,
+          ...(type !== "all" ? { type } : {}),
+        },
+        undefined,
+        apiFetch,
+      );
       setState((current) => ({ ...current, data, loading: false }));
     } catch (error) {
       setState((current) => ({ ...current, loading: false, error: errorMessage(error) }));

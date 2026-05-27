@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ApiResponseSchemas } from "@kizunashelf/api-contract";
+import { getEntity, getEntityDates } from "@kizunashelf/api-contract";
 import { ArrowLeftIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { fetchJson, errorMessage } from "@/api/client";
+import { apiFetch, errorMessage } from "@/api/client";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
@@ -23,10 +23,9 @@ export function EntityPage() {
   useEffect(() => {
     if (!id) return;
     setState({ loading: true });
-    const encodedId = encodeURIComponent(id);
     void Promise.all([
-      fetchJson(`/api/entities/${encodedId}`, ApiResponseSchemas.entityDetail),
-      fetchJson(`/api/entities/${encodedId}/dates`, ApiResponseSchemas.entityDates),
+      getEntity(id, undefined, apiFetch),
+      getEntityDates(id, undefined, apiFetch),
     ]).then(
       ([detail, dates]) => setState({ detail, dates, loading: false }),
       (error: unknown) => setState({ loading: false, error: errorMessage(error) }),
