@@ -781,6 +781,12 @@
           "label": {
             "type": "string"
           },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "path": {
             "type": "string"
           }
@@ -1030,6 +1036,12 @@
           },
           "label": {
             "type": "string"
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "count": {
             "type": "integer",

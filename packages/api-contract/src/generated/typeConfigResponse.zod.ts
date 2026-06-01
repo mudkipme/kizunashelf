@@ -9,6 +9,7 @@ import { z as zod } from 'zod';
 export const TypeConfigResponse = zod.object({
   "id": zod.string(),
   "label": zod.string(),
+  "icon": zod.string().nullish(),
   "path": zod.string()
 })
 

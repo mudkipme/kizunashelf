@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { getHome } from "@kizunashelf/api-contract";
-import { Link } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { HomeSection } from "@/components/home/home-section";
 import { AppFrame } from "@/components/layout/app-frame";
-import { Button } from "@/components/ui/button";
 import type { HomeResponse } from "@/types/api";
 
 type HomeState = {
@@ -33,7 +31,7 @@ export function HomePage() {
 
   return (
     <AppFrame error={home.error}>
-      <div className="flex min-h-[calc(100vh-3rem)] flex-col">
+      <div className="flex min-h-full flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">{home.data?.title ?? "Home"}</h1>
@@ -45,9 +43,6 @@ export function HomePage() {
                   : "No home data"}
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/library">Open Library</Link>
-          </Button>
         </header>
 
         {home.loading ? (
@@ -61,7 +56,7 @@ export function HomePage() {
         ) : null}
 
         {home.data?.sections.length ? (
-          <div className="grid flex-1 grid-cols-1 lg:grid-cols-3">
+          <div className="flex flex-1 flex-col gap-6 p-4">
             {home.data.sections.map((section) => (
               <HomeSection key={section.id} section={section} />
             ))}

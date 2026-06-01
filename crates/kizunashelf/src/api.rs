@@ -245,6 +245,7 @@ async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
             .map(|item| TypeConfigResponse {
                 id: item.id.clone(),
                 label: item.label.clone(),
+                icon: item.icon.clone(),
                 path: item.path.clone(),
             })
             .collect(),
@@ -327,6 +328,7 @@ async fn stats(
             .map(|entity_type| TypeCount {
                 id: entity_type.id.clone(),
                 label: entity_type.label.clone(),
+                icon: entity_type.icon.clone(),
                 count: library
                     .entities
                     .iter()
@@ -863,6 +865,7 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
                 .map(|entity_type| TypeCount {
                     id: entity_type.id.clone(),
                     label: entity_type.label.clone(),
+                    icon: entity_type.icon.clone(),
                     count: summaries
                         .iter()
                         .filter(|entity| entity.entity_type == entity_type.id)

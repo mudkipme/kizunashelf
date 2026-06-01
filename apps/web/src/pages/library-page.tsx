@@ -7,7 +7,6 @@ import { apiFetch, errorMessage, isAbortError } from "@/api/client";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
-import { LibrarySidebar } from "@/components/assets/library-sidebar";
 import { PaginationBar } from "@/components/assets/pagination-bar";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
@@ -255,16 +254,8 @@ export function LibraryPage() {
 
   return (
     <AppFrame error={stats.error ?? list.error}>
-      <div className="grid min-h-[calc(100vh-3rem)] grid-cols-1 overflow-hidden md:grid-cols-[220px_minmax(0,1fr)]">
-        <div className="hidden md:block">
-          <LibrarySidebar
-            stats={stats.global}
-            selectedType={selectedType}
-            onSelectType={selectType}
-          />
-        </div>
-
-        <section className="min-w-0">
+      <div className="h-full min-h-full overflow-hidden">
+        <section className="h-full min-w-0">
           <div className="flex h-full flex-col">
             <div className="border-b px-3 py-2 md:hidden">
               <div className="grid grid-cols-2 gap-2">

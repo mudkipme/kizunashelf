@@ -24,6 +24,8 @@ pub struct ErrorResponse {
 pub struct TypeConfigResponse {
     pub id: String,
     pub label: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
     pub path: String,
 }
 
@@ -77,6 +79,8 @@ pub struct StatsResponse {
 pub struct TypeCount {
     pub id: String,
     pub label: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
     pub count: usize,
 }
 

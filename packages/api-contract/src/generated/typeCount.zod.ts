@@ -12,6 +12,7 @@ export const typeCountCountMin = 0;
 export const TypeCount = zod.object({
   "id": zod.string(),
   "label": zod.string(),
+  "icon": zod.string().nullish(),
   "count": zod.number().min(typeCountCountMin)
 })
 

@@ -653,6 +653,7 @@ mod tests {
             types: vec![EntityTypeConfig {
                 id: "anime".to_string(),
                 label: "Anime".to_string(),
+                icon: None,
                 path: "Anime".to_string(),
                 fields: EntityFields {
                     title: vec!["title".to_string()],

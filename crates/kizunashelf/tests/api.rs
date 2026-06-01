@@ -28,6 +28,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let config = server.ok_json("/api/config").await;
     assert_eq!(config["taxonomyRoot"], "Taxonomy");
     assert_eq!(config["types"].as_array().unwrap().len(), 4);
+    assert_eq!(config["types"][0]["icon"], "📺");
 
     let home = server.ok_json("/api/home").await;
     assert_eq!(home["title"], "Fixture Home");
@@ -40,6 +41,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(stats["relations"], 10);
     assert_eq!(count_for(&stats["byType"], "Anime"), 1);
     assert_eq!(count_for(&stats["byType"], "Games"), 1);
+    assert_eq!(stats["byType"][0]["icon"], "📺");
     assert_eq!(count_for(&stats["byStatus"], "Watching"), 1);
 
     let anime_stats = server.ok_json("/api/stats?type=anime").await;
@@ -247,6 +249,7 @@ impl TestServer {
                 {
                     "id": "anime",
                     "label": "Anime",
+                    "icon": "📺",
                     "path": "Anime",
                     "fields": {
                         "title": ["title"],

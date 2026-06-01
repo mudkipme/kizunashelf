@@ -88,6 +88,7 @@ export const AnalyticsResponse = zod.object({
   "byType": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),
+  "icon": zod.string().nullish(),
   "count": zod.number().min(analyticsResponseDistributionsByTypeItemCountMin)
 })),
   "byStatus": zod.array(zod.object({

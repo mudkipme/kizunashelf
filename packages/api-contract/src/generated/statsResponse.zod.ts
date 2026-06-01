@@ -24,6 +24,7 @@ export const StatsResponse = zod.object({
   "byType": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),
+  "icon": zod.string().nullish(),
   "count": zod.number().min(statsResponseByTypeItemCountMin)
 })),
   "dateFields": zod.array(zod.string()),
