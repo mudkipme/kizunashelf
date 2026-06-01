@@ -8,15 +8,18 @@ import {
   HomeIcon,
   type LucideIcon,
   Link2Icon,
+  MenuIcon,
   SearchIcon,
   SettingsIcon,
   TablePropertiesIcon,
+  XIcon,
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { apiFetch, isAbortError } from "@/api/client";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
@@ -26,6 +29,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const location = useLocation();
   const [stats, setStats] = useState<StatsResponse>();
   const [search, setSearch] = useState("");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const activeType = useMemo(() => {
     if (location.pathname !== "/library") return "";
     return new URLSearchParams(location.search).get("type") ?? "";
@@ -44,6 +48,19 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     }
     setSearch(new URLSearchParams(location.search).get("q") ?? "");
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!mobileSidebarOpen) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileSidebarOpen(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileSidebarOpen]);
 
   async function loadStats(signal: AbortSignal) {
     try {
@@ -80,6 +97,17 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
             <span className="block text-xs leading-4 text-muted-foreground">A personal memory graph</span>
           </span>
         </Link>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label="Open navigation"
+          aria-expanded={mobileSidebarOpen}
+        >
+          <MenuIcon />
+        </Button>
         <form onSubmit={submitSearch} className="order-3 flex w-full min-w-0 items-center gap-2 sm:order-none sm:ml-auto sm:max-w-sm">
           <SearchIcon className="text-muted-foreground" />
           <Input
@@ -108,6 +136,13 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         <AppSidebar stats={stats} activeType={activeType} pathname={location.pathname} />
         <div className="min-w-0 overflow-hidden">{children}</div>
       </div>
+      <MobileSidebar
+        open={mobileSidebarOpen}
+        stats={stats}
+        activeType={activeType}
+        pathname={location.pathname}
+        onClose={() => setMobileSidebarOpen(false)}
+      />
     </main>
   );
 }
@@ -124,60 +159,137 @@ function AppSidebar({
   return (
     <aside className="hidden border-r bg-card/35 md:block">
       <div className="sticky top-0 flex max-h-[calc(100vh-3.5rem)] flex-col gap-4 overflow-auto p-3">
-        <section className="flex flex-col gap-1">
-          <SidebarSectionLabel>Core Views</SidebarSectionLabel>
-          <SidebarNavLink to="/" icon={HomeIcon} end>
-            Home
-          </SidebarNavLink>
-          <SidebarNavLink to="/calendar" icon={CalendarDaysIcon}>
-            Calendar
-          </SidebarNavLink>
-          <SidebarNavLink to="/relations" icon={Link2Icon}>
-            Relations
-          </SidebarNavLink>
-        </section>
-
-        <section className="flex flex-col gap-1">
-          <SidebarSectionLabel>Taxonomy</SidebarSectionLabel>
-          <SidebarNavLink
-            to="/library"
-            icon={DatabaseIcon}
-            active={pathname === "/library" && !activeType}
-          >
-            Library
-          </SidebarNavLink>
-          {stats?.byType.map((type) => (
-            <SidebarNavLink
-              key={type.id}
-              to={`/library?type=${encodeURIComponent(type.id)}`}
-              icon={type.icon ? undefined : TablePropertiesIcon}
-              emoji={type.icon}
-              active={activeType === type.id}
-            >
-              <span className="truncate">{type.label}</span>
-              <span className="ml-auto tabular-nums text-muted-foreground">{type.count}</span>
-            </SidebarNavLink>
-          ))}
-          {!stats ? (
-            <div className="px-2 py-1 text-xs text-muted-foreground">Loading taxonomy</div>
-          ) : null}
-        </section>
-
-        <section className="mt-auto flex flex-col gap-1">
-          <SidebarNavLink to="/statistics" icon={BarChart3Icon}>
-            Statistics
-          </SidebarNavLink>
-          <button
-            type="button"
-            className="flex h-8 items-center gap-2 rounded-md px-2 text-left text-sm text-muted-foreground opacity-70"
-            disabled
-          >
-            <SettingsIcon />
-            <span className="truncate">Settings</span>
-          </button>
-        </section>
+        <SidebarContent stats={stats} activeType={activeType} pathname={pathname} />
       </div>
     </aside>
+  );
+}
+
+function MobileSidebar({
+  open,
+  stats,
+  activeType,
+  pathname,
+  onClose,
+}: {
+  open: boolean;
+  stats?: StatsResponse;
+  activeType: string;
+  pathname: string;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 md:hidden">
+      <button
+        type="button"
+        className="absolute inset-0 bg-background/70"
+        onClick={onClose}
+        aria-label="Close navigation"
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation"
+        className="relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-card shadow-lg"
+      >
+        <header className="flex min-h-14 items-center gap-3 border-b px-3">
+          <img
+            src="/favicon-96x96.png"
+            alt=""
+            className="size-8 shrink-0 rounded-md"
+            aria-hidden="true"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold">KizunaShelf</div>
+            <div className="truncate text-xs text-muted-foreground">Navigation</div>
+          </div>
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Close navigation">
+            <XIcon />
+          </Button>
+        </header>
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-3">
+          <SidebarContent
+            stats={stats}
+            activeType={activeType}
+            pathname={pathname}
+            onNavigate={onClose}
+          />
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function SidebarContent({
+  stats,
+  activeType,
+  pathname,
+  onNavigate,
+}: {
+  stats?: StatsResponse;
+  activeType: string;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      <section className="flex flex-col gap-1">
+        <SidebarSectionLabel>Core Views</SidebarSectionLabel>
+        <SidebarNavLink to="/" icon={HomeIcon} end onNavigate={onNavigate}>
+          Home
+        </SidebarNavLink>
+        <SidebarNavLink to="/calendar" icon={CalendarDaysIcon} onNavigate={onNavigate}>
+          Calendar
+        </SidebarNavLink>
+        <SidebarNavLink to="/relations" icon={Link2Icon} onNavigate={onNavigate}>
+          Relations
+        </SidebarNavLink>
+      </section>
+
+      <section className="flex flex-col gap-1">
+        <SidebarSectionLabel>Taxonomy</SidebarSectionLabel>
+        <SidebarNavLink
+          to="/library"
+          icon={DatabaseIcon}
+          active={pathname === "/library" && !activeType}
+          onNavigate={onNavigate}
+        >
+          Library
+        </SidebarNavLink>
+        {stats?.byType.map((type) => (
+          <SidebarNavLink
+            key={type.id}
+            to={`/library?type=${encodeURIComponent(type.id)}`}
+            icon={type.icon ? undefined : TablePropertiesIcon}
+            emoji={type.icon}
+            active={activeType === type.id}
+            onNavigate={onNavigate}
+          >
+            <span className="truncate">{type.label}</span>
+            <span className="ml-auto tabular-nums text-muted-foreground">{type.count}</span>
+          </SidebarNavLink>
+        ))}
+        {!stats ? (
+          <div className="px-2 py-1 text-xs text-muted-foreground">Loading taxonomy</div>
+        ) : null}
+      </section>
+
+      <section className="mt-auto flex flex-col gap-1">
+        <SidebarNavLink to="/statistics" icon={BarChart3Icon} onNavigate={onNavigate}>
+          Statistics
+        </SidebarNavLink>
+        <button
+          type="button"
+          className="flex h-8 items-center gap-2 rounded-md px-2 text-left text-sm text-muted-foreground opacity-70"
+          disabled
+        >
+          <SettingsIcon />
+          <span className="truncate">Settings</span>
+        </button>
+      </section>
+    </>
   );
 }
 
@@ -195,6 +307,7 @@ function SidebarNavLink({
   emoji,
   end,
   active,
+  onNavigate,
   children,
 }: {
   to: string;
@@ -202,6 +315,7 @@ function SidebarNavLink({
   emoji?: string | null;
   end?: boolean;
   active?: boolean;
+  onNavigate?: () => void;
   children: ReactNode;
 }) {
   return (
@@ -214,6 +328,7 @@ function SidebarNavLink({
           (active ?? isActive) && "bg-accent text-foreground",
         )
       }
+      onClick={onNavigate}
     >
       {emoji ? (
         <span className="flex size-4 shrink-0 items-center justify-center text-sm leading-none" aria-hidden="true">
