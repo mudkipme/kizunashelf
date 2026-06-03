@@ -3,9 +3,19 @@ import { Link } from "react-router-dom";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { Badge } from "@/components/ui/badge";
+import { defaultTitleLanguage } from "@/lib/constants";
+import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
-export function EntityListItem({ entity }: { entity: EntitySummary }) {
+export function EntityListItem({
+  entity,
+  titleLanguage = defaultTitleLanguage,
+}: {
+  entity: EntitySummary;
+  titleLanguage?: string;
+}) {
+  const title = entityTitle(entity, titleLanguage);
+
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
@@ -14,7 +24,7 @@ export function EntityListItem({ entity }: { entity: EntitySummary }) {
       <EntityCover entity={entity} />
       <span className="min-w-0">
         <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium">{entity.title}</span>
+          <span className="truncate text-sm font-medium">{title}</span>
           <Badge variant="outline">{entity.typeLabel}</Badge>
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">

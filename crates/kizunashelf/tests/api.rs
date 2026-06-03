@@ -29,6 +29,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(config["taxonomyRoot"], "Taxonomy");
     assert_eq!(config["types"].as_array().unwrap().len(), 4);
     assert_eq!(config["types"][0]["icon"], "📺");
+    assert_eq!(config["types"][0]["titleLanguages"], json!(["en", "zh"]));
 
     let home = server.ok_json("/api/home").await;
     assert_eq!(home["title"], "Fixture Home");
@@ -61,6 +62,8 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(entities["total"], 4);
     assert!(has_entity_title(&entities["items"], "Star Voyager"));
     assert!(has_entity_title(&entities["items"], "Moon Quest"));
+    assert_eq!(entities["items"][0]["titles"]["zh"], "Star Voyager");
+    assert_eq!(entities["items"][0]["titles"]["en"], "Voyage of Stars");
 
     let filtered = server
         .ok_json("/api/entities?type=games&status=Playing&refs=with&cover=without")
@@ -71,6 +74,18 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let searched = server.ok_json("/api/entities?q=starlanes").await;
     assert_eq!(searched["total"], 1);
     assert_eq!(searched["items"][0]["id"], "anime:Star Voyager");
+
+    let searched_title_language = server
+        .ok_json(&format!(
+            "/api/entities?q={}",
+            urlencoding::encode("Lunar Errand")
+        ))
+        .await;
+    assert_eq!(searched_title_language["total"], 1);
+    assert_eq!(
+        searched_title_language["items"][0]["id"],
+        "games:Moon Quest"
+    );
 
     let by_relation = server
         .ok_json(&format!(
@@ -89,6 +104,8 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         ))
         .await;
     assert_eq!(detail["entity"]["title"], "Star Voyager");
+    assert_eq!(detail["entity"]["titles"]["zh"], "Star Voyager");
+    assert_eq!(detail["entity"]["titles"]["en"], "Voyage of Stars");
     assert_eq!(detail["entity"]["path"], "Taxonomy/Anime/Star Voyager.md");
     assert_eq!(detail["relations"].as_array().unwrap().len(), 3);
 
@@ -253,6 +270,10 @@ impl TestServer {
                     "path": "Anime",
                     "fields": {
                         "title": ["title"],
+                        "titleLanguages": {
+                            "zh": ["filename"],
+                            "en": ["title_en"]
+                        },
                         "subtitle": ["title_en"],
                         "image": ["cover_url"],
                         "status": ["status"],
@@ -267,6 +288,10 @@ impl TestServer {
                     "path": "Games",
                     "fields": {
                         "title": ["title"],
+                        "titleLanguages": {
+                            "zh": ["filename"],
+                            "en": ["title_en"]
+                        },
                         "subtitle": ["title_en"],
                         "image": ["cover_url"],
                         "status": ["status"],
@@ -281,6 +306,9 @@ impl TestServer {
                     "path": "Franchise",
                     "fields": {
                         "title": ["title"],
+                        "titleLanguages": {
+                            "zh": ["filename"]
+                        },
                         "relations": ["related"]
                     }
                 },
@@ -290,6 +318,9 @@ impl TestServer {
                     "path": "Music",
                     "fields": {
                         "title": ["title"],
+                        "titleLanguages": {
+                            "original": ["filename"]
+                        },
                         "date": ["release_date"],
                         "externalRefs": ["musicbrainz_url"]
                     }

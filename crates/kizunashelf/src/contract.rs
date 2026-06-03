@@ -27,6 +27,7 @@ pub struct TypeConfigResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub icon: Option<String>,
     pub path: String,
+    pub title_languages: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getEntities, getStats } from "@kizunashelf/api-contract";
+import { getConfig, getEntities, getStats } from "@kizunashelf/api-contract";
 import { SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
@@ -19,16 +19,18 @@ import {
   defaultCategory,
   defaultDirection,
   defaultSort,
+  defaultTitleLanguage,
   defaultView,
   pageSize,
 } from "@/lib/constants";
+import { titleLanguageLabel } from "@/lib/title-language";
 import {
   applyPreferencesToSearchParams,
   preferencesFromSearchParams,
   readAssetListPreferences,
   writeAssetListPreferences,
 } from "@/lib/asset-list-preferences";
-import type { EntitySummary, StatsResponse } from "@/types/api";
+import type { ConfigResponse, EntitySummary, StatsResponse } from "@/types/api";
 
 type StatsState = {
   global?: StatsResponse;
@@ -49,6 +51,7 @@ type ListState = {
 
 export function LibraryPage() {
   const [stats, setStats] = useState<StatsState>({ loading: true });
+  const [config, setConfig] = useState<ConfigResponse>();
   const [list, setList] = useState<ListState>({
     entities: [],
     total: 0,
@@ -66,11 +69,17 @@ export function LibraryPage() {
   const sort = searchParams.get("sort") ?? defaultSort;
   const direction = searchParams.get("direction") === "desc" ? "desc" : defaultDirection;
   const view = searchParams.get("view") === "grid" ? "grid" : defaultView;
+  const titleLanguage = searchParams.get("titleLanguage") ?? defaultTitleLanguage;
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [queryInput, setQueryInput] = useState(query);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const selectedTypeStats = stats.global?.byType.find((type) => type.id === selectedType);
+  const selectedTypeConfig = config?.types.find((type) => type.id === selectedType);
+  const titleLanguages = selectedTypeConfig?.titleLanguages ?? [];
+  const effectiveTitleLanguage = titleLanguages.includes(titleLanguage)
+    ? titleLanguage
+    : defaultTitleLanguage;
   const effectiveSort =
     stats.category &&
     sort.startsWith("date:") &&
@@ -87,6 +96,7 @@ export function LibraryPage() {
   useEffect(() => {
     const controller = new AbortController();
     void loadGlobalStats(controller.signal);
+    void loadConfig(controller.signal);
     return () => controller.abort();
   }, []);
 
@@ -134,9 +144,15 @@ export function LibraryPage() {
   }, [stats.category, selectedStatus]);
 
   useEffect(() => {
+    if (!config || titleLanguage === defaultTitleLanguage) return;
+    if (titleLanguages.includes(titleLanguage)) return;
+    setQueryParam("titleLanguage", defaultTitleLanguage, defaultTitleLanguage, false);
+  }, [config, titleLanguages, titleLanguage]);
+
+  useEffect(() => {
     if (!stats.global || !selectedType || !searchParams.has("type")) return;
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
-  }, [stats.global, selectedType, selectedStatus, refs, cover, sort, direction, view]);
+  }, [stats.global, selectedType, selectedStatus, refs, cover, sort, direction, view, titleLanguage]);
 
   useEffect(() => {
     setQueryInput(query);
@@ -184,6 +200,16 @@ export function LibraryPage() {
     try {
       const category = await getStats({ type }, { signal }, apiFetch);
       setStats((current) => ({ ...current, category, error: undefined }));
+    } catch (error) {
+      if (isAbortError(error)) return;
+      setStats((current) => ({ ...current, error: errorMessage(error) }));
+    }
+  }
+
+  async function loadConfig(signal: AbortSignal) {
+    try {
+      const config = await getConfig({ signal }, apiFetch);
+      setConfig(config);
     } catch (error) {
       if (isAbortError(error)) return;
       setStats((current) => ({ ...current, error: errorMessage(error) }));
@@ -312,12 +338,17 @@ export function LibraryPage() {
               sort={effectiveSort}
               direction={direction}
               view={view}
+              titleLanguage={effectiveTitleLanguage}
+              titleLanguages={titleLanguages}
               onStatusChange={(value) => setQueryParam("status", value, allStatuses)}
               onRefsChange={(value) => setQueryParam("refs", value)}
               onCoverChange={(value) => setQueryParam("cover", value)}
               onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
               onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
               onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
+              onTitleLanguageChange={(value) =>
+                setQueryParam("titleLanguage", value, defaultTitleLanguage, false)
+              }
             />
 
             <div className="border-b px-3 py-2 md:hidden">
@@ -407,6 +438,21 @@ export function LibraryPage() {
                     <option value="list">List view</option>
                     <option value="grid">Grid view</option>
                   </Select>
+                  <Select
+                    value={effectiveTitleLanguage}
+                    onChange={(event) =>
+                      setQueryParam("titleLanguage", event.target.value, defaultTitleLanguage, false)
+                    }
+                    aria-label="Display title"
+                    className="min-w-0"
+                  >
+                    <option value={defaultTitleLanguage}>Default title</option>
+                    {titleLanguages.map((language) => (
+                      <option key={language} value={language}>
+                        {titleLanguageLabel(language)}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               ) : null}
             </div>
@@ -424,11 +470,21 @@ export function LibraryPage() {
               {view === "grid" ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 p-3">
                   {list.entities.map((entity) => (
-                    <EntityGridItem key={entity.id} entity={entity} />
+                    <EntityGridItem
+                      key={entity.id}
+                      entity={entity}
+                      titleLanguage={effectiveTitleLanguage}
+                    />
                   ))}
                 </div>
               ) : (
-                list.entities.map((entity) => <EntityListItem key={entity.id} entity={entity} />)
+                list.entities.map((entity) => (
+                  <EntityListItem
+                    key={entity.id}
+                    entity={entity}
+                    titleLanguage={effectiveTitleLanguage}
+                  />
+                ))
               )}
               {!list.loading && list.entities.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">No entries</div>
@@ -449,5 +505,7 @@ export function LibraryPage() {
 }
 
 function hasPreferenceParams(params: URLSearchParams) {
-  return ["status", "refs", "cover", "sort", "direction", "view"].some((key) => params.has(key));
+  return ["status", "refs", "cover", "sort", "direction", "view", "titleLanguage"].some((key) =>
+    params.has(key),
+  );
 }

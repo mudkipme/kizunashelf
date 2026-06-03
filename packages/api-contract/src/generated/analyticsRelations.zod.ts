@@ -54,6 +54,7 @@ export const AnalyticsRelations = zod.object({
   "type": zod.string(),
   "typeLabel": zod.string(),
   "title": zod.string(),
+  "titles": zod.record(zod.string(), zod.string()),
   "subtitle": zod.string().nullish(),
   "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
@@ -85,6 +86,7 @@ export const AnalyticsRelations = zod.object({
   "type": zod.string(),
   "typeLabel": zod.string(),
   "title": zod.string(),
+  "titles": zod.record(zod.string(), zod.string()),
   "subtitle": zod.string().nullish(),
   "status": zod.string().nullish(),
   "dates": zod.array(zod.object({

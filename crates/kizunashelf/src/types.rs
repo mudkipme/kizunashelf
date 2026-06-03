@@ -8,6 +8,8 @@ use std::collections::BTreeMap;
 pub struct EntityFields {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub title: Vec<String>,
+    #[serde(default, alias = "titles", skip_serializing_if = "BTreeMap::is_empty")]
+    pub title_languages: BTreeMap<String, Vec<String>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub subtitle: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -115,6 +117,7 @@ pub struct EntitySummary {
     pub entity_type: String,
     pub type_label: String,
     pub title: String,
+    pub titles: BTreeMap<String, String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub subtitle: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

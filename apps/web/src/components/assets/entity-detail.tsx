@@ -1,4 +1,11 @@
-import { BookOpenIcon, CalendarDaysIcon, CircleDotIcon, FileTextIcon, LinkIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  CalendarDaysIcon,
+  CircleDotIcon,
+  FileTextIcon,
+  LanguagesIcon,
+  LinkIcon,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
@@ -8,6 +15,7 @@ import { MarkdownView } from "@/components/assets/markdown-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { relationKey, relationTargetHref } from "@/lib/relations";
+import { titleLanguageLabel } from "@/lib/title-language";
 import type { Entity, EntityDatesResponse, Relation } from "@/types/api";
 
 export function EntityDetail({
@@ -33,6 +41,19 @@ export function EntityDetail({
                 {entity.status ? <Badge variant="outline">{entity.status}</Badge> : null}
               </div>
               <h2 className="mt-2 text-xl font-semibold leading-snug">{entity.title}</h2>
+              {Object.entries(entity.titles).length > 0 ? (
+                <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
+                  {Object.entries(entity.titles).map(([language, title]) => (
+                    <div key={language} className="contents">
+                      <dt className="flex items-center gap-1 text-muted-foreground">
+                        <LanguagesIcon />
+                        {titleLanguageLabel(language)}
+                      </dt>
+                      <dd className="min-w-0 truncate font-medium">{title}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
               <p className="mt-1 truncate text-xs text-muted-foreground">{entity.path}</p>
             </div>
           </div>

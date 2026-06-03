@@ -3,7 +3,14 @@ import { Grid2X2Icon, ListIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { allOptions, allStatuses, defaultDirection, defaultSort } from "@/lib/constants";
+import {
+  allOptions,
+  allStatuses,
+  defaultDirection,
+  defaultSort,
+  defaultTitleLanguage,
+} from "@/lib/constants";
+import { titleLanguageLabel } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
@@ -16,12 +23,15 @@ export function AssetToolbar({
   sort,
   direction,
   view,
+  titleLanguage,
+  titleLanguages,
   onStatusChange,
   onRefsChange,
   onCoverChange,
   onSortChange,
   onDirectionChange,
   onViewChange,
+  onTitleLanguageChange,
 }: {
   className?: string;
   stats?: StatsResponse;
@@ -31,12 +41,15 @@ export function AssetToolbar({
   sort: string;
   direction: string;
   view: string;
+  titleLanguage: string;
+  titleLanguages: string[];
   onStatusChange: (value: string) => void;
   onRefsChange: (value: string) => void;
   onCoverChange: (value: string) => void;
   onSortChange: (value: string) => void;
   onDirectionChange: (value: string) => void;
   onViewChange: (value: string) => void;
+  onTitleLanguageChange: (value: string) => void;
 }) {
   return (
     <div className={cn("flex flex-wrap items-center gap-2 border-b px-3 py-2", className)}>
@@ -77,6 +90,14 @@ export function AssetToolbar({
       <Select value={direction} onChange={(event) => onDirectionChange(event.target.value)}>
         <option value={defaultDirection}>Ascending</option>
         <option value="desc">Descending</option>
+      </Select>
+      <Select value={titleLanguage} onChange={(event) => onTitleLanguageChange(event.target.value)}>
+        <option value={defaultTitleLanguage}>Default title</option>
+        {titleLanguages.map((language) => (
+          <option key={language} value={language}>
+            {titleLanguageLabel(language)}
+          </option>
+        ))}
       </Select>
       <div className="ml-auto flex items-center gap-1">
         <Button

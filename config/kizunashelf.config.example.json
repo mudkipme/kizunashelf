@@ -53,6 +53,17 @@
           "jp_title",
           "title_original"
         ],
+        "titleLanguages": {
+          "zh": [
+            "filename"
+          ],
+          "ja": [
+            "jp_title"
+          ],
+          "original": [
+            "title_original"
+          ]
+        },
         "image": [
           "cover_url"
         ],
@@ -80,6 +91,17 @@
           "title_ja",
           "title_en"
         ],
+        "titleLanguages": {
+          "zh": [
+            "filename"
+          ],
+          "ja": [
+            "title_ja"
+          ],
+          "en": [
+            "title_en"
+          ]
+        },
         "subtitle": [
           "title_en"
         ],

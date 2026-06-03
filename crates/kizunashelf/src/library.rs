@@ -178,8 +178,14 @@ async fn read_entity_file(
         .with_context(|| format!("failed to read entity {}", absolute_path.display()))?;
     let parsed = parse_markdown(&raw);
     let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
-    let title = first_string(&parsed.frontmatter, &type_config.fields.title)
-        .unwrap_or_else(|| note_basename.clone());
+    let titles = title_languages(&parsed.frontmatter, &note_basename, &type_config);
+    let title = first_string_with_basename(
+        &parsed.frontmatter,
+        &type_config.fields.title,
+        &note_basename,
+    )
+    .or_else(|| titles.values().next().cloned())
+    .unwrap_or_else(|| note_basename.clone());
     let relative_path = relative_path(Path::new(&vault_root), &absolute_path);
 
     let summary = EntitySummary {
@@ -187,6 +193,7 @@ async fn read_entity_file(
         entity_type: type_config.id.clone(),
         type_label: type_config.label.clone(),
         title,
+        titles,
         subtitle: first_string(&parsed.frontmatter, &type_config.fields.subtitle),
         status: first_string(&parsed.frontmatter, &type_config.fields.status),
         dates: date_values(&parsed.frontmatter, &type_config.fields.date),
@@ -303,6 +310,43 @@ fn first_string(frontmatter: &Map<String, Value>, keys: &[String]) -> Option<Str
     keys.iter()
         .filter_map(|key| normalize_value(frontmatter.get(key)))
         .next()
+}
+
+fn first_string_with_basename(
+    frontmatter: &Map<String, Value>,
+    keys: &[String],
+    basename: &str,
+) -> Option<String> {
+    keys.iter()
+        .filter_map(|key| normalize_title_field(frontmatter, key, basename))
+        .next()
+}
+
+fn title_languages(
+    frontmatter: &Map<String, Value>,
+    basename: &str,
+    type_config: &EntityTypeConfig,
+) -> BTreeMap<String, String> {
+    type_config
+        .fields
+        .title_languages
+        .iter()
+        .filter_map(|(language, fields)| {
+            first_string_with_basename(frontmatter, fields, basename)
+                .map(|title| (language.clone(), title))
+        })
+        .collect()
+}
+
+fn normalize_title_field(
+    frontmatter: &Map<String, Value>,
+    key: &str,
+    basename: &str,
+) -> Option<String> {
+    if matches!(key, "filename" | "basename" | "$filename" | "$basename") {
+        return Some(basename.to_string());
+    }
+    normalize_value(frontmatter.get(key))
 }
 
 fn normalize_value(value: Option<&Value>) -> Option<String> {
@@ -657,6 +701,7 @@ mod tests {
                 path: "Anime".to_string(),
                 fields: EntityFields {
                     title: vec!["title".to_string()],
+                    title_languages: std::collections::BTreeMap::new(),
                     subtitle: Vec::new(),
                     image: Vec::new(),
                     status: Vec::new(),

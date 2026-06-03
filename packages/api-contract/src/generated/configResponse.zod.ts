@@ -27,7 +27,8 @@ export const ConfigResponse = zod.object({
   "id": zod.string(),
   "label": zod.string(),
   "icon": zod.string().nullish(),
-  "path": zod.string()
+  "path": zod.string(),
+  "titleLanguages": zod.array(zod.string())
 }))
 })
 

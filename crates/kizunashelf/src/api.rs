@@ -247,6 +247,7 @@ async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
                 label: item.label.clone(),
                 icon: item.icon.clone(),
                 path: item.path.clone(),
+                title_languages: item.fields.title_languages.keys().cloned().collect(),
             })
             .collect(),
     }))
@@ -476,6 +477,7 @@ async fn entities(
             ]
             .into_iter()
             .flatten()
+            .chain(entity.titles.values().map(|value| value.as_str()))
             .any(|value| value.to_lowercase().contains(&q))
         });
     }

@@ -10,7 +10,8 @@ export const TypeConfigResponse = zod.object({
   "id": zod.string(),
   "label": zod.string(),
   "icon": zod.string().nullish(),
-  "path": zod.string()
+  "path": zod.string(),
+  "titleLanguages": zod.array(zod.string())
 })
 
 export type TypeConfigResponse = zod.input<typeof TypeConfigResponse>;

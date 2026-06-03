@@ -789,12 +789,19 @@
           },
           "path": {
             "type": "string"
+          },
+          "titleLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "id",
           "label",
-          "path"
+          "path",
+          "titleLanguages"
         ]
       },
       "HomeResponse": {
@@ -891,6 +898,12 @@
           "title": {
             "type": "string"
           },
+          "titles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "subtitle": {
             "type": [
               "string",
@@ -944,6 +957,7 @@
           "type",
           "typeLabel",
           "title",
+          "titles",
           "dates",
           "path",
           "basename",
@@ -2057,6 +2071,12 @@
           "title": {
             "type": "string"
           },
+          "titles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "subtitle": {
             "type": [
               "string",
@@ -2120,6 +2140,7 @@
           "type",
           "typeLabel",
           "title",
+          "titles",
           "dates",
           "path",
           "basename",

@@ -6,6 +6,7 @@ import {
   allStatuses,
   defaultDirection,
   defaultSort,
+  defaultTitleLanguage,
   defaultView,
 } from "@/lib/constants";
 
@@ -16,6 +17,7 @@ export type AssetListPreferences = {
   sort: string;
   direction: string;
   view: string;
+  titleLanguage: string;
 };
 
 type AssetListPreferencesState = {
@@ -31,9 +33,18 @@ const defaults: AssetListPreferences = {
   sort: defaultSort,
   direction: defaultDirection,
   view: defaultView,
+  titleLanguage: defaultTitleLanguage,
 };
 
-export const preferenceKeys = ["status", "refs", "cover", "sort", "direction", "view"] as const;
+export const preferenceKeys = [
+  "status",
+  "refs",
+  "cover",
+  "sort",
+  "direction",
+  "view",
+  "titleLanguage",
+] as const;
 
 export const useAssetListPreferencesStore = create<AssetListPreferencesState>()(
   persist(
@@ -85,6 +96,7 @@ export function preferencesFromSearchParams(params: URLSearchParams): AssetListP
     sort: params.get("sort") ?? undefined,
     direction: params.get("direction") ?? undefined,
     view: params.get("view") ?? undefined,
+    titleLanguage: params.get("titleLanguage") ?? undefined,
   });
 }
 
@@ -107,5 +119,6 @@ function normalizePreferences(preferences: Partial<AssetListPreferences> | undef
         : defaults.sort,
     direction: preferences?.direction === "desc" ? "desc" : defaults.direction,
     view: preferences?.view === "grid" ? "grid" : defaults.view,
+    titleLanguage: preferences?.titleLanguage || defaults.titleLanguage,
   };
 }
