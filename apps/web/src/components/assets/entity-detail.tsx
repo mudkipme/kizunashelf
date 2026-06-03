@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
 import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
+import { FrontmatterPanel } from "@/components/assets/frontmatter-panel";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,9 +70,7 @@ export function EntityDetail({
           ) : null}
 
           <DetailSection title="Frontmatter" icon={<BookOpenIcon />}>
-            <pre className="max-h-[520px] overflow-auto rounded-md bg-muted p-3 text-xs leading-5">
-              {JSON.stringify(entity.frontmatter, null, 2)}
-            </pre>
+            <FrontmatterPanel entity={entity} relationGroups={relationGroups} />
           </DetailSection>
         </div>
       </section>
