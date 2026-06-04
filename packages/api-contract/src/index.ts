@@ -45,6 +45,7 @@ export * from "./generated/relationFieldResponse.zod.js";
 export * from "./generated/relationGroupsResponse.zod.js";
 export * from "./generated/relationListResponse.zod.js";
 export * from "./generated/relationTargetResponse.zod.js";
+export * from "./generated/relationTargetTypeSummary.zod.js";
 export * from "./generated/statsResponse.zod.js";
 
 export const ApiResponseSchemas = {
@@ -76,6 +77,8 @@ export type CleanupUnresolvedRelation = CleanupQueuesResponse["unresolvedRelatio
 export type HomeSectionResponse = HomeResponse["sections"][number];
 export type TypeConfig = ConfigResponse["types"][number];
 export type RelationTargetSummary = RelationGroupsResponse["fields"][number]["topTargets"][number];
+export type RelationTargetTypeSummary = RelationGroupsResponse["targetTypes"][number];
+export type RelationTargetHubSummary = RelationGroupsResponse["targetTypes"][number]["topTargets"][number];
 export type RelationFieldSummary = RelationGroupsResponse["fields"][number];
 export type AnalyticsCoverageMetric = AnalyticsResponse["coverage"][number];
 export type AnalyticsTimelineYear = AnalyticsResponse["timeline"]["years"][number];

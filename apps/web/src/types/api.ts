@@ -25,8 +25,10 @@ export type {
   RelationFieldResponse,
   RelationFieldSummary,
   RelationGroupsResponse,
+  RelationTargetHubSummary,
   RelationTargetResponse,
   RelationTargetSummary,
+  RelationTargetTypeSummary,
   StatsResponse,
   TypeConfig,
 } from "@kizunashelf/api-contract";

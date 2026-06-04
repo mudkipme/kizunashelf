@@ -129,6 +129,19 @@ pub struct RelationTargetSummary {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
+pub struct RelationTargetTypeSummary {
+    #[serde(rename = "type")]
+    pub target_type: String,
+    pub type_label: String,
+    pub edge_count: usize,
+    pub unique_targets: usize,
+    pub resolved_targets: usize,
+    pub fields: Vec<Count>,
+    pub top_targets: Vec<AnalyticsRelationHub>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct RelationFieldSummary {
     pub field: String,
     pub edge_count: usize,
@@ -142,6 +155,7 @@ pub struct RelationFieldSummary {
 #[serde(rename_all = "camelCase")]
 pub struct RelationGroupsResponse {
     pub generated_at: String,
+    pub target_types: Vec<RelationTargetTypeSummary>,
     pub fields: Vec<RelationFieldSummary>,
 }
 

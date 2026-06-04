@@ -17,9 +17,10 @@ use crate::library::{
 };
 use crate::relations::{
     build_relation_field_summary_with_index, build_relation_hubs, build_relation_target_summary,
-    build_relation_targets, count_by, get_status_tracked_type_ids, outgoing_relations,
-    relation_fields, relation_source_type_label, relation_type_pairs, sort_entities,
-    sort_entities_with_title_language, summary_by_id, target_key, Count, SortDirection,
+    build_relation_target_type_summaries, build_relation_targets, count_by,
+    get_status_tracked_type_ids, outgoing_relations, relation_fields, relation_source_type_label,
+    relation_type_pairs, sort_entities, sort_entities_with_title_language, summary_by_id,
+    target_key, Count, SortDirection,
 };
 use crate::types::{EntitySummary, HomeSectionConfig, Library};
 use aide::axum::routing::get_with;
@@ -703,6 +704,7 @@ async fn relation_groups(State(state): State<AppState>) -> ApiResult<RelationGro
         .collect();
     Ok(Json(RelationGroupsResponse {
         generated_at: library.generated_at.clone(),
+        target_types: build_relation_target_type_summaries(&library),
         fields,
     }))
 }

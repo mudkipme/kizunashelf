@@ -171,6 +171,26 @@ async fn relation_endpoints_group_temp_vault_links() {
     assert_eq!(daily_note["sourceCount"], 1);
     assert_eq!(daily_note["uniqueTargets"], 2);
     assert_eq!(daily_note["resolvedTargets"], 2);
+    let anime_targets = groups["targetTypes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|group| group["type"] == "anime")
+        .unwrap();
+    assert_eq!(anime_targets["typeLabel"], "Anime");
+    assert_eq!(anime_targets["edgeCount"], 2);
+    assert_eq!(anime_targets["uniqueTargets"], 1);
+    assert_eq!(count_for(&anime_targets["fields"], "body"), 1);
+    assert_eq!(count_for(&anime_targets["fields"], "daily-note"), 1);
+    assert_eq!(
+        anime_targets["topTargets"][0]["targetTitle"],
+        "Star Voyager"
+    );
+    assert_eq!(anime_targets["topTargets"][0]["count"], 2);
+    assert_eq!(
+        count_for(&anime_targets["topTargets"][0]["fields"], "daily-note"),
+        1
+    );
 
     let franchise_page = server
         .ok_json("/api/relation-groups/franchise?pageSize=1&page=1")

@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
 import { getRelationGroups } from "@kizunashelf/api-contract";
+import { ArrowRightIcon, ExternalLinkIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { AppFrame } from "@/components/layout/app-frame";
-import { RelationFieldCard } from "@/components/relations/relation-field-card";
-import type { RelationGroupsResponse } from "@/types/api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { relationFieldHref, relationTargetHref } from "@/lib/relations";
+import type {
+  RelationGroupsResponse,
+  RelationFieldSummary,
+  RelationTargetHubSummary,
+  RelationTargetTypeSummary,
+} from "@/types/api";
 
 type RelationsState = {
   data?: RelationGroupsResponse;
@@ -39,7 +48,7 @@ export function RelationsPage() {
               {state.loading
                 ? "Loading"
                 : state.data
-                  ? `${state.data.fields.length} relation fields · updated ${state.data.generatedAt.slice(0, 10)}`
+                  ? `${state.data.targetTypes.length} target categories · ${state.data.fields.length} fields · updated ${state.data.generatedAt.slice(0, 10)}`
                   : "No relation data"}
             </p>
           </div>
@@ -51,20 +60,114 @@ export function RelationsPage() {
           </div>
         ) : null}
 
-        {!state.loading && state.data?.fields.length === 0 ? (
+        {!state.loading && state.data?.targetTypes.length === 0 ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
             No relations
           </div>
         ) : null}
 
-        {state.data?.fields.length ? (
+        {state.data?.targetTypes.length ? (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
-            {state.data.fields.map((field) => (
-              <RelationFieldCard key={field.field} field={field} />
+            {state.data.targetTypes.map((targetType) => (
+              <RelationTargetTypeCard key={targetType.type} targetType={targetType} />
             ))}
           </div>
         ) : null}
+
+        {state.data?.fields.length ? <RelationFieldIndex fields={state.data.fields} /> : null}
       </div>
     </AppFrame>
+  );
+}
+
+function RelationTargetTypeCard({ targetType }: { targetType: RelationTargetTypeSummary }) {
+  return (
+    <section className="min-w-0 rounded-md border">
+      <header className="border-b p-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="truncate text-sm font-semibold">{targetType.typeLabel}</h2>
+          <Badge variant="secondary">{targetType.edgeCount}</Badge>
+        </div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          {targetType.uniqueTargets} targets · {targetType.resolvedTargets} resolved
+        </div>
+      </header>
+      <div>
+        {targetType.topTargets.map((target) => (
+          <RelationHubRow key={target.key} target={target} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RelationHubRow({ target }: { target: RelationTargetHubSummary }) {
+  const primaryField = target.fields[0]?.name;
+  const targetHref = primaryField ? relationTargetHref(primaryField, target) : undefined;
+  return (
+    <div className="grid min-w-0 gap-2 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {targetHref ? (
+            <Link to={targetHref} className="min-w-0 truncate text-sm font-medium hover:underline">
+              {target.targetTitle}
+            </Link>
+          ) : (
+            <span className="min-w-0 truncate text-sm font-medium">{target.targetTitle}</span>
+          )}
+          <Badge variant="secondary">{target.count}</Badge>
+          {target.sourceTypes.map((type) => (
+            <Badge key={type.name} variant="outline">
+              {type.name} {type.count}
+            </Badge>
+          ))}
+        </div>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {target.fields.map((field) => (
+            <Link key={field.name} to={relationTargetHref(field.name, target)}>
+              <Badge variant="outline">
+                {field.name} {field.count}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        {target.targetId ? (
+          <Button asChild variant="ghost" size="sm">
+            <Link to={`/entities/${encodeURIComponent(target.targetId)}`}>
+              Entity
+              <ExternalLinkIcon data-icon="inline-end" />
+            </Link>
+          </Button>
+        ) : null}
+        {targetHref ? (
+          <Button asChild variant="outline" size="sm">
+            <Link to={targetHref}>
+              Open
+              <ArrowRightIcon data-icon="inline-end" />
+            </Link>
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function RelationFieldIndex({ fields }: { fields: RelationFieldSummary[] }) {
+  return (
+    <section className="rounded-md border px-3 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Field drill-down</span>
+        {fields.map((field) => (
+          <Button key={field.field} asChild variant="ghost" size="sm">
+            <Link to={relationFieldHref(field.field)}>
+              {field.field}
+              <Badge variant="secondary">{field.edgeCount}</Badge>
+            </Link>
+          </Button>
+        ))}
+      </div>
+    </section>
   );
 }
