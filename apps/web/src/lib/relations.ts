@@ -15,7 +15,3 @@ export function groupRelations(relations: Relation[]) {
 export function relationKey(relation: Relation) {
   return `${relation.sourceId}-${relation.field}-${relation.targetTitle}-${relation.direction}-${relation.targetId ?? ""}`;
 }
-
-export function relationFieldHref(field: string) {
-  return `/relations/${encodeURIComponent(field)}`;
-}

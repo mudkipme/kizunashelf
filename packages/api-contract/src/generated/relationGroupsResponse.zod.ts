@@ -22,20 +22,6 @@ export const relationGroupsResponseTargetTypesItemTopTargetsItemExamplesItemRela
 
 export const relationGroupsResponseTargetTypesItemTopTargetsItemFieldsItemCountMin = 0;
 
-export const relationGroupsResponseFieldsItemEdgeCountMin = 0;
-
-export const relationGroupsResponseFieldsItemSourceCountMin = 0;
-
-export const relationGroupsResponseFieldsItemUniqueTargetsMin = 0;
-
-export const relationGroupsResponseFieldsItemResolvedTargetsMin = 0;
-
-export const relationGroupsResponseFieldsItemTopTargetsItemCountMin = 0;
-
-export const relationGroupsResponseFieldsItemTopTargetsItemSourceTypesItemCountMin = 0;
-
-export const relationGroupsResponseFieldsItemTopTargetsItemExamplesItemRelationCountMin = 0;
-
 
 export const RelationGroupsResponse = zod.object({
   "generatedAt": zod.string(),
@@ -82,44 +68,6 @@ export const RelationGroupsResponse = zod.object({
   "fields": zod.array(zod.object({
   "name": zod.string(),
   "count": zod.number().min(relationGroupsResponseTargetTypesItemTopTargetsItemFieldsItemCountMin)
-}))
-}))
-})),
-  "fields": zod.array(zod.object({
-  "field": zod.string(),
-  "edgeCount": zod.number().min(relationGroupsResponseFieldsItemEdgeCountMin),
-  "sourceCount": zod.number().min(relationGroupsResponseFieldsItemSourceCountMin),
-  "uniqueTargets": zod.number().min(relationGroupsResponseFieldsItemUniqueTargetsMin),
-  "resolvedTargets": zod.number().min(relationGroupsResponseFieldsItemResolvedTargetsMin),
-  "topTargets": zod.array(zod.object({
-  "key": zod.string(),
-  "targetTitle": zod.string(),
-  "targetId": zod.string().nullish(),
-  "targetType": zod.string().nullish(),
-  "targetTypeLabel": zod.string().nullish(),
-  "count": zod.number().min(relationGroupsResponseFieldsItemTopTargetsItemCountMin),
-  "sourceTypes": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(relationGroupsResponseFieldsItemTopTargetsItemSourceTypesItemCountMin)
-})),
-  "examples": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.string(),
-  "typeLabel": zod.string(),
-  "title": zod.string(),
-  "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
-  "dates": zod.array(zod.object({
-  "field": zod.string(),
-  "value": zod.string()
-})),
-  "image": zod.string().nullish(),
-  "summary": zod.string().nullish(),
-  "path": zod.string(),
-  "basename": zod.string(),
-  "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(relationGroupsResponseFieldsItemTopTargetsItemExamplesItemRelationCountMin)
 }))
 }))
 }))

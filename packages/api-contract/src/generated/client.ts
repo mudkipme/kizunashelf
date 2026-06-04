@@ -41,10 +41,6 @@ import type {
 } from './getEntitiesParams.zod';
 
 import type {
-  GetRelationGroupParams
-} from './getRelationGroupParams.zod';
-
-import type {
   GetRelationsParams
 } from './getRelationsParams.zod';
 
@@ -59,10 +55,6 @@ import {
 import {
   HomeResponse
 } from './homeResponse.zod';
-
-import {
-  RelationFieldResponse
-} from './relationFieldResponse.zod';
 
 import {
   RelationGroupsResponse
@@ -447,43 +439,5 @@ export const getRelationGroups = async ( options?: RequestInit, fetchFn?: typeof
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? RelationGroupsResponse.parse(parsedBody) : parsedBody
-  return data
-}
-
-
-
-export const getGetRelationGroupUrl = (field: string,
-    params?: GetRelationGroupParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/relation-groups/${encodeURIComponent(String(field))}?${stringifiedParams}` : `/api/relation-groups/${encodeURIComponent(String(field))}`
-}
-
-export const getRelationGroup = async (field: string,
-    params?: GetRelationGroupParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<RelationFieldResponse> => {
-
-  const res = await (fetchFn ?? fetch)(getGetRelationGroupUrl(field,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-)
-
-  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
-  const data = contentType.includes('json') ? RelationFieldResponse.parse(parsedBody) : parsedBody
   return data
 }

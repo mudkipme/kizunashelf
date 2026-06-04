@@ -26,7 +26,6 @@ import {
   entityStatusOptions,
   entityTypeOptions,
 } from "@/lib/entity-filters";
-import { relationFieldHref } from "@/lib/relations";
 import { cn } from "@/lib/utils";
 import type {
   CleanupQueueSummary,
@@ -314,9 +313,6 @@ function UnresolvedRelationRow({ item }: { item: CleanupUnresolvedRelation }) {
         </div>
       </div>
       <div className="flex items-center justify-end gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link to={relationFieldHref(item.relation.field)}>Field</Link>
-        </Button>
         <Button asChild variant="outline" size="sm">
           <Link to={`/entities/${encodeURIComponent(item.source.id)}`}>
             Source

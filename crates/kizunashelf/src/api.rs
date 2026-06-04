@@ -6,8 +6,8 @@ use crate::contract::{
     AnalyticsResponse, AnalyticsTimeline, AnalyticsTimelineYear, AnalyticsTotals,
     AnalyticsUnresolvedRelations, CalendarResponse, CleanupQueueSummary, CleanupQueuesResponse,
     CleanupUnresolvedRelation, ConfigResponse, EntityDetailResponse, EntityListResponse,
-    ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse, RelationFieldResponse,
-    RelationGroupsResponse, RelationListResponse, StatsResponse, TypeConfigResponse, TypeCount,
+    ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse, RelationGroupsResponse,
+    RelationListResponse, StatsResponse, TypeConfigResponse, TypeCount,
 };
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
 use crate::library::{
@@ -16,9 +16,9 @@ use crate::library::{
 };
 use crate::relations::{
     build_relation_field_summary_with_index, build_relation_hubs,
-    build_relation_target_type_summaries, build_relation_targets, count_by,
-    get_status_tracked_type_ids, outgoing_relations, relation_fields, relation_type_pairs,
-    sort_entities, sort_entities_with_title_language, summary_by_id, Count, SortDirection,
+    build_relation_target_type_summaries, count_by, get_status_tracked_type_ids,
+    outgoing_relations, relation_fields, relation_type_pairs, sort_entities,
+    sort_entities_with_title_language, summary_by_id, Count, SortDirection,
 };
 use crate::types::{EntitySummary, HomeSectionConfig, Library, Relation, RelationDirection};
 use aide::axum::routing::get_with;
@@ -29,6 +29,7 @@ use anyhow::Result;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use axum::routing::get;
 use axum::{Json, Router};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -70,7 +71,8 @@ pub fn router(options: ApiOptions) -> Router {
     let app = api_router()
         .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any))
         .with_state(state)
-        .finish_api(&mut api);
+        .finish_api(&mut api)
+        .route("/api/{*path}", get(api_not_found));
 
     if let Some(web_dist_path) = web_dist_path {
         app.fallback_service(
@@ -200,14 +202,6 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
-        .api_route(
-            "/api/relation-groups/{field}",
-            get_with(relation_group_field, |op| {
-                op.id("getRelationGroup")
-                    .response::<200, Json<RelationFieldResponse>>()
-                    .response::<500, Json<ErrorResponse>>()
-            }),
-        )
 }
 
 async fn get_library(state: &AppState) -> Result<Arc<Library>> {
@@ -233,6 +227,15 @@ async fn health(State(state): State<AppState>) -> ApiResult<HealthResponse> {
         entity_count: library.entities.len(),
         relation_count: library.relations.len(),
     }))
+}
+
+async fn api_not_found() -> impl IntoResponse {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse {
+            error: "API route not found".to_string(),
+        }),
+    )
 }
 
 async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
@@ -734,85 +737,9 @@ async fn relations(
 
 async fn relation_groups(State(state): State<AppState>) -> ApiResult<RelationGroupsResponse> {
     let library = get_library(&state).await?;
-    let entity_by_id = summary_by_id(&library);
-    let fields: Vec<_> = relation_fields(&library)
-        .iter()
-        .map(|field| build_relation_field_summary_with_index(&library, &entity_by_id, field))
-        .filter(|group| group.edge_count > 0)
-        .collect();
     Ok(Json(RelationGroupsResponse {
         generated_at: library.generated_at.clone(),
         target_types: build_relation_target_type_summaries(&library),
-        fields,
-    }))
-}
-
-#[derive(Deserialize, JsonSchema)]
-struct RelationFieldPath {
-    field: String,
-}
-
-#[derive(Deserialize, JsonSchema)]
-struct RelationFieldQuery {
-    q: Option<String>,
-    #[serde(rename = "pageSize")]
-    page_size: Option<f64>,
-    page: Option<f64>,
-}
-
-async fn relation_group_field(
-    State(state): State<AppState>,
-    Path(path): Path<RelationFieldPath>,
-    Query(query): Query<RelationFieldQuery>,
-) -> ApiResult<RelationFieldResponse> {
-    let library = get_library(&state).await?;
-    let field = path.field;
-    let q = query
-        .q
-        .as_ref()
-        .map(|q| q.trim().to_lowercase())
-        .filter(|q| !q.is_empty());
-    let edge_count = outgoing_relations(&library, Some(&field)).len();
-    let mut targets = build_relation_targets(&library, &field);
-    let unique_targets = targets.len();
-    targets = targets
-        .into_iter()
-        .filter(|target| {
-            let Some(q) = q.as_ref() else {
-                return true;
-            };
-            [
-                Some(target.target_title.as_str()),
-                target.target_id.as_deref(),
-                target.target_type_label.as_deref(),
-            ]
-            .into_iter()
-            .flatten()
-            .any(|value| value.to_lowercase().contains(q))
-        })
-        .collect::<Vec<_>>();
-    let total = targets.len();
-    let page_size = clamp_number(query.page_size.unwrap_or(40.0), 1, 100);
-    let requested_page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX);
-    let total_pages = std::cmp::max(1, ((total as f64) / (page_size as f64)).ceil() as i64);
-    let page = requested_page.min(total_pages);
-    let start = ((page - 1) * page_size) as usize;
-    targets = targets
-        .into_iter()
-        .skip(start)
-        .take(page_size as usize)
-        .collect();
-
-    Ok(Json(RelationFieldResponse {
-        generated_at: library.generated_at.clone(),
-        field,
-        edge_count,
-        unique_targets,
-        targets,
-        total,
-        page,
-        page_size,
-        total_pages,
     }))
 }
 

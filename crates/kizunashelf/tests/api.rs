@@ -154,27 +154,6 @@ async fn relation_endpoints_group_temp_vault_links() {
     assert_eq!(daily_note_relations["total"], 2);
 
     let groups = server.ok_json("/api/relation-groups").await;
-    let franchise = groups["fields"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|field| field["field"] == "franchise")
-        .unwrap();
-    assert_eq!(franchise["edgeCount"], 2);
-    assert_eq!(franchise["uniqueTargets"], 1);
-    assert_eq!(franchise["resolvedTargets"], 1);
-    assert_eq!(franchise["topTargets"][0]["targetTitle"], "Star Saga");
-    assert_eq!(franchise["topTargets"][0]["count"], 2);
-    let daily_note = groups["fields"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|field| field["field"] == "daily-note")
-        .unwrap();
-    assert_eq!(daily_note["edgeCount"], 2);
-    assert_eq!(daily_note["sourceCount"], 1);
-    assert_eq!(daily_note["uniqueTargets"], 2);
-    assert_eq!(daily_note["resolvedTargets"], 2);
     let anime_targets = groups["targetTypes"]
         .as_array()
         .unwrap()
@@ -196,14 +175,11 @@ async fn relation_endpoints_group_temp_vault_links() {
         1
     );
 
-    let franchise_page = server
-        .ok_json("/api/relation-groups/franchise?pageSize=1&page=1")
+    let (status, value) = server
+        .json("/api/relation-groups/franchise?pageSize=1&page=1")
         .await;
-    assert_eq!(franchise_page["total"], 1);
-    assert_eq!(
-        franchise_page["targets"][0]["targetId"],
-        "franchise:Star Saga"
-    );
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert_eq!(value["error"], "API route not found");
 }
 
 #[tokio::test]

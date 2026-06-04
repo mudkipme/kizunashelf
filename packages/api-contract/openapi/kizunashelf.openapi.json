@@ -526,70 +526,6 @@
           }
         }
       }
-    },
-    "/api/relation-groups/{field}": {
-      "get": {
-        "operationId": "getRelationGroup",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "field",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          },
-          {
-            "in": "query",
-            "name": "q",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "pageSize",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            },
-            "style": "form"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RelationFieldResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -2291,18 +2227,11 @@
             "items": {
               "$ref": "#/components/schemas/RelationTargetTypeSummary"
             }
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RelationFieldSummary"
-            }
           }
         },
         "required": [
           "generatedAt",
-          "targetTypes",
-          "fields"
+          "targetTypes"
         ]
       },
       "RelationTargetTypeSummary": {
@@ -2350,97 +2279,6 @@
           "resolvedTargets",
           "fields",
           "topTargets"
-        ]
-      },
-      "RelationFieldPath": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "field"
-        ]
-      },
-      "RelationFieldQuery": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "pageSize": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
-          },
-          "page": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
-          }
-        }
-      },
-      "RelationFieldResponse": {
-        "type": "object",
-        "properties": {
-          "generatedAt": {
-            "type": "string"
-          },
-          "field": {
-            "type": "string"
-          },
-          "edgeCount": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "uniqueTargets": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "targets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RelationTargetSummary"
-            }
-          },
-          "total": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "page": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int64"
-          }
-        },
-        "required": [
-          "generatedAt",
-          "field",
-          "edgeCount",
-          "uniqueTargets",
-          "targets",
-          "total",
-          "page",
-          "pageSize",
-          "totalPages"
         ]
       }
     }

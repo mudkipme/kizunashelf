@@ -9,7 +9,6 @@ import { EntityDetailResponse as EntityDetailResponseSchema } from "./generated/
 import { EntityListResponse as EntityListResponseSchema } from "./generated/entityListResponse.zod.js";
 import { HealthResponse as HealthResponseSchema } from "./generated/healthResponse.zod.js";
 import { HomeResponse as HomeResponseSchema } from "./generated/homeResponse.zod.js";
-import { RelationFieldResponse as RelationFieldResponseSchema } from "./generated/relationFieldResponse.zod.js";
 import { RelationGroupsResponse as RelationGroupsResponseSchema } from "./generated/relationGroupsResponse.zod.js";
 import { RelationListResponse as RelationListResponseSchema } from "./generated/relationListResponse.zod.js";
 import { StatsResponse as StatsResponseSchema } from "./generated/statsResponse.zod.js";
@@ -21,7 +20,9 @@ import type { EntityDatesResponse } from "./generated/entityDatesResponse.zod.js
 import type { EntityDetailResponse } from "./generated/entityDetailResponse.zod.js";
 import type { EntityListResponse } from "./generated/entityListResponse.zod.js";
 import type { HomeResponse } from "./generated/homeResponse.zod.js";
+import type { RelationFieldSummary as RelationFieldSummaryType } from "./generated/relationFieldSummary.zod.js";
 import type { RelationGroupsResponse } from "./generated/relationGroupsResponse.zod.js";
+import type { RelationTargetSummary as RelationTargetSummaryType } from "./generated/relationTargetSummary.zod.js";
 
 export * from "./generated/client.js";
 export * from "./generated/analyticsResponse.zod.js";
@@ -35,12 +36,10 @@ export * from "./generated/entityDetailResponse.zod.js";
 export * from "./generated/entityListResponse.zod.js";
 export * from "./generated/getCalendarParams.zod.js";
 export * from "./generated/getEntitiesParams.zod.js";
-export * from "./generated/getRelationGroupParams.zod.js";
 export * from "./generated/getRelationsParams.zod.js";
 export * from "./generated/getStatsParams.zod.js";
 export * from "./generated/healthResponse.zod.js";
 export * from "./generated/homeResponse.zod.js";
-export * from "./generated/relationFieldResponse.zod.js";
 export * from "./generated/relationGroupsResponse.zod.js";
 export * from "./generated/relationListResponse.zod.js";
 export * from "./generated/relationTargetTypeSummary.zod.js";
@@ -58,7 +57,6 @@ export const ApiResponseSchemas = {
   entityDates: EntityDatesResponseSchema,
   relations: RelationListResponseSchema,
   relationGroups: RelationGroupsResponseSchema,
-  relationField: RelationFieldResponseSchema,
   calendar: CalendarResponseSchema,
 } as const;
 
@@ -73,10 +71,10 @@ export type CleanupQueueSummary = CleanupQueuesResponse["queues"][number];
 export type CleanupUnresolvedRelation = CleanupQueuesResponse["unresolvedRelations"][number];
 export type HomeSectionResponse = HomeResponse["sections"][number];
 export type TypeConfig = ConfigResponse["types"][number];
-export type RelationTargetSummary = RelationGroupsResponse["fields"][number]["topTargets"][number];
+export type RelationTargetSummary = RelationTargetSummaryType;
 export type RelationTargetTypeSummary = RelationGroupsResponse["targetTypes"][number];
 export type RelationTargetHubSummary = RelationGroupsResponse["targetTypes"][number]["topTargets"][number];
-export type RelationFieldSummary = RelationGroupsResponse["fields"][number];
+export type RelationFieldSummary = RelationFieldSummaryType;
 export type AnalyticsCoverageMetric = AnalyticsResponse["coverage"][number];
 export type AnalyticsTimelineYear = AnalyticsResponse["timeline"]["years"][number];
 export type AnalyticsRelationHub = AnalyticsResponse["relations"]["topTargets"][number];

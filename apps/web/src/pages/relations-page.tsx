@@ -7,10 +7,8 @@ import { apiFetch, errorMessage } from "@/api/client";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { relationFieldHref } from "@/lib/relations";
 import type {
   RelationGroupsResponse,
-  RelationFieldSummary,
   RelationTargetHubSummary,
   RelationTargetTypeSummary,
 } from "@/types/api";
@@ -48,7 +46,7 @@ export function RelationsPage() {
               {state.loading
                 ? "Loading"
                 : state.data
-                  ? `${state.data.targetTypes.length} target categories · ${state.data.fields.length} fields · updated ${state.data.generatedAt.slice(0, 10)}`
+                  ? `${state.data.targetTypes.length} target categories · updated ${state.data.generatedAt.slice(0, 10)}`
                   : "No relation data"}
             </p>
           </div>
@@ -73,8 +71,6 @@ export function RelationsPage() {
             ))}
           </div>
         ) : null}
-
-        {state.data?.fields.length ? <RelationFieldIndex fields={state.data.fields} /> : null}
       </div>
     </AppFrame>
   );
@@ -148,23 +144,5 @@ function RelationHubRow({ target }: { target: RelationTargetHubSummary }) {
         ) : null}
       </div>
     </div>
-  );
-}
-
-function RelationFieldIndex({ fields }: { fields: RelationFieldSummary[] }) {
-  return (
-    <section className="rounded-md border px-3 py-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Field drill-down</span>
-        {fields.map((field) => (
-          <Button key={field.field} asChild variant="ghost" size="sm">
-            <Link to={relationFieldHref(field.field)}>
-              {field.field}
-              <Badge variant="secondary">{field.edgeCount}</Badge>
-            </Link>
-          </Button>
-        ))}
-      </div>
-    </section>
   );
 }

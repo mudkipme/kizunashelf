@@ -123,12 +123,6 @@ pub fn build_relation_field_summary_with_index(
     }
 }
 
-pub fn build_relation_targets(library: &Library, field: &str) -> Vec<RelationTargetSummary> {
-    let entity_by_id = summary_by_id(library);
-    let relations = outgoing_relations(library, Some(field));
-    build_relation_targets_from_relations(library, &entity_by_id, &relations)
-}
-
 fn build_relation_targets_from_relations<'a>(
     library: &'a Library,
     entity_by_id: &HashMap<&'a str, &'a EntitySummary>,

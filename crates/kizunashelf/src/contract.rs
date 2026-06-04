@@ -157,21 +157,6 @@ pub struct RelationFieldSummary {
 pub struct RelationGroupsResponse {
     pub generated_at: String,
     pub target_types: Vec<RelationTargetTypeSummary>,
-    pub fields: Vec<RelationFieldSummary>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationFieldResponse {
-    pub generated_at: String,
-    pub field: String,
-    pub edge_count: usize,
-    pub unique_targets: usize,
-    pub targets: Vec<RelationTargetSummary>,
-    pub total: usize,
-    pub page: i64,
-    pub page_size: i64,
-    pub total_pages: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -336,7 +321,6 @@ pub struct ApiSchemas {
     pub entity_dates: EntityDatesResponse,
     pub relations: RelationListResponse,
     pub relation_groups: RelationGroupsResponse,
-    pub relation_field: RelationFieldResponse,
     pub calendar: CalendarResponse,
     pub calendar_entry: CalendarEntry,
     pub library: crate::types::Library,

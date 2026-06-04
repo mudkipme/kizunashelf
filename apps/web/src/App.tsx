@@ -4,7 +4,6 @@ import { CalendarPage } from "@/pages/calendar-page";
 import { EntityPage } from "@/pages/entity-page";
 import { HomePage } from "@/pages/home-page";
 import { LibraryPage } from "@/pages/library-page";
-import { RelationFieldPage } from "@/pages/relation-field-page";
 import { RelationsPage } from "@/pages/relations-page";
 import { ReviewPage } from "@/pages/review-page";
 import { StatisticsPage } from "@/pages/statistics-page";
@@ -22,7 +21,7 @@ export default function App() {
         <Route path="/cleanup/:queueId" element={<LegacyCleanupRedirect />} />
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/relations" element={<RelationsPage />} />
-        <Route path="/relations/:field" element={<RelationFieldPage />} />
+        <Route path="/relations/:field" element={<Navigate to="/relations" replace />} />
         <Route path="/relations/:field/:target" element={<LegacyRelationTargetRedirect />} />
         <Route path="/entities/:id" element={<EntityPage />} />
       </Routes>

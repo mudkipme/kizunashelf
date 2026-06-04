@@ -22,7 +22,6 @@ export type {
   HomeResponse,
   HomeSectionResponse,
   Relation,
-  RelationFieldResponse,
   RelationFieldSummary,
   RelationGroupsResponse,
   RelationTargetHubSummary,
