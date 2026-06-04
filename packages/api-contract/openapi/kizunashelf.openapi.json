@@ -294,6 +294,14 @@
           },
           {
             "in": "query",
+            "name": "titleLanguage",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "type": "string"
@@ -1978,6 +1986,12 @@
             ]
           },
           "direction": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleLanguage": {
             "type": [
               "string",
               "null"

@@ -13,6 +13,7 @@ export const GetEntitiesParams = zod.object({
   "cover": zod.string().optional(),
   "sort": zod.string().optional(),
   "direction": zod.string().optional(),
+  "titleLanguage": zod.string().optional(),
   "q": zod.string().optional(),
   "relation": zod.string().optional(),
   "pageSize": zod.number().optional(),

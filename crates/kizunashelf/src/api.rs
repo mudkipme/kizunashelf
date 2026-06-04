@@ -11,12 +11,15 @@ use crate::contract::{
     StatsResponse, TypeConfigResponse, TypeCount,
 };
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
-use crate::library::{compare_string, effective_default_title_language, read_library_from_config};
+use crate::library::{
+    compare_string, compare_string_for_title_language, effective_default_title_language,
+    read_library_from_config,
+};
 use crate::relations::{
     build_relation_field_summary_with_index, build_relation_hubs, build_relation_target_summary,
     build_relation_targets, count_by, get_status_tracked_type_ids, outgoing_relations,
-    relation_fields, relation_type_pairs, sort_entities, summary_by_id, target_key, Count,
-    SortDirection,
+    relation_fields, relation_type_pairs, sort_entities, sort_entities_with_title_language,
+    summary_by_id, target_key, Count, SortDirection,
 };
 use crate::types::{EntitySummary, HomeSectionConfig, Library};
 use aide::axum::routing::get_with;
@@ -437,6 +440,8 @@ struct EntitiesQuery {
     cover: Option<String>,
     sort: Option<String>,
     direction: Option<String>,
+    #[serde(rename = "titleLanguage")]
+    title_language: Option<String>,
     q: Option<String>,
     relation: Option<String>,
     #[serde(rename = "pageSize")]
@@ -518,7 +523,13 @@ async fn entities(
     } else {
         SortDirection::Asc
     };
-    entities = sort_entities(entities, query.sort.as_deref().unwrap_or("type"), direction);
+    entities = sort_entities_for_entity_list(
+        &library,
+        entities,
+        query.sort.as_deref().unwrap_or("type"),
+        direction,
+        query.title_language.as_deref(),
+    );
 
     let page_size = clamp_number(query.page_size.unwrap_or(40.0), 1, 100);
     let requested_page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX);
@@ -539,6 +550,79 @@ async fn entities(
         page_size,
         total_pages,
     }))
+}
+
+fn sort_entities_for_entity_list(
+    library: &Library,
+    mut entities: Vec<EntitySummary>,
+    sort: &str,
+    direction: SortDirection,
+    title_language: Option<&str>,
+) -> Vec<EntitySummary> {
+    let explicit_title_language = title_language
+        .map(str::trim)
+        .filter(|language| !language.is_empty() && *language != "default");
+    if sort != "title" {
+        return sort_entities_with_title_language(
+            entities,
+            sort,
+            direction,
+            explicit_title_language,
+        );
+    }
+
+    let default_title_languages: HashMap<_, _> = library
+        .config
+        .types
+        .iter()
+        .filter_map(|item| {
+            effective_default_title_language(item).map(|language| (item.id.clone(), language))
+        })
+        .collect();
+    let multiplier = if direction == SortDirection::Asc {
+        1
+    } else {
+        -1
+    };
+
+    entities.sort_by(|a, b| {
+        let (title_a, language_a) =
+            entity_sort_title(a, explicit_title_language, &default_title_languages);
+        let (title_b, language_b) =
+            entity_sort_title(b, explicit_title_language, &default_title_languages);
+        let language = (language_a == language_b).then_some(language_a).flatten();
+        let ordering = compare_string_for_title_language(title_a, title_b, language);
+        if multiplier == 1 {
+            ordering
+        } else {
+            ordering.reverse()
+        }
+    });
+    entities
+}
+
+fn entity_sort_title<'entity, 'language>(
+    entity: &'entity EntitySummary,
+    explicit_title_language: Option<&'language str>,
+    default_title_languages: &'language HashMap<String, String>,
+) -> (&'entity str, Option<&'language str>) {
+    if let Some(language) = explicit_title_language {
+        return (
+            entity
+                .titles
+                .get(language)
+                .unwrap_or(&entity.title)
+                .as_str(),
+            Some(language),
+        );
+    }
+
+    (
+        entity.title.as_str(),
+        default_title_languages
+            .get(&entity.entity_type)
+            .map(|language| language.as_str()),
+    )
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -778,7 +862,7 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         })
         .cloned()
         .collect();
-    filtered = sort_entities(filtered, sort, direction);
+    filtered = sort_entities_for_entity_list(library, filtered, sort, direction, None);
     let total = filtered.len();
     let items = filtered
         .into_iter()

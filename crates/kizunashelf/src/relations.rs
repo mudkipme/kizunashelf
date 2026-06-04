@@ -1,5 +1,5 @@
 use crate::contract::{AnalyticsRelationHub, RelationFieldSummary, RelationTargetSummary};
-use crate::library::compare_string;
+use crate::library::{compare_string, compare_string_for_title_language};
 use crate::types::{EntitySummary, Library, Relation, RelationDirection};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
@@ -255,9 +255,18 @@ pub enum SortDirection {
 }
 
 pub fn sort_entities(
+    entities: Vec<EntitySummary>,
+    sort: &str,
+    direction: SortDirection,
+) -> Vec<EntitySummary> {
+    sort_entities_with_title_language(entities, sort, direction, None)
+}
+
+pub fn sort_entities_with_title_language(
     mut entities: Vec<EntitySummary>,
     sort: &str,
     direction: SortDirection,
+    title_language: Option<&str>,
 ) -> Vec<EntitySummary> {
     let multiplier = if direction == SortDirection::Asc {
         1
@@ -266,7 +275,7 @@ pub fn sort_entities(
     };
     entities.sort_by(|a, b| {
         let ordering = if sort == "title" {
-            compare_string(&a.title, &b.title)
+            compare_entity_title(a, b, title_language)
         } else if sort == "status" {
             compare_optional_string(a.status.as_deref(), b.status.as_deref())
         } else if let Some(field) = sort.strip_prefix("date:") {
@@ -283,7 +292,7 @@ pub fn sort_entities(
             if type_compare != Ordering::Equal {
                 type_compare
             } else {
-                compare_string(&a.title, &b.title)
+                compare_entity_title(a, b, title_language)
             }
         };
         if multiplier == 1 {
@@ -293,6 +302,20 @@ pub fn sort_entities(
         }
     });
     entities
+}
+
+fn compare_entity_title(
+    a: &EntitySummary,
+    b: &EntitySummary,
+    title_language: Option<&str>,
+) -> Ordering {
+    let title_a = title_language
+        .and_then(|language| a.titles.get(language))
+        .unwrap_or(&a.title);
+    let title_b = title_language
+        .and_then(|language| b.titles.get(language))
+        .unwrap_or(&b.title);
+    compare_string_for_title_language(title_a, title_b, title_language)
 }
 
 pub fn get_status_tracked_type_ids(library: &Library) -> HashSet<String> {

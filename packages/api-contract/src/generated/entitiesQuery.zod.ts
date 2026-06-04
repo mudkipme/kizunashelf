@@ -13,6 +13,7 @@ export const EntitiesQuery = zod.object({
   "cover": zod.string().nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.string().nullish(),
+  "titleLanguage": zod.string().nullish(),
   "q": zod.string().nullish(),
   "relation": zod.string().nullish(),
   "pageSize": zod.number().nullish(),

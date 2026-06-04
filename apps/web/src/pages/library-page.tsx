@@ -191,11 +191,12 @@ export function LibraryPage() {
       cover,
       sort: effectiveSort,
       direction,
+      titleLanguage: effectiveTitleLanguage,
       q: query,
       page,
     }, controller.signal);
     return () => controller.abort();
-  }, [selectedType, effectiveStatus, refs, cover, effectiveSort, direction, query, page]);
+  }, [selectedType, effectiveStatus, refs, cover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
 
   async function loadGlobalStats(signal: AbortSignal) {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
@@ -235,6 +236,7 @@ export function LibraryPage() {
     cover: string;
     sort: string;
     direction: string;
+    titleLanguage: string;
     q: string;
     page: number;
   }, signal: AbortSignal) {
@@ -247,6 +249,7 @@ export function LibraryPage() {
           pageSize,
           sort: filters.sort,
           direction: filters.direction,
+          titleLanguage: filters.titleLanguage,
           ...(filters.status !== allStatuses ? { status: filters.status } : {}),
           ...(filters.refs !== allOptions ? { refs: filters.refs } : {}),
           ...(filters.cover !== allOptions ? { cover: filters.cover } : {}),

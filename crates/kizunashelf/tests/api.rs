@@ -67,7 +67,12 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert!(has_entity_title(&entities["items"], "Star Voyager"));
     assert!(has_entity_title(&entities["items"], "Moon Quest"));
     assert_eq!(entities["items"][0]["titles"]["zh"], "Star Voyager");
-    assert_eq!(entities["items"][0]["titles"]["en"], "Voyage of Stars");
+    assert_eq!(entities["items"][0]["titles"]["en"], "A Voyage of Stars");
+
+    let english_title_sort = server
+        .ok_json("/api/entities?sort=title&titleLanguage=en")
+        .await;
+    assert_eq!(english_title_sort["items"][0]["id"], "anime:Star Voyager");
 
     let filtered = server
         .ok_json("/api/entities?type=games&status=Playing&refs=with&cover=without")
@@ -109,7 +114,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .await;
     assert_eq!(detail["entity"]["title"], "Star Voyager");
     assert_eq!(detail["entity"]["titles"]["zh"], "Star Voyager");
-    assert_eq!(detail["entity"]["titles"]["en"], "Voyage of Stars");
+    assert_eq!(detail["entity"]["titles"]["en"], "A Voyage of Stars");
     assert_eq!(detail["entity"]["path"], "Taxonomy/Anime/Star Voyager.md");
     assert_eq!(detail["relations"].as_array().unwrap().len(), 3);
 
@@ -384,7 +389,7 @@ fn write_fixture_vault(vault: &Path) {
         &vault.join("Taxonomy/Anime/Star Voyager.md"),
         r#"---
 title: Star Voyager
-title_en: Voyage of Stars
+title_en: A Voyage of Stars
 status: Watching
 season: "2025"
 complete_date: 2025-04-20
