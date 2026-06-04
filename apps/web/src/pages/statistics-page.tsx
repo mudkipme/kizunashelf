@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { getAnalytics } from "@kizunashelf/api-contract";
-import { Link } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
@@ -10,8 +9,6 @@ import { EntityMiniList } from "@/components/analytics/entity-mini-list";
 import { StatTile } from "@/components/analytics/stat-tile";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { relationFieldHref, relationTargetHref } from "@/lib/relations";
 import type { AnalyticsResponse } from "@/types/api";
 
 type StatisticsState = {
@@ -141,105 +138,9 @@ export function StatisticsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <AnalyticsSection title="Relation Fields">
-                <BarList
-                  items={data.distributions.byRelationField.map((item) => ({
-                    ...item,
-                    href: relationFieldHref(item.name),
-                  }))}
-                />
-              </AnalyticsSection>
-
-              <AnalyticsSection title="Source -> Target Types">
-                <BarList items={data.distributions.bySourceTargetType} />
-              </AnalyticsSection>
-            </div>
-
-            <AnalyticsSection title="Top Relation Hubs">
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                {data.relations.topTargets.map((target) => (
-                  <Link
-                    key={target.key}
-                    to={relationTargetHref(target.fields[0]?.name ?? "related", target)}
-                    className="rounded-md border p-3 hover:bg-accent"
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="min-w-0 truncate text-sm font-medium">
-                        {target.targetTitle}
-                      </span>
-                      {target.targetTypeLabel ? (
-                        <Badge variant="outline">{target.targetTypeLabel}</Badge>
-                      ) : null}
-                      <Badge variant="secondary">{target.count}</Badge>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {target.fields.slice(0, 4).map((field) => (
-                        <Badge key={field.name} variant="outline">
-                          {field.name} {field.count}
-                        </Badge>
-                      ))}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </AnalyticsSection>
-
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <AnalyticsSection title="Missing Cover">
-                <EntityMiniList items={data.dataQuality.missingCover} />
-                <QueueLink to="/cleanup/missing-cover" />
-              </AnalyticsSection>
-              <AnalyticsSection title="Missing External Refs">
-                <EntityMiniList items={data.dataQuality.missingExternalRefs} />
-                <QueueLink to="/cleanup/missing-refs" />
-              </AnalyticsSection>
-              <AnalyticsSection title="Missing Summary">
-                <EntityMiniList items={data.dataQuality.missingSummary} />
-                <QueueLink to="/cleanup/missing-summary" />
-              </AnalyticsSection>
-              <AnalyticsSection title="Isolated Nodes">
-                <EntityMiniList items={data.dataQuality.isolated} />
-                <QueueLink to="/cleanup/isolated" />
-              </AnalyticsSection>
-            </div>
-
-            <AnalyticsSection title="Unresolved Relations">
-              {data.relations.unresolved.examples.length > 0 ? (
-                <div className="flex flex-col gap-1">
-                  {data.relations.unresolved.examples.map((relation) => (
-                    <div
-                      key={`${relation.sourceId}-${relation.field}-${relation.targetTitle}`}
-                      className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1 text-xs"
-                    >
-                      <Badge variant="outline">{relation.field}</Badge>
-                      <span className="min-w-0 truncate">{relation.targetTitle}</span>
-                      <Button asChild variant="ghost" size="sm" className="ml-auto">
-                        <Link to={`/entities/${encodeURIComponent(relation.sourceId)}`}>
-                          Source
-                        </Link>
-                      </Button>
-                    </div>
-                  ))}
-                  <QueueLink to="/cleanup/unresolved-relations" />
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">No unresolved relation targets</div>
-              )}
-            </AnalyticsSection>
           </>
         ) : null}
       </div>
     </AppFrame>
-  );
-}
-
-function QueueLink({ to }: { to: string }) {
-  return (
-    <div className="mt-3">
-      <Button asChild variant="outline" size="sm">
-        <Link to={to}>Open Queue</Link>
-      </Button>
-    </div>
   );
 }

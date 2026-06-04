@@ -11,7 +11,7 @@ use crate::contract::{
     StatsResponse, TypeConfigResponse, TypeCount,
 };
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
-use crate::library::{compare_string, read_library_from_config};
+use crate::library::{compare_string, effective_default_title_language, read_library_from_config};
 use crate::relations::{
     build_relation_field_summary_with_index, build_relation_hubs, build_relation_target_summary,
     build_relation_targets, count_by, get_status_tracked_type_ids, outgoing_relations,
@@ -256,6 +256,7 @@ async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
                 label: item.label.clone(),
                 icon: item.icon.clone(),
                 path: item.path.clone(),
+                default_title_language: effective_default_title_language(item),
                 title_languages: item.fields.title_languages.keys().cloned().collect(),
             })
             .collect(),

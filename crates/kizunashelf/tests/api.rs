@@ -29,7 +29,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(config["taxonomyRoot"], "Taxonomy");
     assert_eq!(config["types"].as_array().unwrap().len(), 4);
     assert_eq!(config["types"][0]["icon"], "📺");
-    assert_eq!(config["types"][0]["titleLanguages"], json!(["en", "zh"]));
+    assert_eq!(config["types"][0]["defaultTitleLanguage"], "primary");
+    assert_eq!(
+        config["types"][0]["titleLanguages"],
+        json!(["en", "primary", "zh"])
+    );
 
     let home = server.ok_json("/api/home").await;
     assert_eq!(home["title"], "Fixture Home");
@@ -268,9 +272,10 @@ impl TestServer {
                     "label": "Anime",
                     "icon": "📺",
                     "path": "Anime",
+                    "defaultTitleLanguage": "primary",
                     "fields": {
-                        "title": ["title"],
                         "titleLanguages": {
+                            "primary": ["title"],
                             "zh": ["filename"],
                             "en": ["title_en"]
                         },
@@ -286,9 +291,10 @@ impl TestServer {
                     "id": "games",
                     "label": "Games",
                     "path": "Games",
+                    "defaultTitleLanguage": "primary",
                     "fields": {
-                        "title": ["title"],
                         "titleLanguages": {
+                            "primary": ["title"],
                             "zh": ["filename"],
                             "en": ["title_en"]
                         },
@@ -304,9 +310,10 @@ impl TestServer {
                     "id": "franchise",
                     "label": "Franchise",
                     "path": "Franchise",
+                    "defaultTitleLanguage": "primary",
                     "fields": {
-                        "title": ["title"],
                         "titleLanguages": {
+                            "primary": ["title"],
                             "zh": ["filename"]
                         },
                         "relations": ["related"]
@@ -316,9 +323,10 @@ impl TestServer {
                     "id": "music",
                     "label": "Music",
                     "path": "Music",
+                    "defaultTitleLanguage": "primary",
                     "fields": {
-                        "title": ["title"],
                         "titleLanguages": {
+                            "primary": ["title"],
                             "original": ["filename"]
                         },
                         "date": ["release_date"],

@@ -282,8 +282,8 @@ function SidebarContent({
         <SidebarNavLink to="/statistics" icon={BarChart3Icon} onNavigate={onNavigate}>
           Statistics
         </SidebarNavLink>
-        <SidebarNavLink to="/cleanup" icon={ClipboardCheckIcon} onNavigate={onNavigate}>
-          Cleanup
+        <SidebarNavLink to="/review" icon={ClipboardCheckIcon} onNavigate={onNavigate}>
+          Review
         </SidebarNavLink>
         <button
           type="button"

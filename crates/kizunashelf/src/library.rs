@@ -179,13 +179,7 @@ async fn read_entity_file(
     let parsed = parse_markdown(&raw);
     let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
     let titles = title_languages(&parsed.frontmatter, &note_basename, &type_config);
-    let title = first_string_with_basename(
-        &parsed.frontmatter,
-        &type_config.fields.title,
-        &note_basename,
-    )
-    .or_else(|| titles.values().next().cloned())
-    .unwrap_or_else(|| note_basename.clone());
+    let title = default_title(&titles, &note_basename, &type_config);
     let relative_path = relative_path(Path::new(&vault_root), &absolute_path);
 
     let summary = EntitySummary {
@@ -336,6 +330,26 @@ fn title_languages(
                 .map(|title| (language.clone(), title))
         })
         .collect()
+}
+
+pub fn effective_default_title_language(type_config: &EntityTypeConfig) -> Option<String> {
+    type_config
+        .default_title_language
+        .as_ref()
+        .filter(|language| type_config.fields.title_languages.contains_key(*language))
+        .cloned()
+        .or_else(|| type_config.fields.title_languages.keys().next().cloned())
+}
+
+fn default_title(
+    titles: &BTreeMap<String, String>,
+    basename: &str,
+    type_config: &EntityTypeConfig,
+) -> String {
+    effective_default_title_language(type_config)
+        .and_then(|language| titles.get(&language).cloned())
+        .or_else(|| titles.values().next().cloned())
+        .unwrap_or_else(|| basename.to_string())
 }
 
 fn normalize_title_field(
@@ -699,9 +713,12 @@ mod tests {
                 label: "Anime".to_string(),
                 icon: None,
                 path: "Anime".to_string(),
+                default_title_language: Some("primary".to_string()),
                 fields: EntityFields {
-                    title: vec!["title".to_string()],
-                    title_languages: std::collections::BTreeMap::new(),
+                    title_languages: std::collections::BTreeMap::from([(
+                        "primary".to_string(),
+                        vec!["title".to_string()],
+                    )]),
                     subtitle: Vec::new(),
                     image: Vec::new(),
                     status: Vec::new(),

@@ -52,7 +52,7 @@ const queueDefinitions: QueueDefinition[] = [
   { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
 ];
 
-export function CleanupPage() {
+export function ReviewPage() {
   const { queueId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [state, setState] = useState<CleanupState>({ loading: true });
@@ -124,13 +124,13 @@ export function CleanupPage() {
             <div className="flex flex-wrap items-center gap-2">
               {activeQueue ? (
                 <Button asChild variant="ghost" size="sm">
-                  <Link to="/cleanup">
+                  <Link to="/review">
                     <ArrowLeftIcon data-icon="inline-start" />
-                    Cleanup
+                    Review
                   </Link>
                 </Button>
               ) : (
-                <Badge variant="secondary">Cleanup</Badge>
+                <Badge variant="secondary">Review</Badge>
               )}
               <Button asChild variant="ghost" size="sm">
                 <Link to="/statistics">
@@ -140,14 +140,14 @@ export function CleanupPage() {
               </Button>
             </div>
             <h1 className="mt-2 text-xl font-semibold">
-              {activeQueue?.label ?? "Actionable Cleanup Queues"}
+              {activeQueue?.label ?? "Metadata Review"}
             </h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {state.loading
                 ? "Loading"
                 : state.data
                   ? `Updated ${state.data.generatedAt.slice(0, 10)}`
-                  : "No cleanup data"}
+                  : "No review data"}
             </p>
           </div>
           {activeSummary ? <ProgressPill summary={activeSummary} /> : null}
@@ -157,7 +157,7 @@ export function CleanupPage() {
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : null}
 
-        {state.data && !activeQueue ? <CleanupOverview summaries={summaries} /> : null}
+        {state.data && !activeQueue ? <ReviewOverview summaries={summaries} /> : null}
 
         {state.data && activeQueue ? (
           <>
@@ -238,7 +238,7 @@ export function CleanupPage() {
   );
 }
 
-function CleanupOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
+function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
       {queueDefinitions.map((definition) => {
@@ -247,7 +247,7 @@ function CleanupOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
         return (
           <Link
             key={definition.id}
-            to={`/cleanup/${definition.id}`}
+            to={`/review/${definition.id}`}
             className="flex min-h-36 flex-col gap-3 rounded-md border p-3 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
           >
             <div className="flex items-start justify-between gap-3">

@@ -80,6 +80,9 @@ export function LibraryPage() {
   const scopeStats = isGlobalType ? stats.global : stats.category;
   const selectedTypeConfig = config?.types.find((type) => type.id === selectedType);
   const titleLanguages = selectedTypeConfig?.titleLanguages ?? [];
+  const defaultTitleLabel = selectedTypeConfig?.defaultTitleLanguage
+    ? `Default title (${titleLanguageLabel(selectedTypeConfig.defaultTitleLanguage)})`
+    : "Default title";
   const effectiveTitleLanguage = titleLanguages.includes(titleLanguage)
     ? titleLanguage
     : defaultTitleLanguage;
@@ -358,6 +361,7 @@ export function LibraryPage() {
               view={view}
               titleLanguage={effectiveTitleLanguage}
               titleLanguages={titleLanguages}
+              defaultTitleLabel={defaultTitleLabel}
               onStatusChange={(value) => setQueryParam("status", value, allStatuses)}
               onRefsChange={(value) => setQueryParam("refs", value)}
               onCoverChange={(value) => setQueryParam("cover", value)}
@@ -464,7 +468,7 @@ export function LibraryPage() {
                     aria-label="Display title"
                     className="min-w-0"
                   >
-                    <option value={defaultTitleLanguage}>Default title</option>
+                    <option value={defaultTitleLanguage}>{defaultTitleLabel}</option>
                     {titleLanguages.map((language) => (
                       <option key={language} value={language}>
                         {titleLanguageLabel(language)}

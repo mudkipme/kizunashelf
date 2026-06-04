@@ -25,6 +25,7 @@ export function AssetToolbar({
   view,
   titleLanguage,
   titleLanguages,
+  defaultTitleLabel = "Default title",
   onStatusChange,
   onRefsChange,
   onCoverChange,
@@ -43,6 +44,7 @@ export function AssetToolbar({
   view: string;
   titleLanguage: string;
   titleLanguages: string[];
+  defaultTitleLabel?: string;
   onStatusChange: (value: string) => void;
   onRefsChange: (value: string) => void;
   onCoverChange: (value: string) => void;
@@ -92,7 +94,7 @@ export function AssetToolbar({
         <option value="desc">Descending</option>
       </Select>
       <Select value={titleLanguage} onChange={(event) => onTitleLanguageChange(event.target.value)}>
-        <option value={defaultTitleLanguage}>Default title</option>
+        <option value={defaultTitleLanguage}>{defaultTitleLabel}</option>
         {titleLanguages.map((language) => (
           <option key={language} value={language}>
             {titleLanguageLabel(language)}

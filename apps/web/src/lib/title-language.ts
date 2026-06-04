@@ -3,6 +3,7 @@ import type { EntitySummary } from "@/types/api";
 
 const labels: Record<string, string> = {
   [defaultTitleLanguage]: "Default title",
+  primary: "Primary",
   original: "Original",
   zh: "Chinese",
   "zh-Hans": "Chinese (Simplified)",

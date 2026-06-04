@@ -22,15 +22,6 @@
         "direction": "desc"
       },
       {
-        "id": "watching-drama",
-        "title": "Watching Drama",
-        "type": "drama",
-        "status": "Watching",
-        "limit": 12,
-        "sort": "date:season",
-        "direction": "desc"
-      },
-      {
         "id": "playing-games",
         "title": "Playing Games",
         "type": "games",
@@ -38,6 +29,15 @@
         "limit": 12,
         "sort": "title",
         "direction": "asc"
+      },
+      {
+        "id": "watching-drama",
+        "title": "Watching Drama",
+        "type": "drama",
+        "status": "Watching",
+        "limit": 12,
+        "sort": "date:season",
+        "direction": "desc"
       }
     ]
   },
@@ -48,17 +48,12 @@
       "icon": "📺",
       "path": "Anime",
       "fields": {
-        "title": [
-          "title",
-          "jp_title",
-          "title_original"
-        ],
         "titleLanguages": {
           "zh": [
             "filename"
           ],
           "ja": [
-            "jp_title"
+            "title_ja"
           ],
           "original": [
             "title_original"
@@ -72,13 +67,14 @@
         ],
         "date": [
           "season",
-          "finish at",
+          "complete_date",
           "release_date"
         ],
         "externalRefs": [
           "bgm_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "zh"
     },
     {
       "id": "games",
@@ -86,11 +82,6 @@
       "icon": "🎮",
       "path": "Games",
       "fields": {
-        "title": [
-          "title",
-          "title_ja",
-          "title_en"
-        ],
         "titleLanguages": {
           "zh": [
             "filename"
@@ -102,9 +93,6 @@
             "title_en"
           ]
         },
-        "subtitle": [
-          "title_en"
-        ],
         "image": [
           "cover_url"
         ],
@@ -112,14 +100,15 @@
           "status"
         ],
         "date": [
-          "complete date",
+          "complete_date",
           "release_date"
         ],
         "externalRefs": [
           "igdb_url",
           "backloggd_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "zh"
     },
     {
       "id": "movie",
@@ -127,11 +116,17 @@
       "icon": "🎬",
       "path": "Movie",
       "fields": {
-        "title": [
-          "title",
-          "title_original",
-          "jp_title"
-        ],
+        "titleLanguages": {
+          "original": [
+            "title_original"
+          ],
+          "ja": [
+            "title_ja"
+          ],
+          "zh": [
+            "filename"
+          ]
+        },
         "image": [
           "cover_url"
         ],
@@ -139,14 +134,15 @@
           "status"
         ],
         "date": [
-          "finish at",
+          "complete_date",
           "release_date"
         ],
         "externalRefs": [
           "bgm_url",
           "thetvdb_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "zh"
     },
     {
       "id": "drama",
@@ -154,10 +150,14 @@
       "icon": "📺",
       "path": "Drama",
       "fields": {
-        "title": [
-          "title",
-          "title_original"
-        ],
+        "titleLanguages": {
+          "original": [
+            "title_original"
+          ],
+          "zh": [
+            "filename"
+          ]
+        },
         "image": [
           "cover_url"
         ],
@@ -165,14 +165,15 @@
           "status"
         ],
         "date": [
-          "finish at",
+          "complete_date",
           "season",
           "release_date"
         ],
         "externalRefs": [
           "thetvdb_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "zh"
     },
     {
       "id": "music",
@@ -180,9 +181,11 @@
       "icon": "🎵",
       "path": "Music",
       "fields": {
-        "title": [
-          "title"
-        ],
+        "titleLanguages": {
+          "original": [
+            "filename"
+          ]
+        },
         "image": [
           "cover_url"
         ],
@@ -196,7 +199,8 @@
           "vgmdb_url",
           "itunes_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "original"
     },
     {
       "id": "cd",
@@ -204,9 +208,11 @@
       "icon": "💿",
       "path": "CD",
       "fields": {
-        "title": [
-          "title"
-        ],
+        "titleLanguages": {
+          "original": [
+            "filename"
+          ]
+        },
         "image": [
           "cover_url"
         ],
@@ -224,7 +230,8 @@
           "vgmdb_url",
           "itunes_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "original"
     },
     {
       "id": "event",
@@ -232,9 +239,6 @@
       "icon": "🎫",
       "path": "Event",
       "fields": {
-        "title": [
-          "title"
-        ],
         "subtitle": [
           "location"
         ],
@@ -248,8 +252,14 @@
         "externalRefs": [
           "bgm_url",
           "event_url"
-        ]
-      }
+        ],
+        "titleLanguages": {
+          "original": [
+            "filename"
+          ]
+        }
+      },
+      "defaultTitleLanguage": "original"
     },
     {
       "id": "books",
@@ -257,10 +267,14 @@
       "icon": "📚",
       "path": "Books",
       "fields": {
-        "title": [
-          "title",
-          "jp_title"
-        ],
+        "titleLanguages": {
+          "original": [
+            "title_original"
+          ],
+          "zh": [
+            "filename"
+          ]
+        },
         "image": [
           "cover_url"
         ],
@@ -268,13 +282,14 @@
           "status"
         ],
         "date": [
-          "finish at",
+          "complete_date",
           "release_date"
         ],
         "externalRefs": [
           "bgm_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "zh"
     },
     {
       "id": "blu-ray",
@@ -282,9 +297,11 @@
       "icon": "📀",
       "path": "Blu-Ray",
       "fields": {
-        "title": [
-          "title"
-        ],
+        "titleLanguages": {
+          "original": [
+            "filename"
+          ]
+        },
         "image": [
           "cover_url"
         ],
@@ -299,7 +316,8 @@
         "externalRefs": [
           "bgm_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "original"
     },
     {
       "id": "artist",
@@ -307,10 +325,6 @@
       "icon": "🎤",
       "path": "Artist",
       "fields": {
-        "title": [
-          "title",
-          "name"
-        ],
         "image": [
           "avatar_url",
           "cover_url"
@@ -318,8 +332,14 @@
         "externalRefs": [
           "bgm_url",
           "musicbrainz_url"
-        ]
-      }
+        ],
+        "titleLanguages": {
+          "original": [
+            "filename"
+          ]
+        }
+      },
+      "defaultTitleLanguage": "original"
     },
     {
       "id": "characters",
@@ -327,18 +347,20 @@
       "icon": "👤",
       "path": "Characters",
       "fields": {
-        "title": [
-          "title",
-          "name"
-        ],
         "image": [
           "avatar_url",
           "cover_url"
         ],
         "externalRefs": [
           "bgm_url"
-        ]
-      }
+        ],
+        "titleLanguages": {
+          "original": [
+            "filename"
+          ]
+        }
+      },
+      "defaultTitleLanguage": "original"
     },
     {
       "id": "franchise",
@@ -346,16 +368,25 @@
       "icon": "🧩",
       "path": "Franchise",
       "fields": {
-        "title": [
-          "title"
-        ],
+        "titleLanguages": {
+          "zh": [
+            "filename"
+          ],
+          "ja": [
+            "title_ja"
+          ],
+          "en": [
+            "title_en"
+          ]
+        },
         "image": [
           "cover_url"
         ],
         "externalRefs": [
           "bgm_url"
         ]
-      }
+      },
+      "defaultTitleLanguage": "zh"
     }
   ],
   "relationshipFields": [

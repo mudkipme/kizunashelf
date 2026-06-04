@@ -6,8 +6,6 @@ use std::collections::BTreeMap;
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EntityFields {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub title: Vec<String>,
     #[serde(default, alias = "titles", skip_serializing_if = "BTreeMap::is_empty")]
     pub title_languages: BTreeMap<String, Vec<String>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -32,6 +30,8 @@ pub struct EntityTypeConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub icon: Option<String>,
     pub path: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_title_language: Option<String>,
     pub fields: EntityFields,
 }
 

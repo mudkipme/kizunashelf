@@ -817,6 +817,12 @@
           "path": {
             "type": "string"
           },
+          "defaultTitleLanguage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "titleLanguages": {
             "type": "array",
             "items": {

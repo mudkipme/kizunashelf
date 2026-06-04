@@ -11,6 +11,7 @@ export const TypeConfigResponse = zod.object({
   "label": zod.string(),
   "icon": zod.string().nullish(),
   "path": zod.string(),
+  "defaultTitleLanguage": zod.string().nullish(),
   "titleLanguages": zod.array(zod.string())
 })
 
