@@ -93,18 +93,13 @@ pub fn outgoing_relations<'a>(library: &'a Library, field: Option<&str>) -> Vec<
         .collect()
 }
 
-pub fn build_relation_field_summary(library: &Library, field: &str) -> RelationFieldSummary {
-    let entity_by_id = summary_by_id(library);
-    build_relation_field_summary_with_index(library, &entity_by_id, field)
-}
-
 pub fn build_relation_field_summary_with_index(
     library: &Library,
     entity_by_id: &HashMap<&str, &EntitySummary>,
     field: &str,
 ) -> RelationFieldSummary {
     let relations = outgoing_relations(library, Some(field));
-    let targets = build_relation_targets_from_relations(library, &entity_by_id, &relations);
+    let targets = build_relation_targets_from_relations(library, entity_by_id, &relations);
     let sources: HashSet<_> = relations
         .iter()
         .map(|relation| &relation.source_id)
@@ -226,15 +221,6 @@ fn relation_target_type_label(
         .unwrap_or_else(|| key.to_string())
 }
 
-pub fn build_relation_target_summary(
-    library: &Library,
-    key: &str,
-    relations: &[&Relation],
-) -> RelationTargetSummary {
-    let entity_by_id = summary_by_id(library);
-    build_relation_target_summary_with_index(library, &entity_by_id, key, relations)
-}
-
 fn build_relation_target_summary_with_index(
     library: &Library,
     entity_by_id: &HashMap<&str, &EntitySummary>,
@@ -271,7 +257,7 @@ fn build_relation_target_summary_with_index(
         target_type,
         target_type_label,
         count: relations.len(),
-        source_types: count_by(&relations, |relation| {
+        source_types: count_by(relations, |relation| {
             relation_source_type_label(relation, entity_by_id)
         }),
         examples: sources.into_iter().take(5).collect(),

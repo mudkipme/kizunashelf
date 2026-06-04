@@ -2,7 +2,7 @@
 
 KizunaShelf is a read-only ACGN asset browser for an Obsidian `Taxonomy/` vault.
 
-The v0.1 MVP keeps Markdown files as the source of truth, builds an in-memory relation index from configurable frontmatter fields, and exposes a compact web UI for browsing entities and links. The API is implemented in Rust so the same backend can run as a self-hosted web app server or be embedded by Tauri.
+The v0.2 app keeps Markdown files as the source of truth, builds an in-memory relation index from configurable frontmatter fields, and exposes a compact web UI for browsing entities, timelines, review queues, and links. The API is implemented in Rust so the same backend can run as a self-hosted web app server or be embedded by Tauri.
 
 ## Development
 

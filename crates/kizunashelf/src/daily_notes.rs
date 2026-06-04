@@ -75,7 +75,7 @@ pub fn strip_frontmatter(raw: &str) -> String {
 pub fn normalize_wikilink_target(target: &str) -> String {
     target
         .split('/')
-        .last()
+        .next_back()
         .unwrap_or(target)
         .trim()
         .to_lowercase()

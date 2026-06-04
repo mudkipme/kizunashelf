@@ -122,7 +122,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         <div className="ml-auto flex items-center gap-2 sm:ml-0">
           <ThemeModeSelect />
           <Badge variant="secondary" className="hidden sm:inline-flex">
-            v0.1 MVP
+            v{__APP_VERSION__}
           </Badge>
         </div>
       </header>

@@ -33,6 +33,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use schemars::JsonSchema;
 use serde::Deserialize;
+use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -205,13 +206,17 @@ fn api_router() -> ApiRouter<AppState> {
 }
 
 async fn get_library(state: &AppState) -> Result<Arc<Library>> {
-    let mut cache = state.cache.lock().await;
-    if let Some(cached) = cache.as_ref() {
-        if cached.cached_at.elapsed() < state.options.cache_ttl {
-            return Ok(Arc::clone(&cached.library));
+    {
+        let cache = state.cache.lock().await;
+        if let Some(cached) = cache.as_ref() {
+            if cached.cached_at.elapsed() < state.options.cache_ttl {
+                return Ok(Arc::clone(&cached.library));
+            }
         }
     }
+
     let library = Arc::new(read_library_from_config(&state.options.config_path).await?);
+    let mut cache = state.cache.lock().await;
     *cache = Some(CachedLibrary {
         library: Arc::clone(&library),
         cached_at: Instant::now(),
@@ -317,7 +322,7 @@ async fn stats(
         .cloned()
         .collect();
     let mut top_relations = summaries.clone();
-    top_relations.sort_by(|a, b| b.relation_count.cmp(&a.relation_count));
+    top_relations.sort_by_key(|item| Reverse(item.relation_count));
     top_relations.truncate(12);
 
     Ok(Json(StatsResponse {
@@ -1080,7 +1085,7 @@ fn build_timeline(
         }
     }
     let mut years: Vec<_> = by_year.into_iter().collect();
-    years.sort_by(|a, b| b.0.cmp(&a.0));
+    years.sort_by_key(|item| Reverse(item.0));
     let years = years
         .into_iter()
         .map(|(year, mut entities)| {
