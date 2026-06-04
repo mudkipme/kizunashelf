@@ -1,4 +1,5 @@
 use crate::contract::{CalendarFilters, CalendarResponse, CalendarTotals};
+use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_frontmatter};
 use crate::dates::{clamp_number, is_in_month, normalize_date, parse_exact_date};
 use crate::library::{compare_string, wikilink_regex};
 use crate::relations::summary_by_id;
@@ -8,7 +9,6 @@ use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use tokio::fs;
 
@@ -269,7 +269,7 @@ async fn entity_daily_note_entries(
     library: &Library,
     entity: &EntitySummary,
 ) -> Result<Vec<EntityDateDailyNoteEntry>> {
-    let daily_files = daily_note_files(library, None, None).await?;
+    let daily_files = daily_note_files(&library.config, None, None, true).await?;
     let by_basename = entity_basename_index(library);
     let mut grouped: HashMap<String, EntityDateDailyNoteEntry> = HashMap::new();
     let snippet_max_length = clamp_number(
@@ -284,6 +284,9 @@ async fn entity_daily_note_entries(
     ) as usize;
 
     for file in daily_files {
+        let Some(file_date) = file.date.as_ref() else {
+            continue;
+        };
         let raw = fs::read_to_string(&file.absolute_path).await?;
         for block in mention_blocks(&strip_frontmatter(&raw)) {
             let mentions_entity = wikilink_regex().captures_iter(&block.text).any(|captures| {
@@ -300,10 +303,10 @@ async fn entity_daily_note_entries(
 
             let entry =
                 grouped
-                    .entry(file.date.clone())
+                    .entry(file_date.clone())
                     .or_insert_with(|| EntityDateDailyNoteEntry {
-                        id: format!("daily-note:{}:{}", file.date, entity.id),
-                        date: file.date.clone(),
+                        id: format!("daily-note:{}:{}", file_date, entity.id),
+                        date: file_date.clone(),
                         note_path: file.relative_path.clone(),
                         snippets: Vec::new(),
                     });
@@ -333,7 +336,13 @@ async fn daily_note_calendar_entries(
     library: &Library,
     options: &CalendarBuildOptions,
 ) -> Result<Vec<CalendarEntry>> {
-    let daily_files = daily_note_files(library, Some(options.year), Some(options.month)).await?;
+    let daily_files = daily_note_files(
+        &library.config,
+        Some(options.year),
+        Some(options.month),
+        true,
+    )
+    .await?;
     let by_basename = entity_basename_index(library);
     let mut grouped: HashMap<String, CalendarEntry> = HashMap::new();
     let snippet_max_length = clamp_number(
@@ -348,6 +357,9 @@ async fn daily_note_calendar_entries(
     ) as usize;
 
     for file in daily_files {
+        let Some(file_date) = file.date.as_ref() else {
+            continue;
+        };
         let raw = fs::read_to_string(&file.absolute_path).await?;
         for block in mention_blocks(&strip_frontmatter(&raw)) {
             for captures in wikilink_regex().captures_iter(&block.text) {
@@ -366,10 +378,10 @@ async fn daily_note_calendar_entries(
                     continue;
                 }
 
-                let key = format!("daily-note:{}:{}", file.date, entity.id);
+                let key = format!("daily-note:{}:{}", file_date, entity.id);
                 let entry = grouped.entry(key.clone()).or_insert_with(|| CalendarEntry {
                     id: key,
-                    date: file.date.clone(),
+                    date: file_date.clone(),
                     source: CalendarEntrySource::DailyNote,
                     entity: entity.clone(),
                     date_field: None,
@@ -400,97 +412,6 @@ async fn daily_note_calendar_entries(
             entry
         })
         .collect())
-}
-
-#[derive(Clone)]
-struct DailyFile {
-    absolute_path: PathBuf,
-    relative_path: String,
-    date: String,
-}
-
-async fn daily_note_files(
-    library: &Library,
-    year: Option<i32>,
-    month: Option<u32>,
-) -> Result<Vec<DailyFile>> {
-    let paths = library
-        .config
-        .daily_notes
-        .as_ref()
-        .filter(|daily| !daily.paths.is_empty())
-        .map(|daily| daily.paths.clone())
-        .unwrap_or_else(|| vec!["Daily Notes".to_string()]);
-    let pattern = library
-        .config
-        .daily_notes
-        .as_ref()
-        .and_then(|daily| daily.date_pattern.as_ref())
-        .and_then(|pattern| Regex::new(pattern).ok())
-        .unwrap_or_else(|| Regex::new(r"^(?<date>\d{4}-\d{2}-\d{2})\.md$").unwrap());
-    let mut all_files = Vec::new();
-    for path in paths {
-        all_files
-            .extend(walk_markdown_files(&Path::new(&library.config.vault_root).join(path)).await?);
-    }
-
-    let mut files = Vec::new();
-    for absolute_path in all_files {
-        let relative_path = relative_path(Path::new(&library.config.vault_root), &absolute_path);
-        let basename = absolute_path
-            .file_name()
-            .map(|item| item.to_string_lossy().to_string())
-            .unwrap_or_default();
-        let date = daily_note_date(&relative_path, &pattern)
-            .or_else(|| daily_note_date(&basename, &pattern));
-        let Some(date) = date else {
-            continue;
-        };
-        if year
-            .zip(month)
-            .is_some_and(|(year, month)| !is_in_month(&date, year, month))
-        {
-            continue;
-        }
-        files.push(DailyFile {
-            absolute_path,
-            relative_path,
-            date,
-        });
-    }
-    Ok(files)
-}
-
-async fn walk_markdown_files(root: &Path) -> Result<Vec<PathBuf>> {
-    let mut files = Vec::new();
-    let mut stack = vec![root.to_path_buf()];
-    while let Some(path) = stack.pop() {
-        let mut entries = match fs::read_dir(&path).await {
-            Ok(entries) => entries,
-            Err(_) => continue,
-        };
-        while let Some(entry) = entries.next_entry().await? {
-            let file_type = entry.file_type().await?;
-            let path = entry.path();
-            if file_type.is_dir() {
-                stack.push(path);
-            } else if file_type.is_file()
-                && path.extension().is_some_and(|extension| extension == "md")
-            {
-                files.push(path);
-            }
-        }
-    }
-    Ok(files)
-}
-
-fn daily_note_date(path: &str, pattern: &Regex) -> Option<String> {
-    let captures = pattern.captures(path)?;
-    let date = captures
-        .name("date")
-        .or_else(|| captures.get(1))
-        .map(|capture| capture.as_str())?;
-    parse_exact_date(Some(date))
 }
 
 fn calendar_days(year: i32, month: u32, entries: &[CalendarEntry]) -> Vec<CalendarDay> {
@@ -597,30 +518,11 @@ fn find_entity_for_wikilink(
         .or_else(|| candidates.first().cloned())
 }
 
-fn normalize_wikilink_target(target: &str) -> String {
-    target
-        .split('/')
-        .last()
-        .unwrap_or(target)
-        .trim()
-        .to_lowercase()
-}
-
 #[derive(Clone)]
 struct MarkdownMentionBlock {
     text: String,
     heading: Option<String>,
     line: usize,
-}
-
-fn strip_frontmatter(raw: &str) -> String {
-    if !raw.starts_with("---\n") {
-        return raw.to_string();
-    }
-    raw[4..]
-        .find("\n---")
-        .map(|end| raw[end + 8..].to_string())
-        .unwrap_or_else(|| raw.to_string())
 }
 
 fn mention_blocks(markdown: &str) -> Vec<MarkdownMentionBlock> {
@@ -741,13 +643,6 @@ fn clean_mention_snippet(text: &str, max_length: usize) -> String {
                 .trim()
         )
     }
-}
-
-fn relative_path(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/")
 }
 
 fn fence_line_regex() -> &'static Regex {

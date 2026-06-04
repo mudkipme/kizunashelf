@@ -16,6 +16,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import {
+  allEntityFilter,
+  compareEntitiesByTypeThenTitle,
+  entityDateOptions,
+  entityMatchesDate,
+  entityMatchesQuery,
+  entityMatchesStatus,
+  entityStatusOptions,
+  entityTypeOptions,
+} from "@/lib/entity-filters";
 import { relationFieldHref } from "@/lib/relations";
 import { cn } from "@/lib/utils";
 import type {
@@ -41,9 +51,6 @@ type FilterableItem =
   | { kind: "entity"; entity: EntitySummary }
   | { kind: "relation"; item: CleanupUnresolvedRelation; entity: EntitySummary };
 
-const allFilter = "all";
-const noStatusFilter = "__none";
-
 const queueDefinitions: QueueDefinition[] = [
   { id: "missing-cover", label: "Missing Cover", kind: "entity" },
   { id: "missing-refs", label: "Missing External Refs", kind: "entity" },
@@ -57,9 +64,9 @@ export function ReviewPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [state, setState] = useState<CleanupState>({ loading: true });
   const query = searchParams.get("q") ?? "";
-  const selectedType = searchParams.get("type") ?? allFilter;
-  const selectedStatus = searchParams.get("status") ?? allFilter;
-  const selectedDate = searchParams.get("date") ?? allFilter;
+  const selectedType = searchParams.get("type") ?? allEntityFilter;
+  const selectedStatus = searchParams.get("status") ?? allEntityFilter;
+  const selectedDate = searchParams.get("date") ?? allEntityFilter;
   const [queryInput, setQueryInput] = useState(query);
 
   useEffect(() => {
@@ -73,7 +80,7 @@ export function ReviewPage() {
   useEffect(() => {
     if (queryInput === query) return;
     const timeout = window.setTimeout(() => {
-      setFilter("q", queryInput.trim(), allFilter, true);
+      setFilter("q", queryInput.trim(), allEntityFilter, true);
     }, 180);
     return () => window.clearTimeout(timeout);
   }, [queryInput, query, searchParams]);
@@ -88,7 +95,7 @@ export function ReviewPage() {
     }
   }
 
-  function setFilter(key: string, value: string, defaultValue = allFilter, replace = false) {
+  function setFilter(key: string, value: string, defaultValue = allEntityFilter, replace = false) {
     const next = new URLSearchParams(searchParams);
     if (!value || value === defaultValue) next.delete(key);
     else next.set(key, value);
@@ -102,16 +109,17 @@ export function ReviewPage() {
     () => (state.data && activeQueue ? queueItems(state.data, activeQueue) : []),
     [state.data, activeQueue],
   );
-  const typeOptions = useMemo(() => sourceTypeOptions(items), [items]);
-  const statusOptions = useMemo(() => sourceStatusOptions(items), [items]);
-  const dateOptions = useMemo(() => sourceDateOptions(items), [items]);
+  const itemEntities = useMemo(() => items.map((item) => item.entity), [items]);
+  const typeOptions = useMemo(() => entityTypeOptions(itemEntities), [itemEntities]);
+  const statusOptions = useMemo(() => entityStatusOptions(itemEntities), [itemEntities]);
+  const dateOptions = useMemo(() => entityDateOptions(itemEntities), [itemEntities]);
   const filteredItems = useMemo(
     () =>
       items
         .filter((item) => matchesQuery(item, query))
-        .filter((item) => selectedType === allFilter || item.entity.type === selectedType)
-        .filter((item) => matchesStatus(item.entity, selectedStatus))
-        .filter((item) => matchesDate(item.entity, selectedDate))
+        .filter((item) => selectedType === allEntityFilter || item.entity.type === selectedType)
+        .filter((item) => entityMatchesStatus(item.entity, selectedStatus))
+        .filter((item) => entityMatchesDate(item.entity, selectedDate))
         .sort(compareItems),
     [items, query, selectedType, selectedStatus, selectedDate],
   );
@@ -172,7 +180,7 @@ export function ReviewPage() {
                   />
                 </div>
                 <Select value={selectedType} onChange={(event) => setFilter("type", event.target.value)}>
-                  <option value={allFilter}>All types</option>
+                  <option value={allEntityFilter}>All types</option>
                   {typeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label} ({option.count})
@@ -183,7 +191,7 @@ export function ReviewPage() {
                   value={selectedStatus}
                   onChange={(event) => setFilter("status", event.target.value)}
                 >
-                  <option value={allFilter}>All statuses</option>
+                  <option value={allEntityFilter}>All statuses</option>
                   {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label} ({option.count})
@@ -191,7 +199,7 @@ export function ReviewPage() {
                   ))}
                 </Select>
                 <Select value={selectedDate} onChange={(event) => setFilter("date", event.target.value)}>
-                  <option value={allFilter}>All dates</option>
+                  <option value={allEntityFilter}>All dates</option>
                   <option value="dated">Has date</option>
                   <option value="undated">No date</option>
                   {dateOptions.map((option) => (
@@ -390,81 +398,18 @@ function queueItems(data: CleanupQueuesResponse, queue: QueueDefinition): Filter
   return data.unresolvedRelations.map((item) => ({ kind: "relation", item, entity: item.source }));
 }
 
-function sourceTypeOptions(items: FilterableItem[]) {
-  const counts = countBy(items, (item) => item.entity.type);
-  const labels = new Map(items.map((item) => [item.entity.type, item.entity.typeLabel]));
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, label: labels.get(value) ?? value, count }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function sourceStatusOptions(items: FilterableItem[]) {
-  const counts = countBy(items, (item) => item.entity.status ?? noStatusFilter);
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, label: value === noStatusFilter ? "No status" : value, count }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function sourceDateOptions(items: FilterableItem[]) {
-  const counts = new Map<string, number>();
-  for (const item of items) {
-    const years = new Set(item.entity.dates.map((date) => dateYear(date.value)).filter(Boolean));
-    for (const year of years) counts.set(year, (counts.get(year) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([year, count]) => ({ value: `year:${year}`, label: year, count }))
-    .sort((a, b) => b.label.localeCompare(a.label));
-}
-
 function matchesQuery(item: FilterableItem, query: string) {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return true;
-  const values = [
-    item.entity.title,
-    item.entity.subtitle ?? "",
-    item.entity.summary ?? "",
-    item.entity.basename,
-    item.entity.path,
-    ...Object.values(item.entity.titles),
-  ];
+  const extraValues: string[] = [];
   if (item.kind === "relation") {
-    values.push(item.item.relation.field, item.item.relation.targetTitle, item.item.relation.targetType ?? "");
+    extraValues.push(
+      item.item.relation.field,
+      item.item.relation.targetTitle,
+      item.item.relation.targetType ?? "",
+    );
   }
-  return values.some((value) => value.toLowerCase().includes(normalized));
-}
-
-function matchesStatus(entity: EntitySummary, selectedStatus: string) {
-  if (selectedStatus === allFilter) return true;
-  if (selectedStatus === noStatusFilter) return !entity.status;
-  return entity.status === selectedStatus;
-}
-
-function matchesDate(entity: EntitySummary, selectedDate: string) {
-  if (selectedDate === allFilter) return true;
-  if (selectedDate === "dated") return entity.dates.length > 0;
-  if (selectedDate === "undated") return entity.dates.length === 0;
-  if (selectedDate.startsWith("year:")) {
-    const year = selectedDate.slice("year:".length);
-    return entity.dates.some((date) => dateYear(date.value) === year);
-  }
-  return true;
-}
-
-function dateYear(value: string) {
-  const match = /^(\d{4})/.exec(value);
-  return match?.[1] ?? "";
+  return entityMatchesQuery(item.entity, query, extraValues);
 }
 
 function compareItems(a: FilterableItem, b: FilterableItem) {
-  if (a.entity.typeLabel !== b.entity.typeLabel) return a.entity.typeLabel.localeCompare(b.entity.typeLabel);
-  return a.entity.title.localeCompare(b.entity.title);
-}
-
-function countBy<T>(items: T[], key: (item: T) => string) {
-  const counts = new Map<string, number>();
-  for (const item of items) {
-    const value = key(item);
-    counts.set(value, (counts.get(value) ?? 0) + 1);
-  }
-  return counts;
+  return compareEntitiesByTypeThenTitle(a.entity, b.entity);
 }

@@ -11,6 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import {
+  allEntityFilter,
+  compareEntitiesByTypeThenTitle,
+  entityDateOptions,
+  entityMatchesDate,
+  entityMatchesQuery,
+  entityMatchesStatus,
+  entityStatusOptions,
+  entityTypeOptions,
+  groupEntitiesByTypeLabel,
+} from "@/lib/entity-filters";
 import { cn } from "@/lib/utils";
 import type { EntitySummary, RelationTargetResponse } from "@/types/api";
 
@@ -22,17 +33,14 @@ type TargetState = {
 
 type TargetView = "list" | "graph";
 
-const allFilter = "all";
-const noStatusFilter = "__none";
-
 export function RelationTargetPage() {
   const { field = "", target = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [state, setState] = useState<TargetState>({ loading: true });
   const query = searchParams.get("q") ?? "";
-  const selectedType = searchParams.get("type") ?? allFilter;
-  const selectedStatus = searchParams.get("status") ?? allFilter;
-  const selectedDate = searchParams.get("date") ?? allFilter;
+  const selectedType = searchParams.get("type") ?? allEntityFilter;
+  const selectedStatus = searchParams.get("status") ?? allEntityFilter;
+  const selectedDate = searchParams.get("date") ?? allEntityFilter;
   const view = readView(searchParams.get("view"));
   const [queryInput, setQueryInput] = useState(query);
 
@@ -48,7 +56,7 @@ export function RelationTargetPage() {
   useEffect(() => {
     if (queryInput === query) return;
     const timeout = window.setTimeout(() => {
-      setFilter("q", queryInput.trim(), allFilter, true);
+      setFilter("q", queryInput.trim(), allEntityFilter, true);
     }, 180);
     return () => window.clearTimeout(timeout);
   }, [queryInput, query, searchParams]);
@@ -63,7 +71,7 @@ export function RelationTargetPage() {
     }
   }
 
-  function setFilter(key: string, value: string, defaultValue = allFilter, replace = false) {
+  function setFilter(key: string, value: string, defaultValue = allEntityFilter, replace = false) {
     const next = new URLSearchParams(searchParams);
     if (!value || value === defaultValue) next.delete(key);
     else next.set(key, value);
@@ -84,20 +92,20 @@ export function RelationTargetPage() {
     () => nonEntitySourceTypes.reduce((total, type) => total + type.count, 0),
     [nonEntitySourceTypes],
   );
-  const typeOptions = useMemo(() => sourceTypeOptions(sourceItems), [sourceItems]);
-  const statusOptions = useMemo(() => sourceStatusOptions(sourceItems), [sourceItems]);
-  const dateOptions = useMemo(() => sourceDateOptions(sourceItems), [sourceItems]);
+  const typeOptions = useMemo(() => entityTypeOptions(sourceItems), [sourceItems]);
+  const statusOptions = useMemo(() => entityStatusOptions(sourceItems), [sourceItems]);
+  const dateOptions = useMemo(() => entityDateOptions(sourceItems), [sourceItems]);
   const filteredSources = useMemo(
     () =>
       sourceItems
-        .filter((entity) => matchesQuery(entity, query))
-        .filter((entity) => selectedType === allFilter || entity.type === selectedType)
-        .filter((entity) => matchesStatus(entity, selectedStatus))
-        .filter((entity) => matchesDate(entity, selectedDate))
-        .sort(compareSources),
+        .filter((entity) => entityMatchesQuery(entity, query))
+        .filter((entity) => selectedType === allEntityFilter || entity.type === selectedType)
+        .filter((entity) => entityMatchesStatus(entity, selectedStatus))
+        .filter((entity) => entityMatchesDate(entity, selectedDate))
+        .sort(compareEntitiesByTypeThenTitle),
     [sourceItems, query, selectedType, selectedStatus, selectedDate],
   );
-  const filteredGroups = useMemo(() => groupSourcesByType(filteredSources), [filteredSources]);
+  const filteredGroups = useMemo(() => groupEntitiesByTypeLabel(filteredSources), [filteredSources]);
 
   return (
     <AppFrame error={state.error}>
@@ -152,7 +160,7 @@ export function RelationTargetPage() {
                 />
               </div>
               <Select value={selectedType} onChange={(event) => setFilter("type", event.target.value)}>
-                <option value={allFilter}>All types</option>
+                <option value={allEntityFilter}>All types</option>
                 {typeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label} ({option.count})
@@ -160,7 +168,7 @@ export function RelationTargetPage() {
                 ))}
               </Select>
               <Select value={selectedStatus} onChange={(event) => setFilter("status", event.target.value)}>
-                <option value={allFilter}>All statuses</option>
+                <option value={allEntityFilter}>All statuses</option>
                 {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label} ({option.count})
@@ -168,7 +176,7 @@ export function RelationTargetPage() {
                 ))}
               </Select>
               <Select value={selectedDate} onChange={(event) => setFilter("date", event.target.value)}>
-                <option value={allFilter}>All dates</option>
+                <option value={allEntityFilter}>All dates</option>
                 <option value="dated">Has date</option>
                 <option value="undated">No date</option>
                 {dateOptions.map((option) => (
@@ -288,91 +296,6 @@ function flattenSources(data: RelationTargetResponse | undefined) {
   return entities;
 }
 
-function sourceTypeOptions(entities: EntitySummary[]) {
-  const counts = countBy(entities, (entity) => entity.type);
-  const labels = new Map(entities.map((entity) => [entity.type, entity.typeLabel]));
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, label: labels.get(value) ?? value, count }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function sourceStatusOptions(entities: EntitySummary[]) {
-  const counts = countBy(entities, (entity) => entity.status ?? noStatusFilter);
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, label: value === noStatusFilter ? "No status" : value, count }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function sourceDateOptions(entities: EntitySummary[]) {
-  const counts = new Map<string, number>();
-  for (const entity of entities) {
-    const years = new Set(entity.dates.map((date) => dateYear(date.value)).filter(Boolean));
-    for (const year of years) counts.set(year, (counts.get(year) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([year, count]) => ({ value: `year:${year}`, label: year, count }))
-    .sort((a, b) => b.label.localeCompare(a.label));
-}
-
-function matchesQuery(entity: EntitySummary, query: string) {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return true;
-  const values = [
-    entity.title,
-    entity.subtitle ?? "",
-    entity.summary ?? "",
-    entity.basename,
-    ...Object.values(entity.titles),
-  ];
-  return values.some((value) => value.toLowerCase().includes(normalized));
-}
-
-function matchesStatus(entity: EntitySummary, selectedStatus: string) {
-  if (selectedStatus === allFilter) return true;
-  if (selectedStatus === noStatusFilter) return !entity.status;
-  return entity.status === selectedStatus;
-}
-
-function matchesDate(entity: EntitySummary, selectedDate: string) {
-  if (selectedDate === allFilter) return true;
-  if (selectedDate === "dated") return entity.dates.length > 0;
-  if (selectedDate === "undated") return entity.dates.length === 0;
-  if (selectedDate.startsWith("year:")) {
-    const year = selectedDate.slice("year:".length);
-    return entity.dates.some((date) => dateYear(date.value) === year);
-  }
-  return true;
-}
-
-function dateYear(value: string) {
-  const match = /^(\d{4})/.exec(value);
-  return match?.[1] ?? "";
-}
-
-function groupSourcesByType(entities: EntitySummary[]) {
-  const groups = new Map<string, EntitySummary[]>();
-  for (const entity of entities) {
-    const items = groups.get(entity.typeLabel) ?? [];
-    items.push(entity);
-    groups.set(entity.typeLabel, items);
-  }
-  return [...groups.entries()].map(([typeLabel, items]) => ({ typeLabel, items }));
-}
-
-function compareSources(a: EntitySummary, b: EntitySummary) {
-  if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
-  return a.title.localeCompare(b.title);
-}
-
 function formatSourceTypeList(sourceTypes: { name: string; count: number }[]) {
   return sourceTypes.map((type) => type.name).join(", ");
-}
-
-function countBy<T>(items: T[], key: (item: T) => string) {
-  const counts = new Map<string, number>();
-  for (const item of items) {
-    const value = key(item);
-    counts.set(value, (counts.get(value) ?? 0) + 1);
-  }
-  return counts;
 }
