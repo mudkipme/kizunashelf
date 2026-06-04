@@ -8,6 +8,8 @@ import { z as zod } from 'zod';
 
 export const entityDetailResponseEntityRelationCountMin = 0;
 
+export const entityDetailResponseRelatedEntitiesItemRelationCountMin = 0;
+
 
 export const EntityDetailResponse = zod.object({
   "entity": zod.object({
@@ -39,6 +41,25 @@ export const EntityDetailResponse = zod.object({
   "targetType": zod.string().nullish(),
   "field": zod.string(),
   "direction": zod.enum(['out', 'in'])
+})),
+  "relatedEntities": zod.array(zod.object({
+  "id": zod.string(),
+  "type": zod.string(),
+  "typeLabel": zod.string(),
+  "title": zod.string(),
+  "titles": zod.record(zod.string(), zod.string()),
+  "subtitle": zod.string().nullish(),
+  "status": zod.string().nullish(),
+  "dates": zod.array(zod.object({
+  "field": zod.string(),
+  "value": zod.string()
+})),
+  "image": zod.string().nullish(),
+  "summary": zod.string().nullish(),
+  "path": zod.string(),
+  "basename": zod.string(),
+  "externalRefs": zod.record(zod.string(), zod.string()),
+  "relationCount": zod.number().min(entityDetailResponseRelatedEntitiesItemRelationCountMin)
 }))
 })
 

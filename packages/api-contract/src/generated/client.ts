@@ -73,10 +73,6 @@ import {
 } from './relationListResponse.zod';
 
 import {
-  RelationTargetResponse
-} from './relationTargetResponse.zod';
-
-import {
   StatsResponse
 } from './statsResponse.zod';
 
@@ -489,36 +485,5 @@ export const getRelationGroup = async (field: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? RelationFieldResponse.parse(parsedBody) : parsedBody
-  return data
-}
-
-
-
-export const getGetRelationTargetUrl = (field: string,
-    target: string,) => {
-
-
-
-
-  return `/api/relation-groups/${encodeURIComponent(String(field))}/${encodeURIComponent(String(target))}`
-}
-
-export const getRelationTarget = async (field: string,
-    target: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<RelationTargetResponse> => {
-
-  const res = await (fetchFn ?? fetch)(getGetRelationTargetUrl(field,target),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-)
-
-  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
-  const data = contentType.includes('json') ? RelationTargetResponse.parse(parsedBody) : parsedBody
   return data
 }

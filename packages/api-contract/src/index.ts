@@ -12,7 +12,6 @@ import { HomeResponse as HomeResponseSchema } from "./generated/homeResponse.zod
 import { RelationFieldResponse as RelationFieldResponseSchema } from "./generated/relationFieldResponse.zod.js";
 import { RelationGroupsResponse as RelationGroupsResponseSchema } from "./generated/relationGroupsResponse.zod.js";
 import { RelationListResponse as RelationListResponseSchema } from "./generated/relationListResponse.zod.js";
-import { RelationTargetResponse as RelationTargetResponseSchema } from "./generated/relationTargetResponse.zod.js";
 import { StatsResponse as StatsResponseSchema } from "./generated/statsResponse.zod.js";
 import type { AnalyticsResponse } from "./generated/analyticsResponse.zod.js";
 import type { CalendarResponse } from "./generated/calendarResponse.zod.js";
@@ -44,7 +43,6 @@ export * from "./generated/homeResponse.zod.js";
 export * from "./generated/relationFieldResponse.zod.js";
 export * from "./generated/relationGroupsResponse.zod.js";
 export * from "./generated/relationListResponse.zod.js";
-export * from "./generated/relationTargetResponse.zod.js";
 export * from "./generated/relationTargetTypeSummary.zod.js";
 export * from "./generated/statsResponse.zod.js";
 
@@ -61,7 +59,6 @@ export const ApiResponseSchemas = {
   relations: RelationListResponseSchema,
   relationGroups: RelationGroupsResponseSchema,
   relationField: RelationFieldResponseSchema,
-  relationTarget: RelationTargetResponseSchema,
   calendar: CalendarResponseSchema,
 } as const;
 

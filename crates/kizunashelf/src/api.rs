@@ -7,8 +7,7 @@ use crate::contract::{
     AnalyticsUnresolvedRelations, CalendarResponse, CleanupQueueSummary, CleanupQueuesResponse,
     CleanupUnresolvedRelation, ConfigResponse, EntityDetailResponse, EntityListResponse,
     ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse, RelationFieldResponse,
-    RelationGroupsResponse, RelationListResponse, RelationTargetGroup, RelationTargetResponse,
-    StatsResponse, TypeConfigResponse, TypeCount,
+    RelationGroupsResponse, RelationListResponse, StatsResponse, TypeConfigResponse, TypeCount,
 };
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
 use crate::library::{
@@ -16,13 +15,12 @@ use crate::library::{
     read_library_from_config,
 };
 use crate::relations::{
-    build_relation_field_summary_with_index, build_relation_hubs, build_relation_target_summary,
+    build_relation_field_summary_with_index, build_relation_hubs,
     build_relation_target_type_summaries, build_relation_targets, count_by,
-    get_status_tracked_type_ids, outgoing_relations, relation_fields, relation_source_type_label,
-    relation_type_pairs, sort_entities, sort_entities_with_title_language, summary_by_id,
-    target_key, Count, SortDirection,
+    get_status_tracked_type_ids, outgoing_relations, relation_fields, relation_type_pairs,
+    sort_entities, sort_entities_with_title_language, summary_by_id, Count, SortDirection,
 };
-use crate::types::{EntitySummary, HomeSectionConfig, Library};
+use crate::types::{EntitySummary, HomeSectionConfig, Library, Relation, RelationDirection};
 use aide::axum::routing::get_with;
 use aide::axum::ApiRouter;
 use aide::openapi::{Info, OpenApi};
@@ -207,15 +205,6 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(relation_group_field, |op| {
                 op.id("getRelationGroup")
                     .response::<200, Json<RelationFieldResponse>>()
-                    .response::<500, Json<ErrorResponse>>()
-            }),
-        )
-        .api_route(
-            "/api/relation-groups/{field}/{target}",
-            get_with(relation_group_target, |op| {
-                op.id("getRelationTarget")
-                    .response::<200, Json<RelationTargetResponse>>()
-                    .response::<404, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
@@ -658,15 +647,64 @@ async fn entity_detail(
     else {
         return Err(ApiError::not_found("Entity not found"));
     };
+    let relations = entity_detail_relations(&library, &entity.summary.id);
+    let related_entities = entity_detail_related_entities(&library, &entity.summary.id, &relations);
     Ok(Json(EntityDetailResponse {
         entity: entity.clone(),
-        relations: library
-            .relations
-            .iter()
-            .filter(|relation| relation.source_id == entity.summary.id)
-            .cloned()
-            .collect(),
+        relations,
+        related_entities,
     }))
+}
+
+fn entity_detail_relations(library: &Library, entity_id: &str) -> Vec<Relation> {
+    library
+        .relations
+        .iter()
+        .filter(|relation| {
+            relation.source_id == entity_id
+                || (relation.target_id.as_deref() == Some(entity_id)
+                    && relation.direction == RelationDirection::Out
+                    && !has_mirrored_incoming_relation(library, entity_id, relation))
+        })
+        .cloned()
+        .collect()
+}
+
+fn has_mirrored_incoming_relation(library: &Library, entity_id: &str, relation: &Relation) -> bool {
+    library.relations.iter().any(|candidate| {
+        candidate.source_id == entity_id
+            && candidate.target_id.as_deref() == Some(relation.source_id.as_str())
+            && candidate.field == relation.field
+            && candidate.direction == RelationDirection::In
+    })
+}
+
+fn entity_detail_related_entities(
+    library: &Library,
+    entity_id: &str,
+    relations: &[Relation],
+) -> Vec<EntitySummary> {
+    let summary_by_id = summary_by_id(library);
+    let mut seen = HashSet::new();
+    let mut related = Vec::new();
+    for relation in relations {
+        let related_id = if relation.source_id == entity_id {
+            relation.target_id.as_deref()
+        } else if relation.target_id.as_deref() == Some(entity_id) {
+            Some(relation.source_id.as_str())
+        } else {
+            None
+        };
+        let Some(related_id) = related_id else {
+            continue;
+        };
+        if seen.insert(related_id.to_string()) {
+            if let Some(summary) = summary_by_id.get(related_id) {
+                related.push((*summary).clone());
+            }
+        }
+    }
+    sort_entities(related, "title", SortDirection::Asc)
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -775,66 +813,6 @@ async fn relation_group_field(
         page,
         page_size,
         total_pages,
-    }))
-}
-
-#[derive(Deserialize, JsonSchema)]
-struct RelationTargetPath {
-    field: String,
-    target: String,
-}
-
-async fn relation_group_target(
-    State(state): State<AppState>,
-    Path(path): Path<RelationTargetPath>,
-) -> ApiResult<RelationTargetResponse> {
-    let library = get_library(&state).await?;
-    let field = path.field;
-    let target = path.target;
-    let relations = outgoing_relations(&library, Some(&field))
-        .into_iter()
-        .filter(|relation| {
-            relation.target_id.as_deref() == Some(&target) || relation.target_title == target
-        })
-        .collect::<Vec<_>>();
-    if relations.is_empty() {
-        return Err(ApiError::not_found("Relation target not found"));
-    }
-    let target_summary =
-        build_relation_target_summary(&library, target_key(&relations[0]), &relations);
-    let entity_by_id = summary_by_id(&library);
-    let source_entities: Vec<_> = relations
-        .iter()
-        .filter_map(|relation| {
-            entity_by_id
-                .get(relation.source_id.as_str())
-                .map(|entity| (*entity).clone())
-        })
-        .collect();
-    let groups = count_by(&relations, |relation| {
-        relation_source_type_label(relation, &entity_by_id)
-    })
-    .into_iter()
-    .map(|group| {
-        let items = source_entities
-            .iter()
-            .filter(|entity| entity.type_label == group.name)
-            .cloned()
-            .collect::<Vec<_>>();
-        RelationTargetGroup {
-            type_label: group.name,
-            count: group.count,
-            items: sort_entities(items, "title", SortDirection::Asc),
-        }
-    })
-    .collect::<Vec<_>>();
-
-    Ok(Json(RelationTargetResponse {
-        generated_at: library.generated_at.clone(),
-        field,
-        target: target_summary,
-        groups,
-        total: relations.len(),
     }))
 }
 

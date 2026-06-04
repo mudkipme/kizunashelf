@@ -116,9 +116,7 @@ export function RelationFieldPage() {
           {!state.loading && state.data?.targets.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">No targets</div>
           ) : null}
-          {state.data?.targets.map((target) => (
-            <RelationTargetRow key={target.key} field={field} target={target} />
-          ))}
+          {state.data?.targets.map((target) => <RelationTargetRow key={target.key} target={target} />)}
         </div>
 
         {state.data ? (

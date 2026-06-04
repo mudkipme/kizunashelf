@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { defaultTitleLanguage } from "@/lib/constants";
 import { entityTitle } from "@/lib/title-language";
-import type { EntitySummary, RelationTargetSummary } from "@/types/api";
+import type { EntitySummary } from "@/types/api";
 
 type GraphNode = {
   entity: EntitySummary;
@@ -17,7 +17,7 @@ export function RelationLocalGraph({
   target,
   sources,
 }: {
-  target: RelationTargetSummary;
+  target: { targetTitle: string; targetTypeLabel?: string | null; count: number };
   sources: EntitySummary[];
 }) {
   const nodes = graphNodes(sources.slice(0, maxGraphNodes));

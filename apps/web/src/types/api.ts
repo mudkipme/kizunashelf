@@ -26,7 +26,6 @@ export type {
   RelationFieldSummary,
   RelationGroupsResponse,
   RelationTargetHubSummary,
-  RelationTargetResponse,
   RelationTargetSummary,
   RelationTargetTypeSummary,
   StatsResponse,

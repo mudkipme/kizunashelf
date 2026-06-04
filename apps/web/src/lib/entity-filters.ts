@@ -76,16 +76,6 @@ export function entityMatchesDate(entity: EntitySummary, selectedDate: string) {
   return true;
 }
 
-export function groupEntitiesByTypeLabel(entities: EntitySummary[]) {
-  const groups = new Map<string, EntitySummary[]>();
-  for (const entity of entities) {
-    const items = groups.get(entity.typeLabel) ?? [];
-    items.push(entity);
-    groups.set(entity.typeLabel, items);
-  }
-  return [...groups.entries()].map(([typeLabel, items]) => ({ typeLabel, items }));
-}
-
 export function compareEntitiesByTypeThenTitle(a: EntitySummary, b: EntitySummary) {
   if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
   return a.title.localeCompare(b.title);

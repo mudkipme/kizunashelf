@@ -590,63 +590,6 @@
           }
         }
       }
-    },
-    "/api/relation-groups/{field}/{target}": {
-      "get": {
-        "operationId": "getRelationTarget",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "field",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          },
-          {
-            "in": "path",
-            "name": "target",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RelationTargetResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -2191,11 +2134,18 @@
             "items": {
               "$ref": "#/components/schemas/Relation"
             }
+          },
+          "relatedEntities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
           }
         },
         "required": [
           "entity",
-          "relations"
+          "relations",
+          "relatedEntities"
         ]
       },
       "Entity": {
@@ -2491,77 +2441,6 @@
           "page",
           "pageSize",
           "totalPages"
-        ]
-      },
-      "RelationTargetPath": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "target": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "field",
-          "target"
-        ]
-      },
-      "RelationTargetResponse": {
-        "type": "object",
-        "properties": {
-          "generatedAt": {
-            "type": "string"
-          },
-          "field": {
-            "type": "string"
-          },
-          "target": {
-            "$ref": "#/components/schemas/RelationTargetSummary"
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RelationTargetGroup"
-            }
-          },
-          "total": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "generatedAt",
-          "field",
-          "target",
-          "groups",
-          "total"
-        ]
-      },
-      "RelationTargetGroup": {
-        "type": "object",
-        "properties": {
-          "typeLabel": {
-            "type": "string"
-          },
-          "count": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntitySummary"
-            }
-          }
-        },
-        "required": [
-          "typeLabel",
-          "count",
-          "items"
         ]
       }
     }

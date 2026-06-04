@@ -5,7 +5,6 @@ import { EntityPage } from "@/pages/entity-page";
 import { HomePage } from "@/pages/home-page";
 import { LibraryPage } from "@/pages/library-page";
 import { RelationFieldPage } from "@/pages/relation-field-page";
-import { RelationTargetPage } from "@/pages/relation-target-page";
 import { RelationsPage } from "@/pages/relations-page";
 import { ReviewPage } from "@/pages/review-page";
 import { StatisticsPage } from "@/pages/statistics-page";
@@ -24,7 +23,7 @@ export default function App() {
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/relations" element={<RelationsPage />} />
         <Route path="/relations/:field" element={<RelationFieldPage />} />
-        <Route path="/relations/:field/:target" element={<RelationTargetPage />} />
+        <Route path="/relations/:field/:target" element={<LegacyRelationTargetRedirect />} />
         <Route path="/entities/:id" element={<EntityPage />} />
       </Routes>
     </BrowserRouter>
@@ -34,4 +33,9 @@ export default function App() {
 function LegacyCleanupRedirect() {
   const { queueId } = useParams();
   return <Navigate to={`/review/${encodeURIComponent(queueId ?? "")}`} replace />;
+}
+
+function LegacyRelationTargetRedirect() {
+  const { target } = useParams();
+  return <Navigate to={`/entities/${encodeURIComponent(target ?? "")}`} replace />;
 }

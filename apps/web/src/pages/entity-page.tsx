@@ -54,6 +54,7 @@ export function EntityPage() {
           <EntityDetail
             entity={entity}
             relations={state.detail?.relations ?? []}
+            relatedEntities={state.detail?.relatedEntities ?? []}
             relationGroups={relationGroups}
             dates={state.dates}
           />

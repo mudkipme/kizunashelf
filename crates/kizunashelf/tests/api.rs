@@ -116,7 +116,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(detail["entity"]["titles"]["zh"], "Star Voyager");
     assert_eq!(detail["entity"]["titles"]["en"], "A Voyage of Stars");
     assert_eq!(detail["entity"]["path"], "Taxonomy/Anime/Star Voyager.md");
-    assert_eq!(detail["relations"].as_array().unwrap().len(), 3);
+    assert_eq!(detail["relations"].as_array().unwrap().len(), 5);
+    assert_eq!(relation_field_count(&detail["relations"], "daily-note"), 1);
+    assert_eq!(relation_field_count(&detail["relations"], "body"), 2);
+    assert!(has_entity_title(&detail["relatedEntities"], "Moon Quest"));
+    assert!(has_entity_title(&detail["relatedEntities"], "Star Saga"));
 
     let (status, missing) = server
         .json(&format!(
@@ -200,31 +204,6 @@ async fn relation_endpoints_group_temp_vault_links() {
         franchise_page["targets"][0]["targetId"],
         "franchise:Star Saga"
     );
-
-    let target = server
-        .ok_json(&format!(
-            "/api/relation-groups/franchise/{}",
-            urlencoding::encode("franchise:Star Saga")
-        ))
-        .await;
-    assert_eq!(target["total"], 2);
-    assert_eq!(target["target"]["targetTitle"], "Star Saga");
-    assert_eq!(count_for(&target["groups"], "Anime"), 1);
-    assert_eq!(count_for(&target["groups"], "Games"), 1);
-
-    let daily_target = server
-        .ok_json(&format!(
-            "/api/relation-groups/daily-note/{}",
-            urlencoding::encode("anime:Star Voyager")
-        ))
-        .await;
-    assert_eq!(daily_target["total"], 1);
-    assert_eq!(
-        daily_target["target"]["sourceTypes"][0]["name"],
-        "Daily Note"
-    );
-    assert_eq!(daily_target["target"]["sourceTypes"][0]["count"], 1);
-    assert_eq!(count_for(&daily_target["groups"], "Daily Note"), 1);
 }
 
 #[tokio::test]
@@ -510,6 +489,15 @@ fn count_for(items: &Value, name: &str) -> i64 {
         .find(|item| item["name"] == name || item["label"] == name || item["typeLabel"] == name)
         .and_then(|item| item["count"].as_i64())
         .unwrap_or_default()
+}
+
+fn relation_field_count(items: &Value, field: &str) -> usize {
+    items
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|item| item["field"] == field)
+        .count()
 }
 
 fn has_entity_title(items: &Value, title: &str) -> bool {

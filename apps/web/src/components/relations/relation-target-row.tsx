@@ -3,26 +3,25 @@ import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { relationTargetHref } from "@/lib/relations";
 import type { RelationTargetSummary } from "@/types/api";
 
 export function RelationTargetRow({
-  field,
   target,
 }: {
-  field: string;
   target: RelationTargetSummary;
 }) {
+  const entityHref = target.targetId ? `/entities/${encodeURIComponent(target.targetId)}` : undefined;
   return (
     <div className="grid min-w-0 gap-2 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto]">
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Link
-            to={relationTargetHref(field, target)}
-            className="min-w-0 truncate text-sm font-medium hover:underline"
-          >
-            {target.targetTitle}
-          </Link>
+          {entityHref ? (
+            <Link to={entityHref} className="min-w-0 truncate text-sm font-medium hover:underline">
+              {target.targetTitle}
+            </Link>
+          ) : (
+            <span className="min-w-0 truncate text-sm font-medium">{target.targetTitle}</span>
+          )}
           {target.targetTypeLabel ? <Badge variant="outline">{target.targetTypeLabel}</Badge> : null}
           <Badge variant="secondary">{target.count}</Badge>
           {target.sourceTypes.map((type) => (
@@ -38,17 +37,19 @@ export function RelationTargetRow({
         ) : null}
       </div>
       <div className="flex items-center justify-end gap-2">
-        {target.targetId ? (
+        {entityHref ? (
           <Button asChild variant="ghost" size="sm">
-            <Link to={`/entities/${encodeURIComponent(target.targetId)}`}>Entity</Link>
+            <Link to={entityHref}>Entity</Link>
           </Button>
         ) : null}
-        <Button asChild variant="outline" size="sm">
-          <Link to={relationTargetHref(field, target)}>
-            Open
-            <ArrowRightIcon data-icon="inline-end" />
-          </Link>
-        </Button>
+        {entityHref ? (
+          <Button asChild variant="outline" size="sm">
+            <Link to={entityHref}>
+              Open
+              <ArrowRightIcon data-icon="inline-end" />
+            </Link>
+          </Button>
+        ) : null}
       </div>
     </div>
   );

@@ -102,6 +102,7 @@ pub struct EntityListResponse {
 pub struct EntityDetailResponse {
     pub entity: Entity,
     pub relations: Vec<Relation>,
+    pub related_entities: Vec<EntitySummary>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -171,24 +172,6 @@ pub struct RelationFieldResponse {
     pub page: i64,
     pub page_size: i64,
     pub total_pages: i64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationTargetGroup {
-    pub type_label: String,
-    pub count: usize,
-    pub items: Vec<EntitySummary>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationTargetResponse {
-    pub generated_at: String,
-    pub field: String,
-    pub target: RelationTargetSummary,
-    pub groups: Vec<RelationTargetGroup>,
-    pub total: usize,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -354,7 +337,6 @@ pub struct ApiSchemas {
     pub relations: RelationListResponse,
     pub relation_groups: RelationGroupsResponse,
     pub relation_field: RelationFieldResponse,
-    pub relation_target: RelationTargetResponse,
     pub calendar: CalendarResponse,
     pub calendar_entry: CalendarEntry,
     pub library: crate::types::Library,
