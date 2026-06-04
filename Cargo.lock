@@ -1772,7 +1772,7 @@ dependencies = [
 
 [[package]]
 name = "kizunashelf"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aide",
  "anyhow",
@@ -1795,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "kizunashelf-desktop"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum",
  "kizunashelf",

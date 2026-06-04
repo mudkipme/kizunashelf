@@ -2,6 +2,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { getStats } from "@kizunashelf/api-contract";
 import {
+  ArrowLeftIcon,
   BarChart3Icon,
   CalendarDaysIcon,
   ClipboardCheckIcon,
@@ -33,6 +34,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const [search, setSearch] = useState("");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [canGoBack, setCanGoBack] = useState(false);
   const activeType = useMemo(() => {
     if (location.pathname !== "/library") return "";
     return new URLSearchParams(location.search).get("type") ?? allTypes;
@@ -63,7 +65,8 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   useEffect(() => {
     setMobileSidebarOpen(false);
     setMobileSearchOpen(false);
-  }, [location.pathname, location.search]);
+    setCanGoBack(hasAppBackStack());
+  }, [location.key, location.pathname, location.search]);
 
   useEffect(() => {
     if (!mobileSidebarOpen) return;
@@ -98,9 +101,26 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     navigate(`/library?${params.toString()}`);
   }
 
+  function goBack() {
+    if (!canGoBack) return;
+    navigate(-1);
+  }
+
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <header className="flex min-h-14 shrink-0 items-center gap-2 border-b bg-card/85 px-3 py-2 sm:gap-3 sm:px-4">
+        {canGoBack ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={goBack}
+            aria-label="Go back"
+            title="Back"
+          >
+            <ArrowLeftIcon />
+          </Button>
+        ) : null}
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none">
           <img
             src="/favicon-96x96.png"
@@ -212,6 +232,10 @@ function SearchForm({
       />
     </form>
   );
+}
+
+function hasAppBackStack() {
+  return Number(window.history.state?.idx ?? 0) > 0;
 }
 
 function AppSidebar({

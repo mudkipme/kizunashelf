@@ -1,18 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { getEntity, getEntityDates } from "@kizunashelf/api-contract";
-import { ArrowLeftIcon } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { AppFrame } from "@/components/layout/app-frame";
-import { Button } from "@/components/ui/button";
 import { groupRelations } from "@/lib/relations";
 import type { EntityDatesResponse, EntityDetailResponse } from "@/types/api";
 
 export function EntityPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [state, setState] = useState<{
     detail?: EntityDetailResponse;
     dates?: EntityDatesResponse;
@@ -41,13 +38,6 @@ export function EntityPage() {
   return (
     <AppFrame error={state.error}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
-        <div>
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeftIcon data-icon="inline-start" />
-            Back
-          </Button>
-        </div>
-
         {state.loading ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : entity ? (

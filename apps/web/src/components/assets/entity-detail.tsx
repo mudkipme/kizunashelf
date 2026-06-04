@@ -63,20 +63,17 @@ export function EntityDetail({
                 <p className="mt-1 truncate text-xs text-muted-foreground">{entity.path}</p>
               </div>
             </div>
-            {entity.summary ? (
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{entity.summary}</p>
-            ) : null}
           </div>
           <div className="p-4">
+            <DetailSection title="Frontmatter" icon={<BookOpenIcon />}>
+              <FrontmatterPanel entity={entity} relationGroups={relationGroups} />
+            </DetailSection>
+
             {entity.body.trim() ? (
               <DetailSection title="Markdown" icon={<FileTextIcon />}>
                 <MarkdownView markdown={entity.body} relations={relations} />
               </DetailSection>
             ) : null}
-
-            <DetailSection title="Frontmatter" icon={<BookOpenIcon />}>
-              <FrontmatterPanel entity={entity} relationGroups={relationGroups} />
-            </DetailSection>
           </div>
         </section>
 
