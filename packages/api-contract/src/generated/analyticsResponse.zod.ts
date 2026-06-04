@@ -62,8 +62,6 @@ export const analyticsResponseRelationsTopTargetsItemSourceTypesItemCountMin = 0
 
 export const analyticsResponseRelationsTopTargetsItemExamplesItemRelationCountMin = 0;
 
-export const analyticsResponseRelationsTopTargetsItemFieldsItemCountMin = 0;
-
 export const analyticsResponseRelationsUnresolvedCountMin = 0;
 
 export const analyticsResponseDataQualityMissingCoverItemRelationCountMin = 0;
@@ -217,10 +215,6 @@ export const AnalyticsResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(analyticsResponseRelationsTopTargetsItemExamplesItemRelationCountMin)
-})),
-  "fields": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsResponseRelationsTopTargetsItemFieldsItemCountMin)
 }))
 })),
   "unresolved": zod.object({

@@ -20,8 +20,6 @@ export const relationGroupsResponseTargetTypesItemTopTargetsItemSourceTypesItemC
 
 export const relationGroupsResponseTargetTypesItemTopTargetsItemExamplesItemRelationCountMin = 0;
 
-export const relationGroupsResponseTargetTypesItemTopTargetsItemFieldsItemCountMin = 0;
-
 
 export const RelationGroupsResponse = zod.object({
   "generatedAt": zod.string(),
@@ -64,10 +62,6 @@ export const RelationGroupsResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(relationGroupsResponseTargetTypesItemTopTargetsItemExamplesItemRelationCountMin)
-})),
-  "fields": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(relationGroupsResponseTargetTypesItemTopTargetsItemFieldsItemCountMin)
 }))
 }))
 }))

@@ -26,8 +26,6 @@ export const analyticsRelationsTopTargetsItemSourceTypesItemCountMin = 0;
 
 export const analyticsRelationsTopTargetsItemExamplesItemRelationCountMin = 0;
 
-export const analyticsRelationsTopTargetsItemFieldsItemCountMin = 0;
-
 export const analyticsRelationsUnresolvedCountMin = 0;
 
 
@@ -99,10 +97,6 @@ export const AnalyticsRelations = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(analyticsRelationsTopTargetsItemExamplesItemRelationCountMin)
-})),
-  "fields": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsRelationsTopTargetsItemFieldsItemCountMin)
 }))
 })),
   "unresolved": zod.object({

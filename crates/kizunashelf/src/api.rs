@@ -664,10 +664,12 @@ fn entity_detail_relations(library: &Library, entity_id: &str) -> Vec<Relation> 
         .relations
         .iter()
         .filter(|relation| {
-            relation.source_id == entity_id
-                || (relation.target_id.as_deref() == Some(entity_id)
-                    && relation.direction == RelationDirection::Out
-                    && !has_mirrored_incoming_relation(library, entity_id, relation))
+            relation.field != "daily-note"
+                && !relation.source_id.starts_with("daily-note:")
+                && (relation.source_id == entity_id
+                    || (relation.target_id.as_deref() == Some(entity_id)
+                        && relation.direction == RelationDirection::Out
+                        && !has_mirrored_incoming_relation(library, entity_id, relation)))
         })
         .cloned()
         .collect()

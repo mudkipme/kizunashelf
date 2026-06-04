@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { getRelationGroups } from "@kizunashelf/api-contract";
-import { ArrowRightIcon, ExternalLinkIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type {
   RelationGroupsResponse,
   RelationTargetHubSummary,
@@ -100,7 +98,7 @@ function RelationTargetTypeCard({ targetType }: { targetType: RelationTargetType
 function RelationHubRow({ target }: { target: RelationTargetHubSummary }) {
   const entityHref = target.targetId ? `/entities/${encodeURIComponent(target.targetId)}` : undefined;
   return (
-    <div className="grid min-w-0 gap-2 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {entityHref ? (
@@ -117,31 +115,6 @@ function RelationHubRow({ target }: { target: RelationTargetHubSummary }) {
             </Badge>
           ))}
         </div>
-        <div className="mt-1 flex flex-wrap gap-1">
-          {target.fields.map((field) => (
-            <Badge key={field.name} variant="outline">
-              {field.name} {field.count}
-            </Badge>
-          ))}
-        </div>
-      </div>
-      <div className="flex items-center justify-end gap-2">
-        {entityHref ? (
-          <Button asChild variant="ghost" size="sm">
-            <Link to={entityHref}>
-              Entity
-              <ExternalLinkIcon data-icon="inline-end" />
-            </Link>
-          </Button>
-        ) : null}
-        {entityHref ? (
-          <Button asChild variant="outline" size="sm">
-            <Link to={entityHref}>
-              Open
-              <ArrowRightIcon data-icon="inline-end" />
-            </Link>
-          </Button>
-        ) : null}
       </div>
     </div>
   );

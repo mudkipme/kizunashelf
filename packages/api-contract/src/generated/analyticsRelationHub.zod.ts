@@ -12,8 +12,6 @@ export const analyticsRelationHubSourceTypesItemCountMin = 0;
 
 export const analyticsRelationHubExamplesItemRelationCountMin = 0;
 
-export const analyticsRelationHubFieldsItemCountMin = 0;
-
 
 export const AnalyticsRelationHub = zod.object({
   "key": zod.string(),
@@ -44,10 +42,6 @@ export const AnalyticsRelationHub = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(analyticsRelationHubExamplesItemRelationCountMin)
-})),
-  "fields": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsRelationHubFieldsItemCountMin)
 }))
 })
 

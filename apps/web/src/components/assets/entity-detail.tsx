@@ -186,9 +186,6 @@ function relationDisplay(
   }
 
   if (relation.targetId === entityId) {
-    if (relation.sourceId.startsWith("daily-note:")) {
-      return { label: dailyNoteRelationLabel(relation.sourceId) };
-    }
     const source = relatedById.get(relation.sourceId);
     return {
       label: source?.title ?? relation.sourceId,
@@ -197,9 +194,4 @@ function relationDisplay(
   }
 
   return { label: relation.targetTitle };
-}
-
-function dailyNoteRelationLabel(sourceId: string) {
-  const [, label] = sourceId.split(":");
-  return label ? `Daily Note · ${label}` : "Daily Note";
 }

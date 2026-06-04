@@ -20,8 +20,6 @@ export const relationTargetTypeSummaryTopTargetsItemSourceTypesItemCountMin = 0;
 
 export const relationTargetTypeSummaryTopTargetsItemExamplesItemRelationCountMin = 0;
 
-export const relationTargetTypeSummaryTopTargetsItemFieldsItemCountMin = 0;
-
 
 export const RelationTargetTypeSummary = zod.object({
   "type": zod.string(),
@@ -62,10 +60,6 @@ export const RelationTargetTypeSummary = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(relationTargetTypeSummaryTopTargetsItemExamplesItemRelationCountMin)
-})),
-  "fields": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(relationTargetTypeSummaryTopTargetsItemFieldsItemCountMin)
 }))
 }))
 })

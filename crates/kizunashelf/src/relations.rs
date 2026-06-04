@@ -172,7 +172,6 @@ fn build_relation_hubs_from_relations<'a>(
                 &key,
                 &relations,
             ),
-            fields: count_by(&relations, |relation| relation.field.clone()),
         })
         .collect::<Vec<_>>();
     hubs.sort_by(|a, b| {

@@ -116,8 +116,8 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(detail["entity"]["titles"]["zh"], "Star Voyager");
     assert_eq!(detail["entity"]["titles"]["en"], "A Voyage of Stars");
     assert_eq!(detail["entity"]["path"], "Taxonomy/Anime/Star Voyager.md");
-    assert_eq!(detail["relations"].as_array().unwrap().len(), 5);
-    assert_eq!(relation_field_count(&detail["relations"], "daily-note"), 1);
+    assert_eq!(detail["relations"].as_array().unwrap().len(), 4);
+    assert_eq!(relation_field_count(&detail["relations"], "daily-note"), 0);
     assert_eq!(relation_field_count(&detail["relations"], "body"), 2);
     assert!(has_entity_title(&detail["relatedEntities"], "Moon Quest"));
     assert!(has_entity_title(&detail["relatedEntities"], "Star Saga"));
@@ -170,10 +170,7 @@ async fn relation_endpoints_group_temp_vault_links() {
         "Star Voyager"
     );
     assert_eq!(anime_targets["topTargets"][0]["count"], 2);
-    assert_eq!(
-        count_for(&anime_targets["topTargets"][0]["fields"], "daily-note"),
-        1
-    );
+    assert!(anime_targets["topTargets"][0].get("fields").is_none());
 
     let (status, value) = server
         .json("/api/relation-groups/franchise?pageSize=1&page=1")

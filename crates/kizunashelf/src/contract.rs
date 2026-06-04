@@ -192,7 +192,6 @@ pub struct AnalyticsTimeline {
 pub struct AnalyticsRelationHub {
     #[serde(flatten)]
     pub target: RelationTargetSummary,
-    pub fields: Vec<Count>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

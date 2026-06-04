@@ -1,19 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCleanupQueues } from "@kizunashelf/api-contract";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  BarChart3Icon,
-  ExternalLinkIcon,
-  SearchIcon,
-} from "lucide-react";
+import { ArrowRightIcon, SearchIcon } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
@@ -128,27 +121,7 @@ export function ReviewPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              {activeQueue ? (
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/review">
-                    <ArrowLeftIcon data-icon="inline-start" />
-                    Review
-                  </Link>
-                </Button>
-              ) : (
-                <Badge variant="secondary">Review</Badge>
-              )}
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/statistics">
-                  <BarChart3Icon data-icon="inline-start" />
-                  Statistics
-                </Link>
-              </Button>
-            </div>
-            <h1 className="mt-2 text-xl font-semibold">
-              {activeQueue?.label ?? "Metadata Review"}
-            </h1>
+            <h1 className="text-xl font-semibold">{activeQueue?.label ?? "Metadata Review"}</h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {state.loading
                 ? "Loading"
@@ -280,28 +253,15 @@ function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
 
 function CleanupEntityRow({ entity }: { entity: EntitySummary }) {
   return (
-    <div className="grid min-w-0 gap-3 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
       <EntitySummaryCell entity={entity} />
-      <div className="flex items-center justify-end gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link to={`/library?q=${encodeURIComponent(entity.path)}&type=${encodeURIComponent(entity.type)}`}>
-            Source
-          </Link>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/entities/${encodeURIComponent(entity.id)}`}>
-            Entity
-            <ExternalLinkIcon data-icon="inline-end" />
-          </Link>
-        </Button>
-      </div>
     </div>
   );
 }
 
 function UnresolvedRelationRow({ item }: { item: CleanupUnresolvedRelation }) {
   return (
-    <div className="grid min-w-0 gap-3 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Badge variant="outline">{item.relation.field}</Badge>
@@ -311,14 +271,6 @@ function UnresolvedRelationRow({ item }: { item: CleanupUnresolvedRelation }) {
         <div className="mt-1">
           <EntitySummaryCell entity={item.source} compact />
         </div>
-      </div>
-      <div className="flex items-center justify-end gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/entities/${encodeURIComponent(item.source.id)}`}>
-            Source
-            <ExternalLinkIcon data-icon="inline-end" />
-          </Link>
-        </Button>
       </div>
     </div>
   );
@@ -334,9 +286,12 @@ function EntitySummaryCell({
   return (
     <div className="min-w-0">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className={cn("min-w-0 truncate font-medium", compact ? "text-xs" : "text-sm")}>
+        <Link
+          to={`/entities/${encodeURIComponent(entity.id)}`}
+          className={cn("min-w-0 truncate font-medium hover:underline", compact ? "text-xs" : "text-sm")}
+        >
           {entity.title}
-        </span>
+        </Link>
         <Badge variant="outline">{entity.typeLabel}</Badge>
         {entity.status ? <Badge variant="secondary">{entity.status}</Badge> : null}
       </div>

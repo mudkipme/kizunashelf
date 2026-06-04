@@ -1379,12 +1379,6 @@
             "items": {
               "$ref": "#/components/schemas/EntitySummary"
             }
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Count"
-            }
           }
         },
         "required": [
@@ -1392,8 +1386,7 @@
           "targetTitle",
           "count",
           "sourceTypes",
-          "examples",
-          "fields"
+          "examples"
         ]
       },
       "AnalyticsUnresolvedRelations": {
