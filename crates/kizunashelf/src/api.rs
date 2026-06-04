@@ -29,7 +29,7 @@ use axum::response::{IntoResponse, Response};
 use axum::{Json, Router};
 use schemars::JsonSchema;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -996,7 +996,10 @@ fn build_timeline(
                 year,
                 count: entities.len(),
                 by_type,
-                examples: entities.into_iter().take(6).collect(),
+                examples: unique_entities_by_id(entities)
+                    .into_iter()
+                    .take(6)
+                    .collect(),
             }
         })
         .collect::<Vec<_>>();
@@ -1032,6 +1035,14 @@ fn build_timeline(
         seasons,
         months,
     }
+}
+
+fn unique_entities_by_id(entities: Vec<EntitySummary>) -> Vec<EntitySummary> {
+    let mut seen = HashSet::new();
+    entities
+        .into_iter()
+        .filter(|entity| seen.insert(entity.id.clone()))
+        .collect()
 }
 
 type ApiResult<T> = Result<Json<T>, ApiError>;

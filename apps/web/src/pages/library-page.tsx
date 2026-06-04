@@ -16,6 +16,7 @@ import { Select } from "@/components/ui/select";
 import {
   allOptions,
   allStatuses,
+  allTypes,
   defaultCategory,
   defaultDirection,
   defaultSort,
@@ -62,7 +63,8 @@ export function LibraryPage() {
   });
   const [searchParams, setSearchParams] = useSearchParams();
   const firstType = stats.global?.byType[0]?.id ?? defaultCategory;
-  const selectedType = searchParams.get("type") ?? firstType;
+  const selectedType = searchParams.get("type") ?? allTypes;
+  const isGlobalType = selectedType === allTypes;
   const selectedStatus = searchParams.get("status") ?? allStatuses;
   const refs = searchParams.get("refs") ?? allOptions;
   const cover = searchParams.get("cover") ?? allOptions;
@@ -75,21 +77,22 @@ export function LibraryPage() {
   const [queryInput, setQueryInput] = useState(query);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const selectedTypeStats = stats.global?.byType.find((type) => type.id === selectedType);
+  const scopeStats = isGlobalType ? stats.global : stats.category;
   const selectedTypeConfig = config?.types.find((type) => type.id === selectedType);
   const titleLanguages = selectedTypeConfig?.titleLanguages ?? [];
   const effectiveTitleLanguage = titleLanguages.includes(titleLanguage)
     ? titleLanguage
     : defaultTitleLanguage;
   const effectiveSort =
-    stats.category &&
+    scopeStats &&
     sort.startsWith("date:") &&
-    !stats.category.dateFields.includes(sort.slice("date:".length))
+    !scopeStats.dateFields.includes(sort.slice("date:".length))
       ? defaultSort
       : sort;
   const effectiveStatus =
-    stats.category &&
+    scopeStats &&
     selectedStatus !== allStatuses &&
-    !stats.category.byStatus.some((item) => item.name === selectedStatus)
+    !scopeStats.byStatus.some((item) => item.name === selectedStatus)
       ? allStatuses
       : selectedStatus;
 
@@ -104,8 +107,9 @@ export function LibraryPage() {
     if (!stats.global) return;
     const validTypes = new Set(stats.global.byType.map((type) => type.id));
     const hasType = searchParams.has("type");
+    const hasGlobalQuery = selectedType === allTypes && query.trim().length > 0;
 
-    if (!validTypes.has(selectedType)) {
+    if (selectedType !== allTypes && !validTypes.has(selectedType)) {
       const next = new URLSearchParams(searchParams);
       next.set("type", firstType);
       next.set("page", "1");
@@ -117,31 +121,36 @@ export function LibraryPage() {
     if (!hasType || !hasPreferenceParams(searchParams)) {
       const next = new URLSearchParams(searchParams);
       next.set("type", selectedType);
-      applyPreferencesToSearchParams(next, readAssetListPreferences(selectedType));
+      if (!hasGlobalQuery) {
+        applyPreferencesToSearchParams(next, readAssetListPreferences(selectedType));
+      }
       if (next.toString() !== searchParams.toString()) {
         setSearchParams(next, { replace: true });
       }
     }
-  }, [stats.global, selectedType]);
+  }, [stats.global, selectedType, query]);
 
   useEffect(() => {
-    if (!selectedType) return;
+    if (!selectedType || isGlobalType) {
+      setStats((current) => ({ ...current, category: undefined }));
+      return;
+    }
     const controller = new AbortController();
     void loadCategoryStats(selectedType, controller.signal);
     return () => controller.abort();
-  }, [selectedType]);
+  }, [selectedType, isGlobalType]);
 
   useEffect(() => {
-    if (!stats.category || !sort.startsWith("date:")) return;
-    if (stats.category.dateFields.includes(sort.slice("date:".length))) return;
+    if (!scopeStats || !sort.startsWith("date:")) return;
+    if (scopeStats.dateFields.includes(sort.slice("date:".length))) return;
     setQueryParam("sort", defaultSort, defaultSort);
-  }, [stats.category, sort]);
+  }, [scopeStats, sort]);
 
   useEffect(() => {
-    if (!stats.category || selectedStatus === allStatuses) return;
-    if (stats.category.byStatus.some((item) => item.name === selectedStatus)) return;
+    if (!scopeStats || selectedStatus === allStatuses) return;
+    if (scopeStats.byStatus.some((item) => item.name === selectedStatus)) return;
     setQueryParam("status", allStatuses, allStatuses);
-  }, [stats.category, selectedStatus]);
+  }, [scopeStats, selectedStatus]);
 
   useEffect(() => {
     if (!config || titleLanguage === defaultTitleLanguage) return;
@@ -288,13 +297,17 @@ export function LibraryPage() {
                 <div className="rounded-md border bg-card px-3 py-2">
                   <div className="text-[11px] uppercase text-muted-foreground">Entries</div>
                   <div className="mt-1 text-lg font-semibold tabular-nums">
-                    {(selectedTypeStats?.count ?? list.total).toLocaleString()}
+                    {(
+                      isGlobalType
+                        ? (stats.global?.total ?? list.total)
+                        : (selectedTypeStats?.count ?? list.total)
+                    ).toLocaleString()}
                   </div>
                 </div>
                 <div className="rounded-md border bg-card px-3 py-2">
                   <div className="text-[11px] uppercase text-muted-foreground">Relations</div>
                   <div className="mt-1 text-lg font-semibold tabular-nums">
-                    {(stats.category?.relations ?? stats.global?.relations ?? 0).toLocaleString()}
+                    {(scopeStats?.relations ?? 0).toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -305,13 +318,18 @@ export function LibraryPage() {
                   className="min-w-0 flex-1"
                   aria-label="Type"
                 >
+                  <option value={allTypes}>All types ({stats.global?.total ?? 0})</option>
                   {stats.global?.byType.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.label} ({type.count})
                     </option>
                   ))}
                 </Select>
-                {selectedTypeStats ? (
+                {isGlobalType ? (
+                  <Badge variant="secondary" className="shrink-0">
+                    Global
+                  </Badge>
+                ) : selectedTypeStats ? (
                   <Badge variant="secondary" className="shrink-0">
                     {selectedTypeStats.label}
                   </Badge>
@@ -331,7 +349,7 @@ export function LibraryPage() {
 
             <AssetToolbar
               className="hidden md:flex"
-              stats={stats.category}
+              stats={scopeStats}
               status={effectiveStatus}
               refs={refs}
               cover={cover}
@@ -378,7 +396,7 @@ export function LibraryPage() {
                     className="min-w-0"
                   >
                     <option value={allStatuses}>All statuses</option>
-                    {stats.category?.byStatus.map((item) => (
+                    {scopeStats?.byStatus.map((item) => (
                       <option key={item.name} value={item.name}>
                         {item.name} ({item.count})
                       </option>
@@ -411,7 +429,7 @@ export function LibraryPage() {
                     className="min-w-0"
                   >
                     <option value={defaultSort}>Sort by title</option>
-                    {stats.category?.dateFields.map((field) => (
+                    {scopeStats?.dateFields.map((field) => (
                       <option key={field} value={`date:${field}`}>
                         Sort by {field}
                       </option>

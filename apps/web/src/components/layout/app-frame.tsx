@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { allTypes } from "@/lib/constants";
 import type { StatsResponse } from "@/types/api";
 
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
@@ -32,7 +33,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const activeType = useMemo(() => {
     if (location.pathname !== "/library") return "";
-    return new URLSearchParams(location.search).get("type") ?? "";
+    return new URLSearchParams(location.search).get("type") ?? allTypes;
   }, [location.pathname, location.search]);
 
   useEffect(() => {
@@ -73,11 +74,10 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const params =
-      location.pathname === "/library" ? new URLSearchParams(location.search) : new URLSearchParams();
+    const params = new URLSearchParams();
     const query = search.trim();
     if (query) params.set("q", query);
-    else params.delete("q");
+    params.set("type", allTypes);
     params.set("page", "1");
     navigate(`/library?${params.toString()}`);
   }
@@ -240,6 +240,14 @@ function SidebarContent({
         <SidebarNavLink to="/" icon={HomeIcon} end onNavigate={onNavigate}>
           Home
         </SidebarNavLink>
+        <SidebarNavLink
+          to="/library"
+          icon={DatabaseIcon}
+          active={pathname === "/library" && activeType === allTypes}
+          onNavigate={onNavigate}
+        >
+          Library
+        </SidebarNavLink>
         <SidebarNavLink to="/calendar" icon={CalendarDaysIcon} onNavigate={onNavigate}>
           Calendar
         </SidebarNavLink>
@@ -250,14 +258,7 @@ function SidebarContent({
 
       <section className="flex flex-col gap-1">
         <SidebarSectionLabel>Taxonomy</SidebarSectionLabel>
-        <SidebarNavLink
-          to="/library"
-          icon={DatabaseIcon}
-          active={pathname === "/library" && !activeType}
-          onNavigate={onNavigate}
-        >
-          Library
-        </SidebarNavLink>
+
         {stats?.byType.map((type) => (
           <SidebarNavLink
             key={type.id}
