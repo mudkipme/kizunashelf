@@ -34,6 +34,13 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         config["types"][0]["titleLanguages"],
         json!(["en", "primary", "zh"])
     );
+    assert_eq!(
+        config["types"][0]["dateRoles"],
+        json!({
+            "planning": ["season"],
+            "completed": ["complete_date"]
+        })
+    );
 
     let home = server.ok_json("/api/home").await;
     assert_eq!(home["title"], "Fixture Home");
@@ -286,7 +293,10 @@ impl TestServer {
                         "subtitle": ["title_en"],
                         "image": ["cover_url"],
                         "status": ["status"],
-                        "date": ["season", "complete_date"],
+                        "dateRoles": {
+                            "planning": ["season"],
+                            "completed": ["complete_date"]
+                        },
                         "externalRefs": ["bgm_url"],
                         "relations": ["studio"]
                     }
@@ -305,7 +315,9 @@ impl TestServer {
                         "subtitle": ["title_en"],
                         "image": ["cover_url"],
                         "status": ["status"],
-                        "date": ["release_date"],
+                        "dateRoles": {
+                            "planning": ["release_date"]
+                        },
                         "externalRefs": ["igdb_url"],
                         "relations": ["developer"]
                     }
@@ -331,11 +343,13 @@ impl TestServer {
                     "fields": {
                         "titleLanguages": {
                             "primary": ["title"],
-                            "original": ["filename"]
-                        },
-                        "date": ["release_date"],
-                        "externalRefs": ["musicbrainz_url"]
-                    }
+                        "original": ["filename"]
+                    },
+                    "dateRoles": {
+                        "planning": ["release_date"]
+                    },
+                    "externalRefs": ["musicbrainz_url"]
+                }
                 }
             ]
         });

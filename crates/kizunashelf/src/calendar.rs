@@ -231,7 +231,7 @@ fn metadata_date_entries(library: &Library, entity: &Entity) -> Vec<EntityDateMe
         .types
         .iter()
         .find(|item| item.id == entity.summary.entity_type)
-        .map(|item| item.fields.date.clone())
+        .map(|item| item.fields.date_roles.fields())
         .unwrap_or_default();
     let mut seen = Vec::<String>::new();
     let mut entries = Vec::new();

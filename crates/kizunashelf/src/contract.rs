@@ -1,6 +1,6 @@
 use crate::calendar::{CalendarDay, CalendarEntry, EntityDatesResponse};
 use crate::relations::Count;
-use crate::types::{Entity, EntitySummary, HomeConfig, Relation};
+use crate::types::{DateRoleConfig, Entity, EntitySummary, HomeConfig, Relation};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +30,7 @@ pub struct TypeConfigResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_title_language: Option<String>,
     pub title_languages: Vec<String>,
+    pub date_roles: DateRoleConfig,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

@@ -14,12 +14,37 @@ pub struct EntityFields {
     pub image: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub status: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub date: Vec<String>,
+    #[serde(default, skip_serializing_if = "DateRoleConfig::is_empty")]
+    pub date_roles: DateRoleConfig,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub external_refs: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub relations: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DateRoleConfig {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub planning: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub completed: Vec<String>,
+}
+
+impl DateRoleConfig {
+    pub fn is_empty(&self) -> bool {
+        self.planning.is_empty() && self.completed.is_empty()
+    }
+
+    pub fn fields(&self) -> Vec<String> {
+        let mut fields = Vec::new();
+        for field in self.planning.iter().chain(self.completed.iter()) {
+            if !fields.contains(field) {
+                fields.push(field.clone());
+            }
+        }
+        fields
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]

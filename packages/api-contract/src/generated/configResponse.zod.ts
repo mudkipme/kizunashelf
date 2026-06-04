@@ -29,7 +29,11 @@ export const ConfigResponse = zod.object({
   "icon": zod.string().nullish(),
   "path": zod.string(),
   "defaultTitleLanguage": zod.string().nullish(),
-  "titleLanguages": zod.array(zod.string())
+  "titleLanguages": zod.array(zod.string()),
+  "dateRoles": zod.object({
+  "planning": zod.array(zod.string()).optional(),
+  "completed": zod.array(zod.string()).optional()
+})
 }))
 })
 

@@ -33,6 +33,7 @@ type PlanningState = {
 };
 
 type CalendarMode = "month" | PlanningMode;
+type DateRoles = ConfigResponse["types"][number]["dateRoles"];
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const entityPageSize = 100;
@@ -144,6 +145,13 @@ export function CalendarPage() {
     () => countEntityDatePoints(planningEntities),
     [planningEntities],
   );
+  const dateRolesByType = useMemo(() => {
+    const roles = new Map<string, DateRoles>();
+    for (const item of state.config?.types ?? []) {
+      roles.set(item.id, item.dateRoles);
+    }
+    return roles;
+  }, [state.config]);
 
   function setParam(key: string, value: string, defaultValue?: string) {
     const next = new URLSearchParams(searchParams);
@@ -323,6 +331,7 @@ export function CalendarPage() {
             mode={mode}
             year={year}
             entities={planningEntities}
+            dateRolesByType={dateRolesByType}
             loading={planning.loading}
             onOpenMonth={openMonth}
           />

@@ -715,14 +715,35 @@
             "items": {
               "type": "string"
             }
+          },
+          "dateRoles": {
+            "$ref": "#/components/schemas/DateRoleConfig"
           }
         },
         "required": [
           "id",
           "label",
           "path",
-          "titleLanguages"
+          "titleLanguages",
+          "dateRoles"
         ]
+      },
+      "DateRoleConfig": {
+        "type": "object",
+        "properties": {
+          "planning": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "completed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "HomeResponse": {
         "type": "object",

@@ -65,11 +65,15 @@
         "status": [
           "status"
         ],
-        "date": [
-          "season",
-          "complete_date",
-          "release_date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "season",
+            "release_date"
+          ],
+          "completed": [
+            "complete_date"
+          ]
+        },
         "externalRefs": [
           "bgm_url"
         ]
@@ -99,10 +103,14 @@
         "status": [
           "status"
         ],
-        "date": [
-          "complete_date",
-          "release_date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "release_date"
+          ],
+          "completed": [
+            "complete_date"
+          ]
+        },
         "externalRefs": [
           "igdb_url",
           "backloggd_url"
@@ -133,10 +141,14 @@
         "status": [
           "status"
         ],
-        "date": [
-          "complete_date",
-          "release_date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "release_date"
+          ],
+          "completed": [
+            "complete_date"
+          ]
+        },
         "externalRefs": [
           "bgm_url",
           "thetvdb_url"
@@ -164,11 +176,15 @@
         "status": [
           "status"
         ],
-        "date": [
-          "complete_date",
-          "season",
-          "release_date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "season",
+            "release_date"
+          ],
+          "completed": [
+            "complete_date"
+          ]
+        },
         "externalRefs": [
           "thetvdb_url"
         ]
@@ -189,10 +205,12 @@
         "image": [
           "cover_url"
         ],
-        "date": [
-          "date",
-          "release_date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "date",
+            "release_date"
+          ]
+        },
         "externalRefs": [
           "bgm_url",
           "musicbrainz_url",
@@ -220,10 +238,12 @@
           "owned",
           "status"
         ],
-        "date": [
-          "release_date",
-          "date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "release_date",
+            "date"
+          ]
+        },
         "externalRefs": [
           "bgm_url",
           "musicbrainz_url",
@@ -246,9 +266,11 @@
           "attended",
           "status"
         ],
-        "date": [
-          "date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "date"
+          ]
+        },
         "externalRefs": [
           "bgm_url",
           "event_url"
@@ -281,10 +303,14 @@
         "status": [
           "status"
         ],
-        "date": [
-          "complete_date",
-          "release_date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "release_date"
+          ],
+          "completed": [
+            "complete_date"
+          ]
+        },
         "externalRefs": [
           "bgm_url"
         ]
@@ -309,10 +335,12 @@
           "owned",
           "status"
         ],
-        "date": [
-          "release_date",
-          "date"
-        ],
+        "dateRoles": {
+          "planning": [
+            "release_date",
+            "date"
+          ]
+        },
         "externalRefs": [
           "bgm_url"
         ]

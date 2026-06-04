@@ -21,8 +21,14 @@ type PlanningViewsProps = {
   mode: PlanningMode;
   year: number;
   entities: EntitySummary[];
+  dateRolesByType: Map<string, DateRoles>;
   loading: boolean;
   onOpenMonth: (month: number) => void;
+};
+
+type DateRoles = {
+  planning?: string[];
+  completed?: string[];
 };
 
 const monthNames = [
@@ -53,6 +59,7 @@ export function CalendarPlanningViews({
   mode,
   year,
   entities,
+  dateRolesByType,
   loading,
   onOpenMonth,
 }: PlanningViewsProps) {
@@ -70,7 +77,7 @@ export function CalendarPlanningViews({
     return <SeasonPlanningView year={year} points={points} />;
   }
 
-  return <PlanningBoard points={points} />;
+  return <PlanningBoard points={points} dateRolesByType={dateRolesByType} />;
 }
 
 export function countEntityDatePoints(entities: EntitySummary[]) {
@@ -160,16 +167,22 @@ function SeasonPlanningView({ year, points }: { year: number; points: DatePoint[
   );
 }
 
-function PlanningBoard({ points }: { points: DatePoint[] }) {
+function PlanningBoard({
+  points,
+  dateRolesByType,
+}: {
+  points: DatePoint[];
+  dateRolesByType: Map<string, DateRoles>;
+}) {
   const today = todayKey();
   const upcoming = uniqueByEntity(
     points
-      .filter((point) => point.sortKey >= today && isPlanningDateField(point.field))
+      .filter((point) => point.sortKey >= today && hasDateRole(point, dateRolesByType, "planning"))
       .sort(compareDatePointsAsc),
   ).slice(0, 12);
   const recentlyCompleted = uniqueByEntity(
     points
-      .filter((point) => point.sortKey <= today && isCompletedDateField(point.field))
+      .filter((point) => point.sortKey <= today && hasDateRole(point, dateRolesByType, "completed"))
       .sort(compareDatePointsDesc),
   ).slice(0, 12);
   const backlogByDate = uniqueByEntity(
@@ -178,7 +191,7 @@ function PlanningBoard({ points }: { points: DatePoint[] }) {
         (point) =>
           backlogStatuses.has(point.entity.status ?? "") &&
           point.sortKey >= today &&
-          isPlanningDateField(point.field),
+          hasDateRole(point, dateRolesByType, "planning"),
       )
       .sort(compareDatePointsAsc),
   ).slice(0, 12);
@@ -324,12 +337,12 @@ function seasonForMonth(month: number): SeasonKey {
   return "winter";
 }
 
-function isPlanningDateField(field: string) {
-  return field === "date" || field === "season" || field.includes("release");
-}
-
-function isCompletedDateField(field: string) {
-  return field.includes("complete") || field.includes("finish");
+function hasDateRole(
+  point: DatePoint,
+  dateRolesByType: Map<string, DateRoles>,
+  role: keyof DateRoles,
+) {
+  return dateRolesByType.get(point.entity.type)?.[role]?.includes(point.field) ?? false;
 }
 
 function uniqueByEntity(points: DatePoint[]) {
