@@ -14,7 +14,7 @@ export function RelationTargetRow({
   target: RelationTargetSummary;
 }) {
   return (
-    <div className="grid gap-3 border-b px-3 py-3 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="grid min-w-0 gap-2 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto]">
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Link
@@ -25,8 +25,6 @@ export function RelationTargetRow({
           </Link>
           {target.targetTypeLabel ? <Badge variant="outline">{target.targetTypeLabel}</Badge> : null}
           <Badge variant="secondary">{target.count}</Badge>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-1">
           {target.sourceTypes.map((type) => (
             <Badge key={type.name} variant="outline">
               {type.name} {type.count}
@@ -34,7 +32,7 @@ export function RelationTargetRow({
           ))}
         </div>
         {target.examples.length > 0 ? (
-          <div className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+          <div className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground">
             {target.examples.map((entity) => entity.title).join(" · ")}
           </div>
         ) : null}
