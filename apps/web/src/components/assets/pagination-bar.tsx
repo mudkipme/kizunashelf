@@ -21,7 +21,7 @@ export function PaginationBar({
   const pages = visiblePages(page, totalPages);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2 text-xs text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 text-xs text-muted-foreground md:py-2">
       <span>
         {start}-{end} / {total}
       </span>
