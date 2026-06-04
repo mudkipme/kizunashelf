@@ -188,15 +188,19 @@ export function StatisticsPage() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <AnalyticsSection title="Missing Cover">
                 <EntityMiniList items={data.dataQuality.missingCover} />
+                <QueueLink to="/cleanup/missing-cover" />
               </AnalyticsSection>
               <AnalyticsSection title="Missing External Refs">
                 <EntityMiniList items={data.dataQuality.missingExternalRefs} />
+                <QueueLink to="/cleanup/missing-refs" />
               </AnalyticsSection>
               <AnalyticsSection title="Missing Summary">
                 <EntityMiniList items={data.dataQuality.missingSummary} />
+                <QueueLink to="/cleanup/missing-summary" />
               </AnalyticsSection>
               <AnalyticsSection title="Isolated Nodes">
                 <EntityMiniList items={data.dataQuality.isolated} />
+                <QueueLink to="/cleanup/isolated" />
               </AnalyticsSection>
             </div>
 
@@ -217,6 +221,7 @@ export function StatisticsPage() {
                       </Button>
                     </div>
                   ))}
+                  <QueueLink to="/cleanup/unresolved-relations" />
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">No unresolved relation targets</div>
@@ -226,5 +231,15 @@ export function StatisticsPage() {
         ) : null}
       </div>
     </AppFrame>
+  );
+}
+
+function QueueLink({ to }: { to: string }) {
+  return (
+    <div className="mt-3">
+      <Button asChild variant="outline" size="sm">
+        <Link to={to}>Open Queue</Link>
+      </Button>
+    </div>
   );
 }

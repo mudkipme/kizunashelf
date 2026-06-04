@@ -150,6 +150,33 @@
         }
       }
     },
+    "/api/cleanup-queues": {
+      "get": {
+        "operationId": "getCleanupQueues",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupQueuesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/calendar": {
       "get": {
         "operationId": "getCalendar",
@@ -1571,6 +1598,101 @@
           "missingExternalRefs",
           "missingSummary",
           "isolated"
+        ]
+      },
+      "CleanupQueuesResponse": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "queues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CleanupQueueSummary"
+            }
+          },
+          "missingCover": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
+          },
+          "missingExternalRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
+          },
+          "missingSummary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
+          },
+          "isolated": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
+          },
+          "unresolvedRelations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CleanupUnresolvedRelation"
+            }
+          }
+        },
+        "required": [
+          "generatedAt",
+          "queues",
+          "missingCover",
+          "missingExternalRefs",
+          "missingSummary",
+          "isolated",
+          "unresolvedRelations"
+        ]
+      },
+      "CleanupQueueSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "remaining",
+          "total"
+        ]
+      },
+      "CleanupUnresolvedRelation": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/EntitySummary"
+          },
+          "relation": {
+            "$ref": "#/components/schemas/Relation"
+          }
+        },
+        "required": [
+          "source",
+          "relation"
         ]
       },
       "CalendarQuery": {

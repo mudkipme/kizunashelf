@@ -4,6 +4,7 @@ import { getStats } from "@kizunashelf/api-contract";
 import {
   BarChart3Icon,
   CalendarDaysIcon,
+  ClipboardCheckIcon,
   DatabaseIcon,
   HomeIcon,
   type LucideIcon,
@@ -280,6 +281,9 @@ function SidebarContent({
       <section className="mt-auto flex flex-col gap-1">
         <SidebarNavLink to="/statistics" icon={BarChart3Icon} onNavigate={onNavigate}>
           Statistics
+        </SidebarNavLink>
+        <SidebarNavLink to="/cleanup" icon={ClipboardCheckIcon} onNavigate={onNavigate}>
+          Cleanup
         </SidebarNavLink>
         <button
           type="button"

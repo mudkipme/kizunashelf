@@ -13,6 +13,10 @@ import {
 } from './calendarResponse.zod';
 
 import {
+  CleanupQueuesResponse
+} from './cleanupQueuesResponse.zod';
+
+import {
   ConfigResponse
 } from './configResponse.zod';
 
@@ -223,6 +227,35 @@ export const getAnalytics = async ( options?: RequestInit, fetchFn?: typeof glob
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? AnalyticsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetCleanupQueuesUrl = () => {
+
+
+
+
+  return `/api/cleanup-queues`
+}
+
+export const getCleanupQueues = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<CleanupQueuesResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetCleanupQueuesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? CleanupQueuesResponse.parse(parsedBody) : parsedBody
   return data
 }
 

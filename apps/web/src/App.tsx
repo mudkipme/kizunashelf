@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { CalendarPage } from "@/pages/calendar-page";
+import { CleanupPage } from "@/pages/cleanup-page";
 import { EntityPage } from "@/pages/entity-page";
 import { HomePage } from "@/pages/home-page";
 import { LibraryPage } from "@/pages/library-page";
@@ -16,6 +17,8 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/library" element={<LibraryPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/cleanup" element={<CleanupPage />} />
+        <Route path="/cleanup/:queueId" element={<CleanupPage />} />
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/relations" element={<RelationsPage />} />
         <Route path="/relations/:field" element={<RelationFieldPage />} />

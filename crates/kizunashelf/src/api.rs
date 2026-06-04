@@ -4,10 +4,11 @@ use crate::calendar::{
 use crate::contract::{
     AnalyticsCoverageMetric, AnalyticsDataQuality, AnalyticsDistributions, AnalyticsRelations,
     AnalyticsResponse, AnalyticsTimeline, AnalyticsTimelineYear, AnalyticsTotals,
-    AnalyticsUnresolvedRelations, CalendarResponse, ConfigResponse, EntityDetailResponse,
-    EntityListResponse, ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse,
-    RelationFieldResponse, RelationGroupsResponse, RelationListResponse, RelationTargetGroup,
-    RelationTargetResponse, StatsResponse, TypeConfigResponse, TypeCount,
+    AnalyticsUnresolvedRelations, CalendarResponse, CleanupQueueSummary, CleanupQueuesResponse,
+    CleanupUnresolvedRelation, ConfigResponse, EntityDetailResponse, EntityListResponse,
+    ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse, RelationFieldResponse,
+    RelationGroupsResponse, RelationListResponse, RelationTargetGroup, RelationTargetResponse,
+    StatsResponse, TypeConfigResponse, TypeCount,
 };
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
 use crate::library::{compare_string, read_library_from_config};
@@ -136,6 +137,14 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(analytics, |op| {
                 op.id("getAnalytics")
                     .response::<200, Json<AnalyticsResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/cleanup-queues",
+            get_with(cleanup_queues, |op| {
+                op.id("getCleanupQueues")
+                    .response::<200, Json<CleanupQueuesResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
@@ -363,6 +372,11 @@ async fn stats(
 async fn analytics(State(state): State<AppState>) -> ApiResult<AnalyticsResponse> {
     let library = get_library(&state).await?;
     Ok(Json(build_analytics(&library)))
+}
+
+async fn cleanup_queues(State(state): State<AppState>) -> ApiResult<CleanupQueuesResponse> {
+    let library = get_library(&state).await?;
+    Ok(Json(build_cleanup_queues(&library)))
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -937,6 +951,99 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
                 .cloned()
                 .collect(),
         },
+    }
+}
+
+fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
+    let summaries = &library.summaries;
+    let source_by_id = summary_by_id(library);
+    let outgoing = outgoing_relations(library, None);
+    let unresolved_relations: Vec<_> = outgoing
+        .iter()
+        .filter(|relation| relation.target_id.is_none())
+        .filter_map(|relation| {
+            source_by_id
+                .get(relation.source_id.as_str())
+                .map(|source| CleanupUnresolvedRelation {
+                    source: (*source).clone(),
+                    relation: (*relation).to_owned(),
+                })
+        })
+        .collect();
+    let missing_cover: Vec<_> = summaries
+        .iter()
+        .filter(|entity| entity.image.is_none())
+        .cloned()
+        .collect();
+    let missing_external_refs: Vec<_> = summaries
+        .iter()
+        .filter(|entity| entity.external_refs.is_empty())
+        .cloned()
+        .collect();
+    let missing_summary: Vec<_> = summaries
+        .iter()
+        .filter(|entity| entity.summary.is_none())
+        .cloned()
+        .collect();
+    let isolated: Vec<_> = summaries
+        .iter()
+        .filter(|entity| entity.relation_count == 0)
+        .cloned()
+        .collect();
+
+    CleanupQueuesResponse {
+        generated_at: library.generated_at.clone(),
+        queues: vec![
+            cleanup_queue_summary(
+                "missing-cover",
+                "Missing Cover",
+                missing_cover.len(),
+                summaries.len(),
+            ),
+            cleanup_queue_summary(
+                "missing-refs",
+                "Missing External Refs",
+                missing_external_refs.len(),
+                summaries.len(),
+            ),
+            cleanup_queue_summary(
+                "missing-summary",
+                "Missing Summary",
+                missing_summary.len(),
+                summaries.len(),
+            ),
+            cleanup_queue_summary(
+                "isolated",
+                "Isolated Nodes",
+                isolated.len(),
+                summaries.len(),
+            ),
+            cleanup_queue_summary(
+                "unresolved-relations",
+                "Unresolved Relations",
+                unresolved_relations.len(),
+                outgoing.len(),
+            ),
+        ],
+        missing_cover,
+        missing_external_refs,
+        missing_summary,
+        isolated,
+        unresolved_relations,
+    }
+}
+
+fn cleanup_queue_summary(
+    id: &str,
+    label: &str,
+    remaining: usize,
+    total: usize,
+) -> CleanupQueueSummary {
+    CleanupQueueSummary {
+        id: id.to_string(),
+        label: label.to_string(),
+        remaining,
+        total,
     }
 }
 

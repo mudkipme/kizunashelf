@@ -237,6 +237,34 @@ pub struct AnalyticsDataQuality {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
+pub struct CleanupQueueSummary {
+    pub id: String,
+    pub label: String,
+    pub remaining: usize,
+    pub total: usize,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CleanupUnresolvedRelation {
+    pub source: EntitySummary,
+    pub relation: Relation,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CleanupQueuesResponse {
+    pub generated_at: String,
+    pub queues: Vec<CleanupQueueSummary>,
+    pub missing_cover: Vec<EntitySummary>,
+    pub missing_external_refs: Vec<EntitySummary>,
+    pub missing_summary: Vec<EntitySummary>,
+    pub isolated: Vec<EntitySummary>,
+    pub unresolved_relations: Vec<CleanupUnresolvedRelation>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct AnalyticsTotals {
     pub entities: usize,
     pub relations: usize,

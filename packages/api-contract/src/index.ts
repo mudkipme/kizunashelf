@@ -2,6 +2,7 @@ import {
   AnalyticsResponse as AnalyticsResponseSchema,
 } from "./generated/analyticsResponse.zod.js";
 import { CalendarResponse as CalendarResponseSchema } from "./generated/calendarResponse.zod.js";
+import { CleanupQueuesResponse as CleanupQueuesResponseSchema } from "./generated/cleanupQueuesResponse.zod.js";
 import { ConfigResponse as ConfigResponseSchema } from "./generated/configResponse.zod.js";
 import { EntityDatesResponse as EntityDatesResponseSchema } from "./generated/entityDatesResponse.zod.js";
 import { EntityDetailResponse as EntityDetailResponseSchema } from "./generated/entityDetailResponse.zod.js";
@@ -15,6 +16,7 @@ import { RelationTargetResponse as RelationTargetResponseSchema } from "./genera
 import { StatsResponse as StatsResponseSchema } from "./generated/statsResponse.zod.js";
 import type { AnalyticsResponse } from "./generated/analyticsResponse.zod.js";
 import type { CalendarResponse } from "./generated/calendarResponse.zod.js";
+import type { CleanupQueuesResponse } from "./generated/cleanupQueuesResponse.zod.js";
 import type { ConfigResponse } from "./generated/configResponse.zod.js";
 import type { EntityDatesResponse } from "./generated/entityDatesResponse.zod.js";
 import type { EntityDetailResponse } from "./generated/entityDetailResponse.zod.js";
@@ -25,6 +27,9 @@ import type { RelationGroupsResponse } from "./generated/relationGroupsResponse.
 export * from "./generated/client.js";
 export * from "./generated/analyticsResponse.zod.js";
 export * from "./generated/calendarResponse.zod.js";
+export * from "./generated/cleanupQueueSummary.zod.js";
+export * from "./generated/cleanupQueuesResponse.zod.js";
+export * from "./generated/cleanupUnresolvedRelation.zod.js";
 export * from "./generated/configResponse.zod.js";
 export * from "./generated/entityDatesResponse.zod.js";
 export * from "./generated/entityDetailResponse.zod.js";
@@ -48,6 +53,7 @@ export const ApiResponseSchemas = {
   home: HomeResponseSchema,
   stats: StatsResponseSchema,
   analytics: AnalyticsResponseSchema,
+  cleanupQueues: CleanupQueuesResponseSchema,
   entities: EntityListResponseSchema,
   entityDetail: EntityDetailResponseSchema,
   entityDates: EntityDatesResponseSchema,
@@ -65,6 +71,8 @@ export type Relation = EntityDetailResponse["relations"][number];
 export type CalendarDay = CalendarResponse["days"][number];
 export type CalendarEntry = CalendarDay["entries"][number];
 export type CalendarSnippet = NonNullable<CalendarEntry["snippets"]>[number];
+export type CleanupQueueSummary = CleanupQueuesResponse["queues"][number];
+export type CleanupUnresolvedRelation = CleanupQueuesResponse["unresolvedRelations"][number];
 export type HomeSectionResponse = HomeResponse["sections"][number];
 export type TypeConfig = ConfigResponse["types"][number];
 export type RelationTargetSummary = RelationGroupsResponse["fields"][number]["topTargets"][number];
