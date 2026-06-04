@@ -7,6 +7,7 @@
 import { z as zod } from 'zod';
 
 export const EntityFields = zod.object({
+  "id": zod.array(zod.string()).optional(),
   "titleLanguages": zod.record(zod.string(), zod.array(zod.string())).optional(),
   "subtitle": zod.array(zod.string()).optional(),
   "image": zod.array(zod.string()).optional(),

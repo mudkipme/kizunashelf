@@ -1,7 +1,7 @@
 {
   "vaultRoot": "/var/home/mudkip/Containers/obsidian/config/Obsidian/Mudkip",
   "taxonomyRoot": "Taxonomy",
-  "readConcurrency": 32,
+  "readConcurrency": 16,
   "dailyNotes": {
     "paths": [
       "Daily Notes"
@@ -48,6 +48,10 @@
       "icon": "📺",
       "path": "Anime",
       "fields": {
+        "id": [
+          "uid",
+          "id"
+        ],
         "titleLanguages": {
           "zh": [
             "filename"

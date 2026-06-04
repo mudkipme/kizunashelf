@@ -131,7 +131,10 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(relation_field_count(&detail["relations"], "body"), 2);
     assert!(has_entity_title(&detail["relatedEntities"], "Moon Quest"));
     assert!(has_entity_title(&detail["relatedEntities"], "Star Saga"));
-    assert_eq!(unique_relation_target_count("anime:Star Voyager", &detail["relations"]), 3);
+    assert_eq!(
+        unique_relation_target_count("anime:Star Voyager", &detail["relations"]),
+        3
+    );
     assert_eq!(detail["entity"]["relationCount"], 4);
 
     let (status, missing) = server
@@ -252,6 +255,7 @@ async fn settings_endpoints_create_and_read_config_files() {
         config_path: config_path.clone(),
         cache_ttl: Duration::from_millis(0),
         web_dist_path: None,
+        settings_writable: true,
     });
 
     let missing = request_json(&app, Method::GET, "/api/settings/config", None).await;
@@ -318,6 +322,39 @@ async fn settings_endpoints_create_and_read_config_files() {
     let health = request_json(&app, Method::GET, "/api/health", None).await;
     assert_eq!(health.0, StatusCode::OK);
     assert_eq!(health.1["entityCount"], 1);
+}
+
+#[tokio::test]
+async fn settings_mutation_endpoints_can_be_disabled() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_fixture_vault(&vault);
+    let config_path = temp.path().join("kizunashelf.config.json");
+    let app = router(ApiOptions {
+        config_path,
+        cache_ttl: Duration::from_millis(0),
+        web_dist_path: None,
+        settings_writable: false,
+    });
+    let config = json!({
+        "vaultRoot": vault,
+        "taxonomyRoot": "Taxonomy",
+        "types": []
+    });
+
+    let saved = request_json(&app, Method::PUT, "/api/settings/config", Some(config)).await;
+    assert_eq!(saved.0, StatusCode::FORBIDDEN);
+    assert_eq!(saved.1["error"], "Settings writes are disabled");
+
+    let suggestions = request_json(
+        &app,
+        Method::GET,
+        "/api/settings/path-suggestions?path=.",
+        None,
+    )
+    .await;
+    assert_eq!(suggestions.0, StatusCode::FORBIDDEN);
+    assert_eq!(suggestions.1["error"], "Path suggestions are disabled");
 }
 
 impl TestServer {
@@ -441,6 +478,7 @@ impl TestServer {
                 config_path,
                 cache_ttl: Duration::from_millis(0),
                 web_dist_path: None,
+                settings_writable: true,
             }),
             _temp: temp,
         }

@@ -43,6 +43,7 @@ export const SaveSettingsConfigBody = zod.object({
   "path": zod.string(),
   "defaultTitleLanguage": zod.string().nullish(),
   "fields": zod.object({
+  "id": zod.array(zod.string()).optional(),
   "titleLanguages": zod.record(zod.string(), zod.array(zod.string())).optional(),
   "subtitle": zod.array(zod.string()).optional(),
   "image": zod.array(zod.string()).optional(),

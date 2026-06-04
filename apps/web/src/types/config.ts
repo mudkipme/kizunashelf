@@ -1,4 +1,5 @@
 export type EntityFieldsConfig = {
+  id: string[];
   titleLanguages: Record<string, string[]>;
   subtitle: string[];
   image: string[];

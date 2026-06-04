@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EntityFields {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub id: Vec<String>,
     #[serde(default, alias = "titles", skip_serializing_if = "BTreeMap::is_empty")]
     pub title_languages: BTreeMap<String, Vec<String>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -195,7 +197,17 @@ pub struct Library {
     pub entities: Vec<Entity>,
     pub summaries: Vec<EntitySummary>,
     pub relations: Vec<Relation>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub diagnostics: Vec<LibraryDiagnostic>,
     pub generated_at: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryDiagnostic {
+    pub path: String,
+    pub kind: String,
+    pub message: String,
 }
 
 impl Entity {

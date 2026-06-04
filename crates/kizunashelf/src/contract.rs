@@ -1,6 +1,8 @@
 use crate::calendar::{CalendarDay, CalendarEntry, EntityDatesResponse};
 use crate::relations::Count;
-use crate::types::{DateRoleConfig, Entity, EntitySummary, HomeConfig, KizunaConfig, Relation};
+use crate::types::{
+    DateRoleConfig, Entity, EntitySummary, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +13,8 @@ pub struct HealthResponse {
     pub generated_at: String,
     pub entity_count: usize,
     pub relation_count: usize,
+    pub diagnostic_count: usize,
+    pub diagnostics: Vec<LibraryDiagnostic>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

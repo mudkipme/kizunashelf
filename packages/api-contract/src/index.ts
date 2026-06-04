@@ -40,6 +40,7 @@ export * from "./generated/getRelationsParams.zod.js";
 export * from "./generated/getStatsParams.zod.js";
 export * from "./generated/healthResponse.zod.js";
 export * from "./generated/homeResponse.zod.js";
+export * from "./generated/libraryDiagnostic.zod.js";
 export * from "./generated/relationGroupsResponse.zod.js";
 export * from "./generated/relationListResponse.zod.js";
 export * from "./generated/relationTargetTypeSummary.zod.js";

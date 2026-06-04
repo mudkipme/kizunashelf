@@ -13,7 +13,7 @@ async fn main() -> Result<()> {
         .ok()
         .and_then(|port| port.parse::<u16>().ok())
         .unwrap_or(8787);
-    let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let cache_ttl = std::env::var("KIZUNASHELF_CACHE_TTL_MS")
         .ok()
         .and_then(|ttl| ttl.parse::<u64>().ok())
@@ -26,14 +26,31 @@ async fn main() -> Result<()> {
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("apps/web/dist"))
     });
+    let settings_writable = std::env::var("KIZUNASHELF_SETTINGS_WRITABLE")
+        .ok()
+        .and_then(|value| parse_bool(&value))
+        .unwrap_or_else(|| is_loopback_host(&host));
     let app = router(ApiOptions {
         config_path,
         cache_ttl: Duration::from_millis(cache_ttl),
         web_dist_path,
+        settings_writable,
     });
     let address: SocketAddr = format!("{host}:{port}").parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;
     println!("KizunaShelf listening on http://{}", listener.local_addr()?);
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+fn parse_bool(value: &str) -> Option<bool> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" | "on" => Some(true),
+        "0" | "false" | "no" | "off" => Some(false),
+        _ => None,
+    }
+}
+
+fn is_loopback_host(host: &str) -> bool {
+    matches!(host, "localhost" | "127.0.0.1" | "::1" | "[::1]")
 }

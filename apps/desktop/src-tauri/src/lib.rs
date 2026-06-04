@@ -79,6 +79,7 @@ pub fn run() {
                     config_path,
                     cache_ttl: Duration::from_millis(cache_ttl),
                     web_dist_path: None,
+                    settings_writable: true,
                 }),
             });
             Ok(())

@@ -10,12 +10,20 @@ export const healthResponseEntityCountMin = 0;
 
 export const healthResponseRelationCountMin = 0;
 
+export const healthResponseDiagnosticCountMin = 0;
+
 
 export const HealthResponse = zod.object({
   "ok": zod.boolean(),
   "generatedAt": zod.string(),
   "entityCount": zod.number().min(healthResponseEntityCountMin),
-  "relationCount": zod.number().min(healthResponseRelationCountMin)
+  "relationCount": zod.number().min(healthResponseRelationCountMin),
+  "diagnosticCount": zod.number().min(healthResponseDiagnosticCountMin),
+  "diagnostics": zod.array(zod.object({
+  "path": zod.string(),
+  "kind": zod.string(),
+  "message": zod.string()
+}))
 })
 
 export type HealthResponse = zod.input<typeof HealthResponse>;

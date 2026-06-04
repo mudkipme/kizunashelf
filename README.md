@@ -38,7 +38,7 @@ The onboarding page is the same structured editor used by Settings. Fill in:
 - `Vault root`: the absolute path to the Obsidian vault.
 - `Taxonomy root`: the collection root folder inside the vault; the default convention is `Taxonomy`, but any folder name works.
 - `Types`: each collection folder you want KizunaShelf to index.
-- `Fields`: frontmatter names for titles, images, statuses, dates, external refs, and relations.
+- `Fields`: frontmatter names for stable IDs, titles, images, statuses, dates, external refs, and relations.
 - Optional `Home` and `Daily Notes` sections.
 
 Click `Create Config`. KizunaShelf writes the config file, reloads the in-memory library, and opens the normal app.
@@ -69,7 +69,7 @@ The Settings page at `/settings` can edit every config field:
 - Daily notes: `paths`, `datePattern`, `snippetMaxLength`
 - Home: `title`, section `id`, `title`, `type`, `status`, `limit`, `sort`, `direction`
 - Types: `id`, `label`, `icon`, `path`, `defaultTitleLanguage`
-- Type fields: `titleLanguages`, `subtitle`, `image`, `status`, `dateRoles.planning`, `dateRoles.completed`, `externalRefs`, `relations`
+- Type fields: `id`, `titleLanguages`, `subtitle`, `image`, `status`, `dateRoles.planning`, `dateRoles.completed`, `externalRefs`, `relations`
 
 On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker.
 
@@ -106,14 +106,17 @@ pnpm build
 pnpm serve
 ```
 
-`pnpm serve` runs the Rust API and serves the built Vite app from one process. It listens on `0.0.0.0:8787` by default. Environment variables:
+`pnpm serve` runs the Rust API and serves the built Vite app from one process. It listens on `127.0.0.1:8787` by default. Set `HOST=0.0.0.0` only when you intentionally want to expose it beyond the local machine. Environment variables:
 
-- `HOST`: bind host, default `0.0.0.0`
+- `HOST`: bind host, default `127.0.0.1`
 - `PORT`: bind port, default `8787`
 - `KIZUNASHELF_CONFIG`: config file path
 - `KIZUNASHELF_CACHE_TTL_MS`: in-memory library cache TTL, default `10000`
 - `KIZUNASHELF_WEB_DIST`: alternate web build path
 - `KIZUNASHELF_SERVE_WEB=false`: serve only the API
+- `KIZUNASHELF_SETTINGS_WRITABLE`: enables Settings writes and path suggestions. Defaults to `true` for loopback hosts and `false` for non-loopback hosts.
+
+The server does not enable wildcard CORS by default. Use the Vite dev proxy during development, or serve the built web app from the Rust process for production.
 
 ## Docker
 
@@ -124,6 +127,8 @@ docker build -t kizunashelf .
 ```
 
 Run it with a mounted config and vault. The exact paths depend on your host; the important part is that `KIZUNASHELF_CONFIG` points at the mounted config file and `vaultRoot` inside that config points at the mounted vault path as seen inside the container.
+
+The Docker image sets `HOST=0.0.0.0` and `KIZUNASHELF_SETTINGS_WRITABLE=true` by default so port publishing and onboarding/settings work out of the box. Override `KIZUNASHELF_SETTINGS_WRITABLE=false` for a read-only deployed container.
 
 ## Desktop
 
@@ -166,3 +171,5 @@ The Rust API exposes:
 - `GET /api/entities/:id/relations`
 - `GET /api/relations`
 - `GET /api/relation-groups`
+
+`/api/health` includes `diagnosticCount` and the first 20 diagnostics, including malformed frontmatter warnings detected while indexing Markdown files.

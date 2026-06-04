@@ -429,6 +429,7 @@ function EntityFieldsEditor({
         onChange={(titleLanguages) => onChange({ ...fields, titleLanguages })}
       />
       <div className="flex flex-col gap-3">
+        <StringListEditor label="Stable ID fields" values={fields.id} onChange={(id) => onChange({ ...fields, id })} />
         <StringListEditor label="Subtitle fields" values={fields.subtitle} onChange={(subtitle) => onChange({ ...fields, subtitle })} />
         <StringListEditor label="Image fields" values={fields.image} onChange={(image) => onChange({ ...fields, image })} />
         <StringListEditor label="Status fields" values={fields.status} onChange={(status) => onChange({ ...fields, status })} />
@@ -785,6 +786,7 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
     icon: config.icon ?? "",
     defaultTitleLanguage: config.defaultTitleLanguage ?? "",
     fields: {
+      id: config.fields?.id ?? [],
       titleLanguages: config.fields?.titleLanguages ?? {},
       subtitle: config.fields?.subtitle ?? [],
       image: config.fields?.image ?? [],
@@ -833,6 +835,7 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
       path: typeConfig.path,
       defaultTitleLanguage: emptyToUndefined(typeConfig.defaultTitleLanguage),
       fields: {
+        id: cleanStrings(typeConfig.fields.id),
         titleLanguages: Object.fromEntries(
           Object.entries(typeConfig.fields.titleLanguages)
             .map(([language, fields]) => [language, cleanStrings(fields)] as const)
@@ -896,6 +899,7 @@ function defaultEntityType(): EntityTypeConfig {
     path: "Type",
     defaultTitleLanguage: "original",
     fields: {
+      id: [],
       titleLanguages: { original: ["filename"] },
       subtitle: [],
       image: [],

@@ -108,6 +108,16 @@
               }
             }
           },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "",
             "content": {
@@ -149,6 +159,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PathSuggestionsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -655,13 +675,45 @@
             "type": "integer",
             "format": "uint",
             "minimum": 0
+          },
+          "diagnosticCount": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryDiagnostic"
+            }
           }
         },
         "required": [
           "ok",
           "generatedAt",
           "entityCount",
-          "relationCount"
+          "relationCount",
+          "diagnosticCount",
+          "diagnostics"
+        ]
+      },
+      "LibraryDiagnostic": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "kind",
+          "message"
         ]
       },
       "ErrorResponse": {
@@ -1010,6 +1062,12 @@
       "EntityFields": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "titleLanguages": {
             "type": "object",
             "additionalProperties": {
