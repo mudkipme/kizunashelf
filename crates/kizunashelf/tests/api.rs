@@ -4,6 +4,7 @@ use axum::Router;
 use kizunashelf::api::{router, ApiOptions};
 use pretty_assertions::assert_eq;
 use serde_json::{json, Value};
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use std::time::Duration;
@@ -75,6 +76,8 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert!(has_entity_title(&entities["items"], "Moon Quest"));
     assert_eq!(entities["items"][0]["titles"]["zh"], "Star Voyager");
     assert_eq!(entities["items"][0]["titles"]["en"], "A Voyage of Stars");
+    let star_voyager_summary = entity_by_title(&entities["items"], "Star Voyager");
+    assert_eq!(star_voyager_summary["relationCount"], 4);
 
     let english_title_sort = server
         .ok_json("/api/entities?sort=title&titleLanguage=en")
@@ -128,6 +131,8 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(relation_field_count(&detail["relations"], "body"), 2);
     assert!(has_entity_title(&detail["relatedEntities"], "Moon Quest"));
     assert!(has_entity_title(&detail["relatedEntities"], "Star Saga"));
+    assert_eq!(unique_relation_target_count("anime:Star Voyager", &detail["relations"]), 3);
+    assert_eq!(detail["entity"]["relationCount"], 4);
 
     let (status, missing) = server
         .json(&format!(
@@ -582,4 +587,34 @@ fn has_entity_title(items: &Value, title: &str) -> bool {
         .unwrap()
         .iter()
         .any(|item| item["title"] == title || item["entity"]["title"] == title)
+}
+
+fn entity_by_title<'value>(items: &'value Value, title: &str) -> &'value Value {
+    items
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["title"] == title || item["entity"]["title"] == title)
+        .unwrap_or_else(|| panic!("entity not found: {title}"))
+}
+
+fn unique_relation_target_count(entity_id: &str, relations: &Value) -> usize {
+    relations
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|relation| {
+            if relation["sourceId"] == entity_id {
+                Some(
+                    relation["targetId"]
+                        .as_str()
+                        .map(str::to_owned)
+                        .unwrap_or_else(|| format!("unresolved:{}", relation["targetTitle"])),
+                )
+            } else {
+                relation["sourceId"].as_str().map(str::to_owned)
+            }
+        })
+        .collect::<HashSet<_>>()
+        .len()
 }

@@ -32,10 +32,19 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const [stats, setStats] = useState<StatsResponse>();
   const [search, setSearch] = useState("");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const activeType = useMemo(() => {
     if (location.pathname !== "/library") return "";
     return new URLSearchParams(location.search).get("type") ?? allTypes;
   }, [location.pathname, location.search]);
+  const activeTypeLabel = useMemo(() => {
+    if (activeType === allTypes) return "library";
+    return stats?.byType.find((type) => type.id === activeType)?.label ?? activeType;
+  }, [activeType, stats?.byType]);
+  const searchPlaceholder =
+    location.pathname === "/library"
+      ? `Search ${activeTypeLabel}`
+      : "Search library";
 
   useEffect(() => {
     const controller = new AbortController();
@@ -53,6 +62,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
 
   useEffect(() => {
     setMobileSidebarOpen(false);
+    setMobileSearchOpen(false);
   }, [location.pathname, location.search]);
 
   useEffect(() => {
@@ -75,17 +85,22 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const params = new URLSearchParams();
+    const params =
+      location.pathname === "/library"
+        ? new URLSearchParams(location.search)
+        : new URLSearchParams();
     const query = search.trim();
     if (query) params.set("q", query);
-    params.set("type", allTypes);
+    else params.delete("q");
+    if (!params.get("type")) params.set("type", activeType || allTypes);
     params.set("page", "1");
+    setMobileSearchOpen(false);
     navigate(`/library?${params.toString()}`);
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="flex min-h-14 flex-wrap items-center gap-2 border-b bg-card/85 px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-4">
+    <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
+      <header className="flex min-h-14 shrink-0 items-center gap-2 border-b bg-card/85 px-3 py-2 sm:gap-3 sm:px-4">
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none">
           <img
             src="/favicon-96x96.png"
@@ -109,16 +124,24 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         >
           <MenuIcon />
         </Button>
-        <form onSubmit={submitSearch} className="order-3 flex w-full min-w-0 items-center gap-2 sm:order-none sm:ml-auto sm:max-w-sm">
-          <SearchIcon className="text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search library"
-            className="min-w-0"
-            aria-label="Search library"
-          />
-        </form>
+        <SearchForm
+          search={search}
+          onSearchChange={setSearch}
+          onSubmit={submitSearch}
+          className="ml-auto hidden min-w-0 items-center gap-2 sm:flex sm:max-w-sm"
+          placeholder={searchPlaceholder}
+        />
+        <Button
+          type="button"
+          variant={mobileSearchOpen || search.trim() ? "secondary" : "ghost"}
+          size="icon"
+          className="sm:hidden"
+          onClick={() => setMobileSearchOpen((open) => !open)}
+          aria-label="Search library"
+          aria-expanded={mobileSearchOpen}
+        >
+          <SearchIcon />
+        </Button>
         <div className="ml-auto flex items-center gap-2 sm:ml-0">
           <ThemeModeSelect />
           <Badge variant="secondary" className="hidden sm:inline-flex">
@@ -127,15 +150,28 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         </div>
       </header>
 
+      {mobileSearchOpen ? (
+        <div className="shrink-0 border-b bg-card/85 px-3 py-2 sm:hidden">
+          <SearchForm
+            search={search}
+            onSearchChange={setSearch}
+            onSubmit={submitSearch}
+            className="flex min-w-0 items-center gap-2"
+            placeholder={searchPlaceholder}
+            autoFocus
+          />
+        </div>
+      ) : null}
+
       {error ? (
-        <div className="border-b bg-destructive/10 px-4 py-2 text-sm text-destructive">
+        <div className="shrink-0 border-b bg-destructive/10 px-4 py-2 text-sm text-destructive">
           {error}
         </div>
       ) : null}
 
-      <div className="grid min-h-[calc(100vh-3.5rem)] grid-cols-1 md:grid-cols-[224px_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-[224px_minmax(0,1fr)]">
         <AppSidebar stats={stats} activeType={activeType} pathname={location.pathname} />
-        <div className="min-w-0 overflow-hidden">{children}</div>
+        <div className="min-h-0 min-w-0 overflow-auto overscroll-contain">{children}</div>
       </div>
       <MobileSidebar
         open={mobileSidebarOpen}
@@ -145,6 +181,36 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         onClose={() => setMobileSidebarOpen(false)}
       />
     </main>
+  );
+}
+
+function SearchForm({
+  search,
+  onSearchChange,
+  onSubmit,
+  className,
+  placeholder,
+  autoFocus = false,
+}: {
+  search: string;
+  onSearchChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  className?: string;
+  placeholder: string;
+  autoFocus?: boolean;
+}) {
+  return (
+    <form onSubmit={onSubmit} className={className}>
+      <SearchIcon className="text-muted-foreground" />
+      <Input
+        value={search}
+        onChange={(event) => onSearchChange(event.target.value)}
+        placeholder={placeholder}
+        className="min-w-0"
+        aria-label="Search library"
+        autoFocus={autoFocus}
+      />
+    </form>
   );
 }
 
@@ -158,8 +224,8 @@ function AppSidebar({
   pathname: string;
 }) {
   return (
-    <aside className="hidden border-r bg-card/35 md:block">
-      <div className="sticky top-0 flex max-h-[calc(100vh-3.5rem)] flex-col gap-4 overflow-auto p-3">
+    <aside className="hidden min-h-0 border-r bg-card/35 md:block">
+      <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto overscroll-contain p-3">
         <SidebarContent stats={stats} activeType={activeType} pathname={pathname} />
       </div>
     </aside>

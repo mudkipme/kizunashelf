@@ -42,16 +42,7 @@ pub async fn read_library(config: KizunaConfig) -> Result<Library> {
     validate_library_roots(&config).await?;
     let mut entities = read_entities(&config).await?;
     let relations = build_relations(&config, &entities).await?;
-    let mut relation_count_by_id: HashMap<String, u32> = HashMap::new();
-
-    for relation in &relations {
-        *relation_count_by_id
-            .entry(relation.source_id.clone())
-            .or_insert(0) += 1;
-        if let Some(target_id) = &relation.target_id {
-            *relation_count_by_id.entry(target_id.clone()).or_insert(0) += 1;
-        }
-    }
+    let relation_count_by_id = unique_relation_count_by_id(&relations);
 
     let summaries: Vec<EntitySummary> = entities
         .iter()
@@ -79,6 +70,33 @@ pub async fn read_library(config: KizunaConfig) -> Result<Library> {
         relations,
         generated_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
     })
+}
+
+fn unique_relation_count_by_id(relations: &[Relation]) -> HashMap<String, u32> {
+    let mut related_by_id: HashMap<String, HashSet<String>> = HashMap::new();
+
+    for relation in relations {
+        let target_key = relation
+            .target_id
+            .clone()
+            .unwrap_or_else(|| format!("unresolved:{}", relation.target_title));
+        related_by_id
+            .entry(relation.source_id.clone())
+            .or_default()
+            .insert(target_key.clone());
+
+        if let Some(target_id) = &relation.target_id {
+            related_by_id
+                .entry(target_id.clone())
+                .or_default()
+                .insert(relation.source_id.clone());
+        }
+    }
+
+    related_by_id
+        .into_iter()
+        .map(|(id, related)| (id, related.len() as u32))
+        .collect()
 }
 
 pub async fn read_library_from_config(config_path: impl AsRef<Path>) -> Result<Library> {

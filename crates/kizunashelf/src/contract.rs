@@ -47,6 +47,7 @@ pub struct TypeConfigResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_title_language: Option<String>,
     pub title_languages: Vec<String>,
+    pub status_fields: Vec<String>,
     pub date_roles: DateRoleConfig,
 }
 

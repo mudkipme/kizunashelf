@@ -281,6 +281,7 @@ async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
                 path: item.path.clone(),
                 default_title_language: effective_default_title_language(item),
                 title_languages: item.fields.title_languages.keys().cloned().collect(),
+                status_fields: item.fields.status.clone(),
                 date_roles: item.fields.date_roles.clone(),
             })
             .collect(),

@@ -823,6 +823,12 @@
               "type": "string"
             }
           },
+          "statusFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "dateRoles": {
             "$ref": "#/components/schemas/DateRoleConfig"
           }
@@ -832,6 +838,7 @@
           "label",
           "path",
           "titleLanguages",
+          "statusFields",
           "dateRoles"
         ]
       },

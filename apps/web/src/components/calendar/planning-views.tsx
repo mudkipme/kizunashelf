@@ -77,7 +77,7 @@ export function CalendarPlanningViews({
     return <SeasonPlanningView year={year} points={points} />;
   }
 
-  return <PlanningBoard points={points} dateRolesByType={dateRolesByType} />;
+  return <PlanningBoard entities={entities} points={points} dateRolesByType={dateRolesByType} />;
 }
 
 export function countEntityDatePoints(entities: EntitySummary[]) {
@@ -168,13 +168,20 @@ function SeasonPlanningView({ year, points }: { year: number; points: DatePoint[
 }
 
 function PlanningBoard({
+  entities,
   points,
   dateRolesByType,
 }: {
+  entities: EntitySummary[];
   points: DatePoint[];
   dateRolesByType: Map<string, DateRoles>;
 }) {
   const today = todayKey();
+  const futurePlanningEntityIds = new Set(
+    points
+      .filter((point) => point.sortKey >= today && hasDateRole(point, dateRolesByType, "planning"))
+      .map((point) => point.entity.id),
+  );
   const upcoming = uniqueByEntity(
     points
       .filter((point) => point.sortKey >= today && hasDateRole(point, dateRolesByType, "planning"))
@@ -185,22 +192,19 @@ function PlanningBoard({
       .filter((point) => point.sortKey <= today && hasDateRole(point, dateRolesByType, "completed"))
       .sort(compareDatePointsDesc),
   ).slice(0, 12);
-  const backlogByDate = uniqueByEntity(
-    points
-      .filter(
-        (point) =>
-          backlogStatuses.has(point.entity.status ?? "") &&
-          point.sortKey >= today &&
-          hasDateRole(point, dateRolesByType, "planning"),
-      )
-      .sort(compareDatePointsAsc),
-  ).slice(0, 12);
+  const somedayBacklog = entities
+    .filter(
+      (entity) =>
+        backlogStatuses.has(entity.status ?? "") && !futurePlanningEntityIds.has(entity.id),
+    )
+    .sort(compareEntitiesAsc)
+    .slice(0, 12);
 
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
       <PlanningList title="Upcoming" count={upcoming.length} points={upcoming} />
       <PlanningList title="Recently Completed" count={recentlyCompleted.length} points={recentlyCompleted} />
-      <PlanningList title="Backlog By Date" count={backlogByDate.length} points={backlogByDate} />
+      <EntityPlanningList title="Backlog / Someday" count={somedayBacklog.length} entities={somedayBacklog} />
     </div>
   );
 }
@@ -259,6 +263,52 @@ function PlanningEntityRow({ point }: { point: DatePoint }) {
         </Badge>
         <span className="tabular-nums">{point.value}</span>
       </span>
+    </Link>
+  );
+}
+
+function EntityPlanningList({
+  title,
+  count,
+  entities,
+}: {
+  title: string;
+  count: number;
+  entities: EntitySummary[];
+}) {
+  return (
+    <section className="rounded-md border">
+      <header className="flex items-center gap-2 border-b px-3 py-2">
+        <h2 className="text-sm font-semibold">{title}</h2>
+        <Badge variant="secondary" className="ml-auto">
+          {count}
+        </Badge>
+      </header>
+      <div className="flex flex-col md:max-h-[720px] md:overflow-auto">
+        {entities.length > 0 ? (
+          entities.map((entity) => <PlanningEntitySummaryRow key={entity.id} entity={entity} />)
+        ) : (
+          <div className="p-6 text-center text-sm text-muted-foreground">No entries</div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PlanningEntitySummaryRow({ entity }: { entity: EntitySummary }) {
+  return (
+    <Link
+      to={`/entities/${encodeURIComponent(entity.id)}`}
+      className="flex min-w-0 flex-col gap-1 border-b px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+    >
+      <span className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="min-w-0 truncate text-sm font-medium">{entity.title}</span>
+        <Badge variant="outline">{entity.typeLabel}</Badge>
+        {entity.status ? <Badge variant="secondary">{entity.status}</Badge> : null}
+      </span>
+      {entity.summary ? (
+        <span className="line-clamp-2 text-xs leading-5 text-muted-foreground">{entity.summary}</span>
+      ) : null}
     </Link>
   );
 }
@@ -362,6 +412,12 @@ function compareDatePointsAsc(a: DatePoint, b: DatePoint) {
 function compareDatePointsDesc(a: DatePoint, b: DatePoint) {
   if (a.sortKey !== b.sortKey) return b.sortKey.localeCompare(a.sortKey);
   return a.entity.title.localeCompare(b.entity.title);
+}
+
+function compareEntitiesAsc(a: EntitySummary, b: EntitySummary) {
+  if ((a.status ?? "") !== (b.status ?? "")) return (a.status ?? "").localeCompare(b.status ?? "");
+  if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
+  return a.title.localeCompare(b.title);
 }
 
 function todayKey() {

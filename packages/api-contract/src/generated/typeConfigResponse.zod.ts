@@ -13,6 +13,7 @@ export const TypeConfigResponse = zod.object({
   "path": zod.string(),
   "defaultTitleLanguage": zod.string().nullish(),
   "titleLanguages": zod.array(zod.string()),
+  "statusFields": zod.array(zod.string()),
   "dateRoles": zod.object({
   "planning": zod.array(zod.string()).optional(),
   "completed": zod.array(zod.string()).optional()

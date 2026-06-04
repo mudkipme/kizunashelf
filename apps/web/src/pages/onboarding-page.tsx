@@ -31,7 +31,7 @@ export function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="h-dvh overflow-auto overscroll-contain bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
         {state.error ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">

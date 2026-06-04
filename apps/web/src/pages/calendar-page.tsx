@@ -33,7 +33,8 @@ type PlanningState = {
 };
 
 type CalendarMode = "month" | PlanningMode;
-type DateRoles = ConfigResponse["types"][number]["dateRoles"];
+type ConfigType = ConfigResponse["types"][number];
+type DateRoles = ConfigType["dateRoles"];
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const entityPageSize = 100;
@@ -134,12 +135,20 @@ export function CalendarPage() {
   ]);
   const selectedDay =
     state.data?.days.find((day) => day.date === selectedDate) ?? state.data?.days[0];
+  const planningTypeOptions = useMemo(
+    () => (state.config?.types ?? []).filter(hasPlanningSurface),
+    [state.config],
+  );
+  const effectiveType =
+    mode !== "month" && type !== "all" && !planningTypeOptions.some((item) => item.id === type)
+      ? "all"
+      : type;
   const planningEntities = useMemo(
     () =>
-      type === "all"
+      effectiveType === "all"
         ? planning.entities
-        : planning.entities.filter((entity) => entity.type === type),
-    [planning.entities, type],
+        : planning.entities.filter((entity) => entity.type === effectiveType),
+    [effectiveType, planning.entities],
   );
   const planningDateCount = useMemo(
     () => countEntityDatePoints(planningEntities),
@@ -271,9 +280,9 @@ export function CalendarPage() {
                 <option value="daily-note">Daily note mentions</option>
               </Select>
             ) : null}
-            <Select value={type} onChange={(event) => setParam("type", event.target.value, "all")}>
+            <Select value={effectiveType} onChange={(event) => setParam("type", event.target.value, "all")}>
               <option value="all">All types</option>
-              {state.config?.types.map((item) => (
+              {(mode === "month" ? state.config?.types ?? [] : planningTypeOptions).map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.label}
                 </option>
@@ -380,6 +389,14 @@ function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
 function readMode(value: string | null): CalendarMode {
   if (value === "year" || value === "seasons" || value === "planning") return value;
   return "month";
+}
+
+function hasPlanningSurface(type: ConfigType) {
+  return (
+    type.statusFields.length > 0 ||
+    (type.dateRoles.planning?.length ?? 0) > 0 ||
+    (type.dateRoles.completed?.length ?? 0) > 0
+  );
 }
 
 function todayInMonth(year: number, month: number, date: Date) {

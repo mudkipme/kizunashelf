@@ -58,7 +58,7 @@ function ConfigGate() {
 
   if (state.loading) {
     return (
-      <main className="min-h-screen bg-background p-8 text-center text-sm text-muted-foreground">
+      <main className="h-dvh overflow-auto bg-background p-8 text-center text-sm text-muted-foreground">
         Loading
       </main>
     );

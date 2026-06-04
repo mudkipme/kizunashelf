@@ -14,27 +14,10 @@ import { titleLanguageLabel } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
-export function AssetToolbar({
-  className,
-  stats,
-  status,
-  refs,
-  cover,
-  sort,
-  direction,
-  view,
-  titleLanguage,
-  titleLanguages,
-  defaultTitleLabel = "Default title",
-  onStatusChange,
-  onRefsChange,
-  onCoverChange,
-  onSortChange,
-  onDirectionChange,
-  onViewChange,
-  onTitleLanguageChange,
-}: {
+type AssetToolbarProps = {
   className?: string;
+  compact?: boolean;
+  showLabel?: boolean;
   stats?: StatsResponse;
   status: string;
   refs: string;
@@ -52,14 +35,49 @@ export function AssetToolbar({
   onDirectionChange: (value: string) => void;
   onViewChange: (value: string) => void;
   onTitleLanguageChange: (value: string) => void;
-}) {
+};
+
+export function AssetToolbar({
+  className,
+  compact = false,
+  showLabel = true,
+  stats,
+  status,
+  refs,
+  cover,
+  sort,
+  direction,
+  view,
+  titleLanguage,
+  titleLanguages,
+  defaultTitleLabel = "Default title",
+  onStatusChange,
+  onRefsChange,
+  onCoverChange,
+  onSortChange,
+  onDirectionChange,
+  onViewChange,
+  onTitleLanguageChange,
+}: AssetToolbarProps) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-2 border-b px-3 py-2", className)}>
-      <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
-        <SlidersHorizontalIcon />
-        Filters
-      </div>
-      <Select value={status} onChange={(event) => onStatusChange(event.target.value)}>
+    <div
+      className={cn(
+        compact ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center gap-2 border-b px-3 py-2",
+        className,
+      )}
+    >
+      {showLabel ? (
+        <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+          <SlidersHorizontalIcon />
+          Filters
+        </div>
+      ) : null}
+      <Select
+        value={status}
+        onChange={(event) => onStatusChange(event.target.value)}
+        className={compact ? "min-w-0" : undefined}
+        aria-label="Status"
+      >
         <option value={allStatuses}>All statuses</option>
         {stats?.byStatus.map((item) => (
           <option key={item.name} value={item.name}>
@@ -67,18 +85,33 @@ export function AssetToolbar({
           </option>
         ))}
       </Select>
-      <Select value={refs} onChange={(event) => onRefsChange(event.target.value)}>
+      <Select
+        value={refs}
+        onChange={(event) => onRefsChange(event.target.value)}
+        className={compact ? "min-w-0" : undefined}
+        aria-label="Refs"
+      >
         <option value={allOptions}>Any refs</option>
         <option value="with">With refs</option>
         <option value="without">Without refs</option>
       </Select>
-      <Select value={cover} onChange={(event) => onCoverChange(event.target.value)}>
+      <Select
+        value={cover}
+        onChange={(event) => onCoverChange(event.target.value)}
+        className={compact ? "min-w-0" : undefined}
+        aria-label="Cover"
+      >
         <option value={allOptions}>Any cover</option>
         <option value="with">With cover</option>
         <option value="without">Without cover</option>
       </Select>
-      <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
-      <Select value={sort} onChange={(event) => onSortChange(event.target.value)}>
+      {compact ? null : <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />}
+      <Select
+        value={sort}
+        onChange={(event) => onSortChange(event.target.value)}
+        className={compact ? "min-w-0" : undefined}
+        aria-label="Sort"
+      >
         <option value={defaultSort}>Sort by title</option>
         {stats?.dateFields.map((field) => (
           <option key={field} value={`date:${field}`}>
@@ -89,11 +122,21 @@ export function AssetToolbar({
         <option value="relations">Sort by links</option>
         <option value="path">Sort by path</option>
       </Select>
-      <Select value={direction} onChange={(event) => onDirectionChange(event.target.value)}>
+      <Select
+        value={direction}
+        onChange={(event) => onDirectionChange(event.target.value)}
+        className={compact ? "min-w-0" : undefined}
+        aria-label="Direction"
+      >
         <option value={defaultDirection}>Ascending</option>
         <option value="desc">Descending</option>
       </Select>
-      <Select value={titleLanguage} onChange={(event) => onTitleLanguageChange(event.target.value)}>
+      <Select
+        value={titleLanguage}
+        onChange={(event) => onTitleLanguageChange(event.target.value)}
+        className={compact ? "min-w-0" : undefined}
+        aria-label="Display title"
+      >
         <option value={defaultTitleLanguage}>{defaultTitleLabel}</option>
         {titleLanguages.map((language) => (
           <option key={language} value={language}>
@@ -101,10 +144,11 @@ export function AssetToolbar({
           </option>
         ))}
       </Select>
-      <div className="ml-auto flex items-center gap-1">
+      <div className={cn(compact ? "col-span-2 grid grid-cols-2 gap-2" : "ml-auto flex items-center gap-1")}>
         <Button
           variant={view === "list" ? "secondary" : "ghost"}
           size="sm"
+          className={compact ? "justify-center" : undefined}
           onClick={() => onViewChange("list")}
         >
           <ListIcon data-icon="inline-start" />
@@ -113,6 +157,7 @@ export function AssetToolbar({
         <Button
           variant={view === "grid" ? "secondary" : "ghost"}
           size="sm"
+          className={compact ? "justify-center" : undefined}
           onClick={() => onViewChange("grid")}
         >
           <Grid2X2Icon data-icon="inline-start" />
