@@ -27,7 +27,7 @@ pub async fn load_config(config_path: impl AsRef<Path>) -> Result<KizunaConfig> 
 pub async fn read_library(config: KizunaConfig) -> Result<Library> {
     validate_library_roots(&config).await?;
     let mut entities = read_entities(&config).await?;
-    let relations = build_relations(&config, &entities);
+    let relations = build_relations(&config, &entities).await?;
     let mut relation_count_by_id: HashMap<String, u32> = HashMap::new();
 
     for relation in &relations {
@@ -436,7 +436,7 @@ fn extract_summary(body: &str) -> Option<String> {
     }
 }
 
-fn build_relations(config: &KizunaConfig, entities: &[Entity]) -> Vec<Relation> {
+async fn build_relations(config: &KizunaConfig, entities: &[Entity]) -> Result<Vec<Relation>> {
     let mut by_basename: HashMap<String, Vec<&Entity>> = HashMap::new();
     for entity in entities {
         by_basename
@@ -489,7 +489,9 @@ fn build_relations(config: &KizunaConfig, entities: &[Entity]) -> Vec<Relation> 
         }
     }
 
-    dedupe_relations(relations)
+    relations.extend(daily_note_relations(config, entities).await?);
+
+    Ok(dedupe_relations(relations))
 }
 
 fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<String> {
@@ -505,6 +507,137 @@ fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<String> {
         }
     }
     fields
+}
+
+async fn daily_note_relations(config: &KizunaConfig, entities: &[Entity]) -> Result<Vec<Relation>> {
+    let paths = config
+        .daily_notes
+        .as_ref()
+        .filter(|daily_notes| !daily_notes.paths.is_empty())
+        .map(|daily_notes| daily_notes.paths.clone())
+        .unwrap_or_else(|| vec!["Daily Notes".to_string()]);
+    let date_pattern = config
+        .daily_notes
+        .as_ref()
+        .and_then(|daily_notes| daily_notes.date_pattern.as_ref())
+        .and_then(|pattern| Regex::new(pattern).ok())
+        .unwrap_or_else(|| Regex::new(r"^(?<date>\d{4}-\d{2}-\d{2})\.md$").unwrap());
+    let by_basename = normalized_entity_basename_index(entities);
+    let mut relations = Vec::new();
+
+    for path in paths {
+        let root = Path::new(&config.vault_root).join(path);
+        for absolute_path in walk_markdown_files(&root).await? {
+            let relative_path = relative_path(Path::new(&config.vault_root), &absolute_path);
+            let basename = absolute_path
+                .file_name()
+                .map(|item| item.to_string_lossy().to_string())
+                .unwrap_or_default();
+            let source_label = daily_note_date(&relative_path, &date_pattern)
+                .or_else(|| daily_note_date(&basename, &date_pattern))
+                .unwrap_or_else(|| {
+                    basename
+                        .strip_suffix(".md")
+                        .unwrap_or(&basename)
+                        .to_string()
+                });
+            let source_id = format!("daily-note:{source_label}:{relative_path}");
+            let raw = fs::read_to_string(&absolute_path).await?;
+            for target_title in daily_note_wikilinks(&raw) {
+                let Some(target) = find_target_for_wikilink(&target_title, &by_basename) else {
+                    continue;
+                };
+                relations.push(Relation {
+                    source_id: source_id.clone(),
+                    target_id: Some(target.summary.id.clone()),
+                    target_title,
+                    target_type: Some(target.summary.entity_type.clone()),
+                    field: "daily-note".to_string(),
+                    direction: RelationDirection::Out,
+                });
+            }
+        }
+    }
+
+    Ok(relations)
+}
+
+async fn walk_markdown_files(root: &Path) -> Result<Vec<PathBuf>> {
+    let mut files = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(path) = stack.pop() {
+        let mut entries = match fs::read_dir(&path).await {
+            Ok(entries) => entries,
+            Err(err) if err.kind() == ErrorKind::NotFound => continue,
+            Err(err) => return Err(err.into()),
+        };
+        while let Some(entry) = entries.next_entry().await? {
+            let file_type = entry.file_type().await?;
+            let path = entry.path();
+            if file_type.is_dir() {
+                stack.push(path);
+            } else if file_type.is_file()
+                && path.extension().is_some_and(|extension| extension == "md")
+            {
+                files.push(path);
+            }
+        }
+    }
+    Ok(files)
+}
+
+fn daily_note_date(path: &str, pattern: &Regex) -> Option<String> {
+    let captures = pattern.captures(path)?;
+    captures
+        .name("date")
+        .or_else(|| captures.get(1))
+        .map(|capture| capture.as_str().to_string())
+}
+
+fn daily_note_wikilinks(raw: &str) -> Vec<String> {
+    body_wikilinks(&fence_regex().replace_all(&strip_frontmatter(raw), ""))
+}
+
+fn strip_frontmatter(raw: &str) -> String {
+    if !raw.starts_with("---\n") {
+        return raw.to_string();
+    }
+    raw[4..]
+        .find("\n---")
+        .map(|end| raw[end + 8..].to_string())
+        .unwrap_or_else(|| raw.to_string())
+}
+
+fn normalized_entity_basename_index(entities: &[Entity]) -> HashMap<String, Vec<&Entity>> {
+    let mut by_basename: HashMap<String, Vec<&Entity>> = HashMap::new();
+    for entity in entities {
+        by_basename
+            .entry(normalize_wikilink_target(&entity.summary.basename))
+            .or_default()
+            .push(entity);
+    }
+    by_basename
+}
+
+fn find_target_for_wikilink<'a>(
+    target_title: &str,
+    by_basename: &HashMap<String, Vec<&'a Entity>>,
+) -> Option<&'a Entity> {
+    let candidates = by_basename.get(&normalize_wikilink_target(target_title))?;
+    candidates
+        .iter()
+        .find(|candidate| candidate.summary.entity_type == "franchise")
+        .copied()
+        .or_else(|| candidates.first().copied())
+}
+
+fn normalize_wikilink_target(target: &str) -> String {
+    target
+        .split('/')
+        .last()
+        .unwrap_or(target)
+        .trim()
+        .to_lowercase()
 }
 
 fn relation_values(value: Option<&Value>) -> Vec<String> {

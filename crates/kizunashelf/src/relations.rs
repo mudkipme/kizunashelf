@@ -37,7 +37,6 @@ pub fn build_relation_hubs(library: &Library) -> Vec<AnalyticsRelationHub> {
 pub fn relation_type_pairs(library: &Library) -> Vec<Count> {
     let by_id = summary_by_id(library);
     count_by(&outgoing_relations(library, None), |relation| {
-        let source = by_id.get(relation.source_id.as_str());
         let target_label = relation
             .target_id
             .as_ref()
@@ -51,9 +50,7 @@ pub fn relation_type_pairs(library: &Library) -> Vec<Count> {
             });
         format!(
             "{} -> {}",
-            source
-                .map(|source| source.type_label.as_str())
-                .unwrap_or("Unknown"),
+            relation_source_type_label(relation, &by_id).as_str(),
             target_label.as_deref().unwrap_or("Unresolved")
         )
     })
@@ -190,9 +187,27 @@ fn build_relation_target_summary_with_index(
         target_type,
         target_type_label,
         count: relations.len(),
-        source_types: count_by(&sources, |entity| entity.type_label.clone()),
+        source_types: count_by(&relations, |relation| {
+            relation_source_type_label(relation, entity_by_id)
+        }),
         examples: sources.into_iter().take(5).collect(),
     }
+}
+
+pub fn relation_source_type_label(
+    relation: &Relation,
+    entity_by_id: &HashMap<&str, &EntitySummary>,
+) -> String {
+    entity_by_id
+        .get(relation.source_id.as_str())
+        .map(|source| source.type_label.clone())
+        .unwrap_or_else(|| {
+            if relation.source_id.starts_with("daily-note:") {
+                "Daily Note".to_string()
+            } else {
+                "Unknown".to_string()
+            }
+        })
 }
 
 pub fn target_key(relation: &Relation) -> &str {

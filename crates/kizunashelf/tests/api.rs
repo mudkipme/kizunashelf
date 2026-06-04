@@ -22,7 +22,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let health = server.ok_json("/api/health").await;
     assert_eq!(health["ok"], true);
     assert_eq!(health["entityCount"], 4);
-    assert_eq!(health["relationCount"], 10);
+    assert_eq!(health["relationCount"], 12);
     assert!(health["generatedAt"].as_str().is_some());
 
     let config = server.ok_json("/api/config").await;
@@ -58,7 +58,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
 
     let analytics = server.ok_json("/api/analytics").await;
     assert_eq!(analytics["totals"]["entities"], 4);
-    assert_eq!(analytics["totals"]["relations"], 7);
+    assert_eq!(analytics["totals"]["relations"], 9);
     assert_eq!(analytics["totals"]["unresolvedRelations"], 2);
     assert_eq!(analytics["totals"]["datedEntities"], 3);
 
@@ -133,7 +133,7 @@ async fn relation_endpoints_group_temp_vault_links() {
     let server = TestServer::new();
 
     let relations = server.ok_json("/api/relations").await;
-    assert_eq!(relations["total"], 10);
+    assert_eq!(relations["total"], 12);
 
     let franchise_relations = server.ok_json("/api/relations?field=franchise").await;
     assert_eq!(franchise_relations["total"], 4);
@@ -145,6 +145,9 @@ async fn relation_endpoints_group_temp_vault_links() {
         ))
         .await;
     assert_eq!(star_voyager_relations["total"], 3);
+
+    let daily_note_relations = server.ok_json("/api/relations?field=daily-note").await;
+    assert_eq!(daily_note_relations["total"], 2);
 
     let groups = server.ok_json("/api/relation-groups").await;
     let franchise = groups["fields"]
@@ -158,6 +161,16 @@ async fn relation_endpoints_group_temp_vault_links() {
     assert_eq!(franchise["resolvedTargets"], 1);
     assert_eq!(franchise["topTargets"][0]["targetTitle"], "Star Saga");
     assert_eq!(franchise["topTargets"][0]["count"], 2);
+    let daily_note = groups["fields"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|field| field["field"] == "daily-note")
+        .unwrap();
+    assert_eq!(daily_note["edgeCount"], 2);
+    assert_eq!(daily_note["sourceCount"], 1);
+    assert_eq!(daily_note["uniqueTargets"], 2);
+    assert_eq!(daily_note["resolvedTargets"], 2);
 
     let franchise_page = server
         .ok_json("/api/relation-groups/franchise?pageSize=1&page=1")
@@ -178,6 +191,20 @@ async fn relation_endpoints_group_temp_vault_links() {
     assert_eq!(target["target"]["targetTitle"], "Star Saga");
     assert_eq!(count_for(&target["groups"], "Anime"), 1);
     assert_eq!(count_for(&target["groups"], "Games"), 1);
+
+    let daily_target = server
+        .ok_json(&format!(
+            "/api/relation-groups/daily-note/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ))
+        .await;
+    assert_eq!(daily_target["total"], 1);
+    assert_eq!(
+        daily_target["target"]["sourceTypes"][0]["name"],
+        "Daily Note"
+    );
+    assert_eq!(daily_target["target"]["sourceTypes"][0]["count"], 1);
+    assert_eq!(count_for(&daily_target["groups"], "Daily Note"), 1);
 }
 
 #[tokio::test]

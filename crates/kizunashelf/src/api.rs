@@ -18,8 +18,8 @@ use crate::library::{
 use crate::relations::{
     build_relation_field_summary_with_index, build_relation_hubs, build_relation_target_summary,
     build_relation_targets, count_by, get_status_tracked_type_ids, outgoing_relations,
-    relation_fields, relation_type_pairs, sort_entities, sort_entities_with_title_language,
-    summary_by_id, target_key, Count, SortDirection,
+    relation_fields, relation_source_type_label, relation_type_pairs, sort_entities,
+    sort_entities_with_title_language, summary_by_id, target_key, Count, SortDirection,
 };
 use crate::types::{EntitySummary, HomeSectionConfig, Library};
 use aide::axum::routing::get_with;
@@ -809,21 +809,23 @@ async fn relation_group_target(
                 .map(|entity| (*entity).clone())
         })
         .collect();
-    let groups = count_by(&source_entities, |entity| entity.type_label.clone())
-        .into_iter()
-        .map(|group| {
-            let items = source_entities
-                .iter()
-                .filter(|entity| entity.type_label == group.name)
-                .cloned()
-                .collect::<Vec<_>>();
-            RelationTargetGroup {
-                type_label: group.name,
-                count: group.count,
-                items: sort_entities(items, "title", SortDirection::Asc),
-            }
-        })
-        .collect::<Vec<_>>();
+    let groups = count_by(&relations, |relation| {
+        relation_source_type_label(relation, &entity_by_id)
+    })
+    .into_iter()
+    .map(|group| {
+        let items = source_entities
+            .iter()
+            .filter(|entity| entity.type_label == group.name)
+            .cloned()
+            .collect::<Vec<_>>();
+        RelationTargetGroup {
+            type_label: group.name,
+            count: group.count,
+            items: sort_entities(items, "title", SortDirection::Asc),
+        }
+    })
+    .collect::<Vec<_>>();
 
     Ok(Json(RelationTargetResponse {
         generated_at: library.generated_at.clone(),

@@ -72,6 +72,18 @@ export function RelationTargetPage() {
 
   const relationTarget = state.data?.target;
   const sourceItems = useMemo(() => flattenSources(state.data), [state.data]);
+  const entitySourceTypeLabels = useMemo(
+    () => new Set(sourceItems.map((entity) => entity.typeLabel)),
+    [sourceItems],
+  );
+  const nonEntitySourceTypes = useMemo(
+    () => relationTarget?.sourceTypes.filter((type) => !entitySourceTypeLabels.has(type.name)) ?? [],
+    [entitySourceTypeLabels, relationTarget],
+  );
+  const nonEntityLinkCount = useMemo(
+    () => nonEntitySourceTypes.reduce((total, type) => total + type.count, 0),
+    [nonEntitySourceTypes],
+  );
   const typeOptions = useMemo(() => sourceTypeOptions(sourceItems), [sourceItems]);
   const statusOptions = useMemo(() => sourceStatusOptions(sourceItems), [sourceItems]);
   const dateOptions = useMemo(() => sourceDateOptions(sourceItems), [sourceItems]);
@@ -177,8 +189,13 @@ export function RelationTargetPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary">{filteredSources.length} shown</Badge>
-              <span>{sourceItems.length} total linked sources</span>
+              <Badge variant="secondary">{filteredSources.length} entity sources shown</Badge>
+              <span>{sourceItems.length} total entity sources</span>
+              {nonEntityLinkCount > 0 ? (
+                <span>
+                  {nonEntityLinkCount} links from {formatSourceTypeList(nonEntitySourceTypes)}
+                </span>
+              ) : null}
             </div>
           </section>
         ) : null}
@@ -195,9 +212,16 @@ export function RelationTargetPage() {
           </div>
         ) : null}
 
-        {!state.loading && state.data && filteredSources.length === 0 ? (
+        {!state.loading && state.data && sourceItems.length === 0 && nonEntityLinkCount > 0 ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
-            No linked sources match the current filters
+            This target is linked from {formatSourceTypeList(nonEntitySourceTypes)}, which are counted in the map
+            but do not have entity rows.
+          </div>
+        ) : null}
+
+        {!state.loading && state.data && sourceItems.length > 0 && filteredSources.length === 0 ? (
+          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+            No linked entity sources match the current filters
           </div>
         ) : null}
 
@@ -338,6 +362,10 @@ function groupSourcesByType(entities: EntitySummary[]) {
 function compareSources(a: EntitySummary, b: EntitySummary) {
   if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
   return a.title.localeCompare(b.title);
+}
+
+function formatSourceTypeList(sourceTypes: { name: string; count: number }[]) {
+  return sourceTypes.map((type) => type.name).join(", ");
 }
 
 function countBy<T>(items: T[], key: (item: T) => string) {
