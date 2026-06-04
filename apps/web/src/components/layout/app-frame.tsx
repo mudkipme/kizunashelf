@@ -285,14 +285,9 @@ function SidebarContent({
         <SidebarNavLink to="/review" icon={ClipboardCheckIcon} onNavigate={onNavigate}>
           Review
         </SidebarNavLink>
-        <button
-          type="button"
-          className="flex h-8 items-center gap-2 rounded-md px-2 text-left text-sm text-muted-foreground opacity-70"
-          disabled
-        >
-          <SettingsIcon />
-          <span className="truncate">Settings</span>
-        </button>
+        <SidebarNavLink to="/settings" icon={SettingsIcon} onNavigate={onNavigate}>
+          Settings
+        </SidebarNavLink>
       </section>
     </>
   );

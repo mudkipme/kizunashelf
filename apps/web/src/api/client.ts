@@ -36,9 +36,6 @@ function isTauriRuntime() {
 
 async function fetchTauriResponse(input: RequestInfo | URL, init?: RequestInit) {
   const method = init?.method ?? "GET";
-  if (method.toUpperCase() !== "GET") {
-    throw new Error(`Unsupported desktop API method: ${method}`);
-  }
   if (init?.signal?.aborted) {
     throw new DOMException("The operation was aborted", "AbortError");
   }
@@ -46,11 +43,21 @@ async function fetchTauriResponse(input: RequestInfo | URL, init?: RequestInit) 
   const response = await invoke<DesktopApiResponse>("api_request", {
     method,
     url: requestUrl(input),
+    body: await requestBody(init?.body),
   });
   return new Response(response.body, {
     status: response.status,
     headers: response.contentType ? { "content-type": response.contentType } : undefined,
   });
+}
+
+async function requestBody(body: BodyInit | null | undefined) {
+  if (body == null) return undefined;
+  if (typeof body === "string") return body;
+  if (body instanceof URLSearchParams) return body.toString();
+  if (body instanceof Blob) return body.text();
+  if (body instanceof ArrayBuffer) return new TextDecoder().decode(body);
+  throw new Error("Unsupported desktop API request body");
 }
 
 async function getTauriInvoke(): Promise<TauriInvoke> {

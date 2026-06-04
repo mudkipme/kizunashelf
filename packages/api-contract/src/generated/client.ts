@@ -41,6 +41,10 @@ import type {
 } from './getEntitiesParams.zod';
 
 import type {
+  GetPathSuggestionsParams
+} from './getPathSuggestionsParams.zod';
+
+import type {
   GetRelationsParams
 } from './getRelationsParams.zod';
 
@@ -56,6 +60,14 @@ import {
   HomeResponse
 } from './homeResponse.zod';
 
+import type {
+  KizunaConfig
+} from './kizunaConfig.zod';
+
+import {
+  PathSuggestionsResponse
+} from './pathSuggestionsResponse.zod';
+
 import {
   RelationGroupsResponse
 } from './relationGroupsResponse.zod';
@@ -63,6 +75,10 @@ import {
 import {
   RelationListResponse
 } from './relationListResponse.zod';
+
+import {
+  SettingsConfigResponse
+} from './settingsConfigResponse.zod';
 
 import {
   StatsResponse
@@ -121,6 +137,100 @@ export const getConfig = async ( options?: RequestInit, fetchFn?: typeof globalT
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? ConfigResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetSettingsConfigUrl = () => {
+
+
+
+
+  return `/api/settings/config`
+}
+
+export const getSettingsConfig = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SettingsConfigResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetSettingsConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SettingsConfigResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getSaveSettingsConfigUrl = () => {
+
+
+
+
+  return `/api/settings/config`
+}
+
+export const saveSettingsConfig = async (kizunaConfig: KizunaConfig, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SettingsConfigResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getSaveSettingsConfigUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(kizunaConfig)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SettingsConfigResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetPathSuggestionsUrl = (params?: GetPathSuggestionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/settings/path-suggestions?${stringifiedParams}` : `/api/settings/path-suggestions`
+}
+
+export const getPathSuggestions = async (params?: GetPathSuggestionsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<PathSuggestionsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetPathSuggestionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? PathSuggestionsResponse.parse(parsedBody) : parsedBody
   return data
 }
 

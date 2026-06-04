@@ -59,6 +59,113 @@
         }
       }
     },
+    "/api/settings/config": {
+      "get": {
+        "operationId": "getSettingsConfig",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsConfigResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveSettingsConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KizunaConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsConfigResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/path-suggestions": {
+      "get": {
+        "operationId": "getPathSuggestions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "base",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PathSuggestionsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/home": {
       "get": {
         "operationId": "getHome",
@@ -744,6 +851,232 @@
             }
           }
         }
+      },
+      "SettingsConfigResponse": {
+        "type": "object",
+        "properties": {
+          "configPath": {
+            "type": "string"
+          },
+          "exists": {
+            "type": "boolean"
+          },
+          "config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KizunaConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "configPath",
+          "exists"
+        ]
+      },
+      "KizunaConfig": {
+        "type": "object",
+        "properties": {
+          "vaultRoot": {
+            "type": "string"
+          },
+          "taxonomyRoot": {
+            "type": "string"
+          },
+          "relationshipFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "readConcurrency": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "home": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HomeConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dailyNotes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DailyNotesConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityTypeConfig"
+            }
+          }
+        },
+        "required": [
+          "vaultRoot",
+          "taxonomyRoot",
+          "types"
+        ]
+      },
+      "DailyNotesConfig": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "datePattern": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snippetMaxLength": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          }
+        }
+      },
+      "EntityTypeConfig": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "defaultTitleLanguage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fields": {
+            "$ref": "#/components/schemas/EntityFields"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "path",
+          "fields"
+        ]
+      },
+      "EntityFields": {
+        "type": "object",
+        "properties": {
+          "titleLanguages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "subtitle": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "image": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dateRoles": {
+            "$ref": "#/components/schemas/DateRoleConfig"
+          },
+          "externalRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PathSuggestionsQuery": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PathSuggestionsResponse": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "suggestions"
+        ]
       },
       "HomeResponse": {
         "type": "object",

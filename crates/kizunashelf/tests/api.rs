@@ -1,5 +1,5 @@
 use axum::body;
-use axum::http::{Request, StatusCode};
+use axum::http::{header, Method, Request, StatusCode};
 use axum::Router;
 use kizunashelf::api::{router, ApiOptions};
 use pretty_assertions::assert_eq;
@@ -239,6 +239,82 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
     assert_eq!(dates["dailyNotes"][0]["snippets"][0]["heading"], "Watched");
 }
 
+#[tokio::test]
+async fn settings_endpoints_create_and_read_config_files() {
+    let temp = TempDir::new().unwrap();
+    let config_path = temp.path().join("missing/kizunashelf.config.json");
+    let app = router(ApiOptions {
+        config_path: config_path.clone(),
+        cache_ttl: Duration::from_millis(0),
+        web_dist_path: None,
+    });
+
+    let missing = request_json(&app, Method::GET, "/api/settings/config", None).await;
+    assert_eq!(missing.0, StatusCode::OK);
+    assert_eq!(missing.1["exists"], false);
+    assert_eq!(
+        missing.1["configPath"].as_str().unwrap(),
+        config_path.to_string_lossy()
+    );
+
+    let vault = temp.path().join("vault");
+    write_fixture_vault(&vault);
+    let config = json!({
+        "vaultRoot": vault,
+        "taxonomyRoot": "Taxonomy",
+        "relationshipFields": ["franchise"],
+        "readConcurrency": 4,
+        "dailyNotes": {
+            "paths": ["Daily Notes"],
+            "datePattern": "^(\\d{4}-\\d{2}-\\d{2})\\.md$",
+            "snippetMaxLength": 120
+        },
+        "home": {
+            "title": "Settings Fixture",
+            "sections": []
+        },
+        "types": [
+            {
+                "id": "anime",
+                "label": "Anime",
+                "icon": "📺",
+                "path": "Anime",
+                "defaultTitleLanguage": "primary",
+                "fields": {
+                    "titleLanguages": {
+                        "primary": ["title"],
+                        "zh": ["filename"]
+                    },
+                    "subtitle": ["title_en"],
+                    "image": ["cover_url"],
+                    "status": ["status"],
+                    "dateRoles": {
+                        "planning": ["season"],
+                        "completed": ["complete_date"]
+                    },
+                    "externalRefs": ["bgm_url"],
+                    "relations": ["studio"]
+                }
+            }
+        ]
+    });
+
+    let saved = request_json(&app, Method::PUT, "/api/settings/config", Some(config)).await;
+    assert_eq!(saved.0, StatusCode::OK);
+    assert_eq!(saved.1["exists"], true);
+    assert_eq!(saved.1["config"]["types"].as_array().unwrap().len(), 1);
+    assert!(config_path.is_file());
+
+    let read_back = request_json(&app, Method::GET, "/api/settings/config", None).await;
+    assert_eq!(read_back.0, StatusCode::OK);
+    assert_eq!(read_back.1["exists"], true);
+    assert_eq!(read_back.1["config"]["home"]["title"], "Settings Fixture");
+
+    let health = request_json(&app, Method::GET, "/api/health", None).await;
+    assert_eq!(health.0, StatusCode::OK);
+    assert_eq!(health.1["entityCount"], 1);
+}
+
 impl TestServer {
     fn new() -> Self {
         let temp = TempDir::new().unwrap();
@@ -372,29 +448,42 @@ impl TestServer {
     }
 
     async fn json(&self, path: &str) -> (StatusCode, Value) {
-        let response = self
-            .app
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .uri(path)
-                    .body(body::Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        let status = response.status();
-        let bytes = body::to_bytes(response.into_body(), usize::MAX)
-            .await
-            .unwrap();
-        let value = serde_json::from_slice(&bytes).unwrap_or_else(|error| {
-            panic!(
-                "failed to parse JSON from {path}: {error}\n{}",
-                String::from_utf8_lossy(&bytes)
-            )
-        });
-        (status, value)
+        request_json(&self.app, Method::GET, path, None).await
     }
+}
+
+async fn request_json(
+    app: &Router,
+    method: Method,
+    path: &str,
+    payload: Option<Value>,
+) -> (StatusCode, Value) {
+    let body = payload
+        .map(|value| body::Body::from(serde_json::to_vec(&value).unwrap()))
+        .unwrap_or_else(body::Body::empty);
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(method)
+                .uri(path)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(body)
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let status = response.status();
+    let bytes = body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let value = serde_json::from_slice(&bytes).unwrap_or_else(|error| {
+        panic!(
+            "failed to parse JSON from {path}: {error}\n{}",
+            String::from_utf8_lossy(&bytes)
+        )
+    });
+    (status, value)
 }
 
 fn write_fixture_vault(vault: &Path) {

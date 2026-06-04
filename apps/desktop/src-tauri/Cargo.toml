@@ -13,4 +13,5 @@ axum = "0.8.7"
 kizunashelf = { path = "../../../crates/kizunashelf" }
 serde = { version = "1.0.228", features = ["derive"] }
 tauri = { version = "2.11.2", features = [] }
+tauri-plugin-dialog = "2.7.1"
 tower = { version = "0.5.2", features = ["util"] }

@@ -26,10 +26,12 @@ async fn api_request(
     state: State<'_, DesktopState>,
     method: String,
     url: String,
+    body: Option<String>,
 ) -> Result<DesktopApiResponse, String> {
     let method = method
         .parse::<Method>()
         .map_err(|error| format!("Invalid method {method}: {error}"))?;
+    let body = body.unwrap_or_default();
     let response = state
         .api
         .clone()
@@ -37,7 +39,8 @@ async fn api_request(
             Request::builder()
                 .method(method)
                 .uri(url)
-                .body(Body::empty())
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(body))
                 .map_err(|error| error.to_string())?,
         )
         .await
@@ -64,9 +67,9 @@ async fn api_request(
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let config_path = discover_config_path()
-                .map_err(|error| Box::<dyn std::error::Error>::from(error))?;
+            let config_path = discover_config_path();
             let cache_ttl = env::var("KIZUNASHELF_CACHE_TTL_MS")
                 .ok()
                 .and_then(|ttl| ttl.parse::<u64>().ok())
@@ -85,22 +88,14 @@ pub fn run() {
         .expect("failed to run KizunaShelf desktop app");
 }
 
-fn discover_config_path() -> Result<PathBuf, String> {
+fn discover_config_path() -> PathBuf {
     let candidates = config_candidates();
     candidates
         .iter()
         .find(|path| path.is_file())
         .cloned()
-        .ok_or_else(|| {
-            format!(
-                "No KizunaShelf config file found. Looked in:\n{}",
-                candidates
-                    .iter()
-                    .map(|path| format!("  - {}", path.display()))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            )
-        })
+        .or_else(|| candidates.first().cloned())
+        .unwrap_or_else(|| PathBuf::from("kizunashelf.config.json"))
 }
 
 fn config_candidates() -> Vec<PathBuf> {

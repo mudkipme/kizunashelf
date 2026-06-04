@@ -6,8 +6,9 @@ use crate::contract::{
     AnalyticsResponse, AnalyticsTimeline, AnalyticsTimelineYear, AnalyticsTotals,
     AnalyticsUnresolvedRelations, CalendarResponse, CleanupQueueSummary, CleanupQueuesResponse,
     CleanupUnresolvedRelation, ConfigResponse, EntityDetailResponse, EntityListResponse,
-    ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse, RelationGroupsResponse,
-    RelationListResponse, StatsResponse, TypeConfigResponse, TypeCount,
+    ErrorResponse, HealthResponse, HomeResponse, HomeSectionResponse, PathSuggestionsResponse,
+    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, StatsResponse,
+    TypeConfigResponse, TypeCount,
 };
 use crate::dates::{clamp_number, date_sort_key, parse_entity_date, season_compare_value};
 use crate::library::{
@@ -26,7 +27,7 @@ use aide::axum::ApiRouter;
 use aide::openapi::{Info, OpenApi};
 use aide::OperationOutput;
 use anyhow::Result;
-use axum::extract::{Path, Query, State};
+use axum::extract::{Path as AxumPath, Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
@@ -35,7 +36,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
@@ -118,6 +119,27 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(config, |op| {
                 op.id("getConfig")
                     .response::<200, Json<ConfigResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/settings/config",
+            get_with(settings_config, |op| {
+                op.id("getSettingsConfig")
+                    .response::<200, Json<SettingsConfigResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .put_with(save_settings_config, |op| {
+                op.id("saveSettingsConfig")
+                    .response::<200, Json<SettingsConfigResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/settings/path-suggestions",
+            get_with(path_suggestions, |op| {
+                op.id("getPathSuggestions")
+                    .response::<200, Json<PathSuggestionsResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
@@ -265,6 +287,59 @@ async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
     }))
 }
 
+async fn settings_config(State(state): State<AppState>) -> ApiResult<SettingsConfigResponse> {
+    let config_path = state.options.config_path.clone();
+    match crate::library::load_config(&config_path).await {
+        Ok(config) => Ok(Json(SettingsConfigResponse {
+            config_path: config_path.display().to_string(),
+            exists: true,
+            config: Some(config),
+            error: None,
+        })),
+        Err(_) if !config_path.exists() => Ok(Json(SettingsConfigResponse {
+            config_path: config_path.display().to_string(),
+            exists: false,
+            config: None,
+            error: None,
+        })),
+        Err(error) => Ok(Json(SettingsConfigResponse {
+            config_path: config_path.display().to_string(),
+            exists: true,
+            config: None,
+            error: Some(error.to_string()),
+        })),
+    }
+}
+
+async fn save_settings_config(
+    State(state): State<AppState>,
+    Json(config): Json<crate::types::KizunaConfig>,
+) -> ApiResult<SettingsConfigResponse> {
+    let config_path = state.options.config_path.clone();
+    crate::library::save_config(&config_path, &config).await?;
+    let mut cache = state.cache.lock().await;
+    *cache = None;
+    Ok(Json(SettingsConfigResponse {
+        config_path: config_path.display().to_string(),
+        exists: true,
+        config: Some(config),
+        error: None,
+    }))
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct PathSuggestionsQuery {
+    path: Option<String>,
+    base: Option<String>,
+}
+
+async fn path_suggestions(
+    Query(query): Query<PathSuggestionsQuery>,
+) -> ApiResult<PathSuggestionsResponse> {
+    let suggestions = suggest_directories(query.path.as_deref(), query.base.as_deref()).await?;
+    Ok(Json(PathSuggestionsResponse { suggestions }))
+}
+
 async fn home(State(state): State<AppState>) -> ApiResult<HomeResponse> {
     let library = get_library(&state).await?;
     let sections = library
@@ -287,6 +362,85 @@ async fn home(State(state): State<AppState>) -> ApiResult<HomeResponse> {
             .unwrap_or_else(|| "Home".to_string()),
         sections,
     }))
+}
+
+async fn suggest_directories(path: Option<&str>, base: Option<&str>) -> Result<Vec<String>> {
+    let input = path.unwrap_or_default().trim();
+    let base_path = base.map(str::trim).filter(|value| !value.is_empty());
+    let resolved_input = resolve_suggestion_input(input, base_path);
+    let (search_dir, typed_prefix) = suggestion_search_dir(&resolved_input);
+    let mut entries = match tokio::fs::read_dir(&search_dir).await {
+        Ok(entries) => entries,
+        Err(_) => return Ok(Vec::new()),
+    };
+
+    let mut suggestions = Vec::new();
+    while let Some(entry) = entries.next_entry().await? {
+        let file_type = entry.file_type().await?;
+        if !file_type.is_dir() {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_string();
+        if !typed_prefix.is_empty() && !name.to_lowercase().starts_with(&typed_prefix) {
+            continue;
+        }
+        let path = entry.path();
+        suggestions.push(format_suggestion_path(&path, base_path));
+        if suggestions.len() >= 20 {
+            break;
+        }
+    }
+    suggestions.sort_by(|a, b| compare_string(a, b));
+    Ok(suggestions)
+}
+
+fn resolve_suggestion_input(input: &str, base: Option<&str>) -> PathBuf {
+    let expanded = expand_home(input);
+    let path = PathBuf::from(expanded);
+    if path.is_absolute() {
+        return path;
+    }
+    base.map(PathBuf::from)
+        .unwrap_or_default()
+        .join(path)
+}
+
+fn suggestion_search_dir(path: &Path) -> (PathBuf, String) {
+    if path.is_dir() {
+        return (path.to_path_buf(), String::new());
+    }
+    let prefix = path
+        .file_name()
+        .map(|value| value.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| PathBuf::from("."));
+    (parent, prefix)
+}
+
+fn format_suggestion_path(path: &Path, base: Option<&str>) -> String {
+    if let Some(base) = base {
+        let base_path = Path::new(base);
+        if let Ok(relative) = path.strip_prefix(base_path) {
+            return relative.to_string_lossy().to_string();
+        }
+    }
+    path.to_string_lossy().to_string()
+}
+
+fn expand_home(input: &str) -> String {
+    if input == "~" {
+        return std::env::var("HOME").unwrap_or_else(|_| input.to_string());
+    }
+    if let Some(rest) = input.strip_prefix("~/") {
+        if let Ok(home) = std::env::var("HOME") {
+            return Path::new(&home).join(rest).to_string_lossy().to_string();
+        }
+    }
+    input.to_string()
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -631,7 +785,7 @@ struct EntityPath {
 
 async fn entity_dates(
     State(state): State<AppState>,
-    Path(path): Path<EntityPath>,
+    AxumPath(path): AxumPath<EntityPath>,
 ) -> ApiResult<EntityDatesResponse> {
     let library = get_library(&state).await?;
     let Some(entity) = library
@@ -646,7 +800,7 @@ async fn entity_dates(
 
 async fn entity_detail(
     State(state): State<AppState>,
-    Path(path): Path<EntityPath>,
+    AxumPath(path): AxumPath<EntityPath>,
 ) -> ApiResult<EntityDetailResponse> {
     let library = get_library(&state).await?;
     let Some(entity) = library

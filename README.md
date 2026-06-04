@@ -20,7 +20,7 @@ pnpm dev:desktop
 pnpm build:desktop
 ```
 
-The desktop app uses Tauri and calls the Rust API router in-process, so it does not open an HTTP listener. On startup it looks for `kizunashelf.config.json` in `KIZUNASHELF_CONFIG`, `$XDG_CONFIG_HOME`, `~/.config`, `$XDG_CONFIG_DIR`, `$XDG_CONFIG_DIRS`, and on macOS also under `~/Library/Application Support`. If none of those files exist, startup fails with the searched paths.
+The desktop app uses Tauri and calls the Rust API router in-process, so it does not open an HTTP listener. On startup it looks for `kizunashelf.config.json` in `KIZUNASHELF_CONFIG`, `$XDG_CONFIG_HOME`, `~/.config`, `$XDG_CONFIG_DIR`, `$XDG_CONFIG_DIRS`, and on macOS also under `~/Library/Application Support`. If none of those files exist, it opens the onboarding flow and writes the new config to the first candidate path.
 
 Linux desktop builds require Tauri's WebKitGTK system packages. On Fedora-like systems install `webkit2gtk4.1-devel`, `openssl-devel`, `libappindicator-gtk3-devel`, `librsvg2-devel`, and `libxdo-devel`; see the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for other distributions.
 

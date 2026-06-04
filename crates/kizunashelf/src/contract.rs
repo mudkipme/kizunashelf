@@ -1,6 +1,6 @@
 use crate::calendar::{CalendarDay, CalendarEntry, EntityDatesResponse};
 use crate::relations::Count;
-use crate::types::{DateRoleConfig, Entity, EntitySummary, HomeConfig, Relation};
+use crate::types::{DateRoleConfig, Entity, EntitySummary, HomeConfig, KizunaConfig, Relation};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -17,6 +17,23 @@ pub struct HealthResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ErrorResponse {
     pub error: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SettingsConfigResponse {
+    pub config_path: String,
+    pub exists: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config: Option<KizunaConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PathSuggestionsResponse {
+    pub suggestions: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -312,6 +329,9 @@ pub struct CalendarResponse {
 pub struct ApiSchemas {
     pub error: ErrorResponse,
     pub health: HealthResponse,
+    pub settings_config: SettingsConfigResponse,
+    pub path_suggestions: PathSuggestionsResponse,
+    pub kizuna_config: KizunaConfig,
     pub config: ConfigResponse,
     pub home: HomeResponse,
     pub stats: StatsResponse,

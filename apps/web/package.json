@@ -12,6 +12,7 @@
     "@kizunashelf/api-contract": "workspace:*",
     "@radix-ui/react-slot": "^1.2.4",
     "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "2.7.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.554.0",

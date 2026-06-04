@@ -25,6 +25,19 @@ pub async fn load_config(config_path: impl AsRef<Path>) -> Result<KizunaConfig> 
     serde_json::from_str(&raw).with_context(|| format!("invalid config {}", path.display()))
 }
 
+pub async fn save_config(config_path: impl AsRef<Path>, config: &KizunaConfig) -> Result<()> {
+    let path = config_path.as_ref();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .await
+            .with_context(|| format!("failed to create config directory {}", parent.display()))?;
+    }
+    let raw = serde_json::to_string_pretty(config).context("failed to serialize config")?;
+    fs::write(path, format!("{raw}\n"))
+        .await
+        .with_context(|| format!("failed to write config {}", path.display()))
+}
+
 pub async fn read_library(config: KizunaConfig) -> Result<Library> {
     validate_library_roots(&config).await?;
     let mut entities = read_entities(&config).await?;
