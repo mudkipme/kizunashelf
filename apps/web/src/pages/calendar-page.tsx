@@ -162,11 +162,11 @@ export function CalendarPage() {
     return roles;
   }, [state.config]);
 
-  function setParam(key: string, value: string, defaultValue?: string) {
+  function setParam(key: string, value: string, defaultValue?: string, options?: { replace?: boolean }) {
     const next = new URLSearchParams(searchParams);
     if (defaultValue !== undefined && value === defaultValue) next.delete(key);
     else next.set(key, value);
-    setSearchParams(next);
+    setSearchParams(next, { replace: options?.replace ?? false });
   }
 
   function setMode(nextMode: CalendarMode) {
@@ -199,7 +199,7 @@ export function CalendarPage() {
     next.set("year", String(today.getFullYear()));
     next.set("month", String(today.getMonth() + 1));
     next.set("date", todayInMonth(today.getFullYear(), today.getMonth() + 1, today));
-    setSearchParams(next);
+    setSearchParams(next, { replace: true });
   }
 
   function openMonth(nextMonth: number) {
@@ -308,7 +308,7 @@ export function CalendarPage() {
                       key={day.date}
                       day={day}
                       selected={day.date === selectedDay?.date}
-                      onSelect={(date) => setParam("date", date)}
+                      onSelect={(date) => setParam("date", date, undefined, { replace: true })}
                     />
                   ) : (
                     <div key={`blank-${index}`} className="min-h-28 border-b border-r bg-muted/30" />
