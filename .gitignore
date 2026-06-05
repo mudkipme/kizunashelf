@@ -8,4 +8,6 @@ target/
 !.env.example
 .agents
 /config/kizunashelf.config.json
+/config/kizunashelf.yml
+/config/kizunashelf.yaml
 .antigravitycli/

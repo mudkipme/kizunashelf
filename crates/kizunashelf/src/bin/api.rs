@@ -8,7 +8,7 @@ use std::time::Duration;
 async fn main() -> Result<()> {
     let config_path = std::env::var("KIZUNASHELF_CONFIG")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("config/kizunashelf.config.json"));
+        .unwrap_or_else(|_| PathBuf::from("config/kizunashelf.yaml"));
     let port = std::env::var("PORT")
         .ok()
         .and_then(|port| port.parse::<u16>().ok())

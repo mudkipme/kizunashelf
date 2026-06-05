@@ -1,7 +1,7 @@
 use crate::calendar::{CalendarDay, CalendarEntry, EntityDatesResponse};
 use crate::relations::Count;
 use crate::types::{
-    DateRoleConfig, Entity, EntitySummary, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,
+    Entity, EntitySummary, EntityTypeConfig, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -52,36 +52,11 @@ pub struct PathSuggestionsResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct TypeConfigResponse {
-    pub id: String,
-    pub label: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub icon: Option<String>,
-    pub path: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_title_language: Option<String>,
-    pub id_fields: Vec<String>,
-    pub title_language_fields: std::collections::BTreeMap<String, Vec<String>>,
-    pub subtitle_fields: Vec<String>,
-    pub image_fields: Vec<String>,
-    pub title_languages: Vec<String>,
-    pub status_fields: Vec<String>,
-    pub status_options: Vec<String>,
-    pub progress_fields: Vec<String>,
-    pub total_progress_fields: Vec<String>,
-    pub rating_fields: Vec<String>,
-    pub date_roles: DateRoleConfig,
-    pub external_ref_fields: Vec<String>,
-    pub relation_fields: Vec<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 pub struct ConfigResponse {
     pub taxonomy_root: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub home: Option<HomeConfig>,
-    pub types: Vec<TypeConfigResponse>,
+    pub types: Vec<EntityTypeConfig>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -92,7 +67,6 @@ pub struct HomeSectionResponse {
     #[serde(rename = "type")]
     pub entity_type: String,
     pub type_label: String,
-    pub status: Vec<String>,
     pub limit: u32,
     pub sort: String,
     pub direction: String,
@@ -116,7 +90,6 @@ pub struct StatsResponse {
     pub relations: usize,
     pub by_type: Vec<TypeCount>,
     pub date_fields: Vec<String>,
-    pub by_status: Vec<Count>,
     pub top_relations: Vec<EntitySummary>,
 }
 
@@ -384,7 +357,6 @@ pub struct AnalyticsTotals {
 #[serde(rename_all = "camelCase")]
 pub struct AnalyticsDistributions {
     pub by_type: Vec<TypeCount>,
-    pub by_status: Vec<Count>,
     pub by_relation_field: Vec<Count>,
     pub by_source_target_type: Vec<Count>,
 }

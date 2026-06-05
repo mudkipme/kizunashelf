@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { Badge } from "@/components/ui/badge";
-import { defaultTitleLanguage } from "@/lib/constants";
+import { defaultTitleOptionId } from "@/lib/constants";
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
 export function EntityGridItem({
   entity,
-  titleLanguage = defaultTitleLanguage,
+  titleLanguage = defaultTitleOptionId,
 }: {
   entity: EntitySummary;
   titleLanguage?: string;
@@ -30,9 +30,6 @@ export function EntityGridItem({
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
         <div className="flex min-w-0 items-center gap-2">
           <Badge variant="outline">{entity.typeLabel}</Badge>
-          {entity.status ? (
-            <span className="truncate text-xs text-muted-foreground">{entity.status}</span>
-          ) : null}
         </div>
         <div className="line-clamp-2 text-sm font-medium leading-5">{title}</div>
         {entity.summary ? (

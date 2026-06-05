@@ -54,8 +54,6 @@ function visibleFrontmatterEntries(
   const displayedValues = new Set(
     [
       entity.title,
-      entity.subtitle,
-      entity.status,
       entity.image,
       ...Object.values(entity.titles),
       ...Object.values(entity.externalRefs),

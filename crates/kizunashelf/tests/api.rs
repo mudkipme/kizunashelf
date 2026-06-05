@@ -36,26 +36,36 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(config["taxonomyRoot"], "Taxonomy");
     assert_eq!(config["types"].as_array().unwrap().len(), 4);
     assert_eq!(config["types"][0]["icon"], "📺");
-    assert_eq!(config["types"][0]["defaultTitleLanguage"], "primary");
     assert_eq!(
-        config["types"][0]["titleLanguages"],
-        json!(["en", "primary", "zh"])
+        config["types"][0]["filename"],
+        json!({ "titleLanguage": "zh", "defaultTitle": true })
     );
     assert_eq!(
-        config["types"][0]["statusOptions"],
-        json!(["Backlog", "Watching", "Completed", "Paused", "Dropped"])
-    );
-    assert_eq!(
-        config["types"][0]["dateRoles"],
+        config["types"][0]["fields"][1],
         json!({
-            "planning": ["season"],
-            "completed": ["complete_date"]
+            "field": "title",
+            "fieldType": "title",
+            "displayName": "Title",
+            "titleLanguage": "primary",
+            "defaultTitle": true
         })
     );
+    assert_eq!(
+        config["types"][0]["fields"][4],
+        json!({
+            "field": "status",
+            "fieldType": "enum",
+            "displayName": "Status",
+            "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"]
+        })
+    );
+    assert_eq!(config["types"][0]["fields"][5]["fieldType"], "season");
+    assert_eq!(config["types"][0]["fields"][5]["dateRole"], "planning");
+    assert_eq!(config["types"][0]["fields"][5]["seasonLanguage"], "zh");
 
     let home = server.ok_json("/api/home").await;
     assert_eq!(home["title"], "Fixture Home");
-    assert_eq!(home["sections"][0]["title"], "Watching Anime");
+    assert_eq!(home["sections"][0]["title"], "Recent Anime");
     assert_eq!(home["sections"][0]["total"], 1);
     assert_eq!(home["sections"][0]["items"][0]["title"], "Star Voyager");
 
@@ -65,7 +75,6 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(count_for(&stats["byType"], "Anime"), 1);
     assert_eq!(count_for(&stats["byType"], "Games"), 1);
     assert_eq!(stats["byType"][0]["icon"], "📺");
-    assert_eq!(count_for(&stats["byStatus"], "Watching"), 1);
 
     let anime_stats = server.ok_json("/api/stats?type=anime").await;
     assert_eq!(anime_stats["total"], 1);
@@ -95,7 +104,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(english_title_sort["items"][0]["id"], "anime:Star Voyager");
 
     let filtered = server
-        .ok_json("/api/entities?type=games&status=Playing&refs=with&cover=without")
+        .ok_json("/api/entities?type=games&refs=with&cover=without")
         .await;
     assert_eq!(filtered["total"], 1);
     assert_eq!(filtered["items"][0]["id"], "games:Moon Quest");
@@ -187,7 +196,7 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
     )
     .await;
     assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
-    assert_eq!(updated.1["entity"]["status"], "Completed");
+    assert_eq!(updated.1["entity"]["frontmatter"]["status"], "Completed");
     assert_eq!(updated.1["entity"]["frontmatter"]["progress"], 12);
     assert!(updated.1["entity"]["frontmatter"].get("bgm_url").is_none());
     assert_eq!(
@@ -212,6 +221,44 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
     .await;
     assert_eq!(stale.0, StatusCode::CONFLICT);
 
+    let rename_revision = updated.1["entity"]["revision"].as_str().unwrap();
+    let renamed = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        Some(json!({
+            "revision": rename_revision,
+            "renameTo": "  Star Voyager Renamed  "
+        })),
+    )
+    .await;
+    assert_eq!(renamed.0, StatusCode::OK, "{}", renamed.1);
+    assert_eq!(renamed.1["entity"]["id"], "anime:Star Voyager Renamed");
+    assert_eq!(renamed.1["entity"]["basename"], "Star Voyager Renamed");
+    assert_eq!(
+        renamed.1["entity"]["path"],
+        "Taxonomy/Anime/Star Voyager Renamed.md"
+    );
+
+    let invalid_rename_revision = renamed.1["entity"]["revision"].as_str().unwrap();
+    let invalid_rename = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager Renamed")
+        ),
+        Some(json!({
+            "revision": invalid_rename_revision,
+            "renameTo": "Bad:Name?"
+        })),
+    )
+    .await;
+    assert_eq!(invalid_rename.0, StatusCode::BAD_REQUEST);
+
     let created = request_json(
         &server.app,
         Method::POST,
@@ -234,6 +281,20 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
         created.1["entity"]["path"],
         "Taxonomy/Games/Solar Tactics.md"
     );
+
+    let invalid_created = request_json(
+        &server.app,
+        Method::POST,
+        "/api/entities",
+        Some(json!({
+            "type": "games",
+            "basename": "Solar/Tactics.md",
+            "frontmatter": {},
+            "body": ""
+        })),
+    )
+    .await;
+    assert_eq!(invalid_created.0, StatusCode::BAD_REQUEST);
 
     let delete_revision = created.1["entity"]["revision"].as_str().unwrap();
     let deleted = request_json(
@@ -387,7 +448,7 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
 #[tokio::test]
 async fn settings_endpoints_create_and_read_config_files() {
     let temp = TempDir::new().unwrap();
-    let config_path = temp.path().join("missing/kizunashelf.config.json");
+    let config_path = temp.path().join("missing/kizunashelf.yaml");
     let app = router(ApiOptions {
         config_path: config_path.clone(),
         cache_ttl: Duration::from_millis(0),
@@ -409,7 +470,6 @@ async fn settings_endpoints_create_and_read_config_files() {
     let config = json!({
         "vaultRoot": vault,
         "taxonomyRoot": "Taxonomy",
-        "relationshipFields": ["franchise"],
         "readConcurrency": 4,
         "dailyNotes": {
             "paths": ["Daily Notes"],
@@ -426,22 +486,18 @@ async fn settings_endpoints_create_and_read_config_files() {
                 "label": "Anime",
                 "icon": "📺",
                 "path": "Anime",
-                "defaultTitleLanguage": "primary",
-                "fields": {
-                    "titleLanguages": {
-                        "primary": ["title"],
-                        "zh": ["filename"]
-                    },
-                    "subtitle": ["title_en"],
-                    "image": ["cover_url"],
-                    "status": ["status"],
-                    "dateRoles": {
-                        "planning": ["season"],
-                        "completed": ["complete_date"]
-                    },
-                    "externalRefs": ["bgm_url"],
-                    "relations": ["studio"]
-                }
+                "filename": { "titleLanguage": "zh" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "titleLanguage": "primary", "defaultTitle": true },
+                    { "field": "title_en", "fieldType": "title", "titleLanguage": "en" },
+                    { "field": "cover_url", "fieldType": "image" },
+                    { "field": "status", "fieldType": "enum", "enumOptions": ["Backlog", "Watching", "Completed"] },
+                    { "field": "season", "fieldType": "season", "dateRole": "planning", "seasonLanguage": "zh" },
+                    { "field": "complete_date", "fieldType": "date", "dateRole": "completed" },
+                        { "field": "bgm_url", "fieldType": "externalRef", "externalRef": "bgm" },
+                        { "field": "franchise", "fieldType": "relation", "relationType": "franchise" },
+                        { "field": "studio", "fieldType": "relation", "relationType": "studio" }
+                ]
             }
         ]
     });
@@ -467,7 +523,7 @@ async fn settings_mutation_endpoints_can_be_disabled() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
     write_fixture_vault(&vault);
-    let config_path = temp.path().join("kizunashelf.config.json");
+    let config_path = temp.path().join("kizunashelf.yaml");
     let app = router(ApiOptions {
         config_path,
         cache_ttl: Duration::from_millis(0),
@@ -501,7 +557,7 @@ async fn content_mutation_endpoints_can_be_disabled() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
     write_fixture_vault(&vault);
-    let config_path = temp.path().join("kizunashelf.config.json");
+    let config_path = temp.path().join("kizunashelf.yaml");
     let config = json!({
         "vaultRoot": vault,
         "taxonomyRoot": "Taxonomy",
@@ -510,16 +566,14 @@ async fn content_mutation_endpoints_can_be_disabled() {
                 "id": "anime",
                 "label": "Anime",
                 "path": "Anime",
-                "fields": {
-                    "titleLanguages": {
-                        "primary": ["title"]
-                    },
-                    "status": ["status"]
-                }
+                "fields": [
+                    { "field": "title", "fieldType": "title", "titleLanguage": "primary", "defaultTitle": true },
+                    { "field": "status", "fieldType": "enum", "enumOptions": ["Backlog", "Watching", "Completed"] }
+                ]
             }
         ]
     });
-    fs::write(&config_path, serde_json::to_string_pretty(&config).unwrap()).unwrap();
+    fs::write(&config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
     let app = router(ApiOptions {
         config_path,
         cache_ttl: Duration::from_millis(0),
@@ -568,11 +622,10 @@ impl TestServer {
         let temp = TempDir::new().unwrap();
         let vault = temp.path().join("vault");
         write_fixture_vault(&vault);
-        let config_path = temp.path().join("kizunashelf.config.json");
+        let config_path = temp.path().join("kizunashelf.yaml");
         let config = json!({
             "vaultRoot": vault,
             "taxonomyRoot": "Taxonomy",
-            "relationshipFields": ["franchise", "related"],
             "dailyNotes": {
                 "paths": ["Daily Notes"],
                 "datePattern": "^(?:Daily Notes/)?(?<date>\\d{4}-\\d{2}-\\d{2})\\.md$",
@@ -582,19 +635,17 @@ impl TestServer {
                 "title": "Fixture Home",
                 "sections": [
                     {
-                        "id": "watching-anime",
-                        "title": "Watching Anime",
+                        "id": "recent-anime",
+                        "title": "Recent Anime",
                         "type": "anime",
-                        "status": "Watching",
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
                     },
                     {
-                        "id": "playing-games",
-                        "title": "Playing Games",
+                        "id": "games",
+                        "title": "Games",
                         "type": "games",
-                        "status": ["Playing"],
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -607,79 +658,60 @@ impl TestServer {
                     "label": "Anime",
                     "icon": "📺",
                     "path": "Anime",
-                    "defaultTitleLanguage": "primary",
-                    "statusOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"],
-                    "fields": {
-                        "titleLanguages": {
-                            "primary": ["title"],
-                            "zh": ["filename"],
-                            "en": ["title_en"]
-                        },
-                        "subtitle": ["title_en"],
-                        "image": ["cover_url"],
-                        "status": ["status"],
-                        "dateRoles": {
-                            "planning": ["season"],
-                            "completed": ["complete_date"]
-                        },
-                        "externalRefs": ["bgm_url"],
-                        "relations": ["studio"]
-                    }
+                    "filename": { "titleLanguage": "zh", "defaultTitle": true },
+                    "fields": [
+                        { "field": "id", "fieldType": "id", "displayName": "ID" },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
+                        { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
+                        { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"] },
+                        { "field": "season", "fieldType": "season", "displayName": "Season", "dateRole": "planning", "seasonLanguage": "zh" },
+                        { "field": "complete_date", "fieldType": "date", "displayName": "Completed date", "dateRole": "completed" },
+                        { "field": "bgm_url", "fieldType": "externalRef", "displayName": "BGM", "externalRef": "bgm" },
+                        { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
+                        { "field": "studio", "fieldType": "relation", "displayName": "Studio", "relationType": "studio" }
+                    ]
                 },
                 {
                     "id": "games",
                     "label": "Games",
                     "path": "Games",
-                    "defaultTitleLanguage": "primary",
-                    "statusOptions": ["Backlog", "Playing", "Completed", "Paused", "Dropped"],
-                    "fields": {
-                        "titleLanguages": {
-                            "primary": ["title"],
-                            "zh": ["filename"],
-                            "en": ["title_en"]
-                        },
-                        "subtitle": ["title_en"],
-                        "image": ["cover_url"],
-                        "status": ["status"],
-                        "dateRoles": {
-                            "planning": ["release_date"]
-                        },
-                        "externalRefs": ["igdb_url"],
-                        "relations": ["developer"]
-                    }
+                    "filename": { "titleLanguage": "zh" },
+                    "fields": [
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
+                        { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
+                        { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Playing", "Completed", "Paused", "Dropped"] },
+                        { "field": "release_date", "fieldType": "date", "displayName": "Release date", "dateRole": "planning" },
+                        { "field": "igdb_url", "fieldType": "externalRef", "displayName": "IGDB", "externalRef": "igdb" },
+                        { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
+                        { "field": "developer", "fieldType": "relation", "displayName": "Developer", "relationType": "developer" }
+                    ]
                 },
                 {
                     "id": "franchise",
                     "label": "Franchise",
                     "path": "Franchise",
-                    "defaultTitleLanguage": "primary",
-                    "fields": {
-                        "titleLanguages": {
-                            "primary": ["title"],
-                            "zh": ["filename"]
-                        },
-                        "relations": ["related"]
-                    }
+                    "filename": { "titleLanguage": "zh" },
+                    "fields": [
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "related", "fieldType": "relation", "displayName": "Related", "relationType": "related" }
+                    ]
                 },
                 {
                     "id": "music",
                     "label": "Music",
                     "path": "Music",
-                    "defaultTitleLanguage": "primary",
-                    "fields": {
-                        "titleLanguages": {
-                            "primary": ["title"],
-                        "original": ["filename"]
-                    },
-                    "dateRoles": {
-                        "planning": ["release_date"]
-                    },
-                    "externalRefs": ["musicbrainz_url"]
-                }
+                    "filename": { "titleLanguage": "original" },
+                    "fields": [
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "release_date", "fieldType": "date", "displayName": "Release date", "dateRole": "planning" },
+                        { "field": "musicbrainz_url", "fieldType": "externalRef", "displayName": "MusicBrainz", "externalRef": "musicbrainz" }
+                    ]
                 }
             ]
         });
-        fs::write(&config_path, serde_json::to_string_pretty(&config).unwrap()).unwrap();
+        fs::write(&config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
 
         Self {
             app: router(ApiOptions {

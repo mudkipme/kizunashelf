@@ -8,13 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { isDesktopRuntime, selectDirectory } from "@/lib/desktop";
+import {
+  fieldTypeLabel,
+  supportsDateRole,
+  supportsEnumOptions,
+  supportsTitleOptions,
+} from "@/lib/type-config";
 import type {
   DailyNotesConfig,
-  EntityFieldsConfig,
+  FieldConfig,
+  FieldType,
   EntityTypeConfig,
   HomeConfig,
   HomeSectionConfig,
   KizunaConfig,
+  SeasonLanguage,
 } from "@/types/config";
 
 type SettingsEditorProps = {
@@ -135,12 +143,6 @@ export function SettingsEditor({
             </Select>
           </Field>
         </div>
-        <StringListEditor
-          label="Relationship fields"
-          values={config.relationshipFields}
-          placeholder="frontmatter field"
-          onChange={(relationshipFields) => setConfig((current) => ({ ...current, relationshipFields }))}
-        />
       </SettingsSection>
 
       <SettingsSection
@@ -214,7 +216,6 @@ export function SettingsEditor({
               key={`${typeConfig.id}-${index}`}
               config={typeConfig}
               taxonomyBase={taxonomyBase}
-              relationshipFields={config.relationshipFields}
               onChange={(next) =>
                 setConfig((current) => replaceAt(current, "types", index, next))
               }
@@ -325,8 +326,6 @@ function HomeSectionEditor({
   onChange: (section: HomeSectionConfig) => void;
   onRemove: () => void;
 }) {
-  const statusMode = getStatusMode(section.status);
-
   return (
     <div className="rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
@@ -346,35 +345,6 @@ function HomeSectionEditor({
             {!types.some((type) => type.id === section.type) ? <option value={section.type}>{section.type}</option> : null}
           </Select>
         </Field>
-        <Field label="Status mode">
-          <Select
-            value={statusMode}
-            onChange={(event) => {
-              const mode = event.target.value as StatusMode;
-              onChange({ ...section, status: statusForMode(mode, section.status) });
-            }}
-            className="h-9 w-full text-sm"
-          >
-            <option value="none">Any status</option>
-            <option value="one">One status</option>
-            <option value="many">Multiple statuses</option>
-          </Select>
-        </Field>
-        {statusMode === "one" ? (
-          <TextField
-            label="Status"
-            value={typeof section.status === "string" ? section.status : section.status?.[0] ?? ""}
-            onChange={(status) => onChange({ ...section, status })}
-          />
-        ) : null}
-        {statusMode === "many" ? (
-          <StringListEditor
-            label="Statuses"
-            values={Array.isArray(section.status) ? section.status : section.status ? [section.status] : []}
-            placeholder="status"
-            onChange={(status) => onChange({ ...section, status })}
-          />
-        ) : null}
         <NumberField label="Limit" value={section.limit} onChange={(limit) => onChange({ ...section, limit })} />
         <TextField label="Sort" value={section.sort ?? ""} onChange={(sort) => onChange({ ...section, sort })} />
         <Field label="Direction">
@@ -401,17 +371,14 @@ function HomeSectionEditor({
 function EntityTypeEditor({
   config,
   taxonomyBase,
-  relationshipFields,
   onChange,
   onRemove,
 }: {
   config: EntityTypeConfig;
   taxonomyBase: string;
-  relationshipFields: string[];
   onChange: (config: EntityTypeConfig) => void;
   onRemove: () => void;
 }) {
-  const languageOptions = Object.keys(config.fields.titleLanguages);
   return (
     <div className="rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
@@ -423,89 +390,200 @@ function EntityTypeEditor({
         <TextField label="Label" value={config.label} onChange={(label) => onChange({ ...config, label })} />
         <TextField label="Icon" value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
         <PathField label="Path" value={config.path} base={taxonomyBase} onChange={(path) => onChange({ ...config, path })} />
-        <Field label="Default title language">
+        <Field label="Filename title language">
           <Select
-            value={config.defaultTitleLanguage ?? ""}
-            onChange={(event) => onChange({ ...config, defaultTitleLanguage: event.target.value })}
+            value={config.filename?.titleLanguage ?? ""}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                filename: event.target.value
+                  ? {
+                      titleLanguage: event.target.value,
+                      defaultTitle: config.filename?.defaultTitle ?? false,
+                    }
+                  : null,
+              })
+            }
             className="h-9 w-full text-sm"
           >
             <option value="">None</option>
-            {config.defaultTitleLanguage && !languageOptions.includes(config.defaultTitleLanguage) ? (
-              <option value={config.defaultTitleLanguage}>{config.defaultTitleLanguage}</option>
-            ) : null}
-            {languageOptions.map((language) => (
-              <option key={language} value={language}>
-                {language}
-              </option>
-            ))}
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="en">English</option>
+            <option value="original">Original</option>
+          </Select>
+        </Field>
+        <Field label="Filename default title">
+          <Select
+            value={config.filename?.defaultTitle ? "true" : "false"}
+            disabled={!config.filename}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                filename: config.filename
+                  ? { ...config.filename, defaultTitle: event.target.value === "true" }
+                  : null,
+              })
+            }
+            className="h-9 w-full text-sm"
+          >
+            <option value="false">No</option>
+            <option value="true">Yes</option>
           </Select>
         </Field>
       </div>
-      <div className="mt-3">
-        <StringListEditor
-          label="Status options"
-          values={config.statusOptions}
-          placeholder="Watching"
-          onChange={(statusOptions) => onChange({ ...config, statusOptions })}
-        />
-      </div>
       <Separator className="my-3" />
-      <EntityFieldsEditor
-        fields={config.fields}
-        relationshipFields={relationshipFields}
-        onChange={(fields) => onChange({ ...config, fields })}
-      />
+      <FieldsEditor fields={config.fields} onChange={(fields) => onChange({ ...config, fields })} />
     </div>
   );
 }
 
-function EntityFieldsEditor({
+function FieldsEditor({
   fields,
-  relationshipFields,
   onChange,
 }: {
-  fields: EntityFieldsConfig;
-  relationshipFields: string[];
-  onChange: (fields: EntityFieldsConfig) => void;
+  fields: FieldConfig[];
+  onChange: (fields: FieldConfig[]) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <KeyedStringListEditor
-        label="Title languages"
-        values={fields.titleLanguages}
-        onChange={(titleLanguages) => onChange({ ...fields, titleLanguages })}
-      />
-      <div className="flex flex-col gap-3">
-        <StringListEditor label="Stable ID fields" values={fields.id} onChange={(id) => onChange({ ...fields, id })} />
-        <StringListEditor label="Subtitle fields" values={fields.subtitle} onChange={(subtitle) => onChange({ ...fields, subtitle })} />
-        <StringListEditor label="Image fields" values={fields.image} onChange={(image) => onChange({ ...fields, image })} />
-        <StringListEditor label="Status fields" values={fields.status} onChange={(status) => onChange({ ...fields, status })} />
-        <StringListEditor label="Progress fields" values={fields.progress} onChange={(progress) => onChange({ ...fields, progress })} />
-        <StringListEditor label="Total progress fields" values={fields.totalProgress} onChange={(totalProgress) => onChange({ ...fields, totalProgress })} />
-        <StringListEditor label="Rating fields" values={fields.rating} onChange={(rating) => onChange({ ...fields, rating })} />
-        <StringListEditor
-          label="External ref fields"
-          values={fields.externalRefs}
-          onChange={(externalRefs) => onChange({ ...fields, externalRefs })}
-        />
-        <StringListEditor
-          label="Relation fields"
-          values={fields.relations}
-          suggestions={relationshipFields}
-          onChange={(relations) => onChange({ ...fields, relations })}
-        />
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-medium">Fields</h4>
+        <Button type="button" variant="outline" size="sm" onClick={() => onChange([...fields, defaultField()])}>
+          <PlusIcon data-icon="inline-start" />
+          Field
+        </Button>
       </div>
-      <div className="flex flex-col gap-3 xl:col-span-2">
-        <StringListEditor
-          label="Planning date fields"
-          values={fields.dateRoles.planning}
-          onChange={(planning) => onChange({ ...fields, dateRoles: { ...fields.dateRoles, planning } })}
+      <div className="flex flex-col gap-3">
+        {fields.map((field, index) => (
+          <FieldConfigEditor
+            key={`${field.field}-${field.fieldType}-${index}`}
+            field={field}
+            onChange={(next) => onChange(replaceArray(fields, index, next))}
+            onRemove={() => onChange(fields.filter((_, itemIndex) => itemIndex !== index))}
+          />
+        ))}
+        {fields.length === 0 ? <EmptyConfigLine>No fields configured.</EmptyConfigLine> : null}
+      </div>
+    </div>
+  );
+}
+
+function FieldConfigEditor({
+  field,
+  onChange,
+  onRemove,
+}: {
+  field: FieldConfig;
+  onChange: (field: FieldConfig) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-md border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="truncate text-sm font-medium">{field.displayName || field.field || "Field"}</h4>
+        <IconButton label="Remove field" onClick={onRemove} />
+      </div>
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <TextField label="Field" value={field.field} onChange={(value) => onChange({ ...field, field: value })} />
+        <Field label="Type">
+          <Select
+            value={field.fieldType}
+            onChange={(event) => onChange({ ...field, fieldType: event.target.value as FieldType })}
+            className="h-9 w-full text-sm"
+          >
+            {fieldTypeOptions.map((option) => (
+              <option key={option} value={option}>
+                {fieldTypeLabel(option)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <TextField
+          label="Display name"
+          value={field.displayName ?? ""}
+          onChange={(displayName) => onChange({ ...field, displayName })}
         />
-        <StringListEditor
-          label="Completed date fields"
-          values={fields.dateRoles.completed}
-          onChange={(completed) => onChange({ ...fields, dateRoles: { ...fields.dateRoles, completed } })}
-        />
+        {supportsTitleOptions(field.fieldType) ? (
+          <>
+            <TextField
+              label="Title language"
+              value={field.titleLanguage ?? ""}
+              onChange={(titleLanguage) => onChange({ ...field, titleLanguage })}
+            />
+            <Field label="Default title">
+              <Select
+                value={field.defaultTitle ? "true" : "false"}
+                onChange={(event) => onChange({ ...field, defaultTitle: event.target.value === "true" })}
+                className="h-9 w-full text-sm"
+              >
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </Select>
+            </Field>
+          </>
+        ) : null}
+        {supportsEnumOptions(field.fieldType) ? (
+          <>
+            <div className="lg:col-span-3">
+              <StringListEditor
+                label="Enum options"
+                values={field.enumOptions ?? []}
+                placeholder="Completed"
+                onChange={(enumOptions) => onChange({ ...field, enumOptions })}
+              />
+            </div>
+          </>
+        ) : null}
+        {field.fieldType === "progress" ? (
+          <TextField
+            label="Total progress field"
+            value={field.totalProgressField ?? ""}
+            onChange={(totalProgressField) => onChange({ ...field, totalProgressField })}
+          />
+        ) : null}
+        {supportsDateRole(field.fieldType) ? (
+          <Field label="Date role">
+            <Select
+              value={field.dateRole ?? ""}
+              onChange={(event) =>
+                onChange({ ...field, dateRole: (event.target.value || null) as FieldConfig["dateRole"] })
+              }
+              className="h-9 w-full text-sm"
+            >
+              <option value="">None</option>
+              <option value="planning">Planning</option>
+              <option value="completed">Completed</option>
+            </Select>
+          </Field>
+        ) : null}
+        {field.fieldType === "season" ? (
+          <Field label="Season language">
+            <Select
+              value={field.seasonLanguage ?? "zh"}
+              onChange={(event) => onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })}
+              className="h-9 w-full text-sm"
+            >
+              <option value="zh">Chinese</option>
+              <option value="ja">Japanese</option>
+              <option value="en">English</option>
+            </Select>
+          </Field>
+        ) : null}
+        {field.fieldType === "externalRef" ? (
+          <TextField
+            label="External source"
+            value={field.externalRef ?? ""}
+            onChange={(externalRef) => onChange({ ...field, externalRef })}
+          />
+        ) : null}
+        {field.fieldType === "relation" ? (
+          <TextField
+            label="Relation type"
+            value={field.relationType ?? ""}
+            onChange={(relationType) => onChange({ ...field, relationType })}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -568,10 +646,14 @@ function StringListEditor({
 function KeyedStringListEditor({
   label,
   values,
+  keyPlaceholder = "language",
+  addLabel = "Language",
   onChange,
 }: {
   label: string;
   values: Record<string, string[]>;
+  keyPlaceholder?: string;
+  addLabel?: string;
   onChange: (values: Record<string, string[]>) => void;
 }) {
   const entries = Object.entries(values);
@@ -586,17 +668,22 @@ function KeyedStringListEditor({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
-        <Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...values, language: [] })}>
+        <Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...values, [keyPlaceholder]: [] })}>
           <PlusIcon data-icon="inline-start" />
-          Language
+          {addLabel}
         </Button>
       </div>
       {entries.map(([language, fields]) => (
         <div key={language} className="rounded-md border p-3">
           <div className="flex items-center gap-2">
-            <Input value={language} onChange={(event) => changeKey(language, event.target.value)} aria-label="Language" />
+            <Input
+              value={language}
+              placeholder={keyPlaceholder}
+              onChange={(event) => changeKey(language, event.target.value)}
+              aria-label={addLabel}
+            />
             <IconButton
-              label="Remove language"
+              label={`Remove ${addLabel}`}
               onClick={() => {
                 const next = { ...values };
                 delete next[language];
@@ -613,7 +700,7 @@ function KeyedStringListEditor({
           </div>
         </div>
       ))}
-      {entries.length === 0 ? <EmptyConfigLine>No title languages configured.</EmptyConfigLine> : null}
+      {entries.length === 0 ? <EmptyConfigLine>No values configured.</EmptyConfigLine> : null}
     </div>
   );
 }
@@ -808,7 +895,6 @@ function normalizeConfig(config?: KizunaConfig): KizunaConfig {
     vaultRoot: config.vaultRoot ?? "",
     taxonomyRoot: config.taxonomyRoot ?? "Taxonomy",
     contentWritable: config.contentWritable ?? true,
-    relationshipFields: config.relationshipFields ?? [],
     readConcurrency: config.readConcurrency ?? null,
     dailyNotes: config.dailyNotes ? normalizeDailyNotes(config.dailyNotes) : null,
     home: config.home ? normalizeHome(config.home) : null,
@@ -833,26 +919,33 @@ function normalizeHome(config: HomeConfig): HomeConfig {
 
 function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
   return {
-    ...config,
+    id: config.id ?? "",
+    label: config.label ?? "",
     icon: config.icon ?? "",
-    defaultTitleLanguage: config.defaultTitleLanguage ?? "",
-    statusOptions: config.statusOptions ?? [],
-    fields: {
-      id: config.fields?.id ?? [],
-      titleLanguages: config.fields?.titleLanguages ?? {},
-      subtitle: config.fields?.subtitle ?? [],
-      image: config.fields?.image ?? [],
-      status: config.fields?.status ?? [],
-      progress: config.fields?.progress ?? [],
-      totalProgress: config.fields?.totalProgress ?? [],
-      rating: config.fields?.rating ?? [],
-      dateRoles: {
-        planning: config.fields?.dateRoles?.planning ?? [],
-        completed: config.fields?.dateRoles?.completed ?? [],
-      },
-      externalRefs: config.fields?.externalRefs ?? [],
-      relations: config.fields?.relations ?? [],
-    },
+    path: config.path ?? "",
+    filename: config.filename
+      ? {
+          titleLanguage: config.filename.titleLanguage ?? "",
+          defaultTitle: config.filename.defaultTitle ?? false,
+        }
+      : null,
+    fields: (config.fields ?? []).map(normalizeField),
+  };
+}
+
+function normalizeField(field: FieldConfig): FieldConfig {
+  return {
+    field: field.field ?? "",
+    fieldType: field.fieldType ?? "text",
+    displayName: field.displayName ?? "",
+    titleLanguage: field.titleLanguage ?? "",
+    defaultTitle: field.defaultTitle ?? false,
+    enumOptions: field.enumOptions ?? [],
+    totalProgressField: field.totalProgressField ?? "",
+    dateRole: field.dateRole ?? null,
+    seasonLanguage: field.seasonLanguage ?? "zh",
+    externalRef: field.externalRef ?? "",
+    relationType: field.relationType ?? "",
   };
 }
 
@@ -861,7 +954,6 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
     vaultRoot: config.vaultRoot,
     taxonomyRoot: config.taxonomyRoot,
     contentWritable: config.contentWritable ?? undefined,
-    relationshipFields: cleanStrings(config.relationshipFields),
     readConcurrency: config.readConcurrency ?? undefined,
     dailyNotes: config.dailyNotes
       ? {
@@ -877,7 +969,6 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
             id: section.id,
             title: section.title,
             type: section.type,
-            status: section.status ?? undefined,
             limit: section.limit ?? undefined,
             sort: emptyToUndefined(section.sort),
             direction: section.direction ?? undefined,
@@ -889,29 +980,39 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
       label: typeConfig.label,
       icon: emptyToUndefined(typeConfig.icon),
       path: typeConfig.path,
-      defaultTitleLanguage: emptyToUndefined(typeConfig.defaultTitleLanguage),
-      statusOptions: cleanStrings(typeConfig.statusOptions),
-      fields: {
-        id: cleanStrings(typeConfig.fields.id),
-        titleLanguages: Object.fromEntries(
-          Object.entries(typeConfig.fields.titleLanguages)
-            .map(([language, fields]) => [language, cleanStrings(fields)] as const)
-            .filter(([language, fields]) => language.trim() && fields.length > 0),
-        ),
-        subtitle: cleanStrings(typeConfig.fields.subtitle),
-        image: cleanStrings(typeConfig.fields.image),
-        status: cleanStrings(typeConfig.fields.status),
-        progress: cleanStrings(typeConfig.fields.progress),
-        totalProgress: cleanStrings(typeConfig.fields.totalProgress),
-        rating: cleanStrings(typeConfig.fields.rating),
-        dateRoles: {
-          planning: cleanStrings(typeConfig.fields.dateRoles.planning),
-          completed: cleanStrings(typeConfig.fields.dateRoles.completed),
-        },
-        externalRefs: cleanStrings(typeConfig.fields.externalRefs),
-        relations: cleanStrings(typeConfig.fields.relations),
-      },
+      filename: typeConfig.filename?.titleLanguage
+        ? {
+            titleLanguage: typeConfig.filename.titleLanguage,
+            defaultTitle: typeConfig.filename.defaultTitle || undefined,
+          }
+        : undefined,
+      fields: typeConfig.fields
+        .map(cleanField)
+        .filter((field): field is FieldConfig => Boolean(field)),
     })),
+  };
+}
+
+function cleanField(field: FieldConfig): FieldConfig | undefined {
+  const key = field.field.trim();
+  if (!key) return undefined;
+  return {
+    field: key,
+    fieldType: field.fieldType,
+    displayName: emptyToUndefined(field.displayName),
+    titleLanguage: field.fieldType === "title" ? emptyToUndefined(field.titleLanguage) : undefined,
+    defaultTitle: field.fieldType === "title" && field.defaultTitle ? true : undefined,
+    enumOptions:
+      field.fieldType === "enum" || field.fieldType === "enumList"
+        ? cleanStrings(field.enumOptions ?? [])
+        : undefined,
+    totalProgressField:
+      field.fieldType === "progress" ? emptyToUndefined(field.totalProgressField) : undefined,
+    dateRole:
+      field.fieldType === "date" || field.fieldType === "season" ? field.dateRole || undefined : undefined,
+    seasonLanguage: field.fieldType === "season" ? field.seasonLanguage || "zh" : undefined,
+    externalRef: field.fieldType === "externalRef" ? emptyToUndefined(field.externalRef) : undefined,
+    relationType: field.fieldType === "relation" ? emptyToUndefined(field.relationType) : undefined,
   };
 }
 
@@ -920,7 +1021,6 @@ function defaultConfig(): KizunaConfig {
     vaultRoot: "",
     taxonomyRoot: "Taxonomy",
     contentWritable: true,
-    relationshipFields: [],
     readConcurrency: 8,
     dailyNotes: defaultDailyNotes(),
     home: defaultHome(),
@@ -945,7 +1045,6 @@ function defaultHomeSection(type = ""): HomeSectionConfig {
     id: "section",
     title: "Section",
     type,
-    status: null,
     limit: 12,
     sort: "title",
     direction: "asc",
@@ -958,21 +1057,17 @@ function defaultEntityType(): EntityTypeConfig {
     label: "Type",
     icon: "",
     path: "Type",
-    defaultTitleLanguage: "original",
-    statusOptions: ["Backlog", "Active", "Completed", "Paused", "Dropped"],
-    fields: {
-      id: [],
-      titleLanguages: { original: ["filename"] },
-      subtitle: [],
-      image: [],
-      status: [],
-      progress: ["progress"],
-      totalProgress: [],
-      rating: [],
-      dateRoles: { planning: [], completed: [] },
-      externalRefs: [],
-      relations: [],
-    },
+    filename: { titleLanguage: "original", defaultTitle: true },
+    fields: [
+      { field: "id", fieldType: "id", displayName: "ID" },
+      {
+        field: "state",
+        fieldType: "enum",
+        displayName: "State",
+        enumOptions: ["Backlog", "Active", "Completed", "Paused", "Dropped"],
+      },
+      { field: "progress", fieldType: "progress", displayName: "Progress" },
+    ],
   };
 }
 
@@ -992,8 +1087,8 @@ function vaultTemplates(): Array<{ id: string; label: string; config: KizunaConf
         home: {
           title: "Home",
           sections: [
-            { id: "watching-anime", title: "Watching Anime", type: "anime", status: "Watching", limit: 12, sort: "date:season", direction: "desc" },
-            { id: "playing-games", title: "Playing Games", type: "games", status: "Playing", limit: 12, sort: "title", direction: "asc" },
+            { id: "recent-anime", title: "Recent Anime", type: "anime", limit: 12, sort: "date:season", direction: "desc" },
+            { id: "games", title: "Games", type: "games", limit: 12, sort: "title", direction: "asc" },
           ],
         },
       },
@@ -1047,35 +1142,80 @@ function mediaType(
   planningDates: string[],
   completedDates: string[],
 ): EntityTypeConfig {
+  const stateOptions = ["Backlog", "Watching", "Playing", "Reading", "Completed", "Paused", "Dropped"];
   return {
     id,
     label,
     icon,
     path,
-    defaultTitleLanguage: "zh",
-    statusOptions: ["Backlog", "Watching", "Playing", "Reading", "Completed", "Paused", "Dropped"],
-    fields: {
-      id: ["uid", "id"],
-      titleLanguages: {
-        zh: ["filename", "title"],
-        original: ["title_original"],
-        en: ["title_en"],
-        ja: ["title_ja"],
-      },
-      subtitle: ["title_en", "title_original"],
-      image: ["cover_url"],
-      status: ["status"],
-      progress: ["progress"],
-      totalProgress: ["episodes"],
-      rating: ["rating"],
-      dateRoles: {
-        planning: planningDates,
-        completed: completedDates,
-      },
-      externalRefs,
-      relations: ["franchise", "studio", "developer"],
-    },
+    filename: { titleLanguage: "zh", defaultTitle: true },
+    fields: [
+      { field: "uid", fieldType: "id", displayName: "UID" },
+      { field: "id", fieldType: "id", displayName: "ID" },
+      { field: "title", fieldType: "title", displayName: "Title", titleLanguage: "zh" },
+      { field: "title_original", fieldType: "title", displayName: "Title (Original)", titleLanguage: "original" },
+      { field: "title_en", fieldType: "title", displayName: "Title (English)", titleLanguage: "en" },
+      { field: "title_ja", fieldType: "title", displayName: "Title (Japanese)", titleLanguage: "ja" },
+      { field: "cover_url", fieldType: "image", displayName: "Cover" },
+      { field: "state", fieldType: "enum", displayName: "State", enumOptions: stateOptions },
+      { field: "progress", fieldType: "progress", displayName: "Progress", totalProgressField: "episodes" },
+      { field: "episodes", fieldType: "totalProgress", displayName: "Episodes" },
+      { field: "rating", fieldType: "rating", displayName: "Rating" },
+      ...planningDates.map((field) =>
+        field === "season"
+          ? ({
+              field,
+              fieldType: "season",
+              displayName: "Season",
+              dateRole: "planning",
+              seasonLanguage: "zh",
+            } satisfies FieldConfig)
+          : ({
+              field,
+              fieldType: "date",
+              displayName: field === "release_date" ? "Release date" : field,
+              dateRole: "planning",
+            } satisfies FieldConfig),
+      ),
+      ...completedDates.map((field) => ({
+        field,
+        fieldType: "date",
+        displayName: field === "complete_date" ? "Completed date" : field,
+        dateRole: "completed",
+      }) satisfies FieldConfig),
+      ...externalRefs.map((field) => ({
+        field,
+        fieldType: "externalRef",
+        displayName: field,
+        externalRef: field.replace(/_url$/, ""),
+      }) satisfies FieldConfig),
+      { field: "franchise", fieldType: "relation", displayName: "Franchise", relationType: "franchise" },
+      { field: "studio", fieldType: "relation", displayName: "Studio", relationType: "studio" },
+      { field: "developer", fieldType: "relation", displayName: "Developer", relationType: "developer" },
+    ],
   };
+}
+
+const fieldTypeOptions: FieldType[] = [
+  "id",
+  "title",
+  "image",
+  "imageList",
+  "enum",
+  "enumList",
+  "progress",
+  "totalProgress",
+  "rating",
+  "season",
+  "date",
+  "externalRef",
+  "relation",
+  "text",
+  "textList",
+];
+
+function defaultField(): FieldConfig {
+  return { field: "field", fieldType: "text", displayName: "" };
 }
 
 function replaceAt<T, K extends keyof T>(object: T, key: K, index: number, value: T[K] extends Array<infer U> ? U : never): T {
@@ -1095,19 +1235,6 @@ function cleanStrings(values: string[]) {
 function emptyToUndefined(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : undefined;
-}
-
-type StatusMode = "none" | "one" | "many";
-
-function getStatusMode(status: HomeSectionConfig["status"]): StatusMode {
-  if (Array.isArray(status)) return "many";
-  return status ? "one" : "none";
-}
-
-function statusForMode(mode: StatusMode, current: HomeSectionConfig["status"]): HomeSectionConfig["status"] {
-  if (mode === "none") return null;
-  if (mode === "one") return typeof current === "string" ? current : current?.[0] ?? "";
-  return Array.isArray(current) ? current : current ? [current] : [];
 }
 
 function joinPath(base: string, path: string) {

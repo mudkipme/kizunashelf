@@ -192,9 +192,12 @@ fn apply_frontmatter_patch(target: &mut Map<String, Value>, patch: Map<String, V
 }
 
 fn sanitize_basename(value: &str) -> Result<String> {
-    let basename = value.trim().trim_end_matches(".md").trim();
+    let basename = value.trim();
     if basename.is_empty() {
         anyhow::bail!("Entity filename cannot be empty");
+    }
+    if basename.to_lowercase().ends_with(".md") {
+        anyhow::bail!("Entity filename must be a basename without .md");
     }
     let path = Path::new(basename);
     if path.components().count() != 1
@@ -205,7 +208,17 @@ fn sanitize_basename(value: &str) -> Result<String> {
     {
         anyhow::bail!("Entity filename must be a single Markdown basename");
     }
+    if basename.chars().any(is_forbidden_obsidian_filename_char) {
+        anyhow::bail!("Entity filename cannot contain / \\ : * ? \" < > | or control characters");
+    }
     Ok(basename.to_string())
+}
+
+fn is_forbidden_obsidian_filename_char(character: char) -> bool {
+    matches!(
+        character,
+        '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|'
+    ) || character.is_control()
 }
 
 async fn entity_absolute_path(vault_root: &str, relative: &str) -> Result<PathBuf> {

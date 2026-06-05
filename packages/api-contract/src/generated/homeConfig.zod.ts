@@ -15,7 +15,6 @@ export const HomeConfig = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "type": zod.string(),
-  "status": zod.union([zod.union([zod.string(),zod.array(zod.string())]),zod.null()]).optional(),
   "limit": zod.number().min(homeConfigSectionsItemLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()

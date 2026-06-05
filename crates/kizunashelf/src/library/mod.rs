@@ -4,12 +4,12 @@ mod relations;
 
 pub use collation::{compare_optional_string, compare_string, compare_string_for_title_language};
 pub use frontmatter::{
-    effective_default_title_language, serialize_markdown_document, split_markdown_document,
-    wikilink_regex, MarkdownDocument,
+    serialize_markdown_document, split_markdown_document, wikilink_regex, MarkdownDocument,
 };
 
 use crate::types::{
-    Entity, EntitySummary, EntityTypeConfig, KizunaConfig, Library, LibraryDiagnostic, Relation,
+    DateRole, Entity, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig, Library,
+    LibraryDiagnostic, Relation,
 };
 use anyhow::{Context, Result};
 use frontmatter::{
@@ -33,7 +33,7 @@ pub async fn load_config(config_path: impl AsRef<Path>) -> Result<KizunaConfig> 
     let raw = fs::read_to_string(path)
         .await
         .with_context(|| format!("failed to read config {}", path.display()))?;
-    serde_json::from_str(&raw).with_context(|| format!("invalid config {}", path.display()))
+    serde_yaml::from_str(&raw).with_context(|| format!("invalid config {}", path.display()))
 }
 
 pub async fn save_config(config_path: impl AsRef<Path>, config: &KizunaConfig) -> Result<()> {
@@ -43,7 +43,7 @@ pub async fn save_config(config_path: impl AsRef<Path>, config: &KizunaConfig) -
             .await
             .with_context(|| format!("failed to create config directory {}", parent.display()))?;
     }
-    let raw = serde_json::to_string_pretty(config).context("failed to serialize config")?;
+    let raw = serde_yaml::to_string(config).context("failed to serialize config")?;
     fs::write(path, format!("{raw}\n"))
         .await
         .with_context(|| format!("failed to write config {}", path.display()))
@@ -273,7 +273,7 @@ async fn read_entity_file(
     let parsed = parse_markdown(&raw);
     let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
     let titles = title_languages(&parsed.frontmatter, &note_basename, &type_config);
-    let title = default_title(&titles, &note_basename, &type_config);
+    let title = default_title(&parsed.frontmatter, &titles, &note_basename, &type_config);
     let relative_path = relative_path(Path::new(&vault_root), &absolute_path);
     let entity_key = entity_key(&parsed.frontmatter, &note_basename, &type_config);
     let diagnostics = parsed
@@ -292,14 +292,19 @@ async fn read_entity_file(
         type_label: type_config.label.clone(),
         title,
         titles,
-        subtitle: first_string(&parsed.frontmatter, &type_config.fields.subtitle),
-        status: first_string(&parsed.frontmatter, &type_config.fields.status),
-        dates: date_values(&parsed.frontmatter, &type_config.fields.date_roles.fields()),
-        image: first_string(&parsed.frontmatter, &type_config.fields.image),
+        dates: date_values(&parsed.frontmatter, &date_field_names(&type_config)),
+        image: first_field_string_for_types(
+            &parsed.frontmatter,
+            &type_config,
+            &[FieldType::Image, FieldType::ImageList],
+        ),
         summary: extract_summary(&parsed.body),
         path: relative_path,
         basename: note_basename,
-        external_refs: external_refs(&parsed.frontmatter, &type_config.fields.external_refs),
+        external_refs: external_refs(
+            &parsed.frontmatter,
+            &field_names(&type_config, FieldType::ExternalRef),
+        ),
         relation_count: 0,
     };
 
@@ -332,7 +337,47 @@ fn entity_key(
     basename: &str,
     type_config: &EntityTypeConfig,
 ) -> String {
-    first_string(frontmatter, &type_config.fields.id).unwrap_or_else(|| basename.to_string())
+    first_string(frontmatter, &field_names(type_config, FieldType::Id))
+        .unwrap_or_else(|| basename.to_string())
+}
+
+fn first_field_string_for_types(
+    frontmatter: &serde_json::Map<String, serde_json::Value>,
+    type_config: &EntityTypeConfig,
+    field_types: &[FieldType],
+) -> Option<String> {
+    first_string(
+        frontmatter,
+        &field_names_for_types(type_config, field_types),
+    )
+}
+
+fn field_names(type_config: &EntityTypeConfig, field_type: FieldType) -> Vec<String> {
+    field_names_for_types(type_config, &[field_type])
+}
+
+fn field_names_for_types(type_config: &EntityTypeConfig, field_types: &[FieldType]) -> Vec<String> {
+    type_config
+        .fields
+        .iter()
+        .filter(|field| field_types.contains(&field.field_type))
+        .map(|field| field.field.clone())
+        .collect()
+}
+
+fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
+    type_config
+        .fields
+        .iter()
+        .filter(|field| {
+            matches!(field.field_type, FieldType::Date | FieldType::Season)
+                && matches!(
+                    field.date_role,
+                    Some(DateRole::Planning | DateRole::Completed)
+                )
+        })
+        .map(|field| field.field.clone())
+        .collect()
 }
 
 fn effective_read_concurrency(config: &KizunaConfig) -> usize {
@@ -353,7 +398,7 @@ fn relative_path(root: &Path, path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::{compare_string, read_library};
-    use crate::types::{EntityFields, EntityTypeConfig, KizunaConfig};
+    use crate::types::{EntityTypeConfig, FieldConfig, FieldType, FilenameConfig, KizunaConfig};
 
     #[test]
     fn compare_string_supports_non_english_collation_without_system_icu_data() {
@@ -425,7 +470,22 @@ mod tests {
         .unwrap();
         std::fs::write(taxonomy.join("Broken.md"), "---\ntitle: [broken\n---\n").unwrap();
         let mut config = test_config(temp.path().to_string_lossy().as_ref());
-        config.types[0].fields.id = vec!["uid".to_string()];
+        config.types[0].fields.insert(
+            0,
+            FieldConfig {
+                field: "uid".to_string(),
+                field_type: FieldType::Id,
+                display_name: Some("UID".to_string()),
+                title_language: None,
+                default_title: None,
+                enum_options: Vec::new(),
+                total_progress_field: None,
+                date_role: None,
+                season_language: None,
+                external_ref: None,
+                relation_type: None,
+            },
+        );
 
         let library = read_library(config).await.unwrap();
 
@@ -445,7 +505,6 @@ mod tests {
         KizunaConfig {
             vault_root: vault_root.to_string(),
             taxonomy_root: "Taxonomy".to_string(),
-            relationship_fields: Vec::new(),
             content_writable: None,
             read_concurrency: None,
             home: None,
@@ -455,24 +514,23 @@ mod tests {
                 label: "Anime".to_string(),
                 icon: None,
                 path: "Anime".to_string(),
-                default_title_language: Some("primary".to_string()),
-                status_options: Vec::new(),
-                fields: EntityFields {
-                    id: Vec::new(),
-                    title_languages: std::collections::BTreeMap::from([(
-                        "primary".to_string(),
-                        vec!["title".to_string()],
-                    )]),
-                    subtitle: Vec::new(),
-                    image: Vec::new(),
-                    status: Vec::new(),
-                    progress: Vec::new(),
-                    total_progress: Vec::new(),
-                    rating: Vec::new(),
-                    date_roles: Default::default(),
-                    external_refs: Vec::new(),
-                    relations: Vec::new(),
-                },
+                filename: Some(FilenameConfig {
+                    title_language: "primary".to_string(),
+                    default_title: false,
+                }),
+                fields: vec![FieldConfig {
+                    field: "title".to_string(),
+                    field_type: FieldType::Title,
+                    display_name: Some("Title".to_string()),
+                    title_language: Some("primary".to_string()),
+                    default_title: Some(true),
+                    enum_options: Vec::new(),
+                    total_progress_field: None,
+                    date_role: None,
+                    season_language: None,
+                    external_ref: None,
+                    relation_type: None,
+                }],
             }],
         }
     }

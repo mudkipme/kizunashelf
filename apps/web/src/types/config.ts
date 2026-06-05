@@ -1,20 +1,40 @@
-export type EntityFieldsConfig = {
-  id: string[];
-  titleLanguages: Record<string, string[]>;
-  subtitle: string[];
-  image: string[];
-  status: string[];
-  progress: string[];
-  totalProgress: string[];
-  rating: string[];
-  dateRoles: DateRoleConfig;
-  externalRefs: string[];
-  relations: string[];
+export type FieldType =
+  | "id"
+  | "title"
+  | "image"
+  | "imageList"
+  | "enum"
+  | "enumList"
+  | "progress"
+  | "totalProgress"
+  | "rating"
+  | "season"
+  | "date"
+  | "externalRef"
+  | "relation"
+  | "text"
+  | "textList";
+
+export type DateRole = "planning" | "completed";
+export type SeasonLanguage = "zh" | "ja" | "en";
+
+export type FilenameConfig = {
+  titleLanguage: string;
+  defaultTitle?: boolean;
 };
 
-export type DateRoleConfig = {
-  planning: string[];
-  completed: string[];
+export type FieldConfig = {
+  field: string;
+  fieldType: FieldType;
+  displayName?: string | null;
+  titleLanguage?: string | null;
+  defaultTitle?: boolean | null;
+  enumOptions?: string[];
+  totalProgressField?: string | null;
+  dateRole?: DateRole | null;
+  seasonLanguage?: SeasonLanguage | null;
+  externalRef?: string | null;
+  relationType?: string | null;
 };
 
 export type EntityTypeConfig = {
@@ -22,16 +42,14 @@ export type EntityTypeConfig = {
   label: string;
   icon?: string | null;
   path: string;
-  defaultTitleLanguage?: string | null;
-  statusOptions: string[];
-  fields: EntityFieldsConfig;
+  filename?: FilenameConfig | null;
+  fields: FieldConfig[];
 };
 
 export type HomeSectionConfig = {
   id: string;
   title: string;
   type: string;
-  status?: string | string[] | null;
   limit?: number | null;
   sort?: string | null;
   direction?: "asc" | "desc" | null;
@@ -52,7 +70,6 @@ export type KizunaConfig = {
   vaultRoot: string;
   taxonomyRoot: string;
   contentWritable?: boolean | null;
-  relationshipFields: string[];
   readConcurrency?: number | null;
   home?: HomeConfig | null;
   dailyNotes?: DailyNotesConfig | null;

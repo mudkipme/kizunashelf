@@ -15,10 +15,7 @@ export function HomeSection({ section }: { section: HomeSectionResponse }) {
             <h2 className="truncate text-sm font-semibold">{section.title}</h2>
             <Badge variant="secondary">{section.total}</Badge>
           </div>
-          <div className="mt-1 truncate text-xs text-muted-foreground">
-            {section.typeLabel}
-            {section.status.length > 0 ? ` · ${section.status.join(", ")}` : ""}
-          </div>
+          <div className="mt-1 truncate text-xs text-muted-foreground">{section.typeLabel}</div>
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link to={libraryHref(section)}>
@@ -48,6 +45,5 @@ function libraryHref(section: HomeSectionResponse) {
     sort: section.sort,
     direction: section.direction,
   });
-  if (section.status.length === 1) params.set("status", section.status[0]);
   return `/library?${params}`;
 }

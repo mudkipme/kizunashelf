@@ -53,8 +53,6 @@ const seasons: Array<{ key: SeasonKey; label: string; months: string }> = [
   { key: "autumn", label: "Autumn", months: "Oct-Dec" },
 ];
 
-const backlogStatuses = new Set(["Backlog", "Pending", "Wishlist"]);
-
 export function CalendarPlanningViews({
   mode,
   year,
@@ -192,11 +190,8 @@ function PlanningBoard({
       .filter((point) => point.sortKey <= today && hasDateRole(point, dateRolesByType, "completed"))
       .sort(compareDatePointsDesc),
   ).slice(0, 12);
-  const somedayBacklog = entities
-    .filter(
-      (entity) =>
-        backlogStatuses.has(entity.status ?? "") && !futurePlanningEntityIds.has(entity.id),
-    )
+  const unscheduled = entities
+    .filter((entity) => !futurePlanningEntityIds.has(entity.id))
     .sort(compareEntitiesAsc)
     .slice(0, 12);
 
@@ -204,7 +199,7 @@ function PlanningBoard({
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
       <PlanningList title="Upcoming" count={upcoming.length} points={upcoming} />
       <PlanningList title="Recently Completed" count={recentlyCompleted.length} points={recentlyCompleted} />
-      <EntityPlanningList title="Backlog / Someday" count={somedayBacklog.length} entities={somedayBacklog} />
+      <EntityPlanningList title="Unscheduled" count={unscheduled.length} entities={unscheduled} />
     </div>
   );
 }
@@ -249,7 +244,6 @@ function PlanningEntityRow({ point }: { point: DatePoint }) {
         <span className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="min-w-0 truncate text-sm font-medium">{point.entity.title}</span>
           <Badge variant="outline">{point.entity.typeLabel}</Badge>
-          {point.entity.status ? <Badge variant="secondary">{point.entity.status}</Badge> : null}
         </span>
         {point.entity.summary ? (
           <span className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
@@ -304,7 +298,6 @@ function PlanningEntitySummaryRow({ entity }: { entity: EntitySummary }) {
       <span className="flex min-w-0 flex-wrap items-center gap-2">
         <span className="min-w-0 truncate text-sm font-medium">{entity.title}</span>
         <Badge variant="outline">{entity.typeLabel}</Badge>
-        {entity.status ? <Badge variant="secondary">{entity.status}</Badge> : null}
       </span>
       {entity.summary ? (
         <span className="line-clamp-2 text-xs leading-5 text-muted-foreground">{entity.summary}</span>
@@ -415,7 +408,6 @@ function compareDatePointsDesc(a: DatePoint, b: DatePoint) {
 }
 
 function compareEntitiesAsc(a: EntitySummary, b: EntitySummary) {
-  if ((a.status ?? "") !== (b.status ?? "")) return (a.status ?? "").localeCompare(b.status ?? "");
   if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
   return a.title.localeCompare(b.title);
 }

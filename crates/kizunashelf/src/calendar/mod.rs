@@ -8,7 +8,7 @@ use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_fron
 use crate::dates::{clamp_number, is_in_month, normalize_date, parse_exact_date};
 use crate::library::{compare_string, wikilink_regex};
 use crate::relations::summary_by_id;
-use crate::types::{Entity, EntitySummary, Library};
+use crate::types::{DateRole, Entity, EntitySummary, FieldType, Library};
 use anyhow::Result;
 use chrono::Datelike;
 use mentions::{clean_mention_snippet, mention_blocks};
@@ -127,12 +127,24 @@ fn taxonomy_calendar_entries(
 }
 
 fn metadata_date_entries(library: &Library, entity: &Entity) -> Vec<EntityDateMetadataEntry> {
-    let fields = library
+    let fields: Vec<String> = library
         .config
         .types
         .iter()
         .find(|item| item.id == entity.summary.entity_type)
-        .map(|item| item.fields.date_roles.fields())
+        .map(|item| {
+            item.fields
+                .iter()
+                .filter(|field| {
+                    matches!(field.field_type, FieldType::Date | FieldType::Season)
+                        && matches!(
+                            field.date_role,
+                            Some(DateRole::Planning | DateRole::Completed)
+                        )
+                })
+                .map(|field| field.field.clone())
+                .collect()
+        })
         .unwrap_or_default();
     let mut seen = Vec::<String>::new();
     let mut entries = Vec::new();

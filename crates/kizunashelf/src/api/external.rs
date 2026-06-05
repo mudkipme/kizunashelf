@@ -314,7 +314,8 @@ async fn igdb_access_token(
                 expires_at_unix_seconds,
             },
         )
-        .await;
+        .await
+        .map_err(|error| ApiError::bad_request(&format!("failed to cache IGDB token: {error}")))?;
     Ok(access_token)
 }
 
@@ -489,7 +490,10 @@ async fn thetvdb_access_token(
                 expires_at_unix_seconds: unix_seconds_now() + 23 * 60 * 60,
             },
         )
-        .await;
+        .await
+        .map_err(|error| {
+            ApiError::bad_request(&format!("failed to cache TheTVDB token: {error}"))
+        })?;
     Ok(access_token)
 }
 

@@ -5,10 +5,8 @@ use crate::calendar::{build_calendar, CalendarBuildOptions, CalendarSource};
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
     HomeSectionResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
-    TypeConfigResponse,
 };
 use crate::dates::clamp_number;
-use crate::library::effective_default_title_language;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
 use crate::types::{HomeSectionConfig, Library};
 use axum::extract::{Query, State};
@@ -44,31 +42,7 @@ pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigRes
     Ok(Json(ConfigResponse {
         taxonomy_root: library.config.taxonomy_root.clone(),
         home: library.config.home.clone(),
-        types: library
-            .config
-            .types
-            .iter()
-            .map(|item| TypeConfigResponse {
-                id: item.id.clone(),
-                label: item.label.clone(),
-                icon: item.icon.clone(),
-                path: item.path.clone(),
-                default_title_language: effective_default_title_language(item),
-                id_fields: item.fields.id.clone(),
-                title_language_fields: item.fields.title_languages.clone(),
-                subtitle_fields: item.fields.subtitle.clone(),
-                image_fields: item.fields.image.clone(),
-                title_languages: item.fields.title_languages.keys().cloned().collect(),
-                status_fields: item.fields.status.clone(),
-                status_options: item.status_options.clone(),
-                progress_fields: item.fields.progress.clone(),
-                total_progress_fields: item.fields.total_progress.clone(),
-                rating_fields: item.fields.rating.clone(),
-                date_roles: item.fields.date_roles.clone(),
-                external_ref_fields: item.fields.external_refs.clone(),
-                relation_fields: item.fields.relations.clone(),
-            })
-            .collect(),
+        types: library.config.types.clone(),
     }))
 }
 
@@ -229,7 +203,6 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         .types
         .iter()
         .find(|item| item.id == section.entity_type);
-    let statuses = normalize_statuses(section);
     let limit = clamp_number(section.limit.unwrap_or(12) as f64, 1, 48) as u32;
     let direction = if section.direction == Some(crate::types::SortDirection::Desc) {
         SortDirection::Desc
@@ -240,18 +213,10 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
     let mut filtered: Vec<_> = library
         .summaries
         .iter()
-        .filter(|entity| {
-            if entity.entity_type != section.entity_type {
-                return false;
-            }
-            statuses.is_empty()
-                || statuses
-                    .iter()
-                    .any(|status| status == entity.status.as_deref().unwrap_or("Unknown"))
-        })
+        .filter(|entity| entity.entity_type == section.entity_type)
         .cloned()
         .collect();
-    filtered = sort_entities_for_entity_list(library, filtered, sort, direction, None);
+    filtered = sort_entities_for_entity_list(filtered, sort, direction, None);
     let total = filtered.len();
     let items = filtered
         .into_iter()
@@ -265,7 +230,6 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         type_label: entity_type
             .map(|entity_type| entity_type.label.clone())
             .unwrap_or_else(|| section.entity_type.clone()),
-        status: statuses,
         limit,
         sort: sort.to_string(),
         direction: if direction == SortDirection::Desc {
@@ -276,18 +240,5 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         .to_string(),
         total,
         items,
-    }
-}
-
-fn normalize_statuses(section: &HomeSectionConfig) -> Vec<String> {
-    match &section.status {
-        None => Vec::new(),
-        Some(crate::types::StatusConfig::One(value)) if value.is_empty() => Vec::new(),
-        Some(crate::types::StatusConfig::One(value)) => vec![value.clone()],
-        Some(crate::types::StatusConfig::Many(values)) => values
-            .iter()
-            .filter(|value| !value.is_empty())
-            .cloned()
-            .collect(),
     }
 }

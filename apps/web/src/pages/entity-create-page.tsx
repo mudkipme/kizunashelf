@@ -1,39 +1,55 @@
 import { useEffect, useMemo, useState } from "react";
-import { getConfig } from "@kizunashelf/api-contract";
+import { getConfig, getEntities } from "@kizunashelf/api-contract";
 import { PlusIcon, SearchIcon, WandSparklesIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch, errorMessage, isAbortError } from "@/api/client";
 import { addEntity, getAppCapabilities, searchSources } from "@/api/entities";
+import {
+  type FrontmatterDraft,
+  MetadataEditor,
+  normalizeFrontmatter,
+} from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import type { Capabilities, ConfigResponse, ExternalCandidate } from "@/types/api";
+import {
+  candidateMetadataEntries,
+  candidateMetadataPatch,
+  type ExternalMetadataEntry,
+} from "@/lib/external-metadata";
+import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import type { Capabilities, ConfigResponse, EntitySummary, ExternalCandidate } from "@/types/api";
 
 type CreateState = {
   config?: ConfigResponse;
   capabilities?: Capabilities;
+  relationSuggestions: EntitySummary[];
   loading: boolean;
   error?: string;
 };
 
 export function EntityCreatePage() {
   const navigate = useNavigate();
-  const [state, setState] = useState<CreateState>({ loading: true });
+  const [state, setState] = useState<CreateState>({ loading: true, relationSuggestions: [] });
   const [typeId, setTypeId] = useState("");
   const [basename, setBasename] = useState("");
-  const [frontmatterText, setFrontmatterText] = useState("{}");
+  const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   const [creating, setCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [provider, setProvider] = useState("all");
   const [searching, setSearching] = useState(false);
   const [candidates, setCandidates] = useState<ExternalCandidate[]>([]);
+  const [selectedCandidate, setSelectedCandidate] = useState<ExternalCandidate>();
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<string>();
   const contentWritable = state.capabilities?.contentWritable !== false;
+  const normalizedBasename = normalizeBasename(basename);
+  const basenameError = basenameValidationError(basename);
+  const showBasenameError = Boolean(basename) && Boolean(basenameError);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -50,30 +66,40 @@ export function EntityCreatePage() {
     () => state.config?.types.find((type) => type.id === typeId),
     [state.config, typeId],
   );
+  const selectedCandidateEntries = useMemo(
+    () => (selectedCandidate ? candidateMetadataEntries(selectedCandidate, selectedType) : []),
+    [selectedCandidate, selectedType],
+  );
 
   async function load(signal: AbortSignal) {
-    setState({ loading: true });
+    setState({ loading: true, relationSuggestions: [] });
     try {
-      const [config, capabilities] = await Promise.all([
+      const [config, capabilities, relations] = await Promise.all([
         getConfig({ signal }, apiFetch),
         getAppCapabilities({ signal }),
+        getEntities({ type: "all", pageSize: 500, sort: "title", direction: "asc" }, { signal }, apiFetch),
       ]);
-      setState({ config, capabilities, loading: false });
+      setState({ config, capabilities, relationSuggestions: relations.items, loading: false });
     } catch (error) {
       if (isAbortError(error)) return;
-      setState({ loading: false, error: errorMessage(error) });
+      setState({ loading: false, relationSuggestions: [], error: errorMessage(error) });
     }
   }
 
   async function create() {
+    if (!contentWritable) return;
+    if (basenameError) {
+      setBasename(normalizedBasename);
+      setState((current) => ({ ...current, error: basenameError }));
+      return;
+    }
     setCreating(true);
     setMessage(undefined);
     setState((current) => ({ ...current, error: undefined }));
     try {
-      const frontmatter = parseFrontmatter(frontmatterText);
       const result = await addEntity({
         type: typeId,
-        basename,
+        basename: normalizedBasename,
         frontmatter,
         body,
       });
@@ -86,7 +112,7 @@ export function EntityCreatePage() {
   }
 
   async function searchExternal() {
-    const query = searchQuery.trim() || basename.trim();
+    const query = searchQuery.trim() || normalizedBasename;
     if (!query) return;
     setSearching(true);
     setMessage(undefined);
@@ -99,6 +125,8 @@ export function EntityCreatePage() {
         pageSize: 8,
       });
       setCandidates(result.items);
+      setSelectedCandidate(undefined);
+      setSelectedFields(new Set());
       if (result.items.length === 0) setMessage("No external matches");
     } catch (error) {
       setState((current) => ({ ...current, error: errorMessage(error) }));
@@ -107,16 +135,28 @@ export function EntityCreatePage() {
     }
   }
 
-  function useCandidate(candidate: ExternalCandidate) {
-    const current = parseFrontmatter(frontmatterText);
+  function chooseCandidate(candidate: ExternalCandidate) {
+    setSelectedCandidate(candidate);
+    setSelectedFields(new Set(candidateMetadataEntries(candidate, selectedType).map((entry) => entry.field)));
+  }
+
+  function applyCandidate() {
+    if (!selectedCandidate || !contentWritable) return;
     const next = {
-      ...current,
-      ...candidate.metadata,
+      ...frontmatter,
+      ...candidateMetadataPatch(selectedCandidate, selectedType, selectedFields),
     };
-    setFrontmatterText(JSON.stringify(next, null, 2));
-    setBasename((currentBasename) => currentBasename || candidate.title);
-    setSearchQuery(candidate.title);
-    setMessage(`Using ${candidate.provider}: ${candidate.title}`);
+    setFrontmatter(normalizeFrontmatter(next));
+    setBasename((currentBasename) => currentBasename || selectedCandidate.title);
+    setSearchQuery(selectedCandidate.title);
+    setMessage(`Using ${selectedCandidate.provider}: ${selectedCandidate.title}`);
+  }
+
+  function toggleSelectedField(field: string) {
+    const next = new Set(selectedFields);
+    if (next.has(field)) next.delete(field);
+    else next.add(field);
+    setSelectedFields(next);
   }
 
   return (
@@ -129,7 +169,7 @@ export function EntityCreatePage() {
               {selectedType ? `${selectedType.label} · ${selectedType.path}` : "Choose a type"}
             </p>
           </div>
-          <Button type="button" onClick={create} disabled={!contentWritable || creating || !typeId || !basename.trim()}>
+          <Button type="button" onClick={create} disabled={!contentWritable || creating || !typeId || Boolean(basenameError)}>
             <PlusIcon data-icon="inline-start" />
             {creating ? "Creating" : "Create"}
           </Button>
@@ -146,7 +186,7 @@ export function EntityCreatePage() {
           <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
             <label className="flex flex-col gap-1 text-sm font-medium">
               Type
-              <Select value={typeId} onChange={(event) => setTypeId(event.target.value)}>
+              <Select value={typeId} onChange={(event) => setTypeId(event.target.value)} disabled={!contentWritable}>
                 {state.config?.types.map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.label}
@@ -156,7 +196,15 @@ export function EntityCreatePage() {
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium">
               Filename
-              <Input value={basename} onChange={(event) => setBasename(event.target.value)} placeholder="Entity title" />
+              <Input
+                value={basename}
+                onChange={(event) => setBasename(event.target.value)}
+                onBlur={() => setBasename(normalizeBasename(basename))}
+                placeholder="Entity title"
+                disabled={!contentWritable}
+                aria-invalid={showBasenameError}
+              />
+              {showBasenameError ? <span className="text-xs text-destructive">{basenameError}</span> : null}
             </label>
           </div>
         </section>
@@ -188,7 +236,7 @@ export function EntityCreatePage() {
                 key={`${candidate.provider}:${candidate.sourceId}`}
                 type="button"
                 className="min-w-0 rounded-md border p-3 text-left hover:bg-accent"
-                onClick={() => useCandidate(candidate)}
+              onClick={() => chooseCandidate(candidate)}
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <Badge variant="secondary">{candidate.provider}</Badge>
@@ -203,37 +251,82 @@ export function EntityCreatePage() {
               </button>
             ))}
           </div>
+          {selectedCandidate ? (
+            <ExternalMetadataPicker
+              entries={selectedCandidateEntries}
+              selectedFields={selectedFields}
+              contentWritable={contentWritable}
+              onToggleField={toggleSelectedField}
+              onApply={applyCandidate}
+            />
+          ) : null}
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Frontmatter JSON
-            <Textarea
-              value={frontmatterText}
-              onChange={(event) => setFrontmatterText(event.target.value)}
-              className="min-h-80 font-mono text-xs"
-              spellCheck={false}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Markdown Body
-            <Textarea
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              className="min-h-80 font-mono text-xs"
-              spellCheck={false}
-            />
-          </label>
-        </section>
+        <MetadataEditor
+          title="Metadata"
+          path={selectedType?.path}
+          typeConfig={selectedType}
+          frontmatter={frontmatter}
+          bodyText={body}
+          saving={creating}
+          disabled={!contentWritable}
+          relationSuggestions={state.relationSuggestions}
+          saveLabel="Create"
+          onFrontmatterChange={setFrontmatter}
+          onBodyChange={setBody}
+          onSave={create}
+        />
       </div>
     </AppFrame>
   );
 }
 
-function parseFrontmatter(value: string) {
-  const parsed = JSON.parse(value || "{}") as unknown;
-  if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
-    throw new Error("Frontmatter must be a JSON object");
-  }
-  return parsed as Record<string, unknown>;
+function ExternalMetadataPicker({
+  entries,
+  selectedFields,
+  contentWritable,
+  onToggleField,
+  onApply,
+}: {
+  entries: ExternalMetadataEntry[];
+  selectedFields: Set<string>;
+  contentWritable: boolean;
+  onToggleField: (field: string) => void;
+  onApply: () => void;
+}) {
+  return (
+    <div className="mt-3 rounded-md border p-3">
+      <h3 className="text-sm font-semibold">Selected Metadata</h3>
+      <div className="mt-3 flex flex-col gap-2">
+        {entries.map((entry) => (
+          <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={selectedFields.has(entry.field)}
+              onChange={() => onToggleField(entry.field)}
+              className="mt-1"
+              disabled={!contentWritable}
+            />
+            <span className="min-w-0">
+              <span className="block font-medium">{entry.label}</span>
+              <span className="block font-mono text-[11px] text-muted-foreground">{entry.field}</span>
+              <span className="block break-words text-xs text-muted-foreground">{formatMetadataValue(entry.value)}</span>
+            </span>
+          </label>
+        ))}
+        {entries.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No candidate fields match this type schema.</p>
+        ) : null}
+        <Button type="button" onClick={onApply} disabled={!contentWritable || selectedFields.size === 0}>
+          <WandSparklesIcon data-icon="inline-start" />
+          Apply Selected
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function formatMetadataValue(value: unknown) {
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
 }

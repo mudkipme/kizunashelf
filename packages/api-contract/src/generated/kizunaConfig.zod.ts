@@ -6,19 +6,17 @@
  */
 import { z as zod } from 'zod';
 
-export const kizunaConfigRelationshipFieldsDefault = [];
 export const kizunaConfigReadConcurrencyMin = 0;
 
 export const kizunaConfigHomeOneSectionsItemLimitMin = 0;
 
 export const kizunaConfigDailyNotesOneSnippetMaxLengthMin = 0;
 
-
+export const kizunaConfigTypesItemFieldsDefault = [];
 export const KizunaConfig = zod.object({
   "vaultRoot": zod.string(),
   "taxonomyRoot": zod.string(),
   "contentWritable": zod.boolean().nullish(),
-  "relationshipFields": zod.array(zod.string()).default(kizunaConfigRelationshipFieldsDefault),
   "readConcurrency": zod.number().min(kizunaConfigReadConcurrencyMin).nullish(),
   "home": zod.union([zod.object({
   "title": zod.string().nullish(),
@@ -26,7 +24,6 @@ export const KizunaConfig = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "type": zod.string(),
-  "status": zod.union([zod.union([zod.string(),zod.array(zod.string())]),zod.null()]).optional(),
   "limit": zod.number().min(kizunaConfigHomeOneSectionsItemLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
@@ -42,24 +39,23 @@ export const KizunaConfig = zod.object({
   "label": zod.string(),
   "icon": zod.string().nullish(),
   "path": zod.string(),
-  "defaultTitleLanguage": zod.string().nullish(),
-  "statusOptions": zod.array(zod.string()).optional(),
-  "fields": zod.object({
-  "id": zod.array(zod.string()).optional(),
-  "titleLanguages": zod.record(zod.string(), zod.array(zod.string())).optional(),
-  "subtitle": zod.array(zod.string()).optional(),
-  "image": zod.array(zod.string()).optional(),
-  "status": zod.array(zod.string()).optional(),
-  "progress": zod.array(zod.string()).optional(),
-  "totalProgress": zod.array(zod.string()).optional(),
-  "rating": zod.array(zod.string()).optional(),
-  "dateRoles": zod.object({
-  "planning": zod.array(zod.string()).optional(),
-  "completed": zod.array(zod.string()).optional()
-}).optional(),
-  "externalRefs": zod.array(zod.string()).optional(),
-  "relations": zod.array(zod.string()).optional()
-})
+  "filename": zod.union([zod.object({
+  "titleLanguage": zod.string(),
+  "defaultTitle": zod.boolean().optional()
+}),zod.null()]).optional(),
+  "fields": zod.array(zod.object({
+  "field": zod.string(),
+  "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),
+  "displayName": zod.string().nullish(),
+  "titleLanguage": zod.string().nullish(),
+  "defaultTitle": zod.boolean().nullish(),
+  "enumOptions": zod.array(zod.string()).optional(),
+  "totalProgressField": zod.string().nullish(),
+  "dateRole": zod.union([zod.enum(['planning', 'completed']),zod.null()]).optional(),
+  "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
+  "externalRef": zod.string().nullish(),
+  "relationType": zod.string().nullish()
+})).default(kizunaConfigTypesItemFieldsDefault)
 }))
 })
 

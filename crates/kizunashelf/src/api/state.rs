@@ -77,14 +77,21 @@ impl AppState {
         }
         let mut disk_tokens = self.read_disk_tokens().await.ok()?;
         let disk_token = disk_tokens.remove(key)?;
-        let token = cached_token_from_disk(disk_token)?;
+        let Some(token) = cached_token_from_disk(disk_token) else {
+            let _ = self.write_disk_tokens(&disk_tokens).await;
+            return None;
+        };
         self.store_memory_access_token(key, token.clone()).await;
         Some(token)
     }
 
-    pub(crate) async fn store_access_token(&self, key: &str, token: CachedAccessToken) {
+    pub(crate) async fn store_access_token(
+        &self,
+        key: &str,
+        token: CachedAccessToken,
+    ) -> Result<()> {
         self.store_memory_access_token(key, token.clone()).await;
-        let _ = self.store_disk_access_token(key, &token).await;
+        self.store_disk_access_token(key, &token).await
     }
 
     pub(crate) async fn invalidate_access_token(&self, key: &str) {

@@ -1,8 +1,8 @@
-import { defaultTitleLanguage } from "@/lib/constants";
+import { defaultTitleOptionId } from "@/lib/constants";
 import type { EntitySummary } from "@/types/api";
 
 const labels: Record<string, string> = {
-  [defaultTitleLanguage]: "Default title",
+  [defaultTitleOptionId]: "Default title",
   primary: "Primary",
   original: "Original",
   zh: "Chinese",
@@ -15,7 +15,7 @@ const labels: Record<string, string> = {
 };
 
 export function entityTitle(entity: EntitySummary, titleLanguage: string) {
-  if (titleLanguage === defaultTitleLanguage) return entity.title;
+  if (titleLanguage === defaultTitleOptionId) return entity.title;
   return entity.titles[titleLanguage] ?? entity.title;
 }
 

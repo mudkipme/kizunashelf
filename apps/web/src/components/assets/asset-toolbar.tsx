@@ -5,10 +5,9 @@ import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   allOptions,
-  allStatuses,
   defaultDirection,
   defaultSort,
-  defaultTitleLanguage,
+  defaultTitleOptionId,
 } from "@/lib/constants";
 import { titleLanguageLabel } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
@@ -19,7 +18,6 @@ type AssetToolbarProps = {
   compact?: boolean;
   showLabel?: boolean;
   stats?: StatsResponse;
-  status: string;
   refs: string;
   cover: string;
   sort: string;
@@ -28,7 +26,6 @@ type AssetToolbarProps = {
   titleLanguage: string;
   titleLanguages: string[];
   defaultTitleLabel?: string;
-  onStatusChange: (value: string) => void;
   onRefsChange: (value: string) => void;
   onCoverChange: (value: string) => void;
   onSortChange: (value: string) => void;
@@ -42,7 +39,6 @@ export function AssetToolbar({
   compact = false,
   showLabel = true,
   stats,
-  status,
   refs,
   cover,
   sort,
@@ -51,7 +47,6 @@ export function AssetToolbar({
   titleLanguage,
   titleLanguages,
   defaultTitleLabel = "Default title",
-  onStatusChange,
   onRefsChange,
   onCoverChange,
   onSortChange,
@@ -72,19 +67,6 @@ export function AssetToolbar({
           Filters
         </div>
       ) : null}
-      <Select
-        value={status}
-        onChange={(event) => onStatusChange(event.target.value)}
-        className={compact ? "min-w-0" : undefined}
-        aria-label="Status"
-      >
-        <option value={allStatuses}>All statuses</option>
-        {stats?.byStatus.map((item) => (
-          <option key={item.name} value={item.name}>
-            {item.name} ({item.count})
-          </option>
-        ))}
-      </Select>
       <Select
         value={refs}
         onChange={(event) => onRefsChange(event.target.value)}
@@ -118,7 +100,6 @@ export function AssetToolbar({
             Sort by {field}
           </option>
         ))}
-        <option value="status">Sort by status</option>
         <option value="relations">Sort by links</option>
         <option value="path">Sort by path</option>
       </Select>
@@ -137,7 +118,7 @@ export function AssetToolbar({
         className={compact ? "min-w-0" : undefined}
         aria-label="Display title"
       >
-        <option value={defaultTitleLanguage}>{defaultTitleLabel}</option>
+        <option value={defaultTitleOptionId}>{defaultTitleLabel}</option>
         {titleLanguages.map((language) => (
           <option key={language} value={language}>
             {titleLanguageLabel(language)}

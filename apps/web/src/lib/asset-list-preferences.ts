@@ -3,15 +3,13 @@ import { persist } from "zustand/middleware";
 
 import {
   allOptions,
-  allStatuses,
   defaultDirection,
   defaultSort,
-  defaultTitleLanguage,
+  defaultTitleOptionId,
   defaultView,
 } from "@/lib/constants";
 
 export type AssetListPreferences = {
-  status: string;
   refs: string;
   cover: string;
   sort: string;
@@ -27,17 +25,15 @@ type AssetListPreferencesState = {
 };
 
 const defaults: AssetListPreferences = {
-  status: allStatuses,
   refs: allOptions,
   cover: allOptions,
   sort: defaultSort,
   direction: defaultDirection,
   view: defaultView,
-  titleLanguage: defaultTitleLanguage,
+  titleLanguage: defaultTitleOptionId,
 };
 
 export const preferenceKeys = [
-  "status",
   "refs",
   "cover",
   "sort",
@@ -90,7 +86,6 @@ export function applyPreferencesToSearchParams(
 
 export function preferencesFromSearchParams(params: URLSearchParams): AssetListPreferences {
   return normalizePreferences({
-    status: params.get("status") ?? undefined,
     refs: params.get("refs") ?? undefined,
     cover: params.get("cover") ?? undefined,
     sort: params.get("sort") ?? undefined,
@@ -104,19 +99,12 @@ function normalizePreferences(preferences: Partial<AssetListPreferences> | undef
   const sort = preferences?.sort ?? defaults.sort;
 
   return {
-    status: preferences?.status || defaults.status,
     refs: preferences?.refs === "with" || preferences?.refs === "without" ? preferences.refs : defaults.refs,
     cover:
       preferences?.cover === "with" || preferences?.cover === "without"
         ? preferences.cover
         : defaults.cover,
-    sort:
-      sort.startsWith("date:") ||
-      sort === "status" ||
-      sort === "relations" ||
-      sort === "path"
-        ? sort
-        : defaults.sort,
+    sort: sort.startsWith("date:") || sort === "relations" || sort === "path" ? sort : defaults.sort,
     direction: preferences?.direction === "desc" ? "desc" : defaults.direction,
     view: preferences?.view === "grid" ? "grid" : defaults.view,
     titleLanguage: preferences?.titleLanguage || defaults.titleLanguage,

@@ -6,17 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const entityTypeConfigFieldsDefault = [];
-export const EntityTypeConfig = zod.object({
-  "id": zod.string(),
-  "label": zod.string(),
-  "icon": zod.string().nullish(),
-  "path": zod.string(),
-  "filename": zod.union([zod.object({
-  "titleLanguage": zod.string(),
-  "defaultTitle": zod.boolean().optional()
-}),zod.null()]).optional(),
-  "fields": zod.array(zod.object({
+export const FieldConfig = zod.object({
   "field": zod.string(),
   "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),
   "displayName": zod.string().nullish(),
@@ -28,8 +18,7 @@ export const EntityTypeConfig = zod.object({
   "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
   "externalRef": zod.string().nullish(),
   "relationType": zod.string().nullish()
-})).default(entityTypeConfigFieldsDefault)
 })
 
-export type EntityTypeConfig = zod.input<typeof EntityTypeConfig>;
-export type EntityTypeConfigOutput = zod.output<typeof EntityTypeConfig>;
+export type FieldConfig = zod.input<typeof FieldConfig>;
+export type FieldConfigOutput = zod.output<typeof FieldConfig>;

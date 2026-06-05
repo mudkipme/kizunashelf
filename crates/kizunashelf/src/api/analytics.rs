@@ -9,11 +9,10 @@ use crate::contract::{
 use crate::dates::{date_sort_key, parse_entity_date, season_compare_value};
 use crate::library::compare_string;
 use crate::relations::{
-    build_relation_field_summary_with_index, build_relation_hubs, count_by,
-    get_status_tracked_type_ids, outgoing_relations, relation_fields, relation_type_pairs,
-    summary_by_id, Count,
+    build_relation_field_summary_with_index, build_relation_hubs, count_by, outgoing_relations,
+    relation_fields, relation_type_pairs, summary_by_id, Count,
 };
-use crate::types::{EntitySummary, Library};
+use crate::types::{DateRole, EntitySummary, FieldType, Library};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -48,12 +47,6 @@ pub(crate) async fn stats(
     };
     let ids: std::collections::HashSet<_> =
         summaries.iter().map(|entity| entity.id.clone()).collect();
-    let status_tracked_type_ids = get_status_tracked_type_ids(&library);
-    let status_summaries: Vec<_> = summaries
-        .iter()
-        .filter(|entity| status_tracked_type_ids.contains(&entity.entity_type))
-        .cloned()
-        .collect();
     let mut top_relations = summaries.clone();
     top_relations.sort_by_key(|item| Reverse(item.relation_count));
     top_relations.truncate(12);
@@ -92,14 +85,21 @@ pub(crate) async fn stats(
                     .iter()
                     .find(|item| item.id == *entity_type)
             })
-            .map(|entity_type| entity_type.fields.date_roles.fields())
+            .map(|entity_type| {
+                entity_type
+                    .fields
+                    .iter()
+                    .filter(|field| {
+                        matches!(field.field_type, FieldType::Date | FieldType::Season)
+                            && matches!(
+                                field.date_role,
+                                Some(DateRole::Planning | DateRole::Completed)
+                            )
+                    })
+                    .map(|field| field.field.clone())
+                    .collect()
+            })
             .unwrap_or_default(),
-        by_status: count_by(&status_summaries, |entity| {
-            entity
-                .status
-                .clone()
-                .unwrap_or_else(|| "Unknown".to_string())
-        }),
         top_relations,
     }))
 }
@@ -118,12 +118,6 @@ pub(crate) async fn cleanup_queues(
 
 fn build_analytics(library: &Library) -> AnalyticsResponse {
     let summaries = &library.summaries;
-    let status_tracked_type_ids = get_status_tracked_type_ids(library);
-    let status_summaries: Vec<_> = summaries
-        .iter()
-        .filter(|entity| status_tracked_type_ids.contains(&entity.entity_type))
-        .cloned()
-        .collect();
     let outgoing = outgoing_relations(library, None);
     let unresolved: Vec<_> = outgoing
         .iter()
@@ -186,12 +180,6 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
                         .count(),
                 })
                 .collect(),
-            by_status: count_by(&status_summaries, |entity| {
-                entity
-                    .status
-                    .clone()
-                    .unwrap_or_else(|| "Unknown".to_string())
-            }),
             by_relation_field: count_by(&outgoing, |relation| relation.field.clone())
                 .into_iter()
                 .take(16)

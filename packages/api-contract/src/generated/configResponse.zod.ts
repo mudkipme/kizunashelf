@@ -8,7 +8,7 @@ import { z as zod } from 'zod';
 
 export const configResponseHomeOneSectionsItemLimitMin = 0;
 
-
+export const configResponseTypesItemFieldsDefault = [];
 export const ConfigResponse = zod.object({
   "taxonomyRoot": zod.string(),
   "home": zod.union([zod.object({
@@ -17,7 +17,6 @@ export const ConfigResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "type": zod.string(),
-  "status": zod.union([zod.union([zod.string(),zod.array(zod.string())]),zod.null()]).optional(),
   "limit": zod.number().min(configResponseHomeOneSectionsItemLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
@@ -28,23 +27,23 @@ export const ConfigResponse = zod.object({
   "label": zod.string(),
   "icon": zod.string().nullish(),
   "path": zod.string(),
-  "defaultTitleLanguage": zod.string().nullish(),
-  "idFields": zod.array(zod.string()),
-  "titleLanguageFields": zod.record(zod.string(), zod.array(zod.string())),
-  "subtitleFields": zod.array(zod.string()),
-  "imageFields": zod.array(zod.string()),
-  "titleLanguages": zod.array(zod.string()),
-  "statusFields": zod.array(zod.string()),
-  "statusOptions": zod.array(zod.string()),
-  "progressFields": zod.array(zod.string()),
-  "totalProgressFields": zod.array(zod.string()),
-  "ratingFields": zod.array(zod.string()),
-  "dateRoles": zod.object({
-  "planning": zod.array(zod.string()).optional(),
-  "completed": zod.array(zod.string()).optional()
-}),
-  "externalRefFields": zod.array(zod.string()),
-  "relationFields": zod.array(zod.string())
+  "filename": zod.union([zod.object({
+  "titleLanguage": zod.string(),
+  "defaultTitle": zod.boolean().optional()
+}),zod.null()]).optional(),
+  "fields": zod.array(zod.object({
+  "field": zod.string(),
+  "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),
+  "displayName": zod.string().nullish(),
+  "titleLanguage": zod.string().nullish(),
+  "defaultTitle": zod.boolean().nullish(),
+  "enumOptions": zod.array(zod.string()).optional(),
+  "totalProgressField": zod.string().nullish(),
+  "dateRole": zod.union([zod.enum(['planning', 'completed']),zod.null()]).optional(),
+  "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
+  "externalRef": zod.string().nullish(),
+  "relationType": zod.string().nullish()
+})).default(configResponseTypesItemFieldsDefault)
 }))
 })
 

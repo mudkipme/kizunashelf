@@ -97,7 +97,7 @@ fn discover_config_path() -> PathBuf {
         .find(|path| path.is_file())
         .cloned()
         .or_else(|| candidates.first().cloned())
-        .unwrap_or_else(|| PathBuf::from("kizunashelf.config.json"))
+        .unwrap_or_else(|| PathBuf::from("kizunashelf.yaml"))
 }
 
 fn config_candidates() -> Vec<PathBuf> {
@@ -124,23 +124,22 @@ fn config_candidates_from_values(
         candidates.push(PathBuf::from(path));
     }
     if let Some(path) = xdg_config_home.filter(|value| !value.is_empty()) {
-        candidates.push(Path::new(path).join("kizunashelf.config.json"));
+        candidates.push(Path::new(path).join("kizunashelf.yaml"));
     }
     if let Some(home) = home.filter(|value| !value.is_empty()) {
         let home = Path::new(home);
-        candidates.push(home.join(".config/kizunashelf.config.json"));
+        candidates.push(home.join(".config/kizunashelf.yaml"));
         if include_macos_application_support {
-            candidates.push(home.join("Library/Application Support/kizunashelf.config.json"));
-            candidates
-                .push(home.join("Library/Application Support/KizunaShelf/kizunashelf.config.json"));
+            candidates.push(home.join("Library/Application Support/kizunashelf.yaml"));
+            candidates.push(home.join("Library/Application Support/KizunaShelf/kizunashelf.yaml"));
         }
     }
     if let Some(path) = xdg_config_dir.filter(|value| !value.is_empty()) {
-        candidates.push(Path::new(path).join("kizunashelf.config.json"));
+        candidates.push(Path::new(path).join("kizunashelf.yaml"));
     }
     if let Some(paths) = xdg_config_dirs.and_then(|value| value.to_str()) {
         for path in paths.split(':').filter(|path| !path.is_empty()) {
-            candidates.push(Path::new(path).join("kizunashelf.config.json"));
+            candidates.push(Path::new(path).join("kizunashelf.yaml"));
         }
     }
     dedupe_paths(candidates)
@@ -165,7 +164,7 @@ mod tests {
     #[test]
     fn config_candidates_include_xdg_home_and_config_dirs() {
         let candidates = config_candidates_from_values(
-            Some(OsStr::new("/custom/config.json")),
+            Some(OsStr::new("/custom/config.yaml")),
             Some(OsStr::new("/home/mudkip")),
             Some(OsStr::new("/tmp/xdg")),
             Some(OsStr::new("/etc/xdg-single")),
@@ -176,12 +175,12 @@ mod tests {
         assert_eq!(
             candidates,
             vec![
-                PathBuf::from("/custom/config.json"),
-                PathBuf::from("/tmp/xdg/kizunashelf.config.json"),
-                PathBuf::from("/home/mudkip/.config/kizunashelf.config.json"),
-                PathBuf::from("/etc/xdg-single/kizunashelf.config.json"),
-                PathBuf::from("/etc/xdg/kizunashelf.config.json"),
-                PathBuf::from("/usr/local/etc/xdg/kizunashelf.config.json"),
+                PathBuf::from("/custom/config.yaml"),
+                PathBuf::from("/tmp/xdg/kizunashelf.yaml"),
+                PathBuf::from("/home/mudkip/.config/kizunashelf.yaml"),
+                PathBuf::from("/etc/xdg-single/kizunashelf.yaml"),
+                PathBuf::from("/etc/xdg/kizunashelf.yaml"),
+                PathBuf::from("/usr/local/etc/xdg/kizunashelf.yaml"),
             ]
         );
     }
@@ -200,10 +199,10 @@ mod tests {
         assert_eq!(
             candidates,
             vec![
-                PathBuf::from("/Users/mudkip/.config/kizunashelf.config.json"),
-                PathBuf::from("/Users/mudkip/Library/Application Support/kizunashelf.config.json"),
+                PathBuf::from("/Users/mudkip/.config/kizunashelf.yaml"),
+                PathBuf::from("/Users/mudkip/Library/Application Support/kizunashelf.yaml"),
                 PathBuf::from(
-                    "/Users/mudkip/Library/Application Support/KizunaShelf/kizunashelf.config.json"
+                    "/Users/mudkip/Library/Application Support/KizunaShelf/kizunashelf.yaml"
                 ),
             ]
         );

@@ -1,11 +1,9 @@
-import type { KeyboardEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { getConfig, getEntity, getEntityDates } from "@kizunashelf/api-contract";
+import { getConfig, getEntities, getEntity, getEntityDates } from "@kizunashelf/api-contract";
 import {
   CheckIcon,
-  MinusIcon,
+  FilePenLineIcon,
   PencilIcon,
-  PlusIcon,
   SearchIcon,
   Trash2Icon,
   WandSparklesIcon,
@@ -16,12 +14,23 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, errorMessage } from "@/api/client";
 import { getAppCapabilities, removeEntity, saveEntity, searchSources } from "@/api/entities";
 import { EntityDetail } from "@/components/assets/entity-detail";
+import {
+  type FrontmatterDraft,
+  frontmatterPatch,
+  MetadataEditor,
+  normalizeFrontmatter,
+} from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  candidateMetadataEntries,
+  candidateMetadataPatch,
+  type ExternalMetadataEntry,
+} from "@/lib/external-metadata";
+import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { groupRelations } from "@/lib/relations";
 import type {
   Capabilities,
@@ -29,12 +38,9 @@ import type {
   Entity,
   EntityDatesResponse,
   EntityDetailResponse,
+  EntitySummary,
   ExternalCandidate,
-  TypeConfig,
 } from "@/types/api";
-
-type FrontmatterValue = null | boolean | number | string | FrontmatterValue[] | FrontmatterObject;
-type FrontmatterObject = { [key: string]: FrontmatterValue | undefined };
 
 export function EntityPage() {
   const { id } = useParams();
@@ -44,16 +50,17 @@ export function EntityPage() {
     dates?: EntityDatesResponse;
     config?: ConfigResponse;
     capabilities?: Capabilities;
+    relationSuggestions: EntitySummary[];
     loading: boolean;
     error?: string;
-  }>({ loading: true });
+  }>({ loading: true, relationSuggestions: [] });
   const [editOpen, setEditOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameBasename, setRenameBasename] = useState("");
   const [matchOpen, setMatchOpen] = useState(false);
-  const [draftFrontmatter, setDraftFrontmatter] = useState<Record<string, FrontmatterValue>>({});
+  const [draftFrontmatter, setDraftFrontmatter] = useState<FrontmatterDraft>({});
   const [bodyText, setBodyText] = useState("");
   const [saving, setSaving] = useState(false);
-  const [quickStatus, setQuickStatus] = useState("");
-  const [quickProgress, setQuickProgress] = useState("");
   const [externalQuery, setExternalQuery] = useState("");
   const [externalProvider, setExternalProvider] = useState("all");
   const [externalCandidates, setExternalCandidates] = useState<ExternalCandidate[]>([]);
@@ -69,8 +76,10 @@ export function EntityPage() {
   const entity = state.detail?.entity;
   const contentWritable = state.capabilities?.contentWritable !== false;
   const typeConfig = state.config?.types.find((type) => type.id === entity?.type);
-  const statusField = typeConfig?.statusFields[0] ?? "status";
-  const progressField = typeConfig?.progressFields[0] ?? inferProgressField(entity);
+  const selectedCandidateEntries = useMemo(
+    () => (selectedCandidate ? candidateMetadataEntries(selectedCandidate, typeConfig) : []),
+    [selectedCandidate, typeConfig],
+  );
   const relationGroups = useMemo(
     () => groupRelations(state.detail?.relations ?? []),
     [state.detail],
@@ -80,10 +89,9 @@ export function EntityPage() {
     if (!entity) return;
     setDraftFrontmatter(normalizeFrontmatter(entity.frontmatter));
     setBodyText(entity.body);
-    setQuickStatus(entity.status ?? "");
-    setQuickProgress(progressField ? String(entity.frontmatter[progressField] ?? "") : "");
+    setRenameBasename(entity.basename);
     setExternalQuery(entity.title);
-  }, [entity?.id, entity?.revision, progressField]);
+  }, [entity?.id, entity?.revision]);
 
   async function loadEntity() {
     if (!id) return;
@@ -95,10 +103,20 @@ export function EntityPage() {
         getConfig(undefined, apiFetch),
         getAppCapabilities(),
       ]);
-      setState({ detail, dates, config, capabilities, loading: false });
+      const relationSuggestions = await loadRelationSuggestions();
+      setState({ detail, dates, config, capabilities, relationSuggestions, loading: false });
     } catch (error: unknown) {
       setState((current) => ({ ...current, loading: false, error: errorMessage(error) }));
     }
+  }
+
+  async function loadRelationSuggestions() {
+    const result = await getEntities(
+      { type: "all", pageSize: 500, sort: "title", direction: "asc" },
+      undefined,
+      apiFetch,
+    );
+    return result.items;
   }
 
   async function saveFullEdit() {
@@ -119,18 +137,27 @@ export function EntityPage() {
     }
   }
 
-  async function saveQuickUpdate() {
+  async function saveRename() {
     if (!entity) return;
-    const patch: Record<string, unknown> = {};
-    patch[statusField] = quickStatus.trim() || null;
-    if (progressField) patch[progressField] = numberOrString(quickProgress.trim());
+    const nextBasename = normalizeBasename(renameBasename);
+    const validationError = basenameValidationError(nextBasename);
+    setRenameBasename(nextBasename);
+    if (validationError) {
+      setState((current) => ({ ...current, error: validationError }));
+      return;
+    }
+    if (nextBasename === entity.basename) {
+      setRenameOpen(false);
+      return;
+    }
     setSaving(true);
     try {
-      await saveEntity(entity.id, {
+      const result = await saveEntity(entity.id, {
         revision: entity.revision,
-        frontmatter: patch,
+        renameTo: nextBasename,
       });
-      await loadEntity();
+      setRenameOpen(false);
+      navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
       setState((current) => ({ ...current, error: errorMessage(error) }));
     } finally {
@@ -160,16 +187,12 @@ export function EntityPage() {
 
   function chooseCandidate(candidate: ExternalCandidate) {
     setSelectedCandidate(candidate);
-    setSelectedFields(new Set(Object.keys(candidate.metadata ?? {})));
+    setSelectedFields(new Set(candidateMetadataEntries(candidate, typeConfig).map((entry) => entry.field)));
   }
 
   async function applyCandidate() {
     if (!entity || !selectedCandidate) return;
-    const patch: Record<string, unknown> = {};
-    const metadata = selectedCandidate.metadata ?? {};
-    for (const field of selectedFields) {
-      patch[field] = metadata[field];
-    }
+    const patch = candidateMetadataPatch(selectedCandidate, typeConfig, selectedFields);
     setSaving(true);
     try {
       await saveEntity(entity.id, {
@@ -210,27 +233,37 @@ export function EntityPage() {
               entity={entity}
               contentWritable={contentWritable}
               saving={saving}
-              statusField={statusField}
-              statusOptions={statusOptions(typeConfig, entity.status)}
-              progressField={progressField}
-              quickStatus={quickStatus}
-              quickProgress={quickProgress}
-              onQuickStatusChange={setQuickStatus}
-              onQuickProgressChange={setQuickProgress}
-              onQuickSave={saveQuickUpdate}
               onEdit={() => setEditOpen(true)}
+              onRename={() => setRenameOpen((open) => !open)}
               onMatch={() => setMatchOpen((open) => !open)}
               onDelete={deleteCurrentEntity}
             />
+            {renameOpen ? (
+              <RenamePanel
+                currentBasename={entity.basename}
+                basename={renameBasename}
+                saving={saving}
+                disabled={!contentWritable}
+                onBasenameChange={setRenameBasename}
+                onSave={saveRename}
+                onCancel={() => {
+                  setRenameBasename(entity.basename);
+                  setRenameOpen(false);
+                }}
+              />
+            ) : null}
             {editOpen ? (
-              <EditPanel
-                entity={entity}
+              <MetadataEditor
+                title={`Edit ${entity.title}`}
+                path={entity.path}
                 typeConfig={typeConfig}
                 frontmatter={draftFrontmatter}
                 bodyText={bodyText}
                 saving={saving}
+                relationSuggestions={state.relationSuggestions}
                 onFrontmatterChange={setDraftFrontmatter}
                 onBodyChange={setBodyText}
+                disabled={!contentWritable}
                 onSave={saveFullEdit}
                 onCancel={() => setEditOpen(false)}
               />
@@ -241,6 +274,7 @@ export function EntityPage() {
                 provider={externalProvider}
                 candidates={externalCandidates}
                 selectedCandidate={selectedCandidate}
+                metadataEntries={selectedCandidateEntries}
                 selectedFields={selectedFields}
                 searching={externalSearching}
                 saving={saving}
@@ -275,71 +309,29 @@ function EntityActions({
   entity,
   contentWritable,
   saving,
-  statusField,
-  statusOptions,
-  progressField,
-  quickStatus,
-  quickProgress,
-  onQuickStatusChange,
-  onQuickProgressChange,
-  onQuickSave,
   onEdit,
+  onRename,
   onMatch,
   onDelete,
 }: {
   entity: Entity;
   contentWritable: boolean;
   saving: boolean;
-  statusField: string;
-  statusOptions: string[];
-  progressField?: string;
-  quickStatus: string;
-  quickProgress: string;
-  onQuickStatusChange: (value: string) => void;
-  onQuickProgressChange: (value: string) => void;
-  onQuickSave: () => void;
   onEdit: () => void;
+  onRename: () => void;
   onMatch: () => void;
   onDelete: () => void;
 }) {
   return (
     <section className="rounded-md border p-3">
       <div className="flex flex-wrap items-end gap-2">
-        <div className="min-w-36 flex-1">
-          <label className="text-xs font-medium text-muted-foreground">{statusField}</label>
-          <Select
-            value={quickStatus}
-            onChange={(event) => onQuickStatusChange(event.target.value)}
-            disabled={!contentWritable}
-            className="w-full"
-            aria-label={statusField}
-          >
-            <option value="">No status</option>
-            {statusOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </Select>
-        </div>
-        {progressField ? (
-          <div className="min-w-36">
-            <label className="text-xs font-medium text-muted-foreground">{progressField}</label>
-            <NumberStepper
-              value={quickProgress}
-              onChange={onQuickProgressChange}
-              disabled={!contentWritable}
-              ariaLabel={progressField}
-            />
-          </div>
-        ) : null}
-        <Button type="button" variant="outline" onClick={onQuickSave} disabled={!contentWritable || saving}>
-          <CheckIcon data-icon="inline-start" />
-          Update
-        </Button>
         <Button type="button" variant="outline" onClick={onEdit} disabled={!contentWritable}>
           <PencilIcon data-icon="inline-start" />
           Edit
+        </Button>
+        <Button type="button" variant="outline" onClick={onRename} disabled={!contentWritable || saving}>
+          <FilePenLineIcon data-icon="inline-start" />
+          Rename
         </Button>
         <Button type="button" variant="outline" onClick={onMatch}>
           <SearchIcon data-icon="inline-start" />
@@ -359,329 +351,57 @@ function EntityActions({
   );
 }
 
-function EditPanel({
-  entity,
-  typeConfig,
-  frontmatter,
-  bodyText,
+function RenamePanel({
+  currentBasename,
+  basename,
   saving,
-  onFrontmatterChange,
-  onBodyChange,
+  disabled,
+  onBasenameChange,
   onSave,
   onCancel,
 }: {
-  entity: Entity;
-  typeConfig?: TypeConfig;
-  frontmatter: Record<string, FrontmatterValue>;
-  bodyText: string;
+  currentBasename: string;
+  basename: string;
   saving: boolean;
-  onFrontmatterChange: (value: Record<string, FrontmatterValue>) => void;
-  onBodyChange: (value: string) => void;
+  disabled: boolean;
+  onBasenameChange: (value: string) => void;
   onSave: () => void;
   onCancel: () => void;
 }) {
-  const [newFieldName, setNewFieldName] = useState("");
-  const fieldSpecs = useMemo(
-    () => editableFieldSpecs(typeConfig, frontmatter),
-    [typeConfig, frontmatter],
-  );
-
-  function updateField(key: string, value: FrontmatterValue | undefined) {
-    const next = { ...frontmatter };
-    if (value === undefined) delete next[key];
-    else next[key] = value;
-    onFrontmatterChange(next);
-  }
-
-  function renameField(oldKey: string, nextKey: string) {
-    const key = nextKey.trim();
-    if (!key || key === oldKey || key in frontmatter) return;
-    const next = { ...frontmatter };
-    next[key] = next[oldKey];
-    delete next[oldKey];
-    onFrontmatterChange(next);
-  }
-
-  function addCustomField() {
-    const key = newFieldName.trim();
-    if (!key || key in frontmatter) return;
-    onFrontmatterChange({ ...frontmatter, [key]: "" });
-    setNewFieldName("");
-  }
-
+  const normalizedBasename = normalizeBasename(basename);
+  const validationError = basenameValidationError(basename);
+  const unchanged = normalizedBasename === currentBasename;
   return (
     <section className="rounded-md border p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold">Edit {entity.title}</h2>
-          <p className="mt-1 truncate text-xs text-muted-foreground">{entity.path}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-            <XIcon data-icon="inline-start" />
-            Cancel
-          </Button>
-          <Button type="button" size="sm" onClick={onSave} disabled={saving}>
-            <CheckIcon data-icon="inline-start" />
-            {saving ? "Saving" : "Save"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        {fieldSpecs.map((field) => (
-          <EditableFieldRow
-            key={field.key}
-            field={field}
-            value={frontmatter[field.key]}
-            statusOptions={statusOptions(typeConfig, entity.status)}
-            onChange={(value) => updateField(field.key, value)}
-            onRemove={field.configured ? undefined : () => updateField(field.key, undefined)}
-            onRename={field.configured ? undefined : (key) => renameField(field.key, key)}
-          />
-        ))}
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-dashed p-3">
-        <label className="min-w-48 flex-1 text-sm font-medium">
-          Custom field
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="min-w-60 flex-1 text-sm font-medium">
+          Basename
           <Input
-            value={newFieldName}
-            onChange={(event) => setNewFieldName(event.target.value)}
-            placeholder="field_name"
+            value={basename}
+            onChange={(event) => onBasenameChange(event.target.value)}
+            onBlur={() => onBasenameChange(normalizedBasename)}
+            disabled={disabled || saving}
+            aria-invalid={Boolean(validationError)}
           />
         </label>
-        <Button type="button" variant="outline" onClick={addCustomField} disabled={!newFieldName.trim()}>
-          <PlusIcon data-icon="inline-start" />
-          Add Field
+        <Button
+          type="button"
+          onClick={onSave}
+          disabled={disabled || saving || Boolean(validationError) || unchanged}
+        >
+          <CheckIcon data-icon="inline-start" />
+          {saving ? "Renaming" : "Rename"}
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+          <XIcon data-icon="inline-start" />
+          Cancel
         </Button>
       </div>
-
-      <div className="mt-4">
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          Markdown Body
-          <Textarea
-            className="min-h-72 font-mono text-xs"
-            value={bodyText}
-            onChange={(event) => onBodyChange(event.target.value)}
-            spellCheck={false}
-          />
-        </label>
-      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        File path stays in the same folder. Only the Markdown basename changes.
+      </p>
+      {validationError ? <p className="mt-1 text-xs text-destructive">{validationError}</p> : null}
     </section>
-  );
-}
-
-type EditableFieldSpec = {
-  key: string;
-  label: string;
-  kind: "text" | "status" | "number" | "boolean" | "list" | "json";
-  configured: boolean;
-};
-
-function EditableFieldRow({
-  field,
-  value,
-  statusOptions,
-  onChange,
-  onRemove,
-  onRename,
-}: {
-  field: EditableFieldSpec;
-  value: FrontmatterValue | undefined;
-  statusOptions: string[];
-  onChange: (value: FrontmatterValue) => void;
-  onRemove?: () => void;
-  onRename?: (key: string) => void;
-}) {
-  const [keyDraft, setKeyDraft] = useState(field.key);
-
-  useEffect(() => {
-    setKeyDraft(field.key);
-  }, [field.key]);
-
-  return (
-    <div className="min-w-0 rounded-md border p-3">
-      <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
-        {onRename ? (
-          <Input
-            value={keyDraft}
-            onChange={(event) => setKeyDraft(event.target.value)}
-            onBlur={() => onRename(keyDraft)}
-            className="h-8 min-w-0 font-mono text-xs"
-            aria-label="Custom field name"
-          />
-        ) : (
-          <div className="min-w-0">
-            <div className="truncate text-sm font-medium">{field.label}</div>
-            <div className="truncate font-mono text-[11px] text-muted-foreground">{field.key}</div>
-          </div>
-        )}
-        {onRemove ? (
-          <Button type="button" variant="ghost" size="icon" onClick={onRemove} aria-label={`Remove ${field.key}`}>
-            <Trash2Icon />
-          </Button>
-        ) : null}
-      </div>
-      <FieldValueInput
-        field={field}
-        value={value}
-        statusOptions={statusOptions}
-        onChange={onChange}
-      />
-    </div>
-  );
-}
-
-function FieldValueInput({
-  field,
-  value,
-  statusOptions,
-  onChange,
-}: {
-  field: EditableFieldSpec;
-  value: FrontmatterValue | undefined;
-  statusOptions: string[];
-  onChange: (value: FrontmatterValue) => void;
-}) {
-  if (field.kind === "status") {
-    return (
-      <Select
-        value={valueToText(value)}
-        onChange={(event) => onChange(event.target.value || null)}
-        className="w-full"
-        aria-label={field.label}
-      >
-        <option value="">No status</option>
-        {statusOptions.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </Select>
-    );
-  }
-
-  if (field.kind === "number") {
-    return (
-      <NumberStepper
-        value={valueToText(value)}
-        onChange={(next) => onChange(numberOrString(next))}
-        ariaLabel={field.label}
-      />
-    );
-  }
-
-  if (field.kind === "boolean") {
-    return (
-      <Select
-        value={value === true ? "true" : value === false ? "false" : ""}
-        onChange={(event) =>
-          onChange(event.target.value === "" ? null : event.target.value === "true")
-        }
-        className="w-full"
-        aria-label={field.label}
-      >
-        <option value="">Empty</option>
-        <option value="true">Yes</option>
-        <option value="false">No</option>
-      </Select>
-    );
-  }
-
-  if (field.kind === "list") {
-    return (
-      <Textarea
-        value={Array.isArray(value) ? value.map(valueToText).join("\n") : valueToText(value)}
-        onChange={(event) =>
-          onChange(
-            event.target.value
-              .split("\n")
-              .map((item) => item.trim())
-              .filter(Boolean),
-          )
-        }
-        className="min-h-24"
-        aria-label={field.label}
-      />
-    );
-  }
-
-  if (field.kind === "json") {
-    return (
-      <Textarea
-        value={JSON.stringify(value ?? null, null, 2)}
-        onChange={(event) => onChange(parseJsonFieldValue(event.target.value))}
-        className="min-h-24 font-mono text-xs"
-        spellCheck={false}
-        aria-label={field.label}
-      />
-    );
-  }
-
-  return (
-    <Input
-      value={valueToText(value)}
-      onChange={(event) => onChange(event.target.value || null)}
-      aria-label={field.label}
-    />
-  );
-}
-
-function NumberStepper({
-  value,
-  onChange,
-  disabled = false,
-  ariaLabel,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  ariaLabel: string;
-}) {
-  const number = Number(value || 0);
-  const current = Number.isFinite(number) ? number : 0;
-  const step = (delta: number) => onChange(String(Math.max(0, current + delta)));
-  const keyStep = (event: KeyboardEvent<HTMLButtonElement>, delta: number) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    step(delta);
-  };
-  return (
-    <div className="flex min-w-0 items-center gap-1">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        disabled={disabled}
-        onClick={() => step(-1)}
-        onKeyDown={(event) => keyStep(event, -1)}
-        aria-label={`Decrease ${ariaLabel}`}
-      >
-        <MinusIcon />
-      </Button>
-      <Input
-        type="number"
-        min={0}
-        step={1}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="min-w-0 text-center tabular-nums"
-        aria-label={ariaLabel}
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        disabled={disabled}
-        onClick={() => step(1)}
-        onKeyDown={(event) => keyStep(event, 1)}
-        aria-label={`Increase ${ariaLabel}`}
-      >
-        <PlusIcon />
-      </Button>
-    </div>
   );
 }
 
@@ -690,6 +410,7 @@ function ExternalMatchPanel({
   provider,
   candidates,
   selectedCandidate,
+  metadataEntries,
   selectedFields,
   searching,
   saving,
@@ -705,6 +426,7 @@ function ExternalMatchPanel({
   provider: string;
   candidates: ExternalCandidate[];
   selectedCandidate?: ExternalCandidate;
+  metadataEntries: ExternalMetadataEntry[];
   selectedFields: Set<string>;
   searching: boolean;
   saving: boolean;
@@ -764,20 +486,24 @@ function ExternalMatchPanel({
           <h3 className="text-sm font-semibold">Selected Metadata</h3>
           {selectedCandidate ? (
             <div className="mt-3 flex flex-col gap-2">
-              {Object.entries(selectedCandidate.metadata ?? {}).map(([field, value]) => (
-                <label key={field} className="flex min-w-0 items-start gap-2 text-sm">
+              {metadataEntries.map((entry) => (
+                <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
                   <input
                     type="checkbox"
-                    checked={selectedFields.has(field)}
-                    onChange={() => toggleField(field)}
+                    checked={selectedFields.has(entry.field)}
+                    onChange={() => toggleField(entry.field)}
                     className="mt-1"
                   />
                   <span className="min-w-0">
-                    <span className="block font-medium">{field}</span>
-                    <span className="block break-words text-xs text-muted-foreground">{formatMetadataValue(value)}</span>
+                    <span className="block font-medium">{entry.label}</span>
+                    <span className="block font-mono text-[11px] text-muted-foreground">{entry.field}</span>
+                    <span className="block break-words text-xs text-muted-foreground">{formatMetadataValue(entry.value)}</span>
                   </span>
                 </label>
               ))}
+              {metadataEntries.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No candidate fields match this type schema.</p>
+              ) : null}
               <Button type="button" onClick={onApply} disabled={!contentWritable || saving || selectedFields.size === 0}>
                 <WandSparklesIcon data-icon="inline-start" />
                 Apply Selected
@@ -790,139 +516,6 @@ function ExternalMatchPanel({
       </div>
     </section>
   );
-}
-
-function editableFieldSpecs(
-  typeConfig: TypeConfig | undefined,
-  frontmatter: Record<string, FrontmatterValue>,
-) {
-  const specs: EditableFieldSpec[] = [];
-  const seen = new Set<string>();
-  const addFields = (
-    fields: string[] | undefined,
-    labelPrefix: string,
-    kind: EditableFieldSpec["kind"] = "text",
-  ) => {
-    for (const key of fields ?? []) {
-      if (!key || seen.has(key) || isVirtualTitleField(key)) continue;
-      seen.add(key);
-      specs.push({
-        key,
-        label: labelPrefix ? `${labelPrefix}: ${key}` : humanizeField(key),
-        kind,
-        configured: true,
-      });
-    }
-  };
-
-  addFields(typeConfig?.idFields, "Stable ID");
-  for (const [language, fields] of Object.entries(typeConfig?.titleLanguageFields ?? {})) {
-    addFields(fields, `${language} title`);
-  }
-  addFields(typeConfig?.subtitleFields, "Subtitle");
-  addFields(typeConfig?.imageFields, "Image");
-  addFields(typeConfig?.statusFields, "Status", "status");
-  addFields(typeConfig?.progressFields, "Progress", "number");
-  addFields(typeConfig?.totalProgressFields, "Total", "number");
-  addFields(typeConfig?.ratingFields, "Rating", "number");
-  addFields(typeConfig?.dateRoles.planning, "Planning date");
-  addFields(typeConfig?.dateRoles.completed, "Completed date");
-  addFields(typeConfig?.externalRefFields, "External ref");
-  addFields(typeConfig?.relationFields, "Relation", "list");
-
-  for (const [key, value] of Object.entries(frontmatter)) {
-    if (seen.has(key)) continue;
-    seen.add(key);
-    specs.push({
-      key,
-      label: humanizeField(key),
-      kind: inferFieldKind(value),
-      configured: false,
-    });
-  }
-
-  return specs;
-}
-
-function statusOptions(typeConfig: TypeConfig | undefined, current?: string | null) {
-  const options = new Set(typeConfig?.statusOptions ?? []);
-  if (options.size === 0) {
-    for (const option of ["Backlog", "Watching", "Playing", "Reading", "Completed", "Paused", "Dropped"]) {
-      options.add(option);
-    }
-  }
-  if (current) options.add(current);
-  return [...options];
-}
-
-function inferProgressField(entity: Entity | undefined) {
-  if (!entity) return undefined;
-  for (const field of ["progress", "episode", "episodes_watched", "watched", "chapter", "chapters_read"]) {
-    if (field in entity.frontmatter) return field;
-  }
-  return undefined;
-}
-
-function normalizeFrontmatter(value: Record<string, unknown>) {
-  return Object.fromEntries(
-    Object.entries(value).map(([key, item]) => [key, normalizeFrontmatterValue(item)]),
-  ) as Record<string, FrontmatterValue>;
-}
-
-function normalizeFrontmatterValue(value: unknown): FrontmatterValue {
-  if (value === null || ["boolean", "number", "string"].includes(typeof value)) {
-    return value as FrontmatterValue;
-  }
-  if (Array.isArray(value)) {
-    return value.map(normalizeFrontmatterValue);
-  }
-  if (typeof value === "object" && value) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, normalizeFrontmatterValue(item)]),
-    );
-  }
-  return String(value ?? "");
-}
-
-function inferFieldKind(value: FrontmatterValue | undefined): EditableFieldSpec["kind"] {
-  if (typeof value === "number") return "number";
-  if (typeof value === "boolean") return "boolean";
-  if (Array.isArray(value)) {
-    return value.every((item) => item === null || ["string", "number", "boolean"].includes(typeof item))
-      ? "list"
-      : "json";
-  }
-  if (typeof value === "object" && value !== null) return "json";
-  return "text";
-}
-
-function valueToText(value: FrontmatterValue | undefined): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return JSON.stringify(value);
-}
-
-function parseJsonFieldValue(value: string): FrontmatterValue {
-  try {
-    return normalizeFrontmatterValue(JSON.parse(value));
-  } catch {
-    return value;
-  }
-}
-
-function frontmatterPatch(original: Record<string, unknown>, next: Record<string, FrontmatterValue>) {
-  const patch: Record<string, unknown> = { ...next };
-  for (const key of Object.keys(original)) {
-    if (!(key in next)) patch[key] = null;
-  }
-  return patch;
-}
-
-function numberOrString(value: string) {
-  if (!value) return null;
-  const number = Number(value);
-  return Number.isFinite(number) && String(number) === value ? number : value;
 }
 
 function formatMetadataValue(value: unknown) {

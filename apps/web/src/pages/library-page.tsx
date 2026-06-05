@@ -14,15 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import {
   allOptions,
-  allStatuses,
   allTypes,
   defaultCategory,
   defaultDirection,
   defaultSort,
-  defaultTitleLanguage,
+  defaultTitleOptionId,
   defaultView,
   pageSize,
 } from "@/lib/constants";
+import { defaultTitleOption, titleLanguageOptions } from "@/lib/type-config";
 import { titleLanguageLabel } from "@/lib/title-language";
 import {
   applyPreferencesToSearchParams,
@@ -65,49 +65,42 @@ export function LibraryPage() {
   const firstType = stats.global?.byType[0]?.id ?? defaultCategory;
   const selectedType = searchParams.get("type") ?? allTypes;
   const isGlobalType = selectedType === allTypes;
-  const selectedStatus = searchParams.get("status") ?? allStatuses;
   const refs = searchParams.get("refs") ?? allOptions;
   const cover = searchParams.get("cover") ?? allOptions;
   const sort = searchParams.get("sort") ?? defaultSort;
   const direction = searchParams.get("direction") === "desc" ? "desc" : defaultDirection;
   const view = searchParams.get("view") === "grid" ? "grid" : defaultView;
-  const titleLanguage = searchParams.get("titleLanguage") ?? defaultTitleLanguage;
+  const titleLanguage = searchParams.get("titleLanguage") ?? defaultTitleOptionId;
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const selectedTypeStats = stats.global?.byType.find((type) => type.id === selectedType);
   const scopeStats = isGlobalType ? stats.global : stats.category;
   const selectedTypeConfig = config?.types.find((type) => type.id === selectedType);
-  const titleLanguages = selectedTypeConfig?.titleLanguages ?? [];
-  const defaultTitleLabel = selectedTypeConfig?.defaultTitleLanguage
-    ? `Default title (${titleLanguageLabel(selectedTypeConfig.defaultTitleLanguage)})`
+  const titleLanguages = titleLanguageOptions(selectedTypeConfig);
+  const defaultTitle = defaultTitleOption(selectedTypeConfig);
+  const defaultTitleLabel = defaultTitle
+    ? `Default title (${titleLanguageLabel(defaultTitle)})`
     : "Default title";
   const effectiveTitleLanguage = titleLanguages.includes(titleLanguage)
     ? titleLanguage
-    : defaultTitleLanguage;
+    : defaultTitleOptionId;
   const effectiveSort =
     scopeStats &&
     sort.startsWith("date:") &&
     !scopeStats.dateFields.includes(sort.slice("date:".length))
       ? defaultSort
       : sort;
-  const effectiveStatus =
-    scopeStats &&
-    selectedStatus !== allStatuses &&
-    !scopeStats.byStatus.some((item) => item.name === selectedStatus)
-      ? allStatuses
-      : selectedStatus;
   const entryCount = isGlobalType
     ? (stats.global?.total ?? list.total)
     : (selectedTypeStats?.count ?? list.total);
   const filtersActive =
-    effectiveStatus !== allStatuses ||
     refs !== allOptions ||
     cover !== allOptions ||
     effectiveSort !== defaultSort ||
     direction !== defaultDirection ||
     view !== defaultView ||
-    effectiveTitleLanguage !== defaultTitleLanguage;
+    effectiveTitleLanguage !== defaultTitleOptionId;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -161,27 +154,20 @@ export function LibraryPage() {
   }, [scopeStats, sort]);
 
   useEffect(() => {
-    if (!scopeStats || selectedStatus === allStatuses) return;
-    if (scopeStats.byStatus.some((item) => item.name === selectedStatus)) return;
-    setQueryParam("status", allStatuses, allStatuses);
-  }, [scopeStats, selectedStatus]);
-
-  useEffect(() => {
-    if (!config || titleLanguage === defaultTitleLanguage) return;
+    if (!config || titleLanguage === defaultTitleOptionId) return;
     if (titleLanguages.includes(titleLanguage)) return;
-    setQueryParam("titleLanguage", defaultTitleLanguage, defaultTitleLanguage, false);
+    setQueryParam("titleLanguage", defaultTitleOptionId, defaultTitleOptionId, false);
   }, [config, titleLanguages, titleLanguage]);
 
   useEffect(() => {
     if (!stats.global || !selectedType || !searchParams.has("type")) return;
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
-  }, [stats.global, selectedType, selectedStatus, refs, cover, sort, direction, view, titleLanguage]);
+  }, [stats.global, selectedType, refs, cover, sort, direction, view, titleLanguage]);
 
   useEffect(() => {
     const controller = new AbortController();
     void loadEntities({
       type: selectedType,
-      status: effectiveStatus,
       refs,
       cover,
       sort: effectiveSort,
@@ -191,7 +177,7 @@ export function LibraryPage() {
       page,
     }, controller.signal);
     return () => controller.abort();
-  }, [selectedType, effectiveStatus, refs, cover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
+  }, [selectedType, refs, cover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
 
   async function loadGlobalStats(signal: AbortSignal) {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
@@ -235,7 +221,6 @@ export function LibraryPage() {
 
   async function loadEntities(filters: {
     type: string;
-    status: string;
     refs: string;
     cover: string;
     sort: string;
@@ -254,7 +239,6 @@ export function LibraryPage() {
           sort: filters.sort,
           direction: filters.direction,
           titleLanguage: filters.titleLanguage,
-          ...(filters.status !== allStatuses ? { status: filters.status } : {}),
           ...(filters.refs !== allOptions ? { refs: filters.refs } : {}),
           ...(filters.cover !== allOptions ? { cover: filters.cover } : {}),
           ...(filters.q.trim() ? { q: filters.q.trim() } : {}),
@@ -364,7 +348,6 @@ export function LibraryPage() {
                   showLabel={false}
                   className="mt-2"
                   stats={scopeStats}
-                  status={effectiveStatus}
                   refs={refs}
                   cover={cover}
                   sort={effectiveSort}
@@ -373,14 +356,13 @@ export function LibraryPage() {
                   titleLanguage={effectiveTitleLanguage}
                   titleLanguages={titleLanguages}
                   defaultTitleLabel={defaultTitleLabel}
-                  onStatusChange={(value) => setQueryParam("status", value, allStatuses)}
                   onRefsChange={(value) => setQueryParam("refs", value)}
                   onCoverChange={(value) => setQueryParam("cover", value)}
                   onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
                   onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
                   onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
                   onTitleLanguageChange={(value) =>
-                    setQueryParam("titleLanguage", value, defaultTitleLanguage, false)
+                    setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
                   }
                 />
               ) : null}
@@ -389,7 +371,6 @@ export function LibraryPage() {
             <AssetToolbar
               className="hidden md:flex"
               stats={scopeStats}
-              status={effectiveStatus}
               refs={refs}
               cover={cover}
               sort={effectiveSort}
@@ -398,14 +379,13 @@ export function LibraryPage() {
               titleLanguage={effectiveTitleLanguage}
               titleLanguages={titleLanguages}
               defaultTitleLabel={defaultTitleLabel}
-              onStatusChange={(value) => setQueryParam("status", value, allStatuses)}
               onRefsChange={(value) => setQueryParam("refs", value)}
               onCoverChange={(value) => setQueryParam("cover", value)}
               onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
               onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
               onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
               onTitleLanguageChange={(value) =>
-                setQueryParam("titleLanguage", value, defaultTitleLanguage, false)
+                setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
               }
             />
 
@@ -483,7 +463,7 @@ export function LibraryPage() {
 }
 
 function hasPreferenceParams(params: URLSearchParams) {
-  return ["status", "refs", "cover", "sort", "direction", "view", "titleLanguage"].some((key) =>
+  return ["refs", "cover", "sort", "direction", "view", "titleLanguage"].some((key) =>
     params.has(key),
   );
 }

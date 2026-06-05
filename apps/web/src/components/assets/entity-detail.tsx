@@ -44,7 +44,6 @@ export function EntityDetail({
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">{entity.typeLabel}</Badge>
-                  {entity.status ? <Badge variant="outline">{entity.status}</Badge> : null}
                 </div>
                 <h2 className="mt-2 text-xl font-semibold leading-snug">{entity.title}</h2>
                 {Object.entries(entity.titles).length > 0 ? (

@@ -18,8 +18,6 @@ export const analyticsResponseTotalsConnectedEntitiesMin = 0;
 
 export const analyticsResponseDistributionsByTypeItemCountMin = 0;
 
-export const analyticsResponseDistributionsByStatusItemCountMin = 0;
-
 export const analyticsResponseDistributionsByRelationFieldItemCountMin = 0;
 
 export const analyticsResponseDistributionsBySourceTargetTypeItemCountMin = 0;
@@ -89,10 +87,6 @@ export const AnalyticsResponse = zod.object({
   "icon": zod.string().nullish(),
   "count": zod.number().min(analyticsResponseDistributionsByTypeItemCountMin)
 })),
-  "byStatus": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsResponseDistributionsByStatusItemCountMin)
-})),
   "byRelationField": zod.array(zod.object({
   "name": zod.string(),
   "count": zod.number().min(analyticsResponseDistributionsByRelationFieldItemCountMin)
@@ -124,8 +118,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -171,8 +163,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -203,8 +193,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -236,8 +224,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -255,8 +241,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -274,8 +258,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -293,8 +275,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()

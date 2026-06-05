@@ -3,7 +3,7 @@ use super::state::{get_library, AppState};
 use crate::calendar::{build_entity_dates, EntityDatesResponse};
 use crate::contract::{EntityDetailResponse, EntityListResponse};
 use crate::dates::clamp_number;
-use crate::library::{compare_string_for_title_language, effective_default_title_language};
+use crate::library::compare_string_for_title_language;
 use crate::relations::{
     sort_entities, sort_entities_with_title_language, summary_by_id, SortDirection,
 };
@@ -12,13 +12,12 @@ use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct EntitiesQuery {
     #[serde(rename = "type")]
     entity_type: Option<String>,
-    status: Option<String>,
     refs: Option<String>,
     cover: Option<String>,
     sort: Option<String>,
@@ -45,13 +44,6 @@ pub(crate) async fn entities(
     {
         entities.retain(|entity| Some(&entity.entity_type) == query.entity_type.as_ref());
     }
-    if query.status.as_ref().is_some_and(|status| status != "all") {
-        if query.status.as_deref() == Some("Unknown") {
-            entities.retain(|entity| entity.status.is_none());
-        } else {
-            entities.retain(|entity| entity.status.as_ref() == query.status.as_ref());
-        }
-    }
     if query.refs.as_deref() == Some("with") {
         entities.retain(|entity| !entity.external_refs.is_empty());
     }
@@ -73,7 +65,6 @@ pub(crate) async fn entities(
         entities.retain(|entity| {
             [
                 Some(entity.title.as_str()),
-                entity.subtitle.as_deref(),
                 entity.summary.as_deref(),
                 Some(entity.basename.as_str()),
                 Some(entity.path.as_str()),
@@ -107,7 +98,6 @@ pub(crate) async fn entities(
         SortDirection::Asc
     };
     entities = sort_entities_for_entity_list(
-        &library,
         entities,
         query.sort.as_deref().unwrap_or("type"),
         direction,
@@ -136,7 +126,6 @@ pub(crate) async fn entities(
 }
 
 pub(crate) fn sort_entities_for_entity_list(
-    library: &Library,
     mut entities: Vec<EntitySummary>,
     sort: &str,
     direction: SortDirection,
@@ -154,14 +143,6 @@ pub(crate) fn sort_entities_for_entity_list(
         );
     }
 
-    let default_title_languages: HashMap<_, _> = library
-        .config
-        .types
-        .iter()
-        .filter_map(|item| {
-            effective_default_title_language(item).map(|language| (item.id.clone(), language))
-        })
-        .collect();
     let multiplier = if direction == SortDirection::Asc {
         1
     } else {
@@ -169,12 +150,9 @@ pub(crate) fn sort_entities_for_entity_list(
     };
 
     entities.sort_by(|a, b| {
-        let (title_a, language_a) =
-            entity_sort_title(a, explicit_title_language, &default_title_languages);
-        let (title_b, language_b) =
-            entity_sort_title(b, explicit_title_language, &default_title_languages);
-        let language = (language_a == language_b).then_some(language_a).flatten();
-        let ordering = compare_string_for_title_language(title_a, title_b, language);
+        let title_a = entity_sort_title(a, explicit_title_language);
+        let title_b = entity_sort_title(b, explicit_title_language);
+        let ordering = compare_string_for_title_language(title_a, title_b, explicit_title_language);
         if multiplier == 1 {
             ordering
         } else {
@@ -187,25 +165,16 @@ pub(crate) fn sort_entities_for_entity_list(
 fn entity_sort_title<'entity, 'language>(
     entity: &'entity EntitySummary,
     explicit_title_language: Option<&'language str>,
-    default_title_languages: &'language HashMap<String, String>,
-) -> (&'entity str, Option<&'language str>) {
+) -> &'entity str {
     if let Some(language) = explicit_title_language {
-        return (
-            entity
-                .titles
-                .get(language)
-                .unwrap_or(&entity.title)
-                .as_str(),
-            Some(language),
-        );
+        return entity
+            .titles
+            .get(language)
+            .unwrap_or(&entity.title)
+            .as_str();
     }
 
-    (
-        entity.title.as_str(),
-        default_title_languages
-            .get(&entity.entity_type)
-            .map(|language| language.as_str()),
-    )
+    entity.title.as_str()
 }
 
 #[derive(Deserialize, JsonSchema)]

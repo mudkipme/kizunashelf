@@ -12,8 +12,6 @@ export const statsResponseRelationsMin = 0;
 
 export const statsResponseByTypeItemCountMin = 0;
 
-export const statsResponseByStatusItemCountMin = 0;
-
 export const statsResponseTopRelationsItemRelationCountMin = 0;
 
 
@@ -28,18 +26,12 @@ export const StatsResponse = zod.object({
   "count": zod.number().min(statsResponseByTypeItemCountMin)
 })),
   "dateFields": zod.array(zod.string()),
-  "byStatus": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(statsResponseByStatusItemCountMin)
-})),
   "topRelations": zod.array(zod.object({
   "id": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()

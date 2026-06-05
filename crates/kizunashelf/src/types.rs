@@ -5,58 +5,6 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct EntityFields {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub id: Vec<String>,
-    #[serde(default, alias = "titles", skip_serializing_if = "BTreeMap::is_empty")]
-    pub title_languages: BTreeMap<String, Vec<String>>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub subtitle: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub image: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub status: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub progress: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub total_progress: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub rating: Vec<String>,
-    #[serde(default, skip_serializing_if = "DateRoleConfig::is_empty")]
-    pub date_roles: DateRoleConfig,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub external_refs: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub relations: Vec<String>,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct DateRoleConfig {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub planning: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub completed: Vec<String>,
-}
-
-impl DateRoleConfig {
-    pub fn is_empty(&self) -> bool {
-        self.planning.is_empty() && self.completed.is_empty()
-    }
-
-    pub fn fields(&self) -> Vec<String> {
-        let mut fields = Vec::new();
-        for field in self.planning.iter().chain(self.completed.iter()) {
-            if !fields.contains(field) {
-                fields.push(field.clone());
-            }
-        }
-        fields
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 pub struct EntityTypeConfig {
     pub id: String,
     pub label: String,
@@ -64,10 +12,84 @@ pub struct EntityTypeConfig {
     pub icon: Option<String>,
     pub path: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_title_language: Option<String>,
+    pub filename: Option<FilenameConfig>,
+    #[serde(default)]
+    pub fields: Vec<FieldConfig>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct FilenameConfig {
+    pub title_language: String,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub default_title: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct FieldConfig {
+    pub field: String,
+    pub field_type: FieldType,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title_language: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_title: Option<bool>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub status_options: Vec<String>,
-    pub fields: EntityFields,
+    pub enum_options: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub total_progress_field: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date_role: Option<DateRole>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub season_language: Option<SeasonLanguage>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub external_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub relation_type: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum FieldType {
+    Id,
+    Title,
+    Image,
+    ImageList,
+    Enum,
+    EnumList,
+    Progress,
+    TotalProgress,
+    Rating,
+    Season,
+    Date,
+    ExternalRef,
+    Relation,
+    Text,
+    TextList,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum DateRole {
+    Planning,
+    Completed,
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+pub enum SeasonLanguage {
+    #[default]
+    #[serde(rename = "zh")]
+    Zh,
+    #[serde(rename = "ja")]
+    Ja,
+    #[serde(rename = "en")]
+    En,
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -78,20 +100,11 @@ pub struct HomeSectionConfig {
     #[serde(rename = "type")]
     pub entity_type: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub status: Option<StatusConfig>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sort: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub direction: Option<SortDirection>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(untagged)]
-pub enum StatusConfig {
-    One(String),
-    Many(Vec<String>),
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
@@ -128,8 +141,6 @@ pub struct KizunaConfig {
     pub taxonomy_root: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_writable: Option<bool>,
-    #[serde(default)]
-    pub relationship_fields: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub read_concurrency: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -155,10 +166,6 @@ pub struct EntitySummary {
     pub type_label: String,
     pub title: String,
     pub titles: BTreeMap<String, String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub subtitle: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
     pub dates: Vec<EntityDateValue>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image: Option<String>,

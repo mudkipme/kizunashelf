@@ -8,7 +8,6 @@ import { z as zod } from 'zod';
 
 export const GetEntitiesParams = zod.object({
   "type": zod.string().optional(),
-  "status": zod.string().optional(),
   "refs": zod.string().optional(),
   "cover": zod.string().optional(),
   "sort": zod.string().optional(),

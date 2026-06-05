@@ -82,8 +82,8 @@ export function StatisticsPage() {
                 />
               </AnalyticsSection>
 
-              <AnalyticsSection title="Status Distribution">
-                <BarList items={data.distributions.byStatus} />
+              <AnalyticsSection title="Relation Fields">
+                <BarList items={data.distributions.byRelationField} />
               </AnalyticsSection>
             </div>
 
