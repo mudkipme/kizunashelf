@@ -80,6 +80,7 @@ pub fn run() {
                     cache_ttl: Duration::from_millis(cache_ttl),
                     web_dist_path: None,
                     settings_writable: true,
+                    content_writable: true,
                 }),
             });
             Ok(())

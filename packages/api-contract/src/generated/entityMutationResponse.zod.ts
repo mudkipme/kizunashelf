@@ -6,10 +6,11 @@
  */
 import { z as zod } from 'zod';
 
-export const entityRelationCountMin = 0;
+export const entityMutationResponseEntityRelationCountMin = 0;
 
 
-export const Entity = zod.object({
+export const EntityMutationResponse = zod.object({
+  "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
@@ -26,12 +27,13 @@ export const Entity = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(entityRelationCountMin),
+  "relationCount": zod.number().min(entityMutationResponseEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),
   "body": zod.string(),
   "raw": zod.string()
 })
+})
 
-export type Entity = zod.input<typeof Entity>;
-export type EntityOutput = zod.output<typeof Entity>;
+export type EntityMutationResponse = zod.input<typeof EntityMutationResponse>;
+export type EntityMutationResponseOutput = zod.output<typeof EntityMutationResponse>;

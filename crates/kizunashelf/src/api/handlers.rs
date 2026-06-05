@@ -1,10 +1,11 @@
 use super::entities::sort_entities_for_entity_list;
 use super::error::{ApiError, ApiResult};
-use super::state::{get_library, AppState};
+use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{build_calendar, CalendarBuildOptions, CalendarSource};
 use crate::contract::{
-    CalendarResponse, ConfigResponse, HealthResponse, HomeResponse, HomeSectionResponse,
-    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, TypeConfigResponse,
+    CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
+    HomeSectionResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
+    TypeConfigResponse,
 };
 use crate::dates::clamp_number;
 use crate::library::effective_default_title_language;
@@ -27,6 +28,17 @@ pub(crate) async fn health(State(state): State<AppState>) -> ApiResult<HealthRes
     }))
 }
 
+pub(crate) async fn capabilities(State(state): State<AppState>) -> ApiResult<CapabilitiesResponse> {
+    let library = get_library(&state).await?;
+    let content_writable = content_writes_enabled(&state, &library);
+    Ok(Json(CapabilitiesResponse {
+        settings_writable: state.options.settings_writable,
+        content_writable,
+        external_search_enabled: true,
+        external_apply_enabled: content_writable,
+    }))
+}
+
 pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
     let library = get_library(&state).await?;
     Ok(Json(ConfigResponse {
@@ -42,9 +54,19 @@ pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigRes
                 icon: item.icon.clone(),
                 path: item.path.clone(),
                 default_title_language: effective_default_title_language(item),
+                id_fields: item.fields.id.clone(),
+                title_language_fields: item.fields.title_languages.clone(),
+                subtitle_fields: item.fields.subtitle.clone(),
+                image_fields: item.fields.image.clone(),
                 title_languages: item.fields.title_languages.keys().cloned().collect(),
                 status_fields: item.fields.status.clone(),
+                status_options: item.status_options.clone(),
+                progress_fields: item.fields.progress.clone(),
+                total_progress_fields: item.fields.total_progress.clone(),
+                rating_fields: item.fields.rating.clone(),
                 date_roles: item.fields.date_roles.clone(),
+                external_ref_fields: item.fields.external_refs.clone(),
+                relation_fields: item.fields.relations.clone(),
             })
             .collect(),
     }))
@@ -84,6 +106,7 @@ pub(crate) async fn save_settings_config(
         return Err(ApiError::forbidden("Settings writes are disabled"));
     }
     let config_path = state.options.config_path.clone();
+    crate::library::ensure_config_directories(&config).await?;
     crate::library::save_config(&config_path, &config).await?;
     state.invalidate_cache().await;
     Ok(Json(SettingsConfigResponse {

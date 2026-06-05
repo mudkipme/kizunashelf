@@ -3,7 +3,10 @@ mod frontmatter;
 mod relations;
 
 pub use collation::{compare_optional_string, compare_string, compare_string_for_title_language};
-pub use frontmatter::{effective_default_title_language, wikilink_regex};
+pub use frontmatter::{
+    effective_default_title_language, serialize_markdown_document, split_markdown_document,
+    wikilink_regex, MarkdownDocument,
+};
 
 use crate::types::{
     Entity, EntitySummary, EntityTypeConfig, KizunaConfig, Library, LibraryDiagnostic, Relation,
@@ -15,6 +18,7 @@ use frontmatter::{
 };
 use relations::build_relations;
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use tokio::fs;
@@ -43,6 +47,32 @@ pub async fn save_config(config_path: impl AsRef<Path>, config: &KizunaConfig) -
     fs::write(path, format!("{raw}\n"))
         .await
         .with_context(|| format!("failed to write config {}", path.display()))
+}
+
+pub async fn ensure_config_directories(config: &KizunaConfig) -> Result<()> {
+    let vault_root = Path::new(&config.vault_root);
+    fs::create_dir_all(vault_root)
+        .await
+        .with_context(|| format!("failed to create vault root {}", vault_root.display()))?;
+    let taxonomy_root = vault_root.join(&config.taxonomy_root);
+    fs::create_dir_all(&taxonomy_root)
+        .await
+        .with_context(|| format!("failed to create taxonomy root {}", taxonomy_root.display()))?;
+    for type_config in &config.types {
+        let path = taxonomy_root.join(&type_config.path);
+        fs::create_dir_all(&path).await.with_context(|| {
+            format!("failed to create entity type directory {}", path.display())
+        })?;
+    }
+    if let Some(daily_notes) = &config.daily_notes {
+        for path in &daily_notes.paths {
+            let path = vault_root.join(path);
+            fs::create_dir_all(&path).await.with_context(|| {
+                format!("failed to create daily notes directory {}", path.display())
+            })?;
+        }
+    }
+    Ok(())
 }
 
 pub async fn read_library(config: KizunaConfig) -> Result<Library> {
@@ -236,6 +266,10 @@ async fn read_entity_file(
     let raw = fs::read_to_string(&absolute_path)
         .await
         .with_context(|| format!("failed to read entity {}", absolute_path.display()))?;
+    let metadata = fs::metadata(&absolute_path)
+        .await
+        .with_context(|| format!("failed to stat entity {}", absolute_path.display()))?;
+    let revision = file_revision(&raw, &metadata);
     let parsed = parse_markdown(&raw);
     let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
     let titles = title_languages(&parsed.frontmatter, &note_basename, &type_config);
@@ -272,12 +306,25 @@ async fn read_entity_file(
     Ok(EntityReadResult {
         entity: Entity {
             summary,
+            revision,
             frontmatter: parsed.frontmatter,
             body: parsed.body,
             raw,
         },
         diagnostics,
     })
+}
+
+fn file_revision(raw: &str, metadata: &std::fs::Metadata) -> String {
+    let modified = metadata
+        .modified()
+        .ok()
+        .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    raw.hash(&mut hasher);
+    format!("{:x}-{}-{}", hasher.finish(), metadata.len(), modified)
 }
 
 fn entity_key(
@@ -399,6 +446,7 @@ mod tests {
             vault_root: vault_root.to_string(),
             taxonomy_root: "Taxonomy".to_string(),
             relationship_fields: Vec::new(),
+            content_writable: None,
             read_concurrency: None,
             home: None,
             daily_notes: None,
@@ -408,6 +456,7 @@ mod tests {
                 icon: None,
                 path: "Anime".to_string(),
                 default_title_language: Some("primary".to_string()),
+                status_options: Vec::new(),
                 fields: EntityFields {
                     id: Vec::new(),
                     title_languages: std::collections::BTreeMap::from([(
@@ -417,6 +466,9 @@ mod tests {
                     subtitle: Vec::new(),
                     image: Vec::new(),
                     status: Vec::new(),
+                    progress: Vec::new(),
+                    total_progress: Vec::new(),
+                    rating: Vec::new(),
                     date_roles: Default::default(),
                     external_refs: Vec::new(),
                     relations: Vec::new(),

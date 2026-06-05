@@ -11,6 +11,7 @@ import {
 import { errorMessage } from "@/api/client";
 import { getSettingsConfig } from "@/api/settings";
 import { CalendarPage } from "@/pages/calendar-page";
+import { EntityCreatePage } from "@/pages/entity-create-page";
 import { EntityPage } from "@/pages/entity-page";
 import { HomePage } from "@/pages/home-page";
 import { LibraryPage } from "@/pages/library-page";
@@ -97,6 +98,7 @@ function AppRoutes() {
       <Route path="/relations" element={<RelationsPage />} />
       <Route path="/relations/:field" element={<Navigate to="/relations" replace />} />
       <Route path="/relations/:field/:target" element={<LegacyRelationTargetRedirect />} />
+      <Route path="/entities/new" element={<EntityCreatePage />} />
       <Route path="/entities/:id" element={<EntityPage />} />
     </Routes>
   );

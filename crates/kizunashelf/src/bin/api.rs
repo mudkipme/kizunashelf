@@ -30,11 +30,16 @@ async fn main() -> Result<()> {
         .ok()
         .and_then(|value| parse_bool(&value))
         .unwrap_or_else(|| is_loopback_host(&host));
+    let content_writable = std::env::var("KIZUNASHELF_CONTENT_WRITABLE")
+        .ok()
+        .and_then(|value| parse_bool(&value))
+        .unwrap_or_else(|| is_loopback_host(&host));
     let app = router(ApiOptions {
         config_path,
         cache_ttl: Duration::from_millis(cache_ttl),
         web_dist_path,
         settings_writable,
+        content_writable,
     });
     let address: SocketAddr = format!("{host}:{port}").parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;

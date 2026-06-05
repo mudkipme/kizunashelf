@@ -4,6 +4,9 @@ export type EntityFieldsConfig = {
   subtitle: string[];
   image: string[];
   status: string[];
+  progress: string[];
+  totalProgress: string[];
+  rating: string[];
   dateRoles: DateRoleConfig;
   externalRefs: string[];
   relations: string[];
@@ -20,6 +23,7 @@ export type EntityTypeConfig = {
   icon?: string | null;
   path: string;
   defaultTitleLanguage?: string | null;
+  statusOptions: string[];
   fields: EntityFieldsConfig;
 };
 
@@ -47,6 +51,7 @@ export type DailyNotesConfig = {
 export type KizunaConfig = {
   vaultRoot: string;
   taxonomyRoot: string;
+  contentWritable?: boolean | null;
   relationshipFields: string[];
   readConcurrency?: number | null;
   home?: HomeConfig | null;

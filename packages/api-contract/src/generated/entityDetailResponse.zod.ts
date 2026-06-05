@@ -30,6 +30,7 @@ export const EntityDetailResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(entityDetailResponseEntityRelationCountMin),
+  "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),
   "body": zod.string(),
   "raw": zod.string()

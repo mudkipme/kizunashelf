@@ -76,6 +76,30 @@ export function SettingsEditor({
 
       {error ? <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</div> : null}
 
+      {onboarding ? (
+        <SettingsSection title="Create Vault Templates">
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+            {vaultTemplates().map((template) => (
+              <Button
+                key={template.id}
+                type="button"
+                variant="outline"
+                className="h-auto justify-start whitespace-normal py-3 text-left"
+                onClick={() =>
+                  setConfig((current) => ({
+                    ...template.config,
+                    vaultRoot: current.vaultRoot,
+                    contentWritable: current.contentWritable ?? true,
+                  }))
+                }
+              >
+                {template.label}
+              </Button>
+            ))}
+          </div>
+        </SettingsSection>
+      ) : null}
+
       <SettingsSection title="Core">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <PathField
@@ -95,6 +119,21 @@ export function SettingsEditor({
             value={config.readConcurrency}
             onChange={(value) => setConfig((current) => ({ ...current, readConcurrency: value }))}
           />
+          <Field label="Content writes">
+            <Select
+              value={config.contentWritable === false ? "false" : "true"}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  contentWritable: event.target.value === "false" ? false : true,
+                }))
+              }
+              className="h-9 w-full text-sm"
+            >
+              <option value="true">Enabled</option>
+              <option value="false">Read only</option>
+            </Select>
+          </Field>
         </div>
         <StringListEditor
           label="Relationship fields"
@@ -402,6 +441,14 @@ function EntityTypeEditor({
           </Select>
         </Field>
       </div>
+      <div className="mt-3">
+        <StringListEditor
+          label="Status options"
+          values={config.statusOptions}
+          placeholder="Watching"
+          onChange={(statusOptions) => onChange({ ...config, statusOptions })}
+        />
+      </div>
       <Separator className="my-3" />
       <EntityFieldsEditor
         fields={config.fields}
@@ -433,6 +480,9 @@ function EntityFieldsEditor({
         <StringListEditor label="Subtitle fields" values={fields.subtitle} onChange={(subtitle) => onChange({ ...fields, subtitle })} />
         <StringListEditor label="Image fields" values={fields.image} onChange={(image) => onChange({ ...fields, image })} />
         <StringListEditor label="Status fields" values={fields.status} onChange={(status) => onChange({ ...fields, status })} />
+        <StringListEditor label="Progress fields" values={fields.progress} onChange={(progress) => onChange({ ...fields, progress })} />
+        <StringListEditor label="Total progress fields" values={fields.totalProgress} onChange={(totalProgress) => onChange({ ...fields, totalProgress })} />
+        <StringListEditor label="Rating fields" values={fields.rating} onChange={(rating) => onChange({ ...fields, rating })} />
         <StringListEditor
           label="External ref fields"
           values={fields.externalRefs}
@@ -757,6 +807,7 @@ function normalizeConfig(config?: KizunaConfig): KizunaConfig {
   return {
     vaultRoot: config.vaultRoot ?? "",
     taxonomyRoot: config.taxonomyRoot ?? "Taxonomy",
+    contentWritable: config.contentWritable ?? true,
     relationshipFields: config.relationshipFields ?? [],
     readConcurrency: config.readConcurrency ?? null,
     dailyNotes: config.dailyNotes ? normalizeDailyNotes(config.dailyNotes) : null,
@@ -785,12 +836,16 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
     ...config,
     icon: config.icon ?? "",
     defaultTitleLanguage: config.defaultTitleLanguage ?? "",
+    statusOptions: config.statusOptions ?? [],
     fields: {
       id: config.fields?.id ?? [],
       titleLanguages: config.fields?.titleLanguages ?? {},
       subtitle: config.fields?.subtitle ?? [],
       image: config.fields?.image ?? [],
       status: config.fields?.status ?? [],
+      progress: config.fields?.progress ?? [],
+      totalProgress: config.fields?.totalProgress ?? [],
+      rating: config.fields?.rating ?? [],
       dateRoles: {
         planning: config.fields?.dateRoles?.planning ?? [],
         completed: config.fields?.dateRoles?.completed ?? [],
@@ -805,6 +860,7 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
   return {
     vaultRoot: config.vaultRoot,
     taxonomyRoot: config.taxonomyRoot,
+    contentWritable: config.contentWritable ?? undefined,
     relationshipFields: cleanStrings(config.relationshipFields),
     readConcurrency: config.readConcurrency ?? undefined,
     dailyNotes: config.dailyNotes
@@ -834,6 +890,7 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
       icon: emptyToUndefined(typeConfig.icon),
       path: typeConfig.path,
       defaultTitleLanguage: emptyToUndefined(typeConfig.defaultTitleLanguage),
+      statusOptions: cleanStrings(typeConfig.statusOptions),
       fields: {
         id: cleanStrings(typeConfig.fields.id),
         titleLanguages: Object.fromEntries(
@@ -844,6 +901,9 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
         subtitle: cleanStrings(typeConfig.fields.subtitle),
         image: cleanStrings(typeConfig.fields.image),
         status: cleanStrings(typeConfig.fields.status),
+        progress: cleanStrings(typeConfig.fields.progress),
+        totalProgress: cleanStrings(typeConfig.fields.totalProgress),
+        rating: cleanStrings(typeConfig.fields.rating),
         dateRoles: {
           planning: cleanStrings(typeConfig.fields.dateRoles.planning),
           completed: cleanStrings(typeConfig.fields.dateRoles.completed),
@@ -859,6 +919,7 @@ function defaultConfig(): KizunaConfig {
   return {
     vaultRoot: "",
     taxonomyRoot: "Taxonomy",
+    contentWritable: true,
     relationshipFields: [],
     readConcurrency: 8,
     dailyNotes: defaultDailyNotes(),
@@ -898,15 +959,121 @@ function defaultEntityType(): EntityTypeConfig {
     icon: "",
     path: "Type",
     defaultTitleLanguage: "original",
+    statusOptions: ["Backlog", "Active", "Completed", "Paused", "Dropped"],
     fields: {
       id: [],
       titleLanguages: { original: ["filename"] },
       subtitle: [],
       image: [],
       status: [],
+      progress: ["progress"],
+      totalProgress: [],
+      rating: [],
       dateRoles: { planning: [], completed: [] },
       externalRefs: [],
       relations: [],
+    },
+  };
+}
+
+function vaultTemplates(): Array<{ id: string; label: string; config: KizunaConfig }> {
+  return [
+    {
+      id: "media",
+      label: "Media Library",
+      config: {
+        ...defaultConfig(),
+        types: [
+          mediaType("anime", "Anime", "📺", "Anime", ["bgm_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType("drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType("movie", "Movie", "🎬", "Movie", ["bgm_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
+          mediaType("games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"]),
+        ],
+        home: {
+          title: "Home",
+          sections: [
+            { id: "watching-anime", title: "Watching Anime", type: "anime", status: "Watching", limit: 12, sort: "date:season", direction: "desc" },
+            { id: "playing-games", title: "Playing Games", type: "games", status: "Playing", limit: 12, sort: "title", direction: "asc" },
+          ],
+        },
+      },
+    },
+    {
+      id: "watching",
+      label: "Anime + Drama + Movies",
+      config: {
+        ...defaultConfig(),
+        types: [
+          mediaType("anime", "Anime", "📺", "Anime", ["bgm_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType("drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType("movie", "Movie", "🎬", "Movie", ["bgm_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
+        ],
+      },
+    },
+    {
+      id: "games",
+      label: "Games",
+      config: {
+        ...defaultConfig(),
+        types: [mediaType("games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"])],
+      },
+    },
+    {
+      id: "books",
+      label: "Books",
+      config: {
+        ...defaultConfig(),
+        types: [mediaType("books", "Books", "📚", "Books", ["openlibrary_url", "isbn"], ["release_date"], ["complete_date"])],
+      },
+    },
+    {
+      id: "blank",
+      label: "Custom Blank",
+      config: {
+        ...defaultConfig(),
+        home: { title: "Home", sections: [] },
+        types: [defaultEntityType()],
+      },
+    },
+  ];
+}
+
+function mediaType(
+  id: string,
+  label: string,
+  icon: string,
+  path: string,
+  externalRefs: string[],
+  planningDates: string[],
+  completedDates: string[],
+): EntityTypeConfig {
+  return {
+    id,
+    label,
+    icon,
+    path,
+    defaultTitleLanguage: "zh",
+    statusOptions: ["Backlog", "Watching", "Playing", "Reading", "Completed", "Paused", "Dropped"],
+    fields: {
+      id: ["uid", "id"],
+      titleLanguages: {
+        zh: ["filename", "title"],
+        original: ["title_original"],
+        en: ["title_en"],
+        ja: ["title_ja"],
+      },
+      subtitle: ["title_en", "title_original"],
+      image: ["cover_url"],
+      status: ["status"],
+      progress: ["progress"],
+      totalProgress: ["episodes"],
+      rating: ["rating"],
+      dateRoles: {
+        planning: planningDates,
+        completed: completedDates,
+      },
+      externalRefs,
+      relations: ["franchise", "studio", "developer"],
     },
   };
 }

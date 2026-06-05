@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { getConfig, getEntities, getStats } from "@kizunashelf/api-contract";
-import { SlidersHorizontalIcon } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { apiFetch, errorMessage, isAbortError } from "@/api/client";
+import { getAppCapabilities } from "@/api/entities";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
@@ -29,7 +30,7 @@ import {
   readAssetListPreferences,
   writeAssetListPreferences,
 } from "@/lib/asset-list-preferences";
-import type { ConfigResponse, EntitySummary, StatsResponse } from "@/types/api";
+import type { Capabilities, ConfigResponse, EntitySummary, StatsResponse } from "@/types/api";
 
 type StatsState = {
   global?: StatsResponse;
@@ -51,6 +52,7 @@ type ListState = {
 export function LibraryPage() {
   const [stats, setStats] = useState<StatsState>({ loading: true });
   const [config, setConfig] = useState<ConfigResponse>();
+  const [capabilities, setCapabilities] = useState<Capabilities>();
   const [list, setList] = useState<ListState>({
     entities: [],
     total: 0,
@@ -111,6 +113,7 @@ export function LibraryPage() {
     const controller = new AbortController();
     void loadGlobalStats(controller.signal);
     void loadConfig(controller.signal);
+    void loadCapabilities(controller.signal);
     return () => controller.abort();
   }, []);
 
@@ -221,6 +224,15 @@ export function LibraryPage() {
     }
   }
 
+  async function loadCapabilities(signal: AbortSignal) {
+    try {
+      setCapabilities(await getAppCapabilities({ signal }));
+    } catch (error) {
+      if (isAbortError(error)) return;
+      setStats((current) => ({ ...current, error: errorMessage(error) }));
+    }
+  }
+
   async function loadEntities(filters: {
     type: string;
     status: string;
@@ -316,6 +328,30 @@ export function LibraryPage() {
                 >
                   <SlidersHorizontalIcon />
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  disabled={capabilities?.contentWritable === false}
+                  aria-label="Add entity"
+                  title={
+                    capabilities?.contentWritable === false
+                      ? "Content writes are disabled"
+                      : "Add entity"
+                  }
+                  asChild={capabilities?.contentWritable !== false}
+                >
+                  {capabilities?.contentWritable === false ? (
+                    <span>
+                      <PlusIcon />
+                    </span>
+                  ) : (
+                    <Link to="/entities/new">
+                      <PlusIcon />
+                    </Link>
+                  )}
+                </Button>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span>{entryCount.toLocaleString()} entries</span>
@@ -378,9 +414,35 @@ export function LibraryPage() {
                 {list.total} entries
                 {list.total > 0 ? ` · page ${list.page}/${list.totalPages}` : ""}
               </span>
-              <span>
-                {list.loading || stats.loading ? "Loading" : stats.global?.generatedAt.slice(0, 10)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span>
+                  {list.loading || stats.loading ? "Loading" : stats.global?.generatedAt.slice(0, 10)}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={capabilities?.contentWritable === false}
+                  title={
+                    capabilities?.contentWritable === false
+                      ? "Content writes are disabled"
+                      : "Add entity"
+                  }
+                  asChild={capabilities?.contentWritable !== false}
+                >
+                  {capabilities?.contentWritable === false ? (
+                    <span>
+                      <PlusIcon data-icon="inline-start" />
+                      Add
+                    </span>
+                  ) : (
+                    <Link to="/entities/new">
+                      <PlusIcon data-icon="inline-start" />
+                      Add
+                    </Link>
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="min-h-0 flex-1 overflow-auto">
               {view === "grid" ? (

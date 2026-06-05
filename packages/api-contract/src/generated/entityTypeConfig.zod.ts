@@ -12,12 +12,16 @@ export const EntityTypeConfig = zod.object({
   "icon": zod.string().nullish(),
   "path": zod.string(),
   "defaultTitleLanguage": zod.string().nullish(),
+  "statusOptions": zod.array(zod.string()).optional(),
   "fields": zod.object({
   "id": zod.array(zod.string()).optional(),
   "titleLanguages": zod.record(zod.string(), zod.array(zod.string())).optional(),
   "subtitle": zod.array(zod.string()).optional(),
   "image": zod.array(zod.string()).optional(),
   "status": zod.array(zod.string()).optional(),
+  "progress": zod.array(zod.string()).optional(),
+  "totalProgress": zod.array(zod.string()).optional(),
+  "rating": zod.array(zod.string()).optional(),
   "dateRoles": zod.object({
   "planning": zod.array(zod.string()).optional(),
   "completed": zod.array(zod.string()).optional()

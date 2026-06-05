@@ -29,12 +29,22 @@ export const ConfigResponse = zod.object({
   "icon": zod.string().nullish(),
   "path": zod.string(),
   "defaultTitleLanguage": zod.string().nullish(),
+  "idFields": zod.array(zod.string()),
+  "titleLanguageFields": zod.record(zod.string(), zod.array(zod.string())),
+  "subtitleFields": zod.array(zod.string()),
+  "imageFields": zod.array(zod.string()),
   "titleLanguages": zod.array(zod.string()),
   "statusFields": zod.array(zod.string()),
+  "statusOptions": zod.array(zod.string()),
+  "progressFields": zod.array(zod.string()),
+  "totalProgressFields": zod.array(zod.string()),
+  "ratingFields": zod.array(zod.string()),
   "dateRoles": zod.object({
   "planning": zod.array(zod.string()).optional(),
   "completed": zod.array(zod.string()).optional()
-})
+}),
+  "externalRefFields": zod.array(zod.string()),
+  "relationFields": zod.array(zod.string())
 }))
 })
 

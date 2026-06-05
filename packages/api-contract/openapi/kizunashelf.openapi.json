@@ -32,6 +32,33 @@
         }
       }
     },
+    "/api/capabilities": {
+      "get": {
+        "operationId": "getCapabilities",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/config": {
       "get": {
         "operationId": "getConfig",
@@ -367,6 +394,87 @@
         }
       }
     },
+    "/api/external/search": {
+      "get": {
+        "operationId": "searchExternalSources",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "provider",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities": {
       "get": {
         "operationId": "getEntities",
@@ -484,6 +592,71 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "createEntity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEntityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/entities/{id}/dates": {
@@ -560,6 +733,168 @@
             }
           },
           "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "updateEntity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEntityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteEntity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteEntityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteEntityResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "",
             "content": {
               "application/json": {
@@ -727,6 +1062,29 @@
           "error"
         ]
       },
+      "CapabilitiesResponse": {
+        "type": "object",
+        "properties": {
+          "settingsWritable": {
+            "type": "boolean"
+          },
+          "contentWritable": {
+            "type": "boolean"
+          },
+          "externalSearchEnabled": {
+            "type": "boolean"
+          },
+          "externalApplyEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "settingsWritable",
+          "contentWritable",
+          "externalSearchEnabled",
+          "externalApplyEnabled"
+        ]
+      },
       "ConfigResponse": {
         "type": "object",
         "properties": {
@@ -869,6 +1227,33 @@
               "null"
             ]
           },
+          "idFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "titleLanguageFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "subtitleFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "imageFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "titleLanguages": {
             "type": "array",
             "items": {
@@ -881,17 +1266,63 @@
               "type": "string"
             }
           },
+          "statusOptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "progressFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalProgressFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ratingFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "dateRoles": {
             "$ref": "#/components/schemas/DateRoleConfig"
+          },
+          "externalRefFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relationFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "id",
           "label",
           "path",
+          "idFields",
+          "titleLanguageFields",
+          "subtitleFields",
+          "imageFields",
           "titleLanguages",
           "statusFields",
-          "dateRoles"
+          "statusOptions",
+          "progressFields",
+          "totalProgressFields",
+          "ratingFields",
+          "dateRoles",
+          "externalRefFields",
+          "relationFields"
         ]
       },
       "DateRoleConfig": {
@@ -950,6 +1381,12 @@
           },
           "taxonomyRoot": {
             "type": "string"
+          },
+          "contentWritable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
           },
           "relationshipFields": {
             "type": "array",
@@ -1048,6 +1485,12 @@
               "null"
             ]
           },
+          "statusOptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "fields": {
             "$ref": "#/components/schemas/EntityFields"
           }
@@ -1090,6 +1533,24 @@
             }
           },
           "status": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "progress": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalProgress": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rating": {
             "type": "array",
             "items": {
               "type": "string"
@@ -2243,6 +2704,142 @@
           "dailyNotes"
         ]
       },
+      "ExternalSearchQuery": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "q": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pageSize": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "page": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ExternalSearchResponse": {
+        "type": "object",
+        "properties": {
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalProviderSummary"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalCandidate"
+            }
+          }
+        },
+        "required": [
+          "providers",
+          "items"
+        ]
+      },
+      "ExternalProviderSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "enabled"
+        ]
+      },
+      "ExternalCandidate": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subtitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "brief": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "coverUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {}
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "default": {}
+          }
+        },
+        "required": [
+          "provider",
+          "sourceId",
+          "url",
+          "title"
+        ]
+      },
       "EntitiesQuery": {
         "type": "object",
         "properties": {
@@ -2349,6 +2946,142 @@
           "page",
           "pageSize",
           "totalPages"
+        ]
+      },
+      "CreateEntityRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "basename": {
+            "type": "string"
+          },
+          "frontmatter": {
+            "type": "object",
+            "additionalProperties": true,
+            "default": {}
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "basename"
+        ]
+      },
+      "EntityMutationResponse": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          }
+        },
+        "required": [
+          "entity"
+        ]
+      },
+      "Entity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "typeLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "subtitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityDateValue"
+            }
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "basename": {
+            "type": "string"
+          },
+          "externalRefs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "relationCount": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "revision": {
+            "type": "string"
+          },
+          "frontmatter": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "body": {
+            "type": "string"
+          },
+          "raw": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "typeLabel",
+          "title",
+          "titles",
+          "dates",
+          "path",
+          "basename",
+          "externalRefs",
+          "relationCount",
+          "revision",
+          "frontmatter",
+          "body",
+          "raw"
         ]
       },
       "EntityPath": {
@@ -2496,99 +3229,77 @@
           "relatedEntities"
         ]
       },
-      "Entity": {
+      "EntityPath2": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
-          },
-          "type": {
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "UpdateEntityRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
             "type": "string"
-          },
-          "typeLabel": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "titles": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "subtitle": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "status": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "dates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityDateValue"
-            }
-          },
-          "image": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "summary": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "path": {
-            "type": "string"
-          },
-          "basename": {
-            "type": "string"
-          },
-          "externalRefs": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "relationCount": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
           },
           "frontmatter": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "additionalProperties": true
           },
           "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "renameTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "DeleteEntityRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
             "type": "string"
           },
-          "raw": {
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "DeleteEntityResponse": {
+        "type": "object",
+        "properties": {
+          "deletedId": {
+            "type": "string"
+          },
+          "backupPath": {
             "type": "string"
           }
         },
         "required": [
-          "id",
-          "type",
-          "typeLabel",
-          "title",
-          "titles",
-          "dates",
-          "path",
-          "basename",
-          "externalRefs",
-          "relationCount",
-          "frontmatter",
-          "body",
-          "raw"
+          "deletedId",
+          "backupPath"
         ]
       },
       "RelationsQuery": {

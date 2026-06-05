@@ -26,6 +26,12 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(health["relationCount"], 12);
     assert!(health["generatedAt"].as_str().is_some());
 
+    let capabilities = server.ok_json("/api/capabilities").await;
+    assert_eq!(capabilities["settingsWritable"], true);
+    assert_eq!(capabilities["contentWritable"], true);
+    assert_eq!(capabilities["externalSearchEnabled"], true);
+    assert_eq!(capabilities["externalApplyEnabled"], true);
+
     let config = server.ok_json("/api/config").await;
     assert_eq!(config["taxonomyRoot"], "Taxonomy");
     assert_eq!(config["types"].as_array().unwrap().len(), 4);
@@ -34,6 +40,10 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(
         config["types"][0]["titleLanguages"],
         json!(["en", "primary", "zh"])
+    );
+    assert_eq!(
+        config["types"][0]["statusOptions"],
+        json!(["Backlog", "Watching", "Completed", "Paused", "Dropped"])
     );
     assert_eq!(
         config["types"][0]["dateRoles"],
@@ -148,6 +158,109 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
 }
 
 #[tokio::test]
+async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
+    let server = TestServer::new();
+
+    let detail = server
+        .ok_json(&format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ))
+        .await;
+    let revision = detail["entity"]["revision"].as_str().unwrap();
+    let updated = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        Some(json!({
+            "revision": revision,
+            "frontmatter": {
+                "status": "Completed",
+                "progress": 12,
+                "bgm_url": null
+            },
+            "body": "Updated body with [[Moon Quest]]."
+        })),
+    )
+    .await;
+    assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
+    assert_eq!(updated.1["entity"]["status"], "Completed");
+    assert_eq!(updated.1["entity"]["frontmatter"]["progress"], 12);
+    assert!(updated.1["entity"]["frontmatter"].get("bgm_url").is_none());
+    assert_eq!(
+        updated.1["entity"]["body"],
+        "Updated body with [[Moon Quest]]."
+    );
+
+    let stale = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        Some(json!({
+            "revision": revision,
+            "frontmatter": {
+                "status": "Watching"
+            }
+        })),
+    )
+    .await;
+    assert_eq!(stale.0, StatusCode::CONFLICT);
+
+    let created = request_json(
+        &server.app,
+        Method::POST,
+        "/api/entities",
+        Some(json!({
+            "type": "games",
+            "basename": "Solar Tactics",
+            "frontmatter": {
+                "title": "Solar Tactics",
+                "status": "Backlog",
+                "igdb_url": "https://www.igdb.com/games/solar-tactics"
+            },
+            "body": "A new strategy game."
+        })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+    assert_eq!(created.1["entity"]["id"], "games:Solar Tactics");
+    assert_eq!(
+        created.1["entity"]["path"],
+        "Taxonomy/Games/Solar Tactics.md"
+    );
+
+    let delete_revision = created.1["entity"]["revision"].as_str().unwrap();
+    let deleted = request_json(
+        &server.app,
+        Method::DELETE,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("games:Solar Tactics")
+        ),
+        Some(json!({
+            "revision": delete_revision,
+            "mode": "trash"
+        })),
+    )
+    .await;
+    assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);
+    assert_eq!(deleted.1["deletedId"], "games:Solar Tactics");
+    assert!(deleted.1["backupPath"]
+        .as_str()
+        .unwrap()
+        .contains(".kizunashelf/trash"));
+
+    let entities = server.ok_json("/api/entities").await;
+    assert_eq!(entities["total"], 4);
+}
+
+#[tokio::test]
 async fn relation_endpoints_group_temp_vault_links() {
     let server = TestServer::new();
 
@@ -192,6 +305,30 @@ async fn relation_endpoints_group_temp_vault_links() {
         .await;
     assert_eq!(status, StatusCode::NOT_FOUND);
     assert_eq!(value["error"], "API route not found");
+}
+
+#[tokio::test]
+async fn external_search_lists_providers_without_querying_network_for_empty_searches() {
+    let server = TestServer::new();
+
+    let providers = server.ok_json("/api/external/search?q=").await;
+    assert_eq!(providers["items"].as_array().unwrap().len(), 0);
+    assert!(providers["providers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|provider| provider["id"] == "bangumi" && provider["enabled"] == true));
+    assert!(providers["providers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|provider| provider["id"] == "igdb"));
+
+    let unknown = server
+        .json("/api/external/search?provider=missing&q=Star")
+        .await;
+    assert_eq!(unknown.0, StatusCode::BAD_REQUEST);
+    assert_eq!(unknown.1["error"], "Unknown external provider");
 }
 
 #[tokio::test]
@@ -256,6 +393,7 @@ async fn settings_endpoints_create_and_read_config_files() {
         cache_ttl: Duration::from_millis(0),
         web_dist_path: None,
         settings_writable: true,
+        content_writable: true,
     });
 
     let missing = request_json(&app, Method::GET, "/api/settings/config", None).await;
@@ -335,6 +473,7 @@ async fn settings_mutation_endpoints_can_be_disabled() {
         cache_ttl: Duration::from_millis(0),
         web_dist_path: None,
         settings_writable: false,
+        content_writable: false,
     });
     let config = json!({
         "vaultRoot": vault,
@@ -355,6 +494,73 @@ async fn settings_mutation_endpoints_can_be_disabled() {
     .await;
     assert_eq!(suggestions.0, StatusCode::FORBIDDEN);
     assert_eq!(suggestions.1["error"], "Path suggestions are disabled");
+}
+
+#[tokio::test]
+async fn content_mutation_endpoints_can_be_disabled() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_fixture_vault(&vault);
+    let config_path = temp.path().join("kizunashelf.config.json");
+    let config = json!({
+        "vaultRoot": vault,
+        "taxonomyRoot": "Taxonomy",
+        "types": [
+            {
+                "id": "anime",
+                "label": "Anime",
+                "path": "Anime",
+                "fields": {
+                    "titleLanguages": {
+                        "primary": ["title"]
+                    },
+                    "status": ["status"]
+                }
+            }
+        ]
+    });
+    fs::write(&config_path, serde_json::to_string_pretty(&config).unwrap()).unwrap();
+    let app = router(ApiOptions {
+        config_path,
+        cache_ttl: Duration::from_millis(0),
+        web_dist_path: None,
+        settings_writable: true,
+        content_writable: false,
+    });
+
+    let capabilities = request_json(&app, Method::GET, "/api/capabilities", None).await;
+    assert_eq!(capabilities.0, StatusCode::OK);
+    assert_eq!(capabilities.1["contentWritable"], false);
+
+    let detail = request_json(
+        &app,
+        Method::GET,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        None,
+    )
+    .await;
+    assert_eq!(detail.0, StatusCode::OK);
+    let revision = detail.1["entity"]["revision"].as_str().unwrap();
+    let updated = request_json(
+        &app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        Some(json!({
+            "revision": revision,
+            "frontmatter": {
+                "status": "Completed"
+            }
+        })),
+    )
+    .await;
+    assert_eq!(updated.0, StatusCode::FORBIDDEN);
+    assert_eq!(updated.1["error"], "Content writes are disabled");
 }
 
 impl TestServer {
@@ -402,6 +608,7 @@ impl TestServer {
                     "icon": "📺",
                     "path": "Anime",
                     "defaultTitleLanguage": "primary",
+                    "statusOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"],
                     "fields": {
                         "titleLanguages": {
                             "primary": ["title"],
@@ -424,6 +631,7 @@ impl TestServer {
                     "label": "Games",
                     "path": "Games",
                     "defaultTitleLanguage": "primary",
+                    "statusOptions": ["Backlog", "Playing", "Completed", "Paused", "Dropped"],
                     "fields": {
                         "titleLanguages": {
                             "primary": ["title"],
@@ -479,6 +687,7 @@ impl TestServer {
                 cache_ttl: Duration::from_millis(0),
                 web_dist_path: None,
                 settings_writable: true,
+                content_writable: true,
             }),
             _temp: temp,
         }

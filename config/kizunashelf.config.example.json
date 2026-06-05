@@ -47,6 +47,13 @@
       "label": "Anime",
       "icon": "📺",
       "path": "Anime",
+      "statusOptions": [
+        "Backlog",
+        "Watching",
+        "Completed",
+        "Paused",
+        "Dropped"
+      ],
       "fields": {
         "id": [
           "uid",
@@ -69,6 +76,12 @@
         "status": [
           "status"
         ],
+        "progress": [
+          "progress"
+        ],
+        "totalProgress": [
+          "episodes"
+        ],
         "dateRoles": {
           "planning": [
             "season",
@@ -89,6 +102,13 @@
       "label": "Games",
       "icon": "🎮",
       "path": "Games",
+      "statusOptions": [
+        "Backlog",
+        "Playing",
+        "Completed",
+        "Paused",
+        "Dropped"
+      ],
       "fields": {
         "titleLanguages": {
           "zh": [
@@ -106,6 +126,9 @@
         ],
         "status": [
           "status"
+        ],
+        "progress": [
+          "progress"
         ],
         "dateRoles": {
           "planning": [
@@ -127,6 +150,13 @@
       "label": "Movie",
       "icon": "🎬",
       "path": "Movie",
+      "statusOptions": [
+        "Backlog",
+        "Watching",
+        "Completed",
+        "Paused",
+        "Dropped"
+      ],
       "fields": {
         "titleLanguages": {
           "original": [
@@ -144,6 +174,9 @@
         ],
         "status": [
           "status"
+        ],
+        "progress": [
+          "progress"
         ],
         "dateRoles": {
           "planning": [
@@ -165,6 +198,13 @@
       "label": "Drama",
       "icon": "📺",
       "path": "Drama",
+      "statusOptions": [
+        "Backlog",
+        "Watching",
+        "Completed",
+        "Paused",
+        "Dropped"
+      ],
       "fields": {
         "titleLanguages": {
           "original": [
@@ -179,6 +219,12 @@
         ],
         "status": [
           "status"
+        ],
+        "progress": [
+          "progress"
+        ],
+        "totalProgress": [
+          "episodes"
         ],
         "dateRoles": {
           "planning": [

@@ -16,6 +16,12 @@ pub struct EntityFields {
     pub image: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub status: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub progress: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub total_progress: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rating: Vec<String>,
     #[serde(default, skip_serializing_if = "DateRoleConfig::is_empty")]
     pub date_roles: DateRoleConfig,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -59,6 +65,8 @@ pub struct EntityTypeConfig {
     pub path: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_title_language: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub status_options: Vec<String>,
     pub fields: EntityFields,
 }
 
@@ -118,6 +126,8 @@ pub struct DailyNotesConfig {
 pub struct KizunaConfig {
     pub vault_root: String,
     pub taxonomy_root: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_writable: Option<bool>,
     #[serde(default)]
     pub relationship_fields: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -165,6 +175,7 @@ pub struct EntitySummary {
 pub struct Entity {
     #[serde(flatten)]
     pub summary: EntitySummary,
+    pub revision: String,
     pub frontmatter: Map<String, Value>,
     pub body: String,
     pub raw: String,

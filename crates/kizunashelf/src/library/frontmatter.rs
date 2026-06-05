@@ -10,6 +10,11 @@ pub(super) struct ParsedMarkdown {
     pub(super) diagnostics: Vec<String>,
 }
 
+pub struct MarkdownDocument {
+    pub frontmatter: Map<String, Value>,
+    pub body: String,
+}
+
 pub(super) fn parse_markdown(raw: &str) -> ParsedMarkdown {
     if !raw.starts_with("---\n") {
         return ParsedMarkdown {
@@ -52,6 +57,54 @@ pub(super) fn parse_markdown(raw: &str) -> ParsedMarkdown {
         frontmatter,
         body,
         diagnostics,
+    }
+}
+
+pub fn split_markdown_document(raw: &str) -> MarkdownDocument {
+    if !raw.starts_with("---\n") {
+        return MarkdownDocument {
+            frontmatter: Map::new(),
+            body: raw.to_string(),
+        };
+    }
+    let Some(end) = raw[4..].find("\n---").map(|index| index + 4) else {
+        return MarkdownDocument {
+            frontmatter: Map::new(),
+            body: raw.to_string(),
+        };
+    };
+    let yaml_text = &raw[4..end];
+    let frontmatter = serde_yaml::from_str::<serde_yaml::Value>(yaml_text)
+        .ok()
+        .and_then(yaml_to_json_value)
+        .and_then(|value| match value {
+            Value::Object(map) => Some(map),
+            _ => None,
+        })
+        .unwrap_or_default();
+    MarkdownDocument {
+        frontmatter,
+        body: raw[end + 4..].to_string(),
+    }
+}
+
+pub fn serialize_markdown_document(frontmatter: &Map<String, Value>, body: &str) -> String {
+    if frontmatter.is_empty() {
+        return body.to_string();
+    }
+    let mut yaml = serde_yaml::to_string(frontmatter).unwrap_or_default();
+    if let Some(stripped) = yaml.strip_prefix("---\n") {
+        yaml = stripped.to_string();
+    }
+    if !yaml.ends_with('\n') {
+        yaml.push('\n');
+    }
+    if body.is_empty() {
+        format!("---\n{yaml}---\n")
+    } else if body.starts_with('\n') {
+        format!("---\n{yaml}---{body}")
+    } else {
+        format!("---\n{yaml}---\n{body}")
     }
 }
 
