@@ -65,7 +65,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   useEffect(() => {
     setMobileSidebarOpen(false);
     setMobileSearchOpen(false);
-    setCanGoBack(hasAppBackStack());
+    setCanGoBack(location.pathname !== "/" && hasAppBackStack());
   }, [location.key, location.pathname, location.search]);
 
   useEffect(() => {

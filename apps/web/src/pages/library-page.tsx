@@ -267,7 +267,7 @@ export function LibraryPage() {
     next.set("type", type);
     applyPreferencesToSearchParams(next, readAssetListPreferences(type));
     next.set("page", "1");
-    setSearchParams(next);
+    setSearchParams(next, { replace: true });
   }
 
   function goToPage(nextPage: number) {
@@ -282,7 +282,7 @@ export function LibraryPage() {
     else next.set(key, value);
     if (resetPage) next.set("page", "1");
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(next));
-    setSearchParams(next);
+    setSearchParams(next, { replace: true });
   }
 
   return (
