@@ -107,7 +107,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   }
 
   return (
-    <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
+    <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] text-foreground">
       <header className="flex min-h-14 shrink-0 items-center gap-2 border-b bg-card/85 px-3 py-2 sm:gap-3 sm:px-4">
         {canGoBack ? (
           <Button
