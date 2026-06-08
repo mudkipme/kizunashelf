@@ -1,10 +1,11 @@
 use crate::calendar::{CalendarDay, CalendarEntry, EntityDatesResponse};
 use crate::relations::Count;
 use crate::types::{
-    DateRoleConfig, Entity, EntitySummary, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,
+    Entity, EntitySummary, EntityTypeConfig, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -21,6 +22,15 @@ pub struct HealthResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ErrorResponse {
     pub error: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CapabilitiesResponse {
+    pub settings_writable: bool,
+    pub content_writable: bool,
+    pub external_search_enabled: bool,
+    pub external_apply_enabled: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -42,26 +52,11 @@ pub struct PathSuggestionsResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct TypeConfigResponse {
-    pub id: String,
-    pub label: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub icon: Option<String>,
-    pub path: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_title_language: Option<String>,
-    pub title_languages: Vec<String>,
-    pub status_fields: Vec<String>,
-    pub date_roles: DateRoleConfig,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 pub struct ConfigResponse {
     pub taxonomy_root: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub home: Option<HomeConfig>,
-    pub types: Vec<TypeConfigResponse>,
+    pub types: Vec<EntityTypeConfig>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -72,7 +67,6 @@ pub struct HomeSectionResponse {
     #[serde(rename = "type")]
     pub entity_type: String,
     pub type_label: String,
-    pub status: Vec<String>,
     pub limit: u32,
     pub sort: String,
     pub direction: String,
@@ -96,7 +90,6 @@ pub struct StatsResponse {
     pub relations: usize,
     pub by_type: Vec<TypeCount>,
     pub date_fields: Vec<String>,
-    pub by_status: Vec<Count>,
     pub top_relations: Vec<EntitySummary>,
 }
 
@@ -126,6 +119,87 @@ pub struct EntityDetailResponse {
     pub entity: Entity,
     pub relations: Vec<Relation>,
     pub related_entities: Vec<EntitySummary>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityMutationResponse {
+    pub entity: Entity,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateEntityRequest {
+    pub revision: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frontmatter: Option<Map<String, Value>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rename_to: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateEntityRequest {
+    #[serde(rename = "type")]
+    pub entity_type: String,
+    pub basename: String,
+    #[serde(default)]
+    pub frontmatter: Map<String, Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteEntityRequest {
+    pub revision: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteEntityResponse {
+    pub deleted_id: String,
+    pub backup_path: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalProviderSummary {
+    pub id: String,
+    pub label: String,
+    pub enabled: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalCandidate {
+    pub provider: String,
+    pub source_id: String,
+    pub url: String,
+    pub title: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub original_title: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub brief: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cover_url: Option<String>,
+    #[serde(default)]
+    pub titles: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    pub metadata: Map<String, Value>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalSearchResponse {
+    pub providers: Vec<ExternalProviderSummary>,
+    pub items: Vec<ExternalCandidate>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -237,7 +311,6 @@ pub struct AnalyticsUnresolvedRelations {
 pub struct AnalyticsDataQuality {
     pub missing_cover: Vec<EntitySummary>,
     pub missing_external_refs: Vec<EntitySummary>,
-    pub missing_summary: Vec<EntitySummary>,
     pub isolated: Vec<EntitySummary>,
 }
 
@@ -264,7 +337,6 @@ pub struct CleanupQueuesResponse {
     pub queues: Vec<CleanupQueueSummary>,
     pub missing_cover: Vec<EntitySummary>,
     pub missing_external_refs: Vec<EntitySummary>,
-    pub missing_summary: Vec<EntitySummary>,
     pub isolated: Vec<EntitySummary>,
     pub unresolved_relations: Vec<CleanupUnresolvedRelation>,
 }
@@ -283,7 +355,6 @@ pub struct AnalyticsTotals {
 #[serde(rename_all = "camelCase")]
 pub struct AnalyticsDistributions {
     pub by_type: Vec<TypeCount>,
-    pub by_status: Vec<Count>,
     pub by_relation_field: Vec<Count>,
     pub by_source_target_type: Vec<Count>,
 }

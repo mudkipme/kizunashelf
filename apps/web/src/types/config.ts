@@ -1,17 +1,50 @@
-export type EntityFieldsConfig = {
-  id: string[];
-  titleLanguages: Record<string, string[]>;
-  subtitle: string[];
-  image: string[];
-  status: string[];
-  dateRoles: DateRoleConfig;
-  externalRefs: string[];
-  relations: string[];
+export type FieldType =
+  | "id"
+  | "title"
+  | "image"
+  | "imageList"
+  | "enum"
+  | "enumList"
+  | "progress"
+  | "totalProgress"
+  | "rating"
+  | "bool"
+  | "season"
+  | "date"
+  | "externalRef"
+  | "relation"
+  | "text"
+  | "textList";
+
+export type DateRole = "planning" | "completed";
+export type SeasonLanguage = "zh" | "ja" | "en";
+export type TitleRole = "original";
+
+export type ExternalFieldMapping = {
+  source: string;
+  field: string;
 };
 
-export type DateRoleConfig = {
-  planning: string[];
-  completed: string[];
+export type FilenameConfig = {
+  titleLanguage?: string | null;
+  defaultTitle?: boolean;
+};
+
+export type FieldConfig = {
+  field: string;
+  fieldType: FieldType;
+  displayName?: string | null;
+  titleLanguage?: string | null;
+  titleRole?: TitleRole | null;
+  externalFields?: ExternalFieldMapping[];
+  defaultTitle?: boolean | null;
+  enumOptions?: string[];
+  totalProgressField?: string | null;
+  dateRole?: DateRole | null;
+  seasonLanguage?: SeasonLanguage | null;
+  externalRef?: string | null;
+  externalTypes?: string[];
+  relationType?: string | null;
 };
 
 export type EntityTypeConfig = {
@@ -19,18 +52,23 @@ export type EntityTypeConfig = {
   label: string;
   icon?: string | null;
   path: string;
-  defaultTitleLanguage?: string | null;
-  fields: EntityFieldsConfig;
+  filename?: FilenameConfig | null;
+  fields: FieldConfig[];
 };
 
 export type HomeSectionConfig = {
   id: string;
   title: string;
   type: string;
-  status?: string | string[] | null;
+  filters?: HomeSectionFilterConfig[];
   limit?: number | null;
   sort?: string | null;
   direction?: "asc" | "desc" | null;
+};
+
+export type HomeSectionFilterConfig = {
+  field: string;
+  values: string[];
 };
 
 export type HomeConfig = {
@@ -47,7 +85,7 @@ export type DailyNotesConfig = {
 export type KizunaConfig = {
   vaultRoot: string;
   taxonomyRoot: string;
-  relationshipFields: string[];
+  contentWritable?: boolean | null;
   readConcurrency?: number | null;
   home?: HomeConfig | null;
   dailyNotes?: DailyNotesConfig | null;

@@ -10,8 +10,6 @@ export const analyticsDataQualityMissingCoverItemRelationCountMin = 0;
 
 export const analyticsDataQualityMissingExternalRefsItemRelationCountMin = 0;
 
-export const analyticsDataQualityMissingSummaryItemRelationCountMin = 0;
-
 export const analyticsDataQualityIsolatedItemRelationCountMin = 0;
 
 
@@ -22,8 +20,6 @@ export const AnalyticsDataQuality = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -41,8 +37,6 @@ export const AnalyticsDataQuality = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -54,33 +48,12 @@ export const AnalyticsDataQuality = zod.object({
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(analyticsDataQualityMissingExternalRefsItemRelationCountMin)
 })),
-  "missingSummary": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.string(),
-  "typeLabel": zod.string(),
-  "title": zod.string(),
-  "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
-  "dates": zod.array(zod.object({
-  "field": zod.string(),
-  "value": zod.string()
-})),
-  "image": zod.string().nullish(),
-  "summary": zod.string().nullish(),
-  "path": zod.string(),
-  "basename": zod.string(),
-  "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(analyticsDataQualityMissingSummaryItemRelationCountMin)
-})),
   "isolated": zod.array(zod.object({
   "id": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()

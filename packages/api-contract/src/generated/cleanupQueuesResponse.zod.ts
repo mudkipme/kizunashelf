@@ -14,8 +14,6 @@ export const cleanupQueuesResponseMissingCoverItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseMissingExternalRefsItemRelationCountMin = 0;
 
-export const cleanupQueuesResponseMissingSummaryItemRelationCountMin = 0;
-
 export const cleanupQueuesResponseIsolatedItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceRelationCountMin = 0;
@@ -35,8 +33,6 @@ export const CleanupQueuesResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -54,8 +50,6 @@ export const CleanupQueuesResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -67,33 +61,12 @@ export const CleanupQueuesResponse = zod.object({
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(cleanupQueuesResponseMissingExternalRefsItemRelationCountMin)
 })),
-  "missingSummary": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.string(),
-  "typeLabel": zod.string(),
-  "title": zod.string(),
-  "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
-  "dates": zod.array(zod.object({
-  "field": zod.string(),
-  "value": zod.string()
-})),
-  "image": zod.string().nullish(),
-  "summary": zod.string().nullish(),
-  "path": zod.string(),
-  "basename": zod.string(),
-  "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(cleanupQueuesResponseMissingSummaryItemRelationCountMin)
-})),
   "isolated": zod.array(zod.object({
   "id": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -112,8 +85,6 @@ export const CleanupQueuesResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()

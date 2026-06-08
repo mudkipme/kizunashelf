@@ -71,8 +71,19 @@ pub fn relation_type_pairs(library: &Library) -> Vec<Count> {
 }
 
 pub fn relation_fields(library: &Library) -> Vec<String> {
-    let mut fields: Vec<String> = library.config.relationship_fields.clone();
-    let mut seen: HashSet<String> = fields.iter().cloned().collect();
+    let mut fields = Vec::new();
+    let mut seen = HashSet::new();
+    for field in library.config.types.iter().flat_map(|entity_type| {
+        entity_type
+            .fields
+            .iter()
+            .filter(|field| field.field_type == crate::types::FieldType::Relation)
+            .map(|field| field.field.clone())
+    }) {
+        if seen.insert(field.clone()) {
+            fields.push(field);
+        }
+    }
     for relation in &library.relations {
         if relation.direction == RelationDirection::Out && seen.insert(relation.field.clone()) {
             fields.push(relation.field.clone());
@@ -361,14 +372,12 @@ pub fn sort_entities_with_title_language(
     entities.sort_by(|a, b| {
         let ordering = if sort == "title" {
             compare_entity_title(a, b, title_language)
-        } else if sort == "status" {
-            compare_optional_string(a.status.as_deref(), b.status.as_deref())
         } else if let Some(field) = sort.strip_prefix("date:") {
             compare_optional_string(
                 entity_date_sort_value(a, field).as_deref(),
                 entity_date_sort_value(b, field).as_deref(),
             )
-        } else if sort == "relations" {
+        } else if sort == "relationCount" {
             a.relation_count.cmp(&b.relation_count)
         } else if sort == "path" {
             compare_string(&a.path, &b.path)
@@ -401,16 +410,6 @@ fn compare_entity_title(
         .and_then(|language| b.titles.get(language))
         .unwrap_or(&b.title);
     compare_string_for_title_language(title_a, title_b, title_language)
-}
-
-pub fn get_status_tracked_type_ids(library: &Library) -> HashSet<String> {
-    library
-        .config
-        .types
-        .iter()
-        .filter(|entity_type| !entity_type.fields.status.is_empty())
-        .map(|entity_type| entity_type.id.clone())
-        .collect()
 }
 
 fn compare_optional_string(a: Option<&str>, b: Option<&str>) -> Ordering {

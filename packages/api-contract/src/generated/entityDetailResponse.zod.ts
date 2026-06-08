@@ -18,8 +18,6 @@ export const EntityDetailResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -30,6 +28,7 @@ export const EntityDetailResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(entityDetailResponseEntityRelationCountMin),
+  "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),
   "body": zod.string(),
   "raw": zod.string()
@@ -48,8 +47,6 @@ export const EntityDetailResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()

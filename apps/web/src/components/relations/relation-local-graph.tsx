@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
-import { defaultTitleLanguage } from "@/lib/constants";
+import { defaultTitleOptionId } from "@/lib/constants";
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
@@ -61,17 +61,12 @@ export function RelationLocalGraph({
               style={{ left: `${node.x}%`, top: `${node.y}%` }}
             >
               <span className="truncate text-xs font-medium">
-                {entityTitle(node.entity, defaultTitleLanguage)}
+                {entityTitle(node.entity, defaultTitleOptionId)}
               </span>
               <span className="flex min-w-0 items-center gap-1">
                 <Badge variant="outline" className="max-w-full truncate px-1.5 py-0 text-[11px] font-normal">
                   {node.entity.typeLabel}
                 </Badge>
-                {node.entity.status ? (
-                  <Badge variant="secondary" className="max-w-full truncate px-1.5 py-0 text-[11px] font-normal">
-                    {node.entity.status}
-                  </Badge>
-                ) : null}
               </span>
             </Link>
           ))}

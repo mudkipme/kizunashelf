@@ -1,15 +1,18 @@
 use super::analytics::{analytics, cleanup_queues, stats};
 use super::entities::{entities, entity_dates, entity_detail};
+use super::external::external_search;
 use super::handlers::{
-    calendar, config, health, home, relation_groups, relations, save_settings_config,
+    calendar, capabilities, config, health, home, relation_groups, relations, save_settings_config,
     settings_config,
 };
+use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
 use crate::calendar::EntityDatesResponse;
 use crate::contract::{
-    AnalyticsResponse, CalendarResponse, CleanupQueuesResponse, ConfigResponse,
-    EntityDetailResponse, EntityListResponse, ErrorResponse, HealthResponse, HomeResponse,
+    AnalyticsResponse, CalendarResponse, CapabilitiesResponse, CleanupQueuesResponse,
+    ConfigResponse, DeleteEntityResponse, EntityDetailResponse, EntityListResponse,
+    EntityMutationResponse, ErrorResponse, ExternalSearchResponse, HealthResponse, HomeResponse,
     PathSuggestionsResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
     StatsResponse,
 };
@@ -67,6 +70,14 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(health, |op| {
                 op.id("getHealth")
                     .response::<200, Json<HealthResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/capabilities",
+            get_with(capabilities, |op| {
+                op.id("getCapabilities")
+                    .response::<200, Json<CapabilitiesResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
@@ -142,10 +153,27 @@ fn api_router() -> ApiRouter<AppState> {
             }),
         )
         .api_route(
+            "/api/external/search",
+            get_with(external_search, |op| {
+                op.id("searchExternalSources")
+                    .response::<200, Json<ExternalSearchResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
             "/api/entities",
             get_with(entities, |op| {
                 op.id("getEntities")
                     .response::<200, Json<EntityListResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .post_with(create_entity, |op| {
+                op.id("createEntity")
+                    .response::<200, Json<EntityMutationResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
@@ -164,6 +192,23 @@ fn api_router() -> ApiRouter<AppState> {
                 op.id("getEntity")
                     .response::<200, Json<EntityDetailResponse>>()
                     .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .post_with(update_entity, |op| {
+                op.id("updateEntity")
+                    .response::<200, Json<EntityMutationResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .delete_with(delete_entity, |op| {
+                op.id("deleteEntity")
+                    .response::<200, Json<DeleteEntityResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )

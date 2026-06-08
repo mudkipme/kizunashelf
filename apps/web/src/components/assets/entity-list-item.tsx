@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { Badge } from "@/components/ui/badge";
-import { defaultTitleLanguage } from "@/lib/constants";
+import { defaultTitleOptionId } from "@/lib/constants";
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
 export function EntityListItem({
   entity,
-  titleLanguage = defaultTitleLanguage,
+  titleLanguage = defaultTitleOptionId,
 }: {
   entity: EntitySummary;
   titleLanguage?: string;
@@ -28,7 +28,6 @@ export function EntityListItem({
           <Badge variant="outline">{entity.typeLabel}</Badge>
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          {entity.status ? <span className="shrink-0">{entity.status}</span> : null}
           <EntityDateList entity={entity} compact />
           <span className="ml-auto shrink-0">{entity.relationCount} links</span>
         </span>

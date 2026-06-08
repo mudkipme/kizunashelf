@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { getConfig, getEntities, getStats } from "@kizunashelf/api-contract";
-import { SlidersHorizontalIcon } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { apiFetch, errorMessage, isAbortError } from "@/api/client";
+import { getAppCapabilities } from "@/api/entities";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
@@ -13,15 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import {
   allOptions,
-  allStatuses,
   allTypes,
   defaultCategory,
   defaultDirection,
   defaultSort,
-  defaultTitleLanguage,
+  defaultTitleOptionId,
   defaultView,
   pageSize,
 } from "@/lib/constants";
+import { defaultTitleOption, hasAnyFieldType, titleLanguageOptions } from "@/lib/type-config";
 import { titleLanguageLabel } from "@/lib/title-language";
 import {
   applyPreferencesToSearchParams,
@@ -29,7 +30,7 @@ import {
   readAssetListPreferences,
   writeAssetListPreferences,
 } from "@/lib/asset-list-preferences";
-import type { ConfigResponse, EntitySummary, StatsResponse } from "@/types/api";
+import type { Capabilities, ConfigResponse, EntitySummary, StatsResponse } from "@/types/api";
 
 type StatsState = {
   global?: StatsResponse;
@@ -51,6 +52,7 @@ type ListState = {
 export function LibraryPage() {
   const [stats, setStats] = useState<StatsState>({ loading: true });
   const [config, setConfig] = useState<ConfigResponse>();
+  const [capabilities, setCapabilities] = useState<Capabilities>();
   const [list, setList] = useState<ListState>({
     entities: [],
     total: 0,
@@ -63,54 +65,60 @@ export function LibraryPage() {
   const firstType = stats.global?.byType[0]?.id ?? defaultCategory;
   const selectedType = searchParams.get("type") ?? allTypes;
   const isGlobalType = selectedType === allTypes;
-  const selectedStatus = searchParams.get("status") ?? allStatuses;
   const refs = searchParams.get("refs") ?? allOptions;
   const cover = searchParams.get("cover") ?? allOptions;
   const sort = searchParams.get("sort") ?? defaultSort;
   const direction = searchParams.get("direction") === "desc" ? "desc" : defaultDirection;
   const view = searchParams.get("view") === "grid" ? "grid" : defaultView;
-  const titleLanguage = searchParams.get("titleLanguage") ?? defaultTitleLanguage;
+  const titleLanguage = searchParams.get("titleLanguage") ?? defaultTitleOptionId;
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const selectedTypeStats = stats.global?.byType.find((type) => type.id === selectedType);
   const scopeStats = isGlobalType ? stats.global : stats.category;
   const selectedTypeConfig = config?.types.find((type) => type.id === selectedType);
-  const titleLanguages = selectedTypeConfig?.titleLanguages ?? [];
-  const defaultTitleLabel = selectedTypeConfig?.defaultTitleLanguage
-    ? `Default title (${titleLanguageLabel(selectedTypeConfig.defaultTitleLanguage)})`
+  const scopeTypeConfigs = isGlobalType
+    ? (config?.types ?? [])
+    : selectedTypeConfig
+      ? [selectedTypeConfig]
+      : [];
+  const supportsRefsFilter =
+    !config || scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["externalRef"]));
+  const supportsCoverFilter =
+    !config ||
+    scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["image", "imageList"]));
+  const effectiveRefs = supportsRefsFilter ? refs : allOptions;
+  const effectiveCover = supportsCoverFilter ? cover : allOptions;
+  const titleLanguages = titleLanguageOptions(selectedTypeConfig);
+  const defaultTitle = defaultTitleOption(selectedTypeConfig);
+  const defaultTitleLabel = defaultTitle
+    ? `Default title (${titleLanguageLabel(defaultTitle)})`
     : "Default title";
   const effectiveTitleLanguage = titleLanguages.includes(titleLanguage)
     ? titleLanguage
-    : defaultTitleLanguage;
+    : defaultTitleOptionId;
   const effectiveSort =
     scopeStats &&
     sort.startsWith("date:") &&
     !scopeStats.dateFields.includes(sort.slice("date:".length))
       ? defaultSort
       : sort;
-  const effectiveStatus =
-    scopeStats &&
-    selectedStatus !== allStatuses &&
-    !scopeStats.byStatus.some((item) => item.name === selectedStatus)
-      ? allStatuses
-      : selectedStatus;
   const entryCount = isGlobalType
     ? (stats.global?.total ?? list.total)
     : (selectedTypeStats?.count ?? list.total);
   const filtersActive =
-    effectiveStatus !== allStatuses ||
-    refs !== allOptions ||
-    cover !== allOptions ||
+    effectiveRefs !== allOptions ||
+    effectiveCover !== allOptions ||
     effectiveSort !== defaultSort ||
     direction !== defaultDirection ||
     view !== defaultView ||
-    effectiveTitleLanguage !== defaultTitleLanguage;
+    effectiveTitleLanguage !== defaultTitleOptionId;
 
   useEffect(() => {
     const controller = new AbortController();
     void loadGlobalStats(controller.signal);
     void loadConfig(controller.signal);
+    void loadCapabilities(controller.signal);
     return () => controller.abort();
   }, []);
 
@@ -158,29 +166,47 @@ export function LibraryPage() {
   }, [scopeStats, sort]);
 
   useEffect(() => {
-    if (!scopeStats || selectedStatus === allStatuses) return;
-    if (scopeStats.byStatus.some((item) => item.name === selectedStatus)) return;
-    setQueryParam("status", allStatuses, allStatuses);
-  }, [scopeStats, selectedStatus]);
+    if (!config || supportsRefsFilter || refs === allOptions) return;
+    setQueryParam("refs", allOptions);
+  }, [config, supportsRefsFilter, refs]);
 
   useEffect(() => {
-    if (!config || titleLanguage === defaultTitleLanguage) return;
+    if (!config || supportsCoverFilter || cover === allOptions) return;
+    setQueryParam("cover", allOptions);
+  }, [config, supportsCoverFilter, cover]);
+
+  useEffect(() => {
+    if (!config || titleLanguage === defaultTitleOptionId) return;
     if (titleLanguages.includes(titleLanguage)) return;
-    setQueryParam("titleLanguage", defaultTitleLanguage, defaultTitleLanguage, false);
+    setQueryParam("titleLanguage", defaultTitleOptionId, defaultTitleOptionId, false);
   }, [config, titleLanguages, titleLanguage]);
 
   useEffect(() => {
     if (!stats.global || !selectedType || !searchParams.has("type")) return;
+    if ((!supportsRefsFilter && refs !== allOptions) || (!supportsCoverFilter && cover !== allOptions)) {
+      return;
+    }
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
-  }, [stats.global, selectedType, selectedStatus, refs, cover, sort, direction, view, titleLanguage]);
+  }, [
+    stats.global,
+    selectedType,
+    searchParams,
+    supportsRefsFilter,
+    supportsCoverFilter,
+    refs,
+    cover,
+    sort,
+    direction,
+    view,
+    titleLanguage,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
     void loadEntities({
       type: selectedType,
-      status: effectiveStatus,
-      refs,
-      cover,
+      refs: effectiveRefs,
+      cover: effectiveCover,
       sort: effectiveSort,
       direction,
       titleLanguage: effectiveTitleLanguage,
@@ -188,7 +214,7 @@ export function LibraryPage() {
       page,
     }, controller.signal);
     return () => controller.abort();
-  }, [selectedType, effectiveStatus, refs, cover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
+  }, [selectedType, effectiveRefs, effectiveCover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
 
   async function loadGlobalStats(signal: AbortSignal) {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
@@ -221,9 +247,17 @@ export function LibraryPage() {
     }
   }
 
+  async function loadCapabilities(signal: AbortSignal) {
+    try {
+      setCapabilities(await getAppCapabilities({ signal }));
+    } catch (error) {
+      if (isAbortError(error)) return;
+      setStats((current) => ({ ...current, error: errorMessage(error) }));
+    }
+  }
+
   async function loadEntities(filters: {
     type: string;
-    status: string;
     refs: string;
     cover: string;
     sort: string;
@@ -242,7 +276,6 @@ export function LibraryPage() {
           sort: filters.sort,
           direction: filters.direction,
           titleLanguage: filters.titleLanguage,
-          ...(filters.status !== allStatuses ? { status: filters.status } : {}),
           ...(filters.refs !== allOptions ? { refs: filters.refs } : {}),
           ...(filters.cover !== allOptions ? { cover: filters.cover } : {}),
           ...(filters.q.trim() ? { q: filters.q.trim() } : {}),
@@ -316,6 +349,30 @@ export function LibraryPage() {
                 >
                   <SlidersHorizontalIcon />
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  disabled={capabilities?.contentWritable === false}
+                  aria-label="Add entity"
+                  title={
+                    capabilities?.contentWritable === false
+                      ? "Content writes are disabled"
+                      : "Add entity"
+                  }
+                  asChild={capabilities?.contentWritable !== false}
+                >
+                  {capabilities?.contentWritable === false ? (
+                    <span>
+                      <PlusIcon />
+                    </span>
+                  ) : (
+                    <Link to="/entities/new">
+                      <PlusIcon />
+                    </Link>
+                  )}
+                </Button>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span>{entryCount.toLocaleString()} entries</span>
@@ -328,23 +385,23 @@ export function LibraryPage() {
                   showLabel={false}
                   className="mt-2"
                   stats={scopeStats}
-                  status={effectiveStatus}
-                  refs={refs}
-                  cover={cover}
+                  showRefsFilter={supportsRefsFilter}
+                  showCoverFilter={supportsCoverFilter}
+                  refs={effectiveRefs}
+                  cover={effectiveCover}
                   sort={effectiveSort}
                   direction={direction}
                   view={view}
                   titleLanguage={effectiveTitleLanguage}
                   titleLanguages={titleLanguages}
                   defaultTitleLabel={defaultTitleLabel}
-                  onStatusChange={(value) => setQueryParam("status", value, allStatuses)}
                   onRefsChange={(value) => setQueryParam("refs", value)}
                   onCoverChange={(value) => setQueryParam("cover", value)}
                   onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
                   onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
                   onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
                   onTitleLanguageChange={(value) =>
-                    setQueryParam("titleLanguage", value, defaultTitleLanguage, false)
+                    setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
                   }
                 />
               ) : null}
@@ -353,23 +410,23 @@ export function LibraryPage() {
             <AssetToolbar
               className="hidden md:flex"
               stats={scopeStats}
-              status={effectiveStatus}
-              refs={refs}
-              cover={cover}
+              showRefsFilter={supportsRefsFilter}
+              showCoverFilter={supportsCoverFilter}
+              refs={effectiveRefs}
+              cover={effectiveCover}
               sort={effectiveSort}
               direction={direction}
               view={view}
               titleLanguage={effectiveTitleLanguage}
               titleLanguages={titleLanguages}
               defaultTitleLabel={defaultTitleLabel}
-              onStatusChange={(value) => setQueryParam("status", value, allStatuses)}
               onRefsChange={(value) => setQueryParam("refs", value)}
               onCoverChange={(value) => setQueryParam("cover", value)}
               onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
               onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
               onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
               onTitleLanguageChange={(value) =>
-                setQueryParam("titleLanguage", value, defaultTitleLanguage, false)
+                setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
               }
             />
 
@@ -378,9 +435,35 @@ export function LibraryPage() {
                 {list.total} entries
                 {list.total > 0 ? ` · page ${list.page}/${list.totalPages}` : ""}
               </span>
-              <span>
-                {list.loading || stats.loading ? "Loading" : stats.global?.generatedAt.slice(0, 10)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span>
+                  {list.loading || stats.loading ? "Loading" : stats.global?.generatedAt.slice(0, 10)}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={capabilities?.contentWritable === false}
+                  title={
+                    capabilities?.contentWritable === false
+                      ? "Content writes are disabled"
+                      : "Add entity"
+                  }
+                  asChild={capabilities?.contentWritable !== false}
+                >
+                  {capabilities?.contentWritable === false ? (
+                    <span>
+                      <PlusIcon data-icon="inline-start" />
+                      Add
+                    </span>
+                  ) : (
+                    <Link to="/entities/new">
+                      <PlusIcon data-icon="inline-start" />
+                      Add
+                    </Link>
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="min-h-0 flex-1 overflow-auto">
               {view === "grid" ? (
@@ -421,7 +504,7 @@ export function LibraryPage() {
 }
 
 function hasPreferenceParams(params: URLSearchParams) {
-  return ["status", "refs", "cover", "sort", "direction", "view", "titleLanguage"].some((key) =>
+  return ["refs", "cover", "sort", "direction", "view", "titleLanguage"].some((key) =>
     params.has(key),
   );
 }

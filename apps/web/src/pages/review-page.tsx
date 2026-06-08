@@ -15,8 +15,6 @@ import {
   entityDateOptions,
   entityMatchesDate,
   entityMatchesQuery,
-  entityMatchesStatus,
-  entityStatusOptions,
   entityTypeOptions,
 } from "@/lib/entity-filters";
 import { cn } from "@/lib/utils";
@@ -46,7 +44,6 @@ type FilterableItem =
 const queueDefinitions: QueueDefinition[] = [
   { id: "missing-cover", label: "Missing Cover", kind: "entity" },
   { id: "missing-refs", label: "Missing External Refs", kind: "entity" },
-  { id: "missing-summary", label: "Missing Summary", kind: "entity" },
   { id: "isolated", label: "Isolated Nodes", kind: "entity" },
   { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
 ];
@@ -57,7 +54,6 @@ export function ReviewPage() {
   const [state, setState] = useState<CleanupState>({ loading: true });
   const query = searchParams.get("q") ?? "";
   const selectedType = searchParams.get("type") ?? allEntityFilter;
-  const selectedStatus = searchParams.get("status") ?? allEntityFilter;
   const selectedDate = searchParams.get("date") ?? allEntityFilter;
   const [queryInput, setQueryInput] = useState(query);
 
@@ -103,17 +99,15 @@ export function ReviewPage() {
   );
   const itemEntities = useMemo(() => items.map((item) => item.entity), [items]);
   const typeOptions = useMemo(() => entityTypeOptions(itemEntities), [itemEntities]);
-  const statusOptions = useMemo(() => entityStatusOptions(itemEntities), [itemEntities]);
   const dateOptions = useMemo(() => entityDateOptions(itemEntities), [itemEntities]);
   const filteredItems = useMemo(
     () =>
       items
         .filter((item) => matchesQuery(item, query))
         .filter((item) => selectedType === allEntityFilter || item.entity.type === selectedType)
-        .filter((item) => entityMatchesStatus(item.entity, selectedStatus))
         .filter((item) => entityMatchesDate(item.entity, selectedDate))
         .sort(compareItems),
-    [items, query, selectedType, selectedStatus, selectedDate],
+    [items, query, selectedType, selectedDate],
   );
 
   return (
@@ -142,7 +136,7 @@ export function ReviewPage() {
         {state.data && activeQueue ? (
           <>
             <section className="flex flex-col gap-3 rounded-md border px-3 py-3">
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(220px,1fr)_repeat(3,auto)]">
+              <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(220px,1fr)_repeat(2,auto)]">
                 <div className="flex min-w-0 items-center gap-2">
                   <SearchIcon className="text-muted-foreground" />
                   <Input
@@ -154,17 +148,6 @@ export function ReviewPage() {
                 <Select value={selectedType} onChange={(event) => setFilter("type", event.target.value)}>
                   <option value={allEntityFilter}>All types</option>
                   {typeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label} ({option.count})
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  value={selectedStatus}
-                  onChange={(event) => setFilter("status", event.target.value)}
-                >
-                  <option value={allEntityFilter}>All statuses</option>
-                  {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label} ({option.count})
                     </option>
@@ -293,7 +276,6 @@ function EntitySummaryCell({
           {entity.title}
         </Link>
         <Badge variant="outline">{entity.typeLabel}</Badge>
-        {entity.status ? <Badge variant="secondary">{entity.status}</Badge> : null}
       </div>
       <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <EntityDateList entity={entity} compact />
@@ -339,9 +321,6 @@ function queueItems(data: CleanupQueuesResponse, queue: QueueDefinition): Filter
   }
   if (queue.id === "missing-refs") {
     return data.missingExternalRefs.map((entity) => ({ kind: "entity", entity }));
-  }
-  if (queue.id === "missing-summary") {
-    return data.missingSummary.map((entity) => ({ kind: "entity", entity }));
   }
   if (queue.id === "isolated") {
     return data.isolated.map((entity) => ({ kind: "entity", entity }));

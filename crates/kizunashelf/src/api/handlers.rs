@@ -1,15 +1,14 @@
 use super::entities::sort_entities_for_entity_list;
 use super::error::{ApiError, ApiResult};
-use super::state::{get_library, AppState};
+use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{build_calendar, CalendarBuildOptions, CalendarSource};
 use crate::contract::{
-    CalendarResponse, ConfigResponse, HealthResponse, HomeResponse, HomeSectionResponse,
-    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, TypeConfigResponse,
+    CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
+    HomeSectionResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
 };
 use crate::dates::clamp_number;
-use crate::library::effective_default_title_language;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
-use crate::types::{HomeSectionConfig, Library};
+use crate::types::{Entity, HomeSectionConfig, Library};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -27,26 +26,23 @@ pub(crate) async fn health(State(state): State<AppState>) -> ApiResult<HealthRes
     }))
 }
 
+pub(crate) async fn capabilities(State(state): State<AppState>) -> ApiResult<CapabilitiesResponse> {
+    let library = get_library(&state).await?;
+    let content_writable = content_writes_enabled(&state, &library);
+    Ok(Json(CapabilitiesResponse {
+        settings_writable: state.options.settings_writable,
+        content_writable,
+        external_search_enabled: true,
+        external_apply_enabled: content_writable,
+    }))
+}
+
 pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
     let library = get_library(&state).await?;
     Ok(Json(ConfigResponse {
         taxonomy_root: library.config.taxonomy_root.clone(),
         home: library.config.home.clone(),
-        types: library
-            .config
-            .types
-            .iter()
-            .map(|item| TypeConfigResponse {
-                id: item.id.clone(),
-                label: item.label.clone(),
-                icon: item.icon.clone(),
-                path: item.path.clone(),
-                default_title_language: effective_default_title_language(item),
-                title_languages: item.fields.title_languages.keys().cloned().collect(),
-                status_fields: item.fields.status.clone(),
-                date_roles: item.fields.date_roles.clone(),
-            })
-            .collect(),
+        types: library.config.types.clone(),
     }))
 }
 
@@ -84,6 +80,7 @@ pub(crate) async fn save_settings_config(
         return Err(ApiError::forbidden("Settings writes are disabled"));
     }
     let config_path = state.options.config_path.clone();
+    crate::library::ensure_config_directories(&config).await?;
     crate::library::save_config(&config_path, &config).await?;
     state.invalidate_cache().await;
     Ok(Json(SettingsConfigResponse {
@@ -206,7 +203,6 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         .types
         .iter()
         .find(|item| item.id == section.entity_type);
-    let statuses = normalize_statuses(section);
     let limit = clamp_number(section.limit.unwrap_or(12) as f64, 1, 48) as u32;
     let direction = if section.direction == Some(crate::types::SortDirection::Desc) {
         SortDirection::Desc
@@ -215,20 +211,13 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
     };
     let sort = section.sort.as_deref().unwrap_or("title");
     let mut filtered: Vec<_> = library
-        .summaries
+        .entities
         .iter()
-        .filter(|entity| {
-            if entity.entity_type != section.entity_type {
-                return false;
-            }
-            statuses.is_empty()
-                || statuses
-                    .iter()
-                    .any(|status| status == entity.status.as_deref().unwrap_or("Unknown"))
-        })
-        .cloned()
+        .filter(|entity| entity.summary.entity_type == section.entity_type)
+        .filter(|entity| home_section_filters_match(entity, section))
+        .map(|entity| entity.summary.clone())
         .collect();
-    filtered = sort_entities_for_entity_list(library, filtered, sort, direction, None);
+    filtered = sort_entities_for_entity_list(filtered, sort, direction, None);
     let total = filtered.len();
     let items = filtered
         .into_iter()
@@ -242,7 +231,6 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         type_label: entity_type
             .map(|entity_type| entity_type.label.clone())
             .unwrap_or_else(|| section.entity_type.clone()),
-        status: statuses,
         limit,
         sort: sort.to_string(),
         direction: if direction == SortDirection::Desc {
@@ -256,15 +244,36 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
     }
 }
 
-fn normalize_statuses(section: &HomeSectionConfig) -> Vec<String> {
-    match &section.status {
-        None => Vec::new(),
-        Some(crate::types::StatusConfig::One(value)) if value.is_empty() => Vec::new(),
-        Some(crate::types::StatusConfig::One(value)) => vec![value.clone()],
-        Some(crate::types::StatusConfig::Many(values)) => values
+fn home_section_filters_match(entity: &Entity, section: &HomeSectionConfig) -> bool {
+    section.filters.iter().all(|filter| {
+        let field = filter.field.trim();
+        if field.is_empty() {
+            return true;
+        }
+        let Some(value) = entity.frontmatter.get(field) else {
+            return false;
+        };
+        if filter.values.is_empty() {
+            return !value.is_null();
+        }
+        frontmatter_value_matches_any(value, &filter.values)
+    })
+}
+
+fn frontmatter_value_matches_any(value: &serde_json::Value, expected: &[String]) -> bool {
+    match value {
+        serde_json::Value::Array(items) => items
             .iter()
-            .filter(|value| !value.is_empty())
-            .cloned()
-            .collect(),
+            .any(|item| frontmatter_value_matches_any(item, expected)),
+        serde_json::Value::String(value) => expected.iter().any(|item| item == value),
+        serde_json::Value::Bool(value) => {
+            let value = if *value { "true" } else { "false" };
+            expected.iter().any(|item| item == value)
+        }
+        serde_json::Value::Number(value) => {
+            let value = value.to_string();
+            expected.iter().any(|item| item == &value)
+        }
+        _ => false,
     }
 }

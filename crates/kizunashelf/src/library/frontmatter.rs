@@ -1,4 +1,4 @@
-use crate::types::{EntityDateValue, EntityTypeConfig};
+use crate::types::{EntityDateValue, EntityTypeConfig, FieldType};
 use regex::Regex;
 use serde_json::{Map, Number, Value};
 use std::collections::BTreeMap;
@@ -8,6 +8,11 @@ pub(super) struct ParsedMarkdown {
     pub(super) frontmatter: Map<String, Value>,
     pub(super) body: String,
     pub(super) diagnostics: Vec<String>,
+}
+
+pub struct MarkdownDocument {
+    pub frontmatter: Map<String, Value>,
+    pub body: String,
 }
 
 pub(super) fn parse_markdown(raw: &str) -> ParsedMarkdown {
@@ -52,6 +57,54 @@ pub(super) fn parse_markdown(raw: &str) -> ParsedMarkdown {
         frontmatter,
         body,
         diagnostics,
+    }
+}
+
+pub fn split_markdown_document(raw: &str) -> MarkdownDocument {
+    if !raw.starts_with("---\n") {
+        return MarkdownDocument {
+            frontmatter: Map::new(),
+            body: raw.to_string(),
+        };
+    }
+    let Some(end) = raw[4..].find("\n---").map(|index| index + 4) else {
+        return MarkdownDocument {
+            frontmatter: Map::new(),
+            body: raw.to_string(),
+        };
+    };
+    let yaml_text = &raw[4..end];
+    let frontmatter = serde_yaml::from_str::<serde_yaml::Value>(yaml_text)
+        .ok()
+        .and_then(yaml_to_json_value)
+        .and_then(|value| match value {
+            Value::Object(map) => Some(map),
+            _ => None,
+        })
+        .unwrap_or_default();
+    MarkdownDocument {
+        frontmatter,
+        body: raw[end + 4..].to_string(),
+    }
+}
+
+pub fn serialize_markdown_document(frontmatter: &Map<String, Value>, body: &str) -> String {
+    if frontmatter.is_empty() {
+        return body.to_string();
+    }
+    let mut yaml = serde_yaml::to_string(frontmatter).unwrap_or_default();
+    if let Some(stripped) = yaml.strip_prefix("---\n") {
+        yaml = stripped.to_string();
+    }
+    if !yaml.ends_with('\n') {
+        yaml.push('\n');
+    }
+    if body.is_empty() {
+        format!("---\n{yaml}---\n")
+    } else if body.starts_with('\n') {
+        format!("---\n{yaml}---{body}")
+    } else {
+        format!("---\n{yaml}---\n{body}")
     }
 }
 
@@ -123,48 +176,62 @@ pub(super) fn first_string(frontmatter: &Map<String, Value>, keys: &[String]) ->
         .next()
 }
 
-fn first_string_with_basename(
-    frontmatter: &Map<String, Value>,
-    keys: &[String],
-    basename: &str,
-) -> Option<String> {
-    keys.iter()
-        .filter_map(|key| normalize_title_field(frontmatter, key, basename))
-        .next()
-}
-
 pub(super) fn title_languages(
     frontmatter: &Map<String, Value>,
     basename: &str,
     type_config: &EntityTypeConfig,
 ) -> BTreeMap<String, String> {
-    type_config
+    let mut titles = BTreeMap::new();
+    if let Some(filename) = &type_config.filename {
+        if let Some(language) = &filename.title_language {
+            titles.insert(language.clone(), basename.to_string());
+        }
+    }
+    for field in type_config
         .fields
-        .title_languages
         .iter()
-        .filter_map(|(language, fields)| {
-            first_string_with_basename(frontmatter, fields, basename)
-                .map(|title| (language.clone(), title))
-        })
-        .collect()
-}
-
-pub fn effective_default_title_language(type_config: &EntityTypeConfig) -> Option<String> {
-    type_config
-        .default_title_language
-        .as_ref()
-        .filter(|language| type_config.fields.title_languages.contains_key(*language))
-        .cloned()
-        .or_else(|| type_config.fields.title_languages.keys().next().cloned())
+        .filter(|field| field.field_type == FieldType::Title)
+    {
+        let Some(language) = &field.title_language else {
+            continue;
+        };
+        if titles.contains_key(language) {
+            continue;
+        }
+        if let Some(title) = normalize_title_field(frontmatter, &field.field, basename) {
+            titles.insert(language.clone(), title);
+        }
+    }
+    titles
 }
 
 pub(super) fn default_title(
+    frontmatter: &Map<String, Value>,
     titles: &BTreeMap<String, String>,
     basename: &str,
     type_config: &EntityTypeConfig,
 ) -> String {
-    effective_default_title_language(type_config)
-        .and_then(|language| titles.get(&language).cloned())
+    if type_config
+        .filename
+        .as_ref()
+        .is_some_and(|filename| filename.default_title)
+    {
+        return basename.to_string();
+    }
+
+    type_config
+        .fields
+        .iter()
+        .find(|field| field.field_type == FieldType::Title && field.default_title.unwrap_or(false))
+        .and_then(|field| normalize_title_field(frontmatter, &field.field, basename))
+        .or_else(|| type_config.filename.as_ref().map(|_| basename.to_string()))
+        .or_else(|| {
+            type_config
+                .fields
+                .iter()
+                .find(|field| field.field_type == FieldType::Title)
+                .and_then(|field| normalize_title_field(frontmatter, &field.field, basename))
+        })
         .or_else(|| titles.values().next().cloned())
         .unwrap_or_else(|| basename.to_string())
 }

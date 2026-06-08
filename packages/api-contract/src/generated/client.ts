@@ -13,12 +13,28 @@ import {
 } from './calendarResponse.zod';
 
 import {
+  CapabilitiesResponse
+} from './capabilitiesResponse.zod';
+
+import {
   CleanupQueuesResponse
 } from './cleanupQueuesResponse.zod';
 
 import {
   ConfigResponse
 } from './configResponse.zod';
+
+import type {
+  CreateEntityRequest
+} from './createEntityRequest.zod';
+
+import type {
+  DeleteEntityRequest
+} from './deleteEntityRequest.zod';
+
+import {
+  DeleteEntityResponse
+} from './deleteEntityResponse.zod';
 
 import {
   EntityDatesResponse
@@ -31,6 +47,14 @@ import {
 import {
   EntityListResponse
 } from './entityListResponse.zod';
+
+import {
+  EntityMutationResponse
+} from './entityMutationResponse.zod';
+
+import {
+  ExternalSearchResponse
+} from './externalSearchResponse.zod';
 
 import type {
   GetCalendarParams
@@ -76,6 +100,10 @@ import {
   RelationListResponse
 } from './relationListResponse.zod';
 
+import type {
+  SearchExternalSourcesParams
+} from './searchExternalSourcesParams.zod';
+
 import {
   SettingsConfigResponse
 } from './settingsConfigResponse.zod';
@@ -83,6 +111,10 @@ import {
 import {
   StatsResponse
 } from './statsResponse.zod';
+
+import type {
+  UpdateEntityRequest
+} from './updateEntityRequest.zod';
 
 export const getGetHealthUrl = () => {
 
@@ -108,6 +140,35 @@ export const getHealth = async ( options?: RequestInit, fetchFn?: typeof globalT
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? HealthResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetCapabilitiesUrl = () => {
+
+
+
+
+  return `/api/capabilities`
+}
+
+export const getCapabilities = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<CapabilitiesResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetCapabilitiesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? CapabilitiesResponse.parse(parsedBody) : parsedBody
   return data
 }
 
@@ -395,6 +456,42 @@ export const getCalendar = async (params?: GetCalendarParams, options?: RequestI
 
 
 
+export const getSearchExternalSourcesUrl = (params?: SearchExternalSourcesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/external/search?${stringifiedParams}` : `/api/external/search`
+}
+
+export const searchExternalSources = async (params?: SearchExternalSourcesParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ExternalSearchResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getSearchExternalSourcesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ExternalSearchResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
 export const getGetEntitiesUrl = (params?: GetEntitiesParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -426,6 +523,35 @@ export const getEntities = async (params?: GetEntitiesParams, options?: RequestI
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? EntityListResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCreateEntityUrl = () => {
+
+
+
+
+  return `/api/entities`
+}
+
+export const createEntity = async (createEntityRequest: CreateEntityRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityMutationResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getCreateEntityUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createEntityRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityMutationResponse.parse(parsedBody) : parsedBody
   return data
 }
 
@@ -484,6 +610,66 @@ export const getEntity = async (id: string, options?: RequestInit, fetchFn?: typ
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? EntityDetailResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getUpdateEntityUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}`
+}
+
+export const updateEntity = async (id: string,
+    updateEntityRequest: UpdateEntityRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityMutationResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getUpdateEntityUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateEntityRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityMutationResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getDeleteEntityUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}`
+}
+
+export const deleteEntity = async (id: string,
+    deleteEntityRequest: DeleteEntityRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<DeleteEntityResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getDeleteEntityUrl(id),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(deleteEntityRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? DeleteEntityResponse.parse(parsedBody) : parsedBody
   return data
 }
 

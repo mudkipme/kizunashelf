@@ -27,13 +27,7 @@ export function HomeEntityCard({ entity }: { entity: EntitySummary }) {
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-2.5">
         <div className="line-clamp-2 text-sm font-medium leading-5">{entity.title}</div>
         <div className="flex min-w-0 items-center gap-2">
-          {entity.status ? (
-            <Badge variant="outline" className="max-w-full truncate">
-              {entity.status}
-            </Badge>
-          ) : (
-            <Badge variant="outline">{entity.typeLabel}</Badge>
-          )}
+          <Badge variant="outline">{entity.typeLabel}</Badge>
         </div>
         <div className="mt-auto flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <span className="min-w-0 truncate">

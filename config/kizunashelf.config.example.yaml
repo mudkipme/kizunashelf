@@ -1,0 +1,128 @@
+vaultRoot: /path/to/ObsidianVault
+taxonomyRoot: Taxonomy
+contentWritable: true
+readConcurrency: 8
+dailyNotes:
+  paths:
+  - Daily Notes
+  datePattern: '^(?:Daily Notes/)?(?<date>\d{4}-\d{2}-\d{2})\.md$'
+  snippetMaxLength: 260
+home:
+  title: Home
+  sections:
+  - id: recent-anime
+    title: Recent Anime
+    type: Anime
+    limit: 12
+    sort: date:season
+    direction: desc
+types:
+- id: Anime
+  label: Anime
+  icon: "📺"
+  path: Anime
+  filename:
+    titleLanguage: zh
+    defaultTitle: true
+  fields:
+  - field: id
+    fieldType: id
+    displayName: ID
+  - field: title_ja
+    fieldType: title
+    displayName: Title (Japanese)
+    titleLanguage: ja
+    externalFields:
+    - source: bangumi
+      field: name
+  - field: title_en
+    fieldType: title
+    displayName: Title (English)
+    titleLanguage: en
+  - field: cover_url
+    fieldType: image
+    displayName: Cover
+    externalFields:
+    - source: bangumi
+      field: cover_url
+  - field: state
+    fieldType: enum
+    displayName: State
+    enumOptions:
+    - Backlog
+    - Watching
+    - Completed
+  - field: progress
+    fieldType: progress
+    displayName: Progress
+    totalProgressField: episodes
+  - field: episodes
+    fieldType: totalProgress
+    displayName: Episodes
+    externalFields:
+    - source: bangumi
+      field: total_episodes
+  - field: season
+    fieldType: season
+    displayName: Season
+    dateRole: planning
+    seasonLanguage: zh
+  - field: complete_date
+    fieldType: date
+    displayName: Completed date
+    dateRole: completed
+  - field: bgm_url
+    fieldType: externalRef
+    displayName: BGM
+    externalRef: bangumi
+    externalTypes:
+    - "2"
+  - field: franchise
+    fieldType: relation
+    displayName: Franchise
+    relationType: franchise
+- id: Games
+  label: Games
+  icon: "🎮"
+  path: Games
+  filename:
+    titleLanguage: zh
+    defaultTitle: true
+  fields:
+  - field: title_en
+    fieldType: title
+    displayName: Title (English)
+    titleLanguage: en
+    externalFields:
+    - source: igdb
+      field: name
+  - field: cover_url
+    fieldType: image
+    displayName: Cover
+    externalFields:
+    - source: igdb
+      field: cover_url
+  - field: state
+    fieldType: enum
+    displayName: State
+    enumOptions:
+    - Backlog
+    - Playing
+    - Completed
+  - field: release_date
+    fieldType: date
+    displayName: Release date
+    dateRole: planning
+    externalFields:
+    - source: igdb
+      field: first_release_date
+  - field: igdb_url
+    fieldType: externalRef
+    displayName: IGDB
+    externalRef: igdb
+    externalTypes:
+    - game
+  - field: developer
+    fieldType: relation
+    displayName: Developer
+    relationType: developer

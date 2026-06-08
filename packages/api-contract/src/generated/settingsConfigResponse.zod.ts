@@ -6,21 +6,20 @@
  */
 import { z as zod } from 'zod';
 
-export const settingsConfigResponseConfigOneRelationshipFieldsDefault = [];
 export const settingsConfigResponseConfigOneReadConcurrencyMin = 0;
 
 export const settingsConfigResponseConfigOneHomeOneSectionsItemLimitMin = 0;
 
 export const settingsConfigResponseConfigOneDailyNotesOneSnippetMaxLengthMin = 0;
 
-
+export const settingsConfigResponseConfigOneTypesItemFieldsDefault = [];
 export const SettingsConfigResponse = zod.object({
   "configPath": zod.string(),
   "exists": zod.boolean(),
   "config": zod.union([zod.object({
   "vaultRoot": zod.string(),
   "taxonomyRoot": zod.string(),
-  "relationshipFields": zod.array(zod.string()).default(settingsConfigResponseConfigOneRelationshipFieldsDefault),
+  "contentWritable": zod.boolean().nullish(),
   "readConcurrency": zod.number().min(settingsConfigResponseConfigOneReadConcurrencyMin).nullish(),
   "home": zod.union([zod.object({
   "title": zod.string().nullish(),
@@ -28,7 +27,10 @@ export const SettingsConfigResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "type": zod.string(),
-  "status": zod.union([zod.union([zod.string(),zod.array(zod.string())]),zod.null()]).optional(),
+  "filters": zod.array(zod.object({
+  "field": zod.string(),
+  "values": zod.array(zod.string()).optional()
+})).optional(),
   "limit": zod.number().min(settingsConfigResponseConfigOneHomeOneSectionsItemLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
@@ -44,20 +46,29 @@ export const SettingsConfigResponse = zod.object({
   "label": zod.string(),
   "icon": zod.string().nullish(),
   "path": zod.string(),
-  "defaultTitleLanguage": zod.string().nullish(),
-  "fields": zod.object({
-  "id": zod.array(zod.string()).optional(),
-  "titleLanguages": zod.record(zod.string(), zod.array(zod.string())).optional(),
-  "subtitle": zod.array(zod.string()).optional(),
-  "image": zod.array(zod.string()).optional(),
-  "status": zod.array(zod.string()).optional(),
-  "dateRoles": zod.object({
-  "planning": zod.array(zod.string()).optional(),
-  "completed": zod.array(zod.string()).optional()
-}).optional(),
-  "externalRefs": zod.array(zod.string()).optional(),
-  "relations": zod.array(zod.string()).optional()
-})
+  "filename": zod.union([zod.object({
+  "titleLanguage": zod.string().nullish(),
+  "defaultTitle": zod.boolean().optional()
+}),zod.null()]).optional(),
+  "fields": zod.array(zod.object({
+  "field": zod.string(),
+  "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'bool', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),
+  "displayName": zod.string().nullish(),
+  "titleLanguage": zod.string().nullish(),
+  "titleRole": zod.union([zod.enum(['original']),zod.null()]).optional(),
+  "externalFields": zod.array(zod.object({
+  "source": zod.string(),
+  "field": zod.string()
+})).optional(),
+  "defaultTitle": zod.boolean().nullish(),
+  "enumOptions": zod.array(zod.string()).optional(),
+  "totalProgressField": zod.string().nullish(),
+  "dateRole": zod.union([zod.enum(['planning', 'completed']),zod.null()]).optional(),
+  "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
+  "externalRef": zod.string().nullish(),
+  "externalTypes": zod.array(zod.string()).optional(),
+  "relationType": zod.string().nullish()
+})).default(settingsConfigResponseConfigOneTypesItemFieldsDefault)
 }))
 }),zod.null()]).optional(),
   "error": zod.string().nullish()

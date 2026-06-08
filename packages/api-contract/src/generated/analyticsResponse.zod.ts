@@ -18,8 +18,6 @@ export const analyticsResponseTotalsConnectedEntitiesMin = 0;
 
 export const analyticsResponseDistributionsByTypeItemCountMin = 0;
 
-export const analyticsResponseDistributionsByStatusItemCountMin = 0;
-
 export const analyticsResponseDistributionsByRelationFieldItemCountMin = 0;
 
 export const analyticsResponseDistributionsBySourceTargetTypeItemCountMin = 0;
@@ -68,8 +66,6 @@ export const analyticsResponseDataQualityMissingCoverItemRelationCountMin = 0;
 
 export const analyticsResponseDataQualityMissingExternalRefsItemRelationCountMin = 0;
 
-export const analyticsResponseDataQualityMissingSummaryItemRelationCountMin = 0;
-
 export const analyticsResponseDataQualityIsolatedItemRelationCountMin = 0;
 
 
@@ -88,10 +84,6 @@ export const AnalyticsResponse = zod.object({
   "label": zod.string(),
   "icon": zod.string().nullish(),
   "count": zod.number().min(analyticsResponseDistributionsByTypeItemCountMin)
-})),
-  "byStatus": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsResponseDistributionsByStatusItemCountMin)
 })),
   "byRelationField": zod.array(zod.object({
   "name": zod.string(),
@@ -124,8 +116,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -171,8 +161,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -203,8 +191,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -236,8 +222,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -255,8 +239,6 @@ export const AnalyticsResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()
@@ -268,33 +250,12 @@ export const AnalyticsResponse = zod.object({
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(analyticsResponseDataQualityMissingExternalRefsItemRelationCountMin)
 })),
-  "missingSummary": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.string(),
-  "typeLabel": zod.string(),
-  "title": zod.string(),
-  "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
-  "dates": zod.array(zod.object({
-  "field": zod.string(),
-  "value": zod.string()
-})),
-  "image": zod.string().nullish(),
-  "summary": zod.string().nullish(),
-  "path": zod.string(),
-  "basename": zod.string(),
-  "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(analyticsResponseDataQualityMissingSummaryItemRelationCountMin)
-})),
   "isolated": zod.array(zod.object({
   "id": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()

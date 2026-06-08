@@ -40,11 +40,8 @@ pub fn parse_entity_date(value: Option<&str>) -> Option<ParsedEntityDate> {
         .and_then(|captures| captures.get(2))
         .and_then(|month| month.as_str().parse::<u32>().ok())
         .map(|month| clamp_number(month as f64, 1, 12) as u32);
-    let season = season_regex()
-        .captures(value)
-        .and_then(|captures| captures.get(1))
-        .map(|season| season.as_str().to_string())
-        .or_else(|| month.map(|month| season_for_month(month).to_string()));
+    let season =
+        parse_season_name(value).or_else(|| month.map(|month| season_for_month(month).to_string()));
 
     Some(ParsedEntityDate {
         year,
@@ -67,11 +64,11 @@ pub fn date_sort_key(value: Option<&str>) -> Option<String> {
 }
 
 pub fn season_compare_value(season: &str) -> i32 {
-    match season {
-        "冬季" => 0,
-        "春季" => 1,
-        "夏季" => 2,
-        "秋季" => 3,
+    match normalize_season_name(season).as_deref() {
+        Some("winter") => 0,
+        Some("spring") => 1,
+        Some("summer") => 2,
+        Some("autumn") => 3,
         _ => i32::MIN,
     }
 }
@@ -134,11 +131,33 @@ fn season_for_month(month: u32) -> &'static str {
 }
 
 fn season_end_date(season: &str) -> Option<(u32, u32)> {
-    match season {
-        "冬季" => Some((3, 31)),
-        "春季" => Some((6, 30)),
-        "夏季" => Some((9, 30)),
-        "秋季" => Some((12, 31)),
+    match normalize_season_name(season).as_deref() {
+        Some("winter") => Some((3, 31)),
+        Some("spring") => Some((6, 30)),
+        Some("summer") => Some((9, 30)),
+        Some("autumn") => Some((12, 31)),
+        _ => None,
+    }
+}
+
+fn parse_season_name(value: &str) -> Option<String> {
+    season_regex()
+        .captures(value)
+        .and_then(|captures| {
+            captures
+                .get(1)
+                .or_else(|| captures.get(2))
+                .or_else(|| captures.get(3))
+        })
+        .map(|season| season.as_str().to_string())
+}
+
+fn normalize_season_name(season: &str) -> Option<String> {
+    match season.trim().to_ascii_lowercase().as_str() {
+        "冬季" | "winter" => Some("winter".to_string()),
+        "春季" | "spring" => Some("spring".to_string()),
+        "夏季" | "summer" => Some("summer".to_string()),
+        "秋季" | "autumn" | "fall" => Some("autumn".to_string()),
         _ => None,
     }
 }
@@ -167,5 +186,41 @@ fn year_month_regex() -> &'static Regex {
 
 fn season_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"年(春季|夏季|秋季|冬季)").unwrap())
+    RE.get_or_init(|| {
+        Regex::new(r"(?i)年(春季|夏季|秋季|冬季)|\b(?:19|20)\d{2}\s*(Spring|Summer|Autumn|Fall|Winter)\b|\b(Spring|Summer|Autumn|Fall|Winter)\s+(?:19|20)\d{2}\b").unwrap()
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_chinese_and_english_season_dates() {
+        assert_eq!(
+            parse_entity_date(Some("2025年春季")).unwrap().season,
+            Some("春季".to_string())
+        );
+        assert_eq!(
+            parse_entity_date(Some("Spring 2025")).unwrap().season,
+            Some("Spring".to_string())
+        );
+        assert_eq!(
+            parse_entity_date(Some("2025 Fall")).unwrap().season,
+            Some("Fall".to_string())
+        );
+    }
+
+    #[test]
+    fn season_sort_keys_support_english_terms() {
+        assert_eq!(
+            date_sort_key(Some("Spring 2025")),
+            Some("2025-06-30".to_string())
+        );
+        assert_eq!(
+            date_sort_key(Some("2025 Winter")),
+            Some("2025-03-31".to_string())
+        );
+        assert!(season_compare_value("Autumn") > season_compare_value("Summer"));
+    }
 }

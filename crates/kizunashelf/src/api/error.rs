@@ -12,6 +12,13 @@ pub struct ApiError {
 }
 
 impl ApiError {
+    pub(crate) fn bad_request(message: &str) -> Self {
+        Self {
+            status: StatusCode::BAD_REQUEST,
+            message: message.to_string(),
+        }
+    }
+
     pub(crate) fn not_found(message: &str) -> Self {
         Self {
             status: StatusCode::NOT_FOUND,
@@ -22,6 +29,13 @@ impl ApiError {
     pub(crate) fn forbidden(message: &str) -> Self {
         Self {
             status: StatusCode::FORBIDDEN,
+            message: message.to_string(),
+        }
+    }
+
+    pub(crate) fn conflict(message: &str) -> Self {
+        Self {
+            status: StatusCode::CONFLICT,
             message: message.to_string(),
         }
     }

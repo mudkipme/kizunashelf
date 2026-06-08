@@ -1,5 +1,5 @@
 use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_frontmatter};
-use crate::types::{Entity, KizunaConfig, Relation, RelationDirection};
+use crate::types::{Entity, FieldType, KizunaConfig, Relation, RelationDirection};
 use anyhow::Result;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -14,22 +14,26 @@ pub(super) async fn build_relations(
     let mut by_basename: HashMap<String, Vec<&Entity>> = HashMap::new();
     for entity in entities {
         by_basename
-            .entry(entity.summary.basename.clone())
+            .entry(normalize_wikilink_target(&entity.summary.basename))
             .or_default()
             .push(entity);
     }
 
     let mut relations = Vec::new();
     for entity in entities {
-        for field in relation_fields(config, &entity.summary.entity_type) {
-            for target_title in relation_values(entity.frontmatter.get(&field)) {
-                let target = find_target(&target_title, &by_basename);
+        for relation_field in relation_fields(config, &entity.summary.entity_type) {
+            for target_title in relation_values(entity.frontmatter.get(&relation_field.field)) {
+                let target = find_target(
+                    &target_title,
+                    relation_field.relation_type.as_deref(),
+                    &by_basename,
+                );
                 relations.push(Relation {
                     source_id: entity.summary.id.clone(),
                     target_id: target.map(|target| target.summary.id.clone()),
                     target_title: target_title.clone(),
                     target_type: target.map(|target| target.summary.entity_type.clone()),
-                    field: field.clone(),
+                    field: relation_field.field.clone(),
                     direction: RelationDirection::Out,
                 });
                 if let Some(target) = target {
@@ -38,7 +42,7 @@ pub(super) async fn build_relations(
                         target_id: Some(entity.summary.id.clone()),
                         target_title: entity.summary.title.clone(),
                         target_type: Some(entity.summary.entity_type.clone()),
-                        field: field.clone(),
+                        field: relation_field.field.clone(),
                         direction: RelationDirection::In,
                     });
                 }
@@ -46,7 +50,7 @@ pub(super) async fn build_relations(
         }
 
         for target_title in body_wikilinks(&entity.body) {
-            let Some(target) = find_target(&target_title, &by_basename) else {
+            let Some(target) = find_target(&target_title, None, &by_basename) else {
                 continue;
             };
             if target.summary.id == entity.summary.id {
@@ -68,16 +72,28 @@ pub(super) async fn build_relations(
     Ok(dedupe_relations(relations))
 }
 
-fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<String> {
+#[derive(Clone)]
+struct RelationFieldConfig {
+    field: String,
+    relation_type: Option<String>,
+}
+
+fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<RelationFieldConfig> {
     let type_config = config.types.iter().find(|item| item.id == entity_type);
     let mut fields = Vec::new();
-    for field in config.relationship_fields.iter().chain(
-        type_config
-            .into_iter()
-            .flat_map(|item| item.fields.relations.iter()),
-    ) {
-        if !fields.contains(field) {
-            fields.push(field.clone());
+    for field in type_config.into_iter().flat_map(|item| {
+        item.fields
+            .iter()
+            .filter(|field| field.field_type == FieldType::Relation)
+    }) {
+        if !fields
+            .iter()
+            .any(|item: &RelationFieldConfig| item.field == field.field)
+        {
+            fields.push(RelationFieldConfig {
+                field: field.field.clone(),
+                relation_type: field.relation_type.clone(),
+            });
         }
     }
     fields
@@ -128,11 +144,7 @@ fn find_target_for_wikilink<'a>(
     by_basename: &HashMap<String, Vec<&'a Entity>>,
 ) -> Option<&'a Entity> {
     let candidates = by_basename.get(&normalize_wikilink_target(target_title))?;
-    candidates
-        .iter()
-        .find(|candidate| candidate.summary.entity_type == "franchise")
-        .copied()
-        .or_else(|| candidates.first().copied())
+    candidates.first().copied()
 }
 
 fn relation_values(value: Option<&Value>) -> Vec<String> {
@@ -173,14 +185,52 @@ fn body_wikilinks(body: &str) -> Vec<String> {
 
 fn find_target<'a>(
     target_title: &str,
+    relation_type: Option<&str>,
     by_basename: &HashMap<String, Vec<&'a Entity>>,
 ) -> Option<&'a Entity> {
-    let candidates = by_basename.get(target_title)?;
-    candidates
-        .iter()
-        .find(|candidate| candidate.summary.entity_type == "franchise")
-        .copied()
-        .or_else(|| candidates.first().copied())
+    let normalized = normalize_wikilink_target(target_title);
+    let candidates = by_basename.get(&normalized)?;
+    let path_parts: Vec<_> = target_title
+        .split('/')
+        .map(str::trim)
+        .filter(|part| !part.is_empty())
+        .collect();
+    let type_path = if path_parts.len() > 1 {
+        path_parts.get(path_parts.len() - 2)
+    } else {
+        None
+    };
+    if let Some(type_path) = type_path {
+        if let Some(candidate) = candidates.iter().find(|candidate| {
+            candidate
+                .summary
+                .path
+                .split('/')
+                .any(|part| part == *type_path)
+        }) {
+            return Some(*candidate);
+        }
+    }
+    let relation_type = relation_type
+        .map(normalize_relation_type)
+        .filter(|value| !value.is_empty());
+    if let Some(relation_type) = relation_type {
+        if let Some(candidate) = candidates.iter().find(|candidate| {
+            normalize_relation_type(&candidate.summary.entity_type) == relation_type
+                || normalize_relation_type(&candidate.summary.type_label) == relation_type
+        }) {
+            return Some(*candidate);
+        }
+    }
+    candidates.first().copied()
+}
+
+fn normalize_relation_type(value: &str) -> String {
+    value
+        .chars()
+        .filter(|character| !matches!(character, ' ' | '_' | '-'))
+        .flat_map(char::to_lowercase)
+        .collect()
 }
 
 fn dedupe_relations(relations: Vec<Relation>) -> Vec<Relation> {

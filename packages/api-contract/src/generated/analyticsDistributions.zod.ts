@@ -8,8 +8,6 @@ import { z as zod } from 'zod';
 
 export const analyticsDistributionsByTypeItemCountMin = 0;
 
-export const analyticsDistributionsByStatusItemCountMin = 0;
-
 export const analyticsDistributionsByRelationFieldItemCountMin = 0;
 
 export const analyticsDistributionsBySourceTargetTypeItemCountMin = 0;
@@ -21,10 +19,6 @@ export const AnalyticsDistributions = zod.object({
   "label": zod.string(),
   "icon": zod.string().nullish(),
   "count": zod.number().min(analyticsDistributionsByTypeItemCountMin)
-})),
-  "byStatus": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsDistributionsByStatusItemCountMin)
 })),
   "byRelationField": zod.array(zod.object({
   "name": zod.string(),

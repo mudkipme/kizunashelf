@@ -21,7 +21,6 @@ export const HomeResponse = zod.object({
   "title": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
-  "status": zod.array(zod.string()),
   "limit": zod.number().min(homeResponseSectionsItemLimitMin),
   "sort": zod.string(),
   "direction": zod.string(),
@@ -32,8 +31,6 @@ export const HomeResponse = zod.object({
   "typeLabel": zod.string(),
   "title": zod.string(),
   "titles": zod.record(zod.string(), zod.string()),
-  "subtitle": zod.string().nullish(),
-  "status": zod.string().nullish(),
   "dates": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.string()

@@ -15,6 +15,7 @@ import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { dateRoleFields, fieldsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type { CalendarDay, CalendarResponse, ConfigResponse, EntitySummary } from "@/types/api";
 
@@ -34,7 +35,10 @@ type PlanningState = {
 
 type CalendarMode = "month" | PlanningMode;
 type ConfigType = ConfigResponse["types"][number];
-type DateRoles = ConfigType["dateRoles"];
+type DateRoles = {
+  planning: string[];
+  completed: string[];
+};
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const entityPageSize = 100;
@@ -157,7 +161,10 @@ export function CalendarPage() {
   const dateRolesByType = useMemo(() => {
     const roles = new Map<string, DateRoles>();
     for (const item of state.config?.types ?? []) {
-      roles.set(item.id, item.dateRoles);
+      roles.set(item.id, {
+        planning: dateRoleFields(item, "planning").map((field) => field.field),
+        completed: dateRoleFields(item, "completed").map((field) => field.field),
+      });
     }
     return roles;
   }, [state.config]);
@@ -393,9 +400,9 @@ function readMode(value: string | null): CalendarMode {
 
 function hasPlanningSurface(type: ConfigType) {
   return (
-    type.statusFields.length > 0 ||
-    (type.dateRoles.planning?.length ?? 0) > 0 ||
-    (type.dateRoles.completed?.length ?? 0) > 0
+    fieldsByType(type, "enum").length > 0 ||
+    dateRoleFields(type, "planning").length > 0 ||
+    dateRoleFields(type, "completed").length > 0
   );
 }
 

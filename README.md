@@ -1,26 +1,26 @@
 # KizunaShelf
 
-KizunaShelf is a read-only personal catalog and relationship browser for an Obsidian vault.
+KizunaShelf is a personal catalog editor and relationship browser for an Obsidian vault.
 
 Use it to organize any typed collection you keep in Markdown: media backlogs, books, games, shows, music, projects, people, places, research notes, or custom archives. The app keeps your Markdown files as the source of truth, builds an in-memory index from configurable frontmatter fields, and gives you one place to browse, track, review, and connect everything.
 
-KizunaShelf is fully schema-driven. You decide which folders are entity types, which frontmatter fields hold titles or images, which fields represent dates or status, and which fields should become relationships. The Rust API can run as a self-hosted web server or be embedded directly inside the Tauri desktop app.
+KizunaShelf is fully schema-driven. You decide which folders are entity types, which frontmatter fields hold titles, images, enums, dates, external refs, and relationships. The Rust API can run as a self-hosted web server or be embedded directly inside the Tauri desktop app.
 
 ## Features
 
 - Custom collection types for whatever you track, each with its own label, icon, folder, title languages, metadata fields, dates, external refs, and relation fields.
-- Home dashboard with configurable sections for current, upcoming, active, completed, or otherwise status-driven lists.
-- Library browser for every configured type, with pagination, search, status filters, relation/cover filters, title-language selection, sorting, and grid/list layouts.
+- Home dashboard with configurable type sections, limits, sorting, and title-language display.
+- Library browser for every configured type, with pagination, search, relation/cover filters, title-language selection, sorting, and grid/list layouts.
 - Entity detail pages that show frontmatter, rendered Markdown body, dates, external refs, local relationships, and linked entities.
 - Calendar views for dated entities and daily notes, including month navigation and planning views.
 - Relation explorer with grouped relation fields, target summaries, unresolved links, and local graph context.
-- Statistics and analytics for collection totals, type distribution, status distribution, relations, and dated timelines.
+- Statistics and analytics for collection totals, type distribution, relation fields, and dated timelines.
 - Review queues for missing metadata, missing covers, and unresolved relations.
-- Settings editor and first-run onboarding for the full `kizunashelf.config.json` schema.
+- Settings editor and first-run onboarding for the full `kizunashelf.yaml` schema.
 - Web path inputs with directory autocomplete and desktop-native folder selection through Tauri's dialog plugin.
 - Self-hosted web mode, Docker-friendly production server mode, and desktop mode from the same backend.
 
-KizunaShelf treats the vault content as read-only. The Settings and onboarding flows write the app config file, not the Markdown vault.
+KizunaShelf treats Markdown files as the source of truth. When `contentWritable` is enabled it can edit entity frontmatter/body and create or delete entity files; when read-only mode is selected those content write features are disabled.
 
 ## First Run
 
@@ -31,14 +31,14 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:5173/`. If the configured `kizunashelf.config.json` does not exist, KizunaShelf redirects to `/onboarding`.
+Open `http://localhost:5173/`. If the configured `kizunashelf.yaml` does not exist, KizunaShelf redirects to `/onboarding`.
 
 The onboarding page is the same structured editor used by Settings. Fill in:
 
 - `Vault root`: the absolute path to the Obsidian vault.
 - `Taxonomy root`: the collection root folder inside the vault; the default convention is `Taxonomy`, but any folder name works.
 - `Types`: each collection folder you want KizunaShelf to index.
-- `Fields`: frontmatter names for stable IDs, titles, images, statuses, dates, external refs, and relations.
+- `Fields`: frontmatter names for stable IDs, titles, images, enums, dates, external refs, and relations.
 - Optional `Home` and `Daily Notes` sections.
 
 Click `Create Config`. KizunaShelf writes the config file, reloads the in-memory library, and opens the normal app.
@@ -48,28 +48,31 @@ Click `Create Config`. KizunaShelf writes the config file, reloads the in-memory
 The server reads `KIZUNASHELF_CONFIG` when it is set. Otherwise it uses:
 
 ```text
-config/kizunashelf.config.json
+config/kizunashelf.yaml
 ```
 
-The desktop app searches for `kizunashelf.config.json` in this order:
+An example config is available at `config/kizunashelf.config.example.yaml`.
+
+The desktop app searches for `kizunashelf.yaml` in this order:
 
 1. `KIZUNASHELF_CONFIG`
-2. `$XDG_CONFIG_HOME/kizunashelf.config.json`
-3. `~/.config/kizunashelf.config.json`
-4. `$XDG_CONFIG_DIR/kizunashelf.config.json`
+2. `$XDG_CONFIG_HOME/kizunashelf.yaml`
+3. `~/.config/kizunashelf.yaml`
+4. `$XDG_CONFIG_DIR/kizunashelf.yaml`
 5. Each `$XDG_CONFIG_DIRS` entry
-6. On macOS, `~/Library/Application Support/kizunashelf.config.json`
-7. On macOS, `~/Library/Application Support/KizunaShelf/kizunashelf.config.json`
+6. On macOS, `~/Library/Application Support/kizunashelf.yaml`
+7. On macOS, `~/Library/Application Support/KizunaShelf/kizunashelf.yaml`
 
 If none of those files exist, desktop opens onboarding and writes the new config to the first candidate path.
 
 The Settings page at `/settings` can edit every config field:
 
-- Core: `vaultRoot`, `taxonomyRoot`, `relationshipFields`, `readConcurrency`
+- Core: `vaultRoot`, `taxonomyRoot`, `readConcurrency`
 - Daily notes: `paths`, `datePattern`, `snippetMaxLength`
-- Home: `title`, section `id`, `title`, `type`, `status`, `limit`, `sort`, `direction`
-- Types: `id`, `label`, `icon`, `path`, `defaultTitleLanguage`
-- Type fields: `id`, `titleLanguages`, `subtitle`, `image`, `status`, `dateRoles.planning`, `dateRoles.completed`, `externalRefs`, `relations`
+- Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`
+- Types: `id`, `label`, `icon`, `path`, `filename`, `fields`
+- Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
+- Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
 
 On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker.
 

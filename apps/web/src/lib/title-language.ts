@@ -1,24 +1,32 @@
-import { defaultTitleLanguage } from "@/lib/constants";
+import { defaultTitleOptionId } from "@/lib/constants";
 import type { EntitySummary } from "@/types/api";
 
 const labels: Record<string, string> = {
-  [defaultTitleLanguage]: "Default title",
-  primary: "Primary",
-  original: "Original",
   zh: "Chinese",
-  "zh-Hans": "Chinese (Simplified)",
-  "zh-Hant": "Chinese (Traditional)",
   ja: "Japanese",
-  jp: "Japanese",
   en: "English",
   ko: "Korean",
 };
 
+const languageNames =
+  typeof Intl.DisplayNames === "function"
+    ? new Intl.DisplayNames(["en"], { type: "language" })
+    : undefined;
+
 export function entityTitle(entity: EntitySummary, titleLanguage: string) {
-  if (titleLanguage === defaultTitleLanguage) return entity.title;
+  if (titleLanguage === defaultTitleOptionId) return entity.title;
   return entity.titles[titleLanguage] ?? entity.title;
 }
 
 export function titleLanguageLabel(titleLanguage: string) {
-  return labels[titleLanguage] ?? titleLanguage;
+  if (titleLanguage === defaultTitleOptionId) return "Default title";
+  return labels[titleLanguage] ?? languageNames?.of(titleLanguage) ?? titleLanguage;
+}
+
+export function isIso639TitleLanguage(value: string | null | undefined) {
+  return /^[a-z]{2,3}$/.test(value ?? "");
+}
+
+export function iso639TitleLanguage(value: string | null | undefined) {
+  return isIso639TitleLanguage(value) ? value ?? undefined : undefined;
 }

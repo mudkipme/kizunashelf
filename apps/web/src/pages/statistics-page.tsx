@@ -82,19 +82,19 @@ export function StatisticsPage() {
                 />
               </AnalyticsSection>
 
-              <AnalyticsSection title="Status Distribution">
-                <BarList items={data.distributions.byStatus} />
+              <AnalyticsSection title="Relation Fields">
+                <BarList items={data.distributions.byRelationField} />
               </AnalyticsSection>
             </div>
 
-            <AnalyticsSection title="Coverage" subtitle="How complete the browsable memory graph is">
+            <AnalyticsSection title="Coverage" description="How complete the browsable memory graph is">
               <CoverageList items={data.coverage} />
             </AnalyticsSection>
 
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
               <AnalyticsSection
                 title="Timeline"
-                subtitle={`${data.timeline.totalDated.toLocaleString()} entities have parseable year data`}
+                description={`${data.timeline.totalDated.toLocaleString()} entities have parseable year data`}
               >
                 <div className="flex flex-col gap-3">
                   {data.timeline.years.slice(0, 16).map((year) => (
