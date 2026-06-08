@@ -21,6 +21,8 @@ types:
   label: Anime
   icon: "📺"
   path: Anime
+  externalPriority:
+  - bangumi
   filename:
     titleLanguage: zh
     defaultTitle: true
@@ -85,6 +87,8 @@ types:
   label: Games
   icon: "🎮"
   path: Games
+  externalPriority:
+  - igdb
   filename:
     titleLanguage: zh
     defaultTitle: true

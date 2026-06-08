@@ -1213,6 +1213,12 @@
           "path": {
             "type": "string"
           },
+          "externalPriority": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "filename": {
             "anyOf": [
               {

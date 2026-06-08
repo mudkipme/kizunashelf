@@ -12,6 +12,7 @@ export const EntityTypeConfig = zod.object({
   "label": zod.string(),
   "icon": zod.string().nullish(),
   "path": zod.string(),
+  "externalPriority": zod.array(zod.string()).optional(),
   "filename": zod.union([zod.object({
   "titleLanguage": zod.string().nullish(),
   "defaultTitle": zod.boolean().optional()

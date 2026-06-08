@@ -1,4 +1,4 @@
-use super::{provider_error, ExternalProvider, ProviderSearchConfig};
+use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig};
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
 use crate::contract::ExternalCandidate;
@@ -50,7 +50,7 @@ async fn search_thetvdb(
     else {
         return Ok(Vec::new());
     };
-    let client = reqwest::Client::new();
+    let client = external_client()?;
     let mut login = Map::new();
     login.insert("apikey".to_string(), Value::String(api_key));
     if let Ok(pin) = std::env::var("KIZUNASHELF_TVDB_PIN") {
@@ -65,8 +65,15 @@ async fn search_thetvdb(
     let mut items = Vec::new();
     let mut seen = BTreeSet::new();
     for type_filter in type_filters {
-        let data =
-            search_thetvdb_type(state, &client, &login, &token, q, type_filter.as_deref()).await?;
+        let data = search_thetvdb_type(
+            state,
+            &client,
+            &login,
+            &token,
+            &thetvdb_query(q),
+            type_filter.as_deref(),
+        )
+        .await?;
         for candidate in data.iter().filter_map(thetvdb_candidate) {
             if seen.insert(format!("{}:{}", candidate.provider, candidate.source_id)) {
                 items.push(candidate);
@@ -126,6 +133,25 @@ fn thetvdb_search_request<'a>(
     } else {
         request
     }
+}
+
+fn thetvdb_query(q: &str) -> String {
+    let trimmed = q.trim().trim_end_matches('/');
+    let Some((_, rest)) = trimmed.split_once("thetvdb.com/") else {
+        return trimmed.to_string();
+    };
+    let parts = rest
+        .split(['?', '#'])
+        .next()
+        .unwrap_or_default()
+        .split('/')
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>();
+    parts
+        .last()
+        .map(|value| value.replace('-', " "))
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or_else(|| trimmed.to_string())
 }
 
 pub(super) fn thetvdb_type_filters(

@@ -288,6 +288,12 @@ export function EntityTypeEditor({
         <TextField label="Label" value={config.label} onChange={(label) => onChange({ ...config, label })} />
         <TextField label="Icon" value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
         <PathField label="Path" value={config.path} base={taxonomyBase} onChange={(path) => onChange({ ...config, path })} />
+        <div className="lg:col-span-3">
+          <ExternalPriorityEditor
+            values={config.externalPriority ?? []}
+            onChange={(externalPriority) => onChange({ ...config, externalPriority })}
+          />
+        </div>
         <Field label="Filename title language">
           <Select
             value={config.filename?.titleLanguage ?? ""}
@@ -329,15 +335,21 @@ export function EntityTypeEditor({
         </Field>
       </div>
       <Separator className="my-3" />
-      <FieldsEditor fields={config.fields} onChange={(fields) => onChange({ ...config, fields })} />
+      <FieldsEditor
+        typeId={config.id}
+        fields={config.fields}
+        onChange={(fields) => onChange({ ...config, fields })}
+      />
     </div>
   );
 }
 
 function FieldsEditor({
+  typeId,
   fields,
   onChange,
 }: {
+  typeId: string;
   fields: FieldConfig[];
   onChange: (fields: FieldConfig[]) => void;
 }) {
@@ -354,6 +366,7 @@ function FieldsEditor({
         {fields.map((field, index) => (
           <FieldConfigEditor
             key={`${field.field}-${field.fieldType}-${index}`}
+            typeId={typeId}
             field={field}
             onChange={(next) => onChange(replaceArray(fields, index, next))}
             onRemove={() => onChange(fields.filter((_, itemIndex) => itemIndex !== index))}
@@ -365,11 +378,68 @@ function FieldsEditor({
   );
 }
 
+function ExternalPriorityEditor({
+  values,
+  onChange,
+}: {
+  values: string[];
+  onChange: (values: string[]) => void;
+}) {
+  const available = externalSourceOptions.filter((option) => !values.includes(option.source));
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Provider priority</span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={available.length === 0}
+          onClick={() => onChange([...values, available[0]?.source ?? ""])}
+        >
+          <PlusIcon data-icon="inline-start" />
+          Provider
+        </Button>
+      </div>
+      <div className="flex flex-col gap-2">
+        {values.map((value, index) => {
+          const options = externalSourceOptions.filter(
+            (option) => option.source === value || !values.includes(option.source),
+          );
+          return (
+            <div key={`${value}-${index}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+              <span className="text-xs font-medium tabular-nums text-muted-foreground">{index + 1}</span>
+              <Select
+                value={value}
+                onChange={(event) => onChange(replaceArray(values, index, event.target.value))}
+                aria-label="Provider priority"
+              >
+                {options.map((option) => (
+                  <option key={option.source} value={option.source}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+              <IconButton
+                label="Remove provider priority"
+                onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+              />
+            </div>
+          );
+        })}
+        {values.length === 0 ? <EmptyConfigLine>Default provider order is used.</EmptyConfigLine> : null}
+      </div>
+    </div>
+  );
+}
+
 function FieldConfigEditor({
+  typeId,
   field,
   onChange,
   onRemove,
 }: {
+  typeId: string;
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
   onRemove: () => void;
@@ -491,7 +561,7 @@ function FieldConfigEditor({
                   onChange({
                     ...field,
                     externalRef: event.target.value,
-                    externalTypes: externalTypesForSource(event.target.value, ""),
+                    externalTypes: externalTypesForSource(event.target.value, typeId),
                   })
                 }
                 className="h-9 w-full text-sm"

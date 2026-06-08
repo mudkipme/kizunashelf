@@ -131,7 +131,7 @@ docker build -t kizunashelf .
 
 Run it with a mounted config and vault. The exact paths depend on your host; the important part is that `KIZUNASHELF_CONFIG` points at the mounted config file and `vaultRoot` inside that config points at the mounted vault path as seen inside the container.
 
-The Docker image sets `HOST=0.0.0.0` and `KIZUNASHELF_SETTINGS_WRITABLE=true` by default so port publishing and onboarding/settings work out of the box. Override `KIZUNASHELF_SETTINGS_WRITABLE=false` for a read-only deployed container.
+The Docker image sets `HOST=0.0.0.0` and `KIZUNASHELF_SETTINGS_WRITABLE=false` by default. Set `KIZUNASHELF_SETTINGS_WRITABLE=true` only when you intentionally want onboarding/settings writes available from the published container.
 
 ## Desktop
 

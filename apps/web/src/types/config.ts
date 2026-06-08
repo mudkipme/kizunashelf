@@ -52,6 +52,7 @@ export type EntityTypeConfig = {
   label: string;
   icon?: string | null;
   path: string;
+  externalPriority?: string[];
   filename?: FilenameConfig | null;
   fields: FieldConfig[];
 };

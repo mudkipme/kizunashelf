@@ -11,10 +11,13 @@ use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
+use std::time::Duration;
 
 use super::state::{get_library, AppState};
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
+const EXTERNAL_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+const EXTERNAL_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 
 trait ExternalProvider {
     const ID: &'static str;
@@ -120,39 +123,50 @@ pub(crate) async fn external_search(
     let page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX) as usize;
 
     let mut items = Vec::new();
-    search_provider::<bangumi::BangumiProvider>(
-        &state,
-        requested_provider,
-        &providers,
-        &configured_providers,
-        q,
-        page,
-        page_size,
-        &mut items,
-    )
-    .await?;
-    search_provider::<igdb::IgdbProvider>(
-        &state,
-        requested_provider,
-        &providers,
-        &configured_providers,
-        q,
-        page,
-        page_size,
-        &mut items,
-    )
-    .await?;
-    search_provider::<thetvdb::ThetvdbProvider>(
-        &state,
-        requested_provider,
-        &providers,
-        &configured_providers,
-        q,
-        page,
-        page_size,
-        &mut items,
-    )
-    .await?;
+    for provider in provider_order(&library.config, entity_type) {
+        match provider {
+            "bangumi" => {
+                search_provider::<bangumi::BangumiProvider>(
+                    &state,
+                    requested_provider,
+                    &providers,
+                    &configured_providers,
+                    q,
+                    page,
+                    page_size,
+                    &mut items,
+                )
+                .await?;
+            }
+            "igdb" => {
+                search_provider::<igdb::IgdbProvider>(
+                    &state,
+                    requested_provider,
+                    &providers,
+                    &configured_providers,
+                    q,
+                    page,
+                    page_size,
+                    &mut items,
+                )
+                .await?;
+            }
+            "thetvdb" => {
+                search_provider::<thetvdb::ThetvdbProvider>(
+                    &state,
+                    requested_provider,
+                    &providers,
+                    &configured_providers,
+                    q,
+                    page,
+                    page_size,
+                    &mut items,
+                )
+                .await?;
+            }
+            _ => {}
+        }
+    }
     Ok(Json(ExternalSearchResponse { providers, items }))
 }
 
@@ -261,6 +275,34 @@ fn configured_external_providers(
         }
     }
     providers
+}
+
+fn provider_order(config: &KizunaConfig, entity_type: &str) -> Vec<&'static str> {
+    let configured = configured_external_providers(config, entity_type);
+    let mut order = Vec::new();
+    if let Some(type_config) = config.types.iter().find(|item| item.id == entity_type) {
+        for provider in &type_config.external_priority {
+            if let Some(provider) = provider_for_external_ref(provider) {
+                if configured.contains_key(provider) && !order.contains(&provider) {
+                    order.push(provider);
+                }
+            }
+        }
+    }
+    for provider in ["bangumi", "igdb", "thetvdb"] {
+        if configured.contains_key(provider) && !order.contains(&provider) {
+            order.push(provider);
+        }
+    }
+    order
+}
+
+pub(super) fn external_client() -> Result<reqwest::Client, ApiError> {
+    reqwest::Client::builder()
+        .connect_timeout(EXTERNAL_CONNECT_TIMEOUT)
+        .timeout(EXTERNAL_REQUEST_TIMEOUT)
+        .build()
+        .map_err(provider_error)
 }
 
 fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
@@ -375,6 +417,7 @@ mod tests {
             label: id.to_string(),
             icon: None,
             path: id.to_string(),
+            external_priority: Vec::new(),
             filename: None,
             fields: vec![FieldConfig {
                 field: field.to_string(),

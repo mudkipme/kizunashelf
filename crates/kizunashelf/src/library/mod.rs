@@ -20,7 +20,7 @@ use relations::build_relations;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::io::ErrorKind;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use tokio::fs;
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
@@ -50,19 +50,25 @@ pub async fn save_config(config_path: impl AsRef<Path>, config: &KizunaConfig) -
 }
 
 pub async fn ensure_config_directories(config: &KizunaConfig) -> Result<()> {
+    validate_config_paths(config)?;
     let vault_root = Path::new(&config.vault_root);
     fs::create_dir_all(vault_root)
         .await
         .with_context(|| format!("failed to create vault root {}", vault_root.display()))?;
+    let canonical_vault_root = vault_root
+        .canonicalize()
+        .with_context(|| format!("failed to resolve vault root {}", vault_root.display()))?;
     let taxonomy_root = vault_root.join(&config.taxonomy_root);
     fs::create_dir_all(&taxonomy_root)
         .await
         .with_context(|| format!("failed to create taxonomy root {}", taxonomy_root.display()))?;
+    ensure_path_inside_root(&canonical_vault_root, &taxonomy_root, "taxonomy root")?;
     for type_config in &config.types {
         let path = taxonomy_root.join(&type_config.path);
         fs::create_dir_all(&path).await.with_context(|| {
             format!("failed to create entity type directory {}", path.display())
         })?;
+        ensure_path_inside_root(&canonical_vault_root, &path, "entity type directory")?;
     }
     if let Some(daily_notes) = &config.daily_notes {
         for path in &daily_notes.paths {
@@ -70,6 +76,7 @@ pub async fn ensure_config_directories(config: &KizunaConfig) -> Result<()> {
             fs::create_dir_all(&path).await.with_context(|| {
                 format!("failed to create daily notes directory {}", path.display())
             })?;
+            ensure_path_inside_root(&canonical_vault_root, &path, "daily notes directory")?;
         }
     }
     Ok(())
@@ -143,6 +150,7 @@ pub async fn read_library_from_config(config_path: impl AsRef<Path>) -> Result<L
 }
 
 async fn validate_library_roots(config: &KizunaConfig) -> Result<()> {
+    validate_config_paths(config)?;
     let vault_root = Path::new(&config.vault_root);
     let vault_metadata = fs::metadata(vault_root)
         .await
@@ -150,6 +158,9 @@ async fn validate_library_roots(config: &KizunaConfig) -> Result<()> {
     if !vault_metadata.is_dir() {
         anyhow::bail!("vault root is not a directory: {}", vault_root.display());
     }
+    let canonical_vault_root = vault_root
+        .canonicalize()
+        .with_context(|| format!("failed to resolve vault root {}", vault_root.display()))?;
 
     let taxonomy_root = vault_root.join(&config.taxonomy_root);
     let taxonomy_metadata = fs::metadata(&taxonomy_root)
@@ -161,8 +172,79 @@ async fn validate_library_roots(config: &KizunaConfig) -> Result<()> {
             taxonomy_root.display()
         );
     }
+    ensure_path_inside_root(&canonical_vault_root, &taxonomy_root, "taxonomy root")?;
+    for type_config in &config.types {
+        let path = taxonomy_root.join(&type_config.path);
+        ensure_existing_path_inside_root(&canonical_vault_root, &path, "entity type directory")?;
+    }
+    if let Some(daily_notes) = &config.daily_notes {
+        for path in &daily_notes.paths {
+            let path = vault_root.join(path);
+            ensure_existing_path_inside_root(
+                &canonical_vault_root,
+                &path,
+                "daily notes directory",
+            )?;
+        }
+    }
 
     Ok(())
+}
+
+fn validate_config_paths(config: &KizunaConfig) -> Result<()> {
+    if config.vault_root.trim().is_empty() {
+        anyhow::bail!("vaultRoot cannot be empty");
+    }
+    validate_relative_config_path("taxonomyRoot", &config.taxonomy_root)?;
+    for type_config in &config.types {
+        validate_relative_config_path(
+            &format!("type path for {}", type_config.id),
+            &type_config.path,
+        )?;
+    }
+    if let Some(daily_notes) = &config.daily_notes {
+        for path in &daily_notes.paths {
+            validate_relative_config_path("daily notes path", path)?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_relative_config_path(label: &str, value: &str) -> Result<()> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        anyhow::bail!("{label} cannot be empty");
+    }
+    let path = Path::new(trimmed);
+    if path.is_absolute() {
+        anyhow::bail!("{label} must be relative to vaultRoot");
+    }
+    if path.components().any(|component| {
+        matches!(
+            component,
+            Component::ParentDir | Component::RootDir | Component::Prefix(_)
+        )
+    }) {
+        anyhow::bail!("{label} cannot contain parent directory components");
+    }
+    Ok(())
+}
+
+fn ensure_path_inside_root(root: &Path, path: &Path, label: &str) -> Result<()> {
+    let canonical = path
+        .canonicalize()
+        .with_context(|| format!("failed to resolve {label} {}", path.display()))?;
+    if !canonical.starts_with(root) {
+        anyhow::bail!("{label} is outside vaultRoot: {}", path.display());
+    }
+    Ok(())
+}
+
+fn ensure_existing_path_inside_root(root: &Path, path: &Path, label: &str) -> Result<()> {
+    if !path.exists() {
+        return Ok(());
+    }
+    ensure_path_inside_root(root, path, label)
 }
 
 async fn read_entities(config: &KizunaConfig) -> Result<(Vec<Entity>, Vec<LibraryDiagnostic>)> {
@@ -517,6 +599,7 @@ mod tests {
                 label: "Anime".to_string(),
                 icon: None,
                 path: "Anime".to_string(),
+                external_priority: Vec::new(),
                 filename: Some(FilenameConfig {
                     title_language: Some("zh".to_string()),
                     default_title: false,

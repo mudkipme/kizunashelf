@@ -577,6 +577,61 @@ async fn settings_endpoints_create_and_read_config_files() {
 }
 
 #[tokio::test]
+async fn settings_config_rejects_paths_that_escape_the_vault_root() {
+    let temp = TempDir::new().unwrap();
+    let config_path = temp.path().join("kizunashelf.yaml");
+    let app = router(ApiOptions {
+        config_path,
+        cache_ttl: Duration::from_millis(0),
+        web_dist_path: None,
+        settings_writable: true,
+        content_writable: true,
+    });
+    let vault = temp.path().join("vault");
+
+    let escaped_taxonomy = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(json!({
+            "vaultRoot": vault,
+            "taxonomyRoot": "../outside",
+            "types": []
+        })),
+    )
+    .await;
+    assert_eq!(escaped_taxonomy.0, StatusCode::BAD_REQUEST);
+    assert!(escaped_taxonomy.1["error"]
+        .as_str()
+        .unwrap()
+        .contains("taxonomyRoot cannot contain parent directory components"));
+
+    let absolute_type_path = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(json!({
+            "vaultRoot": vault,
+            "taxonomyRoot": "Taxonomy",
+            "types": [
+                {
+                    "id": "anime",
+                    "label": "Anime",
+                    "path": "/tmp/anime",
+                    "fields": []
+                }
+            ]
+        })),
+    )
+    .await;
+    assert_eq!(absolute_type_path.0, StatusCode::BAD_REQUEST);
+    assert!(absolute_type_path.1["error"]
+        .as_str()
+        .unwrap()
+        .contains("type path for anime must be relative to vaultRoot"));
+}
+
+#[tokio::test]
 async fn settings_mutation_endpoints_can_be_disabled() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");

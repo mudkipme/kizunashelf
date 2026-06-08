@@ -1,4 +1,4 @@
-use super::{provider_error, ExternalProvider, ProviderSearchConfig};
+use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig};
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
 use crate::contract::ExternalCandidate;
@@ -50,13 +50,10 @@ async fn search_igdb(
     let Some((client_id, client_secret)) = igdb_credentials() else {
         return Ok(Vec::new());
     };
-    let client = reqwest::Client::new();
+    let client = external_client()?;
     let token = igdb_access_token(state, &client, &client_id, &client_secret, false).await?;
     let offset = (page - 1) * page_size;
-    let body = format!(
-        r#"fields name,url,summary,storyline,first_release_date,cover.url,genres.name,platforms.name; search "{}"; limit {page_size}; offset {offset};"#,
-        q.replace('"', "\\\"")
-    );
+    let body = igdb_query_body(q, page_size, offset);
     let response = client
         .post("https://api.igdb.com/v4/games")
         .header("Client-ID", &client_id)
@@ -98,6 +95,28 @@ pub(super) fn igdb_external_types_match(provider_config: &ProviderSearchConfig) 
     external_types
         .iter()
         .any(|external_type| matches!(external_type.trim().to_ascii_lowercase().as_str(), "game"))
+}
+
+fn igdb_query_body(q: &str, page_size: usize, offset: usize) -> String {
+    let fields = "fields name,url,summary,storyline,first_release_date,cover.url,genres.name,platforms.name;";
+    let trimmed = q.trim();
+    if trimmed.chars().all(|character| character.is_ascii_digit()) {
+        return format!("{fields} where id = {trimmed}; limit {page_size}; offset {offset};");
+    }
+    if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+        return format!(
+            r#"{fields} where url = "{}"; limit {page_size}; offset {offset};"#,
+            escape_igdb_string(trimmed)
+        );
+    }
+    format!(
+        r#"{fields} search "{}"; limit {page_size}; offset {offset};"#,
+        escape_igdb_string(trimmed)
+    )
+}
+
+fn escape_igdb_string(value: &str) -> String {
+    value.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
 async fn igdb_access_token(

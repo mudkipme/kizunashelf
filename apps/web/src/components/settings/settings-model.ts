@@ -1,4 +1,4 @@
-import { externalFieldOptionsBySource } from "@/lib/external-metadata";
+import { externalFieldOptionsBySource, externalSourceOptions } from "@/lib/external-metadata";
 import { isIso639TitleLanguage } from "@/lib/title-language";
 import type {
   DailyNotesConfig,
@@ -46,6 +46,7 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
     label: config.label ?? "",
     icon: config.icon ?? "",
     path: config.path ?? "",
+    externalPriority: config.externalPriority ?? [],
     filename: config.filename
       ? {
           titleLanguage: config.filename.titleLanguage ?? "",
@@ -107,6 +108,7 @@ export function cleanConfig(config: KizunaConfig): KizunaConfig {
       label: typeConfig.label,
       icon: emptyToUndefined(typeConfig.icon),
       path: typeConfig.path,
+      externalPriority: cleanExternalPriority(typeConfig.externalPriority ?? []),
       filename: cleanFilename(typeConfig.filename),
       fields: typeConfig.fields
         .map(cleanField)
@@ -234,6 +236,7 @@ export function defaultEntityType(): EntityTypeConfig {
     label: "Type",
     icon: "",
     path: "Type",
+    externalPriority: [],
     filename: { defaultTitle: true },
     fields: [
       { field: "id", fieldType: "id", displayName: "ID" },
@@ -329,6 +332,7 @@ function mediaType(
     label,
     icon,
     path,
+    externalPriority: defaultExternalPriority(externalRefs),
     filename: { titleLanguage: "zh", defaultTitle: true },
     fields: [
       { field: "uid", fieldType: "id", displayName: "UID" },
@@ -397,6 +401,10 @@ function externalSourceForField(field: string) {
   return field.replace(/_url$/, "");
 }
 
+function defaultExternalPriority(externalRefs: string[]) {
+  return cleanExternalPriority(externalRefs.map(externalSourceForField)) ?? [];
+}
+
 function defaultExternalMappings(typeId: string, role: string): ExternalFieldMapping[] {
   const source = typeId === "games" ? "igdb" : typeId === "drama" ? "thetvdb" : "bangumi";
   const field = defaultExternalField(source, role);
@@ -455,6 +463,14 @@ export function replaceArray<T>(items: T[], index: number, value: T) {
 
 function cleanStrings(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
+}
+
+function cleanExternalPriority(values: string[]) {
+  const allowed = new Set(externalSourceOptions.map((option) => option.source));
+  const cleaned = values
+    .map((value) => value.trim().toLowerCase())
+    .filter((value, index, items) => allowed.has(value) && items.indexOf(value) === index);
+  return cleaned.length > 0 ? cleaned : undefined;
 }
 
 function emptyToUndefined(value?: string | null) {

@@ -1,4 +1,4 @@
-use super::{provider_error, ExternalProvider, ProviderSearchConfig, USER_AGENT};
+use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig, USER_AGENT};
 use crate::api::ApiError;
 use crate::contract::ExternalCandidate;
 use serde_json::{json, Map, Value};
@@ -34,7 +34,21 @@ async fn search_bangumi(
     let Some(filter_types) = bangumi_types(provider_config) else {
         return Ok(Vec::new());
     };
-    let client = reqwest::Client::new();
+    let client = external_client()?;
+    if let Some(subject_id) = bangumi_subject_id(q) {
+        let value = client
+            .get(format!("https://api.bgm.tv/v0/subjects/{subject_id}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status()
+            .map_err(provider_error)?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)?;
+        return Ok(bangumi_candidate(&value).into_iter().collect());
+    }
     let response = client
         .post(format!(
             "https://api.bgm.tv/v0/search/subjects?limit={page_size}&offset={}",
@@ -64,6 +78,22 @@ async fn search_bangumi(
         .iter()
         .filter_map(|item| bangumi_candidate(item))
         .collect())
+}
+
+fn bangumi_subject_id(q: &str) -> Option<String> {
+    let trimmed = q.trim().trim_end_matches('/');
+    if trimmed.chars().all(|character| character.is_ascii_digit()) {
+        return Some(trimmed.to_string());
+    }
+    let marker = "/subject/";
+    let (_, rest) = trimmed.split_once(marker)?;
+    let id = rest
+        .split(['/', '?', '#'])
+        .next()
+        .unwrap_or_default()
+        .trim();
+    (!id.is_empty() && id.chars().all(|character| character.is_ascii_digit()))
+        .then(|| id.to_string())
 }
 
 pub(super) fn bangumi_types(provider_config: &ProviderSearchConfig) -> Option<Vec<u32>> {

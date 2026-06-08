@@ -22,7 +22,10 @@ import { Select } from "@/components/ui/select";
 import {
   candidateMetadataEntries,
   candidateMetadataPatch,
-  type ExternalMetadataEntry,
+  candidateMetadataPreviewEntries,
+  externalProviderPriority,
+  externalSourceLabel,
+  type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { groupRelations } from "@/lib/relations";
@@ -65,8 +68,25 @@ export function EntityPage() {
   const entity = state.detail?.entity;
   const contentWritable = state.capabilities?.contentWritable !== false;
   const typeConfig = state.config?.types.find((type) => type.id === entity?.type);
+  const providerOptions = useMemo(() => externalProviderPriority(typeConfig), [typeConfig]);
+  const existingExternalRefs = useMemo(
+    () =>
+      typeConfig && entity
+        ? (typeConfig.fields ?? [])
+            .filter((field) => field.fieldType === "externalRef" && field.externalRef)
+            .map((field) => ({
+              field: field.field,
+              provider: field.externalRef ?? "",
+              value: entity.externalRefs[field.field],
+            }))
+            .filter((item): item is { field: string; provider: string; value: string } =>
+              Boolean(item.provider && item.value),
+            )
+        : [],
+    [entity, typeConfig],
+  );
   const selectedCandidateEntries = useMemo(
-    () => (selectedCandidate ? candidateMetadataEntries(selectedCandidate, typeConfig) : []),
+    () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, typeConfig) : []),
     [selectedCandidate, typeConfig],
   );
   const relationGroups = useMemo(
@@ -124,15 +144,15 @@ export function EntityPage() {
     }
   }
 
-  async function searchExternal() {
+  async function searchExternal(providerOverride = externalProvider, queryOverride = externalQuery) {
     if (!entity) return;
     setExternalSearching(true);
     setSelectedCandidate(undefined);
     setSelectedFields(new Set());
     try {
       const result = await searchSources({
-        provider: externalProvider,
-        q: externalQuery || entity.title,
+        provider: providerOverride,
+        q: queryOverride || entity.title,
         type: entity.type,
         pageSize: 8,
       });
@@ -142,6 +162,13 @@ export function EntityPage() {
     } finally {
       setExternalSearching(false);
     }
+  }
+
+  function refreshFromExternalRef(provider: string, value: string) {
+    setMatchOpen(true);
+    setExternalProvider(provider);
+    setExternalQuery(value);
+    void searchExternal(provider, value);
   }
 
   function chooseCandidate(candidate: ExternalCandidate) {
@@ -219,12 +246,16 @@ export function EntityPage() {
                 selectedCandidate={selectedCandidate}
                 metadataEntries={selectedCandidateEntries}
                 selectedFields={selectedFields}
+                providerOptions={providerOptions}
+                existingExternalRefs={existingExternalRefs}
+                frontmatter={entity.frontmatter as Record<string, unknown>}
                 searching={externalSearching}
                 saving={saving}
                 contentWritable={contentWritable}
                 onQueryChange={setExternalQuery}
                 onProviderChange={setExternalProvider}
                 onSearch={searchExternal}
+                onRefreshRef={refreshFromExternalRef}
                 onChooseCandidate={chooseCandidate}
                 onSelectedFieldsChange={setSelectedFields}
                 onApply={applyCandidate}
@@ -355,12 +386,16 @@ function ExternalMatchPanel({
   selectedCandidate,
   metadataEntries,
   selectedFields,
+  providerOptions,
+  existingExternalRefs,
+  frontmatter,
   searching,
   saving,
   contentWritable,
   onQueryChange,
   onProviderChange,
   onSearch,
+  onRefreshRef,
   onChooseCandidate,
   onSelectedFieldsChange,
   onApply,
@@ -369,14 +404,18 @@ function ExternalMatchPanel({
   provider: string;
   candidates: ExternalCandidate[];
   selectedCandidate?: ExternalCandidate;
-  metadataEntries: ExternalMetadataEntry[];
+  metadataEntries: ExternalMetadataPreviewEntry[];
   selectedFields: Set<string>;
+  providerOptions: string[];
+  existingExternalRefs: Array<{ field: string; provider: string; value: string }>;
+  frontmatter: Record<string, unknown>;
   searching: boolean;
   saving: boolean;
   contentWritable: boolean;
   onQueryChange: (value: string) => void;
   onProviderChange: (value: string) => void;
   onSearch: () => void;
+  onRefreshRef: (provider: string, value: string) => void;
   onChooseCandidate: (candidate: ExternalCandidate) => void;
   onSelectedFieldsChange: (fields: Set<string>) => void;
   onApply: () => void;
@@ -397,15 +436,34 @@ function ExternalMatchPanel({
         </label>
         <Select value={provider} onChange={(event) => onProviderChange(event.target.value)} aria-label="Provider">
           <option value="all">All sources</option>
-          <option value="bangumi">Bangumi</option>
-          <option value="igdb">IGDB</option>
-          <option value="thetvdb">TheTVDB</option>
+          {providerOptions.map((provider) => (
+            <option key={provider} value={provider}>
+              {externalSourceLabel(provider)}
+            </option>
+          ))}
         </Select>
         <Button type="button" variant="outline" onClick={onSearch} disabled={searching}>
           <SearchIcon data-icon="inline-start" />
           {searching ? "Searching" : "Search"}
         </Button>
       </div>
+      {existingExternalRefs.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {existingExternalRefs.map((ref) => (
+            <Button
+              key={`${ref.provider}:${ref.field}`}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onRefreshRef(ref.provider, ref.value)}
+              disabled={searching}
+            >
+              <WandSparklesIcon data-icon="inline-start" />
+              Refresh {externalSourceLabel(ref.provider)}
+            </Button>
+          ))}
+        </div>
+      ) : null}
       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
         <div className="grid gap-2">
           {candidates.map((candidate) => (
@@ -435,11 +493,19 @@ function ExternalMatchPanel({
                     checked={selectedFields.has(entry.field)}
                     onChange={() => toggleField(entry.field)}
                     className="mt-1"
+                    disabled={!entry.hasValue}
                   />
                   <span className="min-w-0">
                     <span className="block font-medium">{entry.label}</span>
-                    <span className="block font-mono text-[11px] text-muted-foreground">{entry.field}</span>
-                    <span className="block break-words text-xs text-muted-foreground">{formatMetadataValue(entry.value)}</span>
+                    <span className="block font-mono text-[11px] text-muted-foreground">
+                      {entry.field} · {entry.externalField ?? "external ref"}
+                    </span>
+                    <span className="block break-words text-xs text-muted-foreground">
+                      Current: {formatMetadataValue(frontmatter[entry.field])}
+                    </span>
+                    <span className="block break-words text-xs text-muted-foreground">
+                      New: {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
+                    </span>
                   </span>
                 </label>
               ))}

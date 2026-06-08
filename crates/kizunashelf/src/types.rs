@@ -11,6 +11,8 @@ pub struct EntityTypeConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub icon: Option<String>,
     pub path: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub external_priority: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filename: Option<FilenameConfig>,
     #[serde(default)]

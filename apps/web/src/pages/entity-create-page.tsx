@@ -18,7 +18,10 @@ import { Select } from "@/components/ui/select";
 import {
   candidateMetadataEntries,
   candidateMetadataPatch,
-  type ExternalMetadataEntry,
+  candidateMetadataPreviewEntries,
+  externalProviderPriority,
+  externalSourceLabel,
+  type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import type { Capabilities, ConfigResponse, EntitySummary, ExternalCandidate } from "@/types/api";
@@ -67,9 +70,10 @@ export function EntityCreatePage() {
     [state.config, typeId],
   );
   const selectedCandidateEntries = useMemo(
-    () => (selectedCandidate ? candidateMetadataEntries(selectedCandidate, selectedType) : []),
+    () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, selectedType) : []),
     [selectedCandidate, selectedType],
   );
+  const providerOptions = useMemo(() => externalProviderPriority(selectedType), [selectedType]);
 
   async function load(signal: AbortSignal) {
     setState({ loading: true, relationSuggestions: [] });
@@ -221,9 +225,11 @@ export function EntityCreatePage() {
             </label>
             <Select value={provider} onChange={(event) => setProvider(event.target.value)} aria-label="Provider">
               <option value="all">All sources</option>
-              <option value="bangumi">Bangumi</option>
-              <option value="igdb">IGDB</option>
-              <option value="thetvdb">TheTVDB</option>
+              {providerOptions.map((provider) => (
+                <option key={provider} value={provider}>
+                  {externalSourceLabel(provider)}
+                </option>
+              ))}
             </Select>
             <Button type="button" variant="outline" onClick={searchExternal} disabled={searching}>
               <SearchIcon data-icon="inline-start" />
@@ -285,7 +291,7 @@ function ExternalMetadataPicker({
   onToggleField,
   onApply,
 }: {
-  entries: ExternalMetadataEntry[];
+  entries: ExternalMetadataPreviewEntry[];
   selectedFields: Set<string>;
   contentWritable: boolean;
   onToggleField: (field: string) => void;
@@ -302,12 +308,16 @@ function ExternalMetadataPicker({
               checked={selectedFields.has(entry.field)}
               onChange={() => onToggleField(entry.field)}
               className="mt-1"
-              disabled={!contentWritable}
+              disabled={!contentWritable || !entry.hasValue}
             />
             <span className="min-w-0">
               <span className="block font-medium">{entry.label}</span>
-              <span className="block font-mono text-[11px] text-muted-foreground">{entry.field}</span>
-              <span className="block break-words text-xs text-muted-foreground">{formatMetadataValue(entry.value)}</span>
+              <span className="block font-mono text-[11px] text-muted-foreground">
+                {entry.field} · {entry.externalField ?? "external ref"}
+              </span>
+              <span className="block break-words text-xs text-muted-foreground">
+                {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
+              </span>
             </span>
           </label>
         ))}

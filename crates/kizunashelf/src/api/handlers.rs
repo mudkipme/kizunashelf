@@ -80,7 +80,9 @@ pub(crate) async fn save_settings_config(
         return Err(ApiError::forbidden("Settings writes are disabled"));
     }
     let config_path = state.options.config_path.clone();
-    crate::library::ensure_config_directories(&config).await?;
+    crate::library::ensure_config_directories(&config)
+        .await
+        .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     crate::library::save_config(&config_path, &config).await?;
     state.invalidate_cache().await;
     Ok(Json(SettingsConfigResponse {
