@@ -2,8 +2,10 @@ import { ExternalLinkIcon } from "lucide-react";
 
 import { EmptyLine } from "@/components/assets/detail-section";
 import { Badge } from "@/components/ui/badge";
+import { RatingStars, ratingNumber } from "@/components/ui/rating-stars";
+import { configFields, fieldsByType, fieldLabelForKey, type FieldType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
-import type { Entity, Relation } from "@/types/api";
+import type { Entity, Relation, TypeConfig } from "@/types/api";
 
 type FrontmatterValue = null | boolean | number | string | FrontmatterValue[] | FrontmatterObject;
 type FrontmatterObject = { [key: string]: FrontmatterValue | undefined };
@@ -13,11 +15,14 @@ const titleFieldNames = new Set(["title", "name", "jp_title", "title_ja", "title
 export function FrontmatterPanel({
   entity,
   relationGroups,
+  typeConfig,
 }: {
   entity: Entity;
   relationGroups: Array<{ field: string; items: Relation[] }>;
+  typeConfig?: TypeConfig;
 }) {
-  const entries = visibleFrontmatterEntries(entity, relationGroups);
+  const entries = visibleFrontmatterEntries(entity, relationGroups, typeConfig);
+  const fieldTypes = new Map(configFields(typeConfig).map((field) => [field.field, field.fieldType]));
 
   if (entries.length === 0) {
     return <EmptyLine>No additional frontmatter</EmptyLine>;
@@ -31,9 +36,11 @@ export function FrontmatterPanel({
             key={key}
             className="grid min-w-0 gap-2 px-3 py-2 sm:grid-cols-[minmax(8rem,13rem)_minmax(0,1fr)]"
           >
-            <dt className="min-w-0 truncate text-xs font-medium text-muted-foreground">{formatKey(key)}</dt>
+            <dt className="min-w-0 truncate text-xs font-medium text-muted-foreground">
+              {fieldLabelForKey(typeConfig, key)}
+            </dt>
             <dd className="min-w-0 text-sm">
-              <FrontmatterValueView value={value} depth={0} />
+              <FrontmatterValueView value={value} depth={0} fieldType={fieldTypes.get(key)} />
             </dd>
           </div>
         ))}
@@ -45,8 +52,10 @@ export function FrontmatterPanel({
 function visibleFrontmatterEntries(
   entity: Entity,
   relationGroups: Array<{ field: string; items: Relation[] }>,
+  typeConfig: TypeConfig | undefined,
 ): Array<[string, FrontmatterValue | undefined]> {
   const hiddenKeys = new Set<string>([
+    ...fieldsByType(typeConfig, "title").map((field) => field.field),
     ...entity.dates.map((date) => date.field),
     ...Object.keys(entity.externalRefs),
     ...relationGroups.map((group) => group.field),
@@ -89,9 +98,11 @@ function isEmptyTopLevelValue(value: FrontmatterValue | undefined) {
 function FrontmatterValueView({
   value,
   depth,
+  fieldType,
 }: {
   value: FrontmatterValue | undefined;
   depth: number;
+  fieldType?: FieldType;
 }) {
   if (value === undefined || value === null) {
     return <span className="text-muted-foreground">Empty</span>;
@@ -102,10 +113,12 @@ function FrontmatterValueView({
   }
 
   if (typeof value === "number") {
+    if (fieldType === "rating") return <RatingStars value={value} />;
     return <span className="tabular-nums">{value}</span>;
   }
 
   if (typeof value === "string") {
+    if (fieldType === "rating" && ratingNumber(value) !== undefined) return <RatingStars value={value} />;
     return <StringValue value={value} />;
   }
 

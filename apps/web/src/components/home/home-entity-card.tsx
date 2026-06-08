@@ -4,7 +4,13 @@ import { EntityDateList } from "@/components/assets/entity-date-list";
 import { Badge } from "@/components/ui/badge";
 import type { EntitySummary } from "@/types/api";
 
-export function HomeEntityCard({ entity }: { entity: EntitySummary }) {
+export function HomeEntityCard({
+  entity,
+  labelsByType,
+}: {
+  entity: EntitySummary;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+}) {
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
@@ -31,7 +37,11 @@ export function HomeEntityCard({ entity }: { entity: EntitySummary }) {
         </div>
         <div className="mt-auto flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <span className="min-w-0 truncate">
-            {entity.dates.length > 0 ? <EntityDateList entity={entity} compact /> : entity.basename}
+            {entity.dates.length > 0 ? (
+              <EntityDateList entity={entity} compact labelsByType={labelsByType} />
+            ) : (
+              entity.basename
+            )}
           </span>
           <span className="ml-auto shrink-0 tabular-nums">{entity.relationCount} links</span>
         </div>

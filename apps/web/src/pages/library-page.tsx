@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getConfig, getEntities, getStats } from "@kizunashelf/api-contract";
 import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -22,7 +22,13 @@ import {
   defaultView,
   pageSize,
 } from "@/lib/constants";
-import { defaultTitleOption, hasAnyFieldType, titleLanguageOptions } from "@/lib/type-config";
+import {
+  defaultTitleOption,
+  fieldLabelAcrossTypes,
+  fieldLabelsByType,
+  hasAnyFieldType,
+  titleLanguageOptions,
+} from "@/lib/type-config";
 import { titleLanguageLabel } from "@/lib/title-language";
 import {
   applyPreferencesToSearchParams,
@@ -82,6 +88,7 @@ export function LibraryPage() {
     : selectedTypeConfig
       ? [selectedTypeConfig]
       : [];
+  const fieldLabels = useMemo(() => fieldLabelsByType(config?.types), [config]);
   const supportsRefsFilter =
     !config || scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["externalRef"]));
   const supportsCoverFilter =
@@ -395,6 +402,7 @@ export function LibraryPage() {
                   titleLanguage={effectiveTitleLanguage}
                   titleLanguages={titleLanguages}
                   defaultTitleLabel={defaultTitleLabel}
+                  dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
                   onRefsChange={(value) => setQueryParam("refs", value)}
                   onCoverChange={(value) => setQueryParam("cover", value)}
                   onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
@@ -420,6 +428,7 @@ export function LibraryPage() {
               titleLanguage={effectiveTitleLanguage}
               titleLanguages={titleLanguages}
               defaultTitleLabel={defaultTitleLabel}
+              dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
               onRefsChange={(value) => setQueryParam("refs", value)}
               onCoverChange={(value) => setQueryParam("cover", value)}
               onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
@@ -473,6 +482,7 @@ export function LibraryPage() {
                       key={entity.id}
                       entity={entity}
                       titleLanguage={effectiveTitleLanguage}
+                      labelsByType={fieldLabels}
                     />
                   ))}
                 </div>
@@ -482,6 +492,7 @@ export function LibraryPage() {
                     key={entity.id}
                     entity={entity}
                     titleLanguage={effectiveTitleLanguage}
+                    labelsByType={fieldLabels}
                   />
                 ))
               )}

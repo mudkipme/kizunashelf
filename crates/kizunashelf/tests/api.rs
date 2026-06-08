@@ -51,7 +51,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         })
     );
     assert_eq!(
-        config["types"][0]["fields"][4],
+        config["types"][0]["fields"][5],
         json!({
             "field": "status",
             "fieldType": "enum",
@@ -59,9 +59,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
             "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"]
         })
     );
-    assert_eq!(config["types"][0]["fields"][5]["fieldType"], "season");
-    assert_eq!(config["types"][0]["fields"][5]["dateRole"], "planning");
-    assert_eq!(config["types"][0]["fields"][5]["seasonLanguage"], "zh");
+    assert_eq!(config["types"][0]["fields"][3]["field"], "title_original");
+    assert_eq!(config["types"][0]["fields"][3]["titleRole"], "original");
+    assert_eq!(config["types"][0]["fields"][6]["fieldType"], "season");
+    assert_eq!(config["types"][0]["fields"][6]["dateRole"], "planning");
+    assert_eq!(config["types"][0]["fields"][6]["seasonLanguage"], "zh");
 
     let home = server.ok_json("/api/home").await;
     assert_eq!(home["title"], "Fixture Home");
@@ -128,6 +130,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert!(has_entity_title(&entities["items"], "Moon Quest"));
     assert_eq!(entities["items"][0]["titles"]["zh"], "Star Voyager");
     assert_eq!(entities["items"][0]["titles"]["en"], "A Voyage of Stars");
+    assert_eq!(entities["items"][0]["titles"]["title_original"], "星之航路");
     let star_voyager_summary = entity_by_title(&entities["items"], "Star Voyager");
     assert_eq!(star_voyager_summary["relationCount"], 4);
 
@@ -182,6 +185,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(detail["entity"]["title"], "Star Voyager");
     assert_eq!(detail["entity"]["titles"]["zh"], "Star Voyager");
     assert_eq!(detail["entity"]["titles"]["en"], "A Voyage of Stars");
+    assert_eq!(detail["entity"]["titles"]["title_original"], "星之航路");
     assert_eq!(detail["entity"]["path"], "Taxonomy/Anime/Star Voyager.md");
     assert_eq!(detail["relations"].as_array().unwrap().len(), 4);
     assert_eq!(relation_field_count(&detail["relations"], "daily-note"), 0);
@@ -787,6 +791,7 @@ impl TestServer {
                         { "field": "id", "fieldType": "id", "displayName": "ID" },
                         { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
+                        { "field": "title_original", "fieldType": "title", "displayName": "Title (Original)", "titleRole": "original" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
                         { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"] },
                         { "field": "season", "fieldType": "season", "displayName": "Season", "dateRole": "planning", "seasonLanguage": "zh" },
@@ -900,6 +905,7 @@ fn write_fixture_vault(vault: &Path) {
         r#"---
 title: Star Voyager
 title_en: A Voyage of Stars
+title_original: 星之航路
 status: Watching
 season: "2025"
 complete_date: 2025-04-20

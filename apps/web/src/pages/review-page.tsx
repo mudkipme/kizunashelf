@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getCleanupQueues } from "@kizunashelf/api-contract";
+import { getCleanupQueues, getConfig } from "@kizunashelf/api-contract";
 import { ArrowRightIcon, SearchIcon } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
@@ -17,16 +17,19 @@ import {
   entityMatchesQuery,
   entityTypeOptions,
 } from "@/lib/entity-filters";
+import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type {
   CleanupQueueSummary,
   CleanupQueuesResponse,
   CleanupUnresolvedRelation,
+  ConfigResponse,
   EntitySummary,
 } from "@/types/api";
 
 type CleanupState = {
   data?: CleanupQueuesResponse;
+  config?: ConfigResponse;
   loading: boolean;
   error?: string;
 };
@@ -76,8 +79,11 @@ export function ReviewPage() {
   async function loadQueues() {
     setState({ loading: true });
     try {
-      const data = await getCleanupQueues(undefined, apiFetch);
-      setState({ data, loading: false });
+      const [data, config] = await Promise.all([
+        getCleanupQueues(undefined, apiFetch),
+        getConfig(undefined, apiFetch),
+      ]);
+      setState({ data, config, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });
     }
@@ -93,6 +99,7 @@ export function ReviewPage() {
   const activeQueue = queueDefinitions.find((queue) => queue.id === queueId);
   const summaries = state.data?.queues ?? [];
   const activeSummary = summaries.find((queue) => queue.id === activeQueue?.id);
+  const labelsByType = useMemo(() => fieldLabelsByType(state.config?.types), [state.config]);
   const items = useMemo(
     () => (state.data && activeQueue ? queueItems(state.data, activeQueue) : []),
     [state.data, activeQueue],
@@ -183,11 +190,16 @@ export function ReviewPage() {
                 <div>
                   {filteredItems.map((item) =>
                     item.kind === "entity" ? (
-                      <CleanupEntityRow key={item.entity.id} entity={item.entity} />
+                      <CleanupEntityRow
+                        key={item.entity.id}
+                        entity={item.entity}
+                        labelsByType={labelsByType}
+                      />
                     ) : (
                       <UnresolvedRelationRow
                         key={`${item.item.relation.sourceId}-${item.item.relation.field}-${item.item.relation.targetTitle}`}
                         item={item.item}
+                        labelsByType={labelsByType}
                       />
                     ),
                   )}
@@ -234,25 +246,39 @@ function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
   );
 }
 
-function CleanupEntityRow({ entity }: { entity: EntitySummary }) {
+function CleanupEntityRow({
+  entity,
+  labelsByType,
+}: {
+  entity: EntitySummary;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+}) {
   return (
     <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
-      <EntitySummaryCell entity={entity} />
+      <EntitySummaryCell entity={entity} labelsByType={labelsByType} />
     </div>
   );
 }
 
-function UnresolvedRelationRow({ item }: { item: CleanupUnresolvedRelation }) {
+function UnresolvedRelationRow({
+  item,
+  labelsByType,
+}: {
+  item: CleanupUnresolvedRelation;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+}) {
   return (
     <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Badge variant="outline">{item.relation.field}</Badge>
+          <Badge variant="outline">
+            {entityFieldLabel(labelsByType, item.source.type, item.relation.field)}
+          </Badge>
           {item.relation.targetType ? <Badge variant="secondary">{item.relation.targetType}</Badge> : null}
           <span className="min-w-0 truncate text-sm font-medium">{item.relation.targetTitle}</span>
         </div>
         <div className="mt-1">
-          <EntitySummaryCell entity={item.source} compact />
+          <EntitySummaryCell entity={item.source} compact labelsByType={labelsByType} />
         </div>
       </div>
     </div>
@@ -262,9 +288,11 @@ function UnresolvedRelationRow({ item }: { item: CleanupUnresolvedRelation }) {
 function EntitySummaryCell({
   entity,
   compact = false,
+  labelsByType,
 }: {
   entity: EntitySummary;
   compact?: boolean;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
   return (
     <div className="min-w-0">
@@ -278,7 +306,7 @@ function EntitySummaryCell({
         <Badge variant="outline">{entity.typeLabel}</Badge>
       </div>
       <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
-        <EntityDateList entity={entity} compact />
+        <EntityDateList entity={entity} compact labelsByType={labelsByType} />
         <span className="min-w-0 truncate">{entity.path}</span>
       </div>
       {!compact && entity.summary ? (

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { getAnalytics } from "@kizunashelf/api-contract";
+import { useEffect, useMemo, useState } from "react";
+import { getAnalytics, getConfig } from "@kizunashelf/api-contract";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
@@ -9,10 +9,12 @@ import { EntityMiniList } from "@/components/analytics/entity-mini-list";
 import { StatTile } from "@/components/analytics/stat-tile";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
-import type { AnalyticsResponse } from "@/types/api";
+import { fieldLabelAcrossTypes, fieldLabelsByType } from "@/lib/type-config";
+import type { AnalyticsResponse, ConfigResponse } from "@/types/api";
 
 type StatisticsState = {
   data?: AnalyticsResponse;
+  config?: ConfigResponse;
   loading: boolean;
   error?: string;
 };
@@ -27,14 +29,18 @@ export function StatisticsPage() {
   async function loadAnalytics() {
     setState({ loading: true });
     try {
-      const data = await getAnalytics(undefined, apiFetch);
-      setState({ data, loading: false });
+      const [data, config] = await Promise.all([
+        getAnalytics(undefined, apiFetch),
+        getConfig(undefined, apiFetch),
+      ]);
+      setState({ data, config, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });
     }
   }
 
   const data = state.data;
+  const labelsByType = useMemo(() => fieldLabelsByType(state.config?.types), [state.config]);
   const maxTypeCount = Math.max(1, ...(data?.distributions.byType.map((item) => item.count) ?? [1]));
   const maxTimelineCount = Math.max(1, ...(data?.timeline.years.map((item) => item.count) ?? [1]));
 
@@ -83,7 +89,12 @@ export function StatisticsPage() {
               </AnalyticsSection>
 
               <AnalyticsSection title="Relation Fields">
-                <BarList items={data.distributions.byRelationField} />
+                <BarList
+                  items={data.distributions.byRelationField.map((item) => ({
+                    ...item,
+                    name: fieldLabelAcrossTypes(state.config?.types, item.name),
+                  }))}
+                />
               </AnalyticsSection>
             </div>
 
@@ -121,7 +132,7 @@ export function StatisticsPage() {
                         ))}
                       </div>
                       <div className="mt-2">
-                        <EntityMiniList items={year.examples.slice(0, 4)} />
+                        <EntityMiniList items={year.examples.slice(0, 4)} labelsByType={labelsByType} />
                       </div>
                     </div>
                   ))}

@@ -12,6 +12,7 @@ KizunaShelf is fully schema-driven. You decide which folders are entity types, w
 - Home dashboard with configurable type sections, limits, sorting, and title-language display.
 - Library browser for every configured type, with pagination, search, relation/cover filters, title-language selection, sorting, and grid/list layouts.
 - Entity detail pages that show frontmatter, rendered Markdown body, dates, external refs, local relationships, and linked entities.
+- External metadata matching for configured entity types, with provider search, candidate comparison, selectable field application, and refresh from existing external refs.
 - Calendar views for dated entities and daily notes, including month navigation and planning views.
 - Relation explorer with grouped relation fields, target summaries, unresolved links, and local graph context.
 - Statistics and analytics for collection totals, type distribution, relation fields, and dated timelines.
@@ -52,6 +53,7 @@ config/kizunashelf.yaml
 ```
 
 An example config is available at `config/kizunashelf.config.example.yaml`.
+For the full schema and design notes, see `docs/config.md`.
 
 The desktop app searches for `kizunashelf.yaml` in this order:
 
@@ -75,6 +77,18 @@ The Settings page at `/settings` can edit every config field:
 - Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
 
 On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker.
+
+## External Metadata Matching
+
+Entity creation and entity detail pages can search supported external sources and apply selected metadata back into Markdown frontmatter. Matching is enabled per entity type by defining `externalRef` fields and optional `externalFields` mappings in `kizunashelf.yaml`.
+
+Supported providers:
+
+- Bangumi: works without extra credentials.
+- IGDB: requires `KIZUNASHELF_IGDB_CLIENT_ID` and `KIZUNASHELF_IGDB_CLIENT_SECRET`.
+- TheTVDB: requires `KIZUNASHELF_TVDB_API_KEY`; `KIZUNASHELF_TVDB_PIN` is optional.
+
+Provider order is controlled by each type's `externalPriority`. `externalRef` fields store the selected provider URL/id, and `externalFields` describe how candidate metadata such as titles, covers, release dates, summaries, and totals should map into local fields. See `docs/config.md` for the full schema.
 
 ## Development
 
@@ -118,6 +132,8 @@ pnpm serve
 - `KIZUNASHELF_WEB_DIST`: alternate web build path
 - `KIZUNASHELF_SERVE_WEB=false`: serve only the API
 - `KIZUNASHELF_SETTINGS_WRITABLE`: enables Settings writes and path suggestions. Defaults to `true` for loopback hosts and `false` for non-loopback hosts.
+- `KIZUNASHELF_IGDB_CLIENT_ID` and `KIZUNASHELF_IGDB_CLIENT_SECRET`: enable IGDB external matching.
+- `KIZUNASHELF_TVDB_API_KEY` and optional `KIZUNASHELF_TVDB_PIN`: enable TheTVDB external matching.
 
 The server does not enable wildcard CORS by default. Use the Vite dev proxy during development, or serve the built web app from the Rust process for production.
 
@@ -168,6 +184,7 @@ The Rust API exposes:
 - `GET /api/analytics`
 - `GET /api/cleanup-queues`
 - `GET /api/calendar`
+- `GET /api/external/search`
 - `GET /api/entities`
 - `GET /api/entities/:id`
 - `GET /api/entities/:id/dates`

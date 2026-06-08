@@ -17,6 +17,51 @@ export function fieldNamesByType(typeConfig: TypeConfig | undefined, fieldType: 
   return fieldsByType(typeConfig, fieldType).map((field) => field.field);
 }
 
+export function fieldDisplayLabel(field: FieldConfig) {
+  return field.displayName?.trim() || field.field;
+}
+
+export function fieldLabelForKey(typeConfig: TypeConfig | undefined, key: string) {
+  const field = configFields(typeConfig).find((item) => item.field === key);
+  return field ? fieldDisplayLabel(field) : key;
+}
+
+export function fieldLabelAcrossTypes(typeConfigs: TypeConfig[] | undefined, key: string) {
+  const field = (typeConfigs ?? [])
+    .flatMap((typeConfig) => configFields(typeConfig))
+    .find((item) => item.field === key && item.displayName?.trim());
+  return field ? fieldDisplayLabel(field) : key;
+}
+
+export function titleFieldLabelForLanguage(typeConfig: TypeConfig | undefined, language: string) {
+  const field = fieldsByType(typeConfig, "title").find(
+    (item) => iso639TitleLanguage(item.titleLanguage) === language && item.displayName?.trim(),
+  );
+  return field ? fieldDisplayLabel(field) : undefined;
+}
+
+export function titleLabelForKey(typeConfig: TypeConfig | undefined, key: string) {
+  const field = configFields(typeConfig).find((item) => item.field === key);
+  return titleFieldLabelForLanguage(typeConfig, key) ?? (field ? fieldDisplayLabel(field) : undefined);
+}
+
+export function fieldLabelsByType(typeConfigs: TypeConfig[] | undefined) {
+  return new Map(
+    (typeConfigs ?? []).map((typeConfig) => [
+      typeConfig.id,
+      new Map(configFields(typeConfig).map((field) => [field.field, fieldDisplayLabel(field)])),
+    ]),
+  );
+}
+
+export function entityFieldLabel(
+  labelsByType: ReadonlyMap<string, ReadonlyMap<string, string>> | undefined,
+  type: string,
+  field: string,
+) {
+  return labelsByType?.get(type)?.get(field) ?? field;
+}
+
 export function hasAnyFieldType(typeConfig: TypeConfig | undefined, fieldTypes: FieldType[]) {
   return configFields(typeConfig).some((field) => fieldTypes.includes(field.fieldType));
 }
@@ -102,7 +147,7 @@ export function fieldTypeLabel(fieldType: FieldType) {
 }
 
 export function configuredFieldLabel(field: FieldConfig) {
-  if (field.displayName) return field.displayName;
+  if (field.displayName?.trim()) return field.displayName.trim();
   if (field.fieldType === "title" && field.titleRole === "original") return `Original title: ${field.field}`;
   if (field.fieldType === "title" && field.titleLanguage) return `${field.titleLanguage} title: ${field.field}`;
   if (field.fieldType === "date") {

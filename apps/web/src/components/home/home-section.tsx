@@ -6,7 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { HomeSectionResponse } from "@/types/api";
 
-export function HomeSection({ section }: { section: HomeSectionResponse }) {
+export function HomeSection({
+  section,
+  labelsByType,
+}: {
+  section: HomeSectionResponse;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+}) {
   return (
     <section className="min-w-0">
       <header className="flex min-h-12 items-center gap-3">
@@ -27,7 +33,7 @@ export function HomeSection({ section }: { section: HomeSectionResponse }) {
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(144px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(156px,1fr))] xl:grid-cols-[repeat(auto-fill,minmax(168px,1fr))]">
         {section.items.map((entity) => (
-          <HomeEntityCard key={entity.id} entity={entity} />
+          <HomeEntityCard key={entity.id} entity={entity} labelsByType={labelsByType} />
         ))}
         {section.items.length === 0 ? (
           <div className="col-span-full rounded-md border px-3 py-8 text-center text-sm text-muted-foreground">

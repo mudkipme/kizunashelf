@@ -287,6 +287,7 @@ export function EntityPage() {
               relatedEntities={state.detail?.relatedEntities ?? []}
               relationGroups={relationGroups}
               dates={state.dates}
+              typeConfig={typeConfig}
             />
           </>
         ) : (
@@ -525,8 +526,8 @@ function ExternalMatchPanel({
                   />
                   <span className="min-w-0">
                     <span className="block font-medium">{entry.label}</span>
-                    <span className="block font-mono text-[11px] text-muted-foreground">
-                      {entry.field} · {entry.externalField ?? "external ref"}
+                    <span className="block text-xs text-muted-foreground">
+                      {entry.externalField ?? "external ref"}
                     </span>
                     <span className="block break-words text-xs text-muted-foreground">
                       Current: {formatMetadataValue(frontmatter[entry.field])}

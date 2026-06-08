@@ -15,7 +15,7 @@ import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { dateRoleFields, fieldsByType } from "@/lib/type-config";
+import { dateRoleFields, fieldLabelsByType, fieldsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type { CalendarDay, CalendarResponse, ConfigResponse, EntitySummary } from "@/types/api";
 
@@ -158,6 +158,7 @@ export function CalendarPage() {
     () => countEntityDatePoints(planningEntities),
     [planningEntities],
   );
+  const fieldLabels = useMemo(() => fieldLabelsByType(state.config?.types), [state.config]);
   const dateRolesByType = useMemo(() => {
     const roles = new Map<string, DateRoles>();
     for (const item of state.config?.types ?? []) {
@@ -334,7 +335,7 @@ export function CalendarPage() {
               <div className="flex max-h-[720px] flex-col gap-2 overflow-auto p-3">
                 {selectedDay && selectedDay.entries.length > 0 ? (
                   selectedDay.entries.map((entry) => (
-                    <CalendarEntryItem key={entry.id} entry={entry} />
+                    <CalendarEntryItem key={entry.id} entry={entry} labelsByType={fieldLabels} />
                   ))
                 ) : (
                   <div className="py-8 text-center text-sm text-muted-foreground">No entries</div>
@@ -348,6 +349,7 @@ export function CalendarPage() {
             year={year}
             entities={planningEntities}
             dateRolesByType={dateRolesByType}
+            labelsByType={fieldLabels}
             loading={planning.loading}
             onOpenMonth={openMonth}
           />

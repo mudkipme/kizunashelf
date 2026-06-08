@@ -28,6 +28,7 @@ type AssetToolbarProps = {
   titleLanguage: string;
   titleLanguages: string[];
   defaultTitleLabel?: string;
+  dateFieldLabel?: (field: string) => string;
   onRefsChange: (value: string) => void;
   onCoverChange: (value: string) => void;
   onSortChange: (value: string) => void;
@@ -51,6 +52,7 @@ export function AssetToolbar({
   titleLanguage,
   titleLanguages,
   defaultTitleLabel = "Default title",
+  dateFieldLabel = (field) => field,
   onRefsChange,
   onCoverChange,
   onSortChange,
@@ -107,7 +109,7 @@ export function AssetToolbar({
         <option value={defaultSort}>Sort by title</option>
         {stats?.dateFields.map((field) => (
           <option key={field} value={`date:${field}`}>
-            Sort by {field}
+            Sort by {dateFieldLabel(field)}
           </option>
         ))}
         <option value="relationCount">Sort by relation count</option>

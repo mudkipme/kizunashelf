@@ -2,9 +2,10 @@ import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { EntityDatesResponse } from "@/types/api";
+import { fieldLabelForKey } from "@/lib/type-config";
+import type { EntityDatesResponse, TypeConfig } from "@/types/api";
 
-export function EntityDates({ dates }: { dates?: EntityDatesResponse }) {
+export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse; typeConfig?: TypeConfig }) {
   if (!dates || dates.totals.metadata + dates.totals.dailyNotes === 0) {
     return <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">No dates</div>;
   }
@@ -17,14 +18,15 @@ export function EntityDates({ dates }: { dates?: EntityDatesResponse }) {
           {dates.metadata.map((item) => (
             <div key={item.id} className="rounded-md border px-2 py-1.5 text-xs">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <Badge variant="outline">{item.field}</Badge>
+                <Badge variant="outline">{fieldLabelForKey(typeConfig, item.field)}</Badge>
                 {item.date ? (
                   <Button variant="ghost" size="sm" className="h-6 px-1.5" asChild>
-                    <Link to={calendarDateHref(item.date, "taxonomy")}>{item.date}</Link>
+                    <Link to={calendarDateHref(item.date, "taxonomy")}>{item.value}</Link>
                   </Button>
-                ) : null}
+                ) : (
+                  <span className="break-words text-muted-foreground">{item.value}</span>
+                )}
               </div>
-              <div className="mt-1 break-words text-muted-foreground">{item.value}</div>
             </div>
           ))}
         </div>

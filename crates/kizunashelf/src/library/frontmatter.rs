@@ -192,14 +192,12 @@ pub(super) fn title_languages(
         .iter()
         .filter(|field| field.field_type == FieldType::Title)
     {
-        let Some(language) = &field.title_language else {
-            continue;
-        };
-        if titles.contains_key(language) {
+        let key = field.title_language.as_ref().unwrap_or(&field.field);
+        if titles.contains_key(key) {
             continue;
         }
         if let Some(title) = normalize_title_field(frontmatter, &field.field, basename) {
-            titles.insert(language.clone(), title);
+            titles.insert(key.clone(), title);
         }
     }
     titles

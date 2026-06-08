@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { getHome } from "@kizunashelf/api-contract";
+import { useEffect, useMemo, useState } from "react";
+import { getConfig, getHome } from "@kizunashelf/api-contract";
 import { PlusIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -8,10 +8,12 @@ import { getAppCapabilities } from "@/api/entities";
 import { HomeSection } from "@/components/home/home-section";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
-import type { Capabilities, HomeResponse } from "@/types/api";
+import { fieldLabelsByType } from "@/lib/type-config";
+import type { Capabilities, ConfigResponse, HomeResponse } from "@/types/api";
 
 type HomeState = {
   data?: HomeResponse;
+  config?: ConfigResponse;
   capabilities?: Capabilities;
   loading: boolean;
   error?: string;
@@ -19,6 +21,7 @@ type HomeState = {
 
 export function HomePage() {
   const [home, setHome] = useState<HomeState>({ loading: true });
+  const labelsByType = useMemo(() => fieldLabelsByType(home.config?.types), [home.config]);
 
   useEffect(() => {
     void loadHome();
@@ -27,11 +30,12 @@ export function HomePage() {
   async function loadHome() {
     setHome({ loading: true });
     try {
-      const [data, capabilities] = await Promise.all([
+      const [data, config, capabilities] = await Promise.all([
         getHome(undefined, apiFetch),
+        getConfig(undefined, apiFetch),
         getAppCapabilities(),
       ]);
-      setHome({ data, capabilities, loading: false });
+      setHome({ data, config, capabilities, loading: false });
     } catch (error) {
       setHome({ loading: false, error: errorMessage(error) });
     }
@@ -84,7 +88,7 @@ export function HomePage() {
         {home.data?.sections.length ? (
           <div className="flex flex-1 flex-col gap-6 p-4">
             {home.data.sections.map((section) => (
-              <HomeSection key={section.id} section={section} />
+              <HomeSection key={section.id} section={section} labelsByType={labelsByType} />
             ))}
           </div>
         ) : null}

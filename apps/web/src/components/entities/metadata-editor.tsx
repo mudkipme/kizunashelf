@@ -207,7 +207,6 @@ function EditableFieldRow({
         ) : (
           <div className="min-w-0">
             <div className="truncate text-sm font-medium">{field.label}</div>
-            <div className="truncate font-mono text-[11px] text-muted-foreground">{field.key}</div>
           </div>
         )}
         {onRemove ? (

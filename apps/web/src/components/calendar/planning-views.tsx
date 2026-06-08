@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { entityFieldLabel } from "@/lib/type-config";
 import type { EntitySummary } from "@/types/api";
 
 export type PlanningMode = "year" | "seasons" | "planning";
@@ -22,6 +23,7 @@ type PlanningViewsProps = {
   year: number;
   entities: EntitySummary[];
   dateRolesByType: Map<string, DateRoles>;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
   loading: boolean;
   onOpenMonth: (month: number) => void;
 };
@@ -58,6 +60,7 @@ export function CalendarPlanningViews({
   year,
   entities,
   dateRolesByType,
+  labelsByType,
   loading,
   onOpenMonth,
 }: PlanningViewsProps) {
@@ -72,10 +75,17 @@ export function CalendarPlanningViews({
   }
 
   if (mode === "seasons") {
-    return <SeasonPlanningView year={year} points={points} />;
+    return <SeasonPlanningView year={year} points={points} labelsByType={labelsByType} />;
   }
 
-  return <PlanningBoard entities={entities} points={points} dateRolesByType={dateRolesByType} />;
+  return (
+    <PlanningBoard
+      entities={entities}
+      points={points}
+      dateRolesByType={dateRolesByType}
+      labelsByType={labelsByType}
+    />
+  );
 }
 
 export function countEntityDatePoints(entities: EntitySummary[]) {
@@ -133,7 +143,15 @@ function YearPlanningView({
   );
 }
 
-function SeasonPlanningView({ year, points }: { year: number; points: DatePoint[] }) {
+function SeasonPlanningView({
+  year,
+  points,
+  labelsByType,
+}: {
+  year: number;
+  points: DatePoint[];
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+}) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       {seasons.map((season) => {
@@ -152,7 +170,11 @@ function SeasonPlanningView({ year, points }: { year: number; points: DatePoint[
             <div className="flex flex-col">
               {bucket.length > 0 ? (
                 bucket.map((point) => (
-                  <PlanningEntityRow key={`${point.entity.id}-${point.field}-${point.value}`} point={point} />
+                  <PlanningEntityRow
+                    key={`${point.entity.id}-${point.field}-${point.value}`}
+                    point={point}
+                    labelsByType={labelsByType}
+                  />
                 ))
               ) : (
                 <div className="p-6 text-center text-sm text-muted-foreground">No entries</div>
@@ -169,10 +191,12 @@ function PlanningBoard({
   entities,
   points,
   dateRolesByType,
+  labelsByType,
 }: {
   entities: EntitySummary[];
   points: DatePoint[];
   dateRolesByType: Map<string, DateRoles>;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
   const today = todayKey();
   const futurePlanningEntityIds = new Set(
@@ -197,8 +221,13 @@ function PlanningBoard({
 
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <PlanningList title="Upcoming" count={upcoming.length} points={upcoming} />
-      <PlanningList title="Recently Completed" count={recentlyCompleted.length} points={recentlyCompleted} />
+      <PlanningList title="Upcoming" count={upcoming.length} points={upcoming} labelsByType={labelsByType} />
+      <PlanningList
+        title="Recently Completed"
+        count={recentlyCompleted.length}
+        points={recentlyCompleted}
+        labelsByType={labelsByType}
+      />
       <EntityPlanningList title="Unscheduled" count={unscheduled.length} entities={unscheduled} />
     </div>
   );
@@ -208,10 +237,12 @@ function PlanningList({
   title,
   count,
   points,
+  labelsByType,
 }: {
   title: string;
   count: number;
   points: DatePoint[];
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
   return (
     <section className="rounded-md border">
@@ -224,7 +255,11 @@ function PlanningList({
       <div className="flex flex-col md:max-h-[720px] md:overflow-auto">
         {points.length > 0 ? (
           points.map((point) => (
-            <PlanningEntityRow key={`${point.entity.id}-${point.field}-${point.value}`} point={point} />
+            <PlanningEntityRow
+              key={`${point.entity.id}-${point.field}-${point.value}`}
+              point={point}
+              labelsByType={labelsByType}
+            />
           ))
         ) : (
           <div className="p-6 text-center text-sm text-muted-foreground">No entries</div>
@@ -234,7 +269,13 @@ function PlanningList({
   );
 }
 
-function PlanningEntityRow({ point }: { point: DatePoint }) {
+function PlanningEntityRow({
+  point,
+  labelsByType,
+}: {
+  point: DatePoint;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+}) {
   return (
     <Link
       to={`/entities/${encodeURIComponent(point.entity.id)}`}
@@ -253,7 +294,7 @@ function PlanningEntityRow({ point }: { point: DatePoint }) {
       </span>
       <span className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
         <Badge variant="outline" className="font-normal">
-          {point.field}
+          {entityFieldLabel(labelsByType, point.entity.type, point.field)}
         </Badge>
         <span className="tabular-nums">{point.value}</span>
       </span>

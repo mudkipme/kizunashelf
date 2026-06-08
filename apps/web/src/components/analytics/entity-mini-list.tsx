@@ -4,7 +4,13 @@ import { EntityDateList } from "@/components/assets/entity-date-list";
 import { Badge } from "@/components/ui/badge";
 import type { EntitySummary } from "@/types/api";
 
-export function EntityMiniList({ items }: { items: EntitySummary[] }) {
+export function EntityMiniList({
+  items,
+  labelsByType,
+}: {
+  items: EntitySummary[];
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+}) {
   return (
     <div className="flex flex-col gap-1">
       {items.map((entity) => (
@@ -15,7 +21,7 @@ export function EntityMiniList({ items }: { items: EntitySummary[] }) {
         >
           <Badge variant="outline">{entity.typeLabel}</Badge>
           <span className="min-w-0 truncate">{entity.title}</span>
-          <EntityDateList entity={entity} compact />
+          <EntityDateList entity={entity} compact labelsByType={labelsByType} />
         </Link>
       ))}
     </div>

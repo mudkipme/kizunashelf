@@ -9,9 +9,11 @@ import type { EntitySummary } from "@/types/api";
 export function EntityGridItem({
   entity,
   titleLanguage = defaultTitleOptionId,
+  labelsByType,
 }: {
   entity: EntitySummary;
   titleLanguage?: string;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
   const title = entityTitle(entity, titleLanguage);
 
@@ -37,7 +39,11 @@ export function EntityGridItem({
         ) : null}
         <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="min-w-0">
-            {entity.dates.length > 0 ? <EntityDateList entity={entity} compact /> : entity.basename}
+            {entity.dates.length > 0 ? (
+              <EntityDateList entity={entity} compact labelsByType={labelsByType} />
+            ) : (
+              entity.basename
+            )}
           </span>
           <span className="shrink-0">{entity.relationCount} links</span>
         </div>

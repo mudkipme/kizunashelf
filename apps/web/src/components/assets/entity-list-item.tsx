@@ -10,9 +10,11 @@ import type { EntitySummary } from "@/types/api";
 export function EntityListItem({
   entity,
   titleLanguage = defaultTitleOptionId,
+  labelsByType,
 }: {
   entity: EntitySummary;
   titleLanguage?: string;
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
   const title = entityTitle(entity, titleLanguage);
 
@@ -28,7 +30,7 @@ export function EntityListItem({
           <Badge variant="outline">{entity.typeLabel}</Badge>
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <EntityDateList entity={entity} compact />
+          <EntityDateList entity={entity} compact labelsByType={labelsByType} />
           <span className="ml-auto shrink-0">{entity.relationCount} links</span>
         </span>
         {entity.summary ? (
