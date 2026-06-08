@@ -29,6 +29,7 @@ type EditableFieldSpec = {
   configured: boolean;
   options: string[];
   relationOptions: MultiValueOption[];
+  loadRelationOptions?: (query: string, signal: AbortSignal) => Promise<MultiValueOption[]>;
   relationType?: string | null;
   seasonLanguage: SeasonLanguage;
 };
@@ -37,6 +38,11 @@ type SeasonLanguage = "zh" | "ja" | "en";
 type SeasonKey = "winter" | "spring" | "summer" | "autumn";
 type SeasonRow = { kind: "season"; year: string; season: SeasonKey } | { kind: "raw"; value: string };
 type MultiValueOption = { value: string; label?: string; detail?: string };
+export type RelationSuggestionSearch = (params: {
+  relationType?: string | null;
+  query: string;
+  signal: AbortSignal;
+}) => Promise<EntitySummary[]>;
 
 export function MetadataEditor({
   title,
@@ -47,6 +53,7 @@ export function MetadataEditor({
   saving,
   disabled = false,
   relationSuggestions = [],
+  onRelationSearch,
   saveLabel = "Save",
   onFrontmatterChange,
   onBodyChange,
@@ -61,6 +68,7 @@ export function MetadataEditor({
   saving: boolean;
   disabled?: boolean;
   relationSuggestions?: EntitySummary[];
+  onRelationSearch?: RelationSuggestionSearch;
   saveLabel?: string;
   onFrontmatterChange: (value: FrontmatterDraft) => void;
   onBodyChange: (value: string) => void;
@@ -69,8 +77,8 @@ export function MetadataEditor({
 }) {
   const [newFieldName, setNewFieldName] = useState("");
   const fieldSpecs = useMemo(
-    () => editableFieldSpecs(typeConfig, frontmatter, relationSuggestions),
-    [typeConfig, frontmatter, relationSuggestions],
+    () => editableFieldSpecs(typeConfig, frontmatter, relationSuggestions, onRelationSearch),
+    [typeConfig, frontmatter, relationSuggestions, onRelationSearch],
   );
 
   function updateField(key: string, value: FrontmatterValue | undefined) {
@@ -306,6 +314,7 @@ function FieldValueInput({
       <MultiValueInput
         values={listDisplayValues(value, relation)}
         options={relation ? field.relationOptions : field.options.map((option) => ({ value: option }))}
+        loadOptions={relation ? field.loadRelationOptions : undefined}
         placeholder={relation ? relationPlaceholder(field.relationType) : "Add value"}
         ariaLabel={field.label}
         wikilinks={relation}
@@ -352,6 +361,7 @@ function FieldValueInput({
 function MultiValueInput({
   values,
   options,
+  loadOptions,
   placeholder,
   ariaLabel,
   wikilinks,
@@ -360,6 +370,7 @@ function MultiValueInput({
 }: {
   values: string[];
   options: MultiValueOption[];
+  loadOptions?: (query: string, signal: AbortSignal) => Promise<MultiValueOption[]>;
   placeholder: string;
   ariaLabel: string;
   wikilinks: boolean;
@@ -368,21 +379,58 @@ function MultiValueInput({
 }) {
   const [inputValue, setInputValue] = useState("");
   const [open, setOpen] = useState(false);
+  const [remoteOptions, setRemoteOptions] = useState<MultiValueOption[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [optionsError, setOptionsError] = useState<string>();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const selectedValues = uniqueStrings(values.map((value) => normalizeListItem(value, wikilinks)).filter(Boolean));
-  const normalizedOptions = uniqueOptions(options, wikilinks);
+  const normalizedOptions = uniqueOptions([...options, ...remoteOptions], wikilinks);
   const customValue = normalizeListItem(inputValue, wikilinks);
   const query = customValue.toLowerCase();
   const suggestedItems = normalizedOptions
     .filter((option) => !selectedValues.includes(option.value))
-    .filter((option) => !query || option.value.toLowerCase().includes(query) || option.label?.toLowerCase().includes(query));
+    .filter(
+      (option) =>
+        loadOptions ||
+        !query ||
+        option.value.toLowerCase().includes(query) ||
+        option.label?.toLowerCase().includes(query) ||
+        option.detail?.toLowerCase().includes(query),
+    );
   const optionValues = normalizedOptions.map((option) => option.value);
   const customItem =
     customValue && !selectedValues.includes(customValue) && !optionValues.includes(customValue)
       ? ({ value: customValue } satisfies MultiValueOption)
       : undefined;
-  const items = [customItem, ...suggestedItems].filter((item): item is MultiValueOption => Boolean(item));
+  const items = (loadOptions ? [...suggestedItems, customItem] : [customItem, ...suggestedItems]).filter(
+    (item): item is MultiValueOption => Boolean(item),
+  );
   const labels = new Map(normalizedOptions.map((option) => [option.value, option.label || option.value]));
+
+  useEffect(() => {
+    if (!open || disabled || !loadOptions) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoadingOptions(true);
+      setOptionsError(undefined);
+      loadOptions(inputValue.trim(), controller.signal)
+        .then((items) => {
+          if (!controller.signal.aborted) setRemoteOptions(items);
+        })
+        .catch((error) => {
+          if (isAbortError(error) || controller.signal.aborted) return;
+          setRemoteOptions([]);
+          setOptionsError(error instanceof Error ? error.message : "Could not load options.");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadingOptions(false);
+        });
+    }, 200);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [disabled, inputValue, loadOptions, open]);
 
   useEffect(() => {
     if (!open || disabled) return;
@@ -492,6 +540,10 @@ function MultiValueInput({
                   {selectedValues.includes(item.value) ? <CheckIcon /> : null}
                 </button>
               ))
+            ) : loadingOptions ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">Searching...</div>
+            ) : optionsError ? (
+              <div className="px-3 py-6 text-center text-sm text-destructive">{optionsError}</div>
             ) : (
               <div className="px-3 py-6 text-center text-sm text-muted-foreground">No values found.</div>
             )}
@@ -865,6 +917,7 @@ function editableFieldSpecs(
   typeConfig: TypeConfig | undefined,
   frontmatter: FrontmatterDraft,
   relationSuggestions: EntitySummary[],
+  onRelationSearch: RelationSuggestionSearch | undefined,
 ) {
   const specs: EditableFieldSpec[] = [];
   const seen = new Set<string>();
@@ -879,6 +932,10 @@ function editableFieldSpecs(
       kind: fieldKind(field, frontmatter[key]),
       options: optionsForConfiguredField(field, frontmatter[key]),
       relationOptions: field.fieldType === "relation" ? relationOptionsForField(field, relationSuggestions) : [],
+      loadRelationOptions:
+        field.fieldType === "relation" && onRelationSearch
+          ? async (query, signal) => relationOptionsForField(field, await onRelationSearch({ relationType: field.relationType, query, signal }))
+          : undefined,
       relationType: field.fieldType === "relation" ? field.relationType : undefined,
       seasonLanguage: normalizeSeasonLanguage(field.seasonLanguage),
       configured: true,
@@ -894,6 +951,7 @@ function editableFieldSpecs(
       kind: "text",
       options: [],
       relationOptions: [],
+      loadRelationOptions: undefined,
       seasonLanguage: "zh",
       configured: false,
     });
@@ -1126,6 +1184,10 @@ function stripWikilink(value: string) {
   const trimmed = value.trim();
   const match = /^\[\[(.*?)(?:\|.*?)?\]\]$/.exec(trimmed);
   return match?.[1]?.trim() ?? trimmed;
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 function humanizeField(key: string) {

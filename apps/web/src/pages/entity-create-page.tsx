@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getConfig, getEntities } from "@kizunashelf/api-contract";
 import { PlusIcon, SearchIcon, WandSparklesIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -78,17 +78,37 @@ export function EntityCreatePage() {
   async function load(signal: AbortSignal) {
     setState({ loading: true, relationSuggestions: [] });
     try {
-      const [config, capabilities, relations] = await Promise.all([
+      const [config, capabilities] = await Promise.all([
         getConfig({ signal }, apiFetch),
         getAppCapabilities({ signal }),
-        getEntities({ type: "all", pageSize: 500, sort: "title", direction: "asc" }, { signal }, apiFetch),
       ]);
-      setState({ config, capabilities, relationSuggestions: relations.items, loading: false });
+      setState({ config, capabilities, relationSuggestions: [], loading: false });
     } catch (error) {
       if (isAbortError(error)) return;
       setState({ loading: false, relationSuggestions: [], error: errorMessage(error) });
     }
   }
+
+  const searchRelations = useCallback(async ({ relationType, query, signal }: {
+    relationType?: string | null;
+    query: string;
+    signal: AbortSignal;
+  }) => {
+    const type = relationType?.trim();
+    if (!type) return [];
+    const result = await getEntities(
+      {
+        type,
+        q: query.trim() || undefined,
+        pageSize: 25,
+        sort: "title",
+        direction: "asc",
+      },
+      { signal },
+      apiFetch,
+    );
+    return result.items;
+  }, []);
 
   async function create() {
     if (!contentWritable) return;
@@ -274,6 +294,7 @@ export function EntityCreatePage() {
           saving={creating}
           disabled={!contentWritable}
           relationSuggestions={state.relationSuggestions}
+          onRelationSearch={searchRelations}
           saveLabel="Create"
           onFrontmatterChange={setFrontmatter}
           onBodyChange={setBody}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getConfig, getEntities, getEntity } from "@kizunashelf/api-contract";
 import { ArrowLeftIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -60,17 +60,16 @@ export function EntityEditPage() {
     if (!id) return;
     setState({ loading: true, relationSuggestions: [] });
     try {
-      const [detail, config, capabilities, relations] = await Promise.all([
+      const [detail, config, capabilities] = await Promise.all([
         getEntity(id, { signal }, apiFetch),
         getConfig({ signal }, apiFetch),
         getAppCapabilities({ signal }),
-        getEntities({ type: "all", pageSize: 500, sort: "title", direction: "asc" }, { signal }, apiFetch),
       ]);
       setState({
         detail,
         config,
         capabilities,
-        relationSuggestions: relations.items,
+        relationSuggestions: [],
         loading: false,
       });
     } catch (error) {
@@ -78,6 +77,27 @@ export function EntityEditPage() {
       setState({ loading: false, relationSuggestions: [], error: errorMessage(error) });
     }
   }
+
+  const searchRelations = useCallback(async ({ relationType, query, signal }: {
+    relationType?: string | null;
+    query: string;
+    signal: AbortSignal;
+  }) => {
+    const type = relationType?.trim();
+    if (!type) return [];
+    const result = await getEntities(
+      {
+        type,
+        q: query.trim() || undefined,
+        pageSize: 25,
+        sort: "title",
+        direction: "asc",
+      },
+      { signal },
+      apiFetch,
+    );
+    return result.items;
+  }, []);
 
   async function save() {
     if (!entity || !contentWritable) return;
@@ -138,6 +158,7 @@ export function EntityEditPage() {
             saving={saving}
             disabled={!contentWritable}
             relationSuggestions={state.relationSuggestions}
+            onRelationSearch={searchRelations}
             onFrontmatterChange={setFrontmatter}
             onBodyChange={setBody}
             onSave={save}

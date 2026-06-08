@@ -88,11 +88,19 @@ types:
   icon: "🎮"
   path: Games
   externalPriority:
+  - bangumi
   - igdb
   filename:
     titleLanguage: zh
     defaultTitle: true
   fields:
+  - field: title_ja
+    fieldType: title
+    displayName: Title (Japanese)
+    titleLanguage: ja
+    externalFields:
+    - source: bangumi
+      field: name
   - field: title_en
     fieldType: title
     displayName: Title (English)
@@ -104,6 +112,8 @@ types:
     fieldType: image
     displayName: Cover
     externalFields:
+    - source: bangumi
+      field: cover_url
     - source: igdb
       field: cover_url
   - field: state
@@ -118,8 +128,16 @@ types:
     displayName: Release date
     dateRole: planning
     externalFields:
+    - source: bangumi
+      field: date
     - source: igdb
       field: first_release_date
+  - field: bgm_url
+    fieldType: externalRef
+    displayName: BGM
+    externalRef: bangumi
+    externalTypes:
+    - "4"
   - field: igdb_url
     fieldType: externalRef
     displayName: IGDB
