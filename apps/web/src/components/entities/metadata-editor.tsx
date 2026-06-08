@@ -908,6 +908,7 @@ function fieldKind(field: FieldConfig, value: FrontmatterValue | undefined): Fie
   if (field.fieldType === "relation") return "relation";
   if (isListFieldType(field.fieldType) || Array.isArray(value)) return "list";
   if (field.fieldType === "enum") return "select";
+  if (field.fieldType === "bool") return "boolean";
   if (field.fieldType === "progress") return "progress";
   if (field.fieldType === "totalProgress" || field.fieldType === "rating") {
     return "number";

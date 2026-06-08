@@ -183,7 +183,9 @@ pub(super) fn title_languages(
 ) -> BTreeMap<String, String> {
     let mut titles = BTreeMap::new();
     if let Some(filename) = &type_config.filename {
-        titles.insert(filename.title_language.clone(), basename.to_string());
+        if let Some(language) = &filename.title_language {
+            titles.insert(language.clone(), basename.to_string());
+        }
     }
     for field in type_config
         .fields

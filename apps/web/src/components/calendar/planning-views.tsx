@@ -343,10 +343,14 @@ function parseDateValue(value: string): Omit<DatePoint, "entity" | "field" | "va
     }
   }
 
-  const season = /^(?<year>\d{4})年(?<season>春季|夏季|秋季|冬季)$/.exec(value);
+  const season =
+    /^(?:(?<yearPrefix>\d{4})年(?<seasonZh>春季|夏季|秋季|冬季)|(?<yearBefore>\d{4})\s*(?<seasonAfter>Spring|Summer|Autumn|Fall|Winter)|(?<seasonBefore>Spring|Summer|Autumn|Fall|Winter)\s+(?<yearAfter>\d{4}))$/i.exec(
+      value.trim(),
+    );
   if (season?.groups) {
-    const year = Number(season.groups.year);
-    const seasonKey = seasonKeyFromValue(season.groups.season);
+    const year = Number(season.groups.yearPrefix ?? season.groups.yearBefore ?? season.groups.yearAfter);
+    const seasonValue = season.groups.seasonZh ?? season.groups.seasonAfter ?? season.groups.seasonBefore;
+    const seasonKey = seasonKeyFromValue(seasonValue);
     const month = seasonMonth(seasonKey);
     return {
       year,
@@ -360,9 +364,10 @@ function parseDateValue(value: string): Omit<DatePoint, "entity" | "field" | "va
 }
 
 function seasonKeyFromValue(value: string): SeasonKey {
-  if (value === "春季") return "spring";
-  if (value === "夏季") return "summer";
-  if (value === "秋季") return "autumn";
+  const normalized = value.trim().toLowerCase();
+  if (value === "春季" || normalized === "spring") return "spring";
+  if (value === "夏季" || normalized === "summer") return "summer";
+  if (value === "秋季" || normalized === "autumn" || normalized === "fall") return "autumn";
   return "winter";
 }
 

@@ -75,7 +75,7 @@ function semanticCandidateValue(
   field: FieldConfig,
 ) {
   if (field.fieldType === "title") {
-    return titleValue(candidate, field.titleLanguage ?? "");
+    return titleValue(candidate, field);
   }
 
   if (field.fieldType === "image" || field.fieldType === "imageList") {
@@ -87,7 +87,7 @@ function semanticCandidateValue(
   }
 
   if (field.fieldType === "date" && field.dateRole === "planning") {
-    return metadata.release_date ?? dateLikeSubtitle(candidate.subtitle);
+    return metadata.release_date;
   }
 
   if (field.fieldType === "totalProgress") {
@@ -107,12 +107,12 @@ function normalizeValueForField(field: FieldConfig, value: unknown) {
   return value;
 }
 
-function titleValue(candidate: ExternalCandidate, language: string) {
+function titleValue(candidate: ExternalCandidate, field: FieldConfig) {
+  if (field.titleRole === "original") return candidate.originalTitle ?? candidate.title;
+  const language = field.titleLanguage ?? "";
   if (language && candidate.titles?.[language]) return candidate.titles[language];
   if (language === "zh" && candidate.titles?.zh) return candidate.titles.zh;
-  if ((language === "original" || language === "ja") && candidate.titles?.original) {
-    return candidate.titles.original;
-  }
+  if (language === "ja" && candidate.titles?.ja) return candidate.titles.ja;
   if (!language || language === "default") return candidate.title;
   return undefined;
 }
@@ -121,12 +121,6 @@ function externalRefMatches(candidate: ExternalCandidate, externalRef: string) {
   const expected = externalRef.trim().toLowerCase();
   if (!expected) return false;
   return (providerExternalRefs[candidate.provider] ?? [candidate.provider]).includes(expected);
-}
-
-function dateLikeSubtitle(value: string | null | undefined) {
-  const trimmed = value?.trim();
-  if (!trimmed) return undefined;
-  return /^(?:\d{4}|\d{4}-\d{1,2}(?:-\d{1,2})?)$/.test(trimmed) ? trimmed : undefined;
 }
 
 function hasValue(value: unknown): value is NonNullable<unknown> {

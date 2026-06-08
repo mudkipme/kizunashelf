@@ -72,7 +72,7 @@ The Settings page at `/settings` can edit every config field:
 - Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`
 - Types: `id`, `label`, `icon`, `path`, `filename`, `fields`
 - Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
-- Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
+- Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
 
 On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker.
 

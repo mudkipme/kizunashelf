@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const FieldType = zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'season', 'date', 'externalRef', 'relation', 'text', 'textList'])
+export const FieldType = zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'bool', 'season', 'date', 'externalRef', 'relation', 'text', 'textList'])
 
 export type FieldType = zod.input<typeof FieldType>;
 export type FieldTypeOutput = zod.output<typeof FieldType>;

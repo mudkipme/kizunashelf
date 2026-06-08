@@ -44,7 +44,6 @@ type FilterableItem =
 const queueDefinitions: QueueDefinition[] = [
   { id: "missing-cover", label: "Missing Cover", kind: "entity" },
   { id: "missing-refs", label: "Missing External Refs", kind: "entity" },
-  { id: "missing-summary", label: "Missing Summary", kind: "entity" },
   { id: "isolated", label: "Isolated Nodes", kind: "entity" },
   { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
 ];

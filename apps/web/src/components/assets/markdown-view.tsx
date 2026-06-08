@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
+import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 
 import type { Relation } from "@/types/api";
@@ -12,7 +13,7 @@ export function MarkdownView({ markdown, relations }: { markdown: string; relati
   return (
     <div className="flex flex-col gap-4 text-sm leading-7 text-foreground">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           a({ href, children }) {
             if (href?.startsWith("/entities/")) {

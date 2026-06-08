@@ -184,7 +184,7 @@ pub struct ExternalCandidate {
     pub url: String,
     pub title: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub subtitle: Option<String>,
+    pub original_title: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub brief: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

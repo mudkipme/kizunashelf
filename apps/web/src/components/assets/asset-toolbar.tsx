@@ -18,6 +18,8 @@ type AssetToolbarProps = {
   compact?: boolean;
   showLabel?: boolean;
   stats?: StatsResponse;
+  showRefsFilter?: boolean;
+  showCoverFilter?: boolean;
   refs: string;
   cover: string;
   sort: string;
@@ -39,6 +41,8 @@ export function AssetToolbar({
   compact = false,
   showLabel = true,
   stats,
+  showRefsFilter = true,
+  showCoverFilter = true,
   refs,
   cover,
   sort,
@@ -67,27 +71,33 @@ export function AssetToolbar({
           Filters
         </div>
       ) : null}
-      <Select
-        value={refs}
-        onChange={(event) => onRefsChange(event.target.value)}
-        className={compact ? "min-w-0" : undefined}
-        aria-label="Refs"
-      >
-        <option value={allOptions}>Any refs</option>
-        <option value="with">With refs</option>
-        <option value="without">Without refs</option>
-      </Select>
-      <Select
-        value={cover}
-        onChange={(event) => onCoverChange(event.target.value)}
-        className={compact ? "min-w-0" : undefined}
-        aria-label="Cover"
-      >
-        <option value={allOptions}>Any cover</option>
-        <option value="with">With cover</option>
-        <option value="without">Without cover</option>
-      </Select>
-      {compact ? null : <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />}
+      {showRefsFilter ? (
+        <Select
+          value={refs}
+          onChange={(event) => onRefsChange(event.target.value)}
+          className={compact ? "min-w-0" : undefined}
+          aria-label="Refs"
+        >
+          <option value={allOptions}>Any refs</option>
+          <option value="with">With refs</option>
+          <option value="without">Without refs</option>
+        </Select>
+      ) : null}
+      {showCoverFilter ? (
+        <Select
+          value={cover}
+          onChange={(event) => onCoverChange(event.target.value)}
+          className={compact ? "min-w-0" : undefined}
+          aria-label="Cover"
+        >
+          <option value={allOptions}>Any cover</option>
+          <option value="with">With cover</option>
+          <option value="without">Without cover</option>
+        </Select>
+      ) : null}
+      {compact || (!showRefsFilter && !showCoverFilter) ? null : (
+        <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
+      )}
       <Select
         value={sort}
         onChange={(event) => onSortChange(event.target.value)}
@@ -100,7 +110,7 @@ export function AssetToolbar({
             Sort by {field}
           </option>
         ))}
-        <option value="relations">Sort by links</option>
+        <option value="relationCount">Sort by relation count</option>
         <option value="path">Sort by path</option>
       </Select>
       <Select

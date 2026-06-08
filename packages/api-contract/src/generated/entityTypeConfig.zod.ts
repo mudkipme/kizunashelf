@@ -13,20 +13,22 @@ export const EntityTypeConfig = zod.object({
   "icon": zod.string().nullish(),
   "path": zod.string(),
   "filename": zod.union([zod.object({
-  "titleLanguage": zod.string(),
+  "titleLanguage": zod.string().nullish(),
   "defaultTitle": zod.boolean().optional()
 }),zod.null()]).optional(),
   "fields": zod.array(zod.object({
   "field": zod.string(),
-  "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),
+  "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'bool', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),
   "displayName": zod.string().nullish(),
   "titleLanguage": zod.string().nullish(),
+  "titleRole": zod.union([zod.enum(['original']),zod.null()]).optional(),
   "defaultTitle": zod.boolean().nullish(),
   "enumOptions": zod.array(zod.string()).optional(),
   "totalProgressField": zod.string().nullish(),
   "dateRole": zod.union([zod.enum(['planning', 'completed']),zod.null()]).optional(),
   "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
   "externalRef": zod.string().nullish(),
+  "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
 })).default(entityTypeConfigFieldsDefault)
 })

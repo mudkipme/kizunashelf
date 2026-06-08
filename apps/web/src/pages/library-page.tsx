@@ -22,7 +22,7 @@ import {
   defaultView,
   pageSize,
 } from "@/lib/constants";
-import { defaultTitleOption, titleLanguageOptions } from "@/lib/type-config";
+import { defaultTitleOption, hasAnyFieldType, titleLanguageOptions } from "@/lib/type-config";
 import { titleLanguageLabel } from "@/lib/title-language";
 import {
   applyPreferencesToSearchParams,
@@ -77,6 +77,18 @@ export function LibraryPage() {
   const selectedTypeStats = stats.global?.byType.find((type) => type.id === selectedType);
   const scopeStats = isGlobalType ? stats.global : stats.category;
   const selectedTypeConfig = config?.types.find((type) => type.id === selectedType);
+  const scopeTypeConfigs = isGlobalType
+    ? (config?.types ?? [])
+    : selectedTypeConfig
+      ? [selectedTypeConfig]
+      : [];
+  const supportsRefsFilter =
+    !config || scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["externalRef"]));
+  const supportsCoverFilter =
+    !config ||
+    scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["image", "imageList"]));
+  const effectiveRefs = supportsRefsFilter ? refs : allOptions;
+  const effectiveCover = supportsCoverFilter ? cover : allOptions;
   const titleLanguages = titleLanguageOptions(selectedTypeConfig);
   const defaultTitle = defaultTitleOption(selectedTypeConfig);
   const defaultTitleLabel = defaultTitle
@@ -95,8 +107,8 @@ export function LibraryPage() {
     ? (stats.global?.total ?? list.total)
     : (selectedTypeStats?.count ?? list.total);
   const filtersActive =
-    refs !== allOptions ||
-    cover !== allOptions ||
+    effectiveRefs !== allOptions ||
+    effectiveCover !== allOptions ||
     effectiveSort !== defaultSort ||
     direction !== defaultDirection ||
     view !== defaultView ||
@@ -154,6 +166,16 @@ export function LibraryPage() {
   }, [scopeStats, sort]);
 
   useEffect(() => {
+    if (!config || supportsRefsFilter || refs === allOptions) return;
+    setQueryParam("refs", allOptions);
+  }, [config, supportsRefsFilter, refs]);
+
+  useEffect(() => {
+    if (!config || supportsCoverFilter || cover === allOptions) return;
+    setQueryParam("cover", allOptions);
+  }, [config, supportsCoverFilter, cover]);
+
+  useEffect(() => {
     if (!config || titleLanguage === defaultTitleOptionId) return;
     if (titleLanguages.includes(titleLanguage)) return;
     setQueryParam("titleLanguage", defaultTitleOptionId, defaultTitleOptionId, false);
@@ -161,15 +183,30 @@ export function LibraryPage() {
 
   useEffect(() => {
     if (!stats.global || !selectedType || !searchParams.has("type")) return;
+    if ((!supportsRefsFilter && refs !== allOptions) || (!supportsCoverFilter && cover !== allOptions)) {
+      return;
+    }
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
-  }, [stats.global, selectedType, refs, cover, sort, direction, view, titleLanguage]);
+  }, [
+    stats.global,
+    selectedType,
+    searchParams,
+    supportsRefsFilter,
+    supportsCoverFilter,
+    refs,
+    cover,
+    sort,
+    direction,
+    view,
+    titleLanguage,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
     void loadEntities({
       type: selectedType,
-      refs,
-      cover,
+      refs: effectiveRefs,
+      cover: effectiveCover,
       sort: effectiveSort,
       direction,
       titleLanguage: effectiveTitleLanguage,
@@ -177,7 +214,7 @@ export function LibraryPage() {
       page,
     }, controller.signal);
     return () => controller.abort();
-  }, [selectedType, refs, cover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
+  }, [selectedType, effectiveRefs, effectiveCover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
 
   async function loadGlobalStats(signal: AbortSignal) {
     setStats((current) => ({ ...current, loading: true, error: undefined }));
@@ -348,8 +385,10 @@ export function LibraryPage() {
                   showLabel={false}
                   className="mt-2"
                   stats={scopeStats}
-                  refs={refs}
-                  cover={cover}
+                  showRefsFilter={supportsRefsFilter}
+                  showCoverFilter={supportsCoverFilter}
+                  refs={effectiveRefs}
+                  cover={effectiveCover}
                   sort={effectiveSort}
                   direction={direction}
                   view={view}
@@ -371,8 +410,10 @@ export function LibraryPage() {
             <AssetToolbar
               className="hidden md:flex"
               stats={scopeStats}
-              refs={refs}
-              cover={cover}
+              showRefsFilter={supportsRefsFilter}
+              showCoverFilter={supportsCoverFilter}
+              refs={effectiveRefs}
+              cover={effectiveCover}
               sort={effectiveSort}
               direction={direction}
               view={view}

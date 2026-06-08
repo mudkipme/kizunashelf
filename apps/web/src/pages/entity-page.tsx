@@ -476,7 +476,6 @@ function ExternalMatchPanel({
                 <Badge variant="secondary">{candidate.provider}</Badge>
                 <span className="truncate text-sm font-medium">{candidate.title}</span>
               </div>
-              {candidate.subtitle ? <div className="mt-1 text-xs text-muted-foreground">{candidate.subtitle}</div> : null}
               {candidate.brief ? <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{candidate.brief}</p> : null}
             </button>
           ))}

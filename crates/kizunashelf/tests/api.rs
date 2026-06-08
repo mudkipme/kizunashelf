@@ -46,7 +46,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
             "field": "title",
             "fieldType": "title",
             "displayName": "Title",
-            "titleLanguage": "primary",
+            "titleLanguage": "zh",
             "defaultTitle": true
         })
     );
@@ -68,6 +68,8 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(home["sections"][0]["title"], "Recent Anime");
     assert_eq!(home["sections"][0]["total"], 1);
     assert_eq!(home["sections"][0]["items"][0]["title"], "Star Voyager");
+    assert_eq!(home["sections"][2]["title"], "Completed Anime");
+    assert_eq!(home["sections"][2]["total"], 0);
 
     let stats = server.ok_json("/api/stats").await;
     assert_eq!(stats["total"], 4);
@@ -88,6 +90,49 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(analytics["totals"]["relations"], 9);
     assert_eq!(analytics["totals"]["unresolvedRelations"], 2);
     assert_eq!(analytics["totals"]["datedEntities"], 3);
+    let cover_coverage = coverage_metric(&analytics["coverage"], "Cover");
+    assert_eq!(cover_coverage["total"], 2);
+    assert_eq!(cover_coverage["missing"], 1);
+    let refs_coverage = coverage_metric(&analytics["coverage"], "External refs");
+    assert_eq!(refs_coverage["total"], 3);
+    assert_eq!(refs_coverage["missing"], 1);
+    let relation_coverage = coverage_metric(&analytics["coverage"], "Relations");
+    assert_eq!(relation_coverage["total"], 3);
+    assert_eq!(relation_coverage["missing"], 0);
+    assert!(analytics["coverage"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|metric| metric["name"] != "Summary"));
+    assert_eq!(
+        analytics["dataQuality"]["missingSummary"]
+            .as_array()
+            .unwrap()
+            .len(),
+        0
+    );
+
+    let cleanup = server.ok_json("/api/cleanup-queues").await;
+    let missing_cover = queue_summary(&cleanup["queues"], "missing-cover");
+    assert_eq!(missing_cover["total"], 2);
+    assert_eq!(missing_cover["remaining"], 1);
+    let missing_refs = queue_summary(&cleanup["queues"], "missing-refs");
+    assert_eq!(missing_refs["total"], 3);
+    assert_eq!(missing_refs["remaining"], 1);
+    let isolated = queue_summary(&cleanup["queues"], "isolated");
+    assert_eq!(isolated["total"], 3);
+    assert_eq!(isolated["remaining"], 0);
+    assert!(cleanup["queues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|queue| queue["id"] != "missing-summary"));
+    assert_eq!(cleanup["missingCover"][0]["id"], "games:Moon Quest");
+    assert_eq!(
+        cleanup["missingExternalRefs"][0]["id"],
+        "music:Opening Theme"
+    );
+    assert_eq!(cleanup["isolated"].as_array().unwrap().len(), 0);
 
     let entities = server.ok_json("/api/entities").await;
     assert_eq!(entities["total"], 4);
@@ -102,6 +147,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .ok_json("/api/entities?sort=title&titleLanguage=en")
         .await;
     assert_eq!(english_title_sort["items"][0]["id"], "anime:Star Voyager");
+
+    let relation_count_sort = server
+        .ok_json("/api/entities?sort=relationCount&direction=desc")
+        .await;
+    assert_eq!(relation_count_sort["items"][0]["id"], "anime:Star Voyager");
 
     let filtered = server
         .ok_json("/api/entities?type=games&refs=with&cover=without")
@@ -372,7 +422,7 @@ async fn relation_endpoints_group_temp_vault_links() {
 async fn external_search_lists_providers_without_querying_network_for_empty_searches() {
     let server = TestServer::new();
 
-    let providers = server.ok_json("/api/external/search?q=").await;
+    let providers = server.ok_json("/api/external/search?type=anime&q=").await;
     assert_eq!(providers["items"].as_array().unwrap().len(), 0);
     assert!(providers["providers"]
         .as_array()
@@ -390,6 +440,26 @@ async fn external_search_lists_providers_without_querying_network_for_empty_sear
         .await;
     assert_eq!(unknown.0, StatusCode::BAD_REQUEST);
     assert_eq!(unknown.1["error"], "Unknown external provider");
+
+    let all_type = server.json("/api/external/search?type=all&q=Star").await;
+    assert_eq!(all_type.0, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        all_type.1["error"],
+        "External search requires a concrete entity type"
+    );
+
+    let missing_type = server.json("/api/external/search?q=Star").await;
+    assert_eq!(missing_type.0, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        missing_type.1["error"],
+        "External search requires a concrete entity type"
+    );
+
+    let unknown_type = server
+        .json("/api/external/search?type=animation&q=Star")
+        .await;
+    assert_eq!(unknown_type.0, StatusCode::BAD_REQUEST);
+    assert_eq!(unknown_type.1["error"], "Unknown entity type");
 }
 
 #[tokio::test]
@@ -488,7 +558,7 @@ async fn settings_endpoints_create_and_read_config_files() {
                 "path": "Anime",
                 "filename": { "titleLanguage": "zh" },
                 "fields": [
-                    { "field": "title", "fieldType": "title", "titleLanguage": "primary", "defaultTitle": true },
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh", "defaultTitle": true },
                     { "field": "title_en", "fieldType": "title", "titleLanguage": "en" },
                     { "field": "cover_url", "fieldType": "image" },
                     { "field": "status", "fieldType": "enum", "enumOptions": ["Backlog", "Watching", "Completed"] },
@@ -567,7 +637,7 @@ async fn content_mutation_endpoints_can_be_disabled() {
                 "label": "Anime",
                 "path": "Anime",
                 "fields": [
-                    { "field": "title", "fieldType": "title", "titleLanguage": "primary", "defaultTitle": true },
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh", "defaultTitle": true },
                     { "field": "status", "fieldType": "enum", "enumOptions": ["Backlog", "Watching", "Completed"] }
                 ]
             }
@@ -638,6 +708,7 @@ impl TestServer {
                         "id": "recent-anime",
                         "title": "Recent Anime",
                         "type": "anime",
+                        "filters": [{ "field": "status", "values": ["Watching"] }],
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -646,6 +717,16 @@ impl TestServer {
                         "id": "games",
                         "title": "Games",
                         "type": "games",
+                        "filters": [{ "field": "status", "values": ["Playing"] }],
+                        "limit": 4,
+                        "sort": "title",
+                        "direction": "asc"
+                    },
+                    {
+                        "id": "completed-anime",
+                        "title": "Completed Anime",
+                        "type": "anime",
+                        "filters": [{ "field": "status", "values": ["Completed"] }],
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -661,7 +742,7 @@ impl TestServer {
                     "filename": { "titleLanguage": "zh", "defaultTitle": true },
                     "fields": [
                         { "field": "id", "fieldType": "id", "displayName": "ID" },
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
                         { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"] },
@@ -678,7 +759,7 @@ impl TestServer {
                     "path": "Games",
                     "filename": { "titleLanguage": "zh" },
                     "fields": [
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
                         { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Playing", "Completed", "Paused", "Dropped"] },
@@ -694,7 +775,7 @@ impl TestServer {
                     "path": "Franchise",
                     "filename": { "titleLanguage": "zh" },
                     "fields": [
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
                         { "field": "related", "fieldType": "relation", "displayName": "Related", "relationType": "related" }
                     ]
                 },
@@ -702,9 +783,9 @@ impl TestServer {
                     "id": "music",
                     "label": "Music",
                     "path": "Music",
-                    "filename": { "titleLanguage": "original" },
+                    "filename": { "defaultTitle": true },
                     "fields": [
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "primary", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
                         { "field": "release_date", "fieldType": "date", "displayName": "Release date", "dateRole": "planning" },
                         { "field": "musicbrainz_url", "fieldType": "externalRef", "displayName": "MusicBrainz", "externalRef": "musicbrainz" }
                     ]
@@ -849,6 +930,24 @@ fn count_for(items: &Value, name: &str) -> i64 {
         .find(|item| item["name"] == name || item["label"] == name || item["typeLabel"] == name)
         .and_then(|item| item["count"].as_i64())
         .unwrap_or_default()
+}
+
+fn coverage_metric<'a>(items: &'a Value, name: &str) -> &'a Value {
+    items
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["name"] == name)
+        .unwrap_or_else(|| panic!("coverage metric not found: {name}"))
+}
+
+fn queue_summary<'a>(items: &'a Value, id: &str) -> &'a Value {
+    items
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["id"] == id)
+        .unwrap_or_else(|| panic!("queue not found: {id}"))
 }
 
 fn relation_field_count(items: &Value, field: &str) -> usize {

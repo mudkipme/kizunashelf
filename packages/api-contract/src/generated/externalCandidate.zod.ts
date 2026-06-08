@@ -13,7 +13,7 @@ export const ExternalCandidate = zod.object({
   "sourceId": zod.string(),
   "url": zod.string(),
   "title": zod.string(),
-  "subtitle": zod.string().nullish(),
+  "originalTitle": zod.string().nullish(),
   "brief": zod.string().nullish(),
   "coverUrl": zod.string().nullish(),
   "titles": zod.record(zod.string(), zod.string()).default(externalCandidateTitlesDefault),

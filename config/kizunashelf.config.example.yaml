@@ -66,6 +66,8 @@ types:
     fieldType: externalRef
     displayName: BGM
     externalRef: bgm
+    externalTypes:
+    - anime
   - field: franchise
     fieldType: relation
     displayName: Franchise
@@ -100,6 +102,8 @@ types:
     fieldType: externalRef
     displayName: IGDB
     externalRef: igdb
+    externalTypes:
+    - game
   - field: developer
     fieldType: relation
     displayName: Developer

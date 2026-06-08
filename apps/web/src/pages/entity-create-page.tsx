@@ -113,7 +113,7 @@ export function EntityCreatePage() {
 
   async function searchExternal() {
     const query = searchQuery.trim() || normalizedBasename;
-    if (!query) return;
+    if (!query || !typeId) return;
     setSearching(true);
     setMessage(undefined);
     setState((current) => ({ ...current, error: undefined }));
@@ -242,9 +242,6 @@ export function EntityCreatePage() {
                   <Badge variant="secondary">{candidate.provider}</Badge>
                   <span className="min-w-0 truncate text-sm font-medium">{candidate.title}</span>
                 </div>
-                {candidate.subtitle ? (
-                  <div className="mt-1 truncate text-xs text-muted-foreground">{candidate.subtitle}</div>
-                ) : null}
                 {candidate.brief ? (
                   <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{candidate.brief}</p>
                 ) : null}

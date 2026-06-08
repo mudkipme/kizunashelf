@@ -8,6 +8,7 @@ export type FieldType =
   | "progress"
   | "totalProgress"
   | "rating"
+  | "bool"
   | "season"
   | "date"
   | "externalRef"
@@ -17,9 +18,10 @@ export type FieldType =
 
 export type DateRole = "planning" | "completed";
 export type SeasonLanguage = "zh" | "ja" | "en";
+export type TitleRole = "original";
 
 export type FilenameConfig = {
-  titleLanguage: string;
+  titleLanguage?: string | null;
   defaultTitle?: boolean;
 };
 
@@ -28,12 +30,14 @@ export type FieldConfig = {
   fieldType: FieldType;
   displayName?: string | null;
   titleLanguage?: string | null;
+  titleRole?: TitleRole | null;
   defaultTitle?: boolean | null;
   enumOptions?: string[];
   totalProgressField?: string | null;
   dateRole?: DateRole | null;
   seasonLanguage?: SeasonLanguage | null;
   externalRef?: string | null;
+  externalTypes?: string[];
   relationType?: string | null;
 };
 
@@ -50,9 +54,15 @@ export type HomeSectionConfig = {
   id: string;
   title: string;
   type: string;
+  filters?: HomeSectionFilterConfig[];
   limit?: number | null;
   sort?: string | null;
   direction?: "asc" | "desc" | null;
+};
+
+export type HomeSectionFilterConfig = {
+  field: string;
+  values: string[];
 };
 
 export type HomeConfig = {

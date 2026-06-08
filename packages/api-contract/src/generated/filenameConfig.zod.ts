@@ -7,7 +7,7 @@
 import { z as zod } from 'zod';
 
 export const FilenameConfig = zod.object({
-  "titleLanguage": zod.string(),
+  "titleLanguage": zod.string().nullish(),
   "defaultTitle": zod.boolean().optional()
 })
 

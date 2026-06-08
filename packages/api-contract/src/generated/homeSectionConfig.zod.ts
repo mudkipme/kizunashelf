@@ -13,6 +13,10 @@ export const HomeSectionConfig = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "type": zod.string(),
+  "filters": zod.array(zod.object({
+  "field": zod.string(),
+  "values": zod.array(zod.string()).optional()
+})).optional(),
   "limit": zod.number().min(homeSectionConfigLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()

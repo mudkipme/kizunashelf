@@ -118,6 +118,7 @@ pub(crate) async fn cleanup_queues(
 
 fn build_analytics(library: &Library) -> AnalyticsResponse {
     let summaries = &library.summaries;
+    let quality = QualityEligibility::new(library);
     let outgoing = outgoing_relations(library, None);
     let unresolved: Vec<_> = outgoing
         .iter()
@@ -140,19 +141,30 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
         dated.iter().map(|(entity, _)| entity.id.clone()).collect();
     let with_cover_count = summaries
         .iter()
+        .filter(|entity| quality.requires_cover(entity))
         .filter(|entity| entity.image.is_some())
+        .count();
+    let cover_total = summaries
+        .iter()
+        .filter(|entity| quality.requires_cover(entity))
         .count();
     let with_refs_count = summaries
         .iter()
+        .filter(|entity| quality.requires_external_refs(entity))
         .filter(|entity| !entity.external_refs.is_empty())
         .count();
-    let with_summary_count = summaries
+    let refs_total = summaries
         .iter()
-        .filter(|entity| entity.summary.is_some())
+        .filter(|entity| quality.requires_external_refs(entity))
         .count();
     let connected_count = summaries
         .iter()
+        .filter(|entity| quality.requires_relations(entity))
         .filter(|entity| entity.relation_count > 0)
+        .count();
+    let relations_total = summaries
+        .iter()
+        .filter(|entity| quality.requires_relations(entity))
         .count();
 
     let entity_by_id = summary_by_id(library);
@@ -186,17 +198,16 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
                 .collect::<Vec<Count>>(),
             by_source_target_type: relation_type_pairs(library).into_iter().take(16).collect(),
         },
-        coverage: vec![
-            build_coverage_metric("Cover", with_cover_count, summaries.len()),
-            build_coverage_metric("External refs", with_refs_count, summaries.len()),
-            build_coverage_metric("Summary", with_summary_count, summaries.len()),
-            build_coverage_metric("Relations", connected_count, summaries.len()),
-            build_coverage_metric(
-                "Resolved relation targets",
-                outgoing.len() - unresolved.len(),
-                outgoing.len(),
-            ),
-        ],
+        coverage: build_coverage_metrics(
+            with_cover_count,
+            cover_total,
+            with_refs_count,
+            refs_total,
+            connected_count,
+            relations_total,
+            outgoing.len() - unresolved.len(),
+            outgoing.len(),
+        ),
         timeline: build_timeline(dated),
         relations: AnalyticsRelations {
             top_fields: relation_fields(library)
@@ -214,24 +225,22 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
         data_quality: AnalyticsDataQuality {
             missing_cover: summaries
                 .iter()
+                .filter(|entity| quality.requires_cover(entity))
                 .filter(|entity| entity.image.is_none())
                 .take(12)
                 .cloned()
                 .collect(),
             missing_external_refs: summaries
                 .iter()
+                .filter(|entity| quality.requires_external_refs(entity))
                 .filter(|entity| entity.external_refs.is_empty())
                 .take(12)
                 .cloned()
                 .collect(),
-            missing_summary: summaries
-                .iter()
-                .filter(|entity| entity.summary.is_none())
-                .take(12)
-                .cloned()
-                .collect(),
+            missing_summary: Vec::new(),
             isolated: summaries
                 .iter()
+                .filter(|entity| quality.requires_relations(entity))
                 .filter(|entity| entity.relation_count == 0)
                 .take(12)
                 .cloned()
@@ -242,6 +251,7 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
 
 fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
     let summaries = &library.summaries;
+    let quality = QualityEligibility::new(library);
     let source_by_id = summary_by_id(library);
     let outgoing = outgoing_relations(library, None);
     let unresolved_relations: Vec<_> = outgoing
@@ -258,64 +268,189 @@ fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
         .collect();
     let missing_cover: Vec<_> = summaries
         .iter()
+        .filter(|entity| quality.requires_cover(entity))
         .filter(|entity| entity.image.is_none())
         .cloned()
         .collect();
+    let cover_total = summaries
+        .iter()
+        .filter(|entity| quality.requires_cover(entity))
+        .count();
     let missing_external_refs: Vec<_> = summaries
         .iter()
+        .filter(|entity| quality.requires_external_refs(entity))
         .filter(|entity| entity.external_refs.is_empty())
         .cloned()
         .collect();
-    let missing_summary: Vec<_> = summaries
+    let refs_total = summaries
         .iter()
-        .filter(|entity| entity.summary.is_none())
-        .cloned()
-        .collect();
+        .filter(|entity| quality.requires_external_refs(entity))
+        .count();
+    let missing_summary: Vec<EntitySummary> = Vec::new();
     let isolated: Vec<_> = summaries
         .iter()
+        .filter(|entity| quality.requires_relations(entity))
         .filter(|entity| entity.relation_count == 0)
         .cloned()
         .collect();
+    let relations_total = summaries
+        .iter()
+        .filter(|entity| quality.requires_relations(entity))
+        .count();
+    let queues = cleanup_queue_summaries(
+        &missing_cover,
+        cover_total,
+        &missing_external_refs,
+        refs_total,
+        &isolated,
+        relations_total,
+        unresolved_relations.len(),
+        outgoing.len(),
+    );
 
     CleanupQueuesResponse {
         generated_at: library.generated_at.clone(),
-        queues: vec![
-            cleanup_queue_summary(
-                "missing-cover",
-                "Missing Cover",
-                missing_cover.len(),
-                summaries.len(),
-            ),
-            cleanup_queue_summary(
-                "missing-refs",
-                "Missing External Refs",
-                missing_external_refs.len(),
-                summaries.len(),
-            ),
-            cleanup_queue_summary(
-                "missing-summary",
-                "Missing Summary",
-                missing_summary.len(),
-                summaries.len(),
-            ),
-            cleanup_queue_summary(
-                "isolated",
-                "Isolated Nodes",
-                isolated.len(),
-                summaries.len(),
-            ),
-            cleanup_queue_summary(
-                "unresolved-relations",
-                "Unresolved Relations",
-                unresolved_relations.len(),
-                outgoing.len(),
-            ),
-        ],
+        queues,
         missing_cover,
         missing_external_refs,
         missing_summary,
         isolated,
         unresolved_relations,
+    }
+}
+
+struct QualityEligibility {
+    cover_types: HashSet<String>,
+    external_ref_types: HashSet<String>,
+    relation_types: HashSet<String>,
+}
+
+impl QualityEligibility {
+    fn new(library: &Library) -> Self {
+        let mut cover_types = HashSet::new();
+        let mut external_ref_types = HashSet::new();
+        let mut relation_types = HashSet::new();
+        for type_config in &library.config.types {
+            for field in &type_config.fields {
+                match field.field_type {
+                    FieldType::Image | FieldType::ImageList => {
+                        cover_types.insert(type_config.id.clone());
+                    }
+                    FieldType::ExternalRef => {
+                        external_ref_types.insert(type_config.id.clone());
+                    }
+                    FieldType::Relation => {
+                        relation_types.insert(type_config.id.clone());
+                    }
+                    _ => {}
+                }
+            }
+        }
+        Self {
+            cover_types,
+            external_ref_types,
+            relation_types,
+        }
+    }
+
+    fn requires_cover(&self, entity: &EntitySummary) -> bool {
+        self.cover_types.contains(&entity.entity_type)
+    }
+
+    fn requires_external_refs(&self, entity: &EntitySummary) -> bool {
+        self.external_ref_types.contains(&entity.entity_type)
+    }
+
+    fn requires_relations(&self, entity: &EntitySummary) -> bool {
+        self.relation_types.contains(&entity.entity_type)
+    }
+}
+
+fn build_coverage_metrics(
+    with_cover_count: usize,
+    cover_total: usize,
+    with_refs_count: usize,
+    refs_total: usize,
+    connected_count: usize,
+    relations_total: usize,
+    resolved_relations: usize,
+    relations_count: usize,
+) -> Vec<AnalyticsCoverageMetric> {
+    let mut metrics = Vec::new();
+    push_coverage_metric(&mut metrics, "Cover", with_cover_count, cover_total);
+    push_coverage_metric(&mut metrics, "External refs", with_refs_count, refs_total);
+    push_coverage_metric(&mut metrics, "Relations", connected_count, relations_total);
+    push_coverage_metric(
+        &mut metrics,
+        "Resolved relation targets",
+        resolved_relations,
+        relations_count,
+    );
+    metrics
+}
+
+fn push_coverage_metric(
+    metrics: &mut Vec<AnalyticsCoverageMetric>,
+    name: &str,
+    count: usize,
+    total: usize,
+) {
+    if total > 0 {
+        metrics.push(build_coverage_metric(name, count, total));
+    }
+}
+
+fn cleanup_queue_summaries(
+    missing_cover: &[EntitySummary],
+    cover_total: usize,
+    missing_external_refs: &[EntitySummary],
+    refs_total: usize,
+    isolated: &[EntitySummary],
+    relations_total: usize,
+    unresolved_relations: usize,
+    outgoing_relations: usize,
+) -> Vec<CleanupQueueSummary> {
+    let mut queues = Vec::new();
+    push_cleanup_queue(
+        &mut queues,
+        "missing-cover",
+        "Missing Cover",
+        missing_cover.len(),
+        cover_total,
+    );
+    push_cleanup_queue(
+        &mut queues,
+        "missing-refs",
+        "Missing External Refs",
+        missing_external_refs.len(),
+        refs_total,
+    );
+    push_cleanup_queue(
+        &mut queues,
+        "isolated",
+        "Isolated Nodes",
+        isolated.len(),
+        relations_total,
+    );
+    push_cleanup_queue(
+        &mut queues,
+        "unresolved-relations",
+        "Unresolved Relations",
+        unresolved_relations,
+        outgoing_relations,
+    );
+    queues
+}
+
+fn push_cleanup_queue(
+    queues: &mut Vec<CleanupQueueSummary>,
+    id: &str,
+    label: &str,
+    remaining: usize,
+    total: usize,
+) {
+    if total > 0 {
+        queues.push(cleanup_queue_summary(id, label, remaining, total));
     }
 }
 

@@ -104,7 +104,7 @@ function normalizePreferences(preferences: Partial<AssetListPreferences> | undef
       preferences?.cover === "with" || preferences?.cover === "without"
         ? preferences.cover
         : defaults.cover,
-    sort: sort.startsWith("date:") || sort === "relations" || sort === "path" ? sort : defaults.sort,
+    sort: sort.startsWith("date:") || sort === "relationCount" || sort === "path" ? sort : defaults.sort,
     direction: preferences?.direction === "desc" ? "desc" : defaults.direction,
     view: preferences?.view === "grid" ? "grid" : defaults.view,
     titleLanguage: preferences?.titleLanguage || defaults.titleLanguage,

@@ -1134,6 +1134,12 @@
           "type": {
             "type": "string"
           },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSectionFilterConfig"
+            }
+          },
           "limit": {
             "type": [
               "integer",
@@ -1163,6 +1169,23 @@
           "id",
           "title",
           "type"
+        ]
+      },
+      "HomeSectionFilterConfig": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "field"
         ]
       },
       "SortDirection": {
@@ -1218,15 +1241,15 @@
         "type": "object",
         "properties": {
           "titleLanguage": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "defaultTitle": {
             "type": "boolean"
           }
-        },
-        "required": [
-          "titleLanguage"
-        ]
+        }
       },
       "FieldConfig": {
         "type": "object",
@@ -1247,6 +1270,16 @@
             "type": [
               "string",
               "null"
+            ]
+          },
+          "titleRole": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TitleRole"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "defaultTitle": {
@@ -1293,6 +1326,12 @@
               "null"
             ]
           },
+          "externalTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "relationType": {
             "type": [
               "string",
@@ -1317,12 +1356,19 @@
           "progress",
           "totalProgress",
           "rating",
+          "bool",
           "season",
           "date",
           "externalRef",
           "relation",
           "text",
           "textList"
+        ]
+      },
+      "TitleRole": {
+        "type": "string",
+        "enum": [
+          "original"
         ]
       },
       "DateRole": {
@@ -2648,7 +2694,7 @@
           "title": {
             "type": "string"
           },
-          "subtitle": {
+          "originalTitle": {
             "type": [
               "string",
               "null"

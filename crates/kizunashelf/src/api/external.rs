@@ -1,17 +1,44 @@
 use super::error::{ApiError, ApiResult};
 use crate::contract::{ExternalCandidate, ExternalProviderSummary, ExternalSearchResponse};
 use crate::dates::clamp_number;
+use crate::types::{FieldType, KizunaConfig};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{json, Map, Value};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
-use super::state::{unix_seconds_now, AppState, CachedAccessToken};
+use super::state::{get_library, unix_seconds_now, AppState, CachedAccessToken};
 use std::time::{Duration, Instant};
 
 const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
+
+#[derive(Clone, Debug, Default)]
+struct ProviderSearchConfig {
+    unconstrained: bool,
+    external_types: BTreeSet<String>,
+}
+
+impl ProviderSearchConfig {
+    fn add_external_types(&mut self, external_types: &[String]) {
+        let external_types = external_types
+            .iter()
+            .map(|value| value.trim())
+            .filter(|value| !value.is_empty())
+            .collect::<Vec<_>>();
+        if external_types.is_empty() {
+            self.unconstrained = true;
+            return;
+        }
+        self.external_types
+            .extend(external_types.into_iter().map(str::to_string));
+    }
+
+    fn external_types(&self) -> Option<&BTreeSet<String>> {
+        (!self.unconstrained).then_some(&self.external_types)
+    }
+}
 
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct ExternalSearchQuery {
@@ -28,7 +55,35 @@ pub(crate) async fn external_search(
     State(state): State<AppState>,
     Query(query): Query<ExternalSearchQuery>,
 ) -> ApiResult<ExternalSearchResponse> {
-    let providers = provider_summaries();
+    let requested_provider = query.provider.as_deref().filter(|value| *value != "all");
+    if let Some(provider) = requested_provider {
+        if !is_known_provider(provider) {
+            return Err(ApiError::bad_request("Unknown external provider"));
+        }
+    }
+
+    let library = get_library(&state).await?;
+    let Some(entity_type) = query
+        .entity_type
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty() && *value != "all")
+    else {
+        return Err(ApiError::bad_request(
+            "External search requires a concrete entity type",
+        ));
+    };
+    if !library
+        .config
+        .types
+        .iter()
+        .any(|type_config| type_config.id == entity_type)
+    {
+        return Err(ApiError::bad_request("Unknown entity type"));
+    }
+    let configured_providers = configured_external_providers(&library.config, entity_type);
+    let providers = provider_summaries(&configured_providers);
+
     let q = query.q.as_deref().unwrap_or_default().trim();
     if q.is_empty() {
         return Ok(Json(ExternalSearchResponse {
@@ -36,64 +91,158 @@ pub(crate) async fn external_search(
             items: Vec::new(),
         }));
     }
-    let requested_provider = query.provider.as_deref().filter(|value| *value != "all");
-    let entity_type = query.entity_type.as_deref().unwrap_or("all");
     let page_size = clamp_number(query.page_size.unwrap_or(10.0), 1, 25) as usize;
     let page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX) as usize;
 
     let mut items = Vec::new();
-    if requested_provider.is_none() || requested_provider == Some("bangumi") {
-        items.extend(search_bangumi(q, entity_type, page, page_size).await?);
+    if should_search_provider(requested_provider, &providers, "bangumi") {
+        if let Some(provider_config) = configured_providers.get("bangumi") {
+            items.extend(search_bangumi(q, page, page_size, provider_config).await?);
+        }
     }
-    if requested_provider.is_none() || requested_provider == Some("igdb") {
-        items.extend(search_igdb(&state, q, entity_type, page, page_size).await?);
+    if should_search_provider(requested_provider, &providers, "igdb") {
+        if let Some(provider_config) = configured_providers.get("igdb") {
+            items.extend(search_igdb(&state, q, page, page_size, provider_config).await?);
+        }
     }
-    if requested_provider.is_none() || requested_provider == Some("thetvdb") {
-        items.extend(search_thetvdb(&state, q, entity_type, page_size).await?);
-    }
-    if let Some(provider) = requested_provider {
-        if !providers.iter().any(|item| item.id == provider) {
-            return Err(ApiError::bad_request("Unknown external provider"));
+    if should_search_provider(requested_provider, &providers, "thetvdb") {
+        if let Some(provider_config) = configured_providers.get("thetvdb") {
+            items.extend(search_thetvdb(&state, q, page_size, provider_config).await?);
         }
     }
     Ok(Json(ExternalSearchResponse { providers, items }))
 }
 
-fn provider_summaries() -> Vec<ExternalProviderSummary> {
+fn provider_summaries(
+    configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
+) -> Vec<ExternalProviderSummary> {
     vec![
         ExternalProviderSummary {
             id: "bangumi".to_string(),
             label: "Bangumi".to_string(),
-            enabled: true,
-            reason: None,
+            enabled: provider_configured_and_supported(configured_providers, "bangumi"),
+            reason: provider_reason(configured_providers, "bangumi", None),
         },
         ExternalProviderSummary {
             id: "igdb".to_string(),
             label: "IGDB".to_string(),
-            enabled: igdb_credentials().is_some(),
-            reason: igdb_credentials().is_none().then(|| {
-                "Set KIZUNASHELF_IGDB_CLIENT_ID and KIZUNASHELF_IGDB_CLIENT_SECRET".to_string()
-            }),
+            enabled: provider_configured_and_supported(configured_providers, "igdb")
+                && igdb_credentials().is_some(),
+            reason: provider_reason(
+                configured_providers,
+                "igdb",
+                igdb_credentials().is_none().then(|| {
+                    "Set KIZUNASHELF_IGDB_CLIENT_ID and KIZUNASHELF_IGDB_CLIENT_SECRET".to_string()
+                }),
+            ),
         },
         ExternalProviderSummary {
             id: "thetvdb".to_string(),
             label: "TheTVDB".to_string(),
-            enabled: std::env::var("KIZUNASHELF_TVDB_API_KEY").ok().is_some(),
-            reason: std::env::var("KIZUNASHELF_TVDB_API_KEY")
-                .ok()
-                .is_none()
-                .then(|| "Set KIZUNASHELF_TVDB_API_KEY".to_string()),
+            enabled: provider_configured_and_supported(configured_providers, "thetvdb")
+                && std::env::var("KIZUNASHELF_TVDB_API_KEY").ok().is_some(),
+            reason: provider_reason(
+                configured_providers,
+                "thetvdb",
+                std::env::var("KIZUNASHELF_TVDB_API_KEY")
+                    .ok()
+                    .is_none()
+                    .then(|| "Set KIZUNASHELF_TVDB_API_KEY".to_string()),
+            ),
         },
     ]
 }
 
+fn provider_reason(
+    configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
+    provider: &'static str,
+    unavailable_reason: Option<String>,
+) -> Option<String> {
+    if !configured_providers.contains_key(provider) {
+        return Some("No externalRef field configured for this source".to_string());
+    }
+    if !provider_configured_and_supported(configured_providers, provider) {
+        return Some("No supported externalTypes configured for this source".to_string());
+    }
+    unavailable_reason
+}
+
+fn provider_configured_and_supported(
+    configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
+    provider: &'static str,
+) -> bool {
+    let Some(provider_config) = configured_providers.get(provider) else {
+        return false;
+    };
+    match provider {
+        "bangumi" => bangumi_types(provider_config).is_some(),
+        "igdb" => igdb_external_types_match(provider_config),
+        "thetvdb" => thetvdb_type_filters(provider_config).is_some(),
+        _ => false,
+    }
+}
+
+fn should_search_provider(
+    requested_provider: Option<&str>,
+    providers: &[ExternalProviderSummary],
+    provider: &str,
+) -> bool {
+    if requested_provider.is_some_and(|requested| requested != provider) {
+        return false;
+    }
+    providers
+        .iter()
+        .any(|item| item.id == provider && item.enabled)
+}
+
+fn is_known_provider(provider: &str) -> bool {
+    matches!(provider, "bangumi" | "igdb" | "thetvdb")
+}
+
+fn configured_external_providers(
+    config: &KizunaConfig,
+    entity_type: &str,
+) -> BTreeMap<&'static str, ProviderSearchConfig> {
+    let mut providers = BTreeMap::new();
+    for type_config in &config.types {
+        if type_config.id != entity_type {
+            continue;
+        }
+        for field in &type_config.fields {
+            if field.field_type != FieldType::ExternalRef {
+                continue;
+            }
+            if let Some(provider) = field
+                .external_ref
+                .as_deref()
+                .and_then(provider_for_external_ref)
+            {
+                providers
+                    .entry(provider)
+                    .or_insert_with(ProviderSearchConfig::default)
+                    .add_external_types(&field.external_types);
+            }
+        }
+    }
+    providers
+}
+
+fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
+    match external_ref.trim().to_ascii_lowercase().as_str() {
+        "bangumi" | "bgm" => Some("bangumi"),
+        "igdb" => Some("igdb"),
+        "thetvdb" | "tvdb" => Some("thetvdb"),
+        _ => None,
+    }
+}
+
 async fn search_bangumi(
     q: &str,
-    entity_type: &str,
     page: usize,
     page_size: usize,
+    provider_config: &ProviderSearchConfig,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
-    let Some(filter_types) = bangumi_types(entity_type) else {
+    let Some(filter_types) = bangumi_types(provider_config) else {
         return Ok(Vec::new());
     };
     let client = reqwest::Client::new();
@@ -128,13 +277,26 @@ async fn search_bangumi(
         .collect())
 }
 
-fn bangumi_types(entity_type: &str) -> Option<Vec<u32>> {
-    match entity_type {
-        "all" => Some(vec![1, 2, 3, 4, 6]),
-        "anime" | "movie" | "drama" => Some(vec![2, 6]),
-        "games" | "game" => Some(vec![4]),
-        "music" | "cd" => Some(vec![3]),
-        "book" | "books" => Some(vec![1]),
+fn bangumi_types(provider_config: &ProviderSearchConfig) -> Option<Vec<u32>> {
+    let Some(external_types) = provider_config.external_types() else {
+        return Some(vec![1, 2, 3, 4, 6]);
+    };
+    let mut types = BTreeSet::new();
+    for external_type in external_types {
+        if let Some(value) = bangumi_type(external_type) {
+            types.insert(value);
+        }
+    }
+    (!types.is_empty()).then(|| types.into_iter().collect())
+}
+
+fn bangumi_type(external_type: &str) -> Option<u32> {
+    match external_type.trim().to_ascii_lowercase().as_str() {
+        "1" | "book" | "books" => Some(1),
+        "2" | "anime" | "animation" => Some(2),
+        "3" | "music" | "cd" => Some(3),
+        "4" | "game" | "games" => Some(4),
+        "6" | "real" | "drama" | "movie" => Some(6),
         _ => None,
     }
 }
@@ -162,7 +324,7 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
         titles.insert("zh".to_string(), name_cn.to_string());
     }
     if !name.is_empty() {
-        titles.insert("original".to_string(), name.to_string());
+        titles.insert("ja".to_string(), name.to_string());
     }
     let mut metadata = Map::new();
     metadata.insert("bgm_url".to_string(), Value::String(url.clone()));
@@ -194,7 +356,7 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
         source_id: id,
         url,
         title: title.to_string(),
-        subtitle: (!release_date.is_empty()).then(|| release_date.to_string()),
+        original_title: (!name.is_empty()).then(|| name.to_string()),
         brief: item
             .get("summary")
             .and_then(Value::as_str)
@@ -209,11 +371,11 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
 async fn search_igdb(
     state: &AppState,
     q: &str,
-    entity_type: &str,
     page: usize,
     page_size: usize,
+    provider_config: &ProviderSearchConfig,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
-    if !matches!(entity_type, "all" | "games" | "game") {
+    if !igdb_external_types_match(provider_config) {
         return Ok(Vec::new());
     }
     let Some((client_id, client_secret)) = igdb_credentials() else {
@@ -258,6 +420,18 @@ async fn search_igdb(
         .cloned()
         .unwrap_or_default();
     Ok(data.iter().filter_map(igdb_candidate).collect())
+}
+
+fn igdb_external_types_match(provider_config: &ProviderSearchConfig) -> bool {
+    let Some(external_types) = provider_config.external_types() else {
+        return true;
+    };
+    external_types.iter().any(|external_type| {
+        matches!(
+            external_type.trim().to_ascii_lowercase().as_str(),
+            "game" | "games"
+        )
+    })
 }
 
 async fn igdb_access_token(
@@ -371,8 +545,8 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         provider: "igdb".to_string(),
         source_id,
         url,
+        original_title: Some(title.clone()),
         title,
-        subtitle: release_date,
         brief: item
             .get("summary")
             .or_else(|| item.get("storyline"))
@@ -388,12 +562,9 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
 async fn search_thetvdb(
     state: &AppState,
     q: &str,
-    entity_type: &str,
     page_size: usize,
+    provider_config: &ProviderSearchConfig,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
-    if !matches!(entity_type, "all" | "anime" | "drama" | "movie") {
-        return Ok(Vec::new());
-    }
     let Some(api_key) = std::env::var("KIZUNASHELF_TVDB_API_KEY")
         .ok()
         .filter(|value| !value.is_empty())
@@ -409,34 +580,47 @@ async fn search_thetvdb(
         }
     }
     let token = thetvdb_access_token(state, &client, &login, false).await?;
-    let type_filter = match entity_type {
-        "movie" => Some("movie"),
-        "anime" | "drama" => Some("series"),
-        _ => None,
+    let Some(type_filters) = thetvdb_type_filters(provider_config) else {
+        return Ok(Vec::new());
     };
-    let mut request = client
-        .get("https://api4.thetvdb.com/v4/search")
-        .bearer_auth(token)
-        .query(&[("query", q)]);
-    if let Some(type_filter) = type_filter {
-        request = request.query(&[("type", type_filter)]);
+    let mut items = Vec::new();
+    let mut seen = BTreeSet::new();
+    for type_filter in type_filters {
+        let data =
+            search_thetvdb_type(state, &client, &login, &token, q, type_filter.as_deref()).await?;
+        for candidate in data.iter().filter_map(thetvdb_candidate) {
+            if seen.insert(format!("{}:{}", candidate.provider, candidate.source_id)) {
+                items.push(candidate);
+            }
+            if items.len() >= page_size {
+                return Ok(items);
+            }
+        }
     }
+    Ok(items)
+}
+
+async fn search_thetvdb_type(
+    state: &AppState,
+    client: &reqwest::Client,
+    login: &Map<String, Value>,
+    token: &str,
+    q: &str,
+    type_filter: Option<&str>,
+) -> Result<Vec<Value>, ApiError> {
+    let request = thetvdb_search_request(client, token, q, type_filter);
     let response = request.send().await.map_err(provider_error)?;
     let response = if response.status() == reqwest::StatusCode::UNAUTHORIZED {
         state.invalidate_access_token("thetvdb").await;
-        let token = thetvdb_access_token(state, &client, &login, true).await?;
-        let mut request = client
-            .get("https://api4.thetvdb.com/v4/search")
-            .bearer_auth(token)
-            .query(&[("query", q)]);
-        if let Some(type_filter) = type_filter {
-            request = request.query(&[("type", type_filter)]);
-        }
-        request.send().await.map_err(provider_error)?
+        let token = thetvdb_access_token(state, client, login, true).await?;
+        thetvdb_search_request(client, &token, q, type_filter)
+            .send()
+            .await
+            .map_err(provider_error)?
     } else {
         response
     };
-    let data = response
+    Ok(response
         .error_for_status()
         .map_err(provider_error)?
         .json::<Value>()
@@ -445,12 +629,43 @@ async fn search_thetvdb(
         .get("data")
         .and_then(Value::as_array)
         .cloned()
-        .unwrap_or_default();
-    Ok(data
+        .unwrap_or_default())
+}
+
+fn thetvdb_search_request<'a>(
+    client: &'a reqwest::Client,
+    token: &'a str,
+    q: &'a str,
+    type_filter: Option<&'a str>,
+) -> reqwest::RequestBuilder {
+    let request = client
+        .get("https://api4.thetvdb.com/v4/search")
+        .bearer_auth(token)
+        .query(&[("query", q)]);
+    if let Some(type_filter) = type_filter {
+        request.query(&[("type", type_filter)])
+    } else {
+        request
+    }
+}
+
+fn thetvdb_type_filters(provider_config: &ProviderSearchConfig) -> Option<Vec<Option<String>>> {
+    let Some(external_types) = provider_config.external_types() else {
+        return Some(vec![None]);
+    };
+    let filters = external_types
         .iter()
-        .take(page_size)
-        .filter_map(thetvdb_candidate)
-        .collect())
+        .filter_map(|external_type| thetvdb_type_filter(external_type).map(Some))
+        .collect::<Vec<_>>();
+    (!filters.is_empty()).then_some(filters)
+}
+
+fn thetvdb_type_filter(external_type: &str) -> Option<String> {
+    match external_type.trim().to_ascii_lowercase().as_str() {
+        "series" | "serie" | "show" | "tv" | "anime" | "drama" => Some("series".to_string()),
+        "movie" | "movies" => Some("movie".to_string()),
+        _ => None,
+    }
 }
 
 async fn thetvdb_access_token(
@@ -554,8 +769,8 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         provider: "thetvdb".to_string(),
         source_id,
         url,
+        original_title: Some(title.clone()),
         title,
-        subtitle: release_date,
         brief: item
             .get("overview")
             .and_then(Value::as_str)
@@ -569,4 +784,123 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
 
 fn provider_error(error: reqwest::Error) -> ApiError {
     ApiError::bad_request(&format!("External provider request failed: {error}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{EntityTypeConfig, FieldConfig};
+
+    #[test]
+    fn external_providers_are_derived_from_external_ref_fields() {
+        let config = KizunaConfig {
+            vault_root: "/vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            content_writable: None,
+            read_concurrency: None,
+            home: None,
+            daily_notes: None,
+            types: vec![
+                entity_type("animation", "BGM Link", "bgm"),
+                entity_type("interactive", "IGDB Link", "igdb"),
+                entity_type("series", "TVDB Link", "tvdb"),
+            ],
+        };
+
+        assert!(configured_external_providers(&config, "animation").contains_key("bangumi"));
+        assert!(configured_external_providers(&config, "interactive").contains_key("igdb"));
+        assert!(configured_external_providers(&config, "series").contains_key("thetvdb"));
+        assert!(configured_external_providers(&config, "all").is_empty());
+    }
+
+    #[test]
+    fn external_provider_type_gates_are_provider_specific() {
+        let config = KizunaConfig {
+            vault_root: "/vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            content_writable: None,
+            read_concurrency: None,
+            home: None,
+            daily_notes: None,
+            types: vec![
+                entity_type_with_external_types("animation", "BGM Link", "bgm", &["anime"]),
+                entity_type_with_external_types("series", "TVDB Link", "thetvdb", &["series"]),
+                entity_type_with_external_types("video", "TVDB Link", "thetvdb", &["movie"]),
+                entity_type_with_external_types("bad", "TVDB Link", "thetvdb", &["game"]),
+            ],
+        };
+
+        let bangumi = configured_external_providers(&config, "animation");
+        assert_eq!(
+            bangumi_types(bangumi.get("bangumi").unwrap()),
+            Some(vec![2])
+        );
+
+        let series = configured_external_providers(&config, "series");
+        assert_eq!(
+            thetvdb_type_filters(series.get("thetvdb").unwrap()),
+            Some(vec![Some("series".to_string())])
+        );
+
+        let movie = configured_external_providers(&config, "video");
+        assert_eq!(
+            thetvdb_type_filters(movie.get("thetvdb").unwrap()),
+            Some(vec![Some("movie".to_string())])
+        );
+
+        let invalid = configured_external_providers(&config, "bad");
+        assert_eq!(thetvdb_type_filters(invalid.get("thetvdb").unwrap()), None);
+    }
+
+    #[test]
+    fn unknown_type_has_no_configured_external_providers() {
+        let config = KizunaConfig {
+            vault_root: "/vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            content_writable: None,
+            read_concurrency: None,
+            home: None,
+            daily_notes: None,
+            types: vec![entity_type("animation", "Bangumi Link", "bangumi")],
+        };
+
+        assert!(configured_external_providers(&config, "anime").is_empty());
+    }
+
+    fn entity_type(id: &str, field: &str, external_ref: &str) -> EntityTypeConfig {
+        entity_type_with_external_types(id, field, external_ref, &[])
+    }
+
+    fn entity_type_with_external_types(
+        id: &str,
+        field: &str,
+        external_ref: &str,
+        external_types: &[&str],
+    ) -> EntityTypeConfig {
+        EntityTypeConfig {
+            id: id.to_string(),
+            label: id.to_string(),
+            icon: None,
+            path: id.to_string(),
+            filename: None,
+            fields: vec![FieldConfig {
+                field: field.to_string(),
+                field_type: FieldType::ExternalRef,
+                display_name: None,
+                title_language: None,
+                title_role: None,
+                default_title: None,
+                enum_options: Vec::new(),
+                total_progress_field: None,
+                date_role: None,
+                season_language: None,
+                external_ref: Some(external_ref.to_string()),
+                external_types: external_types
+                    .iter()
+                    .map(|value| value.to_string())
+                    .collect(),
+                relation_type: None,
+            }],
+        }
+    }
 }

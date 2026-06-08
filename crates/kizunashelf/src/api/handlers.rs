@@ -8,7 +8,7 @@ use crate::contract::{
 };
 use crate::dates::clamp_number;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
-use crate::types::{HomeSectionConfig, Library};
+use crate::types::{Entity, HomeSectionConfig, Library};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -211,10 +211,11 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
     };
     let sort = section.sort.as_deref().unwrap_or("title");
     let mut filtered: Vec<_> = library
-        .summaries
+        .entities
         .iter()
-        .filter(|entity| entity.entity_type == section.entity_type)
-        .cloned()
+        .filter(|entity| entity.summary.entity_type == section.entity_type)
+        .filter(|entity| home_section_filters_match(entity, section))
+        .map(|entity| entity.summary.clone())
         .collect();
     filtered = sort_entities_for_entity_list(filtered, sort, direction, None);
     let total = filtered.len();
@@ -240,5 +241,39 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         .to_string(),
         total,
         items,
+    }
+}
+
+fn home_section_filters_match(entity: &Entity, section: &HomeSectionConfig) -> bool {
+    section.filters.iter().all(|filter| {
+        let field = filter.field.trim();
+        if field.is_empty() {
+            return true;
+        }
+        let Some(value) = entity.frontmatter.get(field) else {
+            return false;
+        };
+        if filter.values.is_empty() {
+            return !value.is_null();
+        }
+        frontmatter_value_matches_any(value, &filter.values)
+    })
+}
+
+fn frontmatter_value_matches_any(value: &serde_json::Value, expected: &[String]) -> bool {
+    match value {
+        serde_json::Value::Array(items) => items
+            .iter()
+            .any(|item| frontmatter_value_matches_any(item, expected)),
+        serde_json::Value::String(value) => expected.iter().any(|item| item == value),
+        serde_json::Value::Bool(value) => {
+            let value = if *value { "true" } else { "false" };
+            expected.iter().any(|item| item == value)
+        }
+        serde_json::Value::Number(value) => {
+            let value = value.to_string();
+            expected.iter().any(|item| item == &value)
+        }
+        _ => false,
     }
 }

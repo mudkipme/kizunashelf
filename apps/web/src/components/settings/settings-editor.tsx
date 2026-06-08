@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { isDesktopRuntime, selectDirectory } from "@/lib/desktop";
+import { isIso639TitleLanguage } from "@/lib/title-language";
 import {
   fieldTypeLabel,
   supportsDateRole,
@@ -19,8 +20,10 @@ import type {
   FieldConfig,
   FieldType,
   EntityTypeConfig,
+  FilenameConfig,
   HomeConfig,
   HomeSectionConfig,
+  HomeSectionFilterConfig,
   KizunaConfig,
   SeasonLanguage,
 } from "@/types/config";
@@ -326,6 +329,23 @@ function HomeSectionEditor({
   onChange: (section: HomeSectionConfig) => void;
   onRemove: () => void;
 }) {
+  const selectedType = types.find((type) => type.id === section.type);
+  const filterFields = selectedType?.fields.filter((field) => supportsEnumOptions(field.fieldType)) ?? [];
+  const filters = section.filters ?? [];
+
+  function updateFilter(index: number, filter: HomeSectionFilterConfig) {
+    onChange({ ...section, filters: replaceArray(filters, index, filter) });
+  }
+
+  function removeFilter(index: number) {
+    onChange({ ...section, filters: filters.filter((_, itemIndex) => itemIndex !== index) });
+  }
+
+  function addFilter() {
+    const field = filterFields[0]?.field ?? "";
+    onChange({ ...section, filters: [...filters, { field, values: [] }] });
+  }
+
   return (
     <div className="rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
@@ -336,7 +356,11 @@ function HomeSectionEditor({
         <TextField label="ID" value={section.id} onChange={(id) => onChange({ ...section, id })} />
         <TextField label="Title" value={section.title} onChange={(title) => onChange({ ...section, title })} />
         <Field label="Type">
-          <Select value={section.type} onChange={(event) => onChange({ ...section, type: event.target.value })} className="h-9 w-full text-sm">
+          <Select
+            value={section.type}
+            onChange={(event) => onChange({ ...section, type: event.target.value, filters: [] })}
+            className="h-9 w-full text-sm"
+          >
             {types.map((type) => (
               <option key={type.id} value={type.id}>
                 {type.label || type.id}
@@ -345,6 +369,30 @@ function HomeSectionEditor({
             {!types.some((type) => type.id === section.type) ? <option value={section.type}>{section.type}</option> : null}
           </Select>
         </Field>
+        <div className="lg:col-span-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-sm font-medium">Filters</div>
+                <div className="text-xs text-muted-foreground">Enum and enum list fields from this type.</div>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={addFilter} disabled={filterFields.length === 0}>
+                <PlusIcon data-icon="inline-start" />
+                Add Filter
+              </Button>
+            </div>
+            {filters.map((filter, index) => (
+              <HomeSectionFilterEditor
+                key={`${filter.field}-${index}`}
+                filter={filter}
+                fields={filterFields}
+                onChange={(nextFilter) => updateFilter(index, nextFilter)}
+                onRemove={() => removeFilter(index)}
+              />
+            ))}
+            {filterFields.length === 0 ? <EmptyConfigLine>No enum fields available for this type.</EmptyConfigLine> : null}
+          </div>
+        </div>
         <NumberField label="Limit" value={section.limit} onChange={(limit) => onChange({ ...section, limit })} />
         <TextField label="Sort" value={section.sort ?? ""} onChange={(sort) => onChange({ ...section, sort })} />
         <Field label="Direction">
@@ -363,6 +411,53 @@ function HomeSectionEditor({
             <option value="desc">Descending</option>
           </Select>
         </Field>
+      </div>
+    </div>
+  );
+}
+
+function HomeSectionFilterEditor({
+  filter,
+  fields,
+  onChange,
+  onRemove,
+}: {
+  filter: HomeSectionFilterConfig;
+  fields: FieldConfig[];
+  onChange: (filter: HomeSectionFilterConfig) => void;
+  onRemove: () => void;
+}) {
+  const selectedField = fields.find((field) => field.field === filter.field);
+  const suggestions = selectedField?.enumOptions ?? [];
+  return (
+    <div className="rounded-md border border-dashed p-3">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
+        <Field label="Field">
+          <Select
+            value={filter.field}
+            onChange={(event) => onChange({ ...filter, field: event.target.value, values: [] })}
+            className="h-9 w-full text-sm"
+          >
+            {fields.map((field) => (
+              <option key={field.field} value={field.field}>
+                {field.displayName || field.field}
+              </option>
+            ))}
+            {filter.field && !fields.some((field) => field.field === filter.field) ? (
+              <option value={filter.field}>{filter.field}</option>
+            ) : null}
+          </Select>
+        </Field>
+        <StringListEditor
+          label="Values"
+          values={filter.values}
+          suggestions={suggestions}
+          placeholder={suggestions[0] ?? "value"}
+          onChange={(values) => onChange({ ...filter, values })}
+        />
+        <div className="flex items-end">
+          <IconButton label="Remove filter" onClick={onRemove} />
+        </div>
       </div>
     </div>
   );
@@ -396,12 +491,11 @@ function EntityTypeEditor({
             onChange={(event) =>
               onChange({
                 ...config,
-                filename: event.target.value
-                  ? {
-                      titleLanguage: event.target.value,
-                      defaultTitle: config.filename?.defaultTitle ?? false,
-                    }
-                  : null,
+                filename: {
+                  ...(config.filename ?? {}),
+                  titleLanguage: event.target.value || undefined,
+                  defaultTitle: config.filename?.defaultTitle ?? false,
+                },
               })
             }
             className="h-9 w-full text-sm"
@@ -410,19 +504,18 @@ function EntityTypeEditor({
             <option value="zh">Chinese</option>
             <option value="ja">Japanese</option>
             <option value="en">English</option>
-            <option value="original">Original</option>
           </Select>
         </Field>
         <Field label="Filename default title">
           <Select
             value={config.filename?.defaultTitle ? "true" : "false"}
-            disabled={!config.filename}
             onChange={(event) =>
               onChange({
                 ...config,
-                filename: config.filename
-                  ? { ...config.filename, defaultTitle: event.target.value === "true" }
-                  : null,
+                filename: {
+                  ...(config.filename ?? {}),
+                  defaultTitle: event.target.value === "true",
+                },
               })
             }
             className="h-9 w-full text-sm"
@@ -511,6 +604,16 @@ function FieldConfigEditor({
               value={field.titleLanguage ?? ""}
               onChange={(titleLanguage) => onChange({ ...field, titleLanguage })}
             />
+            <Field label="Title role">
+              <Select
+                value={field.titleRole ?? ""}
+                onChange={(event) => onChange({ ...field, titleRole: (event.target.value || null) as FieldConfig["titleRole"] })}
+                className="h-9 w-full text-sm"
+              >
+                <option value="">None</option>
+                <option value="original">Original</option>
+              </Select>
+            </Field>
             <Field label="Default title">
               <Select
                 value={field.defaultTitle ? "true" : "false"}
@@ -571,11 +674,21 @@ function FieldConfigEditor({
           </Field>
         ) : null}
         {field.fieldType === "externalRef" ? (
-          <TextField
-            label="External source"
-            value={field.externalRef ?? ""}
-            onChange={(externalRef) => onChange({ ...field, externalRef })}
-          />
+          <>
+            <TextField
+              label="External source"
+              value={field.externalRef ?? ""}
+              onChange={(externalRef) => onChange({ ...field, externalRef })}
+            />
+            <div className="lg:col-span-2">
+              <StringListEditor
+                label="External types"
+                values={field.externalTypes ?? []}
+                placeholder="anime"
+                onChange={(externalTypes) => onChange({ ...field, externalTypes })}
+              />
+            </div>
+          </>
         ) : null}
         {field.fieldType === "relation" ? (
           <TextField
@@ -923,8 +1036,8 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
     label: config.label ?? "",
     icon: config.icon ?? "",
     path: config.path ?? "",
-    filename: config.filename
-      ? {
+      filename: config.filename
+        ? {
           titleLanguage: config.filename.titleLanguage ?? "",
           defaultTitle: config.filename.defaultTitle ?? false,
         }
@@ -939,12 +1052,14 @@ function normalizeField(field: FieldConfig): FieldConfig {
     fieldType: field.fieldType ?? "text",
     displayName: field.displayName ?? "",
     titleLanguage: field.titleLanguage ?? "",
+    titleRole: field.titleRole ?? null,
     defaultTitle: field.defaultTitle ?? false,
     enumOptions: field.enumOptions ?? [],
     totalProgressField: field.totalProgressField ?? "",
     dateRole: field.dateRole ?? null,
     seasonLanguage: field.seasonLanguage ?? "zh",
     externalRef: field.externalRef ?? "",
+    externalTypes: field.externalTypes ?? [],
     relationType: field.relationType ?? "",
   };
 }
@@ -969,6 +1084,7 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
             id: section.id,
             title: section.title,
             type: section.type,
+            filters: cleanHomeSectionFilters(section.filters ?? []),
             limit: section.limit ?? undefined,
             sort: emptyToUndefined(section.sort),
             direction: section.direction ?? undefined,
@@ -980,16 +1096,33 @@ function cleanConfig(config: KizunaConfig): KizunaConfig {
       label: typeConfig.label,
       icon: emptyToUndefined(typeConfig.icon),
       path: typeConfig.path,
-      filename: typeConfig.filename?.titleLanguage
-        ? {
-            titleLanguage: typeConfig.filename.titleLanguage,
-            defaultTitle: typeConfig.filename.defaultTitle || undefined,
-          }
-        : undefined,
+      filename: cleanFilename(typeConfig.filename),
       fields: typeConfig.fields
         .map(cleanField)
         .filter((field): field is FieldConfig => Boolean(field)),
     })),
+  };
+}
+
+function cleanHomeSectionFilters(filters: HomeSectionFilterConfig[]) {
+  const cleaned = filters
+    .map((filter) => ({
+      field: filter.field.trim(),
+      values: cleanStrings(filter.values ?? []),
+    }))
+    .filter((filter) => filter.field);
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
+function cleanFilename(filename: FilenameConfig | null | undefined): FilenameConfig | undefined {
+  if (!filename) return undefined;
+  const titleLanguage = isIso639TitleLanguage(filename.titleLanguage)
+    ? filename.titleLanguage
+    : undefined;
+  if (!titleLanguage && !filename.defaultTitle) return undefined;
+  return {
+    titleLanguage,
+    defaultTitle: filename.defaultTitle || undefined,
   };
 }
 
@@ -1000,7 +1133,11 @@ function cleanField(field: FieldConfig): FieldConfig | undefined {
     field: key,
     fieldType: field.fieldType,
     displayName: emptyToUndefined(field.displayName),
-    titleLanguage: field.fieldType === "title" ? emptyToUndefined(field.titleLanguage) : undefined,
+    titleLanguage:
+      field.fieldType === "title" && isIso639TitleLanguage(field.titleLanguage)
+        ? field.titleLanguage
+        : undefined,
+    titleRole: field.fieldType === "title" ? field.titleRole || undefined : undefined,
     defaultTitle: field.fieldType === "title" && field.defaultTitle ? true : undefined,
     enumOptions:
       field.fieldType === "enum" || field.fieldType === "enumList"
@@ -1012,6 +1149,8 @@ function cleanField(field: FieldConfig): FieldConfig | undefined {
       field.fieldType === "date" || field.fieldType === "season" ? field.dateRole || undefined : undefined,
     seasonLanguage: field.fieldType === "season" ? field.seasonLanguage || "zh" : undefined,
     externalRef: field.fieldType === "externalRef" ? emptyToUndefined(field.externalRef) : undefined,
+    externalTypes:
+      field.fieldType === "externalRef" ? cleanOptionalStrings(field.externalTypes ?? []) : undefined,
     relationType: field.fieldType === "relation" ? emptyToUndefined(field.relationType) : undefined,
   };
 }
@@ -1057,7 +1196,7 @@ function defaultEntityType(): EntityTypeConfig {
     label: "Type",
     icon: "",
     path: "Type",
-    filename: { titleLanguage: "original", defaultTitle: true },
+    filename: { defaultTitle: true },
     fields: [
       { field: "id", fieldType: "id", displayName: "ID" },
       {
@@ -1153,7 +1292,7 @@ function mediaType(
       { field: "uid", fieldType: "id", displayName: "UID" },
       { field: "id", fieldType: "id", displayName: "ID" },
       { field: "title", fieldType: "title", displayName: "Title", titleLanguage: "zh" },
-      { field: "title_original", fieldType: "title", displayName: "Title (Original)", titleLanguage: "original" },
+      { field: "title_original", fieldType: "title", displayName: "Title (Original)", titleRole: "original" },
       { field: "title_en", fieldType: "title", displayName: "Title (English)", titleLanguage: "en" },
       { field: "title_ja", fieldType: "title", displayName: "Title (Japanese)", titleLanguage: "ja" },
       { field: "cover_url", fieldType: "image", displayName: "Cover" },
@@ -1188,12 +1327,27 @@ function mediaType(
         fieldType: "externalRef",
         displayName: field,
         externalRef: field.replace(/_url$/, ""),
+        externalTypes: externalTypesForSource(field.replace(/_url$/, ""), id),
       }) satisfies FieldConfig),
       { field: "franchise", fieldType: "relation", displayName: "Franchise", relationType: "franchise" },
       { field: "studio", fieldType: "relation", displayName: "Studio", relationType: "studio" },
       { field: "developer", fieldType: "relation", displayName: "Developer", relationType: "developer" },
     ],
   };
+}
+
+function externalTypesForSource(source: string, typeId: string) {
+  if (source === "igdb") return ["game"];
+  if (source === "thetvdb") return typeId === "movie" ? ["movie"] : ["series"];
+  if (source === "bgm") {
+    if (typeId === "games") return ["game"];
+    if (typeId === "music" || typeId === "cd") return ["music"];
+    if (typeId === "books" || typeId === "book") return ["book"];
+    if (typeId === "drama") return ["real"];
+    if (typeId === "movie") return ["anime", "real"];
+    return ["anime"];
+  }
+  return [];
 }
 
 const fieldTypeOptions: FieldType[] = [
@@ -1206,6 +1360,7 @@ const fieldTypeOptions: FieldType[] = [
   "progress",
   "totalProgress",
   "rating",
+  "bool",
   "season",
   "date",
   "externalRef",
@@ -1230,6 +1385,11 @@ function replaceArray<T>(items: T[], index: number, value: T) {
 
 function cleanStrings(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
+}
+
+function cleanOptionalStrings(values: string[]) {
+  const cleaned = cleanStrings(values);
+  return cleaned.length > 0 ? cleaned : undefined;
 }
 
 function emptyToUndefined(value?: string | null) {

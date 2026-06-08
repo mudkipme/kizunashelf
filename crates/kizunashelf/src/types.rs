@@ -20,7 +20,8 @@ pub struct EntityTypeConfig {
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct FilenameConfig {
-    pub title_language: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title_language: Option<String>,
     #[serde(default, skip_serializing_if = "is_false")]
     pub default_title: bool,
 }
@@ -35,6 +36,8 @@ pub struct FieldConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title_language: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title_role: Option<TitleRole>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_title: Option<bool>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub enum_options: Vec<String>,
@@ -46,6 +49,8 @@ pub struct FieldConfig {
     pub season_language: Option<SeasonLanguage>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub external_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub external_types: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub relation_type: Option<String>,
 }
@@ -62,12 +67,19 @@ pub enum FieldType {
     Progress,
     TotalProgress,
     Rating,
+    Bool,
     Season,
     Date,
     ExternalRef,
     Relation,
     Text,
     TextList,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum TitleRole {
+    Original,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
@@ -99,12 +111,22 @@ pub struct HomeSectionConfig {
     pub title: String,
     #[serde(rename = "type")]
     pub entity_type: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub filters: Vec<HomeSectionFilterConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sort: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub direction: Option<SortDirection>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct HomeSectionFilterConfig {
+    pub field: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub values: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

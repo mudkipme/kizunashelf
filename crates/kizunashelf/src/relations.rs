@@ -377,7 +377,7 @@ pub fn sort_entities_with_title_language(
                 entity_date_sort_value(a, field).as_deref(),
                 entity_date_sort_value(b, field).as_deref(),
             )
-        } else if sort == "relations" {
+        } else if sort == "relationCount" {
             a.relation_count.cmp(&b.relation_count)
         } else if sort == "path" {
             compare_string(&a.path, &b.path)
