@@ -104,13 +104,6 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .unwrap()
         .iter()
         .all(|metric| metric["name"] != "Summary"));
-    assert_eq!(
-        analytics["dataQuality"]["missingSummary"]
-            .as_array()
-            .unwrap()
-            .len(),
-        0
-    );
 
     let cleanup = server.ok_json("/api/cleanup-queues").await;
     let missing_cover = queue_summary(&cleanup["queues"], "missing-cover");
@@ -122,11 +115,6 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let isolated = queue_summary(&cleanup["queues"], "isolated");
     assert_eq!(isolated["total"], 3);
     assert_eq!(isolated["remaining"], 0);
-    assert!(cleanup["queues"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .all(|queue| queue["id"] != "missing-summary"));
     assert_eq!(cleanup["missingCover"][0]["id"], "games:Moon Quest");
     assert_eq!(
         cleanup["missingExternalRefs"][0]["id"],

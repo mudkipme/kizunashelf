@@ -237,7 +237,6 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
                 .take(12)
                 .cloned()
                 .collect(),
-            missing_summary: Vec::new(),
             isolated: summaries
                 .iter()
                 .filter(|entity| quality.requires_relations(entity))
@@ -286,7 +285,6 @@ fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
         .iter()
         .filter(|entity| quality.requires_external_refs(entity))
         .count();
-    let missing_summary: Vec<EntitySummary> = Vec::new();
     let isolated: Vec<_> = summaries
         .iter()
         .filter(|entity| quality.requires_relations(entity))
@@ -313,7 +311,6 @@ fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
         queues,
         missing_cover,
         missing_external_refs,
-        missing_summary,
         isolated,
         unresolved_relations,
     }

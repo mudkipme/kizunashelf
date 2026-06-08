@@ -2259,12 +2259,6 @@
               "$ref": "#/components/schemas/EntitySummary"
             }
           },
-          "missingSummary": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntitySummary"
-            }
-          },
           "isolated": {
             "type": "array",
             "items": {
@@ -2275,7 +2269,6 @@
         "required": [
           "missingCover",
           "missingExternalRefs",
-          "missingSummary",
           "isolated"
         ]
       },
@@ -2303,12 +2296,6 @@
               "$ref": "#/components/schemas/EntitySummary"
             }
           },
-          "missingSummary": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntitySummary"
-            }
-          },
           "isolated": {
             "type": "array",
             "items": {
@@ -2327,7 +2314,6 @@
           "queues",
           "missingCover",
           "missingExternalRefs",
-          "missingSummary",
           "isolated",
           "unresolvedRelations"
         ]

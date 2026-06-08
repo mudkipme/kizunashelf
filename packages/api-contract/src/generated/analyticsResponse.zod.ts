@@ -66,8 +66,6 @@ export const analyticsResponseDataQualityMissingCoverItemRelationCountMin = 0;
 
 export const analyticsResponseDataQualityMissingExternalRefsItemRelationCountMin = 0;
 
-export const analyticsResponseDataQualityMissingSummaryItemRelationCountMin = 0;
-
 export const analyticsResponseDataQualityIsolatedItemRelationCountMin = 0;
 
 
@@ -251,23 +249,6 @@ export const AnalyticsResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(analyticsResponseDataQualityMissingExternalRefsItemRelationCountMin)
-})),
-  "missingSummary": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.string(),
-  "typeLabel": zod.string(),
-  "title": zod.string(),
-  "titles": zod.record(zod.string(), zod.string()),
-  "dates": zod.array(zod.object({
-  "field": zod.string(),
-  "value": zod.string()
-})),
-  "image": zod.string().nullish(),
-  "summary": zod.string().nullish(),
-  "path": zod.string(),
-  "basename": zod.string(),
-  "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(analyticsResponseDataQualityMissingSummaryItemRelationCountMin)
 })),
   "isolated": zod.array(zod.object({
   "id": zod.string(),

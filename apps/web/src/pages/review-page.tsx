@@ -322,9 +322,6 @@ function queueItems(data: CleanupQueuesResponse, queue: QueueDefinition): Filter
   if (queue.id === "missing-refs") {
     return data.missingExternalRefs.map((entity) => ({ kind: "entity", entity }));
   }
-  if (queue.id === "missing-summary") {
-    return data.missingSummary.map((entity) => ({ kind: "entity", entity }));
-  }
   if (queue.id === "isolated") {
     return data.isolated.map((entity) => ({ kind: "entity", entity }));
   }

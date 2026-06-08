@@ -885,7 +885,7 @@ function editableFieldSpecs(
     });
   }
 
-  for (const [key, value] of Object.entries(frontmatter)) {
+  for (const key of Object.keys(frontmatter)) {
     if (seen.has(key)) continue;
     seen.add(key);
     specs.push({

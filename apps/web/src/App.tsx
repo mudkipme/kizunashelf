@@ -5,7 +5,6 @@ import {
   Route,
   Routes,
   useLocation,
-  useParams,
 } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -92,24 +91,10 @@ function AppRoutes() {
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/review" element={<ReviewPage />} />
       <Route path="/review/:queueId" element={<ReviewPage />} />
-      <Route path="/cleanup" element={<Navigate to="/review" replace />} />
-      <Route path="/cleanup/:queueId" element={<LegacyCleanupRedirect />} />
       <Route path="/statistics" element={<StatisticsPage />} />
       <Route path="/relations" element={<RelationsPage />} />
-      <Route path="/relations/:field" element={<Navigate to="/relations" replace />} />
-      <Route path="/relations/:field/:target" element={<LegacyRelationTargetRedirect />} />
       <Route path="/entities/new" element={<EntityCreatePage />} />
       <Route path="/entities/:id" element={<EntityPage />} />
     </Routes>
   );
-}
-
-function LegacyCleanupRedirect() {
-  const { queueId } = useParams();
-  return <Navigate to={`/review/${encodeURIComponent(queueId ?? "")}`} replace />;
-}
-
-function LegacyRelationTargetRedirect() {
-  const { target } = useParams();
-  return <Navigate to={`/entities/${encodeURIComponent(target ?? "")}`} replace />;
 }

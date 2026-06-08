@@ -521,11 +521,3 @@ function formatMetadataValue(value: unknown) {
   if (typeof value === "string") return value;
   return JSON.stringify(value);
 }
-
-function humanizeField(key: string) {
-  return key.replace(/[_-]+/g, " ");
-}
-
-function isVirtualTitleField(key: string) {
-  return ["filename", "basename", "$filename", "$basename"].includes(key);
-}

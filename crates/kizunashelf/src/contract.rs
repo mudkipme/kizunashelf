@@ -311,7 +311,6 @@ pub struct AnalyticsUnresolvedRelations {
 pub struct AnalyticsDataQuality {
     pub missing_cover: Vec<EntitySummary>,
     pub missing_external_refs: Vec<EntitySummary>,
-    pub missing_summary: Vec<EntitySummary>,
     pub isolated: Vec<EntitySummary>,
 }
 
@@ -338,7 +337,6 @@ pub struct CleanupQueuesResponse {
     pub queues: Vec<CleanupQueueSummary>,
     pub missing_cover: Vec<EntitySummary>,
     pub missing_external_refs: Vec<EntitySummary>,
-    pub missing_summary: Vec<EntitySummary>,
     pub isolated: Vec<EntitySummary>,
     pub unresolved_relations: Vec<CleanupUnresolvedRelation>,
 }
