@@ -475,7 +475,7 @@ function MultiValueInput({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative data-[open=true]:z-20" data-open={open}>
       <div
         role="toolbar"
         aria-label={ariaLabel}
@@ -989,7 +989,6 @@ function relationOptionsForField(field: FieldConfig, suggestions: EntitySummary[
     .map((item) => ({
       value: item.basename,
       label: item.title,
-      detail: `${item.typeLabel} - ${item.path}`,
     }))
     .filter((item) => item.value);
 }

@@ -159,17 +159,19 @@ export function EntityPage() {
     }
   }
 
-  async function searchExternal(providerOverride = externalProvider, queryOverride = externalQuery) {
+  async function searchExternal(providerOverride?: string, queryOverride?: string) {
     if (!entity) return;
+    const selectedProvider = providerOverride ?? externalProvider;
+    const selectedQuery = queryOverride ?? externalQuery;
     if (providerOptions.length === 0) return;
-    if (providerOverride !== "all" && !providerOptions.includes(providerOverride)) return;
+    if (selectedProvider !== "all" && !providerOptions.includes(selectedProvider)) return;
     setExternalSearching(true);
     setSelectedCandidate(undefined);
     setSelectedFields(new Set());
     try {
       const result = await searchSources({
-        provider: providerOverride,
-        q: queryOverride || entity.title,
+        provider: selectedProvider,
+        q: selectedQuery || entity.title,
         type: entity.type,
         pageSize: 8,
       });
@@ -468,7 +470,7 @@ function ExternalMatchPanel({
             </option>
           ))}
         </Select>
-        <Button type="button" variant="outline" onClick={onSearch} disabled={searching || !externalSearchEnabled}>
+        <Button type="button" variant="outline" onClick={() => onSearch()} disabled={searching || !externalSearchEnabled}>
           <SearchIcon data-icon="inline-start" />
           {searching ? "Searching" : "Search"}
         </Button>
