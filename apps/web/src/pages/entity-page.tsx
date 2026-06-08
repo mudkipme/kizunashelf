@@ -69,6 +69,7 @@ export function EntityPage() {
   const contentWritable = state.capabilities?.contentWritable !== false;
   const typeConfig = state.config?.types.find((type) => type.id === entity?.type);
   const providerOptions = useMemo(() => externalProviderPriority(typeConfig), [typeConfig]);
+  const externalSearchEnabled = providerOptions.length > 0;
   const existingExternalRefs = useMemo(
     () =>
       typeConfig && entity
@@ -80,10 +81,10 @@ export function EntityPage() {
               value: entity.externalRefs[field.field],
             }))
             .filter((item): item is { field: string; provider: string; value: string } =>
-              Boolean(item.provider && item.value),
+              Boolean(item.provider && item.value && providerOptions.includes(item.provider)),
             )
         : [],
-    [entity, typeConfig],
+    [entity, providerOptions, typeConfig],
   );
   const selectedCandidateEntries = useMemo(
     () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, typeConfig) : []),
@@ -99,6 +100,20 @@ export function EntityPage() {
     setRenameBasename(entity.basename);
     setExternalQuery(entity.title);
   }, [entity?.id, entity?.revision]);
+
+  useEffect(() => {
+    if (providerOptions.length === 0) {
+      if (externalProvider !== "all") setExternalProvider("all");
+      return;
+    }
+    if (providerOptions.length === 1) {
+      if (externalProvider !== providerOptions[0]) setExternalProvider(providerOptions[0]);
+      return;
+    }
+    if (externalProvider !== "all" && !providerOptions.includes(externalProvider)) {
+      setExternalProvider("all");
+    }
+  }, [externalProvider, providerOptions]);
 
   async function loadEntity() {
     if (!id) return;
@@ -146,6 +161,8 @@ export function EntityPage() {
 
   async function searchExternal(providerOverride = externalProvider, queryOverride = externalQuery) {
     if (!entity) return;
+    if (providerOptions.length === 0) return;
+    if (providerOverride !== "all" && !providerOptions.includes(providerOverride)) return;
     setExternalSearching(true);
     setSelectedCandidate(undefined);
     setSelectedFields(new Set());
@@ -247,6 +264,7 @@ export function EntityPage() {
                 metadataEntries={selectedCandidateEntries}
                 selectedFields={selectedFields}
                 providerOptions={providerOptions}
+                externalSearchEnabled={externalSearchEnabled}
                 existingExternalRefs={existingExternalRefs}
                 frontmatter={entity.frontmatter as Record<string, unknown>}
                 searching={externalSearching}
@@ -387,6 +405,7 @@ function ExternalMatchPanel({
   metadataEntries,
   selectedFields,
   providerOptions,
+  externalSearchEnabled,
   existingExternalRefs,
   frontmatter,
   searching,
@@ -407,6 +426,7 @@ function ExternalMatchPanel({
   metadataEntries: ExternalMetadataPreviewEntry[];
   selectedFields: Set<string>;
   providerOptions: string[];
+  externalSearchEnabled: boolean;
   existingExternalRefs: Array<{ field: string; provider: string; value: string }>;
   frontmatter: Record<string, unknown>;
   searching: boolean;
@@ -434,15 +454,21 @@ function ExternalMatchPanel({
           Search
           <Input value={query} onChange={(event) => onQueryChange(event.target.value)} />
         </label>
-        <Select value={provider} onChange={(event) => onProviderChange(event.target.value)} aria-label="Provider">
-          <option value="all">All sources</option>
+        <Select
+          value={provider}
+          onChange={(event) => onProviderChange(event.target.value)}
+          aria-label="Provider"
+          disabled={!externalSearchEnabled}
+        >
+          {providerOptions.length === 0 ? <option value="all">No supported sources</option> : null}
+          {providerOptions.length > 1 ? <option value="all">All sources</option> : null}
           {providerOptions.map((provider) => (
             <option key={provider} value={provider}>
               {externalSourceLabel(provider)}
             </option>
           ))}
         </Select>
-        <Button type="button" variant="outline" onClick={onSearch} disabled={searching}>
+        <Button type="button" variant="outline" onClick={onSearch} disabled={searching || !externalSearchEnabled}>
           <SearchIcon data-icon="inline-start" />
           {searching ? "Searching" : "Search"}
         </Button>

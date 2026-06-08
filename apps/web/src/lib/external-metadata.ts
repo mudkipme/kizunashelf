@@ -59,17 +59,20 @@ export function externalSourceLabel(source: string) {
 }
 
 export function externalProviderPriority(typeConfig: TypeConfig | undefined) {
+  const supported = new Set<string>();
+  for (const field of configFields(typeConfig)) {
+    if (field.fieldType === "externalRef") addKnownSource(supported, field.externalRef ?? "");
+  }
+
   const priority = new Set<string>();
   for (const source of typeConfig?.externalPriority ?? []) {
-    addKnownSource(priority, source);
+    addKnownSupportedSource(priority, supported, source);
   }
+
   for (const field of configFields(typeConfig)) {
-    if (field.fieldType === "externalRef") addKnownSource(priority, field.externalRef ?? "");
+    if (field.fieldType === "externalRef") addKnownSupportedSource(priority, supported, field.externalRef ?? "");
   }
-  for (const field of configFields(typeConfig)) {
-    for (const mapping of field.externalFields ?? []) addKnownSource(priority, mapping.source);
-  }
-  for (const option of externalSourceOptions) priority.add(option.source);
+
   return [...priority];
 }
 
@@ -176,6 +179,11 @@ function addKnownSource(target: Set<string>, source: string) {
   if (externalSourceOptions.some((option) => option.source === expected)) {
     target.add(expected);
   }
+}
+
+function addKnownSupportedSource(target: Set<string>, supported: Set<string>, source: string) {
+  const expected = source.trim().toLowerCase();
+  if (supported.has(expected)) target.add(expected);
 }
 
 function hasValue(value: unknown): value is NonNullable<unknown> {

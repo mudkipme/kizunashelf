@@ -74,6 +74,19 @@ export function EntityCreatePage() {
     [selectedCandidate, selectedType],
   );
   const providerOptions = useMemo(() => externalProviderPriority(selectedType), [selectedType]);
+  const externalSearchEnabled = providerOptions.length > 0;
+
+  useEffect(() => {
+    if (providerOptions.length === 0) {
+      if (provider !== "all") setProvider("all");
+      return;
+    }
+    if (providerOptions.length === 1) {
+      if (provider !== providerOptions[0]) setProvider(providerOptions[0]);
+      return;
+    }
+    if (provider !== "all" && !providerOptions.includes(provider)) setProvider("all");
+  }, [provider, providerOptions]);
 
   async function load(signal: AbortSignal) {
     setState({ loading: true, relationSuggestions: [] });
@@ -137,7 +150,8 @@ export function EntityCreatePage() {
 
   async function searchExternal() {
     const query = searchQuery.trim() || normalizedBasename;
-    if (!query || !typeId) return;
+    if (!query || !typeId || !externalSearchEnabled) return;
+    if (provider !== "all" && !providerOptions.includes(provider)) return;
     setSearching(true);
     setMessage(undefined);
     setState((current) => ({ ...current, error: undefined }));
@@ -243,15 +257,21 @@ export function EntityCreatePage() {
                 placeholder={basename || "Search media sources"}
               />
             </label>
-            <Select value={provider} onChange={(event) => setProvider(event.target.value)} aria-label="Provider">
-              <option value="all">All sources</option>
+            <Select
+              value={provider}
+              onChange={(event) => setProvider(event.target.value)}
+              aria-label="Provider"
+              disabled={!externalSearchEnabled}
+            >
+              {providerOptions.length === 0 ? <option value="all">No supported sources</option> : null}
+              {providerOptions.length > 1 ? <option value="all">All sources</option> : null}
               {providerOptions.map((provider) => (
                 <option key={provider} value={provider}>
                   {externalSourceLabel(provider)}
                 </option>
               ))}
             </Select>
-            <Button type="button" variant="outline" onClick={searchExternal} disabled={searching}>
+            <Button type="button" variant="outline" onClick={searchExternal} disabled={searching || !externalSearchEnabled}>
               <SearchIcon data-icon="inline-start" />
               {searching ? "Searching" : "Search"}
             </Button>
