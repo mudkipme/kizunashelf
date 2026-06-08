@@ -20,6 +20,11 @@ export type DateRole = "planning" | "completed";
 export type SeasonLanguage = "zh" | "ja" | "en";
 export type TitleRole = "original";
 
+export type ExternalFieldMapping = {
+  source: string;
+  field: string;
+};
+
 export type FilenameConfig = {
   titleLanguage?: string | null;
   defaultTitle?: boolean;
@@ -31,6 +36,7 @@ export type FieldConfig = {
   displayName?: string | null;
   titleLanguage?: string | null;
   titleRole?: TitleRole | null;
+  externalFields?: ExternalFieldMapping[];
   defaultTitle?: boolean | null;
   enumOptions?: string[];
   totalProgressField?: string | null;

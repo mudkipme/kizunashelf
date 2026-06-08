@@ -37,6 +37,8 @@ pub struct FieldConfig {
     pub title_language: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title_role: Option<TitleRole>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub external_fields: Vec<ExternalFieldMapping>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_title: Option<bool>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -80,6 +82,13 @@ pub enum FieldType {
 #[serde(rename_all = "camelCase")]
 pub enum TitleRole {
     Original,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalFieldMapping {
+    pub source: String,
+    pub field: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

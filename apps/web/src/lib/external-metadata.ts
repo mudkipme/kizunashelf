@@ -12,11 +12,41 @@ export type ExternalMetadataEntry = {
   value: unknown;
 };
 
-const providerExternalRefs: Record<string, string[]> = {
-  bangumi: ["bangumi", "bgm"],
-  igdb: ["igdb"],
-  thetvdb: ["thetvdb", "tvdb"],
+export type ExternalFieldOption = {
+  field: string;
+  label: string;
 };
+
+export const externalFieldOptionsBySource: Record<string, ExternalFieldOption[]> = {
+  bangumi: [
+    { field: "name", label: "Name" },
+    { field: "name_cn", label: "Chinese name" },
+    { field: "cover_url", label: "Cover URL" },
+    { field: "date", label: "Release date" },
+    { field: "total_episodes", label: "Total episodes" },
+    { field: "summary", label: "Summary" },
+  ],
+  igdb: [
+    { field: "name", label: "Name" },
+    { field: "cover_url", label: "Cover URL" },
+    { field: "first_release_date", label: "First release date" },
+    { field: "summary", label: "Summary" },
+    { field: "storyline", label: "Storyline" },
+  ],
+  thetvdb: [
+    { field: "name", label: "Name" },
+    { field: "cover_url", label: "Cover URL" },
+    { field: "first_air_time", label: "First air time" },
+    { field: "year", label: "Year" },
+    { field: "overview", label: "Overview" },
+  ],
+};
+
+export const externalSourceOptions = [
+  { source: "bangumi", label: "Bangumi" },
+  { source: "igdb", label: "IGDB" },
+  { source: "thetvdb", label: "TheTVDB" },
+];
 
 export function candidateMetadataEntries(
   candidate: ExternalCandidate,
@@ -28,13 +58,7 @@ export function candidateMetadataEntries(
   const fields = configFields(typeConfig);
 
   for (const field of fields) {
-    const exactValue = metadata[field.field];
-    if (hasValue(exactValue)) {
-      addEntry(entries, used, field, normalizeValueForField(field, exactValue));
-      continue;
-    }
-
-    const semanticValue = semanticCandidateValue(candidate, metadata, field);
+    const semanticValue = candidateValueForField(candidate, metadata, field);
     if (hasValue(semanticValue)) {
       addEntry(entries, used, field, normalizeValueForField(field, semanticValue));
     }
@@ -69,32 +93,19 @@ function addEntry(
   });
 }
 
-function semanticCandidateValue(
+function candidateValueForField(
   candidate: ExternalCandidate,
   metadata: Record<string, unknown>,
   field: FieldConfig,
 ) {
-  if (field.fieldType === "title") {
-    return titleValue(candidate, field);
-  }
-
-  if (field.fieldType === "image" || field.fieldType === "imageList") {
-    return candidate.coverUrl ?? metadata.cover_url;
-  }
-
   if (field.fieldType === "externalRef" && externalRefMatches(candidate, field.externalRef ?? "")) {
     return candidate.url;
   }
 
-  if (field.fieldType === "date" && field.dateRole === "planning") {
-    return metadata.release_date;
-  }
+  const mapping = field.externalFields?.find((item) => externalSourceMatches(candidate.provider, item.source));
+  if (!mapping) return undefined;
 
-  if (field.fieldType === "totalProgress") {
-    return metadata.episodes;
-  }
-
-  return undefined;
+  return metadata[mapping.field];
 }
 
 function normalizeValueForField(field: FieldConfig, value: unknown) {
@@ -107,20 +118,16 @@ function normalizeValueForField(field: FieldConfig, value: unknown) {
   return value;
 }
 
-function titleValue(candidate: ExternalCandidate, field: FieldConfig) {
-  if (field.titleRole === "original") return candidate.originalTitle ?? candidate.title;
-  const language = field.titleLanguage ?? "";
-  if (language && candidate.titles?.[language]) return candidate.titles[language];
-  if (language === "zh" && candidate.titles?.zh) return candidate.titles.zh;
-  if (language === "ja" && candidate.titles?.ja) return candidate.titles.ja;
-  if (!language || language === "default") return candidate.title;
-  return undefined;
-}
-
 function externalRefMatches(candidate: ExternalCandidate, externalRef: string) {
   const expected = externalRef.trim().toLowerCase();
   if (!expected) return false;
-  return (providerExternalRefs[candidate.provider] ?? [candidate.provider]).includes(expected);
+  return externalSourceMatches(candidate.provider, expected);
+}
+
+function externalSourceMatches(provider: string, source: string) {
+  const expected = source.trim().toLowerCase();
+  if (!expected) return false;
+  return provider === expected;
 }
 
 function hasValue(value: unknown): value is NonNullable<unknown> {

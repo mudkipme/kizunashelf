@@ -564,7 +564,7 @@ async fn settings_endpoints_create_and_read_config_files() {
                     { "field": "status", "fieldType": "enum", "enumOptions": ["Backlog", "Watching", "Completed"] },
                     { "field": "season", "fieldType": "season", "dateRole": "planning", "seasonLanguage": "zh" },
                     { "field": "complete_date", "fieldType": "date", "dateRole": "completed" },
-                        { "field": "bgm_url", "fieldType": "externalRef", "externalRef": "bgm" },
+                        { "field": "bgm_url", "fieldType": "externalRef", "externalRef": "bangumi" },
                         { "field": "franchise", "fieldType": "relation", "relationType": "franchise" },
                         { "field": "studio", "fieldType": "relation", "relationType": "studio" }
                 ]
@@ -748,7 +748,7 @@ impl TestServer {
                         { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"] },
                         { "field": "season", "fieldType": "season", "displayName": "Season", "dateRole": "planning", "seasonLanguage": "zh" },
                         { "field": "complete_date", "fieldType": "date", "displayName": "Completed date", "dateRole": "completed" },
-                        { "field": "bgm_url", "fieldType": "externalRef", "displayName": "BGM", "externalRef": "bgm" },
+                        { "field": "bgm_url", "fieldType": "externalRef", "displayName": "BGM", "externalRef": "bangumi" },
                         { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
                         { "field": "studio", "fieldType": "relation", "displayName": "Studio", "relationType": "studio" }
                     ]

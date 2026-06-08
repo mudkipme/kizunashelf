@@ -1282,6 +1282,12 @@
               }
             ]
           },
+          "externalFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalFieldMapping"
+            }
+          },
           "defaultTitle": {
             "type": [
               "boolean",
@@ -1369,6 +1375,21 @@
         "type": "string",
         "enum": [
           "original"
+        ]
+      },
+      "ExternalFieldMapping": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "field"
         ]
       },
       "DateRole": {

@@ -32,6 +32,9 @@ types:
     fieldType: title
     displayName: Title (Japanese)
     titleLanguage: ja
+    externalFields:
+    - source: bangumi
+      field: name
   - field: title_en
     fieldType: title
     displayName: Title (English)
@@ -39,6 +42,9 @@ types:
   - field: cover_url
     fieldType: image
     displayName: Cover
+    externalFields:
+    - source: bangumi
+      field: cover_url
   - field: state
     fieldType: enum
     displayName: State
@@ -53,6 +59,9 @@ types:
   - field: episodes
     fieldType: totalProgress
     displayName: Episodes
+    externalFields:
+    - source: bangumi
+      field: total_episodes
   - field: season
     fieldType: season
     displayName: Season
@@ -65,9 +74,9 @@ types:
   - field: bgm_url
     fieldType: externalRef
     displayName: BGM
-    externalRef: bgm
+    externalRef: bangumi
     externalTypes:
-    - anime
+    - "2"
   - field: franchise
     fieldType: relation
     displayName: Franchise
@@ -84,9 +93,15 @@ types:
     fieldType: title
     displayName: Title (English)
     titleLanguage: en
+    externalFields:
+    - source: igdb
+      field: name
   - field: cover_url
     fieldType: image
     displayName: Cover
+    externalFields:
+    - source: igdb
+      field: cover_url
   - field: state
     fieldType: enum
     displayName: State
@@ -98,6 +113,9 @@ types:
     fieldType: date
     displayName: Release date
     dateRole: planning
+    externalFields:
+    - source: igdb
+      field: first_release_date
   - field: igdb_url
     fieldType: externalRef
     displayName: IGDB

@@ -53,6 +53,10 @@ export const KizunaConfig = zod.object({
   "displayName": zod.string().nullish(),
   "titleLanguage": zod.string().nullish(),
   "titleRole": zod.union([zod.enum(['original']),zod.null()]).optional(),
+  "externalFields": zod.array(zod.object({
+  "source": zod.string(),
+  "field": zod.string()
+})).optional(),
   "defaultTitle": zod.boolean().nullish(),
   "enumOptions": zod.array(zod.string()).optional(),
   "totalProgressField": zod.string().nullish(),
