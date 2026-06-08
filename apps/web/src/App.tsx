@@ -11,6 +11,7 @@ import { errorMessage } from "@/api/client";
 import { getSettingsConfig } from "@/api/settings";
 import { CalendarPage } from "@/pages/calendar-page";
 import { EntityCreatePage } from "@/pages/entity-create-page";
+import { EntityEditPage } from "@/pages/entity-edit-page";
 import { EntityPage } from "@/pages/entity-page";
 import { HomePage } from "@/pages/home-page";
 import { LibraryPage } from "@/pages/library-page";
@@ -94,6 +95,7 @@ function AppRoutes() {
       <Route path="/statistics" element={<StatisticsPage />} />
       <Route path="/relations" element={<RelationsPage />} />
       <Route path="/entities/new" element={<EntityCreatePage />} />
+      <Route path="/entities/:id/edit" element={<EntityEditPage />} />
       <Route path="/entities/:id" element={<EntityPage />} />
     </Routes>
   );

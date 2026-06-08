@@ -1,6 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { getStats } from "@kizunashelf/api-contract";
 import {
   ArrowLeftIcon,
   BarChart3Icon,
@@ -18,19 +17,20 @@ import {
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
-import { apiFetch, isAbortError } from "@/api/client";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { allTypes } from "@/lib/constants";
+import { useSidebarStatsStore } from "@/lib/sidebar-stats";
 import type { StatsResponse } from "@/types/api";
 
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [stats, setStats] = useState<StatsResponse>();
+  const stats = useSidebarStatsStore((state) => state.stats);
+  const refreshStats = useSidebarStatsStore((state) => state.refreshStats);
   const [search, setSearch] = useState("");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -50,9 +50,9 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
 
   useEffect(() => {
     const controller = new AbortController();
-    void loadStats(controller.signal);
+    void refreshStats(controller.signal);
     return () => controller.abort();
-  }, []);
+  }, [refreshStats]);
 
   useEffect(() => {
     if (location.pathname !== "/library") {
@@ -76,15 +76,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [mobileSidebarOpen]);
-
-  async function loadStats(signal: AbortSignal) {
-    try {
-      const data = await getStats(undefined, { signal }, apiFetch);
-      setStats(data);
-    } catch (error) {
-      if (isAbortError(error)) return;
-    }
-  }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getConfig, getEntities, getEntity, getEntityDates } from "@kizunashelf/api-contract";
+import { getConfig, getEntity, getEntityDates } from "@kizunashelf/api-contract";
 import {
   CheckIcon,
   FilePenLineIcon,
@@ -14,12 +14,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, errorMessage } from "@/api/client";
 import { getAppCapabilities, removeEntity, saveEntity, searchSources } from "@/api/entities";
 import { EntityDetail } from "@/components/assets/entity-detail";
-import {
-  type FrontmatterDraft,
-  frontmatterPatch,
-  MetadataEditor,
-  normalizeFrontmatter,
-} from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +32,6 @@ import type {
   Entity,
   EntityDatesResponse,
   EntityDetailResponse,
-  EntitySummary,
   ExternalCandidate,
 } from "@/types/api";
 
@@ -50,16 +43,12 @@ export function EntityPage() {
     dates?: EntityDatesResponse;
     config?: ConfigResponse;
     capabilities?: Capabilities;
-    relationSuggestions: EntitySummary[];
     loading: boolean;
     error?: string;
-  }>({ loading: true, relationSuggestions: [] });
-  const [editOpen, setEditOpen] = useState(false);
+  }>({ loading: true });
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
   const [matchOpen, setMatchOpen] = useState(false);
-  const [draftFrontmatter, setDraftFrontmatter] = useState<FrontmatterDraft>({});
-  const [bodyText, setBodyText] = useState("");
   const [saving, setSaving] = useState(false);
   const [externalQuery, setExternalQuery] = useState("");
   const [externalProvider, setExternalProvider] = useState("all");
@@ -87,8 +76,6 @@ export function EntityPage() {
 
   useEffect(() => {
     if (!entity) return;
-    setDraftFrontmatter(normalizeFrontmatter(entity.frontmatter));
-    setBodyText(entity.body);
     setRenameBasename(entity.basename);
     setExternalQuery(entity.title);
   }, [entity?.id, entity?.revision]);
@@ -103,37 +90,9 @@ export function EntityPage() {
         getConfig(undefined, apiFetch),
         getAppCapabilities(),
       ]);
-      const relationSuggestions = await loadRelationSuggestions();
-      setState({ detail, dates, config, capabilities, relationSuggestions, loading: false });
+      setState({ detail, dates, config, capabilities, loading: false });
     } catch (error: unknown) {
       setState((current) => ({ ...current, loading: false, error: errorMessage(error) }));
-    }
-  }
-
-  async function loadRelationSuggestions() {
-    const result = await getEntities(
-      { type: "all", pageSize: 500, sort: "title", direction: "asc" },
-      undefined,
-      apiFetch,
-    );
-    return result.items;
-  }
-
-  async function saveFullEdit() {
-    if (!entity) return;
-    setSaving(true);
-    try {
-      await saveEntity(entity.id, {
-        revision: entity.revision,
-        frontmatter: frontmatterPatch(entity.frontmatter, draftFrontmatter),
-        body: bodyText,
-      });
-      setEditOpen(false);
-      await loadEntity();
-    } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -233,7 +192,7 @@ export function EntityPage() {
               entity={entity}
               contentWritable={contentWritable}
               saving={saving}
-              onEdit={() => setEditOpen(true)}
+              onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
               onRename={() => setRenameOpen((open) => !open)}
               onMatch={() => setMatchOpen((open) => !open)}
               onDelete={deleteCurrentEntity}
@@ -250,22 +209,6 @@ export function EntityPage() {
                   setRenameBasename(entity.basename);
                   setRenameOpen(false);
                 }}
-              />
-            ) : null}
-            {editOpen ? (
-              <MetadataEditor
-                title={`Edit ${entity.title}`}
-                path={entity.path}
-                typeConfig={typeConfig}
-                frontmatter={draftFrontmatter}
-                bodyText={bodyText}
-                saving={saving}
-                relationSuggestions={state.relationSuggestions}
-                onFrontmatterChange={setDraftFrontmatter}
-                onBodyChange={setBodyText}
-                disabled={!contentWritable}
-                onSave={saveFullEdit}
-                onCancel={() => setEditOpen(false)}
               />
             ) : null}
             {matchOpen ? (
