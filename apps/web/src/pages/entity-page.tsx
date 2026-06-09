@@ -6,7 +6,6 @@ import {
   PencilIcon,
   SearchIcon,
   Trash2Icon,
-  WandSparklesIcon,
   XIcon,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -14,18 +13,26 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch, errorMessage } from "@/api/client";
 import { getAppCapabilities, removeEntity, saveEntity, searchSources } from "@/api/entities";
 import { EntityDetail } from "@/components/assets/entity-detail";
+import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { AppFrame } from "@/components/layout/app-frame";
-import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import {
   candidateMetadataEntries,
   candidateMetadataPatch,
   candidateMetadataPreviewEntries,
   externalProviderPriority,
-  externalSourceLabel,
-  type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { groupRelations } from "@/lib/relations";
@@ -215,7 +222,6 @@ export function EntityPage() {
 
   async function deleteCurrentEntity() {
     if (!entity) return;
-    if (!window.confirm(`Move ${entity.title} to KizunaShelf trash?`)) return;
     setSaving(true);
     try {
       await removeEntity(entity.id, { revision: entity.revision, mode: "trash" });
@@ -240,7 +246,7 @@ export function EntityPage() {
               saving={saving}
               onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
               onRename={() => setRenameOpen((open) => !open)}
-              onMatch={() => setMatchOpen((open) => !open)}
+              onMatch={() => setMatchOpen(true)}
               onDelete={deleteCurrentEntity}
             />
             {renameOpen ? (
@@ -257,30 +263,30 @@ export function EntityPage() {
                 }}
               />
             ) : null}
-            {matchOpen ? (
-              <ExternalMatchPanel
-                query={externalQuery}
-                provider={externalProvider}
-                candidates={externalCandidates}
-                selectedCandidate={selectedCandidate}
-                metadataEntries={selectedCandidateEntries}
-                selectedFields={selectedFields}
-                providerOptions={providerOptions}
-                externalSearchEnabled={externalSearchEnabled}
-                existingExternalRefs={existingExternalRefs}
-                frontmatter={entity.frontmatter as Record<string, unknown>}
-                searching={externalSearching}
-                saving={saving}
-                contentWritable={contentWritable}
-                onQueryChange={setExternalQuery}
-                onProviderChange={setExternalProvider}
-                onSearch={searchExternal}
-                onRefreshRef={refreshFromExternalRef}
-                onChooseCandidate={chooseCandidate}
-                onSelectedFieldsChange={setSelectedFields}
-                onApply={applyCandidate}
-              />
-            ) : null}
+            <ExternalMatchDialog
+              open={matchOpen}
+              query={externalQuery}
+              provider={externalProvider}
+              candidates={externalCandidates}
+              selectedCandidate={selectedCandidate}
+              metadataEntries={selectedCandidateEntries}
+              selectedFields={selectedFields}
+              providerOptions={providerOptions}
+              externalSearchEnabled={externalSearchEnabled}
+              existingExternalRefs={existingExternalRefs}
+              currentValues={entity.frontmatter as Record<string, unknown>}
+              searching={externalSearching}
+              applying={saving}
+              contentWritable={contentWritable}
+              onOpenChange={setMatchOpen}
+              onQueryChange={setExternalQuery}
+              onProviderChange={setExternalProvider}
+              onSearch={searchExternal}
+              onRefreshRef={refreshFromExternalRef}
+              onChooseCandidate={chooseCandidate}
+              onSelectedFieldsChange={setSelectedFields}
+              onApply={applyCandidate}
+            />
             <EntityDetail
               entity={entity}
               relations={state.detail?.relations ?? []}
@@ -332,10 +338,28 @@ function EntityActions({
           <SearchIcon data-icon="inline-start" />
           Match
         </Button>
-        <Button type="button" variant="outline" onClick={onDelete} disabled={!contentWritable || saving}>
-          <Trash2Icon data-icon="inline-start" />
-          Delete
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button type="button" variant="outline" disabled={!contentWritable || saving}>
+              <Trash2Icon data-icon="inline-start" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Move to trash?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This moves {entity.title} to KizunaShelf trash. You can restore it from the backup location if needed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={onDelete} disabled={saving}>
+                Move to Trash
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       {!contentWritable ? (
         <p className="mt-2 text-xs text-muted-foreground">Content writes are disabled. Editing actions are unavailable.</p>
@@ -398,164 +422,4 @@ function RenamePanel({
       {validationError ? <p className="mt-1 text-xs text-destructive">{validationError}</p> : null}
     </section>
   );
-}
-
-function ExternalMatchPanel({
-  query,
-  provider,
-  candidates,
-  selectedCandidate,
-  metadataEntries,
-  selectedFields,
-  providerOptions,
-  externalSearchEnabled,
-  existingExternalRefs,
-  frontmatter,
-  searching,
-  saving,
-  contentWritable,
-  onQueryChange,
-  onProviderChange,
-  onSearch,
-  onRefreshRef,
-  onChooseCandidate,
-  onSelectedFieldsChange,
-  onApply,
-}: {
-  query: string;
-  provider: string;
-  candidates: ExternalCandidate[];
-  selectedCandidate?: ExternalCandidate;
-  metadataEntries: ExternalMetadataPreviewEntry[];
-  selectedFields: Set<string>;
-  providerOptions: string[];
-  externalSearchEnabled: boolean;
-  existingExternalRefs: Array<{ field: string; provider: string; value: string }>;
-  frontmatter: Record<string, unknown>;
-  searching: boolean;
-  saving: boolean;
-  contentWritable: boolean;
-  onQueryChange: (value: string) => void;
-  onProviderChange: (value: string) => void;
-  onSearch: () => void;
-  onRefreshRef: (provider: string, value: string) => void;
-  onChooseCandidate: (candidate: ExternalCandidate) => void;
-  onSelectedFieldsChange: (fields: Set<string>) => void;
-  onApply: () => void;
-}) {
-  function toggleField(field: string) {
-    const next = new Set(selectedFields);
-    if (next.has(field)) next.delete(field);
-    else next.add(field);
-    onSelectedFieldsChange(next);
-  }
-
-  return (
-    <section className="rounded-md border p-4">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="min-w-48 flex-1 text-sm font-medium">
-          Search
-          <Input value={query} onChange={(event) => onQueryChange(event.target.value)} />
-        </label>
-        <Select
-          value={provider}
-          onChange={(event) => onProviderChange(event.target.value)}
-          aria-label="Provider"
-          disabled={!externalSearchEnabled}
-        >
-          {providerOptions.length === 0 ? <option value="all">No supported sources</option> : null}
-          {providerOptions.length > 1 ? <option value="all">All sources</option> : null}
-          {providerOptions.map((provider) => (
-            <option key={provider} value={provider}>
-              {externalSourceLabel(provider)}
-            </option>
-          ))}
-        </Select>
-        <Button type="button" variant="outline" onClick={() => onSearch()} disabled={searching || !externalSearchEnabled}>
-          <SearchIcon data-icon="inline-start" />
-          {searching ? "Searching" : "Search"}
-        </Button>
-      </div>
-      {existingExternalRefs.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {existingExternalRefs.map((ref) => (
-            <Button
-              key={`${ref.provider}:${ref.field}`}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onRefreshRef(ref.provider, ref.value)}
-              disabled={searching}
-            >
-              <WandSparklesIcon data-icon="inline-start" />
-              Refresh {externalSourceLabel(ref.provider)}
-            </Button>
-          ))}
-        </div>
-      ) : null}
-      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
-        <div className="grid gap-2">
-          {candidates.map((candidate) => (
-            <button
-              key={`${candidate.provider}:${candidate.sourceId}`}
-              type="button"
-              className="rounded-md border p-3 text-left hover:bg-accent"
-              onClick={() => onChooseCandidate(candidate)}
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <Badge variant="secondary">{candidate.provider}</Badge>
-                <span className="truncate text-sm font-medium">{candidate.title}</span>
-              </div>
-              {candidate.brief ? <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{candidate.brief}</p> : null}
-            </button>
-          ))}
-          {candidates.length === 0 ? <div className="rounded-md border p-4 text-sm text-muted-foreground">No candidates loaded</div> : null}
-        </div>
-        <div className="rounded-md border p-3">
-          <h3 className="text-sm font-semibold">Selected Metadata</h3>
-          {selectedCandidate ? (
-            <div className="mt-3 flex flex-col gap-2">
-              {metadataEntries.map((entry) => (
-                <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedFields.has(entry.field)}
-                    onChange={() => toggleField(entry.field)}
-                    className="mt-1"
-                    disabled={!entry.hasValue}
-                  />
-                  <span className="min-w-0">
-                    <span className="block font-medium">{entry.label}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {entry.externalField ?? "external ref"}
-                    </span>
-                    <span className="block break-words text-xs text-muted-foreground">
-                      Current: {formatMetadataValue(frontmatter[entry.field])}
-                    </span>
-                    <span className="block break-words text-xs text-muted-foreground">
-                      New: {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
-                    </span>
-                  </span>
-                </label>
-              ))}
-              {metadataEntries.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No candidate fields match this type schema.</p>
-              ) : null}
-              <Button type="button" onClick={onApply} disabled={!contentWritable || saving || selectedFields.size === 0}>
-                <WandSparklesIcon data-icon="inline-start" />
-                Apply Selected
-              </Button>
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-muted-foreground">Choose a candidate to compare fields.</p>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function formatMetadataValue(value: unknown) {
-  if (typeof value === "string") return value;
-  return JSON.stringify(value);
 }

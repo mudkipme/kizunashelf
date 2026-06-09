@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getConfig, getEntities } from "@kizunashelf/api-contract";
-import { PlusIcon, SearchIcon, WandSparklesIcon } from "lucide-react";
+import { PlusIcon, SearchIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch, errorMessage, isAbortError } from "@/api/client";
@@ -10,8 +10,8 @@ import {
   MetadataEditor,
   normalizeFrontmatter,
 } from "@/components/entities/metadata-editor";
+import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { AppFrame } from "@/components/layout/app-frame";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -20,8 +20,6 @@ import {
   candidateMetadataPatch,
   candidateMetadataPreviewEntries,
   externalProviderPriority,
-  externalSourceLabel,
-  type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import type { Capabilities, ConfigResponse, EntitySummary, ExternalCandidate } from "@/types/api";
@@ -42,6 +40,7 @@ export function EntityCreatePage() {
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   const [creating, setCreating] = useState(false);
+  const [matchOpen, setMatchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [provider, setProvider] = useState("all");
   const [searching, setSearching] = useState(false);
@@ -188,13 +187,7 @@ export function EntityCreatePage() {
     setBasename((currentBasename) => currentBasename || selectedCandidate.title);
     setSearchQuery(selectedCandidate.title);
     setMessage(`Using ${selectedCandidate.provider}: ${selectedCandidate.title}`);
-  }
-
-  function toggleSelectedField(field: string) {
-    const next = new Set(selectedFields);
-    if (next.has(field)) next.delete(field);
-    else next.add(field);
-    setSelectedFields(next);
+    setMatchOpen(false);
   }
 
   return (
@@ -245,65 +238,42 @@ export function EntityCreatePage() {
               {showBasenameError ? <span className="text-xs text-destructive">{basenameError}</span> : null}
             </label>
           </div>
-        </section>
-
-        <section className="rounded-md border p-4">
-          <div className="mb-3 flex flex-wrap items-end gap-2">
-            <label className="flex min-w-48 flex-1 flex-col gap-1 text-sm font-medium">
-              External search
-              <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={basename || "Search media sources"}
-              />
-            </label>
-            <Select
-              value={provider}
-              onChange={(event) => setProvider(event.target.value)}
-              aria-label="Provider"
+          <div className="mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setMatchOpen(true)}
               disabled={!externalSearchEnabled}
             >
-              {providerOptions.length === 0 ? <option value="all">No supported sources</option> : null}
-              {providerOptions.length > 1 ? <option value="all">All sources</option> : null}
-              {providerOptions.map((provider) => (
-                <option key={provider} value={provider}>
-                  {externalSourceLabel(provider)}
-                </option>
-              ))}
-            </Select>
-            <Button type="button" variant="outline" onClick={searchExternal} disabled={searching || !externalSearchEnabled}>
               <SearchIcon data-icon="inline-start" />
-              {searching ? "Searching" : "Search"}
+              Match Metadata
             </Button>
           </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            {candidates.map((candidate) => (
-              <button
-                key={`${candidate.provider}:${candidate.sourceId}`}
-                type="button"
-                className="min-w-0 rounded-md border p-3 text-left hover:bg-accent"
-              onClick={() => chooseCandidate(candidate)}
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <Badge variant="secondary">{candidate.provider}</Badge>
-                  <span className="min-w-0 truncate text-sm font-medium">{candidate.title}</span>
-                </div>
-                {candidate.brief ? (
-                  <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{candidate.brief}</p>
-                ) : null}
-              </button>
-            ))}
-          </div>
-          {selectedCandidate ? (
-            <ExternalMetadataPicker
-              entries={selectedCandidateEntries}
-              selectedFields={selectedFields}
-              contentWritable={contentWritable}
-              onToggleField={toggleSelectedField}
-              onApply={applyCandidate}
-            />
-          ) : null}
         </section>
+
+        <ExternalMatchDialog
+          open={matchOpen}
+          query={searchQuery}
+          provider={provider}
+          candidates={candidates}
+          selectedCandidate={selectedCandidate}
+          metadataEntries={selectedCandidateEntries}
+          selectedFields={selectedFields}
+          providerOptions={providerOptions}
+          externalSearchEnabled={externalSearchEnabled}
+          searching={searching}
+          applying={false}
+          contentWritable={contentWritable}
+          applyLabel="Use Selected"
+          emptyMessage={message === "No external matches" ? message : "No candidates loaded"}
+          onOpenChange={setMatchOpen}
+          onQueryChange={setSearchQuery}
+          onProviderChange={setProvider}
+          onSearch={searchExternal}
+          onChooseCandidate={chooseCandidate}
+          onSelectedFieldsChange={setSelectedFields}
+          onApply={applyCandidate}
+        />
 
         <MetadataEditor
           title="Metadata"
@@ -323,58 +293,4 @@ export function EntityCreatePage() {
       </div>
     </AppFrame>
   );
-}
-
-function ExternalMetadataPicker({
-  entries,
-  selectedFields,
-  contentWritable,
-  onToggleField,
-  onApply,
-}: {
-  entries: ExternalMetadataPreviewEntry[];
-  selectedFields: Set<string>;
-  contentWritable: boolean;
-  onToggleField: (field: string) => void;
-  onApply: () => void;
-}) {
-  return (
-    <div className="mt-3 rounded-md border p-3">
-      <h3 className="text-sm font-semibold">Selected Metadata</h3>
-      <div className="mt-3 flex flex-col gap-2">
-        {entries.map((entry) => (
-          <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={selectedFields.has(entry.field)}
-              onChange={() => onToggleField(entry.field)}
-              className="mt-1"
-              disabled={!contentWritable || !entry.hasValue}
-            />
-            <span className="min-w-0">
-              <span className="block font-medium">{entry.label}</span>
-              <span className="block text-xs text-muted-foreground">
-                {entry.externalField ?? "external ref"}
-              </span>
-              <span className="block break-words text-xs text-muted-foreground">
-                {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
-              </span>
-            </span>
-          </label>
-        ))}
-        {entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No candidate fields match this type schema.</p>
-        ) : null}
-        <Button type="button" onClick={onApply} disabled={!contentWritable || selectedFields.size === 0}>
-          <WandSparklesIcon data-icon="inline-start" />
-          Apply Selected
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function formatMetadataValue(value: unknown) {
-  if (typeof value === "string") return value;
-  return JSON.stringify(value);
 }
