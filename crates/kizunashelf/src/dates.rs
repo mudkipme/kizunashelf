@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ParsedEntityDate {
     pub year: i32,
@@ -13,6 +13,8 @@ pub struct ParsedEntityDate {
     pub day: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub season: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub season_key: Option<String>,
 }
 
 pub fn parse_entity_date(value: Option<&str>) -> Option<ParsedEntityDate> {
@@ -23,6 +25,7 @@ pub fn parse_entity_date(value: Option<&str>) -> Option<ParsedEntityDate> {
             month: Some(month),
             day: Some(day),
             season: Some(season_for_month(month).to_string()),
+            season_key: Some(season_key_for_month(month).to_string()),
         });
     }
 
@@ -42,13 +45,27 @@ pub fn parse_entity_date(value: Option<&str>) -> Option<ParsedEntityDate> {
         .map(|month| clamp_number(month as f64, 1, 12) as u32);
     let season =
         parse_season_name(value).or_else(|| month.map(|month| season_for_month(month).to_string()));
+    let season_key = season
+        .as_deref()
+        .and_then(normalize_season_name)
+        .or_else(|| month.map(|month| season_key_for_month(month).to_string()));
 
     Some(ParsedEntityDate {
         year,
-        month,
+        month: month.or_else(|| season_key.as_deref().and_then(season_start_month)),
         day: None,
         season,
+        season_key,
     })
+}
+
+pub fn parsed_date_sort_key(value: Option<&str>) -> Option<String> {
+    let parsed = parse_entity_date(value)?;
+    normalize_date(
+        parsed.year,
+        parsed.month.unwrap_or(1),
+        parsed.day.unwrap_or(1),
+    )
 }
 
 pub fn date_sort_key(value: Option<&str>) -> Option<String> {
@@ -127,6 +144,28 @@ fn season_for_month(month: u32) -> &'static str {
         "夏季"
     } else {
         "秋季"
+    }
+}
+
+fn season_key_for_month(month: u32) -> &'static str {
+    if month <= 3 {
+        "winter"
+    } else if month <= 6 {
+        "spring"
+    } else if month <= 9 {
+        "summer"
+    } else {
+        "autumn"
+    }
+}
+
+fn season_start_month(season: &str) -> Option<u32> {
+    match season {
+        "winter" => Some(1),
+        "spring" => Some(4),
+        "summer" => Some(7),
+        "autumn" => Some(10),
+        _ => None,
     }
 }
 
@@ -222,5 +261,21 @@ mod tests {
             Some("2025-03-31".to_string())
         );
         assert!(season_compare_value("Autumn") > season_compare_value("Summer"));
+    }
+
+    #[test]
+    fn parsed_date_sort_keys_use_planning_start_dates() {
+        assert_eq!(
+            parsed_date_sort_key(Some("Spring 2025")),
+            Some("2025-04-01".to_string())
+        );
+        assert_eq!(
+            parsed_date_sort_key(Some("2025/4/5")),
+            Some("2025-04-05".to_string())
+        );
+        assert_eq!(
+            parsed_date_sort_key(Some("2025")),
+            Some("2025-01-01".to_string())
+        );
     }
 }

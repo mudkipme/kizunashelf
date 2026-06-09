@@ -6,7 +6,15 @@
  */
 import { z as zod } from 'zod';
 
+export const entityDetailResponseEntityDatesItemParsedOneMonthMin = 0;
+
+export const entityDetailResponseEntityDatesItemParsedOneDayMin = 0;
+
 export const entityDetailResponseEntityRelationCountMin = 0;
+
+export const entityDetailResponseRelatedEntitiesItemDatesItemParsedOneMonthMin = 0;
+
+export const entityDetailResponseRelatedEntitiesItemDatesItemParsedOneDayMin = 0;
 
 export const entityDetailResponseRelatedEntitiesItemRelationCountMin = 0;
 
@@ -20,7 +28,15 @@ export const EntityDetailResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(entityDetailResponseEntityDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(entityDetailResponseEntityDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -49,7 +65,15 @@ export const EntityDetailResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(entityDetailResponseRelatedEntitiesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(entityDetailResponseRelatedEntitiesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

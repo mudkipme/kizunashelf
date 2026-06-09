@@ -18,6 +18,10 @@ export const relationFieldSummaryTopTargetsItemCountMin = 0;
 
 export const relationFieldSummaryTopTargetsItemSourceTypesItemCountMin = 0;
 
+export const relationFieldSummaryTopTargetsItemExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const relationFieldSummaryTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
+
 export const relationFieldSummaryTopTargetsItemExamplesItemRelationCountMin = 0;
 
 
@@ -46,7 +50,15 @@ export const RelationFieldSummary = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(relationFieldSummaryTopTargetsItemExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(relationFieldSummaryTopTargetsItemExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

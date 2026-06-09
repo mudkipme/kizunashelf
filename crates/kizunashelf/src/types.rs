@@ -188,6 +188,10 @@ pub struct KizunaConfig {
 pub struct EntityDateValue {
     pub field: String,
     pub value: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parsed: Option<crate::dates::ParsedEntityDate>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sort_key: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize, JsonSchema)]

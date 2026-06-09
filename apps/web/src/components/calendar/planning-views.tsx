@@ -156,7 +156,7 @@ function SeasonPlanningView({
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       {seasons.map((season) => {
         const bucket = uniqueByEntity(
-          points.filter((point) => point.year === year && seasonForMonth(point.month) === season.key),
+          points.filter((point) => point.year === year && (point.season ?? seasonForMonth(point.month)) === season.key),
         );
         return (
           <section key={season.key} className="rounded-md border">
@@ -362,61 +362,27 @@ function DatePointSummary({ point }: { point: DatePoint }) {
 function entityDatePoints(entities: EntitySummary[]) {
   return entities.flatMap((entity) =>
     entity.dates.flatMap((date) => {
-      const parsed = parseDateValue(date.value);
-      if (!parsed) return [];
-      return [{ entity, field: date.field, value: date.value, ...parsed }];
+      if (!date.parsed || !date.sortKey) return [];
+      return [
+        {
+          entity,
+          field: date.field,
+          value: date.value,
+          year: date.parsed.year,
+          month: date.parsed.month ?? 1,
+          sortKey: date.sortKey,
+          season: seasonKey(date.parsed.seasonKey),
+        },
+      ];
     }),
   );
 }
 
-function parseDateValue(value: string): Omit<DatePoint, "entity" | "field" | "value"> | null {
-  const iso = /^(?<year>\d{4})(?:-(?<month>\d{2})(?:-(?<day>\d{2}))?)?$/.exec(value);
-  if (iso?.groups) {
-    const year = Number(iso.groups.year);
-    const month = Number(iso.groups.month ?? "1");
-    const day = Number(iso.groups.day ?? "1");
-    if (year >= 1970 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return {
-        year,
-        month,
-        sortKey: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
-      };
-    }
+function seasonKey(value: string | null | undefined): SeasonKey | undefined {
+  if (value === "winter" || value === "spring" || value === "summer" || value === "autumn") {
+    return value;
   }
-
-  const season =
-    /^(?:(?<yearPrefix>\d{4})年(?<seasonZh>春季|夏季|秋季|冬季)|(?<yearBefore>\d{4})\s*(?<seasonAfter>Spring|Summer|Autumn|Fall|Winter)|(?<seasonBefore>Spring|Summer|Autumn|Fall|Winter)\s+(?<yearAfter>\d{4}))$/i.exec(
-      value.trim(),
-    );
-  if (season?.groups) {
-    const year = Number(season.groups.yearPrefix ?? season.groups.yearBefore ?? season.groups.yearAfter);
-    const seasonValue = season.groups.seasonZh ?? season.groups.seasonAfter ?? season.groups.seasonBefore;
-    const seasonKey = seasonKeyFromValue(seasonValue);
-    const month = seasonMonth(seasonKey);
-    return {
-      year,
-      month,
-      season: seasonKey,
-      sortKey: `${year}-${String(month).padStart(2, "0")}-01`,
-    };
-  }
-
-  return null;
-}
-
-function seasonKeyFromValue(value: string): SeasonKey {
-  const normalized = value.trim().toLowerCase();
-  if (value === "春季" || normalized === "spring") return "spring";
-  if (value === "夏季" || normalized === "summer") return "summer";
-  if (value === "秋季" || normalized === "autumn" || normalized === "fall") return "autumn";
-  return "winter";
-}
-
-function seasonMonth(season: SeasonKey) {
-  if (season === "spring") return 4;
-  if (season === "summer") return 7;
-  if (season === "autumn") return 10;
-  return 1;
+  return undefined;
 }
 
 function seasonForMonth(month: number): SeasonKey {

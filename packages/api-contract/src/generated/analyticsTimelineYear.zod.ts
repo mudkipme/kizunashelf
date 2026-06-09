@@ -10,6 +10,10 @@ export const analyticsTimelineYearCountMin = 0;
 
 export const analyticsTimelineYearByTypeItemCountMin = 0;
 
+export const analyticsTimelineYearExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsTimelineYearExamplesItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsTimelineYearExamplesItemRelationCountMin = 0;
 
 
@@ -28,7 +32,15 @@ export const AnalyticsTimelineYear = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsTimelineYearExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsTimelineYearExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

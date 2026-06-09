@@ -34,6 +34,10 @@ export const analyticsResponseTimelineYearsItemCountMin = 0;
 
 export const analyticsResponseTimelineYearsItemByTypeItemCountMin = 0;
 
+export const analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsResponseTimelineYearsItemExamplesItemRelationCountMin = 0;
 
 export const analyticsResponseTimelineSeasonsItemCountMin = 0;
@@ -52,19 +56,39 @@ export const analyticsResponseRelationsTopFieldsItemTopTargetsItemCountMin = 0;
 
 export const analyticsResponseRelationsTopFieldsItemTopTargetsItemSourceTypesItemCountMin = 0;
 
+export const analyticsResponseRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsResponseRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsResponseRelationsTopFieldsItemTopTargetsItemExamplesItemRelationCountMin = 0;
 
 export const analyticsResponseRelationsTopTargetsItemCountMin = 0;
 
 export const analyticsResponseRelationsTopTargetsItemSourceTypesItemCountMin = 0;
 
+export const analyticsResponseRelationsTopTargetsItemExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsResponseRelationsTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsResponseRelationsTopTargetsItemExamplesItemRelationCountMin = 0;
 
 export const analyticsResponseRelationsUnresolvedCountMin = 0;
 
+export const analyticsResponseDataQualityMissingCoverItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsResponseDataQualityMissingCoverItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsResponseDataQualityMissingCoverItemRelationCountMin = 0;
 
+export const analyticsResponseDataQualityMissingExternalRefsItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsResponseDataQualityMissingExternalRefsItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsResponseDataQualityMissingExternalRefsItemRelationCountMin = 0;
+
+export const analyticsResponseDataQualityIsolatedItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsResponseDataQualityIsolatedItemDatesItemParsedOneDayMin = 0;
 
 export const analyticsResponseDataQualityIsolatedItemRelationCountMin = 0;
 
@@ -118,7 +142,15 @@ export const AnalyticsResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -163,7 +195,15 @@ export const AnalyticsResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsResponseRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsResponseRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -193,7 +233,15 @@ export const AnalyticsResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsResponseRelationsTopTargetsItemExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsResponseRelationsTopTargetsItemExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -224,7 +272,15 @@ export const AnalyticsResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsResponseDataQualityMissingCoverItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsResponseDataQualityMissingCoverItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -241,7 +297,15 @@ export const AnalyticsResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsResponseDataQualityMissingExternalRefsItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsResponseDataQualityMissingExternalRefsItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -258,7 +322,15 @@ export const AnalyticsResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsResponseDataQualityIsolatedItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsResponseDataQualityIsolatedItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

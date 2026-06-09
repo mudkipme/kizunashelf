@@ -12,6 +12,10 @@ export const statsResponseRelationsMin = 0;
 
 export const statsResponseByTypeItemCountMin = 0;
 
+export const statsResponseTopRelationsItemDatesItemParsedOneMonthMin = 0;
+
+export const statsResponseTopRelationsItemDatesItemParsedOneDayMin = 0;
+
 export const statsResponseTopRelationsItemRelationCountMin = 0;
 
 
@@ -34,7 +38,15 @@ export const StatsResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(statsResponseTopRelationsItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(statsResponseTopRelationsItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

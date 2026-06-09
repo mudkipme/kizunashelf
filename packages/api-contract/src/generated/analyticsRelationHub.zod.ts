@@ -10,6 +10,10 @@ export const analyticsRelationHubCountMin = 0;
 
 export const analyticsRelationHubSourceTypesItemCountMin = 0;
 
+export const analyticsRelationHubExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsRelationHubExamplesItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsRelationHubExamplesItemRelationCountMin = 0;
 
 
@@ -32,7 +36,15 @@ export const AnalyticsRelationHub = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsRelationHubExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsRelationHubExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

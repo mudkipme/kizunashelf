@@ -10,6 +10,10 @@ export const homeSectionResponseLimitMin = 0;
 
 export const homeSectionResponseTotalMin = 0;
 
+export const homeSectionResponseItemsItemDatesItemParsedOneMonthMin = 0;
+
+export const homeSectionResponseItemsItemDatesItemParsedOneDayMin = 0;
+
 export const homeSectionResponseItemsItemRelationCountMin = 0;
 
 
@@ -30,7 +34,15 @@ export const HomeSectionResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(homeSectionResponseItemsItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(homeSectionResponseItemsItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

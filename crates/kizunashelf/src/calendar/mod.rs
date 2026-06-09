@@ -424,9 +424,71 @@ fn find_entity_for_wikilink(
             }
         }
     }
-    candidates
-        .iter()
-        .find(|candidate| candidate.entity_type == "franchise")
-        .cloned()
-        .or_else(|| candidates.first().cloned())
+    candidates.first().cloned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{entity_basename_index, find_entity_for_wikilink};
+    use crate::types::{EntitySummary, EntityTypeConfig, KizunaConfig, Library};
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn ambiguous_daily_note_wikilinks_do_not_prefer_franchise_type() {
+        let anime = summary("anime", "Anime", "Shared");
+        let franchise = summary("franchise", "Franchise", "Shared");
+        let library = Library {
+            config: KizunaConfig {
+                vault_root: String::new(),
+                taxonomy_root: "Taxonomy".to_string(),
+                content_writable: None,
+                read_concurrency: None,
+                home: None,
+                daily_notes: None,
+                types: vec![
+                    entity_type("anime", "Anime"),
+                    entity_type("franchise", "Franchise"),
+                ],
+            },
+            entities: Vec::new(),
+            summaries: vec![anime.clone(), franchise],
+            relations: Vec::new(),
+            diagnostics: Vec::new(),
+            generated_at: String::new(),
+        };
+        let by_basename = entity_basename_index(&library);
+
+        let resolved = find_entity_for_wikilink("Shared", &library, &by_basename).unwrap();
+
+        assert_eq!(resolved.id, anime.id);
+    }
+
+    fn entity_type(id: &str, label: &str) -> EntityTypeConfig {
+        EntityTypeConfig {
+            id: id.to_string(),
+            label: label.to_string(),
+            icon: None,
+            path: label.to_string(),
+            external_priority: Vec::new(),
+            filename: None,
+            fields: Vec::new(),
+        }
+    }
+
+    fn summary(entity_type: &str, type_label: &str, basename: &str) -> EntitySummary {
+        EntitySummary {
+            id: format!("{entity_type}:{basename}"),
+            entity_type: entity_type.to_string(),
+            type_label: type_label.to_string(),
+            title: basename.to_string(),
+            titles: BTreeMap::new(),
+            dates: Vec::new(),
+            image: None,
+            summary: None,
+            path: format!("Taxonomy/{type_label}/{basename}.md"),
+            basename: basename.to_string(),
+            external_refs: BTreeMap::new(),
+            relation_count: 0,
+        }
+    }
 }

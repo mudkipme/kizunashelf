@@ -6,9 +6,21 @@
  */
 import { z as zod } from 'zod';
 
+export const analyticsDataQualityMissingCoverItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsDataQualityMissingCoverItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsDataQualityMissingCoverItemRelationCountMin = 0;
 
+export const analyticsDataQualityMissingExternalRefsItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsDataQualityMissingExternalRefsItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsDataQualityMissingExternalRefsItemRelationCountMin = 0;
+
+export const analyticsDataQualityIsolatedItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsDataQualityIsolatedItemDatesItemParsedOneDayMin = 0;
 
 export const analyticsDataQualityIsolatedItemRelationCountMin = 0;
 
@@ -22,7 +34,15 @@ export const AnalyticsDataQuality = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsDataQualityMissingCoverItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsDataQualityMissingCoverItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -39,7 +59,15 @@ export const AnalyticsDataQuality = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsDataQualityMissingExternalRefsItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsDataQualityMissingExternalRefsItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -56,7 +84,15 @@ export const AnalyticsDataQuality = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsDataQualityIsolatedItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsDataQualityIsolatedItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

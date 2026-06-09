@@ -18,11 +18,19 @@ export const analyticsRelationsTopFieldsItemTopTargetsItemCountMin = 0;
 
 export const analyticsRelationsTopFieldsItemTopTargetsItemSourceTypesItemCountMin = 0;
 
+export const analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
+
 export const analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemRelationCountMin = 0;
 
 export const analyticsRelationsTopTargetsItemCountMin = 0;
 
 export const analyticsRelationsTopTargetsItemSourceTypesItemCountMin = 0;
+
+export const analyticsRelationsTopTargetsItemExamplesItemDatesItemParsedOneMonthMin = 0;
+
+export const analyticsRelationsTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
 
 export const analyticsRelationsTopTargetsItemExamplesItemRelationCountMin = 0;
 
@@ -55,7 +63,15 @@ export const AnalyticsRelations = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -85,7 +101,15 @@ export const AnalyticsRelations = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(analyticsRelationsTopTargetsItemExamplesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(analyticsRelationsTopTargetsItemExamplesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

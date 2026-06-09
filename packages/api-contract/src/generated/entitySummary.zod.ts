@@ -6,6 +6,10 @@
  */
 import { z as zod } from 'zod';
 
+export const entitySummaryDatesItemParsedOneMonthMin = 0;
+
+export const entitySummaryDatesItemParsedOneDayMin = 0;
+
 export const entitySummaryRelationCountMin = 0;
 
 
@@ -17,7 +21,15 @@ export const EntitySummary = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(entitySummaryDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(entitySummaryDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

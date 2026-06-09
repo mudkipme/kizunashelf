@@ -1,3 +1,4 @@
+use crate::dates::{parse_entity_date, parsed_date_sort_key};
 use crate::types::{EntityDateValue, EntityTypeConfig, FieldType};
 use regex::Regex;
 use serde_json::{Map, Number, Value};
@@ -161,9 +162,13 @@ pub(super) fn date_values(
     let mut dates = Vec::new();
     for field in keys {
         for value in normalize_values(frontmatter.get(field)) {
+            let parsed = parse_entity_date(Some(&value));
+            let sort_key = parsed_date_sort_key(Some(&value));
             dates.push(EntityDateValue {
                 field: field.clone(),
                 value,
+                parsed,
+                sort_key,
             });
         }
     }

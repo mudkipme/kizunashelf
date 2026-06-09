@@ -10,8 +10,6 @@ import type { Entity, Relation, TypeConfig } from "@/types/api";
 type FrontmatterValue = null | boolean | number | string | FrontmatterValue[] | FrontmatterObject;
 type FrontmatterObject = { [key: string]: FrontmatterValue | undefined };
 
-const titleFieldNames = new Set(["title", "name", "jp_title", "title_ja", "title_en", "title_original"]);
-
 export function FrontmatterPanel({
   entity,
   relationGroups,
@@ -78,10 +76,6 @@ function visibleFrontmatterEntries(
 
     const normalizedValue = normalizedPrimitiveSummary(value);
     if (normalizedValue && displayedValues.has(normalizedValue)) return false;
-
-    if (titleFieldNames.has(key) || key.startsWith("title_")) {
-      return !normalizedValue || !displayedValues.has(normalizedValue);
-    }
 
     return true;
   });

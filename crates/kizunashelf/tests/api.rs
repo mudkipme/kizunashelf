@@ -133,6 +133,17 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(entities["items"][0]["titles"]["title_original"], "星之航路");
     let star_voyager_summary = entity_by_title(&entities["items"], "Star Voyager");
     assert_eq!(star_voyager_summary["relationCount"], 4);
+    let completed_date = star_voyager_summary["dates"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["field"] == "complete_date")
+        .unwrap();
+    assert_eq!(completed_date["sortKey"], "2025-04-20");
+    assert_eq!(completed_date["parsed"]["year"], 2025);
+    assert_eq!(completed_date["parsed"]["month"], 4);
+    assert_eq!(completed_date["parsed"]["day"], 20);
+    assert_eq!(completed_date["parsed"]["seasonKey"], "spring");
 
     let english_title_sort = server
         .ok_json("/api/entities?sort=title&titleLanguage=en")

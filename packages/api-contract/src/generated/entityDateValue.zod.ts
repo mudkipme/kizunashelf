@@ -6,9 +6,22 @@
  */
 import { z as zod } from 'zod';
 
+export const entityDateValueParsedOneMonthMin = 0;
+
+export const entityDateValueParsedOneDayMin = 0;
+
+
 export const EntityDateValue = zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(entityDateValueParsedOneMonthMin).nullish(),
+  "day": zod.number().min(entityDateValueParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })
 
 export type EntityDateValue = zod.input<typeof EntityDateValue>;

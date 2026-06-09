@@ -10,11 +10,27 @@ export const cleanupQueuesResponseQueuesItemRemainingMin = 0;
 
 export const cleanupQueuesResponseQueuesItemTotalMin = 0;
 
+export const cleanupQueuesResponseMissingCoverItemDatesItemParsedOneMonthMin = 0;
+
+export const cleanupQueuesResponseMissingCoverItemDatesItemParsedOneDayMin = 0;
+
 export const cleanupQueuesResponseMissingCoverItemRelationCountMin = 0;
+
+export const cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneMonthMin = 0;
+
+export const cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseMissingExternalRefsItemRelationCountMin = 0;
 
+export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneMonthMin = 0;
+
+export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneDayMin = 0;
+
 export const cleanupQueuesResponseIsolatedItemRelationCountMin = 0;
+
+export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneMonthMin = 0;
+
+export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceRelationCountMin = 0;
 
@@ -35,7 +51,15 @@ export const CleanupQueuesResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(cleanupQueuesResponseMissingCoverItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(cleanupQueuesResponseMissingCoverItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -52,7 +76,15 @@ export const CleanupQueuesResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -69,7 +101,15 @@ export const CleanupQueuesResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(cleanupQueuesResponseIsolatedItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(cleanupQueuesResponseIsolatedItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
@@ -87,7 +127,15 @@ export const CleanupQueuesResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

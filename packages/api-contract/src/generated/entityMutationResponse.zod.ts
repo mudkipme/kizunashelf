@@ -6,6 +6,10 @@
  */
 import { z as zod } from 'zod';
 
+export const entityMutationResponseEntityDatesItemParsedOneMonthMin = 0;
+
+export const entityMutationResponseEntityDatesItemParsedOneDayMin = 0;
+
 export const entityMutationResponseEntityRelationCountMin = 0;
 
 
@@ -18,7 +22,15 @@ export const EntityMutationResponse = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(entityMutationResponseEntityDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(entityMutationResponseEntityDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

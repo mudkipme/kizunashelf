@@ -6,6 +6,10 @@
  */
 import { z as zod } from 'zod';
 
+export const cleanupUnresolvedRelationSourceDatesItemParsedOneMonthMin = 0;
+
+export const cleanupUnresolvedRelationSourceDatesItemParsedOneDayMin = 0;
+
 export const cleanupUnresolvedRelationSourceRelationCountMin = 0;
 
 
@@ -18,7 +22,15 @@ export const CleanupUnresolvedRelation = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(cleanupUnresolvedRelationSourceDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(cleanupUnresolvedRelationSourceDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),

@@ -6,6 +6,10 @@
  */
 import { z as zod } from 'zod';
 
+export const calendarDayEntriesItemEntityDatesItemParsedOneMonthMin = 0;
+
+export const calendarDayEntriesItemEntityDatesItemParsedOneDayMin = 0;
+
 export const calendarDayEntriesItemEntityRelationCountMin = 0;
 
 export const calendarDayEntriesItemSnippetsItemLineMin = 0;
@@ -31,7 +35,15 @@ export const CalendarDay = zod.object({
   "titles": zod.record(zod.string(), zod.string()),
   "dates": zod.array(zod.object({
   "field": zod.string(),
-  "value": zod.string()
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(calendarDayEntriesItemEntityDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(calendarDayEntriesItemEntityDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
 })),
   "image": zod.string().nullish(),
   "summary": zod.string().nullish(),
