@@ -4,6 +4,27 @@ KizunaShelf is schema-driven. The config file tells the app where your vault liv
 
 The config is YAML. The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and `config/kizunashelf.config.example.yaml` is the working example.
 
+## First Run
+
+Start the web app during development:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open `http://localhost:5173/`. If the configured `kizunashelf.yaml` does not exist, KizunaShelf redirects to `/onboarding`.
+
+The onboarding page is the same structured editor used by Settings. Fill in:
+
+- `Vault root`: the absolute path to the Obsidian vault.
+- `Taxonomy root`: the collection root folder inside the vault; the default convention is `Taxonomy`, but any folder name works.
+- `Types`: each collection folder you want KizunaShelf to index.
+- `Fields`: frontmatter names for stable IDs, titles, images, enums, dates, external refs, and relations.
+- Optional `Home` and `Daily Notes` sections.
+
+Click `Create Config`. KizunaShelf writes the config file, reloads the in-memory library, and opens the normal app.
+
 ## Design Model
 
 KizunaShelf treats Markdown files as the durable source of truth. The config does not create a database schema; it describes how to read and edit Markdown files that already exist in an Obsidian-style vault.
@@ -47,7 +68,56 @@ The server reads `KIZUNASHELF_CONFIG` if it is set. Otherwise it uses:
 config/kizunashelf.yaml
 ```
 
-The desktop app searches standard config locations and opens onboarding if no config exists. See the project README for the full search order.
+An example config is available at `config/kizunashelf.config.example.yaml`.
+
+The desktop app searches for `kizunashelf.yaml` in this order:
+
+1. `KIZUNASHELF_CONFIG`
+2. `$XDG_CONFIG_HOME/kizunashelf.yaml`
+3. `~/.config/kizunashelf.yaml`
+4. `$XDG_CONFIG_DIR/kizunashelf.yaml`
+5. Each `$XDG_CONFIG_DIRS` entry
+6. On macOS, `~/Library/Application Support/kizunashelf.yaml`
+7. On macOS, `~/Library/Application Support/KizunaShelf/kizunashelf.yaml`
+
+If none of those files exist, desktop opens onboarding and writes the new config to the first candidate path.
+
+## Settings Editor
+
+The Settings page at `/settings` can edit every config field:
+
+- Core: `vaultRoot`, `taxonomyRoot`, `contentWritable`, `readConcurrency`
+- Daily notes: `paths`, `datePattern`, `snippetMaxLength`
+- Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`, and filters
+- Types: `id`, `label`, `icon`, `path`, `filename`, `externalPriority`, `fields`
+- Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
+- Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
+
+On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker.
+
+Settings writes and path suggestions can be disabled with `KIZUNASHELF_SETTINGS_WRITABLE=false`. In production web mode, Settings writes default to enabled only for loopback hosts.
+
+## Runtime Environment
+
+The production web server is configured through environment variables:
+
+| Variable | Description |
+| --- | --- |
+| `HOST` | Bind host. Defaults to `127.0.0.1`. Set `HOST=0.0.0.0` only when you intentionally want to expose it beyond the local machine. |
+| `PORT` | Bind port. Defaults to `8787`. |
+| `KIZUNASHELF_CONFIG` | Config file path. |
+| `KIZUNASHELF_CACHE_TTL_MS` | In-memory library cache TTL. Defaults to `10000`. |
+| `KIZUNASHELF_WEB_DIST` | Alternate web build path. |
+| `KIZUNASHELF_SERVE_WEB` | Set to `false` to serve only the API. |
+| `KIZUNASHELF_SETTINGS_WRITABLE` | Enables Settings writes and path suggestions. Defaults to `true` for loopback hosts and `false` for non-loopback hosts. |
+| `KIZUNASHELF_IGDB_CLIENT_ID` | IGDB client id for external matching. |
+| `KIZUNASHELF_IGDB_CLIENT_SECRET` | IGDB client secret for external matching. |
+| `KIZUNASHELF_TVDB_API_KEY` | TheTVDB API key for external matching. |
+| `KIZUNASHELF_TVDB_PIN` | Optional TheTVDB PIN. |
+
+The server does not enable wildcard CORS by default. Use the Vite dev proxy during development, or serve the built web app from the Rust process for production.
+
+The Docker image sets `HOST=0.0.0.0` and `KIZUNASHELF_SETTINGS_WRITABLE=false` by default. Set `KIZUNASHELF_SETTINGS_WRITABLE=true` only when you intentionally want onboarding/settings writes available from the published container.
 
 ## Top-Level Schema
 
@@ -312,6 +382,12 @@ External metadata support has two pieces:
 
 1. `externalRef` fields store links/ids to providers.
 2. `externalFields` map provider metadata into local fields.
+
+Supported providers:
+
+- Bangumi: works without extra credentials.
+- IGDB: requires `KIZUNASHELF_IGDB_CLIENT_ID` and `KIZUNASHELF_IGDB_CLIENT_SECRET`.
+- TheTVDB: requires `KIZUNASHELF_TVDB_API_KEY`; `KIZUNASHELF_TVDB_PIN` is optional.
 
 ```yaml
 externalPriority:
