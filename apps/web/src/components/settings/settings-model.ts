@@ -271,10 +271,10 @@ export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array
       config: {
         ...defaultConfig(),
         types: [
-          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", ["bangumi_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", ["bangumi_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", [externalRef("bangumi_url", "bangumi")], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", [externalRef("thetvdb_url", "thetvdb")], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", [externalRef("bangumi_url", "bangumi"), externalRef("thetvdb_url", "thetvdb")], ["release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "games", "Games", "🎮", "Games", [externalRef("igdb_url", "igdb")], ["release_date"], ["complete_date"]),
         ],
         home: {
           title: "Home",
@@ -291,9 +291,9 @@ export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array
       config: {
         ...defaultConfig(),
         types: [
-          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", ["bangumi_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", ["bangumi_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", [externalRef("bangumi_url", "bangumi")], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", [externalRef("thetvdb_url", "thetvdb")], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", [externalRef("bangumi_url", "bangumi"), externalRef("thetvdb_url", "thetvdb")], ["release_date"], ["complete_date"]),
         ],
       },
     },
@@ -302,7 +302,7 @@ export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array
       label: "Games",
       config: {
         ...defaultConfig(),
-        types: [mediaType(providerCatalog, "games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"])],
+        types: [mediaType(providerCatalog, "games", "Games", "🎮", "Games", [externalRef("igdb_url", "igdb")], ["release_date"], ["complete_date"])],
       },
     },
     {
@@ -325,13 +325,22 @@ export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array
   ];
 }
 
+type ExternalRefTemplate = {
+  field: string;
+  source: string;
+};
+
+function externalRef(field: string, source: string): ExternalRefTemplate {
+  return { field, source };
+}
+
 function mediaType(
   providerCatalog: ExternalProviderCatalog | undefined,
   id: string,
   label: string,
   icon: string,
   path: string,
-  externalRefs: string[],
+  externalRefs: ExternalRefTemplate[],
   planningDates: string[],
   completedDates: string[],
 ): EntityTypeConfig {
@@ -341,7 +350,7 @@ function mediaType(
     label,
     icon,
     path,
-    externalPriority: defaultExternalPriority(providerCatalog, externalRefs),
+    externalPriority: defaultExternalPriority(providerCatalog, externalRefs.map((ref) => ref.source)),
     filename: { titleLanguage: "zh", defaultTitle: true },
     fields: [
       { field: "uid", fieldType: "id", displayName: "UID" },
@@ -378,12 +387,12 @@ function mediaType(
         displayName: field === "complete_date" ? "Completed date" : field,
         dateRole: "completed",
       }) satisfies FieldConfig),
-      ...externalRefs.map((field) => ({
-        field,
+      ...externalRefs.map((ref) => ({
+        field: ref.field,
         fieldType: "externalRef",
-        displayName: field,
-        externalRef: externalSourceForField(field),
-        externalTypes: externalTypesForSource(providerCatalog, externalSourceForField(field)),
+        displayName: ref.field,
+        externalRef: ref.source,
+        externalTypes: externalTypesForSource(providerCatalog, ref.source),
       }) satisfies FieldConfig),
       { field: "franchise", fieldType: "relation", displayName: "Franchise", relationType: "franchise" },
       { field: "studio", fieldType: "relation", displayName: "Studio", relationType: "studio" },
@@ -392,12 +401,8 @@ function mediaType(
   };
 }
 
-function externalSourceForField(field: string) {
-  return field.replace(/_url$/, "");
-}
-
-function defaultExternalSource(externalRefs: string[]) {
-  return externalSourceForField(externalRefs[0] ?? "");
+function defaultExternalSource(externalRefs: ExternalRefTemplate[]) {
+  return externalRefs[0]?.source ?? "";
 }
 
 export function replaceAt<T, K extends keyof T>(

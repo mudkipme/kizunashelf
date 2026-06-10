@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import { PlusIcon } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
@@ -9,12 +11,7 @@ import {
   externalTypeOptionsForSource,
   externalTypesForSource,
 } from "@/lib/external-metadata";
-import {
-  fieldTypeLabel,
-  supportsDateRole,
-  supportsEnumOptions,
-  supportsTitleOptions,
-} from "@/lib/type-config";
+import { fieldTypeLabel, supportsEnumOptions } from "@/lib/type-config";
 import type {
   DailyNotesConfig,
   EntityTypeConfig,
@@ -37,6 +34,12 @@ import {
   StringListEditor,
   TextField,
 } from "./settings-controls";
+import {
+  fieldConfigSummary,
+  fieldOptionKeys,
+  fieldTypeOptions,
+  type FieldOptionKey,
+} from "./settings-field-descriptors";
 import {
   defaultField,
   defaultHomeSection,
@@ -283,67 +286,97 @@ export function EntityTypeEditor({
   onChange: (config: EntityTypeConfig) => void;
   onRemove: () => void;
 }) {
+  const providerCount = new Set([
+    ...(config.externalPriority ?? []),
+    ...config.fields
+      .filter((field) => field.fieldType === "externalRef")
+      .map((field) => field.externalRef ?? "")
+      .filter(Boolean),
+  ]).size;
+
   return (
     <div className="rounded-md border p-3">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="truncate text-sm font-semibold">{config.label || config.id || "Entity type"}</h3>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold">{config.label || config.id || "Entity type"}</h3>
+          <div className="mt-2 flex flex-wrap gap-1">
+            <Badge variant="secondary">{config.fields.length} fields</Badge>
+            <Badge variant="secondary">{providerCount} providers</Badge>
+            {config.path ? <Badge variant="outline">{config.path}</Badge> : null}
+          </div>
+        </div>
         <IconButton label="Remove type" onClick={onRemove} />
       </div>
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <TextField label="ID" value={config.id} onChange={(id) => onChange({ ...config, id })} />
-        <TextField label="Label" value={config.label} onChange={(label) => onChange({ ...config, label })} />
-        <TextField label="Icon" value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
-        <PathField label="Path" value={config.path} base={taxonomyBase} onChange={(path) => onChange({ ...config, path })} />
-        <div className="lg:col-span-3">
+
+      <div className="mt-4 flex flex-col gap-4">
+        <ConfigSubsection title="Basics">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+            <TextField label="ID" value={config.id} onChange={(id) => onChange({ ...config, id })} />
+            <TextField label="Label" value={config.label} onChange={(label) => onChange({ ...config, label })} />
+            <TextField label="Icon" value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
+            <PathField
+              label="Path"
+              value={config.path}
+              base={taxonomyBase}
+              onChange={(path) => onChange({ ...config, path })}
+            />
+          </div>
+        </ConfigSubsection>
+
+        <ConfigSubsection title="Providers">
           <ExternalPriorityEditor
             providerCatalog={providerCatalog}
             values={config.externalPriority ?? []}
             onChange={(externalPriority) => onChange({ ...config, externalPriority })}
           />
-        </div>
-        <Field label="Filename title language">
-          <Select
-            value={config.filename?.titleLanguage ?? ""}
-            onChange={(event) =>
-              onChange({
-                ...config,
-                filename: {
-                  ...(config.filename ?? {}),
-                  titleLanguage: event.target.value || undefined,
-                  defaultTitle: config.filename?.defaultTitle ?? false,
-                },
-              })
-            }
-            className="h-9 w-full text-sm"
-          >
-            <option value="">None</option>
-            <option value="zh">Chinese</option>
-            <option value="ja">Japanese</option>
-            <option value="en">English</option>
-          </Select>
-        </Field>
-        <Field label="Filename default title">
-          <Select
-            value={config.filename?.defaultTitle ? "true" : "false"}
-            onChange={(event) =>
-              onChange({
-                ...config,
-                filename: {
-                  ...(config.filename ?? {}),
-                  defaultTitle: event.target.value === "true",
-                },
-              })
-            }
-            className="h-9 w-full text-sm"
-          >
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </Select>
-        </Field>
+        </ConfigSubsection>
+
+        <ConfigSubsection title="Filename">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <Field label="Filename title language">
+              <Select
+                value={config.filename?.titleLanguage ?? ""}
+                onChange={(event) =>
+                  onChange({
+                    ...config,
+                    filename: {
+                      titleLanguage: event.target.value || undefined,
+                      defaultTitle: config.filename?.defaultTitle ?? false,
+                    },
+                  })
+                }
+                className="h-9 w-full text-sm"
+              >
+                <option value="">None</option>
+                <option value="zh">Chinese</option>
+                <option value="ja">Japanese</option>
+                <option value="en">English</option>
+              </Select>
+            </Field>
+            <Field label="Filename default title">
+              <Select
+                value={config.filename?.defaultTitle ? "true" : "false"}
+                onChange={(event) =>
+                  onChange({
+                    ...config,
+                    filename: {
+                      titleLanguage: config.filename?.titleLanguage,
+                      defaultTitle: event.target.value === "true",
+                    },
+                  })
+                }
+                className="h-9 w-full text-sm"
+              >
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </Select>
+            </Field>
+          </div>
+        </ConfigSubsection>
       </div>
+
       <Separator className="my-3" />
       <FieldsEditor
-        typeId={config.id}
         providerCatalog={providerCatalog}
         fields={config.fields}
         onChange={(fields) => onChange({ ...config, fields })}
@@ -352,13 +385,20 @@ export function EntityTypeEditor({
   );
 }
 
+function ConfigSubsection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h4 className="text-xs font-semibold uppercase text-muted-foreground">{title}</h4>
+      {children}
+    </div>
+  );
+}
+
 function FieldsEditor({
-  typeId,
   providerCatalog,
   fields,
   onChange,
 }: {
-  typeId: string;
   providerCatalog?: ExternalProviderCatalog;
   fields: FieldConfig[];
   onChange: (fields: FieldConfig[]) => void;
@@ -376,7 +416,6 @@ function FieldsEditor({
         {fields.map((field, index) => (
           <FieldConfigEditor
             key={`${field.field}-${field.fieldType}-${index}`}
-            typeId={typeId}
             providerCatalog={providerCatalog}
             field={field}
             onChange={(next) => onChange(replaceArray(fields, index, next))}
@@ -448,13 +487,11 @@ function ExternalPriorityEditor({
 }
 
 function FieldConfigEditor({
-  typeId,
   providerCatalog,
   field,
   onChange,
   onRemove,
 }: {
-  typeId: string;
   providerCatalog?: ExternalProviderCatalog;
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
@@ -462,8 +499,17 @@ function FieldConfigEditor({
 }) {
   return (
     <div className="rounded-md border p-3">
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="truncate text-sm font-medium">{field.displayName || field.field || "Field"}</h4>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h4 className="truncate text-sm font-medium">{field.displayName || field.field || "Field"}</h4>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {fieldConfigSummary(field).map((item) => (
+              <Badge key={item} variant="outline">
+                {item}
+              </Badge>
+            ))}
+          </div>
+        </div>
         <IconButton label="Remove field" onClick={onRemove} />
       </div>
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -486,131 +532,196 @@ function FieldConfigEditor({
           value={field.displayName ?? ""}
           onChange={(displayName) => onChange({ ...field, displayName })}
         />
-        {supportsTitleOptions(field.fieldType) ? (
-          <>
-            <TextField
-              label="Title language"
-              value={field.titleLanguage ?? ""}
-              onChange={(titleLanguage) => onChange({ ...field, titleLanguage })}
-            />
-            <Field label="Title role">
-              <Select
-                value={field.titleRole ?? ""}
-                onChange={(event) => onChange({ ...field, titleRole: (event.target.value || null) as FieldConfig["titleRole"] })}
-                className="h-9 w-full text-sm"
-              >
-                <option value="">None</option>
-                <option value="original">Original</option>
-              </Select>
-            </Field>
-            <Field label="Default title">
-              <Select
-                value={field.defaultTitle ? "true" : "false"}
-                onChange={(event) => onChange({ ...field, defaultTitle: event.target.value === "true" })}
-                className="h-9 w-full text-sm"
-              >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-              </Select>
-            </Field>
-          </>
-        ) : null}
-        {supportsEnumOptions(field.fieldType) ? (
-          <div className="lg:col-span-3">
-            <StringListEditor
-              label="Enum options"
-              values={field.enumOptions ?? []}
-              placeholder="Completed"
-              onChange={(enumOptions) => onChange({ ...field, enumOptions })}
-            />
-          </div>
-        ) : null}
-        {field.fieldType !== "externalRef" ? (
-          <div className="lg:col-span-3">
-            <ExternalFieldMappingsEditor
-              providerCatalog={providerCatalog}
-              values={field.externalFields ?? []}
-              onChange={(externalFields) => onChange({ ...field, externalFields })}
-            />
-          </div>
-        ) : null}
-        {field.fieldType === "progress" ? (
-          <TextField
-            label="Total progress field"
-            value={field.totalProgressField ?? ""}
-            onChange={(totalProgressField) => onChange({ ...field, totalProgressField })}
-          />
-        ) : null}
-        {supportsDateRole(field.fieldType) ? (
-          <Field label="Date role">
-            <Select
-              value={field.dateRole ?? ""}
-              onChange={(event) =>
-                onChange({ ...field, dateRole: (event.target.value || null) as FieldConfig["dateRole"] })
-              }
-              className="h-9 w-full text-sm"
-            >
-              <option value="">None</option>
-              <option value="planning">Planning</option>
-              <option value="completed">Completed</option>
-            </Select>
-          </Field>
-        ) : null}
-        {field.fieldType === "season" ? (
-          <Field label="Season language">
-            <Select
-              value={field.seasonLanguage ?? "zh"}
-              onChange={(event) => onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })}
-              className="h-9 w-full text-sm"
-            >
-              <option value="zh">Chinese</option>
-              <option value="ja">Japanese</option>
-              <option value="en">English</option>
-            </Select>
-          </Field>
-        ) : null}
-        {field.fieldType === "externalRef" ? (
-          <>
-            <Field label="External source">
-              <Select
-                value={field.externalRef ?? ""}
-                onChange={(event) =>
-                  onChange({
-                    ...field,
-                    externalRef: event.target.value,
-                    externalTypes: externalTypesForSource(providerCatalog, event.target.value),
-                  })
-                }
-                className="h-9 w-full text-sm"
-              >
-                <option value="">None</option>
-                {externalSourceOptions(providerCatalog).map((option) => (
-                  <option key={option.source} value={option.source}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <div className="lg:col-span-2">
-              <ExternalTypesEditor
-                source={field.externalRef ?? ""}
-                providerCatalog={providerCatalog}
-                values={field.externalTypes ?? []}
-                onChange={(externalTypes) => onChange({ ...field, externalTypes })}
-              />
-            </div>
-          </>
-        ) : null}
-        {field.fieldType === "relation" ? (
-          <TextField
-            label="Relation type"
-            value={field.relationType ?? ""}
-            onChange={(relationType) => onChange({ ...field, relationType })}
-          />
-        ) : null}
+        <FieldOptionEditors providerCatalog={providerCatalog} field={field} onChange={onChange} />
       </div>
     </div>
   );
+}
+
+function FieldOptionEditors({
+  providerCatalog,
+  field,
+  onChange,
+}: {
+  providerCatalog?: ExternalProviderCatalog;
+  field: FieldConfig;
+  onChange: (field: FieldConfig) => void;
+}) {
+  return (
+    <>
+      {fieldOptionKeys(field.fieldType).map((optionKey) => (
+        <FieldOptionEditor
+          key={optionKey}
+          optionKey={optionKey}
+          providerCatalog={providerCatalog}
+          field={field}
+          onChange={onChange}
+        />
+      ))}
+    </>
+  );
+}
+
+function FieldOptionEditor({
+  optionKey,
+  providerCatalog,
+  field,
+  onChange,
+}: {
+  optionKey: FieldOptionKey;
+  providerCatalog?: ExternalProviderCatalog;
+  field: FieldConfig;
+  onChange: (field: FieldConfig) => void;
+}) {
+  if (optionKey === "titleOptions") {
+    return (
+      <>
+        <TextField
+          label="Title language"
+          value={field.titleLanguage ?? ""}
+          onChange={(titleLanguage) => onChange({ ...field, titleLanguage })}
+        />
+        <Field label="Title role">
+          <Select
+            value={field.titleRole ?? ""}
+            onChange={(event) =>
+              onChange({ ...field, titleRole: (event.target.value || null) as FieldConfig["titleRole"] })
+            }
+            className="h-9 w-full text-sm"
+          >
+            <option value="">None</option>
+            <option value="original">Original</option>
+          </Select>
+        </Field>
+        <Field label="Default title">
+          <Select
+            value={field.defaultTitle ? "true" : "false"}
+            onChange={(event) => onChange({ ...field, defaultTitle: event.target.value === "true" })}
+            className="h-9 w-full text-sm"
+          >
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </Select>
+        </Field>
+      </>
+    );
+  }
+
+  if (optionKey === "enumOptions") {
+    return (
+      <div className="lg:col-span-3">
+        <StringListEditor
+          label="Enum options"
+          values={field.enumOptions ?? []}
+          placeholder="Completed"
+          onChange={(enumOptions) => onChange({ ...field, enumOptions })}
+        />
+      </div>
+    );
+  }
+
+  if (optionKey === "externalMappings") {
+    return (
+      <div className="lg:col-span-3">
+        <ExternalFieldMappingsEditor
+          providerCatalog={providerCatalog}
+          values={field.externalFields ?? []}
+          onChange={(externalFields) => onChange({ ...field, externalFields })}
+        />
+      </div>
+    );
+  }
+
+  if (optionKey === "progressTotal") {
+    return (
+      <TextField
+        label="Total progress field"
+        value={field.totalProgressField ?? ""}
+        onChange={(totalProgressField) => onChange({ ...field, totalProgressField })}
+      />
+    );
+  }
+
+  if (optionKey === "dateRole") {
+    return (
+      <Field label="Date role">
+        <Select
+          value={field.dateRole ?? ""}
+          onChange={(event) =>
+            onChange({ ...field, dateRole: (event.target.value || null) as FieldConfig["dateRole"] })
+          }
+          className="h-9 w-full text-sm"
+        >
+          <option value="">None</option>
+          <option value="planning">Planning</option>
+          <option value="completed">Completed</option>
+        </Select>
+      </Field>
+    );
+  }
+
+  if (optionKey === "seasonLanguage") {
+    return (
+      <Field label="Season language">
+        <Select
+          value={field.seasonLanguage ?? "zh"}
+          onChange={(event) => onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })}
+          className="h-9 w-full text-sm"
+        >
+          <option value="zh">Chinese</option>
+          <option value="ja">Japanese</option>
+          <option value="en">English</option>
+        </Select>
+      </Field>
+    );
+  }
+
+  if (optionKey === "externalRef") {
+    return (
+      <>
+        <Field label="External source">
+          <Select
+            value={field.externalRef ?? ""}
+            onChange={(event) =>
+              onChange({
+                ...field,
+                externalRef: event.target.value,
+                externalTypes: externalTypesForSource(providerCatalog, event.target.value),
+              })
+            }
+            className="h-9 w-full text-sm"
+          >
+            <option value="">None</option>
+            {externalSourceOptions(providerCatalog).map((option) => (
+              <option key={option.source} value={option.source}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <div className="lg:col-span-2">
+          <ExternalTypesEditor
+            source={field.externalRef ?? ""}
+            providerCatalog={providerCatalog}
+            values={field.externalTypes ?? []}
+            onChange={(externalTypes) => onChange({ ...field, externalTypes })}
+          />
+        </div>
+      </>
+    );
+  }
+
+  if (optionKey === "relationType") {
+    return (
+      <TextField
+        label="Relation type"
+        value={field.relationType ?? ""}
+        onChange={(relationType) => onChange({ ...field, relationType })}
+      />
+    );
+  }
+
+  return null;
 }
 
 function ExternalFieldMappingsEditor({
@@ -735,22 +846,3 @@ function ExternalTypesEditor({
     </div>
   );
 }
-
-const fieldTypeOptions: FieldType[] = [
-  "id",
-  "title",
-  "image",
-  "imageList",
-  "enum",
-  "enumList",
-  "progress",
-  "totalProgress",
-  "rating",
-  "bool",
-  "season",
-  "date",
-  "externalRef",
-  "relation",
-  "text",
-  "textList",
-];

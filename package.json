@@ -11,6 +11,7 @@
     "dev:web": "pnpm --filter @kizunashelf/web dev",
     "build": "pnpm contract:generate && pnpm -r build && cargo build -p kizunashelf",
     "build:desktop": "pnpm --filter @kizunashelf/desktop tauri build",
+    "lint": "oxlint apps/web/src apps/web/vite.config.ts packages/api-contract/src/index.ts packages/api-contract/orval.config.mjs --max-warnings=0",
     "typecheck": "pnpm -r typecheck && cargo check -p kizunashelf",
     "typecheck:desktop": "cargo check -p kizunashelf-desktop",
     "test": "cargo test -p kizunashelf",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "concurrently": "^9.2.1",
     "orval": "^8.13.0",
+    "oxlint": "^1.69.0",
     "typescript": "^5.9.3"
   }
 }

@@ -83,9 +83,9 @@ export function externalTypesForSource(
 
 export function defaultExternalPriority(
   catalog: ExternalProviderCatalog | undefined,
-  externalRefs: string[],
+  sources: string[],
 ) {
-  return cleanExternalPriority(catalog, externalRefs.map(externalSourceForField)) ?? [];
+  return cleanExternalPriority(catalog, sources) ?? [];
 }
 
 export function defaultExternalMappings(
@@ -224,10 +224,6 @@ function externalProvider(
 ): ExternalProviderCatalogItem | undefined {
   const expected = source.trim().toLowerCase();
   return catalog?.providers.find((provider) => provider.id === expected);
-}
-
-function externalSourceForField(field: string) {
-  return field.replace(/_url$/, "");
 }
 
 function defaultExternalField(

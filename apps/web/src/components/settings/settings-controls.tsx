@@ -203,18 +203,30 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 }
 
 export function SettingsSection({
+  id,
   title,
+  description,
+  summary,
   action,
   children,
 }: {
+  id?: string;
   title: string;
+  description?: string;
+  summary?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-md border">
-      <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
-        <h2 className="text-sm font-semibold">{title}</h2>
+    <section id={id} className="scroll-mt-4 rounded-md border">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b px-3 py-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-semibold">{title}</h2>
+            {summary}
+          </div>
+          {description ? <p className="mt-1 text-xs text-muted-foreground">{description}</p> : null}
+        </div>
         {action}
       </header>
       <div className="flex flex-col gap-4 p-3">{children}</div>
