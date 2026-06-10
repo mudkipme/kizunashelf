@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { getCleanupQueues, getConfig } from "@kizunashelf/api-contract";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon, SearchIcon } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
-import { apiFetch, errorMessage } from "@/api/client";
+import { errorMessage } from "@/api/client";
+import { cleanupQueuesQuery, configQuery } from "@/api/queries";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
@@ -23,16 +24,8 @@ import type {
   CleanupQueueSummary,
   CleanupQueuesResponse,
   CleanupUnresolvedRelation,
-  ConfigResponse,
   EntitySummary,
 } from "@/types/api";
-
-type CleanupState = {
-  data?: CleanupQueuesResponse;
-  config?: ConfigResponse;
-  loading: boolean;
-  error?: string;
-};
 
 type QueueDefinition = {
   id: string;
@@ -54,15 +47,12 @@ const queueDefinitions: QueueDefinition[] = [
 export function ReviewPage() {
   const { queueId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [state, setState] = useState<CleanupState>({ loading: true });
+  const cleanup = useQuery(cleanupQueuesQuery());
+  const config = useQuery(configQuery());
   const query = searchParams.get("q") ?? "";
   const selectedType = searchParams.get("type") ?? allEntityFilter;
   const selectedDate = searchParams.get("date") ?? allEntityFilter;
   const [queryInput, setQueryInput] = useState(query);
-
-  useEffect(() => {
-    void loadQueues();
-  }, []);
 
   useEffect(() => {
     setQueryInput(query);
@@ -76,19 +66,6 @@ export function ReviewPage() {
     return () => window.clearTimeout(timeout);
   }, [queryInput, query, searchParams]);
 
-  async function loadQueues() {
-    setState({ loading: true });
-    try {
-      const [data, config] = await Promise.all([
-        getCleanupQueues(undefined, apiFetch),
-        getConfig(undefined, apiFetch),
-      ]);
-      setState({ data, config, loading: false });
-    } catch (error) {
-      setState({ loading: false, error: errorMessage(error) });
-    }
-  }
-
   function setFilter(key: string, value: string, defaultValue = allEntityFilter, replace = false) {
     const next = new URLSearchParams(searchParams);
     if (!value || value === defaultValue) next.delete(key);
@@ -97,12 +74,12 @@ export function ReviewPage() {
   }
 
   const activeQueue = queueDefinitions.find((queue) => queue.id === queueId);
-  const summaries = state.data?.queues ?? [];
+  const summaries = cleanup.data?.queues ?? [];
   const activeSummary = summaries.find((queue) => queue.id === activeQueue?.id);
-  const labelsByType = useMemo(() => fieldLabelsByType(state.config?.types), [state.config]);
+  const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const items = useMemo(
-    () => (state.data && activeQueue ? queueItems(state.data, activeQueue) : []),
-    [state.data, activeQueue],
+    () => (cleanup.data && activeQueue ? queueItems(cleanup.data, activeQueue) : []),
+    [cleanup.data, activeQueue],
   );
   const itemEntities = useMemo(() => items.map((item) => item.entity), [items]);
   const typeOptions = useMemo(() => entityTypeOptions(itemEntities), [itemEntities]);
@@ -118,29 +95,29 @@ export function ReviewPage() {
   );
 
   return (
-    <AppFrame error={state.error}>
+    <AppFrame error={cleanup.error || config.error ? errorMessage(cleanup.error ?? config.error) : undefined}>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold">{activeQueue?.label ?? "Metadata Review"}</h1>
             <p className="mt-1 text-xs text-muted-foreground">
-              {state.loading
+              {cleanup.isPending || config.isPending
                 ? "Loading"
-                : state.data
-                  ? `Updated ${state.data.generatedAt.slice(0, 10)}`
+                : cleanup.data
+                  ? `Updated ${cleanup.data.generatedAt.slice(0, 10)}`
                   : "No review data"}
             </p>
           </div>
           {activeSummary ? <ProgressPill summary={activeSummary} /> : null}
         </header>
 
-        {state.loading ? (
+        {cleanup.isPending || config.isPending ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : null}
 
-        {state.data && !activeQueue ? <ReviewOverview summaries={summaries} /> : null}
+        {cleanup.data && !activeQueue ? <ReviewOverview summaries={summaries} /> : null}
 
-        {state.data && activeQueue ? (
+        {cleanup.data && activeQueue ? (
           <>
             <section className="flex flex-col gap-3 rounded-md border px-3 py-3">
               <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(220px,1fr)_repeat(2,auto)]">

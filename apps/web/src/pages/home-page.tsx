@@ -1,67 +1,44 @@
-import { useEffect, useMemo, useState } from "react";
-import { getConfig, getHome } from "@kizunashelf/api-contract";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { apiFetch, errorMessage } from "@/api/client";
-import { getAppCapabilities } from "@/api/entities";
+import { errorMessage } from "@/api/client";
+import { capabilitiesQuery, configQuery, homeQuery } from "@/api/queries";
 import { HomeSection } from "@/components/home/home-section";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
 import { fieldLabelsByType } from "@/lib/type-config";
-import type { Capabilities, ConfigResponse, HomeResponse } from "@/types/api";
-
-type HomeState = {
-  data?: HomeResponse;
-  config?: ConfigResponse;
-  capabilities?: Capabilities;
-  loading: boolean;
-  error?: string;
-};
 
 export function HomePage() {
-  const [home, setHome] = useState<HomeState>({ loading: true });
-  const labelsByType = useMemo(() => fieldLabelsByType(home.config?.types), [home.config]);
-
-  useEffect(() => {
-    void loadHome();
-  }, []);
-
-  async function loadHome() {
-    setHome({ loading: true });
-    try {
-      const [data, config, capabilities] = await Promise.all([
-        getHome(undefined, apiFetch),
-        getConfig(undefined, apiFetch),
-        getAppCapabilities(),
-      ]);
-      setHome({ data, config, capabilities, loading: false });
-    } catch (error) {
-      setHome({ loading: false, error: errorMessage(error) });
-    }
-  }
+  const home = useQuery(homeQuery());
+  const config = useQuery(configQuery());
+  const capabilities = useQuery(capabilitiesQuery());
+  const loading = home.isPending || config.isPending || capabilities.isPending;
+  const error = home.error ?? config.error ?? capabilities.error;
+  const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
 
   return (
-    <AppFrame error={home.error}>
+    <AppFrame error={error ? errorMessage(error) : undefined}>
       <div className="flex min-h-full flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">{home.data?.title ?? "Home"}</h1>
             <p className="mt-1 text-xs text-muted-foreground">
-              {home.loading ? "Loading" : `${home.data?.sections.length ?? 0} sections`}
+              {loading ? "Loading" : `${home.data?.sections.length ?? 0} sections`}
             </p>
           </div>
           <Button
             type="button"
-            disabled={home.capabilities?.contentWritable === false}
+            disabled={capabilities.data?.contentWritable === false}
             title={
-              home.capabilities?.contentWritable === false
+              capabilities.data?.contentWritable === false
                 ? "Content writes are disabled"
                 : "Add entity"
             }
-            asChild={home.capabilities?.contentWritable !== false}
+            asChild={capabilities.data?.contentWritable !== false}
           >
-            {home.capabilities?.contentWritable === false ? (
+            {capabilities.data?.contentWritable === false ? (
               <span>
                 <PlusIcon data-icon="inline-start" />
                 Add
@@ -75,11 +52,11 @@ export function HomePage() {
           </Button>
         </header>
 
-        {home.loading ? (
+        {loading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : null}
 
-        {!home.loading && home.data?.sections.length === 0 ? (
+        {!loading && home.data?.sections.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No home sections configured
           </div>

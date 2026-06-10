@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BrowserRouter,
   Navigate,
@@ -7,8 +8,7 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import { errorMessage } from "@/api/client";
-import { getSettingsConfig } from "@/api/settings";
+import { settingsConfigQuery } from "@/api/queries";
 import { CalendarPage } from "@/pages/calendar-page";
 import { EntityCreatePage } from "@/pages/entity-create-page";
 import { EntityEditPage } from "@/pages/entity-edit-page";
@@ -20,7 +20,6 @@ import { RelationsPage } from "@/pages/relations-page";
 import { ReviewPage } from "@/pages/review-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { StatisticsPage } from "@/pages/statistics-page";
-import type { SettingsConfigResponse } from "@/types/config";
 
 export default function App() {
   return (
@@ -32,32 +31,18 @@ export default function App() {
 
 function ConfigGate() {
   const location = useLocation();
-  const [state, setState] = useState<{
-    data?: SettingsConfigResponse;
-    loading: boolean;
-    error?: string;
-  }>({ loading: true });
+  const queryClient = useQueryClient();
+  const settings = useQuery(settingsConfigQuery());
 
   useEffect(() => {
-    void loadSettings();
     function reload() {
-      void loadSettings();
+      void queryClient.invalidateQueries();
     }
     window.addEventListener("kizunashelf-config-saved", reload);
     return () => window.removeEventListener("kizunashelf-config-saved", reload);
-  }, []);
+  }, [queryClient]);
 
-  async function loadSettings() {
-    setState({ loading: true });
-    try {
-      const data = await getSettingsConfig();
-      setState({ data, loading: false });
-    } catch (error) {
-      setState({ loading: false, error: errorMessage(error) });
-    }
-  }
-
-  if (state.loading) {
+  if (settings.isPending) {
     return (
       <main className="h-dvh overflow-auto bg-background p-8 text-center text-sm text-muted-foreground">
         Loading
@@ -66,16 +51,16 @@ function ConfigGate() {
   }
 
   const pathname = location.pathname;
-  if (state.error) {
+  if (settings.error) {
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;
   }
-  if (state.data && !state.data.exists && pathname !== "/onboarding") {
+  if (settings.data && !settings.data.exists && pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
-  if (state.data?.error && pathname !== "/settings" && pathname !== "/onboarding") {
+  if (settings.data?.error && pathname !== "/settings" && pathname !== "/onboarding") {
     return <Navigate to="/settings" replace />;
   }
-  if (state.data?.exists && pathname === "/onboarding" && !state.data.error) {
+  if (settings.data?.exists && pathname === "/onboarding" && !settings.data.error) {
     return <Navigate to="/" replace />;
   }
 

@@ -1,58 +1,38 @@
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { getProviderCatalog } from "@/api/external";
-import { getSettingsConfig } from "@/api/settings";
+import { providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
 import { SettingsEditor } from "@/components/settings/settings-editor";
-import type { ExternalProviderCatalog } from "@/types/api";
-import type { SettingsConfigResponse } from "@/types/config";
-
-type OnboardingState = {
-  data?: SettingsConfigResponse;
-  providerCatalog?: ExternalProviderCatalog;
-  loading: boolean;
-  error?: string;
-};
 
 export function OnboardingPage() {
   const navigate = useNavigate();
-  const [state, setState] = useState<OnboardingState>({ loading: true });
-
-  useEffect(() => {
-    void load();
-  }, []);
-
-  async function load() {
-    setState({ loading: true });
-    try {
-      const [data, providerCatalog] = await Promise.all([
-        getSettingsConfig(),
-        getProviderCatalog(),
-      ]);
-      setState({ data, providerCatalog, loading: false });
-    } catch (error) {
-      setState({ loading: false, error: errorMessage(error) });
-    }
-  }
+  const queryClient = useQueryClient();
+  const settings = useQuery(settingsConfigQuery());
+  const providerCatalog = useQuery(providerCatalogQuery());
+  const loading = settings.isPending || providerCatalog.isPending;
+  const error = settings.error ?? providerCatalog.error;
 
   return (
     <main className="h-dvh overflow-auto overscroll-contain bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
-        {state.error ? (
+        {error ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            {state.error}
+            {errorMessage(error)}
           </div>
         ) : null}
-        {state.loading ? (
+        {loading ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
-        ) : state.data ? (
+        ) : settings.data ? (
           <SettingsEditor
-            configPath={state.data.configPath}
-            initialConfig={state.data.config}
-            providerCatalog={state.providerCatalog}
-            onboarding={!state.data.exists}
-            onSaved={() => navigate("/", { replace: true })}
+            configPath={settings.data.configPath}
+            initialConfig={settings.data.config}
+            providerCatalog={providerCatalog.data}
+            onboarding={!settings.data.exists}
+            onSaved={() => {
+              void queryClient.invalidateQueries();
+              navigate("/", { replace: true });
+            }}
           />
         ) : null}
       </div>

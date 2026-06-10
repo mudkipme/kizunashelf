@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { getConfig, getEntities, getStats } from "@kizunashelf/api-contract";
+import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { apiFetch, errorMessage, isAbortError } from "@/api/client";
-import { getAppCapabilities } from "@/api/entities";
+import { errorMessage } from "@/api/client";
+import { capabilitiesQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
@@ -35,41 +35,19 @@ import {
   readAssetListPreferences,
   writeAssetListPreferences,
 } from "@/lib/asset-list-preferences";
-import type { Capabilities, ConfigResponse, EntitySummary, StatsResponse } from "@/types/api";
-
-type StatsState = {
-  global?: StatsResponse;
-  category?: StatsResponse;
-  loading: boolean;
-  error?: string;
-};
-
-type ListState = {
-  entities: EntitySummary[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  loading: boolean;
-  error?: string;
-};
 
 export function LibraryPage() {
-  const [stats, setStats] = useState<StatsState>({ loading: true });
-  const [config, setConfig] = useState<ConfigResponse>();
-  const [capabilities, setCapabilities] = useState<Capabilities>();
-  const [list, setList] = useState<ListState>({
-    entities: [],
-    total: 0,
-    page: 1,
-    pageSize,
-    totalPages: 1,
-    loading: true,
-  });
   const [searchParams, setSearchParams] = useSearchParams();
-  const firstType = stats.global?.byType[0]?.id ?? allTypes;
+  const globalStats = useQuery(statsQuery());
+  const config = useQuery(configQuery());
+  const capabilities = useQuery(capabilitiesQuery());
+  const firstType = globalStats.data?.byType[0]?.id ?? allTypes;
   const selectedType = searchParams.get("type") ?? allTypes;
   const isGlobalType = selectedType === allTypes;
+  const categoryStats = useQuery({
+    ...statsQuery({ type: selectedType }),
+    enabled: !isGlobalType,
+  });
   const refs = searchParams.get("refs") ?? allOptions;
   const cover = searchParams.get("cover") ?? allOptions;
   const sort = searchParams.get("sort") ?? defaultSort;
@@ -79,19 +57,19 @@ export function LibraryPage() {
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const selectedTypeStats = stats.global?.byType.find((type) => type.id === selectedType);
-  const scopeStats = isGlobalType ? stats.global : stats.category;
-  const selectedTypeConfig = config?.types.find((type) => type.id === selectedType);
+  const selectedTypeStats = globalStats.data?.byType.find((type) => type.id === selectedType);
+  const scopeStats = isGlobalType ? globalStats.data : categoryStats.data;
+  const selectedTypeConfig = config.data?.types.find((type) => type.id === selectedType);
   const scopeTypeConfigs = isGlobalType
-    ? (config?.types ?? [])
+    ? (config.data?.types ?? [])
     : selectedTypeConfig
       ? [selectedTypeConfig]
       : [];
-  const fieldLabels = useMemo(() => fieldLabelsByType(config?.types), [config]);
+  const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const supportsRefsFilter =
-    !config || scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["externalRef"]));
+    !config.data || scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["externalRef"]));
   const supportsCoverFilter =
-    !config ||
+    !config.data ||
     scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["image", "imageList"]));
   const effectiveRefs = supportsRefsFilter ? refs : allOptions;
   const effectiveCover = supportsCoverFilter ? cover : allOptions;
@@ -110,8 +88,8 @@ export function LibraryPage() {
       ? defaultSort
       : sort;
   const entryCount = isGlobalType
-    ? (stats.global?.total ?? list.total)
-    : (selectedTypeStats?.count ?? list.total);
+    ? (globalStats.data?.total ?? 0)
+    : (selectedTypeStats?.count ?? 0);
   const filtersActive =
     effectiveRefs !== allOptions ||
     effectiveCover !== allOptions ||
@@ -120,17 +98,28 @@ export function LibraryPage() {
     view !== defaultView ||
     effectiveTitleLanguage !== defaultTitleOptionId;
 
-  useEffect(() => {
-    const controller = new AbortController();
-    void loadGlobalStats(controller.signal);
-    void loadConfig(controller.signal);
-    void loadCapabilities(controller.signal);
-    return () => controller.abort();
-  }, []);
+  const list = useQuery(
+    entitiesQuery({
+      type: selectedType,
+      page,
+      pageSize,
+      sort: effectiveSort,
+      direction,
+      titleLanguage: effectiveTitleLanguage,
+      ...(effectiveRefs !== allOptions ? { refs: effectiveRefs } : {}),
+      ...(effectiveCover !== allOptions ? { cover: effectiveCover } : {}),
+      ...(query.trim() ? { q: query.trim() } : {}),
+    }),
+  );
+  const entities = list.data?.items ?? [];
+  const total = list.data?.total ?? 0;
+  const totalPages = list.data?.totalPages ?? 1;
+  const loading = globalStats.isPending || config.isPending || capabilities.isPending || list.isPending;
+  const error = globalStats.error ?? categoryStats.error ?? config.error ?? capabilities.error ?? list.error;
 
   useEffect(() => {
-    if (!stats.global) return;
-    const validTypes = new Set(stats.global.byType.map((type) => type.id));
+    if (!globalStats.data) return;
+    const validTypes = new Set(globalStats.data.byType.map((type) => type.id));
     const hasType = searchParams.has("type");
     const hasGlobalQuery = selectedType === allTypes && query.trim().length > 0;
 
@@ -153,17 +142,7 @@ export function LibraryPage() {
         setSearchParams(next, { replace: true });
       }
     }
-  }, [stats.global, selectedType, query]);
-
-  useEffect(() => {
-    if (!selectedType || isGlobalType) {
-      setStats((current) => ({ ...current, category: undefined }));
-      return;
-    }
-    const controller = new AbortController();
-    void loadCategoryStats(selectedType, controller.signal);
-    return () => controller.abort();
-  }, [selectedType, isGlobalType]);
+  }, [globalStats.data, selectedType, query]);
 
   useEffect(() => {
     if (!scopeStats || !sort.startsWith("date:")) return;
@@ -172,29 +151,29 @@ export function LibraryPage() {
   }, [scopeStats, sort]);
 
   useEffect(() => {
-    if (!config || supportsRefsFilter || refs === allOptions) return;
+    if (!config.data || supportsRefsFilter || refs === allOptions) return;
     setQueryParam("refs", allOptions);
-  }, [config, supportsRefsFilter, refs]);
+  }, [config.data, supportsRefsFilter, refs]);
 
   useEffect(() => {
-    if (!config || supportsCoverFilter || cover === allOptions) return;
+    if (!config.data || supportsCoverFilter || cover === allOptions) return;
     setQueryParam("cover", allOptions);
-  }, [config, supportsCoverFilter, cover]);
+  }, [config.data, supportsCoverFilter, cover]);
 
   useEffect(() => {
-    if (!config || titleLanguage === defaultTitleOptionId) return;
+    if (!config.data || titleLanguage === defaultTitleOptionId) return;
     if (titleLanguages.includes(titleLanguage)) return;
     setQueryParam("titleLanguage", defaultTitleOptionId, defaultTitleOptionId, false);
-  }, [config, titleLanguages, titleLanguage]);
+  }, [config.data, titleLanguages, titleLanguage]);
 
   useEffect(() => {
-    if (!stats.global || !selectedType || !searchParams.has("type")) return;
+    if (!globalStats.data || !selectedType || !searchParams.has("type")) return;
     if ((!supportsRefsFilter && refs !== allOptions) || (!supportsCoverFilter && cover !== allOptions)) {
       return;
     }
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
   }, [
-    stats.global,
+    globalStats.data,
     selectedType,
     searchParams,
     supportsRefsFilter,
@@ -208,98 +187,11 @@ export function LibraryPage() {
   ]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void loadEntities({
-      type: selectedType,
-      refs: effectiveRefs,
-      cover: effectiveCover,
-      sort: effectiveSort,
-      direction,
-      titleLanguage: effectiveTitleLanguage,
-      q: query,
-      page,
-    }, controller.signal);
-    return () => controller.abort();
-  }, [selectedType, effectiveRefs, effectiveCover, effectiveSort, direction, effectiveTitleLanguage, query, page]);
-
-  async function loadGlobalStats(signal: AbortSignal) {
-    setStats((current) => ({ ...current, loading: true, error: undefined }));
-    try {
-      const global = await getStats(undefined, { signal }, apiFetch);
-      setStats((current) => ({ ...current, global, loading: false }));
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setStats((current) => ({ ...current, loading: false, error: errorMessage(error) }));
-    }
-  }
-
-  async function loadCategoryStats(type: string, signal: AbortSignal) {
-    try {
-      const category = await getStats({ type }, { signal }, apiFetch);
-      setStats((current) => ({ ...current, category, error: undefined }));
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setStats((current) => ({ ...current, error: errorMessage(error) }));
-    }
-  }
-
-  async function loadConfig(signal: AbortSignal) {
-    try {
-      const config = await getConfig({ signal }, apiFetch);
-      setConfig(config);
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setStats((current) => ({ ...current, error: errorMessage(error) }));
-    }
-  }
-
-  async function loadCapabilities(signal: AbortSignal) {
-    try {
-      setCapabilities(await getAppCapabilities({ signal }));
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setStats((current) => ({ ...current, error: errorMessage(error) }));
-    }
-  }
-
-  async function loadEntities(filters: {
-    type: string;
-    refs: string;
-    cover: string;
-    sort: string;
-    direction: string;
-    titleLanguage: string;
-    q: string;
-    page: number;
-  }, signal: AbortSignal) {
-    setList((current) => ({ ...current, loading: true, error: undefined }));
-    try {
-      const result = await getEntities(
-        {
-          type: filters.type,
-          page: filters.page,
-          pageSize,
-          sort: filters.sort,
-          direction: filters.direction,
-          titleLanguage: filters.titleLanguage,
-          ...(filters.refs !== allOptions ? { refs: filters.refs } : {}),
-          ...(filters.cover !== allOptions ? { cover: filters.cover } : {}),
-          ...(filters.q.trim() ? { q: filters.q.trim() } : {}),
-        },
-        { signal },
-        apiFetch,
-      );
-      setList({ ...result, entities: result.items, loading: false });
-      if (result.page !== filters.page) {
-        const next = new URLSearchParams(searchParams);
-        next.set("page", String(result.page));
-        setSearchParams(next, { replace: true });
-      }
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setList((current) => ({ ...current, loading: false, error: errorMessage(error) }));
-    }
-  }
+    if (!list.data || list.data.page === page) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("page", String(list.data.page));
+    setSearchParams(next, { replace: true });
+  }, [list.data, page, searchParams, setSearchParams]);
 
   function selectType(type: string) {
     const next = new URLSearchParams(searchParams);
@@ -325,7 +217,7 @@ export function LibraryPage() {
   }
 
   return (
-    <AppFrame error={stats.error ?? list.error}>
+    <AppFrame error={error ? errorMessage(error) : undefined}>
       <div className="h-full min-h-full overflow-hidden">
         <section className="h-full min-w-0">
           <div className="flex h-full flex-col">
@@ -337,8 +229,8 @@ export function LibraryPage() {
                   className="min-w-0 flex-1"
                   aria-label="Type"
                 >
-                  <option value={allTypes}>All types ({stats.global?.total ?? 0})</option>
-                  {stats.global?.byType.map((type) => (
+                  <option value={allTypes}>All types ({globalStats.data?.total ?? 0})</option>
+                  {globalStats.data?.byType.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.label} ({type.count})
                     </option>
@@ -360,16 +252,16 @@ export function LibraryPage() {
                   variant="outline"
                   size="icon"
                   className="shrink-0"
-                  disabled={capabilities?.contentWritable === false}
+                  disabled={capabilities.data?.contentWritable === false}
                   aria-label="Add entity"
                   title={
-                    capabilities?.contentWritable === false
+                    capabilities.data?.contentWritable === false
                       ? "Content writes are disabled"
                       : "Add entity"
                   }
-                  asChild={capabilities?.contentWritable !== false}
+                  asChild={capabilities.data?.contentWritable !== false}
                 >
-                  {capabilities?.contentWritable === false ? (
+                  {capabilities.data?.contentWritable === false ? (
                     <span>
                       <PlusIcon />
                     </span>
@@ -440,26 +332,26 @@ export function LibraryPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs text-muted-foreground">
               <span>
-                {list.total} entries
-                {list.total > 0 ? ` · page ${list.page}/${list.totalPages}` : ""}
+                {total} entries
+                {total > 0 ? ` · page ${list.data?.page ?? page}/${totalPages}` : ""}
               </span>
               <div className="flex items-center gap-2">
                 <span>
-                  {list.loading || stats.loading ? "Loading" : stats.global?.generatedAt.slice(0, 10)}
+                  {loading ? "Loading" : globalStats.data?.generatedAt.slice(0, 10)}
                 </span>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={capabilities?.contentWritable === false}
+                  disabled={capabilities.data?.contentWritable === false}
                   title={
-                    capabilities?.contentWritable === false
+                    capabilities.data?.contentWritable === false
                       ? "Content writes are disabled"
                       : "Add entity"
                   }
-                  asChild={capabilities?.contentWritable !== false}
+                  asChild={capabilities.data?.contentWritable !== false}
                 >
-                  {capabilities?.contentWritable === false ? (
+                  {capabilities.data?.contentWritable === false ? (
                     <span>
                       <PlusIcon data-icon="inline-start" />
                       Add
@@ -476,7 +368,7 @@ export function LibraryPage() {
             <div className="min-h-0 flex-1 overflow-auto">
               {view === "grid" ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 p-3">
-                  {list.entities.map((entity) => (
+                  {entities.map((entity) => (
                     <EntityGridItem
                       key={entity.id}
                       entity={entity}
@@ -486,7 +378,7 @@ export function LibraryPage() {
                   ))}
                 </div>
               ) : (
-                list.entities.map((entity) => (
+                entities.map((entity) => (
                   <EntityListItem
                     key={entity.id}
                     entity={entity}
@@ -495,15 +387,15 @@ export function LibraryPage() {
                   />
                 ))
               )}
-              {!list.loading && list.entities.length === 0 ? (
+              {!list.isPending && entities.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">No entries</div>
               ) : null}
             </div>
             <PaginationBar
-              page={list.page}
-              totalPages={list.totalPages}
-              total={list.total}
-              pageSize={list.pageSize}
+              page={list.data?.page ?? page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
               onPageChange={goToPage}
             />
           </div>

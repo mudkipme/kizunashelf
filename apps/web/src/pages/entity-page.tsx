@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getConfig, getEntity, getEntityDates } from "@kizunashelf/api-contract";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
   FilePenLineIcon,
@@ -10,9 +10,15 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { apiFetch, errorMessage } from "@/api/client";
-import { getAppCapabilities, removeEntity, saveEntity } from "@/api/entities";
-import { getProviderCatalog } from "@/api/external";
+import { errorMessage } from "@/api/client";
+import { removeEntity, saveEntity } from "@/api/entities";
+import {
+  capabilitiesQuery,
+  configQuery,
+  entityDatesQuery,
+  entityQuery,
+  providerCatalogQuery,
+} from "@/api/queries";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { useExternalMatch } from "@/components/entities/use-external-match";
@@ -33,49 +39,45 @@ import { Input } from "@/components/ui/input";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { groupRelations } from "@/lib/relations";
 import type {
-  Capabilities,
-  ConfigResponse,
   Entity,
-  EntityDatesResponse,
-  EntityDetailResponse,
-  ExternalProviderCatalog,
 } from "@/types/api";
 
 export function EntityPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [state, setState] = useState<{
-    detail?: EntityDetailResponse;
-    dates?: EntityDatesResponse;
-    config?: ConfigResponse;
-    providerCatalog?: ExternalProviderCatalog;
-    capabilities?: Capabilities;
-    loading: boolean;
-    error?: string;
-  }>({ loading: true });
+  const queryClient = useQueryClient();
+  const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
+  const dates = useQuery({ ...entityDatesQuery(id ?? ""), enabled: Boolean(id) });
+  const config = useQuery(configQuery());
+  const providerCatalog = useQuery(providerCatalogQuery());
+  const capabilities = useQuery(capabilitiesQuery());
+  const [error, setError] = useState<string>();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!id) return;
-    void loadEntity();
-  }, [id]);
-
-  const entity = state.detail?.entity;
-  const contentWritable = state.capabilities?.contentWritable !== false;
-  const typeConfig = state.config?.types.find((type) => type.id === entity?.type);
+  const loading =
+    detail.isPending ||
+    dates.isPending ||
+    config.isPending ||
+    providerCatalog.isPending ||
+    capabilities.isPending;
+  const queryError =
+    detail.error ?? dates.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
+  const entity = detail.data?.entity;
+  const contentWritable = capabilities.data?.contentWritable !== false;
+  const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
   const external = useExternalMatch({
     typeConfig,
-    providerCatalog: state.providerCatalog,
+    providerCatalog: providerCatalog.data,
     entityType: entity?.type,
     defaultQuery: entity?.title,
     externalRefs: entity?.externalRefs,
-    onError: (error) => setState((current) => ({ ...current, error })),
+    onError: setError,
   });
   const relationGroups = useMemo(
-    () => groupRelations(state.detail?.relations ?? []),
-    [state.detail],
+    () => groupRelations(detail.data?.relations ?? []),
+    [detail.data],
   );
 
   useEffect(() => {
@@ -84,21 +86,18 @@ export function EntityPage() {
     external.setQuery(entity.title);
   }, [entity?.id, entity?.revision, external.setQuery]);
 
-  async function loadEntity() {
-    if (!id) return;
-    setState((current) => ({ ...current, loading: true, error: undefined }));
-    try {
-      const [detail, dates, config, providerCatalog, capabilities] = await Promise.all([
-        getEntity(id, undefined, apiFetch),
-        getEntityDates(id, undefined, apiFetch),
-        getConfig(undefined, apiFetch),
-        getProviderCatalog(),
-        getAppCapabilities(),
-      ]);
-      setState({ detail, dates, config, providerCatalog, capabilities, loading: false });
-    } catch (error: unknown) {
-      setState((current) => ({ ...current, loading: false, error: errorMessage(error) }));
-    }
+  async function invalidateEntityData() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["entity"] }),
+      queryClient.invalidateQueries({ queryKey: ["entityDates"] }),
+      queryClient.invalidateQueries({ queryKey: ["entities"] }),
+      queryClient.invalidateQueries({ queryKey: ["calendar"] }),
+      queryClient.invalidateQueries({ queryKey: ["calendarPlanning"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics"] }),
+      queryClient.invalidateQueries({ queryKey: ["cleanupQueues"] }),
+      queryClient.invalidateQueries({ queryKey: ["relationGroups"] }),
+      queryClient.invalidateQueries({ queryKey: ["stats"] }),
+    ]);
   }
 
   async function saveRename() {
@@ -107,7 +106,7 @@ export function EntityPage() {
     const validationError = basenameValidationError(nextBasename);
     setRenameBasename(nextBasename);
     if (validationError) {
-      setState((current) => ({ ...current, error: validationError }));
+      setError(validationError);
       return;
     }
     if (nextBasename === entity.basename) {
@@ -121,9 +120,10 @@ export function EntityPage() {
         renameTo: nextBasename,
       });
       setRenameOpen(false);
+      await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
+      setError(errorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -139,9 +139,9 @@ export function EntityPage() {
         frontmatter: patch,
       });
       external.setOpen(false);
-      await loadEntity();
+      await invalidateEntityData();
     } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
+      setError(errorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -152,18 +152,19 @@ export function EntityPage() {
     setSaving(true);
     try {
       await removeEntity(entity.id, { revision: entity.revision, mode: "trash" });
+      await invalidateEntityData();
       navigate("/library");
     } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
+      setError(errorMessage(error));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <AppFrame error={state.error}>
+    <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
-        {state.loading ? (
+        {loading ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : entity ? (
           <>
@@ -198,7 +199,7 @@ export function EntityPage() {
               selectedCandidate={external.selectedCandidate}
               metadataEntries={external.metadataEntries}
               selectedFields={external.selectedFields}
-              providerCatalog={state.providerCatalog}
+              providerCatalog={providerCatalog.data}
               providerOptions={external.providerOptions}
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}
@@ -218,10 +219,10 @@ export function EntityPage() {
             />
             <EntityDetail
               entity={entity}
-              relations={state.detail?.relations ?? []}
-              relatedEntities={state.detail?.relatedEntities ?? []}
+              relations={detail.data?.relations ?? []}
+              relatedEntities={detail.data?.relatedEntities ?? []}
               relationGroups={relationGroups}
-              dates={state.dates}
+              dates={dates.data}
               typeConfig={typeConfig}
             />
           </>

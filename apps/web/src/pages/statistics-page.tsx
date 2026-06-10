@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { getAnalytics, getConfig } from "@kizunashelf/api-contract";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { apiFetch, errorMessage } from "@/api/client";
+import { errorMessage } from "@/api/client";
+import { analyticsQuery, configQuery } from "@/api/queries";
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
 import { BarList } from "@/components/analytics/bar-list";
 import { CoverageList } from "@/components/analytics/coverage-list";
@@ -10,48 +11,25 @@ import { StatTile } from "@/components/analytics/stat-tile";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { fieldLabelAcrossTypes, fieldLabelsByType } from "@/lib/type-config";
-import type { AnalyticsResponse, ConfigResponse } from "@/types/api";
-
-type StatisticsState = {
-  data?: AnalyticsResponse;
-  config?: ConfigResponse;
-  loading: boolean;
-  error?: string;
-};
 
 export function StatisticsPage() {
-  const [state, setState] = useState<StatisticsState>({ loading: true });
-
-  useEffect(() => {
-    void loadAnalytics();
-  }, []);
-
-  async function loadAnalytics() {
-    setState({ loading: true });
-    try {
-      const [data, config] = await Promise.all([
-        getAnalytics(undefined, apiFetch),
-        getConfig(undefined, apiFetch),
-      ]);
-      setState({ data, config, loading: false });
-    } catch (error) {
-      setState({ loading: false, error: errorMessage(error) });
-    }
-  }
-
-  const data = state.data;
-  const labelsByType = useMemo(() => fieldLabelsByType(state.config?.types), [state.config]);
+  const analytics = useQuery(analyticsQuery());
+  const config = useQuery(configQuery());
+  const loading = analytics.isPending || config.isPending;
+  const error = analytics.error ?? config.error;
+  const data = analytics.data;
+  const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const maxTypeCount = Math.max(1, ...(data?.distributions.byType.map((item) => item.count) ?? [1]));
   const maxTimelineCount = Math.max(1, ...(data?.timeline.years.map((item) => item.count) ?? [1]));
 
   return (
-    <AppFrame error={state.error}>
+    <AppFrame error={error ? errorMessage(error) : undefined}>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">Memory Analytics</h1>
             <p className="mt-1 text-xs text-muted-foreground">
-              {state.loading
+              {loading
                 ? "Loading"
                 : data
                   ? `Updated ${data.generatedAt.slice(0, 10)}`
@@ -60,7 +38,7 @@ export function StatisticsPage() {
           </div>
         </header>
 
-        {state.loading ? (
+        {loading ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
             Loading
           </div>
@@ -92,7 +70,7 @@ export function StatisticsPage() {
                 <BarList
                   items={data.distributions.byRelationField.map((item) => ({
                     ...item,
-                    name: fieldLabelAcrossTypes(state.config?.types, item.name),
+                    name: fieldLabelAcrossTypes(config.data?.types, item.name),
                   }))}
                 />
               </AnalyticsSection>

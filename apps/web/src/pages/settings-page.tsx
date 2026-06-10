@@ -1,51 +1,28 @@
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { errorMessage } from "@/api/client";
-import { getProviderCatalog } from "@/api/external";
-import { getSettingsConfig } from "@/api/settings";
+import { providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { SettingsEditor } from "@/components/settings/settings-editor";
-import type { ExternalProviderCatalog } from "@/types/api";
-import type { SettingsConfigResponse } from "@/types/config";
-
-type SettingsState = {
-  data?: SettingsConfigResponse;
-  providerCatalog?: ExternalProviderCatalog;
-  loading: boolean;
-  error?: string;
-};
 
 export function SettingsPage() {
-  const [state, setState] = useState<SettingsState>({ loading: true });
-
-  useEffect(() => {
-    void load();
-  }, []);
-
-  async function load() {
-    setState({ loading: true });
-    try {
-      const [data, providerCatalog] = await Promise.all([
-        getSettingsConfig(),
-        getProviderCatalog(),
-      ]);
-      setState({ data, providerCatalog, loading: false });
-    } catch (error) {
-      setState({ loading: false, error: errorMessage(error) });
-    }
-  }
+  const queryClient = useQueryClient();
+  const settings = useQuery(settingsConfigQuery());
+  const providerCatalog = useQuery(providerCatalogQuery());
+  const loading = settings.isPending || providerCatalog.isPending;
+  const error = settings.error ?? providerCatalog.error;
 
   return (
-    <AppFrame error={state.error ?? state.data?.error}>
+    <AppFrame error={(error ? errorMessage(error) : undefined) ?? settings.data?.error}>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
-        {state.loading ? (
+        {loading ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
-        ) : state.data ? (
+        ) : settings.data ? (
           <SettingsEditor
-            configPath={state.data.configPath}
-            initialConfig={state.data.config}
-            providerCatalog={state.providerCatalog}
-            onSaved={load}
+            configPath={settings.data.configPath}
+            initialConfig={settings.data.config}
+            providerCatalog={providerCatalog.data}
+            onSaved={() => void queryClient.invalidateQueries()}
           />
         ) : null}
       </div>

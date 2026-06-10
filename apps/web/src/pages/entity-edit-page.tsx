@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getConfig, getEntities, getEntity } from "@kizunashelf/api-contract";
+import { getEntities } from "@kizunashelf/api-contract";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { apiFetch, errorMessage, isAbortError } from "@/api/client";
-import { getAppCapabilities, saveEntity } from "@/api/entities";
-import { getProviderCatalog } from "@/api/external";
+import { apiFetch, errorMessage } from "@/api/client";
+import { saveEntity } from "@/api/entities";
+import {
+  capabilitiesQuery,
+  configQuery,
+  entityQuery,
+  providerCatalogQuery,
+} from "@/api/queries";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import {
   type FrontmatterDraft,
@@ -16,52 +22,36 @@ import {
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
-import type {
-  Capabilities,
-  ConfigResponse,
-  EntityDetailResponse,
-  EntitySummary,
-  ExternalProviderCatalog,
-} from "@/types/api";
-
-type EditState = {
-  detail?: EntityDetailResponse;
-  config?: ConfigResponse;
-  providerCatalog?: ExternalProviderCatalog;
-  capabilities?: Capabilities;
-  relationSuggestions: EntitySummary[];
-  loading: boolean;
-  error?: string;
-};
 
 export function EntityEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [state, setState] = useState<EditState>({ loading: true, relationSuggestions: [] });
+  const queryClient = useQueryClient();
+  const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
+  const config = useQuery(configQuery());
+  const providerCatalog = useQuery(providerCatalogQuery());
+  const capabilities = useQuery(capabilitiesQuery());
+  const [error, setError] = useState<string>();
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
-  const entity = state.detail?.entity;
-  const contentWritable = state.capabilities?.contentWritable !== false;
+  const loading =
+    detail.isPending || config.isPending || providerCatalog.isPending || capabilities.isPending;
+  const queryError = detail.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
+  const entity = detail.data?.entity;
+  const contentWritable = capabilities.data?.contentWritable !== false;
   const typeConfig = useMemo(
-    () => state.config?.types.find((type) => type.id === entity?.type),
-    [state.config, entity?.type],
+    () => config.data?.types.find((type) => type.id === entity?.type),
+    [config.data, entity?.type],
   );
   const external = useExternalMatch({
     typeConfig,
-    providerCatalog: state.providerCatalog,
+    providerCatalog: providerCatalog.data,
     entityType: entity?.type,
     defaultQuery: entity?.title,
     externalRefs: entity?.externalRefs,
-    onError: (error) => setState((current) => ({ ...current, error })),
+    onError: setError,
   });
-
-  useEffect(() => {
-    if (!id) return;
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [id]);
 
   useEffect(() => {
     if (!entity) return;
@@ -69,30 +59,6 @@ export function EntityEditPage() {
     setBody(entity.body);
     external.setQuery(entity.title);
   }, [entity?.id, entity?.revision, external.setQuery]);
-
-  async function load(signal: AbortSignal) {
-    if (!id) return;
-    setState({ loading: true, relationSuggestions: [] });
-    try {
-      const [detail, config, providerCatalog, capabilities] = await Promise.all([
-        getEntity(id, { signal }, apiFetch),
-        getConfig({ signal }, apiFetch),
-        getProviderCatalog({ signal }),
-        getAppCapabilities({ signal }),
-      ]);
-      setState({
-        detail,
-        config,
-        providerCatalog,
-        capabilities,
-        relationSuggestions: [],
-        loading: false,
-      });
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setState({ loading: false, relationSuggestions: [], error: errorMessage(error) });
-    }
-  }
 
   const searchRelations = useCallback(async ({ relationType, query, signal }: {
     relationType?: string | null;
@@ -118,16 +84,17 @@ export function EntityEditPage() {
   async function save() {
     if (!entity || !contentWritable) return;
     setSaving(true);
-    setState((current) => ({ ...current, error: undefined }));
+    setError(undefined);
     try {
       const result = await saveEntity(entity.id, {
         revision: entity.revision,
         frontmatter: frontmatterPatch(entity.frontmatter, frontmatter),
         body,
       });
+      await queryClient.invalidateQueries();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
+      setError(errorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -150,7 +117,7 @@ export function EntityEditPage() {
   }
 
   return (
-    <AppFrame error={state.error}>
+    <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -184,7 +151,7 @@ export function EntityEditPage() {
           </div>
         ) : null}
 
-        {state.loading ? (
+        {loading ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : entity ? (
           <>
@@ -196,7 +163,7 @@ export function EntityEditPage() {
               selectedCandidate={external.selectedCandidate}
               metadataEntries={external.metadataEntries}
               selectedFields={external.selectedFields}
-              providerCatalog={state.providerCatalog}
+              providerCatalog={providerCatalog.data}
               providerOptions={external.providerOptions}
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}
@@ -210,7 +177,7 @@ export function EntityEditPage() {
               onQueryChange={external.setQuery}
               onProviderChange={external.setProvider}
               onSearch={() => {
-                setState((current) => ({ ...current, error: undefined }));
+                setError(undefined);
                 void external.search();
               }}
               onRefreshRef={external.refreshFromExternalRef}
@@ -226,7 +193,7 @@ export function EntityEditPage() {
               bodyText={body}
               saving={saving}
               disabled={!contentWritable}
-              relationSuggestions={state.relationSuggestions}
+              relationSuggestions={[]}
               onRelationSearch={searchRelations}
               onFrontmatterChange={setFrontmatter}
               onBodyChange={setBody}

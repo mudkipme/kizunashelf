@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getConfig, getEntities } from "@kizunashelf/api-contract";
+import { getEntities } from "@kizunashelf/api-contract";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, SearchIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { apiFetch, errorMessage, isAbortError } from "@/api/client";
-import { addEntity, getAppCapabilities } from "@/api/entities";
-import { getProviderCatalog } from "@/api/external";
+import { apiFetch, errorMessage } from "@/api/client";
+import { addEntity } from "@/api/entities";
+import { capabilitiesQuery, configQuery, providerCatalogQuery } from "@/api/queries";
 import {
   type FrontmatterDraft,
   MetadataEditor,
@@ -18,68 +19,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
-import type { Capabilities, ConfigResponse, EntitySummary, ExternalProviderCatalog } from "@/types/api";
-
-type CreateState = {
-  config?: ConfigResponse;
-  providerCatalog?: ExternalProviderCatalog;
-  capabilities?: Capabilities;
-  relationSuggestions: EntitySummary[];
-  loading: boolean;
-  error?: string;
-};
 
 export function EntityCreatePage() {
   const navigate = useNavigate();
-  const [state, setState] = useState<CreateState>({ loading: true, relationSuggestions: [] });
+  const queryClient = useQueryClient();
+  const config = useQuery(configQuery());
+  const providerCatalog = useQuery(providerCatalogQuery());
+  const capabilities = useQuery(capabilitiesQuery());
+  const [error, setError] = useState<string>();
   const [typeId, setTypeId] = useState("");
   const [basename, setBasename] = useState("");
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<string>();
-  const contentWritable = state.capabilities?.contentWritable !== false;
+  const contentWritable = capabilities.data?.contentWritable !== false;
+  const queryError = config.error ?? providerCatalog.error ?? capabilities.error;
   const normalizedBasename = normalizeBasename(basename);
   const basenameError = basenameValidationError(basename);
   const showBasenameError = Boolean(basename) && Boolean(basenameError);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    const firstType = state.config?.types[0]?.id;
+    const firstType = config.data?.types[0]?.id;
     if (!typeId && firstType) setTypeId(firstType);
-  }, [state.config, typeId]);
+  }, [config.data, typeId]);
 
   const selectedType = useMemo(
-    () => state.config?.types.find((type) => type.id === typeId),
-    [state.config, typeId],
+    () => config.data?.types.find((type) => type.id === typeId),
+    [config.data, typeId],
   );
   const external = useExternalMatch({
     typeConfig: selectedType,
-    providerCatalog: state.providerCatalog,
+    providerCatalog: providerCatalog.data,
     entityType: typeId,
     defaultQuery: normalizedBasename,
-    onError: (error) => setState((current) => ({ ...current, error })),
+    onError: setError,
   });
-
-  async function load(signal: AbortSignal) {
-    setState({ loading: true, relationSuggestions: [] });
-    try {
-      const [config, providerCatalog, capabilities] = await Promise.all([
-        getConfig({ signal }, apiFetch),
-        getProviderCatalog({ signal }),
-        getAppCapabilities({ signal }),
-      ]);
-      setState({ config, providerCatalog, capabilities, relationSuggestions: [], loading: false });
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setState({ loading: false, relationSuggestions: [], error: errorMessage(error) });
-    }
-  }
 
   const searchRelations = useCallback(async ({ relationType, query, signal }: {
     relationType?: string | null;
@@ -106,12 +81,12 @@ export function EntityCreatePage() {
     if (!contentWritable) return;
     if (basenameError) {
       setBasename(normalizedBasename);
-      setState((current) => ({ ...current, error: basenameError }));
+      setError(basenameError);
       return;
     }
     setCreating(true);
     setMessage(undefined);
-    setState((current) => ({ ...current, error: undefined }));
+    setError(undefined);
     try {
       const result = await addEntity({
         type: typeId,
@@ -119,9 +94,10 @@ export function EntityCreatePage() {
         frontmatter,
         body,
       });
+      await queryClient.invalidateQueries();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
+      setError(errorMessage(error));
     } finally {
       setCreating(false);
     }
@@ -141,7 +117,7 @@ export function EntityCreatePage() {
   }
 
   return (
-    <AppFrame error={state.error}>
+    <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -168,7 +144,7 @@ export function EntityCreatePage() {
             <label className="flex flex-col gap-1 text-sm font-medium">
               Type
               <Select value={typeId} onChange={(event) => setTypeId(event.target.value)} disabled={!contentWritable}>
-                {state.config?.types.map((type) => (
+                {config.data?.types.map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.label}
                   </option>
@@ -209,7 +185,7 @@ export function EntityCreatePage() {
           selectedCandidate={external.selectedCandidate}
           metadataEntries={external.metadataEntries}
           selectedFields={external.selectedFields}
-          providerCatalog={state.providerCatalog}
+          providerCatalog={providerCatalog.data}
           providerOptions={external.providerOptions}
           externalSearchEnabled={external.externalSearchEnabled}
           searching={external.searching}
@@ -222,7 +198,7 @@ export function EntityCreatePage() {
           onProviderChange={external.setProvider}
           onSearch={() => {
             setMessage(undefined);
-            setState((current) => ({ ...current, error: undefined }));
+            setError(undefined);
             void external.search();
           }}
           onChooseCandidate={external.chooseCandidate}
@@ -238,7 +214,7 @@ export function EntityCreatePage() {
           bodyText={body}
           saving={creating}
           disabled={!contentWritable}
-          relationSuggestions={state.relationSuggestions}
+          relationSuggestions={[]}
           onRelationSearch={searchRelations}
           saveLabel="Create"
           onFrontmatterChange={setFrontmatter}

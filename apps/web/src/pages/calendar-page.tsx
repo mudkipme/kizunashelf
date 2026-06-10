@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { getCalendar, getCalendarPlanning, getConfig } from "@kizunashelf/api-contract";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, errorMessage, isAbortError } from "@/api/client";
+import { errorMessage } from "@/api/client";
+import { calendarPlanningQuery, calendarQuery, configQuery } from "@/api/queries";
 import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { CalendarEntryItem } from "@/components/calendar/calendar-entry-item";
 import {
@@ -18,23 +19,7 @@ import { fieldLabelsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type {
   CalendarDay,
-  CalendarPlanningResponse,
-  CalendarResponse,
-  ConfigResponse,
 } from "@/types/api";
-
-type CalendarState = {
-  data?: CalendarResponse;
-  config?: ConfigResponse;
-  loading: boolean;
-  error?: string;
-};
-
-type PlanningState = {
-  data?: CalendarPlanningResponse;
-  loading: boolean;
-  error?: string;
-};
 
 type CalendarMode = "month" | PlanningMode;
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -48,80 +33,33 @@ export function CalendarPage() {
   const source = readSource(searchParams.get("source"));
   const type = searchParams.get("type") ?? "all";
   const mode = readMode(searchParams.get("view"));
-  const [state, setState] = useState<CalendarState>({ loading: true });
-  const [planning, setPlanning] = useState<PlanningState>({
-    loading: false,
+  const calendarParams = {
+    year,
+    month,
+    source,
+    ...(type !== "all" ? { type } : {}),
+  };
+  const planningParams = {
+    year,
+    ...(type !== "all" ? { type } : {}),
+  };
+  const config = useQuery(configQuery());
+  const calendar = useQuery({
+    ...calendarQuery(calendarParams),
+    enabled: mode === "month",
+  });
+  const planning = useQuery({
+    ...calendarPlanningQuery(planningParams),
+    enabled: mode !== "month",
   });
 
-  useEffect(() => {
-    void loadConfig();
-  }, []);
-
-  useEffect(() => {
-    if (mode === "month") return;
-    const controller = new AbortController();
-    void loadPlanning(controller.signal);
-    return () => controller.abort();
-  }, [mode, year, type]);
-
-  useEffect(() => {
-    if (mode !== "month") return;
-    void loadCalendar();
-  }, [mode, year, month, source, type]);
-
-  async function loadConfig() {
-    try {
-      const config = await getConfig(undefined, apiFetch);
-      setState((current) => ({ ...current, config }));
-    } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
-    }
-  }
-
-  async function loadCalendar() {
-    setState((current) => ({ ...current, loading: true, error: undefined }));
-    try {
-      const data = await getCalendar(
-        {
-          year,
-          month,
-          source,
-          ...(type !== "all" ? { type } : {}),
-        },
-        undefined,
-        apiFetch,
-      );
-      setState((current) => ({ ...current, data, loading: false }));
-    } catch (error) {
-      setState((current) => ({ ...current, loading: false, error: errorMessage(error) }));
-    }
-  }
-
-  async function loadPlanning(signal: AbortSignal) {
-    setPlanning({ loading: true });
-    try {
-      const data = await getCalendarPlanning(
-        {
-          year,
-          ...(type !== "all" ? { type } : {}),
-        },
-        { signal },
-        apiFetch,
-      );
-      setPlanning({ data, loading: false });
-    } catch (error) {
-      if (isAbortError(error)) return;
-      setPlanning({ loading: false, error: errorMessage(error) });
-    }
-  }
-
-  const gridDays = useMemo(() => monthGridDays(state.data?.days ?? [], year, month), [
-    state.data,
+  const gridDays = useMemo(() => monthGridDays(calendar.data?.days ?? [], year, month), [
+    calendar.data,
     year,
     month,
   ]);
   const selectedDay =
-    state.data?.days.find((day) => day.date === selectedDate) ?? state.data?.days[0];
+    calendar.data?.days.find((day) => day.date === selectedDate) ?? calendar.data?.days[0];
   const planningTypeOptions = planning.data?.typeOptions ?? [];
   const effectiveType =
     mode !== "month" &&
@@ -130,7 +68,9 @@ export function CalendarPage() {
     !planningTypeOptions.some((item) => item.id === type)
       ? "all"
       : type;
-  const fieldLabels = useMemo(() => fieldLabelsByType(state.config?.types), [state.config]);
+  const activeLoading = mode === "month" ? calendar.isPending : planning.isPending;
+  const activeError = config.error ?? (mode === "month" ? calendar.error : planning.error);
+  const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
 
   function setParam(key: string, value: string, defaultValue?: string, options?: { replace?: boolean }) {
     const next = new URLSearchParams(searchParams);
@@ -182,7 +122,7 @@ export function CalendarPage() {
   }
 
   return (
-    <AppFrame error={state.error ?? planning.error}>
+    <AppFrame error={activeError ? errorMessage(activeError) : undefined}>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
@@ -192,12 +132,12 @@ export function CalendarPage() {
             </h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {mode === "month"
-                ? state.loading
+                ? activeLoading
                   ? "Loading"
-                  : state.data
-                    ? `${state.data.totals.entries} entries across ${state.data.totals.daysWithEntries} days`
+                  : calendar.data
+                    ? `${calendar.data.totals.entries} entries across ${calendar.data.totals.daysWithEntries} days`
                     : "No calendar data"
-                : planning.loading
+                : activeLoading
                   ? "Loading"
                   : planning.data
                     ? `${planning.data.totals.entities} entities - ${planning.data.totals.datedEntries} dated entries`
@@ -237,10 +177,10 @@ export function CalendarPage() {
 
         <section className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2">
           <div className="text-sm font-medium">{mode === "month" ? monthTitle(year, month) : year}</div>
-          {mode === "month" && state.data ? (
+          {mode === "month" && calendar.data ? (
             <div className="flex flex-wrap gap-1">
-              <Badge variant="outline">Taxonomy {state.data.totals.taxonomy}</Badge>
-              <Badge variant="outline">Daily Notes {state.data.totals.dailyNotes}</Badge>
+              <Badge variant="outline">Taxonomy {calendar.data.totals.taxonomy}</Badge>
+              <Badge variant="outline">Daily Notes {calendar.data.totals.dailyNotes}</Badge>
             </div>
           ) : null}
           {mode !== "month" ? <Badge variant="outline">Taxonomy dates</Badge> : null}
@@ -254,7 +194,7 @@ export function CalendarPage() {
             ) : null}
             <Select value={effectiveType} onChange={(event) => setParam("type", event.target.value, "all")}>
               <option value="all">All types</option>
-              {(mode === "month" ? state.config?.types ?? [] : planningTypeOptions).map((item) => (
+              {(mode === "month" ? config.data?.types ?? [] : planningTypeOptions).map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.label}
                 </option>
@@ -311,7 +251,7 @@ export function CalendarPage() {
           <CalendarPlanningViews
             mode={mode}
             data={planning.data}
-            loading={planning.loading}
+            loading={planning.isPending}
             onOpenMonth={openMonth}
           />
         )}

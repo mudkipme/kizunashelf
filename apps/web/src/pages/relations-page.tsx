@@ -1,70 +1,49 @@
-import { useEffect, useState } from "react";
-import { getRelationGroups } from "@kizunashelf/api-contract";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
-import { apiFetch, errorMessage } from "@/api/client";
+import { errorMessage } from "@/api/client";
+import { relationGroupsQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import type {
-  RelationGroupsResponse,
   RelationTargetHubSummary,
   RelationTargetTypeSummary,
 } from "@/types/api";
 
-type RelationsState = {
-  data?: RelationGroupsResponse;
-  loading: boolean;
-  error?: string;
-};
-
 export function RelationsPage() {
-  const [state, setState] = useState<RelationsState>({ loading: true });
-
-  useEffect(() => {
-    void loadRelations();
-  }, []);
-
-  async function loadRelations() {
-    setState({ loading: true });
-    try {
-      const data = await getRelationGroups(undefined, apiFetch);
-      setState({ data, loading: false });
-    } catch (error) {
-      setState({ loading: false, error: errorMessage(error) });
-    }
-  }
+  const relations = useQuery(relationGroupsQuery());
 
   return (
-    <AppFrame error={state.error}>
+    <AppFrame error={relations.error ? errorMessage(relations.error) : undefined}>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">Kizuna Map</h1>
             <p className="mt-1 text-xs text-muted-foreground">
-              {state.loading
+              {relations.isPending
                 ? "Loading"
-                : state.data
-                  ? `${state.data.targetTypes.length} target categories · updated ${state.data.generatedAt.slice(0, 10)}`
+                : relations.data
+                  ? `${relations.data.targetTypes.length} target categories · updated ${relations.data.generatedAt.slice(0, 10)}`
                   : "No relation data"}
             </p>
           </div>
         </header>
 
-        {state.loading ? (
+        {relations.isPending ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
             Loading
           </div>
         ) : null}
 
-        {!state.loading && state.data?.targetTypes.length === 0 ? (
+        {!relations.isPending && relations.data?.targetTypes.length === 0 ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
             No relations
           </div>
         ) : null}
 
-        {state.data?.targetTypes.length ? (
+        {relations.data?.targetTypes.length ? (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
-            {state.data.targetTypes.map((targetType) => (
+            {relations.data.targetTypes.map((targetType) => (
               <RelationTargetTypeCard key={targetType.type} targetType={targetType} />
             ))}
           </div>
