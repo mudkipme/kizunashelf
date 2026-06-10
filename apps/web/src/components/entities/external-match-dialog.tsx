@@ -13,7 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
+  externalBodySectionState,
   externalSourceLabel,
+  type ExternalBodyPreviewEntry,
   type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { cn } from "@/lib/utils";
@@ -32,11 +34,14 @@ type ExternalMatchDialogProps = {
   candidates: ExternalCandidate[];
   selectedCandidate?: ExternalCandidate;
   metadataEntries: ExternalMetadataPreviewEntry[];
+  bodyEntries: ExternalBodyPreviewEntry[];
   selectedFields: Set<string>;
+  selectedBodySections: Set<string>;
   providerCatalog?: ExternalProviderCatalog;
   providerOptions: string[];
   externalSearchEnabled: boolean;
   currentValues?: Record<string, unknown>;
+  bodyText?: string;
   existingExternalRefs?: ExternalRefAction[];
   searching: boolean;
   applying: boolean;
@@ -50,6 +55,7 @@ type ExternalMatchDialogProps = {
   onRefreshRef?: (provider: string, value: string) => void;
   onChooseCandidate: (candidate: ExternalCandidate) => void;
   onSelectedFieldsChange: (fields: Set<string>) => void;
+  onSelectedBodySectionsChange: (sections: Set<string>) => void;
   onApply: () => void;
 };
 
@@ -60,11 +66,14 @@ export function ExternalMatchDialog({
   candidates,
   selectedCandidate,
   metadataEntries,
+  bodyEntries,
   selectedFields,
+  selectedBodySections,
   providerCatalog,
   providerOptions,
   externalSearchEnabled,
   currentValues,
+  bodyText,
   existingExternalRefs = [],
   searching,
   applying,
@@ -78,6 +87,7 @@ export function ExternalMatchDialog({
   onRefreshRef,
   onChooseCandidate,
   onSelectedFieldsChange,
+  onSelectedBodySectionsChange,
   onApply,
 }: ExternalMatchDialogProps) {
   function toggleField(field: string) {
@@ -86,6 +96,15 @@ export function ExternalMatchDialog({
     else next.add(field);
     onSelectedFieldsChange(next);
   }
+
+  function toggleBodySection(section: string) {
+    const next = new Set(selectedBodySections);
+    if (next.has(section)) next.delete(section);
+    else next.add(section);
+    onSelectedBodySectionsChange(next);
+  }
+
+  const selectedCount = selectedFields.size + selectedBodySections.size;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -210,10 +229,40 @@ export function ExternalMatchDialog({
                       </span>
                     </label>
                   ))}
-                  {metadataEntries.length === 0 ? (
+                  {metadataEntries.length === 0 && bodyEntries.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      No candidate fields match this type schema.
+                      No candidate fields or body sections match this type schema.
                     </p>
+                  ) : null}
+                  {bodyEntries.length > 0 ? (
+                    <div className="mt-3 border-t pt-3">
+                      <h4 className="text-xs font-semibold uppercase text-muted-foreground">Body Sections</h4>
+                      <div className="mt-2 flex flex-col gap-2">
+                        {bodyEntries.map((entry) => (
+                          <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={selectedBodySections.has(entry.key)}
+                              onChange={() => toggleBodySection(entry.key)}
+                              className="mt-1"
+                              disabled={!contentWritable || !entry.hasValue}
+                            />
+                            <span className="min-w-0">
+                              <span className="block font-medium">{entry.heading}</span>
+                              <span className="block text-xs text-muted-foreground">
+                                {entry.externalField}
+                                {bodyText !== undefined
+                                  ? ` · ${externalBodySectionState(bodyText, entry.heading) === "replace" ? "replaces existing section" : "adds new section"}`
+                                  : ""}
+                              </span>
+                              <span className="block break-words text-xs text-muted-foreground">
+                                {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   ) : null}
                 </div>
               ) : (
@@ -227,7 +276,7 @@ export function ExternalMatchDialog({
           <Button
             type="button"
             onClick={onApply}
-            disabled={!contentWritable || applying || !selectedCandidate || selectedFields.size === 0}
+            disabled={!contentWritable || applying || !selectedCandidate || selectedCount === 0}
           >
             <WandSparklesIcon data-icon="inline-start" />
             {applying ? "Applying" : applyLabel}

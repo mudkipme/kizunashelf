@@ -178,7 +178,10 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
 }
 
 pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
-    vec![type_option("series", "Series"), type_option("movie", "Movie")]
+    vec![
+        type_option("series", "Series"),
+        type_option("movie", "Movie"),
+    ]
 }
 
 fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
@@ -280,14 +283,8 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         .map(str::to_string);
     let release_date = item
         .get("first_air_time")
-        .or_else(|| item.get("year"))
-        .and_then(|value| {
-            value
-                .as_str()
-                .or_else(|| value.as_i64().map(|_| "").filter(|_| false))
-        })
-        .filter(|value| !value.is_empty())
-        .map(str::to_string);
+        .and_then(non_empty_string_or_integer)
+        .or_else(|| item.get("year").and_then(non_empty_string_or_integer));
     let mut metadata = Map::new();
     metadata.insert("name".to_string(), Value::String(title.clone()));
     if let Some(cover_url) = &cover_url {
@@ -326,4 +323,51 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         titles: BTreeMap::new(),
         metadata,
     })
+}
+
+fn non_empty_string_or_integer(value: &Value) -> Option<String> {
+    value
+        .as_str()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+        .or_else(|| value.as_i64().map(|value| value.to_string()))
+        .or_else(|| value.as_u64().map(|value| value.to_string()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::thetvdb_candidate;
+    use serde_json::{json, Value};
+
+    #[test]
+    fn candidate_uses_numeric_year_metadata() {
+        let candidate = thetvdb_candidate(&json!({
+            "tvdb_id": 123,
+            "name": "Example Series",
+            "year": 2026
+        }))
+        .unwrap();
+
+        assert_eq!(candidate.source_id, "123");
+        assert_eq!(candidate.metadata.get("year"), Some(&json!("2026")));
+        assert_eq!(candidate.metadata.get("first_air_time"), None);
+    }
+
+    #[test]
+    fn candidate_prefers_first_air_time_over_year() {
+        let candidate = thetvdb_candidate(&json!({
+            "id": "series-123",
+            "name": "Example Series",
+            "first_air_time": "2026-04-12",
+            "year": 2026
+        }))
+        .unwrap();
+
+        assert_eq!(
+            candidate.metadata.get("first_air_time"),
+            Some(&Value::String("2026-04-12".to_string()))
+        );
+        assert_eq!(candidate.metadata.get("year"), None);
+    }
 }

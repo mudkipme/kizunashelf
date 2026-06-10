@@ -186,6 +186,7 @@ pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogR
                     default_field_mapping(&["originalTitle", "titleJa"], "name"),
                     default_field_mapping(&["cover"], "cover_url"),
                     default_field_mapping(&["releaseDate"], "date"),
+                    default_field_mapping(&["summary"], "summary"),
                 ],
             ),
             provider_catalog_item::<igdb::IgdbProvider>(
@@ -196,6 +197,7 @@ pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogR
                     default_field_mapping(&["title", "originalTitle"], "name"),
                     default_field_mapping(&["cover"], "cover_url"),
                     default_field_mapping(&["releaseDate"], "first_release_date"),
+                    default_field_mapping(&["summary"], "summary"),
                 ],
             ),
             provider_catalog_item::<thetvdb::ThetvdbProvider>(
@@ -206,6 +208,7 @@ pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogR
                     default_field_mapping(&["title", "originalTitle"], "name"),
                     default_field_mapping(&["cover"], "cover_url"),
                     default_field_mapping(&["releaseDate"], "first_air_time"),
+                    default_field_mapping(&["summary"], "overview"),
                 ],
             ),
         ],
@@ -283,7 +286,7 @@ fn provider_reason<P: ExternalProvider>(
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> Option<String> {
     if !configured_providers.contains_key(P::ID) {
-        return Some("No externalRef field configured for this source".to_string());
+        return Some("No external source mapping configured for this source".to_string());
     }
     if !provider_configured_and_supported::<P>(configured_providers) {
         return Some("No supported externalTypes configured for this source".to_string());
@@ -341,6 +344,14 @@ fn configured_external_providers(
                     .add_external_types(&field.external_types);
             }
         }
+        for mapping in &type_config.body_mappings {
+            if let Some(provider) = provider_for_external_ref(&mapping.source) {
+                providers
+                    .entry(provider)
+                    .or_insert_with(ProviderSearchConfig::default)
+                    .add_external_types(&[]);
+            }
+        }
     }
     providers
 }
@@ -389,10 +400,10 @@ fn provider_error(error: reqwest::Error) -> ApiError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{EntityTypeConfig, FieldConfig};
+    use crate::types::{EntityTypeConfig, ExternalBodyMapping, FieldConfig};
 
     #[test]
-    fn external_providers_are_derived_from_external_ref_fields() {
+    fn external_providers_are_derived_from_schema_mappings() {
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
             taxonomy_root: "Taxonomy".to_string(),
@@ -411,6 +422,31 @@ mod tests {
         assert!(configured_external_providers(&config, "interactive").contains_key("igdb"));
         assert!(configured_external_providers(&config, "series").contains_key("thetvdb"));
         assert!(configured_external_providers(&config, "all").is_empty());
+    }
+
+    #[test]
+    fn external_body_mappings_enable_provider_without_guessing_type_name() {
+        let mut type_config = entity_type("drama", "IGDB Body", "igdb");
+        type_config.fields.clear();
+        type_config.body_mappings = vec![ExternalBodyMapping {
+            source: "igdb".to_string(),
+            field: "summary".to_string(),
+            heading: "Summary".to_string(),
+        }];
+        let config = KizunaConfig {
+            vault_root: "/vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            content_writable: None,
+            read_concurrency: None,
+            home: None,
+            daily_notes: None,
+            types: vec![type_config],
+        };
+
+        let configured = configured_external_providers(&config, "drama");
+
+        assert!(configured.contains_key("igdb"));
+        assert!(!configured.contains_key("thetvdb"));
     }
 
     #[test]
@@ -487,6 +523,7 @@ mod tests {
             path: id.to_string(),
             external_priority: Vec::new(),
             filename: None,
+            body_mappings: Vec::new(),
             fields: vec![FieldConfig {
                 field: field.to_string(),
                 field_type: FieldType::ExternalRef,

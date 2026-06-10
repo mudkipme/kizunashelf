@@ -1,4 +1,5 @@
 import {
+  defaultExternalBodyMappings,
   defaultExternalMappings,
   defaultExternalPriority,
   externalFieldOptionsForSource,
@@ -11,6 +12,7 @@ import type { ExternalProviderCatalog } from "@/types/api";
 import type {
   DailyNotesConfig,
   EntityTypeConfig,
+  ExternalBodyMapping,
   ExternalFieldMapping,
   FieldConfig,
   FilenameConfig,
@@ -61,6 +63,7 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
           defaultTitle: config.filename.defaultTitle ?? false,
         }
       : null,
+    bodyMappings: config.bodyMappings ?? [],
     fields: (config.fields ?? []).map(normalizeField),
   };
 }
@@ -118,6 +121,7 @@ export function cleanConfig(config: KizunaConfig, providerCatalog?: ExternalProv
       path: typeConfig.path,
       externalPriority: cleanExternalPriority(providerCatalog, typeConfig.externalPriority ?? []),
       filename: cleanFilename(typeConfig.filename),
+      bodyMappings: cleanExternalBodyMappings(typeConfig.bodyMappings ?? [], providerCatalog),
       fields: typeConfig.fields
         .map((field) => cleanField(field, providerCatalog))
         .filter((field): field is FieldConfig => Boolean(field)),
@@ -156,6 +160,27 @@ function cleanExternalFieldMappings(values: ExternalFieldMapping[], providerCata
     .filter((value) =>
       externalFieldOptionsForSource(providerCatalog, value.source).some((option) => option.field === value.field),
     );
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
+function cleanExternalBodyMappings(values: ExternalBodyMapping[], providerCatalog?: ExternalProviderCatalog) {
+  const seen = new Set<string>();
+  const cleaned = values
+    .map((value) => ({
+      source: value.source.trim(),
+      field: value.field.trim(),
+      heading: value.heading.trim(),
+    }))
+    .filter((value) => {
+      if (!value.heading) return false;
+      if (!externalFieldOptionsForSource(providerCatalog, value.source).some((option) => option.field === value.field)) {
+        return false;
+      }
+      const key = `${value.source}:${value.field}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
@@ -246,6 +271,7 @@ export function defaultEntityType(): EntityTypeConfig {
     path: "Type",
     externalPriority: [],
     filename: { defaultTitle: true },
+    bodyMappings: [],
     fields: [
       { field: "id", fieldType: "id", displayName: "ID" },
       {
@@ -352,6 +378,7 @@ function mediaType(
     path,
     externalPriority: defaultExternalPriority(providerCatalog, externalRefs.map((ref) => ref.source)),
     filename: { titleLanguage: "zh", defaultTitle: true },
+    bodyMappings: defaultExternalBodyMappings(providerCatalog, defaultExternalSource(externalRefs), "summary", "Summary"),
     fields: [
       { field: "uid", fieldType: "id", displayName: "UID" },
       { field: "id", fieldType: "id", displayName: "ID" },

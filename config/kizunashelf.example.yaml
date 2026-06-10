@@ -26,6 +26,10 @@ types:
   filename:
     titleLanguage: zh
     defaultTitle: true
+  bodyMappings:
+  - source: bangumi
+    field: summary
+    heading: Summary
   fields:
   - field: id
     fieldType: id
@@ -93,6 +97,13 @@ types:
   filename:
     titleLanguage: zh
     defaultTitle: true
+  bodyMappings:
+  - source: bangumi
+    field: summary
+    heading: Summary
+  - source: igdb
+    field: summary
+    heading: Summary
   fields:
   - field: title_ja
     fieldType: title

@@ -1292,6 +1292,12 @@
               }
             ]
           },
+          "bodyMappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalBodyMapping"
+            }
+          },
           "fields": {
             "type": "array",
             "items": {
@@ -1319,6 +1325,25 @@
             "type": "boolean"
           }
         }
+      },
+      "ExternalBodyMapping": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "field",
+          "heading"
+        ]
       },
       "FieldConfig": {
         "type": "object",

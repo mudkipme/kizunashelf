@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { applyExternalBodySections } from "@/lib/external-metadata";
 
 export function EntityCreatePage() {
   const navigate = useNavigate();
@@ -110,6 +111,7 @@ export function EntityCreatePage() {
       ...external.selectedPatch(),
     };
     setFrontmatter(normalizeFrontmatter(next));
+    setBody((currentBody) => applyExternalBodySections(currentBody, external.selectedBodyPatch()));
     setBasename((currentBasename) => currentBasename || external.selectedCandidate?.title || "");
     external.setQuery(external.selectedCandidate.title);
     setMessage(`Using ${external.selectedCandidate.provider}: ${external.selectedCandidate.title}`);
@@ -184,10 +186,13 @@ export function EntityCreatePage() {
           candidates={external.candidates}
           selectedCandidate={external.selectedCandidate}
           metadataEntries={external.metadataEntries}
+          bodyEntries={external.bodyEntries}
           selectedFields={external.selectedFields}
+          selectedBodySections={external.selectedBodySections}
           providerCatalog={providerCatalog.data}
           providerOptions={external.providerOptions}
           externalSearchEnabled={external.externalSearchEnabled}
+          bodyText={body}
           searching={external.searching}
           applying={false}
           contentWritable={contentWritable}
@@ -203,6 +208,7 @@ export function EntityCreatePage() {
           }}
           onChooseCandidate={external.chooseCandidate}
           onSelectedFieldsChange={external.setSelectedFields}
+          onSelectedBodySectionsChange={external.setSelectedBodySections}
           onApply={applyCandidate}
         />
 

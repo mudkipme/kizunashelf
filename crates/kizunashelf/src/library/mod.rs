@@ -604,6 +604,7 @@ mod tests {
                     title_language: Some("zh".to_string()),
                     default_title: false,
                 }),
+                body_mappings: Vec::new(),
                 fields: vec![FieldConfig {
                     field: "title".to_string(),
                     field_type: FieldType::Title,

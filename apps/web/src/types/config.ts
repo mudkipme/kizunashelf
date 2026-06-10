@@ -25,6 +25,12 @@ export type ExternalFieldMapping = {
   field: string;
 };
 
+export type ExternalBodyMapping = {
+  source: string;
+  field: string;
+  heading: string;
+};
+
 export type FilenameConfig = {
   titleLanguage?: string | null;
   defaultTitle?: boolean;
@@ -54,6 +60,7 @@ export type EntityTypeConfig = {
   path: string;
   externalPriority?: string[];
   filename?: FilenameConfig | null;
+  bodyMappings?: ExternalBodyMapping[];
   fields: FieldConfig[];
 };
 

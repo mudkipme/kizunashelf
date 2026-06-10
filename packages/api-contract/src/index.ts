@@ -58,6 +58,7 @@ export * from "./generated/entityDetailResponse.zod.js";
 export * from "./generated/entityListResponse.zod.js";
 export * from "./generated/entityMutationResponse.zod.js";
 export * from "./generated/externalCandidate.zod.js";
+export * from "./generated/externalBodyMapping.zod.js";
 export * from "./generated/externalProviderCatalogItem.zod.js";
 export * from "./generated/externalProviderCatalogResponse.zod.js";
 export * from "./generated/externalProviderDefaultFieldMapping.zod.js";

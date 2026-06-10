@@ -22,6 +22,7 @@ import {
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
+import { applyExternalBodySections } from "@/lib/external-metadata";
 
 export function EntityEditPage() {
   const { id } = useParams();
@@ -112,6 +113,7 @@ export function EntityEditPage() {
       ...external.selectedPatch(),
     };
     setFrontmatter(normalizeFrontmatter(next));
+    setBody((currentBody) => applyExternalBodySections(currentBody, external.selectedBodyPatch()));
     external.setQuery(external.selectedCandidate.title);
     external.setOpen(false);
   }
@@ -162,12 +164,15 @@ export function EntityEditPage() {
               candidates={external.candidates}
               selectedCandidate={external.selectedCandidate}
               metadataEntries={external.metadataEntries}
+              bodyEntries={external.bodyEntries}
               selectedFields={external.selectedFields}
+              selectedBodySections={external.selectedBodySections}
               providerCatalog={providerCatalog.data}
               providerOptions={external.providerOptions}
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}
               currentValues={frontmatter}
+              bodyText={body}
               searching={external.searching}
               applying={false}
               contentWritable={contentWritable}
@@ -183,6 +188,7 @@ export function EntityEditPage() {
               onRefreshRef={external.refreshFromExternalRef}
               onChooseCandidate={external.chooseCandidate}
               onSelectedFieldsChange={external.setSelectedFields}
+              onSelectedBodySectionsChange={external.setSelectedBodySections}
               onApply={applyCandidate}
             />
             <MetadataEditor

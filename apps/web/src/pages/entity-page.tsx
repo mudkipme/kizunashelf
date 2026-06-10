@@ -37,6 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { applyExternalBodySections } from "@/lib/external-metadata";
 import { groupRelations } from "@/lib/relations";
 import type {
   Entity,
@@ -132,11 +133,13 @@ export function EntityPage() {
   async function applyCandidate() {
     if (!entity || !external.selectedCandidate) return;
     const patch = external.selectedPatch();
+    const nextBody = applyExternalBodySections(entity.body, external.selectedBodyPatch());
     setSaving(true);
     try {
       await saveEntity(entity.id, {
         revision: entity.revision,
         frontmatter: patch,
+        body: nextBody === entity.body ? undefined : nextBody,
       });
       external.setOpen(false);
       await invalidateEntityData();
@@ -198,12 +201,15 @@ export function EntityPage() {
               candidates={external.candidates}
               selectedCandidate={external.selectedCandidate}
               metadataEntries={external.metadataEntries}
+              bodyEntries={external.bodyEntries}
               selectedFields={external.selectedFields}
+              selectedBodySections={external.selectedBodySections}
               providerCatalog={providerCatalog.data}
               providerOptions={external.providerOptions}
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}
               currentValues={entity.frontmatter as Record<string, unknown>}
+              bodyText={entity.body}
               searching={external.searching}
               applying={saving}
               contentWritable={contentWritable}
@@ -215,6 +221,7 @@ export function EntityPage() {
               onRefreshRef={external.refreshFromExternalRef}
               onChooseCandidate={external.chooseCandidate}
               onSelectedFieldsChange={external.setSelectedFields}
+              onSelectedBodySectionsChange={external.setSelectedBodySections}
               onApply={applyCandidate}
             />
             <EntityDetail

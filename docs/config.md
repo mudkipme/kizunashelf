@@ -2,7 +2,7 @@
 
 KizunaShelf is schema-driven. The config file tells the app where your vault lives, which Markdown folders are entity collections, and how frontmatter fields should be interpreted.
 
-The config is YAML. The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and `config/kizunashelf.config.example.yaml` is the working example.
+The config is YAML. The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and `config/kizunashelf.example.yaml` is the working example.
 
 ## First Run
 
@@ -68,7 +68,7 @@ The server reads `KIZUNASHELF_CONFIG` if it is set. Otherwise it uses:
 config/kizunashelf.yaml
 ```
 
-An example config is available at `config/kizunashelf.config.example.yaml`.
+An example config is available at `config/kizunashelf.example.yaml`.
 
 The desktop app searches for `kizunashelf.yaml` in this order:
 
@@ -158,6 +158,10 @@ types:
   filename:
     titleLanguage: zh
     defaultTitle: true
+  bodyMappings:
+  - source: bangumi
+    field: summary
+    heading: Summary
   fields:
   - field: title
     fieldType: title
@@ -174,6 +178,7 @@ types:
 | `path` | yes | string | Folder under `taxonomyRoot` that contains this type's Markdown files. |
 | `externalPriority` | no | string[] | Preferred external metadata providers for match/search workflows. |
 | `filename` | no | object | How the Markdown filename participates in titles. |
+| `bodyMappings` | no | array | Maps external provider metadata fields into Markdown body sections by heading. |
 | `fields` | no | array | Frontmatter field definitions. |
 
 ### Filename Config
@@ -382,6 +387,7 @@ External metadata support has two pieces:
 
 1. `externalRef` fields store links/ids to providers.
 2. `externalFields` map provider metadata into local fields.
+3. `bodyMappings` map provider metadata into Markdown body sections.
 
 Supported providers:
 
@@ -413,7 +419,7 @@ fields:
 
 ### `externalPriority`
 
-At the type level, `externalPriority` controls provider order in external match/search workflows. Providers not configured through an `externalRef` field are ignored.
+At the type level, `externalPriority` controls provider order in external match/search workflows. Providers not configured through an `externalRef` field or `bodyMappings` are ignored.
 
 ### `externalRef`
 
@@ -436,6 +442,22 @@ For example:
     field: cover_url
   - source: igdb
     field: cover_url
+```
+
+### `bodyMappings`
+
+`bodyMappings` maps provider result metadata into Markdown body sections. The heading is matched from the schema, not inferred from an entity type id or provider name.
+
+When applying a selected body mapping, KizunaShelf replaces the matching heading section if it exists. If the heading does not exist, it appends a new section. Other body content is preserved.
+
+```yaml
+bodyMappings:
+- source: bangumi
+  field: summary
+  heading: Summary
+- source: thetvdb
+  field: overview
+  heading: Summary
 ```
 
 ## Home Page

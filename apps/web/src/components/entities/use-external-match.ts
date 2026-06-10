@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { errorMessage } from "@/api/client";
 import { searchSources } from "@/api/entities";
 import {
+  candidateBodyPatch,
+  candidateBodyPreviewEntries,
   candidateMetadataEntries,
   candidateMetadataPatch,
   candidateMetadataPreviewEntries,
@@ -34,6 +36,7 @@ export function useExternalMatch({
   const [searching, setSearching] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<ExternalCandidate>();
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+  const [selectedBodySections, setSelectedBodySections] = useState<Set<string>>(new Set());
   const [emptyMessage, setEmptyMessage] = useState("No candidates loaded");
 
   const providerOptions = useMemo(
@@ -43,6 +46,10 @@ export function useExternalMatch({
   const externalSearchEnabled = providerOptions.length > 0;
   const metadataEntries = useMemo(
     () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, typeConfig) : []),
+    [selectedCandidate, typeConfig],
+  );
+  const bodyEntries = useMemo(
+    () => (selectedCandidate ? candidateBodyPreviewEntries(selectedCandidate, typeConfig) : []),
     [selectedCandidate, typeConfig],
   );
   const existingExternalRefs = useMemo(
@@ -79,6 +86,7 @@ export function useExternalMatch({
   function resetSelection() {
     setSelectedCandidate(undefined);
     setSelectedFields(new Set());
+    setSelectedBodySections(new Set());
   }
 
   async function search(providerOverride?: string, queryOverride?: string) {
@@ -116,11 +124,23 @@ export function useExternalMatch({
   function chooseCandidate(candidate: ExternalCandidate) {
     setSelectedCandidate(candidate);
     setSelectedFields(new Set(candidateMetadataEntries(candidate, typeConfig).map((entry) => entry.field)));
+    setSelectedBodySections(
+      new Set(
+        candidateBodyPreviewEntries(candidate, typeConfig)
+          .filter((entry) => entry.hasValue)
+          .map((entry) => entry.key),
+      ),
+    );
   }
 
   function selectedPatch() {
     if (!selectedCandidate) return {};
     return candidateMetadataPatch(selectedCandidate, typeConfig, selectedFields);
+  }
+
+  function selectedBodyPatch() {
+    if (!selectedCandidate) return [];
+    return candidateBodyPatch(selectedCandidate, typeConfig, selectedBodySections);
   }
 
   return {
@@ -135,14 +155,18 @@ export function useExternalMatch({
     selectedCandidate,
     selectedFields,
     setSelectedFields,
+    selectedBodySections,
+    setSelectedBodySections,
     providerOptions,
     externalSearchEnabled,
     metadataEntries,
+    bodyEntries,
     existingExternalRefs,
     emptyMessage,
     search,
     refreshFromExternalRef,
     chooseCandidate,
     selectedPatch,
+    selectedBodyPatch,
   };
 }

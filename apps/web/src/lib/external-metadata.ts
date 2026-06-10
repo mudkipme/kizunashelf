@@ -18,6 +18,26 @@ export type ExternalMetadataPreviewEntry = ExternalMetadataEntry & {
   hasValue: boolean;
 };
 
+export type ExternalBodyPreviewEntry = {
+  key: string;
+  source: string;
+  externalField: string;
+  heading: string;
+  value: unknown;
+  markdown: string;
+  hasValue: boolean;
+};
+
+export type ExternalBodyPatch = {
+  key: string;
+  source: string;
+  field: string;
+  heading: string;
+  markdown: string;
+};
+
+export type ExternalBodySectionState = "replace" | "append";
+
 export type ExternalFieldOption = {
   field: string;
   label: string;
@@ -61,6 +81,9 @@ export function externalProviderPriority(
   for (const field of configFields(typeConfig)) {
     if (field.fieldType === "externalRef") addKnownSource(catalog, supported, field.externalRef ?? "");
   }
+  for (const mapping of typeConfig?.bodyMappings ?? []) {
+    addKnownSource(catalog, supported, mapping.source);
+  }
 
   const priority = new Set<string>();
   for (const source of typeConfig?.externalPriority ?? []) {
@@ -69,6 +92,9 @@ export function externalProviderPriority(
 
   for (const field of configFields(typeConfig)) {
     if (field.fieldType === "externalRef") addKnownSupportedSource(priority, supported, field.externalRef ?? "");
+  }
+  for (const mapping of typeConfig?.bodyMappings ?? []) {
+    addKnownSupportedSource(priority, supported, mapping.source);
   }
 
   return [...priority];
@@ -95,6 +121,16 @@ export function defaultExternalMappings(
 ) {
   const field = defaultExternalField(catalog, source, role);
   return field ? [{ source, field }] : [];
+}
+
+export function defaultExternalBodyMappings(
+  catalog: ExternalProviderCatalog | undefined,
+  source: string,
+  role: string,
+  heading: string,
+) {
+  const field = defaultExternalField(catalog, source, role);
+  return field ? [{ source, field, heading }] : [];
 }
 
 export function candidateMetadataEntries(
@@ -133,6 +169,51 @@ export function candidateMetadataPatch(
   return Object.fromEntries(
     entries.filter((entry) => fields.has(entry.field)).map((entry) => [entry.field, entry.value]),
   );
+}
+
+export function candidateBodyPreviewEntries(
+  candidate: ExternalCandidate,
+  typeConfig: TypeConfig | undefined,
+): ExternalBodyPreviewEntry[] {
+  const metadata = (candidate.metadata ?? {}) as Record<string, unknown>;
+  return (typeConfig?.bodyMappings ?? [])
+    .filter((mapping) => externalSourceMatches(candidate.provider, mapping.source))
+    .map((mapping) => {
+      const markdown = formatExternalBodyValue(metadata[mapping.field]);
+      return {
+        key: externalBodyMappingKey(mapping),
+        source: mapping.source,
+        externalField: mapping.field,
+        heading: mapping.heading,
+        value: metadata[mapping.field],
+        markdown,
+        hasValue: hasValue(markdown),
+      };
+    });
+}
+
+export function candidateBodyPatch(
+  candidate: ExternalCandidate,
+  typeConfig: TypeConfig | undefined,
+  selectedBodySections: Set<string>,
+): ExternalBodyPatch[] {
+  return candidateBodyPreviewEntries(candidate, typeConfig)
+    .filter((entry) => entry.hasValue && selectedBodySections.has(entry.key))
+    .map((entry) => ({
+      key: entry.key,
+      source: entry.source,
+      field: entry.externalField,
+      heading: entry.heading,
+      markdown: entry.markdown,
+    }));
+}
+
+export function applyExternalBodySections(body: string, patches: ExternalBodyPatch[]) {
+  return patches.reduce((nextBody, patch) => applyExternalBodySection(nextBody, patch), body);
+}
+
+export function externalBodySectionState(body: string, heading: string): ExternalBodySectionState {
+  return findMarkdownHeadingSection(body, heading) ? "replace" : "append";
 }
 
 function addPreviewEntry(
@@ -216,6 +297,98 @@ function hasValue(value: unknown): value is NonNullable<unknown> {
   if (typeof value === "string") return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
   return true;
+}
+
+function externalBodyMappingKey(mapping: { source: string; field: string; heading: string }) {
+  return `${mapping.source}:${mapping.field}:${mapping.heading}`;
+}
+
+function formatExternalBodyValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) {
+    return value.map(formatExternalBodyValue).filter(Boolean).join("\n\n");
+  }
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return `\`\`\`json\n${JSON.stringify(value, null, 2)}\n\`\`\``;
+}
+
+function applyExternalBodySection(body: string, patch: ExternalBodyPatch) {
+  const section = findMarkdownHeadingSection(body, patch.heading);
+  if (!section) {
+    const next = body.trimEnd();
+    return `${next}${next ? "\n\n" : ""}${renderExternalBodySection(patch)}\n`;
+  }
+
+  const before = body.slice(0, section.start);
+  const after = body.slice(section.end).replace(/^\n+/, "");
+  const headingLine = body.slice(section.start, section.contentStart).trimEnd();
+  const separator = after ? "\n\n" : "\n";
+  return `${before}${headingLine}\n\n${patch.markdown.trim()}${separator}${after}`;
+}
+
+function renderExternalBodySection(patch: ExternalBodyPatch) {
+  const heading = sanitizeExternalBodyHeading(patch.heading);
+  return [`## ${heading}`, "", patch.markdown.trim()].join("\n");
+}
+
+function sanitizeExternalBodyHeading(value: string) {
+  return value.replace(/[\r\n#]/g, " ").replace(/\s+/g, " ").trim() || "External Notes";
+}
+
+function findMarkdownHeadingSection(body: string, heading: string) {
+  const target = normalizeMarkdownHeadingText(heading);
+  if (!target) return undefined;
+
+  const headings = markdownHeadings(body);
+  const startIndex = headings.findIndex((item) => normalizeMarkdownHeadingText(item.text) === target);
+  if (startIndex < 0) return undefined;
+
+  const start = headings[startIndex];
+  const next = headings
+    .slice(startIndex + 1)
+    .find((item) => item.level <= start.level);
+  return {
+    start: start.start,
+    contentStart: start.end,
+    end: next?.start ?? body.length,
+  };
+}
+
+function markdownHeadings(body: string) {
+  const headings: Array<{ start: number; end: number; level: number; text: string }> = [];
+  let offset = 0;
+  let fence: { marker: "`" | "~"; length: number } | undefined;
+  for (const line of body.match(/[^\n]*(?:\n|$)/g) ?? []) {
+    if (!line) continue;
+    const content = line.replace(/\r?\n$/, "");
+    const fenceMatch = content.match(/^ {0,3}(`{3,}|~{3,})/);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0] as "`" | "~";
+      const length = fenceMatch[1].length;
+      if (!fence) {
+        fence = { marker, length };
+      } else if (fence.marker === marker && length >= fence.length) {
+        fence = undefined;
+      }
+    } else if (!fence) {
+      const headingMatch = content.match(/^ {0,3}(#{1,6})(?:[ \t]+|$)(.*)$/);
+      if (headingMatch) {
+        headings.push({
+          start: offset,
+          end: offset + line.length,
+          level: headingMatch[1].length,
+          text: headingMatch[2].replace(/[ \t]+#+[ \t]*$/, "").trim(),
+        });
+      }
+    }
+    offset += line.length;
+  }
+  return headings;
+}
+
+function normalizeMarkdownHeadingText(value: string) {
+  return sanitizeExternalBodyHeading(value).toLowerCase();
 }
 
 function externalProvider(

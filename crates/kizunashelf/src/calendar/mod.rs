@@ -65,9 +65,9 @@ pub fn build_calendar_planning(
     options: CalendarPlanningOptions,
 ) -> CalendarPlanningResponse {
     let type_options = planning_type_options(library);
-    let entity_type = options.entity_type.filter(|entity_type| {
-        type_options.iter().any(|option| option.id == *entity_type)
-    });
+    let entity_type = options
+        .entity_type
+        .filter(|entity_type| type_options.iter().any(|option| option.id == *entity_type));
     let entities = selected_planning_entities(library, entity_type.as_deref());
     let mut points = planning_date_points(library, &entities);
     points.sort_by(compare_planning_points_asc);
@@ -78,9 +78,7 @@ pub fn build_calendar_planning(
     let upcoming = unique_planning_points_by_entity(
         points
             .iter()
-            .filter(|point| {
-                point.sort_key >= today && point.role == DateRole::Planning
-            })
+            .filter(|point| point.sort_key >= today && point.role == DateRole::Planning)
             .cloned()
             .collect(),
     )
@@ -283,10 +281,7 @@ fn has_planning_surface(entity_type: &EntityTypeConfig) -> bool {
     })
 }
 
-fn selected_planning_entities(
-    library: &Library,
-    entity_type: Option<&str>,
-) -> Vec<EntitySummary> {
+fn selected_planning_entities(library: &Library, entity_type: Option<&str>) -> Vec<EntitySummary> {
     library
         .summaries
         .iter()
@@ -343,10 +338,9 @@ fn planning_date_points(
                     year: parsed.year,
                     month: parsed.month.unwrap_or(1),
                     sort_key,
-                    season: parsed
-                        .season_key
-                        .clone()
-                        .or_else(|| Some(season_key_for_month(parsed.month.unwrap_or(1)).to_string())),
+                    season: parsed.season_key.clone().or_else(|| {
+                        Some(season_key_for_month(parsed.month.unwrap_or(1)).to_string())
+                    }),
                     role,
                 })
             })
@@ -439,8 +433,7 @@ fn compare_planning_points_desc(
 }
 
 fn compare_entity_summaries(a: &EntitySummary, b: &EntitySummary) -> std::cmp::Ordering {
-    compare_string(&a.type_label, &b.type_label)
-        .then_with(|| compare_string(&a.title, &b.title))
+    compare_string(&a.type_label, &b.type_label).then_with(|| compare_string(&a.title, &b.title))
 }
 
 fn month_labels() -> [&'static str; 12] {
@@ -763,6 +756,7 @@ mod tests {
             path: label.to_string(),
             external_priority: Vec::new(),
             filename: None,
+            body_mappings: Vec::new(),
             fields: Vec::new(),
         }
     }

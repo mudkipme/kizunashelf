@@ -1,6 +1,4 @@
-use crate::calendar::{
-    CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse,
-};
+use crate::calendar::{CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse};
 use crate::relations::Count;
 use crate::types::{
     Entity, EntitySummary, EntityTypeConfig, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,

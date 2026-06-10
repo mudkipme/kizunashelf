@@ -15,6 +15,8 @@ pub struct EntityTypeConfig {
     pub external_priority: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filename: Option<FilenameConfig>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub body_mappings: Vec<ExternalBodyMapping>,
     #[serde(default)]
     pub fields: Vec<FieldConfig>,
 }
@@ -91,6 +93,14 @@ pub enum TitleRole {
 pub struct ExternalFieldMapping {
     pub source: String,
     pub field: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalBodyMapping {
+    pub source: String,
+    pub field: String,
+    pub heading: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

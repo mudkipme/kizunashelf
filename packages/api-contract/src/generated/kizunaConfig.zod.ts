@@ -48,6 +48,11 @@ export const KizunaConfig = zod.object({
   "titleLanguage": zod.string().nullish(),
   "defaultTitle": zod.boolean().optional()
 }),zod.null()]).optional(),
+  "bodyMappings": zod.array(zod.object({
+  "source": zod.string(),
+  "field": zod.string(),
+  "heading": zod.string()
+})).optional(),
   "fields": zod.array(zod.object({
   "field": zod.string(),
   "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'bool', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),

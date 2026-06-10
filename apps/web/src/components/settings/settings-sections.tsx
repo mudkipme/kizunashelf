@@ -15,6 +15,7 @@ import { fieldTypeLabel, supportsEnumOptions } from "@/lib/type-config";
 import type {
   DailyNotesConfig,
   EntityTypeConfig,
+  ExternalBodyMapping,
   ExternalFieldMapping,
   FieldConfig,
   FieldType,
@@ -288,6 +289,7 @@ export function EntityTypeEditor({
 }) {
   const providerCount = new Set([
     ...(config.externalPriority ?? []),
+    ...(config.bodyMappings ?? []).map((mapping) => mapping.source),
     ...config.fields
       .filter((field) => field.fieldType === "externalRef")
       .map((field) => field.externalRef ?? "")
@@ -328,6 +330,11 @@ export function EntityTypeEditor({
             providerCatalog={providerCatalog}
             values={config.externalPriority ?? []}
             onChange={(externalPriority) => onChange({ ...config, externalPriority })}
+          />
+          <ExternalBodyMappingsEditor
+            providerCatalog={providerCatalog}
+            values={config.bodyMappings ?? []}
+            onChange={(bodyMappings) => onChange({ ...config, bodyMappings })}
           />
         </ConfigSubsection>
 
@@ -481,6 +488,87 @@ function ExternalPriorityEditor({
           );
         })}
         {values.length === 0 ? <EmptyConfigLine>Default provider order is used.</EmptyConfigLine> : null}
+      </div>
+    </div>
+  );
+}
+
+function ExternalBodyMappingsEditor({
+  providerCatalog,
+  values,
+  onChange,
+}: {
+  providerCatalog?: ExternalProviderCatalog;
+  values: ExternalBodyMapping[];
+  onChange: (values: ExternalBodyMapping[]) => void;
+}) {
+  const sourceOptions = externalSourceOptions(providerCatalog);
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Markdown body sections</span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const source = sourceOptions[0]?.source ?? "";
+            const field = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
+            onChange([...values, { source, field, heading: "Summary" }]);
+          }}
+          disabled={sourceOptions.length === 0}
+        >
+          <PlusIcon data-icon="inline-start" />
+          Section
+        </Button>
+      </div>
+      <div className="flex flex-col gap-2">
+        {values.map((value, index) => {
+          const fieldOptions = externalFieldOptionsForSource(providerCatalog, value.source);
+          return (
+            <div key={index} className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <Select
+                value={value.source}
+                onChange={(event) => {
+                  const source = event.target.value;
+                  const field = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
+                  onChange(replaceArray(values, index, { ...value, source, field }));
+                }}
+                aria-label="Body mapping source"
+              >
+                {sourceOptions.map((option) => (
+                  <option key={option.source} value={option.source}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                value={value.field}
+                onChange={(event) => onChange(replaceArray(values, index, { ...value, field: event.target.value }))}
+                aria-label="Body mapping field"
+              >
+                <option value="">Select field</option>
+                {fieldOptions.map((option) => (
+                  <option key={option.field} value={option.field}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+              <TextField
+                label="Heading"
+                value={value.heading}
+                onChange={(heading) => onChange(replaceArray(values, index, { ...value, heading }))}
+              />
+              <div className="flex items-end">
+                <IconButton
+                  label="Remove body mapping"
+                  onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+                />
+              </div>
+            </div>
+          );
+        })}
+        {values.length === 0 ? <EmptyConfigLine>No markdown body sections.</EmptyConfigLine> : null}
       </div>
     </div>
   );
