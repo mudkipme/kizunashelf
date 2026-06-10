@@ -1,6 +1,17 @@
 import { Grid2X2Icon, ListIcon, SlidersHorizontalIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+} from "@/components/ui/combobox";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -111,33 +122,12 @@ export function AssetToolbar({
         </Select>
       ) : null}
       {enumFilters.map((filter) => (
-        <label
+        <EnumFilterCombobox
           key={filter.field}
-          className={cn(
-            "flex min-w-44 flex-col gap-1 text-xs text-muted-foreground",
-            compact ? "col-span-2 min-w-0" : undefined,
-          )}
-        >
-          <span className="truncate">{filter.label}</span>
-          <Select
-            multiple
-            value={filter.values}
-            onChange={(event) =>
-              onEnumFilterChange?.(
-                filter.field,
-                Array.from(event.currentTarget.selectedOptions, (option) => option.value),
-              )
-            }
-            className={cn("h-20 min-w-0", compact ? undefined : "min-w-44")}
-            aria-label={filter.label}
-          >
-            {filter.options.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </Select>
-        </label>
+          filter={filter}
+          compact={compact}
+          onChange={(values) => onEnumFilterChange?.(filter.field, values)}
+        />
       ))}
       {compact || (!showRefsFilter && !showCoverFilter && !hasFieldFilters) ? null : (
         <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
@@ -200,5 +190,41 @@ export function AssetToolbar({
         </Button>
       </div>
     </div>
+  );
+}
+
+function EnumFilterCombobox({
+  filter,
+  compact,
+  onChange,
+}: {
+  filter: EnumFieldFilter;
+  compact: boolean;
+  onChange: (values: string[]) => void;
+}) {
+  return (
+    <label className={cn("w-56 text-xs text-muted-foreground", compact ? "col-span-2 w-full min-w-0" : "shrink-0")}>
+      <span className="mb-1 block truncate">{filter.label}</span>
+      <Combobox items={filter.options} multiple value={filter.values} onValueChange={onChange}>
+        <ComboboxChips className="min-h-8 w-full px-2 py-1 text-xs">
+          <ComboboxValue>
+            {filter.values.map((item) => (
+              <ComboboxChip key={item}>{item}</ComboboxChip>
+            ))}
+          </ComboboxValue>
+          <ComboboxChipsInput placeholder={`Any ${filter.label}`} />
+        </ComboboxChips>
+        <ComboboxContent>
+          <ComboboxEmpty>No options found.</ComboboxEmpty>
+          <ComboboxList>
+            {(item) => (
+              <ComboboxItem key={item} value={item}>
+                {item}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </label>
   );
 }

@@ -1,10 +1,11 @@
 import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
-import { CalendarIcon, CheckIcon, MinusIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CalendarIcon, MinusIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select } from "@/components/ui/select";
 
@@ -190,29 +191,8 @@ function MultiValueInput({
   const [remoteOptions, setRemoteOptions] = useState<MultiValueOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [optionsError, setOptionsError] = useState<string>();
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const selectedValues = uniqueStrings(values.map((value) => normalizeListItem(value, wikilinks)).filter(Boolean));
   const normalizedOptions = uniqueOptions([...options, ...remoteOptions], wikilinks);
-  const customValue = normalizeListItem(inputValue, wikilinks);
-  const query = customValue.toLowerCase();
-  const suggestedItems = normalizedOptions
-    .filter((option) => !selectedValues.includes(option.value))
-    .filter(
-      (option) =>
-        loadOptions ||
-        !query ||
-        option.value.toLowerCase().includes(query) ||
-        option.label?.toLowerCase().includes(query) ||
-        option.detail?.toLowerCase().includes(query),
-    );
-  const optionValues = normalizedOptions.map((option) => option.value);
-  const customItem =
-    customValue && !selectedValues.includes(customValue) && !optionValues.includes(customValue)
-      ? ({ value: customValue } satisfies MultiValueOption)
-      : undefined;
-  const items = (loadOptions ? [...suggestedItems, customItem] : [customItem, ...suggestedItems]).filter(
-    (item): item is MultiValueOption => Boolean(item),
-  );
   const labels = new Map(normalizedOptions.map((option) => [option.value, option.label || option.value]));
 
   useEffect(() => {
@@ -240,125 +220,29 @@ function MultiValueInput({
     };
   }, [disabled, inputValue, loadOptions, open]);
 
-  useEffect(() => {
-    if (!open || disabled) return;
-    function closeOnOutsidePointer(event: PointerEvent) {
-      if (containerRef.current?.contains(event.target as Node)) return;
-      setOpen(false);
-    }
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [disabled, open]);
-
   function updateValues(nextValues: string[]) {
     if (disabled) return;
     onChange(uniqueStrings(nextValues.map((value) => normalizeListItem(value, wikilinks)).filter(Boolean)));
     setInputValue("");
   }
 
-  function commitInput(value = inputValue) {
-    if (disabled) return;
-    const nextValue = normalizeListItem(value, wikilinks);
-    if (!nextValue || selectedValues.includes(nextValue)) return;
-    updateValues([...selectedValues, nextValue]);
-    setOpen(false);
-  }
-
-  function removeValue(value: string) {
-    if (disabled) return;
-    updateValues(selectedValues.filter((item) => item !== value));
-  }
-
-  function chooseValue(value: string) {
-    if (disabled) return;
-    updateValues([...selectedValues, value]);
-    setOpen(false);
-  }
-
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (disabled || (event.key !== "Enter" && event.key !== ",")) return;
-    event.preventDefault();
-    if (items[0]) chooseValue(items[0].value);
-    else commitInput(event.currentTarget.value);
-  }
-
   return (
-    <div ref={containerRef} className="relative data-[open=true]:z-20" data-open={open}>
-      <div
-        role="toolbar"
-        aria-label={ariaLabel}
-        className="border-input bg-background focus-within:ring-ring flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border px-2 py-1 shadow-xs focus-within:ring-2"
-      >
-        {selectedValues.map((value) => (
-          <span
-            key={value}
-            className="bg-secondary text-secondary-foreground inline-flex max-w-full items-center gap-1 rounded-md border-transparent px-2 py-0.5 text-xs font-medium"
-          >
-            <span className="truncate">{labels.get(value) ?? value}</span>
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground rounded-sm outline-none"
-              onClick={() => removeValue(value)}
-              aria-label={`Remove ${value}`}
-              disabled={disabled}
-            >
-              <XIcon />
-            </button>
-          </span>
-        ))}
-        <input
-          role="combobox"
-          aria-expanded={open}
-          aria-haspopup="listbox"
-          aria-autocomplete="list"
-          aria-label={ariaLabel}
-          value={inputValue}
-          placeholder={selectedValues.length === 0 ? placeholder : ""}
-          onFocus={() => {
-            if (!disabled) setOpen(true);
-          }}
-          onChange={(event) => {
-            setInputValue(event.target.value);
-            if (!disabled) setOpen(true);
-          }}
-          onKeyDown={handleKeyDown}
-          onBlur={(event) => commitInput(event.currentTarget.value)}
-          className="placeholder:text-muted-foreground min-w-28 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={disabled}
-        />
-      </div>
-      {open ? (
-        <div className="bg-popover text-popover-foreground border-border absolute top-full right-0 left-0 mt-1 max-h-64 overflow-hidden rounded-md border shadow-md">
-          <div role="listbox" className="max-h-64 overflow-auto p-1 outline-none">
-            {items.length > 0 ? (
-              items.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  role="option"
-                  aria-selected={selectedValues.includes(item.value)}
-                  className="hover:bg-accent hover:text-accent-foreground flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => chooseValue(item.value)}
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    {customItem && item.value === customItem.value ? `Add "${item.value}"` : (item.label ?? item.value)}
-                  </span>
-                  {item.detail ? <span className="truncate text-xs text-muted-foreground">{item.detail}</span> : null}
-                  {selectedValues.includes(item.value) ? <CheckIcon /> : null}
-                </button>
-              ))
-            ) : loadingOptions ? (
-              <div className="px-3 py-6 text-center text-sm text-muted-foreground">Searching...</div>
-            ) : optionsError ? (
-              <div className="px-3 py-6 text-center text-sm text-destructive">{optionsError}</div>
-            ) : (
-              <div className="px-3 py-6 text-center text-sm text-muted-foreground">No values found.</div>
-            )}
-          </div>
-        </div>
-      ) : null}
-    </div>
+    <MultiValueCombobox
+      values={selectedValues}
+      options={normalizedOptions}
+      placeholder={placeholder}
+      ariaLabel={ariaLabel}
+      disabled={disabled}
+      allowCustomValue
+      inputValue={inputValue}
+      onInputValueChange={setInputValue}
+      loading={loadingOptions}
+      error={optionsError}
+      normalizeValue={(value) => normalizeListItem(value, wikilinks)}
+      formatChipLabel={(value) => labels.get(value) ?? value}
+      onOpenChange={setOpen}
+      onChange={updateValues}
+    />
   );
 }
 

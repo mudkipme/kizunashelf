@@ -5,6 +5,7 @@ import { FolderOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { getPathSuggestions } from "@/api/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { isDesktopRuntime, selectDirectory } from "@/lib/desktop";
 
 import { relativeToBase, replaceArray } from "./settings-model";
@@ -26,6 +27,22 @@ export function StringListEditor({
   pathItems?: boolean;
   onChange: (values: string[]) => void;
 }) {
+  if (!pathItems && suggestions.length > 0) {
+    return (
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <MultiValueCombobox
+          values={values}
+          options={suggestions.map((suggestion) => ({ value: suggestion }))}
+          placeholder={placeholder}
+          ariaLabel={label}
+          allowCustomValue
+          onChange={onChange}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -47,11 +64,10 @@ export function StringListEditor({
                 hideLabel
               />
             ) : (
-              <InputWithSuggestions
+              <Input
                 value={value}
                 placeholder={placeholder}
-                suggestions={suggestions}
-                onChange={(next) => onChange(replaceArray(values, index, next))}
+                onChange={(event) => onChange(replaceArray(values, index, event.target.value))}
               />
             )}
             <IconButton
@@ -131,30 +147,6 @@ export function PathField({
 
   if (hideLabel) return input;
   return <Field label={label ?? "Path"}>{input}</Field>;
-}
-
-function InputWithSuggestions({
-  value,
-  suggestions,
-  placeholder,
-  onChange,
-}: {
-  value: string;
-  suggestions: string[];
-  placeholder?: string;
-  onChange: (value: string) => void;
-}) {
-  const datalistId = useId();
-  return (
-    <>
-      <Input value={value} placeholder={placeholder} list={datalistId} onChange={(event) => onChange(event.target.value)} />
-      <datalist id={datalistId}>
-        {suggestions.map((suggestion) => (
-          <option key={suggestion} value={suggestion} />
-        ))}
-      </datalist>
-    </>
-  );
 }
 
 export function TextField({

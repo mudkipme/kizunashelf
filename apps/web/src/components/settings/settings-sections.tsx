@@ -3,6 +3,7 @@ import { PlusIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -896,41 +897,18 @@ function ExternalTypesEditor({
   const options = externalTypeOptionsForSource(providerCatalog, source);
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">External types</span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={options.length === 0}
-          onClick={() => onChange([...values, options[0]?.value ?? ""])}
-        >
-          <PlusIcon data-icon="inline-start" />
-          Add
-        </Button>
-      </div>
-      <div className="flex flex-col gap-2">
-        {values.map((value, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <Select
-              value={value}
-              onChange={(event) => onChange(replaceArray(values, index, event.target.value))}
-              aria-label="External type"
-            >
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-            <IconButton
-              label="Remove external type"
-              onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
-            />
-          </div>
-        ))}
-        {values.length === 0 ? <EmptyConfigLine>No type filter.</EmptyConfigLine> : null}
-      </div>
+      <span className="text-xs font-medium text-muted-foreground">External types</span>
+      {options.length > 0 ? (
+        <MultiValueCombobox
+          values={values}
+          options={options.map((option) => ({ value: option.value, label: option.label }))}
+          placeholder="Select type"
+          ariaLabel="External types"
+          onChange={onChange}
+        />
+      ) : (
+        <EmptyConfigLine>No type options.</EmptyConfigLine>
+      )}
     </div>
   );
 }
