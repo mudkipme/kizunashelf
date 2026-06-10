@@ -9,6 +9,10 @@ import {
 } from './analyticsResponse.zod';
 
 import {
+  CalendarPlanningResponse
+} from './calendarPlanningResponse.zod';
+
+import {
   CalendarResponse
 } from './calendarResponse.zod';
 
@@ -63,6 +67,10 @@ import {
 import type {
   GetCalendarParams
 } from './getCalendarParams.zod';
+
+import type {
+  GetCalendarPlanningParams
+} from './getCalendarPlanningParams.zod';
 
 import type {
   GetEntitiesParams
@@ -455,6 +463,42 @@ export const getCalendar = async (params?: GetCalendarParams, options?: RequestI
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? CalendarResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetCalendarPlanningUrl = (params?: GetCalendarPlanningParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/calendar/planning?${stringifiedParams}` : `/api/calendar/planning`
+}
+
+export const getCalendarPlanning = async (params?: GetCalendarPlanningParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<CalendarPlanningResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetCalendarPlanningUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? CalendarPlanningResponse.parse(parsedBody) : parsedBody
   return data
 }
 

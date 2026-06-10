@@ -1,4 +1,6 @@
-use crate::calendar::{CalendarDay, CalendarEntry, EntityDatesResponse};
+use crate::calendar::{
+    CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse,
+};
 use crate::relations::Count;
 use crate::types::{
     Entity, EntitySummary, EntityTypeConfig, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,
@@ -451,6 +453,7 @@ pub struct ApiSchemas {
     pub stats: StatsResponse,
     pub analytics: AnalyticsResponse,
     pub external_provider_catalog: ExternalProviderCatalogResponse,
+    pub calendar_planning: CalendarPlanningResponse,
     pub entities: EntityListResponse,
     pub entity_detail: EntityDetailResponse,
     pub entity_dates: EntityDatesResponse,

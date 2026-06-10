@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getCalendar, getConfig, getEntities } from "@kizunashelf/api-contract";
+import { getCalendar, getCalendarPlanning, getConfig } from "@kizunashelf/api-contract";
 import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
@@ -8,16 +8,20 @@ import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { CalendarEntryItem } from "@/components/calendar/calendar-entry-item";
 import {
   CalendarPlanningViews,
-  countEntityDatePoints,
   type PlanningMode,
 } from "@/components/calendar/planning-views";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { dateRoleFields, fieldLabelsByType, fieldsByType } from "@/lib/type-config";
+import { fieldLabelsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
-import type { CalendarDay, CalendarResponse, ConfigResponse, EntitySummary } from "@/types/api";
+import type {
+  CalendarDay,
+  CalendarPlanningResponse,
+  CalendarResponse,
+  ConfigResponse,
+} from "@/types/api";
 
 type CalendarState = {
   data?: CalendarResponse;
@@ -27,21 +31,13 @@ type CalendarState = {
 };
 
 type PlanningState = {
-  entities: EntitySummary[];
+  data?: CalendarPlanningResponse;
   loading: boolean;
-  loaded: boolean;
   error?: string;
 };
 
 type CalendarMode = "month" | PlanningMode;
-type ConfigType = ConfigResponse["types"][number];
-type DateRoles = {
-  planning: string[];
-  completed: string[];
-};
-
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const entityPageSize = 100;
 
 export function CalendarPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,9 +50,7 @@ export function CalendarPage() {
   const mode = readMode(searchParams.get("view"));
   const [state, setState] = useState<CalendarState>({ loading: true });
   const [planning, setPlanning] = useState<PlanningState>({
-    entities: [],
     loading: false,
-    loaded: false,
   });
 
   useEffect(() => {
@@ -64,11 +58,11 @@ export function CalendarPage() {
   }, []);
 
   useEffect(() => {
-    if (mode === "month" || planning.loaded) return;
+    if (mode === "month") return;
     const controller = new AbortController();
-    void loadPlanningEntities(controller.signal);
+    void loadPlanning(controller.signal);
     return () => controller.abort();
-  }, [mode, planning.loaded]);
+  }, [mode, year, type]);
 
   useEffect(() => {
     if (mode !== "month") return;
@@ -103,32 +97,21 @@ export function CalendarPage() {
     }
   }
 
-  async function loadPlanningEntities(signal: AbortSignal) {
-    setPlanning({ entities: [], loading: true, loaded: false });
+  async function loadPlanning(signal: AbortSignal) {
+    setPlanning({ loading: true });
     try {
-      const entities: EntitySummary[] = [];
-      let page = 1;
-      let totalPages = 1;
-      do {
-        const result = await getEntities(
-          {
-            type: "all",
-            page,
-            pageSize: entityPageSize,
-            sort: "type",
-            direction: "asc",
-          },
-          { signal },
-          apiFetch,
-        );
-        entities.push(...result.items);
-        totalPages = result.totalPages;
-        page += 1;
-      } while (page <= totalPages);
-      setPlanning({ entities, loading: false, loaded: true });
+      const data = await getCalendarPlanning(
+        {
+          year,
+          ...(type !== "all" ? { type } : {}),
+        },
+        { signal },
+        apiFetch,
+      );
+      setPlanning({ data, loading: false });
     } catch (error) {
       if (isAbortError(error)) return;
-      setPlanning({ entities: [], loading: false, loaded: false, error: errorMessage(error) });
+      setPlanning({ loading: false, error: errorMessage(error) });
     }
   }
 
@@ -139,36 +122,15 @@ export function CalendarPage() {
   ]);
   const selectedDay =
     state.data?.days.find((day) => day.date === selectedDate) ?? state.data?.days[0];
-  const planningTypeOptions = useMemo(
-    () => (state.config?.types ?? []).filter(hasPlanningSurface),
-    [state.config],
-  );
+  const planningTypeOptions = planning.data?.typeOptions ?? [];
   const effectiveType =
-    mode !== "month" && type !== "all" && !planningTypeOptions.some((item) => item.id === type)
+    mode !== "month" &&
+    type !== "all" &&
+    planning.data &&
+    !planningTypeOptions.some((item) => item.id === type)
       ? "all"
       : type;
-  const planningEntities = useMemo(
-    () =>
-      effectiveType === "all"
-        ? planning.entities
-        : planning.entities.filter((entity) => entity.type === effectiveType),
-    [effectiveType, planning.entities],
-  );
-  const planningDateCount = useMemo(
-    () => countEntityDatePoints(planningEntities),
-    [planningEntities],
-  );
   const fieldLabels = useMemo(() => fieldLabelsByType(state.config?.types), [state.config]);
-  const dateRolesByType = useMemo(() => {
-    const roles = new Map<string, DateRoles>();
-    for (const item of state.config?.types ?? []) {
-      roles.set(item.id, {
-        planning: dateRoleFields(item, "planning").map((field) => field.field),
-        completed: dateRoleFields(item, "completed").map((field) => field.field),
-      });
-    }
-    return roles;
-  }, [state.config]);
 
   function setParam(key: string, value: string, defaultValue?: string, options?: { replace?: boolean }) {
     const next = new URLSearchParams(searchParams);
@@ -237,7 +199,9 @@ export function CalendarPage() {
                     : "No calendar data"
                 : planning.loading
                   ? "Loading"
-                  : `${planningEntities.length} entities - ${planningDateCount} dated entries`}
+                  : planning.data
+                    ? `${planning.data.totals.entities} entities - ${planning.data.totals.datedEntries} dated entries`
+                    : "No planning data"}
             </p>
           </div>
 
@@ -346,10 +310,7 @@ export function CalendarPage() {
         ) : (
           <CalendarPlanningViews
             mode={mode}
-            year={year}
-            entities={planningEntities}
-            dateRolesByType={dateRolesByType}
-            labelsByType={fieldLabels}
+            data={planning.data}
             loading={planning.loading}
             onOpenMonth={openMonth}
           />
@@ -398,14 +359,6 @@ function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
 function readMode(value: string | null): CalendarMode {
   if (value === "year" || value === "seasons" || value === "planning") return value;
   return "month";
-}
-
-function hasPlanningSurface(type: ConfigType) {
-  return (
-    fieldsByType(type, "enum").length > 0 ||
-    dateRoleFields(type, "planning").length > 0 ||
-    dateRoleFields(type, "completed").length > 0
-  );
 }
 
 function todayInMonth(year: number, month: number, date: Date) {

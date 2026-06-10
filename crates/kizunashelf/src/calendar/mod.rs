@@ -8,7 +8,9 @@ use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_fron
 use crate::dates::{clamp_number, is_in_month, normalize_date, parse_exact_date};
 use crate::library::{compare_string, wikilink_regex};
 use crate::relations::summary_by_id;
-use crate::types::{DateRole, Entity, EntitySummary, FieldType, Library};
+use crate::types::{
+    DateRole, Entity, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library,
+};
 use anyhow::Result;
 use chrono::Datelike;
 use mentions::{clean_mention_snippet, mention_blocks};
@@ -56,6 +58,82 @@ pub async fn build_calendar(
         },
         days,
     })
+}
+
+pub fn build_calendar_planning(
+    library: &Library,
+    options: CalendarPlanningOptions,
+) -> CalendarPlanningResponse {
+    let type_options = planning_type_options(library);
+    let entity_type = options.entity_type.filter(|entity_type| {
+        type_options.iter().any(|option| option.id == *entity_type)
+    });
+    let entities = selected_planning_entities(library, entity_type.as_deref());
+    let mut points = planning_date_points(library, &entities);
+    points.sort_by(compare_planning_points_asc);
+
+    let year_months = planning_months(options.year, &points);
+    let seasons = planning_seasons(options.year, &points);
+    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let upcoming = unique_planning_points_by_entity(
+        points
+            .iter()
+            .filter(|point| {
+                point.sort_key >= today && point.role == DateRole::Planning
+            })
+            .cloned()
+            .collect(),
+    )
+    .into_iter()
+    .take(12)
+    .collect::<Vec<_>>();
+
+    let mut completed = points
+        .iter()
+        .filter(|point| point.sort_key <= today && point.role == DateRole::Completed)
+        .cloned()
+        .collect::<Vec<_>>();
+    completed.sort_by(compare_planning_points_desc);
+    let recently_completed = unique_planning_points_by_entity(completed)
+        .into_iter()
+        .take(12)
+        .collect::<Vec<_>>();
+
+    let future_planning_entity_ids = points
+        .iter()
+        .filter(|point| point.sort_key >= today && point.role == DateRole::Planning)
+        .map(|point| point.entity.id.as_str())
+        .collect::<std::collections::HashSet<_>>();
+    let mut unscheduled = entities
+        .iter()
+        .filter(|entity| !future_planning_entity_ids.contains(entity.id.as_str()))
+        .cloned()
+        .collect::<Vec<_>>();
+    unscheduled.sort_by(compare_entity_summaries);
+    unscheduled.truncate(12);
+
+    CalendarPlanningResponse {
+        generated_at: library.generated_at.clone(),
+        filters: CalendarPlanningFilters {
+            year: options.year,
+            entity_type,
+        },
+        type_options,
+        totals: CalendarPlanningTotals {
+            entities: entities.len(),
+            dated_entries: points.len(),
+            upcoming: upcoming.len(),
+            recently_completed: recently_completed.len(),
+            unscheduled: unscheduled.len(),
+        },
+        year_months,
+        seasons,
+        board: CalendarPlanningBoard {
+            upcoming,
+            recently_completed,
+            unscheduled,
+        },
+    }
 }
 
 pub async fn build_entity_dates(library: &Library, entity: &Entity) -> Result<EntityDatesResponse> {
@@ -176,6 +254,220 @@ fn metadata_date_entries(library: &Library, entity: &Entity) -> Vec<EntityDateMe
         }
     });
     entries
+}
+
+fn planning_type_options(library: &Library) -> Vec<CalendarPlanningTypeOption> {
+    library
+        .config
+        .types
+        .iter()
+        .filter(|entity_type| has_planning_surface(entity_type))
+        .map(|entity_type| CalendarPlanningTypeOption {
+            id: entity_type.id.clone(),
+            label: if entity_type.label.trim().is_empty() {
+                entity_type.id.clone()
+            } else {
+                entity_type.label.clone()
+            },
+        })
+        .collect()
+}
+
+fn has_planning_surface(entity_type: &EntityTypeConfig) -> bool {
+    entity_type.fields.iter().any(|field| {
+        matches!(field.field_type, FieldType::Enum)
+            || matches!(
+                field.date_role,
+                Some(DateRole::Planning | DateRole::Completed)
+            )
+    })
+}
+
+fn selected_planning_entities(
+    library: &Library,
+    entity_type: Option<&str>,
+) -> Vec<EntitySummary> {
+    library
+        .summaries
+        .iter()
+        .filter(|entity| {
+            entity_type.is_none_or(|expected| entity.entity_type == expected)
+                && library
+                    .config
+                    .types
+                    .iter()
+                    .find(|item| item.id == entity.entity_type)
+                    .is_some_and(has_planning_surface)
+        })
+        .cloned()
+        .collect()
+}
+
+fn planning_date_points(
+    library: &Library,
+    entities: &[EntitySummary],
+) -> Vec<CalendarPlanningDatePoint> {
+    let fields_by_type = library
+        .config
+        .types
+        .iter()
+        .map(|entity_type| {
+            (
+                entity_type.id.as_str(),
+                entity_type
+                    .fields
+                    .iter()
+                    .filter_map(|field| {
+                        field
+                            .date_role
+                            .map(|role| (field.field.as_str(), (role, field_display_label(field))))
+                    })
+                    .collect::<HashMap<_, _>>(),
+            )
+        })
+        .collect::<HashMap<_, HashMap<_, _>>>();
+
+    entities
+        .iter()
+        .flat_map(|entity| {
+            let fields = fields_by_type.get(entity.entity_type.as_str());
+            entity.dates.iter().filter_map(move |date| {
+                let (role, field_label) = fields?.get(date.field.as_str())?.clone();
+                let parsed = date.parsed.as_ref()?;
+                let sort_key = date.sort_key.clone()?;
+                Some(CalendarPlanningDatePoint {
+                    entity: entity.clone(),
+                    field: date.field.clone(),
+                    field_label,
+                    value: date.value.clone(),
+                    year: parsed.year,
+                    month: parsed.month.unwrap_or(1),
+                    sort_key,
+                    season: parsed
+                        .season_key
+                        .clone()
+                        .or_else(|| Some(season_key_for_month(parsed.month.unwrap_or(1)).to_string())),
+                    role,
+                })
+            })
+        })
+        .collect()
+}
+
+fn planning_months(year: i32, points: &[CalendarPlanningDatePoint]) -> Vec<CalendarPlanningMonth> {
+    month_labels()
+        .iter()
+        .enumerate()
+        .map(|(index, label)| {
+            let month = index as u32 + 1;
+            CalendarPlanningMonth {
+                month,
+                label: (*label).to_string(),
+                entries: unique_planning_points_by_entity(
+                    points
+                        .iter()
+                        .filter(|point| point.year == year && point.month == month)
+                        .cloned()
+                        .collect(),
+                ),
+            }
+        })
+        .collect()
+}
+
+fn planning_seasons(
+    year: i32,
+    points: &[CalendarPlanningDatePoint],
+) -> Vec<CalendarPlanningSeason> {
+    season_options()
+        .iter()
+        .map(|season| CalendarPlanningSeason {
+            key: season.0.to_string(),
+            label: season.1.to_string(),
+            months: season.2.to_string(),
+            entries: unique_planning_points_by_entity(
+                points
+                    .iter()
+                    .filter(|point| {
+                        point.year == year
+                            && point
+                                .season
+                                .as_deref()
+                                .unwrap_or_else(|| season_key_for_month(point.month))
+                                == season.0
+                    })
+                    .cloned()
+                    .collect(),
+            ),
+        })
+        .collect()
+}
+
+fn field_display_label(field: &FieldConfig) -> String {
+    field
+        .display_name
+        .as_ref()
+        .filter(|label| !label.trim().is_empty())
+        .cloned()
+        .unwrap_or_else(|| field.field.clone())
+}
+
+fn unique_planning_points_by_entity(
+    points: Vec<CalendarPlanningDatePoint>,
+) -> Vec<CalendarPlanningDatePoint> {
+    let mut seen = std::collections::HashSet::<String>::new();
+    points
+        .into_iter()
+        .filter(|point| seen.insert(point.entity.id.clone()))
+        .collect()
+}
+
+fn compare_planning_points_asc(
+    a: &CalendarPlanningDatePoint,
+    b: &CalendarPlanningDatePoint,
+) -> std::cmp::Ordering {
+    compare_string(&a.sort_key, &b.sort_key)
+        .then_with(|| compare_string(&a.entity.title, &b.entity.title))
+}
+
+fn compare_planning_points_desc(
+    a: &CalendarPlanningDatePoint,
+    b: &CalendarPlanningDatePoint,
+) -> std::cmp::Ordering {
+    compare_string(&b.sort_key, &a.sort_key)
+        .then_with(|| compare_string(&a.entity.title, &b.entity.title))
+}
+
+fn compare_entity_summaries(a: &EntitySummary, b: &EntitySummary) -> std::cmp::Ordering {
+    compare_string(&a.type_label, &b.type_label)
+        .then_with(|| compare_string(&a.title, &b.title))
+}
+
+fn month_labels() -> [&'static str; 12] {
+    [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ]
+}
+
+fn season_options() -> [(&'static str, &'static str, &'static str); 4] {
+    [
+        ("winter", "Winter", "Jan-Mar"),
+        ("spring", "Spring", "Apr-Jun"),
+        ("summer", "Summer", "Jul-Sep"),
+        ("autumn", "Autumn", "Oct-Dec"),
+    ]
+}
+
+fn season_key_for_month(month: u32) -> &'static str {
+    if (4..=6).contains(&month) {
+        "spring"
+    } else if (7..=9).contains(&month) {
+        "summer"
+    } else if (10..=12).contains(&month) {
+        "autumn"
+    } else {
+        "winter"
+    }
 }
 
 async fn entity_daily_note_entries(

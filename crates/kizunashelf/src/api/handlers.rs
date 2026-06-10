@@ -1,7 +1,10 @@
 use super::entities::sort_entities_for_entity_list;
 use super::error::{ApiError, ApiResult};
 use super::state::{content_writes_enabled, get_library, AppState};
-use crate::calendar::{build_calendar, CalendarBuildOptions, CalendarSource};
+use crate::calendar::{
+    build_calendar, build_calendar_planning, CalendarBuildOptions, CalendarPlanningOptions,
+    CalendarPlanningResponse, CalendarSource,
+};
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
     HomeSectionResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
@@ -163,6 +166,35 @@ pub(crate) async fn calendar(
         )
         .await?,
     ))
+}
+
+#[derive(Deserialize, JsonSchema)]
+pub(crate) struct CalendarPlanningQuery {
+    year: Option<f64>,
+    #[serde(rename = "type")]
+    entity_type: Option<String>,
+}
+
+pub(crate) async fn calendar_planning(
+    State(state): State<AppState>,
+    Query(query): Query<CalendarPlanningQuery>,
+) -> ApiResult<CalendarPlanningResponse> {
+    let library = get_library(&state).await?;
+    let now = chrono::Utc::now();
+    let year = clamp_number(
+        query
+            .year
+            .unwrap_or(now.format("%Y").to_string().parse().unwrap_or(1970.0)),
+        1970,
+        2100,
+    ) as i32;
+    Ok(Json(build_calendar_planning(
+        &library,
+        CalendarPlanningOptions {
+            year,
+            entity_type: query.entity_type.filter(|item| item != "all"),
+        },
+    )))
 }
 
 #[derive(Deserialize, JsonSchema)]

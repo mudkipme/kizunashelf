@@ -516,6 +516,34 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
         "Daily Notes/2025-04-21.md"
     );
 
+    let planning = server.ok_json("/api/calendar/planning?year=2025").await;
+    assert_eq!(planning["filters"]["year"], 2025);
+    assert!(planning["totals"]["entities"].as_u64().unwrap() > 0);
+    assert!(planning["totals"]["datedEntries"].as_u64().unwrap() > 0);
+    assert!(planning["typeOptions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|item| item["id"] == "anime"));
+    assert!(planning["yearMonths"][3]["entries"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|item| item["entity"]["id"] == "anime:Star Voyager"
+            && item["field"] == "complete_date"
+            && item["fieldLabel"] == "Completed date"
+            && item["role"] == "completed"));
+
+    let game_planning = server
+        .ok_json("/api/calendar/planning?year=2025&type=games")
+        .await;
+    assert_eq!(game_planning["filters"]["type"], "games");
+    assert!(game_planning["board"]["unscheduled"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|item| item["type"] == "games"));
+
     let dates = server
         .ok_json(&format!(
             "/api/entities/{}/dates",

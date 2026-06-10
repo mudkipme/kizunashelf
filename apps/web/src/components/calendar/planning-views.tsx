@@ -1,138 +1,82 @@
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
-import { entityFieldLabel } from "@/lib/type-config";
-import type { EntitySummary } from "@/types/api";
+import type {
+  CalendarPlanningDatePoint,
+  CalendarPlanningResponse,
+  EntitySummary,
+} from "@/types/api";
 
 export type PlanningMode = "year" | "seasons" | "planning";
 
-type DatePoint = {
-  entity: EntitySummary;
-  field: string;
-  value: string;
-  year: number;
-  month: number;
-  sortKey: string;
-  season?: SeasonKey;
-};
-
-type SeasonKey = "winter" | "spring" | "summer" | "autumn";
-
 type PlanningViewsProps = {
   mode: PlanningMode;
-  year: number;
-  entities: EntitySummary[];
-  dateRolesByType: Map<string, DateRoles>;
-  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  data?: CalendarPlanningResponse;
   loading: boolean;
   onOpenMonth: (month: number) => void;
 };
 
-type DateRoles = {
-  planning?: string[];
-  completed?: string[];
-};
-
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-const seasons: Array<{ key: SeasonKey; label: string; months: string }> = [
-  { key: "winter", label: "Winter", months: "Jan-Mar" },
-  { key: "spring", label: "Spring", months: "Apr-Jun" },
-  { key: "summer", label: "Summer", months: "Jul-Sep" },
-  { key: "autumn", label: "Autumn", months: "Oct-Dec" },
-];
-
 export function CalendarPlanningViews({
   mode,
-  year,
-  entities,
-  dateRolesByType,
-  labelsByType,
+  data,
   loading,
   onOpenMonth,
 }: PlanningViewsProps) {
-  const points = entityDatePoints(entities);
-
   if (loading) {
     return <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>;
   }
 
+  if (!data) {
+    return <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">No planning data</div>;
+  }
+
   if (mode === "year") {
-    return <YearPlanningView year={year} points={points} onOpenMonth={onOpenMonth} />;
+    return <YearPlanningView data={data} onOpenMonth={onOpenMonth} />;
   }
 
   if (mode === "seasons") {
-    return <SeasonPlanningView year={year} points={points} labelsByType={labelsByType} />;
+    return <SeasonPlanningView data={data} />;
   }
 
-  return (
-    <PlanningBoard
-      entities={entities}
-      points={points}
-      dateRolesByType={dateRolesByType}
-      labelsByType={labelsByType}
-    />
-  );
-}
-
-export function countEntityDatePoints(entities: EntitySummary[]) {
-  return entityDatePoints(entities).length;
+  return <PlanningBoard data={data} />;
 }
 
 function YearPlanningView({
-  year,
-  points,
+  data,
   onOpenMonth,
 }: {
-  year: number;
-  points: DatePoint[];
+  data: CalendarPlanningResponse;
   onOpenMonth: (month: number) => void;
 }) {
-  const buckets = Array.from({ length: 12 }, (_, index) => {
-    const month = index + 1;
-    return uniqueByEntity(points.filter((point) => point.year === year && point.month === month));
-  });
-  const total = buckets.reduce((sum, bucket) => sum + bucket.length, 0);
+  const total = data.yearMonths.reduce((sum, bucket) => sum + bucket.entries.length, 0);
 
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-sm font-semibold">{year}</h2>
+        <h2 className="text-sm font-semibold">{data.filters.year}</h2>
         <Badge variant="secondary">{total} dated entries</Badge>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {buckets.map((bucket, index) => {
-          const month = index + 1;
+        {data.yearMonths.map((bucket) => {
           return (
             <button
-              key={month}
+              key={bucket.month}
               type="button"
-              onClick={() => onOpenMonth(month)}
+              onClick={() => onOpenMonth(bucket.month)}
               className="flex min-h-36 flex-col gap-3 rounded-md border bg-background p-3 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium">{monthNames[index]}</span>
-                <Badge variant={bucket.length > 0 ? "secondary" : "outline"}>{bucket.length}</Badge>
+                <span className="text-sm font-medium">{bucket.label}</span>
+                <Badge variant={bucket.entries.length > 0 ? "secondary" : "outline"}>
+                  {bucket.entries.length}
+                </Badge>
               </div>
               <div className="flex min-w-0 flex-col gap-2">
-                {bucket.slice(0, 4).map((point) => (
+                {bucket.entries.slice(0, 4).map((point) => (
                   <DatePointSummary key={`${point.entity.id}-${point.field}-${point.value}`} point={point} />
                 ))}
-                {bucket.length > 4 ? (
-                  <span className="text-xs text-muted-foreground">+{bucket.length - 4}</span>
+                {bucket.entries.length > 4 ? (
+                  <span className="text-xs text-muted-foreground">+{bucket.entries.length - 4}</span>
                 ) : null}
               </div>
             </button>
@@ -144,112 +88,69 @@ function YearPlanningView({
 }
 
 function SeasonPlanningView({
-  year,
-  points,
-  labelsByType,
+  data,
 }: {
-  year: number;
-  points: DatePoint[];
-  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  data: CalendarPlanningResponse;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      {seasons.map((season) => {
-        const bucket = uniqueByEntity(
-          points.filter((point) => point.year === year && (point.season ?? seasonForMonth(point.month)) === season.key),
-        );
-        return (
-          <section key={season.key} className="rounded-md border">
-            <header className="flex items-center gap-2 border-b px-3 py-2">
-              <h2 className="text-sm font-semibold">{season.label}</h2>
-              <Badge variant="outline">{season.months}</Badge>
-              <Badge variant="secondary" className="ml-auto">
-                {bucket.length}
-              </Badge>
-            </header>
-            <div className="flex flex-col">
-              {bucket.length > 0 ? (
-                bucket.map((point) => (
-                  <PlanningEntityRow
-                    key={`${point.entity.id}-${point.field}-${point.value}`}
-                    point={point}
-                    labelsByType={labelsByType}
-                  />
-                ))
-              ) : (
-                <div className="p-6 text-center text-sm text-muted-foreground">No entries</div>
-              )}
-            </div>
-          </section>
-        );
-      })}
+      {data.seasons.map((season) => (
+        <section key={season.key} className="rounded-md border">
+          <header className="flex items-center gap-2 border-b px-3 py-2">
+            <h2 className="text-sm font-semibold">{season.label}</h2>
+            <Badge variant="outline">{season.months}</Badge>
+            <Badge variant="secondary" className="ml-auto">
+              {season.entries.length}
+            </Badge>
+          </header>
+          <div className="flex flex-col">
+            {season.entries.length > 0 ? (
+              season.entries.map((point) => (
+                <PlanningEntityRow
+                  key={`${point.entity.id}-${point.field}-${point.value}`}
+                  point={point}
+                />
+              ))
+            ) : (
+              <div className="p-6 text-center text-sm text-muted-foreground">No entries</div>
+            )}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
 
 function PlanningBoard({
-  entities,
-  points,
-  dateRolesByType,
-  labelsByType,
+  data,
 }: {
-  entities: EntitySummary[];
-  points: DatePoint[];
-  dateRolesByType: Map<string, DateRoles>;
-  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  data: CalendarPlanningResponse;
 }) {
-  const today = todayKey();
-  const futurePlanningEntityIds = new Set(
-    points
-      .filter((point) => point.sortKey >= today && hasDateRole(point, dateRolesByType, "planning"))
-      .map((point) => point.entity.id),
-  );
-  const upcoming = uniqueByEntity(
-    points
-      .filter((point) => point.sortKey >= today && hasDateRole(point, dateRolesByType, "planning"))
-      .sort(compareDatePointsAsc),
-  ).slice(0, 12);
-  const recentlyCompleted = uniqueByEntity(
-    points
-      .filter((point) => point.sortKey <= today && hasDateRole(point, dateRolesByType, "completed"))
-      .sort(compareDatePointsDesc),
-  ).slice(0, 12);
-  const unscheduled = entities
-    .filter((entity) => !futurePlanningEntityIds.has(entity.id))
-    .sort(compareEntitiesAsc)
-    .slice(0, 12);
-
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <PlanningList title="Upcoming" count={upcoming.length} points={upcoming} labelsByType={labelsByType} />
+      <PlanningList title="Upcoming" points={data.board.upcoming} />
       <PlanningList
         title="Recently Completed"
-        count={recentlyCompleted.length}
-        points={recentlyCompleted}
-        labelsByType={labelsByType}
+        points={data.board.recentlyCompleted}
       />
-      <EntityPlanningList title="Unscheduled" count={unscheduled.length} entities={unscheduled} />
+      <EntityPlanningList title="Unscheduled" entities={data.board.unscheduled} />
     </div>
   );
 }
 
 function PlanningList({
   title,
-  count,
   points,
-  labelsByType,
 }: {
   title: string;
-  count: number;
-  points: DatePoint[];
-  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  points: CalendarPlanningDatePoint[];
 }) {
   return (
     <section className="rounded-md border">
       <header className="flex items-center gap-2 border-b px-3 py-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         <Badge variant="secondary" className="ml-auto">
-          {count}
+          {points.length}
         </Badge>
       </header>
       <div className="flex flex-col md:max-h-[720px] md:overflow-auto">
@@ -258,7 +159,6 @@ function PlanningList({
             <PlanningEntityRow
               key={`${point.entity.id}-${point.field}-${point.value}`}
               point={point}
-              labelsByType={labelsByType}
             />
           ))
         ) : (
@@ -271,10 +171,8 @@ function PlanningList({
 
 function PlanningEntityRow({
   point,
-  labelsByType,
 }: {
-  point: DatePoint;
-  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  point: CalendarPlanningDatePoint;
 }) {
   return (
     <Link
@@ -294,7 +192,7 @@ function PlanningEntityRow({
       </span>
       <span className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
         <Badge variant="outline" className="font-normal">
-          {entityFieldLabel(labelsByType, point.entity.type, point.field)}
+          {point.fieldLabel}
         </Badge>
         <span className="tabular-nums">{point.value}</span>
       </span>
@@ -304,11 +202,9 @@ function PlanningEntityRow({
 
 function EntityPlanningList({
   title,
-  count,
   entities,
 }: {
   title: string;
-  count: number;
   entities: EntitySummary[];
 }) {
   return (
@@ -316,7 +212,7 @@ function EntityPlanningList({
       <header className="flex items-center gap-2 border-b px-3 py-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         <Badge variant="secondary" className="ml-auto">
-          {count}
+          {entities.length}
         </Badge>
       </header>
       <div className="flex flex-col md:max-h-[720px] md:overflow-auto">
@@ -347,7 +243,7 @@ function PlanningEntitySummaryRow({ entity }: { entity: EntitySummary }) {
   );
 }
 
-function DatePointSummary({ point }: { point: DatePoint }) {
+function DatePointSummary({ point }: { point: CalendarPlanningDatePoint }) {
   return (
     <span className="min-w-0">
       <span className="block truncate text-xs font-medium">{point.entity.title}</span>
@@ -357,76 +253,4 @@ function DatePointSummary({ point }: { point: DatePoint }) {
       </span>
     </span>
   );
-}
-
-function entityDatePoints(entities: EntitySummary[]) {
-  return entities.flatMap((entity) =>
-    entity.dates.flatMap((date) => {
-      if (!date.parsed || !date.sortKey) return [];
-      return [
-        {
-          entity,
-          field: date.field,
-          value: date.value,
-          year: date.parsed.year,
-          month: date.parsed.month ?? 1,
-          sortKey: date.sortKey,
-          season: seasonKey(date.parsed.seasonKey),
-        },
-      ];
-    }),
-  );
-}
-
-function seasonKey(value: string | null | undefined): SeasonKey | undefined {
-  if (value === "winter" || value === "spring" || value === "summer" || value === "autumn") {
-    return value;
-  }
-  return undefined;
-}
-
-function seasonForMonth(month: number): SeasonKey {
-  if (month >= 4 && month <= 6) return "spring";
-  if (month >= 7 && month <= 9) return "summer";
-  if (month >= 10 && month <= 12) return "autumn";
-  return "winter";
-}
-
-function hasDateRole(
-  point: DatePoint,
-  dateRolesByType: Map<string, DateRoles>,
-  role: keyof DateRoles,
-) {
-  return dateRolesByType.get(point.entity.type)?.[role]?.includes(point.field) ?? false;
-}
-
-function uniqueByEntity(points: DatePoint[]) {
-  const seen = new Set<string>();
-  return points.filter((point) => {
-    if (seen.has(point.entity.id)) return false;
-    seen.add(point.entity.id);
-    return true;
-  });
-}
-
-function compareDatePointsAsc(a: DatePoint, b: DatePoint) {
-  if (a.sortKey !== b.sortKey) return a.sortKey.localeCompare(b.sortKey);
-  return a.entity.title.localeCompare(b.entity.title);
-}
-
-function compareDatePointsDesc(a: DatePoint, b: DatePoint) {
-  if (a.sortKey !== b.sortKey) return b.sortKey.localeCompare(a.sortKey);
-  return a.entity.title.localeCompare(b.entity.title);
-}
-
-function compareEntitiesAsc(a: EntitySummary, b: EntitySummary) {
-  if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
-  return a.title.localeCompare(b.title);
-}
-
-function todayKey() {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-    date.getDate(),
-  ).padStart(2, "0")}`;
 }
