@@ -168,7 +168,7 @@ export function ExternalMatchDialog({
             </div>
           ) : null}
 
-          <div className="grid min-h-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+          <div className="grid min-h-0 gap-3 min-[900px]:grid-cols-[minmax(260px,1fr)_minmax(300px,380px)]">
             <div className="grid content-start gap-2">
               {candidates.map((candidate) => {
                 const selected =

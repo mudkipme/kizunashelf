@@ -15,13 +15,14 @@ use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
+use std::error::Error;
 use std::time::Duration;
 
 use super::state::{get_library, AppState};
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
-const EXTERNAL_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const EXTERNAL_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
+const EXTERNAL_CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
+const EXTERNAL_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 trait ExternalProvider {
     const ID: &'static str;
@@ -65,6 +66,12 @@ impl ProviderSearchConfig {
         }
         self.external_types
             .extend(external_types.into_iter().map(str::to_string));
+    }
+
+    fn add_unconstrained_source_if_empty(&mut self) {
+        if self.external_types.is_empty() {
+            self.unconstrained = true;
+        }
     }
 
     fn external_types(&self) -> Option<&BTreeSet<String>> {
@@ -349,7 +356,7 @@ fn configured_external_providers(
                 providers
                     .entry(provider)
                     .or_insert_with(ProviderSearchConfig::default)
-                    .add_external_types(&[]);
+                    .add_unconstrained_source_if_empty();
             }
         }
     }
@@ -394,7 +401,13 @@ fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
 }
 
 fn provider_error(error: reqwest::Error) -> ApiError {
-    ApiError::bad_request(&format!("External provider request failed: {error}"))
+    let mut message = format!("External provider request failed: {error}");
+    let mut source = error.source();
+    while let Some(error) = source {
+        message.push_str(&format!(": {error}"));
+        source = error.source();
+    }
+    ApiError::bad_request(&message)
 }
 
 #[cfg(test)]
@@ -447,6 +460,33 @@ mod tests {
 
         assert!(configured.contains_key("igdb"));
         assert!(!configured.contains_key("thetvdb"));
+    }
+
+    #[test]
+    fn external_body_mappings_do_not_override_external_ref_type_filters() {
+        let mut type_config =
+            entity_type_with_external_types("drama", "TVDB Link", "thetvdb", &["series"]);
+        type_config.body_mappings = vec![ExternalBodyMapping {
+            source: "thetvdb".to_string(),
+            field: "overview".to_string(),
+            heading: "Summary".to_string(),
+        }];
+        let config = KizunaConfig {
+            vault_root: "/vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            content_writable: None,
+            read_concurrency: None,
+            home: None,
+            daily_notes: None,
+            types: vec![type_config],
+        };
+
+        let configured = configured_external_providers(&config, "drama");
+
+        assert_eq!(
+            thetvdb::thetvdb_type_filters(configured.get("thetvdb").unwrap()),
+            Some(vec![Some("series".to_string())])
+        );
     }
 
     #[test]
