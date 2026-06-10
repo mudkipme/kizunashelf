@@ -113,12 +113,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           </Button>
         ) : null}
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none">
-          <img
-            src="/favicon-96x96.png"
-            alt=""
-            className="size-8 shrink-0 rounded-md"
-            aria-hidden="true"
-          />
+          <AppLogo />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">KizunaShelf</span>
             <span className="block text-xs leading-4 text-muted-foreground">A personal memory graph</span>
@@ -229,6 +224,15 @@ function hasAppBackStack() {
   return Number(window.history.state?.idx ?? 0) > 0;
 }
 
+function AppLogo() {
+  return (
+    <span className="relative size-8 shrink-0 overflow-hidden rounded-md" aria-hidden="true">
+      <img src="/icon.svg" alt="" className="size-full dark:hidden" />
+      <img src="/icon-dark.svg" alt="" className="hidden size-full dark:block" />
+    </span>
+  );
+}
+
 function AppSidebar({
   stats,
   activeType,
@@ -277,12 +281,7 @@ function MobileSidebar({
         className="relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-card shadow-lg"
       >
         <header className="flex min-h-14 items-center gap-3 border-b px-3">
-          <img
-            src="/favicon-96x96.png"
-            alt=""
-            className="size-8 shrink-0 rounded-md"
-            aria-hidden="true"
-          />
+          <AppLogo />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">KizunaShelf</div>
             <div className="truncate text-xs text-muted-foreground">Navigation</div>

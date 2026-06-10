@@ -4,6 +4,12 @@
   "description": "A personal memory graph",
   "icons": [
     {
+      "src": "/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
@@ -17,6 +23,6 @@
     }
   ],
   "theme_color": "#1b7d75",
-  "background_color": "#fcfbf8",
+  "background_color": "#ffffff",
   "display": "standalone"
 }
