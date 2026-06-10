@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
+import { getProviderCatalog } from "@/api/external";
 import { getSettingsConfig } from "@/api/settings";
 import { SettingsEditor } from "@/components/settings/settings-editor";
+import type { ExternalProviderCatalog } from "@/types/api";
 import type { SettingsConfigResponse } from "@/types/config";
 
 type OnboardingState = {
   data?: SettingsConfigResponse;
+  providerCatalog?: ExternalProviderCatalog;
   loading: boolean;
   error?: string;
 };
@@ -23,8 +26,11 @@ export function OnboardingPage() {
   async function load() {
     setState({ loading: true });
     try {
-      const data = await getSettingsConfig();
-      setState({ data, loading: false });
+      const [data, providerCatalog] = await Promise.all([
+        getSettingsConfig(),
+        getProviderCatalog(),
+      ]);
+      setState({ data, providerCatalog, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });
     }
@@ -44,6 +50,7 @@ export function OnboardingPage() {
           <SettingsEditor
             configPath={state.data.configPath}
             initialConfig={state.data.config}
+            providerCatalog={state.providerCatalog}
             onboarding={!state.data.exists}
             onSaved={() => navigate("/", { replace: true })}
           />

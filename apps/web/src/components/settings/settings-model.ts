@@ -1,5 +1,13 @@
-import { externalFieldOptionsBySource, externalSourceOptions } from "@/lib/external-metadata";
+import {
+  defaultExternalMappings,
+  defaultExternalPriority,
+  externalFieldOptionsForSource,
+  externalTypeOptionsForSource,
+  externalTypesForSource,
+  externalSourceOptions,
+} from "@/lib/external-metadata";
 import { isIso639TitleLanguage } from "@/lib/title-language";
+import type { ExternalProviderCatalog } from "@/types/api";
 import type {
   DailyNotesConfig,
   EntityTypeConfig,
@@ -76,7 +84,7 @@ function normalizeField(field: FieldConfig): FieldConfig {
   };
 }
 
-export function cleanConfig(config: KizunaConfig): KizunaConfig {
+export function cleanConfig(config: KizunaConfig, providerCatalog?: ExternalProviderCatalog): KizunaConfig {
   return {
     vaultRoot: config.vaultRoot,
     taxonomyRoot: config.taxonomyRoot,
@@ -108,10 +116,10 @@ export function cleanConfig(config: KizunaConfig): KizunaConfig {
       label: typeConfig.label,
       icon: emptyToUndefined(typeConfig.icon),
       path: typeConfig.path,
-      externalPriority: cleanExternalPriority(typeConfig.externalPriority ?? []),
+      externalPriority: cleanExternalPriority(providerCatalog, typeConfig.externalPriority ?? []),
       filename: cleanFilename(typeConfig.filename),
       fields: typeConfig.fields
-        .map(cleanField)
+        .map((field) => cleanField(field, providerCatalog))
         .filter((field): field is FieldConfig => Boolean(field)),
     })),
   };
@@ -139,26 +147,26 @@ function cleanFilename(filename: FilenameConfig | null | undefined): FilenameCon
   };
 }
 
-function cleanExternalFieldMappings(values: ExternalFieldMapping[]) {
+function cleanExternalFieldMappings(values: ExternalFieldMapping[], providerCatalog?: ExternalProviderCatalog) {
   const cleaned = values
     .map((value) => ({
       source: value.source.trim(),
       field: value.field.trim(),
     }))
     .filter((value) =>
-      externalFieldOptionsBySource[value.source]?.some((option) => option.field === value.field),
+      externalFieldOptionsForSource(providerCatalog, value.source).some((option) => option.field === value.field),
     );
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
-function cleanExternalTypes(source: string | null | undefined, values: string[]) {
-  const options = externalTypeOptionsBySource[source ?? ""] ?? [];
+function cleanExternalTypes(providerCatalog: ExternalProviderCatalog | undefined, source: string | null | undefined, values: string[]) {
+  const options = externalTypeOptionsForSource(providerCatalog, source ?? "");
   const allowed = new Set(options.map((option) => option.value));
   const cleaned = values.map((value) => value.trim()).filter((value) => allowed.has(value));
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
-function cleanField(field: FieldConfig): FieldConfig | undefined {
+function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalog): FieldConfig | undefined {
   const key = field.field.trim();
   if (!key) return undefined;
   return {
@@ -172,7 +180,7 @@ function cleanField(field: FieldConfig): FieldConfig | undefined {
     titleRole: field.fieldType === "title" ? field.titleRole || undefined : undefined,
     externalFields:
       field.fieldType !== "externalRef"
-        ? cleanExternalFieldMappings(field.externalFields ?? [])
+        ? cleanExternalFieldMappings(field.externalFields ?? [], providerCatalog)
         : undefined,
     defaultTitle: field.fieldType === "title" && field.defaultTitle ? true : undefined,
     enumOptions:
@@ -189,7 +197,7 @@ function cleanField(field: FieldConfig): FieldConfig | undefined {
     externalRef: field.fieldType === "externalRef" ? emptyToUndefined(field.externalRef) : undefined,
     externalTypes:
       field.fieldType === "externalRef"
-        ? cleanExternalTypes(field.externalRef, field.externalTypes ?? [])
+        ? cleanExternalTypes(providerCatalog, field.externalRef, field.externalTypes ?? [])
         : undefined,
     relationType: field.fieldType === "relation" ? emptyToUndefined(field.relationType) : undefined,
   };
@@ -255,7 +263,7 @@ export function defaultField(): FieldConfig {
   return { field: "field", fieldType: "text", displayName: "" };
 }
 
-export function vaultTemplates(): Array<{ id: string; label: string; config: KizunaConfig }> {
+export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array<{ id: string; label: string; config: KizunaConfig }> {
   return [
     {
       id: "media",
@@ -263,10 +271,10 @@ export function vaultTemplates(): Array<{ id: string; label: string; config: Kiz
       config: {
         ...defaultConfig(),
         types: [
-          mediaType("anime", "Anime", "📺", "Anime", ["bangumi_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType("drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType("movie", "Movie", "🎬", "Movie", ["bangumi_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
-          mediaType("games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", ["bangumi_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", ["bangumi_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"]),
         ],
         home: {
           title: "Home",
@@ -283,9 +291,9 @@ export function vaultTemplates(): Array<{ id: string; label: string; config: Kiz
       config: {
         ...defaultConfig(),
         types: [
-          mediaType("anime", "Anime", "📺", "Anime", ["bangumi_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType("drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
-          mediaType("movie", "Movie", "🎬", "Movie", ["bangumi_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", ["bangumi_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", ["thetvdb_url"], ["season", "release_date"], ["complete_date"]),
+          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", ["bangumi_url", "thetvdb_url"], ["release_date"], ["complete_date"]),
         ],
       },
     },
@@ -294,7 +302,7 @@ export function vaultTemplates(): Array<{ id: string; label: string; config: Kiz
       label: "Games",
       config: {
         ...defaultConfig(),
-        types: [mediaType("games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"])],
+        types: [mediaType(providerCatalog, "games", "Games", "🎮", "Games", ["igdb_url"], ["release_date"], ["complete_date"])],
       },
     },
     {
@@ -302,7 +310,7 @@ export function vaultTemplates(): Array<{ id: string; label: string; config: Kiz
       label: "Books",
       config: {
         ...defaultConfig(),
-        types: [mediaType("books", "Books", "📚", "Books", ["openlibrary_url", "isbn"], ["release_date"], ["complete_date"])],
+        types: [mediaType(providerCatalog, "books", "Books", "📚", "Books", [], ["release_date"], ["complete_date"])],
       },
     },
     {
@@ -318,6 +326,7 @@ export function vaultTemplates(): Array<{ id: string; label: string; config: Kiz
 }
 
 function mediaType(
+  providerCatalog: ExternalProviderCatalog | undefined,
   id: string,
   label: string,
   icon: string,
@@ -332,16 +341,16 @@ function mediaType(
     label,
     icon,
     path,
-    externalPriority: defaultExternalPriority(externalRefs),
+    externalPriority: defaultExternalPriority(providerCatalog, externalRefs),
     filename: { titleLanguage: "zh", defaultTitle: true },
     fields: [
       { field: "uid", fieldType: "id", displayName: "UID" },
       { field: "id", fieldType: "id", displayName: "ID" },
-      { field: "title", fieldType: "title", displayName: "Title", titleLanguage: "zh", externalFields: defaultExternalMappings(id, "title") },
-      { field: "title_original", fieldType: "title", displayName: "Title (Original)", titleRole: "original", externalFields: defaultExternalMappings(id, "originalTitle") },
-      { field: "title_en", fieldType: "title", displayName: "Title (English)", titleLanguage: "en", externalFields: defaultExternalMappings(id, "titleEn") },
-      { field: "title_ja", fieldType: "title", displayName: "Title (Japanese)", titleLanguage: "ja", externalFields: defaultExternalMappings(id, "titleJa") },
-      { field: "cover_url", fieldType: "image", displayName: "Cover", externalFields: defaultExternalMappings(id, "cover") },
+      { field: "title", fieldType: "title", displayName: "Title", titleLanguage: "zh", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "title") },
+      { field: "title_original", fieldType: "title", displayName: "Title (Original)", titleRole: "original", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "originalTitle") },
+      { field: "title_en", fieldType: "title", displayName: "Title (English)", titleLanguage: "en", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "titleEn") },
+      { field: "title_ja", fieldType: "title", displayName: "Title (Japanese)", titleLanguage: "ja", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "titleJa") },
+      { field: "cover_url", fieldType: "image", displayName: "Cover", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "cover") },
       { field: "state", fieldType: "enum", displayName: "State", enumOptions: stateOptions },
       { field: "progress", fieldType: "progress", displayName: "Progress", totalProgressField: "episodes" },
       { field: "episodes", fieldType: "totalProgress", displayName: "Episodes" },
@@ -360,7 +369,7 @@ function mediaType(
               fieldType: "date",
               displayName: field === "release_date" ? "Release date" : field,
               dateRole: "planning",
-              externalFields: field === "release_date" ? defaultExternalMappings(id, "releaseDate") : [],
+              externalFields: field === "release_date" ? defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "releaseDate") : [],
             } satisfies FieldConfig),
       ),
       ...completedDates.map((field) => ({
@@ -374,7 +383,7 @@ function mediaType(
         fieldType: "externalRef",
         displayName: field,
         externalRef: externalSourceForField(field),
-        externalTypes: externalTypesForSource(externalSourceForField(field), id),
+        externalTypes: externalTypesForSource(providerCatalog, externalSourceForField(field)),
       }) satisfies FieldConfig),
       { field: "franchise", fieldType: "relation", displayName: "Franchise", relationType: "franchise" },
       { field: "studio", fieldType: "relation", displayName: "Studio", relationType: "studio" },
@@ -383,68 +392,13 @@ function mediaType(
   };
 }
 
-export function externalTypesForSource(source: string, typeId: string) {
-  if (source === "igdb") return ["game"];
-  if (source === "thetvdb") return typeId === "movie" ? ["movie"] : ["series"];
-  if (source === "bangumi") {
-    if (typeId === "games") return ["4"];
-    if (typeId === "music" || typeId === "cd") return ["3"];
-    if (typeId === "books" || typeId === "book") return ["1"];
-    if (typeId === "drama") return ["6"];
-    if (typeId === "movie") return ["2", "6"];
-    return ["2"];
-  }
-  return [];
-}
-
 function externalSourceForField(field: string) {
   return field.replace(/_url$/, "");
 }
 
-function defaultExternalPriority(externalRefs: string[]) {
-  return cleanExternalPriority(externalRefs.map(externalSourceForField)) ?? [];
+function defaultExternalSource(externalRefs: string[]) {
+  return externalSourceForField(externalRefs[0] ?? "");
 }
-
-function defaultExternalMappings(typeId: string, role: string): ExternalFieldMapping[] {
-  const source = typeId === "games" ? "igdb" : typeId === "drama" ? "thetvdb" : "bangumi";
-  const field = defaultExternalField(source, role);
-  return field ? [{ source, field }] : [];
-}
-
-function defaultExternalField(source: string, role: string) {
-  if (source === "bangumi") {
-    if (role === "title") return "name_cn";
-    if (role === "originalTitle" || role === "titleJa") return "name";
-    if (role === "cover") return "cover_url";
-    if (role === "releaseDate") return "date";
-  }
-  if (source === "igdb") {
-    if (role === "title" || role === "originalTitle") return "name";
-    if (role === "cover") return "cover_url";
-    if (role === "releaseDate") return "first_release_date";
-  }
-  if (source === "thetvdb") {
-    if (role === "title" || role === "originalTitle") return "name";
-    if (role === "cover") return "cover_url";
-    if (role === "releaseDate") return "first_air_time";
-  }
-  return undefined;
-}
-
-export const externalTypeOptionsBySource: Record<string, Array<{ value: string; label: string }>> = {
-  bangumi: [
-    { value: "1", label: "Book (1)" },
-    { value: "2", label: "Anime (2)" },
-    { value: "3", label: "Music (3)" },
-    { value: "4", label: "Game (4)" },
-    { value: "6", label: "Real (6)" },
-  ],
-  igdb: [{ value: "game", label: "Game" }],
-  thetvdb: [
-    { value: "series", label: "Series" },
-    { value: "movie", label: "Movie" },
-  ],
-};
 
 export function replaceAt<T, K extends keyof T>(
   object: T,
@@ -465,8 +419,8 @@ function cleanStrings(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
 }
 
-function cleanExternalPriority(values: string[]) {
-  const allowed = new Set(externalSourceOptions.map((option) => option.source));
+function cleanExternalPriority(providerCatalog: ExternalProviderCatalog | undefined, values: string[]) {
+  const allowed = new Set(externalSourceOptions(providerCatalog).map((option) => option.source));
   const cleaned = values
     .map((value) => value.trim().toLowerCase())
     .filter((value, index, items) => allowed.has(value) && items.indexOf(value) === index);

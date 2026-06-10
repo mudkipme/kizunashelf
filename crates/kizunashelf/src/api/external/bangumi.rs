@@ -1,6 +1,6 @@
 use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig, USER_AGENT};
 use crate::api::ApiError;
-use crate::contract::ExternalCandidate;
+use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
 use serde_json::{json, Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -107,6 +107,41 @@ pub(super) fn bangumi_types(provider_config: &ProviderSearchConfig) -> Option<Ve
         }
     }
     (!types.is_empty()).then(|| types.into_iter().collect())
+}
+
+pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
+    vec![
+        field_option("name", "Name"),
+        field_option("name_cn", "Chinese name"),
+        field_option("cover_url", "Cover URL"),
+        field_option("date", "Release date"),
+        field_option("total_episodes", "Total episodes"),
+        field_option("summary", "Summary"),
+    ]
+}
+
+pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
+    vec![
+        type_option("1", "Book (1)"),
+        type_option("2", "Anime (2)"),
+        type_option("3", "Music (3)"),
+        type_option("4", "Game (4)"),
+        type_option("6", "Real (6)"),
+    ]
+}
+
+fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
+    ExternalProviderFieldOption {
+        field: field.to_string(),
+        label: label.to_string(),
+    }
+}
+
+fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
+    ExternalProviderTypeOption {
+        value: value.to_string(),
+        label: label.to_string(),
+    }
 }
 
 fn bangumi_type(external_type: &str) -> Option<u32> {

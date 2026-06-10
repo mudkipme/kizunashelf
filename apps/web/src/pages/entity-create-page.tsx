@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import { apiFetch, errorMessage, isAbortError } from "@/api/client";
 import { addEntity, getAppCapabilities } from "@/api/entities";
+import { getProviderCatalog } from "@/api/external";
 import {
   type FrontmatterDraft,
   MetadataEditor,
@@ -17,10 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
-import type { Capabilities, ConfigResponse, EntitySummary } from "@/types/api";
+import type { Capabilities, ConfigResponse, EntitySummary, ExternalProviderCatalog } from "@/types/api";
 
 type CreateState = {
   config?: ConfigResponse;
+  providerCatalog?: ExternalProviderCatalog;
   capabilities?: Capabilities;
   relationSuggestions: EntitySummary[];
   loading: boolean;
@@ -58,6 +60,7 @@ export function EntityCreatePage() {
   );
   const external = useExternalMatch({
     typeConfig: selectedType,
+    providerCatalog: state.providerCatalog,
     entityType: typeId,
     defaultQuery: normalizedBasename,
     onError: (error) => setState((current) => ({ ...current, error })),
@@ -66,11 +69,12 @@ export function EntityCreatePage() {
   async function load(signal: AbortSignal) {
     setState({ loading: true, relationSuggestions: [] });
     try {
-      const [config, capabilities] = await Promise.all([
+      const [config, providerCatalog, capabilities] = await Promise.all([
         getConfig({ signal }, apiFetch),
+        getProviderCatalog({ signal }),
         getAppCapabilities({ signal }),
       ]);
-      setState({ config, capabilities, relationSuggestions: [], loading: false });
+      setState({ config, providerCatalog, capabilities, relationSuggestions: [], loading: false });
     } catch (error) {
       if (isAbortError(error)) return;
       setState({ loading: false, relationSuggestions: [], error: errorMessage(error) });
@@ -205,6 +209,7 @@ export function EntityCreatePage() {
           selectedCandidate={external.selectedCandidate}
           metadataEntries={external.metadataEntries}
           selectedFields={external.selectedFields}
+          providerCatalog={state.providerCatalog}
           providerOptions={external.providerOptions}
           externalSearchEnabled={external.externalSearchEnabled}
           searching={external.searching}

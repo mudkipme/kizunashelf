@@ -15,7 +15,6 @@ import { Select } from "@/components/ui/select";
 import {
   allOptions,
   allTypes,
-  defaultCategory,
   defaultDirection,
   defaultSort,
   defaultTitleOptionId,
@@ -68,7 +67,7 @@ export function LibraryPage() {
     loading: true,
   });
   const [searchParams, setSearchParams] = useSearchParams();
-  const firstType = stats.global?.byType[0]?.id ?? defaultCategory;
+  const firstType = stats.global?.byType[0]?.id ?? allTypes;
   const selectedType = searchParams.get("type") ?? allTypes;
   const isGlobalType = selectedType === allTypes;
   const refs = searchParams.get("refs") ?? allOptions;

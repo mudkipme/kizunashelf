@@ -3,7 +3,11 @@ mod bangumi;
 mod igdb;
 mod thetvdb;
 
-use crate::contract::{ExternalCandidate, ExternalProviderSummary, ExternalSearchResponse};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderCatalogItem, ExternalProviderCatalogResponse,
+    ExternalProviderDefaultFieldMapping, ExternalProviderFieldOption, ExternalProviderSummary,
+    ExternalProviderTypeOption, ExternalSearchResponse,
+};
 use crate::dates::clamp_number;
 use crate::types::{FieldType, KizunaConfig};
 use axum::extract::{Query, State};
@@ -168,6 +172,70 @@ pub(crate) async fn external_search(
         }
     }
     Ok(Json(ExternalSearchResponse { providers, items }))
+}
+
+pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogResponse> {
+    Json(ExternalProviderCatalogResponse {
+        providers: vec![
+            provider_catalog_item::<bangumi::BangumiProvider>(
+                bangumi::field_options(),
+                bangumi::type_options(),
+                &[],
+                &[
+                    default_field_mapping(&["title"], "name_cn"),
+                    default_field_mapping(&["originalTitle", "titleJa"], "name"),
+                    default_field_mapping(&["cover"], "cover_url"),
+                    default_field_mapping(&["releaseDate"], "date"),
+                ],
+            ),
+            provider_catalog_item::<igdb::IgdbProvider>(
+                igdb::field_options(),
+                igdb::type_options(),
+                &["game"],
+                &[
+                    default_field_mapping(&["title", "originalTitle"], "name"),
+                    default_field_mapping(&["cover"], "cover_url"),
+                    default_field_mapping(&["releaseDate"], "first_release_date"),
+                ],
+            ),
+            provider_catalog_item::<thetvdb::ThetvdbProvider>(
+                thetvdb::field_options(),
+                thetvdb::type_options(),
+                &[],
+                &[
+                    default_field_mapping(&["title", "originalTitle"], "name"),
+                    default_field_mapping(&["cover"], "cover_url"),
+                    default_field_mapping(&["releaseDate"], "first_air_time"),
+                ],
+            ),
+        ],
+    })
+}
+
+fn provider_catalog_item<P: ExternalProvider>(
+    fields: Vec<ExternalProviderFieldOption>,
+    types: Vec<ExternalProviderTypeOption>,
+    default_external_types: &[&str],
+    default_field_mappings: &[ExternalProviderDefaultFieldMapping],
+) -> ExternalProviderCatalogItem {
+    ExternalProviderCatalogItem {
+        id: P::ID.to_string(),
+        label: P::LABEL.to_string(),
+        fields,
+        types,
+        default_external_types: default_external_types
+            .iter()
+            .map(|value| value.to_string())
+            .collect(),
+        default_field_mappings: default_field_mappings.to_vec(),
+    }
+}
+
+fn default_field_mapping(roles: &[&str], field: &str) -> ExternalProviderDefaultFieldMapping {
+    ExternalProviderDefaultFieldMapping {
+        roles: roles.iter().map(|value| value.to_string()).collect(),
+        field: field.to_string(),
+    }
 }
 
 async fn search_provider<P: ExternalProvider>(

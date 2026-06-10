@@ -53,6 +53,10 @@ import {
 } from './entityMutationResponse.zod';
 
 import {
+  ExternalProviderCatalogResponse
+} from './externalProviderCatalogResponse.zod';
+
+import {
   ExternalSearchResponse
 } from './externalSearchResponse.zod';
 
@@ -451,6 +455,35 @@ export const getCalendar = async (params?: GetCalendarParams, options?: RequestI
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? CalendarResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetExternalProviderCatalogUrl = () => {
+
+
+
+
+  return `/api/external/providers`
+}
+
+export const getExternalProviderCatalog = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ExternalProviderCatalogResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetExternalProviderCatalogUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ExternalProviderCatalogResponse.parse(parsedBody) : parsedBody
   return data
 }
 

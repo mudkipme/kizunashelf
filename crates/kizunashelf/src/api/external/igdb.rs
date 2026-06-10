@@ -1,7 +1,7 @@
 use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig};
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
-use crate::contract::ExternalCandidate;
+use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
@@ -95,6 +95,34 @@ pub(super) fn igdb_external_types_match(provider_config: &ProviderSearchConfig) 
     external_types
         .iter()
         .any(|external_type| matches!(external_type.trim().to_ascii_lowercase().as_str(), "game"))
+}
+
+pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
+    vec![
+        field_option("name", "Name"),
+        field_option("cover_url", "Cover URL"),
+        field_option("first_release_date", "First release date"),
+        field_option("summary", "Summary"),
+        field_option("storyline", "Storyline"),
+    ]
+}
+
+pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
+    vec![type_option("game", "Game")]
+}
+
+fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
+    ExternalProviderFieldOption {
+        field: field.to_string(),
+        label: label.to_string(),
+    }
+}
+
+fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
+    ExternalProviderTypeOption {
+        value: value.to_string(),
+        label: label.to_string(),
+    }
 }
 
 fn igdb_query_body(q: &str, page_size: usize, offset: usize) -> String {

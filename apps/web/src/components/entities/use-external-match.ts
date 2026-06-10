@@ -8,18 +8,20 @@ import {
   candidateMetadataPreviewEntries,
   externalProviderPriority,
 } from "@/lib/external-metadata";
-import type { ExternalCandidate, TypeConfig } from "@/types/api";
+import type { ExternalCandidate, ExternalProviderCatalog, TypeConfig } from "@/types/api";
 
 type ExternalRefs = Record<string, string | undefined>;
 
 export function useExternalMatch({
   typeConfig,
+  providerCatalog,
   entityType,
   defaultQuery,
   externalRefs,
   onError,
 }: {
   typeConfig?: TypeConfig;
+  providerCatalog?: ExternalProviderCatalog;
   entityType?: string;
   defaultQuery?: string;
   externalRefs?: ExternalRefs;
@@ -34,7 +36,10 @@ export function useExternalMatch({
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [emptyMessage, setEmptyMessage] = useState("No candidates loaded");
 
-  const providerOptions = useMemo(() => externalProviderPriority(typeConfig), [typeConfig]);
+  const providerOptions = useMemo(
+    () => externalProviderPriority(providerCatalog, typeConfig),
+    [providerCatalog, typeConfig],
+  );
   const externalSearchEnabled = providerOptions.length > 0;
   const metadataEntries = useMemo(
     () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, typeConfig) : []),

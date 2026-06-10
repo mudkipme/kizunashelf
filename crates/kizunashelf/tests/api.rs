@@ -32,6 +32,19 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(capabilities["externalSearchEnabled"], true);
     assert_eq!(capabilities["externalApplyEnabled"], true);
 
+    let external_providers = server.ok_json("/api/external/providers").await;
+    assert_eq!(external_providers["providers"].as_array().unwrap().len(), 3);
+    assert_eq!(external_providers["providers"][0]["id"], "bangumi");
+    assert_eq!(external_providers["providers"][0]["fields"][0]["field"], "name");
+    assert_eq!(
+        external_providers["providers"][0]["defaultFieldMappings"][0],
+        json!({ "roles": ["title"], "field": "name_cn" })
+    );
+    assert_eq!(
+        external_providers["providers"][1]["defaultExternalTypes"],
+        json!(["game"])
+    );
+
     let config = server.ok_json("/api/config").await;
     assert_eq!(config["taxonomyRoot"], "Taxonomy");
     assert_eq!(config["types"].as_array().unwrap().len(), 4);

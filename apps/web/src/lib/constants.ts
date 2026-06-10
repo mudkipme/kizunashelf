@@ -1,6 +1,5 @@
 export const allOptions = "all";
 export const allTypes = "all";
-export const defaultCategory = "anime";
 export const defaultSort = "title";
 export const defaultDirection = "asc";
 export const defaultView = "list";

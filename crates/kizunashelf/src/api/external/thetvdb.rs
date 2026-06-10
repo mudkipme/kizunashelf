@@ -1,7 +1,7 @@
 use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig};
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
-use crate::contract::ExternalCandidate;
+use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::time::{Duration, Instant};
@@ -165,6 +165,34 @@ pub(super) fn thetvdb_type_filters(
         .filter_map(|external_type| thetvdb_type_filter(external_type).map(Some))
         .collect::<Vec<_>>();
     (!filters.is_empty()).then_some(filters)
+}
+
+pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
+    vec![
+        field_option("name", "Name"),
+        field_option("cover_url", "Cover URL"),
+        field_option("first_air_time", "First air time"),
+        field_option("year", "Year"),
+        field_option("overview", "Overview"),
+    ]
+}
+
+pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
+    vec![type_option("series", "Series"), type_option("movie", "Movie")]
+}
+
+fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
+    ExternalProviderFieldOption {
+        field: field.to_string(),
+        label: label.to_string(),
+    }
+}
+
+fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
+    ExternalProviderTypeOption {
+        value: value.to_string(),
+        label: label.to_string(),
+    }
 }
 
 fn thetvdb_type_filter(external_type: &str) -> Option<String> {

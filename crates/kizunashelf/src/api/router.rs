@@ -1,6 +1,6 @@
 use super::analytics::{analytics, cleanup_queues, stats};
 use super::entities::{entities, entity_dates, entity_detail};
-use super::external::external_search;
+use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
     calendar, capabilities, config, health, home, relation_groups, relations, save_settings_config,
     settings_config,
@@ -12,9 +12,9 @@ use crate::calendar::EntityDatesResponse;
 use crate::contract::{
     AnalyticsResponse, CalendarResponse, CapabilitiesResponse, CleanupQueuesResponse,
     ConfigResponse, DeleteEntityResponse, EntityDetailResponse, EntityListResponse,
-    EntityMutationResponse, ErrorResponse, ExternalSearchResponse, HealthResponse, HomeResponse,
-    PathSuggestionsResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
-    StatsResponse,
+    EntityMutationResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse,
+    HealthResponse, HomeResponse, PathSuggestionsResponse, RelationGroupsResponse,
+    RelationListResponse, SettingsConfigResponse, StatsResponse,
 };
 use aide::axum::routing::get_with;
 use aide::axum::ApiRouter;
@@ -150,6 +150,13 @@ fn api_router() -> ApiRouter<AppState> {
                 op.id("getCalendar")
                     .response::<200, Json<CalendarResponse>>()
                     .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/external/providers",
+            get_with(external_provider_catalog, |op| {
+                op.id("getExternalProviderCatalog")
+                    .response::<200, Json<ExternalProviderCatalogResponse>>()
             }),
         )
         .api_route(

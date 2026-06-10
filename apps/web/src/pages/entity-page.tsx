@@ -12,6 +12,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { getAppCapabilities, removeEntity, saveEntity } from "@/api/entities";
+import { getProviderCatalog } from "@/api/external";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { useExternalMatch } from "@/components/entities/use-external-match";
@@ -37,6 +38,7 @@ import type {
   Entity,
   EntityDatesResponse,
   EntityDetailResponse,
+  ExternalProviderCatalog,
 } from "@/types/api";
 
 export function EntityPage() {
@@ -46,6 +48,7 @@ export function EntityPage() {
     detail?: EntityDetailResponse;
     dates?: EntityDatesResponse;
     config?: ConfigResponse;
+    providerCatalog?: ExternalProviderCatalog;
     capabilities?: Capabilities;
     loading: boolean;
     error?: string;
@@ -64,6 +67,7 @@ export function EntityPage() {
   const typeConfig = state.config?.types.find((type) => type.id === entity?.type);
   const external = useExternalMatch({
     typeConfig,
+    providerCatalog: state.providerCatalog,
     entityType: entity?.type,
     defaultQuery: entity?.title,
     externalRefs: entity?.externalRefs,
@@ -84,13 +88,14 @@ export function EntityPage() {
     if (!id) return;
     setState((current) => ({ ...current, loading: true, error: undefined }));
     try {
-      const [detail, dates, config, capabilities] = await Promise.all([
+      const [detail, dates, config, providerCatalog, capabilities] = await Promise.all([
         getEntity(id, undefined, apiFetch),
         getEntityDates(id, undefined, apiFetch),
         getConfig(undefined, apiFetch),
+        getProviderCatalog(),
         getAppCapabilities(),
       ]);
-      setState({ detail, dates, config, capabilities, loading: false });
+      setState({ detail, dates, config, providerCatalog, capabilities, loading: false });
     } catch (error: unknown) {
       setState((current) => ({ ...current, loading: false, error: errorMessage(error) }));
     }
@@ -193,6 +198,7 @@ export function EntityPage() {
               selectedCandidate={external.selectedCandidate}
               metadataEntries={external.metadataEntries}
               selectedFields={external.selectedFields}
+              providerCatalog={state.providerCatalog}
               providerOptions={external.providerOptions}
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}

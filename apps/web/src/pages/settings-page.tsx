@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 
 import { errorMessage } from "@/api/client";
+import { getProviderCatalog } from "@/api/external";
 import { getSettingsConfig } from "@/api/settings";
 import { AppFrame } from "@/components/layout/app-frame";
 import { SettingsEditor } from "@/components/settings/settings-editor";
+import type { ExternalProviderCatalog } from "@/types/api";
 import type { SettingsConfigResponse } from "@/types/config";
 
 type SettingsState = {
   data?: SettingsConfigResponse;
+  providerCatalog?: ExternalProviderCatalog;
   loading: boolean;
   error?: string;
 };
@@ -22,8 +25,11 @@ export function SettingsPage() {
   async function load() {
     setState({ loading: true });
     try {
-      const data = await getSettingsConfig();
-      setState({ data, loading: false });
+      const [data, providerCatalog] = await Promise.all([
+        getSettingsConfig(),
+        getProviderCatalog(),
+      ]);
+      setState({ data, providerCatalog, loading: false });
     } catch (error) {
       setState({ loading: false, error: errorMessage(error) });
     }
@@ -38,6 +44,7 @@ export function SettingsPage() {
           <SettingsEditor
             configPath={state.data.configPath}
             initialConfig={state.data.config}
+            providerCatalog={state.providerCatalog}
             onSaved={load}
           />
         ) : null}

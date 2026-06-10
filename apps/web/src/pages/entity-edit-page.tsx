@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { apiFetch, errorMessage, isAbortError } from "@/api/client";
 import { getAppCapabilities, saveEntity } from "@/api/entities";
+import { getProviderCatalog } from "@/api/external";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import {
   type FrontmatterDraft,
@@ -20,11 +21,13 @@ import type {
   ConfigResponse,
   EntityDetailResponse,
   EntitySummary,
+  ExternalProviderCatalog,
 } from "@/types/api";
 
 type EditState = {
   detail?: EntityDetailResponse;
   config?: ConfigResponse;
+  providerCatalog?: ExternalProviderCatalog;
   capabilities?: Capabilities;
   relationSuggestions: EntitySummary[];
   loading: boolean;
@@ -46,6 +49,7 @@ export function EntityEditPage() {
   );
   const external = useExternalMatch({
     typeConfig,
+    providerCatalog: state.providerCatalog,
     entityType: entity?.type,
     defaultQuery: entity?.title,
     externalRefs: entity?.externalRefs,
@@ -70,14 +74,16 @@ export function EntityEditPage() {
     if (!id) return;
     setState({ loading: true, relationSuggestions: [] });
     try {
-      const [detail, config, capabilities] = await Promise.all([
+      const [detail, config, providerCatalog, capabilities] = await Promise.all([
         getEntity(id, { signal }, apiFetch),
         getConfig({ signal }, apiFetch),
+        getProviderCatalog({ signal }),
         getAppCapabilities({ signal }),
       ]);
       setState({
         detail,
         config,
+        providerCatalog,
         capabilities,
         relationSuggestions: [],
         loading: false,
@@ -190,6 +196,7 @@ export function EntityEditPage() {
               selectedCandidate={external.selectedCandidate}
               metadataEntries={external.metadataEntries}
               selectedFields={external.selectedFields}
+              providerCatalog={state.providerCatalog}
               providerOptions={external.providerOptions}
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}

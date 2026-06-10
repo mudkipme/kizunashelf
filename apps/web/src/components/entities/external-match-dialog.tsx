@@ -17,7 +17,7 @@ import {
   type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { cn } from "@/lib/utils";
-import type { ExternalCandidate } from "@/types/api";
+import type { ExternalCandidate, ExternalProviderCatalog } from "@/types/api";
 
 type ExternalRefAction = {
   field: string;
@@ -33,6 +33,7 @@ type ExternalMatchDialogProps = {
   selectedCandidate?: ExternalCandidate;
   metadataEntries: ExternalMetadataPreviewEntry[];
   selectedFields: Set<string>;
+  providerCatalog?: ExternalProviderCatalog;
   providerOptions: string[];
   externalSearchEnabled: boolean;
   currentValues?: Record<string, unknown>;
@@ -60,6 +61,7 @@ export function ExternalMatchDialog({
   selectedCandidate,
   metadataEntries,
   selectedFields,
+  providerCatalog,
   providerOptions,
   externalSearchEnabled,
   currentValues,
@@ -114,7 +116,7 @@ export function ExternalMatchDialog({
               {providerOptions.length > 1 ? <option value="all">All sources</option> : null}
               {providerOptions.map((providerOption) => (
                 <option key={providerOption} value={providerOption}>
-                  {externalSourceLabel(providerOption)}
+                  {externalSourceLabel(providerCatalog, providerOption)}
                 </option>
               ))}
             </Select>
@@ -141,7 +143,7 @@ export function ExternalMatchDialog({
                   disabled={searching || !onRefreshRef}
                 >
                   <WandSparklesIcon data-icon="inline-start" />
-                  Refresh {externalSourceLabel(ref.provider)}
+                  Refresh {externalSourceLabel(providerCatalog, ref.provider)}
                 </Button>
               ))}
             </div>
@@ -164,7 +166,7 @@ export function ExternalMatchDialog({
                     onClick={() => onChooseCandidate(candidate)}
                   >
                     <div className="flex min-w-0 items-center gap-2">
-                      <Badge variant="secondary">{externalSourceLabel(candidate.provider)}</Badge>
+                      <Badge variant="secondary">{externalSourceLabel(providerCatalog, candidate.provider)}</Badge>
                       <span className="min-w-0 truncate text-sm font-medium">{candidate.title}</span>
                     </div>
                     {candidate.brief ? (

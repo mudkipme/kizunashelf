@@ -10,6 +10,7 @@ import { EntityDetailResponse as EntityDetailResponseSchema } from "./generated/
 import { EntityListResponse as EntityListResponseSchema } from "./generated/entityListResponse.zod.js";
 import { EntityMutationResponse as EntityMutationResponseSchema } from "./generated/entityMutationResponse.zod.js";
 import { ExternalSearchResponse as ExternalSearchResponseSchema } from "./generated/externalSearchResponse.zod.js";
+import { ExternalProviderCatalogResponse as ExternalProviderCatalogResponseSchema } from "./generated/externalProviderCatalogResponse.zod.js";
 import { HealthResponse as HealthResponseSchema } from "./generated/healthResponse.zod.js";
 import { HomeResponse as HomeResponseSchema } from "./generated/homeResponse.zod.js";
 import { RelationGroupsResponse as RelationGroupsResponseSchema } from "./generated/relationGroupsResponse.zod.js";
@@ -25,6 +26,7 @@ import type { EntityDetailResponse } from "./generated/entityDetailResponse.zod.
 import type { EntityListResponse } from "./generated/entityListResponse.zod.js";
 import type { EntityMutationResponse } from "./generated/entityMutationResponse.zod.js";
 import type { ExternalSearchResponse } from "./generated/externalSearchResponse.zod.js";
+import type { ExternalProviderCatalogResponse } from "./generated/externalProviderCatalogResponse.zod.js";
 import type { HomeResponse } from "./generated/homeResponse.zod.js";
 import type { RelationFieldSummary as RelationFieldSummaryType } from "./generated/relationFieldSummary.zod.js";
 import type { RelationGroupsResponse } from "./generated/relationGroupsResponse.zod.js";
@@ -46,7 +48,12 @@ export * from "./generated/entityDetailResponse.zod.js";
 export * from "./generated/entityListResponse.zod.js";
 export * from "./generated/entityMutationResponse.zod.js";
 export * from "./generated/externalCandidate.zod.js";
+export * from "./generated/externalProviderCatalogItem.zod.js";
+export * from "./generated/externalProviderCatalogResponse.zod.js";
+export * from "./generated/externalProviderDefaultFieldMapping.zod.js";
+export * from "./generated/externalProviderFieldOption.zod.js";
 export * from "./generated/externalProviderSummary.zod.js";
+export * from "./generated/externalProviderTypeOption.zod.js";
 export * from "./generated/externalSearchResponse.zod.js";
 export * from "./generated/getCalendarParams.zod.js";
 export * from "./generated/getEntitiesParams.zod.js";
@@ -74,6 +81,7 @@ export const ApiResponseSchemas = {
   entityDetail: EntityDetailResponseSchema,
   entityMutation: EntityMutationResponseSchema,
   entityDates: EntityDatesResponseSchema,
+  externalProviderCatalog: ExternalProviderCatalogResponseSchema,
   externalSearch: ExternalSearchResponseSchema,
   relations: RelationListResponseSchema,
   relationGroups: RelationGroupsResponseSchema,
@@ -85,6 +93,8 @@ export type Capabilities = CapabilitiesResponse;
 export type EntitySummary = EntityListResponse["items"][number];
 export type MutatedEntity = EntityMutationResponse["entity"];
 export type ExternalCandidate = ExternalSearchResponse["items"][number];
+export type ExternalProviderCatalog = ExternalProviderCatalogResponse;
+export type ExternalProviderCatalogItem = ExternalProviderCatalogResponse["providers"][number];
 export type ExternalProviderSummary = ExternalSearchResponse["providers"][number];
 export type EntityDateValue = EntitySummary["dates"][number];
 export type Relation = EntityDetailResponse["relations"][number];

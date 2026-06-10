@@ -22,6 +22,8 @@ export type {
   EntityMutationResponse,
   EntitySummary,
   ExternalCandidate,
+  ExternalProviderCatalog,
+  ExternalProviderCatalogItem,
   ExternalProviderSummary,
   ExternalSearchResponse,
   HomeResponse,

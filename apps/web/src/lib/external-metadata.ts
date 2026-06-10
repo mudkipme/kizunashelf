@@ -4,7 +4,7 @@ import {
   isListFieldType,
   type FieldConfig,
 } from "@/lib/type-config";
-import type { ExternalCandidate, TypeConfig } from "@/types/api";
+import type { ExternalCandidate, ExternalProviderCatalog, ExternalProviderCatalogItem, TypeConfig } from "@/types/api";
 
 export type ExternalMetadataEntry = {
   field: string;
@@ -23,45 +23,43 @@ export type ExternalFieldOption = {
   label: string;
 };
 
-export const externalFieldOptionsBySource: Record<string, ExternalFieldOption[]> = {
-  bangumi: [
-    { field: "name", label: "Name" },
-    { field: "name_cn", label: "Chinese name" },
-    { field: "cover_url", label: "Cover URL" },
-    { field: "date", label: "Release date" },
-    { field: "total_episodes", label: "Total episodes" },
-    { field: "summary", label: "Summary" },
-  ],
-  igdb: [
-    { field: "name", label: "Name" },
-    { field: "cover_url", label: "Cover URL" },
-    { field: "first_release_date", label: "First release date" },
-    { field: "summary", label: "Summary" },
-    { field: "storyline", label: "Storyline" },
-  ],
-  thetvdb: [
-    { field: "name", label: "Name" },
-    { field: "cover_url", label: "Cover URL" },
-    { field: "first_air_time", label: "First air time" },
-    { field: "year", label: "Year" },
-    { field: "overview", label: "Overview" },
-  ],
+export type ExternalSourceOption = {
+  source: string;
+  label: string;
 };
 
-export const externalSourceOptions = [
-  { source: "bangumi", label: "Bangumi" },
-  { source: "igdb", label: "IGDB" },
-  { source: "thetvdb", label: "TheTVDB" },
-];
-
-export function externalSourceLabel(source: string) {
-  return externalSourceOptions.find((option) => option.source === source)?.label ?? source;
+export function externalSourceOptions(catalog: ExternalProviderCatalog | undefined): ExternalSourceOption[] {
+  return (catalog?.providers ?? []).map((provider) => ({
+    source: provider.id,
+    label: provider.label,
+  }));
 }
 
-export function externalProviderPriority(typeConfig: TypeConfig | undefined) {
+export function externalFieldOptionsForSource(
+  catalog: ExternalProviderCatalog | undefined,
+  source: string,
+): ExternalFieldOption[] {
+  return externalProvider(catalog, source)?.fields ?? [];
+}
+
+export function externalTypeOptionsForSource(
+  catalog: ExternalProviderCatalog | undefined,
+  source: string,
+) {
+  return externalProvider(catalog, source)?.types ?? [];
+}
+
+export function externalSourceLabel(catalog: ExternalProviderCatalog | undefined, source: string) {
+  return externalProvider(catalog, source)?.label ?? source;
+}
+
+export function externalProviderPriority(
+  catalog: ExternalProviderCatalog | undefined,
+  typeConfig: TypeConfig | undefined,
+) {
   const supported = new Set<string>();
   for (const field of configFields(typeConfig)) {
-    if (field.fieldType === "externalRef") addKnownSource(supported, field.externalRef ?? "");
+    if (field.fieldType === "externalRef") addKnownSource(catalog, supported, field.externalRef ?? "");
   }
 
   const priority = new Set<string>();
@@ -74,6 +72,29 @@ export function externalProviderPriority(typeConfig: TypeConfig | undefined) {
   }
 
   return [...priority];
+}
+
+export function externalTypesForSource(
+  catalog: ExternalProviderCatalog | undefined,
+  source: string,
+) {
+  return [...(externalProvider(catalog, source)?.defaultExternalTypes ?? [])];
+}
+
+export function defaultExternalPriority(
+  catalog: ExternalProviderCatalog | undefined,
+  externalRefs: string[],
+) {
+  return cleanExternalPriority(catalog, externalRefs.map(externalSourceForField)) ?? [];
+}
+
+export function defaultExternalMappings(
+  catalog: ExternalProviderCatalog | undefined,
+  source: string,
+  role: string,
+) {
+  const field = defaultExternalField(catalog, source, role);
+  return field ? [{ source, field }] : [];
 }
 
 export function candidateMetadataEntries(
@@ -174,9 +195,13 @@ function externalSourceMatches(provider: string, source: string) {
   return provider === expected;
 }
 
-function addKnownSource(target: Set<string>, source: string) {
+function addKnownSource(
+  catalog: ExternalProviderCatalog | undefined,
+  target: Set<string>,
+  source: string,
+) {
   const expected = source.trim().toLowerCase();
-  if (externalSourceOptions.some((option) => option.source === expected)) {
+  if (externalProvider(catalog, expected)) {
     target.add(expected);
   }
 }
@@ -191,4 +216,34 @@ function hasValue(value: unknown): value is NonNullable<unknown> {
   if (typeof value === "string") return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
   return true;
+}
+
+function externalProvider(
+  catalog: ExternalProviderCatalog | undefined,
+  source: string,
+): ExternalProviderCatalogItem | undefined {
+  const expected = source.trim().toLowerCase();
+  return catalog?.providers.find((provider) => provider.id === expected);
+}
+
+function externalSourceForField(field: string) {
+  return field.replace(/_url$/, "");
+}
+
+function defaultExternalField(
+  catalog: ExternalProviderCatalog | undefined,
+  source: string,
+  role: string,
+) {
+  return externalProvider(catalog, source)?.defaultFieldMappings.find((mapping) =>
+    mapping.roles.includes(role),
+  )?.field;
+}
+
+function cleanExternalPriority(catalog: ExternalProviderCatalog | undefined, values: string[]) {
+  const allowed = new Set(externalSourceOptions(catalog).map((option) => option.source));
+  const cleaned = values
+    .map((value) => value.trim().toLowerCase())
+    .filter((value, index, items) => allowed.has(value) && items.indexOf(value) === index);
+  return cleaned.length > 0 ? cleaned : undefined;
 }

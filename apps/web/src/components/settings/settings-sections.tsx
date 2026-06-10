@@ -3,7 +3,12 @@ import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { externalFieldOptionsBySource, externalSourceOptions } from "@/lib/external-metadata";
+import {
+  externalFieldOptionsForSource,
+  externalSourceOptions,
+  externalTypeOptionsForSource,
+  externalTypesForSource,
+} from "@/lib/external-metadata";
 import {
   fieldTypeLabel,
   supportsDateRole,
@@ -21,6 +26,7 @@ import type {
   HomeSectionFilterConfig,
   SeasonLanguage,
 } from "@/types/config";
+import type { ExternalProviderCatalog } from "@/types/api";
 
 import {
   EmptyConfigLine,
@@ -34,8 +40,6 @@ import {
 import {
   defaultField,
   defaultHomeSection,
-  externalTypeOptionsBySource,
-  externalTypesForSource,
   replaceArray,
   replaceAt,
 } from "./settings-model";
@@ -268,11 +272,13 @@ function HomeSectionFilterEditor({
 
 export function EntityTypeEditor({
   config,
+  providerCatalog,
   taxonomyBase,
   onChange,
   onRemove,
 }: {
   config: EntityTypeConfig;
+  providerCatalog?: ExternalProviderCatalog;
   taxonomyBase: string;
   onChange: (config: EntityTypeConfig) => void;
   onRemove: () => void;
@@ -290,6 +296,7 @@ export function EntityTypeEditor({
         <PathField label="Path" value={config.path} base={taxonomyBase} onChange={(path) => onChange({ ...config, path })} />
         <div className="lg:col-span-3">
           <ExternalPriorityEditor
+            providerCatalog={providerCatalog}
             values={config.externalPriority ?? []}
             onChange={(externalPriority) => onChange({ ...config, externalPriority })}
           />
@@ -337,6 +344,7 @@ export function EntityTypeEditor({
       <Separator className="my-3" />
       <FieldsEditor
         typeId={config.id}
+        providerCatalog={providerCatalog}
         fields={config.fields}
         onChange={(fields) => onChange({ ...config, fields })}
       />
@@ -346,10 +354,12 @@ export function EntityTypeEditor({
 
 function FieldsEditor({
   typeId,
+  providerCatalog,
   fields,
   onChange,
 }: {
   typeId: string;
+  providerCatalog?: ExternalProviderCatalog;
   fields: FieldConfig[];
   onChange: (fields: FieldConfig[]) => void;
 }) {
@@ -367,6 +377,7 @@ function FieldsEditor({
           <FieldConfigEditor
             key={`${field.field}-${field.fieldType}-${index}`}
             typeId={typeId}
+            providerCatalog={providerCatalog}
             field={field}
             onChange={(next) => onChange(replaceArray(fields, index, next))}
             onRemove={() => onChange(fields.filter((_, itemIndex) => itemIndex !== index))}
@@ -379,13 +390,16 @@ function FieldsEditor({
 }
 
 function ExternalPriorityEditor({
+  providerCatalog,
   values,
   onChange,
 }: {
+  providerCatalog?: ExternalProviderCatalog;
   values: string[];
   onChange: (values: string[]) => void;
 }) {
-  const available = externalSourceOptions.filter((option) => !values.includes(option.source));
+  const sourceOptions = externalSourceOptions(providerCatalog);
+  const available = sourceOptions.filter((option) => !values.includes(option.source));
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -403,7 +417,7 @@ function ExternalPriorityEditor({
       </div>
       <div className="flex flex-col gap-2">
         {values.map((value, index) => {
-          const options = externalSourceOptions.filter(
+          const options = sourceOptions.filter(
             (option) => option.source === value || !values.includes(option.source),
           );
           return (
@@ -435,11 +449,13 @@ function ExternalPriorityEditor({
 
 function FieldConfigEditor({
   typeId,
+  providerCatalog,
   field,
   onChange,
   onRemove,
 }: {
   typeId: string;
+  providerCatalog?: ExternalProviderCatalog;
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
   onRemove: () => void;
@@ -512,6 +528,7 @@ function FieldConfigEditor({
         {field.fieldType !== "externalRef" ? (
           <div className="lg:col-span-3">
             <ExternalFieldMappingsEditor
+              providerCatalog={providerCatalog}
               values={field.externalFields ?? []}
               onChange={(externalFields) => onChange({ ...field, externalFields })}
             />
@@ -561,13 +578,13 @@ function FieldConfigEditor({
                   onChange({
                     ...field,
                     externalRef: event.target.value,
-                    externalTypes: externalTypesForSource(event.target.value, typeId),
+                    externalTypes: externalTypesForSource(providerCatalog, event.target.value),
                   })
                 }
                 className="h-9 w-full text-sm"
               >
                 <option value="">None</option>
-                {externalSourceOptions.map((option) => (
+                {externalSourceOptions(providerCatalog).map((option) => (
                   <option key={option.source} value={option.source}>
                     {option.label}
                   </option>
@@ -577,6 +594,7 @@ function FieldConfigEditor({
             <div className="lg:col-span-2">
               <ExternalTypesEditor
                 source={field.externalRef ?? ""}
+                providerCatalog={providerCatalog}
                 values={field.externalTypes ?? []}
                 onChange={(externalTypes) => onChange({ ...field, externalTypes })}
               />
@@ -596,12 +614,15 @@ function FieldConfigEditor({
 }
 
 function ExternalFieldMappingsEditor({
+  providerCatalog,
   values,
   onChange,
 }: {
+  providerCatalog?: ExternalProviderCatalog;
   values: ExternalFieldMapping[];
   onChange: (values: ExternalFieldMapping[]) => void;
 }) {
+  const sourceOptions = externalSourceOptions(providerCatalog);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -610,7 +631,8 @@ function ExternalFieldMappingsEditor({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => onChange([...values, { source: externalSourceOptions[0]?.source ?? "bangumi", field: "" }])}
+          onClick={() => onChange([...values, { source: sourceOptions[0]?.source ?? "", field: "" }])}
+          disabled={sourceOptions.length === 0}
         >
           <PlusIcon data-icon="inline-start" />
           Add
@@ -618,19 +640,19 @@ function ExternalFieldMappingsEditor({
       </div>
       <div className="flex flex-col gap-2">
         {values.map((value, index) => {
-          const fieldOptions = externalFieldOptionsBySource[value.source] ?? [];
+          const fieldOptions = externalFieldOptionsForSource(providerCatalog, value.source);
           return (
             <div key={index} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_auto] gap-2">
               <Select
                 value={value.source}
                 onChange={(event) => {
                   const source = event.target.value;
-                  const firstField = externalFieldOptionsBySource[source]?.[0]?.field ?? "";
+                  const firstField = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
                   onChange(replaceArray(values, index, { source, field: firstField }));
                 }}
                 aria-label="External source"
               >
-                {externalSourceOptions.map((option) => (
+                {sourceOptions.map((option) => (
                   <option key={option.source} value={option.source}>
                     {option.label}
                   </option>
@@ -663,14 +685,16 @@ function ExternalFieldMappingsEditor({
 
 function ExternalTypesEditor({
   source,
+  providerCatalog,
   values,
   onChange,
 }: {
   source: string;
+  providerCatalog?: ExternalProviderCatalog;
   values: string[];
   onChange: (values: string[]) => void;
 }) {
-  const options = externalTypeOptionsBySource[source] ?? [];
+  const options = externalTypeOptionsForSource(providerCatalog, source);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">

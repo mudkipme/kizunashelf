@@ -4,6 +4,7 @@ import { PlusIcon, SaveIcon } from "lucide-react";
 import { saveSettingsConfig } from "@/api/settings";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import type { ExternalProviderCatalog } from "@/types/api";
 import type { KizunaConfig } from "@/types/config";
 
 import {
@@ -29,6 +30,7 @@ import { DailyNotesEditor, EntityTypeEditor, HomeEditor } from "./settings-secti
 type SettingsEditorProps = {
   configPath: string;
   initialConfig?: KizunaConfig;
+  providerCatalog?: ExternalProviderCatalog;
   onboarding?: boolean;
   onSaved?: () => void;
 };
@@ -36,6 +38,7 @@ type SettingsEditorProps = {
 export function SettingsEditor({
   configPath,
   initialConfig,
+  providerCatalog,
   onboarding = false,
   onSaved,
 }: SettingsEditorProps) {
@@ -54,7 +57,7 @@ export function SettingsEditor({
     setError(undefined);
     setMessage(undefined);
     try {
-      await saveSettingsConfig(cleanConfig(config));
+      await saveSettingsConfig(cleanConfig(config, providerCatalog));
       setMessage("Saved");
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onSaved?.();
@@ -92,7 +95,7 @@ export function SettingsEditor({
       {onboarding ? (
         <SettingsSection title="Create Vault Templates">
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {vaultTemplates().map((template) => (
+            {vaultTemplates(providerCatalog).map((template) => (
               <Button
                 key={template.id}
                 type="button"
@@ -220,6 +223,7 @@ export function SettingsEditor({
             <EntityTypeEditor
               key={`${typeConfig.id}-${index}`}
               config={typeConfig}
+              providerCatalog={providerCatalog}
               taxonomyBase={taxonomyBase}
               onChange={(next) => setConfig((current) => replaceAt(current, "types", index, next))}
               onRemove={() =>

@@ -61,6 +61,44 @@ pub struct ConfigResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
+pub struct ExternalProviderCatalogResponse {
+    pub providers: Vec<ExternalProviderCatalogItem>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalProviderCatalogItem {
+    pub id: String,
+    pub label: String,
+    pub fields: Vec<ExternalProviderFieldOption>,
+    pub types: Vec<ExternalProviderTypeOption>,
+    pub default_external_types: Vec<String>,
+    pub default_field_mappings: Vec<ExternalProviderDefaultFieldMapping>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalProviderFieldOption {
+    pub field: String,
+    pub label: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalProviderTypeOption {
+    pub value: String,
+    pub label: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalProviderDefaultFieldMapping {
+    pub roles: Vec<String>,
+    pub field: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct HomeSectionResponse {
     pub id: String,
     pub title: String,
@@ -412,6 +450,7 @@ pub struct ApiSchemas {
     pub home: HomeResponse,
     pub stats: StatsResponse,
     pub analytics: AnalyticsResponse,
+    pub external_provider_catalog: ExternalProviderCatalogResponse,
     pub entities: EntityListResponse,
     pub entity_detail: EntityDetailResponse,
     pub entity_dates: EntityDatesResponse,
