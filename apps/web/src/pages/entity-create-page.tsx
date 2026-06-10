@@ -4,25 +4,20 @@ import { PlusIcon, SearchIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch, errorMessage, isAbortError } from "@/api/client";
-import { addEntity, getAppCapabilities, searchSources } from "@/api/entities";
+import { addEntity, getAppCapabilities } from "@/api/entities";
 import {
   type FrontmatterDraft,
   MetadataEditor,
   normalizeFrontmatter,
 } from "@/components/entities/metadata-editor";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
+import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import {
-  candidateMetadataEntries,
-  candidateMetadataPatch,
-  candidateMetadataPreviewEntries,
-  externalProviderPriority,
-} from "@/lib/external-metadata";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
-import type { Capabilities, ConfigResponse, EntitySummary, ExternalCandidate } from "@/types/api";
+import type { Capabilities, ConfigResponse, EntitySummary } from "@/types/api";
 
 type CreateState = {
   config?: ConfigResponse;
@@ -40,13 +35,6 @@ export function EntityCreatePage() {
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   const [creating, setCreating] = useState(false);
-  const [matchOpen, setMatchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [provider, setProvider] = useState("all");
-  const [searching, setSearching] = useState(false);
-  const [candidates, setCandidates] = useState<ExternalCandidate[]>([]);
-  const [selectedCandidate, setSelectedCandidate] = useState<ExternalCandidate>();
-  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<string>();
   const contentWritable = state.capabilities?.contentWritable !== false;
   const normalizedBasename = normalizeBasename(basename);
@@ -68,24 +56,12 @@ export function EntityCreatePage() {
     () => state.config?.types.find((type) => type.id === typeId),
     [state.config, typeId],
   );
-  const selectedCandidateEntries = useMemo(
-    () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, selectedType) : []),
-    [selectedCandidate, selectedType],
-  );
-  const providerOptions = useMemo(() => externalProviderPriority(selectedType), [selectedType]);
-  const externalSearchEnabled = providerOptions.length > 0;
-
-  useEffect(() => {
-    if (providerOptions.length === 0) {
-      if (provider !== "all") setProvider("all");
-      return;
-    }
-    if (providerOptions.length === 1) {
-      if (provider !== providerOptions[0]) setProvider(providerOptions[0]);
-      return;
-    }
-    if (provider !== "all" && !providerOptions.includes(provider)) setProvider("all");
-  }, [provider, providerOptions]);
+  const external = useExternalMatch({
+    typeConfig: selectedType,
+    entityType: typeId,
+    defaultQuery: normalizedBasename,
+    onError: (error) => setState((current) => ({ ...current, error })),
+  });
 
   async function load(signal: AbortSignal) {
     setState({ loading: true, relationSuggestions: [] });
@@ -147,47 +123,17 @@ export function EntityCreatePage() {
     }
   }
 
-  async function searchExternal() {
-    const query = searchQuery.trim() || normalizedBasename;
-    if (!query || !typeId || !externalSearchEnabled) return;
-    if (provider !== "all" && !providerOptions.includes(provider)) return;
-    setSearching(true);
-    setMessage(undefined);
-    setState((current) => ({ ...current, error: undefined }));
-    try {
-      const result = await searchSources({
-        provider,
-        q: query,
-        type: typeId,
-        pageSize: 8,
-      });
-      setCandidates(result.items);
-      setSelectedCandidate(undefined);
-      setSelectedFields(new Set());
-      if (result.items.length === 0) setMessage("No external matches");
-    } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
-    } finally {
-      setSearching(false);
-    }
-  }
-
-  function chooseCandidate(candidate: ExternalCandidate) {
-    setSelectedCandidate(candidate);
-    setSelectedFields(new Set(candidateMetadataEntries(candidate, selectedType).map((entry) => entry.field)));
-  }
-
   function applyCandidate() {
-    if (!selectedCandidate || !contentWritable) return;
+    if (!external.selectedCandidate || !contentWritable) return;
     const next = {
       ...frontmatter,
-      ...candidateMetadataPatch(selectedCandidate, selectedType, selectedFields),
+      ...external.selectedPatch(),
     };
     setFrontmatter(normalizeFrontmatter(next));
-    setBasename((currentBasename) => currentBasename || selectedCandidate.title);
-    setSearchQuery(selectedCandidate.title);
-    setMessage(`Using ${selectedCandidate.provider}: ${selectedCandidate.title}`);
-    setMatchOpen(false);
+    setBasename((currentBasename) => currentBasename || external.selectedCandidate?.title || "");
+    external.setQuery(external.selectedCandidate.title);
+    setMessage(`Using ${external.selectedCandidate.provider}: ${external.selectedCandidate.title}`);
+    external.setOpen(false);
   }
 
   return (
@@ -242,8 +188,8 @@ export function EntityCreatePage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setMatchOpen(true)}
-              disabled={!externalSearchEnabled}
+              onClick={() => external.setOpen(true)}
+              disabled={!external.externalSearchEnabled}
             >
               <SearchIcon data-icon="inline-start" />
               Match Metadata
@@ -252,26 +198,30 @@ export function EntityCreatePage() {
         </section>
 
         <ExternalMatchDialog
-          open={matchOpen}
-          query={searchQuery}
-          provider={provider}
-          candidates={candidates}
-          selectedCandidate={selectedCandidate}
-          metadataEntries={selectedCandidateEntries}
-          selectedFields={selectedFields}
-          providerOptions={providerOptions}
-          externalSearchEnabled={externalSearchEnabled}
-          searching={searching}
+          open={external.open}
+          query={external.query}
+          provider={external.provider}
+          candidates={external.candidates}
+          selectedCandidate={external.selectedCandidate}
+          metadataEntries={external.metadataEntries}
+          selectedFields={external.selectedFields}
+          providerOptions={external.providerOptions}
+          externalSearchEnabled={external.externalSearchEnabled}
+          searching={external.searching}
           applying={false}
           contentWritable={contentWritable}
           applyLabel="Use Selected"
-          emptyMessage={message === "No external matches" ? message : "No candidates loaded"}
-          onOpenChange={setMatchOpen}
-          onQueryChange={setSearchQuery}
-          onProviderChange={setProvider}
-          onSearch={searchExternal}
-          onChooseCandidate={chooseCandidate}
-          onSelectedFieldsChange={setSelectedFields}
+          emptyMessage={external.emptyMessage}
+          onOpenChange={external.setOpen}
+          onQueryChange={external.setQuery}
+          onProviderChange={external.setProvider}
+          onSearch={() => {
+            setMessage(undefined);
+            setState((current) => ({ ...current, error: undefined }));
+            void external.search();
+          }}
+          onChooseCandidate={external.chooseCandidate}
+          onSelectedFieldsChange={external.setSelectedFields}
           onApply={applyCandidate}
         />
 

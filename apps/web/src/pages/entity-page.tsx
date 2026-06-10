@@ -11,9 +11,10 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
-import { getAppCapabilities, removeEntity, saveEntity, searchSources } from "@/api/entities";
+import { getAppCapabilities, removeEntity, saveEntity } from "@/api/entities";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
+import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
 import {
   AlertDialog,
@@ -28,12 +29,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  candidateMetadataEntries,
-  candidateMetadataPatch,
-  candidateMetadataPreviewEntries,
-  externalProviderPriority,
-} from "@/lib/external-metadata";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { groupRelations } from "@/lib/relations";
 import type {
@@ -42,7 +37,6 @@ import type {
   Entity,
   EntityDatesResponse,
   EntityDetailResponse,
-  ExternalCandidate,
 } from "@/types/api";
 
 export function EntityPage() {
@@ -58,14 +52,7 @@ export function EntityPage() {
   }>({ loading: true });
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
-  const [matchOpen, setMatchOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [externalQuery, setExternalQuery] = useState("");
-  const [externalProvider, setExternalProvider] = useState("all");
-  const [externalCandidates, setExternalCandidates] = useState<ExternalCandidate[]>([]);
-  const [externalSearching, setExternalSearching] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<ExternalCandidate>();
-  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!id) return;
@@ -75,28 +62,13 @@ export function EntityPage() {
   const entity = state.detail?.entity;
   const contentWritable = state.capabilities?.contentWritable !== false;
   const typeConfig = state.config?.types.find((type) => type.id === entity?.type);
-  const providerOptions = useMemo(() => externalProviderPriority(typeConfig), [typeConfig]);
-  const externalSearchEnabled = providerOptions.length > 0;
-  const existingExternalRefs = useMemo(
-    () =>
-      typeConfig && entity
-        ? (typeConfig.fields ?? [])
-            .filter((field) => field.fieldType === "externalRef" && field.externalRef)
-            .map((field) => ({
-              field: field.field,
-              provider: field.externalRef ?? "",
-              value: entity.externalRefs[field.field],
-            }))
-            .filter((item): item is { field: string; provider: string; value: string } =>
-              Boolean(item.provider && item.value && providerOptions.includes(item.provider)),
-            )
-        : [],
-    [entity, providerOptions, typeConfig],
-  );
-  const selectedCandidateEntries = useMemo(
-    () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, typeConfig) : []),
-    [selectedCandidate, typeConfig],
-  );
+  const external = useExternalMatch({
+    typeConfig,
+    entityType: entity?.type,
+    defaultQuery: entity?.title,
+    externalRefs: entity?.externalRefs,
+    onError: (error) => setState((current) => ({ ...current, error })),
+  });
   const relationGroups = useMemo(
     () => groupRelations(state.detail?.relations ?? []),
     [state.detail],
@@ -105,22 +77,8 @@ export function EntityPage() {
   useEffect(() => {
     if (!entity) return;
     setRenameBasename(entity.basename);
-    setExternalQuery(entity.title);
-  }, [entity?.id, entity?.revision]);
-
-  useEffect(() => {
-    if (providerOptions.length === 0) {
-      if (externalProvider !== "all") setExternalProvider("all");
-      return;
-    }
-    if (providerOptions.length === 1) {
-      if (externalProvider !== providerOptions[0]) setExternalProvider(providerOptions[0]);
-      return;
-    }
-    if (externalProvider !== "all" && !providerOptions.includes(externalProvider)) {
-      setExternalProvider("all");
-    }
-  }, [externalProvider, providerOptions]);
+    external.setQuery(entity.title);
+  }, [entity?.id, entity?.revision, external.setQuery]);
 
   async function loadEntity() {
     if (!id) return;
@@ -166,52 +124,16 @@ export function EntityPage() {
     }
   }
 
-  async function searchExternal(providerOverride?: string, queryOverride?: string) {
-    if (!entity) return;
-    const selectedProvider = providerOverride ?? externalProvider;
-    const selectedQuery = queryOverride ?? externalQuery;
-    if (providerOptions.length === 0) return;
-    if (selectedProvider !== "all" && !providerOptions.includes(selectedProvider)) return;
-    setExternalSearching(true);
-    setSelectedCandidate(undefined);
-    setSelectedFields(new Set());
-    try {
-      const result = await searchSources({
-        provider: selectedProvider,
-        q: selectedQuery || entity.title,
-        type: entity.type,
-        pageSize: 8,
-      });
-      setExternalCandidates(result.items);
-    } catch (error) {
-      setState((current) => ({ ...current, error: errorMessage(error) }));
-    } finally {
-      setExternalSearching(false);
-    }
-  }
-
-  function refreshFromExternalRef(provider: string, value: string) {
-    setMatchOpen(true);
-    setExternalProvider(provider);
-    setExternalQuery(value);
-    void searchExternal(provider, value);
-  }
-
-  function chooseCandidate(candidate: ExternalCandidate) {
-    setSelectedCandidate(candidate);
-    setSelectedFields(new Set(candidateMetadataEntries(candidate, typeConfig).map((entry) => entry.field)));
-  }
-
   async function applyCandidate() {
-    if (!entity || !selectedCandidate) return;
-    const patch = candidateMetadataPatch(selectedCandidate, typeConfig, selectedFields);
+    if (!entity || !external.selectedCandidate) return;
+    const patch = external.selectedPatch();
     setSaving(true);
     try {
       await saveEntity(entity.id, {
         revision: entity.revision,
         frontmatter: patch,
       });
-      setMatchOpen(false);
+      external.setOpen(false);
       await loadEntity();
     } catch (error) {
       setState((current) => ({ ...current, error: errorMessage(error) }));
@@ -246,7 +168,7 @@ export function EntityPage() {
               saving={saving}
               onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
               onRename={() => setRenameOpen((open) => !open)}
-              onMatch={() => setMatchOpen(true)}
+              onMatch={() => external.setOpen(true)}
               onDelete={deleteCurrentEntity}
             />
             {renameOpen ? (
@@ -264,27 +186,28 @@ export function EntityPage() {
               />
             ) : null}
             <ExternalMatchDialog
-              open={matchOpen}
-              query={externalQuery}
-              provider={externalProvider}
-              candidates={externalCandidates}
-              selectedCandidate={selectedCandidate}
-              metadataEntries={selectedCandidateEntries}
-              selectedFields={selectedFields}
-              providerOptions={providerOptions}
-              externalSearchEnabled={externalSearchEnabled}
-              existingExternalRefs={existingExternalRefs}
+              open={external.open}
+              query={external.query}
+              provider={external.provider}
+              candidates={external.candidates}
+              selectedCandidate={external.selectedCandidate}
+              metadataEntries={external.metadataEntries}
+              selectedFields={external.selectedFields}
+              providerOptions={external.providerOptions}
+              externalSearchEnabled={external.externalSearchEnabled}
+              existingExternalRefs={external.existingExternalRefs}
               currentValues={entity.frontmatter as Record<string, unknown>}
-              searching={externalSearching}
+              searching={external.searching}
               applying={saving}
               contentWritable={contentWritable}
-              onOpenChange={setMatchOpen}
-              onQueryChange={setExternalQuery}
-              onProviderChange={setExternalProvider}
-              onSearch={searchExternal}
-              onRefreshRef={refreshFromExternalRef}
-              onChooseCandidate={chooseCandidate}
-              onSelectedFieldsChange={setSelectedFields}
+              emptyMessage={external.emptyMessage}
+              onOpenChange={external.setOpen}
+              onQueryChange={external.setQuery}
+              onProviderChange={external.setProvider}
+              onSearch={() => void external.search()}
+              onRefreshRef={external.refreshFromExternalRef}
+              onChooseCandidate={external.chooseCandidate}
+              onSelectedFieldsChange={external.setSelectedFields}
               onApply={applyCandidate}
             />
             <EntityDetail
