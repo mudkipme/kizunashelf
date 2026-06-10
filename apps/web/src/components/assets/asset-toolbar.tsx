@@ -13,6 +13,13 @@ import { titleLanguageLabel } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
+export type EnumFieldFilter = {
+  field: string;
+  label: string;
+  options: string[];
+  values: string[];
+};
+
 type AssetToolbarProps = {
   className?: string;
   compact?: boolean;
@@ -27,6 +34,7 @@ type AssetToolbarProps = {
   view: string;
   titleLanguage: string;
   titleLanguages: string[];
+  enumFilters?: EnumFieldFilter[];
   defaultTitleLabel?: string;
   dateFieldLabel?: (field: string) => string;
   onRefsChange: (value: string) => void;
@@ -35,6 +43,7 @@ type AssetToolbarProps = {
   onDirectionChange: (value: string) => void;
   onViewChange: (value: string) => void;
   onTitleLanguageChange: (value: string) => void;
+  onEnumFilterChange?: (field: string, values: string[]) => void;
 };
 
 export function AssetToolbar({
@@ -51,6 +60,7 @@ export function AssetToolbar({
   view,
   titleLanguage,
   titleLanguages,
+  enumFilters = [],
   defaultTitleLabel = "Default title",
   dateFieldLabel = (field) => field,
   onRefsChange,
@@ -59,7 +69,10 @@ export function AssetToolbar({
   onDirectionChange,
   onViewChange,
   onTitleLanguageChange,
+  onEnumFilterChange,
 }: AssetToolbarProps) {
+  const hasFieldFilters = enumFilters.length > 0;
+
   return (
     <div
       className={cn(
@@ -97,7 +110,36 @@ export function AssetToolbar({
           <option value="without">Without cover</option>
         </Select>
       ) : null}
-      {compact || (!showRefsFilter && !showCoverFilter) ? null : (
+      {enumFilters.map((filter) => (
+        <label
+          key={filter.field}
+          className={cn(
+            "flex min-w-44 flex-col gap-1 text-xs text-muted-foreground",
+            compact ? "col-span-2 min-w-0" : undefined,
+          )}
+        >
+          <span className="truncate">{filter.label}</span>
+          <Select
+            multiple
+            value={filter.values}
+            onChange={(event) =>
+              onEnumFilterChange?.(
+                filter.field,
+                Array.from(event.currentTarget.selectedOptions, (option) => option.value),
+              )
+            }
+            className={cn("h-20 min-w-0", compact ? undefined : "min-w-44")}
+            aria-label={filter.label}
+          >
+            {filter.options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </Select>
+        </label>
+      ))}
+      {compact || (!showRefsFilter && !showCoverFilter && !hasFieldFilters) ? null : (
         <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
       )}
       <Select

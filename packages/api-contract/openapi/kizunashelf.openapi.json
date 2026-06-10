@@ -608,6 +608,14 @@
           },
           {
             "in": "query",
+            "name": "filters",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
             "name": "pageSize",
             "schema": {
               "type": "number",
@@ -632,6 +640,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EntityListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3298,6 +3316,12 @@
             ]
           },
           "relation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filters": {
             "type": [
               "string",
               "null"

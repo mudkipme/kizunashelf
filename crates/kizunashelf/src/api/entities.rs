@@ -7,7 +7,7 @@ use crate::library::compare_string_for_title_language;
 use crate::relations::{
     sort_entities, sort_entities_with_title_language, summary_by_id, SortDirection,
 };
-use crate::types::{EntitySummary, Library, Relation, RelationDirection};
+use crate::types::{Entity, EntitySummary, FieldType, Library, Relation, RelationDirection};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -26,9 +26,17 @@ pub(crate) struct EntitiesQuery {
     title_language: Option<String>,
     q: Option<String>,
     relation: Option<String>,
+    filters: Option<String>,
     #[serde(rename = "pageSize")]
     page_size: Option<f64>,
     page: Option<f64>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct EntityFieldFilter {
+    field: String,
+    values: Vec<String>,
 }
 
 pub(crate) async fn entities(
@@ -36,25 +44,29 @@ pub(crate) async fn entities(
     Query(query): Query<EntitiesQuery>,
 ) -> ApiResult<EntityListResponse> {
     let library = get_library(&state).await?;
-    let mut entities = library.summaries.clone();
+    let field_filters = parse_entity_field_filters(query.filters.as_deref())?;
+    let mut entities: Vec<_> = library.entities.iter().collect();
     if query
         .entity_type
         .as_ref()
         .is_some_and(|entity_type| entity_type != "all")
     {
-        entities.retain(|entity| Some(&entity.entity_type) == query.entity_type.as_ref());
+        entities.retain(|entity| Some(&entity.summary.entity_type) == query.entity_type.as_ref());
     }
     if query.refs.as_deref() == Some("with") {
-        entities.retain(|entity| !entity.external_refs.is_empty());
+        entities.retain(|entity| !entity.summary.external_refs.is_empty());
     }
     if query.refs.as_deref() == Some("without") {
-        entities.retain(|entity| entity.external_refs.is_empty());
+        entities.retain(|entity| entity.summary.external_refs.is_empty());
     }
     if query.cover.as_deref() == Some("with") {
-        entities.retain(|entity| entity.image.is_some());
+        entities.retain(|entity| entity.summary.image.is_some());
     }
     if query.cover.as_deref() == Some("without") {
-        entities.retain(|entity| entity.image.is_none());
+        entities.retain(|entity| entity.summary.image.is_none());
+    }
+    if !field_filters.is_empty() {
+        entities.retain(|entity| entity_matches_field_filters(entity, &library, &field_filters));
     }
     if let Some(q) = query
         .q
@@ -64,14 +76,14 @@ pub(crate) async fn entities(
     {
         entities.retain(|entity| {
             [
-                Some(entity.title.as_str()),
-                entity.summary.as_deref(),
-                Some(entity.basename.as_str()),
-                Some(entity.path.as_str()),
+                Some(entity.summary.title.as_str()),
+                entity.summary.summary.as_deref(),
+                Some(entity.summary.basename.as_str()),
+                Some(entity.summary.path.as_str()),
             ]
             .into_iter()
             .flatten()
-            .chain(entity.titles.values().map(|value| value.as_str()))
+            .chain(entity.summary.titles.values().map(|value| value.as_str()))
             .any(|value| value.to_lowercase().contains(&q))
         });
     }
@@ -89,7 +101,7 @@ pub(crate) async fn entities(
             })
             .map(|item| item.source_id.clone())
             .collect();
-        entities.retain(|entity| ids.contains(&entity.id));
+        entities.retain(|entity| ids.contains(&entity.summary.id));
     }
 
     let direction = if query.direction.as_deref() == Some("desc") {
@@ -97,8 +109,12 @@ pub(crate) async fn entities(
     } else {
         SortDirection::Asc
     };
-    entities = sort_entities_for_entity_list(
-        entities,
+    let mut summaries = entities
+        .into_iter()
+        .map(|entity| entity.summary.clone())
+        .collect::<Vec<_>>();
+    summaries = sort_entities_for_entity_list(
+        summaries,
         query.sort.as_deref().unwrap_or("type"),
         direction,
         query.title_language.as_deref(),
@@ -106,11 +122,11 @@ pub(crate) async fn entities(
 
     let page_size = clamp_number(query.page_size.unwrap_or(40.0), 1, 100);
     let requested_page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX);
-    let total = entities.len();
+    let total = summaries.len();
     let total_pages = std::cmp::max(1, ((total as f64) / (page_size as f64)).ceil() as i64);
     let page = requested_page.min(total_pages);
     let start = ((page - 1) * page_size) as usize;
-    let items = entities
+    let items = summaries
         .into_iter()
         .skip(start)
         .take(page_size as usize)
@@ -123,6 +139,98 @@ pub(crate) async fn entities(
         page_size,
         total_pages,
     }))
+}
+
+fn parse_entity_field_filters(filters: Option<&str>) -> Result<Vec<EntityFieldFilter>, ApiError> {
+    let Some(filters) = filters.map(str::trim).filter(|filters| !filters.is_empty()) else {
+        return Ok(Vec::new());
+    };
+    serde_json::from_str::<Vec<EntityFieldFilter>>(filters)
+        .map(|filters| {
+            filters
+                .into_iter()
+                .filter_map(|filter| {
+                    let field = filter.field.trim().to_string();
+                    let values = filter
+                        .values
+                        .into_iter()
+                        .map(|value| value.trim().to_string())
+                        .filter(|value| !value.is_empty())
+                        .collect::<Vec<_>>();
+                    (!field.is_empty() && !values.is_empty())
+                        .then_some(EntityFieldFilter { field, values })
+                })
+                .collect()
+        })
+        .map_err(|_| ApiError::bad_request("Invalid entity filters"))
+}
+
+fn entity_matches_field_filters(
+    entity: &Entity,
+    library: &Library,
+    filters: &[EntityFieldFilter],
+) -> bool {
+    filters.iter().all(|filter| {
+        let Some(field_type) = field_type_for_entity_filter(entity, library, &filter.field) else {
+            return false;
+        };
+        let Some(value) = entity.frontmatter.get(&filter.field) else {
+            return false;
+        };
+        field_value_matches_filter(value, field_type, &filter.values)
+    })
+}
+
+fn field_type_for_entity_filter(
+    entity: &Entity,
+    library: &Library,
+    field: &str,
+) -> Option<FieldType> {
+    library
+        .config
+        .types
+        .iter()
+        .find(|type_config| type_config.id == entity.summary.entity_type)
+        .and_then(|type_config| {
+            type_config
+                .fields
+                .iter()
+                .find(|field_config| field_config.field == field)
+        })
+        .map(|field_config| field_config.field_type)
+        .filter(|field_type| matches!(field_type, FieldType::Enum | FieldType::EnumList))
+}
+
+fn field_value_matches_filter(
+    value: &serde_json::Value,
+    field_type: FieldType,
+    expected: &[String],
+) -> bool {
+    match field_type {
+        FieldType::Enum => frontmatter_scalar_matches_any(value, expected),
+        FieldType::EnumList => match value {
+            serde_json::Value::Array(items) => items
+                .iter()
+                .any(|item| frontmatter_scalar_matches_any(item, expected)),
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+fn frontmatter_scalar_matches_any(value: &serde_json::Value, expected: &[String]) -> bool {
+    match value {
+        serde_json::Value::String(value) => expected.iter().any(|item| item == value),
+        serde_json::Value::Bool(value) => {
+            let value = if *value { "true" } else { "false" };
+            expected.iter().any(|item| item == value)
+        }
+        serde_json::Value::Number(value) => {
+            let value = value.to_string();
+            expected.iter().any(|item| item == &value)
+        }
+        _ => false,
+    }
 }
 
 pub(crate) fn sort_entities_for_entity_list(

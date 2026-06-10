@@ -15,6 +15,7 @@ export const EntitiesQuery = zod.object({
   "titleLanguage": zod.string().nullish(),
   "q": zod.string().nullish(),
   "relation": zod.string().nullish(),
+  "filters": zod.string().nullish(),
   "pageSize": zod.number().nullish(),
   "page": zod.number().nullish()
 })

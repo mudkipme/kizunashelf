@@ -181,6 +181,7 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(entities, |op| {
                 op.id("getEntities")
                     .response::<200, Json<EntityListResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             })
             .post_with(create_entity, |op| {

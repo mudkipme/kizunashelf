@@ -6,6 +6,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { capabilitiesQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
+import type { EnumFieldFilter } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
 import { PaginationBar } from "@/components/assets/pagination-bar";
@@ -23,12 +24,15 @@ import {
 } from "@/lib/constants";
 import {
   defaultTitleOption,
+  fieldDisplayLabel,
   fieldLabelAcrossTypes,
   fieldLabelsByType,
   hasAnyFieldType,
+  supportsEnumOptions,
   titleLanguageOptions,
 } from "@/lib/type-config";
 import { titleLanguageLabel } from "@/lib/title-language";
+import type { TypeConfig } from "@/types/api";
 import {
   applyPreferencesToSearchParams,
   preferencesFromSearchParams,
@@ -81,6 +85,11 @@ export function LibraryPage() {
   const effectiveTitleLanguage = titleLanguages.includes(titleLanguage)
     ? titleLanguage
     : defaultTitleOptionId;
+  const enumFilters = useMemo(
+    () => enumFieldFiltersForTypes(scopeTypeConfigs, searchParams),
+    [scopeTypeConfigs, searchParams],
+  );
+  const activeEnumFilters = enumFilters.filter((filter) => filter.values.length > 0);
   const effectiveSort =
     scopeStats &&
     sort.startsWith("date:") &&
@@ -93,6 +102,7 @@ export function LibraryPage() {
   const filtersActive =
     effectiveRefs !== allOptions ||
     effectiveCover !== allOptions ||
+    activeEnumFilters.length > 0 ||
     effectiveSort !== defaultSort ||
     direction !== defaultDirection ||
     view !== defaultView ||
@@ -108,6 +118,7 @@ export function LibraryPage() {
       titleLanguage: effectiveTitleLanguage,
       ...(effectiveRefs !== allOptions ? { refs: effectiveRefs } : {}),
       ...(effectiveCover !== allOptions ? { cover: effectiveCover } : {}),
+      ...entityFiltersParam(activeEnumFilters),
       ...(query.trim() ? { q: query.trim() } : {}),
     }),
   );
@@ -159,6 +170,14 @@ export function LibraryPage() {
     if (!config.data || supportsCoverFilter || cover === allOptions) return;
     setQueryParam("cover", allOptions);
   }, [config.data, supportsCoverFilter, cover]);
+
+  useEffect(() => {
+    if (!config.data) return;
+    const next = cleanUnsupportedEnumFilterParams(searchParams, enumFilters);
+    if (!next) return;
+    next.set("page", "1");
+    setSearchParams(next, { replace: true });
+  }, [config.data, enumFilters, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!config.data || titleLanguage === defaultTitleOptionId) return;
@@ -213,6 +232,17 @@ export function LibraryPage() {
     else next.set(key, value);
     if (resetPage) next.set("page", "1");
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(next));
+    setSearchParams(next, { replace: true });
+  }
+
+  function setEnumFilterParam(field: string, values: string[]) {
+    const next = new URLSearchParams(searchParams);
+    const key = enumFilterParamKey(field);
+    next.delete(key);
+    for (const value of uniqueStrings(values)) {
+      next.append(key, value);
+    }
+    next.set("page", "1");
     setSearchParams(next, { replace: true });
   }
 
@@ -292,6 +322,7 @@ export function LibraryPage() {
                   view={view}
                   titleLanguage={effectiveTitleLanguage}
                   titleLanguages={titleLanguages}
+                  enumFilters={enumFilters}
                   defaultTitleLabel={defaultTitleLabel}
                   dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
                   onRefsChange={(value) => setQueryParam("refs", value)}
@@ -302,6 +333,7 @@ export function LibraryPage() {
                   onTitleLanguageChange={(value) =>
                     setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
                   }
+                  onEnumFilterChange={setEnumFilterParam}
                 />
               ) : null}
             </div>
@@ -318,6 +350,7 @@ export function LibraryPage() {
               view={view}
               titleLanguage={effectiveTitleLanguage}
               titleLanguages={titleLanguages}
+              enumFilters={enumFilters}
               defaultTitleLabel={defaultTitleLabel}
               dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
               onRefsChange={(value) => setQueryParam("refs", value)}
@@ -328,6 +361,7 @@ export function LibraryPage() {
               onTitleLanguageChange={(value) =>
                 setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
               }
+              onEnumFilterChange={setEnumFilterParam}
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs text-muted-foreground">
@@ -409,4 +443,81 @@ function hasPreferenceParams(params: URLSearchParams) {
   return ["refs", "cover", "sort", "direction", "view", "titleLanguage"].some((key) =>
     params.has(key),
   );
+}
+
+function enumFieldFiltersForTypes(typeConfigs: TypeConfig[], params: URLSearchParams) {
+  const byField = new Map<string, { field: string; label: string; options: string[] }>();
+  for (const typeConfig of typeConfigs) {
+    for (const field of typeConfig.fields ?? []) {
+      if (!supportsEnumOptions(field.fieldType) || !field.enumOptions?.length) continue;
+      const current = byField.get(field.field);
+      if (current) {
+        current.options = uniqueStrings([...current.options, ...field.enumOptions]);
+      } else {
+        byField.set(field.field, {
+          field: field.field,
+          label: fieldDisplayLabel(field),
+          options: uniqueStrings(field.enumOptions),
+        });
+      }
+    }
+  }
+  return [...byField.values()].map((filter) => ({
+    ...filter,
+    values: readEnumFilterValues(params, filter.field, filter.options),
+  }));
+}
+
+function entityFiltersParam(filters: EnumFieldFilter[]) {
+  if (filters.length === 0) return {};
+  return {
+    filters: JSON.stringify(
+      filters.map((filter) => ({
+        field: filter.field,
+        values: filter.values,
+      })),
+    ),
+  };
+}
+
+function enumFilterParamKey(field: string) {
+  return `filter:${field}`;
+}
+
+function readEnumFilterValues(params: URLSearchParams, field: string, options: string[]) {
+  const allowed = new Set(options);
+  return uniqueStrings(params.getAll(enumFilterParamKey(field))).filter((value) => allowed.has(value));
+}
+
+function cleanUnsupportedEnumFilterParams(params: URLSearchParams, filters: EnumFieldFilter[]) {
+  const cleanValuesByKey = new Map(
+    filters.map((filter) => [enumFilterParamKey(filter.field), filter.values]),
+  );
+  const next = new URLSearchParams(params);
+  let changed = false;
+
+  for (const key of [...params.keys()].filter((item) => item.startsWith("filter:"))) {
+    const cleanValues = cleanValuesByKey.get(key);
+    if (!cleanValues) {
+      next.delete(key);
+      changed = true;
+      continue;
+    }
+
+    const currentValues = params.getAll(key);
+    if (arraysEqual(currentValues, cleanValues)) continue;
+    next.delete(key);
+    for (const value of cleanValues) next.append(key, value);
+    changed = true;
+  }
+
+  return changed ? next : undefined;
+}
+
+function uniqueStrings(values: string[]) {
+  return values.filter((value, index, items) => value.trim() && items.indexOf(value) === index);
+}
+
+function arraysEqual(a: string[], b: string[]) {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
 }

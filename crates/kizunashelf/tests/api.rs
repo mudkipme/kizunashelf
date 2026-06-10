@@ -177,6 +177,30 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(filtered["total"], 1);
     assert_eq!(filtered["items"][0]["id"], "games:Moon Quest");
 
+    let status_filters =
+        urlencoding::encode(r#"[{"field":"status","values":["Watching","Playing"]}]"#);
+    let status_filtered = server
+        .ok_json(&format!("/api/entities?filters={status_filters}"))
+        .await;
+    assert_eq!(status_filtered["total"], 2);
+    assert!(has_entity_title(&status_filtered["items"], "Star Voyager"));
+    assert!(has_entity_title(&status_filtered["items"], "Moon Quest"));
+
+    let genre_filters = urlencoding::encode(r#"[{"field":"genres","values":["Strategy","RPG"]}]"#);
+    let genre_filtered = server
+        .ok_json(&format!("/api/entities?type=games&filters={genre_filters}"))
+        .await;
+    assert_eq!(genre_filtered["total"], 1);
+    assert_eq!(genre_filtered["items"][0]["id"], "games:Moon Quest");
+
+    let missing_genre_filters = urlencoding::encode(r#"[{"field":"genres","values":["RPG"]}]"#);
+    let missing_genre_filtered = server
+        .ok_json(&format!(
+            "/api/entities?type=games&filters={missing_genre_filters}"
+        ))
+        .await;
+    assert_eq!(missing_genre_filtered["total"], 0);
+
     let searched = server.ok_json("/api/entities?q=starlanes").await;
     assert_eq!(searched["total"], 1);
     assert_eq!(searched["items"][0]["id"], "anime:Star Voyager");
@@ -869,7 +893,8 @@ impl TestServer {
                         { "field": "release_date", "fieldType": "date", "displayName": "Release date", "dateRole": "planning" },
                         { "field": "igdb_url", "fieldType": "externalRef", "displayName": "IGDB", "externalRef": "igdb" },
                         { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
-                        { "field": "developer", "fieldType": "relation", "displayName": "Developer", "relationType": "developer" }
+                        { "field": "developer", "fieldType": "relation", "displayName": "Developer", "relationType": "developer" },
+                        { "field": "genres", "fieldType": "enumList", "displayName": "Genres", "enumOptions": ["Adventure", "Strategy", "RPG"] }
                     ]
                 },
                 {
@@ -981,6 +1006,7 @@ It shares continuity with [[Moon Quest]].
 title: Moon Quest
 title_en: Lunar Errand
 status: Playing
+genres: [Adventure, Strategy]
 release_date: 2025-04-05
 igdb_url: https://igdb.example/moon
 franchise: "[[Star Saga]]"
