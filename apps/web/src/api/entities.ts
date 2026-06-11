@@ -1,9 +1,11 @@
 import {
   createEntity,
   deleteEntity,
+  downloadEntityAssets,
   getCapabilities,
   searchExternalSources,
   updateEntity,
+  type AssetDownloadRequest,
   type CreateEntityRequest,
   type DeleteEntityRequest,
   type SearchExternalSourcesParams,
@@ -30,4 +32,8 @@ export function removeEntity(id: string, request: DeleteEntityRequest) {
 
 export function searchSources(params: SearchExternalSourcesParams, init?: RequestInit) {
   return searchExternalSources(params, init, apiFetch);
+}
+
+export function downloadAssets(id: string, request: AssetDownloadRequest) {
+  return downloadEntityAssets(id, request, undefined, apiFetch);
 }

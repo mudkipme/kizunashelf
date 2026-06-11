@@ -183,6 +183,8 @@ pub struct KizunaConfig {
     pub vault_root: String,
     pub taxonomy_root: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_root: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_writable: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub read_concurrency: Option<u32>,
@@ -191,6 +193,19 @@ pub struct KizunaConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub daily_notes: Option<DailyNotesConfig>,
     pub types: Vec<EntityTypeConfig>,
+}
+
+pub const DEFAULT_ASSET_ROOT: &str = "Assets";
+
+impl KizunaConfig {
+    /// Vault-relative directory where downloaded assets are stored.
+    pub fn resolved_asset_root(&self) -> &str {
+        self.asset_root
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .unwrap_or(DEFAULT_ASSET_ROOT)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

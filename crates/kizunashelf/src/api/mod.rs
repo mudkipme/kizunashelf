@@ -1,4 +1,5 @@
 mod analytics;
+mod assets;
 mod entities;
 mod error;
 mod external;

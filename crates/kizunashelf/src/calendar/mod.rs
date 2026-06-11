@@ -726,6 +726,7 @@ mod tests {
             config: KizunaConfig {
                 vault_root: String::new(),
                 taxonomy_root: "Taxonomy".to_string(),
+                asset_root: None,
                 content_writable: None,
                 read_concurrency: None,
                 home: None,

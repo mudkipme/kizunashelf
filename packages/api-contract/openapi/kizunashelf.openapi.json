@@ -990,6 +990,94 @@
         }
       }
     },
+    "/api/entities/{id}/assets/download": {
+      "post": {
+        "operationId": "downloadEntityAssets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetDownloadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/relations": {
       "get": {
         "operationId": "getRelations",
@@ -1149,19 +1237,31 @@
           },
           "externalApplyEnabled": {
             "type": "boolean"
+          },
+          "assetDownloadEnabled": {
+            "type": "boolean"
           }
         },
         "required": [
           "settingsWritable",
           "contentWritable",
           "externalSearchEnabled",
-          "externalApplyEnabled"
+          "externalApplyEnabled",
+          "assetDownloadEnabled"
         ]
       },
       "ConfigResponse": {
         "type": "object",
         "properties": {
           "taxonomyRoot": {
+            "type": "string"
+          },
+          "vaultRoot": {
+            "description": "Absolute vault root, used by the desktop runtime to resolve local assets\ndirectly from disk (the web runtime uses the `/api/assets` route instead).",
+            "type": "string"
+          },
+          "assetRoot": {
+            "description": "Vault-relative directory where downloaded assets are stored.",
             "type": "string"
           },
           "home": {
@@ -1183,6 +1283,8 @@
         },
         "required": [
           "taxonomyRoot",
+          "vaultRoot",
+          "assetRoot",
           "types"
         ]
       },
@@ -1558,6 +1660,12 @@
           },
           "taxonomyRoot": {
             "type": "string"
+          },
+          "assetRoot": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "contentWritable": {
             "type": [
@@ -3718,6 +3826,93 @@
         "required": [
           "deletedId",
           "backupPath"
+        ]
+      },
+      "AssetDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "fields": {
+            "description": "Restrict to these field names; when omitted, all image fields with remote\nURLs are downloaded.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "AssetDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadItemResult"
+            }
+          }
+        },
+        "required": [
+          "entity",
+          "results"
+        ]
+      },
+      "AssetDownloadItemResult": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AssetDownloadStatus"
+          },
+          "sourceUrl": {
+            "description": "Source URL that was downloaded (or attempted).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "description": "Vault-relative local path written on success.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "description": "Why the item was skipped or failed.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conflictResolved": {
+            "description": "True when an existing file referenced by another entity forced a\ndisambiguated filename.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "status"
+        ]
+      },
+      "AssetDownloadStatus": {
+        "type": "string",
+        "enum": [
+          "downloaded",
+          "skipped",
+          "failed"
         ]
       },
       "RelationsQuery": {

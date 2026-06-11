@@ -1144,3 +1144,298 @@ fn unique_relation_target_count(entity_id: &str, relations: &Value) -> usize {
         .collect::<HashSet<_>>()
         .len()
 }
+
+// ---------------------------------------------------------------------------
+// Asset download
+// ---------------------------------------------------------------------------
+
+/// Minimal valid 1x1 PNG.
+const PNG_1X1: &[u8] = &[
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+    0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+    0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+    0x42, 0x60, 0x82,
+];
+
+async fn start_mock_image_server() -> std::net::SocketAddr {
+    let app = Router::new()
+        .route(
+            "/image.png",
+            axum::routing::get(|| async {
+                ([(header::CONTENT_TYPE, "image/png")], PNG_1X1.to_vec())
+            }),
+        )
+        .route(
+            "/notimage",
+            axum::routing::get(|| async {
+                (
+                    [(header::CONTENT_TYPE, "text/html")],
+                    b"<html>nope</html>".to_vec(),
+                )
+            }),
+        )
+        .route(
+            "/missing",
+            axum::routing::get(|| async { StatusCode::NOT_FOUND }),
+        );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+    addr
+}
+
+fn asset_test_app(
+    content_writable: bool,
+    write_entities: impl FnOnce(&Path),
+) -> (Router, TempDir, std::path::PathBuf) {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    fs::create_dir_all(vault.join("Taxonomy/Anime")).unwrap();
+    write_entities(&vault);
+    let config_path = temp.path().join("kizunashelf.yaml");
+    let config = json!({
+        "vaultRoot": vault,
+        "taxonomyRoot": "Taxonomy",
+        "assetRoot": "Assets",
+        "types": [
+            {
+                "id": "anime",
+                "label": "Anime",
+                "path": "Anime",
+                "filename": { "titleLanguage": "zh", "defaultTitle": true },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh", "defaultTitle": true },
+                    { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
+                    { "field": "shots", "fieldType": "imageList", "displayName": "Shots" }
+                ]
+            }
+        ]
+    });
+    fs::write(&config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
+    let app = router(ApiOptions {
+        config_path,
+        cache_ttl: Duration::from_millis(0),
+        web_dist_path: None,
+        settings_writable: true,
+        content_writable,
+    });
+    (app, temp, vault)
+}
+
+async fn entity_revision(app: &Router, id: &str) -> String {
+    let detail = request_json(
+        app,
+        Method::GET,
+        &format!("/api/entities/{}", urlencoding::encode(id)),
+        None,
+    )
+    .await;
+    assert_eq!(detail.0, StatusCode::OK, "detail: {}", detail.1);
+    detail.1["entity"]["revision"].as_str().unwrap().to_string()
+}
+
+async fn download_assets(app: &Router, id: &str, revision: &str) -> (StatusCode, Value) {
+    request_json(
+        app,
+        Method::POST,
+        &format!("/api/entities/{}/assets/download", urlencoding::encode(id)),
+        Some(json!({ "revision": revision })),
+    )
+    .await
+}
+
+async fn request_raw(app: &Router, path: &str) -> (StatusCode, Option<String>, Vec<u8>) {
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::GET)
+                .uri(path)
+                .body(body::Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let status = response.status();
+    let content_type = response
+        .headers()
+        .get(header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .map(str::to_string);
+    let bytes = body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap()
+        .to_vec();
+    (status, content_type, bytes)
+}
+
+#[tokio::test]
+async fn asset_download_writes_local_file_and_serves_it() {
+    let addr = start_mock_image_server().await;
+    let cover = format!("http://{addr}/image.png");
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let revision = entity_revision(&app, id).await;
+    let (status, body) = download_assets(&app, id, &revision).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let results = body["results"].as_array().unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0]["field"], "cover_url");
+    assert_eq!(results[0]["status"], "downloaded");
+    let local_path = results[0]["path"].as_str().unwrap();
+    assert_eq!(
+        local_path,
+        "Assets/Taxonomy/Anime/Star Voyager/cover_url.png"
+    );
+
+    // Frontmatter (and therefore the summary cover) now points at the local file.
+    assert_eq!(body["entity"]["image"], local_path);
+    assert_eq!(body["entity"]["frontmatter"]["cover_url"], local_path);
+
+    // The file is written under the vault.
+    let written = vault.join(local_path);
+    assert_eq!(fs::read(&written).unwrap(), PNG_1X1);
+
+    // And it is served back through the asset route with an image content type.
+    let serve_path = format!("/api/assets/{}", local_path.replace(' ', "%20"));
+    let (serve_status, content_type, bytes) = request_raw(&app, &serve_path).await;
+    assert_eq!(serve_status, StatusCode::OK);
+    assert_eq!(content_type.as_deref(), Some("image/png"));
+    assert_eq!(bytes, PNG_1X1);
+}
+
+#[tokio::test]
+async fn asset_download_failure_keeps_remote_url() {
+    let addr = start_mock_image_server().await;
+    let missing = format!("http://{addr}/missing");
+    let not_image = format!("http://{addr}/notimage");
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\ncover_url: {missing}\nshots:\n  - {not_image}\n---\nBody\n"),
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let revision = entity_revision(&app, id).await;
+    let (status, body) = download_assets(&app, id, &revision).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let results = body["results"].as_array().unwrap();
+    assert!(results.iter().all(|item| item["status"] == "failed"));
+
+    // Remote URLs are left untouched so the user can retry.
+    assert_eq!(body["entity"]["frontmatter"]["cover_url"], missing);
+    assert_eq!(body["entity"]["frontmatter"]["shots"][0], not_image);
+
+    // No asset directory was created for this entity.
+    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+}
+
+#[tokio::test]
+async fn asset_download_handles_image_list_partially() {
+    let addr = start_mock_image_server().await;
+    let ok = format!("http://{addr}/image.png");
+    let bad = format!("http://{addr}/missing");
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\nshots:\n  - {ok}\n  - {bad}\n---\nBody\n"),
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let revision = entity_revision(&app, id).await;
+    let (status, body) = download_assets(&app, id, &revision).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let shots = body["entity"]["frontmatter"]["shots"].as_array().unwrap();
+    // First element became a local hashed path; the failed one keeps its URL.
+    assert!(shots[0]
+        .as_str()
+        .unwrap()
+        .starts_with("Assets/Taxonomy/Anime/Star Voyager/shots/"));
+    assert!(shots[0].as_str().unwrap().ends_with(".png"));
+    assert_eq!(shots[1], bad);
+}
+
+#[tokio::test]
+async fn asset_download_avoids_overwriting_another_entitys_file() {
+    let addr = start_mock_image_server().await;
+    let cover = format!("http://{addr}/image.png");
+    // "Old Show" references a local cover that sits inside "Star Voyager"'s asset
+    // directory (as if filenames were swapped outside the app).
+    let collide = "Assets/Taxonomy/Anime/Star Voyager/cover_url.png";
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+        );
+        write_file(
+            &vault.join("Taxonomy/Anime/Old Show.md"),
+            &format!("---\ntitle: Old Show\ncover_url: {collide}\n---\nBody\n"),
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let revision = entity_revision(&app, id).await;
+    let (status, body) = download_assets(&app, id, &revision).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let new_path = body["entity"]["frontmatter"]["cover_url"].as_str().unwrap();
+    assert_ne!(new_path, collide, "must not reuse another entity's file");
+    assert!(new_path.starts_with("Assets/Taxonomy/Anime/Star Voyager/cover_url-"));
+    assert_eq!(body["results"][0]["conflictResolved"], true);
+
+    // The other entity's reference is untouched.
+    let other_revision = entity_revision(&app, "anime:Old Show").await;
+    assert!(!other_revision.is_empty());
+}
+
+#[tokio::test]
+async fn asset_serve_route_rejects_path_escape() {
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\n---\nBody\n",
+        );
+        // A secret outside the asset root.
+        write_file(&vault.join("secret.txt"), "top secret");
+    });
+
+    let (status, _content_type, _bytes) =
+        request_raw(&app, "/api/assets/..%2f..%2fsecret.txt").await;
+    assert!(
+        status == StatusCode::FORBIDDEN || status == StatusCode::NOT_FOUND,
+        "escape must not succeed, got {status}"
+    );
+}
+
+#[tokio::test]
+async fn asset_download_is_disabled_in_read_only_mode() {
+    let addr = start_mock_image_server().await;
+    let cover = format!("http://{addr}/image.png");
+    let (app, _temp, _vault) = asset_test_app(false, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+        );
+    });
+
+    let capabilities = request_json(&app, Method::GET, "/api/capabilities", None).await;
+    assert_eq!(capabilities.1["assetDownloadEnabled"], false);
+
+    let (status, body) = download_assets(&app, "anime:Star Voyager", "any-revision").await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert_eq!(body["error"], "Content writes are disabled");
+}

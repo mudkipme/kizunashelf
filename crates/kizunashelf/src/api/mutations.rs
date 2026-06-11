@@ -17,7 +17,7 @@ use tokio::fs;
 
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct EntityPath {
-    id: String,
+    pub(super) id: String,
 }
 
 pub(crate) async fn update_entity(
@@ -221,7 +221,7 @@ fn is_forbidden_obsidian_filename_char(character: char) -> bool {
     ) || character.is_control()
 }
 
-async fn entity_absolute_path(vault_root: &str, relative: &str) -> Result<PathBuf> {
+pub(super) async fn entity_absolute_path(vault_root: &str, relative: &str) -> Result<PathBuf> {
     let root = Path::new(vault_root).canonicalize()?;
     let path = root.join(relative);
     ensure_path_inside_root(&root, &path).await?;
@@ -240,7 +240,7 @@ async fn entity_create_path(
     Ok(dir.join(format!("{basename}.md")))
 }
 
-async fn write_entity_raw(vault_root: &str, path: &Path, raw: &str) -> Result<()> {
+pub(super) async fn write_entity_raw(vault_root: &str, path: &Path, raw: &str) -> Result<()> {
     let root = Path::new(vault_root).canonicalize()?;
     ensure_path_inside_root(&root, path).await?;
     if let Some(parent) = path.parent() {
@@ -253,7 +253,11 @@ async fn write_entity_raw(vault_root: &str, path: &Path, raw: &str) -> Result<()
         .with_context(|| format!("failed to write entity {}", path.display()))
 }
 
-async fn backup_file(vault_root: &str, source_path: &Path, bucket: &str) -> Result<PathBuf> {
+pub(super) async fn backup_file(
+    vault_root: &str,
+    source_path: &Path,
+    bucket: &str,
+) -> Result<PathBuf> {
     let root = Path::new(vault_root).canonicalize()?;
     ensure_path_inside_root(&root, source_path).await?;
     let relative = source_path.strip_prefix(&root).unwrap_or(source_path);
@@ -274,7 +278,7 @@ async fn backup_file(vault_root: &str, source_path: &Path, bucket: &str) -> Resu
     Ok(backup_path)
 }
 
-async fn ensure_path_inside_root(root: &Path, path: &Path) -> Result<()> {
+pub(super) async fn ensure_path_inside_root(root: &Path, path: &Path) -> Result<()> {
     if path
         .components()
         .any(|component| matches!(component, Component::ParentDir))
@@ -305,7 +309,7 @@ async fn ensure_path_inside_root(root: &Path, path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn relative_path(root: &Path, path: &Path) -> String {
+pub(super) fn relative_path(root: &Path, path: &Path) -> String {
     path.strip_prefix(root)
         .unwrap_or(path)
         .to_string_lossy()

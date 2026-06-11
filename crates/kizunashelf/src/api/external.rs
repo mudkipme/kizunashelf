@@ -420,6 +420,7 @@ mod tests {
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
             taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
             content_writable: None,
             read_concurrency: None,
             home: None,
@@ -449,6 +450,7 @@ mod tests {
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
             taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
             content_writable: None,
             read_concurrency: None,
             home: None,
@@ -474,6 +476,7 @@ mod tests {
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
             taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
             content_writable: None,
             read_concurrency: None,
             home: None,
@@ -494,6 +497,7 @@ mod tests {
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
             taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
             content_writable: None,
             read_concurrency: None,
             home: None,
@@ -536,6 +540,7 @@ mod tests {
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
             taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
             content_writable: None,
             read_concurrency: None,
             home: None,

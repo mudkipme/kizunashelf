@@ -37,6 +37,7 @@ pub(crate) async fn capabilities(State(state): State<AppState>) -> ApiResult<Cap
         content_writable,
         external_search_enabled: true,
         external_apply_enabled: content_writable,
+        asset_download_enabled: content_writable,
     }))
 }
 
@@ -44,6 +45,8 @@ pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigRes
     let library = get_library(&state).await?;
     Ok(Json(ConfigResponse {
         taxonomy_root: library.config.taxonomy_root.clone(),
+        vault_root: library.config.vault_root.clone(),
+        asset_root: library.config.resolved_asset_root().to_string(),
         home: library.config.home.clone(),
         types: library.config.types.clone(),
     }))

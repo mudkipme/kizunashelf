@@ -1,4 +1,5 @@
 use super::analytics::{analytics, cleanup_queues, stats};
+use super::assets::{download_entity_assets, serve_asset};
 use super::entities::{entities, entity_dates, entity_detail};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
@@ -10,13 +11,13 @@ use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
 use crate::calendar::{CalendarPlanningResponse, EntityDatesResponse};
 use crate::contract::{
-    AnalyticsResponse, CalendarResponse, CapabilitiesResponse, CleanupQueuesResponse,
-    ConfigResponse, DeleteEntityResponse, EntityDetailResponse, EntityListResponse,
-    EntityMutationResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse,
-    HealthResponse, HomeResponse, PathSuggestionsResponse, RelationGroupsResponse,
-    RelationListResponse, SettingsConfigResponse, StatsResponse,
+    AnalyticsResponse, AssetDownloadResponse, CalendarResponse, CapabilitiesResponse,
+    CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse, EntityDetailResponse,
+    EntityListResponse, EntityMutationResponse, ErrorResponse, ExternalProviderCatalogResponse,
+    ExternalSearchResponse, HealthResponse, HomeResponse, PathSuggestionsResponse,
+    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, StatsResponse,
 };
-use aide::axum::routing::get_with;
+use aide::axum::routing::{get_with, post_with};
 use aide::axum::ApiRouter;
 use aide::openapi::{Info, OpenApi};
 use axum::http::StatusCode;
@@ -228,6 +229,19 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
+        .api_route(
+            "/api/entities/{id}/assets/download",
+            post_with(download_entity_assets, |op| {
+                op.id("downloadEntityAssets")
+                    .response::<200, Json<AssetDownloadResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .route("/api/assets/{*path}", get(serve_asset))
         .api_route(
             "/api/relations",
             get_with(relations, |op| {

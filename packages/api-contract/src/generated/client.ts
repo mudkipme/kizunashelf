@@ -8,6 +8,14 @@ import {
   AnalyticsResponse
 } from './analyticsResponse.zod';
 
+import type {
+  AssetDownloadRequest
+} from './assetDownloadRequest.zod';
+
+import {
+  AssetDownloadResponse
+} from './assetDownloadResponse.zod';
+
 import {
   CalendarPlanningResponse
 } from './calendarPlanningResponse.zod';
@@ -747,6 +755,36 @@ export const deleteEntity = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? DeleteEntityResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getDownloadEntityAssetsUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/assets/download`
+}
+
+export const downloadEntityAssets = async (id: string,
+    assetDownloadRequest: AssetDownloadRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetDownloadResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getDownloadEntityAssetsUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(assetDownloadRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetDownloadResponse.parse(parsedBody) : parsedBody
   return data
 }
 

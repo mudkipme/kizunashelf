@@ -16,6 +16,7 @@ export const saveSettingsConfigBodyTypesItemFieldsDefault = [];
 export const SaveSettingsConfigBody = zod.object({
   "vaultRoot": zod.string(),
   "taxonomyRoot": zod.string(),
+  "assetRoot": zod.string().nullish(),
   "contentWritable": zod.boolean().nullish(),
   "readConcurrency": zod.number().min(saveSettingsConfigBodyReadConcurrencyMin).nullish(),
   "home": zod.union([zod.object({

@@ -36,6 +36,10 @@ import type { RelationTargetSummary as RelationTargetSummaryType } from "./gener
 
 export * from "./generated/client.js";
 export * from "./generated/analyticsResponse.zod.js";
+export * from "./generated/assetDownloadItemResult.zod.js";
+export * from "./generated/assetDownloadRequest.zod.js";
+export * from "./generated/assetDownloadResponse.zod.js";
+export * from "./generated/assetDownloadStatus.zod.js";
 export * from "./generated/calendarPlanningBoard.zod.js";
 export * from "./generated/calendarPlanningDatePoint.zod.js";
 export * from "./generated/calendarPlanningFilters.zod.js";

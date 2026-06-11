@@ -10,7 +10,8 @@ export const CapabilitiesResponse = zod.object({
   "settingsWritable": zod.boolean(),
   "contentWritable": zod.boolean(),
   "externalSearchEnabled": zod.boolean(),
-  "externalApplyEnabled": zod.boolean()
+  "externalApplyEnabled": zod.boolean(),
+  "assetDownloadEnabled": zod.boolean()
 })
 
 export type CapabilitiesResponse = zod.input<typeof CapabilitiesResponse>;

@@ -24,6 +24,7 @@ pub(crate) struct AppState {
     cache: Arc<Mutex<Option<CachedLibrary>>>,
     reload: Arc<Mutex<()>>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
+    http_client: reqwest::Client,
 }
 
 #[derive(Clone)]
@@ -51,12 +52,24 @@ struct DiskCachedAccessToken {
 
 impl AppState {
     pub(crate) fn new(options: ApiOptions) -> Self {
+        let http_client = reqwest::Client::builder()
+            .connect_timeout(Duration::from_secs(15))
+            .user_agent(concat!("KizunaShelf/", env!("CARGO_PKG_VERSION")))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
         Self {
             options,
             cache: Arc::new(Mutex::new(None)),
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
+            http_client,
         }
+    }
+
+    /// Shared HTTP client (connection-pooled) for outbound requests such as
+    /// asset downloads.
+    pub(crate) fn http_client(&self) -> &reqwest::Client {
+        &self.http_client
     }
 
     pub(crate) async fn invalidate_cache(&self) {

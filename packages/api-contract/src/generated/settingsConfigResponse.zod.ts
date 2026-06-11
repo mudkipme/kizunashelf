@@ -19,6 +19,7 @@ export const SettingsConfigResponse = zod.object({
   "config": zod.union([zod.object({
   "vaultRoot": zod.string(),
   "taxonomyRoot": zod.string(),
+  "assetRoot": zod.string().nullish(),
   "contentWritable": zod.boolean().nullish(),
   "readConcurrency": zod.number().min(settingsConfigResponseConfigOneReadConcurrencyMin).nullish(),
   "home": zod.union([zod.object({
