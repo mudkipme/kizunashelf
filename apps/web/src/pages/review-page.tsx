@@ -5,6 +5,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { cleanupQueuesQuery, configQuery } from "@/api/queries";
+import { AssetDownloadPanel } from "@/components/assets/asset-download-panel";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
@@ -39,10 +40,13 @@ type FilterableItem =
 
 const queueDefinitions: QueueDefinition[] = [
   { id: "missing-cover", label: "Missing Cover", kind: "entity" },
+  { id: "broken-asset", label: "Broken Assets", kind: "entity" },
   { id: "missing-refs", label: "Missing External Refs", kind: "entity" },
   { id: "isolated", label: "Isolated Nodes", kind: "entity" },
   { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
 ];
+
+const assetQueueIds = new Set(["missing-cover", "broken-asset"]);
 
 export function ReviewPage() {
   const { queueId } = useParams();
@@ -113,6 +117,10 @@ export function ReviewPage() {
 
         {cleanup.isPending || config.isPending ? (
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+        ) : null}
+
+        {cleanup.data && (!activeQueue || assetQueueIds.has(activeQueue.id)) ? (
+          <AssetDownloadPanel />
         ) : null}
 
         {cleanup.data && !activeQueue ? <ReviewOverview summaries={summaries} /> : null}
@@ -329,6 +337,9 @@ function queueItems(data: CleanupQueuesResponse, queue: QueueDefinition): Filter
   }
   if (queue.id === "isolated") {
     return data.isolated.map((entity) => ({ kind: "entity", entity }));
+  }
+  if (queue.id === "broken-asset") {
+    return data.brokenAssets.map((entity) => ({ kind: "entity", entity }));
   }
   return data.unresolvedRelations.map((item) => ({ kind: "relation", item, entity: item.source }));
 }

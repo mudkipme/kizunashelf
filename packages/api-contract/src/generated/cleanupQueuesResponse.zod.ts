@@ -28,6 +28,12 @@ export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseIsolatedItemRelationCountMin = 0;
 
+export const cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneMonthMin = 0;
+
+export const cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneDayMin = 0;
+
+export const cleanupQueuesResponseBrokenAssetsItemRelationCountMin = 0;
+
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneMonthMin = 0;
 
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneDayMin = 0;
@@ -118,6 +124,31 @@ export const CleanupQueuesResponse = zod.object({
   "externalRefs": zod.record(zod.string(), zod.string()),
   "relationCount": zod.number().min(cleanupQueuesResponseIsolatedItemRelationCountMin)
 })),
+  "brokenAssets": zod.array(zod.object({
+  "id": zod.string(),
+  "type": zod.string(),
+  "typeLabel": zod.string(),
+  "title": zod.string(),
+  "titles": zod.record(zod.string(), zod.string()),
+  "dates": zod.array(zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
+})),
+  "image": zod.string().nullish(),
+  "summary": zod.string().nullish(),
+  "path": zod.string(),
+  "basename": zod.string(),
+  "externalRefs": zod.record(zod.string(), zod.string()),
+  "relationCount": zod.number().min(cleanupQueuesResponseBrokenAssetsItemRelationCountMin)
+})).describe('Entities whose local cover path points to a file that no longer exists.'),
   "unresolvedRelations": zod.array(zod.object({
   "source": zod.object({
   "id": zod.string(),

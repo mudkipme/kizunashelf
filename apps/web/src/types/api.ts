@@ -4,6 +4,8 @@ export type {
   AnalyticsResponse,
   AnalyticsTimelineYear,
   AssetDownloadItemResult,
+  AssetDownloadJob,
+  AssetDownloadJobListResponse,
   AssetDownloadRequest,
   AssetDownloadResponse,
   CalendarDay,

@@ -261,6 +261,56 @@ pub struct AssetDownloadResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJobRequest {
+    /// Restrict the batch to one entity type; when omitted, the whole library.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entity_type: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum AssetDownloadJobStatus {
+    Queued,
+    Running,
+    Completed,
+    Cancelled,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJobError {
+    pub entity_id: String,
+    pub entity_title: String,
+    pub message: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJob {
+    pub id: String,
+    pub status: AssetDownloadJobStatus,
+    /// Human-readable scope, e.g. `all` or `type:anime`.
+    pub scope: String,
+    pub total: u32,
+    pub processed: u32,
+    pub downloaded: u32,
+    pub failed: u32,
+    pub skipped: u32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub errors: Vec<AssetDownloadJobError>,
+    pub started_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub finished_at: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJobListResponse {
+    pub jobs: Vec<AssetDownloadJob>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ExternalProviderSummary {
     pub id: String,
     pub label: String,
@@ -431,6 +481,8 @@ pub struct CleanupQueuesResponse {
     pub missing_cover: Vec<EntitySummary>,
     pub missing_external_refs: Vec<EntitySummary>,
     pub isolated: Vec<EntitySummary>,
+    /// Entities whose local cover path points to a file that no longer exists.
+    pub broken_assets: Vec<EntitySummary>,
     pub unresolved_relations: Vec<CleanupUnresolvedRelation>,
 }
 
@@ -515,5 +567,7 @@ pub struct ApiSchemas {
     pub calendar: CalendarResponse,
     pub calendar_entry: CalendarEntry,
     pub asset_download: AssetDownloadResponse,
+    pub asset_download_job: AssetDownloadJob,
+    pub asset_download_jobs: AssetDownloadJobListResponse,
     pub library: crate::types::Library,
 }

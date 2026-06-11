@@ -39,6 +39,10 @@ impl ApiError {
             message: message.to_string(),
         }
     }
+
+    pub(crate) fn message(&self) -> &str {
+        &self.message
+    }
 }
 
 impl From<anyhow::Error> for ApiError {

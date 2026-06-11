@@ -1,0 +1,138 @@
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DownloadIcon, XIcon } from "lucide-react";
+
+import { errorMessage } from "@/api/client";
+import { fetchAssetJob, startAssetJob, stopAssetJob } from "@/api/entities";
+import { capabilitiesQuery, configQuery } from "@/api/queries";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import type { AssetDownloadJob } from "@/types/api";
+
+const ALL_TYPES = "__all__";
+
+function isRunning(job?: AssetDownloadJob) {
+  return job?.status === "queued" || job?.status === "running";
+}
+
+export function AssetDownloadPanel() {
+  const capabilities = useQuery(capabilitiesQuery());
+  const config = useQuery(configQuery());
+  const queryClient = useQueryClient();
+  const [selectedType, setSelectedType] = useState(ALL_TYPES);
+  const [jobId, setJobId] = useState<string>();
+  const [error, setError] = useState<string>();
+
+  const job = useQuery({
+    queryKey: ["assetJob", jobId],
+    queryFn: () => fetchAssetJob(jobId as string),
+    enabled: Boolean(jobId),
+    refetchInterval: (query) => (isRunning(query.state.data as AssetDownloadJob | undefined) ? 1000 : false),
+  });
+
+  const status = job.data?.status;
+  useEffect(() => {
+    if (status === "completed" || status === "cancelled") {
+      void queryClient.invalidateQueries({ queryKey: ["cleanupQueues"] });
+      void queryClient.invalidateQueries({ queryKey: ["entities"] });
+      void queryClient.invalidateQueries({ queryKey: ["stats"] });
+    }
+  }, [status, queryClient]);
+
+  const start = useMutation({
+    mutationFn: () =>
+      startAssetJob({ entityType: selectedType === ALL_TYPES ? undefined : selectedType }),
+    onSuccess: (created) => {
+      setError(undefined);
+      setJobId(created.id);
+    },
+    onError: (mutationError) => setError(errorMessage(mutationError)),
+  });
+
+  const cancel = useMutation({
+    mutationFn: () => stopAssetJob(jobId as string),
+    onError: (mutationError) => setError(errorMessage(mutationError)),
+  });
+
+  if (capabilities.data?.assetDownloadEnabled !== true) return null;
+
+  const current = job.data;
+  const running = isRunning(current);
+
+  return (
+    <section className="rounded-md border p-3">
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold">Download remote covers</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Fetch external cover images into the vault so the files are yours.
+          </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <Select
+            value={selectedType}
+            onChange={(event) => setSelectedType(event.target.value)}
+            disabled={running}
+            aria-label="Download scope"
+          >
+            <option value={ALL_TYPES}>All types</option>
+            {(config.data?.types ?? []).map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.label}
+              </option>
+            ))}
+          </Select>
+          <Button type="button" onClick={() => start.mutate()} disabled={running || start.isPending}>
+            <DownloadIcon data-icon="inline-start" />
+            {running ? "Running" : "Start"}
+          </Button>
+          {running ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => cancel.mutate()}
+              disabled={cancel.isPending}
+            >
+              <XIcon data-icon="inline-start" />
+              Cancel
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
+      {current ? <JobProgress job={current} /> : null}
+    </section>
+  );
+}
+
+function JobProgress({ job }: { job: AssetDownloadJob }) {
+  const percent = job.total > 0 ? Math.round((job.processed / job.total) * 100) : 100;
+  const errors = job.errors ?? [];
+  return (
+    <div className="mt-3">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <Badge variant="secondary">{job.scope}</Badge>
+        <span className="tabular-nums">
+          {job.processed} / {job.total} processed
+        </span>
+        <Badge variant="outline">{job.downloaded} downloaded</Badge>
+        {job.failed > 0 ? <span className="text-destructive">{job.failed} failed</span> : null}
+        {job.skipped > 0 ? <span>{job.skipped} skipped</span> : null}
+        <span className="capitalize">{job.status}</span>
+      </div>
+      <div className="mt-2 h-2 rounded-sm bg-muted">
+        <div className="h-2 rounded-sm bg-primary" style={{ width: `${percent}%` }} />
+      </div>
+      {errors.length > 0 ? (
+        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+          {errors.slice(0, 5).map((item, index) => (
+            <li key={`${item.entityId}-${index}`} className="truncate">
+              {item.entityTitle || item.entityId}: {item.message}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}

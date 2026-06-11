@@ -1078,6 +1078,184 @@
         }
       }
     },
+    "/api/asset-jobs": {
+      "get": {
+        "operationId": "listAssetJobs",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJobListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAssetJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetDownloadJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asset-jobs/{id}": {
+      "get": {
+        "operationId": "getAssetJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asset-jobs/{id}/cancel": {
+      "post": {
+        "operationId": "cancelAssetJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/relations": {
       "get": {
         "operationId": "getRelations",
@@ -2578,6 +2756,13 @@
               "$ref": "#/components/schemas/EntitySummary"
             }
           },
+          "brokenAssets": {
+            "description": "Entities whose local cover path points to a file that no longer exists.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
+          },
           "unresolvedRelations": {
             "type": "array",
             "items": {
@@ -2591,6 +2776,7 @@
           "missingCover",
           "missingExternalRefs",
           "isolated",
+          "brokenAssets",
           "unresolvedRelations"
         ]
       },
@@ -3913,6 +4099,137 @@
           "downloaded",
           "skipped",
           "failed"
+        ]
+      },
+      "AssetDownloadJobListResponse": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadJob"
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ]
+      },
+      "AssetDownloadJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AssetDownloadJobStatus"
+          },
+          "scope": {
+            "description": "Human-readable scope, e.g. `all` or `type:anime`.",
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "processed": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "downloaded": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadJobError"
+            }
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "scope",
+          "total",
+          "processed",
+          "downloaded",
+          "failed",
+          "skipped",
+          "startedAt"
+        ]
+      },
+      "AssetDownloadJobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "completed",
+          "cancelled"
+        ]
+      },
+      "AssetDownloadJobError": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string"
+          },
+          "entityTitle": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entityId",
+          "entityTitle",
+          "message"
+        ]
+      },
+      "AssetDownloadJobRequest": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "description": "Restrict the batch to one entity type; when omitted, the whole library.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "JobPath": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
         ]
       },
       "RelationsQuery": {

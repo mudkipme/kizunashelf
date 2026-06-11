@@ -1,6 +1,6 @@
 # Local Cover / Asset Download
 
-Status: Phase 1 + Phase 2 complete
+Status: Phase 1 + Phase 2 + Phase 3 complete
 
 ## Goal
 
@@ -165,6 +165,9 @@ field/image: `downloaded | skipped | failed`, new path or error, `conflictResolv
    serve route; `resolveAssetSrc` desktop branch. Note: the desktop crate
    (`kizunashelf-desktop`) requires GTK/WebKit dev libraries to compile, which are
    not present in all dev environments — verify with `pnpm dev:desktop`.
-3. **Phase 3:** batch job manager + review-page UI; inside-app rename move +
-   delete trash; cleanup-queue missing-asset detector.
+3. **Phase 3 (done):** in-memory batch job manager (`/api/asset-jobs`,
+   per-type + whole-library, bounded concurrency, cancel) with a review-page
+   download panel that polls job status; inside-app rename asset-move +
+   frontmatter rewrite; delete trashes the asset dir; `broken-asset` cleanup
+   queue flagging local covers whose file is missing.
 4. **Phase 4:** external-match "download on apply".

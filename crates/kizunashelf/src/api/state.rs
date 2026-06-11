@@ -1,13 +1,26 @@
+use crate::contract::AssetDownloadJob;
 use crate::library::read_library_from_config;
 use crate::types::Library;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::fs;
 use tokio::sync::Mutex;
+
+/// Maximum number of finished asset-download jobs kept in memory.
+const MAX_RETAINED_JOBS: usize = 20;
+
+/// In-memory record for a batch asset-download job. Jobs do not survive a
+/// restart by design; the user simply re-runs and already-downloaded images are
+/// skipped.
+pub(crate) struct AssetJobRecord {
+    pub(crate) job: AssetDownloadJob,
+    pub(crate) cancel: Arc<AtomicBool>,
+}
 
 #[derive(Clone)]
 pub struct ApiOptions {
@@ -25,6 +38,8 @@ pub(crate) struct AppState {
     reload: Arc<Mutex<()>>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
     http_client: reqwest::Client,
+    asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
+    asset_job_counter: Arc<AtomicU64>,
 }
 
 #[derive(Clone)]
@@ -63,6 +78,8 @@ impl AppState {
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
             http_client,
+            asset_jobs: Arc::new(Mutex::new(HashMap::new())),
+            asset_job_counter: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -70,6 +87,52 @@ impl AppState {
     /// asset downloads.
     pub(crate) fn http_client(&self) -> &reqwest::Client {
         &self.http_client
+    }
+
+    pub(crate) fn asset_jobs(&self) -> &Arc<Mutex<HashMap<String, AssetJobRecord>>> {
+        &self.asset_jobs
+    }
+
+    pub(crate) fn next_asset_job_id(&self) -> String {
+        let counter = self.asset_job_counter.fetch_add(1, Ordering::Relaxed);
+        format!("job-{}-{}", unix_seconds_now(), counter)
+    }
+
+    /// Inserts a new job, pruning the oldest finished jobs beyond the retention
+    /// limit.
+    pub(crate) async fn insert_asset_job(&self, record: AssetJobRecord) {
+        use crate::contract::AssetDownloadJobStatus;
+        let mut jobs = self.asset_jobs.lock().await;
+        jobs.insert(record.job.id.clone(), record);
+        if jobs.len() > MAX_RETAINED_JOBS {
+            let mut finished: Vec<(String, String)> = jobs
+                .values()
+                .filter(|record| {
+                    matches!(
+                        record.job.status,
+                        AssetDownloadJobStatus::Completed | AssetDownloadJobStatus::Cancelled
+                    )
+                })
+                .map(|record| (record.job.id.clone(), record.job.started_at.clone()))
+                .collect();
+            finished.sort_by(|a, b| a.1.cmp(&b.1));
+            let remove = jobs.len().saturating_sub(MAX_RETAINED_JOBS);
+            for (id, _) in finished.into_iter().take(remove) {
+                jobs.remove(&id);
+            }
+        }
+    }
+
+    /// Applies `update` to the stored job, if it still exists.
+    pub(crate) async fn update_asset_job(
+        &self,
+        job_id: &str,
+        update: impl FnOnce(&mut AssetDownloadJob),
+    ) {
+        let mut jobs = self.asset_jobs.lock().await;
+        if let Some(record) = jobs.get_mut(job_id) {
+            update(&mut record.job);
+        }
     }
 
     pub(crate) async fn invalidate_cache(&self) {

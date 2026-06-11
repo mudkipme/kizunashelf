@@ -1439,3 +1439,144 @@ async fn asset_download_is_disabled_in_read_only_mode() {
     assert_eq!(status, StatusCode::FORBIDDEN);
     assert_eq!(body["error"], "Content writes are disabled");
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn asset_batch_job_downloads_remote_covers() {
+    let addr = start_mock_image_server().await;
+    let cover = format!("http://{addr}/image.png");
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+        );
+        write_file(
+            &vault.join("Taxonomy/Anime/Moon Quest.md"),
+            &format!("---\ntitle: Moon Quest\ncover_url: {cover}\n---\nBody\n"),
+        );
+    });
+
+    let created = request_json(&app, Method::POST, "/api/asset-jobs", Some(json!({}))).await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+    assert_eq!(created.1["total"], 2);
+    let job_id = created.1["id"].as_str().unwrap().to_string();
+
+    let mut job = created.1;
+    for _ in 0..100 {
+        let polled = request_json(
+            &app,
+            Method::GET,
+            &format!("/api/asset-jobs/{}", urlencoding::encode(&job_id)),
+            None,
+        )
+        .await;
+        assert_eq!(polled.0, StatusCode::OK);
+        job = polled.1;
+        if job["status"] == "completed" {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+
+    assert_eq!(job["status"], "completed", "job did not finish: {job}");
+    assert_eq!(job["processed"], 2);
+    assert_eq!(job["downloaded"], 2);
+    assert_eq!(job["failed"], 0);
+
+    assert!(vault
+        .join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png")
+        .exists());
+    assert!(vault
+        .join("Assets/Taxonomy/Anime/Moon Quest/cover_url.png")
+        .exists());
+
+    let list = request_json(&app, Method::GET, "/api/asset-jobs", None).await;
+    assert!(list.1["jobs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|item| item["id"] == job_id));
+}
+
+#[tokio::test]
+async fn rename_moves_asset_directory_and_rewrites_paths() {
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\ncover_url: Assets/Taxonomy/Anime/Star Voyager/cover_url.png\n---\nBody\n",
+        );
+        write_file(
+            &vault.join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png"),
+            "fake-bytes",
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let revision = entity_revision(&app, id).await;
+    let updated = request_json(
+        &app,
+        Method::POST,
+        &format!("/api/entities/{}", urlencoding::encode(id)),
+        Some(json!({ "revision": revision, "renameTo": "Star Voyager 2" })),
+    )
+    .await;
+    assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
+
+    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(vault
+        .join("Assets/Taxonomy/Anime/Star Voyager 2/cover_url.png")
+        .exists());
+    assert_eq!(
+        updated.1["entity"]["frontmatter"]["cover_url"],
+        "Assets/Taxonomy/Anime/Star Voyager 2/cover_url.png"
+    );
+}
+
+#[tokio::test]
+async fn delete_trashes_asset_directory() {
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\ncover_url: Assets/Taxonomy/Anime/Star Voyager/cover_url.png\n---\nBody\n",
+        );
+        write_file(
+            &vault.join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png"),
+            "fake-bytes",
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let revision = entity_revision(&app, id).await;
+    let deleted = request_json(
+        &app,
+        Method::DELETE,
+        &format!("/api/entities/{}", urlencoding::encode(id)),
+        Some(json!({ "revision": revision, "mode": "trash" })),
+    )
+    .await;
+    assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);
+
+    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(vault.join(".kizunashelf/trash").exists());
+}
+
+#[tokio::test]
+async fn broken_asset_cleanup_queue_flags_missing_files() {
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        // References a local cover that does not exist on disk.
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\ncover_url: Assets/Taxonomy/Anime/Star Voyager/cover_url.png\n---\nBody\n",
+        );
+    });
+
+    let cleanup = request_json(&app, Method::GET, "/api/cleanup-queues", None).await;
+    assert_eq!(cleanup.0, StatusCode::OK);
+    let broken = cleanup.1["brokenAssets"].as_array().unwrap();
+    assert_eq!(broken.len(), 1);
+    assert_eq!(broken[0]["title"], "Star Voyager");
+    assert!(cleanup.1["queues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|queue| queue["id"] == "broken-asset"));
+}
