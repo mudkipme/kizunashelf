@@ -1,11 +1,30 @@
+/** Custom URI scheme the desktop app registers to serve local vault assets. */
+const DESKTOP_ASSET_SCHEME = "kizasset";
+
+function isTauriRuntime(): boolean {
+  return typeof window !== "undefined" && window.__TAURI_INTERNALS__ != null;
+}
+
 /**
- * Resolve a frontmatter image value to a URL the browser can load.
+ * Build the desktop asset URL for the custom `kizasset` scheme. The host form
+ * differs by platform: Windows/Android use `http://<scheme>.localhost/...`,
+ * everything else uses `<scheme>://localhost/...`.
+ */
+function desktopAssetUrl(encodedPath: string): string {
+  const isWindowsOrAndroid =
+    typeof navigator !== "undefined" && /windows|android/i.test(navigator.userAgent);
+  return isWindowsOrAndroid
+    ? `http://${DESKTOP_ASSET_SCHEME}.localhost/${encodedPath}`
+    : `${DESKTOP_ASSET_SCHEME}://localhost/${encodedPath}`;
+}
+
+/**
+ * Resolve a frontmatter image value to a URL the runtime can load.
  *
  * Remote URLs (`http(s):`, `data:`, `blob:`) pass through unchanged. A
  * vault-relative local path (written after an asset download) is served through
- * the API asset route. Desktop (Tauri) asset resolution from disk lands in a
- * later phase; until then a local path falls back to the same route, which only
- * resolves in the web runtime.
+ * the API asset route in the web runtime, or the `kizasset` custom scheme in the
+ * desktop (Tauri) runtime, which has no HTTP listener.
  */
 export function resolveAssetSrc(value: string | null | undefined): string | undefined {
   if (!value) return undefined;
@@ -17,7 +36,7 @@ export function resolveAssetSrc(value: string | null | undefined): string | unde
     .filter(Boolean)
     .map((segment) => encodeURIComponent(segment))
     .join("/");
-  return `/api/assets/${encoded}`;
+  return isTauriRuntime() ? desktopAssetUrl(encoded) : `/api/assets/${encoded}`;
 }
 
 /** True when `value` is a downloaded local asset rather than a remote URL. */

@@ -1,6 +1,6 @@
 # Local Cover / Asset Download
 
-Status: in progress (Phase 1)
+Status: Phase 1 + Phase 2 complete
 
 ## Goal
 
@@ -47,10 +47,16 @@ the locally stored assets to both the web and desktop runtimes.
 4. **Serving local assets** — distinguish by URL scheme at render time:
    - Web: new `GET /api/assets/{*path}` route streaming files from inside
      `assetRoot` (path-validated), with content-type + cache headers.
-   - Desktop: serve directly from disk via Tauri's asset protocol /
-     `convertFileSrc(vaultRoot + path)` — the String-body bridge can't carry binary.
-   - Frontend `resolveAssetSrc(value)`: `http(s)://` / `data:` -> return as-is
-     (back-compat); otherwise -> web URL or desktop file URL.
+   - Desktop: the String-body command bridge can't carry binary, so the desktop
+     app registers a custom async URI scheme (`kizasset://`) that forwards to the
+     in-process `/api/assets/{path}` route and returns the raw bytes. This reuses
+     the serve route's path validation and keeps binary data binary. (Chosen over
+     Tauri's `convertFileSrc`/asset-protocol scope, which would require static
+     scope config + runtime scope extension + absolute paths on the client.)
+   - Frontend `resolveAssetSrc(value)`: `http(s):` / `data:` / `blob:` -> return
+     as-is (back-compat); otherwise -> `/api/assets/<path>` on web, or
+     `kizasset://localhost/<path>` (Windows/Android: `http://kizasset.localhost/...`)
+     in the Tauri runtime.
 
 5. **Reliability** — atomic download (`.tmp` -> rename), per-download timeout,
    max size cap (~20 MB), content-type sniffing (reject non-images / HTML error
@@ -155,7 +161,10 @@ field/image: `downloaded | skipped | failed`, new path or error, `conflictResolv
 1. **Phase 1 (this work):** config `assetRoot` + download core + serve route +
    single-entity endpoint + capabilities/config contract + frontend
    `resolveAssetSrc` + "Download cover" button + tests.
-2. **Phase 2:** desktop asset-protocol resolution.
+2. **Phase 2 (done):** desktop `kizasset://` custom URI scheme forwarding to the
+   serve route; `resolveAssetSrc` desktop branch. Note: the desktop crate
+   (`kizunashelf-desktop`) requires GTK/WebKit dev libraries to compile, which are
+   not present in all dev environments — verify with `pnpm dev:desktop`.
 3. **Phase 3:** batch job manager + review-page UI; inside-app rename move +
    delete trash; cleanup-queue missing-asset detector.
 4. **Phase 4:** external-match "download on apply".
