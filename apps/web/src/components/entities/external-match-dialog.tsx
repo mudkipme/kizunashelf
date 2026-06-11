@@ -48,6 +48,9 @@ type ExternalMatchDialogProps = {
   contentWritable: boolean;
   applyLabel?: string;
   emptyMessage?: string;
+  coverDownloadAvailable?: boolean;
+  downloadCover?: boolean;
+  onDownloadCoverChange?: (value: boolean) => void;
   onOpenChange: (open: boolean) => void;
   onQueryChange: (value: string) => void;
   onProviderChange: (value: string) => void;
@@ -80,6 +83,9 @@ export function ExternalMatchDialog({
   contentWritable,
   applyLabel = "Apply Selected",
   emptyMessage = "No candidates loaded",
+  coverDownloadAvailable = false,
+  downloadCover = false,
+  onDownloadCoverChange,
   onOpenChange,
   onQueryChange,
   onProviderChange,
@@ -272,7 +278,20 @@ export function ExternalMatchDialog({
           </div>
         </div>
 
-        <DialogFooter className="border-t p-4 sm:px-6">
+        <DialogFooter className="border-t p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          {coverDownloadAvailable ? (
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={downloadCover}
+                onChange={(event) => onDownloadCoverChange?.(event.target.checked)}
+                disabled={!contentWritable}
+              />
+              Download cover locally
+            </label>
+          ) : (
+            <span className="hidden sm:block" />
+          )}
           <Button
             type="button"
             onClick={onApply}

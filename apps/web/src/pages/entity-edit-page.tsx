@@ -51,6 +51,7 @@ export function EntityEditPage() {
     entityType: entity?.type,
     defaultQuery: entity?.title,
     externalRefs: entity?.externalRefs,
+    assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
     onError: setError,
   });
 
@@ -92,6 +93,7 @@ export function EntityEditPage() {
         frontmatter: frontmatterPatch(entity.frontmatter, frontmatter),
         body,
       });
+      await external.maybeDownloadCover(result.entity);
       await queryClient.invalidateQueries();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
@@ -177,6 +179,9 @@ export function EntityEditPage() {
               applying={false}
               contentWritable={contentWritable}
               applyLabel="Use Selected"
+              coverDownloadAvailable={external.coverDownloadAvailable}
+              downloadCover={external.downloadAfterApply}
+              onDownloadCoverChange={external.setDownloadAfterApply}
               emptyMessage={external.emptyMessage}
               onOpenChange={external.setOpen}
               onQueryChange={external.setQuery}

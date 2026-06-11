@@ -80,6 +80,7 @@ export function EntityPage() {
     entityType: entity?.type,
     defaultQuery: entity?.title,
     externalRefs: entity?.externalRefs,
+    assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
     onError: setError,
   });
   const relationGroups = useMemo(
@@ -142,12 +143,13 @@ export function EntityPage() {
     const nextBody = applyExternalBodySections(entity.body, external.selectedBodyPatch());
     setSaving(true);
     try {
-      await saveEntity(entity.id, {
+      const result = await saveEntity(entity.id, {
         revision: entity.revision,
         frontmatter: patch,
         body: nextBody === entity.body ? undefined : nextBody,
       });
       external.setOpen(false);
+      await external.maybeDownloadCover(result.entity);
       await invalidateEntityData();
     } catch (error) {
       setError(errorMessage(error));
@@ -244,6 +246,9 @@ export function EntityPage() {
               searching={external.searching}
               applying={saving}
               contentWritable={contentWritable}
+              coverDownloadAvailable={external.coverDownloadAvailable}
+              downloadCover={external.downloadAfterApply}
+              onDownloadCoverChange={external.setDownloadAfterApply}
               emptyMessage={external.emptyMessage}
               onOpenChange={external.setOpen}
               onQueryChange={external.setQuery}

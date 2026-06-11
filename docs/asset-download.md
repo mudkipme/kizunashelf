@@ -1,6 +1,6 @@
 # Local Cover / Asset Download
 
-Status: Phase 1 + Phase 2 + Phase 3 complete
+Status: complete (Phases 1-4)
 
 ## Goal
 
@@ -170,4 +170,10 @@ field/image: `downloaded | skipped | failed`, new path or error, `conflictResolv
    download panel that polls job status; inside-app rename asset-move +
    frontmatter rewrite; delete trashes the asset dir; `broken-asset` cleanup
    queue flagging local covers whose file is missing.
-4. **Phase 4:** external-match "download on apply".
+4. **Phase 4 (done):** external-match "download cover locally" opt-in. The
+   shared `useExternalMatch` hook owns the `downloadAfterApply` flag and a
+   `maybeDownloadCover(entity)` method; `ExternalMatchDialog` renders one
+   checkbox (shown only when the selection sets a remote image and asset
+   download is enabled); each consumer (view / edit / create) calls
+   `maybeDownloadCover` at its own persist point. The download localizes the
+   cover that the applied match wrote.
