@@ -1,17 +1,7 @@
 import { Grid2X2Icon, ListIcon, SlidersHorizontalIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Combobox,
-  ComboboxChip,
-  ComboboxChips,
-  ComboboxChipsInput,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxValue,
-} from "@/components/ui/combobox";
+import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -24,10 +14,16 @@ import { titleLanguageLabel } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
-export type EnumFieldFilter = {
+export type FieldFilterOption = {
+  value: string;
+  label?: string;
+};
+
+export type FieldFilter = {
   field: string;
   label: string;
-  options: string[];
+  kind: "multi" | "bool";
+  options: FieldFilterOption[];
   values: string[];
 };
 
@@ -45,7 +41,7 @@ type AssetToolbarProps = {
   view: string;
   titleLanguage: string;
   titleLanguages: string[];
-  enumFilters?: EnumFieldFilter[];
+  fieldFilters?: FieldFilter[];
   defaultTitleLabel?: string;
   dateFieldLabel?: (field: string) => string;
   onRefsChange: (value: string) => void;
@@ -54,7 +50,7 @@ type AssetToolbarProps = {
   onDirectionChange: (value: string) => void;
   onViewChange: (value: string) => void;
   onTitleLanguageChange: (value: string) => void;
-  onEnumFilterChange?: (field: string, values: string[]) => void;
+  onFieldFilterChange?: (field: string, values: string[]) => void;
 };
 
 export function AssetToolbar({
@@ -71,7 +67,7 @@ export function AssetToolbar({
   view,
   titleLanguage,
   titleLanguages,
-  enumFilters = [],
+  fieldFilters = [],
   defaultTitleLabel = "Default title",
   dateFieldLabel = (field) => field,
   onRefsChange,
@@ -80,9 +76,9 @@ export function AssetToolbar({
   onDirectionChange,
   onViewChange,
   onTitleLanguageChange,
-  onEnumFilterChange,
+  onFieldFilterChange,
 }: AssetToolbarProps) {
-  const hasFieldFilters = enumFilters.length > 0;
+  const hasFieldFilters = fieldFilters.length > 0;
 
   return (
     <div
@@ -121,12 +117,12 @@ export function AssetToolbar({
           <option value="without">Without cover</option>
         </Select>
       ) : null}
-      {enumFilters.map((filter) => (
-        <EnumFilterCombobox
+      {fieldFilters.map((filter) => (
+        <FieldFilterControl
           key={filter.field}
           filter={filter}
           compact={compact}
-          onChange={(values) => onEnumFilterChange?.(filter.field, values)}
+          onChange={(values) => onFieldFilterChange?.(filter.field, values)}
         />
       ))}
       {compact || (!showRefsFilter && !showCoverFilter && !hasFieldFilters) ? null : (
@@ -193,38 +189,45 @@ export function AssetToolbar({
   );
 }
 
-function EnumFilterCombobox({
+function FieldFilterControl({
   filter,
   compact,
   onChange,
 }: {
-  filter: EnumFieldFilter;
+  filter: FieldFilter;
   compact: boolean;
   onChange: (values: string[]) => void;
 }) {
+  if (filter.kind === "bool") {
+    const value = filter.values[0] ?? allOptions;
+    return (
+      <Select
+        value={value}
+        onChange={(event) => onChange(event.target.value === allOptions ? [] : [event.target.value])}
+        className={compact ? "col-span-2 w-full min-w-0" : "w-40 shrink-0"}
+        aria-label={filter.label}
+      >
+        <option value={allOptions}>Any {filter.label}</option>
+        {filter.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {filter.label} {option.label ?? option.value}
+          </option>
+        ))}
+      </Select>
+    );
+  }
+
   return (
     <label className={cn("w-56 text-xs text-muted-foreground", compact ? "col-span-2 w-full min-w-0" : "shrink-0")}>
       <span className="mb-1 block truncate">{filter.label}</span>
-      <Combobox items={filter.options} multiple value={filter.values} onValueChange={onChange}>
-        <ComboboxChips className="min-h-8 w-full px-2 py-1 text-xs">
-          <ComboboxValue>
-            {filter.values.map((item) => (
-              <ComboboxChip key={item}>{item}</ComboboxChip>
-            ))}
-          </ComboboxValue>
-          <ComboboxChipsInput placeholder={`Any ${filter.label}`} />
-        </ComboboxChips>
-        <ComboboxContent>
-          <ComboboxEmpty>No options found.</ComboboxEmpty>
-          <ComboboxList>
-            {(item) => (
-              <ComboboxItem key={item} value={item}>
-                {item}
-              </ComboboxItem>
-            )}
-          </ComboboxList>
-        </ComboboxContent>
-      </Combobox>
+      <MultiValueCombobox
+        values={filter.values}
+        options={filter.options}
+        placeholder={`Any ${filter.label}`}
+        ariaLabel={filter.label}
+        className="min-h-8 px-2 py-1 text-xs"
+        onChange={onChange}
+      />
     </label>
   );
 }

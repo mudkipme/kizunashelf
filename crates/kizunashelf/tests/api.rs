@@ -201,6 +201,20 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .await;
     assert_eq!(missing_genre_filtered["total"], 0);
 
+    let favorite_filters = urlencoding::encode(r#"[{"field":"favorite","values":["true"]}]"#);
+    let favorite_filtered = server
+        .ok_json(&format!("/api/entities?filters={favorite_filters}"))
+        .await;
+    assert_eq!(favorite_filtered["total"], 1);
+    assert_eq!(favorite_filtered["items"][0]["id"], "anime:Star Voyager");
+
+    let not_favorite_filters = urlencoding::encode(r#"[{"field":"favorite","values":["false"]}]"#);
+    let not_favorite_filtered = server
+        .ok_json(&format!("/api/entities?filters={not_favorite_filters}"))
+        .await;
+    assert_eq!(not_favorite_filtered["total"], 1);
+    assert_eq!(not_favorite_filtered["items"][0]["id"], "games:Moon Quest");
+
     let searched = server.ok_json("/api/entities?q=starlanes").await;
     assert_eq!(searched["total"], 1);
     assert_eq!(searched["items"][0]["id"], "anime:Star Voyager");
@@ -875,6 +889,7 @@ impl TestServer {
                         { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"] },
                         { "field": "season", "fieldType": "season", "displayName": "Season", "dateRole": "planning", "seasonLanguage": "zh" },
                         { "field": "complete_date", "fieldType": "date", "displayName": "Completed date", "dateRole": "completed" },
+                        { "field": "favorite", "fieldType": "bool", "displayName": "Favorite" },
                         { "field": "bgm_url", "fieldType": "externalRef", "displayName": "BGM", "externalRef": "bangumi" },
                         { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
                         { "field": "studio", "fieldType": "relation", "displayName": "Studio", "relationType": "studio" }
@@ -890,6 +905,7 @@ impl TestServer {
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
                         { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Playing", "Completed", "Paused", "Dropped"] },
+                        { "field": "favorite", "fieldType": "bool", "displayName": "Favorite" },
                         { "field": "release_date", "fieldType": "date", "displayName": "Release date", "dateRole": "planning" },
                         { "field": "igdb_url", "fieldType": "externalRef", "displayName": "IGDB", "externalRef": "igdb" },
                         { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
@@ -987,6 +1003,7 @@ title: Star Voyager
 title_en: A Voyage of Stars
 title_original: 星之航路
 status: Watching
+favorite: true
 season: "2025"
 complete_date: 2025-04-20
 cover_url: https://img.example/star.jpg
@@ -1006,6 +1023,7 @@ It shares continuity with [[Moon Quest]].
 title: Moon Quest
 title_en: Lunar Errand
 status: Playing
+favorite: false
 genres: [Adventure, Strategy]
 release_date: 2025-04-05
 igdb_url: https://igdb.example/moon

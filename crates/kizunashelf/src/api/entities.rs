@@ -198,7 +198,7 @@ fn field_type_for_entity_filter(
                 .find(|field_config| field_config.field == field)
         })
         .map(|field_config| field_config.field_type)
-        .filter(|field_type| matches!(field_type, FieldType::Enum | FieldType::EnumList))
+        .filter(|field_type| matches!(field_type, FieldType::Enum | FieldType::EnumList | FieldType::Bool))
 }
 
 fn field_value_matches_filter(
@@ -212,6 +212,13 @@ fn field_value_matches_filter(
             serde_json::Value::Array(items) => items
                 .iter()
                 .any(|item| frontmatter_scalar_matches_any(item, expected)),
+            _ => false,
+        },
+        FieldType::Bool => match value {
+            serde_json::Value::Bool(value) => {
+                let value = if *value { "true" } else { "false" };
+                expected.iter().any(|item| item == value)
+            }
             _ => false,
         },
         _ => false,
