@@ -113,7 +113,45 @@ pub(crate) async fn cleanup_queues(
     State(state): State<AppState>,
 ) -> ApiResult<CleanupQueuesResponse> {
     let library = get_library(&state).await?;
-    Ok(Json(build_cleanup_queues(&library)))
+    let (broken_assets, broken_total) = broken_local_assets(&library).await;
+    Ok(Json(build_cleanup_queues(
+        &library,
+        broken_assets,
+        broken_total,
+    )))
+}
+
+/// Entities whose local cover path points at a file that no longer exists, plus
+/// the number of entities that reference a local cover (the denominator).
+async fn broken_local_assets(library: &Library) -> (Vec<EntitySummary>, usize) {
+    let vault_root = std::path::Path::new(&library.config.vault_root);
+    let mut broken = Vec::new();
+    let mut local_total = 0;
+    for summary in &library.summaries {
+        let Some(image) = summary.image.as_deref() else {
+            continue;
+        };
+        let image = image.trim();
+        if image.is_empty() || is_remote_or_data_url(image) {
+            continue;
+        }
+        local_total += 1;
+        if !tokio::fs::try_exists(vault_root.join(image))
+            .await
+            .unwrap_or(false)
+        {
+            broken.push(summary.clone());
+        }
+    }
+    (broken, local_total)
+}
+
+fn is_remote_or_data_url(value: &str) -> bool {
+    let lower = value.to_ascii_lowercase();
+    lower.starts_with("http://")
+        || lower.starts_with("https://")
+        || lower.starts_with("data:")
+        || lower.starts_with("blob:")
 }
 
 fn build_analytics(library: &Library) -> AnalyticsResponse {
@@ -248,7 +286,11 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
     }
 }
 
-fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
+fn build_cleanup_queues(
+    library: &Library,
+    broken_assets: Vec<EntitySummary>,
+    broken_total: usize,
+) -> CleanupQueuesResponse {
     let summaries = &library.summaries;
     let quality = QualityEligibility::new(library);
     let source_by_id = summary_by_id(library);
@@ -302,6 +344,8 @@ fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
         refs_total,
         &isolated,
         relations_total,
+        &broken_assets,
+        broken_total,
         unresolved_relations.len(),
         outgoing.len(),
     );
@@ -312,6 +356,7 @@ fn build_cleanup_queues(library: &Library) -> CleanupQueuesResponse {
         missing_cover,
         missing_external_refs,
         isolated,
+        broken_assets,
         unresolved_relations,
     }
 }
@@ -404,6 +449,8 @@ fn cleanup_queue_summaries(
     refs_total: usize,
     isolated: &[EntitySummary],
     relations_total: usize,
+    broken_assets: &[EntitySummary],
+    broken_total: usize,
     unresolved_relations: usize,
     outgoing_relations: usize,
 ) -> Vec<CleanupQueueSummary> {
@@ -428,6 +475,13 @@ fn cleanup_queue_summaries(
         "Isolated Nodes",
         isolated.len(),
         relations_total,
+    );
+    push_cleanup_queue(
+        &mut queues,
+        "broken-asset",
+        "Broken Assets",
+        broken_assets.len(),
+        broken_total,
     );
     push_cleanup_queue(
         &mut queues,

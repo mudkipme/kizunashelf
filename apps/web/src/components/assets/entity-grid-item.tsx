@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { AssetImage } from "@/components/assets/asset-image";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { Badge } from "@/components/ui/badge";
 import { defaultTitleOptionId } from "@/lib/constants";
@@ -23,11 +24,13 @@ export function EntityGridItem({
       className="flex min-h-64 flex-col overflow-hidden rounded-md border bg-background transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
     >
       <div className="flex aspect-[4/3] items-center justify-center bg-muted">
-        {entity.image ? (
-          <img src={entity.image} alt="" className="size-full object-cover" loading="lazy" />
-        ) : (
-          <span className="text-sm font-medium text-muted-foreground">{entity.typeLabel}</span>
-        )}
+        <AssetImage
+          src={entity.image}
+          className="size-full object-cover"
+          fallback={
+            <span className="text-sm font-medium text-muted-foreground">{entity.typeLabel}</span>
+          }
+        />
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
         <div className="flex min-w-0 items-center gap-2">

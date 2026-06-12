@@ -1,13 +1,19 @@
 use axum::body::{self, Body};
-use axum::http::{header, Method, Request};
+use axum::http::{header, Method, Request, Response, StatusCode};
 use axum::Router;
 use kizunashelf::api::{router, ApiOptions};
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tauri::{Manager, State};
+use tauri::{AppHandle, Manager, State};
 use tower::ServiceExt;
+
+/// Custom URI scheme used by the webview to load locally stored vault assets
+/// (downloaded covers). It forwards to the in-process API `/api/assets` route so
+/// binary image data is served directly rather than through the JSON command
+/// bridge.
+const ASSET_SCHEME: &str = "kizasset";
 
 struct DesktopState {
     api: Router,
@@ -65,9 +71,64 @@ async fn api_request(
     })
 }
 
+/// Serves a local vault asset by forwarding the request to the in-process API
+/// `/api/assets/{path}` route, which validates the path and reads the file.
+async fn forward_asset_request(
+    app: AppHandle,
+    request: tauri::http::Request<Vec<u8>>,
+) -> Response<Vec<u8>> {
+    let api = app.state::<DesktopState>().api.clone();
+    // The custom-scheme URL is `kizasset://localhost/<vault-relative asset path>`,
+    // so the request path already carries the asset-root prefix the serve route
+    // expects (e.g. `/Assets/Anime/Foo/cover.jpg`).
+    let path = request.uri().path();
+    let forwarded = match Request::builder()
+        .method(Method::GET)
+        .uri(format!("/api/assets{path}"))
+        .body(Body::empty())
+    {
+        Ok(request) => request,
+        Err(_) => return asset_error_response(),
+    };
+    match api.oneshot(forwarded).await {
+        Ok(response) => {
+            let (parts, body) = response.into_parts();
+            let content_type = parts
+                .headers
+                .get(header::CONTENT_TYPE)
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or("application/octet-stream")
+                .to_string();
+            let bytes = body::to_bytes(body, usize::MAX)
+                .await
+                .map(|bytes| bytes.to_vec())
+                .unwrap_or_default();
+            Response::builder()
+                .status(parts.status)
+                .header(header::CONTENT_TYPE, content_type)
+                .body(bytes)
+                .unwrap_or_else(|_| asset_error_response())
+        }
+        Err(_) => asset_error_response(),
+    }
+}
+
+fn asset_error_response() -> Response<Vec<u8>> {
+    Response::builder()
+        .status(StatusCode::INTERNAL_SERVER_ERROR)
+        .body(Vec::new())
+        .expect("static asset error response is valid")
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .register_asynchronous_uri_scheme_protocol(ASSET_SCHEME, |ctx, request, responder| {
+            let app = ctx.app_handle().clone();
+            tauri::async_runtime::spawn(async move {
+                responder.respond(forward_asset_request(app, request).await);
+            });
+        })
         .setup(|app| {
             let config_path = discover_config_path();
             let cache_ttl = env::var("KIZUNASHELF_CACHE_TTL_MS")

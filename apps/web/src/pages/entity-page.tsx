@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
+  DownloadIcon,
   FilePenLineIcon,
   PencilIcon,
   SearchIcon,
@@ -11,7 +12,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { removeEntity, saveEntity } from "@/api/entities";
+import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
 import {
   capabilitiesQuery,
   configQuery,
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { groupRelations } from "@/lib/relations";
@@ -67,6 +69,10 @@ export function EntityPage() {
     detail.error ?? dates.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
   const entity = detail.data?.entity;
   const contentWritable = capabilities.data?.contentWritable !== false;
+  const canDownloadCover =
+    contentWritable &&
+    capabilities.data?.assetDownloadEnabled === true &&
+    isRemoteAsset(entity?.image);
   const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
   const external = useExternalMatch({
     typeConfig,
@@ -74,6 +80,7 @@ export function EntityPage() {
     entityType: entity?.type,
     defaultQuery: entity?.title,
     externalRefs: entity?.externalRefs,
+    assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
     onError: setError,
   });
   const relationGroups = useMemo(
@@ -136,13 +143,37 @@ export function EntityPage() {
     const nextBody = applyExternalBodySections(entity.body, external.selectedBodyPatch());
     setSaving(true);
     try {
-      await saveEntity(entity.id, {
+      const result = await saveEntity(entity.id, {
         revision: entity.revision,
         frontmatter: patch,
         body: nextBody === entity.body ? undefined : nextBody,
       });
       external.setOpen(false);
+      await external.maybeDownloadCover(result.entity);
       await invalidateEntityData();
+    } catch (error) {
+      setError(errorMessage(error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function downloadCover() {
+    if (!entity) return;
+    setSaving(true);
+    try {
+      const result = await downloadAssets(entity.id, { revision: entity.revision });
+      await invalidateEntityData();
+      const failures = result.results.filter((item) => item.status === "failed");
+      if (failures.length > 0) {
+        const reasons = failures
+          .map((item) => item.message)
+          .filter(Boolean)
+          .join("; ");
+        setError(reasons ? `Some images could not be downloaded: ${reasons}` : "Some images could not be downloaded");
+      } else {
+        setError(undefined);
+      }
     } catch (error) {
       setError(errorMessage(error));
     } finally {
@@ -175,9 +206,11 @@ export function EntityPage() {
               entity={entity}
               contentWritable={contentWritable}
               saving={saving}
+              showDownloadCover={canDownloadCover}
               onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
               onRename={() => setRenameOpen((open) => !open)}
               onMatch={() => external.setOpen(true)}
+              onDownloadCover={downloadCover}
               onDelete={deleteCurrentEntity}
             />
             {renameOpen ? (
@@ -213,6 +246,9 @@ export function EntityPage() {
               searching={external.searching}
               applying={saving}
               contentWritable={contentWritable}
+              coverDownloadAvailable={external.coverDownloadAvailable}
+              downloadCover={external.downloadAfterApply}
+              onDownloadCoverChange={external.setDownloadAfterApply}
               emptyMessage={external.emptyMessage}
               onOpenChange={external.setOpen}
               onQueryChange={external.setQuery}
@@ -247,17 +283,21 @@ function EntityActions({
   entity,
   contentWritable,
   saving,
+  showDownloadCover,
   onEdit,
   onRename,
   onMatch,
+  onDownloadCover,
   onDelete,
 }: {
   entity: Entity;
   contentWritable: boolean;
   saving: boolean;
+  showDownloadCover: boolean;
   onEdit: () => void;
   onRename: () => void;
   onMatch: () => void;
+  onDownloadCover: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -275,6 +315,12 @@ function EntityActions({
           <SearchIcon data-icon="inline-start" />
           Match
         </Button>
+        {showDownloadCover ? (
+          <Button type="button" variant="outline" onClick={onDownloadCover} disabled={saving}>
+            <DownloadIcon data-icon="inline-start" />
+            Download cover
+          </Button>
+        ) : null}
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button type="button" variant="outline" disabled={!contentWritable || saving}>

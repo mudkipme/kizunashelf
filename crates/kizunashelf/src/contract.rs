@@ -31,6 +31,7 @@ pub struct CapabilitiesResponse {
     pub content_writable: bool,
     pub external_search_enabled: bool,
     pub external_apply_enabled: bool,
+    pub asset_download_enabled: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -54,6 +55,11 @@ pub struct PathSuggestionsResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ConfigResponse {
     pub taxonomy_root: String,
+    /// Absolute vault root, used by the desktop runtime to resolve local assets
+    /// directly from disk (the web runtime uses the `/api/assets` route instead).
+    pub vault_root: String,
+    /// Vault-relative directory where downloaded assets are stored.
+    pub asset_root: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub home: Option<HomeConfig>,
     pub types: Vec<EntityTypeConfig>,
@@ -202,6 +208,105 @@ pub struct DeleteEntityRequest {
 pub struct DeleteEntityResponse {
     pub deleted_id: String,
     pub backup_path: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadRequest {
+    pub revision: String,
+    /// Restrict to these field names; when omitted, all image fields with remote
+    /// URLs are downloaded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fields: Option<Vec<String>>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum AssetDownloadStatus {
+    Downloaded,
+    Skipped,
+    Failed,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadItemResult {
+    pub field: String,
+    pub status: AssetDownloadStatus,
+    /// Source URL that was downloaded (or attempted).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_url: Option<String>,
+    /// Vault-relative local path written on success.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+    /// Why the item was skipped or failed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    /// True when an existing file referenced by another entity forced a
+    /// disambiguated filename.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub conflict_resolved: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadResponse {
+    pub entity: Entity,
+    pub results: Vec<AssetDownloadItemResult>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJobRequest {
+    /// Restrict the batch to one entity type; when omitted, the whole library.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entity_type: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum AssetDownloadJobStatus {
+    Queued,
+    Running,
+    Completed,
+    Cancelled,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJobError {
+    pub entity_id: String,
+    pub entity_title: String,
+    pub message: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJob {
+    pub id: String,
+    pub status: AssetDownloadJobStatus,
+    /// Human-readable scope, e.g. `all` or `type:anime`.
+    pub scope: String,
+    pub total: u32,
+    pub processed: u32,
+    pub downloaded: u32,
+    pub failed: u32,
+    pub skipped: u32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub errors: Vec<AssetDownloadJobError>,
+    pub started_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub finished_at: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadJobListResponse {
+    pub jobs: Vec<AssetDownloadJob>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -376,6 +481,8 @@ pub struct CleanupQueuesResponse {
     pub missing_cover: Vec<EntitySummary>,
     pub missing_external_refs: Vec<EntitySummary>,
     pub isolated: Vec<EntitySummary>,
+    /// Entities whose local cover path points to a file that no longer exists.
+    pub broken_assets: Vec<EntitySummary>,
     pub unresolved_relations: Vec<CleanupUnresolvedRelation>,
 }
 
@@ -459,5 +566,8 @@ pub struct ApiSchemas {
     pub relation_groups: RelationGroupsResponse,
     pub calendar: CalendarResponse,
     pub calendar_entry: CalendarEntry,
+    pub asset_download: AssetDownloadResponse,
+    pub asset_download_job: AssetDownloadJob,
+    pub asset_download_jobs: AssetDownloadJobListResponse,
     pub library: crate::types::Library,
 }

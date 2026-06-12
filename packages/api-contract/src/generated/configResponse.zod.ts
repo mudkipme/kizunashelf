@@ -11,6 +11,8 @@ export const configResponseHomeOneSectionsItemLimitMin = 0;
 export const configResponseTypesItemFieldsDefault = [];
 export const ConfigResponse = zod.object({
   "taxonomyRoot": zod.string(),
+  "vaultRoot": zod.string().describe('Absolute vault root, used by the desktop runtime to resolve local assets\ndirectly from disk (the web runtime uses the `\/api\/assets` route instead).'),
+  "assetRoot": zod.string().describe('Vault-relative directory where downloaded assets are stored.'),
   "home": zod.union([zod.object({
   "title": zod.string().nullish(),
   "sections": zod.array(zod.object({

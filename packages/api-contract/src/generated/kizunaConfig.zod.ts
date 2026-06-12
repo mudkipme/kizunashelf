@@ -16,6 +16,7 @@ export const kizunaConfigTypesItemFieldsDefault = [];
 export const KizunaConfig = zod.object({
   "vaultRoot": zod.string(),
   "taxonomyRoot": zod.string(),
+  "assetRoot": zod.string().nullish(),
   "contentWritable": zod.boolean().nullish(),
   "readConcurrency": zod.number().min(kizunaConfigReadConcurrencyMin).nullish(),
   "home": zod.union([zod.object({

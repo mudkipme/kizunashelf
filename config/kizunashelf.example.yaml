@@ -1,5 +1,6 @@
 vaultRoot: /path/to/ObsidianVault
 taxonomyRoot: Taxonomy
+assetRoot: Assets
 contentWritable: true
 readConcurrency: 8
 dailyNotes:

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { errorMessage } from "@/api/client";
-import { searchSources } from "@/api/entities";
+import { downloadAssets, searchSources } from "@/api/entities";
+import { isRemoteAsset } from "@/lib/asset-src";
 import {
   candidateBodyPatch,
   candidateBodyPreviewEntries,
@@ -14,12 +15,21 @@ import type { ExternalCandidate, ExternalProviderCatalog, TypeConfig } from "@/t
 
 type ExternalRefs = Record<string, string | undefined>;
 
+function patchValueHasRemote(value: unknown): boolean {
+  if (typeof value === "string") return isRemoteAsset(value);
+  if (Array.isArray(value)) {
+    return value.some((item) => typeof item === "string" && isRemoteAsset(item));
+  }
+  return false;
+}
+
 export function useExternalMatch({
   typeConfig,
   providerCatalog,
   entityType,
   defaultQuery,
   externalRefs,
+  assetDownloadEnabled = false,
   onError,
 }: {
   typeConfig?: TypeConfig;
@@ -27,6 +37,7 @@ export function useExternalMatch({
   entityType?: string;
   defaultQuery?: string;
   externalRefs?: ExternalRefs;
+  assetDownloadEnabled?: boolean;
   onError: (message: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -38,6 +49,7 @@ export function useExternalMatch({
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [selectedBodySections, setSelectedBodySections] = useState<Set<string>>(new Set());
   const [emptyMessage, setEmptyMessage] = useState("No candidates loaded");
+  const [downloadAfterApply, setDownloadAfterApply] = useState(false);
 
   const providerOptions = useMemo(
     () => externalProviderPriority(providerCatalog, typeConfig),
@@ -82,6 +94,32 @@ export function useExternalMatch({
       setProvider("all");
     }
   }, [provider, providerOptions]);
+
+  const coverDownloadAvailable = useMemo(() => {
+    if (!assetDownloadEnabled || !selectedCandidate || !typeConfig) return false;
+    const patch = candidateMetadataPatch(selectedCandidate, typeConfig, selectedFields) as Record<
+      string,
+      unknown
+    >;
+    return (typeConfig.fields ?? []).some(
+      (field) =>
+        (field.fieldType === "image" || field.fieldType === "imageList") &&
+        patchValueHasRemote(patch[field.field]),
+    );
+  }, [assetDownloadEnabled, selectedCandidate, typeConfig, selectedFields]);
+
+  // Downloads the entity's freshly applied remote cover when the user opted in.
+  // Best-effort: a failure is surfaced but does not block the caller's flow.
+  async function maybeDownloadCover(entity: { id: string; revision: string }) {
+    if (!downloadAfterApply) return;
+    try {
+      await downloadAssets(entity.id, { revision: entity.revision });
+    } catch (error) {
+      onError(errorMessage(error));
+    } finally {
+      setDownloadAfterApply(false);
+    }
+  }
 
   function resetSelection() {
     setSelectedCandidate(undefined);
@@ -163,6 +201,10 @@ export function useExternalMatch({
     bodyEntries,
     existingExternalRefs,
     emptyMessage,
+    coverDownloadAvailable,
+    downloadAfterApply,
+    setDownloadAfterApply,
+    maybeDownloadCover,
     search,
     refreshFromExternalRef,
     chooseCandidate,

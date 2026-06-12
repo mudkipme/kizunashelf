@@ -9,6 +9,26 @@ import {
 } from './analyticsResponse.zod';
 
 import {
+  AssetDownloadJob
+} from './assetDownloadJob.zod';
+
+import {
+  AssetDownloadJobListResponse
+} from './assetDownloadJobListResponse.zod';
+
+import type {
+  AssetDownloadJobRequest
+} from './assetDownloadJobRequest.zod';
+
+import type {
+  AssetDownloadRequest
+} from './assetDownloadRequest.zod';
+
+import {
+  AssetDownloadResponse
+} from './assetDownloadResponse.zod';
+
+import {
   CalendarPlanningResponse
 } from './calendarPlanningResponse.zod';
 
@@ -747,6 +767,152 @@ export const deleteEntity = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? DeleteEntityResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getDownloadEntityAssetsUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/assets/download`
+}
+
+export const downloadEntityAssets = async (id: string,
+    assetDownloadRequest: AssetDownloadRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetDownloadResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getDownloadEntityAssetsUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(assetDownloadRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetDownloadResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getListAssetJobsUrl = () => {
+
+
+
+
+  return `/api/asset-jobs`
+}
+
+export const listAssetJobs = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetDownloadJobListResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getListAssetJobsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetDownloadJobListResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCreateAssetJobUrl = () => {
+
+
+
+
+  return `/api/asset-jobs`
+}
+
+export const createAssetJob = async (assetDownloadJobRequest: AssetDownloadJobRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetDownloadJob> => {
+
+  const res = await (fetchFn ?? fetch)(getCreateAssetJobUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(assetDownloadJobRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetDownloadJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetAssetJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/asset-jobs/${encodeURIComponent(String(id))}`
+}
+
+export const getAssetJob = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetDownloadJob> => {
+
+  const res = await (fetchFn ?? fetch)(getGetAssetJobUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetDownloadJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCancelAssetJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/asset-jobs/${encodeURIComponent(String(id))}/cancel`
+}
+
+export const cancelAssetJob = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetDownloadJob> => {
+
+  const res = await (fetchFn ?? fetch)(getCancelAssetJobUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetDownloadJob.parse(parsedBody) : parsedBody
   return data
 }
 

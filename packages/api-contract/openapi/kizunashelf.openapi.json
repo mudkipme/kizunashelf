@@ -990,6 +990,272 @@
         }
       }
     },
+    "/api/entities/{id}/assets/download": {
+      "post": {
+        "operationId": "downloadEntityAssets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetDownloadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asset-jobs": {
+      "get": {
+        "operationId": "listAssetJobs",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJobListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAssetJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetDownloadJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asset-jobs/{id}": {
+      "get": {
+        "operationId": "getAssetJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/asset-jobs/{id}/cancel": {
+      "post": {
+        "operationId": "cancelAssetJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/relations": {
       "get": {
         "operationId": "getRelations",
@@ -1149,19 +1415,31 @@
           },
           "externalApplyEnabled": {
             "type": "boolean"
+          },
+          "assetDownloadEnabled": {
+            "type": "boolean"
           }
         },
         "required": [
           "settingsWritable",
           "contentWritable",
           "externalSearchEnabled",
-          "externalApplyEnabled"
+          "externalApplyEnabled",
+          "assetDownloadEnabled"
         ]
       },
       "ConfigResponse": {
         "type": "object",
         "properties": {
           "taxonomyRoot": {
+            "type": "string"
+          },
+          "vaultRoot": {
+            "description": "Absolute vault root, used by the desktop runtime to resolve local assets\ndirectly from disk (the web runtime uses the `/api/assets` route instead).",
+            "type": "string"
+          },
+          "assetRoot": {
+            "description": "Vault-relative directory where downloaded assets are stored.",
             "type": "string"
           },
           "home": {
@@ -1183,6 +1461,8 @@
         },
         "required": [
           "taxonomyRoot",
+          "vaultRoot",
+          "assetRoot",
           "types"
         ]
       },
@@ -1558,6 +1838,12 @@
           },
           "taxonomyRoot": {
             "type": "string"
+          },
+          "assetRoot": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "contentWritable": {
             "type": [
@@ -2470,6 +2756,13 @@
               "$ref": "#/components/schemas/EntitySummary"
             }
           },
+          "brokenAssets": {
+            "description": "Entities whose local cover path points to a file that no longer exists.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
+          },
           "unresolvedRelations": {
             "type": "array",
             "items": {
@@ -2483,6 +2776,7 @@
           "missingCover",
           "missingExternalRefs",
           "isolated",
+          "brokenAssets",
           "unresolvedRelations"
         ]
       },
@@ -3718,6 +4012,224 @@
         "required": [
           "deletedId",
           "backupPath"
+        ]
+      },
+      "AssetDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "fields": {
+            "description": "Restrict to these field names; when omitted, all image fields with remote\nURLs are downloaded.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "AssetDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadItemResult"
+            }
+          }
+        },
+        "required": [
+          "entity",
+          "results"
+        ]
+      },
+      "AssetDownloadItemResult": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AssetDownloadStatus"
+          },
+          "sourceUrl": {
+            "description": "Source URL that was downloaded (or attempted).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "description": "Vault-relative local path written on success.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "description": "Why the item was skipped or failed.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conflictResolved": {
+            "description": "True when an existing file referenced by another entity forced a\ndisambiguated filename.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "status"
+        ]
+      },
+      "AssetDownloadStatus": {
+        "type": "string",
+        "enum": [
+          "downloaded",
+          "skipped",
+          "failed"
+        ]
+      },
+      "AssetDownloadJobListResponse": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadJob"
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ]
+      },
+      "AssetDownloadJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AssetDownloadJobStatus"
+          },
+          "scope": {
+            "description": "Human-readable scope, e.g. `all` or `type:anime`.",
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "processed": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "downloaded": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadJobError"
+            }
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "scope",
+          "total",
+          "processed",
+          "downloaded",
+          "failed",
+          "skipped",
+          "startedAt"
+        ]
+      },
+      "AssetDownloadJobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "completed",
+          "cancelled"
+        ]
+      },
+      "AssetDownloadJobError": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string"
+          },
+          "entityTitle": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entityId",
+          "entityTitle",
+          "message"
+        ]
+      },
+      "AssetDownloadJobRequest": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "description": "Restrict the batch to one entity type; when omitted, the whole library.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "JobPath": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
         ]
       },
       "RelationsQuery": {

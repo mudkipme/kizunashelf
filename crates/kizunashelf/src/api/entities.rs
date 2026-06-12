@@ -198,7 +198,12 @@ fn field_type_for_entity_filter(
                 .find(|field_config| field_config.field == field)
         })
         .map(|field_config| field_config.field_type)
-        .filter(|field_type| matches!(field_type, FieldType::Enum | FieldType::EnumList | FieldType::Bool))
+        .filter(|field_type| {
+            matches!(
+                field_type,
+                FieldType::Enum | FieldType::EnumList | FieldType::Bool
+            )
+        })
 }
 
 fn field_value_matches_filter(
