@@ -6,7 +6,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 
 RUN apk add --no-cache build-base ca-certificates nodejs npm \
-  && npm install -g pnpm@10.28.0
+  && npm install -g pnpm@11.6.0
 
 FROM base AS deps
 
