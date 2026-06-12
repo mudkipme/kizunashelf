@@ -463,9 +463,13 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
 }
 
 fn effective_read_concurrency(config: &KizunaConfig) -> usize {
-    config
-        .read_concurrency
-        .map(|value| value as usize)
+    // Read concurrency is an operational tuning knob, not a user-facing setting:
+    // the `KIZUNASHELF_READ_CONCURRENCY` env var overrides the config file when
+    // set, otherwise the config value (or the built-in default) is used.
+    std::env::var("KIZUNASHELF_READ_CONCURRENCY")
+        .ok()
+        .and_then(|value| value.trim().parse::<usize>().ok())
+        .or_else(|| config.read_concurrency.map(|value| value as usize))
         .unwrap_or(DEFAULT_READ_CONCURRENCY)
         .clamp(1, MAX_READ_CONCURRENCY)
 }

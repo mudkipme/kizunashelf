@@ -43,6 +43,11 @@ async fn suggest_directories(path: Option<&str>, base: Option<&str>) -> Result<V
             continue;
         }
         let name = entry.file_name().to_string_lossy().to_string();
+        // Omit hidden (dotfile) directories such as `.git`/`.obsidian` unless the
+        // user explicitly typed a leading dot to navigate into one.
+        if name.starts_with('.') && !typed_prefix.starts_with('.') {
+            continue;
+        }
         if !typed_prefix.is_empty() && !name.to_lowercase().starts_with(&typed_prefix) {
             continue;
         }

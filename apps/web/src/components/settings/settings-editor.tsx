@@ -11,7 +11,6 @@ import type { KizunaConfig } from "@/types/config";
 import {
   EmptyConfigLine,
   Field,
-  NumberField,
   OptionalToggle,
   PathField,
   SettingsSection,
@@ -166,7 +165,7 @@ export function SettingsEditor({
               <SummaryBadges
                 items={[
                   config.contentWritable === false ? "read only" : "writable",
-                  `${config.readConcurrency ?? "default"} readers`,
+                  `assets: ${config.assetRoot || "Assets"}`,
                 ]}
               />
             }
@@ -184,10 +183,11 @@ export function SettingsEditor({
                 base={config.vaultRoot}
                 onChange={(value) => setConfig((current) => ({ ...current, taxonomyRoot: value }))}
               />
-              <NumberField
-                label="Read concurrency"
-                value={config.readConcurrency}
-                onChange={(value) => setConfig((current) => ({ ...current, readConcurrency: value }))}
+              <PathField
+                label="Asset root"
+                value={config.assetRoot ?? ""}
+                base={config.vaultRoot}
+                onChange={(value) => setConfig((current) => ({ ...current, assetRoot: value }))}
               />
               <Field label="Content writes">
                 <Select

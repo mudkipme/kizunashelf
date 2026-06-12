@@ -93,7 +93,11 @@ export type DailyNotesConfig = {
 export type KizunaConfig = {
   vaultRoot: string;
   taxonomyRoot: string;
+  assetRoot?: string | null;
   contentWritable?: boolean | null;
+  // Operational tuning knob configured via the config file / KIZUNASHELF_READ_CONCURRENCY
+  // env var only — not surfaced in the Settings UI, but round-tripped on save so an
+  // existing value is never clobbered.
   readConcurrency?: number | null;
   home?: HomeConfig | null;
   dailyNotes?: DailyNotesConfig | null;

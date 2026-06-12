@@ -27,7 +27,9 @@ export function normalizeConfig(config?: KizunaConfig): KizunaConfig {
   return {
     vaultRoot: config.vaultRoot ?? "",
     taxonomyRoot: config.taxonomyRoot ?? "Taxonomy",
+    assetRoot: config.assetRoot ?? "",
     contentWritable: config.contentWritable ?? true,
+    // Preserved verbatim across saves even though the UI no longer edits it.
     readConcurrency: config.readConcurrency ?? null,
     dailyNotes: config.dailyNotes ? normalizeDailyNotes(config.dailyNotes) : null,
     home: config.home ? normalizeHome(config.home) : null,
@@ -91,6 +93,7 @@ export function cleanConfig(config: KizunaConfig, providerCatalog?: ExternalProv
   return {
     vaultRoot: config.vaultRoot,
     taxonomyRoot: config.taxonomyRoot,
+    assetRoot: emptyToUndefined(config.assetRoot),
     contentWritable: config.contentWritable ?? undefined,
     readConcurrency: config.readConcurrency ?? undefined,
     dailyNotes: config.dailyNotes
@@ -232,8 +235,8 @@ export function defaultConfig(): KizunaConfig {
   return {
     vaultRoot: "",
     taxonomyRoot: "Taxonomy",
+    assetRoot: "Assets",
     contentWritable: true,
-    readConcurrency: 8,
     dailyNotes: defaultDailyNotes(),
     home: defaultHome(),
     types: [defaultEntityType()],

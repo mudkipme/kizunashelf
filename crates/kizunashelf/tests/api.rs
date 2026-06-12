@@ -729,6 +729,56 @@ async fn settings_config_rejects_paths_that_escape_the_vault_root() {
 }
 
 #[tokio::test]
+async fn path_suggestions_omit_hidden_directories() {
+    let temp = TempDir::new().unwrap();
+    let base = temp.path().join("picker");
+    std::fs::create_dir_all(base.join("Vault")).unwrap();
+    std::fs::create_dir_all(base.join(".obsidian")).unwrap();
+    let app = router(ApiOptions {
+        config_path: temp.path().join("kizunashelf.yaml"),
+        cache_ttl: Duration::from_millis(0),
+        web_dist_path: None,
+        settings_writable: true,
+        content_writable: true,
+    });
+
+    // Listing a directory hides dotfile folders such as `.obsidian`.
+    let visible = request_json(
+        &app,
+        Method::GET,
+        &format!("/api/settings/path-suggestions?path={}", base.display()),
+        None,
+    )
+    .await;
+    assert_eq!(visible.0, StatusCode::OK);
+    let names: Vec<String> = visible.1["suggestions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap().to_string())
+        .collect();
+    assert!(names.iter().any(|name| name.ends_with("Vault")));
+    assert!(names.iter().all(|name| !name.contains(".obsidian")));
+
+    // Typing an explicit leading dot still reveals the hidden folder.
+    let typed = request_json(
+        &app,
+        Method::GET,
+        &format!("/api/settings/path-suggestions?path={}/.o", base.display()),
+        None,
+    )
+    .await;
+    assert_eq!(typed.0, StatusCode::OK);
+    let typed_names: Vec<String> = typed.1["suggestions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap().to_string())
+        .collect();
+    assert!(typed_names.iter().any(|name| name.ends_with(".obsidian")));
+}
+
+#[tokio::test]
 async fn settings_mutation_endpoints_can_be_disabled() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
