@@ -236,16 +236,16 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
                 .collect::<Vec<Count>>(),
             by_source_target_type: relation_type_pairs(library).into_iter().take(16).collect(),
         },
-        coverage: build_coverage_metrics(
-            with_cover_count,
-            cover_total,
-            with_refs_count,
-            refs_total,
-            connected_count,
-            relations_total,
-            outgoing.len() - unresolved.len(),
-            outgoing.len(),
-        ),
+        coverage: build_coverage_metrics(&[
+            ("Cover", with_cover_count, cover_total),
+            ("External refs", with_refs_count, refs_total),
+            ("Relations", connected_count, relations_total),
+            (
+                "Resolved relation targets",
+                outgoing.len() - unresolved.len(),
+                outgoing.len(),
+            ),
+        ]),
         timeline: build_timeline(dated),
         relations: AnalyticsRelations {
             top_fields: relation_fields(library)
@@ -337,18 +337,38 @@ fn build_cleanup_queues(
         .iter()
         .filter(|entity| quality.requires_relations(entity))
         .count();
-    let queues = cleanup_queue_summaries(
-        &missing_cover,
-        cover_total,
-        &missing_external_refs,
-        refs_total,
-        &isolated,
-        relations_total,
-        &broken_assets,
-        broken_total,
-        unresolved_relations.len(),
-        outgoing.len(),
-    );
+    let queues = cleanup_queue_summaries(&[
+        (
+            "missing-cover",
+            "Missing Cover",
+            missing_cover.len(),
+            cover_total,
+        ),
+        (
+            "missing-refs",
+            "Missing External Refs",
+            missing_external_refs.len(),
+            refs_total,
+        ),
+        (
+            "isolated",
+            "Isolated Nodes",
+            isolated.len(),
+            relations_total,
+        ),
+        (
+            "broken-asset",
+            "Broken Assets",
+            broken_assets.len(),
+            broken_total,
+        ),
+        (
+            "unresolved-relations",
+            "Unresolved Relations",
+            unresolved_relations.len(),
+            outgoing.len(),
+        ),
+    ]);
 
     CleanupQueuesResponse {
         generated_at: library.generated_at.clone(),
@@ -408,26 +428,13 @@ impl QualityEligibility {
     }
 }
 
-fn build_coverage_metrics(
-    with_cover_count: usize,
-    cover_total: usize,
-    with_refs_count: usize,
-    refs_total: usize,
-    connected_count: usize,
-    relations_total: usize,
-    resolved_relations: usize,
-    relations_count: usize,
-) -> Vec<AnalyticsCoverageMetric> {
+/// Builds coverage metrics from `(name, count, total)` rows, skipping any whose
+/// total is zero.
+fn build_coverage_metrics(entries: &[(&str, usize, usize)]) -> Vec<AnalyticsCoverageMetric> {
     let mut metrics = Vec::new();
-    push_coverage_metric(&mut metrics, "Cover", with_cover_count, cover_total);
-    push_coverage_metric(&mut metrics, "External refs", with_refs_count, refs_total);
-    push_coverage_metric(&mut metrics, "Relations", connected_count, relations_total);
-    push_coverage_metric(
-        &mut metrics,
-        "Resolved relation targets",
-        resolved_relations,
-        relations_count,
-    );
+    for &(name, count, total) in entries {
+        push_coverage_metric(&mut metrics, name, count, total);
+    }
     metrics
 }
 
@@ -442,54 +449,13 @@ fn push_coverage_metric(
     }
 }
 
-fn cleanup_queue_summaries(
-    missing_cover: &[EntitySummary],
-    cover_total: usize,
-    missing_external_refs: &[EntitySummary],
-    refs_total: usize,
-    isolated: &[EntitySummary],
-    relations_total: usize,
-    broken_assets: &[EntitySummary],
-    broken_total: usize,
-    unresolved_relations: usize,
-    outgoing_relations: usize,
-) -> Vec<CleanupQueueSummary> {
+/// Builds cleanup-queue summaries from `(id, label, remaining, total)` rows,
+/// skipping any whose total is zero.
+fn cleanup_queue_summaries(entries: &[(&str, &str, usize, usize)]) -> Vec<CleanupQueueSummary> {
     let mut queues = Vec::new();
-    push_cleanup_queue(
-        &mut queues,
-        "missing-cover",
-        "Missing Cover",
-        missing_cover.len(),
-        cover_total,
-    );
-    push_cleanup_queue(
-        &mut queues,
-        "missing-refs",
-        "Missing External Refs",
-        missing_external_refs.len(),
-        refs_total,
-    );
-    push_cleanup_queue(
-        &mut queues,
-        "isolated",
-        "Isolated Nodes",
-        isolated.len(),
-        relations_total,
-    );
-    push_cleanup_queue(
-        &mut queues,
-        "broken-asset",
-        "Broken Assets",
-        broken_assets.len(),
-        broken_total,
-    );
-    push_cleanup_queue(
-        &mut queues,
-        "unresolved-relations",
-        "Unresolved Relations",
-        unresolved_relations,
-        outgoing_relations,
-    );
+    for &(id, label, remaining, total) in entries {
+        push_cleanup_queue(&mut queues, id, label, remaining, total);
+    }
     queues
 }
 

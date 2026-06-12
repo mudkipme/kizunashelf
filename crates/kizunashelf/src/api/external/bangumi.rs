@@ -34,7 +34,7 @@ async fn search_bangumi(
     let Some(filter_types) = bangumi_types(provider_config) else {
         return Ok(Vec::new());
     };
-    let client = external_client()?;
+    let client = external_client();
     if let Some(subject_id) = bangumi_subject_id(q) {
         let value = client
             .get(format!("https://api.bgm.tv/v0/subjects/{subject_id}"))
@@ -74,10 +74,7 @@ async fn search_bangumi(
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default();
-    Ok(data
-        .iter()
-        .filter_map(|item| bangumi_candidate(item))
-        .collect())
+    Ok(data.iter().filter_map(bangumi_candidate).collect())
 }
 
 fn bangumi_subject_id(q: &str) -> Option<String> {

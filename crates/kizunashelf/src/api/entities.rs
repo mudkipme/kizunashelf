@@ -282,9 +282,9 @@ pub(crate) fn sort_entities_for_entity_list(
     entities
 }
 
-fn entity_sort_title<'entity, 'language>(
+fn entity_sort_title<'entity>(
     entity: &'entity EntitySummary,
-    explicit_title_language: Option<&'language str>,
+    explicit_title_language: Option<&str>,
 ) -> &'entity str {
     if let Some(language) = explicit_title_language {
         return entity

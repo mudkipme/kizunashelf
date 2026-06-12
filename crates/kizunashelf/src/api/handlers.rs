@@ -212,13 +212,17 @@ pub(crate) async fn relations(
     Query(query): Query<RelationsQuery>,
 ) -> ApiResult<RelationListResponse> {
     let library = get_library(&state).await?;
-    let mut relations = library.relations.clone();
-    if let Some(source_id) = query.source_id {
-        relations.retain(|relation| relation.source_id == source_id);
-    }
-    if let Some(field) = query.field {
-        relations.retain(|relation| relation.field == field);
-    }
+    // Filter by reference and clone only the matching relations, instead of
+    // cloning the entire shared Vec up front and then discarding most of it.
+    let source_id = query.source_id.as_deref();
+    let field = query.field.as_deref();
+    let relations: Vec<_> = library
+        .relations
+        .iter()
+        .filter(|relation| source_id.is_none_or(|id| relation.source_id == id))
+        .filter(|relation| field.is_none_or(|field| relation.field == field))
+        .cloned()
+        .collect();
     Ok(Json(RelationListResponse {
         total: relations.len(),
         items: relations,

@@ -40,6 +40,20 @@ impl ApiError {
         }
     }
 
+    pub(crate) fn bad_gateway(message: &str) -> Self {
+        Self {
+            status: StatusCode::BAD_GATEWAY,
+            message: message.to_string(),
+        }
+    }
+
+    pub(crate) fn gateway_timeout(message: &str) -> Self {
+        Self {
+            status: StatusCode::GATEWAY_TIMEOUT,
+            message: message.to_string(),
+        }
+    }
+
     pub(crate) fn message(&self) -> &str {
         &self.message
     }

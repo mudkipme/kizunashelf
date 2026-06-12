@@ -50,8 +50,8 @@ async fn search_igdb(
     let Some((client_id, client_secret)) = igdb_credentials() else {
         return Ok(Vec::new());
     };
-    let client = external_client()?;
-    let token = igdb_access_token(state, &client, &client_id, &client_secret, false).await?;
+    let client = external_client();
+    let token = igdb_access_token(state, client, &client_id, &client_secret, false).await?;
     let offset = (page - 1) * page_size;
     let body = igdb_query_body(q, page_size, offset);
     let response = client
@@ -64,7 +64,7 @@ async fn search_igdb(
         .map_err(provider_error)?;
     let response = if response.status() == reqwest::StatusCode::UNAUTHORIZED {
         state.invalidate_access_token("igdb").await;
-        let token = igdb_access_token(state, &client, &client_id, &client_secret, true).await?;
+        let token = igdb_access_token(state, client, &client_id, &client_secret, true).await?;
         client
             .post("https://api.igdb.com/v4/games")
             .header("Client-ID", &client_id)

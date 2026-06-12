@@ -50,7 +50,7 @@ async fn search_thetvdb(
     else {
         return Ok(Vec::new());
     };
-    let client = external_client()?;
+    let client = external_client();
     let mut login = Map::new();
     login.insert("apikey".to_string(), Value::String(api_key));
     if let Ok(pin) = std::env::var("KIZUNASHELF_TVDB_PIN") {
@@ -58,7 +58,7 @@ async fn search_thetvdb(
             login.insert("pin".to_string(), Value::String(pin));
         }
     }
-    let token = thetvdb_access_token(state, &client, &login, false).await?;
+    let token = thetvdb_access_token(state, client, &login, false).await?;
     let Some(type_filters) = thetvdb_type_filters(provider_config) else {
         return Ok(Vec::new());
     };
@@ -67,7 +67,7 @@ async fn search_thetvdb(
     for type_filter in type_filters {
         let data = search_thetvdb_type(
             state,
-            &client,
+            client,
             &login,
             &token,
             &thetvdb_query(q),

@@ -16,6 +16,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use super::state::{get_library, AppState};
@@ -133,49 +134,55 @@ pub(crate) async fn external_search(
     let page_size = clamp_number(query.page_size.unwrap_or(10.0), 1, 25) as usize;
     let page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX) as usize;
 
+    let order = provider_order(&library.config, entity_type);
+
+    // Run every selected provider concurrently rather than summing their
+    // latencies sequentially. `tokio::join!` polls all three on this task, so
+    // no spawning or 'static bound is needed; each `search_provider` returns an
+    // empty Vec when its provider is not selected/enabled.
+    let (bangumi_items, igdb_items, thetvdb_items) = tokio::join!(
+        search_provider::<bangumi::BangumiProvider>(
+            &state,
+            &order,
+            requested_provider,
+            &providers,
+            &configured_providers,
+            q,
+            page,
+            page_size,
+        ),
+        search_provider::<igdb::IgdbProvider>(
+            &state,
+            &order,
+            requested_provider,
+            &providers,
+            &configured_providers,
+            q,
+            page,
+            page_size,
+        ),
+        search_provider::<thetvdb::ThetvdbProvider>(
+            &state,
+            &order,
+            requested_provider,
+            &providers,
+            &configured_providers,
+            q,
+            page,
+            page_size,
+        ),
+    );
+
+    let mut by_provider: BTreeMap<&'static str, Vec<ExternalCandidate>> = BTreeMap::new();
+    by_provider.insert(bangumi::BangumiProvider::ID, bangumi_items?);
+    by_provider.insert(igdb::IgdbProvider::ID, igdb_items?);
+    by_provider.insert(thetvdb::ThetvdbProvider::ID, thetvdb_items?);
+
+    // Reassemble in priority order so concurrency does not change result order.
     let mut items = Vec::new();
-    for provider in provider_order(&library.config, entity_type) {
-        match provider {
-            "bangumi" => {
-                search_provider::<bangumi::BangumiProvider>(
-                    &state,
-                    requested_provider,
-                    &providers,
-                    &configured_providers,
-                    q,
-                    page,
-                    page_size,
-                    &mut items,
-                )
-                .await?;
-            }
-            "igdb" => {
-                search_provider::<igdb::IgdbProvider>(
-                    &state,
-                    requested_provider,
-                    &providers,
-                    &configured_providers,
-                    q,
-                    page,
-                    page_size,
-                    &mut items,
-                )
-                .await?;
-            }
-            "thetvdb" => {
-                search_provider::<thetvdb::ThetvdbProvider>(
-                    &state,
-                    requested_provider,
-                    &providers,
-                    &configured_providers,
-                    q,
-                    page,
-                    page_size,
-                    &mut items,
-                )
-                .await?;
-            }
-            _ => {}
+    for provider in &order {
+        if let Some(found) = by_provider.remove(provider) {
+            items.extend(found);
         }
     }
     Ok(Json(ExternalSearchResponse { providers, items }))
@@ -248,24 +255,27 @@ fn default_field_mapping(roles: &[&str], field: &str) -> ExternalProviderDefault
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn search_provider<P: ExternalProvider>(
     state: &AppState,
+    order: &[&'static str],
     requested_provider: Option<&str>,
     providers: &[ExternalProviderSummary],
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
     q: &str,
     page: usize,
     page_size: usize,
-    items: &mut Vec<ExternalCandidate>,
-) -> Result<(), ApiError> {
+) -> Result<Vec<ExternalCandidate>, ApiError> {
+    if !order.contains(&P::ID) {
+        return Ok(Vec::new());
+    }
     if !should_search_provider(requested_provider, providers, P::ID) {
-        return Ok(());
+        return Ok(Vec::new());
     }
     let Some(provider_config) = configured_providers.get(P::ID) else {
-        return Ok(());
+        return Ok(Vec::new());
     };
-    items.extend(P::search(state, q, page, page_size, provider_config).await?);
-    Ok(())
+    P::search(state, q, page, page_size, provider_config).await
 }
 
 fn provider_summaries(
@@ -383,12 +393,18 @@ fn provider_order(config: &KizunaConfig, entity_type: &str) -> Vec<&'static str>
     order
 }
 
-pub(super) fn external_client() -> Result<reqwest::Client, ApiError> {
-    reqwest::Client::builder()
-        .connect_timeout(EXTERNAL_CONNECT_TIMEOUT)
-        .timeout(EXTERNAL_REQUEST_TIMEOUT)
-        .build()
-        .map_err(provider_error)
+/// Shared, connection-pooled HTTP client for outbound provider requests. Built
+/// once on first use so repeated searches reuse keep-alive connections instead
+/// of paying a fresh TLS handshake per request.
+pub(super) fn external_client() -> &'static reqwest::Client {
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .connect_timeout(EXTERNAL_CONNECT_TIMEOUT)
+            .timeout(EXTERNAL_REQUEST_TIMEOUT)
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new())
+    })
 }
 
 fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
@@ -407,7 +423,13 @@ fn provider_error(error: reqwest::Error) -> ApiError {
         message.push_str(&format!(": {error}"));
         source = error.source();
     }
-    ApiError::bad_request(&message)
+    // Upstream failures are not the caller's fault: surface them as gateway
+    // errors so clients can distinguish a flaky provider from a bad request.
+    if error.is_timeout() {
+        ApiError::gateway_timeout(&message)
+    } else {
+        ApiError::bad_gateway(&message)
+    }
 }
 
 #[cfg(test)]
