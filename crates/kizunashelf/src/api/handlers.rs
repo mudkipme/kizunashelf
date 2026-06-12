@@ -272,6 +272,7 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         type_label: entity_type
             .map(|entity_type| entity_type.label.clone())
             .unwrap_or_else(|| section.entity_type.clone()),
+        filters: section.filters.clone(),
         limit,
         sort: sort.to_string(),
         direction: if direction == SortDirection::Desc {

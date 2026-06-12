@@ -25,6 +25,10 @@ export const HomeResponse = zod.object({
   "title": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
+  "filters": zod.array(zod.object({
+  "field": zod.string(),
+  "values": zod.array(zod.string()).optional()
+})).optional(),
   "limit": zod.number().min(homeResponseSectionsItemLimitMin),
   "sort": zod.string(),
   "direction": zod.string(),

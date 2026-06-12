@@ -51,5 +51,12 @@ function libraryHref(section: HomeSectionResponse) {
     sort: section.sort,
     direction: section.direction,
   });
+  for (const filter of section.filters ?? []) {
+    const field = filter.field.trim();
+    if (!field) continue;
+    for (const value of filter.values ?? []) {
+      if (value.trim()) params.append(`filter:${field}`, value);
+    }
+  }
   return `/library?${params}`;
 }

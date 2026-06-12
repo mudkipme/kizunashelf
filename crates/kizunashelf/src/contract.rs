@@ -1,7 +1,8 @@
 use crate::calendar::{CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse};
 use crate::relations::Count;
 use crate::types::{
-    Entity, EntitySummary, EntityTypeConfig, HomeConfig, KizunaConfig, LibraryDiagnostic, Relation,
+    Entity, EntitySummary, EntityTypeConfig, HomeConfig, HomeSectionFilterConfig, KizunaConfig,
+    LibraryDiagnostic, Relation,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -111,6 +112,8 @@ pub struct HomeSectionResponse {
     #[serde(rename = "type")]
     pub entity_type: String,
     pub type_label: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub filters: Vec<HomeSectionFilterConfig>,
     pub limit: u32,
     pub sort: String,
     pub direction: String,
