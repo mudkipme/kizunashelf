@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { SearchIcon, WandSparklesIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -96,20 +97,6 @@ export function ExternalMatchDialog({
   onSelectedBodySectionsChange,
   onApply,
 }: ExternalMatchDialogProps) {
-  function toggleField(field: string) {
-    const next = new Set(selectedFields);
-    if (next.has(field)) next.delete(field);
-    else next.add(field);
-    onSelectedFieldsChange(next);
-  }
-
-  function toggleBodySection(section: string) {
-    const next = new Set(selectedBodySections);
-    if (next.has(section)) next.delete(section);
-    else next.add(section);
-    onSelectedBodySectionsChange(next);
-  }
-
   const selectedCount = selectedFields.size + selectedBodySections.size;
 
   return (
@@ -175,106 +162,26 @@ export function ExternalMatchDialog({
           ) : null}
 
           <div className="grid min-h-0 gap-3 min-[900px]:grid-cols-[minmax(260px,1fr)_minmax(300px,380px)]">
-            <div className="grid content-start gap-2">
-              {candidates.map((candidate) => {
-                const selected =
-                  selectedCandidate?.provider === candidate.provider &&
-                  selectedCandidate.sourceId === candidate.sourceId;
-                return (
-                  <button
-                    key={`${candidate.provider}:${candidate.sourceId}`}
-                    type="button"
-                    className={cn(
-                      "min-w-0 rounded-md border p-3 text-left transition-colors hover:bg-accent",
-                      selected && "border-primary bg-accent",
-                    )}
-                    onClick={() => onChooseCandidate(candidate)}
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Badge variant="secondary">{externalSourceLabel(providerCatalog, candidate.provider)}</Badge>
-                      <span className="min-w-0 truncate text-sm font-medium">{candidate.title}</span>
-                    </div>
-                    {candidate.brief ? (
-                      <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{candidate.brief}</p>
-                    ) : null}
-                  </button>
-                );
-              })}
-              {candidates.length === 0 ? (
-                <div className="rounded-md border p-4 text-sm text-muted-foreground">{emptyMessage}</div>
-              ) : null}
-            </div>
+            <CandidateList
+              candidates={candidates}
+              selectedCandidate={selectedCandidate}
+              providerCatalog={providerCatalog}
+              emptyMessage={emptyMessage}
+              onChooseCandidate={onChooseCandidate}
+            />
 
-            <div className="rounded-md border p-3">
-              <h3 className="text-sm font-semibold">Selected Metadata</h3>
-              {selectedCandidate ? (
-                <div className="mt-3 flex flex-col gap-2">
-                  {metadataEntries.map((entry) => (
-                    <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selectedFields.has(entry.field)}
-                        onChange={() => toggleField(entry.field)}
-                        className="mt-1"
-                        disabled={!contentWritable || !entry.hasValue}
-                      />
-                      <span className="min-w-0">
-                        <span className="block font-medium">{entry.label}</span>
-                        <span className="block text-xs text-muted-foreground">
-                          {entry.externalField ?? "external ref"}
-                        </span>
-                        {currentValues ? (
-                          <span className="block break-words text-xs text-muted-foreground">
-                            Current: {formatMetadataValue(currentValues[entry.field])}
-                          </span>
-                        ) : null}
-                        <span className="block break-words text-xs text-muted-foreground">
-                          {currentValues ? "New: " : ""}
-                          {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                  {metadataEntries.length === 0 && bodyEntries.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No candidate fields or body sections match this type schema.
-                    </p>
-                  ) : null}
-                  {bodyEntries.length > 0 ? (
-                    <div className="mt-3 border-t pt-3">
-                      <h4 className="text-xs font-semibold uppercase text-muted-foreground">Body Sections</h4>
-                      <div className="mt-2 flex flex-col gap-2">
-                        {bodyEntries.map((entry) => (
-                          <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={selectedBodySections.has(entry.key)}
-                              onChange={() => toggleBodySection(entry.key)}
-                              className="mt-1"
-                              disabled={!contentWritable || !entry.hasValue}
-                            />
-                            <span className="min-w-0">
-                              <span className="block font-medium">{entry.heading}</span>
-                              <span className="block text-xs text-muted-foreground">
-                                {entry.externalField}
-                                {bodyText !== undefined
-                                  ? ` · ${externalBodySectionState(bodyText, entry.heading) === "replace" ? "replaces existing section" : "adds new section"}`
-                                  : ""}
-                              </span>
-                              <span className="block break-words text-xs text-muted-foreground">
-                                {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
-                              </span>
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">Choose a candidate to compare fields.</p>
-              )}
-            </div>
+            <SelectedMetadataPanel
+              selectedCandidate={selectedCandidate}
+              metadataEntries={metadataEntries}
+              bodyEntries={bodyEntries}
+              selectedFields={selectedFields}
+              selectedBodySections={selectedBodySections}
+              currentValues={currentValues}
+              bodyText={bodyText}
+              contentWritable={contentWritable}
+              onSelectedFieldsChange={onSelectedFieldsChange}
+              onSelectedBodySectionsChange={onSelectedBodySectionsChange}
+            />
           </div>
         </div>
 
@@ -305,6 +212,165 @@ export function ExternalMatchDialog({
     </Dialog>
   );
 }
+
+// The candidate list and metadata panel are memoized so typing in the search
+// box (which only changes `query`) does not re-render either subtree.
+const CandidateList = memo(function CandidateList({
+  candidates,
+  selectedCandidate,
+  providerCatalog,
+  emptyMessage,
+  onChooseCandidate,
+}: {
+  candidates: ExternalCandidate[];
+  selectedCandidate?: ExternalCandidate;
+  providerCatalog?: ExternalProviderCatalog;
+  emptyMessage: string;
+  onChooseCandidate: (candidate: ExternalCandidate) => void;
+}) {
+  return (
+    <div className="grid content-start gap-2">
+      {candidates.map((candidate) => {
+        const selected =
+          selectedCandidate?.provider === candidate.provider &&
+          selectedCandidate.sourceId === candidate.sourceId;
+        return (
+          <button
+            key={`${candidate.provider}:${candidate.sourceId}`}
+            type="button"
+            className={cn(
+              "min-w-0 rounded-md border p-3 text-left transition-colors hover:bg-accent",
+              selected && "border-primary bg-accent",
+            )}
+            onClick={() => onChooseCandidate(candidate)}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <Badge variant="secondary">{externalSourceLabel(providerCatalog, candidate.provider)}</Badge>
+              <span className="min-w-0 truncate text-sm font-medium">{candidate.title}</span>
+            </div>
+            {candidate.brief ? (
+              <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{candidate.brief}</p>
+            ) : null}
+          </button>
+        );
+      })}
+      {candidates.length === 0 ? (
+        <div className="rounded-md border p-4 text-sm text-muted-foreground">{emptyMessage}</div>
+      ) : null}
+    </div>
+  );
+});
+
+const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
+  selectedCandidate,
+  metadataEntries,
+  bodyEntries,
+  selectedFields,
+  selectedBodySections,
+  currentValues,
+  bodyText,
+  contentWritable,
+  onSelectedFieldsChange,
+  onSelectedBodySectionsChange,
+}: {
+  selectedCandidate?: ExternalCandidate;
+  metadataEntries: ExternalMetadataPreviewEntry[];
+  bodyEntries: ExternalBodyPreviewEntry[];
+  selectedFields: Set<string>;
+  selectedBodySections: Set<string>;
+  currentValues?: Record<string, unknown>;
+  bodyText?: string;
+  contentWritable: boolean;
+  onSelectedFieldsChange: (fields: Set<string>) => void;
+  onSelectedBodySectionsChange: (sections: Set<string>) => void;
+}) {
+  function toggleField(field: string) {
+    const next = new Set(selectedFields);
+    if (next.has(field)) next.delete(field);
+    else next.add(field);
+    onSelectedFieldsChange(next);
+  }
+
+  function toggleBodySection(section: string) {
+    const next = new Set(selectedBodySections);
+    if (next.has(section)) next.delete(section);
+    else next.add(section);
+    onSelectedBodySectionsChange(next);
+  }
+
+  return (
+    <div className="rounded-md border p-3">
+      <h3 className="text-sm font-semibold">Selected Metadata</h3>
+      {selectedCandidate ? (
+        <div className="mt-3 flex flex-col gap-2">
+          {metadataEntries.map((entry) => (
+            <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selectedFields.has(entry.field)}
+                onChange={() => toggleField(entry.field)}
+                className="mt-1"
+                disabled={!contentWritable || !entry.hasValue}
+              />
+              <span className="min-w-0">
+                <span className="block font-medium">{entry.label}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {entry.externalField ?? "external ref"}
+                </span>
+                {currentValues ? (
+                  <span className="block break-words text-xs text-muted-foreground">
+                    Current: {formatMetadataValue(currentValues[entry.field])}
+                  </span>
+                ) : null}
+                <span className="block break-words text-xs text-muted-foreground">
+                  {currentValues ? "New: " : ""}
+                  {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
+                </span>
+              </span>
+            </label>
+          ))}
+          {metadataEntries.length === 0 && bodyEntries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No candidate fields or body sections match this type schema.
+            </p>
+          ) : null}
+          {bodyEntries.length > 0 ? (
+            <div className="mt-3 border-t pt-3">
+              <h4 className="text-xs font-semibold uppercase text-muted-foreground">Body Sections</h4>
+              <div className="mt-2 flex flex-col gap-2">
+                {bodyEntries.map((entry) => (
+                  <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedBodySections.has(entry.key)}
+                      onChange={() => toggleBodySection(entry.key)}
+                      className="mt-1"
+                      disabled={!contentWritable || !entry.hasValue}
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-medium">{entry.heading}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {entry.externalField}
+                        {bodyText !== undefined
+                          ? ` · ${externalBodySectionState(bodyText, entry.heading) === "replace" ? "replaces existing section" : "adds new section"}`
+                          : ""}
+                      </span>
+                      <span className="block break-words text-xs text-muted-foreground">
+                        {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">Choose a candidate to compare fields.</p>
+      )}
+    </div>
+  );
+});
 
 function formatMetadataValue(value: unknown) {
   if (typeof value === "string") return value;

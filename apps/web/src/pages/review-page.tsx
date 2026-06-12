@@ -62,12 +62,16 @@ export function ReviewPage() {
     setQueryInput(query);
   }, [query]);
 
+  // Debounces the search box into the URL. Keyed on the input/query delta only;
+  // `setFilter` is intentionally omitted so the timer is not reset by the very
+  // searchParams change it triggers.
   useEffect(() => {
     if (queryInput === query) return;
     const timeout = window.setTimeout(() => {
       setFilter("q", queryInput.trim(), allEntityFilter, true);
     }, 180);
     return () => window.clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryInput, query, searchParams]);
 
   function setFilter(key: string, value: string, defaultValue = allEntityFilter, replace = false) {

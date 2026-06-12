@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -63,11 +63,15 @@ export function LibraryPage() {
   const selectedTypeStats = globalStats.data?.byType.find((type) => type.id === selectedType);
   const scopeStats = isGlobalType ? globalStats.data : categoryStats.data;
   const selectedTypeConfig = config.data?.types.find((type) => type.id === selectedType);
-  const scopeTypeConfigs = isGlobalType
-    ? (config.data?.types ?? [])
-    : selectedTypeConfig
-      ? [selectedTypeConfig]
-      : [];
+  const scopeTypeConfigs = useMemo(
+    () =>
+      isGlobalType
+        ? (config.data?.types ?? [])
+        : selectedTypeConfig
+          ? [selectedTypeConfig]
+          : [],
+    [isGlobalType, config.data, selectedTypeConfig],
+  );
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const supportsRefsFilter =
     !config.data || scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["externalRef"]));
@@ -127,6 +131,24 @@ export function LibraryPage() {
   const loading = globalStats.isPending || config.isPending || capabilities.isPending || list.isPending;
   const error = globalStats.error ?? categoryStats.error ?? config.error ?? capabilities.error ?? list.error;
 
+  // Stable across renders for a given URL/type so the normalization effects below
+  // can depend on it without re-running every render.
+  const setQueryParam = useCallback(
+    (key: string, value: string, defaultValue = allOptions, resetPage = true) => {
+      const next = new URLSearchParams(searchParams);
+      if (value === defaultValue) next.delete(key);
+      else next.set(key, value);
+      if (resetPage) next.set("page", "1");
+      writeAssetListPreferences(selectedType, preferencesFromSearchParams(next));
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, selectedType, setSearchParams],
+  );
+
+  // Bootstraps the type + saved preferences when the type or query changes.
+  // Intentionally keyed on those transitions only — `searchParams`/`firstType`
+  // are read but must not re-trigger it, or every filter/page change would
+  // re-run the bootstrap.
   useEffect(() => {
     if (!globalStats.data) return;
     const validTypes = new Set(globalStats.data.byType.map((type) => type.id));
@@ -152,23 +174,24 @@ export function LibraryPage() {
         setSearchParams(next, { replace: true });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalStats.data, selectedType, query]);
 
   useEffect(() => {
     if (!scopeStats || !sort.startsWith("date:")) return;
     if (scopeStats.dateFields.includes(sort.slice("date:".length))) return;
     setQueryParam("sort", defaultSort, defaultSort);
-  }, [scopeStats, sort]);
+  }, [scopeStats, sort, setQueryParam]);
 
   useEffect(() => {
     if (!config.data || supportsRefsFilter || refs === allOptions) return;
     setQueryParam("refs", allOptions);
-  }, [config.data, supportsRefsFilter, refs]);
+  }, [config.data, supportsRefsFilter, refs, setQueryParam]);
 
   useEffect(() => {
     if (!config.data || supportsCoverFilter || cover === allOptions) return;
     setQueryParam("cover", allOptions);
-  }, [config.data, supportsCoverFilter, cover]);
+  }, [config.data, supportsCoverFilter, cover, setQueryParam]);
 
   useEffect(() => {
     if (!config.data) return;
@@ -182,7 +205,7 @@ export function LibraryPage() {
     if (!config.data || titleLanguage === defaultTitleOptionId) return;
     if (titleLanguages.includes(titleLanguage)) return;
     setQueryParam("titleLanguage", defaultTitleOptionId, defaultTitleOptionId, false);
-  }, [config.data, titleLanguages, titleLanguage]);
+  }, [config.data, titleLanguages, titleLanguage, setQueryParam]);
 
   useEffect(() => {
     if (!globalStats.data || !selectedType || !searchParams.has("type")) return;
@@ -223,15 +246,6 @@ export function LibraryPage() {
     const next = new URLSearchParams(searchParams);
     next.set("page", String(nextPage));
     setSearchParams(next);
-  }
-
-  function setQueryParam(key: string, value: string, defaultValue = allOptions, resetPage = true) {
-    const next = new URLSearchParams(searchParams);
-    if (value === defaultValue) next.delete(key);
-    else next.set(key, value);
-    if (resetPage) next.set("page", "1");
-    writeAssetListPreferences(selectedType, preferencesFromSearchParams(next));
-    setSearchParams(next, { replace: true });
   }
 
   function setFieldFilterParam(field: string, values: string[]) {
@@ -420,7 +434,7 @@ export function LibraryPage() {
                   />
                 ))
               )}
-              {!list.isPending && entities.length === 0 ? (
+              {!list.isFetching && entities.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">No entries</div>
               ) : null}
             </div>

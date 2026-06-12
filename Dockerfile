@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM rust:1-alpine AS base
 
 ENV PNPM_HOME="/pnpm"
@@ -14,7 +15,8 @@ COPY crates/kizunashelf/Cargo.toml crates/kizunashelf/Cargo.toml
 COPY apps/web/package.json apps/web/package.json
 COPY packages/api-contract/package.json packages/api-contract/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/pnpm/store \
+  pnpm install --frozen-lockfile
 
 FROM deps AS build
 
@@ -23,9 +25,20 @@ COPY packages packages
 COPY config config
 COPY crates crates
 
-RUN pnpm contract:generate \
-  && pnpm -r build \
-  && cargo build --release -p kizunashelf
+# Build the web bundle from the committed contract. CI enforces that the
+# generated contract stays in sync (see .woodpecker/docker.yml), so there is no
+# need to regenerate it here — doing so would run a debug `cargo run` of the
+# schema binary and compile the crate a second time.
+RUN pnpm -r build
+
+# Cache the cargo registry/git and the target dir across image builds. The
+# release binary is copied out of the cache-mounted target so it survives into
+# the final image layer (cache mounts are not part of the layer).
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+  --mount=type=cache,target=/usr/local/cargo/git \
+  --mount=type=cache,target=/app/target \
+  cargo build --release -p kizunashelf \
+  && cp target/release/kizunashelf-api /usr/local/bin/kizunashelf-api
 
 FROM alpine:3.22 AS runner
 
@@ -36,7 +49,7 @@ ENV PORT="8787"
 ENV KIZUNASHELF_SETTINGS_WRITABLE="false"
 WORKDIR /app
 
-COPY --from=build /app/target/release/kizunashelf-api /usr/local/bin/kizunashelf-api
+COPY --from=build /usr/local/bin/kizunashelf-api /usr/local/bin/kizunashelf-api
 COPY --from=build /app/apps/web/dist apps/web/dist
 COPY config config
 

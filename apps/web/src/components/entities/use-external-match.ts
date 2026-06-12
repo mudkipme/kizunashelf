@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { errorMessage } from "@/api/client";
 import { downloadAssets, searchSources } from "@/api/entities";
@@ -110,76 +110,88 @@ export function useExternalMatch({
 
   // Downloads the entity's freshly applied remote cover when the user opted in.
   // Best-effort: a failure is surfaced but does not block the caller's flow.
-  async function maybeDownloadCover(entity: { id: string; revision: string }) {
-    if (!downloadAfterApply) return;
-    try {
-      await downloadAssets(entity.id, { revision: entity.revision });
-    } catch (error) {
-      onError(errorMessage(error));
-    } finally {
-      setDownloadAfterApply(false);
-    }
-  }
+  const maybeDownloadCover = useCallback(
+    async (entity: { id: string; revision: string }) => {
+      if (!downloadAfterApply) return;
+      try {
+        await downloadAssets(entity.id, { revision: entity.revision });
+      } catch (error) {
+        onError(errorMessage(error));
+      } finally {
+        setDownloadAfterApply(false);
+      }
+    },
+    [downloadAfterApply, onError],
+  );
 
-  function resetSelection() {
+  const resetSelection = useCallback(() => {
     setSelectedCandidate(undefined);
     setSelectedFields(new Set());
     setSelectedBodySections(new Set());
-  }
+  }, []);
 
-  async function search(providerOverride?: string, queryOverride?: string) {
-    const selectedProvider = providerOverride ?? provider;
-    const selectedQuery = (queryOverride ?? query).trim() || defaultQuery?.trim() || "";
-    if (!selectedQuery || !entityType || !externalSearchEnabled) return;
-    if (selectedProvider !== "all" && !providerOptions.includes(selectedProvider)) return;
+  const search = useCallback(
+    async (providerOverride?: string, queryOverride?: string) => {
+      const selectedProvider = providerOverride ?? provider;
+      const selectedQuery = (queryOverride ?? query).trim() || defaultQuery?.trim() || "";
+      if (!selectedQuery || !entityType || !externalSearchEnabled) return;
+      if (selectedProvider !== "all" && !providerOptions.includes(selectedProvider)) return;
 
-    setSearching(true);
-    setEmptyMessage("No candidates loaded");
-    resetSelection();
-    try {
-      const result = await searchSources({
-        provider: selectedProvider,
-        q: selectedQuery,
-        type: entityType,
-        pageSize: 8,
-      });
-      setCandidates(result.items);
-      if (result.items.length === 0) setEmptyMessage("No external matches");
-    } catch (error) {
-      onError(errorMessage(error));
-    } finally {
-      setSearching(false);
-    }
-  }
+      setSearching(true);
+      setEmptyMessage("No candidates loaded");
+      resetSelection();
+      try {
+        const result = await searchSources({
+          provider: selectedProvider,
+          q: selectedQuery,
+          type: entityType,
+          pageSize: 8,
+        });
+        setCandidates(result.items);
+        if (result.items.length === 0) setEmptyMessage("No external matches");
+      } catch (error) {
+        onError(errorMessage(error));
+      } finally {
+        setSearching(false);
+      }
+    },
+    [provider, query, defaultQuery, entityType, externalSearchEnabled, providerOptions, onError, resetSelection],
+  );
 
-  function refreshFromExternalRef(provider: string, value: string) {
-    setOpen(true);
-    setProvider(provider);
-    setQuery(value);
-    void search(provider, value);
-  }
+  const refreshFromExternalRef = useCallback(
+    (nextProvider: string, value: string) => {
+      setOpen(true);
+      setProvider(nextProvider);
+      setQuery(value);
+      void search(nextProvider, value);
+    },
+    [search],
+  );
 
-  function chooseCandidate(candidate: ExternalCandidate) {
-    setSelectedCandidate(candidate);
-    setSelectedFields(new Set(candidateMetadataEntries(candidate, typeConfig).map((entry) => entry.field)));
-    setSelectedBodySections(
-      new Set(
-        candidateBodyPreviewEntries(candidate, typeConfig)
-          .filter((entry) => entry.hasValue)
-          .map((entry) => entry.key),
-      ),
-    );
-  }
+  const chooseCandidate = useCallback(
+    (candidate: ExternalCandidate) => {
+      setSelectedCandidate(candidate);
+      setSelectedFields(new Set(candidateMetadataEntries(candidate, typeConfig).map((entry) => entry.field)));
+      setSelectedBodySections(
+        new Set(
+          candidateBodyPreviewEntries(candidate, typeConfig)
+            .filter((entry) => entry.hasValue)
+            .map((entry) => entry.key),
+        ),
+      );
+    },
+    [typeConfig],
+  );
 
-  function selectedPatch() {
+  const selectedPatch = useCallback(() => {
     if (!selectedCandidate) return {};
     return candidateMetadataPatch(selectedCandidate, typeConfig, selectedFields);
-  }
+  }, [selectedCandidate, typeConfig, selectedFields]);
 
-  function selectedBodyPatch() {
+  const selectedBodyPatch = useCallback(() => {
     if (!selectedCandidate) return [];
     return candidateBodyPatch(selectedCandidate, typeConfig, selectedBodySections);
-  }
+  }, [selectedCandidate, typeConfig, selectedBodySections]);
 
   return {
     open,

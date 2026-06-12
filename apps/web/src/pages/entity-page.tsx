@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   CheckIcon,
   DownloadIcon,
@@ -13,6 +13,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
+import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import {
   capabilitiesQuery,
   configQuery,
@@ -48,7 +49,7 @@ import type {
 export function EntityPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const invalidateEntityData = useInvalidateEntityData();
   const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
   const dates = useQuery({ ...entityDatesQuery(id ?? ""), enabled: Boolean(id) });
   const config = useQuery(configQuery());
@@ -87,26 +88,13 @@ export function EntityPage() {
     () => groupRelations(detail.data?.relations ?? []),
     [detail.data],
   );
+  const { setQuery: setMatchQuery } = external;
 
   useEffect(() => {
     if (!entity) return;
     setRenameBasename(entity.basename);
-    external.setQuery(entity.title);
-  }, [entity?.id, entity?.revision, external.setQuery]);
-
-  async function invalidateEntityData() {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["entity"] }),
-      queryClient.invalidateQueries({ queryKey: ["entityDates"] }),
-      queryClient.invalidateQueries({ queryKey: ["entities"] }),
-      queryClient.invalidateQueries({ queryKey: ["calendar"] }),
-      queryClient.invalidateQueries({ queryKey: ["calendarPlanning"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics"] }),
-      queryClient.invalidateQueries({ queryKey: ["cleanupQueues"] }),
-      queryClient.invalidateQueries({ queryKey: ["relationGroups"] }),
-      queryClient.invalidateQueries({ queryKey: ["stats"] }),
-    ]);
-  }
+    setMatchQuery(entity.title);
+  }, [entity, setMatchQuery]);
 
   async function saveRename() {
     if (!entity) return;

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEntities } from "@kizunashelf/api-contract";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { saveEntity } from "@/api/entities";
+import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import {
   capabilitiesQuery,
   configQuery,
@@ -27,7 +28,7 @@ import { applyExternalBodySections } from "@/lib/external-metadata";
 export function EntityEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const invalidateEntityData = useInvalidateEntityData();
   const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
@@ -54,13 +55,14 @@ export function EntityEditPage() {
     assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
     onError: setError,
   });
+  const { setQuery: setMatchQuery } = external;
 
   useEffect(() => {
     if (!entity) return;
     setFrontmatter(normalizeFrontmatter(entity.frontmatter));
     setBody(entity.body);
-    external.setQuery(entity.title);
-  }, [entity?.id, entity?.revision, external.setQuery]);
+    setMatchQuery(entity.title);
+  }, [entity, setMatchQuery]);
 
   const searchRelations = useCallback(async ({ relationType, query, signal }: {
     relationType?: string | null;
@@ -94,7 +96,7 @@ export function EntityEditPage() {
         body,
       });
       await external.maybeDownloadCover(result.entity);
-      await queryClient.invalidateQueries();
+      await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
       setError(errorMessage(error));

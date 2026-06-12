@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { errorMessage } from "@/api/client";
 import { providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
@@ -6,7 +6,6 @@ import { AppFrame } from "@/components/layout/app-frame";
 import { SettingsEditor } from "@/components/settings/settings-editor";
 
 export function SettingsPage() {
-  const queryClient = useQueryClient();
   const settings = useQuery(settingsConfigQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const loading = settings.isPending || providerCatalog.isPending;
@@ -22,7 +21,6 @@ export function SettingsPage() {
             configPath={settings.data.configPath}
             initialConfig={settings.data.config}
             providerCatalog={providerCatalog.data}
-            onSaved={() => void queryClient.invalidateQueries()}
           />
         ) : null}
       </div>

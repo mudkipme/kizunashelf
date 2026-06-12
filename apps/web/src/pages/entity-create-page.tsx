@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEntities } from "@kizunashelf/api-contract";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, SearchIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { addEntity } from "@/api/entities";
+import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { capabilitiesQuery, configQuery, providerCatalogQuery } from "@/api/queries";
 import {
   type FrontmatterDraft,
@@ -23,7 +24,7 @@ import { applyExternalBodySections } from "@/lib/external-metadata";
 
 export function EntityCreatePage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useQuery(capabilitiesQuery());
@@ -97,7 +98,7 @@ export function EntityCreatePage() {
         body,
       });
       await external.maybeDownloadCover(result.entity);
-      await queryClient.invalidateQueries();
+      await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
       setError(errorMessage(error));

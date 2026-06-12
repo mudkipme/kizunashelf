@@ -16,7 +16,7 @@ import {
   type GetEntitiesParams,
   type GetStatsParams,
 } from "@kizunashelf/api-contract";
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import { getProviderCatalog } from "@/api/external";
@@ -50,6 +50,8 @@ export function calendarQuery(params: GetCalendarParams) {
   return queryOptions({
     queryKey: queryKeys.calendar(params),
     queryFn: ({ signal }) => getCalendar(params, { signal }, apiFetch),
+    // Keep the previous month on screen while the next one loads.
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -57,6 +59,7 @@ export function calendarPlanningQuery(params: GetCalendarPlanningParams) {
   return queryOptions({
     queryKey: queryKeys.calendarPlanning(params),
     queryFn: ({ signal }) => getCalendarPlanning(params, { signal }, apiFetch),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -85,6 +88,9 @@ export function entitiesQuery(params: GetEntitiesParams) {
   return queryOptions({
     queryKey: queryKeys.entities(params),
     queryFn: ({ signal }) => getEntities(params, { signal }, apiFetch),
+    // Hold the current page/sort/filter results visible while the next set
+    // loads, so the grid never blanks between param changes.
+    placeholderData: keepPreviousData,
   });
 }
 

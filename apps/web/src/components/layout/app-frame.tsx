@@ -1,5 +1,6 @@
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   BarChart3Icon,
@@ -21,16 +22,18 @@ import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { statsQuery } from "@/api/queries";
 import { cn } from "@/lib/utils";
 import { allTypes } from "@/lib/constants";
-import { useSidebarStatsStore } from "@/lib/sidebar-stats";
 import type { StatsResponse } from "@/types/api";
 
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const stats = useSidebarStatsStore((state) => state.stats);
-  const refreshStats = useSidebarStatsStore((state) => state.refreshStats);
+  // Drive the sidebar counts from the shared React Query cache so they stay in
+  // sync with mutations (which invalidate the `stats` key) instead of going
+  // stale behind a one-shot store fetch.
+  const stats = useQuery(statsQuery()).data;
   const [search, setSearch] = useState("");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -47,12 +50,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     location.pathname === "/library"
       ? `Search ${activeTypeLabel}`
       : "Search library";
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void refreshStats(controller.signal);
-    return () => controller.abort();
-  }, [refreshStats]);
 
   useEffect(() => {
     if (location.pathname !== "/library") {
