@@ -1,16 +1,20 @@
 import { apiFetch } from "@/api/client";
-import type { KizunaConfig, PathSuggestionsResponse, SettingsConfigResponse } from "@/types/config";
+import type {
+  PathSuggestionsResponse,
+  SaveSettingsRequest,
+  SettingsConfigResponse,
+} from "@/types/config";
 
 export async function getSettingsConfig(init?: RequestInit) {
   const response = await apiFetch("/api/settings/config", init);
   return (await response.json()) as SettingsConfigResponse;
 }
 
-export async function saveSettingsConfig(config: KizunaConfig) {
+export async function saveSettingsConfig(request: SaveSettingsRequest) {
   const response = await apiFetch("/api/settings/config", {
     method: "PUT",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(config),
+    body: JSON.stringify(request),
   });
   return (await response.json()) as SettingsConfigResponse;
 }

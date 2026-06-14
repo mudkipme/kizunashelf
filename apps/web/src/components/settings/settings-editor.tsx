@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import type { ExternalProviderCatalog } from "@/types/api";
-import type { KizunaConfig } from "@/types/config";
+import type { AppConfig, MergedConfig, VaultConfig } from "@/types/config";
 
 import {
   EmptyConfigLine,
@@ -28,25 +28,35 @@ import {
 import { DailyNotesEditor, EntityTypeEditor, HomeEditor } from "./settings-sections";
 
 type SettingsEditorProps = {
-  configPath: string;
-  initialConfig?: KizunaConfig;
+  appConfigPath: string;
+  vaultConfigPath?: string;
+  initialApp?: AppConfig;
+  initialVault?: VaultConfig;
   providerCatalog?: ExternalProviderCatalog;
   onboarding?: boolean;
+  onBack?: () => void;
   onSaved?: () => void;
 };
 
 export function SettingsEditor({
-  configPath,
-  initialConfig,
+  appConfigPath,
+  vaultConfigPath,
+  initialApp,
+  initialVault,
   providerCatalog,
   onboarding = false,
+  onBack,
   onSaved,
 }: SettingsEditorProps) {
-  const [config, setConfig] = useState<KizunaConfig>(() => normalizeConfig(initialConfig));
+  const [config, setConfig] = useState<MergedConfig>(() => normalizeConfig(initialApp, initialVault));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
   const taxonomyBase = joinPath(config.vaultRoot, config.taxonomyRoot);
+  // The server only reports vaultConfigPath once a vault root is saved; during
+  // onboarding derive it from the in-progress vault root for display.
+  const vaultPath =
+    vaultConfigPath ?? (config.vaultRoot ? joinPath(config.vaultRoot, ".kizunashelf/config.yaml") : undefined);
   const totalFields = config.types.reduce((sum, typeConfig) => sum + typeConfig.fields.length, 0);
   const configuredProviderCount = new Set(
     config.types.flatMap((typeConfig) => [
@@ -59,10 +69,21 @@ export function SettingsEditor({
   ).size;
   const overviewItems = [
     ...(onboarding ? [{ id: "templates", title: "Templates", detail: `${vaultTemplates(providerCatalog).length} presets` }] : []),
+    // The App section is hidden during onboarding (the vault root is chosen in
+    // the picker step and machine-level settings use defaults).
+    ...(onboarding
+      ? []
+      : [
+          {
+            id: "app",
+            title: "App",
+            detail: config.contentWritable === false ? "Read only" : "Writable",
+          },
+        ]),
     {
-      id: "core",
-      title: "Core",
-      detail: config.contentWritable === false ? "Read only" : "Writable",
+      id: "vault",
+      title: "Vault",
+      detail: `taxonomy: ${config.taxonomyRoot || "Taxonomy"}`,
     },
     {
       id: "daily-notes",
@@ -82,8 +103,8 @@ export function SettingsEditor({
   ];
 
   useEffect(() => {
-    setConfig(normalizeConfig(initialConfig));
-  }, [initialConfig]);
+    setConfig(normalizeConfig(initialApp, initialVault));
+  }, [initialApp, initialVault]);
 
   async function save() {
     setSaving(true);
@@ -106,15 +127,31 @@ export function SettingsEditor({
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-base font-semibold">
-            {onboarding ? "Set Up KizunaShelf" : "Settings"}
+            {onboarding ? "Configure Vault" : "Settings"}
           </h1>
-          <p className="mt-1 truncate text-xs text-muted-foreground">{configPath}</p>
+          {onboarding ? (
+            vaultPath ? (
+              <p className="mt-1 truncate text-xs text-muted-foreground">Vault: {vaultPath}</p>
+            ) : null
+          ) : (
+            <>
+              <p className="mt-1 truncate text-xs text-muted-foreground">App: {appConfigPath}</p>
+              {vaultPath ? (
+                <p className="truncate text-xs text-muted-foreground">Vault: {vaultPath}</p>
+              ) : null}
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
+          {onboarding && onBack ? (
+            <Button type="button" variant="outline" onClick={onBack} disabled={saving}>
+              Back
+            </Button>
+          ) : null}
           <Button type="button" onClick={save} disabled={saving}>
             <SaveIcon data-icon="inline-start" />
-            {saving ? "Saving" : onboarding ? "Create Config" : "Save"}
+            {saving ? "Saving" : onboarding ? "Create Vault" : "Save"}
           </Button>
         </div>
       </header>
@@ -157,26 +194,48 @@ export function SettingsEditor({
             </SettingsSection>
           ) : null}
 
+          {onboarding ? null : (
+            <SettingsSection
+              id="app"
+              title="App"
+              description={`Stored on this machine at ${appConfigPath}. Vault location and write mode — not synced with the vault.`}
+              summary={
+                <SummaryBadges items={[config.contentWritable === false ? "read only" : "writable"]} />
+              }
+            >
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <PathField
+                  label="Vault root"
+                  value={config.vaultRoot}
+                  onChange={(value) => setConfig((current) => ({ ...current, vaultRoot: value }))}
+                  absolute
+                />
+                <Field label="Content writes">
+                  <Select
+                    value={config.contentWritable === false ? "false" : "true"}
+                    onChange={(event) =>
+                      setConfig((current) => ({
+                        ...current,
+                        contentWritable: event.target.value === "false" ? false : true,
+                      }))
+                    }
+                    className="h-9 w-full text-sm"
+                  >
+                    <option value="true">Enabled</option>
+                    <option value="false">Read only</option>
+                  </Select>
+                </Field>
+              </div>
+            </SettingsSection>
+          )}
+
           <SettingsSection
-            id="core"
-            title="Core"
-            description="Vault location, taxonomy path, and write mode."
-            summary={
-              <SummaryBadges
-                items={[
-                  config.contentWritable === false ? "read only" : "writable",
-                  `assets: ${config.assetRoot || "Assets"}`,
-                ]}
-              />
-            }
+            id="vault"
+            title="Vault"
+            description={`Stored in the vault${vaultPath ? ` at ${vaultPath}` : ""}. Taxonomy, assets, daily notes, home, and types — synced with the vault.`}
+            summary={<SummaryBadges items={[`assets: ${config.assetRoot || "Assets"}`]} />}
           >
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              <PathField
-                label="Vault root"
-                value={config.vaultRoot}
-                onChange={(value) => setConfig((current) => ({ ...current, vaultRoot: value }))}
-                absolute
-              />
               <PathField
                 label="Taxonomy root"
                 value={config.taxonomyRoot}
@@ -189,21 +248,6 @@ export function SettingsEditor({
                 base={config.vaultRoot}
                 onChange={(value) => setConfig((current) => ({ ...current, assetRoot: value }))}
               />
-              <Field label="Content writes">
-                <Select
-                  value={config.contentWritable === false ? "false" : "true"}
-                  onChange={(event) =>
-                    setConfig((current) => ({
-                      ...current,
-                      contentWritable: event.target.value === "false" ? false : true,
-                    }))
-                  }
-                  className="h-9 w-full text-sm"
-                >
-                  <option value="true">Enabled</option>
-                  <option value="false">Read only</option>
-                </Select>
-              </Field>
             </div>
           </SettingsSection>
 

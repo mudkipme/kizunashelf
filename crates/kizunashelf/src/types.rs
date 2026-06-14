@@ -177,6 +177,40 @@ pub struct DailyNotesConfig {
     pub snippet_max_length: Option<u32>,
 }
 
+/// App-level configuration. Describes how *this machine* runs KizunaShelf and
+/// where the vault lives on disk. Stored in the local app config file
+/// (`~/.config/kizunashelf.yaml` and friends) and never synced with the vault.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AppConfig {
+    pub vault_root: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_writable: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub read_concurrency: Option<u32>,
+}
+
+/// Vault-level configuration. Describes the vault's content schema (taxonomy,
+/// assets, entity types, home dashboard, daily notes). Stored inside the vault
+/// at `<vaultRoot>/.kizunashelf/config.yaml` so it travels with the vault and is
+/// synced by the vault's own syncing method.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct VaultConfig {
+    pub taxonomy_root: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_root: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub home: Option<HomeConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub daily_notes: Option<DailyNotesConfig>,
+    pub types: Vec<EntityTypeConfig>,
+}
+
+/// Merged runtime view of the app and vault config. This is the shape consumed
+/// throughout the library, relations, calendar, and API handlers. It is built
+/// from [`AppConfig`] + [`VaultConfig`] at load time and split back into them
+/// when persisting.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct KizunaConfig {
@@ -205,6 +239,38 @@ impl KizunaConfig {
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .unwrap_or(DEFAULT_ASSET_ROOT)
+    }
+
+    /// Builds the merged runtime config from its on-disk parts.
+    pub fn from_parts(app: AppConfig, vault: VaultConfig) -> Self {
+        Self {
+            vault_root: app.vault_root,
+            content_writable: app.content_writable,
+            read_concurrency: app.read_concurrency,
+            taxonomy_root: vault.taxonomy_root,
+            asset_root: vault.asset_root,
+            home: vault.home,
+            daily_notes: vault.daily_notes,
+            types: vault.types,
+        }
+    }
+
+    /// Splits the merged config back into the app and vault parts for persisting.
+    pub fn into_parts(self) -> (AppConfig, VaultConfig) {
+        (
+            AppConfig {
+                vault_root: self.vault_root,
+                content_writable: self.content_writable,
+                read_concurrency: self.read_concurrency,
+            },
+            VaultConfig {
+                taxonomy_root: self.taxonomy_root,
+                asset_root: self.asset_root,
+                home: self.home,
+                daily_notes: self.daily_notes,
+                types: self.types,
+            },
+        )
     }
 }
 

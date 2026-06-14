@@ -10,6 +10,7 @@ import {
 import { isIso639TitleLanguage } from "@/lib/title-language";
 import type { ExternalProviderCatalog } from "@/types/api";
 import type {
+  AppConfig,
   DailyNotesConfig,
   EntityTypeConfig,
   ExternalBodyMapping,
@@ -19,21 +20,30 @@ import type {
   HomeConfig,
   HomeSectionConfig,
   HomeSectionFilterConfig,
-  KizunaConfig,
+  MergedConfig,
+  SaveSettingsRequest,
+  VaultConfig,
 } from "@/types/config";
 
-export function normalizeConfig(config?: KizunaConfig): KizunaConfig {
-  if (!config) return defaultConfig();
+export function normalizeConfig(app?: AppConfig, vault?: VaultConfig): MergedConfig {
+  const base = defaultConfig();
   return {
-    vaultRoot: config.vaultRoot ?? "",
-    taxonomyRoot: config.taxonomyRoot ?? "Taxonomy",
-    assetRoot: config.assetRoot ?? "",
-    contentWritable: config.contentWritable ?? true,
+    vaultRoot: app?.vaultRoot ?? base.vaultRoot,
+    contentWritable: app?.contentWritable ?? base.contentWritable,
     // Preserved verbatim across saves even though the UI no longer edits it.
-    readConcurrency: config.readConcurrency ?? null,
-    dailyNotes: config.dailyNotes ? normalizeDailyNotes(config.dailyNotes) : null,
-    home: config.home ? normalizeHome(config.home) : null,
-    types: (config.types ?? []).map(normalizeEntityType),
+    readConcurrency: app?.readConcurrency ?? base.readConcurrency ?? null,
+    // When the vault config is missing entirely (e.g. a fresh vault), seed the
+    // defaults so the editor has something to fill in; when it exists, respect
+    // its values including disabled (null) daily notes / home.
+    taxonomyRoot: vault?.taxonomyRoot ?? base.taxonomyRoot,
+    assetRoot: vault?.assetRoot ?? base.assetRoot,
+    dailyNotes: vault
+      ? vault.dailyNotes
+        ? normalizeDailyNotes(vault.dailyNotes)
+        : null
+      : base.dailyNotes,
+    home: vault ? (vault.home ? normalizeHome(vault.home) : null) : base.home,
+    types: vault ? (vault.types ?? []).map(normalizeEntityType) : base.types,
   };
 }
 
@@ -89,46 +99,53 @@ function normalizeField(field: FieldConfig): FieldConfig {
   };
 }
 
-export function cleanConfig(config: KizunaConfig, providerCatalog?: ExternalProviderCatalog): KizunaConfig {
+export function cleanConfig(
+  config: MergedConfig,
+  providerCatalog?: ExternalProviderCatalog,
+): SaveSettingsRequest {
   return {
-    vaultRoot: config.vaultRoot,
-    taxonomyRoot: config.taxonomyRoot,
-    assetRoot: emptyToUndefined(config.assetRoot),
-    contentWritable: config.contentWritable ?? undefined,
-    readConcurrency: config.readConcurrency ?? undefined,
-    dailyNotes: config.dailyNotes
-      ? {
-          paths: cleanStrings(config.dailyNotes.paths),
-          datePattern: emptyToUndefined(config.dailyNotes.datePattern),
-          snippetMaxLength: config.dailyNotes.snippetMaxLength ?? undefined,
-        }
-      : undefined,
-    home: config.home
-      ? {
-          title: emptyToUndefined(config.home.title),
-          sections: config.home.sections.map((section) => ({
-            id: section.id,
-            title: section.title,
-            type: section.type,
-            filters: cleanHomeSectionFilters(section.filters ?? []),
-            limit: section.limit ?? undefined,
-            sort: emptyToUndefined(section.sort),
-            direction: section.direction ?? undefined,
-          })),
-        }
-      : undefined,
-    types: config.types.map((typeConfig) => ({
-      id: typeConfig.id,
-      label: typeConfig.label,
-      icon: emptyToUndefined(typeConfig.icon),
-      path: typeConfig.path,
-      externalPriority: cleanExternalPriority(providerCatalog, typeConfig.externalPriority ?? []),
-      filename: cleanFilename(typeConfig.filename),
-      bodyMappings: cleanExternalBodyMappings(typeConfig.bodyMappings ?? [], providerCatalog),
-      fields: typeConfig.fields
-        .map((field) => cleanField(field, providerCatalog))
-        .filter((field): field is FieldConfig => Boolean(field)),
-    })),
+    app: {
+      vaultRoot: config.vaultRoot,
+      contentWritable: config.contentWritable ?? undefined,
+      readConcurrency: config.readConcurrency ?? undefined,
+    },
+    vault: {
+      taxonomyRoot: config.taxonomyRoot,
+      assetRoot: emptyToUndefined(config.assetRoot),
+      dailyNotes: config.dailyNotes
+        ? {
+            paths: cleanStrings(config.dailyNotes.paths),
+            datePattern: emptyToUndefined(config.dailyNotes.datePattern),
+            snippetMaxLength: config.dailyNotes.snippetMaxLength ?? undefined,
+          }
+        : undefined,
+      home: config.home
+        ? {
+            title: emptyToUndefined(config.home.title),
+            sections: config.home.sections.map((section) => ({
+              id: section.id,
+              title: section.title,
+              type: section.type,
+              filters: cleanHomeSectionFilters(section.filters ?? []),
+              limit: section.limit ?? undefined,
+              sort: emptyToUndefined(section.sort),
+              direction: section.direction ?? undefined,
+            })),
+          }
+        : undefined,
+      types: config.types.map((typeConfig) => ({
+        id: typeConfig.id,
+        label: typeConfig.label,
+        icon: emptyToUndefined(typeConfig.icon),
+        path: typeConfig.path,
+        externalPriority: cleanExternalPriority(providerCatalog, typeConfig.externalPriority ?? []),
+        filename: cleanFilename(typeConfig.filename),
+        bodyMappings: cleanExternalBodyMappings(typeConfig.bodyMappings ?? [], providerCatalog),
+        fields: typeConfig.fields
+          .map((field) => cleanField(field, providerCatalog))
+          .filter((field): field is FieldConfig => Boolean(field)),
+      })),
+    },
   };
 }
 
@@ -231,7 +248,7 @@ function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalo
   };
 }
 
-export function defaultConfig(): KizunaConfig {
+export function defaultConfig(): MergedConfig {
   return {
     vaultRoot: "",
     taxonomyRoot: "Taxonomy",
@@ -292,7 +309,7 @@ export function defaultField(): FieldConfig {
   return { field: "field", fieldType: "text", displayName: "" };
 }
 
-export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array<{ id: string; label: string; config: KizunaConfig }> {
+export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array<{ id: string; label: string; config: MergedConfig }> {
   return [
     {
       id: "media",

@@ -6,19 +6,14 @@
  */
 import { z as zod } from 'zod';
 
-export const kizunaConfigReadConcurrencyMin = 0;
+export const vaultConfigHomeOneSectionsItemLimitMin = 0;
 
-export const kizunaConfigHomeOneSectionsItemLimitMin = 0;
+export const vaultConfigDailyNotesOneSnippetMaxLengthMin = 0;
 
-export const kizunaConfigDailyNotesOneSnippetMaxLengthMin = 0;
-
-export const kizunaConfigTypesItemFieldsDefault = [];
-export const KizunaConfig = zod.object({
-  "vaultRoot": zod.string(),
+export const vaultConfigTypesItemFieldsDefault = [];
+export const VaultConfig = zod.object({
   "taxonomyRoot": zod.string(),
   "assetRoot": zod.string().nullish(),
-  "contentWritable": zod.boolean().nullish(),
-  "readConcurrency": zod.number().min(kizunaConfigReadConcurrencyMin).nullish(),
   "home": zod.union([zod.object({
   "title": zod.string().nullish(),
   "sections": zod.array(zod.object({
@@ -29,7 +24,7 @@ export const KizunaConfig = zod.object({
   "field": zod.string(),
   "values": zod.array(zod.string()).optional()
 })).optional(),
-  "limit": zod.number().min(kizunaConfigHomeOneSectionsItemLimitMin).nullish(),
+  "limit": zod.number().min(vaultConfigHomeOneSectionsItemLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
 })).optional()
@@ -37,7 +32,7 @@ export const KizunaConfig = zod.object({
   "dailyNotes": zod.union([zod.object({
   "paths": zod.array(zod.string()).optional(),
   "datePattern": zod.string().nullish(),
-  "snippetMaxLength": zod.number().min(kizunaConfigDailyNotesOneSnippetMaxLengthMin).nullish()
+  "snippetMaxLength": zod.number().min(vaultConfigDailyNotesOneSnippetMaxLengthMin).nullish()
 }),zod.null()]).optional(),
   "types": zod.array(zod.object({
   "id": zod.string(),
@@ -72,9 +67,9 @@ export const KizunaConfig = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-})).default(kizunaConfigTypesItemFieldsDefault)
+})).default(vaultConfigTypesItemFieldsDefault)
 }))
-})
+}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
 
-export type KizunaConfig = zod.input<typeof KizunaConfig>;
-export type KizunaConfigOutput = zod.output<typeof KizunaConfig>;
+export type VaultConfig = zod.input<typeof VaultConfig>;
+export type VaultConfigOutput = zod.output<typeof VaultConfig>;

@@ -118,7 +118,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/KizunaConfig"
+                "$ref": "#/components/schemas/SaveSettingsRequest"
               }
             }
           },
@@ -1802,16 +1802,39 @@
       "SettingsConfigResponse": {
         "type": "object",
         "properties": {
-          "configPath": {
+          "appConfigPath": {
+            "description": "Path to the local app config file on this machine.",
             "type": "string"
           },
-          "exists": {
+          "appExists": {
+            "description": "Whether the app config file exists on disk.",
             "type": "boolean"
           },
-          "config": {
+          "app": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/KizunaConfig"
+                "$ref": "#/components/schemas/AppConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vaultConfigPath": {
+            "description": "Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).\n`None` until a vault root is configured.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vaultExists": {
+            "description": "Whether the vault config file exists on disk.",
+            "type": "boolean"
+          },
+          "vault": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VaultConfig"
               },
               {
                 "type": "null"
@@ -1826,24 +1849,17 @@
           }
         },
         "required": [
-          "configPath",
-          "exists"
+          "appConfigPath",
+          "appExists",
+          "vaultExists"
         ]
       },
-      "KizunaConfig": {
+      "AppConfig": {
+        "description": "App-level configuration. Describes how *this machine* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~/.config/kizunashelf.yaml` and friends) and never synced with the vault.",
         "type": "object",
         "properties": {
           "vaultRoot": {
             "type": "string"
-          },
-          "taxonomyRoot": {
-            "type": "string"
-          },
-          "assetRoot": {
-            "type": [
-              "string",
-              "null"
-            ]
           },
           "contentWritable": {
             "type": [
@@ -1858,6 +1874,24 @@
             ],
             "format": "uint32",
             "minimum": 0
+          }
+        },
+        "required": [
+          "vaultRoot"
+        ]
+      },
+      "VaultConfig": {
+        "description": "Vault-level configuration. Describes the vault's content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>/.kizunashelf/config.yaml` so it travels with the vault and is\nsynced by the vault's own syncing method.",
+        "type": "object",
+        "properties": {
+          "taxonomyRoot": {
+            "type": "string"
+          },
+          "assetRoot": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "home": {
             "anyOf": [
@@ -1887,7 +1921,6 @@
           }
         },
         "required": [
-          "vaultRoot",
           "taxonomyRoot",
           "types"
         ]
@@ -1916,6 +1949,28 @@
             "minimum": 0
           }
         }
+      },
+      "SaveSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "$ref": "#/components/schemas/AppConfig"
+          },
+          "vault": {
+            "description": "When omitted, only the app config is written and the vault config on disk\n(if any) is left untouched — used by onboarding to persist a chosen vault\nroot without overwriting an existing, synced vault config.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VaultConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "app"
+        ]
       },
       "PathSuggestionsQuery": {
         "type": "object",

@@ -54,13 +54,14 @@ function ConfigGate() {
   if (settings.error) {
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;
   }
-  if (settings.data && !settings.data.exists && pathname !== "/onboarding") {
+  const configReady = Boolean(settings.data?.appExists && settings.data?.vaultExists);
+  if (settings.data && !configReady && pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
   if (settings.data?.error && pathname !== "/settings" && pathname !== "/onboarding") {
     return <Navigate to="/settings" replace />;
   }
-  if (settings.data?.exists && pathname === "/onboarding" && !settings.data.error) {
+  if (configReady && pathname === "/onboarding" && !settings.data?.error) {
     return <Navigate to="/" replace />;
   }
 

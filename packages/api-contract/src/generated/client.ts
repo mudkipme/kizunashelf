@@ -116,10 +116,6 @@ import {
   HomeResponse
 } from './homeResponse.zod';
 
-import type {
-  KizunaConfig
-} from './kizunaConfig.zod';
-
 import {
   PathSuggestionsResponse
 } from './pathSuggestionsResponse.zod';
@@ -131,6 +127,10 @@ import {
 import {
   RelationListResponse
 } from './relationListResponse.zod';
+
+import type {
+  SaveSettingsRequest
+} from './saveSettingsRequest.zod';
 
 import type {
   SearchExternalSourcesParams
@@ -272,14 +272,14 @@ export const getSaveSettingsConfigUrl = () => {
   return `/api/settings/config`
 }
 
-export const saveSettingsConfig = async (kizunaConfig: KizunaConfig, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SettingsConfigResponse> => {
+export const saveSettingsConfig = async (saveSettingsRequest: SaveSettingsRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SettingsConfigResponse> => {
 
   const res = await (fetchFn ?? fetch)(getSaveSettingsConfigUrl(),
   {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(kizunaConfig)
+    body: JSON.stringify(saveSettingsRequest)
   }
 )
 

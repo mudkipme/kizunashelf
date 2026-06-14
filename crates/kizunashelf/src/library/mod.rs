@@ -8,8 +8,8 @@ pub use frontmatter::{
 };
 
 use crate::types::{
-    DateRole, Entity, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig, Library,
-    LibraryDiagnostic, Relation,
+    AppConfig, DateRole, Entity, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig, Library,
+    LibraryDiagnostic, Relation, VaultConfig,
 };
 use anyhow::{Context, Result};
 use frontmatter::{
@@ -28,25 +28,67 @@ use tokio::task::JoinSet;
 const DEFAULT_READ_CONCURRENCY: usize = 8;
 const MAX_READ_CONCURRENCY: usize = 16;
 
-pub async fn load_config(config_path: impl AsRef<Path>) -> Result<KizunaConfig> {
+/// Vault-relative location of the vault config file inside `<vaultRoot>`.
+pub const VAULT_CONFIG_RELATIVE_PATH: &str = ".kizunashelf/config.yaml";
+
+/// Resolves the vault config path (`<vaultRoot>/.kizunashelf/config.yaml`) for
+/// the given app config. Returns `None` when no vault root is configured yet.
+pub fn vault_config_path(app: &AppConfig) -> Option<PathBuf> {
+    let vault_root = app.vault_root.trim();
+    if vault_root.is_empty() {
+        return None;
+    }
+    Some(Path::new(vault_root).join(VAULT_CONFIG_RELATIVE_PATH))
+}
+
+pub async fn load_app_config(config_path: impl AsRef<Path>) -> Result<AppConfig> {
     let path = config_path.as_ref();
     let raw = fs::read_to_string(path)
         .await
-        .with_context(|| format!("failed to read config {}", path.display()))?;
-    serde_yaml::from_str(&raw).with_context(|| format!("invalid config {}", path.display()))
+        .with_context(|| format!("failed to read app config {}", path.display()))?;
+    serde_yaml::from_str(&raw).with_context(|| format!("invalid app config {}", path.display()))
 }
 
-pub async fn save_config(config_path: impl AsRef<Path>, config: &KizunaConfig) -> Result<()> {
+pub async fn load_vault_config(config_path: impl AsRef<Path>) -> Result<VaultConfig> {
     let path = config_path.as_ref();
+    let raw = fs::read_to_string(path)
+        .await
+        .with_context(|| format!("failed to read vault config {}", path.display()))?;
+    serde_yaml::from_str(&raw).with_context(|| format!("invalid vault config {}", path.display()))
+}
+
+async fn write_yaml(path: &Path, raw: String, label: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .await
-            .with_context(|| format!("failed to create config directory {}", parent.display()))?;
+        fs::create_dir_all(parent).await.with_context(|| {
+            format!("failed to create {label} directory {}", parent.display())
+        })?;
     }
-    let raw = serde_yaml::to_string(config).context("failed to serialize config")?;
     fs::write(path, format!("{raw}\n"))
         .await
-        .with_context(|| format!("failed to write config {}", path.display()))
+        .with_context(|| format!("failed to write {label} {}", path.display()))
+}
+
+pub async fn save_app_config(config_path: impl AsRef<Path>, config: &AppConfig) -> Result<()> {
+    let raw = serde_yaml::to_string(config).context("failed to serialize app config")?;
+    write_yaml(config_path.as_ref(), raw, "app config").await
+}
+
+pub async fn save_vault_config(config_path: impl AsRef<Path>, config: &VaultConfig) -> Result<()> {
+    let raw = serde_yaml::to_string(config).context("failed to serialize vault config")?;
+    write_yaml(config_path.as_ref(), raw, "vault config").await
+}
+
+/// Ensures the vault root directory exists, creating it if necessary. Used by
+/// onboarding's app-only save (web "create if missing", desktop "create new
+/// vault") before any vault config is written.
+pub async fn ensure_vault_root(app: &AppConfig) -> Result<()> {
+    let vault_root = app.vault_root.trim();
+    if vault_root.is_empty() {
+        anyhow::bail!("vaultRoot is required");
+    }
+    fs::create_dir_all(vault_root)
+        .await
+        .with_context(|| format!("failed to create vault root {vault_root}"))
 }
 
 pub async fn ensure_config_directories(config: &KizunaConfig) -> Result<()> {
@@ -144,9 +186,12 @@ fn unique_relation_count_by_id(relations: &[Relation]) -> HashMap<String, u32> {
         .collect()
 }
 
-pub async fn read_library_from_config(config_path: impl AsRef<Path>) -> Result<Library> {
-    let config = load_config(config_path).await?;
-    read_library(config).await
+pub async fn read_library_from_config(app_config_path: impl AsRef<Path>) -> Result<Library> {
+    let app = load_app_config(app_config_path).await?;
+    let vault_path = vault_config_path(&app)
+        .context("config does not set a vault root; run onboarding to create one")?;
+    let vault = load_vault_config(&vault_path).await?;
+    read_library(KizunaConfig::from_parts(app, vault)).await
 }
 
 async fn validate_library_roots(config: &KizunaConfig) -> Result<()> {

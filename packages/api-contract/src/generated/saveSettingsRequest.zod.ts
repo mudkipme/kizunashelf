@@ -6,23 +6,19 @@
  */
 import { z as zod } from 'zod';
 
-export const settingsConfigResponseAppOneReadConcurrencyMin = 0;
+export const saveSettingsRequestAppReadConcurrencyMin = 0;
 
-export const settingsConfigResponseVaultOneHomeOneSectionsItemLimitMin = 0;
+export const saveSettingsRequestVaultOneHomeOneSectionsItemLimitMin = 0;
 
-export const settingsConfigResponseVaultOneDailyNotesOneSnippetMaxLengthMin = 0;
+export const saveSettingsRequestVaultOneDailyNotesOneSnippetMaxLengthMin = 0;
 
-export const settingsConfigResponseVaultOneTypesItemFieldsDefault = [];
-export const SettingsConfigResponse = zod.object({
-  "appConfigPath": zod.string().describe('Path to the local app config file on this machine.'),
-  "appExists": zod.boolean().describe('Whether the app config file exists on disk.'),
-  "app": zod.union([zod.object({
+export const saveSettingsRequestVaultOneTypesItemFieldsDefault = [];
+export const SaveSettingsRequest = zod.object({
+  "app": zod.object({
   "vaultRoot": zod.string(),
   "contentWritable": zod.boolean().nullish(),
-  "readConcurrency": zod.number().min(settingsConfigResponseAppOneReadConcurrencyMin).nullish()
-}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.'),zod.null()]).optional(),
-  "vaultConfigPath": zod.string().nullish().describe('Path to the vault config file (`<vaultRoot>\/.kizunashelf\/config.yaml`).\n`None` until a vault root is configured.'),
-  "vaultExists": zod.boolean().describe('Whether the vault config file exists on disk.'),
+  "readConcurrency": zod.number().min(saveSettingsRequestAppReadConcurrencyMin).nullish()
+}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.'),
   "vault": zod.union([zod.object({
   "taxonomyRoot": zod.string(),
   "assetRoot": zod.string().nullish(),
@@ -36,7 +32,7 @@ export const SettingsConfigResponse = zod.object({
   "field": zod.string(),
   "values": zod.array(zod.string()).optional()
 })).optional(),
-  "limit": zod.number().min(settingsConfigResponseVaultOneHomeOneSectionsItemLimitMin).nullish(),
+  "limit": zod.number().min(saveSettingsRequestVaultOneHomeOneSectionsItemLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
 })).optional()
@@ -44,7 +40,7 @@ export const SettingsConfigResponse = zod.object({
   "dailyNotes": zod.union([zod.object({
   "paths": zod.array(zod.string()).optional(),
   "datePattern": zod.string().nullish(),
-  "snippetMaxLength": zod.number().min(settingsConfigResponseVaultOneDailyNotesOneSnippetMaxLengthMin).nullish()
+  "snippetMaxLength": zod.number().min(saveSettingsRequestVaultOneDailyNotesOneSnippetMaxLengthMin).nullish()
 }),zod.null()]).optional(),
   "types": zod.array(zod.object({
   "id": zod.string(),
@@ -79,11 +75,10 @@ export const SettingsConfigResponse = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-})).default(settingsConfigResponseVaultOneTypesItemFieldsDefault)
+})).default(saveSettingsRequestVaultOneTypesItemFieldsDefault)
 }))
-}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional(),
-  "error": zod.string().nullish()
+}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional().describe('When omitted, only the app config is written and the vault config on disk\n(if any) is left untouched — used by onboarding to persist a chosen vault\nroot without overwriting an existing, synced vault config.')
 })
 
-export type SettingsConfigResponse = zod.input<typeof SettingsConfigResponse>;
-export type SettingsConfigResponseOutput = zod.output<typeof SettingsConfigResponse>;
+export type SaveSettingsRequest = zod.input<typeof SaveSettingsRequest>;
+export type SaveSettingsRequestOutput = zod.output<typeof SaveSettingsRequest>;

@@ -1,8 +1,8 @@
 use crate::calendar::{CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse};
 use crate::relations::Count;
 use crate::types::{
-    Entity, EntitySummary, EntityTypeConfig, HomeConfig, HomeSectionFilterConfig, KizunaConfig,
-    LibraryDiagnostic, Relation,
+    AppConfig, Entity, EntitySummary, EntityTypeConfig, HomeConfig, HomeSectionFilterConfig,
+    KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -38,12 +38,33 @@ pub struct CapabilitiesResponse {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsConfigResponse {
-    pub config_path: String,
-    pub exists: bool,
+    /// Path to the local app config file on this machine.
+    pub app_config_path: String,
+    /// Whether the app config file exists on disk.
+    pub app_exists: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub config: Option<KizunaConfig>,
+    pub app: Option<AppConfig>,
+    /// Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).
+    /// `None` until a vault root is configured.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vault_config_path: Option<String>,
+    /// Whether the vault config file exists on disk.
+    pub vault_exists: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vault: Option<VaultConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveSettingsRequest {
+    pub app: AppConfig,
+    /// When omitted, only the app config is written and the vault config on disk
+    /// (if any) is left untouched — used by onboarding to persist a chosen vault
+    /// root without overwriting an existing, synced vault config.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vault: Option<VaultConfig>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -554,8 +575,11 @@ pub struct ApiSchemas {
     pub error: ErrorResponse,
     pub health: HealthResponse,
     pub settings_config: SettingsConfigResponse,
+    pub save_settings_request: SaveSettingsRequest,
     pub path_suggestions: PathSuggestionsResponse,
     pub kizuna_config: KizunaConfig,
+    pub app_config: AppConfig,
+    pub vault_config: VaultConfig,
     pub config: ConfigResponse,
     pub home: HomeResponse,
     pub stats: StatsResponse,

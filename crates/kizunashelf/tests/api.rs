@@ -614,9 +614,10 @@ async fn settings_endpoints_create_and_read_config_files() {
 
     let missing = request_json(&app, Method::GET, "/api/settings/config", None).await;
     assert_eq!(missing.0, StatusCode::OK);
-    assert_eq!(missing.1["exists"], false);
+    assert_eq!(missing.1["appExists"], false);
+    assert_eq!(missing.1["vaultExists"], false);
     assert_eq!(
-        missing.1["configPath"].as_str().unwrap(),
+        missing.1["appConfigPath"].as_str().unwrap(),
         config_path.to_string_lossy()
     );
 
@@ -657,20 +658,79 @@ async fn settings_endpoints_create_and_read_config_files() {
         ]
     });
 
-    let saved = request_json(&app, Method::PUT, "/api/settings/config", Some(config)).await;
+    let saved = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(split_settings_body(&config)),
+    )
+    .await;
     assert_eq!(saved.0, StatusCode::OK);
-    assert_eq!(saved.1["exists"], true);
-    assert_eq!(saved.1["config"]["types"].as_array().unwrap().len(), 1);
+    assert_eq!(saved.1["appExists"], true);
+    assert_eq!(saved.1["vaultExists"], true);
+    assert_eq!(saved.1["vault"]["types"].as_array().unwrap().len(), 1);
     assert!(config_path.is_file());
+    assert!(vault.join(".kizunashelf/config.yaml").is_file());
 
     let read_back = request_json(&app, Method::GET, "/api/settings/config", None).await;
     assert_eq!(read_back.0, StatusCode::OK);
-    assert_eq!(read_back.1["exists"], true);
-    assert_eq!(read_back.1["config"]["home"]["title"], "Settings Fixture");
+    assert_eq!(read_back.1["appExists"], true);
+    assert_eq!(read_back.1["vaultExists"], true);
+    assert_eq!(read_back.1["vault"]["home"]["title"], "Settings Fixture");
 
     let health = request_json(&app, Method::GET, "/api/health", None).await;
     assert_eq!(health.0, StatusCode::OK);
     assert_eq!(health.1["entityCount"], 1);
+}
+
+#[tokio::test]
+async fn app_only_save_persists_vault_root_and_detects_existing_vault_config() {
+    let temp = TempDir::new().unwrap();
+    let config_path = temp.path().join("kizunashelf.yaml");
+    let app = router(ApiOptions {
+        config_path: config_path.clone(),
+        cache_ttl: Duration::from_millis(0),
+        web_dist_path: None,
+        settings_writable: true,
+        content_writable: true,
+    });
+
+    // App-only save (vault omitted) against an empty vault: creates the vault
+    // directory, writes only the app config, and reports no vault config yet.
+    let empty_vault = temp.path().join("empty-vault");
+    let app_only = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(json!({ "app": { "vaultRoot": empty_vault } })),
+    )
+    .await;
+    assert_eq!(app_only.0, StatusCode::OK);
+    assert_eq!(app_only.1["appExists"], true);
+    assert_eq!(app_only.1["vaultExists"], false);
+    assert!(config_path.is_file());
+    assert!(empty_vault.is_dir());
+    assert!(!empty_vault.join(".kizunashelf/config.yaml").exists());
+
+    // App-only save against a vault that already carries a config: reports it and
+    // leaves the file byte-for-byte intact (never rewritten).
+    let synced_vault = temp.path().join("synced-vault");
+    let vault_config_path = synced_vault.join(".kizunashelf/config.yaml");
+    fs::create_dir_all(vault_config_path.parent().unwrap()).unwrap();
+    let original = "taxonomyRoot: Library\nassetRoot: Media\ntypes: []\n# keep me\n";
+    fs::write(&vault_config_path, original).unwrap();
+
+    let detect = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(json!({ "app": { "vaultRoot": synced_vault } })),
+    )
+    .await;
+    assert_eq!(detect.0, StatusCode::OK);
+    assert_eq!(detect.1["vaultExists"], true);
+    assert_eq!(detect.1["vault"]["taxonomyRoot"], "Library");
+    assert_eq!(fs::read_to_string(&vault_config_path).unwrap(), original);
 }
 
 #[tokio::test]
@@ -690,11 +750,11 @@ async fn settings_config_rejects_paths_that_escape_the_vault_root() {
         &app,
         Method::PUT,
         "/api/settings/config",
-        Some(json!({
+        Some(split_settings_body(&json!({
             "vaultRoot": vault,
             "taxonomyRoot": "../outside",
             "types": []
-        })),
+        }))),
     )
     .await;
     assert_eq!(escaped_taxonomy.0, StatusCode::BAD_REQUEST);
@@ -707,7 +767,7 @@ async fn settings_config_rejects_paths_that_escape_the_vault_root() {
         &app,
         Method::PUT,
         "/api/settings/config",
-        Some(json!({
+        Some(split_settings_body(&json!({
             "vaultRoot": vault,
             "taxonomyRoot": "Taxonomy",
             "types": [
@@ -718,7 +778,7 @@ async fn settings_config_rejects_paths_that_escape_the_vault_root() {
                     "fields": []
                 }
             ]
-        })),
+        }))),
     )
     .await;
     assert_eq!(absolute_type_path.0, StatusCode::BAD_REQUEST);
@@ -797,7 +857,13 @@ async fn settings_mutation_endpoints_can_be_disabled() {
         "types": []
     });
 
-    let saved = request_json(&app, Method::PUT, "/api/settings/config", Some(config)).await;
+    let saved = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(split_settings_body(&config)),
+    )
+    .await;
     assert_eq!(saved.0, StatusCode::FORBIDDEN);
     assert_eq!(saved.1["error"], "Settings writes are disabled");
 
@@ -833,7 +899,7 @@ async fn content_mutation_endpoints_can_be_disabled() {
             }
         ]
     });
-    fs::write(&config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
+    write_split_config(&config_path, &config);
     let app = router(ApiOptions {
         config_path,
         cache_ttl: Duration::from_millis(0),
@@ -986,7 +1052,7 @@ impl TestServer {
                 }
             ]
         });
-        fs::write(&config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
+        write_split_config(&config_path, &config);
 
         Self {
             app: router(ApiOptions {
@@ -1009,6 +1075,58 @@ impl TestServer {
     async fn json(&self, path: &str) -> (StatusCode, Value) {
         request_json(&self.app, Method::GET, path, None).await
     }
+}
+
+/// Splits a combined config object into the app file (at `config_path`) and the
+/// vault file (at `<vaultRoot>/.kizunashelf/config.yaml`), mirroring how the app
+/// stores configuration on disk.
+fn write_split_config(config_path: &Path, config: &Value) {
+    let object = config.as_object().expect("config must be an object");
+    let vault_root = object
+        .get("vaultRoot")
+        .and_then(Value::as_str)
+        .expect("config must set vaultRoot");
+    let mut app = serde_json::Map::new();
+    let mut vault = serde_json::Map::new();
+    for (key, value) in object {
+        match key.as_str() {
+            "vaultRoot" | "contentWritable" | "readConcurrency" => {
+                app.insert(key.clone(), value.clone());
+            }
+            _ => {
+                vault.insert(key.clone(), value.clone());
+            }
+        }
+    }
+    write_yaml_file(config_path, &Value::Object(app));
+    let vault_config_path = Path::new(vault_root).join(".kizunashelf/config.yaml");
+    write_yaml_file(&vault_config_path, &Value::Object(vault));
+}
+
+fn write_yaml_file(path: &Path, value: &Value) {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).unwrap();
+    }
+    fs::write(path, serde_yaml::to_string(value).unwrap()).unwrap();
+}
+
+/// Builds a `{ app, vault }` settings request body from a combined config object,
+/// matching the shape the PUT `/api/settings/config` endpoint expects.
+fn split_settings_body(config: &Value) -> Value {
+    let object = config.as_object().expect("config must be an object");
+    let mut app = serde_json::Map::new();
+    let mut vault = serde_json::Map::new();
+    for (key, value) in object {
+        match key.as_str() {
+            "vaultRoot" | "contentWritable" | "readConcurrency" => {
+                app.insert(key.clone(), value.clone());
+            }
+            _ => {
+                vault.insert(key.clone(), value.clone());
+            }
+        }
+    }
+    json!({ "app": Value::Object(app), "vault": Value::Object(vault) })
 }
 
 async fn request_json(
@@ -1264,7 +1382,7 @@ fn asset_test_app(
             }
         ]
     });
-    fs::write(&config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
+    write_split_config(&config_path, &config);
     let app = router(ApiOptions {
         config_path,
         cache_ttl: Duration::from_millis(0),

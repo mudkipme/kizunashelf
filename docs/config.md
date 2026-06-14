@@ -1,8 +1,11 @@
 # KizunaShelf Config
 
-KizunaShelf is schema-driven. The config file tells the app where your vault lives, which Markdown folders are entity collections, and how frontmatter fields should be interpreted.
+KizunaShelf is schema-driven. Configuration is split across two YAML files:
 
-The config is YAML. The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and `config/kizunashelf.example.yaml` is the working example.
+- **App config** — stored on this machine (e.g. `~/.config/kizunashelf.yaml`). It tells the app where your vault lives and how this machine runs. It is local and not synced.
+- **Vault config** — stored inside the vault at `<vaultRoot>/.kizunashelf/config.yaml`. It describes which Markdown folders are entity collections and how frontmatter fields should be interpreted. Because it lives in the vault, it travels with the vault and is synced by the vault's own syncing method, so every machine pointing at the vault shares the same schema.
+
+The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema. `config/kizunashelf.example.yaml` (app) and `config/vault-config.example.yaml` (vault) are the working examples.
 
 ## First Run
 
@@ -62,15 +65,17 @@ If a type defines one or more `id` fields, the first configured `id` field with 
 
 ## Config File Location
 
+### App config
+
 The server reads `KIZUNASHELF_CONFIG` if it is set. Otherwise it uses:
 
 ```text
 config/kizunashelf.yaml
 ```
 
-An example config is available at `config/kizunashelf.example.yaml`.
+An example app config is available at `config/kizunashelf.example.yaml`.
 
-The desktop app searches for `kizunashelf.yaml` in this order:
+The desktop app searches for the app config `kizunashelf.yaml` in this order:
 
 1. `KIZUNASHELF_CONFIG`
 2. `$XDG_CONFIG_HOME/kizunashelf.yaml`
@@ -80,13 +85,28 @@ The desktop app searches for `kizunashelf.yaml` in this order:
 6. On macOS, `~/Library/Application Support/kizunashelf.yaml`
 7. On macOS, `~/Library/Application Support/KizunaShelf/kizunashelf.yaml`
 
-If none of those files exist, desktop opens onboarding and writes the new config to the first candidate path.
+If none of those files exist, desktop opens onboarding and writes the new app config to the first candidate path.
+
+### Vault config
+
+The vault config always lives at a fixed location relative to the configured `vaultRoot`:
+
+```text
+<vaultRoot>/.kizunashelf/config.yaml
+```
+
+KizunaShelf resolves it from the app config's `vaultRoot`. An example vault config is available at `config/vault-config.example.yaml`.
+
+Onboarding is shown when either file is missing. When `vaultRoot` already points at a vault that contains a synced `.kizunashelf/config.yaml`, a fresh machine only needs the app config — the vault schema is picked up automatically.
+
+The provider token cache (`.kizunashelf.tokens.json`) is written next to the app config and stays local; it is never placed inside the vault.
 
 ## Settings Editor
 
 The Settings page at `/settings` can edit every config field:
 
-- Core: `vaultRoot`, `taxonomyRoot`, `contentWritable`, `readConcurrency`
+- App: `vaultRoot`, `contentWritable` (`readConcurrency` is round-tripped but not surfaced in the UI)
+- Vault: `taxonomyRoot`, `assetRoot`
 - Daily notes: `paths`, `datePattern`, `snippetMaxLength`
 - Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`, and filters
 - Types: `id`, `label`, `icon`, `path`, `filename`, `externalPriority`, `fields`
@@ -121,11 +141,25 @@ The Docker image sets `HOST=0.0.0.0` and `KIZUNASHELF_SETTINGS_WRITABLE=false` b
 
 ## Top-Level Schema
 
+### App config (`~/.config/kizunashelf.yaml`)
+
 ```yaml
 vaultRoot: /path/to/ObsidianVault
-taxonomyRoot: Taxonomy
 contentWritable: true
 readConcurrency: 8
+```
+
+| Key | Required | Type | Description |
+| --- | --- | --- | --- |
+| `vaultRoot` | yes | string | Absolute path to the vault root. |
+| `contentWritable` | no | boolean | Enables entity create/edit/delete operations when true. |
+| `readConcurrency` | no | number | Maximum concurrent entity file reads. Defaults to 8 and is clamped from 1 to 16. |
+
+### Vault config (`<vaultRoot>/.kizunashelf/config.yaml`)
+
+```yaml
+taxonomyRoot: Taxonomy
+assetRoot: Assets
 dailyNotes: ...
 home: ...
 types: [...]
@@ -133,10 +167,8 @@ types: [...]
 
 | Key | Required | Type | Description |
 | --- | --- | --- | --- |
-| `vaultRoot` | yes | string | Absolute path to the vault root. |
 | `taxonomyRoot` | yes | string | Path inside `vaultRoot` that contains typed entity folders. Must be relative. |
-| `contentWritable` | no | boolean | Enables entity create/edit/delete operations when true. |
-| `readConcurrency` | no | number | Maximum concurrent entity file reads. Defaults to 8 and is clamped from 1 to 16. |
+| `assetRoot` | no | string | Vault-relative directory where downloaded assets are stored. Defaults to `Assets`. |
 | `dailyNotes` | no | object | Daily note paths and date extraction settings. |
 | `home` | no | object | Home dashboard sections. |
 | `types` | yes | array | Entity type definitions. |
@@ -551,11 +583,18 @@ The default date pattern matches filenames like:
 
 ## Complete Example
 
+App config (`~/.config/kizunashelf.yaml`):
+
 ```yaml
 vaultRoot: /home/me/Vault
-taxonomyRoot: Taxonomy
 contentWritable: true
 readConcurrency: 8
+```
+
+Vault config (`/home/me/Vault/.kizunashelf/config.yaml`):
+
+```yaml
+taxonomyRoot: Taxonomy
 
 dailyNotes:
   paths:
