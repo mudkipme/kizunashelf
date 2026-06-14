@@ -59,9 +59,9 @@ pub async fn load_vault_config(config_path: impl AsRef<Path>) -> Result<VaultCon
 
 async fn write_yaml(path: &Path, raw: String, label: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).await.with_context(|| {
-            format!("failed to create {label} directory {}", parent.display())
-        })?;
+        fs::create_dir_all(parent)
+            .await
+            .with_context(|| format!("failed to create {label} directory {}", parent.display()))?;
     }
     fs::write(path, format!("{raw}\n"))
         .await

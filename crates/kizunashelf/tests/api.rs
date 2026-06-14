@@ -1721,7 +1721,9 @@ async fn delete_trashes_asset_directory() {
     assert!(!vault.join("Taxonomy/Anime/Star Voyager.md").exists());
     assert!(vault.join(".trash/Star Voyager.md").exists());
     assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
-    assert!(vault.join(".trash/Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(vault
+        .join(".trash/Assets/Taxonomy/Anime/Star Voyager")
+        .exists());
 }
 
 #[tokio::test]

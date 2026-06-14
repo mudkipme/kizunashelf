@@ -275,7 +275,10 @@ async fn unique_path(dir: &Path, file_name: &str) -> PathBuf {
         return candidate;
     }
     let name = Path::new(file_name);
-    let stem = name.file_stem().and_then(|s| s.to_str()).unwrap_or(file_name);
+    let stem = name
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or(file_name);
     let extension = name.extension().and_then(|s| s.to_str());
     let mut counter = 1;
     loop {
