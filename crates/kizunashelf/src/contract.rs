@@ -223,8 +223,6 @@ pub struct CreateEntityRequest {
 #[serde(rename_all = "camelCase")]
 pub struct DeleteEntityRequest {
     pub revision: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub mode: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

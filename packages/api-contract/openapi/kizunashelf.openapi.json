@@ -4048,12 +4048,6 @@
         "properties": {
           "revision": {
             "type": "string"
-          },
-          "mode": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
         "required": [

@@ -7,8 +7,7 @@
 import { z as zod } from 'zod';
 
 export const DeleteEntityBody = zod.object({
-  "revision": zod.string(),
-  "mode": zod.string().nullish()
+  "revision": zod.string()
 })
 
 export type DeleteEntityBody = zod.input<typeof DeleteEntityBody>;

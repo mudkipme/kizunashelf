@@ -1,6 +1,6 @@
 use super::error::{ApiError, ApiResult};
 use super::mutations::{
-    backup_file, ensure_path_inside_root, entity_absolute_path, write_entity_raw, EntityPath,
+    ensure_path_inside_root, entity_absolute_path, write_entity_raw, EntityPath,
 };
 use super::state::{content_writes_enabled, get_library, AppState, AssetJobRecord};
 use crate::contract::{
@@ -142,7 +142,6 @@ pub(super) async fn download_entity_core(
 
     if changed {
         let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-        backup_file(vault_root, &source_path, "update").await?;
         write_entity_raw(vault_root, &source_path, &new_raw).await?;
     }
 

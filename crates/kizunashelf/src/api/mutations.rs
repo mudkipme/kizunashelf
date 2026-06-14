@@ -89,7 +89,6 @@ pub(crate) async fn update_entity(
     };
 
     let raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    backup_file(&library.config.vault_root, &source_path, "update").await?;
     write_entity_raw(&library.config.vault_root, &target_path, &raw).await?;
     if target_path != source_path {
         fs::remove_file(&source_path)
@@ -182,21 +181,13 @@ pub(crate) async fn delete_entity(
     }
     let source_path =
         entity_absolute_path(&library.config.vault_root, &entity.summary.path).await?;
-    let bucket = if request.mode.as_deref() == Some("delete") {
-        "backups"
-    } else {
-        "trash"
-    };
-    let backup_path = backup_file(&library.config.vault_root, &source_path, bucket).await?;
-    fs::remove_file(&source_path)
-        .await
-        .with_context(|| format!("failed to delete entity {}", source_path.display()))?;
+    let trash_path = move_to_trash(&library.config.vault_root, &source_path).await?;
     let asset_dir = entity_asset_dir(library.config.resolved_asset_root(), &entity.summary.path);
-    trash_entity_assets(&library.config.vault_root, &asset_dir, bucket).await;
+    trash_entity_assets(&library.config.vault_root, &asset_dir).await;
     state.invalidate_cache().await;
     Ok(Json(DeleteEntityResponse {
         deleted_id: path.id,
-        backup_path: relative_path(Path::new(&library.config.vault_root), &backup_path),
+        backup_path: relative_path(Path::new(&library.config.vault_root), &trash_path),
     }))
 }
 
@@ -255,9 +246,54 @@ fn rewrite_asset_prefix(frontmatter: &mut Map<String, Value>, old_dir: &str, new
     }
 }
 
-/// Moves an entity's asset directory into the `.kizunashelf/<bucket>` area when
-/// the entity is deleted. Best-effort and non-fatal.
-async fn trash_entity_assets(vault_root: &str, asset_dir_relative: &str, bucket: &str) {
+/// Moves an entity's Markdown file into the vault's `.trash` folder, mirroring
+/// Obsidian's local trash. Returns the absolute trash path. Disambiguates name
+/// collisions by appending ` 1`, ` 2`, … before the extension.
+async fn move_to_trash(vault_root: &str, source_path: &Path) -> Result<PathBuf> {
+    let root = Path::new(vault_root).canonicalize()?;
+    ensure_path_inside_root(&root, source_path).await?;
+    let file_name = source_path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| anyhow::anyhow!("entity path has no file name"))?;
+    let trash_dir = root.join(".trash");
+    fs::create_dir_all(&trash_dir)
+        .await
+        .with_context(|| format!("failed to create trash directory {}", trash_dir.display()))?;
+    let dest = unique_path(&trash_dir, file_name).await;
+    fs::rename(source_path, &dest)
+        .await
+        .with_context(|| format!("failed to move entity to trash {}", dest.display()))?;
+    Ok(dest)
+}
+
+/// Returns a path for `file_name` inside `dir`, appending ` 1`, ` 2`, … before
+/// the extension if a file with that name already exists.
+async fn unique_path(dir: &Path, file_name: &str) -> PathBuf {
+    let candidate = dir.join(file_name);
+    if !fs::try_exists(&candidate).await.unwrap_or(false) {
+        return candidate;
+    }
+    let name = Path::new(file_name);
+    let stem = name.file_stem().and_then(|s| s.to_str()).unwrap_or(file_name);
+    let extension = name.extension().and_then(|s| s.to_str());
+    let mut counter = 1;
+    loop {
+        let candidate_name = match extension {
+            Some(extension) => format!("{stem} {counter}.{extension}"),
+            None => format!("{stem} {counter}"),
+        };
+        let candidate = dir.join(candidate_name);
+        if !fs::try_exists(&candidate).await.unwrap_or(false) {
+            return candidate;
+        }
+        counter += 1;
+    }
+}
+
+/// Moves an entity's asset directory into the vault's `.trash` folder, mirroring
+/// its vault-relative path. Best-effort and non-fatal.
+async fn trash_entity_assets(vault_root: &str, asset_dir_relative: &str) {
     let Ok(root) = Path::new(vault_root).canonicalize() else {
         return;
     };
@@ -265,12 +301,12 @@ async fn trash_entity_assets(vault_root: &str, asset_dir_relative: &str, bucket:
     if !fs::try_exists(&source).await.unwrap_or(false) {
         return;
     }
-    let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%S%.3fZ").to_string();
-    let dest = root
-        .join(".kizunashelf")
-        .join(bucket)
-        .join(timestamp)
-        .join(asset_dir_relative);
+    let trash_dir = root.join(".trash");
+    let mut dest = trash_dir.join(asset_dir_relative);
+    if fs::try_exists(&dest).await.unwrap_or(false) {
+        let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%S%.3fZ").to_string();
+        dest = trash_dir.join(format!("{asset_dir_relative}-{timestamp}"));
+    }
     if let Some(parent) = dest.parent() {
         if fs::create_dir_all(parent).await.is_err() {
             return;
@@ -349,31 +385,6 @@ pub(super) async fn write_entity_raw(vault_root: &str, path: &Path, raw: &str) -
     fs::write(path, raw)
         .await
         .with_context(|| format!("failed to write entity {}", path.display()))
-}
-
-pub(super) async fn backup_file(
-    vault_root: &str,
-    source_path: &Path,
-    bucket: &str,
-) -> Result<PathBuf> {
-    let root = Path::new(vault_root).canonicalize()?;
-    ensure_path_inside_root(&root, source_path).await?;
-    let relative = source_path.strip_prefix(&root).unwrap_or(source_path);
-    let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%S%.3fZ").to_string();
-    let backup_path = root
-        .join(".kizunashelf")
-        .join(bucket)
-        .join(timestamp)
-        .join(relative);
-    if let Some(parent) = backup_path.parent() {
-        fs::create_dir_all(parent)
-            .await
-            .with_context(|| format!("failed to create backup directory {}", parent.display()))?;
-    }
-    fs::copy(source_path, &backup_path)
-        .await
-        .with_context(|| format!("failed to back up entity {}", source_path.display()))?;
-    Ok(backup_path)
 }
 
 pub(super) async fn ensure_path_inside_root(root: &Path, path: &Path) -> Result<()> {

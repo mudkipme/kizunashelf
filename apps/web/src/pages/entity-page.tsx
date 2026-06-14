@@ -173,7 +173,7 @@ export function EntityPage() {
     if (!entity) return;
     setSaving(true);
     try {
-      await removeEntity(entity.id, { revision: entity.revision, mode: "trash" });
+      await removeEntity(entity.id, { revision: entity.revision });
       await invalidateEntityData();
       navigate("/library");
     } catch (error) {
@@ -320,7 +320,7 @@ function EntityActions({
             <AlertDialogHeader>
               <AlertDialogTitle>Move to trash?</AlertDialogTitle>
               <AlertDialogDescription>
-                This moves {entity.title} to KizunaShelf trash. You can restore it from the backup location if needed.
+                This moves {entity.title} to the vault's <code>.trash</code> folder. You can restore it from there if needed.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

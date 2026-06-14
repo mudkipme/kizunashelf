@@ -411,18 +411,12 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
             "/api/entities/{}",
             urlencoding::encode("games:Solar Tactics")
         ),
-        Some(json!({
-            "revision": delete_revision,
-            "mode": "trash"
-        })),
+        Some(json!({ "revision": delete_revision })),
     )
     .await;
     assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);
     assert_eq!(deleted.1["deletedId"], "games:Solar Tactics");
-    assert!(deleted.1["backupPath"]
-        .as_str()
-        .unwrap()
-        .contains(".kizunashelf/trash"));
+    assert_eq!(deleted.1["backupPath"], ".trash/Solar Tactics.md");
 
     let entities = server.ok_json("/api/entities").await;
     assert_eq!(entities["total"], 4);
@@ -1718,13 +1712,16 @@ async fn delete_trashes_asset_directory() {
         &app,
         Method::DELETE,
         &format!("/api/entities/{}", urlencoding::encode(id)),
-        Some(json!({ "revision": revision, "mode": "trash" })),
+        Some(json!({ "revision": revision })),
     )
     .await;
     assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);
 
+    // The note and its asset directory are moved into the vault's `.trash`.
+    assert!(!vault.join("Taxonomy/Anime/Star Voyager.md").exists());
+    assert!(vault.join(".trash/Star Voyager.md").exists());
     assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
-    assert!(vault.join(".kizunashelf/trash").exists());
+    assert!(vault.join(".trash/Assets/Taxonomy/Anime/Star Voyager").exists());
 }
 
 #[tokio::test]
