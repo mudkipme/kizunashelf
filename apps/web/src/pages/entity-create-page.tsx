@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEntities } from "@kizunashelf/api-contract";
 import { useQuery } from "@tanstack/react-query";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
@@ -136,10 +136,6 @@ export function EntityCreatePage() {
               {selectedType ? `${selectedType.label} · ${selectedType.path}` : "Choose a type"}
             </p>
           </div>
-          <Button type="button" onClick={create} disabled={!contentWritable || creating || !typeId || Boolean(basenameError)}>
-            <PlusIcon data-icon="inline-start" />
-            {creating ? "Creating" : "Create"}
-          </Button>
         </header>
 
         {!contentWritable ? (
@@ -178,7 +174,10 @@ export function EntityCreatePage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => external.setOpen(true)}
+              onClick={() => {
+                if (normalizedBasename) external.setQuery(normalizedBasename);
+                external.setOpen(true);
+              }}
               disabled={!external.externalSearchEnabled}
             >
               <SearchIcon data-icon="inline-start" />
