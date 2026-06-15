@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEntities } from "@kizunashelf/api-contract";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, SearchIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch, errorMessage } from "@/api/client";
 import { addEntity } from "@/api/entities";
@@ -24,6 +24,8 @@ import { applyExternalBodySections } from "@/lib/external-metadata";
 
 export function EntityCreatePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedType = searchParams.get("type");
   const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
@@ -42,9 +44,12 @@ export function EntityCreatePage() {
   const showBasenameError = Boolean(basename) && Boolean(basenameError);
 
   useEffect(() => {
-    const firstType = config.data?.types[0]?.id;
-    if (!typeId && firstType) setTypeId(firstType);
-  }, [config.data, typeId]);
+    if (typeId) return;
+    const types = config.data?.types;
+    if (!types?.length) return;
+    const preferred = types.find((type) => type.id === requestedType)?.id;
+    setTypeId(preferred ?? types[0].id);
+  }, [config.data, typeId, requestedType]);
 
   const selectedType = useMemo(
     () => config.data?.types.find((type) => type.id === typeId),

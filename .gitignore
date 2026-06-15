@@ -12,3 +12,4 @@ target/
 /config/kizunashelf.yaml
 /config/.kizunashelf.tokens.json
 .antigravitycli/
+.claude

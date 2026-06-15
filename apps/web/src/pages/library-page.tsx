@@ -102,6 +102,9 @@ export function LibraryPage() {
   const entryCount = isGlobalType
     ? (globalStats.data?.total ?? 0)
     : (selectedTypeStats?.count ?? 0);
+  const createHref = isGlobalType
+    ? "/entities/new"
+    : `/entities/new?type=${encodeURIComponent(selectedType)}`;
   const filtersActive =
     effectiveRefs !== allOptions ||
     effectiveCover !== allOptions ||
@@ -309,7 +312,7 @@ export function LibraryPage() {
                       <PlusIcon />
                     </span>
                   ) : (
-                    <Link to="/entities/new">
+                    <Link to={createHref}>
                       <PlusIcon />
                     </Link>
                   )}
@@ -404,7 +407,7 @@ export function LibraryPage() {
                       Add
                     </span>
                   ) : (
-                    <Link to="/entities/new">
+                    <Link to={createHref}>
                       <PlusIcon data-icon="inline-start" />
                       Add
                     </Link>
