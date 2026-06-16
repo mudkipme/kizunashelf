@@ -1,0 +1,157 @@
+//! The vault filesystem bridge: a UniFFI callback interface `VaultFileSystem`
+//! that the iOS host implements in Swift (security-scoped bookmark +
+//! `NSFileCoordinator`), plus [`FfiVfs`], an adapter implementing the core's
+//! async [`Vfs`] trait by delegating to the Swift object.
+//!
+//! The callback methods are *synchronous* — Swift does coordinated, possibly
+//! blocking I/O. [`FfiVfs`] runs each call inside `tokio::task::spawn_blocking`
+//! so that slow, network-backed file access never stalls the async executor.
+//! See docs/ios-port-plan.md §5.
+
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use kizunashelf::vfs::{self, Vfs};
+
+/// One directory entry returned by [`VaultFileSystem::read_dir`].
+#[derive(uniffi::Record)]
+pub struct VfsDirEntry {
+    pub name: String,
+    pub is_dir: bool,
+    pub is_file: bool,
+}
+
+/// File metadata. `modified_unix_nanos` is `0` when the host cannot report a
+/// modification time (nanoseconds since the Unix epoch fit in `u64` until 2554).
+#[derive(uniffi::Record)]
+pub struct VfsMetadata {
+    pub is_dir: bool,
+    pub is_file: bool,
+    pub len: u64,
+    pub modified_unix_nanos: u64,
+}
+
+/// Error surface the Swift implementation reports. Mirrors the core's
+/// `vfs::VfsError`.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum VfsError {
+    #[error("not found")]
+    NotFound,
+    #[error("already exists")]
+    AlreadyExists,
+    #[error("invalid path: {path}")]
+    InvalidPath { path: String },
+    #[error("{message}")]
+    Other { message: String },
+}
+
+/// Vault filesystem implemented by the host (Swift). Paths are vault-relative,
+/// forward-slash; the empty string is the vault root.
+#[uniffi::export(callback_interface)]
+pub trait VaultFileSystem: Send + Sync {
+    fn read(&self, path: String) -> Result<Vec<u8>, VfsError>;
+    fn write(&self, path: String, data: Vec<u8>) -> Result<(), VfsError>;
+    fn create_dir_all(&self, path: String) -> Result<(), VfsError>;
+    fn read_dir(&self, path: String) -> Result<Vec<VfsDirEntry>, VfsError>;
+    fn metadata(&self, path: String) -> Result<VfsMetadata, VfsError>;
+    fn rename(&self, from: String, to: String) -> Result<(), VfsError>;
+    fn remove_file(&self, path: String) -> Result<(), VfsError>;
+}
+
+/// Adapter: implements the core async [`Vfs`] trait over a Swift
+/// [`VaultFileSystem`], running each (blocking) call on a blocking thread.
+pub struct FfiVfs {
+    inner: Arc<dyn VaultFileSystem>,
+}
+
+impl FfiVfs {
+    pub fn new(inner: Box<dyn VaultFileSystem>) -> Self {
+        Self {
+            inner: inner.into(),
+        }
+    }
+}
+
+fn into_core(error: VfsError) -> vfs::VfsError {
+    match error {
+        VfsError::NotFound => vfs::VfsError::NotFound,
+        VfsError::AlreadyExists => vfs::VfsError::AlreadyExists,
+        VfsError::InvalidPath { path } => vfs::VfsError::InvalidPath(path),
+        VfsError::Other { message } => vfs::VfsError::Other(message),
+    }
+}
+
+/// Runs a synchronous host call on a blocking thread, mapping errors into the
+/// core's `VfsError`.
+async fn run_blocking<T, F>(f: F) -> vfs::VfsResult<T>
+where
+    F: FnOnce() -> Result<T, VfsError> + Send + 'static,
+    T: Send + 'static,
+{
+    match tokio::task::spawn_blocking(f).await {
+        Ok(Ok(value)) => Ok(value),
+        Ok(Err(error)) => Err(into_core(error)),
+        Err(join) => Err(vfs::VfsError::Other(join.to_string())),
+    }
+}
+
+#[async_trait]
+impl Vfs for FfiVfs {
+    async fn read(&self, path: &str) -> vfs::VfsResult<Vec<u8>> {
+        let inner = Arc::clone(&self.inner);
+        let path = path.to_string();
+        run_blocking(move || inner.read(path)).await
+    }
+
+    async fn write(&self, path: &str, data: &[u8]) -> vfs::VfsResult<()> {
+        let inner = Arc::clone(&self.inner);
+        let path = path.to_string();
+        let data = data.to_vec();
+        run_blocking(move || inner.write(path, data)).await
+    }
+
+    async fn create_dir_all(&self, path: &str) -> vfs::VfsResult<()> {
+        let inner = Arc::clone(&self.inner);
+        let path = path.to_string();
+        run_blocking(move || inner.create_dir_all(path)).await
+    }
+
+    async fn read_dir(&self, path: &str) -> vfs::VfsResult<Vec<vfs::DirEntry>> {
+        let inner = Arc::clone(&self.inner);
+        let path = path.to_string();
+        let entries = run_blocking(move || inner.read_dir(path)).await?;
+        Ok(entries
+            .into_iter()
+            .map(|entry| vfs::DirEntry {
+                name: entry.name,
+                is_dir: entry.is_dir,
+                is_file: entry.is_file,
+            })
+            .collect())
+    }
+
+    async fn metadata(&self, path: &str) -> vfs::VfsResult<vfs::Metadata> {
+        let inner = Arc::clone(&self.inner);
+        let path = path.to_string();
+        let metadata = run_blocking(move || inner.metadata(path)).await?;
+        Ok(vfs::Metadata {
+            is_dir: metadata.is_dir,
+            is_file: metadata.is_file,
+            len: metadata.len,
+            modified_unix_nanos: metadata.modified_unix_nanos as u128,
+        })
+    }
+
+    async fn rename(&self, from: &str, to: &str) -> vfs::VfsResult<()> {
+        let inner = Arc::clone(&self.inner);
+        let from = from.to_string();
+        let to = to.to_string();
+        run_blocking(move || inner.rename(from, to)).await
+    }
+
+    async fn remove_file(&self, path: &str) -> vfs::VfsResult<()> {
+        let inner = Arc::clone(&self.inner);
+        let path = path.to_string();
+        run_blocking(move || inner.remove_file(path)).await
+    }
+}

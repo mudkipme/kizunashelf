@@ -31,7 +31,9 @@ impl InMemoryVfs {
         add_parent_dirs(&mut state.dirs, &path);
         state.clock += 1;
         let stamp = state.clock;
-        state.files.insert(path, (contents.as_bytes().to_vec(), stamp));
+        state
+            .files
+            .insert(path, (contents.as_bytes().to_vec(), stamp));
     }
 
     /// Test helper: create an (empty) directory.
@@ -109,7 +111,11 @@ impl Vfs for InMemoryVfs {
                 let name = file.rsplit('/').next().unwrap_or(file).to_string();
                 names.insert(
                     name.clone(),
-                    DirEntry { name, is_dir: false, is_file: true },
+                    DirEntry {
+                        name,
+                        is_dir: false,
+                        is_file: true,
+                    },
                 );
             }
         }
@@ -118,7 +124,11 @@ impl Vfs for InMemoryVfs {
                 let name = item.rsplit('/').next().unwrap_or(item).to_string();
                 names.insert(
                     name.clone(),
-                    DirEntry { name, is_dir: true, is_file: false },
+                    DirEntry {
+                        name,
+                        is_dir: true,
+                        is_file: false,
+                    },
                 );
             }
         }
@@ -186,6 +196,10 @@ impl Vfs for InMemoryVfs {
     async fn remove_file(&self, path: &str) -> VfsResult<()> {
         let path = normalize_relative(path)?;
         let mut state = self.state.lock().unwrap();
-        state.files.remove(&path).map(|_| ()).ok_or(VfsError::NotFound)
+        state
+            .files
+            .remove(&path)
+            .map(|_| ())
+            .ok_or(VfsError::NotFound)
     }
 }

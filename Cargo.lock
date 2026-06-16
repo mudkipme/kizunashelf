@@ -2153,6 +2153,7 @@ dependencies = [
 name = "kizunashelf-ffi"
 version = "0.3.0"
 dependencies = [
+ "async-trait",
  "axum",
  "futures",
  "kizunashelf",

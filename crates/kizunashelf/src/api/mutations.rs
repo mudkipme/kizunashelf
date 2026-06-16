@@ -89,9 +89,9 @@ pub(crate) async fn update_entity(
     let raw = serialize_markdown_document(&document.frontmatter, &document.body);
     write_entity_raw(vfs.as_ref(), &target_rel, &raw).await?;
     if target_rel != source_rel {
-        vfs.remove_file(&source_rel)
-            .await
-            .map_err(|error| anyhow::anyhow!("failed to remove old entity {source_rel}: {error}"))?;
+        vfs.remove_file(&source_rel).await.map_err(|error| {
+            anyhow::anyhow!("failed to remove old entity {source_rel}: {error}")
+        })?;
     }
     state.invalidate_cache().await;
     let reloaded = get_library(&state).await?;
@@ -340,7 +340,11 @@ fn is_forbidden_obsidian_filename_char(character: char) -> bool {
 }
 
 /// Vault-relative path for a new entity file under its type directory.
-fn entity_create_path(taxonomy_root: &str, type_config: &EntityTypeConfig, basename: &str) -> String {
+fn entity_create_path(
+    taxonomy_root: &str,
+    type_config: &EntityTypeConfig,
+    basename: &str,
+) -> String {
     format!(
         "{}/{}/{basename}.md",
         taxonomy_root.trim_end_matches('/'),
@@ -352,9 +356,9 @@ fn entity_create_path(taxonomy_root: &str, type_config: &EntityTypeConfig, basen
 /// directories. Containment is enforced by the VFS's path normalization.
 pub(super) async fn write_entity_raw(vfs: &dyn Vfs, relative: &str, raw: &str) -> Result<()> {
     if let Some(parent) = parent_dir(relative) {
-        vfs.create_dir_all(parent)
-            .await
-            .map_err(|error| anyhow::anyhow!("failed to create entity directory {parent}: {error}"))?;
+        vfs.create_dir_all(parent).await.map_err(|error| {
+            anyhow::anyhow!("failed to create entity directory {parent}: {error}")
+        })?;
     }
     vfs.write(relative, raw.as_bytes())
         .await

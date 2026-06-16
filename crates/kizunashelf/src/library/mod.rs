@@ -11,12 +11,12 @@ use crate::types::{
     AppConfig, DateRole, Entity, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig, Library,
     LibraryDiagnostic, Relation, VaultConfig,
 };
+use crate::vfs::{NativeVfs, Vfs, VfsError};
 use anyhow::{Context, Result};
 use frontmatter::{
     date_values, default_title, external_refs, extract_summary, first_string, parse_markdown,
     title_languages,
 };
-use crate::vfs::{NativeVfs, Vfs, VfsError};
 use relations::build_relations;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
@@ -56,6 +56,22 @@ pub async fn load_vault_config(config_path: impl AsRef<Path>) -> Result<VaultCon
         .await
         .with_context(|| format!("failed to read vault config {}", path.display()))?;
     serde_yaml::from_str(&raw).with_context(|| format!("invalid vault config {}", path.display()))
+}
+
+/// Reads the vault config from inside the vault (`.kizunashelf/config.yaml`)
+/// through the VFS. Works for both `NativeVfs` (desktop) and the injected iOS
+/// VFS, so library loading never needs an absolute vault-config path.
+pub async fn load_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<VaultConfig> {
+    let raw = vfs
+        .read_to_string(VAULT_CONFIG_RELATIVE_PATH)
+        .await
+        .map_err(|error| match error {
+            VfsError::NotFound => anyhow::anyhow!(
+                "vault config not found at {VAULT_CONFIG_RELATIVE_PATH}; run onboarding to create one"
+            ),
+            other => anyhow::anyhow!("failed to read vault config: {other}"),
+        })?;
+    serde_yaml::from_str(&raw).context("invalid vault config")
 }
 
 async fn write_yaml(path: &Path, raw: String, label: &str) -> Result<()> {
@@ -213,18 +229,18 @@ async fn validate_library_roots(config: &KizunaConfig, vfs: &dyn Vfs) -> Result<
         anyhow::bail!("vault root is not a directory: {}", config.vault_root);
     }
 
-    let taxonomy_metadata = vfs
-        .metadata(&config.taxonomy_root)
-        .await
-        .map_err(|error| match error {
-            VfsError::NotFound => {
-                anyhow::anyhow!("failed to access taxonomy root {}", config.taxonomy_root)
-            }
-            other => anyhow::anyhow!(
-                "failed to access taxonomy root {}: {other}",
-                config.taxonomy_root
-            ),
-        })?;
+    let taxonomy_metadata =
+        vfs.metadata(&config.taxonomy_root)
+            .await
+            .map_err(|error| match error {
+                VfsError::NotFound => {
+                    anyhow::anyhow!("failed to access taxonomy root {}", config.taxonomy_root)
+                }
+                other => anyhow::anyhow!(
+                    "failed to access taxonomy root {}: {other}",
+                    config.taxonomy_root
+                ),
+            })?;
     if !taxonomy_metadata.is_dir {
         anyhow::bail!("taxonomy root is not a directory: {}", config.taxonomy_root);
     }

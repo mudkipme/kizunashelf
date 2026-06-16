@@ -315,7 +315,9 @@ pub(crate) async fn entity_dates(
         return Err(ApiError::not_found("Entity not found"));
     };
     let vfs = state.vault_vfs(&library.config.vault_root);
-    Ok(Json(build_entity_dates(&library, vfs.as_ref(), entity).await?))
+    Ok(Json(
+        build_entity_dates(&library, vfs.as_ref(), entity).await?,
+    ))
 }
 
 pub(crate) async fn entity_detail(

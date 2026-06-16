@@ -1,6 +1,6 @@
 use crate::contract::AssetDownloadJob;
-use crate::library::read_library_from_config;
-use crate::types::Library;
+use crate::library::{load_app_config, load_vault_config_via_vfs, read_library};
+use crate::types::{AppConfig, KizunaConfig, Library};
 use crate::vfs::{NativeVfs, Vfs};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -35,6 +35,12 @@ pub struct ApiOptions {
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub(crate) options: ApiOptions,
+    /// Injected vault filesystem (iOS). When `None`, a [`NativeVfs`] is built per
+    /// load from the configured vault root (desktop/web).
+    vault_fs: Option<Arc<dyn Vfs>>,
+    /// Inline app config (iOS). When `None`, the app config is read from
+    /// `options.config_path` (desktop/web).
+    app_config: Option<AppConfig>,
     cache: Arc<Mutex<Option<CachedLibrary>>>,
     reload: Arc<Mutex<()>>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
@@ -68,6 +74,16 @@ struct DiskCachedAccessToken {
 
 impl AppState {
     pub(crate) fn new(options: ApiOptions) -> Self {
+        Self::with_vault(options, None, None)
+    }
+
+    /// Builds state with an optional injected vault filesystem and inline app
+    /// config (the iOS path; see docs/ios-port-plan.md §5/§7).
+    pub(crate) fn with_vault(
+        options: ApiOptions,
+        vault_fs: Option<Arc<dyn Vfs>>,
+        app_config: Option<AppConfig>,
+    ) -> Self {
         let http_client = reqwest::Client::builder()
             .connect_timeout(Duration::from_secs(15))
             .user_agent(concat!("KizunaShelf/", env!("CARGO_PKG_VERSION")))
@@ -75,6 +91,8 @@ impl AppState {
             .unwrap_or_else(|_| reqwest::Client::new());
         Self {
             options,
+            vault_fs,
+            app_config,
             cache: Arc::new(Mutex::new(None)),
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
@@ -95,7 +113,10 @@ impl AppState {
     /// return a Swift-backed VFS (security-scoped bookmark + `NSFileCoordinator`).
     /// See docs/ios-port-plan.md §5.
     pub(crate) fn vault_vfs(&self, vault_root: &str) -> Arc<dyn Vfs> {
-        Arc::new(NativeVfs::new(vault_root))
+        match &self.vault_fs {
+            Some(vfs) => Arc::clone(vfs),
+            None => Arc::new(NativeVfs::new(vault_root)),
+        }
     }
 
     pub(crate) fn asset_jobs(&self) -> &Arc<Mutex<HashMap<String, AssetJobRecord>>> {
@@ -302,13 +323,32 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
         }
     }
 
-    let library = Arc::new(read_library_from_config(&state.options.config_path).await?);
+    let library = Arc::new(load_library(state).await?);
     let mut cache = state.cache.lock().await;
     *cache = Some(CachedLibrary {
         library: Arc::clone(&library),
         cached_at: Instant::now(),
     });
     Ok(library)
+}
+
+/// Loads the library from the current configuration. The app config comes from
+/// the inline value (iOS) or the config file (desktop/web); the vault config and
+/// all entities are read through the vault filesystem (a [`NativeVfs`] rooted at
+/// the vault root, or the injected iOS VFS).
+async fn load_library(state: &AppState) -> Result<Library> {
+    let app = match &state.app_config {
+        Some(app) => app.clone(),
+        None => load_app_config(&state.options.config_path).await?,
+    };
+    // Desktop derives the vault filesystem from the (absolute) vault root; iOS
+    // injects one and the root is just a display label.
+    if state.vault_fs.is_none() && app.vault_root.trim().is_empty() {
+        anyhow::bail!("config does not set a vault root; run onboarding to create one");
+    }
+    let vfs = state.vault_vfs(&app.vault_root);
+    let vault = load_vault_config_via_vfs(vfs.as_ref()).await?;
+    read_library(KizunaConfig::from_parts(app, vault), vfs).await
 }
 
 pub(crate) fn content_writes_enabled(state: &AppState, library: &Library) -> bool {

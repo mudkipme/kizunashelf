@@ -3,9 +3,13 @@
 //! and assert the response. Validates the bridge logic on the host before it is
 //! cross-compiled for Apple targets.
 
+use std::collections::HashMap;
 use std::fs;
+use std::sync::Mutex;
 
-use kizunashelf_ffi::{ApiOptions, KizunaEngine};
+use kizunashelf_ffi::{
+    ApiOptions, KizunaEngine, VaultFileSystem, VaultOptions, VfsDirEntry, VfsError, VfsMetadata,
+};
 use serde_json::Value;
 use tempfile::TempDir;
 
@@ -69,4 +73,174 @@ fn invalid_config_path_still_initializes() {
         content_writable: Some(true),
     });
     assert!(core.is_ok());
+}
+
+/// In-memory `VaultFileSystem` standing in for the Swift implementation, so the
+/// iOS engine path (`KizunaEngine::with_vault` → injected VFS → vault config +
+/// entities read through callbacks) can be exercised on the host.
+#[derive(Default)]
+struct FakeVault {
+    files: Mutex<HashMap<String, Vec<u8>>>,
+}
+
+impl FakeVault {
+    fn seed(&self, path: &str, contents: &str) {
+        self.files
+            .lock()
+            .unwrap()
+            .insert(path.to_string(), contents.as_bytes().to_vec());
+    }
+
+    fn is_dir(files: &HashMap<String, Vec<u8>>, path: &str) -> bool {
+        path.is_empty() || files.keys().any(|key| key.starts_with(&format!("{path}/")))
+    }
+}
+
+impl VaultFileSystem for FakeVault {
+    fn read(&self, path: String) -> Result<Vec<u8>, VfsError> {
+        self.files
+            .lock()
+            .unwrap()
+            .get(&path)
+            .cloned()
+            .ok_or(VfsError::NotFound)
+    }
+
+    fn write(&self, path: String, data: Vec<u8>) -> Result<(), VfsError> {
+        self.files.lock().unwrap().insert(path, data);
+        Ok(())
+    }
+
+    fn create_dir_all(&self, _path: String) -> Result<(), VfsError> {
+        Ok(())
+    }
+
+    fn read_dir(&self, path: String) -> Result<Vec<VfsDirEntry>, VfsError> {
+        let files = self.files.lock().unwrap();
+        if !Self::is_dir(&files, &path) {
+            return Err(VfsError::NotFound);
+        }
+        let prefix = if path.is_empty() {
+            String::new()
+        } else {
+            format!("{path}/")
+        };
+        let mut entries: HashMap<String, VfsDirEntry> = HashMap::new();
+        for key in files.keys() {
+            let Some(rest) = key.strip_prefix(&prefix) else {
+                continue;
+            };
+            if rest.is_empty() {
+                continue;
+            }
+            match rest.split_once('/') {
+                Some((dir, _)) => {
+                    entries.entry(dir.to_string()).or_insert(VfsDirEntry {
+                        name: dir.to_string(),
+                        is_dir: true,
+                        is_file: false,
+                    });
+                }
+                None => {
+                    entries.insert(
+                        rest.to_string(),
+                        VfsDirEntry {
+                            name: rest.to_string(),
+                            is_dir: false,
+                            is_file: true,
+                        },
+                    );
+                }
+            }
+        }
+        Ok(entries.into_values().collect())
+    }
+
+    fn metadata(&self, path: String) -> Result<VfsMetadata, VfsError> {
+        let files = self.files.lock().unwrap();
+        if let Some(bytes) = files.get(&path) {
+            return Ok(VfsMetadata {
+                is_dir: false,
+                is_file: true,
+                len: bytes.len() as u64,
+                modified_unix_nanos: 1,
+            });
+        }
+        if Self::is_dir(&files, &path) {
+            return Ok(VfsMetadata {
+                is_dir: true,
+                is_file: false,
+                len: 0,
+                modified_unix_nanos: 0,
+            });
+        }
+        Err(VfsError::NotFound)
+    }
+
+    fn rename(&self, from: String, to: String) -> Result<(), VfsError> {
+        let mut files = self.files.lock().unwrap();
+        let bytes = files.remove(&from).ok_or(VfsError::NotFound)?;
+        files.insert(to, bytes);
+        Ok(())
+    }
+
+    fn remove_file(&self, path: String) -> Result<(), VfsError> {
+        self.files
+            .lock()
+            .unwrap()
+            .remove(&path)
+            .map(|_| ())
+            .ok_or(VfsError::NotFound)
+    }
+}
+
+#[test]
+fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
+    let vault = FakeVault::default();
+    vault.seed(
+        ".kizunashelf/config.yaml",
+        "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
+    );
+    vault.seed(
+        "Taxonomy/Anime/Star Voyager.md",
+        "---\ntitle: Star Voyager\n---\n\nBody.\n",
+    );
+
+    let engine = KizunaEngine::with_vault(
+        VaultOptions {
+            vault_root_label: "My Vault".to_string(),
+            content_writable: false,
+            cache_ttl_ms: Some(0),
+            read_concurrency: None,
+        },
+        Box::new(vault),
+    )
+    .expect("engine initializes from the injected vault filesystem");
+
+    let health = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/health".to_string(),
+        None,
+    ))
+    .expect("health request succeeds");
+    assert_eq!(health.status, 200);
+    let body: Value = serde_json::from_str(&health.body).unwrap();
+    assert_eq!(body["ok"], true, "health: {body}");
+    assert_eq!(body["entityCount"], 1);
+
+    let entities = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/entities".to_string(),
+        None,
+    ))
+    .expect("entities request succeeds");
+    assert_eq!(entities.status, 200);
+    let body: Value = serde_json::from_str(&entities.body).unwrap();
+    let titles: Vec<&str> = body["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|item| item["title"].as_str())
+        .collect();
+    assert!(titles.contains(&"Star Voyager"), "entities: {body}");
 }

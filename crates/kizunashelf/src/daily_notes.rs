@@ -105,4 +105,3 @@ fn daily_note_date(path: &str, pattern: &Regex) -> Option<String> {
         .map(|capture| capture.as_str())?;
     parse_exact_date(Some(date))
 }
-

@@ -9,13 +9,19 @@
 //! layered on top in Swift by swift-openapi-generator, which drives this tunnel
 //! through a custom `ClientTransport`. See docs/ios-port-plan.md §4.
 
+mod vfs;
+
+pub use vfs::{FfiVfs, VaultFileSystem, VfsDirEntry, VfsError, VfsMetadata};
+
 use std::sync::Arc;
 use std::time::Duration;
 
 use axum::body::{self, Body};
 use axum::http::{header, Method, Request};
 use axum::Router;
-use kizunashelf::api::{router, ApiOptions as CoreApiOptions};
+use kizunashelf::api::{router, router_with_vault, ApiOptions as CoreApiOptions};
+use kizunashelf::types::AppConfig;
+use kizunashelf::vfs::Vfs;
 use std::path::PathBuf;
 use tokio::runtime::Runtime;
 use tower::ServiceExt;
@@ -31,6 +37,19 @@ pub struct ApiOptions {
     pub cache_ttl_ms: Option<u64>,
     pub settings_writable: Option<bool>,
     pub content_writable: Option<bool>,
+}
+
+/// Options for an iOS engine backed by a Swift [`VaultFileSystem`]. The vault is
+/// addressed by a security-scoped bookmark Swift owns, so `vault_root_label` is
+/// only a display string; there is no on-device config file.
+#[derive(uniffi::Record)]
+pub struct VaultOptions {
+    pub vault_root_label: String,
+    /// Whether content writes (create/update/delete, asset downloads) are
+    /// allowed. Phase 2 browsing uses `false`.
+    pub content_writable: bool,
+    pub cache_ttl_ms: Option<u64>,
+    pub read_concurrency: Option<u32>,
 }
 
 /// One response from the core: HTTP-like status, body, and content type.
@@ -76,6 +95,41 @@ impl KizunaEngine {
             settings_writable: options.settings_writable.unwrap_or(true),
             content_writable: options.content_writable.unwrap_or(true),
         });
+
+        Ok(Arc::new(Self { runtime, router }))
+    }
+
+    /// Builds an engine backed by a Swift [`VaultFileSystem`] — the iOS path. The
+    /// app config is supplied inline (no config file) and the vault config plus
+    /// all content are read through `vault`.
+    #[uniffi::constructor]
+    pub fn with_vault(
+        options: VaultOptions,
+        vault: Box<dyn VaultFileSystem>,
+    ) -> Result<Arc<Self>, KizunaError> {
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .map_err(|error| KizunaError::Init {
+                message: error.to_string(),
+            })?;
+
+        let vault_fs: Arc<dyn Vfs> = Arc::new(FfiVfs::new(vault));
+        let app_config = AppConfig {
+            vault_root: options.vault_root_label,
+            content_writable: Some(options.content_writable),
+            read_concurrency: options.read_concurrency,
+        };
+        let core_options = CoreApiOptions {
+            config_path: PathBuf::new(),
+            cache_ttl: Duration::from_millis(options.cache_ttl_ms.unwrap_or(10_000)),
+            web_dist_path: None,
+            // Settings endpoints write config files on disk; on iOS config is
+            // owned by Swift (@AppStorage), so they stay disabled for now.
+            settings_writable: false,
+            content_writable: options.content_writable,
+        };
+        let router = router_with_vault(core_options, vault_fs, app_config);
 
         Ok(Arc::new(Self { runtime, router }))
     }

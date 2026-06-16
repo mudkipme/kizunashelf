@@ -21,6 +21,8 @@ use crate::contract::{
     HomeResponse, PathSuggestionsResponse, RelationGroupsResponse, RelationListResponse,
     SettingsConfigResponse, StatsResponse,
 };
+use crate::types::AppConfig;
+use crate::vfs::Vfs;
 use aide::axum::routing::{get_with, post_with};
 use aide::axum::ApiRouter;
 use aide::openapi::{Info, OpenApi};
@@ -28,11 +30,31 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{Json, Router};
+use std::sync::Arc;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub fn router(options: ApiOptions) -> Router {
-    let web_dist_path = options.web_dist_path.clone();
-    let state = AppState::new(options);
+    build_router(AppState::new(options))
+}
+
+/// Builds the router with an injected vault filesystem and inline app config —
+/// the iOS entry point. The vault config and entities are read through `vault_fs`
+/// and the app config comes from `app_config` instead of a file on disk. See
+/// docs/ios-port-plan.md §4/§5.
+pub fn router_with_vault(
+    options: ApiOptions,
+    vault_fs: Arc<dyn Vfs>,
+    app_config: AppConfig,
+) -> Router {
+    build_router(AppState::with_vault(
+        options,
+        Some(vault_fs),
+        Some(app_config),
+    ))
+}
+
+fn build_router(state: AppState) -> Router {
+    let web_dist_path = state.options.web_dist_path.clone();
 
     let mut api = openapi_base();
     let app = api_router()
