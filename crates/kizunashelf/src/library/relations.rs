@@ -1,15 +1,16 @@
 use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_frontmatter};
 use crate::types::{Entity, FieldType, KizunaConfig, Relation, RelationDirection};
+use crate::vfs::Vfs;
 use anyhow::Result;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
-use tokio::fs;
 
 use super::frontmatter::{fence_regex, strip_wikilink, wikilink_regex};
 
 pub(super) async fn build_relations(
     config: &KizunaConfig,
     entities: &[Entity],
+    vfs: &dyn Vfs,
 ) -> Result<Vec<Relation>> {
     let mut by_basename: HashMap<String, Vec<&Entity>> = HashMap::new();
     for entity in entities {
@@ -67,7 +68,7 @@ pub(super) async fn build_relations(
         }
     }
 
-    relations.extend(daily_note_relations(config, entities).await?);
+    relations.extend(daily_note_relations(config, entities, vfs).await?);
 
     Ok(dedupe_relations(relations))
 }
@@ -99,13 +100,17 @@ fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<RelationFiel
     fields
 }
 
-async fn daily_note_relations(config: &KizunaConfig, entities: &[Entity]) -> Result<Vec<Relation>> {
+async fn daily_note_relations(
+    config: &KizunaConfig,
+    entities: &[Entity],
+    vfs: &dyn Vfs,
+) -> Result<Vec<Relation>> {
     let by_basename = normalized_entity_basename_index(entities);
     let mut relations = Vec::new();
 
-    for file in daily_note_files(config, None, None, false).await? {
+    for file in daily_note_files(config, vfs, None, None, false).await? {
         let source_id = format!("daily-note:{}:{}", file.source_label, file.relative_path);
-        let raw = fs::read_to_string(&file.absolute_path).await?;
+        let raw = vfs.read_to_string(&file.relative_path).await?;
         for target_title in daily_note_wikilinks(&raw) {
             let Some(target) = find_target_for_wikilink(&target_title, &by_basename) else {
                 continue;

@@ -16,11 +16,12 @@ use frontmatter::{
     date_values, default_title, external_refs, extract_summary, first_string, parse_markdown,
     title_languages,
 };
+use crate::vfs::{NativeVfs, Vfs, VfsError};
 use relations::build_relations;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
-use std::io::ErrorKind;
 use std::path::{Component, Path, PathBuf};
+use std::sync::Arc;
 use tokio::fs;
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
@@ -124,10 +125,10 @@ pub async fn ensure_config_directories(config: &KizunaConfig) -> Result<()> {
     Ok(())
 }
 
-pub async fn read_library(config: KizunaConfig) -> Result<Library> {
-    validate_library_roots(&config).await?;
-    let (mut entities, diagnostics) = read_entities(&config).await?;
-    let relations = build_relations(&config, &entities).await?;
+pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Library> {
+    validate_library_roots(&config, vfs.as_ref()).await?;
+    let (mut entities, diagnostics) = read_entities(&config, &vfs).await?;
+    let relations = build_relations(&config, &entities, vfs.as_ref()).await?;
     let relation_count_by_id = unique_relation_count_by_id(&relations);
 
     let summaries: Vec<EntitySummary> = entities
@@ -191,48 +192,42 @@ pub async fn read_library_from_config(app_config_path: impl AsRef<Path>) -> Resu
     let vault_path = vault_config_path(&app)
         .context("config does not set a vault root; run onboarding to create one")?;
     let vault = load_vault_config(&vault_path).await?;
-    read_library(KizunaConfig::from_parts(app, vault)).await
+    let config = KizunaConfig::from_parts(app, vault);
+    let vfs: Arc<dyn Vfs> = Arc::new(NativeVfs::new(&config.vault_root));
+    read_library(config, vfs).await
 }
 
-async fn validate_library_roots(config: &KizunaConfig) -> Result<()> {
+/// Validates that the vault root and taxonomy root exist and are directories.
+/// Containment of the configured (relative) sub-paths is guaranteed by
+/// [`validate_config_paths`] plus the VFS's path normalization, so no
+/// canonicalization is needed (and none is available on a non-local VFS).
+async fn validate_library_roots(config: &KizunaConfig, vfs: &dyn Vfs) -> Result<()> {
     validate_config_paths(config)?;
-    let vault_root = Path::new(&config.vault_root);
-    let vault_metadata = fs::metadata(vault_root)
-        .await
-        .with_context(|| format!("failed to access vault root {}", vault_root.display()))?;
-    if !vault_metadata.is_dir() {
-        anyhow::bail!("vault root is not a directory: {}", vault_root.display());
-    }
-    let canonical_vault_root = vault_root
-        .canonicalize()
-        .with_context(|| format!("failed to resolve vault root {}", vault_root.display()))?;
-
-    let taxonomy_root = vault_root.join(&config.taxonomy_root);
-    let taxonomy_metadata = fs::metadata(&taxonomy_root)
-        .await
-        .with_context(|| format!("failed to access taxonomy root {}", taxonomy_root.display()))?;
-    if !taxonomy_metadata.is_dir() {
-        anyhow::bail!(
-            "taxonomy root is not a directory: {}",
-            taxonomy_root.display()
-        );
-    }
-    ensure_path_inside_root(&canonical_vault_root, &taxonomy_root, "taxonomy root")?;
-    for type_config in &config.types {
-        let path = taxonomy_root.join(&type_config.path);
-        ensure_existing_path_inside_root(&canonical_vault_root, &path, "entity type directory")?;
-    }
-    if let Some(daily_notes) = &config.daily_notes {
-        for path in &daily_notes.paths {
-            let path = vault_root.join(path);
-            ensure_existing_path_inside_root(
-                &canonical_vault_root,
-                &path,
-                "daily notes directory",
-            )?;
+    let vault_metadata = vfs.metadata("").await.map_err(|error| match error {
+        VfsError::NotFound => {
+            anyhow::anyhow!("failed to access vault root {}", config.vault_root)
         }
+        other => anyhow::anyhow!("failed to access vault root {}: {other}", config.vault_root),
+    })?;
+    if !vault_metadata.is_dir {
+        anyhow::bail!("vault root is not a directory: {}", config.vault_root);
     }
 
+    let taxonomy_metadata = vfs
+        .metadata(&config.taxonomy_root)
+        .await
+        .map_err(|error| match error {
+            VfsError::NotFound => {
+                anyhow::anyhow!("failed to access taxonomy root {}", config.taxonomy_root)
+            }
+            other => anyhow::anyhow!(
+                "failed to access taxonomy root {}: {other}",
+                config.taxonomy_root
+            ),
+        })?;
+    if !taxonomy_metadata.is_dir {
+        anyhow::bail!("taxonomy root is not a directory: {}", config.taxonomy_root);
+    }
     Ok(())
 }
 
@@ -285,18 +280,14 @@ fn ensure_path_inside_root(root: &Path, path: &Path, label: &str) -> Result<()> 
     Ok(())
 }
 
-fn ensure_existing_path_inside_root(root: &Path, path: &Path, label: &str) -> Result<()> {
-    if !path.exists() {
-        return Ok(());
-    }
-    ensure_path_inside_root(root, path, label)
-}
-
-async fn read_entities(config: &KizunaConfig) -> Result<(Vec<Entity>, Vec<LibraryDiagnostic>)> {
+async fn read_entities(
+    config: &KizunaConfig,
+    vfs: &Arc<dyn Vfs>,
+) -> Result<(Vec<Entity>, Vec<LibraryDiagnostic>)> {
     let mut entities = Vec::new();
     let mut diagnostics = Vec::new();
     for type_config in &config.types {
-        let result = read_entities_for_type(config, type_config).await?;
+        let result = read_entities_for_type(config, type_config, vfs).await?;
         entities.extend(result.entities);
         diagnostics.extend(result.diagnostics);
     }
@@ -323,33 +314,31 @@ struct EntityReadResult {
 async fn read_entities_for_type(
     config: &KizunaConfig,
     type_config: &EntityTypeConfig,
+    vfs: &Arc<dyn Vfs>,
 ) -> Result<EntityReadBatch> {
-    let absolute_dir = Path::new(&config.vault_root)
-        .join(&config.taxonomy_root)
-        .join(&type_config.path);
-    let mut entries = match fs::read_dir(&absolute_dir).await {
+    let relative_dir = format!(
+        "{}/{}",
+        config.taxonomy_root.trim_end_matches('/'),
+        type_config.path
+    );
+    let entries = match vfs.read_dir(&relative_dir).await {
         Ok(entries) => entries,
-        Err(error) if error.kind() == ErrorKind::NotFound => {
+        Err(VfsError::NotFound) => {
             return Ok(EntityReadBatch {
                 entities: Vec::new(),
                 diagnostics: Vec::new(),
             });
         }
         Err(error) => {
-            return Err(error).with_context(|| {
-                format!(
-                    "failed to read taxonomy directory {}",
-                    absolute_dir.display()
-                )
-            });
+            return Err(anyhow::anyhow!(
+                "failed to read taxonomy directory {relative_dir}: {error}"
+            ));
         }
     };
     let mut file_names = Vec::new();
-    while let Some(entry) = entries.next_entry().await? {
-        let file_type = entry.file_type().await?;
-        let name = entry.file_name().to_string_lossy().to_string();
-        if file_type.is_file() && name.ends_with(".md") {
-            file_names.push(name);
+    for entry in entries {
+        if entry.is_file && entry.name.ends_with(".md") {
+            file_names.push(entry.name);
         }
     }
 
@@ -357,17 +346,17 @@ async fn read_entities_for_type(
     let semaphore = std::sync::Arc::new(Semaphore::new(concurrency));
     let mut tasks = JoinSet::new();
     for entry in file_names {
-        let absolute_path = absolute_dir.join(&entry);
+        let relative_path = format!("{relative_dir}/{entry}");
         let permit = semaphore
             .clone()
             .acquire_owned()
             .await
             .context("failed to acquire read concurrency permit")?;
-        let vault_root = config.vault_root.clone();
         let type_config = type_config.clone();
+        let vfs = Arc::clone(vfs);
         tasks.spawn(async move {
             let _permit = permit;
-            read_entity_file(vault_root, type_config, entry, absolute_path).await
+            read_entity_file(vfs, type_config, entry, relative_path).await
         });
     }
 
@@ -385,23 +374,24 @@ async fn read_entities_for_type(
 }
 
 async fn read_entity_file(
-    vault_root: String,
+    vfs: Arc<dyn Vfs>,
     type_config: EntityTypeConfig,
     entry: String,
-    absolute_path: PathBuf,
+    relative_path: String,
 ) -> Result<EntityReadResult> {
-    let raw = fs::read_to_string(&absolute_path)
+    let raw = vfs
+        .read_to_string(&relative_path)
         .await
-        .with_context(|| format!("failed to read entity {}", absolute_path.display()))?;
-    let metadata = fs::metadata(&absolute_path)
+        .map_err(|error| anyhow::anyhow!("failed to read entity {relative_path}: {error}"))?;
+    let metadata = vfs
+        .metadata(&relative_path)
         .await
-        .with_context(|| format!("failed to stat entity {}", absolute_path.display()))?;
-    let revision = file_revision(&raw, &metadata);
+        .map_err(|error| anyhow::anyhow!("failed to stat entity {relative_path}: {error}"))?;
+    let revision = file_revision(&raw, metadata.len, metadata.modified_unix_nanos);
     let parsed = parse_markdown(&raw);
     let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
     let titles = title_languages(&parsed.frontmatter, &note_basename, &type_config);
     let title = default_title(&parsed.frontmatter, &titles, &note_basename, &type_config);
-    let relative_path = relative_path(Path::new(&vault_root), &absolute_path);
     let entity_key = entity_key(&parsed.frontmatter, &note_basename, &type_config);
     let diagnostics = parsed
         .diagnostics
@@ -447,16 +437,10 @@ async fn read_entity_file(
     })
 }
 
-fn file_revision(raw: &str, metadata: &std::fs::Metadata) -> String {
-    let modified = metadata
-        .modified()
-        .ok()
-        .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|duration| duration.as_nanos())
-        .unwrap_or_default();
+fn file_revision(raw: &str, len: u64, modified_unix_nanos: u128) -> String {
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     raw.hash(&mut hasher);
-    format!("{:x}-{}-{}", hasher.finish(), metadata.len(), modified)
+    format!("{:x}-{}-{}", hasher.finish(), len, modified_unix_nanos)
 }
 
 fn entity_key(
@@ -519,17 +503,16 @@ fn effective_read_concurrency(config: &KizunaConfig) -> usize {
         .clamp(1, MAX_READ_CONCURRENCY)
 }
 
-fn relative_path(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/")
-}
-
 #[cfg(test)]
 mod tests {
     use super::{compare_string, read_library};
     use crate::types::{EntityTypeConfig, FieldConfig, FieldType, FilenameConfig, KizunaConfig};
+    use crate::vfs::{InMemoryVfs, NativeVfs, Vfs};
+    use std::sync::Arc;
+
+    fn native_vfs(config: &KizunaConfig) -> Arc<dyn Vfs> {
+        Arc::new(NativeVfs::new(&config.vault_root))
+    }
 
     #[test]
     fn compare_string_supports_non_english_collation_without_system_icu_data() {
@@ -573,8 +556,9 @@ mod tests {
     async fn read_library_errors_when_vault_root_is_missing() {
         let temp = tempfile::tempdir().unwrap();
         let config = test_config(temp.path().join("missing").to_string_lossy().as_ref());
+        let vfs = native_vfs(&config);
 
-        let error = read_library(config).await.unwrap_err().to_string();
+        let error = read_library(config, vfs).await.unwrap_err().to_string();
 
         assert!(error.contains("failed to access vault root"));
     }
@@ -583,8 +567,9 @@ mod tests {
     async fn read_library_errors_when_taxonomy_root_is_missing() {
         let temp = tempfile::tempdir().unwrap();
         let config = test_config(temp.path().to_string_lossy().as_ref());
+        let vfs = native_vfs(&config);
 
-        let error = read_library(config).await.unwrap_err().to_string();
+        let error = read_library(config, vfs).await.unwrap_err().to_string();
 
         assert!(error.contains("failed to access taxonomy root"));
     }
@@ -621,7 +606,8 @@ mod tests {
             },
         );
 
-        let library = read_library(config).await.unwrap();
+        let vfs = native_vfs(&config);
+        let library = read_library(config, vfs).await.unwrap();
 
         assert!(library
             .summaries
@@ -633,6 +619,26 @@ mod tests {
         assert!(library.diagnostics[0]
             .message
             .contains("invalid frontmatter YAML"));
+    }
+
+    #[tokio::test]
+    async fn read_library_reads_entities_from_an_in_memory_vfs() {
+        let config = test_config("/virtual-vault");
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file(
+            "Taxonomy/Anime/Star Voyager.md",
+            "---\ntitle: Star Voyager\nstatus: Watching\n---\n\nBody.\n",
+        );
+
+        let library = read_library(config, vfs).await.unwrap();
+
+        assert_eq!(library.summaries.len(), 1);
+        let summary = &library.summaries[0];
+        assert_eq!(summary.title, "Star Voyager");
+        assert_eq!(summary.path, "Taxonomy/Anime/Star Voyager.md");
+        // Revision is derived from content + metadata, both supplied by the VFS.
+        assert!(!library.entities[0].revision.is_empty());
     }
 
     fn test_config(vault_root: &str) -> KizunaConfig {

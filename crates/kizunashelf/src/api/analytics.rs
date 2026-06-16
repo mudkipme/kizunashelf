@@ -13,6 +13,7 @@ use crate::relations::{
     relation_fields, relation_type_pairs, summary_by_id, Count,
 };
 use crate::types::{DateRole, EntitySummary, FieldType, Library};
+use crate::vfs::Vfs;
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -113,7 +114,8 @@ pub(crate) async fn cleanup_queues(
     State(state): State<AppState>,
 ) -> ApiResult<CleanupQueuesResponse> {
     let library = get_library(&state).await?;
-    let (broken_assets, broken_total) = broken_local_assets(&library).await;
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let (broken_assets, broken_total) = broken_local_assets(&library, vfs.as_ref()).await;
     Ok(Json(build_cleanup_queues(
         &library,
         broken_assets,
@@ -123,8 +125,7 @@ pub(crate) async fn cleanup_queues(
 
 /// Entities whose local cover path points at a file that no longer exists, plus
 /// the number of entities that reference a local cover (the denominator).
-async fn broken_local_assets(library: &Library) -> (Vec<EntitySummary>, usize) {
-    let vault_root = std::path::Path::new(&library.config.vault_root);
+async fn broken_local_assets(library: &Library, vfs: &dyn Vfs) -> (Vec<EntitySummary>, usize) {
     let mut broken = Vec::new();
     let mut local_total = 0;
     for summary in &library.summaries {
@@ -136,10 +137,7 @@ async fn broken_local_assets(library: &Library) -> (Vec<EntitySummary>, usize) {
             continue;
         }
         local_total += 1;
-        if !tokio::fs::try_exists(vault_root.join(image))
-            .await
-            .unwrap_or(false)
-        {
+        if !vfs.exists(image).await.unwrap_or(false) {
             broken.push(summary.clone());
         }
     }

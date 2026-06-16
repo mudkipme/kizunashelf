@@ -6,3 +6,4 @@ pub mod dates;
 pub mod library;
 pub mod relations;
 pub mod types;
+pub mod vfs;

@@ -1,7 +1,5 @@
 use super::error::{ApiError, ApiResult};
-use super::mutations::{
-    ensure_path_inside_root, entity_absolute_path, write_entity_raw, EntityPath,
-};
+use super::mutations::{parent_dir, write_entity_raw, EntityPath};
 use super::state::{content_writes_enabled, get_library, AppState, AssetJobRecord};
 use crate::contract::{
     AssetDownloadItemResult, AssetDownloadJob, AssetDownloadJobError, AssetDownloadJobListResponse,
@@ -10,7 +8,7 @@ use crate::contract::{
 };
 use crate::library::{serialize_markdown_document, split_markdown_document};
 use crate::types::{Entity, EntityTypeConfig, FieldType, Library};
-use anyhow::Context;
+use crate::vfs::{normalize_relative, Vfs};
 use axum::body::Body;
 use axum::extract::{Path as AxumPath, State};
 use axum::http::header;
@@ -23,11 +21,10 @@ use serde_json::{Map, Value};
 use std::collections::HashSet;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::path::{Component, Path};
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::fs;
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 
@@ -70,9 +67,10 @@ pub(crate) async fn download_entity_assets(
     };
 
     let all_local = all_local_asset_paths(&library);
+    let vfs = state.vault_vfs(&library.config.vault_root);
     let results = download_entity_core(
         state.http_client(),
-        &library.config.vault_root,
+        vfs.as_ref(),
         library.config.resolved_asset_root(),
         entity,
         type_config,
@@ -103,7 +101,7 @@ pub(crate) async fn download_entity_assets(
 /// not touch the library cache; the caller decides when to invalidate.
 pub(super) async fn download_entity_core(
     client: &reqwest::Client,
-    vault_root: &str,
+    vfs: &dyn Vfs,
     asset_root: &str,
     entity: &Entity,
     type_config: &EntityTypeConfig,
@@ -117,15 +115,16 @@ pub(super) async fn download_entity_core(
     let asset_dir = entity_asset_dir(asset_root, &entity.summary.path);
     let owned = entity_local_asset_paths(&entity.frontmatter, type_config);
 
-    let source_path = entity_absolute_path(vault_root, &entity.summary.path).await?;
-    let raw = fs::read_to_string(&source_path)
+    let source_rel = entity.summary.path.clone();
+    let raw = vfs
+        .read_to_string(&source_rel)
         .await
-        .with_context(|| format!("failed to read entity {}", source_path.display()))?;
+        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
     let mut document = split_markdown_document(&raw);
 
     let mut ctx = DownloadContext {
         client,
-        vault_root,
+        vfs,
         asset_dir: &asset_dir,
         referenced: all_local,
         owned: &owned,
@@ -142,7 +141,7 @@ pub(super) async fn download_entity_core(
 
     if changed {
         let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-        write_entity_raw(vault_root, &source_path, &new_raw).await?;
+        write_entity_raw(vfs, &source_rel, &new_raw).await?;
     }
 
     Ok(results)
@@ -150,7 +149,7 @@ pub(super) async fn download_entity_core(
 
 struct DownloadContext<'a> {
     client: &'a reqwest::Client,
-    vault_root: &'a str,
+    vfs: &'a dyn Vfs,
     asset_dir: &'a str,
     /// All local asset paths across the library (collision detection).
     referenced: &'a HashSet<String>,
@@ -283,7 +282,7 @@ async fn download_to_asset(
         conflict_resolved = true;
     }
 
-    write_asset_file(ctx.vault_root, &relative, &asset.bytes).await?;
+    write_asset_file(ctx.vfs, &relative, &asset.bytes).await?;
     Ok(AssetOutcome {
         path: relative,
         conflict_resolved,
@@ -350,29 +349,23 @@ async fn download_one(
     })
 }
 
-/// Writes bytes atomically (`.tmp` then rename) under the vault root.
+/// Writes bytes atomically (`.tmp` then rename) under the vault. Containment is
+/// enforced by the VFS's path normalization.
 async fn write_asset_file(
-    vault_root: &str,
+    vfs: &dyn Vfs,
     relative: &str,
     bytes: &[u8],
 ) -> Result<(), DownloadError> {
-    let root = Path::new(vault_root)
-        .canonicalize()
-        .map_err(|error| DownloadError::Io(error.to_string()))?;
-    let target = root.join(relative);
-    ensure_path_inside_root(&root, &target)
-        .await
-        .map_err(|error| DownloadError::Io(error.to_string()))?;
-    if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent)
+    if let Some(parent) = parent_dir(relative) {
+        vfs.create_dir_all(parent)
             .await
             .map_err(|error| DownloadError::Io(error.to_string()))?;
     }
-    let tmp = target.with_extension("tmp");
-    fs::write(&tmp, bytes)
+    let tmp = format!("{relative}.tmp");
+    vfs.write(&tmp, bytes)
         .await
         .map_err(|error| DownloadError::Io(error.to_string()))?;
-    fs::rename(&tmp, &target)
+    vfs.rename(&tmp, relative)
         .await
         .map_err(|error| DownloadError::Io(error.to_string()))?;
     Ok(())
@@ -528,7 +521,7 @@ async fn run_asset_job(
     };
 
     let all_local = Arc::new(all_local_asset_paths(&library));
-    let vault_root = Arc::new(library.config.vault_root.clone());
+    let vfs = state.vault_vfs(&library.config.vault_root);
     let asset_root = Arc::new(library.config.resolved_asset_root().to_string());
     let semaphore = Arc::new(Semaphore::new(ASSET_JOB_CONCURRENCY));
     let mut tasks = JoinSet::new();
@@ -540,7 +533,7 @@ async fn run_asset_job(
         let task_state = state.clone();
         let library = Arc::clone(&library);
         let all_local = Arc::clone(&all_local);
-        let vault_root = Arc::clone(&vault_root);
+        let vfs = Arc::clone(&vfs);
         let asset_root = Arc::clone(&asset_root);
         let semaphore = Arc::clone(&semaphore);
         let job_id = job_id.clone();
@@ -572,7 +565,7 @@ async fn run_asset_job(
 
             let outcome = download_entity_core(
                 task_state.http_client(),
-                vault_root.as_str(),
+                vfs.as_ref(),
                 asset_root.as_str(),
                 &entity,
                 &type_config,
@@ -650,34 +643,23 @@ pub(crate) async fn serve_asset(
     let library = get_library(&state).await?;
     // The wildcard path is vault-relative and includes the asset-root prefix
     // (e.g. `Assets/Taxonomy/Anime/Foo/cover_url.jpg`), matching what is written
-    // into frontmatter. Resolve it from the vault root and constrain it to the
-    // asset directory.
-    if Path::new(&path)
-        .components()
-        .any(|component| matches!(component, Component::ParentDir))
-    {
-        return Err(ApiError::forbidden("Asset path is outside the asset root"));
-    }
-    let canonical_vault = Path::new(&library.config.vault_root)
-        .canonicalize()
-        .map_err(|_| ApiError::not_found("Asset not found"))?;
-    let canonical_assets = canonical_vault
-        .join(library.config.resolved_asset_root())
-        .canonicalize()
-        .map_err(|_| ApiError::not_found("Asset not found"))?;
-
-    let canonical = canonical_vault
-        .join(&path)
-        .canonicalize()
-        .map_err(|_| ApiError::not_found("Asset not found"))?;
-    if !canonical.starts_with(&canonical_assets) {
+    // into frontmatter. Normalize it (rejecting traversal) and constrain it to
+    // the asset directory before reading through the VFS.
+    let normalized = normalize_relative(&path)
+        .map_err(|_| ApiError::forbidden("Asset path is outside the asset root"))?;
+    let asset_root = library.config.resolved_asset_root().trim_end_matches('/');
+    let inside_assets =
+        normalized == asset_root || normalized.starts_with(&format!("{asset_root}/"));
+    if !inside_assets {
         return Err(ApiError::forbidden("Asset path is outside the asset root"));
     }
 
-    let bytes = fs::read(&canonical)
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let bytes = vfs
+        .read(&normalized)
         .await
         .map_err(|_| ApiError::not_found("Asset not found"))?;
-    let content_type = canonical
+    let content_type = Path::new(&normalized)
         .extension()
         .and_then(|ext| ext.to_str())
         .map(|ext| content_type_for_extension(&ext.to_lowercase()))

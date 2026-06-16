@@ -207,9 +207,11 @@ pub(crate) async fn calendar(
         Some("daily-note") => CalendarSource::DailyNote,
         _ => CalendarSource::All,
     };
+    let vfs = state.vault_vfs(&library.config.vault_root);
     Ok(Json(
         build_calendar(
             &library,
+            vfs.as_ref(),
             CalendarBuildOptions {
                 year,
                 month,

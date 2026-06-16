@@ -7,14 +7,14 @@ use crate::contract::{
 };
 use crate::library::{serialize_markdown_document, split_markdown_document};
 use crate::types::EntityTypeConfig;
-use anyhow::{Context, Result};
+use crate::vfs::Vfs;
+use anyhow::Result;
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use std::path::{Component, Path, PathBuf};
-use tokio::fs;
+use std::path::Path;
 
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct EntityPath {
@@ -41,11 +41,12 @@ pub(crate) async fn update_entity(
         return Err(ApiError::conflict("Entity changed since it was loaded"));
     }
 
-    let source_path =
-        entity_absolute_path(&library.config.vault_root, &entity.summary.path).await?;
-    let raw = fs::read_to_string(&source_path)
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let source_rel = entity.summary.path.clone();
+    let raw = vfs
+        .read_to_string(&source_rel)
         .await
-        .with_context(|| format!("failed to read entity {}", source_path.display()))?;
+        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
     let mut document = split_markdown_document(&raw);
     if let Some(frontmatter) = request.frontmatter {
         apply_frontmatter_patch(&mut document.frontmatter, frontmatter);
@@ -53,55 +54,51 @@ pub(crate) async fn update_entity(
     if let Some(body) = request.body {
         document.body = body;
     }
-    let target_path = if let Some(rename_to) = &request.rename_to {
+    let target_rel = if let Some(rename_to) = &request.rename_to {
         let basename = sanitize_basename(rename_to)
             .map_err(|error| ApiError::bad_request(&error.to_string()))?;
-        let parent = source_path
-            .parent()
-            .ok_or_else(|| anyhow::anyhow!("entity path has no parent"))?;
-        let target = parent.join(format!("{basename}.md"));
-        if target != source_path
-            && fs::try_exists(&target)
+        let target = match source_rel.rsplit_once('/') {
+            Some((dir, _)) => format!("{dir}/{basename}.md"),
+            None => format!("{basename}.md"),
+        };
+        if target != source_rel
+            && vfs
+                .exists(&target)
                 .await
-                .context("failed to check target entity path")?
+                .map_err(|error| anyhow::anyhow!("failed to check target entity path: {error}"))?
         {
             return Err(ApiError::conflict("Target entity file already exists"));
         }
         // Move the entity's asset directory alongside the rename and rewrite any
         // frontmatter image paths that lived inside it (best-effort, non-fatal).
-        if target != source_path {
-            let new_relative = match entity.summary.path.rsplit_once('/') {
-                Some((dir, _)) => format!("{dir}/{basename}.md"),
-                None => format!("{basename}.md"),
-            };
+        if target != source_rel {
             move_entity_assets(
-                &library.config.vault_root,
+                vfs.as_ref(),
                 library.config.resolved_asset_root(),
-                &entity.summary.path,
-                &new_relative,
+                &source_rel,
+                &target,
                 &mut document.frontmatter,
             )
             .await;
         }
         target
     } else {
-        source_path.clone()
+        source_rel.clone()
     };
 
     let raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    write_entity_raw(&library.config.vault_root, &target_path, &raw).await?;
-    if target_path != source_path {
-        fs::remove_file(&source_path)
+    write_entity_raw(vfs.as_ref(), &target_rel, &raw).await?;
+    if target_rel != source_rel {
+        vfs.remove_file(&source_rel)
             .await
-            .with_context(|| format!("failed to remove old entity {}", source_path.display()))?;
+            .map_err(|error| anyhow::anyhow!("failed to remove old entity {source_rel}: {error}"))?;
     }
     state.invalidate_cache().await;
     let reloaded = get_library(&state).await?;
-    let relative_target = relative_path(Path::new(&reloaded.config.vault_root), &target_path);
     let entity = reloaded
         .entities
         .iter()
-        .find(|item| item.summary.path == relative_target)
+        .find(|item| item.summary.path == target_rel)
         .cloned()
         .or_else(|| {
             reloaded
@@ -132,29 +129,24 @@ pub(crate) async fn create_entity(
     };
     let basename = sanitize_basename(&request.basename)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
-    let path = entity_create_path(
-        &library.config.vault_root,
-        &library.config.taxonomy_root,
-        type_config,
-        &basename,
-    )
-    .await?;
-    if fs::try_exists(&path)
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let path = entity_create_path(&library.config.taxonomy_root, type_config, &basename);
+    if vfs
+        .exists(&path)
         .await
-        .context("failed to check entity path")?
+        .map_err(|error| anyhow::anyhow!("failed to check entity path: {error}"))?
     {
         return Err(ApiError::conflict("Entity file already exists"));
     }
     let raw =
         serialize_markdown_document(&request.frontmatter, request.body.as_deref().unwrap_or(""));
-    write_entity_raw(&library.config.vault_root, &path, &raw).await?;
+    write_entity_raw(vfs.as_ref(), &path, &raw).await?;
     state.invalidate_cache().await;
     let reloaded = get_library(&state).await?;
-    let relative = relative_path(Path::new(&reloaded.config.vault_root), &path);
     let entity = reloaded
         .entities
         .iter()
-        .find(|item| item.summary.path == relative)
+        .find(|item| item.summary.path == path)
         .cloned()
         .ok_or_else(|| ApiError::not_found("Created entity was not indexed"))?;
     Ok(Json(EntityMutationResponse { entity }))
@@ -179,15 +171,14 @@ pub(crate) async fn delete_entity(
     if request.revision != entity.revision {
         return Err(ApiError::conflict("Entity changed since it was loaded"));
     }
-    let source_path =
-        entity_absolute_path(&library.config.vault_root, &entity.summary.path).await?;
-    let trash_path = move_to_trash(&library.config.vault_root, &source_path).await?;
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let trash_path = move_to_trash(vfs.as_ref(), &entity.summary.path).await?;
     let asset_dir = entity_asset_dir(library.config.resolved_asset_root(), &entity.summary.path);
-    trash_entity_assets(&library.config.vault_root, &asset_dir).await;
+    trash_entity_assets(vfs.as_ref(), &asset_dir).await;
     state.invalidate_cache().await;
     Ok(Json(DeleteEntityResponse {
         deleted_id: path.id,
-        backup_path: relative_path(Path::new(&library.config.vault_root), &trash_path),
+        backup_path: trash_path,
     }))
 }
 
@@ -196,7 +187,7 @@ pub(crate) async fn delete_entity(
 /// absent or the destination already exists, nothing is moved and the existing
 /// (still valid) paths are left in place.
 async fn move_entity_assets(
-    vault_root: &str,
+    vfs: &dyn Vfs,
     asset_root: &str,
     old_relative: &str,
     new_relative: &str,
@@ -207,21 +198,18 @@ async fn move_entity_assets(
     if old_dir == new_dir {
         return;
     }
-    let root = Path::new(vault_root);
-    let old_abs = root.join(&old_dir);
-    let new_abs = root.join(&new_dir);
-    if !fs::try_exists(&old_abs).await.unwrap_or(false) {
+    if !vfs.exists(&old_dir).await.unwrap_or(false) {
         return;
     }
-    if fs::try_exists(&new_abs).await.unwrap_or(false) {
+    if vfs.exists(&new_dir).await.unwrap_or(false) {
         return;
     }
-    if let Some(parent) = new_abs.parent() {
-        if fs::create_dir_all(parent).await.is_err() {
+    if let Some(parent) = parent_dir(&new_dir) {
+        if vfs.create_dir_all(parent).await.is_err() {
             return;
         }
     }
-    if fs::rename(&old_abs, &new_abs).await.is_err() {
+    if vfs.rename(&old_dir, &new_dir).await.is_err() {
         return;
     }
     rewrite_asset_prefix(frontmatter, &old_dir, &new_dir);
@@ -247,31 +235,29 @@ fn rewrite_asset_prefix(frontmatter: &mut Map<String, Value>, old_dir: &str, new
 }
 
 /// Moves an entity's Markdown file into the vault's `.trash` folder, mirroring
-/// Obsidian's local trash. Returns the absolute trash path. Disambiguates name
-/// collisions by appending ` 1`, ` 2`, … before the extension.
-async fn move_to_trash(vault_root: &str, source_path: &Path) -> Result<PathBuf> {
-    let root = Path::new(vault_root).canonicalize()?;
-    ensure_path_inside_root(&root, source_path).await?;
-    let file_name = source_path
-        .file_name()
-        .and_then(|name| name.to_str())
+/// Obsidian's local trash. Returns the vault-relative trash path. Disambiguates
+/// name collisions by appending ` 1`, ` 2`, … before the extension.
+async fn move_to_trash(vfs: &dyn Vfs, source_relative: &str) -> Result<String> {
+    let file_name = source_relative
+        .rsplit('/')
+        .next()
+        .filter(|name| !name.is_empty())
         .ok_or_else(|| anyhow::anyhow!("entity path has no file name"))?;
-    let trash_dir = root.join(".trash");
-    fs::create_dir_all(&trash_dir)
+    vfs.create_dir_all(".trash")
         .await
-        .with_context(|| format!("failed to create trash directory {}", trash_dir.display()))?;
-    let dest = unique_path(&trash_dir, file_name).await;
-    fs::rename(source_path, &dest)
+        .map_err(|error| anyhow::anyhow!("failed to create trash directory: {error}"))?;
+    let dest = unique_path(vfs, ".trash", file_name).await;
+    vfs.rename(source_relative, &dest)
         .await
-        .with_context(|| format!("failed to move entity to trash {}", dest.display()))?;
+        .map_err(|error| anyhow::anyhow!("failed to move entity to trash {dest}: {error}"))?;
     Ok(dest)
 }
 
-/// Returns a path for `file_name` inside `dir`, appending ` 1`, ` 2`, … before
-/// the extension if a file with that name already exists.
-async fn unique_path(dir: &Path, file_name: &str) -> PathBuf {
-    let candidate = dir.join(file_name);
-    if !fs::try_exists(&candidate).await.unwrap_or(false) {
+/// Returns a vault-relative path for `file_name` inside `dir`, appending ` 1`,
+/// ` 2`, … before the extension if a file with that name already exists.
+async fn unique_path(vfs: &dyn Vfs, dir: &str, file_name: &str) -> String {
+    let candidate = format!("{dir}/{file_name}");
+    if !vfs.exists(&candidate).await.unwrap_or(false) {
         return candidate;
     }
     let name = Path::new(file_name);
@@ -286,8 +272,8 @@ async fn unique_path(dir: &Path, file_name: &str) -> PathBuf {
             Some(extension) => format!("{stem} {counter}.{extension}"),
             None => format!("{stem} {counter}"),
         };
-        let candidate = dir.join(candidate_name);
-        if !fs::try_exists(&candidate).await.unwrap_or(false) {
+        let candidate = format!("{dir}/{candidate_name}");
+        if !vfs.exists(&candidate).await.unwrap_or(false) {
             return candidate;
         }
         counter += 1;
@@ -296,26 +282,21 @@ async fn unique_path(dir: &Path, file_name: &str) -> PathBuf {
 
 /// Moves an entity's asset directory into the vault's `.trash` folder, mirroring
 /// its vault-relative path. Best-effort and non-fatal.
-async fn trash_entity_assets(vault_root: &str, asset_dir_relative: &str) {
-    let Ok(root) = Path::new(vault_root).canonicalize() else {
-        return;
-    };
-    let source = root.join(asset_dir_relative);
-    if !fs::try_exists(&source).await.unwrap_or(false) {
+async fn trash_entity_assets(vfs: &dyn Vfs, asset_dir_relative: &str) {
+    if !vfs.exists(asset_dir_relative).await.unwrap_or(false) {
         return;
     }
-    let trash_dir = root.join(".trash");
-    let mut dest = trash_dir.join(asset_dir_relative);
-    if fs::try_exists(&dest).await.unwrap_or(false) {
+    let mut dest = format!(".trash/{asset_dir_relative}");
+    if vfs.exists(&dest).await.unwrap_or(false) {
         let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%S%.3fZ").to_string();
-        dest = trash_dir.join(format!("{asset_dir_relative}-{timestamp}"));
+        dest = format!(".trash/{asset_dir_relative}-{timestamp}");
     }
-    if let Some(parent) = dest.parent() {
-        if fs::create_dir_all(parent).await.is_err() {
+    if let Some(parent) = parent_dir(&dest) {
+        if vfs.create_dir_all(parent).await.is_err() {
             return;
         }
     }
-    let _ = fs::rename(&source, &dest).await;
+    let _ = vfs.rename(asset_dir_relative, &dest).await;
 }
 
 fn apply_frontmatter_patch(target: &mut Map<String, Value>, patch: Map<String, Value>) {
@@ -358,72 +339,30 @@ fn is_forbidden_obsidian_filename_char(character: char) -> bool {
     ) || character.is_control()
 }
 
-pub(super) async fn entity_absolute_path(vault_root: &str, relative: &str) -> Result<PathBuf> {
-    let root = Path::new(vault_root).canonicalize()?;
-    let path = root.join(relative);
-    ensure_path_inside_root(&root, &path).await?;
-    Ok(path)
+/// Vault-relative path for a new entity file under its type directory.
+fn entity_create_path(taxonomy_root: &str, type_config: &EntityTypeConfig, basename: &str) -> String {
+    format!(
+        "{}/{}/{basename}.md",
+        taxonomy_root.trim_end_matches('/'),
+        type_config.path
+    )
 }
 
-async fn entity_create_path(
-    vault_root: &str,
-    taxonomy_root: &str,
-    type_config: &EntityTypeConfig,
-    basename: &str,
-) -> Result<PathBuf> {
-    let root = Path::new(vault_root).canonicalize()?;
-    let dir = root.join(taxonomy_root).join(&type_config.path);
-    ensure_path_inside_root(&root, &dir).await?;
-    Ok(dir.join(format!("{basename}.md")))
-}
-
-pub(super) async fn write_entity_raw(vault_root: &str, path: &Path, raw: &str) -> Result<()> {
-    let root = Path::new(vault_root).canonicalize()?;
-    ensure_path_inside_root(&root, path).await?;
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
+/// Writes an entity's raw Markdown to a vault-relative path, creating parent
+/// directories. Containment is enforced by the VFS's path normalization.
+pub(super) async fn write_entity_raw(vfs: &dyn Vfs, relative: &str, raw: &str) -> Result<()> {
+    if let Some(parent) = parent_dir(relative) {
+        vfs.create_dir_all(parent)
             .await
-            .with_context(|| format!("failed to create entity directory {}", parent.display()))?;
+            .map_err(|error| anyhow::anyhow!("failed to create entity directory {parent}: {error}"))?;
     }
-    fs::write(path, raw)
+    vfs.write(relative, raw.as_bytes())
         .await
-        .with_context(|| format!("failed to write entity {}", path.display()))
+        .map_err(|error| anyhow::anyhow!("failed to write entity {relative}: {error}"))
 }
 
-pub(super) async fn ensure_path_inside_root(root: &Path, path: &Path) -> Result<()> {
-    if path
-        .components()
-        .any(|component| matches!(component, Component::ParentDir))
-    {
-        anyhow::bail!("entity path cannot contain parent directory components");
-    }
-    let parent = if path.extension().is_some() {
-        path.parent().unwrap_or(path)
-    } else {
-        path
-    };
-    let canonical_parent = match parent.canonicalize() {
-        Ok(path) => path,
-        Err(_) => {
-            let mut existing = parent;
-            while !existing.exists() {
-                existing = existing.parent().unwrap_or(root);
-                if existing == root {
-                    break;
-                }
-            }
-            existing.canonicalize()?
-        }
-    };
-    if !canonical_parent.starts_with(root) {
-        anyhow::bail!("entity path is outside the vault root");
-    }
-    Ok(())
-}
-
-pub(super) fn relative_path(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/")
+/// Parent directory of a vault-relative path, or `None` when it lives at the
+/// vault root.
+pub(super) fn parent_dir(relative: &str) -> Option<&str> {
+    relative.rsplit_once('/').map(|(parent, _)| parent)
 }

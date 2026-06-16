@@ -1,6 +1,7 @@
 use crate::contract::AssetDownloadJob;
 use crate::library::read_library_from_config;
 use crate::types::Library;
+use crate::vfs::{NativeVfs, Vfs};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -87,6 +88,14 @@ impl AppState {
     /// asset downloads.
     pub(crate) fn http_client(&self) -> &reqwest::Client {
         &self.http_client
+    }
+
+    /// Returns the vault filesystem for the given vault root. This is the single
+    /// injection seam for the iOS port: desktop/web use [`NativeVfs`]; iOS will
+    /// return a Swift-backed VFS (security-scoped bookmark + `NSFileCoordinator`).
+    /// See docs/ios-port-plan.md §5.
+    pub(crate) fn vault_vfs(&self, vault_root: &str) -> Arc<dyn Vfs> {
+        Arc::new(NativeVfs::new(vault_root))
     }
 
     pub(crate) fn asset_jobs(&self) -> &Arc<Mutex<HashMap<String, AssetJobRecord>>> {

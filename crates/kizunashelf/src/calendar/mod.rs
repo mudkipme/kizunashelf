@@ -11,14 +11,15 @@ use crate::relations::summary_by_id;
 use crate::types::{
     DateRole, Entity, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library,
 };
+use crate::vfs::Vfs;
 use anyhow::Result;
 use chrono::Datelike;
 use mentions::{clean_mention_snippet, mention_blocks};
 use std::collections::HashMap;
-use tokio::fs;
 
 pub async fn build_calendar(
     library: &Library,
+    vfs: &dyn Vfs,
     options: CalendarBuildOptions,
 ) -> Result<CalendarResponse> {
     let mut entries = Vec::new();
@@ -26,7 +27,7 @@ pub async fn build_calendar(
         entries.extend(taxonomy_calendar_entries(library, &options));
     }
     if options.source != CalendarSource::Taxonomy {
-        entries.extend(daily_note_calendar_entries(library, &options).await?);
+        entries.extend(daily_note_calendar_entries(library, vfs, &options).await?);
     }
     entries.sort_by(compare_calendar_entries);
     let days = calendar_days(options.year, options.month, &entries);
@@ -134,9 +135,13 @@ pub fn build_calendar_planning(
     }
 }
 
-pub async fn build_entity_dates(library: &Library, entity: &Entity) -> Result<EntityDatesResponse> {
+pub async fn build_entity_dates(
+    library: &Library,
+    vfs: &dyn Vfs,
+    entity: &Entity,
+) -> Result<EntityDatesResponse> {
     let metadata = metadata_date_entries(library, entity);
-    let daily_notes = entity_daily_note_entries(library, &entity.summary).await?;
+    let daily_notes = entity_daily_note_entries(library, vfs, &entity.summary).await?;
     let snippets = daily_notes.iter().map(|item| item.snippets.len()).sum();
     Ok(EntityDatesResponse {
         generated_at: library.generated_at.clone(),
@@ -465,9 +470,10 @@ fn season_key_for_month(month: u32) -> &'static str {
 
 async fn entity_daily_note_entries(
     library: &Library,
+    vfs: &dyn Vfs,
     entity: &EntitySummary,
 ) -> Result<Vec<EntityDateDailyNoteEntry>> {
-    let daily_files = daily_note_files(&library.config, None, None, true).await?;
+    let daily_files = daily_note_files(&library.config, vfs, None, None, true).await?;
     let by_basename = entity_basename_index(library);
     let mut grouped: HashMap<String, EntityDateDailyNoteEntry> = HashMap::new();
     let snippet_max_length = clamp_number(
@@ -485,7 +491,7 @@ async fn entity_daily_note_entries(
         let Some(file_date) = file.date.as_ref() else {
             continue;
         };
-        let raw = fs::read_to_string(&file.absolute_path).await?;
+        let raw = vfs.read_to_string(&file.relative_path).await?;
         for block in mention_blocks(&strip_frontmatter(&raw)) {
             let mentions_entity = wikilink_regex().captures_iter(&block.text).any(|captures| {
                 captures
@@ -532,10 +538,12 @@ async fn entity_daily_note_entries(
 
 async fn daily_note_calendar_entries(
     library: &Library,
+    vfs: &dyn Vfs,
     options: &CalendarBuildOptions,
 ) -> Result<Vec<CalendarEntry>> {
     let daily_files = daily_note_files(
         &library.config,
+        vfs,
         Some(options.year),
         Some(options.month),
         true,
@@ -558,7 +566,7 @@ async fn daily_note_calendar_entries(
         let Some(file_date) = file.date.as_ref() else {
             continue;
         };
-        let raw = fs::read_to_string(&file.absolute_path).await?;
+        let raw = vfs.read_to_string(&file.relative_path).await?;
         for block in mention_blocks(&strip_frontmatter(&raw)) {
             for captures in wikilink_regex().captures_iter(&block.text) {
                 let Some(target) = captures.get(1) else {
