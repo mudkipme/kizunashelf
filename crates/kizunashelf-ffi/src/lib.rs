@@ -159,6 +159,80 @@ impl KizunaEngine {
             message: "request task was dropped".to_string(),
         })?
     }
+
+    /// Loads a vault asset (e.g. a downloaded cover) as raw bytes via the
+    /// `/api/assets/{path}` route. Separate from [`request`] because asset bodies
+    /// are binary and must not be forced through a UTF-8 `String`. This is the
+    /// `kizasset://` analogue for iOS image loading.
+    pub async fn asset(&self, path: String) -> Result<AssetData, KizunaError> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        let router = self.router.clone();
+
+        self.runtime.spawn(async move {
+            let _ = tx.send(run_asset(router, path).await);
+        });
+
+        rx.await.map_err(|_| KizunaError::Bridge {
+            message: "asset task was dropped".to_string(),
+        })?
+    }
+}
+
+/// Binary asset payload returned by [`KizunaEngine::asset`].
+#[derive(uniffi::Record)]
+pub struct AssetData {
+    pub bytes: Vec<u8>,
+    pub content_type: Option<String>,
+}
+
+/// Percent-encodes each path segment (keeping `/` separators) so the
+/// vault-relative asset path survives as a single wildcard route parameter.
+fn encode_asset_path(path: &str) -> String {
+    path.split('/')
+        .map(|segment| urlencoding::encode(segment).into_owned())
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+async fn run_asset(router: Router, path: String) -> Result<AssetData, KizunaError> {
+    let uri = format!("/api/assets/{}", encode_asset_path(&path));
+    let request = Request::builder()
+        .method(Method::GET)
+        .uri(&uri)
+        .body(Body::empty())
+        .map_err(|error| KizunaError::Bridge {
+            message: format!("invalid asset request: {error}"),
+        })?;
+
+    let response = router
+        .oneshot(request)
+        .await
+        .map_err(|error| KizunaError::Bridge {
+            message: format!("router error: {error}"),
+        })?;
+
+    let (parts, body) = response.into_parts();
+    if !parts.status.is_success() {
+        return Err(KizunaError::Bridge {
+            message: format!("asset {path}: HTTP {}", parts.status.as_u16()),
+        });
+    }
+    let content_type = parts
+        .headers
+        .get(header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .map(str::to_owned);
+    let bytes = body::to_bytes(body, usize::MAX)
+        .await
+        .map_err(|error| KizunaError::Bridge {
+            message: format!("failed to read asset body: {error}"),
+        })?
+        .to_vec();
+
+    Ok(AssetData {
+        bytes,
+        content_type,
+    })
 }
 
 async fn run_request(

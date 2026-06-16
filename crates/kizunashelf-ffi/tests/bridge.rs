@@ -244,3 +244,71 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
         .collect();
     assert!(titles.contains(&"Star Voyager"), "entities: {body}");
 }
+
+#[test]
+fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
+    let vault = FakeVault::default();
+    vault.seed(
+        ".kizunashelf/config.yaml",
+        "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
+    );
+    // An existing entity so the taxonomy directory exists for the first load.
+    vault.seed("Taxonomy/Anime/Existing.md", "---\ntitle: Existing\n---\n");
+    // A stand-in cover asset; the served content type comes from the extension.
+    vault.seed("Assets/cover.png", "PNGDATA");
+
+    let engine = KizunaEngine::with_vault(
+        VaultOptions {
+            vault_root_label: "My Vault".to_string(),
+            content_writable: true,
+            cache_ttl_ms: Some(0),
+            read_concurrency: None,
+        },
+        Box::new(vault),
+    )
+    .expect("engine initializes");
+
+    // Create a new entity through the write path (mutations -> VFS).
+    let created = futures::executor::block_on(
+        engine.request(
+            "POST".to_string(),
+            "/api/entities".to_string(),
+            Some(
+                r#"{"type":"anime","basename":"New Show","frontmatter":{"title":"New Show"}}"#
+                    .to_string(),
+            ),
+        ),
+    )
+    .expect("create request succeeds");
+    assert_eq!(created.status, 200, "create: {}", created.body);
+    // `Entity` flattens its `EntitySummary`, so the title is at `entity.title`.
+    let body: Value = serde_json::from_str(&created.body).unwrap();
+    assert_eq!(body["entity"]["title"], "New Show", "create: {body}");
+
+    // It is now indexed alongside the existing entity.
+    let list = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/entities".to_string(),
+        None,
+    ))
+    .expect("list request succeeds");
+    let body: Value = serde_json::from_str(&list.body).unwrap();
+    let titles: Vec<&str> = body["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|item| item["title"].as_str())
+        .collect();
+    assert!(titles.contains(&"Existing"), "list: {body}");
+    assert!(titles.contains(&"New Show"), "list: {body}");
+
+    // Binary asset loading returns raw bytes + a content type from the extension.
+    let asset = futures::executor::block_on(engine.asset("Assets/cover.png".to_string()))
+        .expect("asset loads");
+    assert_eq!(asset.bytes, b"PNGDATA");
+    assert_eq!(asset.content_type.as_deref(), Some("image/png"));
+
+    // A missing asset surfaces as an error rather than empty bytes.
+    let missing = futures::executor::block_on(engine.asset("Assets/missing.png".to_string()));
+    assert!(missing.is_err());
+}
