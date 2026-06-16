@@ -32,8 +32,8 @@ SIM_TARGETS=("aarch64-apple-ios-sim" "x86_64-apple-ios")
 # builds (aws-lc-sys, pulled in by reqwest's rustls). Without this, rustc links
 # against the iOS 10 default while the SDK compiles aws-lc for a much newer iOS,
 # leaving stack-probe builtins like `___chkstk_darwin` undefined. Matches the
-# KizunaCore SwiftPM platform (.iOS(.v16)).
-export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-16.0}"
+# KizunaCore SwiftPM platform (.iOS(.v17), required by the app's @Observable use).
+export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-17.0}"
 
 BUILD_DIR="$(mktemp -d)"
 HEADERS_DIR="$BUILD_DIR/Headers"
@@ -63,6 +63,14 @@ cp "$BINDINGS_DIR/kizunashelf_ffiFFI.modulemap" "$HEADERS_DIR/module.modulemap"
 # The high-level Swift binding goes into the KizunaCore target sources.
 mkdir -p "$SWIFT_GEN_DIR"
 cp "$BINDINGS_DIR/kizunashelf_ffi.swift" "$SWIFT_GEN_DIR/"
+
+# Generate the OpenAPI spec the swift-openapi-generator plugin reads, collapsing
+# `anyOf: [X, {type: null}]` (schemars' Option<NamedType> encoding) down to `X`.
+# The bare `{type: null}` branch makes swift-openapi-generator drop the whole
+# property; the canonical spec (web/orval) keeps the null branch.
+echo "==> Generating collapsed OpenAPI spec for swift-openapi-generator"
+cargo run -q -p kizunashelf --bin kizunashelf-schema --manifest-path "$REPO_ROOT/Cargo.toml" -- \
+    --collapse-nullable-refs "$PKG/Sources/KizunaCore/openapi.json"
 
 echo "==> Creating fat simulator library"
 SIM_LIBS=()
