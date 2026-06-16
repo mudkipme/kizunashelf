@@ -6,7 +6,7 @@
 //! The callback methods are *synchronous* — Swift does coordinated, possibly
 //! blocking I/O. [`FfiVfs`] runs each call inside `tokio::task::spawn_blocking`
 //! so that slow, network-backed file access never stalls the async executor.
-//! See docs/ios-port-plan.md §5.
+//! See ../kizunashelf-ios/docs/ios-port-plan.md §5.
 
 use std::sync::Arc;
 

@@ -4,7 +4,7 @@
 //! the [`Vfs`] trait using **vault-relative, forward-slash paths**. Desktop and
 //! the web/api server use [`NativeVfs`] (a thin `tokio::fs` wrapper rooted at the
 //! vault). iOS will supply a Swift-backed implementation (security-scoped
-//! bookmarks + `NSFileCoordinator`) — see docs/ios-port-plan.md §5.
+//! bookmarks + `NSFileCoordinator`) — see ../kizunashelf-ios/docs/ios-port-plan.md §5.
 //!
 //! App-private I/O (the app config file, the provider token cache) is *not* part
 //! of this abstraction: it lives outside the vault and stays on direct fs (or, on

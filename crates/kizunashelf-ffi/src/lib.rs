@@ -7,7 +7,7 @@
 //! The bridge intentionally exposes a *single* tunnel — `request(method, url,
 //! body)` — rather than one function per endpoint. Strong per-endpoint typing is
 //! layered on top in Swift by swift-openapi-generator, which drives this tunnel
-//! through a custom `ClientTransport`. See docs/ios-port-plan.md §4.
+//! through a custom `ClientTransport`. See ../kizunashelf-ios/docs/ios-port-plan.md §4.
 
 mod vfs;
 

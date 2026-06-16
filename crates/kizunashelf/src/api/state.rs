@@ -78,7 +78,7 @@ impl AppState {
     }
 
     /// Builds state with an optional injected vault filesystem and inline app
-    /// config (the iOS path; see docs/ios-port-plan.md §5/§7).
+    /// config (the iOS path; see ../kizunashelf-ios/docs/ios-port-plan.md §5/§7).
     pub(crate) fn with_vault(
         options: ApiOptions,
         vault_fs: Option<Arc<dyn Vfs>>,
@@ -111,7 +111,7 @@ impl AppState {
     /// Returns the vault filesystem for the given vault root. This is the single
     /// injection seam for the iOS port: desktop/web use [`NativeVfs`]; iOS will
     /// return a Swift-backed VFS (security-scoped bookmark + `NSFileCoordinator`).
-    /// See docs/ios-port-plan.md §5.
+    /// See ../kizunashelf-ios/docs/ios-port-plan.md §5.
     pub(crate) fn vault_vfs(&self, vault_root: &str) -> Arc<dyn Vfs> {
         match &self.vault_fs {
             Some(vfs) => Arc::clone(vfs),
