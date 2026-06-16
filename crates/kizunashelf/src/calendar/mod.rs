@@ -491,7 +491,7 @@ async fn entity_daily_note_entries(
         let Some(file_date) = file.date.as_ref() else {
             continue;
         };
-        let raw = vfs.read_to_string(&file.relative_path).await?;
+        let raw = file.contents.clone();
         for block in mention_blocks(&strip_frontmatter(&raw)) {
             let mentions_entity = wikilink_regex().captures_iter(&block.text).any(|captures| {
                 captures
@@ -566,7 +566,7 @@ async fn daily_note_calendar_entries(
         let Some(file_date) = file.date.as_ref() else {
             continue;
         };
-        let raw = vfs.read_to_string(&file.relative_path).await?;
+        let raw = file.contents.clone();
         for block in mention_blocks(&strip_frontmatter(&raw)) {
             for captures in wikilink_regex().captures_iter(&block.text) {
                 let Some(target) = captures.get(1) else {

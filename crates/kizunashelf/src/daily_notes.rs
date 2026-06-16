@@ -3,6 +3,7 @@ use crate::types::KizunaConfig;
 use crate::vfs::{self, Vfs};
 use anyhow::Result;
 use regex::Regex;
+use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct DailyNoteFile {
@@ -10,6 +11,15 @@ pub struct DailyNoteFile {
     pub relative_path: String,
     pub date: Option<String>,
     pub source_label: String,
+    /// The file's contents, read in a single batched pass so callers don't make
+    /// a per-file read round trip.
+    pub contents: String,
+}
+
+struct PendingDailyNote {
+    relative_path: String,
+    date: Option<String>,
+    source_label: String,
 }
 
 pub async fn daily_note_files(
@@ -20,8 +30,10 @@ pub async fn daily_note_files(
     require_date: bool,
 ) -> Result<Vec<DailyNoteFile>> {
     let pattern = daily_note_date_pattern(config);
-    let mut files = Vec::new();
 
+    // 1. Walk directory listings (cheap: one `read_dir` per directory) and filter
+    //    by date from the path/filename — no file contents read yet.
+    let mut pending = Vec::new();
     for path in daily_note_paths(config) {
         for relative_path in vfs::walk_markdown_files(vfs, &path).await? {
             let basename = relative_path
@@ -49,13 +61,40 @@ pub async fn daily_note_files(
                     .unwrap_or(&basename)
                     .to_string()
             });
-            files.push(DailyNoteFile {
+            pending.push(PendingDailyNote {
                 relative_path,
                 date,
                 source_label,
             });
         }
     }
+
+    // 2. Read the surviving files' contents in one batched call.
+    let paths: Vec<String> = pending
+        .iter()
+        .map(|note| note.relative_path.clone())
+        .collect();
+    let mut contents_by_path: HashMap<String, String> = vfs
+        .read_files(&paths)
+        .await?
+        .into_iter()
+        .filter_map(|(path, bytes)| String::from_utf8(bytes).ok().map(|text| (path, text)))
+        .collect();
+
+    // 3. Assemble, dropping any file that could not be read or decoded.
+    let files = pending
+        .into_iter()
+        .filter_map(|note| {
+            contents_by_path
+                .remove(&note.relative_path)
+                .map(|contents| DailyNoteFile {
+                    relative_path: note.relative_path,
+                    date: note.date,
+                    source_label: note.source_label,
+                    contents,
+                })
+        })
+        .collect();
 
     Ok(files)
 }

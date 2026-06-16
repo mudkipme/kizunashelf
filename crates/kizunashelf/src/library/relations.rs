@@ -110,8 +110,7 @@ async fn daily_note_relations(
 
     for file in daily_note_files(config, vfs, None, None, false).await? {
         let source_id = format!("daily-note:{}:{}", file.source_label, file.relative_path);
-        let raw = vfs.read_to_string(&file.relative_path).await?;
-        for target_title in daily_note_wikilinks(&raw) {
+        for target_title in daily_note_wikilinks(&file.contents) {
             let Some(target) = find_target_for_wikilink(&target_title, &by_basename) else {
                 continue;
             };

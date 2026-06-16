@@ -8,7 +8,8 @@ use std::fs;
 use std::sync::Mutex;
 
 use kizunashelf_ffi::{
-    ApiOptions, KizunaEngine, VaultFileSystem, VaultOptions, VfsDirEntry, VfsError, VfsMetadata,
+    ApiOptions, KizunaEngine, VaultFileSystem, VaultOptions, VfsDirEntry, VfsError, VfsFile,
+    VfsMetadata,
 };
 use serde_json::Value;
 use tempfile::TempDir;
@@ -109,6 +110,19 @@ impl VaultFileSystem for FakeVault {
     fn write(&self, path: String, data: Vec<u8>) -> Result<(), VfsError> {
         self.files.lock().unwrap().insert(path, data);
         Ok(())
+    }
+
+    fn read_files(&self, paths: Vec<String>) -> Result<Vec<VfsFile>, VfsError> {
+        let files = self.files.lock().unwrap();
+        Ok(paths
+            .into_iter()
+            .filter_map(|path| {
+                files.get(&path).map(|data| VfsFile {
+                    path,
+                    data: data.clone(),
+                })
+            })
+            .collect())
     }
 
     fn create_dir_all(&self, _path: String) -> Result<(), VfsError> {

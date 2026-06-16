@@ -11,7 +11,7 @@
 
 mod vfs;
 
-pub use vfs::{FfiVfs, VaultFileSystem, VfsDirEntry, VfsError, VfsMetadata};
+pub use vfs::{FfiVfs, VaultFileSystem, VfsDirEntry, VfsError, VfsFile, VfsMetadata};
 
 use std::sync::Arc;
 use std::time::Duration;

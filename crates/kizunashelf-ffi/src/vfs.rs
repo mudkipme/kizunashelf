@@ -31,6 +31,13 @@ pub struct VfsMetadata {
     pub modified_unix_nanos: u64,
 }
 
+/// One file returned by [`VaultFileSystem::read_files`].
+#[derive(uniffi::Record)]
+pub struct VfsFile {
+    pub path: String,
+    pub data: Vec<u8>,
+}
+
 /// Error surface the Swift implementation reports. Mirrors the core's
 /// `vfs::VfsError`.
 #[derive(Debug, thiserror::Error, uniffi::Error)]
@@ -53,6 +60,10 @@ pub trait VaultFileSystem: Send + Sync {
     fn write(&self, path: String, data: Vec<u8>) -> Result<(), VfsError>;
     fn create_dir_all(&self, path: String) -> Result<(), VfsError>;
     fn read_dir(&self, path: String) -> Result<Vec<VfsDirEntry>, VfsError>;
+    /// Batch-read many files in one call, returning the files that were read
+    /// successfully (missing files are skipped). This is the load hot path: it
+    /// avoids one FFI + file-coordination round trip per entity.
+    fn read_files(&self, paths: Vec<String>) -> Result<Vec<VfsFile>, VfsError>;
     fn metadata(&self, path: String) -> Result<VfsMetadata, VfsError>;
     fn rename(&self, from: String, to: String) -> Result<(), VfsError>;
     fn remove_file(&self, path: String) -> Result<(), VfsError>;
@@ -101,6 +112,16 @@ impl Vfs for FfiVfs {
         let inner = Arc::clone(&self.inner);
         let path = path.to_string();
         run_blocking(move || inner.read(path)).await
+    }
+
+    async fn read_files(&self, paths: &[String]) -> vfs::VfsResult<Vec<(String, Vec<u8>)>> {
+        let inner = Arc::clone(&self.inner);
+        let paths = paths.to_vec();
+        let files = run_blocking(move || inner.read_files(paths)).await?;
+        Ok(files
+            .into_iter()
+            .map(|file| (file.path, file.data))
+            .collect())
     }
 
     async fn write(&self, path: &str, data: &[u8]) -> vfs::VfsResult<()> {

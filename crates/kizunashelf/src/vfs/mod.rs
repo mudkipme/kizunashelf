@@ -91,6 +91,23 @@ pub trait Vfs: Send + Sync {
     async fn rename(&self, from: &str, to: &str) -> VfsResult<()>;
     async fn remove_file(&self, path: &str) -> VfsResult<()>;
 
+    /// Batch-reads many files in one call, returning `(path, contents)` for each
+    /// that was read successfully (missing files are skipped; order is not
+    /// guaranteed). This is the hot path for loading the library: hosts with
+    /// expensive per-call overhead (the iOS FFI + file coordination) override it
+    /// to avoid one round trip per file. The default reads sequentially.
+    async fn read_files(&self, paths: &[String]) -> VfsResult<Vec<(String, Vec<u8>)>> {
+        let mut out = Vec::with_capacity(paths.len());
+        for path in paths {
+            match self.read(path).await {
+                Ok(bytes) => out.push((path.clone(), bytes)),
+                Err(VfsError::NotFound) => {}
+                Err(error) => return Err(error),
+            }
+        }
+        Ok(out)
+    }
+
     /// Convenience: read a file as UTF-8.
     async fn read_to_string(&self, path: &str) -> VfsResult<String> {
         let bytes = self.read(path).await?;

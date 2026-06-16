@@ -23,11 +23,6 @@ use std::hash::{Hash, Hasher};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs;
-use tokio::sync::Semaphore;
-use tokio::task::JoinSet;
-
-const DEFAULT_READ_CONCURRENCY: usize = 8;
-const MAX_READ_CONCURRENCY: usize = 16;
 
 /// Vault-relative location of the vault config file inside `<vaultRoot>`.
 pub const VAULT_CONFIG_RELATIVE_PATH: &str = ".kizunashelf/config.yaml";
@@ -351,35 +346,24 @@ async fn read_entities_for_type(
             ));
         }
     };
-    let mut file_names = Vec::new();
-    for entry in entries {
-        if entry.is_file && entry.name.ends_with(".md") {
-            file_names.push(entry.name);
-        }
-    }
+    let md_paths: Vec<String> = entries
+        .into_iter()
+        .filter(|entry| entry.is_file && entry.name.ends_with(".md"))
+        .map(|entry| format!("{relative_dir}/{}", entry.name))
+        .collect();
 
-    let concurrency = effective_read_concurrency(config);
-    let semaphore = std::sync::Arc::new(Semaphore::new(concurrency));
-    let mut tasks = JoinSet::new();
-    for entry in file_names {
-        let relative_path = format!("{relative_dir}/{entry}");
-        let permit = semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .context("failed to acquire read concurrency permit")?;
-        let type_config = type_config.clone();
-        let vfs = Arc::clone(vfs);
-        tasks.spawn(async move {
-            let _permit = permit;
-            read_entity_file(vfs, type_config, entry, relative_path).await
-        });
-    }
+    // One batched read for the whole type directory, rather than a read (and a
+    // stat) per file — the per-call FFI + file-coordination overhead on iOS makes
+    // per-file round trips the dominant load cost.
+    let files = vfs
+        .read_files(&md_paths)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entities in {relative_dir}: {error}"))?;
 
     let mut entities = Vec::new();
     let mut diagnostics = Vec::new();
-    while let Some(result) = tasks.join_next().await {
-        let result = result.context("entity read task failed")??;
+    for (relative_path, bytes) in files {
+        let result = parse_entity(type_config, relative_path, bytes)?;
         entities.push(result.entity);
         diagnostics.extend(result.diagnostics);
     }
@@ -389,26 +373,23 @@ async fn read_entities_for_type(
     })
 }
 
-async fn read_entity_file(
-    vfs: Arc<dyn Vfs>,
-    type_config: EntityTypeConfig,
-    entry: String,
+/// Parses one entity from its raw bytes — no I/O. The revision is derived from
+/// the content (hash + length); a separate `metadata` call for the mtime is not
+/// worth its per-file cost, and the content hash already detects edits.
+fn parse_entity(
+    type_config: &EntityTypeConfig,
     relative_path: String,
+    bytes: Vec<u8>,
 ) -> Result<EntityReadResult> {
-    let raw = vfs
-        .read_to_string(&relative_path)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {relative_path}: {error}"))?;
-    let metadata = vfs
-        .metadata(&relative_path)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to stat entity {relative_path}: {error}"))?;
-    let revision = file_revision(&raw, metadata.len, metadata.modified_unix_nanos);
+    let raw = String::from_utf8(bytes)
+        .map_err(|error| anyhow::anyhow!("entity {relative_path} is not valid UTF-8: {error}"))?;
+    let revision = file_revision(&raw);
     let parsed = parse_markdown(&raw);
-    let note_basename = entry.strip_suffix(".md").unwrap_or(&entry).to_string();
-    let titles = title_languages(&parsed.frontmatter, &note_basename, &type_config);
-    let title = default_title(&parsed.frontmatter, &titles, &note_basename, &type_config);
-    let entity_key = entity_key(&parsed.frontmatter, &note_basename, &type_config);
+    let entry = relative_path.rsplit('/').next().unwrap_or(&relative_path);
+    let note_basename = entry.strip_suffix(".md").unwrap_or(entry).to_string();
+    let titles = title_languages(&parsed.frontmatter, &note_basename, type_config);
+    let title = default_title(&parsed.frontmatter, &titles, &note_basename, type_config);
+    let entity_key = entity_key(&parsed.frontmatter, &note_basename, type_config);
     let diagnostics = parsed
         .diagnostics
         .iter()
@@ -425,10 +406,10 @@ async fn read_entity_file(
         type_label: type_config.label.clone(),
         title,
         titles,
-        dates: date_values(&parsed.frontmatter, &date_field_names(&type_config)),
+        dates: date_values(&parsed.frontmatter, &date_field_names(type_config)),
         image: first_field_string_for_types(
             &parsed.frontmatter,
-            &type_config,
+            type_config,
             &[FieldType::Image, FieldType::ImageList],
         ),
         summary: extract_summary(&parsed.body),
@@ -436,7 +417,7 @@ async fn read_entity_file(
         basename: note_basename,
         external_refs: external_refs(
             &parsed.frontmatter,
-            &field_names(&type_config, FieldType::ExternalRef),
+            &field_names(type_config, FieldType::ExternalRef),
         ),
         relation_count: 0,
     };
@@ -453,10 +434,10 @@ async fn read_entity_file(
     })
 }
 
-fn file_revision(raw: &str, len: u64, modified_unix_nanos: u128) -> String {
+fn file_revision(raw: &str) -> String {
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     raw.hash(&mut hasher);
-    format!("{:x}-{}-{}", hasher.finish(), len, modified_unix_nanos)
+    format!("{:x}-{}", hasher.finish(), raw.len())
 }
 
 fn entity_key(
@@ -505,18 +486,6 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
         })
         .map(|field| field.field.clone())
         .collect()
-}
-
-fn effective_read_concurrency(config: &KizunaConfig) -> usize {
-    // Read concurrency is an operational tuning knob, not a user-facing setting:
-    // the `KIZUNASHELF_READ_CONCURRENCY` env var overrides the config file when
-    // set, otherwise the config value (or the built-in default) is used.
-    std::env::var("KIZUNASHELF_READ_CONCURRENCY")
-        .ok()
-        .and_then(|value| value.trim().parse::<usize>().ok())
-        .or_else(|| config.read_concurrency.map(|value| value as usize))
-        .unwrap_or(DEFAULT_READ_CONCURRENCY)
-        .clamp(1, MAX_READ_CONCURRENCY)
 }
 
 #[cfg(test)]
