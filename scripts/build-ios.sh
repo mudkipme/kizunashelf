@@ -28,6 +28,13 @@ SWIFT_GEN_DIR="$PKG/Sources/KizunaCore/Generated"
 DEVICE_TARGET="aarch64-apple-ios"
 SIM_TARGETS=("aarch64-apple-ios-sim" "x86_64-apple-ios")
 
+# Pin a modern iOS deployment target for both rustc's link step and the C/asm
+# builds (aws-lc-sys, pulled in by reqwest's rustls). Without this, rustc links
+# against the iOS 10 default while the SDK compiles aws-lc for a much newer iOS,
+# leaving stack-probe builtins like `___chkstk_darwin` undefined. Matches the
+# KizunaCore SwiftPM platform (.iOS(.v16)).
+export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-16.0}"
+
 BUILD_DIR="$(mktemp -d)"
 HEADERS_DIR="$BUILD_DIR/Headers"
 BINDINGS_DIR="$BUILD_DIR/bindings"
