@@ -87,6 +87,12 @@ pub fn create_vault(parent: &str, name: &str) -> Result<String> {
         .with_context(|| format!("failed to create {}", config_dir.display()))?;
     fs::write(config_dir.join("config.yaml"), STARTER_VAULT_CONFIG)
         .context("failed to write starter schema")?;
+    // Pre-create the taxonomy root so the library loads cleanly and the vault has
+    // a visible structure before any entity is written (matches the starter
+    // schema's `taxonomyRoot: Library`).
+    let taxonomy_root = vault_path.join(STARTER_TAXONOMY_ROOT);
+    fs::create_dir_all(&taxonomy_root)
+        .with_context(|| format!("failed to create {}", taxonomy_root.display()))?;
     Ok(vault_path.to_string_lossy().into_owned())
 }
 
@@ -98,6 +104,9 @@ pub fn name_for(path: &str) -> String {
         .filter(|name| !name.is_empty())
         .unwrap_or_else(|| path.to_string())
 }
+
+/// Taxonomy root of the starter schema below; pre-created on vault creation.
+const STARTER_TAXONOMY_ROOT: &str = "Library";
 
 /// Starter schema written into a newly-created vault: a ready-to-use media
 /// tracker. Kept in sync with the iOS app's `VaultTemplate.starterYAML`.

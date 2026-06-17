@@ -260,20 +260,23 @@ async fn validate_library_roots(config: &KizunaConfig, vfs: &dyn Vfs) -> Result<
         anyhow::bail!("vault root is not a directory: {}", config.vault_root);
     }
 
-    let taxonomy_metadata =
-        vfs.metadata(&config.taxonomy_root)
-            .await
-            .map_err(|error| match error {
-                VfsError::NotFound => {
-                    anyhow::anyhow!("failed to access taxonomy root {}", config.taxonomy_root)
-                }
-                other => anyhow::anyhow!(
-                    "failed to access taxonomy root {}: {other}",
-                    config.taxonomy_root
-                ),
-            })?;
-    if !taxonomy_metadata.is_dir {
-        anyhow::bail!("taxonomy root is not a directory: {}", config.taxonomy_root);
+    match vfs.metadata(&config.taxonomy_root).await {
+        Ok(metadata) => {
+            if !metadata.is_dir {
+                anyhow::bail!("taxonomy root is not a directory: {}", config.taxonomy_root);
+            }
+        }
+        // A freshly-created or not-yet-populated vault may not have the taxonomy
+        // root directory yet (it's created on the first entity write). Treat that
+        // as an empty library rather than failing the load — consistent with how
+        // missing per-type directories are tolerated.
+        Err(VfsError::NotFound) => {}
+        Err(other) => {
+            anyhow::bail!(
+                "failed to access taxonomy root {}: {other}",
+                config.taxonomy_root
+            );
+        }
     }
     Ok(())
 }
@@ -585,14 +588,17 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn read_library_errors_when_taxonomy_root_is_missing() {
+    async fn read_library_is_empty_when_taxonomy_root_is_missing() {
+        // A freshly-created vault has no taxonomy directory yet; the load should
+        // succeed with an empty library rather than failing.
         let temp = tempfile::tempdir().unwrap();
         let config = test_config(temp.path().to_string_lossy().as_ref());
         let vfs = native_vfs(&config);
 
-        let error = read_library(config, vfs).await.unwrap_err().to_string();
+        let library = read_library(config, vfs).await.unwrap();
 
-        assert!(error.contains("failed to access taxonomy root"));
+        assert!(library.entities.is_empty());
+        assert!(library.summaries.is_empty());
     }
 
     #[tokio::test]
