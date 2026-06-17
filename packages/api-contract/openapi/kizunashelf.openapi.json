@@ -2,12 +2,39 @@
   "openapi": "3.1.0",
   "info": {
     "title": "KizunaShelf API",
-    "version": "0.3.0"
+    "version": "0.5.0"
   },
   "paths": {
     "/api/health": {
       "get": {
         "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/refresh": {
+      "post": {
+        "operationId": "refreshLibrary",
         "responses": {
           "200": {
             "description": "",

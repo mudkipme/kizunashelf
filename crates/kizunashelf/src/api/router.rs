@@ -6,8 +6,8 @@ use super::assets::{
 use super::entities::{entities, entity_dates, entity_detail};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
-    calendar, calendar_planning, capabilities, config, health, home, relation_groups, relations,
-    save_settings_config, settings_config,
+    calendar, calendar_planning, capabilities, config, health, home, refresh, relation_groups,
+    relations, save_settings_config, settings_config,
 };
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
@@ -119,6 +119,14 @@ fn api_router() -> ApiRouter<AppState> {
             "/api/health",
             get_with(health, |op| {
                 op.id("getHealth")
+                    .response::<200, Json<HealthResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/refresh",
+            post_with(refresh, |op| {
+                op.id("refreshLibrary")
                     .response::<200, Json<HealthResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),

@@ -30,6 +30,15 @@ pub(crate) async fn health(State(state): State<AppState>) -> ApiResult<HealthRes
     }))
 }
 
+/// Drops the in-memory library cache and re-reads the vault, returning fresh
+/// health. Backs an explicit pull-to-refresh that bypasses the read cache (the
+/// iOS/desktop runtimes use a long cache TTL, so external edits otherwise only
+/// surface after the TTL or a relaunch).
+pub(crate) async fn refresh(State(state): State<AppState>) -> ApiResult<HealthResponse> {
+    state.invalidate_cache().await;
+    health(State(state)).await
+}
+
 pub(crate) async fn capabilities(State(state): State<AppState>) -> ApiResult<CapabilitiesResponse> {
     let library = get_library(&state).await?;
     let content_writable = content_writes_enabled(&state, &library);
