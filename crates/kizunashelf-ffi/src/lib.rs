@@ -129,9 +129,9 @@ impl KizunaEngine {
             config_path: PathBuf::new(),
             cache_ttl: Duration::from_millis(options.cache_ttl_ms.unwrap_or(10_000)),
             web_dist_path: None,
-            // Settings endpoints write config files on disk; on iOS config is
-            // owned by Swift (@AppStorage), so they stay disabled for now.
-            settings_writable: false,
+            // The vault config (schema) is editable on iOS via the VFS-aware
+            // settings handlers; the app config stays in Swift's @AppStorage.
+            settings_writable: true,
             content_writable: options.content_writable,
         };
         let router = router_with_vault(core_options, vault_fs, app_config, secret_store);

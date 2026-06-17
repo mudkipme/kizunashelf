@@ -419,3 +419,48 @@ fn ios_provider_availability_reads_credentials_from_the_secret_store() {
     ]));
     assert_eq!(with["enabled"], true, "summary: {with}");
 }
+
+#[test]
+fn ios_settings_write_vault_config_through_the_vfs() {
+    let vault = FakeVault::default();
+    vault.seed(
+        ".kizunashelf/config.yaml",
+        "taxonomyRoot: Taxonomy\ntypes: []\n",
+    );
+
+    let engine = KizunaEngine::with_vault(
+        VaultOptions {
+            vault_root_label: "My Vault".to_string(),
+            content_writable: true,
+            cache_ttl_ms: Some(0),
+            read_concurrency: None,
+        },
+        Box::new(vault),
+        Box::new(FakeSecretStore::default()),
+    )
+    .expect("engine initializes");
+
+    // Edit the schema (rename the taxonomy root) via the settings endpoint.
+    let saved = futures::executor::block_on(
+        engine.request(
+            "PUT".to_string(),
+            "/api/settings/config".to_string(),
+            Some(
+                r#"{"app":{"vaultRoot":"My Vault"},"vault":{"taxonomyRoot":"Library","types":[]}}"#
+                    .to_string(),
+            ),
+        ),
+    )
+    .expect("settings save succeeds");
+    assert_eq!(saved.status, 200, "save: {}", saved.body);
+
+    // The change is persisted to the vault config through the VFS.
+    let loaded = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/settings/config".to_string(),
+        None,
+    ))
+    .expect("settings read succeeds");
+    let body: Value = serde_json::from_str(&loaded.body).unwrap();
+    assert_eq!(body["vault"]["taxonomyRoot"], "Library", "settings: {body}");
+}

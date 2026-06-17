@@ -259,6 +259,13 @@ impl AppState {
     pub(crate) fn secret_store(&self) -> &Arc<dyn SecretStore> {
         &self.secret_store
     }
+
+    /// The inline app config when running in iOS mode (no config file). `Some`
+    /// signals that settings reads/writes should go through the injected VFS
+    /// rather than native config-file paths.
+    pub(crate) fn inline_app_config(&self) -> Option<AppConfig> {
+        self.app_config.clone()
+    }
 }
 
 pub(crate) fn unix_seconds_now() -> u64 {

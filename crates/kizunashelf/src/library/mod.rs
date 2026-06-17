@@ -53,6 +53,42 @@ pub async fn load_vault_config(config_path: impl AsRef<Path>) -> Result<VaultCon
     serde_yaml::from_str(&raw).with_context(|| format!("invalid vault config {}", path.display()))
 }
 
+/// Writes the vault config to `.kizunashelf/config.yaml` inside the vault through
+/// the VFS (the iOS settings path).
+pub async fn save_vault_config_via_vfs(vfs: &dyn Vfs, config: &VaultConfig) -> Result<()> {
+    let raw = serde_yaml::to_string(config).context("failed to serialize vault config")?;
+    vfs.write(VAULT_CONFIG_RELATIVE_PATH, format!("{raw}\n").as_bytes())
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to write vault config: {error}"))
+}
+
+/// Creates the taxonomy / entity-type / daily-note directories through the VFS,
+/// so editing the schema from iOS can add new type paths. Containment is enforced
+/// by the VFS path normalization.
+pub async fn ensure_config_directories_via_vfs(config: &KizunaConfig, vfs: &dyn Vfs) -> Result<()> {
+    validate_config_paths(config)?;
+    let create = |path: String| async move {
+        vfs.create_dir_all(&path)
+            .await
+            .map_err(|error| anyhow::anyhow!("failed to create directory {path}: {error}"))
+    };
+    create(config.taxonomy_root.clone()).await?;
+    for type_config in &config.types {
+        create(format!(
+            "{}/{}",
+            config.taxonomy_root.trim_end_matches('/'),
+            type_config.path
+        ))
+        .await?;
+    }
+    if let Some(daily_notes) = &config.daily_notes {
+        for path in &daily_notes.paths {
+            create(path.clone()).await?;
+        }
+    }
+    Ok(())
+}
+
 /// Reads the vault config from inside the vault (`.kizunashelf/config.yaml`)
 /// through the VFS. Works for both `NativeVfs` (desktop) and the injected iOS
 /// VFS, so library loading never needs an absolute vault-config path.

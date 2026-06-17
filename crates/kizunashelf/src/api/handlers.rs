@@ -56,6 +56,23 @@ pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigRes
 pub(crate) async fn settings_config(
     State(state): State<AppState>,
 ) -> ApiResult<SettingsConfigResponse> {
+    // iOS: app config is inline (no file); the vault config is read through the VFS.
+    if let Some(app) = state.inline_app_config() {
+        let vfs = state.vault_vfs(&app.vault_root);
+        let vault = crate::library::load_vault_config_via_vfs(vfs.as_ref())
+            .await
+            .ok();
+        return Ok(Json(SettingsConfigResponse {
+            app_config_path: String::new(),
+            app_exists: true,
+            app: Some(app),
+            vault_config_path: Some(crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string()),
+            vault_exists: vault.is_some(),
+            vault,
+            error: None,
+        }));
+    }
+
     let app_config_path = state.options.config_path.clone();
 
     // Load the local app config, if present.
@@ -100,6 +117,35 @@ pub(crate) async fn save_settings_config(
         return Err(ApiError::forbidden("Settings writes are disabled"));
     }
     let SaveSettingsRequest { app, vault } = request;
+
+    // iOS: the app config is owned by Swift (@AppStorage) and never persisted to a
+    // file; only the vault config (the schema) is written, through the VFS.
+    if state.inline_app_config().is_some() {
+        let vfs = state.vault_vfs(&app.vault_root);
+        if let Some(vault) = &vault {
+            let merged = crate::types::KizunaConfig::from_parts(app.clone(), vault.clone());
+            crate::library::ensure_config_directories_via_vfs(&merged, vfs.as_ref())
+                .await
+                .map_err(|error| ApiError::bad_request(&error.to_string()))?;
+            crate::library::save_vault_config_via_vfs(vfs.as_ref(), vault)
+                .await
+                .map_err(ApiError::from)?;
+        }
+        state.invalidate_cache().await;
+        let saved = crate::library::load_vault_config_via_vfs(vfs.as_ref())
+            .await
+            .ok();
+        return Ok(Json(SettingsConfigResponse {
+            app_config_path: String::new(),
+            app_exists: true,
+            app: Some(app),
+            vault_config_path: Some(crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string()),
+            vault_exists: saved.is_some(),
+            vault: saved,
+            error: None,
+        }));
+    }
+
     let app_config_path = state.options.config_path.clone();
 
     match &vault {
