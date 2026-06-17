@@ -186,8 +186,6 @@ pub struct AppConfig {
     pub vault_root: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_writable: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub read_concurrency: Option<u32>,
 }
 
 /// Vault-level configuration. Describes the vault's content schema (taxonomy,
@@ -221,8 +219,6 @@ pub struct KizunaConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_writable: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub read_concurrency: Option<u32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub home: Option<HomeConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub daily_notes: Option<DailyNotesConfig>,
@@ -246,7 +242,6 @@ impl KizunaConfig {
         Self {
             vault_root: app.vault_root,
             content_writable: app.content_writable,
-            read_concurrency: app.read_concurrency,
             taxonomy_root: vault.taxonomy_root,
             asset_root: vault.asset_root,
             home: vault.home,
@@ -261,7 +256,6 @@ impl KizunaConfig {
             AppConfig {
                 vault_root: self.vault_root,
                 content_writable: self.content_writable,
-                read_concurrency: self.read_concurrency,
             },
             VaultConfig {
                 taxonomy_root: self.taxonomy_root,

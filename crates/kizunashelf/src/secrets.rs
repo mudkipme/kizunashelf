@@ -45,6 +45,13 @@ impl NativeSecretStore {
             .unwrap_or_else(|| PathBuf::from(".kizunashelf.tokens.json"));
         Self { token_path }
     }
+
+    /// Builds a store with an explicit token-cache path. Used by the env-only web
+    /// runtime (which has no app config file to anchor the cache beside) and the
+    /// desktop runtime.
+    pub fn with_token_path(token_path: PathBuf) -> Self {
+        Self { token_path }
+    }
 }
 
 impl SecretStore for NativeSecretStore {

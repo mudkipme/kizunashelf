@@ -47,6 +47,10 @@ RUN apk add --no-cache ca-certificates
 ENV HOST="0.0.0.0"
 ENV PORT="8787"
 ENV KIZUNASHELF_SETTINGS_WRITABLE="false"
+# Single vault, mounted at /vault (override with KIZUNASHELF_VAULT_ROOT). Run one
+# container per vault.
+ENV KIZUNASHELF_VAULT_ROOT="/vault"
+VOLUME ["/vault"]
 WORKDIR /app
 
 COPY --from=build /usr/local/bin/kizunashelf-api /usr/local/bin/kizunashelf-api

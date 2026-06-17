@@ -1,13 +1,24 @@
 use axum::body::{self, Body};
 use axum::http::{header, Method, Request, Response, StatusCode};
 use axum::Router;
-use kizunashelf::api::{router, ApiOptions};
+use kizunashelf::api::{router_native, ApiOptions};
+use kizunashelf::secrets::{
+    SecretStore, SECRET_IGDB_CLIENT_ID, SECRET_IGDB_CLIENT_SECRET, SECRET_TVDB_API_KEY,
+    SECRET_TVDB_PIN,
+};
+use kizunashelf::types::AppConfig;
 use std::env;
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Manager, State};
 use tower::ServiceExt;
+
+mod secret_store;
+mod vaults;
+
+use secret_store::KeyringSecretStore;
+use vaults::VaultStoreData;
 
 /// Custom URI scheme used by the webview to load locally stored vault assets
 /// (downloaded covers). It forwards to the in-process API `/api/assets` route so
@@ -15,8 +26,15 @@ use tower::ServiceExt;
 /// bridge.
 const ASSET_SCHEME: &str = "kizasset";
 
+/// Desktop runtime state. The API router is rebuilt whenever the active vault
+/// changes (multi-vault switching), so it lives behind a mutex; it is `None`
+/// when no vault is selected yet. Provider credentials + the OAuth token cache
+/// are stored in the OS keychain via `secret_store`, shared across vaults.
 struct DesktopState {
-    api: Router,
+    api: Mutex<Option<Router>>,
+    vaults_path: PathBuf,
+    cache_ttl: Duration,
+    secret_store: Arc<dyn SecretStore>,
 }
 
 #[derive(serde::Serialize)]
@@ -27,6 +45,23 @@ struct DesktopApiResponse {
     content_type: Option<String>,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct VaultInfo {
+    name: String,
+    path: String,
+    active: bool,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct Credentials {
+    igdb_client_id: String,
+    igdb_client_secret: String,
+    tvdb_api_key: String,
+    tvdb_pin: String,
+}
+
 #[tauri::command]
 async fn api_request(
     state: State<'_, DesktopState>,
@@ -34,13 +69,21 @@ async fn api_request(
     url: String,
     body: Option<String>,
 ) -> Result<DesktopApiResponse, String> {
+    // Clone the current router out of the mutex so the lock isn't held across
+    // the await; respond 503 when no vault is open (the UI shows the chooser).
+    let router = state.api.lock().unwrap().clone();
+    let Some(router) = router else {
+        return Ok(DesktopApiResponse {
+            status: 503,
+            body: "{\"error\":\"No vault is open\"}".to_string(),
+            content_type: Some("application/json".to_string()),
+        });
+    };
     let method = method
         .parse::<Method>()
         .map_err(|error| format!("Invalid method {method}: {error}"))?;
     let body = body.unwrap_or_default();
-    let response = state
-        .api
-        .clone()
+    let response = router
         .oneshot(
             Request::builder()
                 .method(method)
@@ -71,16 +114,137 @@ async fn api_request(
     })
 }
 
-/// Serves a local vault asset by forwarding the request to the in-process API
-/// `/api/assets/{path}` route, which validates the path and reads the file.
+// MARK: Vault management commands
+
+#[tauri::command]
+fn list_vaults(state: State<DesktopState>) -> Vec<VaultInfo> {
+    vault_infos(&vaults::load(&state.vaults_path))
+}
+
+#[tauri::command]
+fn add_vault(state: State<DesktopState>, path: String) -> Result<Vec<VaultInfo>, String> {
+    let name = vaults::name_for(&path);
+    apply(&state, |data| data.add(name, path.clone()))
+}
+
+#[tauri::command]
+fn create_vault(
+    state: State<DesktopState>,
+    parent: String,
+    name: String,
+) -> Result<Vec<VaultInfo>, String> {
+    let path = vaults::create_vault(&parent, &name).map_err(|error| error.to_string())?;
+    let display = name.trim().to_string();
+    apply(&state, |data| data.add(display, path.clone()))
+}
+
+#[tauri::command]
+fn switch_vault(state: State<DesktopState>, path: String) -> Result<Vec<VaultInfo>, String> {
+    apply(&state, |data| data.set_active(&path))
+}
+
+#[tauri::command]
+fn remove_vault(state: State<DesktopState>, path: String) -> Result<Vec<VaultInfo>, String> {
+    apply(&state, |data| data.remove(&path))
+}
+
+// MARK: Credentials commands (stored in the OS keychain)
+
+#[tauri::command]
+fn get_credentials(state: State<DesktopState>) -> Credentials {
+    let store = &state.secret_store;
+    Credentials {
+        igdb_client_id: store.get(SECRET_IGDB_CLIENT_ID).unwrap_or_default(),
+        igdb_client_secret: store.get(SECRET_IGDB_CLIENT_SECRET).unwrap_or_default(),
+        tvdb_api_key: store.get(SECRET_TVDB_API_KEY).unwrap_or_default(),
+        tvdb_pin: store.get(SECRET_TVDB_PIN).unwrap_or_default(),
+    }
+}
+
+#[tauri::command]
+fn set_credentials(state: State<DesktopState>, credentials: Credentials) -> Result<(), String> {
+    let store = &state.secret_store;
+    for (key, value) in [
+        (SECRET_IGDB_CLIENT_ID, credentials.igdb_client_id.trim()),
+        (
+            SECRET_IGDB_CLIENT_SECRET,
+            credentials.igdb_client_secret.trim(),
+        ),
+        (SECRET_TVDB_API_KEY, credentials.tvdb_api_key.trim()),
+        (SECRET_TVDB_PIN, credentials.tvdb_pin.trim()),
+    ] {
+        store.set(key, value).map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+// MARK: Helpers
+
+/// Applies a mutation to the persisted vault list, saves it, rebuilds the active
+/// router, and returns the updated list for the UI.
+fn apply(
+    state: &DesktopState,
+    mutate: impl FnOnce(&mut VaultStoreData),
+) -> Result<Vec<VaultInfo>, String> {
+    let mut data = vaults::load(&state.vaults_path);
+    mutate(&mut data);
+    vaults::save(&state.vaults_path, &data).map_err(|error| error.to_string())?;
+    rebuild_active(state, &data);
+    Ok(vault_infos(&data))
+}
+
+fn rebuild_active(state: &DesktopState, data: &VaultStoreData) {
+    let router = data
+        .active
+        .as_ref()
+        .map(|path| build_router(path, state.cache_ttl, Arc::clone(&state.secret_store)));
+    *state.api.lock().unwrap() = router;
+}
+
+fn vault_infos(data: &VaultStoreData) -> Vec<VaultInfo> {
+    data.vaults
+        .iter()
+        .map(|entry| VaultInfo {
+            name: entry.name.clone(),
+            path: entry.path.clone(),
+            active: data.active.as_deref() == Some(entry.path.as_str()),
+        })
+        .collect()
+}
+
+fn build_router(
+    vault_root: &str,
+    cache_ttl: Duration,
+    secret_store: Arc<dyn SecretStore>,
+) -> Router {
+    router_native(
+        ApiOptions {
+            // Desktop has no app config file; the app config is inline and the
+            // frontend is served by Tauri (not this in-process router).
+            config_path: PathBuf::new(),
+            cache_ttl,
+            web_dist_path: None,
+            settings_writable: true,
+            content_writable: true,
+        },
+        AppConfig {
+            vault_root: vault_root.to_string(),
+            content_writable: Some(true),
+        },
+        secret_store,
+    )
+}
+
+/// Serves a local vault asset by forwarding to the active router's
+/// `/api/assets/{path}` route.
 async fn forward_asset_request(
     app: AppHandle,
     request: tauri::http::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-    let api = app.state::<DesktopState>().api.clone();
-    // The custom-scheme URL is `kizasset://localhost/<vault-relative asset path>`,
-    // so the request path already carries the asset-root prefix the serve route
-    // expects (e.g. `/Assets/Anime/Foo/cover.jpg`).
+    let router = app.state::<DesktopState>().api.lock().unwrap().clone();
+    let Some(api) = router else {
+        return asset_error_response();
+    };
     let path = request.uri().path();
     let forwarded = match Request::builder()
         .method(Method::GET)
@@ -130,142 +294,37 @@ pub fn run() {
             });
         })
         .setup(|app| {
-            let config_path = discover_config_path();
+            let vaults_path = app.path().app_data_dir()?.join("vaults.json");
             let cache_ttl = env::var("KIZUNASHELF_CACHE_TTL_MS")
                 .ok()
                 .and_then(|ttl| ttl.parse::<u64>().ok())
-                .unwrap_or(10_000);
+                .map(Duration::from_millis)
+                .unwrap_or_else(|| Duration::from_millis(10_000));
+            let secret_store: Arc<dyn SecretStore> = Arc::new(KeyringSecretStore::new());
+
+            let data = vaults::load(&vaults_path);
+            let api = data
+                .active
+                .as_ref()
+                .map(|path| build_router(path, cache_ttl, Arc::clone(&secret_store)));
             app.manage(DesktopState {
-                api: router(ApiOptions {
-                    config_path,
-                    cache_ttl: Duration::from_millis(cache_ttl),
-                    web_dist_path: None,
-                    settings_writable: true,
-                    content_writable: true,
-                }),
+                api: Mutex::new(api),
+                vaults_path,
+                cache_ttl,
+                secret_store,
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![api_request])
+        .invoke_handler(tauri::generate_handler![
+            api_request,
+            list_vaults,
+            add_vault,
+            create_vault,
+            switch_vault,
+            remove_vault,
+            get_credentials,
+            set_credentials
+        ])
         .run(tauri::generate_context!())
         .expect("failed to run KizunaShelf desktop app");
-}
-
-fn discover_config_path() -> PathBuf {
-    let candidates = config_candidates();
-    candidates
-        .iter()
-        .find(|path| path.is_file())
-        .cloned()
-        .or_else(|| candidates.first().cloned())
-        .unwrap_or_else(|| PathBuf::from("kizunashelf.yaml"))
-}
-
-fn config_candidates() -> Vec<PathBuf> {
-    config_candidates_from_values(
-        env::var_os("KIZUNASHELF_CONFIG").as_deref(),
-        env::var_os("HOME").as_deref(),
-        env::var_os("XDG_CONFIG_HOME").as_deref(),
-        env::var_os("XDG_CONFIG_DIR").as_deref(),
-        env::var_os("XDG_CONFIG_DIRS").as_deref(),
-        cfg!(target_os = "macos"),
-    )
-}
-
-fn config_candidates_from_values(
-    explicit: Option<&OsStr>,
-    home: Option<&OsStr>,
-    xdg_config_home: Option<&OsStr>,
-    xdg_config_dir: Option<&OsStr>,
-    xdg_config_dirs: Option<&OsStr>,
-    include_macos_application_support: bool,
-) -> Vec<PathBuf> {
-    let mut candidates = Vec::new();
-    if let Some(path) = explicit.filter(|value| !value.is_empty()) {
-        candidates.push(PathBuf::from(path));
-    }
-    if let Some(path) = xdg_config_home.filter(|value| !value.is_empty()) {
-        candidates.push(Path::new(path).join("kizunashelf.yaml"));
-    }
-    if let Some(home) = home.filter(|value| !value.is_empty()) {
-        let home = Path::new(home);
-        candidates.push(home.join(".config/kizunashelf.yaml"));
-        if include_macos_application_support {
-            candidates.push(home.join("Library/Application Support/kizunashelf.yaml"));
-            candidates.push(home.join("Library/Application Support/KizunaShelf/kizunashelf.yaml"));
-        }
-    }
-    if let Some(path) = xdg_config_dir.filter(|value| !value.is_empty()) {
-        candidates.push(Path::new(path).join("kizunashelf.yaml"));
-    }
-    if let Some(paths) = xdg_config_dirs.and_then(|value| value.to_str()) {
-        for path in paths.split(':').filter(|path| !path.is_empty()) {
-            candidates.push(Path::new(path).join("kizunashelf.yaml"));
-        }
-    }
-    dedupe_paths(candidates)
-}
-
-fn dedupe_paths(paths: Vec<PathBuf>) -> Vec<PathBuf> {
-    let mut deduped = Vec::new();
-    for path in paths {
-        if !deduped.contains(&path) {
-            deduped.push(path);
-        }
-    }
-    deduped
-}
-
-#[cfg(test)]
-mod tests {
-    use super::config_candidates_from_values;
-    use std::ffi::OsStr;
-    use std::path::PathBuf;
-
-    #[test]
-    fn config_candidates_include_xdg_home_and_config_dirs() {
-        let candidates = config_candidates_from_values(
-            Some(OsStr::new("/custom/config.yaml")),
-            Some(OsStr::new("/home/mudkip")),
-            Some(OsStr::new("/tmp/xdg")),
-            Some(OsStr::new("/etc/xdg-single")),
-            Some(OsStr::new("/etc/xdg:/usr/local/etc/xdg")),
-            false,
-        );
-
-        assert_eq!(
-            candidates,
-            vec![
-                PathBuf::from("/custom/config.yaml"),
-                PathBuf::from("/tmp/xdg/kizunashelf.yaml"),
-                PathBuf::from("/home/mudkip/.config/kizunashelf.yaml"),
-                PathBuf::from("/etc/xdg-single/kizunashelf.yaml"),
-                PathBuf::from("/etc/xdg/kizunashelf.yaml"),
-                PathBuf::from("/usr/local/etc/xdg/kizunashelf.yaml"),
-            ]
-        );
-    }
-
-    #[test]
-    fn config_candidates_include_macos_application_support() {
-        let candidates = config_candidates_from_values(
-            None,
-            Some(OsStr::new("/Users/mudkip")),
-            None,
-            None,
-            None,
-            true,
-        );
-
-        assert_eq!(
-            candidates,
-            vec![
-                PathBuf::from("/Users/mudkip/.config/kizunashelf.yaml"),
-                PathBuf::from("/Users/mudkip/Library/Application Support/kizunashelf.yaml"),
-                PathBuf::from(
-                    "/Users/mudkip/Library/Application Support/KizunaShelf/kizunashelf.yaml"
-                ),
-            ]
-        );
-    }
 }

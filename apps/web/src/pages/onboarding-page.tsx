@@ -1,110 +1,61 @@
-import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
-import { saveSettingsConfig } from "@/api/settings";
 import { SettingsEditor } from "@/components/settings/settings-editor";
-import { VaultPicker } from "@/components/settings/vault-picker";
-import type { VaultConfig } from "@/types/config";
+import { VaultSwitcher } from "@/components/settings/vault-switcher";
+import { isDesktopRuntime } from "@/lib/desktop";
 
-type Step = "vault" | "configure";
-
+/**
+ * Onboarding. On the desktop app with no open vault, choose/create one via the
+ * native vault switcher. Otherwise (a vault is open but has no `.kizunashelf/
+ * config.yaml` yet) configure its schema. The self-hosted web app has a single,
+ * env-configured vault, so it lands straight on schema configuration.
+ */
 export function OnboardingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const settings = useQuery(settingsConfigQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
+  const desktop = isDesktopRuntime();
 
-  const [step, setStep] = useState<Step>();
-  const [vaultRoot, setVaultRoot] = useState<string>();
-  const [vaultConfigPath, setVaultConfigPath] = useState<string>();
-  const [initialVault, setInitialVault] = useState<VaultConfig>();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
+  const refresh = () => void queryClient.invalidateQueries();
 
-  // Pick the starting step once settings load: resume at configure when a vault
-  // root is already chosen but the vault has no config yet, otherwise start the
-  // picker.
-  useEffect(() => {
-    if (step || !settings.data) return;
-    const data = settings.data;
-    if (data.appExists && !data.vaultExists && data.app?.vaultRoot) {
-      setVaultRoot(data.app.vaultRoot);
-      setVaultConfigPath(data.vaultConfigPath);
-      setInitialVault(data.vault);
-      setStep("configure");
-    } else {
-      setStep("vault");
-    }
-  }, [settings.data, step]);
-
-  async function continueWithVault(root: string) {
-    if (!root) return;
-    setBusy(true);
-    setError(undefined);
-    try {
-      // Persist the chosen vault root only; never overwrite an existing,
-      // possibly synced, vault config.
-      const result = await saveSettingsConfig({ app: { vaultRoot: root }, vault: null });
-      if (result.vaultExists) {
-        // The vault already carries a config — skip configuration entirely.
-        window.dispatchEvent(new Event("kizunashelf-config-saved"));
-        await queryClient.invalidateQueries();
-        navigate("/", { replace: true });
-        return;
-      }
-      setVaultRoot(root);
-      setVaultConfigPath(result.vaultConfigPath);
-      setInitialVault(result.vault);
-      setStep("configure");
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Failed to open vault");
-    } finally {
-      setBusy(false);
-    }
+  let body;
+  if (desktop && settings.error) {
+    // Desktop replies 503 (query error) until a vault is open.
+    body = <VaultSwitcher onboarding onChanged={refresh} />;
+  } else if (settings.isPending || providerCatalog.isPending) {
+    body = (
+      <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+    );
+  } else if (settings.error || providerCatalog.error) {
+    body = (
+      <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        {errorMessage(settings.error ?? providerCatalog.error)}
+      </div>
+    );
+  } else {
+    body = (
+      <SettingsEditor
+        appConfigPath={settings.data?.appConfigPath ?? ""}
+        vaultConfigPath={settings.data?.vaultConfigPath}
+        initialApp={settings.data?.app ?? { vaultRoot: "" }}
+        initialVault={settings.data?.vault}
+        providerCatalog={providerCatalog.data}
+        onboarding
+        onSaved={() => {
+          refresh();
+          navigate("/", { replace: true });
+        }}
+      />
+    );
   }
-
-  const loading = settings.isPending || providerCatalog.isPending || !step;
-  const queryError = settings.error ?? providerCatalog.error;
 
   return (
     <main className="h-dvh overflow-auto overscroll-contain bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
-        {queryError ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            {errorMessage(queryError)}
-          </div>
-        ) : null}
-        {loading ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
-        ) : step === "vault" ? (
-          <VaultPicker
-            initialVaultRoot={vaultRoot}
-            busy={busy}
-            error={error}
-            onContinue={continueWithVault}
-          />
-        ) : (
-          <SettingsEditor
-            appConfigPath={settings.data?.appConfigPath ?? ""}
-            vaultConfigPath={vaultConfigPath}
-            initialApp={{ vaultRoot: vaultRoot ?? "" }}
-            initialVault={initialVault}
-            providerCatalog={providerCatalog.data}
-            onboarding
-            onBack={() => {
-              setError(undefined);
-              setStep("vault");
-            }}
-            onSaved={() => {
-              void queryClient.invalidateQueries();
-              navigate("/", { replace: true });
-            }}
-          />
-        )}
-      </div>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">{body}</div>
     </main>
   );
 }

@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import { settingsConfigQuery } from "@/api/queries";
+import { isDesktopRuntime } from "@/lib/desktop";
 import { CalendarPage } from "@/pages/calendar-page";
 import { EntityCreatePage } from "@/pages/entity-create-page";
 import { EntityEditPage } from "@/pages/entity-edit-page";
@@ -52,9 +53,16 @@ function ConfigGate() {
 
   const pathname = location.pathname;
   if (settings.error) {
+    // Desktop replies 503 until a vault is open → send the user to onboarding to
+    // choose one. On the web a settings error is a real server error → settings.
+    if (isDesktopRuntime()) {
+      return pathname === "/onboarding" ? <AppRoutes /> : <Navigate to="/onboarding" replace />;
+    }
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;
   }
-  const configReady = Boolean(settings.data?.appExists && settings.data?.vaultExists);
+  // `appExists` is always true now (the app config is inline: env on web, the
+  // vault switcher on desktop), so vault config presence alone gates readiness.
+  const configReady = Boolean(settings.data?.vaultExists);
   if (settings.data && !configReady && pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }

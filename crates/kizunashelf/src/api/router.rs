@@ -56,6 +56,26 @@ pub fn router_with_vault(
     ))
 }
 
+/// Builds the router for the native runtimes (desktop / self-hosted web) with an
+/// inline app config — so no app config file is required — and an injected secret
+/// store. The vault filesystem is a [`NativeVfs`](crate::vfs::NativeVfs) rooted
+/// at `app_config.vault_root`. Desktop passes a keyring-backed store and switches
+/// vaults by rebuilding the router; web passes a
+/// [`NativeSecretStore`](crate::secrets::NativeSecretStore) (env credentials + a
+/// token-cache file).
+pub fn router_native(
+    options: ApiOptions,
+    app_config: AppConfig,
+    secret_store: Arc<dyn SecretStore>,
+) -> Router {
+    build_router(AppState::with_vault(
+        options,
+        None,
+        Some(app_config),
+        secret_store,
+    ))
+}
+
 fn build_router(state: AppState) -> Router {
     let web_dist_path = state.options.web_dist_path.clone();
 

@@ -1,14 +1,21 @@
 use anyhow::Result;
-use kizunashelf::api::{router, ApiOptions};
+use kizunashelf::api::{router_native, ApiOptions};
+use kizunashelf::secrets::NativeSecretStore;
+use kizunashelf::types::AppConfig;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
+/// Self-hosted web server. Single-vault by design: the vault directory is mounted
+/// and pointed at by `KIZUNASHELF_VAULT_ROOT` (the schema still lives inside it at
+/// `.kizunashelf/config.yaml`). There is no app config file — runtime behavior is
+/// controlled entirely by environment variables, so an extra config file beside a
+/// mounted vault would be redundant. For multiple vaults, run multiple instances.
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config_path = std::env::var("KIZUNASHELF_CONFIG")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("config/kizunashelf.yaml"));
+    let vault_root =
+        std::env::var("KIZUNASHELF_VAULT_ROOT").unwrap_or_else(|_| "/vault".to_string());
     let port = std::env::var("PORT")
         .ok()
         .and_then(|port| port.parse::<u16>().ok())
@@ -34,13 +41,31 @@ async fn main() -> Result<()> {
         .ok()
         .and_then(|value| parse_bool(&value))
         .unwrap_or_else(|| is_loopback_host(&host));
-    let app = router(ApiOptions {
-        config_path,
+
+    // The provider token cache (derived OAuth tokens) needs a writable path. It
+    // deliberately defaults *outside* the vault (the system temp dir) so it is
+    // never synced to other machines along with the vault; it only holds
+    // re-derivable OAuth tokens, so losing it on reboot is harmless. Override
+    // with `KIZUNASHELF_TOKEN_CACHE` to persist it somewhere durable.
+    let token_cache = std::env::var("KIZUNASHELF_TOKEN_CACHE")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| std::env::temp_dir().join(".kizunashelf.tokens.json"));
+
+    let app_config = AppConfig {
+        vault_root,
+        content_writable: Some(content_writable),
+    };
+    let secret_store = Arc::new(NativeSecretStore::with_token_path(token_cache));
+    let options = ApiOptions {
+        // No app config file in the web runtime; the app config is inline.
+        config_path: PathBuf::new(),
         cache_ttl: Duration::from_millis(cache_ttl),
         web_dist_path,
         settings_writable,
         content_writable,
-    });
+    };
+    let app = router_native(options, app_config, secret_store);
+
     let address: SocketAddr = format!("{host}:{port}").parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;
     println!("KizunaShelf listening on http://{}", listener.local_addr()?);

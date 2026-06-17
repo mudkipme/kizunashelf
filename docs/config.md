@@ -1,32 +1,36 @@
 # KizunaShelf Config
 
-KizunaShelf is schema-driven. Configuration is split across two YAML files:
+KizunaShelf is schema-driven. There are two kinds of configuration:
 
-- **App config** — stored on this machine (e.g. `~/.config/kizunashelf.yaml`). It tells the app where your vault lives and how this machine runs. It is local and not synced.
-- **Vault config** — stored inside the vault at `<vaultRoot>/.kizunashelf/config.yaml`. It describes which Markdown folders are entity collections and how frontmatter fields should be interpreted. Because it lives in the vault, it travels with the vault and is synced by the vault's own syncing method, so every machine pointing at the vault shares the same schema.
+- **Vault config (the schema)** — stored inside the vault at `<vaultRoot>/.kizunashelf/config.yaml`. It describes which Markdown folders are entity collections and how frontmatter fields should be interpreted. Because it lives in the vault, it travels with the vault and is synced by the vault's own syncing method, so every machine pointing at the vault shares the same schema. This is the bulk of this document.
+- **App-level settings** — *where* the vault is and *how this runtime behaves* (writable or read-only). These are **not** a synced file; each runtime sources them differently:
+  - **Self-hosted web**: from environment variables only — there is no app config file. One instance serves one vault.
+  - **Desktop**: a vault list managed in-app (Obsidian-style switching), stored in the app's data directory.
+  - **iOS**: vaults opened from Files via security-scoped bookmarks.
 
-The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema. `config/kizunashelf.example.yaml` (app) and `config/vault-config.example.yaml` (vault) are the working examples.
+The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema. `config/vault-config.example.yaml` is the working vault-config example.
 
 ## First Run
 
-Start the web app during development:
+Start the web app during development, pointing it at a vault directory:
 
 ```bash
 pnpm install
-pnpm dev
+KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 ```
 
-Open `http://localhost:5173/`. If the configured `kizunashelf.yaml` does not exist, KizunaShelf redirects to `/onboarding`.
+Open `http://localhost:5173/`. If that vault has no `.kizunashelf/config.yaml`, KizunaShelf redirects to `/onboarding` to create the schema (the web app never asks for a vault root — that comes from the environment).
 
-The onboarding page is the same structured editor used by Settings. Fill in:
+On **desktop**, onboarding instead opens a native vault chooser: open an existing folder or create a new vault (a new vault is seeded with a starter media-tracker schema). On **iOS**, you pick the vault folder from Files.
 
-- `Vault root`: the absolute path to the Obsidian vault.
+The onboarding schema editor is the same structured editor used by Settings. Fill in:
+
 - `Taxonomy root`: the collection root folder inside the vault; the default convention is `Taxonomy`, but any folder name works.
 - `Types`: each collection folder you want KizunaShelf to index.
 - `Fields`: frontmatter names for stable IDs, titles, images, enums, dates, external refs, and relations.
 - Optional `Home` and `Daily Notes` sections.
 
-Click `Create Config`. KizunaShelf writes the config file, reloads the in-memory library, and opens the normal app.
+Click `Create Vault`. KizunaShelf writes `.kizunashelf/config.yaml` into the vault, reloads the in-memory library, and opens the normal app.
 
 ## Design Model
 
@@ -63,49 +67,37 @@ Each file becomes one entity. The entity id is normally:
 
 If a type defines one or more `id` fields, the first configured `id` field with a value is used as the stable entity key instead of the filename.
 
-## Config File Location
+## Where Settings Live
 
-### App config
+### Vault config (the schema)
 
-The server reads `KIZUNASHELF_CONFIG` if it is set. Otherwise it uses:
-
-```text
-config/kizunashelf.yaml
-```
-
-An example app config is available at `config/kizunashelf.example.yaml`.
-
-The desktop app searches for the app config `kizunashelf.yaml` in this order:
-
-1. `KIZUNASHELF_CONFIG`
-2. `$XDG_CONFIG_HOME/kizunashelf.yaml`
-3. `~/.config/kizunashelf.yaml`
-4. `$XDG_CONFIG_DIR/kizunashelf.yaml`
-5. Each `$XDG_CONFIG_DIRS` entry
-6. On macOS, `~/Library/Application Support/kizunashelf.yaml`
-7. On macOS, `~/Library/Application Support/KizunaShelf/kizunashelf.yaml`
-
-If none of those files exist, desktop opens onboarding and writes the new app config to the first candidate path.
-
-### Vault config
-
-The vault config always lives at a fixed location relative to the configured `vaultRoot`:
+The vault config always lives at a fixed location relative to the vault root:
 
 ```text
 <vaultRoot>/.kizunashelf/config.yaml
 ```
 
-KizunaShelf resolves it from the app config's `vaultRoot`. An example vault config is available at `config/vault-config.example.yaml`.
+An example vault config is available at `config/vault-config.example.yaml`. Onboarding is shown only when this file is missing; when the vault already contains a synced `.kizunashelf/config.yaml`, any machine pointing at the vault picks up the schema automatically.
 
-Onboarding is shown when either file is missing. When `vaultRoot` already points at a vault that contains a synced `.kizunashelf/config.yaml`, a fresh machine only needs the app config — the vault schema is picked up automatically.
+### App-level settings (per runtime)
 
-The provider token cache (`.kizunashelf.tokens.json`) is written next to the app config and stays local; it is never placed inside the vault.
+There is no app config file. The vault root and write mode are sourced per runtime:
+
+- **Self-hosted web** — environment variables only. `KIZUNASHELF_VAULT_ROOT` (default `/vault`) selects the single vault; `KIZUNASHELF_CONTENT_WRITABLE` and `KIZUNASHELF_SETTINGS_WRITABLE` control write modes. See [Runtime Environment](#runtime-environment).
+- **Desktop** — a vault list (name + path + active selection) is stored as `vaults.json` in the platform app-data directory (e.g. `~/Library/Application Support/me.mudkip.kizunashelf-desktop/` on macOS). Vaults are content-writable.
+- **iOS** — the vault list is stored as security-scoped bookmarks; vaults are content-writable.
+
+### Provider token cache
+
+The provider token cache holds derived OAuth tokens (re-derivable, never user secrets):
+
+- **Web** — a single file outside the vault so it is never synced, defaulting to the system temp directory (`<tmp>/.kizunashelf.tokens.json`); override with `KIZUNASHELF_TOKEN_CACHE`.
+- **Desktop / iOS** — the OS keychain, alongside provider credentials.
 
 ## Settings Editor
 
-The Settings page at `/settings` can edit every config field:
+The Settings page at `/settings` edits the vault schema (every field below lives in the vault config). There is no longer an "App" section — the vault root and write mode are runtime settings (env vars on web; the vault switcher on desktop), not editable here.
 
-- App: `vaultRoot`, `contentWritable` (`readConcurrency` is round-tripped but not surfaced in the UI)
 - Vault: `taxonomyRoot`, `assetRoot`
 - Daily notes: `paths`, `datePattern`, `snippetMaxLength`
 - Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`, and filters
@@ -113,47 +105,54 @@ The Settings page at `/settings` can edit every config field:
 - Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
 - Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
 
+On **desktop**, Settings additionally shows a **Vaults** switcher (open / create / switch / forget vaults) and a **Provider Credentials** editor backed by the OS keychain. These are hidden on the web app, where credentials come from environment variables.
+
 On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker.
 
 Settings writes and path suggestions can be disabled with `KIZUNASHELF_SETTINGS_WRITABLE=false`. In production web mode, Settings writes default to enabled only for loopback hosts.
 
 ## Runtime Environment
 
-The production web server is configured through environment variables:
+The self-hosted web server is configured entirely through environment variables (there is no app config file):
 
 | Variable | Description |
 | --- | --- |
+| `KIZUNASHELF_VAULT_ROOT` | Absolute path to the single vault this instance serves. Defaults to `/vault` (the conventional Docker mount). |
 | `HOST` | Bind host. Defaults to `127.0.0.1`. Set `HOST=0.0.0.0` only when you intentionally want to expose it beyond the local machine. |
 | `PORT` | Bind port. Defaults to `8787`. |
-| `KIZUNASHELF_CONFIG` | Config file path. |
+| `KIZUNASHELF_CONTENT_WRITABLE` | Enables entity create/edit/delete. Defaults to `true` for loopback hosts and `false` otherwise. |
+| `KIZUNASHELF_SETTINGS_WRITABLE` | Enables schema (Settings) writes and path suggestions. Defaults to `true` for loopback hosts and `false` otherwise. |
 | `KIZUNASHELF_CACHE_TTL_MS` | In-memory library cache TTL. Defaults to `10000`. |
+| `KIZUNASHELF_TOKEN_CACHE` | Path for the provider OAuth token cache. Defaults to `<tmp>/.kizunashelf.tokens.json` (outside the vault). |
 | `KIZUNASHELF_WEB_DIST` | Alternate web build path. |
 | `KIZUNASHELF_SERVE_WEB` | Set to `false` to serve only the API. |
-| `KIZUNASHELF_SETTINGS_WRITABLE` | Enables Settings writes and path suggestions. Defaults to `true` for loopback hosts and `false` for non-loopback hosts. |
 | `KIZUNASHELF_IGDB_CLIENT_ID` | IGDB client id for external matching. |
 | `KIZUNASHELF_IGDB_CLIENT_SECRET` | IGDB client secret for external matching. |
 | `KIZUNASHELF_TVDB_API_KEY` | TheTVDB API key for external matching. |
 | `KIZUNASHELF_TVDB_PIN` | Optional TheTVDB PIN. |
 
+The four provider-credential variables apply to the **web** runtime only. The desktop and iOS apps read credentials from the OS keychain (entered in Settings), not from the environment. Run multiple instances — each with its own `KIZUNASHELF_VAULT_ROOT` and `PORT` — to serve multiple vaults.
+
 The server does not enable wildcard CORS by default. Use the Vite dev proxy during development, or serve the built web app from the Rust process for production.
 
-The Docker image sets `HOST=0.0.0.0` and `KIZUNASHELF_SETTINGS_WRITABLE=false` by default. Set `KIZUNASHELF_SETTINGS_WRITABLE=true` only when you intentionally want onboarding/settings writes available from the published container.
+Mount your vault into the container (it defaults to `/vault`):
+
+```bash
+docker run -p 8787:8787 -v /path/to/vault:/vault kizunashelf
+```
+
+The Docker image sets `HOST=0.0.0.0` by default, so content and Settings writes default to off (non-loopback). Set `KIZUNASHELF_CONTENT_WRITABLE=true` and/or `KIZUNASHELF_SETTINGS_WRITABLE=true` only when you intentionally want writes available from the published container.
 
 ## Top-Level Schema
 
-### App config (`~/.config/kizunashelf.yaml`)
+### App-level settings
 
-```yaml
-vaultRoot: /path/to/ObsidianVault
-contentWritable: true
-readConcurrency: 8
-```
+These are not a config file; they are supplied by the runtime (see [Where Settings Live](#where-settings-live)):
 
-| Key | Required | Type | Description |
+| Setting | Web source | Desktop / iOS source | Description |
 | --- | --- | --- | --- |
-| `vaultRoot` | yes | string | Absolute path to the vault root. |
-| `contentWritable` | no | boolean | Enables entity create/edit/delete operations when true. |
-| `readConcurrency` | no | number | Maximum concurrent entity file reads. Defaults to 8 and is clamped from 1 to 16. |
+| vault root | `KIZUNASHELF_VAULT_ROOT` | active vault in the vault list | Absolute path to the vault root. |
+| content writable | `KIZUNASHELF_CONTENT_WRITABLE` | always enabled | Enables entity create/edit/delete operations. |
 
 ### Vault config (`<vaultRoot>/.kizunashelf/config.yaml`)
 
@@ -424,8 +423,10 @@ External metadata support has two pieces:
 Supported providers:
 
 - Bangumi: works without extra credentials.
-- IGDB: requires `KIZUNASHELF_IGDB_CLIENT_ID` and `KIZUNASHELF_IGDB_CLIENT_SECRET`.
-- TheTVDB: requires `KIZUNASHELF_TVDB_API_KEY`; `KIZUNASHELF_TVDB_PIN` is optional.
+- IGDB: requires an IGDB (Twitch) client id and secret.
+- TheTVDB: requires a TheTVDB API key; a PIN is optional.
+
+Credentials are supplied per runtime: the web app reads `KIZUNASHELF_IGDB_CLIENT_ID`, `KIZUNASHELF_IGDB_CLIENT_SECRET`, `KIZUNASHELF_TVDB_API_KEY`, and `KIZUNASHELF_TVDB_PIN` from the environment; the desktop and iOS apps store them in the OS keychain (entered under Settings → Provider Credentials).
 
 ```yaml
 externalPriority:
@@ -583,13 +584,14 @@ The default date pattern matches filenames like:
 
 ## Complete Example
 
-App config (`~/.config/kizunashelf.yaml`):
+App-level settings (web): point the instance at the vault and allow writes.
 
-```yaml
-vaultRoot: /home/me/Vault
-contentWritable: true
-readConcurrency: 8
+```bash
+KIZUNASHELF_VAULT_ROOT=/home/me/Vault
+KIZUNASHELF_CONTENT_WRITABLE=true
 ```
+
+(On desktop/iOS this vault is just an entry in the in-app vault list — no env vars.)
 
 Vault config (`/home/me/Vault/.kizunashelf/config.yaml`):
 

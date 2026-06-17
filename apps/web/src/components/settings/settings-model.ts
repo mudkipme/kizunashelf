@@ -30,8 +30,6 @@ export function normalizeConfig(app?: AppConfig, vault?: VaultConfig): MergedCon
   return {
     vaultRoot: app?.vaultRoot ?? base.vaultRoot,
     contentWritable: app?.contentWritable ?? base.contentWritable,
-    // Preserved verbatim across saves even though the UI no longer edits it.
-    readConcurrency: app?.readConcurrency ?? base.readConcurrency ?? null,
     // When the vault config is missing entirely (e.g. a fresh vault), seed the
     // defaults so the editor has something to fill in; when it exists, respect
     // its values including disabled (null) daily notes / home.
@@ -107,7 +105,6 @@ export function cleanConfig(
     app: {
       vaultRoot: config.vaultRoot,
       contentWritable: config.contentWritable ?? undefined,
-      readConcurrency: config.readConcurrency ?? undefined,
     },
     vault: {
       taxonomyRoot: config.taxonomyRoot,

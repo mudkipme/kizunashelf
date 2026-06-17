@@ -52,7 +52,6 @@ pub struct VaultOptions {
     /// allowed. Phase 2 browsing uses `false`.
     pub content_writable: bool,
     pub cache_ttl_ms: Option<u64>,
-    pub read_concurrency: Option<u32>,
 }
 
 /// One response from the core: HTTP-like status, body, and content type.
@@ -123,7 +122,6 @@ impl KizunaEngine {
         let app_config = AppConfig {
             vault_root: options.vault_root_label,
             content_writable: Some(options.content_writable),
-            read_concurrency: options.read_concurrency,
         };
         let core_options = CoreApiOptions {
             config_path: PathBuf::new(),

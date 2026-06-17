@@ -20,8 +20,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "orval": "^8.13.0",
-    "oxlint": "^1.69.0",
+    "orval": "^8.17.0",
+    "oxlint": "^1.70.0",
     "typescript": "^5.9.3"
   }
 }

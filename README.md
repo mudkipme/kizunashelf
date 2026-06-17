@@ -20,20 +20,26 @@ KizunaShelf is a shelf for what matters to you, and a record book for the life t
 - Lets each collection define its own titles, covers, states, ratings, progress, dates, external refs, and relations.
 - Provides library browsing, entity detail pages, calendar views, relation views, analytics, and cleanup queues.
 - Supports external metadata matching for configured providers.
-- Runs as a self-hosted web app or as a Tauri desktop app.
+- Runs as a self-hosted web app, a Tauri desktop app, or a native iOS app.
 
-KizunaShelf treats Markdown files as the source of truth. When `contentWritable` is enabled, it can edit entity frontmatter/body and create or delete entity files. In read-only mode, those content write features are disabled.
+KizunaShelf treats Markdown files as the source of truth. When content writes are enabled, it can edit entity frontmatter/body and create or delete entity files. In read-only mode, those content write features are disabled.
+
+The vault schema (`.kizunashelf/config.yaml`) always lives inside the vault and is shared across machines. App-level settings are sourced per runtime:
+
+- **Self-hosted web**: a single vault configured entirely through environment variables — there is no app config file. For multiple vaults, run multiple instances (the image is small).
+- **Desktop**: multiple vaults managed in-app (Obsidian-style switching); provider credentials are stored in the OS keychain.
+- **iOS**: vaults are opened from Files (On My iPhone / iCloud / a file provider); credentials are stored in the Keychain.
 
 ## Quick Start
 
 ```bash
 pnpm install
-pnpm dev
+KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 ```
 
-Open `http://localhost:5173/`. If the configured `kizunashelf.yaml` does not exist, KizunaShelf redirects to onboarding.
+Open `http://localhost:5173/`. The web app points at the single vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `.kizunashelf/config.yaml` yet, KizunaShelf redirects to onboarding to create the schema.
 
-Configuration lives in `kizunashelf.yaml`; see [docs/config.md](docs/config.md) for first-run setup, config file locations, the full schema, Settings behavior, and provider credentials.
+See [docs/config.md](docs/config.md) for the full schema, per-runtime configuration, Settings behavior, and provider credentials.
 
 ## Development
 
@@ -71,13 +77,16 @@ pnpm build
 pnpm serve
 ```
 
-`pnpm serve` runs the Rust API and serves the built Vite app from one process. It listens on `127.0.0.1:8787` by default.
+`pnpm serve` runs the Rust API and serves the built Vite app from one process. It listens on `127.0.0.1:8787` by default and reads its single vault from `KIZUNASHELF_VAULT_ROOT`.
 
-Build the Docker image from the repository root:
+Build and run the Docker image from the repository root:
 
 ```bash
 docker build -t kizunashelf .
+docker run -p 8787:8787 -v /path/to/vault:/vault kizunashelf
 ```
+
+Mount the vault directory and the server uses it directly — `KIZUNASHELF_VAULT_ROOT` defaults to `/vault`. There is no app config file to mount. For multiple vaults, run multiple containers (each with its own vault mount and port). See [docs/config.md](docs/config.md#runtime-environment) for all environment variables.
 
 For desktop development and builds:
 
@@ -86,4 +95,4 @@ pnpm dev:desktop
 pnpm build:desktop
 ```
 
-The desktop app uses Tauri and calls the Rust API router in-process, so it does not open an HTTP listener.
+The desktop app uses Tauri and calls the Rust API router in-process, so it does not open an HTTP listener. It manages multiple vaults in-app (open or create, then switch between them) and stores provider credentials in the OS keychain (macOS Keychain, Windows Credential Manager, or the Linux Secret Service).

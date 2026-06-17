@@ -90,15 +90,12 @@ export type DailyNotesConfig = {
   snippetMaxLength?: number | null;
 };
 
-// App-level config stored in the local app config file (e.g. ~/.config/kizunashelf.yaml).
-// Describes how this machine runs the app and where the vault lives on disk.
+// App-level config: where the vault lives and whether it is writable. Sourced by
+// the runtime (env vars on the web app; the in-app vault list on desktop/iOS),
+// not a synced file.
 export type AppConfig = {
   vaultRoot: string;
   contentWritable?: boolean | null;
-  // Operational tuning knob configured via the config file / KIZUNASHELF_READ_CONCURRENCY
-  // env var only — not surfaced in the Settings UI, but round-tripped on save so an
-  // existing value is never clobbered.
-  readConcurrency?: number | null;
 };
 
 // Vault-level config stored inside the vault at <vaultRoot>/.kizunashelf/config.yaml.

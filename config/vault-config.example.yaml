@@ -2,7 +2,9 @@
 # Describes the vault's content schema (taxonomy layout, assets, entity types,
 # home dashboard, daily notes). It travels with the vault and is synced by the
 # vault's own syncing method, so every machine pointing at this vault shares the
-# same schema. App/machine settings live separately — see kizunashelf.example.yaml.
+# same schema. Where the vault lives and whether it is writable are runtime
+# settings (env vars on the web app, the in-app vault list on desktop/iOS), not
+# part of this file. See docs/config.md.
 taxonomyRoot: Taxonomy
 assetRoot: Assets
 dailyNotes:

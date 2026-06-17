@@ -668,7 +668,6 @@ mod tests {
             taxonomy_root: "Taxonomy".to_string(),
             asset_root: None,
             content_writable: None,
-            read_concurrency: None,
             home: None,
             daily_notes: None,
             types: vec![EntityTypeConfig {

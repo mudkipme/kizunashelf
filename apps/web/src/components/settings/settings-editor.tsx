@@ -4,13 +4,11 @@ import { PlusIcon, SaveIcon } from "lucide-react";
 import { saveSettingsConfig } from "@/api/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import type { ExternalProviderCatalog } from "@/types/api";
 import type { AppConfig, MergedConfig, VaultConfig } from "@/types/config";
 
 import {
   EmptyConfigLine,
-  Field,
   OptionalToggle,
   PathField,
   SettingsSection,
@@ -34,17 +32,19 @@ type SettingsEditorProps = {
   initialVault?: VaultConfig;
   providerCatalog?: ExternalProviderCatalog;
   onboarding?: boolean;
+  /** When false, the schema is read-only (server enforces it too). */
+  settingsWritable?: boolean;
   onBack?: () => void;
   onSaved?: () => void;
 };
 
 export function SettingsEditor({
-  appConfigPath,
   vaultConfigPath,
   initialApp,
   initialVault,
   providerCatalog,
   onboarding = false,
+  settingsWritable = true,
   onBack,
   onSaved,
 }: SettingsEditorProps) {
@@ -69,17 +69,9 @@ export function SettingsEditor({
   ).size;
   const overviewItems = [
     ...(onboarding ? [{ id: "templates", title: "Templates", detail: `${vaultTemplates(providerCatalog).length} presets` }] : []),
-    // The App section is hidden during onboarding (the vault root is chosen in
-    // the picker step and machine-level settings use defaults).
-    ...(onboarding
-      ? []
-      : [
-          {
-            id: "app",
-            title: "App",
-            detail: config.contentWritable === false ? "Read only" : "Writable",
-          },
-        ]),
+    // The machine-level "App" config (vault root + write mode) is no longer
+    // edited here: the self-hosted web app sources it from env vars, and the
+    // desktop app from its native vault switcher.
     {
       id: "vault",
       title: "Vault",
@@ -129,18 +121,9 @@ export function SettingsEditor({
           <h1 className="truncate text-base font-semibold">
             {onboarding ? "Configure Vault" : "Settings"}
           </h1>
-          {onboarding ? (
-            vaultPath ? (
-              <p className="mt-1 truncate text-xs text-muted-foreground">Vault: {vaultPath}</p>
-            ) : null
-          ) : (
-            <>
-              <p className="mt-1 truncate text-xs text-muted-foreground">App: {appConfigPath}</p>
-              {vaultPath ? (
-                <p className="truncate text-xs text-muted-foreground">Vault: {vaultPath}</p>
-              ) : null}
-            </>
-          )}
+          {vaultPath ? (
+            <p className="mt-1 truncate text-xs text-muted-foreground">Vault: {vaultPath}</p>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
@@ -149,12 +132,20 @@ export function SettingsEditor({
               Back
             </Button>
           ) : null}
-          <Button type="button" onClick={save} disabled={saving}>
+          <Button type="button" onClick={save} disabled={saving || !settingsWritable}>
             <SaveIcon data-icon="inline-start" />
             {saving ? "Saving" : onboarding ? "Create Vault" : "Save"}
           </Button>
         </div>
       </header>
+
+      {!settingsWritable ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          Schema editing is disabled on this instance (read-only). Set
+          <code className="mx-1">KIZUNASHELF_SETTINGS_WRITABLE=true</code>
+          to enable it.
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -165,7 +156,8 @@ export function SettingsEditor({
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
         <SettingsOverview items={overviewItems} />
 
-        <div className="flex min-w-0 flex-col gap-4">
+        {/* A disabled fieldset makes the whole schema form read-only natively. */}
+        <fieldset disabled={!settingsWritable} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
           {onboarding ? (
             <SettingsSection
               id="templates"
@@ -193,41 +185,6 @@ export function SettingsEditor({
               </div>
             </SettingsSection>
           ) : null}
-
-          {onboarding ? null : (
-            <SettingsSection
-              id="app"
-              title="App"
-              description={`Stored on this machine at ${appConfigPath}. Vault location and write mode — not synced with the vault.`}
-              summary={
-                <SummaryBadges items={[config.contentWritable === false ? "read only" : "writable"]} />
-              }
-            >
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                <PathField
-                  label="Vault root"
-                  value={config.vaultRoot}
-                  onChange={(value) => setConfig((current) => ({ ...current, vaultRoot: value }))}
-                  absolute
-                />
-                <Field label="Content writes">
-                  <Select
-                    value={config.contentWritable === false ? "false" : "true"}
-                    onChange={(event) =>
-                      setConfig((current) => ({
-                        ...current,
-                        contentWritable: event.target.value === "false" ? false : true,
-                      }))
-                    }
-                    className="h-9 w-full text-sm"
-                  >
-                    <option value="true">Enabled</option>
-                    <option value="false">Read only</option>
-                  </Select>
-                </Field>
-              </div>
-            </SettingsSection>
-          )}
 
           <SettingsSection
             id="vault"
@@ -349,7 +306,7 @@ export function SettingsEditor({
               {config.types.length === 0 ? <EmptyConfigLine>No entity types configured.</EmptyConfigLine> : null}
             </div>
           </SettingsSection>
-        </div>
+        </fieldset>
       </div>
     </div>
   );

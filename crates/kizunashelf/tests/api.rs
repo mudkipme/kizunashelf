@@ -620,7 +620,6 @@ async fn settings_endpoints_create_and_read_config_files() {
     let config = json!({
         "vaultRoot": vault,
         "taxonomyRoot": "Taxonomy",
-        "readConcurrency": 4,
         "dailyNotes": {
             "paths": ["Daily Notes"],
             "datePattern": "^(\\d{4}-\\d{2}-\\d{2})\\.md$",
@@ -1084,7 +1083,7 @@ fn write_split_config(config_path: &Path, config: &Value) {
     let mut vault = serde_json::Map::new();
     for (key, value) in object {
         match key.as_str() {
-            "vaultRoot" | "contentWritable" | "readConcurrency" => {
+            "vaultRoot" | "contentWritable" => {
                 app.insert(key.clone(), value.clone());
             }
             _ => {
@@ -1112,7 +1111,7 @@ fn split_settings_body(config: &Value) -> Value {
     let mut vault = serde_json::Map::new();
     for (key, value) in object {
         match key.as_str() {
-            "vaultRoot" | "contentWritable" | "readConcurrency" => {
+            "vaultRoot" | "contentWritable" => {
                 app.insert(key.clone(), value.clone());
             }
             _ => {
