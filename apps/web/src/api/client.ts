@@ -36,19 +36,55 @@ function isTauriRuntime() {
 
 async function fetchTauriResponse(input: RequestInfo | URL, init?: RequestInit) {
   const method = init?.method ?? "GET";
-  if (init?.signal?.aborted) {
-    throw new DOMException("The operation was aborted", "AbortError");
-  }
+  const signal = init?.signal ?? undefined;
+  throwIfAborted(signal);
   const invoke = await getTauriInvoke();
-  const response = await invoke<DesktopApiResponse>("api_request", {
+  // `invoke` can't be cancelled mid-flight, but React Query (and StrictMode in
+  // dev) abort the signal to cancel superseded fetches. Native `fetch` rejects
+  // immediately on abort; we mirror that by racing the invoke against the
+  // signal, otherwise the cancelled request's result is silently discarded and
+  // the query never settles — leaving the app stuck on "Loading".
+  const request = invoke<DesktopApiResponse>("api_request", {
     method,
     url: requestUrl(input),
     body: await requestBody(init?.body),
   });
+  const response = await raceAbort(request, signal);
   return new Response(response.body, {
     status: response.status,
     headers: response.contentType ? { "content-type": response.contentType } : undefined,
   });
+}
+
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) throw abortError(signal);
+}
+
+function raceAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(abortError(signal));
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(abortError(signal));
+    signal.addEventListener("abort", onAbort, { once: true });
+    const cleanup = () => signal.removeEventListener("abort", onAbort);
+    promise.then(
+      (value) => {
+        cleanup();
+        resolve(value);
+      },
+      (error) => {
+        cleanup();
+        reject(error);
+      },
+    );
+  });
+}
+
+function abortError(signal: AbortSignal) {
+  const reason = (signal as AbortSignal & { reason?: unknown }).reason;
+  return reason instanceof Error
+    ? reason
+    : new DOMException("The operation was aborted", "AbortError");
 }
 
 async function requestBody(body: BodyInit | null | undefined) {
