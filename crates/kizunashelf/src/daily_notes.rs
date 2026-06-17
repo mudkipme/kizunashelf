@@ -110,12 +110,22 @@ pub fn strip_frontmatter(raw: &str) -> String {
 }
 
 pub fn normalize_wikilink_target(target: &str) -> String {
+    use unicode_normalization::UnicodeNormalization;
+    // Canonicalize to NFC so a target and an entity basename compare equal
+    // regardless of Unicode composition. Filenames and file content can disagree:
+    // Apple filesystems hand back directory entries in decomposed (NFD) form
+    // (e.g. `ず` as `す` + U+3099 combining dakuten), while authors typically write
+    // composed (NFC) content — and a vault may even mix the two. This function is
+    // the single chokepoint applied to both the lookup key and the index, so
+    // normalizing here makes relation/wikilink matching composition-insensitive.
     target
         .split('/')
         .next_back()
         .unwrap_or(target)
         .trim()
         .to_lowercase()
+        .nfc()
+        .collect()
 }
 
 fn daily_note_paths(config: &KizunaConfig) -> Vec<String> {
@@ -143,4 +153,24 @@ fn daily_note_date(path: &str, pattern: &Regex) -> Option<String> {
         .or_else(|| captures.get(1))
         .map(|capture| capture.as_str())?;
     parse_exact_date(Some(date))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_wikilink_target;
+
+    #[test]
+    fn normalize_matches_across_nfc_and_nfd() {
+        // `田所あずさ`: the `ず` is composed (NFC, U+305A) on one side and
+        // decomposed (NFD, `す` U+3059 + U+3099 combining dakuten) on the other —
+        // the shape Apple's filesystem produces for directory-entry names.
+        let nfc = "田所あ\u{305A}さ";
+        let nfd = "田所あ\u{3059}\u{3099}さ";
+        assert_ne!(nfc, nfd, "inputs must differ byte-wise to be a real test");
+        assert_eq!(
+            normalize_wikilink_target(nfc),
+            normalize_wikilink_target(nfd),
+            "NFC and NFD forms of the same name must normalize equal"
+        );
+    }
 }

@@ -34,6 +34,7 @@ function ConfigGate() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const settings = useQuery(settingsConfigQuery());
+  const pathname = location.pathname;
 
   useEffect(() => {
     function reload() {
@@ -43,21 +44,24 @@ function ConfigGate() {
     return () => window.removeEventListener("kizunashelf-config-saved", reload);
   }, [queryClient]);
 
-  if (settings.isPending) {
+  // Desktop replies 503 until a vault is open. That error never resolves on its
+  // own, so route to onboarding for any non-success state (error *or* the
+  // pending blips of a background refetch). Gating on `isPending`/`error`
+  // individually would flip the onboarding route in and out as the query
+  // oscillates, and each remount re-fires the request — an endless loop. Once a
+  // vault is opened the query succeeds and we fall through to the checks below.
+  if (isDesktopRuntime()) {
+    if (settings.status !== "success") {
+      return pathname === "/onboarding" ? <AppRoutes /> : <Navigate to="/onboarding" replace />;
+    }
+  } else if (settings.isPending) {
     return (
       <main className="h-dvh overflow-auto bg-background p-8 text-center text-sm text-muted-foreground">
         Loading
       </main>
     );
-  }
-
-  const pathname = location.pathname;
-  if (settings.error) {
-    // Desktop replies 503 until a vault is open → send the user to onboarding to
-    // choose one. On the web a settings error is a real server error → settings.
-    if (isDesktopRuntime()) {
-      return pathname === "/onboarding" ? <AppRoutes /> : <Navigate to="/onboarding" replace />;
-    }
+  } else if (settings.error) {
+    // On the web a settings error is a real server error → settings page.
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;
   }
   // `appExists` is always true now (the app config is inline: env on web, the
