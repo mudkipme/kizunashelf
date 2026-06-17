@@ -106,157 +106,375 @@ pub fn name_for(path: &str) -> String {
 }
 
 /// Taxonomy root of the starter schema below; pre-created on vault creation.
-const STARTER_TAXONOMY_ROOT: &str = "Library";
+const STARTER_TAXONOMY_ROOT: &str = "Taxonomy";
 
-/// Starter schema written into a newly-created vault: a ready-to-use media
-/// tracker. Kept in sync with the iOS app's `VaultTemplate.starterYAML`.
-const STARTER_VAULT_CONFIG: &str = r#"# KizunaShelf starter vault — a ready-to-use media tracker.
+/// Starter schema written into a newly-created vault: a media tracker wired to
+/// Bangumi, IGDB & TheTVDB. Kept in sync with the iOS app's
+/// `VaultTemplate.starterYAML` and the web onboarding's "Media Library" preset.
+const STARTER_VAULT_CONFIG: &str = r#"# KizunaShelf starter vault — a media tracker wired to Bangumi, IGDB & TheTVDB.
 # Edit this schema anytime in Settings → Vault Schema.
-taxonomyRoot: Library
+taxonomyRoot: Taxonomy
 assetRoot: Assets
 types:
   - id: anime
     label: Anime
     icon: 📺
     path: Anime
+    externalPriority: [bangumi]
     filename:
+      titleLanguage: zh
       defaultTitle: true
+    bodyMappings:
+      - source: bangumi
+        field: summary
+        heading: Summary
     fields:
+      - field: uid
+        fieldType: id
+        displayName: UID
+      - field: id
+        fieldType: id
+        displayName: ID
       - field: title
         fieldType: title
-        defaultTitle: true
-      - field: cover
+        displayName: Title
+        titleLanguage: zh
+        externalFields:
+          - source: bangumi
+            field: name_cn
+      - field: title_original
+        fieldType: title
+        displayName: Title (Original)
+        titleRole: original
+        externalFields:
+          - source: bangumi
+            field: name
+      - field: title_en
+        fieldType: title
+        displayName: Title (English)
+        titleLanguage: en
+      - field: title_ja
+        fieldType: title
+        displayName: Title (Japanese)
+        titleLanguage: ja
+        externalFields:
+          - source: bangumi
+            field: name
+      - field: cover_url
         fieldType: image
         displayName: Cover
-      - field: status
+        externalFields:
+          - source: bangumi
+            field: cover_url
+      - field: state
         fieldType: enum
-        displayName: Status
-        enumOptions: [Planning, Watching, Completed, On Hold, Dropped]
+        displayName: State
+        enumOptions: [Backlog, Watching, Playing, Reading, Completed, Paused, Dropped]
+      - field: progress
+        fieldType: progress
+        displayName: Progress
+        totalProgressField: episodes
+      - field: episodes
+        fieldType: totalProgress
+        displayName: Episodes
       - field: rating
         fieldType: rating
         displayName: Rating
-      - field: episodes
-        fieldType: progress
-        displayName: Episodes Watched
-      - field: started
-        fieldType: date
-        displayName: Started
+      - field: season
+        fieldType: season
+        displayName: Season
         dateRole: planning
-      - field: finished
+        seasonLanguage: zh
+      - field: release_date
         fieldType: date
-        displayName: Finished
+        displayName: Release date
+        dateRole: planning
+        externalFields:
+          - source: bangumi
+            field: date
+      - field: complete_date
+        fieldType: date
+        displayName: Completed date
         dateRole: completed
+      - field: bangumi_url
+        fieldType: externalRef
+        displayName: bangumi_url
+        externalRef: bangumi
+      - field: franchise
+        fieldType: relation
+        displayName: Franchise
+        relationType: franchise
+  - id: drama
+    label: Drama
+    icon: 🎭
+    path: Drama
+    externalPriority: [thetvdb]
+    filename:
+      titleLanguage: zh
+      defaultTitle: true
+    bodyMappings:
+      - source: thetvdb
+        field: overview
+        heading: Summary
+    fields:
+      - field: uid
+        fieldType: id
+        displayName: UID
+      - field: id
+        fieldType: id
+        displayName: ID
+      - field: title
+        fieldType: title
+        displayName: Title
+        titleLanguage: zh
+        externalFields:
+          - source: thetvdb
+            field: name
+      - field: title_original
+        fieldType: title
+        displayName: Title (Original)
+        titleRole: original
+        externalFields:
+          - source: thetvdb
+            field: name
+      - field: title_en
+        fieldType: title
+        displayName: Title (English)
+        titleLanguage: en
+      - field: title_ja
+        fieldType: title
+        displayName: Title (Japanese)
+        titleLanguage: ja
+      - field: cover_url
+        fieldType: image
+        displayName: Cover
+        externalFields:
+          - source: thetvdb
+            field: cover_url
+      - field: state
+        fieldType: enum
+        displayName: State
+        enumOptions: [Backlog, Watching, Playing, Reading, Completed, Paused, Dropped]
+      - field: progress
+        fieldType: progress
+        displayName: Progress
+        totalProgressField: episodes
+      - field: episodes
+        fieldType: totalProgress
+        displayName: Episodes
+      - field: rating
+        fieldType: rating
+        displayName: Rating
+      - field: season
+        fieldType: season
+        displayName: Season
+        dateRole: planning
+        seasonLanguage: zh
+      - field: release_date
+        fieldType: date
+        displayName: Release date
+        dateRole: planning
+        externalFields:
+          - source: thetvdb
+            field: first_air_time
+      - field: complete_date
+        fieldType: date
+        displayName: Completed date
+        dateRole: completed
+      - field: thetvdb_url
+        fieldType: externalRef
+        displayName: thetvdb_url
+        externalRef: thetvdb
+      - field: franchise
+        fieldType: relation
+        displayName: Franchise
+        relationType: franchise
   - id: movie
     label: Movie
     icon: 🎬
-    path: Movies
+    path: Movie
+    externalPriority: [bangumi, thetvdb]
     filename:
+      titleLanguage: zh
       defaultTitle: true
+    bodyMappings:
+      - source: bangumi
+        field: summary
+        heading: Summary
     fields:
+      - field: uid
+        fieldType: id
+        displayName: UID
+      - field: id
+        fieldType: id
+        displayName: ID
       - field: title
         fieldType: title
-        defaultTitle: true
-      - field: cover
-        fieldType: image
-        displayName: Poster
-      - field: status
-        fieldType: enum
-        displayName: Status
-        enumOptions: [Planning, Watching, Completed, Dropped]
-      - field: rating
-        fieldType: rating
-        displayName: Rating
-      - field: watched
-        fieldType: date
-        displayName: Watched
-        dateRole: completed
-  - id: book
-    label: Book
-    icon: 📚
-    path: Books
-    filename:
-      defaultTitle: true
-    fields:
-      - field: title
+        displayName: Title
+        titleLanguage: zh
+        externalFields:
+          - source: bangumi
+            field: name_cn
+      - field: title_original
         fieldType: title
-        defaultTitle: true
-      - field: cover
+        displayName: Title (Original)
+        titleRole: original
+        externalFields:
+          - source: bangumi
+            field: name
+      - field: title_en
+        fieldType: title
+        displayName: Title (English)
+        titleLanguage: en
+      - field: title_ja
+        fieldType: title
+        displayName: Title (Japanese)
+        titleLanguage: ja
+        externalFields:
+          - source: bangumi
+            field: name
+      - field: cover_url
         fieldType: image
         displayName: Cover
-      - field: author
-        fieldType: text
-        displayName: Author
-      - field: status
+        externalFields:
+          - source: bangumi
+            field: cover_url
+      - field: state
         fieldType: enum
-        displayName: Status
-        enumOptions: [Planning, Reading, Completed, On Hold, Dropped]
+        displayName: State
+        enumOptions: [Backlog, Watching, Playing, Reading, Completed, Paused, Dropped]
+      - field: progress
+        fieldType: progress
+        displayName: Progress
+        totalProgressField: episodes
+      - field: episodes
+        fieldType: totalProgress
+        displayName: Episodes
       - field: rating
         fieldType: rating
         displayName: Rating
-      - field: started
+      - field: release_date
         fieldType: date
-        displayName: Started
+        displayName: Release date
         dateRole: planning
-      - field: finished
+        externalFields:
+          - source: bangumi
+            field: date
+      - field: complete_date
         fieldType: date
-        displayName: Finished
+        displayName: Completed date
         dateRole: completed
-  - id: game
-    label: Game
+      - field: bangumi_url
+        fieldType: externalRef
+        displayName: bangumi_url
+        externalRef: bangumi
+      - field: thetvdb_url
+        fieldType: externalRef
+        displayName: thetvdb_url
+        externalRef: thetvdb
+      - field: franchise
+        fieldType: relation
+        displayName: Franchise
+        relationType: franchise
+  - id: games
+    label: Games
     icon: 🎮
     path: Games
+    externalPriority: [igdb]
     filename:
+      titleLanguage: zh
       defaultTitle: true
+    bodyMappings:
+      - source: igdb
+        field: summary
+        heading: Summary
     fields:
+      - field: uid
+        fieldType: id
+        displayName: UID
+      - field: id
+        fieldType: id
+        displayName: ID
       - field: title
         fieldType: title
-        defaultTitle: true
-      - field: cover
+        displayName: Title
+        titleLanguage: zh
+        externalFields:
+          - source: igdb
+            field: name
+      - field: title_original
+        fieldType: title
+        displayName: Title (Original)
+        titleRole: original
+        externalFields:
+          - source: igdb
+            field: name
+      - field: title_en
+        fieldType: title
+        displayName: Title (English)
+        titleLanguage: en
+      - field: title_ja
+        fieldType: title
+        displayName: Title (Japanese)
+        titleLanguage: ja
+      - field: cover_url
         fieldType: image
         displayName: Cover
-      - field: platform
-        fieldType: text
-        displayName: Platform
-      - field: status
+        externalFields:
+          - source: igdb
+            field: cover_url
+      - field: state
         fieldType: enum
-        displayName: Status
-        enumOptions: [Planning, Playing, Completed, On Hold, Dropped]
+        displayName: State
+        enumOptions: [Backlog, Watching, Playing, Reading, Completed, Paused, Dropped]
+      - field: progress
+        fieldType: progress
+        displayName: Progress
+        totalProgressField: episodes
+      - field: episodes
+        fieldType: totalProgress
+        displayName: Episodes
       - field: rating
         fieldType: rating
         displayName: Rating
-      - field: started
+      - field: release_date
         fieldType: date
-        displayName: Started
+        displayName: Release date
         dateRole: planning
-      - field: finished
+        externalFields:
+          - source: igdb
+            field: first_release_date
+      - field: complete_date
         fieldType: date
-        displayName: Finished
+        displayName: Completed date
         dateRole: completed
+      - field: igdb_url
+        fieldType: externalRef
+        displayName: igdb_url
+        externalRef: igdb
+        externalTypes: [game]
+      - field: franchise
+        fieldType: relation
+        displayName: Franchise
+        relationType: franchise
 home:
   title: Home
   sections:
-    - id: watching
-      title: Currently Watching
+    - id: recent-anime
+      title: Recent Anime
       type: anime
-      filters:
-        - field: status
-          values: [Watching]
       limit: 12
-    - id: reading
-      title: Reading Now
-      type: book
-      filters:
-        - field: status
-          values: [Reading]
+      sort: date:season
+      direction: desc
+    - id: games
+      title: Games
+      type: games
       limit: 12
-    - id: playing
-      title: Now Playing
-      type: game
-      filters:
-        - field: status
-          values: [Playing]
-      limit: 12
+      sort: title
+      direction: asc
 dailyNotes:
   paths:
     - Daily Notes
+  datePattern: ^(\d{4}-\d{2}-\d{2})\.md$
+  snippetMaxLength: 260
 "#;

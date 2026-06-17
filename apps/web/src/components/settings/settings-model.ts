@@ -439,8 +439,6 @@ function mediaType(
         externalTypes: externalTypesForSource(providerCatalog, ref.source),
       }) satisfies FieldConfig),
       { field: "franchise", fieldType: "relation", displayName: "Franchise", relationType: "franchise" },
-      { field: "studio", fieldType: "relation", displayName: "Studio", relationType: "studio" },
-      { field: "developer", fieldType: "relation", displayName: "Developer", relationType: "developer" },
     ],
   };
 }
