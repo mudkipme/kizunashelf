@@ -17,7 +17,8 @@ pub struct EntityTypeConfig {
     pub filename: Option<FilenameConfig>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub body_mappings: Vec<ExternalBodyMapping>,
-    #[serde(default)]
+    // Required (and so non-optional in generated clients): a type always carries
+    // a `fields` array, even if empty. The editor and templates always write it.
     pub fields: Vec<FieldConfig>,
 }
 

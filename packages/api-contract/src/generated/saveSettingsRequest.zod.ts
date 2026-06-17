@@ -10,7 +10,7 @@ export const saveSettingsRequestVaultOneHomeOneSectionsItemLimitMin = 0;
 
 export const saveSettingsRequestVaultOneDailyNotesOneSnippetMaxLengthMin = 0;
 
-export const saveSettingsRequestVaultOneTypesItemFieldsDefault = [];
+
 export const SaveSettingsRequest = zod.object({
   "app": zod.object({
   "vaultRoot": zod.string(),
@@ -72,7 +72,7 @@ export const SaveSettingsRequest = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-})).default(saveSettingsRequestVaultOneTypesItemFieldsDefault)
+}))
 }))
 }).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional().describe('When omitted, only the app config is written and the vault config on disk\n(if any) is left untouched — used by onboarding to persist a chosen vault\nroot without overwriting an existing, synced vault config.')
 })

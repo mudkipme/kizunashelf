@@ -6,7 +6,6 @@
  */
 import { z as zod } from 'zod';
 
-export const entityTypeConfigFieldsDefault = [];
 export const EntityTypeConfig = zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -40,7 +39,7 @@ export const EntityTypeConfig = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-})).default(entityTypeConfigFieldsDefault)
+}))
 })
 
 export type EntityTypeConfig = zod.input<typeof EntityTypeConfig>;

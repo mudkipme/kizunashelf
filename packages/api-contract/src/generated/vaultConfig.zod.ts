@@ -10,7 +10,7 @@ export const vaultConfigHomeOneSectionsItemLimitMin = 0;
 
 export const vaultConfigDailyNotesOneSnippetMaxLengthMin = 0;
 
-export const vaultConfigTypesItemFieldsDefault = [];
+
 export const VaultConfig = zod.object({
   "taxonomyRoot": zod.string(),
   "assetRoot": zod.string().nullish(),
@@ -67,7 +67,7 @@ export const VaultConfig = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-})).default(vaultConfigTypesItemFieldsDefault)
+}))
 }))
 }).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
 

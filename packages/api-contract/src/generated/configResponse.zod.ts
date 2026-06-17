@@ -8,7 +8,7 @@ import { z as zod } from 'zod';
 
 export const configResponseHomeOneSectionsItemLimitMin = 0;
 
-export const configResponseTypesItemFieldsDefault = [];
+
 export const ConfigResponse = zod.object({
   "taxonomyRoot": zod.string(),
   "vaultRoot": zod.string().describe('Absolute vault root, used by the desktop runtime to resolve local assets\ndirectly from disk (the web runtime uses the `\/api\/assets` route instead).'),
@@ -61,7 +61,7 @@ export const ConfigResponse = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-})).default(configResponseTypesItemFieldsDefault)
+}))
 }))
 })
 

@@ -10,7 +10,7 @@ export const settingsConfigResponseVaultOneHomeOneSectionsItemLimitMin = 0;
 
 export const settingsConfigResponseVaultOneDailyNotesOneSnippetMaxLengthMin = 0;
 
-export const settingsConfigResponseVaultOneTypesItemFieldsDefault = [];
+
 export const SettingsConfigResponse = zod.object({
   "appConfigPath": zod.string().describe('Path to the local app config file on this machine.'),
   "appExists": zod.boolean().describe('Whether the app config file exists on disk.'),
@@ -76,7 +76,7 @@ export const SettingsConfigResponse = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-})).default(settingsConfigResponseVaultOneTypesItemFieldsDefault)
+}))
 }))
 }).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional(),
   "error": zod.string().nullish()
