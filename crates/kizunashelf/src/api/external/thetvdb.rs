@@ -2,6 +2,7 @@ use super::{external_client, provider_error, ExternalProvider, ProviderSearchCon
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::secrets::{SECRET_TVDB_API_KEY, SECRET_TVDB_PIN};
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::time::{Duration, Instant};
@@ -16,15 +17,14 @@ impl ExternalProvider for ThetvdbProvider {
         thetvdb_type_filters(provider_config).is_some()
     }
 
-    fn unavailable_reason() -> Option<String> {
-        std::env::var("KIZUNASHELF_TVDB_API_KEY")
-            .ok()
+    fn unavailable_reason(state: &AppState) -> Option<String> {
+        tvdb_api_key(state)
             .is_none()
-            .then(|| "Set KIZUNASHELF_TVDB_API_KEY".to_string())
+            .then(|| "Set the TheTVDB API key".to_string())
     }
 
-    fn available() -> bool {
-        std::env::var("KIZUNASHELF_TVDB_API_KEY").ok().is_some()
+    fn available(state: &AppState) -> bool {
+        tvdb_api_key(state).is_some()
     }
 
     async fn search(
@@ -38,25 +38,31 @@ impl ExternalProvider for ThetvdbProvider {
     }
 }
 
+fn tvdb_api_key(state: &AppState) -> Option<String> {
+    state
+        .secret_store()
+        .get(SECRET_TVDB_API_KEY)
+        .filter(|value| !value.is_empty())
+}
+
 async fn search_thetvdb(
     state: &AppState,
     q: &str,
     page_size: usize,
     provider_config: &ProviderSearchConfig,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
-    let Some(api_key) = std::env::var("KIZUNASHELF_TVDB_API_KEY")
-        .ok()
-        .filter(|value| !value.is_empty())
-    else {
+    let Some(api_key) = tvdb_api_key(state) else {
         return Ok(Vec::new());
     };
     let client = external_client();
     let mut login = Map::new();
     login.insert("apikey".to_string(), Value::String(api_key));
-    if let Ok(pin) = std::env::var("KIZUNASHELF_TVDB_PIN") {
-        if !pin.is_empty() {
-            login.insert("pin".to_string(), Value::String(pin));
-        }
+    if let Some(pin) = state
+        .secret_store()
+        .get(SECRET_TVDB_PIN)
+        .filter(|value| !value.is_empty())
+    {
+        login.insert("pin".to_string(), Value::String(pin));
     }
     let token = thetvdb_access_token(state, client, &login, false).await?;
     let Some(type_filters) = thetvdb_type_filters(provider_config) else {

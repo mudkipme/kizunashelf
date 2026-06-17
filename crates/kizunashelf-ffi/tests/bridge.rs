@@ -8,8 +8,8 @@ use std::fs;
 use std::sync::Mutex;
 
 use kizunashelf_ffi::{
-    ApiOptions, KizunaEngine, VaultFileSystem, VaultOptions, VfsDirEntry, VfsError, VfsFile,
-    VfsMetadata,
+    ApiOptions, HostSecretStore, KizunaEngine, VaultFileSystem, VaultOptions, VfsDirEntry,
+    VfsError, VfsFile, VfsMetadata,
 };
 use serde_json::Value;
 use tempfile::TempDir;
@@ -208,6 +208,34 @@ impl VaultFileSystem for FakeVault {
     }
 }
 
+/// In-memory `HostSecretStore` standing in for the Swift Keychain.
+#[derive(Default)]
+struct FakeSecretStore {
+    secrets: Mutex<HashMap<String, String>>,
+}
+
+impl FakeSecretStore {
+    fn with(entries: &[(&str, &str)]) -> Self {
+        let secrets = entries
+            .iter()
+            .map(|(key, value)| (key.to_string(), value.to_string()))
+            .collect();
+        Self {
+            secrets: Mutex::new(secrets),
+        }
+    }
+}
+
+impl HostSecretStore for FakeSecretStore {
+    fn get(&self, key: String) -> Option<String> {
+        self.secrets.lock().unwrap().get(&key).cloned()
+    }
+
+    fn set(&self, key: String, value: String) {
+        self.secrets.lock().unwrap().insert(key, value);
+    }
+}
+
 #[test]
 fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
     let vault = FakeVault::default();
@@ -228,6 +256,7 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
             read_concurrency: None,
         },
         Box::new(vault),
+        Box::new(FakeSecretStore::default()),
     )
     .expect("engine initializes from the injected vault filesystem");
 
@@ -279,6 +308,7 @@ fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
             read_concurrency: None,
         },
         Box::new(vault),
+        Box::new(FakeSecretStore::default()),
     )
     .expect("engine initializes");
 
@@ -325,4 +355,67 @@ fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
     // A missing asset surfaces as an error rather than empty bytes.
     let missing = futures::executor::block_on(engine.asset("Assets/missing.png".to_string()));
     assert!(missing.is_err());
+}
+
+const GAMES_CONFIG: &str = "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: games\n  label: Games\n  path: Games\n  externalPriority:\n  - igdb\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n  - field: igdb_url\n    fieldType: externalRef\n    displayName: IGDB\n    externalRef: igdb\n    externalTypes:\n    - game\n";
+
+fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
+    let vault = FakeVault::default();
+    vault.seed(".kizunashelf/config.yaml", GAMES_CONFIG);
+    vault.seed("Taxonomy/Games/Zelda.md", "---\ntitle: Zelda\n---\n");
+
+    let engine = KizunaEngine::with_vault(
+        VaultOptions {
+            vault_root_label: "Vault".to_string(),
+            content_writable: false,
+            cache_ttl_ms: Some(0),
+            read_concurrency: None,
+        },
+        Box::new(vault),
+        Box::new(secrets),
+    )
+    .expect("engine initializes");
+
+    // No `q` → the handler returns provider availability summaries without making
+    // any network call, so this exercises only the credential lookup.
+    let response = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/external/search?provider=igdb&type=games".to_string(),
+        None,
+    ))
+    .expect("external search request succeeds");
+    assert_eq!(response.status, 200, "search: {}", response.body);
+
+    let body: Value = serde_json::from_str(&response.body).unwrap();
+    body["providers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|provider| provider["id"] == "igdb")
+        .cloned()
+        .expect("igdb provider summary present")
+}
+
+#[test]
+fn ios_provider_availability_reads_credentials_from_the_secret_store() {
+    use kizunashelf::secrets::{SECRET_IGDB_CLIENT_ID, SECRET_IGDB_CLIENT_SECRET};
+
+    // No credentials in the store → IGDB is unavailable, with a "set credentials"
+    // reason routed through the injected secret store.
+    let without = igdb_provider_summary(FakeSecretStore::default());
+    assert_eq!(without["enabled"], false, "summary: {without}");
+    assert!(
+        without["reason"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("IGDB"),
+        "reason: {without}"
+    );
+
+    // Credentials present in the store → IGDB becomes available.
+    let with = igdb_provider_summary(FakeSecretStore::with(&[
+        (SECRET_IGDB_CLIENT_ID, "client-id"),
+        (SECRET_IGDB_CLIENT_SECRET, "client-secret"),
+    ]));
+    assert_eq!(with["enabled"], true, "summary: {with}");
 }

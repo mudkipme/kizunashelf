@@ -5,5 +5,6 @@ pub mod daily_notes;
 pub mod dates;
 pub mod library;
 pub mod relations;
+pub mod secrets;
 pub mod types;
 pub mod vfs;

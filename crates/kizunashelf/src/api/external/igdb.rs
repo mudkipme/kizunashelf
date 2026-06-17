@@ -2,6 +2,7 @@ use super::{external_client, provider_error, ExternalProvider, ProviderSearchCon
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::secrets::{SECRET_IGDB_CLIENT_ID, SECRET_IGDB_CLIENT_SECRET};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
@@ -16,14 +17,14 @@ impl ExternalProvider for IgdbProvider {
         igdb_external_types_match(provider_config)
     }
 
-    fn unavailable_reason() -> Option<String> {
-        igdb_credentials().is_none().then(|| {
-            "Set KIZUNASHELF_IGDB_CLIENT_ID and KIZUNASHELF_IGDB_CLIENT_SECRET".to_string()
-        })
+    fn unavailable_reason(state: &AppState) -> Option<String> {
+        igdb_credentials(state)
+            .is_none()
+            .then(|| "Set the IGDB client ID and client secret".to_string())
     }
 
-    fn available() -> bool {
-        igdb_credentials().is_some()
+    fn available(state: &AppState) -> bool {
+        igdb_credentials(state).is_some()
     }
 
     async fn search(
@@ -47,7 +48,7 @@ async fn search_igdb(
     if !igdb_external_types_match(provider_config) {
         return Ok(Vec::new());
     }
-    let Some((client_id, client_secret)) = igdb_credentials() else {
+    let Some((client_id, client_secret)) = igdb_credentials(state) else {
         return Ok(Vec::new());
     };
     let client = external_client();
@@ -206,9 +207,10 @@ async fn igdb_access_token(
     Ok(access_token)
 }
 
-fn igdb_credentials() -> Option<(String, String)> {
-    let client_id = std::env::var("KIZUNASHELF_IGDB_CLIENT_ID").ok()?;
-    let client_secret = std::env::var("KIZUNASHELF_IGDB_CLIENT_SECRET").ok()?;
+fn igdb_credentials(state: &AppState) -> Option<(String, String)> {
+    let store = state.secret_store();
+    let client_id = store.get(SECRET_IGDB_CLIENT_ID)?;
+    let client_secret = store.get(SECRET_IGDB_CLIENT_SECRET)?;
     (!client_id.is_empty() && !client_secret.is_empty()).then_some((client_id, client_secret))
 }
 

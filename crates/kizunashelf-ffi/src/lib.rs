@@ -9,8 +9,10 @@
 //! layered on top in Swift by swift-openapi-generator, which drives this tunnel
 //! through a custom `ClientTransport`. See ../kizunashelf-ios/docs/ios-port-plan.md §4.
 
+mod secrets;
 mod vfs;
 
+pub use secrets::{FfiSecretStore, HostSecretStore};
 pub use vfs::{FfiVfs, VaultFileSystem, VfsDirEntry, VfsError, VfsFile, VfsMetadata};
 
 use std::sync::Arc;
@@ -20,6 +22,7 @@ use axum::body::{self, Body};
 use axum::http::{header, Method, Request};
 use axum::Router;
 use kizunashelf::api::{router, router_with_vault, ApiOptions as CoreApiOptions};
+use kizunashelf::secrets::SecretStore;
 use kizunashelf::types::AppConfig;
 use kizunashelf::vfs::Vfs;
 use std::path::PathBuf;
@@ -106,6 +109,7 @@ impl KizunaEngine {
     pub fn with_vault(
         options: VaultOptions,
         vault: Box<dyn VaultFileSystem>,
+        secrets: Box<dyn HostSecretStore>,
     ) -> Result<Arc<Self>, KizunaError> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
@@ -115,6 +119,7 @@ impl KizunaEngine {
             })?;
 
         let vault_fs: Arc<dyn Vfs> = Arc::new(FfiVfs::new(vault));
+        let secret_store: Arc<dyn SecretStore> = Arc::new(FfiSecretStore::new(secrets));
         let app_config = AppConfig {
             vault_root: options.vault_root_label,
             content_writable: Some(options.content_writable),
@@ -129,7 +134,7 @@ impl KizunaEngine {
             settings_writable: false,
             content_writable: options.content_writable,
         };
-        let router = router_with_vault(core_options, vault_fs, app_config);
+        let router = router_with_vault(core_options, vault_fs, app_config, secret_store);
 
         Ok(Arc::new(Self { runtime, router }))
     }

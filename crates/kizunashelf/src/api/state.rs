@@ -1,5 +1,6 @@
 use crate::contract::AssetDownloadJob;
 use crate::library::{load_app_config, load_vault_config_via_vfs, read_library};
+use crate::secrets::{NativeSecretStore, SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
 use crate::vfs::{NativeVfs, Vfs};
 use anyhow::{Context, Result};
@@ -9,7 +10,6 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::fs;
 use tokio::sync::Mutex;
 
 /// Maximum number of finished asset-download jobs kept in memory.
@@ -41,6 +41,9 @@ pub(crate) struct AppState {
     /// Inline app config (iOS). When `None`, the app config is read from
     /// `options.config_path` (desktop/web).
     app_config: Option<AppConfig>,
+    /// Provider credentials + token cache. Desktop uses env vars + a file; iOS
+    /// uses the Keychain via an injected store.
+    secret_store: Arc<dyn SecretStore>,
     cache: Arc<Mutex<Option<CachedLibrary>>>,
     reload: Arc<Mutex<()>>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
@@ -74,15 +77,18 @@ struct DiskCachedAccessToken {
 
 impl AppState {
     pub(crate) fn new(options: ApiOptions) -> Self {
-        Self::with_vault(options, None, None)
+        let secret_store: Arc<dyn SecretStore> =
+            Arc::new(NativeSecretStore::new(&options.config_path));
+        Self::with_vault(options, None, None, secret_store)
     }
 
-    /// Builds state with an optional injected vault filesystem and inline app
-    /// config (the iOS path; see ../kizunashelf-ios/docs/ios-port-plan.md §5/§7).
+    /// Builds state with an injected vault filesystem, inline app config, and
+    /// secret store (the iOS path; see ../kizunashelf-ios/docs/ios-port-plan.md §5/§7).
     pub(crate) fn with_vault(
         options: ApiOptions,
         vault_fs: Option<Arc<dyn Vfs>>,
         app_config: Option<AppConfig>,
+        secret_store: Arc<dyn SecretStore>,
     ) -> Self {
         let http_client = reqwest::Client::builder()
             .connect_timeout(Duration::from_secs(15))
@@ -93,6 +99,7 @@ impl AppState {
             options,
             vault_fs,
             app_config,
+            secret_store,
             cache: Arc::new(Mutex::new(None)),
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
@@ -181,10 +188,10 @@ impl AppState {
                 return Some(token);
             }
         }
-        let mut disk_tokens = self.read_disk_tokens().await.ok()?;
+        let mut disk_tokens = self.read_disk_tokens().ok()?;
         let disk_token = disk_tokens.remove(key)?;
         let Some(token) = cached_token_from_disk(disk_token) else {
-            let _ = self.write_disk_tokens(&disk_tokens).await;
+            let _ = self.write_disk_tokens(&disk_tokens);
             return None;
         };
         self.store_memory_access_token(key, token.clone()).await;
@@ -197,14 +204,14 @@ impl AppState {
         token: CachedAccessToken,
     ) -> Result<()> {
         self.store_memory_access_token(key, token.clone()).await;
-        self.store_disk_access_token(key, &token).await
+        self.store_disk_access_token(key, &token)
     }
 
     pub(crate) async fn invalidate_access_token(&self, key: &str) {
         let mut tokens = self.external_tokens.lock().await;
         tokens.remove(key);
         drop(tokens);
-        let _ = self.remove_disk_access_token(key).await;
+        let _ = self.remove_disk_access_token(key);
     }
 
     async fn store_memory_access_token(&self, key: &str, token: CachedAccessToken) {
@@ -212,8 +219,8 @@ impl AppState {
         tokens.insert(key.to_string(), token);
     }
 
-    async fn store_disk_access_token(&self, key: &str, token: &CachedAccessToken) -> Result<()> {
-        let mut tokens = self.read_disk_tokens().await.unwrap_or_default();
+    fn store_disk_access_token(&self, key: &str, token: &CachedAccessToken) -> Result<()> {
+        let mut tokens = self.read_disk_tokens().unwrap_or_default();
         tokens.insert(
             key.to_string(),
             DiskCachedAccessToken {
@@ -222,64 +229,35 @@ impl AppState {
                 expires_at_unix_seconds: token.expires_at_unix_seconds,
             },
         );
-        self.write_disk_tokens(&tokens).await
+        self.write_disk_tokens(&tokens)
     }
 
-    async fn remove_disk_access_token(&self, key: &str) -> Result<()> {
-        let mut tokens = self.read_disk_tokens().await.unwrap_or_default();
+    fn remove_disk_access_token(&self, key: &str) -> Result<()> {
+        let mut tokens = self.read_disk_tokens().unwrap_or_default();
         tokens.remove(key);
-        self.write_disk_tokens(&tokens).await
+        self.write_disk_tokens(&tokens)
     }
 
-    async fn read_disk_tokens(&self) -> Result<HashMap<String, DiskCachedAccessToken>> {
-        let path = self.token_cache_path();
-        let raw = match fs::read_to_string(&path).await {
-            Ok(raw) => raw,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                return Ok(HashMap::new());
+    /// The cached provider tokens, read from the secret store (Keychain on iOS, a
+    /// `0600` JSON file on desktop). A missing/unset value is an empty map.
+    fn read_disk_tokens(&self) -> Result<HashMap<String, DiskCachedAccessToken>> {
+        match self.secret_store.get(SECRET_PROVIDER_TOKENS) {
+            Some(raw) => {
+                serde_json::from_str(&raw).context("invalid provider token cache in secret store")
             }
-            Err(error) => {
-                return Err(error).with_context(|| {
-                    format!("failed to read provider token cache {}", path.display())
-                });
-            }
-        };
-        serde_json::from_str(&raw)
-            .with_context(|| format!("invalid provider token cache {}", path.display()))
-    }
-
-    async fn write_disk_tokens(
-        &self,
-        tokens: &HashMap<String, DiskCachedAccessToken>,
-    ) -> Result<()> {
-        let path = self.token_cache_path();
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).await.with_context(|| {
-                format!(
-                    "failed to create token cache directory {}",
-                    parent.display()
-                )
-            })?;
+            None => Ok(HashMap::new()),
         }
+    }
+
+    fn write_disk_tokens(&self, tokens: &HashMap<String, DiskCachedAccessToken>) -> Result<()> {
         let raw =
             serde_json::to_string_pretty(tokens).context("failed to serialize token cache")?;
-        fs::write(&path, format!("{raw}\n"))
-            .await
-            .with_context(|| format!("failed to write provider token cache {}", path.display()))?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let _ = fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).await;
-        }
-        Ok(())
+        self.secret_store.set(SECRET_PROVIDER_TOKENS, &raw)
     }
 
-    fn token_cache_path(&self) -> PathBuf {
-        self.options
-            .config_path
-            .parent()
-            .map(|parent| parent.join(".kizunashelf.tokens.json"))
-            .unwrap_or_else(|| PathBuf::from(".kizunashelf.tokens.json"))
+    /// The secret store, used by external providers to read their credentials.
+    pub(crate) fn secret_store(&self) -> &Arc<dyn SecretStore> {
+        &self.secret_store
     }
 }
 

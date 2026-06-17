@@ -31,11 +31,11 @@ trait ExternalProvider {
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool;
 
-    fn available() -> bool {
+    fn available(_state: &AppState) -> bool {
         true
     }
 
-    fn unavailable_reason() -> Option<String> {
+    fn unavailable_reason(_state: &AppState) -> Option<String> {
         None
     }
 
@@ -122,7 +122,7 @@ pub(crate) async fn external_search(
         return Err(ApiError::bad_request("Unknown entity type"));
     }
     let configured_providers = configured_external_providers(&library.config, entity_type);
-    let providers = provider_summaries(&configured_providers);
+    let providers = provider_summaries(&state, &configured_providers);
 
     let q = query.q.as_deref().unwrap_or_default().trim();
     if q.is_empty() {
@@ -279,27 +279,31 @@ async fn search_provider<P: ExternalProvider>(
 }
 
 fn provider_summaries(
+    state: &AppState,
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> Vec<ExternalProviderSummary> {
     vec![
-        provider_summary::<bangumi::BangumiProvider>(configured_providers),
-        provider_summary::<igdb::IgdbProvider>(configured_providers),
-        provider_summary::<thetvdb::ThetvdbProvider>(configured_providers),
+        provider_summary::<bangumi::BangumiProvider>(state, configured_providers),
+        provider_summary::<igdb::IgdbProvider>(state, configured_providers),
+        provider_summary::<thetvdb::ThetvdbProvider>(state, configured_providers),
     ]
 }
 
 fn provider_summary<P: ExternalProvider>(
+    state: &AppState,
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> ExternalProviderSummary {
     ExternalProviderSummary {
         id: P::ID.to_string(),
         label: P::LABEL.to_string(),
-        enabled: provider_configured_and_supported::<P>(configured_providers) && P::available(),
-        reason: provider_reason::<P>(configured_providers),
+        enabled: provider_configured_and_supported::<P>(configured_providers)
+            && P::available(state),
+        reason: provider_reason::<P>(state, configured_providers),
     }
 }
 
 fn provider_reason<P: ExternalProvider>(
+    state: &AppState,
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> Option<String> {
     if !configured_providers.contains_key(P::ID) {
@@ -308,7 +312,7 @@ fn provider_reason<P: ExternalProvider>(
     if !provider_configured_and_supported::<P>(configured_providers) {
         return Some("No supported externalTypes configured for this source".to_string());
     }
-    P::unavailable_reason()
+    P::unavailable_reason(state)
 }
 
 fn provider_configured_and_supported<P: ExternalProvider>(

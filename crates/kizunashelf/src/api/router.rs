@@ -21,6 +21,7 @@ use crate::contract::{
     HomeResponse, PathSuggestionsResponse, RelationGroupsResponse, RelationListResponse,
     SettingsConfigResponse, StatsResponse,
 };
+use crate::secrets::SecretStore;
 use crate::types::AppConfig;
 use crate::vfs::Vfs;
 use aide::axum::routing::{get_with, post_with};
@@ -45,11 +46,13 @@ pub fn router_with_vault(
     options: ApiOptions,
     vault_fs: Arc<dyn Vfs>,
     app_config: AppConfig,
+    secret_store: Arc<dyn SecretStore>,
 ) -> Router {
     build_router(AppState::with_vault(
         options,
         Some(vault_fs),
         Some(app_config),
+        secret_store,
     ))
 }
 
