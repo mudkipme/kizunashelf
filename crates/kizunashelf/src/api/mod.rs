@@ -2,7 +2,7 @@ mod analytics;
 mod assets;
 mod entities;
 mod error;
-mod external;
+pub(crate) mod external;
 mod handlers;
 mod mutations;
 mod path_suggestions;

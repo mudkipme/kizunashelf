@@ -39,10 +39,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         external_providers["providers"][0]["fields"][0]["field"],
         "name"
     );
-    assert_eq!(
-        external_providers["providers"][0]["defaultFieldMappings"][0],
-        json!({ "roles": ["title"], "field": "name_cn" })
-    );
+    // The provider catalog deliberately carries no role→field guesses; that
+    // template-seeding data lives only in `crate::templates`.
+    assert!(external_providers["providers"][0]
+        .get("defaultFieldMappings")
+        .is_none());
     assert_eq!(
         external_providers["providers"][1]["defaultExternalTypes"],
         json!(["game"])
@@ -622,8 +623,7 @@ async fn settings_endpoints_create_and_read_config_files() {
         "taxonomyRoot": "Taxonomy",
         "dailyNotes": {
             "paths": ["Daily Notes"],
-            "datePattern": "^(\\d{4}-\\d{2}-\\d{2})\\.md$",
-            "snippetMaxLength": 120
+            "dateFormat": "YYYY-MM-DD"
         },
         "home": {
             "title": "Settings Fixture",
@@ -947,8 +947,7 @@ impl TestServer {
             "taxonomyRoot": "Taxonomy",
             "dailyNotes": {
                 "paths": ["Daily Notes"],
-                "datePattern": "^(?:Daily Notes/)?(?<date>\\d{4}-\\d{2}-\\d{2})\\.md$",
-                "snippetMaxLength": 120
+                "dateFormat": "YYYY-MM-DD"
             },
             "home": {
                 "title": "Fixture Home",

@@ -17,11 +17,7 @@ export const ExternalProviderCatalogItem = zod.object({
   "value": zod.string(),
   "label": zod.string()
 })),
-  "defaultExternalTypes": zod.array(zod.string()),
-  "defaultFieldMappings": zod.array(zod.object({
-  "roles": zod.array(zod.string()),
-  "field": zod.string()
-}))
+  "defaultExternalTypes": zod.array(zod.string())
 })
 
 export type ExternalProviderCatalogItem = zod.input<typeof ExternalProviderCatalogItem>;

@@ -172,10 +172,11 @@ pub struct HomeConfig {
 pub struct DailyNotesConfig {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub paths: Vec<String>,
+    /// Moment.js-style date format (as used by Obsidian Daily Notes) for the file
+    /// path relative to the daily-notes folder, without the `.md` extension —
+    /// e.g. `YYYY-MM-DD` or `YYYY/MM/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub date_pattern: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub snippet_max_length: Option<u32>,
+    pub date_format: Option<String>,
 }
 
 /// App-level configuration. Describes how *this machine* runs KizunaShelf and

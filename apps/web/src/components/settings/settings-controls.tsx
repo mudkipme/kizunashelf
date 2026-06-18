@@ -153,14 +153,20 @@ export function TextField({
   label,
   value,
   onChange,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }) {
   return (
     <Field label={label}>
-      <Input value={value} onChange={(event) => onChange(event.target.value)} />
+      <Input
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </Field>
   );
 }

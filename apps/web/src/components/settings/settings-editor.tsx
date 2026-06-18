@@ -21,9 +21,15 @@ import {
   joinPath,
   normalizeConfig,
   replaceAt,
-  vaultTemplates,
 } from "./settings-model";
 import { DailyNotesEditor, EntityTypeEditor, HomeEditor } from "./settings-sections";
+
+/** A starter schema preset, served by `GET /api/vault-templates`. */
+export type VaultTemplateOption = {
+  id: string;
+  label: string;
+  config: VaultConfig;
+};
 
 type SettingsEditorProps = {
   appConfigPath: string;
@@ -31,6 +37,8 @@ type SettingsEditorProps = {
   initialApp?: AppConfig;
   initialVault?: VaultConfig;
   providerCatalog?: ExternalProviderCatalog;
+  /** Onboarding presets from the core; empty outside onboarding. */
+  templates?: VaultTemplateOption[];
   onboarding?: boolean;
   /** When false, the schema is read-only (server enforces it too). */
   settingsWritable?: boolean;
@@ -43,6 +51,7 @@ export function SettingsEditor({
   initialApp,
   initialVault,
   providerCatalog,
+  templates = [],
   onboarding = false,
   settingsWritable = true,
   onBack,
@@ -68,7 +77,7 @@ export function SettingsEditor({
     ]),
   ).size;
   const overviewItems = [
-    ...(onboarding ? [{ id: "templates", title: "Templates", detail: `${vaultTemplates(providerCatalog).length} presets` }] : []),
+    ...(onboarding ? [{ id: "templates", title: "Templates", detail: `${templates.length} presets` }] : []),
     // The machine-level "App" config (vault root + write mode) is no longer
     // edited here: the self-hosted web app sources it from env vars, and the
     // desktop app from its native vault switcher.
@@ -162,10 +171,10 @@ export function SettingsEditor({
             <SettingsSection
               id="templates"
               title="Create Vault Templates"
-              summary={<SummaryBadges items={[`${vaultTemplates(providerCatalog).length} presets`]} />}
+              summary={<SummaryBadges items={[`${templates.length} presets`]} />}
             >
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                {vaultTemplates(providerCatalog).map((template) => (
+                {templates.map((template) => (
                   <Button
                     key={template.id}
                     type="button"

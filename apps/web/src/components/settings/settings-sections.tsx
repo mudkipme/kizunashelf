@@ -12,7 +12,7 @@ import {
   externalTypeOptionsForSource,
   externalTypesForSource,
 } from "@/lib/external-metadata";
-import { fieldTypeLabel, supportsEnumOptions } from "@/lib/type-config";
+import { fieldDisplayLabel, fieldTypeLabel, isDateFieldType, supportsEnumOptions } from "@/lib/type-config";
 import type {
   DailyNotesConfig,
   EntityTypeConfig,
@@ -68,18 +68,12 @@ export function DailyNotesEditor({
         pathItems
         onChange={(paths) => onChange({ ...config, paths })}
       />
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <TextField
-          label="Date pattern"
-          value={config.datePattern ?? ""}
-          onChange={(datePattern) => onChange({ ...config, datePattern })}
-        />
-        <NumberField
-          label="Snippet max length"
-          value={config.snippetMaxLength}
-          onChange={(snippetMaxLength) => onChange({ ...config, snippetMaxLength })}
-        />
-      </div>
+      <TextField
+        label="Date format"
+        value={config.dateFormat ?? ""}
+        placeholder="YYYY-MM-DD"
+        onChange={(dateFormat) => onChange({ ...config, dateFormat })}
+      />
     </div>
   );
 }
@@ -144,6 +138,15 @@ function HomeSectionEditor({
   const selectedType = types.find((type) => type.id === section.type);
   const filterFields = selectedType?.fields.filter((field) => supportsEnumOptions(field.fieldType)) ?? [];
   const filters = section.filters ?? [];
+  const sortOptions = [
+    { value: "title", label: "Title" },
+    { value: "relationCount", label: "Relation count" },
+    { value: "path", label: "Path" },
+    ...(selectedType?.fields ?? [])
+      .filter((field) => isDateFieldType(field.fieldType))
+      .map((field) => ({ value: `date:${field.field}`, label: `Date: ${fieldDisplayLabel(field)}` })),
+  ];
+  const currentSort = section.sort ?? "title";
 
   function updateFilter(index: number, filter: HomeSectionFilterConfig) {
     onChange({ ...section, filters: replaceArray(filters, index, filter) });
@@ -206,7 +209,22 @@ function HomeSectionEditor({
           </div>
         </div>
         <NumberField label="Limit" value={section.limit} onChange={(limit) => onChange({ ...section, limit })} />
-        <TextField label="Sort" value={section.sort ?? ""} onChange={(sort) => onChange({ ...section, sort })} />
+        <Field label="Sort">
+          <Select
+            value={currentSort}
+            onChange={(event) => onChange({ ...section, sort: event.target.value })}
+            className="h-9 w-full text-sm"
+          >
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+            {!sortOptions.some((option) => option.value === currentSort) ? (
+              <option value={currentSort}>{currentSort}</option>
+            ) : null}
+          </Select>
+        </Field>
         <Field label="Direction">
           <Select
             value={section.direction ?? ""}

@@ -6,15 +6,13 @@
  */
 import { z as zod } from 'zod';
 
-export const saveSettingsRequestVaultOneHomeOneSectionsItemLimitMin = 0;
+export const vaultTemplateConfigHomeOneSectionsItemLimitMin = 0;
 
 
-export const SaveSettingsRequest = zod.object({
-  "app": zod.object({
-  "vaultRoot": zod.string(),
-  "contentWritable": zod.boolean().nullish()
-}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.'),
-  "vault": zod.union([zod.object({
+export const VaultTemplate = zod.object({
+  "id": zod.string(),
+  "label": zod.string(),
+  "config": zod.object({
   "taxonomyRoot": zod.string(),
   "assetRoot": zod.string().nullish(),
   "home": zod.union([zod.object({
@@ -27,7 +25,7 @@ export const SaveSettingsRequest = zod.object({
   "field": zod.string(),
   "values": zod.array(zod.string()).optional()
 })).optional(),
-  "limit": zod.number().min(saveSettingsRequestVaultOneHomeOneSectionsItemLimitMin).nullish(),
+  "limit": zod.number().min(vaultTemplateConfigHomeOneSectionsItemLimitMin).nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
 })).optional()
@@ -71,8 +69,8 @@ export const SaveSettingsRequest = zod.object({
   "relationType": zod.string().nullish()
 }))
 }))
-}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional().describe('When omitted, only the app config is written and the vault config on disk\n(if any) is left untouched — used by onboarding to persist a chosen vault\nroot without overwriting an existing, synced vault config.')
-})
+}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
+}).describe('A ready-made starter vault schema offered during onboarding \/ vault creation.\nThe single source of truth for every frontend (web onboarding, desktop &\niOS create-vault) — see [`crate::templates`].')
 
-export type SaveSettingsRequest = zod.input<typeof SaveSettingsRequest>;
-export type SaveSettingsRequestOutput = zod.output<typeof SaveSettingsRequest>;
+export type VaultTemplate = zod.input<typeof VaultTemplate>;
+export type VaultTemplateOutput = zod.output<typeof VaultTemplate>;

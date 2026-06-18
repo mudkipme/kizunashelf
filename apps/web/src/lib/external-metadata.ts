@@ -107,32 +107,6 @@ export function externalTypesForSource(
   return [...(externalProvider(catalog, source)?.defaultExternalTypes ?? [])];
 }
 
-export function defaultExternalPriority(
-  catalog: ExternalProviderCatalog | undefined,
-  sources: string[],
-) {
-  return cleanExternalPriority(catalog, sources) ?? [];
-}
-
-export function defaultExternalMappings(
-  catalog: ExternalProviderCatalog | undefined,
-  source: string,
-  role: string,
-) {
-  const field = defaultExternalField(catalog, source, role);
-  return field ? [{ source, field }] : [];
-}
-
-export function defaultExternalBodyMappings(
-  catalog: ExternalProviderCatalog | undefined,
-  source: string,
-  role: string,
-  heading: string,
-) {
-  const field = defaultExternalField(catalog, source, role);
-  return field ? [{ source, field, heading }] : [];
-}
-
 export function candidateMetadataEntries(
   candidate: ExternalCandidate,
   typeConfig: TypeConfig | undefined,
@@ -399,20 +373,3 @@ function externalProvider(
   return catalog?.providers.find((provider) => provider.id === expected);
 }
 
-function defaultExternalField(
-  catalog: ExternalProviderCatalog | undefined,
-  source: string,
-  role: string,
-) {
-  return externalProvider(catalog, source)?.defaultFieldMappings.find((mapping) =>
-    mapping.roles.includes(role),
-  )?.field;
-}
-
-function cleanExternalPriority(catalog: ExternalProviderCatalog | undefined, values: string[]) {
-  const allowed = new Set(externalSourceOptions(catalog).map((option) => option.source));
-  const cleaned = values
-    .map((value) => value.trim().toLowerCase())
-    .filter((value, index, items) => allowed.has(value) && items.indexOf(value) === index);
-  return cleaned.length > 0 ? cleaned : undefined;
-}

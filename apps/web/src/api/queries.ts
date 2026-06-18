@@ -20,7 +20,7 @@ import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import { getProviderCatalog } from "@/api/external";
-import { getSettingsConfig } from "@/api/settings";
+import { getSettingsConfig, getVaultTemplates } from "@/api/settings";
 
 export const queryKeys = {
   analytics: ["analytics"] as const,
@@ -37,6 +37,7 @@ export const queryKeys = {
   relationGroups: ["relationGroups"] as const,
   settingsConfig: ["settingsConfig"] as const,
   stats: (params?: GetStatsParams) => ["stats", params ?? {}] as const,
+  vaultTemplates: ["vaultTemplates"] as const,
 };
 
 export function analyticsQuery() {
@@ -140,5 +141,12 @@ export function statsQuery(params?: GetStatsParams) {
   return queryOptions({
     queryKey: queryKeys.stats(params),
     queryFn: ({ signal }) => getStats(params, { signal }, apiFetch),
+  });
+}
+
+export function vaultTemplatesQuery() {
+  return queryOptions({
+    queryKey: queryKeys.vaultTemplates,
+    queryFn: ({ signal }) => getVaultTemplates({ signal }),
   });
 }

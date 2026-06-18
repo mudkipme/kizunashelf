@@ -6,13 +6,9 @@
  */
 import { z as zod } from 'zod';
 
-export const dailyNotesConfigSnippetMaxLengthMin = 0;
-
-
 export const DailyNotesConfig = zod.object({
   "paths": zod.array(zod.string()).optional(),
-  "datePattern": zod.string().nullish(),
-  "snippetMaxLength": zod.number().min(dailyNotesConfigSnippetMaxLengthMin).nullish()
+  "dateFormat": zod.string().nullish().describe('Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY\/MM\/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.')
 })
 
 export type DailyNotesConfig = zod.input<typeof DailyNotesConfig>;

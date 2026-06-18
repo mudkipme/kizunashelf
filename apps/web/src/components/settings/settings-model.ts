@@ -1,10 +1,6 @@
 import {
-  defaultExternalBodyMappings,
-  defaultExternalMappings,
-  defaultExternalPriority,
   externalFieldOptionsForSource,
   externalTypeOptionsForSource,
-  externalTypesForSource,
   externalSourceOptions,
 } from "@/lib/external-metadata";
 import { isIso639TitleLanguage } from "@/lib/title-language";
@@ -48,8 +44,7 @@ export function normalizeConfig(app?: AppConfig, vault?: VaultConfig): MergedCon
 function normalizeDailyNotes(config: DailyNotesConfig): DailyNotesConfig {
   return {
     paths: config.paths ?? [],
-    datePattern: config.datePattern ?? "",
-    snippetMaxLength: config.snippetMaxLength ?? null,
+    dateFormat: config.dateFormat ?? "",
   };
 }
 
@@ -112,8 +107,7 @@ export function cleanConfig(
       dailyNotes: config.dailyNotes
         ? {
             paths: cleanStrings(config.dailyNotes.paths),
-            datePattern: emptyToUndefined(config.dailyNotes.datePattern),
-            snippetMaxLength: config.dailyNotes.snippetMaxLength ?? undefined,
+            dateFormat: emptyToUndefined(config.dailyNotes.dateFormat),
           }
         : undefined,
       home: config.home
@@ -260,8 +254,7 @@ export function defaultConfig(): MergedConfig {
 export function defaultDailyNotes(): DailyNotesConfig {
   return {
     paths: ["Daily Notes"],
-    datePattern: "^(\\d{4}-\\d{2}-\\d{2})\\.md$",
-    snippetMaxLength: 260,
+    dateFormat: "YYYY-MM-DD",
   };
 }
 
@@ -304,147 +297,6 @@ export function defaultEntityType(): EntityTypeConfig {
 
 export function defaultField(): FieldConfig {
   return { field: "field", fieldType: "text", displayName: "" };
-}
-
-export function vaultTemplates(providerCatalog?: ExternalProviderCatalog): Array<{ id: string; label: string; config: MergedConfig }> {
-  return [
-    {
-      id: "media",
-      label: "Media Library",
-      config: {
-        ...defaultConfig(),
-        types: [
-          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", [externalRef("bangumi_url", "bangumi")], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", [externalRef("thetvdb_url", "thetvdb")], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", [externalRef("bangumi_url", "bangumi"), externalRef("thetvdb_url", "thetvdb")], ["release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "games", "Games", "🎮", "Games", [externalRef("igdb_url", "igdb")], ["release_date"], ["complete_date"]),
-        ],
-        home: {
-          title: "Home",
-          sections: [
-            { id: "recent-anime", title: "Recent Anime", type: "anime", limit: 12, sort: "date:season", direction: "desc" },
-            { id: "games", title: "Games", type: "games", limit: 12, sort: "title", direction: "asc" },
-          ],
-        },
-      },
-    },
-    {
-      id: "watching",
-      label: "Anime + Drama + Movies",
-      config: {
-        ...defaultConfig(),
-        types: [
-          mediaType(providerCatalog, "anime", "Anime", "📺", "Anime", [externalRef("bangumi_url", "bangumi")], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "drama", "Drama", "🎭", "Drama", [externalRef("thetvdb_url", "thetvdb")], ["season", "release_date"], ["complete_date"]),
-          mediaType(providerCatalog, "movie", "Movie", "🎬", "Movie", [externalRef("bangumi_url", "bangumi"), externalRef("thetvdb_url", "thetvdb")], ["release_date"], ["complete_date"]),
-        ],
-      },
-    },
-    {
-      id: "games",
-      label: "Games",
-      config: {
-        ...defaultConfig(),
-        types: [mediaType(providerCatalog, "games", "Games", "🎮", "Games", [externalRef("igdb_url", "igdb")], ["release_date"], ["complete_date"])],
-      },
-    },
-    {
-      id: "books",
-      label: "Books",
-      config: {
-        ...defaultConfig(),
-        types: [mediaType(providerCatalog, "books", "Books", "📚", "Books", [], ["release_date"], ["complete_date"])],
-      },
-    },
-    {
-      id: "blank",
-      label: "Custom Blank",
-      config: {
-        ...defaultConfig(),
-        home: { title: "Home", sections: [] },
-        types: [defaultEntityType()],
-      },
-    },
-  ];
-}
-
-type ExternalRefTemplate = {
-  field: string;
-  source: string;
-};
-
-function externalRef(field: string, source: string): ExternalRefTemplate {
-  return { field, source };
-}
-
-function mediaType(
-  providerCatalog: ExternalProviderCatalog | undefined,
-  id: string,
-  label: string,
-  icon: string,
-  path: string,
-  externalRefs: ExternalRefTemplate[],
-  planningDates: string[],
-  completedDates: string[],
-): EntityTypeConfig {
-  const stateOptions = ["Backlog", "Watching", "Playing", "Reading", "Completed", "Paused", "Dropped"];
-  return {
-    id,
-    label,
-    icon,
-    path,
-    externalPriority: defaultExternalPriority(providerCatalog, externalRefs.map((ref) => ref.source)),
-    filename: { titleLanguage: "zh", defaultTitle: true },
-    bodyMappings: defaultExternalBodyMappings(providerCatalog, defaultExternalSource(externalRefs), "summary", "Summary"),
-    fields: [
-      { field: "uid", fieldType: "id", displayName: "UID" },
-      { field: "id", fieldType: "id", displayName: "ID" },
-      { field: "title", fieldType: "title", displayName: "Title", titleLanguage: "zh", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "title") },
-      { field: "title_original", fieldType: "title", displayName: "Title (Original)", titleRole: "original", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "originalTitle") },
-      { field: "title_en", fieldType: "title", displayName: "Title (English)", titleLanguage: "en", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "titleEn") },
-      { field: "title_ja", fieldType: "title", displayName: "Title (Japanese)", titleLanguage: "ja", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "titleJa") },
-      { field: "cover_url", fieldType: "image", displayName: "Cover", externalFields: defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "cover") },
-      { field: "state", fieldType: "enum", displayName: "State", enumOptions: stateOptions },
-      { field: "progress", fieldType: "progress", displayName: "Progress", totalProgressField: "episodes" },
-      { field: "episodes", fieldType: "totalProgress", displayName: "Episodes" },
-      { field: "rating", fieldType: "rating", displayName: "Rating" },
-      ...planningDates.map((field) =>
-        field === "season"
-          ? ({
-              field,
-              fieldType: "season",
-              displayName: "Season",
-              dateRole: "planning",
-              seasonLanguage: "zh",
-            } satisfies FieldConfig)
-          : ({
-              field,
-              fieldType: "date",
-              displayName: field === "release_date" ? "Release date" : field,
-              dateRole: "planning",
-              externalFields: field === "release_date" ? defaultExternalMappings(providerCatalog, defaultExternalSource(externalRefs), "releaseDate") : [],
-            } satisfies FieldConfig),
-      ),
-      ...completedDates.map((field) => ({
-        field,
-        fieldType: "date",
-        displayName: field === "complete_date" ? "Completed date" : field,
-        dateRole: "completed",
-      }) satisfies FieldConfig),
-      ...externalRefs.map((ref) => ({
-        field: ref.field,
-        fieldType: "externalRef",
-        displayName: ref.field,
-        externalRef: ref.source,
-        externalTypes: externalTypesForSource(providerCatalog, ref.source),
-      }) satisfies FieldConfig),
-      { field: "franchise", fieldType: "relation", displayName: "Franchise", relationType: "franchise" },
-    ],
-  };
-}
-
-function defaultExternalSource(externalRefs: ExternalRefTemplate[]) {
-  return externalRefs[0]?.source ?? "";
 }
 
 export function replaceAt<T, K extends keyof T>(

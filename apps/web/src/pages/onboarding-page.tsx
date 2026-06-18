@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
+import { providerCatalogQuery, settingsConfigQuery, vaultTemplatesQuery } from "@/api/queries";
 import { SettingsEditor } from "@/components/settings/settings-editor";
 import { VaultSwitcher } from "@/components/settings/vault-switcher";
 import { isDesktopRuntime } from "@/lib/desktop";
@@ -18,6 +18,7 @@ export function OnboardingPage() {
   const queryClient = useQueryClient();
   const settings = useQuery(settingsConfigQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
+  const templates = useQuery(vaultTemplatesQuery());
   const desktop = isDesktopRuntime();
 
   const refresh = () => void queryClient.invalidateQueries();
@@ -26,14 +27,14 @@ export function OnboardingPage() {
   if (desktop && settings.error) {
     // Desktop replies 503 (query error) until a vault is open.
     body = <VaultSwitcher onboarding onChanged={refresh} />;
-  } else if (settings.isPending || providerCatalog.isPending) {
+  } else if (settings.isPending || providerCatalog.isPending || templates.isPending) {
     body = (
       <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
     );
-  } else if (settings.error || providerCatalog.error) {
+  } else if (settings.error || providerCatalog.error || templates.error) {
     body = (
       <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-        {errorMessage(settings.error ?? providerCatalog.error)}
+        {errorMessage(settings.error ?? providerCatalog.error ?? templates.error)}
       </div>
     );
   } else {
@@ -44,6 +45,7 @@ export function OnboardingPage() {
         initialApp={settings.data?.app ?? { vaultRoot: "" }}
         initialVault={settings.data?.vault}
         providerCatalog={providerCatalog.data}
+        templates={templates.data?.templates ?? []}
         onboarding
         onSaved={() => {
           refresh();

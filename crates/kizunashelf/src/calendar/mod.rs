@@ -5,7 +5,7 @@ pub use types::*;
 
 use crate::contract::{CalendarFilters, CalendarResponse, CalendarTotals};
 use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_frontmatter};
-use crate::dates::{clamp_number, is_in_month, normalize_date, parse_exact_date};
+use crate::dates::{is_in_month, normalize_date, parse_exact_date};
 use crate::library::{compare_string, wikilink_regex};
 use crate::relations::summary_by_id;
 use crate::types::{
@@ -16,6 +16,10 @@ use anyhow::Result;
 use chrono::Datelike;
 use mentions::{clean_mention_snippet, mention_blocks};
 use std::collections::HashMap;
+
+/// Maximum character length of the cleaned context preview shown for a
+/// daily-note mention before it is truncated with an ellipsis.
+const SNIPPET_MAX_LENGTH: usize = 260;
 
 pub async fn build_calendar(
     library: &Library,
@@ -476,17 +480,6 @@ async fn entity_daily_note_entries(
     let daily_files = daily_note_files(&library.config, vfs, None, None, true).await?;
     let by_basename = entity_basename_index(library);
     let mut grouped: HashMap<String, EntityDateDailyNoteEntry> = HashMap::new();
-    let snippet_max_length = clamp_number(
-        library
-            .config
-            .daily_notes
-            .as_ref()
-            .and_then(|item| item.snippet_max_length)
-            .unwrap_or(260) as f64,
-        80,
-        600,
-    ) as usize;
-
     for file in daily_files {
         let Some(file_date) = file.date.as_ref() else {
             continue;
@@ -515,7 +508,7 @@ async fn entity_daily_note_entries(
                         snippets: Vec::new(),
                     });
             let snippet = CalendarSnippet {
-                text: clean_mention_snippet(&block.text, snippet_max_length),
+                text: clean_mention_snippet(&block.text, SNIPPET_MAX_LENGTH),
                 heading: block.heading,
                 line: block.line,
             };
@@ -551,17 +544,6 @@ async fn daily_note_calendar_entries(
     .await?;
     let by_basename = entity_basename_index(library);
     let mut grouped: HashMap<String, CalendarEntry> = HashMap::new();
-    let snippet_max_length = clamp_number(
-        library
-            .config
-            .daily_notes
-            .as_ref()
-            .and_then(|item| item.snippet_max_length)
-            .unwrap_or(260) as f64,
-        80,
-        600,
-    ) as usize;
-
     for file in daily_files {
         let Some(file_date) = file.date.as_ref() else {
             continue;
@@ -596,7 +578,7 @@ async fn daily_note_calendar_entries(
                     snippets: Some(Vec::new()),
                 });
                 let snippet = CalendarSnippet {
-                    text: clean_mention_snippet(&block.text, snippet_max_length),
+                    text: clean_mention_snippet(&block.text, SNIPPET_MAX_LENGTH),
                     heading: block.heading.clone(),
                     line: block.line,
                 };

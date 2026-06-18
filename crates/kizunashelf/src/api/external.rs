@@ -5,8 +5,8 @@ mod thetvdb;
 
 use crate::contract::{
     ExternalCandidate, ExternalProviderCatalogItem, ExternalProviderCatalogResponse,
-    ExternalProviderDefaultFieldMapping, ExternalProviderFieldOption, ExternalProviderSummary,
-    ExternalProviderTypeOption, ExternalSearchResponse,
+    ExternalProviderFieldOption, ExternalProviderSummary, ExternalProviderTypeOption,
+    ExternalSearchResponse,
 };
 use crate::dates::clamp_number;
 use crate::types::{FieldType, KizunaConfig};
@@ -190,50 +190,37 @@ pub(crate) async fn external_search(
 
 pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogResponse> {
     Json(ExternalProviderCatalogResponse {
-        providers: vec![
+        providers: provider_catalog_items(),
+    })
+}
+
+/// The static provider catalog (id, label, field/type options, default
+/// role→field mappings). Shared between the `/api/external/providers` endpoint
+/// and the vault-template builder so external-field wiring has a single source.
+pub(crate) fn provider_catalog_items() -> Vec<ExternalProviderCatalogItem> {
+    vec![
             provider_catalog_item::<bangumi::BangumiProvider>(
                 bangumi::field_options(),
                 bangumi::type_options(),
                 &[],
-                &[
-                    default_field_mapping(&["title"], "name_cn"),
-                    default_field_mapping(&["originalTitle", "titleJa"], "name"),
-                    default_field_mapping(&["cover"], "cover_url"),
-                    default_field_mapping(&["releaseDate"], "date"),
-                    default_field_mapping(&["summary"], "summary"),
-                ],
             ),
             provider_catalog_item::<igdb::IgdbProvider>(
                 igdb::field_options(),
                 igdb::type_options(),
                 &["game"],
-                &[
-                    default_field_mapping(&["title", "originalTitle"], "name"),
-                    default_field_mapping(&["cover"], "cover_url"),
-                    default_field_mapping(&["releaseDate"], "first_release_date"),
-                    default_field_mapping(&["summary"], "summary"),
-                ],
             ),
             provider_catalog_item::<thetvdb::ThetvdbProvider>(
                 thetvdb::field_options(),
                 thetvdb::type_options(),
                 &[],
-                &[
-                    default_field_mapping(&["title", "originalTitle"], "name"),
-                    default_field_mapping(&["cover"], "cover_url"),
-                    default_field_mapping(&["releaseDate"], "first_air_time"),
-                    default_field_mapping(&["summary"], "overview"),
-                ],
             ),
-        ],
-    })
+    ]
 }
 
 fn provider_catalog_item<P: ExternalProvider>(
     fields: Vec<ExternalProviderFieldOption>,
     types: Vec<ExternalProviderTypeOption>,
     default_external_types: &[&str],
-    default_field_mappings: &[ExternalProviderDefaultFieldMapping],
 ) -> ExternalProviderCatalogItem {
     ExternalProviderCatalogItem {
         id: P::ID.to_string(),
@@ -244,14 +231,6 @@ fn provider_catalog_item<P: ExternalProvider>(
             .iter()
             .map(|value| value.to_string())
             .collect(),
-        default_field_mappings: default_field_mappings.to_vec(),
-    }
-}
-
-fn default_field_mapping(roles: &[&str], field: &str) -> ExternalProviderDefaultFieldMapping {
-    ExternalProviderDefaultFieldMapping {
-        roles: roles.iter().map(|value| value.to_string()).collect(),
-        field: field.to_string(),
     }
 }
 

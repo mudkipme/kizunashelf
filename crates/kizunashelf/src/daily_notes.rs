@@ -1,8 +1,7 @@
-use crate::dates::{is_in_month, parse_exact_date};
+use crate::dates::is_in_month;
 use crate::types::KizunaConfig;
 use crate::vfs::{self, Vfs};
 use anyhow::Result;
-use regex::Regex;
 use std::collections::HashMap;
 
 #[derive(Clone)]
@@ -29,7 +28,7 @@ pub async fn daily_note_files(
     month: Option<u32>,
     require_date: bool,
 ) -> Result<Vec<DailyNoteFile>> {
-    let pattern = daily_note_date_pattern(config);
+    let format = daily_note_date_format(config);
 
     // 1. Walk directory listings (cheap: one `read_dir` per directory) and filter
     //    by date from the path/filename — no file contents read yet.
@@ -41,8 +40,14 @@ pub async fn daily_note_files(
                 .next()
                 .unwrap_or(&relative_path)
                 .to_string();
-            let date = daily_note_date(&relative_path, &pattern)
-                .or_else(|| daily_note_date(&basename, &pattern));
+            // Match against the path relative to the daily-notes folder first so
+            // formats that include subfolders (e.g. `YYYY/MM-DD`) resolve, then
+            // fall back to the bare basename.
+            let relative_to_folder = relative_path
+                .strip_prefix(&format!("{path}/"))
+                .unwrap_or(&relative_path);
+            let date = daily_note_date(relative_to_folder, &format)
+                .or_else(|| daily_note_date(&basename, &format));
 
             if require_date && date.is_none() {
                 continue;
@@ -137,27 +142,138 @@ fn daily_note_paths(config: &KizunaConfig) -> Vec<String> {
         .unwrap_or_else(|| vec!["Daily Notes".to_string()])
 }
 
-fn daily_note_date_pattern(config: &KizunaConfig) -> Regex {
-    config
+/// Moment.js-style default, matching Obsidian's out-of-the-box Daily Notes
+/// format and filenames like `2026-06-16.md`.
+const DEFAULT_DATE_FORMAT: &str = "YYYY-MM-DD";
+
+/// Resolve the configured Moment.js-style date format and translate it to a
+/// chrono `strftime` format ready for parsing.
+fn daily_note_date_format(config: &KizunaConfig) -> String {
+    let moment = config
         .daily_notes
         .as_ref()
-        .and_then(|daily_notes| daily_notes.date_pattern.as_ref())
-        .and_then(|pattern| Regex::new(pattern).ok())
-        .unwrap_or_else(|| Regex::new(r"^(?<date>\d{4}-\d{2}-\d{2})\.md$").unwrap())
+        .and_then(|daily_notes| daily_notes.date_format.as_deref())
+        .map(str::trim)
+        .filter(|format| !format.is_empty())
+        .unwrap_or(DEFAULT_DATE_FORMAT);
+    moment_format_to_chrono(moment)
 }
 
-fn daily_note_date(path: &str, pattern: &Regex) -> Option<String> {
-    let captures = pattern.captures(path)?;
-    let date = captures
-        .name("date")
-        .or_else(|| captures.get(1))
-        .map(|capture| capture.as_str())?;
-    parse_exact_date(Some(date))
+/// Parse a daily-note filename candidate (with the `.md` extension stripped)
+/// against the chrono format, returning a normalized `YYYY-MM-DD` string. The
+/// whole candidate must match, which also rejects impossible dates (e.g.
+/// `2025-02-30`).
+fn daily_note_date(candidate: &str, chrono_format: &str) -> Option<String> {
+    let candidate = candidate.strip_suffix(".md").unwrap_or(candidate);
+    let date = chrono::NaiveDate::parse_from_str(candidate, chrono_format).ok()?;
+    Some(date.format("%Y-%m-%d").to_string())
+}
+
+/// Convert a Moment.js-style date format (as used by Obsidian Daily Notes) into
+/// a chrono `strftime` format. Only the tokens meaningful for a daily-note
+/// filename are translated; bracketed text `[literal]` is emitted verbatim and
+/// any other character passes through as a literal (with `%` escaped so it is
+/// not mistaken for a chrono specifier).
+fn moment_format_to_chrono(format: &str) -> String {
+    // Longest tokens first so e.g. `YYYY` is matched before `YY`.
+    const TOKENS: &[(&str, &str)] = &[
+        ("YYYY", "%Y"),
+        ("YY", "%y"),
+        ("MMMM", "%B"),
+        ("MMM", "%b"),
+        ("MM", "%m"),
+        ("M", "%m"),
+        ("DD", "%d"),
+        ("D", "%d"),
+        ("dddd", "%A"),
+        ("ddd", "%a"),
+        ("HH", "%H"),
+        ("H", "%H"),
+        ("hh", "%I"),
+        ("h", "%I"),
+        ("mm", "%M"),
+        ("ss", "%S"),
+        ("A", "%p"),
+    ];
+
+    let mut out = String::with_capacity(format.len() + 8);
+    let mut rest = format;
+    while !rest.is_empty() {
+        if let Some(inner) = rest.strip_prefix('[') {
+            if let Some(end) = inner.find(']') {
+                push_literal(&mut out, &inner[..end]);
+                rest = &inner[end + 1..];
+                continue;
+            }
+        }
+        if let Some((token, repl)) = TOKENS.iter().find(|(token, _)| rest.starts_with(token)) {
+            out.push_str(repl);
+            rest = &rest[token.len()..];
+            continue;
+        }
+        let ch = rest.chars().next().unwrap();
+        push_literal_char(&mut out, ch);
+        rest = &rest[ch.len_utf8()..];
+    }
+    out
+}
+
+fn push_literal(out: &mut String, literal: &str) {
+    for ch in literal.chars() {
+        push_literal_char(out, ch);
+    }
+}
+
+fn push_literal_char(out: &mut String, ch: char) {
+    if ch == '%' {
+        out.push_str("%%");
+    } else {
+        out.push(ch);
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::normalize_wikilink_target;
+    use super::{daily_note_date, moment_format_to_chrono, normalize_wikilink_target};
+
+    #[test]
+    fn moment_tokens_map_to_chrono() {
+        assert_eq!(moment_format_to_chrono("YYYY-MM-DD"), "%Y-%m-%d");
+        assert_eq!(moment_format_to_chrono("YYYY/MM/DD"), "%Y/%m/%d");
+        assert_eq!(moment_format_to_chrono("DD-MM-YYYY"), "%d-%m-%Y");
+        assert_eq!(moment_format_to_chrono("YYYY-MMM-DD"), "%Y-%b-%d");
+        // Bracketed text and unknown characters stay literal.
+        assert_eq!(moment_format_to_chrono("[Daily] YYYY"), "Daily %Y");
+        assert_eq!(moment_format_to_chrono("YYYY年MM月DD日"), "%Y年%m月%d日");
+    }
+
+    #[test]
+    fn default_format_extracts_date_from_filename() {
+        let format = moment_format_to_chrono("YYYY-MM-DD");
+        assert_eq!(
+            daily_note_date("2025-04-21.md", &format),
+            Some("2025-04-21".to_string())
+        );
+        // Impossible dates are rejected.
+        assert_eq!(daily_note_date("2025-02-30.md", &format), None);
+        // A non-matching name yields nothing.
+        assert_eq!(daily_note_date("notes.md", &format), None);
+    }
+
+    #[test]
+    fn custom_formats_extract_and_normalize() {
+        let slashed = moment_format_to_chrono("YYYY/MM-DD");
+        assert_eq!(
+            daily_note_date("2026/06-16", &slashed),
+            Some("2026-06-16".to_string())
+        );
+        // Single-digit M/D tokens accept unpadded values and normalize output.
+        let unpadded = moment_format_to_chrono("YYYY-M-D");
+        assert_eq!(
+            daily_note_date("2026-6-9.md", &unpadded),
+            Some("2026-06-09".to_string())
+        );
+    }
 
     #[test]
     fn normalize_matches_across_nfc_and_nfd() {

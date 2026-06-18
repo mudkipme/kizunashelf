@@ -70,7 +70,6 @@ export * from "./generated/externalCandidate.zod.js";
 export * from "./generated/externalBodyMapping.zod.js";
 export * from "./generated/externalProviderCatalogItem.zod.js";
 export * from "./generated/externalProviderCatalogResponse.zod.js";
-export * from "./generated/externalProviderDefaultFieldMapping.zod.js";
 export * from "./generated/externalProviderFieldOption.zod.js";
 export * from "./generated/externalProviderSummary.zod.js";
 export * from "./generated/externalProviderTypeOption.zod.js";
@@ -89,6 +88,8 @@ export * from "./generated/relationGroupsResponse.zod.js";
 export * from "./generated/relationListResponse.zod.js";
 export * from "./generated/relationTargetTypeSummary.zod.js";
 export * from "./generated/statsResponse.zod.js";
+export * from "./generated/vaultTemplate.zod.js";
+export * from "./generated/vaultTemplatesResponse.zod.js";
 
 export const ApiResponseSchemas = {
   health: HealthResponseSchema,

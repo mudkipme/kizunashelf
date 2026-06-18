@@ -86,8 +86,7 @@ export type HomeConfig = {
 
 export type DailyNotesConfig = {
   paths: string[];
-  datePattern?: string | null;
-  snippetMaxLength?: number | null;
+  dateFormat?: string | null;
 };
 
 // App-level config: where the vault lives and whether it is writable. Sourced by
@@ -110,6 +109,18 @@ export type VaultConfig = {
 
 // Editor working shape: app + vault fields flattened into one form model.
 export type MergedConfig = AppConfig & VaultConfig;
+
+// A built-in starter schema offered during onboarding, served by
+// GET /api/vault-templates. The single source of truth lives in the Rust core.
+export type VaultTemplate = {
+  id: string;
+  label: string;
+  config: VaultConfig;
+};
+
+export type VaultTemplatesResponse = {
+  templates: VaultTemplate[];
+};
 
 export type SaveSettingsRequest = {
   app: AppConfig;

@@ -101,7 +101,6 @@ pub struct ExternalProviderCatalogItem {
     pub fields: Vec<ExternalProviderFieldOption>,
     pub types: Vec<ExternalProviderTypeOption>,
     pub default_external_types: Vec<String>,
-    pub default_field_mappings: Vec<ExternalProviderDefaultFieldMapping>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -118,11 +117,21 @@ pub struct ExternalProviderTypeOption {
     pub label: String,
 }
 
+/// A ready-made starter vault schema offered during onboarding / vault creation.
+/// The single source of truth for every frontend (web onboarding, desktop &
+/// iOS create-vault) — see [`crate::templates`].
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ExternalProviderDefaultFieldMapping {
-    pub roles: Vec<String>,
-    pub field: String,
+pub struct VaultTemplate {
+    pub id: String,
+    pub label: String,
+    pub config: VaultConfig,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct VaultTemplatesResponse {
+    pub templates: Vec<VaultTemplate>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

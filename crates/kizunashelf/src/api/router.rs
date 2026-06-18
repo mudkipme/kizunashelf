@@ -7,7 +7,7 @@ use super::entities::{entities, entity_dates, entity_detail};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
     calendar, calendar_planning, capabilities, config, health, home, refresh, relation_groups,
-    relations, save_settings_config, settings_config,
+    relations, save_settings_config, settings_config, vault_templates,
 };
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
@@ -19,7 +19,7 @@ use crate::contract::{
     DeleteEntityResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
     ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
     HomeResponse, PathSuggestionsResponse, RelationGroupsResponse, RelationListResponse,
-    SettingsConfigResponse, StatsResponse,
+    SettingsConfigResponse, StatsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -168,6 +168,13 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<200, Json<PathSuggestionsResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/vault-templates",
+            get_with(vault_templates, |op| {
+                op.id("getVaultTemplates")
+                    .response::<200, Json<VaultTemplatesResponse>>()
             }),
         )
         .api_route(

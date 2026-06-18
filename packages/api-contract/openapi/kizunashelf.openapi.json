@@ -240,6 +240,23 @@
         }
       }
     },
+    "/api/vault-templates": {
+      "get": {
+        "operationId": "getVaultTemplates",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultTemplatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/home": {
       "get": {
         "operationId": "getHome",
@@ -1953,19 +1970,12 @@
               "type": "string"
             }
           },
-          "datePattern": {
+          "dateFormat": {
+            "description": "Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY/MM/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.",
             "type": [
               "string",
               "null"
             ]
-          },
-          "snippetMaxLength": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "uint32",
-            "minimum": 0
           }
         }
       },
@@ -2020,6 +2030,40 @@
         },
         "required": [
           "suggestions"
+        ]
+      },
+      "VaultTemplatesResponse": {
+        "type": "object",
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VaultTemplate"
+            }
+          }
+        },
+        "required": [
+          "templates"
+        ]
+      },
+      "VaultTemplate": {
+        "description": "A ready-made starter vault schema offered during onboarding / vault creation.\nThe single source of truth for every frontend (web onboarding, desktop &\niOS create-vault) — see [`crate::templates`].",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "config": {
+            "$ref": "#/components/schemas/VaultConfig"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "config"
         ]
       },
       "HomeResponse": {
@@ -3443,12 +3487,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "defaultFieldMappings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ExternalProviderDefaultFieldMapping"
-            }
           }
         },
         "required": [
@@ -3456,8 +3494,7 @@
           "label",
           "fields",
           "types",
-          "defaultExternalTypes",
-          "defaultFieldMappings"
+          "defaultExternalTypes"
         ]
       },
       "ExternalProviderFieldOption": {
@@ -3488,24 +3525,6 @@
         "required": [
           "value",
           "label"
-        ]
-      },
-      "ExternalProviderDefaultFieldMapping": {
-        "type": "object",
-        "properties": {
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "field": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "roles",
-          "field"
         ]
       },
       "ExternalSearchQuery": {

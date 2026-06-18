@@ -148,6 +148,10 @@ import type {
   UpdateEntityRequest
 } from './updateEntityRequest.zod';
 
+import {
+  VaultTemplatesResponse
+} from './vaultTemplatesResponse.zod';
+
 export const getGetHealthUrl = () => {
 
 
@@ -353,6 +357,35 @@ export const getPathSuggestions = async (params?: GetPathSuggestionsParams, opti
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? PathSuggestionsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetVaultTemplatesUrl = () => {
+
+
+
+
+  return `/api/vault-templates`
+}
+
+export const getVaultTemplates = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<VaultTemplatesResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetVaultTemplatesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? VaultTemplatesResponse.parse(parsedBody) : parsedBody
   return data
 }
 

@@ -8,7 +8,7 @@ KizunaShelf is schema-driven. There are two kinds of configuration:
   - **Desktop**: a vault list managed in-app (Obsidian-style switching), stored in the app's data directory.
   - **iOS**: vaults opened from Files via security-scoped bookmarks.
 
-The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema. `config/vault-config.example.yaml` is the working vault-config example.
+The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and the starter vault templates (used by web onboarding, desktop, and iOS vault creation) live in `crates/kizunashelf/src/templates.rs`. `config/vault-config.example.yaml` is generated from the "Media Library" starter template (`cargo run -p kizunashelf --example starter_yaml`) — don't edit it by hand.
 
 ## First Run
 
@@ -77,7 +77,7 @@ The vault config always lives at a fixed location relative to the vault root:
 <vaultRoot>/.kizunashelf/config.yaml
 ```
 
-An example vault config is available at `config/vault-config.example.yaml`. Onboarding is shown only when this file is missing; when the vault already contains a synced `.kizunashelf/config.yaml`, any machine pointing at the vault picks up the schema automatically.
+An example vault config (generated from the "Media Library" starter template) is available at `config/vault-config.example.yaml`. Onboarding is shown only when the vault has no `.kizunashelf/config.yaml` yet; when the vault already contains a synced one, any machine pointing at the vault picks up the schema automatically. Onboarding's template picker is served from the core by `GET /api/vault-templates`.
 
 ### App-level settings (per runtime)
 
@@ -99,7 +99,7 @@ The provider token cache holds derived OAuth tokens (re-derivable, never user se
 The Settings page at `/settings` edits the vault schema (every field below lives in the vault config). There is no longer an "App" section — the vault root and write mode are runtime settings (env vars on web; the vault switcher on desktop), not editable here.
 
 - Vault: `taxonomyRoot`, `assetRoot`
-- Daily notes: `paths`, `datePattern`, `snippetMaxLength`
+- Daily notes: `paths`, `dateFormat`
 - Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`, and filters
 - Types: `id`, `label`, `icon`, `path`, `filename`, `externalPriority`, `fields`
 - Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
@@ -559,24 +559,22 @@ Daily notes let KizunaShelf find entity mentions outside taxonomy files.
 dailyNotes:
   paths:
   - Daily Notes
-  datePattern: '^(?:Daily Notes/)?(?<date>\d{4}-\d{2}-\d{2})\.md$'
-  snippetMaxLength: 260
+  dateFormat: YYYY-MM-DD
 ```
 
 | Key | Required | Type | Description |
 | --- | --- | --- | --- |
 | `paths` | no | string[] | Folders under `vaultRoot` to scan for daily note Markdown files. Defaults to `Daily Notes` when daily note features need paths. |
-| `datePattern` | no | regex string | Regex used to extract a date from the relative path or basename. Use a named group `date` or the first capture group. |
-| `snippetMaxLength` | no | number | Maximum snippet length shown around daily-note mentions. Defaults to 260 and is clamped from 80 to 600. |
+| `dateFormat` | no | moment format string | [Moment.js-style](https://momentjs.com/docs/#/parsing/string-format/) date format (the same syntax Obsidian's Daily Notes uses) describing the file path relative to the daily-notes folder, without the `.md` extension. Supports subfolders, e.g. `YYYY/MM/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`. |
 
 Daily note scanning:
 
 - only reads Markdown files
 - strips frontmatter before searching body wikilinks
 - matches wikilinks against entity basenames
-- extracts dates through `datePattern`
+- extracts dates through `dateFormat`
 
-The default date pattern matches filenames like:
+The default date format matches filenames like:
 
 ```text
 2025-04-20.md
@@ -601,8 +599,7 @@ taxonomyRoot: Taxonomy
 dailyNotes:
   paths:
   - Daily Notes
-  datePattern: '^(?:Daily Notes/)?(?<date>\d{4}-\d{2}-\d{2})\.md$'
-  snippetMaxLength: 260
+  dateFormat: YYYY-MM-DD
 
 home:
   title: Home

@@ -8,8 +8,6 @@ import { z as zod } from 'zod';
 
 export const saveSettingsConfigBodyVaultOneHomeOneSectionsItemLimitMin = 0;
 
-export const saveSettingsConfigBodyVaultOneDailyNotesOneSnippetMaxLengthMin = 0;
-
 
 export const SaveSettingsConfigBody = zod.object({
   "app": zod.object({
@@ -36,8 +34,7 @@ export const SaveSettingsConfigBody = zod.object({
 }),zod.null()]).optional(),
   "dailyNotes": zod.union([zod.object({
   "paths": zod.array(zod.string()).optional(),
-  "datePattern": zod.string().nullish(),
-  "snippetMaxLength": zod.number().min(saveSettingsConfigBodyVaultOneDailyNotesOneSnippetMaxLengthMin).nullish()
+  "dateFormat": zod.string().nullish().describe('Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY\/MM\/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.')
 }),zod.null()]).optional(),
   "types": zod.array(zod.object({
   "id": zod.string(),

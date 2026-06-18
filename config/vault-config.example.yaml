@@ -1,30 +1,31 @@
-# Vault config — stored inside the vault at <vaultRoot>/.kizunashelf/config.yaml.
-# Describes the vault's content schema (taxonomy layout, assets, entity types,
-# home dashboard, daily notes). It travels with the vault and is synced by the
-# vault's own syncing method, so every machine pointing at this vault shares the
-# same schema. Where the vault lives and whether it is writable are runtime
-# settings (env vars on the web app, the in-app vault list on desktop/iOS), not
-# part of this file. See docs/config.md.
+# Generated from the "Media Library" starter template in
+# crates/kizunashelf/src/templates.rs — do not edit by hand. Regenerate with:
+#   cargo run -p kizunashelf --example starter_yaml > config/vault-config.example.yaml
 taxonomyRoot: Taxonomy
 assetRoot: Assets
-dailyNotes:
-  paths:
-  - Daily Notes
-  datePattern: '^(?:Daily Notes/)?(?<date>\d{4}-\d{2}-\d{2})\.md$'
-  snippetMaxLength: 260
 home:
   title: Home
   sections:
   - id: recent-anime
     title: Recent Anime
-    type: Anime
+    type: anime
     limit: 12
     sort: date:season
     direction: desc
+  - id: games
+    title: Games
+    type: games
+    limit: 12
+    sort: title
+    direction: asc
+dailyNotes:
+  paths:
+  - Daily Notes
+  dateFormat: YYYY-MM-DD
 types:
-- id: Anime
+- id: anime
   label: Anime
-  icon: "📺"
+  icon: 📺
   path: Anime
   externalPriority:
   - bangumi
@@ -36,13 +37,23 @@ types:
     field: summary
     heading: Summary
   fields:
+  - field: uid
+    fieldType: id
+    displayName: UID
   - field: id
     fieldType: id
     displayName: ID
-  - field: title_ja
+  - field: title
     fieldType: title
-    displayName: Title (Japanese)
-    titleLanguage: ja
+    displayName: Title
+    titleLanguage: zh
+    externalFields:
+    - source: bangumi
+      field: name_cn
+  - field: title_original
+    fieldType: title
+    displayName: Title (Original)
+    titleRole: original
     externalFields:
     - source: bangumi
       field: name
@@ -50,6 +61,13 @@ types:
     fieldType: title
     displayName: Title (English)
     titleLanguage: en
+  - field: title_ja
+    fieldType: title
+    displayName: Title (Japanese)
+    titleLanguage: ja
+    externalFields:
+    - source: bangumi
+      field: name
   - field: cover_url
     fieldType: image
     displayName: Cover
@@ -62,7 +80,11 @@ types:
     enumOptions:
     - Backlog
     - Watching
+    - Playing
+    - Reading
     - Completed
+    - Paused
+    - Dropped
   - field: progress
     fieldType: progress
     displayName: Progress
@@ -70,35 +92,133 @@ types:
   - field: episodes
     fieldType: totalProgress
     displayName: Episodes
-    externalFields:
-    - source: bangumi
-      field: total_episodes
+  - field: rating
+    fieldType: rating
+    displayName: Rating
   - field: season
     fieldType: season
     displayName: Season
     dateRole: planning
     seasonLanguage: zh
+  - field: release_date
+    fieldType: date
+    displayName: Release date
+    externalFields:
+    - source: bangumi
+      field: date
+    dateRole: planning
   - field: complete_date
     fieldType: date
     displayName: Completed date
     dateRole: completed
-  - field: bgm_url
+  - field: bangumi_url
     fieldType: externalRef
-    displayName: BGM
+    displayName: bangumi_url
     externalRef: bangumi
-    externalTypes:
-    - "2"
   - field: franchise
     fieldType: relation
     displayName: Franchise
     relationType: franchise
-- id: Games
-  label: Games
-  icon: "🎮"
-  path: Games
+- id: drama
+  label: Drama
+  icon: 🎭
+  path: Drama
+  externalPriority:
+  - thetvdb
+  filename:
+    titleLanguage: zh
+    defaultTitle: true
+  bodyMappings:
+  - source: thetvdb
+    field: overview
+    heading: Summary
+  fields:
+  - field: uid
+    fieldType: id
+    displayName: UID
+  - field: id
+    fieldType: id
+    displayName: ID
+  - field: title
+    fieldType: title
+    displayName: Title
+    titleLanguage: zh
+    externalFields:
+    - source: thetvdb
+      field: name
+  - field: title_original
+    fieldType: title
+    displayName: Title (Original)
+    titleRole: original
+    externalFields:
+    - source: thetvdb
+      field: name
+  - field: title_en
+    fieldType: title
+    displayName: Title (English)
+    titleLanguage: en
+  - field: title_ja
+    fieldType: title
+    displayName: Title (Japanese)
+    titleLanguage: ja
+  - field: cover_url
+    fieldType: image
+    displayName: Cover
+    externalFields:
+    - source: thetvdb
+      field: cover_url
+  - field: state
+    fieldType: enum
+    displayName: State
+    enumOptions:
+    - Backlog
+    - Watching
+    - Playing
+    - Reading
+    - Completed
+    - Paused
+    - Dropped
+  - field: progress
+    fieldType: progress
+    displayName: Progress
+    totalProgressField: episodes
+  - field: episodes
+    fieldType: totalProgress
+    displayName: Episodes
+  - field: rating
+    fieldType: rating
+    displayName: Rating
+  - field: season
+    fieldType: season
+    displayName: Season
+    dateRole: planning
+    seasonLanguage: zh
+  - field: release_date
+    fieldType: date
+    displayName: Release date
+    externalFields:
+    - source: thetvdb
+      field: first_air_time
+    dateRole: planning
+  - field: complete_date
+    fieldType: date
+    displayName: Completed date
+    dateRole: completed
+  - field: thetvdb_url
+    fieldType: externalRef
+    displayName: thetvdb_url
+    externalRef: thetvdb
+  - field: franchise
+    fieldType: relation
+    displayName: Franchise
+    relationType: franchise
+- id: movie
+  label: Movie
+  icon: 🎬
+  path: Movie
   externalPriority:
   - bangumi
-  - igdb
+  - thetvdb
   filename:
     titleLanguage: zh
     defaultTitle: true
@@ -106,14 +226,24 @@ types:
   - source: bangumi
     field: summary
     heading: Summary
-  - source: igdb
-    field: summary
-    heading: Summary
   fields:
-  - field: title_ja
+  - field: uid
+    fieldType: id
+    displayName: UID
+  - field: id
+    fieldType: id
+    displayName: ID
+  - field: title
     fieldType: title
-    displayName: Title (Japanese)
-    titleLanguage: ja
+    displayName: Title
+    titleLanguage: zh
+    externalFields:
+    - source: bangumi
+      field: name_cn
+  - field: title_original
+    fieldType: title
+    displayName: Title (Original)
+    titleRole: original
     externalFields:
     - source: bangumi
       field: name
@@ -121,8 +251,12 @@ types:
     fieldType: title
     displayName: Title (English)
     titleLanguage: en
+  - field: title_ja
+    fieldType: title
+    displayName: Title (Japanese)
+    titleLanguage: ja
     externalFields:
-    - source: igdb
+    - source: bangumi
       field: name
   - field: cover_url
     fieldType: image
@@ -130,6 +264,96 @@ types:
     externalFields:
     - source: bangumi
       field: cover_url
+  - field: state
+    fieldType: enum
+    displayName: State
+    enumOptions:
+    - Backlog
+    - Watching
+    - Playing
+    - Reading
+    - Completed
+    - Paused
+    - Dropped
+  - field: progress
+    fieldType: progress
+    displayName: Progress
+    totalProgressField: episodes
+  - field: episodes
+    fieldType: totalProgress
+    displayName: Episodes
+  - field: rating
+    fieldType: rating
+    displayName: Rating
+  - field: release_date
+    fieldType: date
+    displayName: Release date
+    externalFields:
+    - source: bangumi
+      field: date
+    dateRole: planning
+  - field: complete_date
+    fieldType: date
+    displayName: Completed date
+    dateRole: completed
+  - field: bangumi_url
+    fieldType: externalRef
+    displayName: bangumi_url
+    externalRef: bangumi
+  - field: thetvdb_url
+    fieldType: externalRef
+    displayName: thetvdb_url
+    externalRef: thetvdb
+  - field: franchise
+    fieldType: relation
+    displayName: Franchise
+    relationType: franchise
+- id: games
+  label: Games
+  icon: 🎮
+  path: Games
+  externalPriority:
+  - igdb
+  filename:
+    titleLanguage: zh
+    defaultTitle: true
+  bodyMappings:
+  - source: igdb
+    field: summary
+    heading: Summary
+  fields:
+  - field: uid
+    fieldType: id
+    displayName: UID
+  - field: id
+    fieldType: id
+    displayName: ID
+  - field: title
+    fieldType: title
+    displayName: Title
+    titleLanguage: zh
+    externalFields:
+    - source: igdb
+      field: name
+  - field: title_original
+    fieldType: title
+    displayName: Title (Original)
+    titleRole: original
+    externalFields:
+    - source: igdb
+      field: name
+  - field: title_en
+    fieldType: title
+    displayName: Title (English)
+    titleLanguage: en
+  - field: title_ja
+    fieldType: title
+    displayName: Title (Japanese)
+    titleLanguage: ja
+  - field: cover_url
+    fieldType: image
+    displayName: Cover
+    externalFields:
     - source: igdb
       field: cover_url
   - field: state
@@ -137,30 +361,40 @@ types:
     displayName: State
     enumOptions:
     - Backlog
+    - Watching
     - Playing
+    - Reading
     - Completed
+    - Paused
+    - Dropped
+  - field: progress
+    fieldType: progress
+    displayName: Progress
+    totalProgressField: episodes
+  - field: episodes
+    fieldType: totalProgress
+    displayName: Episodes
+  - field: rating
+    fieldType: rating
+    displayName: Rating
   - field: release_date
     fieldType: date
     displayName: Release date
-    dateRole: planning
     externalFields:
-    - source: bangumi
-      field: date
     - source: igdb
       field: first_release_date
-  - field: bgm_url
-    fieldType: externalRef
-    displayName: BGM
-    externalRef: bangumi
-    externalTypes:
-    - "4"
+    dateRole: planning
+  - field: complete_date
+    fieldType: date
+    displayName: Completed date
+    dateRole: completed
   - field: igdb_url
     fieldType: externalRef
-    displayName: IGDB
+    displayName: igdb_url
     externalRef: igdb
     externalTypes:
     - game
-  - field: developer
+  - field: franchise
     fieldType: relation
-    displayName: Developer
-    relationType: developer
+    displayName: Franchise
+    relationType: franchise

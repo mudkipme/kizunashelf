@@ -31,6 +31,15 @@ use tower::ServiceExt;
 
 uniffi::setup_scaffolding!();
 
+/// The default starter vault schema (the "Media Library" preset) serialized to
+/// the YAML written into `<vault>/.kizunashelf/config.yaml`. Defined once in the
+/// core (`kizunashelf::templates`) and shared with web onboarding and the desktop
+/// create-vault flow; iOS writes it directly through its `VaultFileSystem`.
+#[uniffi::export]
+pub fn starter_vault_config_yaml() -> String {
+    kizunashelf::templates::starter_vault_config_yaml()
+}
+
 /// Options passed to the core at init. On iOS these come from `@AppStorage`
 /// (there is no on-device config file); `config_path` points into the app
 /// container. Mirrors the desktop `ApiOptions` minus the desktop-only fields.

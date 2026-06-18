@@ -8,7 +8,7 @@ use crate::calendar::{
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
     HomeSectionResponse, RelationGroupsResponse, RelationListResponse, SaveSettingsRequest,
-    SettingsConfigResponse,
+    SettingsConfigResponse, VaultTemplatesResponse,
 };
 use crate::dates::clamp_number;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
@@ -17,6 +17,14 @@ use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
+
+/// The built-in starter vault schemas offered during onboarding / vault
+/// creation. Static (no library access), so every frontend shares one source.
+pub(crate) async fn vault_templates() -> Json<VaultTemplatesResponse> {
+    Json(VaultTemplatesResponse {
+        templates: crate::templates::vault_templates(),
+    })
+}
 
 pub(crate) async fn health(State(state): State<AppState>) -> ApiResult<HealthResponse> {
     let library = get_library(&state).await?;
