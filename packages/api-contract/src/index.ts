@@ -88,6 +88,8 @@ export * from "./generated/relationGroupsResponse.zod.js";
 export * from "./generated/relationListResponse.zod.js";
 export * from "./generated/relationTargetTypeSummary.zod.js";
 export * from "./generated/statsResponse.zod.js";
+export * from "./generated/language.zod.js";
+export * from "./generated/languagesResponse.zod.js";
 export * from "./generated/vaultTemplate.zod.js";
 export * from "./generated/vaultTemplatesResponse.zod.js";
 

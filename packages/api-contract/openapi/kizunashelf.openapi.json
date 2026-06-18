@@ -257,6 +257,23 @@
         }
       }
     },
+    "/api/languages": {
+      "get": {
+        "operationId": "getLanguages",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguagesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/home": {
       "get": {
         "operationId": "getHome",
@@ -2064,6 +2081,36 @@
           "id",
           "label",
           "config"
+        ]
+      },
+      "LanguagesResponse": {
+        "type": "object",
+        "properties": {
+          "languages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Language"
+            }
+          }
+        },
+        "required": [
+          "languages"
+        ]
+      },
+      "Language": {
+        "description": "A title-language option for the schema editor: an ISO 639-1 code and its\nEnglish display name. See [`crate::languages`].",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label"
         ]
       },
       "HomeResponse": {

@@ -3,6 +3,7 @@ pub mod calendar;
 pub mod contract;
 pub mod daily_notes;
 pub mod dates;
+pub mod languages;
 pub mod library;
 pub mod relations;
 pub mod secrets;

@@ -122,6 +122,17 @@ export type VaultTemplatesResponse = {
   templates: VaultTemplate[];
 };
 
+// A title-language option for the schema editor (ISO 639-1 code + English name),
+// served by GET /api/languages. The single source of truth lives in the core.
+export type Language = {
+  code: string;
+  label: string;
+};
+
+export type LanguagesResponse = {
+  languages: Language[];
+};
+
 export type SaveSettingsRequest = {
   app: AppConfig;
   // Omitted (or null) when persisting only the app config — e.g. the onboarding

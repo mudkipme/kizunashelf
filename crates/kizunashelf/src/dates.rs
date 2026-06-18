@@ -192,11 +192,13 @@ fn parse_season_name(value: &str) -> Option<String> {
 }
 
 fn normalize_season_name(season: &str) -> Option<String> {
+    // Accepts Chinese (春季), Japanese short forms (春), and English. Japanese
+    // seasons are written without the 季 suffix; Chinese keeps it.
     match season.trim().to_ascii_lowercase().as_str() {
-        "冬季" | "winter" => Some("winter".to_string()),
-        "春季" | "spring" => Some("spring".to_string()),
-        "夏季" | "summer" => Some("summer".to_string()),
-        "秋季" | "autumn" | "fall" => Some("autumn".to_string()),
+        "冬季" | "冬" | "winter" => Some("winter".to_string()),
+        "春季" | "春" | "spring" => Some("spring".to_string()),
+        "夏季" | "夏" | "summer" => Some("summer".to_string()),
+        "秋季" | "秋" | "autumn" | "fall" => Some("autumn".to_string()),
         _ => None,
     }
 }
@@ -226,7 +228,9 @@ fn year_month_regex() -> &'static Regex {
 fn season_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
-        Regex::new(r"(?i)年(春季|夏季|秋季|冬季)|\b(?:19|20)\d{2}\s*(Spring|Summer|Autumn|Fall|Winter)\b|\b(Spring|Summer|Autumn|Fall|Winter)\s+(?:19|20)\d{2}\b").unwrap()
+        // Longer Chinese forms (春季) are listed before the Japanese short forms
+        // (春) so the alternation prefers them when the 季 suffix is present.
+        Regex::new(r"(?i)年(春季|夏季|秋季|冬季|春|夏|秋|冬)|\b(?:19|20)\d{2}\s*(Spring|Summer|Autumn|Fall|Winter)\b|\b(Spring|Summer|Autumn|Fall|Winter)\s+(?:19|20)\d{2}\b").unwrap()
     })
 }
 
@@ -247,6 +251,24 @@ mod tests {
         assert_eq!(
             parse_entity_date(Some("2025 Fall")).unwrap().season,
             Some("Fall".to_string())
+        );
+    }
+
+    #[test]
+    fn parses_japanese_short_form_seasons() {
+        // Japanese seasons omit the 季 suffix (春 vs 春季).
+        assert_eq!(
+            parse_entity_date(Some("2025年春")).unwrap().season_key,
+            Some("spring".to_string())
+        );
+        assert_eq!(
+            date_sort_key(Some("2025年夏")),
+            Some("2025-09-30".to_string())
+        );
+        // Chinese long form still resolves correctly alongside the short forms.
+        assert_eq!(
+            parse_entity_date(Some("2025年春季")).unwrap().season_key,
+            Some("spring".to_string())
         );
     }
 

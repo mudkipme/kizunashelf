@@ -1,4 +1,4 @@
-• > Yet another downtime tracker, this one is yours.
+> A shelf for everything you love — and it stays yours.
 
 KizunaShelf starts with the familiar shape of a media tracker: TV shows, movies, books, games, anime, albums, and every small obsession waiting on your shelf. But it is not built around one fixed idea of what a “thing” should be. It is schema-driven from the ground up. You decide the types, fields, dates, titles, covers, states, ratings, progress, external links, and relationships. If your world needs characters, goods, cards, voice actors, artists, live events, or trains, shoes, museums, coffee beans, or something nobody else would think to model, KizunaShelf gives you the grammar to describe it.
 

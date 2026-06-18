@@ -5,7 +5,7 @@ import { saveSettingsConfig } from "@/api/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ExternalProviderCatalog } from "@/types/api";
-import type { AppConfig, MergedConfig, VaultConfig } from "@/types/config";
+import type { AppConfig, Language, MergedConfig, VaultConfig } from "@/types/config";
 
 import {
   EmptyConfigLine,
@@ -39,6 +39,8 @@ type SettingsEditorProps = {
   providerCatalog?: ExternalProviderCatalog;
   /** Onboarding presets from the core; empty outside onboarding. */
   templates?: VaultTemplateOption[];
+  /** Title-language options from the core (`GET /api/languages`). */
+  languages?: Language[];
   onboarding?: boolean;
   /** When false, the schema is read-only (server enforces it too). */
   settingsWritable?: boolean;
@@ -52,6 +54,7 @@ export function SettingsEditor({
   initialVault,
   providerCatalog,
   templates = [],
+  languages = [],
   onboarding = false,
   settingsWritable = true,
   onBack,
@@ -302,6 +305,7 @@ export function SettingsEditor({
                   key={`${typeConfig.id}-${index}`}
                   config={typeConfig}
                   providerCatalog={providerCatalog}
+                  languages={languages}
                   taxonomyBase={taxonomyBase}
                   onChange={(next) => setConfig((current) => replaceAt(current, "types", index, next))}
                   onRemove={() =>

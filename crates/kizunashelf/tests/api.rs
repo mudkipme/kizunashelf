@@ -49,6 +49,16 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         json!(["game"])
     );
 
+    let languages = server.ok_json("/api/languages").await;
+    let language_list = languages["languages"].as_array().unwrap();
+    assert!(
+        language_list.len() > 3,
+        "expects the full TheTVDB language set"
+    );
+    assert!(language_list
+        .iter()
+        .any(|language| language["code"] == "ja" && language["label"] == "Japanese"));
+
     let config = server.ok_json("/api/config").await;
     assert_eq!(config["taxonomyRoot"], "Taxonomy");
     assert_eq!(config["types"].as_array().unwrap().len(), 4);

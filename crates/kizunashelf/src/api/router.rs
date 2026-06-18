@@ -6,8 +6,8 @@ use super::assets::{
 use super::entities::{entities, entity_dates, entity_detail};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
-    calendar, calendar_planning, capabilities, config, health, home, refresh, relation_groups,
-    relations, save_settings_config, settings_config, vault_templates,
+    calendar, calendar_planning, capabilities, config, health, home, languages, refresh,
+    relation_groups, relations, save_settings_config, settings_config, vault_templates,
 };
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
@@ -18,8 +18,8 @@ use crate::contract::{
     CalendarResponse, CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse,
     DeleteEntityResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
     ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
-    HomeResponse, PathSuggestionsResponse, RelationGroupsResponse, RelationListResponse,
-    SettingsConfigResponse, StatsResponse, VaultTemplatesResponse,
+    HomeResponse, LanguagesResponse, PathSuggestionsResponse, RelationGroupsResponse,
+    RelationListResponse, SettingsConfigResponse, StatsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -175,6 +175,13 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(vault_templates, |op| {
                 op.id("getVaultTemplates")
                     .response::<200, Json<VaultTemplatesResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/languages",
+            get_with(languages, |op| {
+                op.id("getLanguages")
+                    .response::<200, Json<LanguagesResponse>>()
             }),
         )
         .api_route(

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { providerCatalogQuery, settingsConfigQuery, vaultTemplatesQuery } from "@/api/queries";
+import { languagesQuery, providerCatalogQuery, settingsConfigQuery, vaultTemplatesQuery } from "@/api/queries";
 import { SettingsEditor } from "@/components/settings/settings-editor";
 import { VaultSwitcher } from "@/components/settings/vault-switcher";
 import { isDesktopRuntime } from "@/lib/desktop";
@@ -19,6 +19,7 @@ export function OnboardingPage() {
   const settings = useQuery(settingsConfigQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const templates = useQuery(vaultTemplatesQuery());
+  const languages = useQuery(languagesQuery());
   const desktop = isDesktopRuntime();
 
   const refresh = () => void queryClient.invalidateQueries();
@@ -27,14 +28,19 @@ export function OnboardingPage() {
   if (desktop && settings.error) {
     // Desktop replies 503 (query error) until a vault is open.
     body = <VaultSwitcher onboarding onChanged={refresh} />;
-  } else if (settings.isPending || providerCatalog.isPending || templates.isPending) {
+  } else if (
+    settings.isPending ||
+    providerCatalog.isPending ||
+    templates.isPending ||
+    languages.isPending
+  ) {
     body = (
       <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
     );
-  } else if (settings.error || providerCatalog.error || templates.error) {
+  } else if (settings.error || providerCatalog.error || templates.error || languages.error) {
     body = (
       <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-        {errorMessage(settings.error ?? providerCatalog.error ?? templates.error)}
+        {errorMessage(settings.error ?? providerCatalog.error ?? templates.error ?? languages.error)}
       </div>
     );
   } else {
@@ -46,6 +52,7 @@ export function OnboardingPage() {
         initialVault={settings.data?.vault}
         providerCatalog={providerCatalog.data}
         templates={templates.data?.templates ?? []}
+        languages={languages.data?.languages ?? []}
         onboarding
         onSaved={() => {
           refresh();

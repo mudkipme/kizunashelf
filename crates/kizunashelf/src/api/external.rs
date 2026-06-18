@@ -199,21 +199,21 @@ pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogR
 /// and the vault-template builder so external-field wiring has a single source.
 pub(crate) fn provider_catalog_items() -> Vec<ExternalProviderCatalogItem> {
     vec![
-            provider_catalog_item::<bangumi::BangumiProvider>(
-                bangumi::field_options(),
-                bangumi::type_options(),
-                &[],
-            ),
-            provider_catalog_item::<igdb::IgdbProvider>(
-                igdb::field_options(),
-                igdb::type_options(),
-                &["game"],
-            ),
-            provider_catalog_item::<thetvdb::ThetvdbProvider>(
-                thetvdb::field_options(),
-                thetvdb::type_options(),
-                &[],
-            ),
+        provider_catalog_item::<bangumi::BangumiProvider>(
+            bangumi::field_options(),
+            bangumi::type_options(),
+            &[],
+        ),
+        provider_catalog_item::<igdb::IgdbProvider>(
+            igdb::field_options(),
+            igdb::type_options(),
+            &["game"],
+        ),
+        provider_catalog_item::<thetvdb::ThetvdbProvider>(
+            thetvdb::field_options(),
+            thetvdb::type_options(),
+            &[],
+        ),
     ]
 }
 

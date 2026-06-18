@@ -7,8 +7,8 @@ use crate::calendar::{
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
-    HomeSectionResponse, RelationGroupsResponse, RelationListResponse, SaveSettingsRequest,
-    SettingsConfigResponse, VaultTemplatesResponse,
+    HomeSectionResponse, LanguagesResponse, RelationGroupsResponse, RelationListResponse,
+    SaveSettingsRequest, SettingsConfigResponse, VaultTemplatesResponse,
 };
 use crate::dates::clamp_number;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
@@ -23,6 +23,14 @@ use serde::Deserialize;
 pub(crate) async fn vault_templates() -> Json<VaultTemplatesResponse> {
     Json(VaultTemplatesResponse {
         templates: crate::templates::vault_templates(),
+    })
+}
+
+/// The title-language options for the schema editor (TheTVDB's supported set).
+/// Static, so every frontend shares one source.
+pub(crate) async fn languages() -> Json<LanguagesResponse> {
+    Json(LanguagesResponse {
+        languages: crate::languages::supported_languages(),
     })
 }
 

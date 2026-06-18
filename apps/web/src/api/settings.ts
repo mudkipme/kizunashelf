@@ -1,5 +1,6 @@
 import { apiFetch } from "@/api/client";
 import type {
+  LanguagesResponse,
   PathSuggestionsResponse,
   SaveSettingsRequest,
   SettingsConfigResponse,
@@ -14,6 +15,11 @@ export async function getSettingsConfig(init?: RequestInit) {
 export async function getVaultTemplates(init?: RequestInit) {
   const response = await apiFetch("/api/vault-templates", init);
   return (await response.json()) as VaultTemplatesResponse;
+}
+
+export async function getLanguages(init?: RequestInit) {
+  const response = await apiFetch("/api/languages", init);
+  return (await response.json()) as LanguagesResponse;
 }
 
 export async function saveSettingsConfig(request: SaveSettingsRequest) {

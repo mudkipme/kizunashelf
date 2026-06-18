@@ -125,6 +125,15 @@ export function seasonOptions(language: SeasonLanguage): Array<{ key: SeasonKey;
       { key: "autumn", label: "Autumn" },
     ];
   }
+  if (language === "ja") {
+    // Japanese seasons drop the 季 suffix that Chinese uses (春 vs 春季).
+    return [
+      { key: "winter", label: "冬" },
+      { key: "spring", label: "春" },
+      { key: "summer", label: "夏" },
+      { key: "autumn", label: "秋" },
+    ];
+  }
   return [
     { key: "winter", label: "冬季" },
     { key: "spring", label: "春季" },

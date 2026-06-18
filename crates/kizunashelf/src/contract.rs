@@ -134,6 +134,21 @@ pub struct VaultTemplatesResponse {
     pub templates: Vec<VaultTemplate>,
 }
 
+/// A title-language option for the schema editor: an ISO 639-1 code and its
+/// English display name. See [`crate::languages`].
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Language {
+    pub code: String,
+    pub label: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct LanguagesResponse {
+    pub languages: Vec<Language>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct HomeSectionResponse {

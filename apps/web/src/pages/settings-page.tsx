@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { errorMessage } from "@/api/client";
-import { capabilitiesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
+import { capabilitiesQuery, languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { ProviderCredentials } from "@/components/settings/provider-credentials";
 import { SettingsEditor } from "@/components/settings/settings-editor";
@@ -13,8 +13,10 @@ export function SettingsPage() {
   const settings = useQuery(settingsConfigQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useQuery(capabilitiesQuery());
-  const loading = settings.isPending || providerCatalog.isPending || capabilities.isPending;
-  const error = settings.error ?? providerCatalog.error ?? capabilities.error;
+  const languages = useQuery(languagesQuery());
+  const loading =
+    settings.isPending || providerCatalog.isPending || capabilities.isPending || languages.isPending;
+  const error = settings.error ?? providerCatalog.error ?? capabilities.error ?? languages.error;
   const desktop = isDesktopRuntime();
 
   return (
@@ -36,6 +38,7 @@ export function SettingsPage() {
             initialApp={settings.data.app}
             initialVault={settings.data.vault}
             providerCatalog={providerCatalog.data}
+            languages={languages.data?.languages ?? []}
             settingsWritable={capabilities.data?.settingsWritable !== false}
           />
         ) : null}

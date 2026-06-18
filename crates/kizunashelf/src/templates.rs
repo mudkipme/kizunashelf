@@ -38,15 +38,57 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 home: Some(HomeConfig {
                     title: Some("Home".to_string()),
                     sections: vec![
-                        home_section("recent-anime", "Recent Anime", "anime", "date:season", SortDirection::Desc),
+                        home_section(
+                            "recent-anime",
+                            "Recent Anime",
+                            "anime",
+                            "date:season",
+                            SortDirection::Desc,
+                        ),
                         home_section("games", "Games", "games", "title", SortDirection::Asc),
                     ],
                 }),
                 types: vec![
-                    media_type(&catalog, "anime", "Anime", "📺", "Anime", &[("bangumi_url", "bangumi")], &["season", "release_date"], &["complete_date"]),
-                    media_type(&catalog, "drama", "Drama", "🎭", "Drama", &[("thetvdb_url", "thetvdb")], &["season", "release_date"], &["complete_date"]),
-                    media_type(&catalog, "movie", "Movie", "🎬", "Movie", &[("bangumi_url", "bangumi"), ("thetvdb_url", "thetvdb")], &["release_date"], &["complete_date"]),
-                    media_type(&catalog, "games", "Games", "🎮", "Games", &[("igdb_url", "igdb")], &["release_date"], &["complete_date"]),
+                    media_type(
+                        &catalog,
+                        "anime",
+                        "Anime",
+                        "📺",
+                        "Anime",
+                        &[("bangumi_url", "bangumi")],
+                        &["season", "release_date"],
+                        &["complete_date"],
+                    ),
+                    media_type(
+                        &catalog,
+                        "drama",
+                        "Drama",
+                        "🎭",
+                        "Drama",
+                        &[("thetvdb_url", "thetvdb")],
+                        &["season", "release_date"],
+                        &["complete_date"],
+                    ),
+                    media_type(
+                        &catalog,
+                        "movie",
+                        "Movie",
+                        "🎬",
+                        "Movie",
+                        &[("bangumi_url", "bangumi"), ("thetvdb_url", "thetvdb")],
+                        &["release_date"],
+                        &["complete_date"],
+                    ),
+                    media_type(
+                        &catalog,
+                        "games",
+                        "Games",
+                        "🎮",
+                        "Games",
+                        &[("igdb_url", "igdb")],
+                        &["release_date"],
+                        &["complete_date"],
+                    ),
                 ],
             },
         },
@@ -59,9 +101,36 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 daily_notes: Some(default_daily_notes()),
                 home: Some(empty_home()),
                 types: vec![
-                    media_type(&catalog, "anime", "Anime", "📺", "Anime", &[("bangumi_url", "bangumi")], &["season", "release_date"], &["complete_date"]),
-                    media_type(&catalog, "drama", "Drama", "🎭", "Drama", &[("thetvdb_url", "thetvdb")], &["season", "release_date"], &["complete_date"]),
-                    media_type(&catalog, "movie", "Movie", "🎬", "Movie", &[("bangumi_url", "bangumi"), ("thetvdb_url", "thetvdb")], &["release_date"], &["complete_date"]),
+                    media_type(
+                        &catalog,
+                        "anime",
+                        "Anime",
+                        "📺",
+                        "Anime",
+                        &[("bangumi_url", "bangumi")],
+                        &["season", "release_date"],
+                        &["complete_date"],
+                    ),
+                    media_type(
+                        &catalog,
+                        "drama",
+                        "Drama",
+                        "🎭",
+                        "Drama",
+                        &[("thetvdb_url", "thetvdb")],
+                        &["season", "release_date"],
+                        &["complete_date"],
+                    ),
+                    media_type(
+                        &catalog,
+                        "movie",
+                        "Movie",
+                        "🎬",
+                        "Movie",
+                        &[("bangumi_url", "bangumi"), ("thetvdb_url", "thetvdb")],
+                        &["release_date"],
+                        &["complete_date"],
+                    ),
                 ],
             },
         },
@@ -73,7 +142,16 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 asset_root: Some(ASSET_ROOT.to_string()),
                 daily_notes: Some(default_daily_notes()),
                 home: Some(empty_home()),
-                types: vec![media_type(&catalog, "games", "Games", "🎮", "Games", &[("igdb_url", "igdb")], &["release_date"], &["complete_date"])],
+                types: vec![media_type(
+                    &catalog,
+                    "games",
+                    "Games",
+                    "🎮",
+                    "Games",
+                    &[("igdb_url", "igdb")],
+                    &["release_date"],
+                    &["complete_date"],
+                )],
             },
         },
         VaultTemplate {
@@ -84,7 +162,16 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 asset_root: Some(ASSET_ROOT.to_string()),
                 daily_notes: Some(default_daily_notes()),
                 home: Some(empty_home()),
-                types: vec![media_type(&catalog, "books", "Books", "📚", "Books", &[], &["release_date"], &["complete_date"])],
+                types: vec![media_type(
+                    &catalog,
+                    "books",
+                    "Books",
+                    "📚",
+                    "Books",
+                    &[],
+                    &["release_date"],
+                    &["complete_date"],
+                )],
             },
         },
         VaultTemplate {
@@ -132,7 +219,13 @@ fn empty_home() -> HomeConfig {
     }
 }
 
-fn home_section(id: &str, title: &str, entity_type: &str, sort: &str, direction: SortDirection) -> HomeSectionConfig {
+fn home_section(
+    id: &str,
+    title: &str,
+    entity_type: &str,
+    sort: &str,
+    direction: SortDirection,
+) -> HomeSectionConfig {
     HomeSectionConfig {
         id: id.to_string(),
         title: title.to_string(),
@@ -157,8 +250,19 @@ fn media_type(
     planning_dates: &[&str],
     completed_dates: &[&str],
 ) -> EntityTypeConfig {
-    let state_options = ["Backlog", "Watching", "Playing", "Reading", "Completed", "Paused", "Dropped"];
-    let primary_source = external_refs.first().map(|(_, source)| *source).unwrap_or("");
+    let state_options = [
+        "Backlog",
+        "Watching",
+        "Playing",
+        "Reading",
+        "Completed",
+        "Paused",
+        "Dropped",
+    ];
+    let primary_source = external_refs
+        .first()
+        .map(|(_, source)| *source)
+        .unwrap_or("");
 
     let mut title = title_field("title", "Title", FieldType::Title);
     title.title_language = Some("zh".to_string());
@@ -180,7 +284,10 @@ fn media_type(
     cover.external_fields = default_external_mappings(primary_source, "cover");
 
     let mut state = field("state", FieldType::Enum, "State");
-    state.enum_options = state_options.iter().map(|value| value.to_string()).collect();
+    state.enum_options = state_options
+        .iter()
+        .map(|value| value.to_string())
+        .collect();
 
     let mut progress = field("progress", FieldType::Progress, "Progress");
     progress.total_progress_field = Some("episodes".to_string());
@@ -203,7 +310,15 @@ fn media_type(
         fields.push(planning_date_field(primary_source, name));
     }
     for &name in completed_dates {
-        let mut date = field(name, FieldType::Date, if name == "complete_date" { "Completed date" } else { name });
+        let mut date = field(
+            name,
+            FieldType::Date,
+            if name == "complete_date" {
+                "Completed date"
+            } else {
+                name
+            },
+        );
         date.date_role = Some(DateRole::Completed);
         fields.push(date);
     }
@@ -222,7 +337,10 @@ fn media_type(
         label: label.to_string(),
         icon: Some(icon.to_string()),
         path: path.to_string(),
-        external_priority: default_external_priority(catalog, external_refs.iter().map(|(_, source)| *source)),
+        external_priority: default_external_priority(
+            catalog,
+            external_refs.iter().map(|(_, source)| *source),
+        ),
         filename: Some(FilenameConfig {
             title_language: Some("zh".to_string()),
             default_title: true,
@@ -239,7 +357,15 @@ fn planning_date_field(source: &str, name: &str) -> FieldConfig {
         season.season_language = Some(SeasonLanguage::Zh);
         return season;
     }
-    let mut date = field(name, FieldType::Date, if name == "release_date" { "Release date" } else { name });
+    let mut date = field(
+        name,
+        FieldType::Date,
+        if name == "release_date" {
+            "Release date"
+        } else {
+            name
+        },
+    );
     date.date_role = Some(DateRole::Planning);
     if name == "release_date" {
         date.external_fields = default_external_mappings(source, "releaseDate");
@@ -299,7 +425,10 @@ fn title_field(field: &str, display_name: &str, field_type: FieldType) -> FieldC
 
 // --- Catalog-aware wiring (mirrors apps/web/src/lib/external-metadata.ts) ---
 
-fn provider<'a>(catalog: &'a [ExternalProviderCatalogItem], source: &str) -> Option<&'a ExternalProviderCatalogItem> {
+fn provider<'a>(
+    catalog: &'a [ExternalProviderCatalogItem],
+    source: &str,
+) -> Option<&'a ExternalProviderCatalogItem> {
     let expected = source.trim().to_ascii_lowercase();
     catalog.iter().find(|item| item.id == expected)
 }
@@ -348,7 +477,11 @@ fn default_external_mappings(source: &str, role: &str) -> Vec<ExternalFieldMappi
     }
 }
 
-fn default_external_body_mappings(source: &str, role: &str, heading: &str) -> Vec<ExternalBodyMapping> {
+fn default_external_body_mappings(
+    source: &str,
+    role: &str,
+    heading: &str,
+) -> Vec<ExternalBodyMapping> {
     match template_default_field(source, role) {
         Some(field) => vec![ExternalBodyMapping {
             source: source.to_string(),
@@ -385,26 +518,38 @@ mod tests {
 
     #[test]
     fn all_presets_are_present() {
-        let ids: Vec<_> = vault_templates().into_iter().map(|template| template.id).collect();
+        let ids: Vec<_> = vault_templates()
+            .into_iter()
+            .map(|template| template.id)
+            .collect();
         assert_eq!(ids, ["media", "watching", "games", "books", "blank"]);
     }
 
     #[test]
     fn media_template_wires_external_fields_from_catalog() {
         let media = starter_vault_config();
-        let anime = media.types.iter().find(|type_config| type_config.id == "anime").unwrap();
+        let anime = media
+            .types
+            .iter()
+            .find(|type_config| type_config.id == "anime")
+            .unwrap();
 
         // Title maps to Bangumi's `name_cn` (the catalog's `title` role).
-        let title = anime.fields.iter().find(|field| field.field == "title").unwrap();
-        assert_eq!(
-            title.external_fields,
-            vec![ExternalFieldMapping { source: "bangumi".into(), field: "name_cn".into() }]
-        );
-        // The external-ref field carries the provider id.
-        assert!(anime
+        let title = anime
             .fields
             .iter()
-            .any(|field| field.field == "bangumi_url" && field.external_ref.as_deref() == Some("bangumi")));
+            .find(|field| field.field == "title")
+            .unwrap();
+        assert_eq!(
+            title.external_fields,
+            vec![ExternalFieldMapping {
+                source: "bangumi".into(),
+                field: "name_cn".into()
+            }]
+        );
+        // The external-ref field carries the provider id.
+        assert!(anime.fields.iter().any(|field| field.field == "bangumi_url"
+            && field.external_ref.as_deref() == Some("bangumi")));
         // Summary body mapping is wired from the catalog.
         assert_eq!(anime.body_mappings.len(), 1);
         assert_eq!(anime.body_mappings[0].field, "summary");

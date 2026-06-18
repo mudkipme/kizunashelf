@@ -117,6 +117,10 @@ import {
 } from './homeResponse.zod';
 
 import {
+  LanguagesResponse
+} from './languagesResponse.zod';
+
+import {
   PathSuggestionsResponse
 } from './pathSuggestionsResponse.zod';
 
@@ -386,6 +390,35 @@ export const getVaultTemplates = async ( options?: RequestInit, fetchFn?: typeof
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? VaultTemplatesResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetLanguagesUrl = () => {
+
+
+
+
+  return `/api/languages`
+}
+
+export const getLanguages = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<LanguagesResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetLanguagesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? LanguagesResponse.parse(parsedBody) : parsedBody
   return data
 }
 

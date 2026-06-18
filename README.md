@@ -1,6 +1,6 @@
 # KizunaShelf
 
-> Yet another downtime tracker, this one is yours.
+> A shelf for everything you love — and it stays yours.
 
 Intro: [English](docs/intro.md) / [简体中文](docs/intro.zh.md) / [日本語](docs/intro.ja.md)
 

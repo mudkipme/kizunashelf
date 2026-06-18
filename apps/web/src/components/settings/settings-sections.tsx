@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { PlusIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import type {
   HomeConfig,
   HomeSectionConfig,
   HomeSectionFilterConfig,
+  Language,
   SeasonLanguage,
 } from "@/types/config";
 import type { ExternalProviderCatalog } from "@/types/api";
@@ -293,15 +294,52 @@ function HomeSectionFilterEditor({
   );
 }
 
+// Title-language options (from `GET /api/languages`) made available to the
+// nested field editors without drilling through every intermediate component.
+const TitleLanguagesContext = createContext<Language[]>([]);
+
+/// A title-language picker over the supported languages. `value` is an empty
+/// string for "None"; an unrecognized configured code is preserved as its own
+/// option so editing never silently drops it.
+function LanguageSelect({
+  value,
+  languages,
+  onChange,
+}: {
+  value: string;
+  languages: Language[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="h-9 w-full text-sm"
+    >
+      <option value="">None</option>
+      {languages.map((language) => (
+        <option key={language.code} value={language.code}>
+          {language.label} ({language.code})
+        </option>
+      ))}
+      {value && !languages.some((language) => language.code === value) ? (
+        <option value={value}>{value}</option>
+      ) : null}
+    </Select>
+  );
+}
+
 export function EntityTypeEditor({
   config,
   providerCatalog,
+  languages,
   taxonomyBase,
   onChange,
   onRemove,
 }: {
   config: EntityTypeConfig;
   providerCatalog?: ExternalProviderCatalog;
+  languages: Language[];
   taxonomyBase: string;
   onChange: (config: EntityTypeConfig) => void;
   onRemove: () => void;
@@ -316,6 +354,7 @@ export function EntityTypeEditor({
   ]).size;
 
   return (
+    <TitleLanguagesContext.Provider value={languages}>
     <div className="rounded-md border p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -360,24 +399,19 @@ export function EntityTypeEditor({
         <ConfigSubsection title="Filename">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             <Field label="Filename title language">
-              <Select
+              <LanguageSelect
                 value={config.filename?.titleLanguage ?? ""}
-                onChange={(event) =>
+                languages={languages}
+                onChange={(titleLanguage) =>
                   onChange({
                     ...config,
                     filename: {
-                      titleLanguage: event.target.value || undefined,
+                      titleLanguage: titleLanguage || undefined,
                       defaultTitle: config.filename?.defaultTitle ?? false,
                     },
                   })
                 }
-                className="h-9 w-full text-sm"
-              >
-                <option value="">None</option>
-                <option value="zh">Chinese</option>
-                <option value="ja">Japanese</option>
-                <option value="en">English</option>
-              </Select>
+              />
             </Field>
             <Field label="Filename default title">
               <Select
@@ -408,6 +442,7 @@ export function EntityTypeEditor({
         onChange={(fields) => onChange({ ...config, fields })}
       />
     </div>
+    </TitleLanguagesContext.Provider>
   );
 }
 
@@ -680,14 +715,17 @@ function FieldOptionEditor({
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
 }) {
+  const titleLanguages = useContext(TitleLanguagesContext);
   if (optionKey === "titleOptions") {
     return (
       <>
-        <TextField
-          label="Title language"
-          value={field.titleLanguage ?? ""}
-          onChange={(titleLanguage) => onChange({ ...field, titleLanguage })}
-        />
+        <Field label="Title language">
+          <LanguageSelect
+            value={field.titleLanguage ?? ""}
+            languages={titleLanguages}
+            onChange={(titleLanguage) => onChange({ ...field, titleLanguage: titleLanguage || undefined })}
+          />
+        </Field>
         <Field label="Title role">
           <Select
             value={field.titleRole ?? ""}
