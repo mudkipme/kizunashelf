@@ -103,6 +103,20 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("name", "Name"),
         field_option("cover_url", "Cover URL"),
         field_option("first_release_date", "First release date"),
+        field_option("rating", "User rating"),
+        field_option("aggregated_rating", "Critic rating"),
+        field_option("total_rating", "Total rating"),
+        field_option("franchise", "Franchise"),
+        // Lists — map these to list-type fields (enum list / text list / relation).
+        field_option("alternative_names", "Alternative names"),
+        field_option("genres", "Genres"),
+        field_option("platforms", "Platforms"),
+        field_option("themes", "Themes"),
+        field_option("game_modes", "Game modes"),
+        field_option("player_perspectives", "Player perspectives"),
+        field_option("game_engines", "Game engines"),
+        field_option("developers", "Developers"),
+        field_option("publishers", "Publishers"),
         field_option("summary", "Summary"),
         field_option("storyline", "Storyline"),
     ]
@@ -119,6 +133,19 @@ fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
     }
 }
 
+/// Collects an array of `{ name }` references into a JSON string array, returning
+/// `None` when the source is missing or empty.
+fn named_list(value: Option<&Value>) -> Option<Value> {
+    let names: Vec<Value> = value?
+        .as_array()?
+        .iter()
+        .filter_map(|element| element.get("name").and_then(Value::as_str))
+        .filter(|name| !name.is_empty())
+        .map(|name| Value::String(name.to_string()))
+        .collect();
+    (!names.is_empty()).then_some(Value::Array(names))
+}
+
 fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
     ExternalProviderTypeOption {
         value: value.to_string(),
@@ -127,7 +154,11 @@ fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
 }
 
 fn igdb_query_body(q: &str, page_size: usize, offset: usize) -> String {
-    let fields = "fields name,url,summary,storyline,first_release_date,cover.url,genres.name,platforms.name;";
+    let fields = "fields name,url,summary,storyline,first_release_date,cover.url,\
+rating,aggregated_rating,total_rating,\
+alternative_names.name,genres.name,platforms.name,themes.name,game_modes.name,\
+player_perspectives.name,game_engines.name,franchises.name,collection.name,\
+involved_companies.developer,involved_companies.publisher,involved_companies.company.name;";
     let trimmed = q.trim();
     if trimmed.chars().all(|character| character.is_ascii_digit()) {
         return format!("{fields} where id = {trimmed}; limit {page_size}; offset {offset};");
@@ -270,6 +301,75 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
             Value::String(storyline.to_string()),
         );
     }
+    // Ratings are 0–100 floats; round to whole numbers for a tidy rating field.
+    for key in ["rating", "aggregated_rating", "total_rating"] {
+        if let Some(rating) = item
+            .get(key)
+            .and_then(Value::as_f64)
+            .filter(|value| *value > 0.0)
+        {
+            metadata.insert(
+                key.to_string(),
+                Value::Number((rating.round() as i64).into()),
+            );
+        }
+    }
+    // `*.name` reference arrays → JSON string arrays for list-type fields.
+    for key in [
+        "alternative_names",
+        "genres",
+        "platforms",
+        "themes",
+        "game_modes",
+        "player_perspectives",
+        "game_engines",
+    ] {
+        if let Some(values) = named_list(item.get(key)) {
+            metadata.insert(key.to_string(), values);
+        }
+    }
+    // Franchise: prefer an explicit franchise, fall back to the collection name.
+    if let Some(franchise) = item
+        .get("franchises")
+        .and_then(Value::as_array)
+        .and_then(|values| values.first())
+        .and_then(|value| value.get("name"))
+        .or_else(|| {
+            item.get("collection")
+                .and_then(|collection| collection.get("name"))
+        })
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+    {
+        metadata.insert(
+            "franchise".to_string(),
+            Value::String(franchise.to_string()),
+        );
+    }
+    if let Some(companies) = item.get("involved_companies").and_then(Value::as_array) {
+        let company_names = |role: &str| -> Vec<Value> {
+            companies
+                .iter()
+                .filter(|company| company.get(role).and_then(Value::as_bool).unwrap_or(false))
+                .filter_map(|company| {
+                    company
+                        .get("company")
+                        .and_then(|company| company.get("name"))
+                        .and_then(Value::as_str)
+                })
+                .filter(|name| !name.is_empty())
+                .map(|name| Value::String(name.to_string()))
+                .collect()
+        };
+        let developers = company_names("developer");
+        if !developers.is_empty() {
+            metadata.insert("developers".to_string(), Value::Array(developers));
+        }
+        let publishers = company_names("publisher");
+        if !publishers.is_empty() {
+            metadata.insert("publishers".to_string(), Value::Array(publishers));
+        }
+    }
     Some(ExternalCandidate {
         provider: "igdb".to_string(),
         source_id,
@@ -286,4 +386,42 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         titles: BTreeMap::new(),
         metadata,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::igdb_candidate;
+    use serde_json::json;
+
+    #[test]
+    fn candidate_surfaces_extended_metadata() {
+        let candidate = igdb_candidate(&json!({
+            "id": 1,
+            "name": "Hollow Knight",
+            "url": "https://www.igdb.com/games/hollow-knight",
+            "total_rating": 91.4,
+            "genres": [{ "name": "Platform" }, { "name": "Adventure" }],
+            "game_modes": [{ "name": "Single player" }],
+            "franchises": [{ "name": "Hollow Knight" }],
+            "involved_companies": [
+                { "developer": true, "publisher": true, "company": { "name": "Team Cherry" } },
+                { "developer": false, "publisher": true, "company": { "name": "Some Publisher" } }
+            ]
+        }))
+        .unwrap();
+
+        let metadata = &candidate.metadata;
+        assert_eq!(metadata.get("total_rating"), Some(&json!(91)));
+        assert_eq!(
+            metadata.get("genres"),
+            Some(&json!(["Platform", "Adventure"]))
+        );
+        assert_eq!(metadata.get("game_modes"), Some(&json!(["Single player"])));
+        assert_eq!(metadata.get("franchise"), Some(&json!("Hollow Knight")));
+        assert_eq!(metadata.get("developers"), Some(&json!(["Team Cherry"])));
+        assert_eq!(
+            metadata.get("publishers"),
+            Some(&json!(["Team Cherry", "Some Publisher"]))
+        );
+    }
 }

@@ -229,11 +229,17 @@ function candidateMappedValueForField(
 }
 
 function normalizeValueForField(field: FieldConfig, value: unknown) {
-  if (field.fieldType === "imageList") {
+  if (isListFieldType(field.fieldType)) {
+    // List-typed fields (enum list / text list / season / relation / image list)
+    // keep the external list as-is; a scalar is wrapped into a single-item list.
     return Array.isArray(value) ? value : [value];
   }
-  if (isListFieldType(field.fieldType) && !Array.isArray(value)) {
-    return [value];
+  // A scalar field can't hold a list-shaped external value (e.g. genres), so
+  // flatten it to comma-separated text rather than writing a YAML array.
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== null && item !== undefined && item !== "")
+      .join(", ");
   }
   return value;
 }

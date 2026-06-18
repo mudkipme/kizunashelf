@@ -112,7 +112,18 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("name_cn", "Chinese name"),
         field_option("cover_url", "Cover URL"),
         field_option("date", "Release date"),
-        field_option("total_episodes", "Total episodes"),
+        field_option("platform", "Platform"),
+        // `eps` is the count declared in the wiki infobox; `total_episodes` is how
+        // many episode records actually exist in Bangumi's database. They differ
+        // for ongoing or sparsely-maintained subjects, so both are offered.
+        field_option("eps", "Episodes (declared)"),
+        field_option("total_episodes", "Episodes (in database)"),
+        field_option("volumes", "Volumes"),
+        field_option("score", "Score"),
+        field_option("rank", "Rank"),
+        // Lists — map these to list-type fields (enum list / text list / relation).
+        field_option("tags", "Tags"),
+        field_option("meta_tags", "Meta tags"),
         field_option("summary", "Summary"),
     ]
 }
@@ -132,6 +143,23 @@ fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
         field: field.to_string(),
         label: label.to_string(),
     }
+}
+
+/// Collects an array's elements into a JSON string array via `extract`, dropping
+/// empties and returning `None` when the source is missing or yields nothing.
+/// Used for list-shaped metadata (tags, genres) that maps onto list-type fields.
+fn string_list<'a>(
+    value: Option<&'a Value>,
+    extract: impl Fn(&'a Value) -> Option<&'a str>,
+) -> Option<Value> {
+    let items: Vec<Value> = value?
+        .as_array()?
+        .iter()
+        .filter_map(extract)
+        .filter(|text| !text.is_empty())
+        .map(|text| Value::String(text.to_string()))
+        .collect();
+    (!items.is_empty()).then_some(Value::Array(items))
 }
 
 fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
@@ -188,10 +216,52 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
     if !release_date.is_empty() {
         metadata.insert("date".to_string(), Value::String(release_date.to_string()));
     }
-    if let Some(episodes) = item.get("total_episodes").and_then(Value::as_i64) {
-        if episodes > 0 {
-            metadata.insert("total_episodes".to_string(), Value::Number(episodes.into()));
+    if let Some(platform) = item
+        .get("platform")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+    {
+        metadata.insert("platform".to_string(), Value::String(platform.to_string()));
+    }
+    for (key, label) in [
+        ("total_episodes", "total_episodes"),
+        ("eps", "eps"),
+        ("volumes", "volumes"),
+    ] {
+        if let Some(count) = item
+            .get(key)
+            .and_then(Value::as_i64)
+            .filter(|count| *count > 0)
+        {
+            metadata.insert(label.to_string(), Value::Number(count.into()));
         }
+    }
+    // Score/rank live under `rating` on a subject fetch but at the top level on
+    // some search responses; accept either shape.
+    let rating = item.get("rating");
+    if let Some(score) = rating
+        .and_then(|rating| rating.get("score"))
+        .or_else(|| item.get("score"))
+        .and_then(Value::as_f64)
+        .filter(|score| *score > 0.0)
+    {
+        metadata.insert("score".to_string(), json!(score));
+    }
+    if let Some(rank) = rating
+        .and_then(|rating| rating.get("rank"))
+        .or_else(|| item.get("rank"))
+        .and_then(Value::as_i64)
+        .filter(|rank| *rank > 0)
+    {
+        metadata.insert("rank".to_string(), Value::Number(rank.into()));
+    }
+    if let Some(tags) = string_list(item.get("tags"), |tag| {
+        tag.get("name").and_then(Value::as_str)
+    }) {
+        metadata.insert("tags".to_string(), tags);
+    }
+    if let Some(meta_tags) = string_list(item.get("meta_tags"), Value::as_str) {
+        metadata.insert("meta_tags".to_string(), meta_tags);
     }
     if let Some(summary) = item
         .get("summary")
@@ -215,4 +285,34 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
         titles,
         metadata,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::bangumi_candidate;
+    use serde_json::json;
+
+    #[test]
+    fn candidate_surfaces_extended_metadata() {
+        let candidate = bangumi_candidate(&json!({
+            "id": 8,
+            "name": "Cowboy Bebop",
+            "name_cn": "星际牛仔",
+            "platform": "TV",
+            "eps": 26,
+            "total_episodes": 26,
+            "rating": { "score": 8.7, "rank": 42 },
+            "tags": [{ "name": "Sci-Fi", "count": 100 }, { "name": "Space", "count": 50 }],
+            "meta_tags": ["TV", "Original"]
+        }))
+        .unwrap();
+
+        let metadata = &candidate.metadata;
+        assert_eq!(metadata.get("platform"), Some(&json!("TV")));
+        assert_eq!(metadata.get("eps"), Some(&json!(26)));
+        assert_eq!(metadata.get("score"), Some(&json!(8.7)));
+        assert_eq!(metadata.get("rank"), Some(&json!(42)));
+        assert_eq!(metadata.get("tags"), Some(&json!(["Sci-Fi", "Space"])));
+        assert_eq!(metadata.get("meta_tags"), Some(&json!(["TV", "Original"])));
+    }
 }

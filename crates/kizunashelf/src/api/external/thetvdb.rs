@@ -179,6 +179,16 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("cover_url", "Cover URL"),
         field_option("first_air_time", "First air time"),
         field_option("year", "Year"),
+        field_option("status", "Status"),
+        field_option("primary_language", "Primary language"),
+        field_option("country", "Country"),
+        field_option("network", "Network"),
+        field_option("director", "Director"),
+        field_option("slug", "Slug"),
+        // Lists — map these to list-type fields (enum list / text list / relation).
+        field_option("genres", "Genres"),
+        field_option("studios", "Studios"),
+        field_option("aliases", "Aliases"),
         field_option("overview", "Overview"),
     ]
 }
@@ -314,6 +324,27 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
     {
         metadata.insert("overview".to_string(), Value::String(overview.to_string()));
     }
+    for key in ["primary_language", "country", "director", "slug"] {
+        if let Some(value) = item
+            .get(key)
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+        {
+            metadata.insert(key.to_string(), Value::String(value.to_string()));
+        }
+    }
+    // `status`/`network` are strings in search results but objects elsewhere.
+    for key in ["status", "network"] {
+        if let Some(value) = item.get(key).and_then(string_or_named) {
+            metadata.insert(key.to_string(), Value::String(value));
+        }
+    }
+    // String arrays → JSON arrays for list-type fields.
+    for key in ["genres", "studios", "aliases"] {
+        if let Some(values) = string_list(item.get(key)) {
+            metadata.insert(key.to_string(), values);
+        }
+    }
     Some(ExternalCandidate {
         provider: "thetvdb".to_string(),
         source_id,
@@ -329,6 +360,30 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         titles: BTreeMap::new(),
         metadata,
     })
+}
+
+/// A field that is a plain string in search results but a `{ name }` object in
+/// some other TheTVDB shapes (e.g. `status`, `network`).
+fn string_or_named(value: &Value) -> Option<String> {
+    value
+        .as_str()
+        .or_else(|| value.get("name").and_then(Value::as_str))
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+}
+
+/// Collects a string array into a JSON string array for list-type fields,
+/// returning `None` when missing or empty.
+fn string_list(value: Option<&Value>) -> Option<Value> {
+    let items: Vec<Value> = value?
+        .as_array()?
+        .iter()
+        .filter_map(Value::as_str)
+        .filter(|text| !text.is_empty())
+        .map(|text| Value::String(text.to_string()))
+        .collect();
+    (!items.is_empty()).then_some(Value::Array(items))
 }
 
 fn non_empty_string_or_integer(value: &Value) -> Option<String> {
@@ -375,5 +430,27 @@ mod tests {
             Some(&Value::String("2026-04-12".to_string()))
         );
         assert_eq!(candidate.metadata.get("year"), None);
+    }
+
+    #[test]
+    fn candidate_surfaces_extended_metadata() {
+        let candidate = thetvdb_candidate(&json!({
+            "tvdb_id": 123,
+            "name": "Example Series",
+            "primary_language": "jpn",
+            "country": "jpn",
+            "status": "Continuing",
+            "network": "TV Tokyo",
+            "genres": ["Anime", "Action"],
+            "studios": ["Studio X"]
+        }))
+        .unwrap();
+
+        let metadata = &candidate.metadata;
+        assert_eq!(metadata.get("primary_language"), Some(&json!("jpn")));
+        assert_eq!(metadata.get("status"), Some(&json!("Continuing")));
+        assert_eq!(metadata.get("network"), Some(&json!("TV Tokyo")));
+        assert_eq!(metadata.get("genres"), Some(&json!(["Anime", "Action"])));
+        assert_eq!(metadata.get("studios"), Some(&json!(["Studio X"])));
     }
 }
