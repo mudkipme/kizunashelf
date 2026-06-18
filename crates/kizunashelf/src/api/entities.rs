@@ -7,7 +7,8 @@ use crate::library::compare_string_for_title_language;
 use crate::relations::{
     sort_entities, sort_entities_with_title_language, summary_by_id, SortDirection,
 };
-use crate::types::{Entity, EntitySummary, FieldType, Library, Relation, RelationDirection};
+use crate::library::load_entity;
+use crate::types::{EntityRecord, EntitySummary, FieldType, Library, Relation, RelationDirection};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -45,7 +46,7 @@ pub(crate) async fn entities(
 ) -> ApiResult<EntityListResponse> {
     let library = get_library(&state).await?;
     let field_filters = parse_entity_field_filters(query.filters.as_deref())?;
-    let mut entities: Vec<_> = library.entities.iter().collect();
+    let mut entities: Vec<_> = library.records.iter().collect();
     if query
         .entity_type
         .as_ref()
@@ -166,7 +167,7 @@ fn parse_entity_field_filters(filters: Option<&str>) -> Result<Vec<EntityFieldFi
 }
 
 fn entity_matches_field_filters(
-    entity: &Entity,
+    entity: &EntityRecord,
     library: &Library,
     filters: &[EntityFieldFilter],
 ) -> bool {
@@ -182,7 +183,7 @@ fn entity_matches_field_filters(
 }
 
 fn field_type_for_entity_filter(
-    entity: &Entity,
+    entity: &EntityRecord,
     library: &Library,
     field: &str,
 ) -> Option<FieldType> {
@@ -307,8 +308,8 @@ pub(crate) async fn entity_dates(
     AxumPath(path): AxumPath<EntityPath>,
 ) -> ApiResult<EntityDatesResponse> {
     let library = get_library(&state).await?;
-    let Some(entity) = library
-        .entities
+    let Some(record) = library
+        .records
         .iter()
         .find(|item| item.summary.id == path.id)
     else {
@@ -316,7 +317,7 @@ pub(crate) async fn entity_dates(
     };
     let vfs = state.vault_vfs(&library.config.vault_root);
     Ok(Json(
-        build_entity_dates(&library, vfs.as_ref(), entity).await?,
+        build_entity_dates(&library, vfs.as_ref(), &record.summary).await?,
     ))
 }
 
@@ -325,17 +326,20 @@ pub(crate) async fn entity_detail(
     AxumPath(path): AxumPath<EntityPath>,
 ) -> ApiResult<EntityDetailResponse> {
     let library = get_library(&state).await?;
-    let Some(entity) = library
-        .entities
+    let Some(record) = library
+        .records
         .iter()
         .find(|item| item.summary.id == path.id)
     else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    let relations = entity_detail_relations(&library, &entity.summary.id);
-    let related_entities = entity_detail_related_entities(&library, &entity.summary.id, &relations);
+    let relations = entity_detail_relations(&library, &record.summary.id);
+    let related_entities = entity_detail_related_entities(&library, &record.summary.id, &relations);
+    // The full body/raw is not resident; load it from disk on demand.
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let entity = load_entity(&library.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(EntityDetailResponse {
-        entity: entity.clone(),
+        entity,
         relations,
         related_entities,
     }))

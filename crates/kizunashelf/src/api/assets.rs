@@ -6,8 +6,8 @@ use crate::contract::{
     AssetDownloadJobRequest, AssetDownloadJobStatus, AssetDownloadRequest, AssetDownloadResponse,
     AssetDownloadStatus,
 };
-use crate::library::{serialize_markdown_document, split_markdown_document};
-use crate::types::{Entity, EntityTypeConfig, FieldType, Library};
+use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
+use crate::types::{EntityRecord, EntityTypeConfig, FieldType, Library};
 use crate::vfs::{normalize_relative, Vfs};
 use axum::body::Body;
 use axum::extract::{Path as AxumPath, State};
@@ -48,7 +48,7 @@ pub(crate) async fn download_entity_assets(
         return Err(ApiError::forbidden("Content writes are disabled"));
     }
     let Some(entity) = library
-        .entities
+        .records
         .iter()
         .find(|item| item.summary.id == path.id)
     else {
@@ -87,12 +87,12 @@ pub(crate) async fn download_entity_assets(
     }
 
     let reloaded = get_library(&state).await?;
-    let entity = reloaded
-        .entities
+    let record = reloaded
+        .records
         .iter()
         .find(|item| item.summary.id == path.id)
-        .cloned()
         .ok_or_else(|| ApiError::not_found("Entity was not indexed"))?;
+    let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(AssetDownloadResponse { entity, results }))
 }
 
@@ -103,7 +103,7 @@ pub(super) async fn download_entity_core(
     client: &reqwest::Client,
     vfs: &dyn Vfs,
     asset_root: &str,
-    entity: &Entity,
+    entity: &EntityRecord,
     type_config: &EntityTypeConfig,
     all_local: &HashSet<String>,
     fields_filter: Option<&[String]>,
@@ -400,7 +400,7 @@ pub(crate) async fn create_asset_job(
     }
 
     let mut entity_ids = Vec::new();
-    for entity in &library.entities {
+    for entity in &library.records {
         if let Some(entity_type) = request.entity_type.as_deref() {
             if entity.summary.entity_type != entity_type {
                 continue;
@@ -546,7 +546,7 @@ async fn run_asset_job(
                 return;
             }
             let Some(entity) = library
-                .entities
+                .records
                 .iter()
                 .find(|item| item.summary.id == entity_id)
                 .cloned()
@@ -688,7 +688,7 @@ pub(super) fn entity_asset_dir(asset_root: &str, entity_relative_path: &str) -> 
 /// for cross-entity collision detection.
 fn all_local_asset_paths(library: &Library) -> HashSet<String> {
     let mut set = HashSet::new();
-    for entity in &library.entities {
+    for entity in &library.records {
         if let Some(type_config) = library
             .config
             .types

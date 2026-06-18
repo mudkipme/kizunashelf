@@ -5,7 +5,7 @@ use crate::contract::{
     CreateEntityRequest, DeleteEntityRequest, DeleteEntityResponse, EntityMutationResponse,
     UpdateEntityRequest,
 };
-use crate::library::{serialize_markdown_document, split_markdown_document};
+use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
 use crate::types::EntityTypeConfig;
 use crate::vfs::Vfs;
 use anyhow::Result;
@@ -31,7 +31,7 @@ pub(crate) async fn update_entity(
         return Err(ApiError::forbidden("Content writes are disabled"));
     }
     let Some(entity) = library
-        .entities
+        .records
         .iter()
         .find(|item| item.summary.id == path.id)
     else {
@@ -95,19 +95,13 @@ pub(crate) async fn update_entity(
     }
     state.invalidate_cache().await;
     let reloaded = get_library(&state).await?;
-    let entity = reloaded
-        .entities
+    let record = reloaded
+        .records
         .iter()
         .find(|item| item.summary.path == target_rel)
-        .cloned()
-        .or_else(|| {
-            reloaded
-                .entities
-                .iter()
-                .find(|item| item.summary.id == path.id)
-                .cloned()
-        })
+        .or_else(|| reloaded.records.iter().find(|item| item.summary.id == path.id))
         .ok_or_else(|| ApiError::not_found("Updated entity was not indexed"))?;
+    let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(EntityMutationResponse { entity }))
 }
 
@@ -143,12 +137,12 @@ pub(crate) async fn create_entity(
     write_entity_raw(vfs.as_ref(), &path, &raw).await?;
     state.invalidate_cache().await;
     let reloaded = get_library(&state).await?;
-    let entity = reloaded
-        .entities
+    let record = reloaded
+        .records
         .iter()
         .find(|item| item.summary.path == path)
-        .cloned()
         .ok_or_else(|| ApiError::not_found("Created entity was not indexed"))?;
+    let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(EntityMutationResponse { entity }))
 }
 
@@ -162,7 +156,7 @@ pub(crate) async fn delete_entity(
         return Err(ApiError::forbidden("Content writes are disabled"));
     }
     let Some(entity) = library
-        .entities
+        .records
         .iter()
         .find(|item| item.summary.id == path.id)
     else {

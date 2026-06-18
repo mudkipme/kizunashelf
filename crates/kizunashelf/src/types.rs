@@ -312,6 +312,21 @@ pub struct Entity {
     pub raw: String,
 }
 
+/// The slim, resident representation of an entity kept in the cached [`Library`].
+/// It carries the summary, frontmatter (for in-memory list/home/asset filtering)
+/// and revision, but deliberately omits `body`/`raw` — those are loaded on demand
+/// from disk via [`crate::library::load_entity`] when a full [`Entity`] is needed
+/// (detail page, mutations, asset writes). This keeps resident memory from scaling
+/// with the total body/raw size of the vault.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityRecord {
+    #[serde(flatten)]
+    pub summary: EntitySummary,
+    pub revision: String,
+    pub frontmatter: Map<String, Value>,
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Relation {
@@ -336,7 +351,7 @@ pub enum RelationDirection {
 #[serde(rename_all = "camelCase")]
 pub struct Library {
     pub config: KizunaConfig,
-    pub entities: Vec<Entity>,
+    pub records: Vec<EntityRecord>,
     pub summaries: Vec<EntitySummary>,
     pub relations: Vec<Relation>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

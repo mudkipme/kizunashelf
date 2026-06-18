@@ -15,10 +15,14 @@ pub struct DailyNoteFile {
     pub contents: String,
 }
 
-struct PendingDailyNote {
-    relative_path: String,
-    date: Option<String>,
-    source_label: String,
+/// A daily-note file that matched the date filter but whose contents have not
+/// been read yet. Discovery (cheap directory walks) is separated from reading so
+/// callers that scan the whole vault can read contents in bounded chunks rather
+/// than loading every note into memory at once.
+pub(crate) struct PendingDailyNote {
+    pub(crate) relative_path: String,
+    pub(crate) date: Option<String>,
+    pub(crate) source_label: String,
 }
 
 pub async fn daily_note_files(
@@ -28,10 +32,48 @@ pub async fn daily_note_files(
     month: Option<u32>,
     require_date: bool,
 ) -> Result<Vec<DailyNoteFile>> {
+    // 1. Discover matching files (no contents read yet).
+    let pending = daily_note_candidates(config, vfs, year, month, require_date).await?;
+
+    // 2. Read the surviving files' contents in one batched call.
+    let paths: Vec<String> = pending
+        .iter()
+        .map(|note| note.relative_path.clone())
+        .collect();
+    let mut contents_by_path: HashMap<String, String> =
+        read_daily_note_contents(vfs, &paths).await?.into_iter().collect();
+
+    // 3. Assemble, dropping any file that could not be read or decoded.
+    let files = pending
+        .into_iter()
+        .filter_map(|note| {
+            contents_by_path
+                .remove(&note.relative_path)
+                .map(|contents| DailyNoteFile {
+                    relative_path: note.relative_path,
+                    date: note.date,
+                    source_label: note.source_label,
+                    contents,
+                })
+        })
+        .collect();
+
+    Ok(files)
+}
+
+/// Walks the configured daily-note directories and returns the files whose
+/// path/filename matches the date filter — without reading any file contents.
+/// One `read_dir` per directory; the surviving paths can then be read in chunks
+/// via [`read_daily_note_contents`].
+pub(crate) async fn daily_note_candidates(
+    config: &KizunaConfig,
+    vfs: &dyn Vfs,
+    year: Option<i32>,
+    month: Option<u32>,
+    require_date: bool,
+) -> Result<Vec<PendingDailyNote>> {
     let format = daily_note_date_format(config);
 
-    // 1. Walk directory listings (cheap: one `read_dir` per directory) and filter
-    //    by date from the path/filename — no file contents read yet.
     let mut pending = Vec::new();
     for path in daily_note_paths(config) {
         for relative_path in vfs::walk_markdown_files(vfs, &path).await? {
@@ -74,34 +116,28 @@ pub async fn daily_note_files(
         }
     }
 
-    // 2. Read the surviving files' contents in one batched call.
-    let paths: Vec<String> = pending
-        .iter()
-        .map(|note| note.relative_path.clone())
-        .collect();
-    let mut contents_by_path: HashMap<String, String> = vfs
-        .read_files(&paths)
+    Ok(pending)
+}
+
+/// Largest number of daily notes whose contents are held in memory at once when
+/// scanning the whole vault (e.g. building daily-note relations). Bounds peak
+/// memory so a vault with very many (or very large) daily notes cannot OOM the
+/// relation pass.
+pub(crate) const DAILY_NOTE_READ_CHUNK: usize = 64;
+
+/// Reads a batch of daily-note files, returning `(relative_path, contents)` for
+/// each that could be read and UTF-8 decoded. Files that fail either are dropped
+/// (consistent with [`daily_note_files`]).
+pub(crate) async fn read_daily_note_contents(
+    vfs: &dyn Vfs,
+    paths: &[String],
+) -> Result<Vec<(String, String)>> {
+    Ok(vfs
+        .read_files(paths)
         .await?
         .into_iter()
         .filter_map(|(path, bytes)| String::from_utf8(bytes).ok().map(|text| (path, text)))
-        .collect();
-
-    // 3. Assemble, dropping any file that could not be read or decoded.
-    let files = pending
-        .into_iter()
-        .filter_map(|note| {
-            contents_by_path
-                .remove(&note.relative_path)
-                .map(|contents| DailyNoteFile {
-                    relative_path: note.relative_path,
-                    date: note.date,
-                    source_label: note.source_label,
-                    contents,
-                })
-        })
-        .collect();
-
-    Ok(files)
+        .collect())
 }
 
 pub fn strip_frontmatter(raw: &str) -> String {

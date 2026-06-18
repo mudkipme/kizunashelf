@@ -8,8 +8,8 @@ pub use frontmatter::{
 };
 
 use crate::types::{
-    AppConfig, DateRole, Entity, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig, Library,
-    LibraryDiagnostic, Relation, VaultConfig,
+    AppConfig, DateRole, Entity, EntityRecord, EntitySummary, EntityTypeConfig, FieldType,
+    KizunaConfig, Library, LibraryDiagnostic, Relation, VaultConfig,
 };
 use crate::vfs::{NativeVfs, Vfs, VfsError};
 use anyhow::{Context, Result};
@@ -17,7 +17,7 @@ use frontmatter::{
     date_values, default_title, external_refs, extract_summary, first_string, parse_markdown,
     title_languages,
 };
-use relations::build_relations;
+use relations::{build_relations, extract_body_links};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::path::{Component, Path, PathBuf};
@@ -174,37 +174,55 @@ pub async fn ensure_config_directories(config: &KizunaConfig) -> Result<()> {
 
 pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Library> {
     validate_library_roots(&config, vfs.as_ref()).await?;
-    let (mut entities, diagnostics) = read_entities(&config, &vfs).await?;
-    let relations = build_relations(&config, &entities, vfs.as_ref()).await?;
+    // Per-directory streaming: bodies/raw are extracted into compact records +
+    // body-link lists and dropped before the next directory, so resident memory
+    // never holds the whole vault's content.
+    let (mut records, body_links, diagnostics) = read_entities(&config, &vfs).await?;
+    let body_links: HashMap<String, Vec<String>> = body_links.into_iter().collect();
+    let relations = build_relations(&config, &records, &body_links, vfs.as_ref()).await?;
     let relation_count_by_id = unique_relation_count_by_id(&relations);
 
-    let summaries: Vec<EntitySummary> = entities
-        .iter()
-        .map(|entity| {
-            let mut summary = entity.summary.clone();
-            summary.relation_count = *relation_count_by_id.get(&summary.id).unwrap_or(&0);
-            summary
-        })
-        .collect();
-    let relation_count_by_summary_id: HashMap<String, u32> = summaries
-        .iter()
-        .map(|summary| (summary.id.clone(), summary.relation_count))
-        .collect();
-
-    for entity in &mut entities {
-        entity.summary.relation_count = *relation_count_by_summary_id
-            .get(&entity.summary.id)
-            .unwrap_or(&0);
+    for record in &mut records {
+        record.summary.relation_count =
+            *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
     }
+    let summaries: Vec<EntitySummary> =
+        records.iter().map(|record| record.summary.clone()).collect();
 
     Ok(Library {
         config,
-        entities,
+        records,
         summaries,
         relations,
         diagnostics,
         generated_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
     })
+}
+
+/// Loads a single full [`Entity`] (including `body`/`raw`) from disk for the
+/// given resident summary. This is the on-demand counterpart to the slim
+/// [`EntityRecord`] kept in the cache: detail views, mutations, and asset writes
+/// call it when they need the complete document, instead of keeping every body
+/// resident. Re-parsing from disk also returns the freshest content.
+pub(crate) async fn load_entity(
+    config: &KizunaConfig,
+    vfs: &dyn Vfs,
+    summary: &EntitySummary,
+) -> Result<Entity> {
+    let type_config = config
+        .types
+        .iter()
+        .find(|type_config| type_config.id == summary.entity_type)
+        .with_context(|| format!("unknown entity type {}", summary.entity_type))?;
+    let bytes = vfs
+        .read(&summary.path)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {}: {error}", summary.path))?;
+    let mut entity = parse_entity(type_config, summary.path.clone(), bytes)?.entity;
+    // `relation_count` is a library-wide derived value (from the relation graph),
+    // not something a single file knows; carry it over from the resident summary.
+    entity.summary.relation_count = summary.relation_count;
+    Ok(entity)
 }
 
 fn unique_relation_count_by_id(relations: &[Relation]) -> HashMap<String, u32> {
@@ -330,29 +348,40 @@ fn ensure_path_inside_root(root: &Path, path: &Path, label: &str) -> Result<()> 
     Ok(())
 }
 
+/// Reads every entity, returning the slim resident records, the per-entity body
+/// wikilink targets (id → targets, for relation building), and any diagnostics.
+/// Each type directory is read and reduced to records before the next, so the
+/// full file contents of at most one directory are in memory at a time.
 async fn read_entities(
     config: &KizunaConfig,
     vfs: &Arc<dyn Vfs>,
-) -> Result<(Vec<Entity>, Vec<LibraryDiagnostic>)> {
-    let mut entities = Vec::new();
+) -> Result<(
+    Vec<EntityRecord>,
+    Vec<(String, Vec<String>)>,
+    Vec<LibraryDiagnostic>,
+)> {
+    let mut records = Vec::new();
+    let mut body_links = Vec::new();
     let mut diagnostics = Vec::new();
     for type_config in &config.types {
         let result = read_entities_for_type(config, type_config, vfs).await?;
-        entities.extend(result.entities);
+        records.extend(result.records);
+        body_links.extend(result.body_links);
         diagnostics.extend(result.diagnostics);
     }
-    entities.sort_by(|a, b| {
+    records.sort_by(|a, b| {
         let type_compare = compare_string(&a.summary.type_label, &b.summary.type_label);
         if !type_compare.is_eq() {
             return type_compare;
         }
         compare_string(&a.summary.title, &b.summary.title)
     });
-    Ok((entities, diagnostics))
+    Ok((records, body_links, diagnostics))
 }
 
 struct EntityReadBatch {
-    entities: Vec<Entity>,
+    records: Vec<EntityRecord>,
+    body_links: Vec<(String, Vec<String>)>,
     diagnostics: Vec<LibraryDiagnostic>,
 }
 
@@ -375,7 +404,8 @@ async fn read_entities_for_type(
         Ok(entries) => entries,
         Err(VfsError::NotFound) => {
             return Ok(EntityReadBatch {
-                entities: Vec::new(),
+                records: Vec::new(),
+                body_links: Vec::new(),
                 diagnostics: Vec::new(),
             });
         }
@@ -399,15 +429,28 @@ async fn read_entities_for_type(
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entities in {relative_dir}: {error}"))?;
 
-    let mut entities = Vec::new();
+    let mut records = Vec::new();
+    let mut body_links = Vec::new();
     let mut diagnostics = Vec::new();
     for (relative_path, bytes) in files {
         let result = parse_entity(type_config, relative_path, bytes)?;
-        entities.push(result.entity);
         diagnostics.extend(result.diagnostics);
+        let entity = result.entity;
+        // Extract body wikilinks now, while the body is in hand, so it can be
+        // dropped along with `raw` instead of staying resident.
+        let links = extract_body_links(&entity.body);
+        if !links.is_empty() {
+            body_links.push((entity.summary.id.clone(), links));
+        }
+        records.push(EntityRecord {
+            summary: entity.summary,
+            revision: entity.revision,
+            frontmatter: entity.frontmatter,
+        });
     }
     Ok(EntityReadBatch {
-        entities,
+        records,
+        body_links,
         diagnostics,
     })
 }
@@ -529,7 +572,7 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{compare_string, read_library};
+    use super::{compare_string, load_entity, read_library};
     use crate::types::{EntityTypeConfig, FieldConfig, FieldType, FilenameConfig, KizunaConfig};
     use crate::vfs::{InMemoryVfs, NativeVfs, Vfs};
     use std::sync::Arc;
@@ -597,7 +640,7 @@ mod tests {
 
         let library = read_library(config, vfs).await.unwrap();
 
-        assert!(library.entities.is_empty());
+        assert!(library.records.is_empty());
         assert!(library.summaries.is_empty());
     }
 
@@ -665,7 +708,39 @@ mod tests {
         assert_eq!(summary.title, "Star Voyager");
         assert_eq!(summary.path, "Taxonomy/Anime/Star Voyager.md");
         // Revision is derived from content + metadata, both supplied by the VFS.
-        assert!(!library.entities[0].revision.is_empty());
+        assert!(!library.records[0].revision.is_empty());
+        // The resident record keeps frontmatter (for in-memory filtering) but the
+        // body/raw are not part of it — they are loaded on demand. (The absence of
+        // `body`/`raw` on `EntityRecord` is enforced at compile time.)
+        assert!(library.records[0].frontmatter.contains_key("status"));
+    }
+
+    #[tokio::test]
+    async fn load_entity_reads_full_body_and_raw_on_demand() {
+        let config = test_config("/virtual-vault");
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file(
+            "Taxonomy/Anime/Star Voyager.md",
+            "---\ntitle: Star Voyager\nstatus: Watching\n---\n\nBody text.\n",
+        );
+
+        let library = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
+            .await
+            .unwrap();
+        let summary = &library.summaries[0];
+
+        let entity = load_entity(&library.config, vfs.as_ref(), summary)
+            .await
+            .unwrap();
+
+        // The on-demand load reconstructs the full document...
+        assert!(entity.body.contains("Body text."));
+        assert!(entity.raw.contains("title: Star Voyager"));
+        assert!(entity.frontmatter.contains_key("status"));
+        // ...and carries the library-wide relation count from the resident summary.
+        assert_eq!(entity.summary.relation_count, summary.relation_count);
+        assert_eq!(entity.summary.id, summary.id);
     }
 
     fn test_config(vault_root: &str) -> KizunaConfig {

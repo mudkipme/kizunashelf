@@ -12,7 +12,7 @@ use crate::contract::{
 };
 use crate::dates::clamp_number;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
-use crate::types::{Entity, HomeSectionConfig, Library};
+use crate::types::{EntityRecord, HomeSectionConfig, Library};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -39,7 +39,7 @@ pub(crate) async fn health(State(state): State<AppState>) -> ApiResult<HealthRes
     Ok(Json(HealthResponse {
         ok: true,
         generated_at: library.generated_at.clone(),
-        entity_count: library.entities.len(),
+        entity_count: library.records.len(),
         relation_count: library.relations.len(),
         diagnostic_count: library.diagnostics.len(),
         diagnostics: library.diagnostics.iter().take(20).cloned().collect(),
@@ -375,7 +375,7 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
     };
     let sort = section.sort.as_deref().unwrap_or("title");
     let mut filtered: Vec<_> = library
-        .entities
+        .records
         .iter()
         .filter(|entity| entity.summary.entity_type == section.entity_type)
         .filter(|entity| home_section_filters_match(entity, section))
@@ -409,7 +409,7 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
     }
 }
 
-fn home_section_filters_match(entity: &Entity, section: &HomeSectionConfig) -> bool {
+fn home_section_filters_match(entity: &EntityRecord, section: &HomeSectionConfig) -> bool {
     section.filters.iter().all(|filter| {
         let field = filter.field.trim();
         if field.is_empty() {

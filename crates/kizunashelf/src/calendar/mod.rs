@@ -9,7 +9,7 @@ use crate::dates::{is_in_month, normalize_date, parse_exact_date};
 use crate::library::{compare_string, wikilink_regex};
 use crate::relations::summary_by_id;
 use crate::types::{
-    DateRole, Entity, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library,
+    DateRole, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library,
 };
 use crate::vfs::Vfs;
 use anyhow::Result;
@@ -142,14 +142,14 @@ pub fn build_calendar_planning(
 pub async fn build_entity_dates(
     library: &Library,
     vfs: &dyn Vfs,
-    entity: &Entity,
+    summary: &EntitySummary,
 ) -> Result<EntityDatesResponse> {
-    let metadata = metadata_date_entries(library, entity);
-    let daily_notes = entity_daily_note_entries(library, vfs, &entity.summary).await?;
+    let metadata = metadata_date_entries(library, summary);
+    let daily_notes = entity_daily_note_entries(library, vfs, summary).await?;
     let snippets = daily_notes.iter().map(|item| item.snippets.len()).sum();
     Ok(EntityDatesResponse {
         generated_at: library.generated_at.clone(),
-        entity_id: entity.summary.id.clone(),
+        entity_id: summary.id.clone(),
         totals: EntityDatesTotals {
             metadata: metadata.len(),
             daily_notes: daily_notes.len(),
@@ -166,11 +166,12 @@ fn taxonomy_calendar_entries(
 ) -> Vec<CalendarEntry> {
     let summaries = summary_by_id(library);
     let mut entries = Vec::new();
-    for entity in &library.entities {
+    for record in &library.records {
+        let entity = &record.summary;
         if options
             .entity_type
             .as_ref()
-            .is_some_and(|entity_type| entity.summary.entity_type != *entity_type)
+            .is_some_and(|entity_type| entity.entity_type != *entity_type)
         {
             continue;
         }
@@ -182,13 +183,13 @@ fn taxonomy_calendar_entries(
             {
                 let date = item.date.clone().unwrap();
                 entries.push(CalendarEntry {
-                    id: format!("taxonomy:{}:{date}:{}", item.field, entity.summary.id),
+                    id: format!("taxonomy:{}:{date}:{}", item.field, entity.id),
                     date,
                     source: CalendarEntrySource::Taxonomy,
                     entity: summaries
-                        .get(entity.summary.id.as_str())
+                        .get(entity.id.as_str())
                         .map(|summary| (*summary).clone())
-                        .unwrap_or_else(|| entity.summary.clone()),
+                        .unwrap_or_else(|| entity.clone()),
                     date_field: Some(item.field),
                     raw_date: Some(item.value),
                     note_path: None,
@@ -211,12 +212,12 @@ fn taxonomy_calendar_entries(
         .collect()
 }
 
-fn metadata_date_entries(library: &Library, entity: &Entity) -> Vec<EntityDateMetadataEntry> {
+fn metadata_date_entries(library: &Library, entity: &EntitySummary) -> Vec<EntityDateMetadataEntry> {
     let fields: Vec<String> = library
         .config
         .types
         .iter()
-        .find(|item| item.id == entity.summary.entity_type)
+        .find(|item| item.id == entity.entity_type)
         .map(|item| {
             item.fields
                 .iter()
@@ -233,7 +234,7 @@ fn metadata_date_entries(library: &Library, entity: &Entity) -> Vec<EntityDateMe
         .unwrap_or_default();
     let mut seen = Vec::<String>::new();
     let mut entries = Vec::new();
-    for item in &entity.summary.dates {
+    for item in &entity.dates {
         if !fields.is_empty() && !fields.contains(&item.field) {
             continue;
         }
@@ -725,7 +726,7 @@ mod tests {
                     entity_type("franchise", "Franchise"),
                 ],
             },
-            entities: Vec::new(),
+            records: Vec::new(),
             summaries: vec![anime.clone(), franchise],
             relations: Vec::new(),
             diagnostics: Vec::new(),

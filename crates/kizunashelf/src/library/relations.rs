@@ -1,5 +1,8 @@
-use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_frontmatter};
-use crate::types::{Entity, FieldType, KizunaConfig, Relation, RelationDirection};
+use crate::daily_notes::{
+    daily_note_candidates, normalize_wikilink_target, read_daily_note_contents, strip_frontmatter,
+    DAILY_NOTE_READ_CHUNK,
+};
+use crate::types::{EntityRecord, FieldType, KizunaConfig, Relation, RelationDirection};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use serde_json::Value;
@@ -7,30 +10,30 @@ use std::collections::{HashMap, HashSet};
 
 use super::frontmatter::{fence_regex, strip_wikilink, wikilink_regex};
 
+/// Builds the relation graph from the resident [`EntityRecord`]s. Frontmatter
+/// relation fields are read from each record (resident); body wikilinks are
+/// supplied via `body_links` (keyed by entity id), pre-extracted during the load
+/// pass before each body was dropped, so this function never needs entity bodies
+/// in memory. Daily-note wikilinks are read from disk in bounded chunks.
 pub(super) async fn build_relations(
     config: &KizunaConfig,
-    entities: &[Entity],
+    records: &[EntityRecord],
+    body_links: &HashMap<String, Vec<String>>,
     vfs: &dyn Vfs,
 ) -> Result<Vec<Relation>> {
-    let mut by_basename: HashMap<String, Vec<&Entity>> = HashMap::new();
-    for entity in entities {
-        by_basename
-            .entry(normalize_wikilink_target(&entity.summary.basename))
-            .or_default()
-            .push(entity);
-    }
+    let by_basename = normalized_entity_basename_index(records);
 
     let mut relations = Vec::new();
-    for entity in entities {
-        for relation_field in relation_fields(config, &entity.summary.entity_type) {
-            for target_title in relation_values(entity.frontmatter.get(&relation_field.field)) {
+    for record in records {
+        for relation_field in relation_fields(config, &record.summary.entity_type) {
+            for target_title in relation_values(record.frontmatter.get(&relation_field.field)) {
                 let target = find_target(
                     &target_title,
                     relation_field.relation_type.as_deref(),
                     &by_basename,
                 );
                 relations.push(Relation {
-                    source_id: entity.summary.id.clone(),
+                    source_id: record.summary.id.clone(),
                     target_id: target.map(|target| target.summary.id.clone()),
                     target_title: target_title.clone(),
                     target_type: target.map(|target| target.summary.entity_type.clone()),
@@ -40,9 +43,9 @@ pub(super) async fn build_relations(
                 if let Some(target) = target {
                     relations.push(Relation {
                         source_id: target.summary.id.clone(),
-                        target_id: Some(entity.summary.id.clone()),
-                        target_title: entity.summary.title.clone(),
-                        target_type: Some(entity.summary.entity_type.clone()),
+                        target_id: Some(record.summary.id.clone()),
+                        target_title: record.summary.title.clone(),
+                        target_type: Some(record.summary.entity_type.clone()),
                         field: relation_field.field.clone(),
                         direction: RelationDirection::In,
                     });
@@ -50,17 +53,17 @@ pub(super) async fn build_relations(
             }
         }
 
-        for target_title in body_wikilinks(&entity.body) {
-            let Some(target) = find_target(&target_title, None, &by_basename) else {
+        for target_title in body_links.get(&record.summary.id).into_iter().flatten() {
+            let Some(target) = find_target(target_title, None, &by_basename) else {
                 continue;
             };
-            if target.summary.id == entity.summary.id {
+            if target.summary.id == record.summary.id {
                 continue;
             }
             relations.push(Relation {
-                source_id: entity.summary.id.clone(),
+                source_id: record.summary.id.clone(),
                 target_id: Some(target.summary.id.clone()),
-                target_title,
+                target_title: target_title.clone(),
                 target_type: Some(target.summary.entity_type.clone()),
                 field: "body".to_string(),
                 direction: RelationDirection::Out,
@@ -68,9 +71,16 @@ pub(super) async fn build_relations(
         }
     }
 
-    relations.extend(daily_note_relations(config, entities, vfs).await?);
+    relations.extend(daily_note_relations(config, records, vfs).await?);
 
     Ok(dedupe_relations(relations))
+}
+
+/// Extracts the body wikilink targets for one entity. Called during the load
+/// pass (while the body is still in hand) so [`build_relations`] can resolve them
+/// later without the body resident. See [`body_wikilinks`].
+pub(super) fn extract_body_links(body: &str) -> Vec<String> {
+    body_wikilinks(body)
 }
 
 #[derive(Clone)]
@@ -102,26 +112,43 @@ fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<RelationFiel
 
 async fn daily_note_relations(
     config: &KizunaConfig,
-    entities: &[Entity],
+    records: &[EntityRecord],
     vfs: &dyn Vfs,
 ) -> Result<Vec<Relation>> {
-    let by_basename = normalized_entity_basename_index(entities);
+    let by_basename = normalized_entity_basename_index(records);
     let mut relations = Vec::new();
 
-    for file in daily_note_files(config, vfs, None, None, false).await? {
-        let source_id = format!("daily-note:{}:{}", file.source_label, file.relative_path);
-        for target_title in daily_note_wikilinks(&file.contents) {
-            let Some(target) = find_target_for_wikilink(&target_title, &by_basename) else {
-                continue;
-            };
-            relations.push(Relation {
-                source_id: source_id.clone(),
-                target_id: Some(target.summary.id.clone()),
-                target_title,
-                target_type: Some(target.summary.entity_type.clone()),
-                field: "daily-note".to_string(),
-                direction: RelationDirection::Out,
-            });
+    // Discover all daily notes up front (cheap), then read their contents in
+    // bounded chunks so a vault with very many/large daily notes can't OOM here.
+    let candidates = daily_note_candidates(config, vfs, None, None, false).await?;
+    for chunk in candidates.chunks(DAILY_NOTE_READ_CHUNK) {
+        let label_by_path: HashMap<&str, &str> = chunk
+            .iter()
+            .map(|note| (note.relative_path.as_str(), note.source_label.as_str()))
+            .collect();
+        let paths: Vec<String> = chunk
+            .iter()
+            .map(|note| note.relative_path.clone())
+            .collect();
+        for (relative_path, contents) in read_daily_note_contents(vfs, &paths).await? {
+            let source_label = label_by_path
+                .get(relative_path.as_str())
+                .copied()
+                .unwrap_or(relative_path.as_str());
+            let source_id = format!("daily-note:{source_label}:{relative_path}");
+            for target_title in daily_note_wikilinks(&contents) {
+                let Some(target) = find_target_for_wikilink(&target_title, &by_basename) else {
+                    continue;
+                };
+                relations.push(Relation {
+                    source_id: source_id.clone(),
+                    target_id: Some(target.summary.id.clone()),
+                    target_title,
+                    target_type: Some(target.summary.entity_type.clone()),
+                    field: "daily-note".to_string(),
+                    direction: RelationDirection::Out,
+                });
+            }
         }
     }
 
@@ -132,21 +159,21 @@ fn daily_note_wikilinks(raw: &str) -> Vec<String> {
     body_wikilinks(&fence_regex().replace_all(&strip_frontmatter(raw), ""))
 }
 
-fn normalized_entity_basename_index(entities: &[Entity]) -> HashMap<String, Vec<&Entity>> {
-    let mut by_basename: HashMap<String, Vec<&Entity>> = HashMap::new();
-    for entity in entities {
+fn normalized_entity_basename_index(records: &[EntityRecord]) -> HashMap<String, Vec<&EntityRecord>> {
+    let mut by_basename: HashMap<String, Vec<&EntityRecord>> = HashMap::new();
+    for record in records {
         by_basename
-            .entry(normalize_wikilink_target(&entity.summary.basename))
+            .entry(normalize_wikilink_target(&record.summary.basename))
             .or_default()
-            .push(entity);
+            .push(record);
     }
     by_basename
 }
 
 fn find_target_for_wikilink<'a>(
     target_title: &str,
-    by_basename: &HashMap<String, Vec<&'a Entity>>,
-) -> Option<&'a Entity> {
+    by_basename: &HashMap<String, Vec<&'a EntityRecord>>,
+) -> Option<&'a EntityRecord> {
     let candidates = by_basename.get(&normalize_wikilink_target(target_title))?;
     candidates.first().copied()
 }
@@ -190,8 +217,8 @@ fn body_wikilinks(body: &str) -> Vec<String> {
 fn find_target<'a>(
     target_title: &str,
     relation_type: Option<&str>,
-    by_basename: &HashMap<String, Vec<&'a Entity>>,
-) -> Option<&'a Entity> {
+    by_basename: &HashMap<String, Vec<&'a EntityRecord>>,
+) -> Option<&'a EntityRecord> {
     let normalized = normalize_wikilink_target(target_title);
     let candidates = by_basename.get(&normalized)?;
     let path_parts: Vec<_> = target_title

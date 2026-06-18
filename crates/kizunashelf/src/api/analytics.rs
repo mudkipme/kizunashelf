@@ -69,7 +69,7 @@ pub(crate) async fn stats(
                 label: entity_type.label.clone(),
                 icon: entity_type.icon.clone(),
                 count: library
-                    .entities
+                    .records
                     .iter()
                     .filter(|entity| entity.summary.entity_type == entity_type.id)
                     .count(),
