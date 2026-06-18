@@ -31,10 +31,9 @@ export async function saveSettingsConfig(request: SaveSettingsRequest) {
   return (await response.json()) as SettingsConfigResponse;
 }
 
-export async function getPathSuggestions(path: string, base?: string, init?: RequestInit) {
+export async function getPathSuggestions(path: string, init?: RequestInit) {
   const params = new URLSearchParams();
   params.set("path", path);
-  if (base) params.set("base", base);
   const response = await apiFetch(`/api/settings/path-suggestions?${params.toString()}`, init);
   return (await response.json()) as PathSuggestionsResponse;
 }

@@ -86,15 +86,14 @@ export function PathField({
   label,
   value,
   base,
-  absolute = false,
   placeholder,
   hideLabel = false,
   onChange,
 }: {
   label?: string;
   value: string;
+  /** Vault root (desktop "Browse" only), used to relativize a chosen folder. */
   base?: string;
-  absolute?: boolean;
   placeholder?: string;
   hideLabel?: boolean;
   onChange: (value: string) => void;
@@ -104,10 +103,10 @@ export function PathField({
   const desktop = isDesktopRuntime();
 
   useEffect(() => {
-    if (!value && !base) return;
     const controller = new AbortController();
     const timeout = window.setTimeout(() => {
-      void getPathSuggestions(value, absolute ? undefined : base, { signal: controller.signal }).then(
+      // `value` is the vault-relative prefix; suggestions are vault directories.
+      void getPathSuggestions(value, { signal: controller.signal }).then(
         (result) => setSuggestions(result.suggestions),
         () => setSuggestions([]),
       );
@@ -116,12 +115,12 @@ export function PathField({
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [absolute, base, value]);
+  }, [value]);
 
   async function browse() {
     const selected = await selectDirectory(base || value).catch(() => undefined);
     if (!selected) return;
-    onChange(absolute || !base ? selected : relativeToBase(selected, base));
+    onChange(!base ? selected : relativeToBase(selected, base));
   }
 
   const input = (

@@ -7,8 +7,7 @@
 import { z as zod } from 'zod';
 
 export const GetPathSuggestionsParams = zod.object({
-  "path": zod.string().optional(),
-  "base": zod.string().optional()
+  "path": zod.string().optional().describe('A vault-relative path prefix being typed (e.g. `Taxonomy\/An`). Suggestions\nare directories inside the vault only.')
 })
 
 export type GetPathSuggestionsParams = zod.input<typeof GetPathSuggestionsParams>;

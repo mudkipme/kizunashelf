@@ -192,15 +192,9 @@
           {
             "in": "query",
             "name": "path",
+            "description": "A vault-relative path prefix being typed (e.g. `Taxonomy/An`). Suggestions\nare directories inside the vault only.",
             "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "base",
-            "schema": {
+              "description": "A vault-relative path prefix being typed (e.g. `Taxonomy/An`). Suggestions\nare directories inside the vault only.",
               "type": "string"
             },
             "style": "form"
@@ -2022,12 +2016,7 @@
         "type": "object",
         "properties": {
           "path": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "base": {
+            "description": "A vault-relative path prefix being typed (e.g. `Taxonomy/An`). Suggestions\nare directories inside the vault only.",
             "type": [
               "string",
               "null"

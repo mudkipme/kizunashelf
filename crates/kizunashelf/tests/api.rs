@@ -792,53 +792,84 @@ async fn settings_config_rejects_paths_that_escape_the_vault_root() {
 }
 
 #[tokio::test]
-async fn path_suggestions_omit_hidden_directories() {
+async fn path_suggestions_list_vault_directories_and_omit_hidden() {
     let temp = TempDir::new().unwrap();
-    let base = temp.path().join("picker");
-    std::fs::create_dir_all(base.join("Vault")).unwrap();
-    std::fs::create_dir_all(base.join(".obsidian")).unwrap();
+    let config_path = temp.path().join("kizunashelf.yaml");
+    let vault = temp.path().join("vault");
+    std::fs::create_dir_all(vault.join("Taxonomy/Anime")).unwrap();
+    std::fs::create_dir_all(vault.join("Assets")).unwrap();
+    std::fs::create_dir_all(vault.join(".obsidian")).unwrap();
     let app = router(ApiOptions {
-        config_path: temp.path().join("kizunashelf.yaml"),
+        config_path,
         cache_ttl: Duration::from_millis(0),
         web_dist_path: None,
         settings_writable: true,
         content_writable: true,
     });
+    // Persist the app config so the vault root is known; suggestions list the
+    // vault through the VFS (vault-relative), never the host filesystem.
+    let saved = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(json!({ "app": { "vaultRoot": vault } })),
+    )
+    .await;
+    assert_eq!(saved.0, StatusCode::OK);
 
-    // Listing a directory hides dotfile folders such as `.obsidian`.
-    let visible = request_json(
+    let names = |response: &serde_json::Value| -> Vec<String> {
+        response["suggestions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap().to_string())
+            .collect()
+    };
+
+    // An empty prefix lists the vault root; dotfile folders are hidden.
+    let root = request_json(
         &app,
         Method::GET,
-        &format!("/api/settings/path-suggestions?path={}", base.display()),
+        "/api/settings/path-suggestions?path=",
         None,
     )
     .await;
-    assert_eq!(visible.0, StatusCode::OK);
-    let names: Vec<String> = visible.1["suggestions"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|value| value.as_str().unwrap().to_string())
-        .collect();
-    assert!(names.iter().any(|name| name.ends_with("Vault")));
-    assert!(names.iter().all(|name| !name.contains(".obsidian")));
+    assert_eq!(root.0, StatusCode::OK);
+    let root_names = names(&root.1);
+    assert!(root_names.iter().any(|name| name == "Taxonomy"));
+    assert!(root_names.iter().any(|name| name == "Assets"));
+    assert!(root_names.iter().all(|name| !name.contains(".obsidian")));
 
-    // Typing an explicit leading dot still reveals the hidden folder.
+    // A vault-relative prefix lists matching subdirectories, returned vault-relative.
+    let nested = request_json(
+        &app,
+        Method::GET,
+        "/api/settings/path-suggestions?path=Taxonomy/",
+        None,
+    )
+    .await;
+    assert!(names(&nested.1).iter().any(|name| name == "Taxonomy/Anime"));
+
+    // An explicit leading dot reveals the hidden folder.
     let typed = request_json(
         &app,
         Method::GET,
-        &format!("/api/settings/path-suggestions?path={}/.o", base.display()),
+        "/api/settings/path-suggestions?path=.o",
         None,
     )
     .await;
-    assert_eq!(typed.0, StatusCode::OK);
-    let typed_names: Vec<String> = typed.1["suggestions"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|value| value.as_str().unwrap().to_string())
-        .collect();
-    assert!(typed_names.iter().any(|name| name.ends_with(".obsidian")));
+    assert!(names(&typed.1).iter().any(|name| name == ".obsidian"));
+
+    // Traversal escapes are rejected outright — never the host filesystem.
+    let escape = request_json(
+        &app,
+        Method::GET,
+        "/api/settings/path-suggestions?path=../",
+        None,
+    )
+    .await;
+    assert_eq!(escape.0, StatusCode::OK);
+    assert!(names(&escape.1).is_empty());
 }
 
 #[tokio::test]

@@ -320,6 +320,16 @@ impl AppState {
     pub(crate) fn inline_app_config(&self) -> Option<AppConfig> {
         self.app_config.clone()
     }
+
+    /// The app config: the inline value (iOS) or the on-disk config file
+    /// (desktop/web). Unlike [`get_library`], this does not require a vault config
+    /// to exist, so it is usable during onboarding.
+    pub(crate) async fn app_config(&self) -> Result<AppConfig> {
+        match &self.app_config {
+            Some(app) => Ok(app.clone()),
+            None => load_app_config(&self.options.config_path).await,
+        }
+    }
 }
 
 pub(crate) fn unix_seconds_now() -> u64 {
