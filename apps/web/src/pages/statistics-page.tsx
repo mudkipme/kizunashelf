@@ -15,8 +15,10 @@ import { fieldLabelAcrossTypes, fieldLabelsByType } from "@/lib/type-config";
 export function StatisticsPage() {
   const analytics = useQuery(analyticsQuery());
   const config = useQuery(configQuery());
-  const loading = analytics.isPending || config.isPending;
-  const error = analytics.error ?? config.error;
+  // Config only supplies type/field labels here; don't block rendering or fail
+  // the whole page on it. Analytics is the load-bearing query.
+  const loading = analytics.isPending;
+  const error = analytics.error;
   const data = analytics.data;
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const maxTypeCount = Math.max(1, ...(data?.distributions.byType.map((item) => item.count) ?? [1]));

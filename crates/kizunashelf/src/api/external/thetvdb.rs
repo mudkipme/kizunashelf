@@ -233,6 +233,12 @@ async fn thetvdb_access_token(
             return Ok(token.access_token);
         }
     }
+    // Single-flight the login so concurrent searches don't stampede the endpoint.
+    let fetch_lock = state.token_fetch_lock("thetvdb").await;
+    let _guard = fetch_lock.lock().await;
+    if let Some(token) = state.cached_access_token("thetvdb").await {
+        return Ok(token.access_token);
+    }
     let value = client
         .post("https://api4.thetvdb.com/v4/login")
         .json(login)

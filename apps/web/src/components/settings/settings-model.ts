@@ -168,8 +168,16 @@ function cleanExternalFieldMappings(values: ExternalFieldMapping[], providerCata
       source: value.source.trim(),
       field: value.field.trim(),
     }))
-    .filter((value) =>
-      externalFieldOptionsForSource(providerCatalog, value.source).some((option) => option.field === value.field),
+    .filter((value) => value.source && value.field)
+    // When the provider catalog is unavailable (query failed/loading), keep the
+    // mappings as-is instead of validating against an empty option list and
+    // silently dropping provider config the user never touched.
+    .filter(
+      (value) =>
+        providerCatalog === undefined ||
+        externalFieldOptionsForSource(providerCatalog, value.source).some(
+          (option) => option.field === value.field,
+        ),
     );
   return cleaned.length > 0 ? cleaned : undefined;
 }
@@ -184,7 +192,11 @@ function cleanExternalBodyMappings(values: ExternalBodyMapping[], providerCatalo
     }))
     .filter((value) => {
       if (!value.heading) return false;
-      if (!externalFieldOptionsForSource(providerCatalog, value.source).some((option) => option.field === value.field)) {
+      // Skip catalog validation when the catalog is unavailable (see above).
+      if (
+        providerCatalog !== undefined &&
+        !externalFieldOptionsForSource(providerCatalog, value.source).some((option) => option.field === value.field)
+      ) {
         return false;
       }
       const key = `${value.source}:${value.field}`;
@@ -196,10 +208,16 @@ function cleanExternalBodyMappings(values: ExternalBodyMapping[], providerCatalo
 }
 
 function cleanExternalTypes(providerCatalog: ExternalProviderCatalog | undefined, source: string | null | undefined, values: string[]) {
+  const cleaned = values.map((value) => value.trim()).filter(Boolean);
+  // Without a catalog, keep the (deduped) values rather than dropping them all.
+  if (providerCatalog === undefined) {
+    const deduped = Array.from(new Set(cleaned));
+    return deduped.length > 0 ? deduped : undefined;
+  }
   const options = externalTypeOptionsForSource(providerCatalog, source ?? "");
   const allowed = new Set(options.map((option) => option.value));
-  const cleaned = values.map((value) => value.trim()).filter((value) => allowed.has(value));
-  return cleaned.length > 0 ? cleaned : undefined;
+  const filtered = cleaned.filter((value) => allowed.has(value));
+  return filtered.length > 0 ? filtered : undefined;
 }
 
 function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalog): FieldConfig | undefined {
@@ -319,11 +337,16 @@ function cleanStrings(values: string[]) {
 }
 
 function cleanExternalPriority(providerCatalog: ExternalProviderCatalog | undefined, values: string[]) {
-  const allowed = new Set(externalSourceOptions(providerCatalog).map((option) => option.source));
-  const cleaned = values
+  const deduped = values
     .map((value) => value.trim().toLowerCase())
-    .filter((value, index, items) => allowed.has(value) && items.indexOf(value) === index);
-  return cleaned.length > 0 ? cleaned : undefined;
+    .filter((value, index, items) => Boolean(value) && items.indexOf(value) === index);
+  // Without a catalog, keep the deduped priority list rather than clearing it.
+  if (providerCatalog === undefined) {
+    return deduped.length > 0 ? deduped : undefined;
+  }
+  const allowed = new Set(externalSourceOptions(providerCatalog).map((option) => option.source));
+  const filtered = deduped.filter((value) => allowed.has(value));
+  return filtered.length > 0 ? filtered : undefined;
 }
 
 function emptyToUndefined(value?: string | null) {

@@ -1329,6 +1329,9 @@ const PNG_1X1: &[u8] = &[
 ];
 
 async fn start_mock_image_server() -> std::net::SocketAddr {
+    // The mock server binds to loopback, which the SSRF guard blocks by default.
+    // Enable the documented escape hatch so the download path can reach it.
+    std::env::set_var("KIZUNASHELF_ALLOW_PRIVATE_ASSET_HOSTS", "1");
     let app = Router::new()
         .route(
             "/image.png",

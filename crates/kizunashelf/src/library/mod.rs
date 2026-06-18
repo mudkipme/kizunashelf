@@ -183,11 +183,12 @@ pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Lib
     let relation_count_by_id = unique_relation_count_by_id(&relations);
 
     for record in &mut records {
-        record.summary.relation_count =
-            *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
+        record.summary.relation_count = *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
     }
-    let summaries: Vec<EntitySummary> =
-        records.iter().map(|record| record.summary.clone()).collect();
+    let summaries: Vec<EntitySummary> = records
+        .iter()
+        .map(|record| record.summary.clone())
+        .collect();
 
     Ok(Library {
         config,
@@ -516,7 +517,7 @@ fn parse_entity(
     })
 }
 
-fn file_revision(raw: &str) -> String {
+pub(crate) fn file_revision(raw: &str) -> String {
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     raw.hash(&mut hasher);
     format!("{:x}-{}", hasher.finish(), raw.len())

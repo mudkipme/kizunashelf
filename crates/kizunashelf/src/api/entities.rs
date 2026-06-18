@@ -4,10 +4,10 @@ use crate::calendar::{build_entity_dates, EntityDatesResponse};
 use crate::contract::{EntityDetailResponse, EntityListResponse};
 use crate::dates::clamp_number;
 use crate::library::compare_string_for_title_language;
+use crate::library::load_entity;
 use crate::relations::{
     sort_entities, sort_entities_with_title_language, summary_by_id, SortDirection,
 };
-use crate::library::load_entity;
 use crate::types::{EntityRecord, EntitySummary, FieldType, Library, Relation, RelationDirection};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;

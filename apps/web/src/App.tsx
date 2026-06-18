@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import { settingsConfigQuery } from "@/api/queries";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { isDesktopRuntime } from "@/lib/desktop";
 import { CalendarPage } from "@/pages/calendar-page";
 import { EntityCreatePage } from "@/pages/entity-create-page";
@@ -25,8 +26,19 @@ import { StatisticsPage } from "@/pages/statistics-page";
 export default function App() {
   return (
     <BrowserRouter>
-      <ConfigGate />
+      <RoutedErrorBoundary />
     </BrowserRouter>
+  );
+}
+
+// Wraps the app in an error boundary keyed on the route, so a render-time throw
+// degrades to a recoverable message and navigating away clears it.
+function RoutedErrorBoundary() {
+  const location = useLocation();
+  return (
+    <ErrorBoundary resetKey={location.pathname}>
+      <ConfigGate />
+    </ErrorBoundary>
   );
 }
 

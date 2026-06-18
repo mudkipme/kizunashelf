@@ -107,7 +107,14 @@ pub(crate) async fn stats(
 
 pub(crate) async fn analytics(State(state): State<AppState>) -> ApiResult<AnalyticsResponse> {
     let library = get_library(&state).await?;
-    Ok(Json(build_analytics(&library)))
+    if let Some(cached) = state.cached_analytics(&library.generated_at).await {
+        return Ok(Json((*cached).clone()));
+    }
+    let response = std::sync::Arc::new(build_analytics(&library));
+    state
+        .store_analytics(&library.generated_at, std::sync::Arc::clone(&response))
+        .await;
+    Ok(Json((*response).clone()))
 }
 
 pub(crate) async fn cleanup_queues(

@@ -1,4 +1,4 @@
-use crate::contract::AssetDownloadJob;
+use crate::contract::{AnalyticsResponse, AssetDownloadJob};
 use crate::library::{load_app_config, load_vault_config_via_vfs, read_library};
 use crate::secrets::{NativeSecretStore, SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
@@ -47,9 +47,21 @@ pub(crate) struct AppState {
     cache: Arc<Mutex<Option<CachedLibrary>>>,
     reload: Arc<Mutex<()>>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
+    /// Per-provider locks that single-flight token acquisition so a cold cache
+    /// under concurrent searches does not stampede the upstream token endpoint.
+    token_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
+    /// Memoized analytics keyed on the library's `generated_at`. Analytics is an
+    /// expensive whole-library scan; the cache turns repeated `/analytics` hits
+    /// into a single build per library generation.
+    analytics_cache: Arc<Mutex<Option<CachedAnalytics>>>,
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
+}
+
+struct CachedAnalytics {
+    generated_at: String,
+    response: Arc<AnalyticsResponse>,
 }
 
 #[derive(Clone)]
@@ -93,6 +105,10 @@ impl AppState {
         let http_client = reqwest::Client::builder()
             .connect_timeout(Duration::from_secs(15))
             .user_agent(concat!("KizunaShelf/", env!("CARGO_PKG_VERSION")))
+            // Asset downloads follow redirects manually (see assets.rs) so each
+            // hop's destination can be re-validated against the SSRF guard; never
+            // let reqwest follow a redirect into an unvalidated host.
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         Self {
@@ -103,6 +119,8 @@ impl AppState {
             cache: Arc::new(Mutex::new(None)),
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
+            token_locks: Arc::new(Mutex::new(HashMap::new())),
+            analytics_cache: Arc::new(Mutex::new(None)),
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
@@ -175,6 +193,42 @@ impl AppState {
     pub(crate) async fn invalidate_cache(&self) {
         let mut cache = self.cache.lock().await;
         *cache = None;
+    }
+
+    /// Returns the per-provider lock used to single-flight token acquisition.
+    /// Callers acquire it, re-check the token cache, and only then fetch.
+    pub(crate) async fn token_fetch_lock(&self, key: &str) -> Arc<Mutex<()>> {
+        let mut locks = self.token_locks.lock().await;
+        Arc::clone(
+            locks
+                .entry(key.to_string())
+                .or_insert_with(|| Arc::new(Mutex::new(()))),
+        )
+    }
+
+    /// Returns memoized analytics if it was built for this `generated_at`.
+    pub(crate) async fn cached_analytics(
+        &self,
+        generated_at: &str,
+    ) -> Option<Arc<AnalyticsResponse>> {
+        let cache = self.analytics_cache.lock().await;
+        cache
+            .as_ref()
+            .filter(|cached| cached.generated_at == generated_at)
+            .map(|cached| Arc::clone(&cached.response))
+    }
+
+    /// Stores analytics keyed on the library generation it was built from.
+    pub(crate) async fn store_analytics(
+        &self,
+        generated_at: &str,
+        response: Arc<AnalyticsResponse>,
+    ) {
+        let mut cache = self.analytics_cache.lock().await;
+        *cache = Some(CachedAnalytics {
+            generated_at: generated_at.to_string(),
+            response,
+        });
     }
 
     pub(crate) async fn cached_access_token(&self, key: &str) -> Option<CachedAccessToken> {

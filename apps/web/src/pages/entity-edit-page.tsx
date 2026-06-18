@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getEntities } from "@kizunashelf/api-contract";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { apiFetch, errorMessage } from "@/api/client";
+import { apiFetch, errorMessage, isConflictError } from "@/api/client";
 import { saveEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import {
@@ -34,9 +34,13 @@ export function EntityEditPage() {
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useQuery(capabilitiesQuery());
   const [error, setError] = useState<string>();
+  const [conflict, setConflict] = useState(false);
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
+  // Tracks which entity the local draft was seeded from, so a background refetch
+  // of the same entity doesn't clobber in-progress edits.
+  const seededEntityIdRef = useRef<string | undefined>(undefined);
   const loading =
     detail.isPending || config.isPending || providerCatalog.isPending || capabilities.isPending;
   const queryError = detail.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
@@ -57,12 +61,35 @@ export function EntityEditPage() {
   });
   const { setQuery: setMatchQuery } = external;
 
+  const seedDraft = useCallback(
+    (source: NonNullable<typeof entity>) => {
+      seededEntityIdRef.current = source.id;
+      setFrontmatter(normalizeFrontmatter(source.frontmatter));
+      setBody(source.body);
+      setMatchQuery(source.title);
+    },
+    [setMatchQuery],
+  );
+
   useEffect(() => {
     if (!entity) return;
-    setFrontmatter(normalizeFrontmatter(entity.frontmatter));
-    setBody(entity.body);
-    setMatchQuery(entity.title);
-  }, [entity, setMatchQuery]);
+    // Seed only when this is a different entity than the one already loaded.
+    // Refetches of the same entity (window focus, cache invalidation) keep the
+    // user's edits instead of resetting the form underneath them.
+    if (seededEntityIdRef.current === entity.id) return;
+    seedDraft(entity);
+  }, [entity, seedDraft]);
+
+  // Reloads the latest server version, replacing the local draft. Used to
+  // recover from a 409 conflict after the entity changed on disk.
+  async function reloadLatest() {
+    const refreshed = await detail.refetch();
+    const fresh = refreshed.data?.entity;
+    if (!fresh) return;
+    seedDraft(fresh);
+    setConflict(false);
+    setError(undefined);
+  }
 
   const searchRelations = useCallback(async ({ relationType, query, signal }: {
     relationType?: string | null;
@@ -89,6 +116,7 @@ export function EntityEditPage() {
     if (!entity || !contentWritable) return;
     setSaving(true);
     setError(undefined);
+    setConflict(false);
     try {
       const result = await saveEntity(entity.id, {
         revision: entity.revision,
@@ -99,7 +127,16 @@ export function EntityEditPage() {
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
-      setError(errorMessage(error));
+      if (isConflictError(error)) {
+        // The file changed on disk since it was loaded. Keep the user's edits and
+        // offer a reload so they can reapply them against the latest version.
+        setConflict(true);
+        setError(
+          "This entity changed on disk since you opened it. Your edits are kept here — reload the latest version, then reapply them.",
+        );
+      } else {
+        setError(errorMessage(error));
+      }
     } finally {
       setSaving(false);
     }
@@ -123,7 +160,7 @@ export function EntityEditPage() {
   }
 
   return (
-    <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
+    <AppFrame error={conflict ? undefined : error ?? (queryError ? errorMessage(queryError) : undefined)}>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -154,6 +191,15 @@ export function EntityEditPage() {
         {!contentWritable ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
             Content writes are disabled.
+          </div>
+        ) : null}
+
+        {conflict ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <span className="min-w-0">{error}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => void reloadLatest()} disabled={saving}>
+              Reload latest version
+            </Button>
           </div>
         ) : null}
 

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { errorMessage } from "@/api/client";
+import { errorMessage, isConflictError } from "@/api/client";
 import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import {
@@ -88,6 +88,18 @@ export function EntityPage() {
     () => groupRelations(detail.data?.relations ?? []),
     [detail.data],
   );
+
+  // A 409 means the entity changed on disk and the action's revision is stale.
+  // Refetch so a retry uses the latest revision, and explain rather than dumping
+  // a raw "409 …" string.
+  function reportActionError(error: unknown) {
+    if (isConflictError(error)) {
+      setError("This entity changed on disk since it was loaded. Reloaded the latest version — please try again.");
+      void detail.refetch();
+    } else {
+      setError(errorMessage(error));
+    }
+  }
   const { setQuery: setMatchQuery } = external;
 
   useEffect(() => {
@@ -119,7 +131,7 @@ export function EntityPage() {
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
-      setError(errorMessage(error));
+      reportActionError(error);
     } finally {
       setSaving(false);
     }
@@ -140,7 +152,7 @@ export function EntityPage() {
       await external.maybeDownloadCover(result.entity);
       await invalidateEntityData();
     } catch (error) {
-      setError(errorMessage(error));
+      reportActionError(error);
     } finally {
       setSaving(false);
     }
@@ -163,7 +175,7 @@ export function EntityPage() {
         setError(undefined);
       }
     } catch (error) {
-      setError(errorMessage(error));
+      reportActionError(error);
     } finally {
       setSaving(false);
     }
@@ -177,7 +189,7 @@ export function EntityPage() {
       await invalidateEntityData();
       navigate("/library");
     } catch (error) {
-      setError(errorMessage(error));
+      reportActionError(error);
     } finally {
       setSaving(false);
     }

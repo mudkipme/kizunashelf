@@ -5,7 +5,9 @@ use crate::contract::{
     CreateEntityRequest, DeleteEntityRequest, DeleteEntityResponse, EntityMutationResponse,
     UpdateEntityRequest,
 };
-use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
+use crate::library::{
+    file_revision, load_entity, serialize_markdown_document, split_markdown_document,
+};
 use crate::types::EntityTypeConfig;
 use crate::vfs::Vfs;
 use anyhow::Result;
@@ -47,6 +49,13 @@ pub(crate) async fn update_entity(
         .read_to_string(&source_rel)
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
+    // Re-check the revision against the *freshly read* content, not just the
+    // cached index. Otherwise an external edit landing between the cache snapshot
+    // and this read would still match the client's revision and be silently
+    // overwritten (TOCTOU).
+    if request.revision != file_revision(&raw) {
+        return Err(ApiError::conflict("Entity changed since it was loaded"));
+    }
     let mut document = split_markdown_document(&raw);
     if let Some(frontmatter) = request.frontmatter {
         apply_frontmatter_patch(&mut document.frontmatter, frontmatter);
@@ -99,7 +108,12 @@ pub(crate) async fn update_entity(
         .records
         .iter()
         .find(|item| item.summary.path == target_rel)
-        .or_else(|| reloaded.records.iter().find(|item| item.summary.id == path.id))
+        .or_else(|| {
+            reloaded
+                .records
+                .iter()
+                .find(|item| item.summary.id == path.id)
+        })
         .ok_or_else(|| ApiError::not_found("Updated entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(EntityMutationResponse { entity }))
@@ -348,15 +362,23 @@ fn entity_create_path(
 
 /// Writes an entity's raw Markdown to a vault-relative path, creating parent
 /// directories. Containment is enforced by the VFS's path normalization.
+///
+/// The write is atomic: bytes go to a `.tmp` sibling and are then renamed over
+/// the destination, so a crash or a concurrent reader never observes a truncated
+/// half-written Markdown file (the same guarantee asset writes already had).
 pub(super) async fn write_entity_raw(vfs: &dyn Vfs, relative: &str, raw: &str) -> Result<()> {
     if let Some(parent) = parent_dir(relative) {
         vfs.create_dir_all(parent).await.map_err(|error| {
             anyhow::anyhow!("failed to create entity directory {parent}: {error}")
         })?;
     }
-    vfs.write(relative, raw.as_bytes())
+    let tmp = format!("{relative}.tmp");
+    vfs.write(&tmp, raw.as_bytes())
         .await
-        .map_err(|error| anyhow::anyhow!("failed to write entity {relative}: {error}"))
+        .map_err(|error| anyhow::anyhow!("failed to write entity {relative}: {error}"))?;
+    vfs.rename(&tmp, relative)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to commit entity {relative}: {error}"))
 }
 
 /// Parent directory of a vault-relative path, or `None` when it lives at the

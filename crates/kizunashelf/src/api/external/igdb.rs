@@ -191,9 +191,19 @@ async fn igdb_access_token(
             return Ok(token.access_token);
         }
     }
+    // Single-flight the token fetch: under concurrent searches a cold cache would
+    // otherwise stampede the Twitch token endpoint and risk rate limits.
+    let fetch_lock = state.token_fetch_lock("igdb").await;
+    let _guard = fetch_lock.lock().await;
+    // Another task may have populated the cache while we waited for the lock.
+    if let Some(token) = state.cached_access_token("igdb").await {
+        return Ok(token.access_token);
+    }
     let value = client
         .post("https://id.twitch.tv/oauth2/token")
-        .query(&[
+        // Credentials go in the form body, never the query string, so they are
+        // not echoed back in any error/log carrying the request URL.
+        .form(&[
             ("client_id", client_id),
             ("client_secret", client_secret),
             ("grant_type", "client_credentials"),

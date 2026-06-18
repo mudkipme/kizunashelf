@@ -400,18 +400,22 @@ fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
 }
 
 fn provider_error(error: reqwest::Error) -> ApiError {
-    let mut message = format!("External provider request failed: {error}");
+    // The full source chain can include transport/TLS/DNS internals and request
+    // URLs (which may carry credentials), so it is logged server-side only and
+    // never returned to the client.
+    let mut detail = format!("External provider request failed: {error}");
     let mut source = error.source();
-    while let Some(error) = source {
-        message.push_str(&format!(": {error}"));
-        source = error.source();
+    while let Some(inner) = source {
+        detail.push_str(&format!(": {inner}"));
+        source = inner.source();
     }
+    eprintln!("{detail}");
     // Upstream failures are not the caller's fault: surface them as gateway
     // errors so clients can distinguish a flaky provider from a bad request.
     if error.is_timeout() {
-        ApiError::gateway_timeout(&message)
+        ApiError::gateway_timeout("The external provider timed out")
     } else {
-        ApiError::bad_gateway(&message)
+        ApiError::bad_gateway("The external provider request failed")
     }
 }
 

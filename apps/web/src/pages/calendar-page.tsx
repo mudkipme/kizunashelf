@@ -69,7 +69,9 @@ export function CalendarPage() {
       ? "all"
       : type;
   const activeLoading = mode === "month" ? calendar.isPending : planning.isPending;
-  const activeError = config.error ?? (mode === "month" ? calendar.error : planning.error);
+  // Config only provides type labels for the filter dropdown; a config failure
+  // shouldn't blank the calendar. The calendar/planning query is load-bearing.
+  const activeError = mode === "month" ? calendar.error : planning.error;
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
 
   function setParam(key: string, value: string, defaultValue?: string, options?: { replace?: boolean }) {

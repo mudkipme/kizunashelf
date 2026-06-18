@@ -40,8 +40,10 @@ pub async fn daily_note_files(
         .iter()
         .map(|note| note.relative_path.clone())
         .collect();
-    let mut contents_by_path: HashMap<String, String> =
-        read_daily_note_contents(vfs, &paths).await?.into_iter().collect();
+    let mut contents_by_path: HashMap<String, String> = read_daily_note_contents(vfs, &paths)
+        .await?
+        .into_iter()
+        .collect();
 
     // 3. Assemble, dropping any file that could not be read or decoded.
     let files = pending

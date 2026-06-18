@@ -126,6 +126,7 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_TOKEN_CACHE` | Path for the provider OAuth token cache. Defaults to `<tmp>/.kizunashelf.tokens.json` (outside the vault). |
 | `KIZUNASHELF_WEB_DIST` | Alternate web build path. |
 | `KIZUNASHELF_SERVE_WEB` | Set to `false` to serve only the API. |
+| `KIZUNASHELF_ALLOW_PRIVATE_ASSET_HOSTS` | Set to `true` to let asset downloads reach private/loopback/link-local addresses (e.g. a LAN image host). Off by default; the SSRF guard blocks them (the `198.18.0.0/15` benchmarking range is always allowed). |
 | `KIZUNASHELF_IGDB_CLIENT_ID` | IGDB client id for external matching. |
 | `KIZUNASHELF_IGDB_CLIENT_SECRET` | IGDB client secret for external matching. |
 | `KIZUNASHELF_TVDB_API_KEY` | TheTVDB API key for external matching. |

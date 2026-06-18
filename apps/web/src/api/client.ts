@@ -30,6 +30,16 @@ export function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+/** HTTP status of a failed API request, or `undefined` for non-HTTP errors. */
+export function errorStatus(error: unknown): number | undefined {
+  return error instanceof ApiHttpError ? error.status : undefined;
+}
+
+/** Whether an error is a 409 optimistic-concurrency conflict (stale revision). */
+export function isConflictError(error: unknown) {
+  return errorStatus(error) === 409;
+}
+
 function isTauriRuntime() {
   return typeof window !== "undefined" && window.__TAURI_INTERNALS__ != null;
 }

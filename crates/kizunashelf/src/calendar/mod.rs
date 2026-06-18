@@ -8,9 +8,7 @@ use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_fron
 use crate::dates::{is_in_month, normalize_date, parse_exact_date};
 use crate::library::{compare_string, wikilink_regex};
 use crate::relations::summary_by_id;
-use crate::types::{
-    DateRole, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library,
-};
+use crate::types::{DateRole, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use chrono::Datelike;
@@ -212,7 +210,10 @@ fn taxonomy_calendar_entries(
         .collect()
 }
 
-fn metadata_date_entries(library: &Library, entity: &EntitySummary) -> Vec<EntityDateMetadataEntry> {
+fn metadata_date_entries(
+    library: &Library,
+    entity: &EntitySummary,
+) -> Vec<EntityDateMetadataEntry> {
     let fields: Vec<String> = library
         .config
         .types
@@ -612,14 +613,16 @@ fn calendar_days(year: i32, month: u32, entries: &[CalendarEntry]) -> Vec<Calend
         .map(|date| date.day())
         .unwrap_or(30);
     (1..=count)
-        .map(|day| {
-            let date = normalize_date(year, month, day).unwrap();
+        // `filter_map` rather than `unwrap`: callers clamp `month` to 1..=12, but
+        // an out-of-range value here yields no day instead of panicking.
+        .filter_map(|day| {
+            let date = normalize_date(year, month, day)?;
             let day_entries: Vec<_> = entries
                 .iter()
                 .filter(|entry| entry.date == date)
                 .cloned()
                 .collect();
-            CalendarDay {
+            Some(CalendarDay {
                 date,
                 counts: CalendarDayCounts {
                     total: day_entries.len(),
@@ -633,7 +636,7 @@ fn calendar_days(year: i32, month: u32, entries: &[CalendarEntry]) -> Vec<Calend
                         .count(),
                 },
                 entries: day_entries,
-            }
+            })
         })
         .collect()
 }

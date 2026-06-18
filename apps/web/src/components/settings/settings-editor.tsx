@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PlusIcon, SaveIcon } from "lucide-react";
 
 import { saveSettingsConfig } from "@/api/settings";
@@ -106,7 +106,14 @@ export function SettingsEditor({
     },
   ];
 
+  // Seed the editable config from the loaded config exactly once, when it first
+  // arrives. Re-seeding on every prop identity change (e.g. a background refetch
+  // on window focus) would silently discard the user's in-progress schema edits.
+  const seededRef = useRef(false);
   useEffect(() => {
+    if (seededRef.current) return;
+    if (initialApp === undefined && initialVault === undefined) return;
+    seededRef.current = true;
     setConfig(normalizeConfig(initialApp, initialVault));
   }, [initialApp, initialVault]);
 

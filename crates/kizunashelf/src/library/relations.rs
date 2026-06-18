@@ -159,7 +159,9 @@ fn daily_note_wikilinks(raw: &str) -> Vec<String> {
     body_wikilinks(&fence_regex().replace_all(&strip_frontmatter(raw), ""))
 }
 
-fn normalized_entity_basename_index(records: &[EntityRecord]) -> HashMap<String, Vec<&EntityRecord>> {
+fn normalized_entity_basename_index(
+    records: &[EntityRecord],
+) -> HashMap<String, Vec<&EntityRecord>> {
     let mut by_basename: HashMap<String, Vec<&EntityRecord>> = HashMap::new();
     for record in records {
         by_basename
