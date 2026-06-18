@@ -38,10 +38,7 @@ pub struct CapabilitiesResponse {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsConfigResponse {
-    /// Path to the local app config file on this machine.
-    pub app_config_path: String,
-    /// Whether the app config file exists on disk.
-    pub app_exists: bool,
+    /// The inline app config (vault root + write mode), owned by the runtime.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub app: Option<AppConfig>,
     /// Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).
@@ -59,10 +56,9 @@ pub struct SettingsConfigResponse {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SaveSettingsRequest {
-    pub app: AppConfig,
-    /// When omitted, only the app config is written and the vault config on disk
-    /// (if any) is left untouched — used by onboarding to persist a chosen vault
-    /// root without overwriting an existing, synced vault config.
+    /// The vault config (the schema) to write. The vault root and write mode are
+    /// owned by the runtime (env vars / the native vault switcher / `@AppStorage`),
+    /// so they are never sent here. Omitting `vault` is a no-op.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vault: Option<VaultConfig>,
 }

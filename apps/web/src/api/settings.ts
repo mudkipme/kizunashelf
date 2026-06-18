@@ -1,7 +1,8 @@
+import { getPathSuggestions as requestPathSuggestions } from "@kizunashelf/api-contract";
+
 import { apiFetch } from "@/api/client";
 import type {
   LanguagesResponse,
-  PathSuggestionsResponse,
   SaveSettingsRequest,
   SettingsConfigResponse,
   VaultTemplatesResponse,
@@ -31,9 +32,10 @@ export async function saveSettingsConfig(request: SaveSettingsRequest) {
   return (await response.json()) as SettingsConfigResponse;
 }
 
-export async function getPathSuggestions(path: string, init?: RequestInit) {
-  const params = new URLSearchParams();
-  params.set("path", path);
-  const response = await apiFetch(`/api/settings/path-suggestions?${params.toString()}`, init);
-  return (await response.json()) as PathSuggestionsResponse;
+// Uses the generated, Zod-validated client (the rest of the app's pattern) so the
+// query params stay in sync with the OpenAPI contract. `base` is a vault-relative
+// directory the suggestions are rooted at (e.g. the taxonomy root for a type's
+// folder path); omitted means the vault root.
+export function getPathSuggestions(path: string, base?: string, init?: RequestInit) {
+  return requestPathSuggestions({ path, base }, init, apiFetch);
 }

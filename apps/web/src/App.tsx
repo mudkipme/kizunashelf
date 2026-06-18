@@ -76,8 +76,8 @@ function ConfigGate() {
     // On the web a settings error is a real server error → settings page.
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;
   }
-  // `appExists` is always true now (the app config is inline: env on web, the
-  // vault switcher on desktop), so vault config presence alone gates readiness.
+  // The app config is always present (inline: env on web, the vault switcher on
+  // desktop, @AppStorage on iOS), so vault config presence alone gates readiness.
   const configReady = Boolean(settings.data?.vaultExists);
   if (settings.data && !configReady && pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;

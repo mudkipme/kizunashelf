@@ -33,7 +33,6 @@ export function SettingsPage() {
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : settings.data ? (
           <SettingsEditor
-            appConfigPath={settings.data.appConfigPath}
             vaultConfigPath={settings.data.vaultConfigPath}
             initialApp={settings.data.app}
             initialVault={settings.data.vault}

@@ -21,7 +21,7 @@ use std::time::Duration;
 use axum::body::{self, Body};
 use axum::http::{header, Method, Request};
 use axum::Router;
-use kizunashelf::api::{router, router_with_vault, ApiOptions as CoreApiOptions};
+use kizunashelf::api::{router_with_vault, ApiOptions as CoreApiOptions};
 use kizunashelf::secrets::SecretStore;
 use kizunashelf::types::AppConfig;
 use kizunashelf::vfs::Vfs;
@@ -38,17 +38,6 @@ uniffi::setup_scaffolding!();
 #[uniffi::export]
 pub fn starter_vault_config_yaml() -> String {
     kizunashelf::templates::starter_vault_config_yaml()
-}
-
-/// Options passed to the core at init. On iOS these come from `@AppStorage`
-/// (there is no on-device config file); `config_path` points into the app
-/// container. Mirrors the desktop `ApiOptions` minus the desktop-only fields.
-#[derive(uniffi::Record)]
-pub struct ApiOptions {
-    pub config_path: String,
-    pub cache_ttl_ms: Option<u64>,
-    pub settings_writable: Option<bool>,
-    pub content_writable: Option<bool>,
 }
 
 /// Options for an iOS engine backed by a Swift [`VaultFileSystem`]. The vault is
@@ -89,27 +78,6 @@ pub struct KizunaEngine {
 
 #[uniffi::export]
 impl KizunaEngine {
-    /// Builds the runtime + router from `options`.
-    #[uniffi::constructor]
-    pub fn new(options: ApiOptions) -> Result<Arc<Self>, KizunaError> {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .map_err(|error| KizunaError::Init {
-                message: error.to_string(),
-            })?;
-
-        let router = router(CoreApiOptions {
-            config_path: PathBuf::from(options.config_path),
-            cache_ttl: Duration::from_millis(options.cache_ttl_ms.unwrap_or(10_000)),
-            web_dist_path: None,
-            settings_writable: options.settings_writable.unwrap_or(true),
-            content_writable: options.content_writable.unwrap_or(true),
-        });
-
-        Ok(Arc::new(Self { runtime, router }))
-    }
-
     /// Builds an engine backed by a Swift [`VaultFileSystem`] — the iOS path. The
     /// app config is supplied inline (no config file) and the vault config plus
     /// all content are read through `vault`.

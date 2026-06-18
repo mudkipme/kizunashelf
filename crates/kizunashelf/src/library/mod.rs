@@ -8,10 +8,10 @@ pub use frontmatter::{
 };
 
 use crate::types::{
-    AppConfig, DateRole, Entity, EntityRecord, EntitySummary, EntityTypeConfig, FieldType,
-    KizunaConfig, Library, LibraryDiagnostic, Relation, VaultConfig,
+    DateRole, Entity, EntityRecord, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig,
+    Library, LibraryDiagnostic, Relation, VaultConfig,
 };
-use crate::vfs::{NativeVfs, Vfs, VfsError};
+use crate::vfs::{Vfs, VfsError};
 use anyhow::{Context, Result};
 use frontmatter::{
     date_values, default_title, external_refs, extract_summary, first_string, parse_markdown,
@@ -20,43 +20,24 @@ use frontmatter::{
 use relations::{build_relations, extract_body_links};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
-use std::path::{Component, Path, PathBuf};
+use std::path::{Component, Path};
 use std::sync::Arc;
-use tokio::fs;
 
 /// Vault-relative location of the vault config file inside `<vaultRoot>`.
 pub const VAULT_CONFIG_RELATIVE_PATH: &str = ".kizunashelf/config.yaml";
-
-/// Resolves the vault config path (`<vaultRoot>/.kizunashelf/config.yaml`) for
-/// the given app config. Returns `None` when no vault root is configured yet.
-pub fn vault_config_path(app: &AppConfig) -> Option<PathBuf> {
-    let vault_root = app.vault_root.trim();
-    if vault_root.is_empty() {
-        return None;
-    }
-    Some(Path::new(vault_root).join(VAULT_CONFIG_RELATIVE_PATH))
-}
-
-pub async fn load_app_config(config_path: impl AsRef<Path>) -> Result<AppConfig> {
-    let path = config_path.as_ref();
-    let raw = fs::read_to_string(path)
-        .await
-        .with_context(|| format!("failed to read app config {}", path.display()))?;
-    serde_yaml::from_str(&raw).with_context(|| format!("invalid app config {}", path.display()))
-}
-
-pub async fn load_vault_config(config_path: impl AsRef<Path>) -> Result<VaultConfig> {
-    let path = config_path.as_ref();
-    let raw = fs::read_to_string(path)
-        .await
-        .with_context(|| format!("failed to read vault config {}", path.display()))?;
-    serde_yaml::from_str(&raw).with_context(|| format!("invalid vault config {}", path.display()))
-}
 
 /// Writes the vault config to `.kizunashelf/config.yaml` inside the vault through
 /// the VFS (the iOS settings path).
 pub async fn save_vault_config_via_vfs(vfs: &dyn Vfs, config: &VaultConfig) -> Result<()> {
     let raw = serde_yaml::to_string(config).context("failed to serialize vault config")?;
+    if let Some(parent) = Path::new(VAULT_CONFIG_RELATIVE_PATH)
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        vfs.create_dir_all(&parent.to_string_lossy())
+            .await
+            .map_err(|error| anyhow::anyhow!("failed to create vault config directory: {error}"))?;
+    }
     vfs.write(VAULT_CONFIG_RELATIVE_PATH, format!("{raw}\n").as_bytes())
         .await
         .map_err(|error| anyhow::anyhow!("failed to write vault config: {error}"))
@@ -103,73 +84,6 @@ pub async fn load_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<VaultConfig> {
             other => anyhow::anyhow!("failed to read vault config: {other}"),
         })?;
     serde_yaml::from_str(&raw).context("invalid vault config")
-}
-
-async fn write_yaml(path: &Path, raw: String, label: &str) -> Result<()> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .await
-            .with_context(|| format!("failed to create {label} directory {}", parent.display()))?;
-    }
-    fs::write(path, format!("{raw}\n"))
-        .await
-        .with_context(|| format!("failed to write {label} {}", path.display()))
-}
-
-pub async fn save_app_config(config_path: impl AsRef<Path>, config: &AppConfig) -> Result<()> {
-    let raw = serde_yaml::to_string(config).context("failed to serialize app config")?;
-    write_yaml(config_path.as_ref(), raw, "app config").await
-}
-
-pub async fn save_vault_config(config_path: impl AsRef<Path>, config: &VaultConfig) -> Result<()> {
-    let raw = serde_yaml::to_string(config).context("failed to serialize vault config")?;
-    write_yaml(config_path.as_ref(), raw, "vault config").await
-}
-
-/// Ensures the vault root directory exists, creating it if necessary. Used by
-/// onboarding's app-only save (web "create if missing", desktop "create new
-/// vault") before any vault config is written.
-pub async fn ensure_vault_root(app: &AppConfig) -> Result<()> {
-    let vault_root = app.vault_root.trim();
-    if vault_root.is_empty() {
-        anyhow::bail!("vaultRoot is required");
-    }
-    fs::create_dir_all(vault_root)
-        .await
-        .with_context(|| format!("failed to create vault root {vault_root}"))
-}
-
-pub async fn ensure_config_directories(config: &KizunaConfig) -> Result<()> {
-    validate_config_paths(config)?;
-    let vault_root = Path::new(&config.vault_root);
-    fs::create_dir_all(vault_root)
-        .await
-        .with_context(|| format!("failed to create vault root {}", vault_root.display()))?;
-    let canonical_vault_root = vault_root
-        .canonicalize()
-        .with_context(|| format!("failed to resolve vault root {}", vault_root.display()))?;
-    let taxonomy_root = vault_root.join(&config.taxonomy_root);
-    fs::create_dir_all(&taxonomy_root)
-        .await
-        .with_context(|| format!("failed to create taxonomy root {}", taxonomy_root.display()))?;
-    ensure_path_inside_root(&canonical_vault_root, &taxonomy_root, "taxonomy root")?;
-    for type_config in &config.types {
-        let path = taxonomy_root.join(&type_config.path);
-        fs::create_dir_all(&path).await.with_context(|| {
-            format!("failed to create entity type directory {}", path.display())
-        })?;
-        ensure_path_inside_root(&canonical_vault_root, &path, "entity type directory")?;
-    }
-    if let Some(daily_notes) = &config.daily_notes {
-        for path in &daily_notes.paths {
-            let path = vault_root.join(path);
-            fs::create_dir_all(&path).await.with_context(|| {
-                format!("failed to create daily notes directory {}", path.display())
-            })?;
-            ensure_path_inside_root(&canonical_vault_root, &path, "daily notes directory")?;
-        }
-    }
-    Ok(())
 }
 
 pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Library> {
@@ -253,16 +167,6 @@ fn unique_relation_count_by_id(relations: &[Relation]) -> HashMap<String, u32> {
         .collect()
 }
 
-pub async fn read_library_from_config(app_config_path: impl AsRef<Path>) -> Result<Library> {
-    let app = load_app_config(app_config_path).await?;
-    let vault_path = vault_config_path(&app)
-        .context("config does not set a vault root; run onboarding to create one")?;
-    let vault = load_vault_config(&vault_path).await?;
-    let config = KizunaConfig::from_parts(app, vault);
-    let vfs: Arc<dyn Vfs> = Arc::new(NativeVfs::new(&config.vault_root));
-    read_library(config, vfs).await
-}
-
 /// Validates that the vault root and taxonomy root exist and are directories.
 /// Containment of the configured (relative) sub-paths is guaranteed by
 /// [`validate_config_paths`] plus the VFS's path normalization, so no
@@ -335,16 +239,6 @@ fn validate_relative_config_path(label: &str, value: &str) -> Result<()> {
         )
     }) {
         anyhow::bail!("{label} cannot contain parent directory components");
-    }
-    Ok(())
-}
-
-fn ensure_path_inside_root(root: &Path, path: &Path, label: &str) -> Result<()> {
-    let canonical = path
-        .canonicalize()
-        .with_context(|| format!("failed to resolve {label} {}", path.display()))?;
-    if !canonical.starts_with(root) {
-        anyhow::bail!("{label} is outside vaultRoot: {}", path.display());
     }
     Ok(())
 }

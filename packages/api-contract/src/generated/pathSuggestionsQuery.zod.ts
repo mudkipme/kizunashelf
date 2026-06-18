@@ -7,7 +7,8 @@
 import { z as zod } from 'zod';
 
 export const PathSuggestionsQuery = zod.object({
-  "path": zod.string().nullish().describe('A vault-relative path prefix being typed (e.g. `Taxonomy\/An`). Suggestions\nare directories inside the vault only.')
+  "path": zod.string().nullish().describe('A path prefix being typed, relative to `base` (e.g. `An`). Suggestions are\ndirectories inside the vault only.'),
+  "base": zod.string().nullish().describe('A vault-relative directory the suggestions are rooted at and returned\nrelative to — e.g. the taxonomy root for a type\'s folder path, which is\nstored relative to it. Defaults to the vault root.')
 })
 
 export type PathSuggestionsQuery = zod.input<typeof PathSuggestionsQuery>;

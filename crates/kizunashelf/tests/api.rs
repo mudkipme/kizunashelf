@@ -1,15 +1,42 @@
 use axum::body;
 use axum::http::{header, Method, Request, StatusCode};
 use axum::Router;
-use kizunashelf::api::{router, ApiOptions};
+use kizunashelf::api::{router_native, ApiOptions};
+use kizunashelf::secrets::NativeSecretStore;
+use kizunashelf::types::AppConfig;
 use pretty_assertions::assert_eq;
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 use tempfile::TempDir;
 use tower::ServiceExt;
+
+/// Builds the production-shape (inline) router for tests: the app config (vault
+/// root + write mode) is passed inline like every real runtime (web/desktop/iOS),
+/// and only the vault config lives on disk inside the vault.
+fn inline_router(vault_root: &Path, settings_writable: bool, content_writable: bool) -> Router {
+    let token_path = vault_root
+        .parent()
+        .map(|parent| parent.join(".tokens.json"))
+        .unwrap_or_else(|| PathBuf::from(".tokens.json"));
+    router_native(
+        ApiOptions {
+            config_path: PathBuf::new(),
+            cache_ttl: Duration::from_millis(0),
+            web_dist_path: None,
+            settings_writable,
+            content_writable,
+        },
+        AppConfig {
+            vault_root: vault_root.to_string_lossy().to_string(),
+            content_writable: Some(content_writable),
+        },
+        Arc::new(NativeSecretStore::with_token_path(token_path)),
+    )
+}
 
 struct TestServer {
     app: Router,
@@ -606,30 +633,17 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
 }
 
 #[tokio::test]
-async fn settings_endpoints_create_and_read_config_files() {
+async fn settings_save_and_read_vault_config() {
     let temp = TempDir::new().unwrap();
-    let config_path = temp.path().join("missing/kizunashelf.yaml");
-    let app = router(ApiOptions {
-        config_path: config_path.clone(),
-        cache_ttl: Duration::from_millis(0),
-        web_dist_path: None,
-        settings_writable: true,
-        content_writable: true,
-    });
+    let vault = temp.path().join("vault");
+    std::fs::create_dir_all(&vault).unwrap();
+    let app = inline_router(&vault, true, true);
 
     let missing = request_json(&app, Method::GET, "/api/settings/config", None).await;
     assert_eq!(missing.0, StatusCode::OK);
-    assert_eq!(missing.1["appExists"], false);
     assert_eq!(missing.1["vaultExists"], false);
-    assert_eq!(
-        missing.1["appConfigPath"].as_str().unwrap(),
-        config_path.to_string_lossy()
-    );
 
-    let vault = temp.path().join("vault");
-    write_fixture_vault(&vault);
     let config = json!({
-        "vaultRoot": vault,
         "taxonomyRoot": "Taxonomy",
         "dailyNotes": {
             "paths": ["Daily Notes"],
@@ -665,97 +679,33 @@ async fn settings_endpoints_create_and_read_config_files() {
         &app,
         Method::PUT,
         "/api/settings/config",
-        Some(split_settings_body(&config)),
+        Some(vault_settings_body(&config)),
     )
     .await;
     assert_eq!(saved.0, StatusCode::OK);
-    assert_eq!(saved.1["appExists"], true);
     assert_eq!(saved.1["vaultExists"], true);
     assert_eq!(saved.1["vault"]["types"].as_array().unwrap().len(), 1);
-    assert!(config_path.is_file());
     assert!(vault.join(".kizunashelf/config.yaml").is_file());
 
     let read_back = request_json(&app, Method::GET, "/api/settings/config", None).await;
     assert_eq!(read_back.0, StatusCode::OK);
-    assert_eq!(read_back.1["appExists"], true);
     assert_eq!(read_back.1["vaultExists"], true);
     assert_eq!(read_back.1["vault"]["home"]["title"], "Settings Fixture");
-
-    let health = request_json(&app, Method::GET, "/api/health", None).await;
-    assert_eq!(health.0, StatusCode::OK);
-    assert_eq!(health.1["entityCount"], 1);
-}
-
-#[tokio::test]
-async fn app_only_save_persists_vault_root_and_detects_existing_vault_config() {
-    let temp = TempDir::new().unwrap();
-    let config_path = temp.path().join("kizunashelf.yaml");
-    let app = router(ApiOptions {
-        config_path: config_path.clone(),
-        cache_ttl: Duration::from_millis(0),
-        web_dist_path: None,
-        settings_writable: true,
-        content_writable: true,
-    });
-
-    // App-only save (vault omitted) against an empty vault: creates the vault
-    // directory, writes only the app config, and reports no vault config yet.
-    let empty_vault = temp.path().join("empty-vault");
-    let app_only = request_json(
-        &app,
-        Method::PUT,
-        "/api/settings/config",
-        Some(json!({ "app": { "vaultRoot": empty_vault } })),
-    )
-    .await;
-    assert_eq!(app_only.0, StatusCode::OK);
-    assert_eq!(app_only.1["appExists"], true);
-    assert_eq!(app_only.1["vaultExists"], false);
-    assert!(config_path.is_file());
-    assert!(empty_vault.is_dir());
-    assert!(!empty_vault.join(".kizunashelf/config.yaml").exists());
-
-    // App-only save against a vault that already carries a config: reports it and
-    // leaves the file byte-for-byte intact (never rewritten).
-    let synced_vault = temp.path().join("synced-vault");
-    let vault_config_path = synced_vault.join(".kizunashelf/config.yaml");
-    fs::create_dir_all(vault_config_path.parent().unwrap()).unwrap();
-    let original = "taxonomyRoot: Library\nassetRoot: Media\ntypes: []\n# keep me\n";
-    fs::write(&vault_config_path, original).unwrap();
-
-    let detect = request_json(
-        &app,
-        Method::PUT,
-        "/api/settings/config",
-        Some(json!({ "app": { "vaultRoot": synced_vault } })),
-    )
-    .await;
-    assert_eq!(detect.0, StatusCode::OK);
-    assert_eq!(detect.1["vaultExists"], true);
-    assert_eq!(detect.1["vault"]["taxonomyRoot"], "Library");
-    assert_eq!(fs::read_to_string(&vault_config_path).unwrap(), original);
 }
 
 #[tokio::test]
 async fn settings_config_rejects_paths_that_escape_the_vault_root() {
     let temp = TempDir::new().unwrap();
-    let config_path = temp.path().join("kizunashelf.yaml");
-    let app = router(ApiOptions {
-        config_path,
-        cache_ttl: Duration::from_millis(0),
-        web_dist_path: None,
-        settings_writable: true,
-        content_writable: true,
-    });
     let vault = temp.path().join("vault");
+    std::fs::create_dir_all(&vault).unwrap();
+    let app = inline_router(&vault, true, true);
 
     let escaped_taxonomy = request_json(
         &app,
         Method::PUT,
         "/api/settings/config",
-        Some(split_settings_body(&json!({
-            "vaultRoot": vault,
-            "taxonomyRoot": "../outside",
+        Some(vault_settings_body(&json!({
+                "taxonomyRoot": "../outside",
             "types": []
         }))),
     )
@@ -770,9 +720,8 @@ async fn settings_config_rejects_paths_that_escape_the_vault_root() {
         &app,
         Method::PUT,
         "/api/settings/config",
-        Some(split_settings_body(&json!({
-            "vaultRoot": vault,
-            "taxonomyRoot": "Taxonomy",
+        Some(vault_settings_body(&json!({
+                "taxonomyRoot": "Taxonomy",
             "types": [
                 {
                     "id": "anime",
@@ -794,28 +743,11 @@ async fn settings_config_rejects_paths_that_escape_the_vault_root() {
 #[tokio::test]
 async fn path_suggestions_list_vault_directories_and_omit_hidden() {
     let temp = TempDir::new().unwrap();
-    let config_path = temp.path().join("kizunashelf.yaml");
     let vault = temp.path().join("vault");
     std::fs::create_dir_all(vault.join("Taxonomy/Anime")).unwrap();
     std::fs::create_dir_all(vault.join("Assets")).unwrap();
     std::fs::create_dir_all(vault.join(".obsidian")).unwrap();
-    let app = router(ApiOptions {
-        config_path,
-        cache_ttl: Duration::from_millis(0),
-        web_dist_path: None,
-        settings_writable: true,
-        content_writable: true,
-    });
-    // Persist the app config so the vault root is known; suggestions list the
-    // vault through the VFS (vault-relative), never the host filesystem.
-    let saved = request_json(
-        &app,
-        Method::PUT,
-        "/api/settings/config",
-        Some(json!({ "app": { "vaultRoot": vault } })),
-    )
-    .await;
-    assert_eq!(saved.0, StatusCode::OK);
+    let app = inline_router(&vault, true, true);
 
     let names = |response: &serde_json::Value| -> Vec<String> {
         response["suggestions"]
@@ -850,6 +782,21 @@ async fn path_suggestions_list_vault_directories_and_omit_hidden() {
     .await;
     assert!(names(&nested.1).iter().any(|name| name == "Taxonomy/Anime"));
 
+    // `base` roots the listing (a type's folder path is taxonomy-relative):
+    // suggestions come back relative to `base`, not the vault root.
+    let based = request_json(
+        &app,
+        Method::GET,
+        "/api/settings/path-suggestions?base=Taxonomy&path=An",
+        None,
+    )
+    .await;
+    assert_eq!(based.0, StatusCode::OK);
+    assert!(names(&based.1).iter().any(|name| name == "Anime"));
+    assert!(names(&based.1)
+        .iter()
+        .all(|name| !name.starts_with("Taxonomy/")));
+
     // An explicit leading dot reveals the hidden folder.
     let typed = request_json(
         &app,
@@ -877,16 +824,8 @@ async fn settings_mutation_endpoints_can_be_disabled() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
     write_fixture_vault(&vault);
-    let config_path = temp.path().join("kizunashelf.yaml");
-    let app = router(ApiOptions {
-        config_path,
-        cache_ttl: Duration::from_millis(0),
-        web_dist_path: None,
-        settings_writable: false,
-        content_writable: false,
-    });
+    let app = inline_router(&vault, false, false);
     let config = json!({
-        "vaultRoot": vault,
         "taxonomyRoot": "Taxonomy",
         "types": []
     });
@@ -895,7 +834,7 @@ async fn settings_mutation_endpoints_can_be_disabled() {
         &app,
         Method::PUT,
         "/api/settings/config",
-        Some(split_settings_body(&config)),
+        Some(vault_settings_body(&config)),
     )
     .await;
     assert_eq!(saved.0, StatusCode::FORBIDDEN);
@@ -917,9 +856,7 @@ async fn content_mutation_endpoints_can_be_disabled() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
     write_fixture_vault(&vault);
-    let config_path = temp.path().join("kizunashelf.yaml");
     let config = json!({
-        "vaultRoot": vault,
         "taxonomyRoot": "Taxonomy",
         "types": [
             {
@@ -933,14 +870,8 @@ async fn content_mutation_endpoints_can_be_disabled() {
             }
         ]
     });
-    write_split_config(&config_path, &config);
-    let app = router(ApiOptions {
-        config_path,
-        cache_ttl: Duration::from_millis(0),
-        web_dist_path: None,
-        settings_writable: true,
-        content_writable: false,
-    });
+    write_vault_config(&vault, &config);
+    let app = inline_router(&vault, true, false);
 
     let capabilities = request_json(&app, Method::GET, "/api/capabilities", None).await;
     assert_eq!(capabilities.0, StatusCode::OK);
@@ -982,10 +913,8 @@ impl TestServer {
         let temp = TempDir::new().unwrap();
         let vault = temp.path().join("vault");
         write_fixture_vault(&vault);
-        let config_path = temp.path().join("kizunashelf.yaml");
         let config = json!({
-            "vaultRoot": vault,
-            "taxonomyRoot": "Taxonomy",
+                "taxonomyRoot": "Taxonomy",
             "dailyNotes": {
                 "paths": ["Daily Notes"],
                 "dateFormat": "YYYY-MM-DD"
@@ -1085,16 +1014,10 @@ impl TestServer {
                 }
             ]
         });
-        write_split_config(&config_path, &config);
+        write_vault_config(&vault, &config);
 
         Self {
-            app: router(ApiOptions {
-                config_path,
-                cache_ttl: Duration::from_millis(0),
-                web_dist_path: None,
-                settings_writable: true,
-                content_writable: true,
-            }),
+            app: inline_router(&vault, true, true),
             _temp: temp,
         }
     }
@@ -1110,30 +1033,11 @@ impl TestServer {
     }
 }
 
-/// Splits a combined config object into the app file (at `config_path`) and the
-/// vault file (at `<vaultRoot>/.kizunashelf/config.yaml`), mirroring how the app
-/// stores configuration on disk.
-fn write_split_config(config_path: &Path, config: &Value) {
-    let object = config.as_object().expect("config must be an object");
-    let vault_root = object
-        .get("vaultRoot")
-        .and_then(Value::as_str)
-        .expect("config must set vaultRoot");
-    let mut app = serde_json::Map::new();
-    let mut vault = serde_json::Map::new();
-    for (key, value) in object {
-        match key.as_str() {
-            "vaultRoot" | "contentWritable" => {
-                app.insert(key.clone(), value.clone());
-            }
-            _ => {
-                vault.insert(key.clone(), value.clone());
-            }
-        }
-    }
-    write_yaml_file(config_path, &Value::Object(app));
-    let vault_config_path = Path::new(vault_root).join(".kizunashelf/config.yaml");
-    write_yaml_file(&vault_config_path, &Value::Object(vault));
+/// Writes a vault config (the schema) to `<vault_root>/.kizunashelf/config.yaml`.
+/// The vault root is owned by the runtime, so it is passed separately rather than
+/// embedded in the config object.
+fn write_vault_config(vault_root: &Path, config: &Value) {
+    write_yaml_file(&vault_root.join(".kizunashelf/config.yaml"), config);
 }
 
 fn write_yaml_file(path: &Path, value: &Value) {
@@ -1143,23 +1047,10 @@ fn write_yaml_file(path: &Path, value: &Value) {
     fs::write(path, serde_yaml::to_string(value).unwrap()).unwrap();
 }
 
-/// Builds a `{ app, vault }` settings request body from a combined config object,
-/// matching the shape the PUT `/api/settings/config` endpoint expects.
-fn split_settings_body(config: &Value) -> Value {
-    let object = config.as_object().expect("config must be an object");
-    let mut app = serde_json::Map::new();
-    let mut vault = serde_json::Map::new();
-    for (key, value) in object {
-        match key.as_str() {
-            "vaultRoot" | "contentWritable" => {
-                app.insert(key.clone(), value.clone());
-            }
-            _ => {
-                vault.insert(key.clone(), value.clone());
-            }
-        }
-    }
-    json!({ "app": Value::Object(app), "vault": Value::Object(vault) })
+/// Wraps a vault config object in the `{ vault }` PUT `/api/settings/config` body
+/// (the vault root + write mode are owned by the runtime and never sent).
+fn vault_settings_body(config: &Value) -> Value {
+    json!({ "vault": config.clone() })
 }
 
 async fn request_json(
@@ -1399,9 +1290,7 @@ fn asset_test_app(
     let vault = temp.path().join("vault");
     fs::create_dir_all(vault.join("Taxonomy/Anime")).unwrap();
     write_entities(&vault);
-    let config_path = temp.path().join("kizunashelf.yaml");
     let config = json!({
-        "vaultRoot": vault,
         "taxonomyRoot": "Taxonomy",
         "assetRoot": "Assets",
         "types": [
@@ -1418,14 +1307,8 @@ fn asset_test_app(
             }
         ]
     });
-    write_split_config(&config_path, &config);
-    let app = router(ApiOptions {
-        config_path,
-        cache_ttl: Duration::from_millis(0),
-        web_dist_path: None,
-        settings_writable: true,
-        content_writable,
-    });
+    write_vault_config(&vault, &config);
+    let app = inline_router(&vault, true, content_writable);
     (app, temp, vault)
 }
 

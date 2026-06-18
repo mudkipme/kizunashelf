@@ -192,9 +192,19 @@
           {
             "in": "query",
             "name": "path",
-            "description": "A vault-relative path prefix being typed (e.g. `Taxonomy/An`). Suggestions\nare directories inside the vault only.",
+            "description": "A path prefix being typed, relative to `base` (e.g. `An`). Suggestions are\ndirectories inside the vault only.",
             "schema": {
-              "description": "A vault-relative path prefix being typed (e.g. `Taxonomy/An`). Suggestions\nare directories inside the vault only.",
+              "description": "A path prefix being typed, relative to `base` (e.g. `An`). Suggestions are\ndirectories inside the vault only.",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "base",
+            "description": "A vault-relative directory the suggestions are rooted at and returned\nrelative to — e.g. the taxonomy root for a type's folder path, which is\nstored relative to it. Defaults to the vault root.",
+            "schema": {
+              "description": "A vault-relative directory the suggestions are rooted at and returned\nrelative to — e.g. the taxonomy root for a type's folder path, which is\nstored relative to it. Defaults to the vault root.",
               "type": "string"
             },
             "style": "form"
@@ -1857,15 +1867,8 @@
       "SettingsConfigResponse": {
         "type": "object",
         "properties": {
-          "appConfigPath": {
-            "description": "Path to the local app config file on this machine.",
-            "type": "string"
-          },
-          "appExists": {
-            "description": "Whether the app config file exists on disk.",
-            "type": "boolean"
-          },
           "app": {
+            "description": "The inline app config (vault root + write mode), owned by the runtime.",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/AppConfig"
@@ -1904,8 +1907,6 @@
           }
         },
         "required": [
-          "appConfigPath",
-          "appExists",
           "vaultExists"
         ]
       },
@@ -1993,11 +1994,8 @@
       "SaveSettingsRequest": {
         "type": "object",
         "properties": {
-          "app": {
-            "$ref": "#/components/schemas/AppConfig"
-          },
           "vault": {
-            "description": "When omitted, only the app config is written and the vault config on disk\n(if any) is left untouched — used by onboarding to persist a chosen vault\nroot without overwriting an existing, synced vault config.",
+            "description": "The vault config (the schema) to write. The vault root and write mode are\nowned by the runtime (env vars / the native vault switcher / `@AppStorage`),\nso they are never sent here. Omitting `vault` is a no-op.",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/VaultConfig"
@@ -2007,16 +2005,20 @@
               }
             ]
           }
-        },
-        "required": [
-          "app"
-        ]
+        }
       },
       "PathSuggestionsQuery": {
         "type": "object",
         "properties": {
           "path": {
-            "description": "A vault-relative path prefix being typed (e.g. `Taxonomy/An`). Suggestions\nare directories inside the vault only.",
+            "description": "A path prefix being typed, relative to `base` (e.g. `An`). Suggestions are\ndirectories inside the vault only.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base": {
+            "description": "A vault-relative directory the suggestions are rooted at and returned\nrelative to — e.g. the taxonomy root for a type's folder path, which is\nstored relative to it. Defaults to the vault root.",
             "type": [
               "string",
               "null"

@@ -6,7 +6,6 @@ import {
 import { isIso639TitleLanguage } from "@/lib/title-language";
 import type { ExternalProviderCatalog } from "@/types/api";
 import type {
-  AppConfig,
   DailyNotesConfig,
   EntityTypeConfig,
   ExternalBodyMapping,
@@ -16,16 +15,13 @@ import type {
   HomeConfig,
   HomeSectionConfig,
   HomeSectionFilterConfig,
-  MergedConfig,
   SaveSettingsRequest,
   VaultConfig,
 } from "@/types/config";
 
-export function normalizeConfig(app?: AppConfig, vault?: VaultConfig): MergedConfig {
-  const base = defaultConfig();
+export function normalizeVaultConfig(vault?: VaultConfig): VaultConfig {
+  const base = defaultVaultConfig();
   return {
-    vaultRoot: app?.vaultRoot ?? base.vaultRoot,
-    contentWritable: app?.contentWritable ?? base.contentWritable,
     // When the vault config is missing entirely (e.g. a fresh vault), seed the
     // defaults so the editor has something to fill in; when it exists, respect
     // its values including disabled (null) daily notes / home.
@@ -92,15 +88,13 @@ function normalizeField(field: FieldConfig): FieldConfig {
   };
 }
 
-export function cleanConfig(
-  config: MergedConfig,
+// The schema editor saves the vault config only; the app config (vault root +
+// write mode) is owned server-side per runtime and is never sent.
+export function cleanVaultConfig(
+  config: VaultConfig,
   providerCatalog?: ExternalProviderCatalog,
 ): SaveSettingsRequest {
   return {
-    app: {
-      vaultRoot: config.vaultRoot,
-      contentWritable: config.contentWritable ?? undefined,
-    },
     vault: {
       taxonomyRoot: config.taxonomyRoot,
       assetRoot: emptyToUndefined(config.assetRoot),
@@ -257,12 +251,10 @@ function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalo
   };
 }
 
-export function defaultConfig(): MergedConfig {
+export function defaultVaultConfig(): VaultConfig {
   return {
-    vaultRoot: "",
     taxonomyRoot: "Taxonomy",
     assetRoot: "Assets",
-    contentWritable: true,
     dailyNotes: defaultDailyNotes(),
     home: defaultHome(),
     types: [defaultEntityType()],

@@ -10,10 +10,6 @@ export const saveSettingsRequestVaultOneHomeOneSectionsItemLimitMin = 0;
 
 
 export const SaveSettingsRequest = zod.object({
-  "app": zod.object({
-  "vaultRoot": zod.string(),
-  "contentWritable": zod.boolean().nullish()
-}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.'),
   "vault": zod.union([zod.object({
   "taxonomyRoot": zod.string(),
   "assetRoot": zod.string().nullish(),
@@ -71,7 +67,7 @@ export const SaveSettingsRequest = zod.object({
   "relationType": zod.string().nullish()
 }))
 }))
-}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional().describe('When omitted, only the app config is written and the vault config on disk\n(if any) is left untouched — used by onboarding to persist a chosen vault\nroot without overwriting an existing, synced vault config.')
+}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional().describe('The vault config (the schema) to write. The vault root and write mode are\nowned by the runtime (env vars \/ the native vault switcher \/ `@AppStorage`),\nso they are never sent here. Omitting `vault` is a no-op.')
 })
 
 export type SaveSettingsRequest = zod.input<typeof SaveSettingsRequest>;

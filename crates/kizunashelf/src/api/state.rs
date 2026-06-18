@@ -1,6 +1,6 @@
 use crate::contract::{AnalyticsResponse, AssetDownloadJob};
-use crate::library::{load_app_config, load_vault_config_via_vfs, read_library};
-use crate::secrets::{NativeSecretStore, SecretStore, SECRET_PROVIDER_TOKENS};
+use crate::library::{load_vault_config_via_vfs, read_library};
+use crate::secrets::{SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
 use crate::vfs::{NativeVfs, Vfs};
 use anyhow::{Context, Result};
@@ -38,9 +38,10 @@ pub(crate) struct AppState {
     /// Injected vault filesystem (iOS). When `None`, a [`NativeVfs`] is built per
     /// load from the configured vault root (desktop/web).
     vault_fs: Option<Arc<dyn Vfs>>,
-    /// Inline app config (iOS). When `None`, the app config is read from
-    /// `options.config_path` (desktop/web).
-    app_config: Option<AppConfig>,
+    /// Inline app config (the vault root + write mode). Every runtime owns this
+    /// server-side and passes it in: env vars (web), the native vault switcher
+    /// (desktop), or `@AppStorage` (iOS). There is no app config file.
+    app_config: AppConfig,
     /// Provider credentials + token cache. Desktop uses env vars + a file; iOS
     /// uses the Keychain via an injected store.
     secret_store: Arc<dyn SecretStore>,
@@ -88,18 +89,13 @@ struct DiskCachedAccessToken {
 }
 
 impl AppState {
-    pub(crate) fn new(options: ApiOptions) -> Self {
-        let secret_store: Arc<dyn SecretStore> =
-            Arc::new(NativeSecretStore::new(&options.config_path));
-        Self::with_vault(options, None, None, secret_store)
-    }
-
-    /// Builds state with an injected vault filesystem, inline app config, and
-    /// secret store (the iOS path; see ../kizunashelf-ios/docs/ios-port-plan.md §5/§7).
+    /// Builds state with an inline app config, an optional injected vault
+    /// filesystem (iOS) or a [`NativeVfs`] derived from the vault root
+    /// (web/desktop), and a secret store. See ../kizunashelf-ios/docs/ios-port-plan.md §5/§7.
     pub(crate) fn with_vault(
         options: ApiOptions,
         vault_fs: Option<Arc<dyn Vfs>>,
-        app_config: Option<AppConfig>,
+        app_config: AppConfig,
         secret_store: Arc<dyn SecretStore>,
     ) -> Self {
         let http_client = reqwest::Client::builder()
@@ -314,21 +310,11 @@ impl AppState {
         &self.secret_store
     }
 
-    /// The inline app config when running in iOS mode (no config file). `Some`
-    /// signals that settings reads/writes should go through the injected VFS
-    /// rather than native config-file paths.
-    pub(crate) fn inline_app_config(&self) -> Option<AppConfig> {
+    /// The inline app config (vault root + write mode), owned by the runtime.
+    /// Unlike [`get_library`] it does not require a vault config to exist, so it
+    /// is usable before a schema is created.
+    pub(crate) fn app_config(&self) -> AppConfig {
         self.app_config.clone()
-    }
-
-    /// The app config: the inline value (iOS) or the on-disk config file
-    /// (desktop/web). Unlike [`get_library`], this does not require a vault config
-    /// to exist, so it is usable during onboarding.
-    pub(crate) async fn app_config(&self) -> Result<AppConfig> {
-        match &self.app_config {
-            Some(app) => Ok(app.clone()),
-            None => load_app_config(&self.options.config_path).await,
-        }
     }
 }
 
@@ -381,15 +367,11 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
     Ok(library)
 }
 
-/// Loads the library from the current configuration. The app config comes from
-/// the inline value (iOS) or the config file (desktop/web); the vault config and
-/// all entities are read through the vault filesystem (a [`NativeVfs`] rooted at
-/// the vault root, or the injected iOS VFS).
+/// Loads the library from the current configuration. The app config is the
+/// inline value; the vault config and all entities are read through the vault
+/// filesystem (a [`NativeVfs`] rooted at the vault root, or the injected iOS VFS).
 async fn load_library(state: &AppState) -> Result<Library> {
-    let app = match &state.app_config {
-        Some(app) => app.clone(),
-        None => load_app_config(&state.options.config_path).await?,
-    };
+    let app = state.app_config.clone();
     // Desktop derives the vault filesystem from the (absolute) vault root; iOS
     // injects one and the root is just a display label.
     if state.vault_fs.is_none() && app.vault_root.trim().is_empty() {

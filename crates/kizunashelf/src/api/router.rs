@@ -34,10 +34,6 @@ use axum::{Json, Router};
 use std::sync::Arc;
 use tower_http::services::{ServeDir, ServeFile};
 
-pub fn router(options: ApiOptions) -> Router {
-    build_router(AppState::new(options))
-}
-
 /// Builds the router with an injected vault filesystem and inline app config —
 /// the iOS entry point. The vault config and entities are read through `vault_fs`
 /// and the app config comes from `app_config` instead of a file on disk. See
@@ -51,7 +47,7 @@ pub fn router_with_vault(
     build_router(AppState::with_vault(
         options,
         Some(vault_fs),
-        Some(app_config),
+        app_config,
         secret_store,
     ))
 }
@@ -71,7 +67,7 @@ pub fn router_native(
     build_router(AppState::with_vault(
         options,
         None,
-        Some(app_config),
+        app_config,
         secret_store,
     ))
 }

@@ -10,12 +10,10 @@ export const settingsConfigResponseVaultOneHomeOneSectionsItemLimitMin = 0;
 
 
 export const SettingsConfigResponse = zod.object({
-  "appConfigPath": zod.string().describe('Path to the local app config file on this machine.'),
-  "appExists": zod.boolean().describe('Whether the app config file exists on disk.'),
   "app": zod.union([zod.object({
   "vaultRoot": zod.string(),
   "contentWritable": zod.boolean().nullish()
-}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.'),zod.null()]).optional(),
+}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.'),zod.null()]).optional().describe('The inline app config (vault root + write mode), owned by the runtime.'),
   "vaultConfigPath": zod.string().nullish().describe('Path to the vault config file (`<vaultRoot>\/.kizunashelf\/config.yaml`).\n`None` until a vault root is configured.'),
   "vaultExists": zod.boolean().describe('Whether the vault config file exists on disk.'),
   "vault": zod.union([zod.object({

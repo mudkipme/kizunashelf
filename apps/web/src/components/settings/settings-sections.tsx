@@ -334,13 +334,17 @@ export function EntityTypeEditor({
   providerCatalog,
   languages,
   taxonomyBase,
+  taxonomyRoot,
   onChange,
   onRemove,
 }: {
   config: EntityTypeConfig;
   providerCatalog?: ExternalProviderCatalog;
   languages: Language[];
+  /** Absolute taxonomy dir (desktop "Browse" base). */
   taxonomyBase: string;
+  /** Vault-relative taxonomy root; the type path is relative to it. */
+  taxonomyRoot: string;
   onChange: (config: EntityTypeConfig) => void;
   onRemove: () => void;
 }) {
@@ -378,6 +382,7 @@ export function EntityTypeEditor({
               label="Path"
               value={config.path}
               base={taxonomyBase}
+              suggestionBase={taxonomyRoot}
               onChange={(path) => onChange({ ...config, path })}
             />
           </div>

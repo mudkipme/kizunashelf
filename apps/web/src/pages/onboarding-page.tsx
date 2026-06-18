@@ -46,7 +46,6 @@ export function OnboardingPage() {
   } else {
     body = (
       <SettingsEditor
-        appConfigPath={settings.data?.appConfigPath ?? ""}
         vaultConfigPath={settings.data?.vaultConfigPath}
         initialApp={settings.data?.app ?? { vaultRoot: "" }}
         initialVault={settings.data?.vault}

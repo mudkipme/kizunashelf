@@ -107,9 +107,6 @@ export type VaultConfig = {
   types: EntityTypeConfig[];
 };
 
-// Editor working shape: app + vault fields flattened into one form model.
-export type MergedConfig = AppConfig & VaultConfig;
-
 // A built-in starter schema offered during onboarding, served by
 // GET /api/vault-templates. The single source of truth lives in the Rust core.
 export type VaultTemplate = {
@@ -133,16 +130,14 @@ export type LanguagesResponse = {
   languages: Language[];
 };
 
+// The schema editor saves the vault config only; the vault root + write mode are
+// owned server-side per runtime (env / native switcher / @AppStorage).
 export type SaveSettingsRequest = {
-  app: AppConfig;
-  // Omitted (or null) when persisting only the app config — e.g. the onboarding
-  // vault picker, which must not overwrite an existing synced vault config.
   vault?: VaultConfig | null;
 };
 
 export type SettingsConfigResponse = {
-  appConfigPath: string;
-  appExists: boolean;
+  // The inline app config (vault root + write mode), owned by the runtime.
   app?: AppConfig;
   vaultConfigPath?: string;
   vaultExists: boolean;

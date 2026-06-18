@@ -5,7 +5,7 @@ import { saveSettingsConfig } from "@/api/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ExternalProviderCatalog } from "@/types/api";
-import type { AppConfig, Language, MergedConfig, VaultConfig } from "@/types/config";
+import type { AppConfig, Language, VaultConfig } from "@/types/config";
 
 import {
   EmptyConfigLine,
@@ -14,12 +14,12 @@ import {
   SettingsSection,
 } from "./settings-controls";
 import {
-  cleanConfig,
+  cleanVaultConfig,
   defaultDailyNotes,
   defaultEntityType,
   defaultHome,
   joinPath,
-  normalizeConfig,
+  normalizeVaultConfig,
   replaceAt,
 } from "./settings-model";
 import { DailyNotesEditor, EntityTypeEditor, HomeEditor } from "./settings-sections";
@@ -32,7 +32,6 @@ export type VaultTemplateOption = {
 };
 
 type SettingsEditorProps = {
-  appConfigPath: string;
   vaultConfigPath?: string;
   initialApp?: AppConfig;
   initialVault?: VaultConfig;
@@ -60,15 +59,19 @@ export function SettingsEditor({
   onBack,
   onSaved,
 }: SettingsEditorProps) {
-  const [config, setConfig] = useState<MergedConfig>(() => normalizeConfig(initialApp, initialVault));
+  // The editor edits the vault config (the schema) only. The vault root is owned
+  // by the runtime (env / native switcher / @AppStorage) and is read-only here —
+  // used for path display and the desktop "Browse" base, never edited or saved.
+  const vaultRoot = initialApp?.vaultRoot ?? "";
+  const [config, setConfig] = useState<VaultConfig>(() => normalizeVaultConfig(initialVault));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
-  const taxonomyBase = joinPath(config.vaultRoot, config.taxonomyRoot);
+  const taxonomyBase = joinPath(vaultRoot, config.taxonomyRoot);
   // The server only reports vaultConfigPath once a vault root is saved; during
-  // onboarding derive it from the in-progress vault root for display.
+  // onboarding derive it from the vault root for display.
   const vaultPath =
-    vaultConfigPath ?? (config.vaultRoot ? joinPath(config.vaultRoot, ".kizunashelf/config.yaml") : undefined);
+    vaultConfigPath ?? (vaultRoot ? joinPath(vaultRoot, ".kizunashelf/config.yaml") : undefined);
   const totalFields = config.types.reduce((sum, typeConfig) => sum + typeConfig.fields.length, 0);
   const configuredProviderCount = new Set(
     config.types.flatMap((typeConfig) => [
@@ -112,17 +115,17 @@ export function SettingsEditor({
   const seededRef = useRef(false);
   useEffect(() => {
     if (seededRef.current) return;
-    if (initialApp === undefined && initialVault === undefined) return;
+    if (initialVault === undefined) return;
     seededRef.current = true;
-    setConfig(normalizeConfig(initialApp, initialVault));
-  }, [initialApp, initialVault]);
+    setConfig(normalizeVaultConfig(initialVault));
+  }, [initialVault]);
 
   async function save() {
     setSaving(true);
     setError(undefined);
     setMessage(undefined);
     try {
-      await saveSettingsConfig(cleanConfig(config, providerCatalog));
+      await saveSettingsConfig(cleanVaultConfig(config, providerCatalog));
       setMessage("Saved");
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onSaved?.();
@@ -190,13 +193,7 @@ export function SettingsEditor({
                     type="button"
                     variant="outline"
                     className="h-auto justify-start whitespace-normal py-3 text-left"
-                    onClick={() =>
-                      setConfig((current) => ({
-                        ...template.config,
-                        vaultRoot: current.vaultRoot,
-                        contentWritable: current.contentWritable ?? true,
-                      }))
-                    }
+                    onClick={() => setConfig(template.config)}
                   >
                     {template.label}
                   </Button>
@@ -215,13 +212,13 @@ export function SettingsEditor({
               <PathField
                 label="Taxonomy root"
                 value={config.taxonomyRoot}
-                base={config.vaultRoot}
+                base={vaultRoot}
                 onChange={(value) => setConfig((current) => ({ ...current, taxonomyRoot: value }))}
               />
               <PathField
                 label="Asset root"
                 value={config.assetRoot ?? ""}
-                base={config.vaultRoot}
+                base={vaultRoot}
                 onChange={(value) => setConfig((current) => ({ ...current, assetRoot: value }))}
               />
             </div>
@@ -247,7 +244,7 @@ export function SettingsEditor({
             {config.dailyNotes ? (
               <DailyNotesEditor
                 config={config.dailyNotes}
-                vaultRoot={config.vaultRoot}
+                vaultRoot={vaultRoot}
                 onChange={(dailyNotes) => setConfig((current) => ({ ...current, dailyNotes }))}
               />
             ) : (
@@ -314,6 +311,7 @@ export function SettingsEditor({
                   providerCatalog={providerCatalog}
                   languages={languages}
                   taxonomyBase={taxonomyBase}
+                  taxonomyRoot={config.taxonomyRoot}
                   onChange={(next) => setConfig((current) => replaceAt(current, "types", index, next))}
                   onRemove={() =>
                     setConfig((current) => ({
