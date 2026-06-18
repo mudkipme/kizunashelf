@@ -4,8 +4,13 @@ import { PlusIcon, SaveIcon } from "lucide-react";
 import { saveSettingsConfig } from "@/api/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { ExternalProviderCatalog } from "@/types/api";
-import type { AppConfig, Language, VaultConfig } from "@/types/config";
+import type {
+  AppConfig,
+  ExternalProviderCatalog,
+  Language,
+  VaultConfig,
+  VaultTemplatesResponse,
+} from "@/types/api";
 
 import {
   EmptyConfigLine,
@@ -25,16 +30,12 @@ import {
 import { DailyNotesEditor, EntityTypeEditor, HomeEditor } from "./settings-sections";
 
 /** A starter schema preset, served by `GET /api/vault-templates`. */
-export type VaultTemplateOption = {
-  id: string;
-  label: string;
-  config: VaultConfig;
-};
+export type VaultTemplateOption = VaultTemplatesResponse["templates"][number];
 
 type SettingsEditorProps = {
   vaultConfigPath?: string;
-  initialApp?: AppConfig;
-  initialVault?: VaultConfig;
+  initialApp?: AppConfig | null;
+  initialVault?: VaultConfig | null;
   providerCatalog?: ExternalProviderCatalog;
   /** Onboarding presets from the core; empty outside onboarding. */
   templates?: VaultTemplateOption[];
@@ -63,7 +64,7 @@ export function SettingsEditor({
   // by the runtime (env / native switcher / @AppStorage) and is read-only here —
   // used for path display and the desktop "Browse" base, never edited or saved.
   const vaultRoot = initialApp?.vaultRoot ?? "";
-  const [config, setConfig] = useState<VaultConfig>(() => normalizeVaultConfig(initialVault));
+  const [config, setConfig] = useState<VaultConfig>(() => normalizeVaultConfig(initialVault ?? undefined));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
@@ -95,12 +96,12 @@ export function SettingsEditor({
     {
       id: "daily-notes",
       title: "Daily Notes",
-      detail: config.dailyNotes ? `${config.dailyNotes.paths.length} paths` : "Off",
+      detail: config.dailyNotes ? `${(config.dailyNotes.paths ?? []).length} paths` : "Off",
     },
     {
       id: "home",
       title: "Home",
-      detail: config.home ? `${config.home.sections.length} sections` : "Off",
+      detail: config.home ? `${(config.home.sections ?? []).length} sections` : "Off",
     },
     {
       id: "types",
@@ -117,7 +118,7 @@ export function SettingsEditor({
     if (seededRef.current) return;
     if (initialVault === undefined) return;
     seededRef.current = true;
-    setConfig(normalizeVaultConfig(initialVault));
+    setConfig(normalizeVaultConfig(initialVault ?? undefined));
   }, [initialVault]);
 
   async function save() {
@@ -227,7 +228,7 @@ export function SettingsEditor({
           <SettingsSection
             id="daily-notes"
             title="Daily Notes"
-            summary={<SummaryBadges items={config.dailyNotes ? [`${config.dailyNotes.paths.length} paths`] : ["off"]} />}
+            summary={<SummaryBadges items={config.dailyNotes ? [`${(config.dailyNotes.paths ?? []).length} paths`] : ["off"]} />}
             action={
               <OptionalToggle
                 enabled={Boolean(config.dailyNotes)}
@@ -255,7 +256,7 @@ export function SettingsEditor({
           <SettingsSection
             id="home"
             title="Home"
-            summary={<SummaryBadges items={config.home ? [`${config.home.sections.length} sections`] : ["off"]} />}
+            summary={<SummaryBadges items={config.home ? [`${(config.home.sections ?? []).length} sections`] : ["off"]} />}
             action={
               <OptionalToggle
                 enabled={Boolean(config.home)}

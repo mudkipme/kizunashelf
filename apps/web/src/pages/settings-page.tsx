@@ -20,7 +20,7 @@ export function SettingsPage() {
   const desktop = isDesktopRuntime();
 
   return (
-    <AppFrame error={(error ? errorMessage(error) : undefined) ?? settings.data?.error}>
+    <AppFrame error={(error ? errorMessage(error) : undefined) ?? settings.data?.error ?? undefined}>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         {/* Desktop manages vaults + credentials natively (multi-vault, OS keychain). */}
         {desktop ? (
@@ -33,7 +33,7 @@ export function SettingsPage() {
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : settings.data ? (
           <SettingsEditor
-            vaultConfigPath={settings.data.vaultConfigPath}
+            vaultConfigPath={settings.data.vaultConfigPath ?? undefined}
             initialApp={settings.data.app}
             initialVault={settings.data.vault}
             providerCatalog={providerCatalog.data}

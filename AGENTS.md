@@ -140,6 +140,34 @@ bin emits it:
 > exists in Rust but missing/optional in Swift." After any API change, treat
 > regenerating the iOS spec as part of the change, even though CI won't fail.
 
+### Web: always consume the contract, never hand-write its types
+
+The web app's API types and request/response shapes come **only** from the
+generated contract — never hand-write a TypeScript type that mirrors a
+`contract.rs` shape, and never hand-roll a `fetch`/URL for an endpoint.
+
+- **API calls** go through the generated client functions, invoked with the
+  shared transport: `getEntities(params, { signal }, apiFetch)` (see
+  `apps/web/src/api/*.ts`). This gives contract-typed params **and** runtime Zod
+  validation. Don't build URLs with `apiFetch(\`/api/...\`)` by hand.
+- **Types** are re-exported (or derived) from `@kizunashelf/api-contract` via
+  `apps/web/src/types/api.ts`. Add a missing one to the barrel
+  (`packages/api-contract/src/index.ts`) and to `types/api.ts` rather than
+  declaring a local duplicate. There is intentionally **no** hand-written
+  `types/config.ts` (it was removed); the schema-editor config types live in
+  `types/api.ts`.
+- **orval inlines nested objects** (gotcha): `SaveSettingsRequest["vault"]`,
+  `SettingsConfigResponse["vault"]`, and the standalone `VaultConfig` schema are
+  three *nominally distinct* types, so mixing them yields TS2719 "two different
+  types with this name … unrelated." For shapes used on both the request and
+  response side (the settings/schema editor), **derive** the granular types by
+  indexed access into one generated type so they unify structurally — e.g.
+  `type VaultConfig = NonNullable<SaveSettingsRequest["vault"]>;
+  type EntityTypeConfig = VaultConfig["types"][number];` — rather than importing
+  the standalone named generated `VaultConfig`/`EntityTypeConfig`. The generated
+  (`input`) types are more nullable/optional than hand-written ones, so expect to
+  guard with `?? []` / `?? undefined` at the use sites.
+
 ## How the iOS app is built
 
 The Swift app has **no hand-written `unsafe`/C** — two generated layers stack:

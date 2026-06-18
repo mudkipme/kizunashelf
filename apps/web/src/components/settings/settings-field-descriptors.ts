@@ -1,5 +1,5 @@
 import { fieldTypeLabel } from "@/lib/type-config";
-import type { FieldConfig, FieldType } from "@/types/config";
+import type { FieldConfig, FieldType } from "@/types/api";
 
 export type FieldOptionKey =
   | "titleOptions"

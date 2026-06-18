@@ -18,6 +18,7 @@ import type {
   EntityTypeConfig,
   ExternalBodyMapping,
   ExternalFieldMapping,
+  ExternalProviderCatalog,
   FieldConfig,
   FieldType,
   HomeConfig,
@@ -25,8 +26,7 @@ import type {
   HomeSectionFilterConfig,
   Language,
   SeasonLanguage,
-} from "@/types/config";
-import type { ExternalProviderCatalog } from "@/types/api";
+} from "@/types/api";
 
 import {
   EmptyConfigLine,
@@ -63,7 +63,7 @@ export function DailyNotesEditor({
     <div className="flex flex-col gap-3">
       <StringListEditor
         label="Paths"
-        values={config.paths}
+        values={config.paths ?? []}
         placeholder="Daily Notes"
         base={vaultRoot}
         pathItems
@@ -88,6 +88,7 @@ export function HomeEditor({
   types: EntityTypeConfig[];
   onChange: (config: HomeConfig) => void;
 }) {
+  const sections = config.sections ?? [];
   return (
     <div className="flex flex-col gap-3">
       <TextField
@@ -101,25 +102,25 @@ export function HomeEditor({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => onChange({ ...config, sections: [...config.sections, defaultHomeSection(types[0]?.id)] })}
+          onClick={() => onChange({ ...config, sections: [...sections, defaultHomeSection(types[0]?.id)] })}
         >
           <PlusIcon data-icon="inline-start" />
           Section
         </Button>
       </div>
       <div className="flex flex-col gap-3">
-        {config.sections.map((section, index) => (
+        {sections.map((section, index) => (
           <HomeSectionEditor
             key={`${section.id}-${index}`}
             section={section}
             types={types}
-            onChange={(next) => onChange(replaceAt(config, "sections", index, next))}
+            onChange={(next) => onChange(replaceAt({ ...config, sections }, "sections", index, next))}
             onRemove={() =>
-              onChange({ ...config, sections: config.sections.filter((_, itemIndex) => itemIndex !== index) })
+              onChange({ ...config, sections: sections.filter((_, itemIndex) => itemIndex !== index) })
             }
           />
         ))}
-        {config.sections.length === 0 ? <EmptyConfigLine>No home sections configured.</EmptyConfigLine> : null}
+        {sections.length === 0 ? <EmptyConfigLine>No home sections configured.</EmptyConfigLine> : null}
       </div>
     </div>
   );
@@ -281,7 +282,7 @@ function HomeSectionFilterEditor({
         </Field>
         <StringListEditor
           label="Values"
-          values={filter.values}
+          values={filter.values ?? []}
           suggestions={suggestions}
           placeholder={suggestions[0] ?? "value"}
           onChange={(values) => onChange({ ...filter, values })}

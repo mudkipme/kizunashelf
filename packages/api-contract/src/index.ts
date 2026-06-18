@@ -92,6 +92,9 @@ export * from "./generated/language.zod.js";
 export * from "./generated/languagesResponse.zod.js";
 export * from "./generated/vaultTemplate.zod.js";
 export * from "./generated/vaultTemplatesResponse.zod.js";
+export * from "./generated/saveSettingsRequest.zod.js";
+export * from "./generated/settingsConfigResponse.zod.js";
+export * from "./generated/pathSuggestionsResponse.zod.js";
 
 export const ApiResponseSchemas = {
   health: HealthResponseSchema,

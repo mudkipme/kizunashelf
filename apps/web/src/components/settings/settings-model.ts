@@ -4,12 +4,12 @@ import {
   externalSourceOptions,
 } from "@/lib/external-metadata";
 import { isIso639TitleLanguage } from "@/lib/title-language";
-import type { ExternalProviderCatalog } from "@/types/api";
 import type {
   DailyNotesConfig,
   EntityTypeConfig,
   ExternalBodyMapping,
   ExternalFieldMapping,
+  ExternalProviderCatalog,
   FieldConfig,
   FilenameConfig,
   HomeConfig,
@@ -17,7 +17,7 @@ import type {
   HomeSectionFilterConfig,
   SaveSettingsRequest,
   VaultConfig,
-} from "@/types/config";
+} from "@/types/api";
 
 export function normalizeVaultConfig(vault?: VaultConfig): VaultConfig {
   const base = defaultVaultConfig();
@@ -100,14 +100,14 @@ export function cleanVaultConfig(
       assetRoot: emptyToUndefined(config.assetRoot),
       dailyNotes: config.dailyNotes
         ? {
-            paths: cleanStrings(config.dailyNotes.paths),
+            paths: cleanStrings(config.dailyNotes.paths ?? []),
             dateFormat: emptyToUndefined(config.dailyNotes.dateFormat),
           }
         : undefined,
       home: config.home
         ? {
             title: emptyToUndefined(config.home.title),
-            sections: config.home.sections.map((section) => ({
+            sections: (config.home.sections ?? []).map((section) => ({
               id: section.id,
               title: section.title,
               type: section.type,
