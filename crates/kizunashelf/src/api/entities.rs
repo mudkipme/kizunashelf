@@ -308,11 +308,7 @@ pub(crate) async fn entity_dates(
     AxumPath(path): AxumPath<EntityPath>,
 ) -> ApiResult<EntityDatesResponse> {
     let library = get_library(&state).await?;
-    let Some(record) = library
-        .records
-        .iter()
-        .find(|item| item.summary.id == path.id)
-    else {
+    let Some(record) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
     let vfs = state.vault_vfs(&library.config.vault_root);
@@ -326,11 +322,7 @@ pub(crate) async fn entity_detail(
     AxumPath(path): AxumPath<EntityPath>,
 ) -> ApiResult<EntityDetailResponse> {
     let library = get_library(&state).await?;
-    let Some(record) = library
-        .records
-        .iter()
-        .find(|item| item.summary.id == path.id)
-    else {
+    let Some(record) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
     let relations = entity_detail_relations(&library, &record.summary.id);
@@ -346,9 +338,12 @@ pub(crate) async fn entity_detail(
 }
 
 pub(crate) fn entity_detail_relations(library: &Library, entity_id: &str) -> Vec<Relation> {
+    // Only the relations that touch this entity (source or resolved target),
+    // visited in stored order so the result matches a full-graph scan.
     library
-        .relations
-        .iter()
+        .relation_indices_touching(entity_id)
+        .into_iter()
+        .map(|index| &library.relations[index])
         .filter(|relation| {
             relation.field != "daily-note"
                 && !relation.source_id.starts_with("daily-note:")
@@ -362,9 +357,8 @@ pub(crate) fn entity_detail_relations(library: &Library, entity_id: &str) -> Vec
 }
 
 fn has_mirrored_incoming_relation(library: &Library, entity_id: &str, relation: &Relation) -> bool {
-    library.relations.iter().any(|candidate| {
-        candidate.source_id == entity_id
-            && candidate.target_id.as_deref() == Some(relation.source_id.as_str())
+    library.relations_from(entity_id).any(|candidate| {
+        candidate.target_id.as_deref() == Some(relation.source_id.as_str())
             && candidate.field == relation.field
             && candidate.direction == RelationDirection::In
     })

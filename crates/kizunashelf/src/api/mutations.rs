@@ -32,11 +32,7 @@ pub(crate) async fn update_entity(
     if !content_writes_enabled(&state, &library) {
         return Err(ApiError::forbidden("Content writes are disabled"));
     }
-    let Some(entity) = library
-        .records
-        .iter()
-        .find(|item| item.summary.id == path.id)
-    else {
+    let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
     if request.revision != entity.revision {
@@ -102,18 +98,12 @@ pub(crate) async fn update_entity(
             anyhow::anyhow!("failed to remove old entity {source_rel}: {error}")
         })?;
     }
-    state.invalidate_cache().await;
-    let reloaded = get_library(&state).await?;
+    // Patch the cached library in place for this edit (full reload only on a
+    // structural change), instead of re-reading the whole vault from disk.
+    let reloaded = state.apply_entity_edit(&target_rel).await?;
     let record = reloaded
-        .records
-        .iter()
-        .find(|item| item.summary.path == target_rel)
-        .or_else(|| {
-            reloaded
-                .records
-                .iter()
-                .find(|item| item.summary.id == path.id)
-        })
+        .record_by_path(&target_rel)
+        .or_else(|| reloaded.record_by_id(&path.id))
         .ok_or_else(|| ApiError::not_found("Updated entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(EntityMutationResponse { entity }))
@@ -152,9 +142,7 @@ pub(crate) async fn create_entity(
     state.invalidate_cache().await;
     let reloaded = get_library(&state).await?;
     let record = reloaded
-        .records
-        .iter()
-        .find(|item| item.summary.path == path)
+        .record_by_path(&path)
         .ok_or_else(|| ApiError::not_found("Created entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(EntityMutationResponse { entity }))
@@ -169,11 +157,7 @@ pub(crate) async fn delete_entity(
     if !content_writes_enabled(&state, &library) {
         return Err(ApiError::forbidden("Content writes are disabled"));
     }
-    let Some(entity) = library
-        .records
-        .iter()
-        .find(|item| item.summary.id == path.id)
-    else {
+    let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
     if request.revision != entity.revision {

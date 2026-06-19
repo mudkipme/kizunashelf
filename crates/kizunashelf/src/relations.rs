@@ -300,8 +300,7 @@ pub fn target_key(relation: &Relation) -> &str {
 
 pub fn summary_by_id(library: &Library) -> HashMap<&str, &EntitySummary> {
     library
-        .summaries
-        .iter()
+        .summaries()
         .map(|entity| (entity.id.as_str(), entity))
         .collect()
 }

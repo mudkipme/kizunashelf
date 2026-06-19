@@ -25,55 +25,81 @@ pub(super) async fn build_relations(
 
     let mut relations = Vec::new();
     for record in records {
-        for relation_field in relation_fields(config, &record.summary.entity_type) {
-            for target_title in relation_values(record.frontmatter.get(&relation_field.field)) {
-                let target = find_target(
-                    &target_title,
-                    relation_field.relation_type.as_deref(),
-                    &by_basename,
-                );
-                relations.push(Relation {
-                    source_id: record.summary.id.clone(),
-                    target_id: target.map(|target| target.summary.id.clone()),
-                    target_title: target_title.clone(),
-                    target_type: target.map(|target| target.summary.entity_type.clone()),
-                    field: relation_field.field.clone(),
-                    direction: RelationDirection::Out,
-                });
-                if let Some(target) = target {
-                    relations.push(Relation {
-                        source_id: target.summary.id.clone(),
-                        target_id: Some(record.summary.id.clone()),
-                        target_title: record.summary.title.clone(),
-                        target_type: Some(record.summary.entity_type.clone()),
-                        field: relation_field.field.clone(),
-                        direction: RelationDirection::In,
-                    });
-                }
-            }
-        }
-
-        for target_title in body_links.get(&record.summary.id).into_iter().flatten() {
-            let Some(target) = find_target(target_title, None, &by_basename) else {
-                continue;
-            };
-            if target.summary.id == record.summary.id {
-                continue;
-            }
-            relations.push(Relation {
-                source_id: record.summary.id.clone(),
-                target_id: Some(target.summary.id.clone()),
-                target_title: target_title.clone(),
-                target_type: Some(target.summary.entity_type.clone()),
-                field: "body".to_string(),
-                direction: RelationDirection::Out,
-            });
-        }
+        let record_body_links = body_links
+            .get(&record.summary.id)
+            .map(Vec::as_slice)
+            .unwrap_or(&[]);
+        relations.extend(build_record_outgoing(
+            config,
+            record,
+            record_body_links,
+            &by_basename,
+        ));
     }
 
     relations.extend(daily_note_relations(config, records, vfs).await?);
 
     Ok(dedupe_relations(relations))
+}
+
+/// Builds one record's outgoing relations — its frontmatter relation fields and
+/// body wikilinks — plus the `In` reflection on each *resolved* frontmatter
+/// target. These are exactly the relations a record "owns": the surgical cache
+/// update removes a record's old owned relations and re-runs this to produce the
+/// new ones, leaving every other entity's links untouched.
+pub(super) fn build_record_outgoing(
+    config: &KizunaConfig,
+    record: &EntityRecord,
+    body_links: &[String],
+    by_basename: &HashMap<String, Vec<&EntityRecord>>,
+) -> Vec<Relation> {
+    let mut relations = Vec::new();
+    for relation_field in relation_fields(config, &record.summary.entity_type) {
+        for target_title in relation_values(record.frontmatter.get(&relation_field.field)) {
+            let target = find_target(
+                &target_title,
+                relation_field.relation_type.as_deref(),
+                by_basename,
+            );
+            relations.push(Relation {
+                source_id: record.summary.id.clone(),
+                target_id: target.map(|target| target.summary.id.clone()),
+                target_title: target_title.clone(),
+                target_type: target.map(|target| target.summary.entity_type.clone()),
+                field: relation_field.field.clone(),
+                direction: RelationDirection::Out,
+            });
+            if let Some(target) = target {
+                relations.push(Relation {
+                    source_id: target.summary.id.clone(),
+                    target_id: Some(record.summary.id.clone()),
+                    target_title: record.summary.title.clone(),
+                    target_type: Some(record.summary.entity_type.clone()),
+                    field: relation_field.field.clone(),
+                    direction: RelationDirection::In,
+                });
+            }
+        }
+    }
+
+    for target_title in body_links {
+        let Some(target) = find_target(target_title, None, by_basename) else {
+            continue;
+        };
+        if target.summary.id == record.summary.id {
+            continue;
+        }
+        relations.push(Relation {
+            source_id: record.summary.id.clone(),
+            target_id: Some(target.summary.id.clone()),
+            target_title: target_title.clone(),
+            target_type: Some(target.summary.entity_type.clone()),
+            field: "body".to_string(),
+            direction: RelationDirection::Out,
+        });
+    }
+
+    relations
 }
 
 /// Extracts the body wikilink targets for one entity. Called during the load
@@ -159,7 +185,7 @@ fn daily_note_wikilinks(raw: &str) -> Vec<String> {
     body_wikilinks(&fence_regex().replace_all(&strip_frontmatter(raw), ""))
 }
 
-fn normalized_entity_basename_index(
+pub(super) fn normalized_entity_basename_index(
     records: &[EntityRecord],
 ) -> HashMap<String, Vec<&EntityRecord>> {
     let mut by_basename: HashMap<String, Vec<&EntityRecord>> = HashMap::new();
@@ -266,7 +292,7 @@ fn normalize_relation_type(value: &str) -> String {
         .collect()
 }
 
-fn dedupe_relations(relations: Vec<Relation>) -> Vec<Relation> {
+pub(super) fn dedupe_relations(relations: Vec<Relation>) -> Vec<Relation> {
     let mut seen = HashSet::new();
     let mut deduped = Vec::new();
     for relation in relations {

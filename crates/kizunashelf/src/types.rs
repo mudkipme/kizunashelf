@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -352,11 +352,129 @@ pub enum RelationDirection {
 pub struct Library {
     pub config: KizunaConfig,
     pub records: Vec<EntityRecord>,
-    pub summaries: Vec<EntitySummary>,
     pub relations: Vec<Relation>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub diagnostics: Vec<LibraryDiagnostic>,
     pub generated_at: String,
+    // Lookup indices over `records`/`relations`, rebuilt by `reindex`. Private and
+    // `#[serde(skip)]`: they are pure derived state (so construction must go
+    // through `Library::new`), and they are not part of the serialized shape.
+    #[serde(skip)]
+    by_id: HashMap<String, usize>,
+    #[serde(skip)]
+    by_path: HashMap<String, usize>,
+    #[serde(skip)]
+    relations_by_source: HashMap<String, Vec<usize>>,
+    #[serde(skip)]
+    relations_by_target: HashMap<String, Vec<usize>>,
+}
+
+impl Library {
+    /// Builds a library from its collections and derives the lookup indices.
+    pub fn new(
+        config: KizunaConfig,
+        records: Vec<EntityRecord>,
+        relations: Vec<Relation>,
+        diagnostics: Vec<LibraryDiagnostic>,
+        generated_at: String,
+    ) -> Self {
+        let mut library = Self {
+            config,
+            records,
+            relations,
+            diagnostics,
+            generated_at,
+            by_id: HashMap::new(),
+            by_path: HashMap::new(),
+            relations_by_source: HashMap::new(),
+            relations_by_target: HashMap::new(),
+        };
+        library.reindex();
+        library
+    }
+
+    /// Rebuilds the id/path/relation lookup indices from `records`/`relations`.
+    /// Must be called whenever those collections are mutated in place (the
+    /// constructor and the surgical cache update both do this).
+    pub fn reindex(&mut self) {
+        self.by_id = self
+            .records
+            .iter()
+            .enumerate()
+            .map(|(index, record)| (record.summary.id.clone(), index))
+            .collect();
+        self.by_path = self
+            .records
+            .iter()
+            .enumerate()
+            .map(|(index, record)| (record.summary.path.clone(), index))
+            .collect();
+        let mut by_source: HashMap<String, Vec<usize>> = HashMap::new();
+        let mut by_target: HashMap<String, Vec<usize>> = HashMap::new();
+        for (index, relation) in self.relations.iter().enumerate() {
+            by_source
+                .entry(relation.source_id.clone())
+                .or_default()
+                .push(index);
+            if let Some(target_id) = &relation.target_id {
+                by_target.entry(target_id.clone()).or_default().push(index);
+            }
+        }
+        self.relations_by_source = by_source;
+        self.relations_by_target = by_target;
+    }
+
+    /// The entity summaries, borrowed from the resident records. There is no
+    /// separate stored `summaries` collection — it would just duplicate
+    /// `records[*].summary` and double the resident summary memory.
+    pub fn summaries(&self) -> impl Iterator<Item = &EntitySummary> {
+        self.records.iter().map(|record| &record.summary)
+    }
+
+    /// O(1) lookup of a resident record by its entity id.
+    pub fn record_by_id(&self, id: &str) -> Option<&EntityRecord> {
+        self.by_id.get(id).map(|&index| &self.records[index])
+    }
+
+    /// O(1) lookup of a resident record by its vault-relative path.
+    pub fn record_by_path(&self, path: &str) -> Option<&EntityRecord> {
+        self.by_path.get(path).map(|&index| &self.records[index])
+    }
+
+    /// O(1) lookup of a resident record's index by its vault-relative path, for
+    /// callers that need to swap the record in a cloned `records` vector.
+    pub fn record_index_by_path(&self, path: &str) -> Option<usize> {
+        self.by_path.get(path).copied()
+    }
+
+    /// Relations whose `source_id` is `id`. Because every incoming link's `In`
+    /// reflection is stored with the linked entity as its source, this yields the
+    /// full set of relations an entity is the subject of (its outgoing edges plus
+    /// the reflections of resolved incoming edges).
+    pub fn relations_from(&self, id: &str) -> impl Iterator<Item = &Relation> {
+        self.relations_by_source
+            .get(id)
+            .into_iter()
+            .flatten()
+            .map(move |&index| &self.relations[index])
+    }
+
+    /// Relation indices (in stored order, deduplicated) where `id` appears as the
+    /// source or as a resolved target. Used to scan only an entity's local
+    /// neighbourhood instead of the whole relation graph.
+    pub fn relation_indices_touching(&self, id: &str) -> Vec<usize> {
+        let mut indices: Vec<usize> = self
+            .relations_by_source
+            .get(id)
+            .into_iter()
+            .flatten()
+            .chain(self.relations_by_target.get(id).into_iter().flatten())
+            .copied()
+            .collect();
+        indices.sort_unstable();
+        indices.dedup();
+        indices
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

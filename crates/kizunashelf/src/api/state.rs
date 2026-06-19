@@ -191,6 +191,58 @@ impl AppState {
         *cache = None;
     }
 
+    /// Reflects a single-entity edit into the cached library without re-reading
+    /// the whole vault. Attempts a surgical patch against the *fresh* cache; falls
+    /// back to a full invalidate + reload when the cache is cold/expired or the
+    /// edit is structural (rename, id-field change, vanished file). Returns the
+    /// resulting library so the mutation handler can serve fresh data.
+    pub(crate) async fn apply_entity_edit(&self, edited_path: &str) -> Result<Arc<Library>> {
+        let surgical = {
+            // Serialize against concurrent reloads while we read the base and swap
+            // in the patched library; never call `get_library` here (it takes the
+            // same lock) to avoid a deadlock.
+            let _reload = self.reload.lock().await;
+            let base = {
+                let cache = self.cache.lock().await;
+                cache
+                    .as_ref()
+                    .filter(|cached| cached.cached_at.elapsed() < self.options.cache_ttl)
+                    .map(|cached| Arc::clone(&cached.library))
+            };
+            match base {
+                Some(base) => {
+                    let vfs = self.vault_vfs(&base.config.vault_root);
+                    match crate::library::rebuild_for_edited_entity(
+                        &base,
+                        vfs.as_ref(),
+                        edited_path,
+                    )
+                    .await?
+                    {
+                        Some(updated) => {
+                            let updated = Arc::new(updated);
+                            let mut cache = self.cache.lock().await;
+                            *cache = Some(CachedLibrary {
+                                library: Arc::clone(&updated),
+                                cached_at: Instant::now(),
+                            });
+                            Some(updated)
+                        }
+                        None => None,
+                    }
+                }
+                None => None,
+            }
+        };
+        match surgical {
+            Some(updated) => Ok(updated),
+            None => {
+                self.invalidate_cache().await;
+                get_library(self).await
+            }
+        }
+    }
+
     /// Returns the per-provider lock used to single-flight token acquisition.
     /// Callers acquire it, re-check the token cache, and only then fetch.
     pub(crate) async fn token_fetch_lock(&self, key: &str) -> Arc<Mutex<()>> {

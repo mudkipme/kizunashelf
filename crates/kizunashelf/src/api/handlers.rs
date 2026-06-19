@@ -252,13 +252,21 @@ pub(crate) async fn relations(
     // cloning the entire shared Vec up front and then discarding most of it.
     let source_id = query.source_id.as_deref();
     let field = query.field.as_deref();
-    let relations: Vec<_> = library
-        .relations
-        .iter()
-        .filter(|relation| source_id.is_none_or(|id| relation.source_id == id))
-        .filter(|relation| field.is_none_or(|field| relation.field == field))
-        .cloned()
-        .collect();
+    // With a `sourceId`, scan only that entity's relations via the index; without
+    // one, fall back to a full scan (optionally narrowed by field).
+    let relations: Vec<_> = match source_id {
+        Some(source_id) => library
+            .relations_from(source_id)
+            .filter(|relation| field.is_none_or(|field| relation.field == field))
+            .cloned()
+            .collect(),
+        None => library
+            .relations
+            .iter()
+            .filter(|relation| field.is_none_or(|field| relation.field == field))
+            .cloned()
+            .collect(),
+    };
     Ok(Json(RelationListResponse {
         total: relations.len(),
         items: relations,

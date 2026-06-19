@@ -9,7 +9,7 @@ pub use frontmatter::{
 
 use crate::types::{
     DateRole, Entity, EntityRecord, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig,
-    Library, LibraryDiagnostic, Relation, VaultConfig,
+    Library, LibraryDiagnostic, Relation, RelationDirection, VaultConfig,
 };
 use crate::vfs::{Vfs, VfsError};
 use anyhow::{Context, Result};
@@ -17,7 +17,10 @@ use frontmatter::{
     date_values, default_title, external_refs, extract_summary, first_string, parse_markdown,
     title_languages,
 };
-use relations::{build_relations, extract_body_links};
+use relations::{
+    build_record_outgoing, build_relations, dedupe_relations, extract_body_links,
+    normalized_entity_basename_index,
+};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::path::{Component, Path};
@@ -99,19 +102,14 @@ pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Lib
     for record in &mut records {
         record.summary.relation_count = *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
     }
-    let summaries: Vec<EntitySummary> = records
-        .iter()
-        .map(|record| record.summary.clone())
-        .collect();
 
-    Ok(Library {
+    Ok(Library::new(
         config,
         records,
-        summaries,
         relations,
         diagnostics,
-        generated_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-    })
+        chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
+    ))
 }
 
 /// Loads a single full [`Entity`] (including `body`/`raw`) from disk for the
@@ -138,6 +136,111 @@ pub(crate) async fn load_entity(
     // not something a single file knows; carry it over from the resident summary.
     entity.summary.relation_count = summary.relation_count;
     Ok(entity)
+}
+
+/// Surgically rebuilds the library after a single entity file was edited in
+/// place, without re-reading the whole vault from disk. Returns `Ok(None)` when
+/// the edit is *structural* — the path is unknown, or the re-parse changed the
+/// entity's id or path (a rename / id-field change) — because those can alter
+/// wikilink resolution for arbitrary other entities and so need a full reload.
+///
+/// On success it re-reads only `edited_path`, swaps that one record, and replaces
+/// exactly the relations the entity owns (its outgoing frontmatter/body links and
+/// the `In` reflections of its resolved targets), leaving every other entity's
+/// links intact. Derived `relation_count`s are recomputed from the updated graph.
+/// The result is value-equivalent (up to ordering and `generated_at`) to a full
+/// [`read_library`] — see the surgical-update tests.
+pub(crate) async fn rebuild_for_edited_entity(
+    base: &Library,
+    vfs: &dyn Vfs,
+    edited_path: &str,
+) -> Result<Option<Library>> {
+    let Some(index) = base.record_index_by_path(edited_path) else {
+        return Ok(None);
+    };
+    let old_summary = &base.records[index].summary;
+    let old_id = old_summary.id.clone();
+    let Some(type_config) = base
+        .config
+        .types
+        .iter()
+        .find(|type_config| type_config.id == old_summary.entity_type)
+    else {
+        return Ok(None);
+    };
+
+    let bytes = match vfs.read(edited_path).await {
+        Ok(bytes) => bytes,
+        // The file vanished or is unreadable: let a full reload reconcile it.
+        Err(_) => return Ok(None),
+    };
+    let parsed = parse_entity(type_config, edited_path.to_string(), bytes)?;
+    let body_links = extract_body_links(&parsed.entity.body);
+    let new_record = EntityRecord {
+        summary: parsed.entity.summary,
+        revision: parsed.entity.revision,
+        frontmatter: parsed.entity.frontmatter,
+    };
+
+    // Structural change → full reload (it can re-resolve other entities' links).
+    if new_record.summary.id != old_id || new_record.summary.path != edited_path {
+        return Ok(None);
+    }
+
+    let mut records = base.records.clone();
+    records[index] = new_record;
+
+    // Rebuild only this entity's outgoing relations against the current entity
+    // set; `by_basename` borrows `records`, so finish with it before mutating.
+    let fresh = {
+        let by_basename = normalized_entity_basename_index(&records);
+        build_record_outgoing(&base.config, &records[index], &body_links, &by_basename)
+    };
+
+    // Drop the relations this entity owns (its outgoing edges and the reflections
+    // of its resolved outgoing links), keep everyone else's, then append the fresh
+    // set. Incoming edges from other entities have `source_id != old_id` and
+    // `In` edges reflecting them have `target_id != old_id`, so they survive.
+    let mut relations: Vec<Relation> = base
+        .relations
+        .iter()
+        .filter(|relation| {
+            !((relation.direction == RelationDirection::Out && relation.source_id == old_id)
+                || (relation.direction == RelationDirection::In
+                    && relation.target_id.as_deref() == Some(old_id.as_str())))
+        })
+        .cloned()
+        .collect();
+    relations.extend(fresh);
+    let relations = dedupe_relations(relations);
+
+    // A title edit can change this record's sort position; re-establish the same
+    // resident order a full load would produce.
+    sort_records(&mut records);
+
+    // Recompute every entity's relation_count from the updated graph (in-memory,
+    // cheap); the edit changes counts for this entity and its old/new targets.
+    let relation_count_by_id = unique_relation_count_by_id(&relations);
+    for record in &mut records {
+        record.summary.relation_count = *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
+    }
+
+    // Replace this file's diagnostics with the fresh parse's.
+    let mut diagnostics: Vec<LibraryDiagnostic> = base
+        .diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.path != edited_path)
+        .cloned()
+        .collect();
+    diagnostics.extend(parsed.diagnostics);
+
+    Ok(Some(Library::new(
+        base.config.clone(),
+        records,
+        relations,
+        diagnostics,
+        chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
+    )))
 }
 
 fn unique_relation_count_by_id(relations: &[Relation]) -> HashMap<String, u32> {
@@ -264,6 +367,14 @@ async fn read_entities(
         body_links.extend(result.body_links);
         diagnostics.extend(result.diagnostics);
     }
+    sort_records(&mut records);
+    Ok((records, body_links, diagnostics))
+}
+
+/// Orders resident records by type label then title — the stable resident order
+/// produced by a full load, which the surgical update also re-establishes so an
+/// edited title lands in the same position it would after a reload.
+fn sort_records(records: &mut [EntityRecord]) {
     records.sort_by(|a, b| {
         let type_compare = compare_string(&a.summary.type_label, &b.summary.type_label);
         if !type_compare.is_eq() {
@@ -271,7 +382,6 @@ async fn read_entities(
         }
         compare_string(&a.summary.title, &b.summary.title)
     });
-    Ok((records, body_links, diagnostics))
 }
 
 struct EntityReadBatch {
@@ -467,8 +577,10 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{compare_string, load_entity, read_library};
-    use crate::types::{EntityTypeConfig, FieldConfig, FieldType, FilenameConfig, KizunaConfig};
+    use super::{compare_string, load_entity, read_library, rebuild_for_edited_entity};
+    use crate::types::{
+        EntityTypeConfig, FieldConfig, FieldType, FilenameConfig, KizunaConfig, Library, Relation,
+    };
     use crate::vfs::{InMemoryVfs, NativeVfs, Vfs};
     use std::sync::Arc;
 
@@ -536,7 +648,7 @@ mod tests {
         let library = read_library(config, vfs).await.unwrap();
 
         assert!(library.records.is_empty());
-        assert!(library.summaries.is_empty());
+        assert!(library.summaries().next().is_none());
     }
 
     #[tokio::test]
@@ -575,8 +687,7 @@ mod tests {
         let library = read_library(config, vfs).await.unwrap();
 
         assert!(library
-            .summaries
-            .iter()
+            .summaries()
             .any(|entity| entity.id == "anime:anime-001"));
         assert_eq!(library.diagnostics.len(), 1);
         assert_eq!(library.diagnostics[0].path, "Taxonomy/Anime/Broken.md");
@@ -598,8 +709,8 @@ mod tests {
 
         let library = read_library(config, vfs).await.unwrap();
 
-        assert_eq!(library.summaries.len(), 1);
-        let summary = &library.summaries[0];
+        assert_eq!(library.summaries().count(), 1);
+        let summary = library.summaries().next().unwrap();
         assert_eq!(summary.title, "Star Voyager");
         assert_eq!(summary.path, "Taxonomy/Anime/Star Voyager.md");
         // Revision is derived from content + metadata, both supplied by the VFS.
@@ -623,7 +734,7 @@ mod tests {
         let library = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
             .await
             .unwrap();
-        let summary = &library.summaries[0];
+        let summary = library.summaries().next().unwrap();
 
         let entity = load_entity(&library.config, vfs.as_ref(), summary)
             .await
@@ -636,6 +747,160 @@ mod tests {
         // ...and carries the library-wide relation count from the resident summary.
         assert_eq!(entity.summary.relation_count, summary.relation_count);
         assert_eq!(entity.summary.id, summary.id);
+    }
+
+    // --- Surgical-update equivalence (Phase 3) -----------------------------
+
+    /// The contract of [`rebuild_for_edited_entity`]: a surgical update of one
+    /// edited file must produce a library value-equivalent (records, relations,
+    /// derived counts) to re-reading the whole vault from disk.
+    #[tokio::test]
+    async fn surgical_update_matches_full_reload() {
+        // (initial Alpha.md, edited Alpha.md) — covering retarget, add, remove,
+        // title change (touches the In-reflection title + sort order), an
+        // unresolved target, and a body-wikilink change.
+        let cases = [
+            (
+                "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n\nSee [[Gamma]].\n",
+                "---\ntitle: Alpha\nrelated: \"[[Gamma]]\"\n---\n\nSee [[Gamma]].\n",
+            ),
+            (
+                "---\ntitle: Alpha\n---\n",
+                "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
+            ),
+            (
+                "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
+                "---\ntitle: Alpha\n---\n",
+            ),
+            (
+                "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
+                "---\ntitle: Alphaz\nrelated: \"[[Beta]]\"\n---\n",
+            ),
+            (
+                "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
+                "---\ntitle: Alpha\nrelated: \"[[Ghost]]\"\n---\n",
+            ),
+            (
+                "---\ntitle: Alpha\n---\n\nSee [[Beta]].\n",
+                "---\ntitle: Alpha\n---\n\nSee [[Gamma]].\n",
+            ),
+        ];
+
+        for (initial, edited) in cases {
+            let config = relation_test_config();
+            let vfs = make_relation_vault(initial);
+            let base = read_library(config.clone(), Arc::clone(&vfs) as Arc<dyn Vfs>)
+                .await
+                .unwrap();
+
+            vfs.insert_file("Taxonomy/Anime/Alpha.md", edited);
+            let surgical =
+                rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Alpha.md")
+                    .await
+                    .unwrap()
+                    .expect("edit should take the surgical path");
+            let full = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
+                .await
+                .unwrap();
+
+            assert_libraries_equivalent(&surgical, &full, initial, edited);
+        }
+    }
+
+    #[tokio::test]
+    async fn surgical_update_falls_back_on_structural_changes() {
+        let config = relation_test_config();
+        let vfs = make_relation_vault("---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n");
+        let base = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
+            .await
+            .unwrap();
+
+        // Unknown path (e.g. a rename's new file the base hasn't indexed) → None.
+        let renamed = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Renamed.md")
+            .await
+            .unwrap();
+        assert!(renamed.is_none());
+
+        // A changed id (here: the file vanished from its indexed path) → None.
+        let missing = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Ghost.md")
+            .await
+            .unwrap();
+        assert!(missing.is_none());
+    }
+
+    fn relation_test_config() -> KizunaConfig {
+        let mut config = test_config("/virtual-vault");
+        config.types[0]
+            .fields
+            .push(relation_field("related", FieldType::Relation));
+        config
+    }
+
+    fn relation_field(name: &str, field_type: FieldType) -> FieldConfig {
+        FieldConfig {
+            field: name.to_string(),
+            field_type,
+            display_name: None,
+            title_language: None,
+            title_role: None,
+            external_fields: Vec::new(),
+            default_title: None,
+            enum_options: Vec::new(),
+            total_progress_field: None,
+            date_role: None,
+            season_language: None,
+            external_ref: None,
+            external_types: Vec::new(),
+            relation_type: None,
+        }
+    }
+
+    fn make_relation_vault(alpha: &str) -> Arc<InMemoryVfs> {
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file("Taxonomy/Anime/Alpha.md", alpha);
+        vfs.insert_file("Taxonomy/Anime/Beta.md", "---\ntitle: Beta\n---\n");
+        vfs.insert_file("Taxonomy/Anime/Gamma.md", "---\ntitle: Gamma\n---\n");
+        vfs
+    }
+
+    fn assert_libraries_equivalent(
+        surgical: &Library,
+        full: &Library,
+        initial: &str,
+        edited: &str,
+    ) {
+        let context = format!("\n  initial: {initial:?}\n  edited:  {edited:?}");
+
+        let mut surgical_records = surgical.records.clone();
+        let mut full_records = full.records.clone();
+        surgical_records.sort_by(|a, b| a.summary.id.cmp(&b.summary.id));
+        full_records.sort_by(|a, b| a.summary.id.cmp(&b.summary.id));
+        assert_eq!(
+            surgical_records, full_records,
+            "records (incl. derived relation_count) diverge from a full reload{context}"
+        );
+
+        let mut surgical_relations: Vec<String> =
+            surgical.relations.iter().map(relation_key).collect();
+        let mut full_relations: Vec<String> = full.relations.iter().map(relation_key).collect();
+        surgical_relations.sort();
+        full_relations.sort();
+        assert_eq!(
+            surgical_relations, full_relations,
+            "relation graph diverges from a full reload{context}"
+        );
+    }
+
+    fn relation_key(relation: &Relation) -> String {
+        format!(
+            "{}|{}|{}|{}|{:?}",
+            relation.source_id,
+            relation.target_id.clone().unwrap_or_default(),
+            relation.target_title,
+            relation.field,
+            relation.direction
+        )
     }
 
     fn test_config(vault_root: &str) -> KizunaConfig {

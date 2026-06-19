@@ -294,8 +294,7 @@ fn has_planning_surface(entity_type: &EntityTypeConfig) -> bool {
 
 fn selected_planning_entities(library: &Library, entity_type: Option<&str>) -> Vec<EntitySummary> {
     library
-        .summaries
-        .iter()
+        .summaries()
         .filter(|entity| {
             entity_type.is_none_or(|expected| entity.entity_type == expected)
                 && library
@@ -662,7 +661,7 @@ fn compare_calendar_entries(a: &CalendarEntry, b: &CalendarEntry) -> std::cmp::O
 
 fn entity_basename_index(library: &Library) -> HashMap<String, Vec<EntitySummary>> {
     let mut by_basename: HashMap<String, Vec<EntitySummary>> = HashMap::new();
-    for entity in &library.summaries {
+    for entity in library.summaries() {
         by_basename
             .entry(normalize_wikilink_target(&entity.basename))
             .or_default()
@@ -709,15 +708,15 @@ fn find_entity_for_wikilink(
 #[cfg(test)]
 mod tests {
     use super::{entity_basename_index, find_entity_for_wikilink};
-    use crate::types::{EntitySummary, EntityTypeConfig, KizunaConfig, Library};
+    use crate::types::{EntityRecord, EntitySummary, EntityTypeConfig, KizunaConfig, Library};
     use std::collections::BTreeMap;
 
     #[test]
     fn ambiguous_daily_note_wikilinks_do_not_prefer_franchise_type() {
         let anime = summary("anime", "Anime", "Shared");
         let franchise = summary("franchise", "Franchise", "Shared");
-        let library = Library {
-            config: KizunaConfig {
+        let library = Library::new(
+            KizunaConfig {
                 vault_root: String::new(),
                 taxonomy_root: "Taxonomy".to_string(),
                 asset_root: None,
@@ -729,12 +728,11 @@ mod tests {
                     entity_type("franchise", "Franchise"),
                 ],
             },
-            records: Vec::new(),
-            summaries: vec![anime.clone(), franchise],
-            relations: Vec::new(),
-            diagnostics: Vec::new(),
-            generated_at: String::new(),
-        };
+            vec![record(anime.clone()), record(franchise)],
+            Vec::new(),
+            Vec::new(),
+            String::new(),
+        );
         let by_basename = entity_basename_index(&library);
 
         let resolved = find_entity_for_wikilink("Shared", &library, &by_basename).unwrap();
@@ -752,6 +750,14 @@ mod tests {
             filename: None,
             body_mappings: Vec::new(),
             fields: Vec::new(),
+        }
+    }
+
+    fn record(summary: EntitySummary) -> EntityRecord {
+        EntityRecord {
+            summary,
+            revision: String::new(),
+            frontmatter: serde_json::Map::new(),
         }
     }
 

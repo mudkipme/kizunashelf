@@ -38,13 +38,12 @@ pub(crate) async fn stats(
         .is_some_and(|entity_type| entity_type != "all")
     {
         library
-            .summaries
-            .iter()
+            .summaries()
             .filter(|entity| Some(&entity.entity_type) == query.entity_type.as_ref())
             .cloned()
             .collect()
     } else {
-        library.summaries.clone()
+        library.summaries().cloned().collect()
     };
     let ids: std::collections::HashSet<_> =
         summaries.iter().map(|entity| entity.id.clone()).collect();
@@ -135,7 +134,7 @@ pub(crate) async fn cleanup_queues(
 async fn broken_local_assets(library: &Library, vfs: &dyn Vfs) -> (Vec<EntitySummary>, usize) {
     let mut broken = Vec::new();
     let mut local_total = 0;
-    for summary in &library.summaries {
+    for summary in library.summaries() {
         let Some(image) = summary.image.as_deref() else {
             continue;
         };
@@ -160,7 +159,10 @@ fn is_remote_or_data_url(value: &str) -> bool {
 }
 
 fn build_analytics(library: &Library) -> AnalyticsResponse {
-    let summaries = &library.summaries;
+    // Materialize once for the multiple passes below; freed when the (memoized)
+    // build returns, unlike a resident duplicate.
+    let summaries: Vec<EntitySummary> = library.summaries().cloned().collect();
+    let summaries = &summaries;
     let quality = QualityEligibility::new(library);
     let outgoing = outgoing_relations(library, None);
     let unresolved: Vec<_> = outgoing
@@ -296,7 +298,8 @@ fn build_cleanup_queues(
     broken_assets: Vec<EntitySummary>,
     broken_total: usize,
 ) -> CleanupQueuesResponse {
-    let summaries = &library.summaries;
+    let summaries: Vec<EntitySummary> = library.summaries().cloned().collect();
+    let summaries = &summaries;
     let quality = QualityEligibility::new(library);
     let source_by_id = summary_by_id(library);
     let outgoing = outgoing_relations(library, None);
