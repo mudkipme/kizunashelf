@@ -363,19 +363,20 @@ pub fn sort_entities_with_title_language(
     direction: SortDirection,
     title_language: Option<&str>,
 ) -> Vec<EntitySummary> {
-    let multiplier = if direction == SortDirection::Asc {
-        1
-    } else {
-        -1
-    };
     entities.sort_by(|a, b| {
-        let ordering = if sort == "title" {
-            compare_entity_title(a, b, title_language)
-        } else if let Some(field) = sort.strip_prefix("date:") {
-            compare_optional_string(
+        // Field-based sorts can have an absent value for some entities (e.g. no
+        // release date). Those entities always sort to the bottom regardless of
+        // direction; only the present values are ordered by `direction`.
+        if let Some(field) = sort.strip_prefix("date:") {
+            return compare_optional_empty_last(
                 entity_date_sort_value(a, field).as_deref(),
                 entity_date_sort_value(b, field).as_deref(),
-            )
+                direction,
+            );
+        }
+
+        let ordering = if sort == "title" {
+            compare_entity_title(a, b, title_language)
         } else if sort == "relationCount" {
             a.relation_count.cmp(&b.relation_count)
         } else if sort == "path" {
@@ -388,13 +389,35 @@ pub fn sort_entities_with_title_language(
                 compare_entity_title(a, b, title_language)
             }
         };
-        if multiplier == 1 {
-            ordering
-        } else {
-            ordering.reverse()
-        }
+        apply_direction(ordering, direction)
     });
     entities
+}
+
+fn apply_direction(ordering: Ordering, direction: SortDirection) -> Ordering {
+    if direction == SortDirection::Asc {
+        ordering
+    } else {
+        ordering.reverse()
+    }
+}
+
+/// Orders two optional sort values so that an absent value always sorts last,
+/// independent of `direction`; present values are compared against each other and
+/// only that comparison follows `direction`. This pins entities with an empty
+/// field (e.g. no release date) to the bottom in both ascending and descending
+/// order, instead of letting them flip to the top in descending.
+fn compare_optional_empty_last(
+    a: Option<&str>,
+    b: Option<&str>,
+    direction: SortDirection,
+) -> Ordering {
+    match (a, b) {
+        (None, None) => Ordering::Equal,
+        (None, Some(_)) => Ordering::Greater,
+        (Some(_), None) => Ordering::Less,
+        (Some(a), Some(b)) => apply_direction(compare_string(a, b), direction),
+    }
 }
 
 fn compare_entity_title(
@@ -411,14 +434,71 @@ fn compare_entity_title(
     compare_string_for_title_language(title_a, title_b, title_language)
 }
 
-fn compare_optional_string(a: Option<&str>, b: Option<&str>) -> Ordering {
-    crate::library::compare_optional_string(a, b)
-}
-
 fn entity_date_sort_value(entity: &EntitySummary, field: &str) -> Option<String> {
     entity
         .dates
         .iter()
         .find(|item| item.field == field)
         .and_then(|item| crate::dates::date_sort_key(Some(&item.value)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{sort_entities_with_title_language, SortDirection};
+    use crate::types::{EntityDateValue, EntitySummary};
+    use std::collections::BTreeMap;
+
+    fn entity(id: &str, title: &str, release: Option<&str>) -> EntitySummary {
+        EntitySummary {
+            id: id.to_string(),
+            entity_type: "game".to_string(),
+            type_label: "Game".to_string(),
+            title: title.to_string(),
+            titles: BTreeMap::new(),
+            dates: release
+                .map(|value| EntityDateValue {
+                    field: "release".to_string(),
+                    value: value.to_string(),
+                    parsed: None,
+                    sort_key: None,
+                })
+                .into_iter()
+                .collect(),
+            image: None,
+            summary: None,
+            path: format!("Taxonomy/Game/{title}.md"),
+            basename: title.to_string(),
+            external_refs: BTreeMap::new(),
+            relation_count: 0,
+        }
+    }
+
+    fn ids(entities: &[EntitySummary]) -> Vec<&str> {
+        entities.iter().map(|entity| entity.id.as_str()).collect()
+    }
+
+    #[test]
+    fn date_sort_keeps_entities_without_a_value_at_the_bottom_in_both_directions() {
+        let entities = || {
+            vec![
+                entity("undated", "Undated", None),
+                entity("early", "Early", Some("2020-01-01")),
+                entity("late", "Late", Some("2022-01-01")),
+            ]
+        };
+
+        let asc =
+            sort_entities_with_title_language(entities(), "date:release", SortDirection::Asc, None);
+        assert_eq!(ids(&asc), ["early", "late", "undated"]);
+
+        // Present values reverse (late before early), but the undated entity must
+        // still sink to the bottom rather than flipping to the top.
+        let desc = sort_entities_with_title_language(
+            entities(),
+            "date:release",
+            SortDirection::Desc,
+            None,
+        );
+        assert_eq!(ids(&desc), ["late", "early", "undated"]);
+    }
 }

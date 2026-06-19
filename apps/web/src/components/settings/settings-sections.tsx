@@ -111,7 +111,9 @@ export function HomeEditor({
       <div className="flex flex-col gap-3">
         {sections.map((section, index) => (
           <HomeSectionEditor
-            key={`${section.id}-${index}`}
+            // Index, not section.id: id is editable, so keying on it remounts the
+            // row each keystroke and drops focus. List ops are index-based.
+            key={index}
             section={section}
             types={types}
             onChange={(next) => onChange(replaceAt({ ...config, sections }, "sections", index, next))}
@@ -200,7 +202,9 @@ function HomeSectionEditor({
             </div>
             {filters.map((filter, index) => (
               <HomeSectionFilterEditor
-                key={`${filter.field}-${index}`}
+                // Index, not filter.field: the field is editable; keying on it
+                // would remount and drop focus on each change.
+                key={index}
                 filter={filter}
                 fields={filterFields}
                 onChange={(nextFilter) => updateFilter(index, nextFilter)}
@@ -482,7 +486,9 @@ function FieldsEditor({
       <div className="flex flex-col gap-3">
         {fields.map((field, index) => (
           <FieldConfigEditor
-            key={`${field.field}-${field.fieldType}-${index}`}
+            // Index, not field.field/fieldType: both are editable, so keying on
+            // them remounts the row on every keystroke and drops focus.
+            key={index}
             providerCatalog={providerCatalog}
             field={field}
             onChange={(next) => onChange(replaceArray(fields, index, next))}
@@ -527,7 +533,7 @@ function ExternalPriorityEditor({
             (option) => option.source === value || !values.includes(option.source),
           );
           return (
-            <div key={`${value}-${index}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+            <div key={index} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
               <span className="text-xs font-medium tabular-nums text-muted-foreground">{index + 1}</span>
               <Select
                 value={value}

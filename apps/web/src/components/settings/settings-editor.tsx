@@ -307,7 +307,10 @@ export function SettingsEditor({
             <div className="flex flex-col gap-3">
               {config.types.map((typeConfig, index) => (
                 <EntityTypeEditor
-                  key={`${typeConfig.id}-${index}`}
+                  // Keyed by position, not by id: the id is an editable field, so
+                  // keying on it would remount the row on every keystroke and drop
+                  // focus. All list ops here are index-based already.
+                  key={index}
                   config={typeConfig}
                   providerCatalog={providerCatalog}
                   languages={languages}
