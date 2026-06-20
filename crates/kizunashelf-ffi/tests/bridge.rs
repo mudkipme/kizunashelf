@@ -48,6 +48,10 @@ impl VaultFileSystem for FakeVault {
         Ok(())
     }
 
+    fn write_atomic(&self, path: String, data: Vec<u8>) -> Result<(), VfsError> {
+        self.write(path, data)
+    }
+
     fn read_files(&self, paths: Vec<String>) -> Result<Vec<VfsFile>, VfsError> {
         let files = self.files.lock().unwrap();
         Ok(paths

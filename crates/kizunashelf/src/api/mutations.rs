@@ -347,22 +347,17 @@ fn entity_create_path(
 /// Writes an entity's raw Markdown to a vault-relative path, creating parent
 /// directories. Containment is enforced by the VFS's path normalization.
 ///
-/// The write is atomic: bytes go to a `.tmp` sibling and are then renamed over
-/// the destination, so a crash or a concurrent reader never observes a truncated
-/// half-written Markdown file (the same guarantee asset writes already had).
+/// The active VFS supplies the atomic replacement mechanism, so a crash or a
+/// concurrent reader never observes a truncated half-written Markdown file.
 pub(super) async fn write_entity_raw(vfs: &dyn Vfs, relative: &str, raw: &str) -> Result<()> {
     if let Some(parent) = parent_dir(relative) {
         vfs.create_dir_all(parent).await.map_err(|error| {
             anyhow::anyhow!("failed to create entity directory {parent}: {error}")
         })?;
     }
-    let tmp = format!("{relative}.tmp");
-    vfs.write(&tmp, raw.as_bytes())
+    vfs.write_atomic(relative, raw.as_bytes())
         .await
-        .map_err(|error| anyhow::anyhow!("failed to write entity {relative}: {error}"))?;
-    vfs.rename(&tmp, relative)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to commit entity {relative}: {error}"))
+        .map_err(|error| anyhow::anyhow!("failed to write entity {relative}: {error}"))
 }
 
 /// Parent directory of a vault-relative path, or `None` when it lives at the

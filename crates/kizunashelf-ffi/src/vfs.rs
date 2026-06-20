@@ -58,6 +58,7 @@ pub enum VfsError {
 pub trait VaultFileSystem: Send + Sync {
     fn read(&self, path: String) -> Result<Vec<u8>, VfsError>;
     fn write(&self, path: String, data: Vec<u8>) -> Result<(), VfsError>;
+    fn write_atomic(&self, path: String, data: Vec<u8>) -> Result<(), VfsError>;
     fn create_dir_all(&self, path: String) -> Result<(), VfsError>;
     fn read_dir(&self, path: String) -> Result<Vec<VfsDirEntry>, VfsError>;
     /// Batch-read many files in one call, returning the files that were read
@@ -129,6 +130,13 @@ impl Vfs for FfiVfs {
         let path = path.to_string();
         let data = data.to_vec();
         run_blocking(move || inner.write(path, data)).await
+    }
+
+    async fn write_atomic(&self, path: &str, data: &[u8]) -> vfs::VfsResult<()> {
+        let inner = Arc::clone(&self.inner);
+        let path = path.to_string();
+        let data = data.to_vec();
+        run_blocking(move || inner.write_atomic(path, data)).await
     }
 
     async fn create_dir_all(&self, path: &str) -> vfs::VfsResult<()> {

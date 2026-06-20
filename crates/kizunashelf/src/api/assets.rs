@@ -459,8 +459,8 @@ async fn download_one(
     })
 }
 
-/// Writes bytes atomically (`.tmp` then rename) under the vault. Containment is
-/// enforced by the VFS's path normalization.
+/// Writes bytes atomically under the vault. Containment and the backend-specific
+/// replacement mechanism are owned by the VFS.
 async fn write_asset_file(
     vfs: &dyn Vfs,
     relative: &str,
@@ -471,11 +471,7 @@ async fn write_asset_file(
             .await
             .map_err(|error| DownloadError::Io(error.to_string()))?;
     }
-    let tmp = format!("{relative}.tmp");
-    vfs.write(&tmp, bytes)
-        .await
-        .map_err(|error| DownloadError::Io(error.to_string()))?;
-    vfs.rename(&tmp, relative)
+    vfs.write_atomic(relative, bytes)
         .await
         .map_err(|error| DownloadError::Io(error.to_string()))?;
     Ok(())

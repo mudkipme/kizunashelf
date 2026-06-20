@@ -47,6 +47,16 @@ impl Vfs for NativeVfs {
         fs::write(&path, data).await.map_err(map_io)
     }
 
+    async fn write_atomic(&self, path: &str, data: &[u8]) -> VfsResult<()> {
+        let path = self.resolve(path)?;
+        let tmp = path.with_extension(match path.extension() {
+            Some(extension) => format!("{}.tmp", extension.to_string_lossy()),
+            None => "tmp".to_string(),
+        });
+        fs::write(&tmp, data).await.map_err(map_io)?;
+        fs::rename(&tmp, &path).await.map_err(map_io)
+    }
+
     async fn create_dir_all(&self, path: &str) -> VfsResult<()> {
         let path = self.resolve(path)?;
         fs::create_dir_all(&path).await.map_err(map_io)

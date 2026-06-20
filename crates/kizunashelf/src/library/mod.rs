@@ -41,7 +41,7 @@ pub async fn save_vault_config_via_vfs(vfs: &dyn Vfs, config: &VaultConfig) -> R
             .await
             .map_err(|error| anyhow::anyhow!("failed to create vault config directory: {error}"))?;
     }
-    vfs.write(VAULT_CONFIG_RELATIVE_PATH, format!("{raw}\n").as_bytes())
+    vfs.write_atomic(VAULT_CONFIG_RELATIVE_PATH, format!("{raw}\n").as_bytes())
         .await
         .map_err(|error| anyhow::anyhow!("failed to write vault config: {error}"))
 }

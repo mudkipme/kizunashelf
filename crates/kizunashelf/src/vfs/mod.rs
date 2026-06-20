@@ -85,6 +85,11 @@ pub struct Metadata {
 pub trait Vfs: Send + Sync {
     async fn read(&self, path: &str) -> VfsResult<Vec<u8>>;
     async fn write(&self, path: &str, data: &[u8]) -> VfsResult<()>;
+    /// Atomically writes a complete file, replacing an existing destination.
+    /// Each backend owns the replacement mechanism appropriate to its
+    /// filesystem (for example, temp + rename on native filesystems or a
+    /// coordinated atomic write in an iOS File Provider).
+    async fn write_atomic(&self, path: &str, data: &[u8]) -> VfsResult<()>;
     async fn create_dir_all(&self, path: &str) -> VfsResult<()>;
     async fn read_dir(&self, path: &str) -> VfsResult<Vec<DirEntry>>;
     async fn metadata(&self, path: &str) -> VfsResult<Metadata>;

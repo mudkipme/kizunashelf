@@ -84,6 +84,10 @@ impl Vfs for InMemoryVfs {
         Ok(())
     }
 
+    async fn write_atomic(&self, path: &str, data: &[u8]) -> VfsResult<()> {
+        self.write(path, data).await
+    }
+
     async fn create_dir_all(&self, path: &str) -> VfsResult<()> {
         let path = normalize_relative(path)?;
         let mut state = self.state.lock().unwrap();
