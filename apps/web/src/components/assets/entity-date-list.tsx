@@ -19,9 +19,10 @@ export function EntityDateList({
         <Badge
           key={`${date.field}-${date.value}`}
           variant="outline"
+          title={`${entityFieldLabel(labelsByType, entity.type, date.field)}: ${date.value}`}
           className={compact ? "max-w-full truncate px-1.5 py-0 text-[11px] font-normal" : "max-w-full truncate font-normal"}
         >
-          {entityFieldLabel(labelsByType, entity.type, date.field)}: {date.value}
+          {date.value}
         </Badge>
       ))}
     </span>

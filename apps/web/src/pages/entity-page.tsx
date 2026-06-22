@@ -4,6 +4,7 @@ import {
   CheckIcon,
   DownloadIcon,
   FilePenLineIcon,
+  MoreHorizontalIcon,
   PencilIcon,
   SearchIcon,
   Trash2Icon,
@@ -34,9 +35,24 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
@@ -202,31 +218,19 @@ export function EntityPage() {
           <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
         ) : entity ? (
           <>
-            <EntityActions
-              entity={entity}
-              contentWritable={contentWritable}
+            <RenameDialog
+              open={renameOpen}
+              onOpenChange={(open) => {
+                setRenameOpen(open);
+                if (!open) setRenameBasename(entity.basename);
+              }}
+              currentBasename={entity.basename}
+              basename={renameBasename}
               saving={saving}
-              showDownloadCover={canDownloadCover}
-              onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
-              onRename={() => setRenameOpen((open) => !open)}
-              onMatch={() => external.setOpen(true)}
-              onDownloadCover={downloadCover}
-              onDelete={deleteCurrentEntity}
+              disabled={!contentWritable}
+              onBasenameChange={setRenameBasename}
+              onSave={saveRename}
             />
-            {renameOpen ? (
-              <RenamePanel
-                currentBasename={entity.basename}
-                basename={renameBasename}
-                saving={saving}
-                disabled={!contentWritable}
-                onBasenameChange={setRenameBasename}
-                onSave={saveRename}
-                onCancel={() => {
-                  setRenameBasename(entity.basename);
-                  setRenameOpen(false);
-                }}
-              />
-            ) : null}
             <ExternalMatchDialog
               open={external.open}
               query={external.query}
@@ -267,6 +271,19 @@ export function EntityPage() {
               relationGroups={relationGroups}
               dates={dates.data}
               typeConfig={typeConfig}
+              actions={
+                <EntityActions
+                  entity={entity}
+                  contentWritable={contentWritable}
+                  saving={saving}
+                  showDownloadCover={canDownloadCover}
+                  onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
+                  onRename={() => setRenameOpen(true)}
+                  onMatch={() => external.setOpen(true)}
+                  onDownloadCover={downloadCover}
+                  onDelete={deleteCurrentEntity}
+                />
+              }
             />
           </>
         ) : (
@@ -300,109 +317,143 @@ function EntityActions({
   onDownloadCover: () => void;
   onDelete: () => void;
 }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
   return (
-    <section className="rounded-md border p-3">
-      <div className="flex flex-wrap items-end gap-2">
-        <Button type="button" variant="outline" onClick={onEdit} disabled={!contentWritable}>
-          <PencilIcon data-icon="inline-start" />
-          Edit
-        </Button>
-        <Button type="button" variant="outline" onClick={onRename} disabled={!contentWritable || saving}>
-          <FilePenLineIcon data-icon="inline-start" />
-          Rename
-        </Button>
-        <Button type="button" variant="outline" onClick={onMatch}>
-          <SearchIcon data-icon="inline-start" />
-          Match
-        </Button>
-        {showDownloadCover ? (
-          <Button type="button" variant="outline" onClick={onDownloadCover} disabled={saving}>
-            <DownloadIcon data-icon="inline-start" />
-            Download cover
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="outline" size="sm" aria-label="Actions">
+            <MoreHorizontalIcon />
+            <span className="hidden sm:inline">Actions</span>
           </Button>
-        ) : null}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="outline" disabled={!contentWritable || saving}>
-              <Trash2Icon data-icon="inline-start" />
-              Delete
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Move to trash?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This moves {entity.title} to the vault's <code>.trash</code> folder. You can restore it from there if needed.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onDelete} disabled={saving}>
-                Move to Trash
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-      {!contentWritable ? (
-        <p className="mt-2 text-xs text-muted-foreground">Content writes are disabled. Editing actions are unavailable.</p>
-      ) : (
-        <p className="mt-2 truncate text-xs text-muted-foreground">{entity.path}</p>
-      )}
-    </section>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuItem onSelect={onEdit} disabled={!contentWritable}>
+            <PencilIcon />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onRename} disabled={!contentWritable || saving}>
+            <FilePenLineIcon />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onMatch}>
+            <SearchIcon />
+            Match
+          </DropdownMenuItem>
+          {showDownloadCover ? (
+            <DropdownMenuItem onSelect={onDownloadCover} disabled={saving}>
+              <DownloadIcon />
+              Download cover
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={!contentWritable || saving}
+            onSelect={() => setDeleteOpen(true)}
+          >
+            <Trash2Icon />
+            Delete
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="font-normal break-all text-xs text-muted-foreground">
+            {contentWritable
+              ? entity.path
+              : "Content writes are disabled. Editing actions are unavailable."}
+          </DropdownMenuLabel>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move to trash?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This moves {entity.title} to the vault's <code>.trash</code> folder. You can restore it from there if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onDelete} disabled={saving}>
+              Move to Trash
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
-function RenamePanel({
+function RenameDialog({
+  open,
+  onOpenChange,
   currentBasename,
   basename,
   saving,
   disabled,
   onBasenameChange,
   onSave,
-  onCancel,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   currentBasename: string;
   basename: string;
   saving: boolean;
   disabled: boolean;
   onBasenameChange: (value: string) => void;
   onSave: () => void;
-  onCancel: () => void;
 }) {
   const normalizedBasename = normalizeBasename(basename);
   const validationError = basenameValidationError(basename);
   const unchanged = normalizedBasename === currentBasename;
   return (
-    <section className="rounded-md border p-4">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="min-w-60 flex-1 text-sm font-medium">
-          Basename
-          <Input
-            value={basename}
-            onChange={(event) => onBasenameChange(event.target.value)}
-            onBlur={() => onBasenameChange(normalizedBasename)}
-            disabled={disabled || saving}
-            aria-invalid={Boolean(validationError)}
-          />
-        </label>
-        <Button
-          type="button"
-          onClick={onSave}
-          disabled={disabled || saving || Boolean(validationError) || unchanged}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-sm:inset-0 max-sm:flex max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:flex-col max-sm:rounded-none max-sm:border-0">
+        <DialogHeader>
+          <DialogTitle>Rename</DialogTitle>
+          <DialogDescription>
+            File path stays in the same folder. Only the Markdown basename changes.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSave();
+          }}
+          className="flex flex-col gap-2"
         >
-          <CheckIcon data-icon="inline-start" />
-          {saving ? "Renaming" : "Rename"}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
-          <XIcon data-icon="inline-start" />
-          Cancel
-        </Button>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        File path stays in the same folder. Only the Markdown basename changes.
-      </p>
-      {validationError ? <p className="mt-1 text-xs text-destructive">{validationError}</p> : null}
-    </section>
+          <label className="text-sm font-medium">
+            Basename
+            <Input
+              value={basename}
+              onChange={(event) => onBasenameChange(event.target.value)}
+              onBlur={() => onBasenameChange(normalizedBasename)}
+              disabled={disabled || saving}
+              aria-invalid={Boolean(validationError)}
+            />
+          </label>
+          {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
+          <DialogFooter className="mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
+              <XIcon data-icon="inline-start" />
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={disabled || saving || Boolean(validationError) || unchanged}
+            >
+              <CheckIcon data-icon="inline-start" />
+              {saving ? "Renaming" : "Rename"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -6,6 +6,7 @@ import {
   LanguagesIcon,
   LinkIcon,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
@@ -32,6 +33,7 @@ export function EntityDetail({
   relationGroups,
   dates,
   typeConfig,
+  actions,
 }: {
   entity: Entity;
   relations: Relation[];
@@ -39,6 +41,7 @@ export function EntityDetail({
   relationGroups: Array<{ field: string; items: Relation[] }>;
   dates?: EntityDatesResponse;
   typeConfig?: TypeConfig;
+  actions?: ReactNode;
 }) {
   const relatedById = new Map(relatedEntities.map((item) => [item.id, item]));
   const subtitleTitles = entitySubtitleTitles(entity, typeConfig);
@@ -71,6 +74,7 @@ export function EntityDetail({
                   </dl>
                 ) : null}
               </div>
+              {actions ? <div className="shrink-0">{actions}</div> : null}
             </div>
           </div>
           <div className="p-4">
