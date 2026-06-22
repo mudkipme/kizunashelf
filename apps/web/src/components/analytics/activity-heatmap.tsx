@@ -105,14 +105,14 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           <span className="w-10 shrink-0" />
-          <div className="grid flex-1 grid-cols-12 gap-1">
+          <div className="grid flex-1 grid-cols-12 gap-1 sm:w-[360px] sm:flex-none">
             {MONTH_INITIALS.map((month, index) => (
               <span key={index} className="text-center">
                 {month}
               </span>
             ))}
           </div>
-          <span className="w-24 shrink-0" />
+          <span className="w-24 shrink-0 sm:w-auto sm:flex-1" />
         </div>
 
         {rows.map((row) => {
@@ -120,7 +120,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
           return (
             <div key={row.year} className="flex items-center gap-2">
               <span className="w-10 shrink-0 text-xs font-medium tabular-nums">{row.year}</span>
-              <div className="grid flex-1 grid-cols-12 gap-1">
+              <div className="grid flex-1 grid-cols-12 gap-1 sm:w-[360px] sm:flex-none">
                 {MONTH_INITIALS.map((_, index) => {
                   const count = row.months[index] ?? 0;
                   return (
@@ -137,7 +137,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
                   );
                 })}
               </div>
-              <div className="flex w-24 shrink-0 items-center gap-2">
+              <div className="flex w-24 shrink-0 items-center gap-2 sm:w-auto sm:flex-1">
                 <div className="h-2 flex-1 rounded-sm bg-muted">
                   <div className="h-2 rounded-sm bg-primary" style={{ width: barWidth }} />
                 </div>
