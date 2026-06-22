@@ -1767,10 +1767,24 @@
               "null"
             ]
           },
-          "defaultTitle": {
-            "type": "boolean"
+          "titleRole": {
+            "description": "When `original`, the filename basename is the language-agnostic fallback\ntitle (mirrors a title field's `titleRole`). The viewer's language picks\nthe displayed title; this is the floor when no language matches.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TitleRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
+      },
+      "TitleRole": {
+        "type": "string",
+        "enum": [
+          "original"
+        ]
       },
       "ExternalBodyMapping": {
         "type": "object",
@@ -1827,12 +1841,6 @@
             "items": {
               "$ref": "#/components/schemas/ExternalFieldMapping"
             }
-          },
-          "defaultTitle": {
-            "type": [
-              "boolean",
-              "null"
-            ]
           },
           "enumOptions": {
             "type": "array",
@@ -1909,12 +1917,6 @@
           "relation",
           "text",
           "textList"
-        ]
-      },
-      "TitleRole": {
-        "type": "string",
-        "enum": [
-          "original"
         ]
       },
       "ExternalFieldMapping": {

@@ -3,20 +3,18 @@ import { Link } from "react-router-dom";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { Badge } from "@/components/ui/badge";
-import { defaultTitleOptionId } from "@/lib/constants";
+import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
 export function EntityListItem({
   entity,
-  titleLanguage = defaultTitleOptionId,
   labelsByType,
 }: {
   entity: EntitySummary;
-  titleLanguage?: string;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
-  const title = entityTitle(entity, titleLanguage);
+  const title = entityTitle(entity, useTitleLanguage());
 
   return (
     <Link

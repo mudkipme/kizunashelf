@@ -53,7 +53,6 @@ export function fieldConfigSummary(field: FieldConfig): string[] {
 
   if (options.has("titleOptions") && field.titleLanguage) summary.push(`lang ${field.titleLanguage}`);
   if (options.has("titleOptions") && field.titleRole) summary.push(field.titleRole);
-  if (options.has("titleOptions") && field.defaultTitle) summary.push("default title");
   if (options.has("enumOptions") && field.enumOptions?.length) summary.push(`${field.enumOptions.length} values`);
   if (options.has("externalMappings") && field.externalFields?.length) {
     summary.push(`${field.externalFields.length} mappings`);

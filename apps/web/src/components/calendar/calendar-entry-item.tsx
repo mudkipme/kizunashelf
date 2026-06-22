@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 import { entityFieldLabel } from "@/lib/type-config";
 import type { CalendarEntry } from "@/types/api";
 
@@ -11,6 +13,7 @@ export function CalendarEntryItem({
   entry: CalendarEntry;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
+  const language = useTitleLanguage();
   return (
     <article className="rounded-md border p-3">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -22,7 +25,7 @@ export function CalendarEntryItem({
           to={`/entities/${encodeURIComponent(entry.entity.id)}`}
           className="min-w-0 break-words text-sm font-medium hover:underline"
         >
-          {entry.entity.title}
+          {entityTitle(entry.entity, language)}
         </Link>
       </div>
 

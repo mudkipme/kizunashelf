@@ -27,8 +27,11 @@ pub struct EntityTypeConfig {
 pub struct FilenameConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title_language: Option<String>,
-    #[serde(default, skip_serializing_if = "is_false")]
-    pub default_title: bool,
+    /// When `original`, the filename basename is the language-agnostic fallback
+    /// title (mirrors a title field's `titleRole`). The viewer's language picks
+    /// the displayed title; this is the floor when no language matches.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title_role: Option<TitleRole>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -44,8 +47,6 @@ pub struct FieldConfig {
     pub title_role: Option<TitleRole>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub external_fields: Vec<ExternalFieldMapping>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_title: Option<bool>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub enum_options: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -120,10 +121,6 @@ pub enum SeasonLanguage {
     Ja,
     #[serde(rename = "en")]
     En,
-}
-
-fn is_false(value: &bool) -> bool {
-    !*value
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]

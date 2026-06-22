@@ -4,13 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  allOptions,
-  defaultDirection,
-  defaultSort,
-  defaultTitleOptionId,
-} from "@/lib/constants";
-import { titleLanguageLabel } from "@/lib/title-language";
+import { allOptions, defaultDirection, defaultSort } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
@@ -39,17 +33,13 @@ type AssetToolbarProps = {
   sort: string;
   direction: string;
   view: string;
-  titleLanguage: string;
-  titleLanguages: string[];
   fieldFilters?: FieldFilter[];
-  defaultTitleLabel?: string;
   dateFieldLabel?: (field: string) => string;
   onRefsChange: (value: string) => void;
   onCoverChange: (value: string) => void;
   onSortChange: (value: string) => void;
   onDirectionChange: (value: string) => void;
   onViewChange: (value: string) => void;
-  onTitleLanguageChange: (value: string) => void;
   onFieldFilterChange?: (field: string, values: string[]) => void;
 };
 
@@ -65,17 +55,13 @@ export function AssetToolbar({
   sort,
   direction,
   view,
-  titleLanguage,
-  titleLanguages,
   fieldFilters = [],
-  defaultTitleLabel = "Default title",
   dateFieldLabel = (field) => field,
   onRefsChange,
   onCoverChange,
   onSortChange,
   onDirectionChange,
   onViewChange,
-  onTitleLanguageChange,
   onFieldFilterChange,
 }: AssetToolbarProps) {
   const hasFieldFilters = fieldFilters.length > 0;
@@ -151,19 +137,6 @@ export function AssetToolbar({
       >
         <option value={defaultDirection}>Ascending</option>
         <option value="desc">Descending</option>
-      </Select>
-      <Select
-        value={titleLanguage}
-        onChange={(event) => onTitleLanguageChange(event.target.value)}
-        className={compact ? "min-w-0" : undefined}
-        aria-label="Display title"
-      >
-        <option value={defaultTitleOptionId}>{defaultTitleLabel}</option>
-        {titleLanguages.map((language) => (
-          <option key={language} value={language}>
-            {titleLanguageLabel(language)}
-          </option>
-        ))}
       </Select>
       <div className={cn(compact ? "col-span-2 grid grid-cols-2 gap-2" : "ml-auto flex items-center gap-1")}>
         <Button

@@ -78,29 +78,6 @@ export function dateFieldNames(typeConfig: TypeConfig | undefined): string[] {
     .map((field) => field.field);
 }
 
-export function titleLanguageOptions(typeConfig: TypeConfig | undefined): string[] {
-  const languages = new Set<string>();
-  const filenameLanguage = iso639TitleLanguage(typeConfig?.filename?.titleLanguage);
-  if (filenameLanguage) languages.add(filenameLanguage);
-  for (const field of fieldsByType(typeConfig, "title")) {
-    const fieldLanguage = iso639TitleLanguage(field.titleLanguage);
-    if (fieldLanguage) languages.add(fieldLanguage);
-  }
-  return [...languages];
-}
-
-export function defaultTitleOption(typeConfig: TypeConfig | undefined): string | undefined {
-  const filenameLanguage = iso639TitleLanguage(typeConfig?.filename?.titleLanguage);
-  if (typeConfig?.filename?.defaultTitle && filenameLanguage) return filenameLanguage;
-  const explicit = fieldsByType(typeConfig, "title").find((field) => field.defaultTitle);
-  const explicitLanguage = iso639TitleLanguage(explicit?.titleLanguage);
-  if (explicitLanguage) return explicitLanguage;
-  if (filenameLanguage) return filenameLanguage;
-  return fieldsByType(typeConfig, "title")
-    .map((field) => iso639TitleLanguage(field.titleLanguage))
-    .find(Boolean);
-}
-
 export function isListFieldType(fieldType: FieldType) {
   return (
     fieldType === "imageList" ||

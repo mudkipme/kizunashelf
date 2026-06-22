@@ -328,28 +328,28 @@ export function EntityTypeForm({
                     ...config,
                     filename: {
                       titleLanguage: titleLanguage || undefined,
-                      defaultTitle: config.filename?.defaultTitle ?? false,
+                      titleRole: config.filename?.titleRole ?? undefined,
                     },
                   })
                 }
               />
             </Field>
-            <Field label="Filename default title">
+            <Field label="Filename title role">
               <Select
-                value={config.filename?.defaultTitle ? "true" : "false"}
+                value={config.filename?.titleRole ?? ""}
                 onChange={(event) =>
                   onChange({
                     ...config,
                     filename: {
                       titleLanguage: config.filename?.titleLanguage,
-                      defaultTitle: event.target.value === "true",
+                      titleRole: event.target.value === "original" ? "original" : undefined,
                     },
                   })
                 }
                 className="h-9 w-full text-base md:text-sm"
               >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
+                <option value="">No role</option>
+                <option value="original">Original (filename is the title)</option>
               </Select>
             </Field>
           </div>
@@ -600,16 +600,6 @@ function FieldOptionEditor({
           >
             <option value="">None</option>
             <option value="original">Original</option>
-          </Select>
-        </Field>
-        <Field label="Default title">
-          <Select
-            value={field.defaultTitle ? "true" : "false"}
-            onChange={(event) => onChange({ ...field, defaultTitle: event.target.value === "true" })}
-            className="h-9 w-full text-base md:text-sm"
-          >
-            <option value="false">No</option>
-            <option value="true">Yes</option>
           </Select>
         </Field>
       </>

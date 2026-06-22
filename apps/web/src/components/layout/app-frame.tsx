@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
+import { LanguageSelect } from "@/components/layout/language-select";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -146,6 +147,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <SearchIcon />
         </Button>
         <div className="ml-auto flex items-center gap-2 sm:ml-0">
+          <LanguageSelect />
           <ThemeModeSelect />
           <Badge variant="secondary" className="hidden sm:inline-flex">
             v{__APP_VERSION__}

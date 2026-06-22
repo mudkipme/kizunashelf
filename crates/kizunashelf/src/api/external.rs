@@ -580,7 +580,6 @@ mod tests {
                 title_language: None,
                 title_role: None,
                 external_fields: Vec::new(),
-                default_title: None,
                 enum_options: Vec::new(),
                 total_progress_field: None,
                 date_role: None,

@@ -189,7 +189,6 @@ types:
   - bangumi
   filename:
     titleLanguage: zh
-    defaultTitle: true
   bodyMappings:
   - source: bangumi
     field: summary
@@ -199,7 +198,6 @@ types:
     fieldType: title
     displayName: Title
     titleLanguage: zh
-    defaultTitle: true
 ```
 
 | Key | Required | Type | Description |
@@ -220,15 +218,14 @@ The filename is often the most stable title source in an Obsidian vault. `filena
 ```yaml
 filename:
   titleLanguage: zh
-  defaultTitle: true
 ```
 
 | Key | Type | Description |
 | --- | --- | --- |
 | `titleLanguage` | string | Adds the filename basename to `entity.titles` under this language key. Use ISO-like language keys such as `zh`, `ja`, or `en`. |
-| `defaultTitle` | boolean | Uses the filename basename as the entity's primary `title`. |
+| `titleRole` | enum | Currently only `original`. Marks the filename basename as the `original` title — i.e. the language-agnostic fallback for `entity.title`. Use this for "the filename is the canonical/original title." |
 
-If `filename.defaultTitle` is true, the primary title is the Markdown file basename. Other configured title fields can still appear as alternate titles.
+Setting `filename.titleLanguage` makes the file basename selectable as that language's title (it is added to `entity.titles`). Setting `filename.titleRole: original` makes the basename the original-title fallback (it then wins over a `titleRole: original` field). If neither a title field nor the filename is marked `original`, `entity.title` falls back to the first title field, then any title, then the basename.
 
 ## Fields
 
@@ -247,8 +244,7 @@ fields:
 | `fieldType` | yes | enum | all | Semantic type. See field types below. |
 | `displayName` | no | string | all | UI label. Outside Settings, the UI prefers `displayName` over raw field names. |
 | `titleLanguage` | no | string | `title` | Language key for a title field. |
-| `titleRole` | no | enum | `title` | Special title role. Currently only `original`. |
-| `defaultTitle` | no | boolean | `title` | Uses this title field as primary `entity.title` when present. |
+| `titleRole` | no | enum | `title` | Special title role. Currently only `original` — the title used as the language-agnostic fallback for `entity.title`. |
 | `externalFields` | no | array | most fields | Maps external provider metadata fields into this frontmatter field. |
 | `enumOptions` | no | string[] | `enum`, `enumList` | Allowed or suggested values in editors and filters. |
 | `totalProgressField` | no | string | `progress` | Field that stores the total count for progress. |
@@ -287,17 +283,24 @@ KizunaShelf exposes:
 
 | Entity property | Purpose |
 | --- | --- |
-| `entity.title` | Primary title used in lists, cards, headings, and search. |
-| `entity.titles` | Alternate title map used for language switching, subtitle display, and search. |
+| `entity.title` | Language-agnostic fallback title, used in search and wherever no viewer language applies. |
+| `entity.titles` | Title map keyed by language, used for language switching, subtitle display, and search. |
 
-Primary title selection follows this order:
+There is no `defaultTitle` flag. The **displayed** title is chosen by the viewer's
+language: the web app has a global language selector (defaulting to the browser
+language); iOS uses the system language. Each surface resolves a title as:
 
-1. `filename.defaultTitle: true`
-2. First `fieldType: title` field with `defaultTitle: true`
-3. Filename basename if `filename` is configured
-4. First configured `fieldType: title`
-5. First value in `entity.titles`
-6. Filename basename
+1. The viewer language's title — `entity.titles[language]`
+2. Otherwise `entity.title` (the language-agnostic fallback below)
+
+The core computes `entity.title` as the fallback, in this order:
+
+1. The `titleRole: original` title field, when present
+2. Otherwise the first configured `fieldType: title` field
+3. Otherwise the first value in `entity.titles` (e.g. a `filename.titleLanguage` basename)
+4. Otherwise the filename basename
+
+So the effective resolution is **selected language → original → other titles**.
 
 All configured title fields are title data:
 
@@ -306,7 +309,6 @@ fields:
 - field: title
   fieldType: title
   titleLanguage: zh
-  defaultTitle: true
 - field: title_en
   fieldType: title
   titleLanguage: en
@@ -625,7 +627,6 @@ types:
   - bangumi
   filename:
     titleLanguage: zh
-    defaultTitle: true
   fields:
   - field: id
     fieldType: id
@@ -634,7 +635,6 @@ types:
     fieldType: title
     displayName: Title
     titleLanguage: zh
-    defaultTitle: true
   - field: title_original
     fieldType: title
     displayName: Title (Original)
@@ -683,7 +683,6 @@ types:
     fieldType: title
     displayName: Title
     titleLanguage: zh
-    defaultTitle: true
   - field: related
     fieldType: relation
     displayName: Related

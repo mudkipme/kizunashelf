@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,13 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
     return <p className="text-xs text-muted-foreground">No dated entities yet.</p>;
   }
 
+  // A cell opens that month in the calendar, carrying the active type filter.
+  function calendarHref(year: number, monthIndex: number) {
+    const params = new URLSearchParams({ year: String(year), month: String(monthIndex + 1) });
+    if (selectedType !== "all") params.set("type", selectedType);
+    return `/calendar?${params.toString()}`;
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -116,10 +124,15 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
                 {MONTH_INITIALS.map((_, index) => {
                   const count = row.months[index] ?? 0;
                   return (
-                    <div
+                    <Link
                       key={index}
+                      to={calendarHref(row.year, index)}
                       title={`${MONTH_NAMES[index]} ${row.year}: ${count}`}
-                      className={cn("aspect-square rounded-sm", CELL_LEVELS[cellLevel(count, maxMonth)])}
+                      aria-label={`${MONTH_NAMES[index]} ${row.year}: ${count} — open in calendar`}
+                      className={cn(
+                        "block aspect-square rounded-sm transition-[outline] hover:outline hover:outline-1 hover:outline-offset-1 hover:outline-ring focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring",
+                        CELL_LEVELS[cellLevel(count, maxMonth)],
+                      )}
                     />
                   );
                 })}

@@ -1,5 +1,5 @@
 use crate::dates::{parse_entity_date, parsed_date_sort_key};
-use crate::types::{EntityDateValue, EntityTypeConfig, FieldType};
+use crate::types::{EntityDateValue, EntityTypeConfig, FieldType, TitleRole};
 use regex::Regex;
 use serde_json::{Map, Number, Value};
 use std::collections::BTreeMap;
@@ -208,16 +208,23 @@ pub(super) fn title_languages(
     titles
 }
 
-pub(super) fn default_title(
+/// The language-agnostic display title. Clients resolve a viewer-specific title
+/// as `titles[language] ?? title`, so this is the fallback when the viewer's
+/// language has no title: the `original`-role title (filename or field), then the
+/// first title field, then any title, then the basename. (There is no
+/// `defaultTitle` flag anymore — the viewer's language picks the title; this is
+/// just the floor.)
+pub(super) fn resolve_title(
     frontmatter: &Map<String, Value>,
     titles: &BTreeMap<String, String>,
     basename: &str,
     type_config: &EntityTypeConfig,
 ) -> String {
+    // An `original`-role filename means the basename is the original title.
     if type_config
         .filename
         .as_ref()
-        .is_some_and(|filename| filename.default_title)
+        .is_some_and(|filename| filename.title_role == Some(TitleRole::Original))
     {
         return basename.to_string();
     }
@@ -225,9 +232,10 @@ pub(super) fn default_title(
     type_config
         .fields
         .iter()
-        .find(|field| field.field_type == FieldType::Title && field.default_title.unwrap_or(false))
+        .find(|field| {
+            field.field_type == FieldType::Title && field.title_role == Some(TitleRole::Original)
+        })
         .and_then(|field| normalize_title_field(frontmatter, &field.field, basename))
-        .or_else(|| type_config.filename.as_ref().map(|_| basename.to_string()))
         .or_else(|| {
             type_config
                 .fields

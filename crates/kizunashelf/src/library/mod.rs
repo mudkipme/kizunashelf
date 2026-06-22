@@ -14,7 +14,7 @@ use crate::types::{
 use crate::vfs::{Vfs, VfsError};
 use anyhow::{Context, Result};
 use frontmatter::{
-    date_values, default_title, external_refs, extract_summary, first_string, parse_markdown,
+    date_values, external_refs, extract_summary, first_string, parse_markdown, resolve_title,
     title_languages,
 };
 use relations::{
@@ -522,7 +522,7 @@ fn parse_entity(
     let entry = relative_path.rsplit('/').next().unwrap_or(&relative_path);
     let note_basename = entry.strip_suffix(".md").unwrap_or(entry).to_string();
     let titles = title_languages(&parsed.frontmatter, &note_basename, type_config);
-    let title = default_title(&parsed.frontmatter, &titles, &note_basename, type_config);
+    let title = resolve_title(&parsed.frontmatter, &titles, &note_basename, type_config);
     let entity_key = entity_key(&parsed.frontmatter, &note_basename, type_config);
     let diagnostics = parsed
         .diagnostics
@@ -719,7 +719,6 @@ mod tests {
                 title_language: None,
                 title_role: None,
                 external_fields: Vec::new(),
-                default_title: None,
                 enum_options: Vec::new(),
                 total_progress_field: None,
                 date_role: None,
@@ -891,7 +890,6 @@ mod tests {
             title_language: None,
             title_role: None,
             external_fields: Vec::new(),
-            default_title: None,
             enum_options: Vec::new(),
             total_progress_field: None,
             date_role: None,
@@ -966,7 +964,7 @@ mod tests {
                 external_priority: Vec::new(),
                 filename: Some(FilenameConfig {
                     title_language: Some("zh".to_string()),
-                    default_title: false,
+                    title_role: None,
                 }),
                 body_mappings: Vec::new(),
                 fields: vec![FieldConfig {
@@ -976,7 +974,6 @@ mod tests {
                     title_language: Some("zh".to_string()),
                     title_role: None,
                     external_fields: Vec::new(),
-                    default_title: Some(true),
                     enum_options: Vec::new(),
                     total_progress_field: None,
                     date_role: None,

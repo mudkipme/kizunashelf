@@ -1,18 +1,21 @@
-import { defaultTitleOptionId } from "@/lib/constants";
-import type { EntitySummary } from "@/types/api";
-
 const languageNames =
   typeof Intl.DisplayNames === "function"
     ? new Intl.DisplayNames(["en"], { type: "language" })
     : undefined;
 
-export function entityTitle(entity: EntitySummary, titleLanguage: string) {
-  if (titleLanguage === defaultTitleOptionId) return entity.title;
-  return entity.titles[titleLanguage] ?? entity.title;
+/**
+ * The title to display for a viewer language: the language's title if present,
+ * otherwise the core's language-agnostic fallback (`entity.title`, which is the
+ * original-role title, then any title). Mirrors the core's `resolve_title`.
+ */
+export function entityTitle(
+  entity: { title: string; titles: Record<string, string> },
+  language: string,
+) {
+  return entity.titles[language] ?? entity.title;
 }
 
 export function titleLanguageLabel(titleLanguage: string) {
-  if (titleLanguage === defaultTitleOptionId) return "Default title";
   return languageNames?.of(titleLanguage) ?? titleLanguage;
 }
 

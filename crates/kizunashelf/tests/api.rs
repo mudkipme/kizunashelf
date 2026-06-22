@@ -92,7 +92,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(config["types"][0]["icon"], "📺");
     assert_eq!(
         config["types"][0]["filename"],
-        json!({ "titleLanguage": "zh", "defaultTitle": true })
+        json!({ "titleLanguage": "zh" })
     );
     assert_eq!(
         config["types"][0]["fields"][1],
@@ -100,8 +100,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
             "field": "title",
             "fieldType": "title",
             "displayName": "Title",
-            "titleLanguage": "zh",
-            "defaultTitle": true
+            "titleLanguage": "zh"
         })
     );
     assert_eq!(
@@ -123,7 +122,9 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(home["title"], "Fixture Home");
     assert_eq!(home["sections"][0]["title"], "Recent Anime");
     assert_eq!(home["sections"][0]["total"], 1);
-    assert_eq!(home["sections"][0]["items"][0]["title"], "Star Voyager");
+    // Resolved title now falls back to the `original`-role title when no viewer
+    // language is matched (the core no longer has a `defaultTitle`).
+    assert_eq!(home["sections"][0]["items"][0]["title"], "星之航路");
     assert_eq!(home["sections"][2]["title"], "Completed Anime");
     assert_eq!(home["sections"][2]["total"], 0);
 
@@ -178,12 +179,12 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
 
     let entities = server.ok_json("/api/entities").await;
     assert_eq!(entities["total"], 4);
-    assert!(has_entity_title(&entities["items"], "Star Voyager"));
+    assert!(has_entity_title(&entities["items"], "星之航路"));
     assert!(has_entity_title(&entities["items"], "Moon Quest"));
     assert_eq!(entities["items"][0]["titles"]["zh"], "Star Voyager");
     assert_eq!(entities["items"][0]["titles"]["en"], "A Voyage of Stars");
     assert_eq!(entities["items"][0]["titles"]["title_original"], "星之航路");
-    let star_voyager_summary = entity_by_title(&entities["items"], "Star Voyager");
+    let star_voyager_summary = entity_by_title(&entities["items"], "星之航路");
     assert_eq!(star_voyager_summary["relationCount"], 4);
     let completed_date = star_voyager_summary["dates"]
         .as_array()
@@ -219,7 +220,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .ok_json(&format!("/api/entities?filters={status_filters}"))
         .await;
     assert_eq!(status_filtered["total"], 2);
-    assert!(has_entity_title(&status_filtered["items"], "Star Voyager"));
+    assert!(has_entity_title(&status_filtered["items"], "星之航路"));
     assert!(has_entity_title(&status_filtered["items"], "Moon Quest"));
 
     let genre_filters = urlencoding::encode(r#"[{"field":"genres","values":["Strategy","RPG"]}]"#);
@@ -274,7 +275,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         ))
         .await;
     assert_eq!(by_relation["total"], 2);
-    assert!(has_entity_title(&by_relation["items"], "Star Voyager"));
+    assert!(has_entity_title(&by_relation["items"], "星之航路"));
     assert!(has_entity_title(&by_relation["items"], "Moon Quest"));
 
     let detail = server
@@ -283,7 +284,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
             urlencoding::encode("anime:Star Voyager")
         ))
         .await;
-    assert_eq!(detail["entity"]["title"], "Star Voyager");
+    assert_eq!(detail["entity"]["title"], "星之航路");
     assert_eq!(detail["entity"]["titles"]["zh"], "Star Voyager");
     assert_eq!(detail["entity"]["titles"]["en"], "A Voyage of Stars");
     assert_eq!(detail["entity"]["titles"]["title_original"], "星之航路");
@@ -491,10 +492,7 @@ async fn relation_endpoints_group_temp_vault_links() {
     assert_eq!(anime_targets["uniqueTargets"], 1);
     assert_eq!(count_for(&anime_targets["fields"], "body"), 1);
     assert_eq!(count_for(&anime_targets["fields"], "daily-note"), 1);
-    assert_eq!(
-        anime_targets["topTargets"][0]["targetTitle"],
-        "Star Voyager"
-    );
+    assert_eq!(anime_targets["topTargets"][0]["targetTitle"], "星之航路");
     assert_eq!(anime_targets["topTargets"][0]["count"], 2);
     assert!(anime_targets["topTargets"][0].get("fields").is_none());
 
@@ -568,7 +566,7 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
         .find(|day| day["date"] == "2025-04-21")
         .unwrap();
     assert_eq!(april_21["counts"]["dailyNotes"], 2);
-    assert!(has_entity_title(&april_21["entries"], "Star Voyager"));
+    assert!(has_entity_title(&april_21["entries"], "星之航路"));
     assert!(has_entity_title(&april_21["entries"], "Moon Quest"));
 
     let taxonomy_only = server
@@ -659,7 +657,7 @@ async fn settings_save_and_read_vault_config() {
                 "path": "Anime",
                 "filename": { "titleLanguage": "zh" },
                 "fields": [
-                    { "field": "title", "fieldType": "title", "titleLanguage": "zh", "defaultTitle": true },
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh" },
                     { "field": "title_en", "fieldType": "title", "titleLanguage": "en" },
                     { "field": "cover_url", "fieldType": "image" },
                     { "field": "status", "fieldType": "enum", "enumOptions": ["Backlog", "Watching", "Completed"] },
@@ -965,7 +963,7 @@ async fn content_mutation_endpoints_can_be_disabled() {
                 "label": "Anime",
                 "path": "Anime",
                 "fields": [
-                    { "field": "title", "fieldType": "title", "titleLanguage": "zh", "defaultTitle": true },
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh" },
                     { "field": "status", "fieldType": "enum", "enumOptions": ["Backlog", "Watching", "Completed"] }
                 ]
             }
@@ -1058,10 +1056,10 @@ impl TestServer {
                     "label": "Anime",
                     "icon": "📺",
                     "path": "Anime",
-                    "filename": { "titleLanguage": "zh", "defaultTitle": true },
+                    "filename": { "titleLanguage": "zh" },
                     "fields": [
                         { "field": "id", "fieldType": "id", "displayName": "ID" },
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
                         { "field": "title_original", "fieldType": "title", "displayName": "Title (Original)", "titleRole": "original" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
@@ -1080,7 +1078,7 @@ impl TestServer {
                     "path": "Games",
                     "filename": { "titleLanguage": "zh" },
                     "fields": [
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
                         { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Playing", "Completed", "Paused", "Dropped"] },
@@ -1098,7 +1096,7 @@ impl TestServer {
                     "path": "Franchise",
                     "filename": { "titleLanguage": "zh" },
                     "fields": [
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },
                         { "field": "related", "fieldType": "relation", "displayName": "Related", "relationType": "related" }
                     ]
                 },
@@ -1106,9 +1104,9 @@ impl TestServer {
                     "id": "music",
                     "label": "Music",
                     "path": "Music",
-                    "filename": { "defaultTitle": true },
+                    "filename": {},
                     "fields": [
-                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh", "defaultTitle": true },
+                        { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },
                         { "field": "release_date", "fieldType": "date", "displayName": "Release date", "dateRole": "planning" },
                         { "field": "musicbrainz_url", "fieldType": "externalRef", "displayName": "MusicBrainz", "externalRef": "musicbrainz" }
                     ]
@@ -1390,9 +1388,9 @@ fn asset_test_app(
                 "id": "anime",
                 "label": "Anime",
                 "path": "Anime",
-                "filename": { "titleLanguage": "zh", "defaultTitle": true },
+                "filename": { "titleLanguage": "zh" },
                 "fields": [
-                    { "field": "title", "fieldType": "title", "titleLanguage": "zh", "defaultTitle": true },
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh" },
                     { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
                     { "field": "shots", "fieldType": "imageList", "displayName": "Shots" }
                 ]

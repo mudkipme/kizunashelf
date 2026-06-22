@@ -61,7 +61,7 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
     filename: config.filename
       ? {
           titleLanguage: config.filename.titleLanguage ?? "",
-          defaultTitle: config.filename.defaultTitle ?? false,
+          titleRole: config.filename.titleRole ?? null,
         }
       : null,
     bodyMappings: config.bodyMappings ?? [],
@@ -77,7 +77,6 @@ function normalizeField(field: FieldConfig): FieldConfig {
     titleLanguage: field.titleLanguage ?? "",
     titleRole: field.titleRole ?? null,
     externalFields: field.externalFields ?? [],
-    defaultTitle: field.defaultTitle ?? false,
     enumOptions: field.enumOptions ?? [],
     totalProgressField: field.totalProgressField ?? "",
     dateRole: field.dateRole ?? null,
@@ -149,10 +148,11 @@ function cleanFilename(filename: FilenameConfig | null | undefined): FilenameCon
   const titleLanguage = isIso639TitleLanguage(filename.titleLanguage)
     ? filename.titleLanguage
     : undefined;
-  if (!titleLanguage && !filename.defaultTitle) return undefined;
+  const titleRole = filename.titleRole || undefined;
+  if (!titleLanguage && !titleRole) return undefined;
   return {
     titleLanguage,
-    defaultTitle: filename.defaultTitle || undefined,
+    titleRole,
   };
 }
 
@@ -230,7 +230,6 @@ function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalo
       field.fieldType !== "externalRef"
         ? cleanExternalFieldMappings(field.externalFields ?? [], providerCatalog)
         : undefined,
-    defaultTitle: field.fieldType === "title" && field.defaultTitle ? true : undefined,
     enumOptions:
       field.fieldType === "enum" || field.fieldType === "enumList"
         ? cleanStrings(field.enumOptions ?? [])
@@ -290,7 +289,7 @@ export function defaultEntityType(): EntityTypeConfig {
     icon: "",
     path: "Type",
     externalPriority: [],
-    filename: { defaultTitle: true },
+    filename: { titleRole: "original" },
     bodyMappings: [],
     fields: [
       { field: "id", fieldType: "id", displayName: "ID" },

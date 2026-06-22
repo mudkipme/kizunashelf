@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
 import type { CalendarDay } from "@/types/api";
 
@@ -12,6 +14,7 @@ export function CalendarDayCell({
   onSelect: (date: string) => void;
 }) {
   const dayNumber = Number(day.date.slice(8, 10));
+  const language = useTitleLanguage();
 
   const uniqueEntries = day.entries.filter(
     (entry, index, entries) =>
@@ -37,7 +40,7 @@ export function CalendarDayCell({
       <div className="hidden min-w-0 flex-col gap-1 sm:flex">
         {uniqueEntries.slice(0, 3).map((entry) => (
           <span key={entry.id} className="truncate text-xs text-muted-foreground">
-            {entry.entity.title}
+            {entityTitle(entry.entity, language)}
           </span>
         ))}
         {uniqueEntries.length > 3 ? (

@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 import type {
   CalendarPlanningDatePoint,
   CalendarPlanningResponse,
@@ -174,6 +176,7 @@ function PlanningEntityRow({
 }: {
   point: CalendarPlanningDatePoint;
 }) {
+  const language = useTitleLanguage();
   return (
     <Link
       to={`/entities/${encodeURIComponent(point.entity.id)}`}
@@ -181,7 +184,9 @@ function PlanningEntityRow({
     >
       <span className="min-w-0">
         <span className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="min-w-0 truncate text-sm font-medium">{point.entity.title}</span>
+          <span className="min-w-0 truncate text-sm font-medium">
+            {entityTitle(point.entity, language)}
+          </span>
           <Badge variant="outline">{point.entity.typeLabel}</Badge>
         </span>
         {point.entity.summary ? (
@@ -227,13 +232,16 @@ function EntityPlanningList({
 }
 
 function PlanningEntitySummaryRow({ entity }: { entity: EntitySummary }) {
+  const language = useTitleLanguage();
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
       className="flex min-w-0 flex-col gap-1 border-b px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
     >
       <span className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="min-w-0 truncate text-sm font-medium">{entity.title}</span>
+        <span className="min-w-0 truncate text-sm font-medium">
+          {entityTitle(entity, language)}
+        </span>
         <Badge variant="outline">{entity.typeLabel}</Badge>
       </span>
       {entity.summary ? (
@@ -244,9 +252,12 @@ function PlanningEntitySummaryRow({ entity }: { entity: EntitySummary }) {
 }
 
 function DatePointSummary({ point }: { point: CalendarPlanningDatePoint }) {
+  const language = useTitleLanguage();
   return (
     <span className="min-w-0">
-      <span className="block truncate text-xs font-medium">{point.entity.title}</span>
+      <span className="block truncate text-xs font-medium">
+        {entityTitle(point.entity, language)}
+      </span>
       <span className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
         <span className="truncate">{point.entity.typeLabel}</span>
         <span className="shrink-0 tabular-nums">{point.value}</span>

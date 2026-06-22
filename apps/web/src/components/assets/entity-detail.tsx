@@ -17,13 +17,10 @@ import { MarkdownView } from "@/components/assets/markdown-view";
 import { RelationLocalGraph } from "@/components/relations/relation-local-graph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTitleLanguage } from "@/lib/language";
 import { relationKey } from "@/lib/relations";
-import {
-  defaultTitleOption,
-  fieldLabelForKey,
-  titleLabelForKey,
-} from "@/lib/type-config";
-import { titleLanguageLabel } from "@/lib/title-language";
+import { fieldLabelForKey, titleLabelForKey } from "@/lib/type-config";
+import { entityTitle, titleLanguageLabel } from "@/lib/title-language";
 import type { Entity, EntityDatesResponse, EntitySummary, Relation, TypeConfig } from "@/types/api";
 
 export function EntityDetail({
@@ -43,8 +40,10 @@ export function EntityDetail({
   typeConfig?: TypeConfig;
   actions?: ReactNode;
 }) {
+  const language = useTitleLanguage();
+  const displayTitle = entityTitle(entity, language);
   const relatedById = new Map(relatedEntities.map((item) => [item.id, item]));
-  const subtitleTitles = entitySubtitleTitles(entity, typeConfig);
+  const subtitleTitles = entitySubtitleTitles(entity, displayTitle, typeConfig);
   const outgoingRelationGroups = relationGroupsForDirection(relationGroups, "out");
   const incomingRelationGroups = relationGroupsForDirection(relationGroups, "in");
 
@@ -59,7 +58,7 @@ export function EntityDetail({
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">{entity.typeLabel}</Badge>
                 </div>
-                <h2 className="mt-2 text-xl font-semibold leading-snug">{entity.title}</h2>
+                <h2 className="mt-2 text-xl font-semibold leading-snug">{displayTitle}</h2>
                 {subtitleTitles.length > 0 ? (
                   <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
                     {subtitleTitles.map((item) => (
@@ -154,15 +153,21 @@ export function EntityDetail({
   );
 }
 
-function entitySubtitleTitles(entity: Entity, typeConfig: TypeConfig | undefined) {
-  const defaultTitleLanguage = defaultTitleOption(typeConfig);
+// Alternate titles to show under the heading: every other title, deduped by
+// value and excluding whatever is currently displayed (the viewer-language title
+// or its fallback).
+function entitySubtitleTitles(
+  entity: Entity,
+  displayTitle: string,
+  typeConfig: TypeConfig | undefined,
+) {
   const normalize = (value: string) => value.trim().toLowerCase();
-  const seen = new Set([normalize(entity.title)]);
+  const seen = new Set([normalize(displayTitle)]);
   const subtitles: Array<{ key: string; label: string; title: string }> = [];
 
   for (const [key, title] of Object.entries(entity.titles)) {
     const normalized = normalize(title);
-    if (!normalized || key === defaultTitleLanguage || seen.has(normalized)) continue;
+    if (!normalized || seen.has(normalized)) continue;
     seen.add(normalized);
     subtitles.push({
       key,

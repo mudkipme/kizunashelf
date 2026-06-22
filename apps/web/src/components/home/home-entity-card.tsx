@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
 import { EntityDateList } from "@/components/assets/entity-date-list";
-import { Badge } from "@/components/ui/badge";
+import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
 export function HomeEntityCard({
@@ -12,6 +13,8 @@ export function HomeEntityCard({
   entity: EntitySummary;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
+  const title = entityTitle(entity, useTitleLanguage());
+
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
@@ -29,10 +32,7 @@ export function HomeEntityCard({
         />
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-2.5">
-        <div className="line-clamp-2 text-sm font-medium leading-5">{entity.title}</div>
-        <div className="flex min-w-0 items-center gap-2">
-          <Badge variant="outline">{entity.typeLabel}</Badge>
-        </div>
+        <div className="line-clamp-2 text-sm font-medium leading-5">{title}</div>
         <div className="mt-auto flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <span className="min-w-0 truncate">
             {entity.dates.length > 0 ? (

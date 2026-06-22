@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
-import { defaultTitleOptionId } from "@/lib/constants";
+import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
@@ -21,6 +21,7 @@ export function RelationLocalGraph({
   sources: EntitySummary[];
 }) {
   const nodes = graphNodes(sources.slice(0, maxGraphNodes));
+  const language = useTitleLanguage();
 
   return (
     <section className="overflow-auto rounded-md border">
@@ -61,7 +62,7 @@ export function RelationLocalGraph({
               style={{ left: `${node.x}%`, top: `${node.y}%` }}
             >
               <span className="truncate text-xs font-medium">
-                {entityTitle(node.entity, defaultTitleOptionId)}
+                {entityTitle(node.entity, language)}
               </span>
               <span className="flex min-w-0 items-center gap-1">
                 <Badge variant="outline" className="max-w-full truncate px-1.5 py-0 text-[11px] font-normal">

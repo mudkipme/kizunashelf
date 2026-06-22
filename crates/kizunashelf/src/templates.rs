@@ -343,7 +343,7 @@ fn media_type(
         ),
         filename: Some(FilenameConfig {
             title_language: Some("zh".to_string()),
-            default_title: true,
+            title_role: None,
         }),
         body_mappings: default_external_body_mappings(primary_source, "summary", "Summary"),
         fields,
@@ -389,7 +389,7 @@ fn blank_type() -> EntityTypeConfig {
         external_priority: Vec::new(),
         filename: Some(FilenameConfig {
             title_language: None,
-            default_title: true,
+            title_role: Some(crate::types::TitleRole::Original),
         }),
         body_mappings: Vec::new(),
         fields: vec![
@@ -408,7 +408,6 @@ fn field(field: &str, field_type: FieldType, display_name: &str) -> FieldConfig 
         title_language: None,
         title_role: None,
         external_fields: Vec::new(),
-        default_title: None,
         enum_options: Vec::new(),
         total_progress_field: None,
         date_role: None,

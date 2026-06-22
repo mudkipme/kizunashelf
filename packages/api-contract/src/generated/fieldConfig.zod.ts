@@ -16,7 +16,6 @@ export const FieldConfig = zod.object({
   "source": zod.string(),
   "field": zod.string()
 })).optional(),
-  "defaultTitle": zod.boolean().nullish(),
   "enumOptions": zod.array(zod.string()).optional(),
   "totalProgressField": zod.string().nullish(),
   "dateRole": zod.union([zod.enum(['planning', 'completed']),zod.null()]).optional(),

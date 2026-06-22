@@ -40,7 +40,7 @@ export const SaveSettingsRequest = zod.object({
   "externalPriority": zod.array(zod.string()).optional(),
   "filename": zod.union([zod.object({
   "titleLanguage": zod.string().nullish(),
-  "defaultTitle": zod.boolean().optional()
+  "titleRole": zod.union([zod.enum(['original']),zod.null()]).optional().describe('When `original`, the filename basename is the language-agnostic fallback\ntitle (mirrors a title field\'s `titleRole`). The viewer\'s language picks\nthe displayed title; this is the floor when no language matches.')
 }),zod.null()]).optional(),
   "bodyMappings": zod.array(zod.object({
   "source": zod.string(),
@@ -57,7 +57,6 @@ export const SaveSettingsRequest = zod.object({
   "source": zod.string(),
   "field": zod.string()
 })).optional(),
-  "defaultTitle": zod.boolean().nullish(),
   "enumOptions": zod.array(zod.string()).optional(),
   "totalProgressField": zod.string().nullish(),
   "dateRole": zod.union([zod.enum(['planning', 'completed']),zod.null()]).optional(),

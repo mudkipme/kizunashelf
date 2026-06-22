@@ -18,19 +18,16 @@ import {
   allTypes,
   defaultDirection,
   defaultSort,
-  defaultTitleOptionId,
   defaultView,
   pageSize,
 } from "@/lib/constants";
 import {
-  defaultTitleOption,
   fieldDisplayLabel,
   fieldLabelAcrossTypes,
   fieldLabelsByType,
   hasAnyFieldType,
-  titleLanguageOptions,
 } from "@/lib/type-config";
-import { titleLanguageLabel } from "@/lib/title-language";
+import { useTitleLanguage } from "@/lib/language";
 import type { TypeConfig } from "@/types/api";
 import {
   applyPreferencesToSearchParams,
@@ -56,7 +53,7 @@ export function LibraryPage() {
   const sort = searchParams.get("sort") ?? defaultSort;
   const direction = searchParams.get("direction") === "desc" ? "desc" : defaultDirection;
   const view = searchParams.get("view") === "grid" ? "grid" : defaultView;
-  const titleLanguage = searchParams.get("titleLanguage") ?? defaultTitleOptionId;
+  const language = useTitleLanguage();
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -80,14 +77,6 @@ export function LibraryPage() {
     scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["image", "imageList"]));
   const effectiveRefs = supportsRefsFilter ? refs : allOptions;
   const effectiveCover = supportsCoverFilter ? cover : allOptions;
-  const titleLanguages = titleLanguageOptions(selectedTypeConfig);
-  const defaultTitle = defaultTitleOption(selectedTypeConfig);
-  const defaultTitleLabel = defaultTitle
-    ? `Default title (${titleLanguageLabel(defaultTitle)})`
-    : "Default title";
-  const effectiveTitleLanguage = titleLanguages.includes(titleLanguage)
-    ? titleLanguage
-    : defaultTitleOptionId;
   const fieldFilters = useMemo(
     () => fieldFiltersForTypes(scopeTypeConfigs, searchParams),
     [scopeTypeConfigs, searchParams],
@@ -111,8 +100,7 @@ export function LibraryPage() {
     activeFieldFilters.length > 0 ||
     effectiveSort !== defaultSort ||
     direction !== defaultDirection ||
-    view !== defaultView ||
-    effectiveTitleLanguage !== defaultTitleOptionId;
+    view !== defaultView;
 
   const list = useQuery(
     entitiesQuery({
@@ -121,7 +109,7 @@ export function LibraryPage() {
       pageSize,
       sort: effectiveSort,
       direction,
-      titleLanguage: effectiveTitleLanguage,
+      titleLanguage: language,
       ...(effectiveRefs !== allOptions ? { refs: effectiveRefs } : {}),
       ...(effectiveCover !== allOptions ? { cover: effectiveCover } : {}),
       ...entityFiltersParam(activeFieldFilters),
@@ -205,12 +193,6 @@ export function LibraryPage() {
   }, [config.data, fieldFilters, searchParams, setSearchParams]);
 
   useEffect(() => {
-    if (!config.data || titleLanguage === defaultTitleOptionId) return;
-    if (titleLanguages.includes(titleLanguage)) return;
-    setQueryParam("titleLanguage", defaultTitleOptionId, defaultTitleOptionId, false);
-  }, [config.data, titleLanguages, titleLanguage, setQueryParam]);
-
-  useEffect(() => {
     if (!globalStats.data || !selectedType || !searchParams.has("type")) return;
     if ((!supportsRefsFilter && refs !== allOptions) || (!supportsCoverFilter && cover !== allOptions)) {
       return;
@@ -227,7 +209,6 @@ export function LibraryPage() {
     sort,
     direction,
     view,
-    titleLanguage,
   ]);
 
   useEffect(() => {
@@ -336,19 +317,13 @@ export function LibraryPage() {
                   sort={effectiveSort}
                   direction={direction}
                   view={view}
-                  titleLanguage={effectiveTitleLanguage}
-                  titleLanguages={titleLanguages}
                   fieldFilters={fieldFilters}
-                  defaultTitleLabel={defaultTitleLabel}
                   dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
                   onRefsChange={(value) => setQueryParam("refs", value)}
                   onCoverChange={(value) => setQueryParam("cover", value)}
                   onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
                   onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
                   onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
-                  onTitleLanguageChange={(value) =>
-                    setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
-                  }
                   onFieldFilterChange={setFieldFilterParam}
                 />
               ) : null}
@@ -364,19 +339,13 @@ export function LibraryPage() {
               sort={effectiveSort}
               direction={direction}
               view={view}
-              titleLanguage={effectiveTitleLanguage}
-              titleLanguages={titleLanguages}
               fieldFilters={fieldFilters}
-              defaultTitleLabel={defaultTitleLabel}
               dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
               onRefsChange={(value) => setQueryParam("refs", value)}
               onCoverChange={(value) => setQueryParam("cover", value)}
               onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
               onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
               onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
-              onTitleLanguageChange={(value) =>
-                setQueryParam("titleLanguage", value, defaultTitleOptionId, false)
-              }
               onFieldFilterChange={setFieldFilterParam}
             />
 
@@ -419,22 +388,12 @@ export function LibraryPage() {
               {view === "grid" ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 p-3">
                   {entities.map((entity) => (
-                    <EntityGridItem
-                      key={entity.id}
-                      entity={entity}
-                      titleLanguage={effectiveTitleLanguage}
-                      labelsByType={fieldLabels}
-                    />
+                    <EntityGridItem key={entity.id} entity={entity} labelsByType={fieldLabels} />
                   ))}
                 </div>
               ) : (
                 entities.map((entity) => (
-                  <EntityListItem
-                    key={entity.id}
-                    entity={entity}
-                    titleLanguage={effectiveTitleLanguage}
-                    labelsByType={fieldLabels}
-                  />
+                  <EntityListItem key={entity.id} entity={entity} labelsByType={fieldLabels} />
                 ))
               )}
               {!list.isFetching && entities.length === 0 ? (
@@ -456,9 +415,7 @@ export function LibraryPage() {
 }
 
 function hasPreferenceParams(params: URLSearchParams) {
-  return ["refs", "cover", "sort", "direction", "view", "titleLanguage"].some((key) =>
-    params.has(key),
-  );
+  return ["refs", "cover", "sort", "direction", "view"].some((key) => params.has(key));
 }
 
 function fieldFiltersForTypes(typeConfigs: TypeConfig[], params: URLSearchParams) {
