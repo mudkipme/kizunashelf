@@ -1,12 +1,12 @@
 use super::error::ApiResult;
 use super::state::{get_library, AppState};
 use crate::contract::{
-    AnalyticsCoverageMetric, AnalyticsDataQuality, AnalyticsDistributions, AnalyticsRelations,
-    AnalyticsResponse, AnalyticsTimeline, AnalyticsTimelineYear, AnalyticsTotals,
-    AnalyticsUnresolvedRelations, CleanupQueueSummary, CleanupQueuesResponse,
+    AnalyticsActivity, AnalyticsActivityType, AnalyticsActivityYear, AnalyticsActivityYearType,
+    AnalyticsDataQuality, AnalyticsDistributions, AnalyticsRelations, AnalyticsResponse,
+    AnalyticsTotals, AnalyticsUnresolvedRelations, CleanupQueueSummary, CleanupQueuesResponse,
     CleanupUnresolvedRelation, StatsResponse, TypeCount,
 };
-use crate::dates::{date_sort_key, parse_entity_date, season_compare_value};
+use crate::dates::parse_entity_date;
 use crate::library::compare_string;
 use crate::relations::{
     build_relation_field_summary_with_index, build_relation_hubs, count_by, outgoing_relations,
@@ -184,32 +184,10 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
         .collect();
     let dated_entity_ids: std::collections::HashSet<_> =
         dated.iter().map(|(entity, _)| entity.id.clone()).collect();
-    let with_cover_count = summaries
-        .iter()
-        .filter(|entity| quality.requires_cover(entity))
-        .filter(|entity| entity.image.is_some())
-        .count();
-    let cover_total = summaries
-        .iter()
-        .filter(|entity| quality.requires_cover(entity))
-        .count();
-    let with_refs_count = summaries
-        .iter()
-        .filter(|entity| quality.requires_external_refs(entity))
-        .filter(|entity| !entity.external_refs.is_empty())
-        .count();
-    let refs_total = summaries
-        .iter()
-        .filter(|entity| quality.requires_external_refs(entity))
-        .count();
     let connected_count = summaries
         .iter()
         .filter(|entity| quality.requires_relations(entity))
         .filter(|entity| entity.relation_count > 0)
-        .count();
-    let relations_total = summaries
-        .iter()
-        .filter(|entity| quality.requires_relations(entity))
         .count();
 
     let entity_by_id = summary_by_id(library);
@@ -243,17 +221,7 @@ fn build_analytics(library: &Library) -> AnalyticsResponse {
                 .collect::<Vec<Count>>(),
             by_source_target_type: relation_type_pairs(library).into_iter().take(16).collect(),
         },
-        coverage: build_coverage_metrics(&[
-            ("Cover", with_cover_count, cover_total),
-            ("External refs", with_refs_count, refs_total),
-            ("Relations", connected_count, relations_total),
-            (
-                "Resolved relation targets",
-                outgoing.len() - unresolved.len(),
-                outgoing.len(),
-            ),
-        ]),
-        timeline: build_timeline(dated),
+        activity: build_activity(dated),
         relations: AnalyticsRelations {
             top_fields: relation_fields(library)
                 .iter()
@@ -436,27 +404,6 @@ impl QualityEligibility {
     }
 }
 
-/// Builds coverage metrics from `(name, count, total)` rows, skipping any whose
-/// total is zero.
-fn build_coverage_metrics(entries: &[(&str, usize, usize)]) -> Vec<AnalyticsCoverageMetric> {
-    let mut metrics = Vec::new();
-    for &(name, count, total) in entries {
-        push_coverage_metric(&mut metrics, name, count, total);
-    }
-    metrics
-}
-
-fn push_coverage_metric(
-    metrics: &mut Vec<AnalyticsCoverageMetric>,
-    name: &str,
-    count: usize,
-    total: usize,
-) {
-    if total > 0 {
-        metrics.push(build_coverage_metric(name, count, total));
-    }
-}
-
 /// Builds cleanup-queue summaries from `(id, label, remaining, total)` rows,
 /// skipping any whose total is zero.
 fn cleanup_queue_summaries(entries: &[(&str, &str, usize, usize)]) -> Vec<CleanupQueueSummary> {
@@ -493,107 +440,101 @@ fn cleanup_queue_summary(
     }
 }
 
-fn build_coverage_metric(name: &str, count: usize, total: usize) -> AnalyticsCoverageMetric {
-    AnalyticsCoverageMetric {
-        name: name.to_string(),
-        count,
-        missing: total - count,
-        total,
-        percent: if total == 0 {
-            0
-        } else {
-            ((count as f64 / total as f64) * 100.0).round() as i64
-        },
-    }
-}
-
-fn build_timeline(
+/// Buckets dated entities into a year × month matrix (Jan..Dec), with a per-type
+/// breakdown so the client can filter by type. Each parseable date is one
+/// occurrence; year-only dates count toward the year total but no month bucket.
+fn build_activity(
     dated: Vec<(EntitySummary, crate::dates::ParsedEntityDate)>,
-) -> AnalyticsTimeline {
-    let mut by_year: HashMap<i32, Vec<EntitySummary>> = HashMap::new();
-    let mut by_season: HashMap<String, (i32, String, Vec<EntitySummary>)> = HashMap::new();
-    let mut by_month: HashMap<String, Vec<EntitySummary>> = HashMap::new();
-    for (entity, date) in &dated {
-        by_year.entry(date.year).or_default().push(entity.clone());
-        if let Some(season) = &date.season {
-            by_season
-                .entry(format!("{} {}", date.year, season))
-                .or_insert_with(|| (date.year, season.clone(), Vec::new()))
-                .2
-                .push(entity.clone());
-        }
-        if let Some(month) = date.month {
-            by_month
-                .entry(format!("{}-{month:02}", date.year))
-                .or_default()
-                .push(entity.clone());
-        }
+) -> AnalyticsActivity {
+    struct TypeAcc {
+        total: usize,
+        months: [u32; 12],
     }
-    let mut years: Vec<_> = by_year.into_iter().collect();
-    years.sort_by_key(|item| Reverse(item.0));
-    let years = years
-        .into_iter()
-        .map(|(year, mut entities)| {
-            let by_type = count_by(&entities, |entity| entity.type_label.clone());
-            entities.sort_by(|a, b| {
-                compare_string(
-                    date_sort_key(b.dates.first().map(|item| item.value.as_str()))
-                        .as_deref()
-                        .unwrap_or_default(),
-                    date_sort_key(a.dates.first().map(|item| item.value.as_str()))
-                        .as_deref()
-                        .unwrap_or_default(),
-                )
+    struct YearAcc {
+        total: usize,
+        months: [u32; 12],
+        by_type: HashMap<String, TypeAcc>,
+    }
+
+    let total_dated = dated
+        .iter()
+        .map(|(entity, _)| entity.id.as_str())
+        .collect::<HashSet<_>>()
+        .len();
+
+    let mut years: HashMap<i32, YearAcc> = HashMap::new();
+    let mut type_totals: HashMap<String, (String, usize)> = HashMap::new();
+    for (entity, date) in &dated {
+        let year = years.entry(date.year).or_insert_with(|| YearAcc {
+            total: 0,
+            months: [0; 12],
+            by_type: HashMap::new(),
+        });
+        year.total += 1;
+        let type_acc = year
+            .by_type
+            .entry(entity.entity_type.clone())
+            .or_insert_with(|| TypeAcc {
+                total: 0,
+                months: [0; 12],
             });
-            AnalyticsTimelineYear {
+        type_acc.total += 1;
+        if let Some(index) = date.month.and_then(month_index) {
+            year.months[index] += 1;
+            type_acc.months[index] += 1;
+        }
+        type_totals
+            .entry(entity.entity_type.clone())
+            .or_insert_with(|| (entity.type_label.clone(), 0))
+            .1 += 1;
+    }
+
+    let mut year_rows: Vec<_> = years.into_iter().collect();
+    year_rows.sort_by_key(|(year, _)| Reverse(*year));
+    let years = year_rows
+        .into_iter()
+        .map(|(year, acc)| {
+            let mut by_type = acc
+                .by_type
+                .into_iter()
+                .map(|(type_id, type_acc)| AnalyticsActivityYearType {
+                    type_id,
+                    total: type_acc.total,
+                    months: type_acc.months.to_vec(),
+                })
+                .collect::<Vec<_>>();
+            by_type.sort_by(|a, b| {
+                b.total
+                    .cmp(&a.total)
+                    .then_with(|| compare_string(&a.type_id, &b.type_id))
+            });
+            AnalyticsActivityYear {
                 year,
-                count: entities.len(),
+                total: acc.total,
+                months: acc.months.to_vec(),
                 by_type,
-                examples: unique_entities_by_id(entities)
-                    .into_iter()
-                    .take(6)
-                    .collect(),
             }
         })
         .collect::<Vec<_>>();
 
-    let mut seasons: Vec<_> = by_season.into_iter().collect();
-    seasons.sort_by(|(_, a), (_, b)| {
-        b.0.cmp(&a.0)
-            .then_with(|| season_compare_value(&b.1).cmp(&season_compare_value(&a.1)))
+    let mut types = type_totals
+        .into_iter()
+        .map(|(id, (label, total))| AnalyticsActivityType { id, label, total })
+        .collect::<Vec<_>>();
+    types.sort_by(|a, b| {
+        b.total
+            .cmp(&a.total)
+            .then_with(|| compare_string(&a.label, &b.label))
     });
-    let seasons = seasons
-        .into_iter()
-        .take(12)
-        .map(|(name, (_, _, entities))| Count {
-            name,
-            count: entities.len(),
-        })
-        .collect::<Vec<_>>();
 
-    let mut months: Vec<_> = by_month.into_iter().collect();
-    months.sort_by(|a, b| compare_string(&b.0, &a.0));
-    let months = months
-        .into_iter()
-        .take(18)
-        .map(|(name, entities)| Count {
-            name,
-            count: entities.len(),
-        })
-        .collect::<Vec<_>>();
-
-    AnalyticsTimeline {
-        total_dated: dated.len(),
+    AnalyticsActivity {
+        total_dated,
+        types,
         years,
-        seasons,
-        months,
     }
 }
 
-fn unique_entities_by_id(entities: Vec<EntitySummary>) -> Vec<EntitySummary> {
-    let mut seen = HashSet::new();
-    entities
-        .into_iter()
-        .filter(|entity| seen.insert(entity.id.clone()))
-        .collect()
+/// Zero-based month bucket (0 = January) for a 1..=12 month value.
+fn month_index(month: u32) -> Option<usize> {
+    (1..=12).contains(&month).then_some((month - 1) as usize)
 }

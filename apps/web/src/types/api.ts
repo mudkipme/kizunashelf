@@ -1,8 +1,9 @@
 export type {
-  AnalyticsCoverageMetric,
+  AnalyticsActivity,
+  AnalyticsActivityType,
+  AnalyticsActivityYear,
   AnalyticsRelationHub,
   AnalyticsResponse,
-  AnalyticsTimelineYear,
   AssetDownloadItemResult,
   AssetDownloadJob,
   AssetDownloadJobListResponse,

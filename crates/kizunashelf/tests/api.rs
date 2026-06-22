@@ -146,20 +146,18 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(analytics["totals"]["relations"], 9);
     assert_eq!(analytics["totals"]["unresolvedRelations"], 2);
     assert_eq!(analytics["totals"]["datedEntities"], 3);
-    let cover_coverage = coverage_metric(&analytics["coverage"], "Cover");
-    assert_eq!(cover_coverage["total"], 2);
-    assert_eq!(cover_coverage["missing"], 1);
-    let refs_coverage = coverage_metric(&analytics["coverage"], "External refs");
-    assert_eq!(refs_coverage["total"], 3);
-    assert_eq!(refs_coverage["missing"], 1);
-    let relation_coverage = coverage_metric(&analytics["coverage"], "Relations");
-    assert_eq!(relation_coverage["total"], 3);
-    assert_eq!(relation_coverage["missing"], 0);
-    assert!(analytics["coverage"]
-        .as_array()
-        .unwrap()
+    // Activity buckets dated entities into a year × month matrix. Star Voyager
+    // completed 2025-04-20 → year 2025, April (month index 3).
+    let activity = &analytics["activity"];
+    assert_eq!(activity["totalDated"], 3);
+    assert!(!activity["types"].as_array().unwrap().is_empty());
+    let years = activity["years"].as_array().unwrap();
+    let year_2025 = years
         .iter()
-        .all(|metric| metric["name"] != "Summary"));
+        .find(|year| year["year"] == 2025)
+        .expect("2025 activity row");
+    assert!(year_2025["total"].as_u64().unwrap() >= 1);
+    assert!(year_2025["months"][3].as_u64().unwrap() >= 1);
 
     let cleanup = server.ok_json("/api/cleanup-queues").await;
     let missing_cover = queue_summary(&cleanup["queues"], "missing-cover");
@@ -1273,15 +1271,6 @@ fn count_for(items: &Value, name: &str) -> i64 {
         .find(|item| item["name"] == name || item["label"] == name || item["typeLabel"] == name)
         .and_then(|item| item["count"].as_i64())
         .unwrap_or_default()
-}
-
-fn coverage_metric<'a>(items: &'a Value, name: &str) -> &'a Value {
-    items
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|item| item["name"] == name)
-        .unwrap_or_else(|| panic!("coverage metric not found: {name}"))
 }
 
 fn queue_summary<'a>(items: &'a Value, id: &str) -> &'a Value {

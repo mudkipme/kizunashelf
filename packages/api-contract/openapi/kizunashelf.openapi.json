@@ -2535,14 +2535,8 @@
           "distributions": {
             "$ref": "#/components/schemas/AnalyticsDistributions"
           },
-          "coverage": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AnalyticsCoverageMetric"
-            }
-          },
-          "timeline": {
-            "$ref": "#/components/schemas/AnalyticsTimeline"
+          "activity": {
+            "$ref": "#/components/schemas/AnalyticsActivity"
           },
           "relations": {
             "$ref": "#/components/schemas/AnalyticsRelations"
@@ -2555,8 +2549,7 @@
           "generatedAt",
           "totals",
           "distributions",
-          "coverage",
-          "timeline",
+          "activity",
           "relations",
           "dataQuality"
         ]
@@ -2643,104 +2636,120 @@
           "count"
         ]
       },
-      "AnalyticsCoverageMetric": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "count": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "missing": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "total": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "percent": {
-            "type": "integer",
-            "format": "int64"
-          }
-        },
-        "required": [
-          "name",
-          "count",
-          "missing",
-          "total",
-          "percent"
-        ]
-      },
-      "AnalyticsTimeline": {
+      "AnalyticsActivity": {
+        "description": "Year-over-year activity: a year × month matrix of dated entities, filterable\nby type. Backs the statistics heatmap + per-year totals. (Browsing dated\nentities by period lives in the calendar's year/season views; this is the\nat-a-glance cross-year comparison.)",
         "type": "object",
         "properties": {
           "totalDated": {
+            "description": "Distinct entities with at least one parseable date.",
             "type": "integer",
             "format": "uint",
             "minimum": 0
           },
+          "types": {
+            "description": "Type filter options (types that have dated entities), most first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsActivityType"
+            }
+          },
           "years": {
+            "description": "Per-year rows, most recent year first.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AnalyticsTimelineYear"
-            }
-          },
-          "seasons": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Count"
-            }
-          },
-          "months": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Count"
+              "$ref": "#/components/schemas/AnalyticsActivityYear"
             }
           }
         },
         "required": [
           "totalDated",
-          "years",
-          "seasons",
-          "months"
+          "types",
+          "years"
         ]
       },
-      "AnalyticsTimelineYear": {
+      "AnalyticsActivityType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "total"
+        ]
+      },
+      "AnalyticsActivityYear": {
         "type": "object",
         "properties": {
           "year": {
             "type": "integer",
             "format": "int32"
           },
-          "count": {
+          "total": {
+            "description": "Dated occurrences in the year across all types.",
             "type": "integer",
             "format": "uint",
             "minimum": 0
           },
-          "byType": {
+          "months": {
+            "description": "Twelve monthly counts (Jan..Dec) across all types. Year-only dates count\ntoward `total` but not toward any month bucket.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Count"
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
             }
           },
-          "examples": {
+          "byType": {
+            "description": "Per-type monthly breakdown, for the type filter.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/EntitySummary"
+              "$ref": "#/components/schemas/AnalyticsActivityYearType"
             }
           }
         },
         "required": [
           "year",
-          "count",
-          "byType",
-          "examples"
+          "total",
+          "months",
+          "byType"
+        ]
+      },
+      "AnalyticsActivityYearType": {
+        "type": "object",
+        "properties": {
+          "typeId": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "months": {
+            "description": "Twelve monthly counts (Jan..Dec) for this type within the year.",
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "typeId",
+          "total",
+          "months"
         ]
       },
       "AnalyticsRelations": {

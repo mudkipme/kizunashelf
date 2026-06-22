@@ -464,32 +464,49 @@ pub struct RelationGroupsResponse {
     pub target_types: Vec<RelationTargetTypeSummary>,
 }
 
+/// Year-over-year activity: a year × month matrix of dated entities, filterable
+/// by type. Backs the statistics heatmap + per-year totals. (Browsing dated
+/// entities by period lives in the calendar's year/season views; this is the
+/// at-a-glance cross-year comparison.)
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AnalyticsCoverageMetric {
-    pub name: String,
-    pub count: usize,
-    pub missing: usize,
-    pub total: usize,
-    pub percent: i64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct AnalyticsTimelineYear {
-    pub year: i32,
-    pub count: usize,
-    pub by_type: Vec<Count>,
-    pub examples: Vec<EntitySummary>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct AnalyticsTimeline {
+pub struct AnalyticsActivity {
+    /// Distinct entities with at least one parseable date.
     pub total_dated: usize,
-    pub years: Vec<AnalyticsTimelineYear>,
-    pub seasons: Vec<Count>,
-    pub months: Vec<Count>,
+    /// Type filter options (types that have dated entities), most first.
+    pub types: Vec<AnalyticsActivityType>,
+    /// Per-year rows, most recent year first.
+    pub years: Vec<AnalyticsActivityYear>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsActivityType {
+    pub id: String,
+    pub label: String,
+    pub total: usize,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsActivityYear {
+    pub year: i32,
+    /// Dated occurrences in the year across all types.
+    pub total: usize,
+    /// Twelve monthly counts (Jan..Dec) across all types. Year-only dates count
+    /// toward `total` but not toward any month bucket.
+    pub months: Vec<u32>,
+    /// Per-type monthly breakdown, for the type filter.
+    pub by_type: Vec<AnalyticsActivityYearType>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsActivityYearType {
+    pub type_id: String,
+    pub total: usize,
+    /// Twelve monthly counts (Jan..Dec) for this type within the year.
+    pub months: Vec<u32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -575,8 +592,7 @@ pub struct AnalyticsResponse {
     pub generated_at: String,
     pub totals: AnalyticsTotals,
     pub distributions: AnalyticsDistributions,
-    pub coverage: Vec<AnalyticsCoverageMetric>,
-    pub timeline: AnalyticsTimeline,
+    pub activity: AnalyticsActivity,
     pub relations: AnalyticsRelations,
     pub data_quality: AnalyticsDataQuality,
 }

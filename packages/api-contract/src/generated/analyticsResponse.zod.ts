@@ -22,27 +22,17 @@ export const analyticsResponseDistributionsByRelationFieldItemCountMin = 0;
 
 export const analyticsResponseDistributionsBySourceTargetTypeItemCountMin = 0;
 
-export const analyticsResponseCoverageItemCountMin = 0;
+export const analyticsResponseActivityTotalDatedMin = 0;
 
-export const analyticsResponseCoverageItemMissingMin = 0;
+export const analyticsResponseActivityTypesItemTotalMin = 0;
 
-export const analyticsResponseCoverageItemTotalMin = 0;
+export const analyticsResponseActivityYearsItemTotalMin = 0;
 
-export const analyticsResponseTimelineTotalDatedMin = 0;
+export const analyticsResponseActivityYearsItemMonthsItemMin = 0;
 
-export const analyticsResponseTimelineYearsItemCountMin = 0;
+export const analyticsResponseActivityYearsItemByTypeItemTotalMin = 0;
 
-export const analyticsResponseTimelineYearsItemByTypeItemCountMin = 0;
-
-export const analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneMonthMin = 0;
-
-export const analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneDayMin = 0;
-
-export const analyticsResponseTimelineYearsItemExamplesItemRelationCountMin = 0;
-
-export const analyticsResponseTimelineSeasonsItemCountMin = 0;
-
-export const analyticsResponseTimelineMonthsItemCountMin = 0;
+export const analyticsResponseActivityYearsItemByTypeItemMonthsItemMin = 0;
 
 export const analyticsResponseRelationsTopFieldsItemEdgeCountMin = 0;
 
@@ -118,57 +108,24 @@ export const AnalyticsResponse = zod.object({
   "count": zod.number().min(analyticsResponseDistributionsBySourceTargetTypeItemCountMin)
 }))
 }),
-  "coverage": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsResponseCoverageItemCountMin),
-  "missing": zod.number().min(analyticsResponseCoverageItemMissingMin),
-  "total": zod.number().min(analyticsResponseCoverageItemTotalMin),
-  "percent": zod.number()
-})),
-  "timeline": zod.object({
-  "totalDated": zod.number().min(analyticsResponseTimelineTotalDatedMin),
+  "activity": zod.object({
+  "totalDated": zod.number().min(analyticsResponseActivityTotalDatedMin).describe('Distinct entities with at least one parseable date.'),
+  "types": zod.array(zod.object({
+  "id": zod.string(),
+  "label": zod.string(),
+  "total": zod.number().min(analyticsResponseActivityTypesItemTotalMin)
+})).describe('Type filter options (types that have dated entities), most first.'),
   "years": zod.array(zod.object({
   "year": zod.number(),
-  "count": zod.number().min(analyticsResponseTimelineYearsItemCountMin),
+  "total": zod.number().min(analyticsResponseActivityYearsItemTotalMin).describe('Dated occurrences in the year across all types.'),
+  "months": zod.array(zod.number().min(analyticsResponseActivityYearsItemMonthsItemMin)).describe('Twelve monthly counts (Jan..Dec) across all types. Year-only dates count\ntoward `total` but not toward any month bucket.'),
   "byType": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsResponseTimelineYearsItemByTypeItemCountMin)
-})),
-  "examples": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.string(),
-  "typeLabel": zod.string(),
-  "title": zod.string(),
-  "titles": zod.record(zod.string(), zod.string()),
-  "dates": zod.array(zod.object({
-  "field": zod.string(),
-  "value": zod.string(),
-  "parsed": zod.union([zod.object({
-  "year": zod.number(),
-  "month": zod.number().min(analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneMonthMin).nullish(),
-  "day": zod.number().min(analyticsResponseTimelineYearsItemExamplesItemDatesItemParsedOneDayMin).nullish(),
-  "season": zod.string().nullish(),
-  "seasonKey": zod.string().nullish()
-}),zod.null()]).optional(),
-  "sortKey": zod.string().nullish()
-})),
-  "image": zod.string().nullish(),
-  "summary": zod.string().nullish(),
-  "path": zod.string(),
-  "basename": zod.string(),
-  "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(analyticsResponseTimelineYearsItemExamplesItemRelationCountMin)
-}))
-})),
-  "seasons": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsResponseTimelineSeasonsItemCountMin)
-})),
-  "months": zod.array(zod.object({
-  "name": zod.string(),
-  "count": zod.number().min(analyticsResponseTimelineMonthsItemCountMin)
-}))
-}),
+  "typeId": zod.string(),
+  "total": zod.number().min(analyticsResponseActivityYearsItemByTypeItemTotalMin),
+  "months": zod.array(zod.number().min(analyticsResponseActivityYearsItemByTypeItemMonthsItemMin)).describe('Twelve monthly counts (Jan..Dec) for this type within the year.')
+})).describe('Per-type monthly breakdown, for the type filter.')
+})).describe('Per-year rows, most recent year first.')
+}).describe('Year-over-year activity: a year × month matrix of dated entities, filterable\nby type. Backs the statistics heatmap + per-year totals. (Browsing dated\nentities by period lives in the calendar\'s year\/season views; this is the\nat-a-glance cross-year comparison.)'),
   "relations": zod.object({
   "topFields": zod.array(zod.object({
   "field": zod.string(),

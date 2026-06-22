@@ -23,7 +23,7 @@ export function CalendarDayCell({
       type="button"
       onClick={() => onSelect(day.date)}
       className={cn(
-        "flex min-h-28 min-w-0 flex-col gap-2 border-b border-r p-2 text-left hover:bg-accent",
+        "flex aspect-square min-w-0 flex-col gap-2 border-b border-r p-2 text-left hover:bg-accent sm:aspect-auto sm:min-h-28",
         selected && "bg-accent",
       )}
     >
@@ -34,7 +34,7 @@ export function CalendarDayCell({
         ) : null}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="hidden min-w-0 flex-col gap-1 sm:flex">
         {uniqueEntries.slice(0, 3).map((entry) => (
           <span key={entry.id} className="truncate text-xs text-muted-foreground">
             {entry.entity.title}
