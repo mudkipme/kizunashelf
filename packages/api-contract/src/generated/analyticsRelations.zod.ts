@@ -47,6 +47,7 @@ export const AnalyticsRelations = zod.object({
   "topTargets": zod.array(zod.object({
   "key": zod.string(),
   "targetTitle": zod.string(),
+  "targetTitles": zod.record(zod.string(), zod.string()).describe('The resolved target entity\'s title map (empty for unresolved targets), so\nclients can show the target in the viewer\'s language: `targetTitles[lang]\n?? targetTitle`. Mirrors `EntitySummary.titles`.'),
   "targetId": zod.string().nullish(),
   "targetType": zod.string().nullish(),
   "targetTypeLabel": zod.string().nullish(),
@@ -85,6 +86,7 @@ export const AnalyticsRelations = zod.object({
   "topTargets": zod.array(zod.object({
   "key": zod.string(),
   "targetTitle": zod.string(),
+  "targetTitles": zod.record(zod.string(), zod.string()).describe('The resolved target entity\'s title map (empty for unresolved targets), so\nclients can show the target in the viewer\'s language: `targetTitles[lang]\n?? targetTitle`. Mirrors `EntitySummary.titles`.'),
   "targetId": zod.string().nullish(),
   "targetType": zod.string().nullish(),
   "targetTypeLabel": zod.string().nullish(),

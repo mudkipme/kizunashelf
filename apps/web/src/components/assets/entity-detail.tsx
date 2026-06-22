@@ -143,6 +143,7 @@ export function EntityDetail({
         <RelationLocalGraph
           target={{
             targetTitle: entity.title,
+            targetTitles: entity.titles,
             targetTypeLabel: entity.typeLabel,
             count: relations.length,
           }}
@@ -244,7 +245,7 @@ function RelationButton({
   entityId: string;
   relatedById: Map<string, EntitySummary>;
 }) {
-  const display = relationDisplay(relation, entityId, relatedById);
+  const display = relationDisplay(relation, entityId, relatedById, useTitleLanguage());
   const className =
     "h-auto min-h-8 max-w-full justify-start whitespace-normal break-all text-left leading-5";
 
@@ -267,10 +268,14 @@ function relationDisplay(
   relation: Relation,
   entityId: string,
   relatedById: Map<string, EntitySummary>,
+  language: string,
 ) {
   if (relation.sourceId === entityId) {
+    // Outgoing: resolve the target's title in the viewer language when it's a
+    // known entity, else fall back to the raw wikilink text.
+    const target = relation.targetId ? relatedById.get(relation.targetId) : undefined;
     return {
-      label: relation.targetTitle,
+      label: target ? entityTitle(target, language) : relation.targetTitle,
       href: relation.targetId ? `/entities/${encodeURIComponent(relation.targetId)}` : undefined,
     };
   }
@@ -278,7 +283,7 @@ function relationDisplay(
   if (relation.targetId === entityId) {
     const source = relatedById.get(relation.sourceId);
     return {
-      label: source?.title ?? relation.sourceId,
+      label: source ? entityTitle(source, language) : relation.sourceId,
       href: source ? `/entities/${encodeURIComponent(source.id)}` : undefined,
     };
   }

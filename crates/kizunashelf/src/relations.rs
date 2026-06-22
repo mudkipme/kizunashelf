@@ -264,6 +264,9 @@ fn build_relation_target_summary_with_index(
         target_title: target_entity
             .map(|entity| entity.title.clone())
             .unwrap_or_else(|| first.target_title.clone()),
+        target_titles: target_entity
+            .map(|entity| entity.titles.clone())
+            .unwrap_or_default(),
         target_id: first.target_id.clone(),
         target_type,
         target_type_label,

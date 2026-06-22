@@ -2830,6 +2830,13 @@
           "targetTitle": {
             "type": "string"
           },
+          "targetTitles": {
+            "description": "The resolved target entity's title map (empty for unresolved targets), so\nclients can show the target in the viewer's language: `targetTitles[lang]\n?? targetTitle`. Mirrors `EntitySummary.titles`.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "targetId": {
             "type": [
               "string",
@@ -2869,6 +2876,7 @@
         "required": [
           "key",
           "targetTitle",
+          "targetTitles",
           "count",
           "sourceTypes",
           "examples"
@@ -2883,6 +2891,13 @@
           "targetTitle": {
             "type": "string"
           },
+          "targetTitles": {
+            "description": "The resolved target entity's title map (empty for unresolved targets), so\nclients can show the target in the viewer's language: `targetTitles[lang]\n?? targetTitle`. Mirrors `EntitySummary.titles`.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "targetId": {
             "type": [
               "string",
@@ -2922,6 +2937,7 @@
         "required": [
           "key",
           "targetTitle",
+          "targetTitles",
           "count",
           "sourceTypes",
           "examples"

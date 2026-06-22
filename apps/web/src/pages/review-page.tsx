@@ -19,6 +19,8 @@ import {
   entityMatchesQuery,
   entityTypeOptions,
 } from "@/lib/entity-filters";
+import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type {
@@ -283,6 +285,7 @@ function EntitySummaryCell({
   compact?: boolean;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
+  const language = useTitleLanguage();
   return (
     <div className="min-w-0">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -290,7 +293,7 @@ function EntitySummaryCell({
           to={`/entities/${encodeURIComponent(entity.id)}`}
           className={cn("min-w-0 truncate font-medium hover:underline", compact ? "text-xs" : "text-sm")}
         >
-          {entity.title}
+          {entityTitle(entity, language)}
         </Link>
         <Badge variant="outline">{entity.typeLabel}</Badge>
       </div>

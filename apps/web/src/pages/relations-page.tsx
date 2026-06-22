@@ -5,6 +5,8 @@ import { errorMessage } from "@/api/client";
 import { relationGroupsQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
+import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 import type {
   RelationTargetHubSummary,
   RelationTargetTypeSummary,
@@ -76,16 +78,17 @@ function RelationTargetTypeCard({ targetType }: { targetType: RelationTargetType
 
 function RelationHubRow({ target }: { target: RelationTargetHubSummary }) {
   const entityHref = target.targetId ? `/entities/${encodeURIComponent(target.targetId)}` : undefined;
+  const title = entityTitle({ title: target.targetTitle, titles: target.targetTitles }, useTitleLanguage());
   return (
     <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {entityHref ? (
             <Link to={entityHref} className="min-w-0 truncate text-sm font-medium hover:underline">
-              {target.targetTitle}
+              {title}
             </Link>
           ) : (
-            <span className="min-w-0 truncate text-sm font-medium">{target.targetTitle}</span>
+            <span className="min-w-0 truncate text-sm font-medium">{title}</span>
           )}
           <Badge variant="secondary">{target.count}</Badge>
           {target.sourceTypes.map((type) => (

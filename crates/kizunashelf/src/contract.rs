@@ -422,6 +422,10 @@ pub struct RelationListResponse {
 pub struct RelationTargetSummary {
     pub key: String,
     pub target_title: String,
+    /// The resolved target entity's title map (empty for unresolved targets), so
+    /// clients can show the target in the viewer's language: `targetTitles[lang]
+    /// ?? targetTitle`. Mirrors `EntitySummary.titles`.
+    pub target_titles: std::collections::BTreeMap<String, String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

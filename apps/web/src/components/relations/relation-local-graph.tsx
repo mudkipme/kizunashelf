@@ -17,11 +17,20 @@ export function RelationLocalGraph({
   target,
   sources,
 }: {
-  target: { targetTitle: string; targetTypeLabel?: string | null; count: number };
+  target: {
+    targetTitle: string;
+    targetTitles?: Record<string, string>;
+    targetTypeLabel?: string | null;
+    count: number;
+  };
   sources: EntitySummary[];
 }) {
   const nodes = graphNodes(sources.slice(0, maxGraphNodes));
   const language = useTitleLanguage();
+  const targetTitle = entityTitle(
+    { title: target.targetTitle, titles: target.targetTitles ?? {} },
+    language,
+  );
 
   return (
     <section className="overflow-auto rounded-md border">
@@ -48,7 +57,7 @@ export function RelationLocalGraph({
             ))}
           </svg>
           <div className="absolute left-1/2 top-1/2 flex w-56 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-md border bg-background px-3 py-2 text-center shadow-xs">
-            <span className="line-clamp-2 text-sm font-semibold">{target.targetTitle}</span>
+            <span className="line-clamp-2 text-sm font-semibold">{targetTitle}</span>
             <span className="flex flex-wrap justify-center gap-1">
               {target.targetTypeLabel ? <Badge variant="outline">{target.targetTypeLabel}</Badge> : null}
               <Badge variant="secondary">{target.count} links</Badge>
