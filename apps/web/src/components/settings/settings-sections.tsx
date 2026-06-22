@@ -1,11 +1,9 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { PlusIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import {
   externalFieldOptionsForSource,
   externalSourceOptions,
@@ -21,7 +19,6 @@ import type {
   ExternalProviderCatalog,
   FieldConfig,
   FieldType,
-  HomeConfig,
   HomeSectionConfig,
   HomeSectionFilterConfig,
   Language,
@@ -38,17 +35,11 @@ import {
   TextField,
 } from "./settings-controls";
 import {
-  fieldConfigSummary,
   fieldOptionKeys,
   fieldTypeOptions,
   type FieldOptionKey,
 } from "./settings-field-descriptors";
-import {
-  defaultField,
-  defaultHomeSection,
-  replaceArray,
-  replaceAt,
-} from "./settings-model";
+import { replaceArray } from "./settings-model";
 
 export function DailyNotesEditor({
   config,
@@ -79,65 +70,14 @@ export function DailyNotesEditor({
   );
 }
 
-export function HomeEditor({
-  config,
-  types,
-  onChange,
-}: {
-  config: HomeConfig;
-  types: EntityTypeConfig[];
-  onChange: (config: HomeConfig) => void;
-}) {
-  const sections = config.sections ?? [];
-  return (
-    <div className="flex flex-col gap-3">
-      <TextField
-        label="Title"
-        value={config.title ?? ""}
-        onChange={(title) => onChange({ ...config, title })}
-      />
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium">Sections</h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onChange({ ...config, sections: [...sections, defaultHomeSection(types[0]?.id)] })}
-        >
-          <PlusIcon data-icon="inline-start" />
-          Section
-        </Button>
-      </div>
-      <div className="flex flex-col gap-3">
-        {sections.map((section, index) => (
-          <HomeSectionEditor
-            // Index, not section.id: id is editable, so keying on it remounts the
-            // row each keystroke and drops focus. List ops are index-based.
-            key={index}
-            section={section}
-            types={types}
-            onChange={(next) => onChange(replaceAt({ ...config, sections }, "sections", index, next))}
-            onRemove={() =>
-              onChange({ ...config, sections: sections.filter((_, itemIndex) => itemIndex !== index) })
-            }
-          />
-        ))}
-        {sections.length === 0 ? <EmptyConfigLine>No home sections configured.</EmptyConfigLine> : null}
-      </div>
-    </div>
-  );
-}
-
-function HomeSectionEditor({
+export function HomeSectionForm({
   section,
   types,
   onChange,
-  onRemove,
 }: {
   section: HomeSectionConfig;
   types: EntityTypeConfig[];
   onChange: (section: HomeSectionConfig) => void;
-  onRemove: () => void;
 }) {
   const selectedType = types.find((type) => type.id === section.type);
   const filterFields = selectedType?.fields.filter((field) => supportsEnumOptions(field.fieldType)) ?? [];
@@ -166,19 +106,14 @@ function HomeSectionEditor({
   }
 
   return (
-    <div className="rounded-md border p-3">
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="truncate text-sm font-medium">{section.title || section.id || "Home section"}</h4>
-        <IconButton label="Remove section" onClick={onRemove} />
-      </div>
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <TextField label="ID" value={section.id} onChange={(id) => onChange({ ...section, id })} />
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <TextField label="ID" value={section.id} onChange={(id) => onChange({ ...section, id })} />
         <TextField label="Title" value={section.title} onChange={(title) => onChange({ ...section, title })} />
         <Field label="Type">
           <Select
             value={section.type}
             onChange={(event) => onChange({ ...section, type: event.target.value, filters: [] })}
-            className="h-9 w-full text-sm"
+            className="h-9 w-full text-base md:text-sm"
           >
             {types.map((type) => (
               <option key={type.id} value={type.id}>
@@ -219,7 +154,7 @@ function HomeSectionEditor({
           <Select
             value={currentSort}
             onChange={(event) => onChange({ ...section, sort: event.target.value })}
-            className="h-9 w-full text-sm"
+            className="h-9 w-full text-base md:text-sm"
           >
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -240,14 +175,13 @@ function HomeSectionEditor({
                 direction: event.target.value ? (event.target.value as "asc" | "desc") : null,
               })
             }
-            className="h-9 w-full text-sm"
+            className="h-9 w-full text-base md:text-sm"
           >
             <option value="">Default</option>
             <option value="asc">Ascending</option>
             <option value="desc">Descending</option>
           </Select>
         </Field>
-      </div>
     </div>
   );
 }
@@ -272,7 +206,7 @@ function HomeSectionFilterEditor({
           <Select
             value={filter.field}
             onChange={(event) => onChange({ ...filter, field: event.target.value, values: [] })}
-            className="h-9 w-full text-sm"
+            className="h-9 w-full text-base md:text-sm"
           >
             {fields.map((field) => (
               <option key={field.field} value={field.field}>
@@ -301,7 +235,7 @@ function HomeSectionFilterEditor({
 
 // Title-language options (from `GET /api/languages`) made available to the
 // nested field editors without drilling through every intermediate component.
-const TitleLanguagesContext = createContext<Language[]>([]);
+export const TitleLanguagesContext = createContext<Language[]>([]);
 
 /// A title-language picker over the supported languages. `value` is an empty
 /// string for "None"; an unrecognized configured code is preserved as its own
@@ -319,7 +253,7 @@ function LanguageSelect({
     <Select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 w-full text-sm"
+      className="h-9 w-full text-base md:text-sm"
     >
       <option value="">None</option>
       {languages.map((language) => (
@@ -334,14 +268,15 @@ function LanguageSelect({
   );
 }
 
-export function EntityTypeEditor({
+/// The basics / providers / filename portion of an entity type — everything
+/// except its fields list, which is edited via a drill-down in the type dialog.
+export function EntityTypeForm({
   config,
   providerCatalog,
   languages,
   taxonomyBase,
   taxonomyRoot,
   onChange,
-  onRemove,
 }: {
   config: EntityTypeConfig;
   providerCatalog?: ExternalProviderCatalog;
@@ -351,33 +286,9 @@ export function EntityTypeEditor({
   /** Vault-relative taxonomy root; the type path is relative to it. */
   taxonomyRoot: string;
   onChange: (config: EntityTypeConfig) => void;
-  onRemove: () => void;
 }) {
-  const providerCount = new Set([
-    ...(config.externalPriority ?? []),
-    ...(config.bodyMappings ?? []).map((mapping) => mapping.source),
-    ...config.fields
-      .filter((field) => field.fieldType === "externalRef")
-      .map((field) => field.externalRef ?? "")
-      .filter(Boolean),
-  ]).size;
-
   return (
-    <TitleLanguagesContext.Provider value={languages}>
-    <div className="rounded-md border p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold">{config.label || config.id || "Entity type"}</h3>
-          <div className="mt-2 flex flex-wrap gap-1">
-            <Badge variant="secondary">{config.fields.length} fields</Badge>
-            <Badge variant="secondary">{providerCount} providers</Badge>
-            {config.path ? <Badge variant="outline">{config.path}</Badge> : null}
-          </div>
-        </div>
-        <IconButton label="Remove type" onClick={onRemove} />
-      </div>
-
-      <div className="mt-4 flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <ConfigSubsection title="Basics">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
             <TextField label="ID" value={config.id} onChange={(id) => onChange({ ...config, id })} />
@@ -435,7 +346,7 @@ export function EntityTypeEditor({
                     },
                   })
                 }
-                className="h-9 w-full text-sm"
+                className="h-9 w-full text-base md:text-sm"
               >
                 <option value="false">No</option>
                 <option value="true">Yes</option>
@@ -444,15 +355,6 @@ export function EntityTypeEditor({
           </div>
         </ConfigSubsection>
       </div>
-
-      <Separator className="my-3" />
-      <FieldsEditor
-        providerCatalog={providerCatalog}
-        fields={config.fields}
-        onChange={(fields) => onChange({ ...config, fields })}
-      />
-    </div>
-    </TitleLanguagesContext.Provider>
   );
 }
 
@@ -461,42 +363,6 @@ function ConfigSubsection({ title, children }: { title: string; children: ReactN
     <div className="flex flex-col gap-2">
       <h4 className="text-xs font-semibold uppercase text-muted-foreground">{title}</h4>
       {children}
-    </div>
-  );
-}
-
-function FieldsEditor({
-  providerCatalog,
-  fields,
-  onChange,
-}: {
-  providerCatalog?: ExternalProviderCatalog;
-  fields: FieldConfig[];
-  onChange: (fields: FieldConfig[]) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="text-sm font-medium">Fields</h4>
-        <Button type="button" variant="outline" size="sm" onClick={() => onChange([...fields, defaultField()])}>
-          <PlusIcon data-icon="inline-start" />
-          Field
-        </Button>
-      </div>
-      <div className="flex flex-col gap-3">
-        {fields.map((field, index) => (
-          <FieldConfigEditor
-            // Index, not field.field/fieldType: both are editable, so keying on
-            // them remounts the row on every keystroke and drops focus.
-            key={index}
-            providerCatalog={providerCatalog}
-            field={field}
-            onChange={(next) => onChange(replaceArray(fields, index, next))}
-            onRemove={() => onChange(fields.filter((_, itemIndex) => itemIndex !== index))}
-          />
-        ))}
-        {fields.length === 0 ? <EmptyConfigLine>No fields configured.</EmptyConfigLine> : null}
-      </div>
     </div>
   );
 }
@@ -640,54 +506,40 @@ function ExternalBodyMappingsEditor({
   );
 }
 
-function FieldConfigEditor({
+/// The editor body for a single field. Rendered inside the type dialog's
+/// field drill-down view; must be wrapped in a [`TitleLanguagesContext`]
+/// provider so the title-language picker has its options.
+export function FieldForm({
   providerCatalog,
   field,
   onChange,
-  onRemove,
 }: {
   providerCatalog?: ExternalProviderCatalog;
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
-  onRemove: () => void;
 }) {
   return (
-    <div className="rounded-md border p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="truncate text-sm font-medium">{field.displayName || field.field || "Field"}</h4>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {fieldConfigSummary(field).map((item) => (
-              <Badge key={item} variant="outline">
-                {item}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <IconButton label="Remove field" onClick={onRemove} />
-      </div>
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <TextField label="Field" value={field.field} onChange={(value) => onChange({ ...field, field: value })} />
-        <Field label="Type">
-          <Select
-            value={field.fieldType}
-            onChange={(event) => onChange({ ...field, fieldType: event.target.value as FieldType })}
-            className="h-9 w-full text-sm"
-          >
-            {fieldTypeOptions.map((option) => (
-              <option key={option} value={option}>
-                {fieldTypeLabel(option)}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <TextField
-          label="Display name"
-          value={field.displayName ?? ""}
-          onChange={(displayName) => onChange({ ...field, displayName })}
-        />
-        <FieldOptionEditors providerCatalog={providerCatalog} field={field} onChange={onChange} />
-      </div>
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <TextField label="Field" value={field.field} onChange={(value) => onChange({ ...field, field: value })} />
+      <Field label="Type">
+        <Select
+          value={field.fieldType}
+          onChange={(event) => onChange({ ...field, fieldType: event.target.value as FieldType })}
+          className="h-9 w-full text-base md:text-sm"
+        >
+          {fieldTypeOptions.map((option) => (
+            <option key={option} value={option}>
+              {fieldTypeLabel(option)}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <TextField
+        label="Display name"
+        value={field.displayName ?? ""}
+        onChange={(displayName) => onChange({ ...field, displayName })}
+      />
+      <FieldOptionEditors providerCatalog={providerCatalog} field={field} onChange={onChange} />
     </div>
   );
 }
@@ -744,7 +596,7 @@ function FieldOptionEditor({
             onChange={(event) =>
               onChange({ ...field, titleRole: (event.target.value || null) as FieldConfig["titleRole"] })
             }
-            className="h-9 w-full text-sm"
+            className="h-9 w-full text-base md:text-sm"
           >
             <option value="">None</option>
             <option value="original">Original</option>
@@ -754,7 +606,7 @@ function FieldOptionEditor({
           <Select
             value={field.defaultTitle ? "true" : "false"}
             onChange={(event) => onChange({ ...field, defaultTitle: event.target.value === "true" })}
-            className="h-9 w-full text-sm"
+            className="h-9 w-full text-base md:text-sm"
           >
             <option value="false">No</option>
             <option value="true">Yes</option>
@@ -807,7 +659,7 @@ function FieldOptionEditor({
           onChange={(event) =>
             onChange({ ...field, dateRole: (event.target.value || null) as FieldConfig["dateRole"] })
           }
-          className="h-9 w-full text-sm"
+          className="h-9 w-full text-base md:text-sm"
         >
           <option value="">None</option>
           <option value="planning">Planning</option>
@@ -823,7 +675,7 @@ function FieldOptionEditor({
         <Select
           value={field.seasonLanguage ?? "zh"}
           onChange={(event) => onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })}
-          className="h-9 w-full text-sm"
+          className="h-9 w-full text-base md:text-sm"
         >
           <option value="zh">Chinese</option>
           <option value="ja">Japanese</option>
@@ -846,7 +698,7 @@ function FieldOptionEditor({
                 externalTypes: externalTypesForSource(providerCatalog, event.target.value),
               })
             }
-            className="h-9 w-full text-sm"
+            className="h-9 w-full text-base md:text-sm"
           >
             <option value="">None</option>
             {externalSourceOptions(providerCatalog).map((option) => (

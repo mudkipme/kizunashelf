@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { PlusIcon, SaveIcon } from "lucide-react";
+import { SaveIcon } from "lucide-react";
 
 import { saveSettingsConfig } from "@/api/settings";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +21,12 @@ import {
 import {
   cleanVaultConfig,
   defaultDailyNotes,
-  defaultEntityType,
   defaultHome,
   joinPath,
   normalizeVaultConfig,
-  replaceAt,
 } from "./settings-model";
-import { DailyNotesEditor, EntityTypeEditor, HomeEditor } from "./settings-sections";
+import { HomeBlock, TypesSection } from "./settings-dialogs";
+import { DailyNotesEditor } from "./settings-sections";
 
 /** A starter schema preset, served by `GET /api/vault-templates`. */
 export type VaultTemplateOption = VaultTemplatesResponse["templates"][number];
@@ -268,7 +267,7 @@ export function SettingsEditor({
             }
           >
             {config.home ? (
-              <HomeEditor
+              <HomeBlock
                 config={config.home}
                 types={config.types}
                 onChange={(home) => setConfig((current) => ({ ...current, home }))}
@@ -290,43 +289,15 @@ export function SettingsEditor({
                 ]}
               />
             }
-            action={
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setConfig((current) => ({ ...current, types: [...current.types, defaultEntityType()] }))
-                }
-              >
-                <PlusIcon data-icon="inline-start" />
-                Type
-              </Button>
-            }
           >
-            <div className="flex flex-col gap-3">
-              {config.types.map((typeConfig, index) => (
-                <EntityTypeEditor
-                  // Keyed by position, not by id: the id is an editable field, so
-                  // keying on it would remount the row on every keystroke and drop
-                  // focus. All list ops here are index-based already.
-                  key={index}
-                  config={typeConfig}
-                  providerCatalog={providerCatalog}
-                  languages={languages}
-                  taxonomyBase={taxonomyBase}
-                  taxonomyRoot={config.taxonomyRoot}
-                  onChange={(next) => setConfig((current) => replaceAt(current, "types", index, next))}
-                  onRemove={() =>
-                    setConfig((current) => ({
-                      ...current,
-                      types: current.types.filter((_, itemIndex) => itemIndex !== index),
-                    }))
-                  }
-                />
-              ))}
-              {config.types.length === 0 ? <EmptyConfigLine>No entity types configured.</EmptyConfigLine> : null}
-            </div>
+            <TypesSection
+              types={config.types}
+              providerCatalog={providerCatalog}
+              languages={languages}
+              taxonomyBase={taxonomyBase}
+              taxonomyRoot={config.taxonomyRoot}
+              onChange={(types) => setConfig((current) => ({ ...current, types }))}
+            />
           </SettingsSection>
         </fieldset>
       </div>
