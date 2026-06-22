@@ -63,6 +63,29 @@ pub struct SaveSettingsRequest {
     pub vault: Option<VaultConfig>,
 }
 
+/// The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the
+/// plain-text "advanced" editor that bypasses the structured schema form.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RawConfigResponse {
+    /// Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).
+    pub vault_config_path: String,
+    /// Whether the vault config file exists on disk.
+    pub vault_exists: bool,
+    /// The raw YAML text of the config file, verbatim (empty when it doesn't
+    /// exist yet).
+    pub content: String,
+}
+
+/// Raw YAML text to validate and write verbatim to the vault config. The text is
+/// strictly parsed first: type errors, missing required fields, invalid enum
+/// values, and any unknown field are rejected (`400`) rather than dropped.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveRawConfigRequest {
+    pub content: String,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PathSuggestionsResponse {
@@ -594,6 +617,8 @@ pub struct ApiSchemas {
     pub health: HealthResponse,
     pub settings_config: SettingsConfigResponse,
     pub save_settings_request: SaveSettingsRequest,
+    pub raw_config: RawConfigResponse,
+    pub save_raw_config_request: SaveRawConfigRequest,
     pub path_suggestions: PathSuggestionsResponse,
     pub kizuna_config: KizunaConfig,
     pub app_config: AppConfig,

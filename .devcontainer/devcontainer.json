@@ -1,11 +1,24 @@
 {
   "name": "Tauri Headless Build",
-  "image": "mcr.microsoft.com/devcontainers/rust:1",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
-    "ghcr.io/devcontainers/features/node:2.0.0": {}
+    "ghcr.io/devcontainers/features/node:2.0.0": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
   },
   "forwardPorts": [
-    1420
+    1420,
+    8787
   ],
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libwebkit2gtk-4.1-dev libsoup-3.0-dev"
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/../kizunashelf-ios,target=${localWorkspaceFolder}/../kizunashelf-ios,type=bind,consistency=cached"
+  ],
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached"
 }

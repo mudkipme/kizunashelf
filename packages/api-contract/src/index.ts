@@ -94,6 +94,8 @@ export * from "./generated/vaultTemplate.zod.js";
 export * from "./generated/vaultTemplatesResponse.zod.js";
 export * from "./generated/saveSettingsRequest.zod.js";
 export * from "./generated/settingsConfigResponse.zod.js";
+export * from "./generated/rawConfigResponse.zod.js";
+export * from "./generated/saveRawConfigRequest.zod.js";
 export * from "./generated/pathSuggestionsResponse.zod.js";
 
 export const ApiResponseSchemas = {

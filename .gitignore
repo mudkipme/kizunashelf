@@ -13,3 +13,4 @@ target/
 /config/.kizunashelf.tokens.json
 .antigravitycli/
 .claude
+.pnpm-store

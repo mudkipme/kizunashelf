@@ -694,6 +694,109 @@ async fn settings_save_and_read_vault_config() {
 }
 
 #[tokio::test]
+async fn raw_settings_config_round_trips_yaml_verbatim() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    std::fs::create_dir_all(&vault).unwrap();
+    let app = inline_router(&vault, true, true);
+
+    let missing = request_json(&app, Method::GET, "/api/settings/config/raw", None).await;
+    assert_eq!(missing.0, StatusCode::OK);
+    assert_eq!(missing.1["vaultExists"], false);
+    assert_eq!(missing.1["content"], "");
+
+    // Comments and exact formatting must survive the round trip (the point of the
+    // raw editor): the bytes are written verbatim, not re-serialized.
+    let yaml = "# my vault\ntaxonomyRoot: Taxonomy\ntypes: []\n";
+    let saved = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config/raw",
+        Some(json!({ "content": yaml })),
+    )
+    .await;
+    assert_eq!(saved.0, StatusCode::OK);
+    assert_eq!(saved.1["vaultExists"], true);
+    assert_eq!(saved.1["content"], yaml);
+    assert_eq!(
+        std::fs::read_to_string(vault.join(".kizunashelf/config.yaml")).unwrap(),
+        yaml
+    );
+
+    let read_back = request_json(&app, Method::GET, "/api/settings/config/raw", None).await;
+    assert_eq!(read_back.1["content"], yaml);
+}
+
+#[tokio::test]
+async fn raw_settings_config_rejects_unknown_fields() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    std::fs::create_dir_all(&vault).unwrap();
+    let app = inline_router(&vault, true, true);
+
+    let rejected = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config/raw",
+        Some(json!({ "content": "taxonomyRoot: Taxonomy\ntypes: []\nmystery: 42\n" })),
+    )
+    .await;
+    assert_eq!(rejected.0, StatusCode::BAD_REQUEST);
+    assert!(rejected.1["error"]
+        .as_str()
+        .unwrap()
+        .contains("unknown config field"));
+    // A rejected write must not touch the file.
+    assert!(!vault.join(".kizunashelf/config.yaml").exists());
+}
+
+#[tokio::test]
+async fn raw_settings_config_rejects_malformed_config() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    std::fs::create_dir_all(&vault).unwrap();
+    let app = inline_router(&vault, true, true);
+
+    // Missing the required `types` field.
+    let missing_required = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config/raw",
+        Some(json!({ "content": "taxonomyRoot: Taxonomy\n" })),
+    )
+    .await;
+    assert_eq!(missing_required.0, StatusCode::BAD_REQUEST);
+
+    // Not valid YAML at all.
+    let broken = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config/raw",
+        Some(json!({ "content": "taxonomyRoot: [unterminated\n" })),
+    )
+    .await;
+    assert_eq!(broken.0, StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn raw_settings_config_write_is_disabled_in_read_only_mode() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    std::fs::create_dir_all(&vault).unwrap();
+    let app = inline_router(&vault, false, false);
+
+    let saved = request_json(
+        &app,
+        Method::PUT,
+        "/api/settings/config/raw",
+        Some(json!({ "content": "taxonomyRoot: Taxonomy\ntypes: []\n" })),
+    )
+    .await;
+    assert_eq!(saved.0, StatusCode::FORBIDDEN);
+    assert_eq!(saved.1["error"], "Settings writes are disabled");
+}
+
+#[tokio::test]
 async fn settings_config_rejects_paths_that_escape_the_vault_root() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");

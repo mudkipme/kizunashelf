@@ -6,8 +6,9 @@ use super::assets::{
 use super::entities::{entities, entity_dates, entity_detail};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
-    calendar, calendar_planning, capabilities, config, health, home, languages, refresh,
-    relation_groups, relations, save_settings_config, settings_config, vault_templates,
+    calendar, calendar_planning, capabilities, config, health, home, languages,
+    raw_settings_config, refresh, relation_groups, relations, save_raw_settings_config,
+    save_settings_config, settings_config, vault_templates,
 };
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
@@ -18,8 +19,9 @@ use crate::contract::{
     CalendarResponse, CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse,
     DeleteEntityResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
     ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
-    HomeResponse, LanguagesResponse, PathSuggestionsResponse, RelationGroupsResponse,
-    RelationListResponse, SettingsConfigResponse, StatsResponse, VaultTemplatesResponse,
+    HomeResponse, LanguagesResponse, PathSuggestionsResponse, RawConfigResponse,
+    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, StatsResponse,
+    VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -153,6 +155,21 @@ fn api_router() -> ApiRouter<AppState> {
             .put_with(save_settings_config, |op| {
                 op.id("saveSettingsConfig")
                     .response::<200, Json<SettingsConfigResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/settings/config/raw",
+            get_with(raw_settings_config, |op| {
+                op.id("getRawSettingsConfig")
+                    .response::<200, Json<RawConfigResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .put_with(save_raw_settings_config, |op| {
+                op.id("saveRawSettingsConfig")
+                    .response::<200, Json<RawConfigResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),

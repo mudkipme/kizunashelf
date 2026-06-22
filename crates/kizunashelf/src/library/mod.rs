@@ -73,6 +73,53 @@ pub async fn ensure_config_directories_via_vfs(config: &KizunaConfig, vfs: &dyn 
     Ok(())
 }
 
+/// Writes raw vault-config YAML verbatim to `.kizunashelf/config.yaml` through
+/// the VFS, preserving the user's exact formatting and comments. This is the
+/// raw-editor counterpart to [`save_vault_config_via_vfs`] (which re-serializes
+/// a typed config). Callers MUST validate the text with
+/// [`parse_vault_config_strict`] before writing — this helper writes whatever it
+/// is given.
+pub async fn save_raw_vault_config_via_vfs(vfs: &dyn Vfs, content: &str) -> Result<()> {
+    if let Some(parent) = Path::new(VAULT_CONFIG_RELATIVE_PATH)
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        vfs.create_dir_all(&parent.to_string_lossy())
+            .await
+            .map_err(|error| anyhow::anyhow!("failed to create vault config directory: {error}"))?;
+    }
+    vfs.write_atomic(VAULT_CONFIG_RELATIVE_PATH, content.as_bytes())
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to write vault config: {error}"))
+}
+
+/// Reads the raw vault-config YAML text verbatim through the VFS (the raw-editor
+/// path). Returns `None` when the config file doesn't exist yet.
+pub async fn read_raw_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<Option<String>> {
+    match vfs.read_to_string(VAULT_CONFIG_RELATIVE_PATH).await {
+        Ok(raw) => Ok(Some(raw)),
+        Err(VfsError::NotFound) => Ok(None),
+        Err(other) => Err(anyhow::anyhow!("failed to read vault config: {other}")),
+    }
+}
+
+/// Strictly parses raw vault-config YAML into a [`VaultConfig`]. Unlike
+/// [`load_vault_config_via_vfs`] — which tolerates extra keys for
+/// forward-compatibility — this is the raw-editor validation path: it surfaces
+/// type errors, missing required fields, invalid enum values, AND any field the
+/// schema doesn't recognize as an error, so a typo or stray key is rejected
+/// rather than silently dropped on the next save.
+pub fn parse_vault_config_strict(content: &str) -> Result<VaultConfig> {
+    let de = serde_yaml::Deserializer::from_str(content);
+    let mut unknown = Vec::new();
+    let config: VaultConfig = serde_ignored::deserialize(de, |path| unknown.push(path.to_string()))
+        .context("invalid vault config")?;
+    if !unknown.is_empty() {
+        anyhow::bail!("unknown config field(s): {}", unknown.join(", "));
+    }
+    Ok(config)
+}
+
 /// Reads the vault config from inside the vault (`.kizunashelf/config.yaml`)
 /// through the VFS. Works for both `NativeVfs` (desktop) and the injected iOS
 /// VFS, so library loading never needs an absolute vault-config path.

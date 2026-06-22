@@ -185,6 +185,89 @@
         }
       }
     },
+    "/api/settings/config/raw": {
+      "get": {
+        "operationId": "getRawSettingsConfig",
+        "responses": {
+          "200": {
+            "description": "The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RawConfigResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveRawSettingsConfig",
+        "requestBody": {
+          "description": "Raw YAML text to validate and write verbatim to the vault config. The text is\nstrictly parsed first: type errors, missing required fields, invalid enum\nvalues, and any unknown field are rejected (`400`) rather than dropped.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRawConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RawConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/settings/path-suggestions": {
       "get": {
         "operationId": "getPathSuggestions",
@@ -2006,6 +2089,41 @@
             ]
           }
         }
+      },
+      "RawConfigResponse": {
+        "description": "The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
+        "type": "object",
+        "properties": {
+          "vaultConfigPath": {
+            "description": "Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).",
+            "type": "string"
+          },
+          "vaultExists": {
+            "description": "Whether the vault config file exists on disk.",
+            "type": "boolean"
+          },
+          "content": {
+            "description": "The raw YAML text of the config file, verbatim (empty when it doesn't\nexist yet).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vaultConfigPath",
+          "vaultExists",
+          "content"
+        ]
+      },
+      "SaveRawConfigRequest": {
+        "description": "Raw YAML text to validate and write verbatim to the vault config. The text is\nstrictly parsed first: type errors, missing required fields, invalid enum\nvalues, and any unknown field are rejected (`400`) rather than dropped.",
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content"
+        ]
       },
       "PathSuggestionsQuery": {
         "type": "object",

@@ -7,8 +7,9 @@ use crate::calendar::{
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
-    HomeSectionResponse, LanguagesResponse, RelationGroupsResponse, RelationListResponse,
-    SaveSettingsRequest, SettingsConfigResponse, VaultTemplatesResponse,
+    HomeSectionResponse, LanguagesResponse, RawConfigResponse, RelationGroupsResponse,
+    RelationListResponse, SaveRawConfigRequest, SaveSettingsRequest, SettingsConfigResponse,
+    VaultTemplatesResponse,
 };
 use crate::dates::clamp_number;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
@@ -130,6 +131,61 @@ pub(crate) async fn save_settings_config(
         vault_exists: saved.is_some(),
         vault: saved,
         error: None,
+    }))
+}
+
+/// Returns the raw YAML text of the vault config for the plain-text editor.
+pub(crate) async fn raw_settings_config(
+    State(state): State<AppState>,
+) -> ApiResult<RawConfigResponse> {
+    let app = state.app_config();
+    let vfs = state.vault_vfs(&app.vault_root);
+    let content = crate::library::read_raw_vault_config_via_vfs(vfs.as_ref())
+        .await
+        .map_err(ApiError::from)?;
+    Ok(Json(RawConfigResponse {
+        vault_config_path: crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string(),
+        vault_exists: content.is_some(),
+        content: content.unwrap_or_default(),
+    }))
+}
+
+/// Validates and writes the raw YAML text of the vault config verbatim. The text
+/// is strictly parsed first — type errors, missing required fields, invalid enum
+/// values, and *any unknown field* are rejected with `400` instead of being
+/// silently dropped or corrupting the on-disk schema.
+pub(crate) async fn save_raw_settings_config(
+    State(state): State<AppState>,
+    Json(request): Json<SaveRawConfigRequest>,
+) -> ApiResult<RawConfigResponse> {
+    if !state.options.settings_writable {
+        return Err(ApiError::forbidden("Settings writes are disabled"));
+    }
+    let SaveRawConfigRequest { content } = request;
+
+    let app = state.app_config();
+    let vfs = state.vault_vfs(&app.vault_root);
+
+    // Strict parse: rejects unknown keys and any malformed value before the write.
+    let vault = crate::library::parse_vault_config_strict(&content)
+        .map_err(|error| ApiError::bad_request(&error.to_string()))?;
+    let merged = crate::types::KizunaConfig::from_parts(app, vault);
+    crate::library::ensure_config_directories_via_vfs(&merged, vfs.as_ref())
+        .await
+        .map_err(|error| ApiError::bad_request(&error.to_string()))?;
+    crate::library::save_raw_vault_config_via_vfs(vfs.as_ref(), &content)
+        .await
+        .map_err(ApiError::from)?;
+    state.invalidate_cache().await;
+
+    let saved = crate::library::read_raw_vault_config_via_vfs(vfs.as_ref())
+        .await
+        .ok()
+        .flatten();
+    Ok(Json(RawConfigResponse {
+        vault_config_path: crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string(),
+        vault_exists: saved.is_some(),
+        content: saved.unwrap_or(content),
     }))
 }
 

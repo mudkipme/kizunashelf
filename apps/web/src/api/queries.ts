@@ -20,7 +20,7 @@ import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import { getProviderCatalog } from "@/api/external";
-import { getLanguages, getSettingsConfig, getVaultTemplates } from "@/api/settings";
+import { getLanguages, getRawSettingsConfig, getSettingsConfig, getVaultTemplates } from "@/api/settings";
 
 export const queryKeys = {
   analytics: ["analytics"] as const,
@@ -37,6 +37,7 @@ export const queryKeys = {
   providerCatalog: ["providerCatalog"] as const,
   relationGroups: ["relationGroups"] as const,
   settingsConfig: ["settingsConfig"] as const,
+  rawSettingsConfig: ["rawSettingsConfig"] as const,
   stats: (params?: GetStatsParams) => ["stats", params ?? {}] as const,
   vaultTemplates: ["vaultTemplates"] as const,
 };
@@ -135,6 +136,13 @@ export function settingsConfigQuery() {
   return queryOptions({
     queryKey: queryKeys.settingsConfig,
     queryFn: ({ signal }) => getSettingsConfig({ signal }),
+  });
+}
+
+export function rawSettingsConfigQuery() {
+  return queryOptions({
+    queryKey: queryKeys.rawSettingsConfig,
+    queryFn: ({ signal }) => getRawSettingsConfig({ signal }),
   });
 }
 

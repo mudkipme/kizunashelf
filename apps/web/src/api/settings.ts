@@ -1,9 +1,12 @@
 import {
   getLanguages as requestLanguages,
   getPathSuggestions as requestPathSuggestions,
+  getRawSettingsConfig as requestRawSettingsConfig,
   getSettingsConfig as requestSettingsConfig,
   getVaultTemplates as requestVaultTemplates,
+  saveRawSettingsConfig as requestSaveRawSettingsConfig,
   saveSettingsConfig as requestSaveSettingsConfig,
+  type SaveRawConfigRequest,
   type SaveSettingsRequest,
 } from "@kizunashelf/api-contract";
 
@@ -23,6 +26,16 @@ export function getLanguages(init?: RequestInit) {
 
 export function saveSettingsConfig(request: SaveSettingsRequest) {
   return requestSaveSettingsConfig(request, undefined, apiFetch);
+}
+
+// The raw-text "advanced" editor: read/write `.kizunashelf/config.yaml` verbatim.
+// Saving strictly validates the YAML server-side (unknown fields are rejected).
+export function getRawSettingsConfig(init?: RequestInit) {
+  return requestRawSettingsConfig(init, apiFetch);
+}
+
+export function saveRawSettingsConfig(request: SaveRawConfigRequest) {
+  return requestSaveRawSettingsConfig(request, undefined, apiFetch);
 }
 
 // `base` is a vault-relative directory the suggestions are rooted at (e.g. the
