@@ -43,6 +43,8 @@ type SettingsEditorProps = {
   onboarding?: boolean;
   /** When false, the schema is read-only (server enforces it too). */
   settingsWritable?: boolean;
+  /** Reports whether the form holds unsaved edits (differs from the saved schema). */
+  onDirtyChange?: (dirty: boolean) => void;
   onBack?: () => void;
   onSaved?: () => void;
 };
@@ -56,6 +58,7 @@ export function SettingsEditor({
   languages = [],
   onboarding = false,
   settingsWritable = true,
+  onDirtyChange,
   onBack,
   onSaved,
 }: SettingsEditorProps) {
@@ -64,6 +67,11 @@ export function SettingsEditor({
   // used for path display and the desktop "Browse" base, never edited or saved.
   const vaultRoot = initialApp?.vaultRoot ?? "";
   const [config, setConfig] = useState<VaultConfig>(() => normalizeVaultConfig(initialVault ?? undefined));
+  // The last saved/loaded schema object. Every edit replaces `config` with a new
+  // object (immutable updates), so dirtiness is a cheap reference check — no
+  // per-keystroke serialization, and untouched-dialog open/close keeps the same
+  // reference (not dirty).
+  const [baselineConfig, setBaselineConfig] = useState(config);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
@@ -117,8 +125,18 @@ export function SettingsEditor({
     if (seededRef.current) return;
     if (initialVault === undefined) return;
     seededRef.current = true;
-    setConfig(normalizeVaultConfig(initialVault ?? undefined));
+    const seeded = normalizeVaultConfig(initialVault ?? undefined);
+    setConfig(seeded);
+    setBaselineConfig(seeded);
   }, [initialVault]);
+
+  // Dirty once any edit replaces the config object; resets when the baseline is
+  // re-pointed at the current draft on seed/save.
+  const dirty = config !== baselineConfig;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+    return () => onDirtyChange?.(false);
+  }, [dirty, onDirtyChange]);
 
   async function save() {
     setSaving(true);
@@ -126,6 +144,7 @@ export function SettingsEditor({
     setMessage(undefined);
     try {
       await saveSettingsConfig(cleanVaultConfig(config, providerCatalog));
+      setBaselineConfig(config);
       setMessage("Saved");
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onSaved?.();

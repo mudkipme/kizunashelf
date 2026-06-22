@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 type RawConfigEditorProps = {
   /** When false, the config is read-only (the server enforces it too). */
   settingsWritable?: boolean;
+  /** Reports whether the editor holds unsaved edits (differs from the saved file). */
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 /**
@@ -19,9 +21,11 @@ type RawConfigEditorProps = {
  * server strictly validates the YAML — type errors, missing required fields, and
  * any unknown field are rejected — so the on-disk schema can never be corrupted.
  */
-export function RawConfigEditor({ settingsWritable = true }: RawConfigEditorProps) {
+export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawConfigEditorProps) {
   const raw = useQuery(rawSettingsConfigQuery());
   const [content, setContent] = useState("");
+  // The last saved/loaded text; the editor is "dirty" when `content` differs.
+  const [baseline, setBaseline] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
@@ -34,7 +38,16 @@ export function RawConfigEditor({ settingsWritable = true }: RawConfigEditorProp
     if (raw.data === undefined) return;
     seededRef.current = true;
     setContent(raw.data.content);
+    setBaseline(raw.data.content);
   }, [raw.data]);
+
+  // Dirty only once the seeded text is actually edited — not on mount, and not
+  // after the seed echoes the loaded file back into both `content` and `baseline`.
+  const dirty = seededRef.current && content !== baseline;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+    return () => onDirtyChange?.(false);
+  }, [dirty, onDirtyChange]);
 
   async function save() {
     setSaving(true);
@@ -42,8 +55,9 @@ export function RawConfigEditor({ settingsWritable = true }: RawConfigEditorProp
     setMessage(undefined);
     try {
       const response = await saveRawSettingsConfig({ content });
-      // Echo back exactly what the server stored.
+      // Echo back exactly what the server stored, and reset the dirty baseline.
       setContent(response.content);
+      setBaseline(response.content);
       setMessage("Saved");
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
     } catch (saveError) {
