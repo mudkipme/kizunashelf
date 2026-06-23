@@ -51,11 +51,22 @@ export function useExternalMatch({
   const [emptyMessage, setEmptyMessage] = useState("No candidates loaded");
   const [downloadAfterApply, setDownloadAfterApply] = useState(false);
 
-  const providerOptions = useMemo(
+  // Providers configured for this type by the schema (credential-independent).
+  const schemaProviderOptions = useMemo(
     () => externalProviderPriority(providerCatalog, typeConfig),
     [providerCatalog, typeConfig],
   );
-  const externalSearchEnabled = providerOptions.length > 0;
+  // Per-provider credential availability from the search-response summaries
+  // (empty until loaded). Mirrors iOS: providers whose credentials aren't
+  // configured are hidden from the picker rather than offered and failing.
+  const [providerEnabled, setProviderEnabled] = useState<Record<string, boolean>>({});
+  const providerOptions = useMemo(() => {
+    if (Object.keys(providerEnabled).length === 0) return schemaProviderOptions;
+    return schemaProviderOptions.filter((id) => providerEnabled[id] !== false);
+  }, [schemaProviderOptions, providerEnabled]);
+  // Whether the type has any external source configured at all — gates whether
+  // the match feature is offered (independent of credentials).
+  const externalSearchEnabled = schemaProviderOptions.length > 0;
   const metadataEntries = useMemo(
     () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, typeConfig) : []),
     [selectedCandidate, typeConfig],
@@ -80,6 +91,27 @@ export function useExternalMatch({
         : [],
     [externalRefs, providerOptions, typeConfig],
   );
+
+  // When the match UI opens, load provider availability. An empty query returns
+  // the provider summaries (with `enabled`) without hitting any external API, so
+  // the picker can hide providers whose credentials aren't configured.
+  useEffect(() => {
+    if (!open || !entityType || schemaProviderOptions.length === 0) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await searchSources({ provider: "all", q: "", type: entityType, pageSize: 1 });
+        if (!cancelled) {
+          setProviderEnabled(Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])));
+        }
+      } catch {
+        // Leave the picker unfiltered on failure rather than blocking matching.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, entityType, schemaProviderOptions.length]);
 
   useEffect(() => {
     if (providerOptions.length === 0) {
@@ -147,6 +179,7 @@ export function useExternalMatch({
           type: entityType,
           pageSize: 8,
         });
+        setProviderEnabled(Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])));
         setCandidates(result.items);
         if (result.items.length === 0) setEmptyMessage("No external matches");
       } catch (error) {

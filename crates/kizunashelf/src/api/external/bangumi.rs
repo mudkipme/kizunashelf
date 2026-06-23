@@ -394,6 +394,7 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("language", "Language"),
         field_option("publisher", "Publisher"),
         field_option("official_site", "Official site"),
+        field_option("isbn", "ISBN"),
         // Lists — map these to list-type fields (enum list / text list / relation).
         field_option("aliases", "Aliases"),
         field_option("director", "Director"),
@@ -603,6 +604,8 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
             ("language", &["语言"][..]),
             ("publisher", &["出版社"][..]),
             ("official_site", &["官方网站", "website"][..]),
+            // Books expose `ISBN` (13-digit) and a separate `ISBN-10`; prefer the 13.
+            ("isbn", &["ISBN", "ISBN-10"][..]),
         ] {
             if let Some(value) = infobox_collect(infobox, keys).into_iter().next() {
                 metadata.insert(field.to_string(), Value::String(value));
@@ -747,7 +750,9 @@ mod tests {
                 { "key": "导演", "value": "渡边信一郎" },
                 { "key": "类型", "value": "科幻" },
                 { "key": "语言", "value": "日语" },
-                { "key": "官方网站", "value": "https://example.com" }
+                { "key": "官方网站", "value": "https://example.com" },
+                { "key": "ISBN", "value": "9784040000000" },
+                { "key": "ISBN-10", "value": "4040000009" }
             ]
         }))
         .unwrap();
@@ -772,5 +777,7 @@ mod tests {
             metadata.get("official_site"),
             Some(&json!("https://example.com"))
         );
+        // Prefer the 13-digit `ISBN` over the separate `ISBN-10`.
+        assert_eq!(metadata.get("isbn"), Some(&json!("9784040000000")));
     }
 }

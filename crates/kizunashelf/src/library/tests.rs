@@ -535,6 +535,61 @@ async fn cached_load_matches_uncached_read_library() {
     assert_libraries_equivalent(&warm, &uncached, "warm-cached", "uncached");
 }
 
+/// The process-resident (in-memory) index cache reuses an unchanged file's
+/// parse across reloads without re-reading it — the property the web server
+/// relies on when no persistent cache dir is configured.
+#[tokio::test]
+async fn memory_index_cache_reuses_unchanged_entries() {
+    use crate::library::MemoryIndexCache;
+    use std::sync::{Arc as StdArc, Mutex as StdMutex};
+
+    let store = StdArc::new(StdMutex::new(MemoryIndexCache::default()));
+    let vfs = Arc::new(InMemoryVfs::new());
+    seed_one(&vfs, "AAAA");
+
+    let first = read_library_cached(
+        test_config("/virtual-vault"),
+        Arc::clone(&vfs) as Arc<dyn Vfs>,
+        IndexCacheContext::memory(StdArc::clone(&store), "schema-v1", "test-vault"),
+    )
+    .await
+    .unwrap();
+    assert_eq!(first.summaries().next().unwrap().title, "AAAA");
+
+    // Edit the bytes but keep size + mtime: a re-read would surface "BBBB", so
+    // serving "AAAA" proves the cached parse (held in `store`) was reused.
+    vfs.overwrite_preserving_stamp(
+        "Taxonomy/Anime/Star Voyager.md",
+        "---\ntitle: BBBB\n---\n\nBody.\n",
+    );
+    let second = read_library_cached(
+        test_config("/virtual-vault"),
+        Arc::clone(&vfs) as Arc<dyn Vfs>,
+        IndexCacheContext::memory(StdArc::clone(&store), "schema-v1", "test-vault"),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        second.summaries().next().unwrap().title,
+        "AAAA",
+        "the in-memory cache must serve the unchanged file's cached parse"
+    );
+
+    // A schema change busts the whole in-memory cache (gate mismatch).
+    vfs.overwrite_preserving_stamp(
+        "Taxonomy/Anime/Star Voyager.md",
+        "---\ntitle: CCCC\n---\n\nBody.\n",
+    );
+    let rebuilt = read_library_cached(
+        test_config("/virtual-vault"),
+        Arc::clone(&vfs) as Arc<dyn Vfs>,
+        IndexCacheContext::memory(StdArc::clone(&store), "schema-v2", "test-vault"),
+    )
+    .await
+    .unwrap();
+    assert_eq!(rebuilt.summaries().next().unwrap().title, "CCCC");
+}
+
 // --- Daily-note relation handling ----------------------------------------
 
 fn daily_notes_config() -> KizunaConfig {

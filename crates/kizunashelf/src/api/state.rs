@@ -2,7 +2,7 @@ use super::error::ApiError;
 use crate::contract::{AnalyticsResponse, AssetDownloadJob};
 use crate::library::{
     compute_listing_fingerprint, load_vault_config_via_vfs, read_library, read_library_cached,
-    read_raw_vault_config_via_vfs, IndexCacheContext,
+    read_raw_vault_config_via_vfs, IndexCacheContext, MemoryIndexCache,
 };
 use crate::secrets::{SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
@@ -34,10 +34,12 @@ pub struct ApiOptions {
     pub web_dist_path: Option<PathBuf>,
     pub settings_writable: bool,
     pub content_writable: bool,
-    /// Host directory for the persistent index cache (NOT inside the vault — a
+    /// Host directory for the *persistent* index cache (NOT inside the vault — a
     /// real app-container path the in-process core can touch with `std::fs`).
-    /// `None` disables the cache (cold starts re-parse the whole vault). It is a
-    /// pure optimization; see [`crate::library`]'s index cache.
+    /// `None` keeps the index cache in process memory instead (lost on restart,
+    /// but still skips re-parsing unchanged files between reloads); a real cold
+    /// start re-parses the whole vault. A pure optimization; see
+    /// [`crate::library`]'s index cache.
     pub index_cache_dir: Option<PathBuf>,
 }
 
@@ -55,6 +57,12 @@ pub(crate) struct AppState {
     /// uses the Keychain via an injected store.
     secret_store: Arc<dyn SecretStore>,
     cache: Arc<Mutex<Option<CachedLibrary>>>,
+    /// Process-resident per-file index cache, used when no persistent
+    /// `index_cache_dir` is configured (e.g. the web server default) so a changed
+    /// reload re-parses only changed files instead of the whole vault. Lost on
+    /// restart. A plain `std::sync::Mutex`: it is only held for the brief
+    /// clone/replace inside the cache load/save, never across an `.await`.
+    index_cache_memory: Arc<std::sync::Mutex<MemoryIndexCache>>,
     reload: Arc<Mutex<()>>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
     /// Per-provider locks that single-flight token acquisition so a cold cache
@@ -143,6 +151,7 @@ impl AppState {
             app_config,
             secret_store,
             cache: Arc::new(Mutex::new(None)),
+            index_cache_memory: Arc::new(std::sync::Mutex::new(MemoryIndexCache::default())),
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
             token_locks: Arc::new(Mutex::new(HashMap::new())),
@@ -463,18 +472,26 @@ async fn load_library(state: &AppState) -> Result<Library> {
     }
 }
 
-/// Builds the index-cache context when a cache dir is configured. The schema
-/// fingerprint comes from the raw vault config text (so any schema edit busts the
-/// whole cache); the vault root is the per-vault identity. Returns `None` — i.e.
-/// the uncached path — when no cache dir is set or the raw config can't be read.
+/// Builds the index-cache context. The schema fingerprint comes from the raw
+/// vault config text (so any schema edit busts the whole cache); the vault root
+/// is the per-vault identity. Uses the persistent on-disk cache when a dir is
+/// configured, otherwise a process-resident in-memory cache (lost on restart but
+/// still avoids whole-vault re-parses between reloads). Returns `None` — the
+/// fully uncached path — only when the raw config can't be read.
 async fn build_index_cache_context(
     state: &AppState,
     vfs: &dyn Vfs,
     config: &KizunaConfig,
 ) -> Option<IndexCacheContext> {
-    let dir = state.options.index_cache_dir.clone()?;
     let raw = read_raw_vault_config_via_vfs(vfs).await.ok().flatten()?;
-    Some(IndexCacheContext::new(dir, &raw, &config.vault_root))
+    Some(match state.options.index_cache_dir.clone() {
+        Some(dir) => IndexCacheContext::new(dir, &raw, &config.vault_root),
+        None => IndexCacheContext::memory(
+            Arc::clone(&state.index_cache_memory),
+            &raw,
+            &config.vault_root,
+        ),
+    })
 }
 
 pub(crate) fn content_writes_enabled(state: &AppState, library: &Library) -> bool {

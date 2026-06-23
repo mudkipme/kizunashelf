@@ -15,7 +15,7 @@ mod parse;
 mod read;
 mod relations;
 
-pub(crate) use index_cache::IndexCacheContext;
+pub(crate) use index_cache::{IndexCacheContext, MemoryIndexCache};
 
 pub use collation::{compare_optional_string, compare_string, compare_string_for_title_language};
 pub use config_io::{

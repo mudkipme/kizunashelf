@@ -56,9 +56,11 @@ async fn main() -> Result<()> {
         content_writable: Some(content_writable),
     };
     let secret_store = Arc::new(NativeSecretStore::with_token_path(token_cache));
-    // Optional persistent index cache (outside the vault). Off by default for the
-    // web server (long-lived process, OS page cache makes re-reads cheap); set
-    // `KIZUNASHELF_INDEX_CACHE_DIR` to speed up restarts on large vaults.
+    // Optional *persistent* index cache (outside the vault). When unset, the core
+    // falls back to a process-resident in-memory index cache, so a changed reload
+    // still re-parses only changed files (not the whole vault) — it's just lost on
+    // restart. Set `KIZUNASHELF_INDEX_CACHE_DIR` to also persist it across
+    // restarts (worthwhile for large vaults / frequent restarts).
     let index_cache_dir = std::env::var("KIZUNASHELF_INDEX_CACHE_DIR")
         .ok()
         .map(PathBuf::from);

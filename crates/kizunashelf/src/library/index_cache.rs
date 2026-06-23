@@ -33,7 +33,8 @@ use crate::types::{EntityRecord, LibraryDiagnostic};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 /// Structural format of the on-disk blob. A mismatch is rejected outright.
 const CACHE_FORMAT: u32 = 1;
@@ -113,9 +114,32 @@ fn hash_str(value: &str) -> String {
     format!("{:x}", hasher.finish())
 }
 
-/// Context for using the persistent index cache during a single library load.
+/// Process-resident index cache, shared across library loads. Used when no
+/// persistent cache dir is configured (e.g. the web server's default): a changed
+/// reload re-parses only the files that changed instead of the whole vault. It is
+/// lost on restart, and gated by the same schema/vault identity as the on-disk
+/// form (engine version is implicit — it's the same running process).
+#[derive(Default)]
+pub(crate) struct MemoryIndexCache {
+    schema_fingerprint: String,
+    vault_identity: String,
+    entries: HashMap<String, CachedEntry>,
+    daily_notes: HashMap<String, CachedDailyNote>,
+}
+
+/// Where an [`IndexCacheContext`] reads/writes its per-file entries.
+enum IndexCacheStore {
+    /// A persistent JSON blob outside the vault (survives restarts).
+    Disk(PathBuf),
+    /// A process-resident cache (lost on restart, no disk needed).
+    Memory(Arc<Mutex<MemoryIndexCache>>),
+}
+
+/// Context for using the index cache during a single library load. Backed by
+/// either a persistent file or a process-resident store; both apply the same
+/// schema/vault gates so a schema edit or vault switch rebuilds.
 pub(crate) struct IndexCacheContext {
-    path: PathBuf,
+    store: IndexCacheStore,
     schema_fingerprint: String,
     vault_identity: String,
 }
@@ -129,18 +153,39 @@ impl IndexCacheContext {
         let identity = hash_str(vault_identity);
         let path = dir.join(format!("index-{identity}.json"));
         Self {
-            path,
+            store: IndexCacheStore::Disk(path),
             schema_fingerprint: hash_str(raw_vault_config),
             vault_identity: identity,
         }
     }
 
+    /// Builds a context backed by a process-resident [`MemoryIndexCache`] for
+    /// runtimes with no persistent cache dir.
+    pub(crate) fn memory(
+        store: Arc<Mutex<MemoryIndexCache>>,
+        raw_vault_config: &str,
+        vault_identity: &str,
+    ) -> Self {
+        Self {
+            store: IndexCacheStore::Memory(store),
+            schema_fingerprint: hash_str(raw_vault_config),
+            vault_identity: hash_str(vault_identity),
+        }
+    }
+
     /// Loads the cached entity + daily-note entries, returning an empty cache
-    /// whenever the file is absent, unreadable, structurally stale, or fails any
-    /// global gate. Never returns data we aren't certain matches the current
-    /// engine + schema.
+    /// whenever the source is absent, unreadable, structurally stale, or fails any
+    /// gate. Never returns data we aren't certain matches the current
+    /// engine + schema + vault.
     pub(super) fn load(&self) -> LoadedCache {
-        let Ok(bytes) = std::fs::read(&self.path) else {
+        match &self.store {
+            IndexCacheStore::Disk(path) => self.load_disk(path),
+            IndexCacheStore::Memory(store) => self.load_memory(store),
+        }
+    }
+
+    fn load_disk(&self, path: &Path) -> LoadedCache {
+        let Ok(bytes) = std::fs::read(path) else {
             return LoadedCache::default();
         };
         let Ok(file) = serde_json::from_slice::<IndexCacheFile>(&bytes) else {
@@ -159,10 +204,38 @@ impl IndexCacheContext {
         }
     }
 
-    /// Persists the per-file entries atomically (temp + rename). Failures are
-    /// swallowed — a cache we couldn't write just means the next load is cold.
+    fn load_memory(&self, store: &Mutex<MemoryIndexCache>) -> LoadedCache {
+        let Ok(cache) = store.lock() else {
+            return LoadedCache::default();
+        };
+        if cache.schema_fingerprint != self.schema_fingerprint
+            || cache.vault_identity != self.vault_identity
+        {
+            return LoadedCache::default();
+        }
+        LoadedCache {
+            entries: cache.entries.clone(),
+            daily_notes: cache.daily_notes.clone(),
+        }
+    }
+
+    /// Persists the per-file entries. The disk form writes atomically (temp +
+    /// rename); the memory form replaces the resident map. Failures are swallowed
+    /// — a cache we couldn't write just means the next load is cold.
     pub(super) fn save(
         &self,
+        entries: BTreeMap<String, CachedEntry>,
+        daily_notes: BTreeMap<String, CachedDailyNote>,
+    ) {
+        match &self.store {
+            IndexCacheStore::Disk(path) => self.save_disk(path, entries, daily_notes),
+            IndexCacheStore::Memory(store) => self.save_memory(store, entries, daily_notes),
+        }
+    }
+
+    fn save_disk(
+        &self,
+        path: &Path,
         entries: BTreeMap<String, CachedEntry>,
         daily_notes: BTreeMap<String, CachedDailyNote>,
     ) {
@@ -177,12 +250,28 @@ impl IndexCacheContext {
         let Ok(serialized) = serde_json::to_vec(&file) else {
             return;
         };
-        if let Some(parent) = self.path.parent() {
+        if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        let tmp = self.path.with_extension("json.tmp");
+        let tmp = path.with_extension("json.tmp");
         if std::fs::write(&tmp, &serialized).is_ok() {
-            let _ = std::fs::rename(&tmp, &self.path);
+            let _ = std::fs::rename(&tmp, path);
+        }
+    }
+
+    fn save_memory(
+        &self,
+        store: &Mutex<MemoryIndexCache>,
+        entries: BTreeMap<String, CachedEntry>,
+        daily_notes: BTreeMap<String, CachedDailyNote>,
+    ) {
+        if let Ok(mut cache) = store.lock() {
+            *cache = MemoryIndexCache {
+                schema_fingerprint: self.schema_fingerprint.clone(),
+                vault_identity: self.vault_identity.clone(),
+                entries: entries.into_iter().collect(),
+                daily_notes: daily_notes.into_iter().collect(),
+            };
         }
     }
 }
