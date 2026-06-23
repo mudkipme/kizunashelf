@@ -1996,7 +1996,7 @@
         ]
       },
       "AppConfig": {
-        "description": "App-level configuration. Describes how *this machine* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~/.config/kizunashelf.yaml` and friends) and never synced with the vault.",
+        "description": "App-level configuration. Describes how *this machine* runs KizunaShelf and\nwhere the vault lives on disk. This is owned by the runtime and passed\ninline: env vars for web, the native vault switcher for desktop, and the\nhost app's local state for iOS. It is never stored in the synced vault config.",
         "type": "object",
         "properties": {
           "vaultRoot": {

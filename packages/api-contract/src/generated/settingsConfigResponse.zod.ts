@@ -13,7 +13,7 @@ export const SettingsConfigResponse = zod.object({
   "app": zod.union([zod.object({
   "vaultRoot": zod.string(),
   "contentWritable": zod.boolean().nullish()
-}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.'),zod.null()]).optional().describe('The inline app config (vault root + write mode), owned by the runtime.'),
+}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. This is owned by the runtime and passed\ninline: env vars for web, the native vault switcher for desktop, and the\nhost app\'s local state for iOS. It is never stored in the synced vault config.'),zod.null()]).optional().describe('The inline app config (vault root + write mode), owned by the runtime.'),
   "vaultConfigPath": zod.string().nullish().describe('Path to the vault config file (`<vaultRoot>\/.kizunashelf\/config.yaml`).\n`None` until a vault root is configured.'),
   "vaultExists": zod.boolean().describe('Whether the vault config file exists on disk.'),
   "vault": zod.union([zod.object({

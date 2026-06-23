@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const AppConfig = zod.object({
   "vaultRoot": zod.string(),
   "contentWritable": zod.boolean().nullish()
-}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. Stored in the local app config file\n(`~\/.config\/kizunashelf.yaml` and friends) and never synced with the vault.')
+}).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. This is owned by the runtime and passed\ninline: env vars for web, the native vault switcher for desktop, and the\nhost app\'s local state for iOS. It is never stored in the synced vault config.')
 
 export type AppConfig = zod.input<typeof AppConfig>;
 export type AppConfigOutput = zod.output<typeof AppConfig>;
