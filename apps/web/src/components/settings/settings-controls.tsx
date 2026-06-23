@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { isDesktopRuntime, selectDirectory } from "@/lib/desktop";
 
-import { relativeToBase, replaceArray } from "./settings-model";
+import { arrayEditor, relativeToBase } from "./settings-model";
 
 /// Renders a fallback `<option>` for a configured value the option list doesn't
 /// recognize, so hand-edited config (an unknown type, sort key, field, or title
@@ -42,6 +42,7 @@ export function StringListEditor({
   pathItems?: boolean;
   onChange: (values: string[]) => void;
 }) {
+  const list = arrayEditor(values, onChange);
   if (!pathItems && suggestions.length > 0) {
     return (
       <div className="flex flex-col gap-2">
@@ -62,7 +63,7 @@ export function StringListEditor({
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
-        <Button type="button" variant="outline" size="sm" onClick={() => onChange([...values, ""])}>
+        <Button type="button" variant="outline" size="sm" onClick={() => list.append("")}>
           <PlusIcon data-icon="inline-start" />
           Add
         </Button>
@@ -75,19 +76,19 @@ export function StringListEditor({
                 value={value}
                 base={base}
                 placeholder={placeholder}
-                onChange={(next) => onChange(replaceArray(values, index, next))}
+                onChange={(next) => list.update(index, next)}
                 hideLabel
               />
             ) : (
               <Input
                 value={value}
                 placeholder={placeholder}
-                onChange={(event) => onChange(replaceArray(values, index, event.target.value))}
+                onChange={(event) => list.update(index, event.target.value)}
               />
             )}
             <IconButton
               label={`Remove ${label}`}
-              onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+              onClick={() => list.remove(index)}
             />
           </div>
         ))}

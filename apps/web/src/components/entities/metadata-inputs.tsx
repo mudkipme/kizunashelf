@@ -81,11 +81,12 @@ export function FieldValueInput({
 
   if (field.kind === "progress") {
     return (
-      <ProgressStepper
+      <NumberStepper
         value={valueToText(value)}
         onChange={(next) => onChange(numberOrString(next))}
         ariaLabel={field.label}
         disabled={disabled}
+        display="output"
       />
     );
   }
@@ -436,16 +437,22 @@ function ObjectValueInput({
   );
 }
 
+/// A +/- stepper over a non-negative integer held as a string. `display="input"`
+/// (the default) renders an editable number field; `display="output"` renders a
+/// read-only value (used for progress, where the count is only nudged via the
+/// buttons). Only the editable variant maps Enter/Space on the buttons to a step.
 export function NumberStepper({
   value,
   onChange,
   disabled = false,
   ariaLabel,
+  display = "input",
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   ariaLabel: string;
+  display?: "input" | "output";
 }) {
   const number = Number(value || 0);
   const current = Number.isFinite(number) ? number : 0;
@@ -455,82 +462,52 @@ export function NumberStepper({
     event.preventDefault();
     step(delta);
   };
+  const isOutput = display === "output";
   return (
-    <div className="flex min-w-0 items-center gap-1">
+    <div
+      className={
+        isOutput
+          ? "grid min-w-0 grid-cols-[auto_minmax(4rem,1fr)_auto] items-center gap-1"
+          : "flex min-w-0 items-center gap-1"
+      }
+    >
       <Button
         type="button"
         variant="outline"
         size="icon"
         disabled={disabled}
         onClick={() => step(-1)}
-        onKeyDown={(event) => keyStep(event, -1)}
+        onKeyDown={isOutput ? undefined : (event) => keyStep(event, -1)}
         aria-label={`Decrease ${ariaLabel}`}
       >
         <MinusIcon />
       </Button>
-      <Input
-        type="number"
-        min={0}
-        step={1}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="min-w-0 text-center tabular-nums"
-        aria-label={ariaLabel}
-      />
+      {isOutput ? (
+        <output
+          className="border-input bg-muted text-foreground flex h-9 min-w-0 items-center justify-center rounded-md border px-3 text-center text-sm tabular-nums"
+          aria-label={ariaLabel}
+        >
+          {value || "0"}
+        </output>
+      ) : (
+        <Input
+          type="number"
+          min={0}
+          step={1}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          className="min-w-0 text-center tabular-nums"
+          aria-label={ariaLabel}
+        />
+      )}
       <Button
         type="button"
         variant="outline"
         size="icon"
         disabled={disabled}
         onClick={() => step(1)}
-        onKeyDown={(event) => keyStep(event, 1)}
-        aria-label={`Increase ${ariaLabel}`}
-      >
-        <PlusIcon />
-      </Button>
-    </div>
-  );
-}
-
-function ProgressStepper({
-  value,
-  onChange,
-  disabled = false,
-  ariaLabel,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  ariaLabel: string;
-}) {
-  const number = Number(value || 0);
-  const current = Number.isFinite(number) ? number : 0;
-  const step = (delta: number) => onChange(String(Math.max(0, current + delta)));
-  return (
-    <div className="grid min-w-0 grid-cols-[auto_minmax(4rem,1fr)_auto] items-center gap-1">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        disabled={disabled}
-        onClick={() => step(-1)}
-        aria-label={`Decrease ${ariaLabel}`}
-      >
-        <MinusIcon />
-      </Button>
-      <output
-        className="border-input bg-muted text-foreground flex h-9 min-w-0 items-center justify-center rounded-md border px-3 text-center text-sm tabular-nums"
-        aria-label={ariaLabel}
-      >
-        {value || "0"}
-      </output>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        disabled={disabled}
-        onClick={() => step(1)}
+        onKeyDown={isOutput ? undefined : (event) => keyStep(event, 1)}
         aria-label={`Increase ${ariaLabel}`}
       >
         <PlusIcon />

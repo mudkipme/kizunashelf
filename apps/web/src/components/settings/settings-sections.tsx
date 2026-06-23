@@ -40,7 +40,7 @@ import {
   fieldTypeOptions,
   type FieldOptionKey,
 } from "./settings-field-descriptors";
-import { replaceArray } from "./settings-model";
+import { arrayEditor } from "./settings-model";
 
 export function DailyNotesEditor({
   config,
@@ -92,18 +92,19 @@ export function HomeSectionForm({
       .map((field) => ({ value: `date:${field.field}`, label: `Date: ${fieldDisplayLabel(field)}` })),
   ];
   const currentSort = section.sort ?? "title";
+  const filterList = arrayEditor(filters, (next) => onChange({ ...section, filters: next }));
 
   function updateFilter(index: number, filter: HomeSectionFilterConfig) {
-    onChange({ ...section, filters: replaceArray(filters, index, filter) });
+    filterList.update(index, filter);
   }
 
   function removeFilter(index: number) {
-    onChange({ ...section, filters: filters.filter((_, itemIndex) => itemIndex !== index) });
+    filterList.remove(index);
   }
 
   function addFilter() {
     const field = filterFields[0]?.field ?? "";
-    onChange({ ...section, filters: [...filters, { field, values: [] }] });
+    filterList.append({ field, values: [] });
   }
 
   return (
@@ -373,6 +374,7 @@ function ExternalPriorityEditor({
 }) {
   const sourceOptions = externalSourceOptions(providerCatalog);
   const available = sourceOptions.filter((option) => !values.includes(option.source));
+  const list = arrayEditor(values, onChange);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -382,7 +384,7 @@ function ExternalPriorityEditor({
           variant="outline"
           size="sm"
           disabled={available.length === 0}
-          onClick={() => onChange([...values, available[0]?.source ?? ""])}
+          onClick={() => list.append(available[0]?.source ?? "")}
         >
           <PlusIcon data-icon="inline-start" />
           Provider
@@ -398,7 +400,7 @@ function ExternalPriorityEditor({
               <span className="text-xs font-medium tabular-nums text-muted-foreground">{index + 1}</span>
               <Select
                 value={value}
-                onChange={(event) => onChange(replaceArray(values, index, event.target.value))}
+                onChange={(event) => list.update(index, event.target.value)}
                 aria-label="Provider priority"
               >
                 {options.map((option) => (
@@ -409,7 +411,7 @@ function ExternalPriorityEditor({
               </Select>
               <IconButton
                 label="Remove provider priority"
-                onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+                onClick={() => list.remove(index)}
               />
             </div>
           );
@@ -430,6 +432,7 @@ function ExternalBodyMappingsEditor({
   onChange: (values: ExternalBodyMapping[]) => void;
 }) {
   const sourceOptions = externalSourceOptions(providerCatalog);
+  const list = arrayEditor(values, onChange);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -441,7 +444,7 @@ function ExternalBodyMappingsEditor({
           onClick={() => {
             const source = sourceOptions[0]?.source ?? "";
             const field = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
-            onChange([...values, { source, field, heading: "Summary" }]);
+            list.append({ source, field, heading: "Summary" });
           }}
           disabled={sourceOptions.length === 0}
         >
@@ -459,7 +462,7 @@ function ExternalBodyMappingsEditor({
                 onChange={(event) => {
                   const source = event.target.value;
                   const field = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
-                  onChange(replaceArray(values, index, { ...value, source, field }));
+                  list.update(index, { ...value, source, field });
                 }}
                 aria-label="Body mapping source"
               >
@@ -471,7 +474,7 @@ function ExternalBodyMappingsEditor({
               </Select>
               <Select
                 value={value.field}
-                onChange={(event) => onChange(replaceArray(values, index, { ...value, field: event.target.value }))}
+                onChange={(event) => list.update(index, { ...value, field: event.target.value })}
                 aria-label="Body mapping field"
               >
                 <option value="">Select field</option>
@@ -484,12 +487,12 @@ function ExternalBodyMappingsEditor({
               <TextField
                 label="Heading"
                 value={value.heading}
-                onChange={(heading) => onChange(replaceArray(values, index, { ...value, heading }))}
+                onChange={(heading) => list.update(index, { ...value, heading })}
               />
               <div className="flex items-end">
                 <IconButton
                   label="Remove body mapping"
-                  onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+                  onClick={() => list.remove(index)}
                 />
               </div>
             </div>
@@ -728,6 +731,7 @@ function ExternalFieldMappingsEditor({
   onChange: (values: ExternalFieldMapping[]) => void;
 }) {
   const sourceOptions = externalSourceOptions(providerCatalog);
+  const list = arrayEditor(values, onChange);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -736,7 +740,7 @@ function ExternalFieldMappingsEditor({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => onChange([...values, { source: sourceOptions[0]?.source ?? "", field: "" }])}
+          onClick={() => list.append({ source: sourceOptions[0]?.source ?? "", field: "" })}
           disabled={sourceOptions.length === 0}
         >
           <PlusIcon data-icon="inline-start" />
@@ -753,7 +757,7 @@ function ExternalFieldMappingsEditor({
                 onChange={(event) => {
                   const source = event.target.value;
                   const firstField = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
-                  onChange(replaceArray(values, index, { source, field: firstField }));
+                  list.update(index, { source, field: firstField });
                 }}
                 aria-label="External source"
               >
@@ -765,7 +769,7 @@ function ExternalFieldMappingsEditor({
               </Select>
               <Select
                 value={value.field}
-                onChange={(event) => onChange(replaceArray(values, index, { ...value, field: event.target.value }))}
+                onChange={(event) => list.update(index, { ...value, field: event.target.value })}
                 aria-label="External field"
               >
                 <option value="">Select field</option>
@@ -777,7 +781,7 @@ function ExternalFieldMappingsEditor({
               </Select>
               <IconButton
                 label="Remove external field mapping"
-                onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+                onClick={() => list.remove(index)}
               />
             </div>
           );

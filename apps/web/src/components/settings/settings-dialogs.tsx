@@ -24,10 +24,10 @@ import type {
 import { EmptyConfigLine, TextField } from "./settings-controls";
 import { fieldConfigSummary } from "./settings-field-descriptors";
 import {
+  arrayEditor,
   defaultEntityType,
   defaultField,
   defaultHomeSection,
-  replaceArray,
 } from "./settings-model";
 import {
   EntityTypeForm,
@@ -184,6 +184,7 @@ export function TypesSection({
   // `null` = closed; `"new"` = adding; a number = editing that index.
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const initial = editing === "new" ? defaultEntityType() : editing === null ? null : types[editing];
+  const typeList = arrayEditor(types, onChange);
 
   return (
     <div className="flex flex-col gap-3">
@@ -202,7 +203,7 @@ export function TypesSection({
                 ...(type.path ? [type.path] : []),
               ]}
               onEdit={() => setEditing(index)}
-              onRemove={() => onChange(types.filter((_, itemIndex) => itemIndex !== index))}
+              onRemove={() => typeList.remove(index)}
               removeLabel="Remove type"
             />
           ))}
@@ -218,7 +219,8 @@ export function TypesSection({
           taxonomyRoot={taxonomyRoot}
           onClose={() => setEditing(null)}
           onApply={(value) => {
-            onChange(editing === "new" ? [...types, value] : replaceArray(types, editing as number, value));
+            if (editing === "new") typeList.append(value);
+            else typeList.update(editing as number, value);
             setEditing(null);
           }}
         />
@@ -258,6 +260,7 @@ function TypeEditorDialog({
   function setFields(next: EntityTypeConfig["fields"]) {
     setDraft((current) => ({ ...current, fields: next }));
   }
+  const fieldList = arrayEditor(fields, setFields);
 
   // Add-field view: a draft field that is only committed on "Done"; the back
   // arrow discards it.
@@ -273,7 +276,7 @@ function TypeEditorDialog({
           <Button
             type="button"
             onClick={() => {
-              setFields([...fields, newField]);
+              fieldList.append(newField);
               setNewField(null);
             }}
           >
@@ -306,7 +309,7 @@ function TypeEditorDialog({
               variant="ghost"
               className="text-destructive sm:mr-auto"
               onClick={() => {
-                setFields(fields.filter((_, index) => index !== fieldIndex));
+                fieldList.remove(fieldIndex);
                 setFieldIndex(null);
               }}
             >
@@ -323,7 +326,7 @@ function TypeEditorDialog({
           <FieldForm
             providerCatalog={providerCatalog}
             field={field}
-            onChange={(next) => setFields(replaceArray(fields, fieldIndex, next))}
+            onChange={(next) => fieldList.update(fieldIndex, next)}
           />
         </TitleLanguagesContext.Provider>
       </DialogShell>
@@ -368,7 +371,7 @@ function TypeEditorDialog({
                 title={field.displayName || field.field || "Field"}
                 badges={fieldConfigSummary(field)}
                 onEdit={() => setFieldIndex(index)}
-                onRemove={() => setFields(fields.filter((_, itemIndex) => itemIndex !== index))}
+                onRemove={() => fieldList.remove(index)}
                 removeLabel="Remove field"
               />
             ))}
@@ -396,6 +399,7 @@ export function HomeBlock({
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const initial =
     editing === "new" ? defaultHomeSection(types[0]?.id) : editing === null ? null : sections[editing];
+  const sectionList = arrayEditor(sections, (next) => onChange({ ...config, sections: next }));
 
   return (
     <div className="flex flex-col gap-3">
@@ -414,7 +418,7 @@ export function HomeBlock({
                 ...(section.filters?.length ? [`${section.filters.length} filters`] : []),
               ]}
               onEdit={() => setEditing(index)}
-              onRemove={() => onChange({ ...config, sections: sections.filter((_, itemIndex) => itemIndex !== index) })}
+              onRemove={() => sectionList.remove(index)}
               removeLabel="Remove section"
             />
           ))}
@@ -427,9 +431,8 @@ export function HomeBlock({
           types={types}
           onClose={() => setEditing(null)}
           onApply={(value) => {
-            const next =
-              editing === "new" ? [...sections, value] : replaceArray(sections, editing as number, value);
-            onChange({ ...config, sections: next });
+            if (editing === "new") sectionList.append(value);
+            else sectionList.update(editing as number, value);
             setEditing(null);
           }}
         />

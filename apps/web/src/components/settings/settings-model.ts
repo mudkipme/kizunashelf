@@ -323,6 +323,19 @@ export function replaceArray<T>(items: T[], index: number, value: T) {
   return items.map((item, itemIndex) => (itemIndex === index ? value : item));
 }
 
+/// Binds a `values` array to its `onChange` and returns the three list-edit
+/// operations the settings editors all need (append / replace-at / remove-at),
+/// so each editor stops re-inlining the same spread/`replaceArray`/`filter`
+/// closures. `onChange` receives the new array; adapt it (e.g.
+/// `(next) => onChange({ ...section, filters: next })`) for nested arrays.
+export function arrayEditor<T>(values: T[], onChange: (next: T[]) => void) {
+  return {
+    append: (item: T) => onChange([...values, item]),
+    update: (index: number, item: T) => onChange(replaceArray(values, index, item)),
+    remove: (index: number) => onChange(values.filter((_, itemIndex) => itemIndex !== index)),
+  };
+}
+
 function cleanStrings(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
 }
