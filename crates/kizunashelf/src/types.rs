@@ -227,6 +227,13 @@ pub struct KizunaConfig {
 pub const DEFAULT_ASSET_ROOT: &str = "Assets";
 
 impl KizunaConfig {
+    /// The type config whose `id` matches `type_id`, or `None` for an unknown
+    /// type. Field meaning is schema-driven, so callers resolve a type's config
+    /// here rather than reasoning about entity types directly.
+    pub fn type_config(&self, type_id: &str) -> Option<&EntityTypeConfig> {
+        self.types.iter().find(|item| item.id == type_id)
+    }
+
     /// Vault-relative directory where downloaded assets are stored.
     pub fn resolved_asset_root(&self) -> &str {
         self.asset_root

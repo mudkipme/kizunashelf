@@ -146,7 +146,7 @@ struct RelationFieldConfig {
 }
 
 fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<RelationFieldConfig> {
-    let type_config = config.types.iter().find(|item| item.id == entity_type);
+    let type_config = config.type_config(entity_type);
     let mut fields = Vec::new();
     for field in type_config.into_iter().flat_map(|item| {
         item.fields

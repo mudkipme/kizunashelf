@@ -1,6 +1,6 @@
 use super::error::{ApiError, ApiResult};
-use super::mutations::{parent_dir, write_entity_raw, EntityPath};
-use super::state::{content_writes_enabled, get_library, AppState, AssetJobRecord};
+use super::mutations::{check_revision, parent_dir, write_entity_raw, EntityPath};
+use super::state::{get_library, require_content_writes, AppState, AssetJobRecord};
 use crate::contract::{
     AssetDownloadItemResult, AssetDownloadJob, AssetDownloadJobError, AssetDownloadJobListResponse,
     AssetDownloadJobRequest, AssetDownloadJobStatus, AssetDownloadRequest, AssetDownloadResponse,
@@ -46,10 +46,7 @@ pub(crate) async fn download_entity_assets(
     AxumPath(path): AxumPath<EntityPath>,
     Json(request): Json<AssetDownloadRequest>,
 ) -> ApiResult<AssetDownloadResponse> {
-    let library = get_library(&state).await?;
-    if !content_writes_enabled(&state, &library) {
-        return Err(ApiError::forbidden("Content writes are disabled"));
-    }
+    let library = require_content_writes(&state).await?;
     let Some(entity) = library
         .records
         .iter()
@@ -57,15 +54,8 @@ pub(crate) async fn download_entity_assets(
     else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    if request.revision != entity.revision {
-        return Err(ApiError::conflict("Entity changed since it was loaded"));
-    }
-    let Some(type_config) = library
-        .config
-        .types
-        .iter()
-        .find(|item| item.id == entity.summary.entity_type)
-    else {
+    check_revision(&request.revision, &entity.revision)?;
+    let Some(type_config) = library.config.type_config(&entity.summary.entity_type) else {
         return Err(ApiError::bad_request("Unknown entity type"));
     };
 
@@ -490,17 +480,9 @@ pub(crate) async fn create_asset_job(
     State(state): State<AppState>,
     Json(request): Json<AssetDownloadJobRequest>,
 ) -> ApiResult<AssetDownloadJob> {
-    let library = get_library(&state).await?;
-    if !content_writes_enabled(&state, &library) {
-        return Err(ApiError::forbidden("Content writes are disabled"));
-    }
+    let library = require_content_writes(&state).await?;
     if let Some(entity_type) = request.entity_type.as_deref() {
-        if !library
-            .config
-            .types
-            .iter()
-            .any(|item| item.id == entity_type)
-        {
+        if library.config.type_config(entity_type).is_none() {
             return Err(ApiError::bad_request("Unknown entity type"));
         }
     }
@@ -512,12 +494,7 @@ pub(crate) async fn create_asset_job(
                 continue;
             }
         }
-        let Some(type_config) = library
-            .config
-            .types
-            .iter()
-            .find(|item| item.id == entity.summary.entity_type)
-        else {
+        let Some(type_config) = library.config.type_config(&entity.summary.entity_type) else {
             continue;
         };
         if entity_has_remote_image(&entity.frontmatter, type_config) {
@@ -661,9 +638,7 @@ async fn run_asset_job(
             };
             let Some(type_config) = library
                 .config
-                .types
-                .iter()
-                .find(|item| item.id == entity.summary.entity_type)
+                .type_config(&entity.summary.entity_type)
                 .cloned()
             else {
                 return;
@@ -795,12 +770,7 @@ pub(super) fn entity_asset_dir(asset_root: &str, entity_relative_path: &str) -> 
 fn all_local_asset_paths(library: &Library) -> HashSet<String> {
     let mut set = HashSet::new();
     for entity in &library.records {
-        if let Some(type_config) = library
-            .config
-            .types
-            .iter()
-            .find(|item| item.id == entity.summary.entity_type)
-        {
+        if let Some(type_config) = library.config.type_config(&entity.summary.entity_type) {
             collect_local_asset_paths(&entity.frontmatter, type_config, &mut set);
         }
     }

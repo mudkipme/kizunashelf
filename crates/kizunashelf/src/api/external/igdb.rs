@@ -1,4 +1,7 @@
-use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig};
+use super::{
+    external_client, field_option, provider_error, type_option, ExternalProvider,
+    ProviderSearchConfig,
+};
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -126,13 +129,6 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
     vec![type_option("game", "Game")]
 }
 
-fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
-    ExternalProviderFieldOption {
-        field: field.to_string(),
-        label: label.to_string(),
-    }
-}
-
 /// Collects an array of `{ name }` references into a JSON string array, returning
 /// `None` when the source is missing or empty.
 fn named_list(value: Option<&Value>) -> Option<Value> {
@@ -144,13 +140,6 @@ fn named_list(value: Option<&Value>) -> Option<Value> {
         .map(|name| Value::String(name.to_string()))
         .collect();
     (!names.is_empty()).then_some(Value::Array(names))
-}
-
-fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
-    ExternalProviderTypeOption {
-        value: value.to_string(),
-        label: label.to_string(),
-    }
 }
 
 fn igdb_query_body(q: &str, page_size: usize, offset: usize) -> String {

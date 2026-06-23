@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { getEntities } from "@kizunashelf/api-contract";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { apiFetch, errorMessage } from "@/api/client";
+import { errorMessage } from "@/api/client";
 import { addEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
+import { useRelationSearch } from "@/api/use-relation-search";
 import { capabilitiesQuery, configQuery, providerCatalogQuery } from "@/api/queries";
 import {
   type FrontmatterDraft,
@@ -64,26 +64,7 @@ export function EntityCreatePage() {
     onError: setError,
   });
 
-  const searchRelations = useCallback(async ({ relationType, query, signal }: {
-    relationType?: string | null;
-    query: string;
-    signal: AbortSignal;
-  }) => {
-    const type = relationType?.trim();
-    if (!type) return [];
-    const result = await getEntities(
-      {
-        type,
-        q: query.trim() || undefined,
-        pageSize: 25,
-        sort: "title",
-        direction: "asc",
-      },
-      { signal },
-      apiFetch,
-    );
-    return result.items;
-  }, []);
+  const searchRelations = useRelationSearch();
 
   async function create() {
     if (!contentWritable) return;

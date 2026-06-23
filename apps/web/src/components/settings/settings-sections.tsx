@@ -33,6 +33,7 @@ import {
   PathField,
   StringListEditor,
   TextField,
+  UnknownValueOption,
 } from "./settings-controls";
 import {
   fieldOptionKeys,
@@ -120,7 +121,7 @@ export function HomeSectionForm({
                 {type.label || type.id}
               </option>
             ))}
-            {!types.some((type) => type.id === section.type) ? <option value={section.type}>{section.type}</option> : null}
+            <UnknownValueOption value={section.type} known={types.map((type) => type.id)} />
           </Select>
         </Field>
         <div className="lg:col-span-3">
@@ -161,9 +162,7 @@ export function HomeSectionForm({
                 {option.label}
               </option>
             ))}
-            {!sortOptions.some((option) => option.value === currentSort) ? (
-              <option value={currentSort}>{currentSort}</option>
-            ) : null}
+            <UnknownValueOption value={currentSort} known={sortOptions.map((option) => option.value)} />
           </Select>
         </Field>
         <Field label="Direction">
@@ -213,9 +212,7 @@ function HomeSectionFilterEditor({
                 {field.displayName || field.field}
               </option>
             ))}
-            {filter.field && !fields.some((field) => field.field === filter.field) ? (
-              <option value={filter.field}>{filter.field}</option>
-            ) : null}
+            <UnknownValueOption value={filter.field} known={fields.map((field) => field.field)} />
           </Select>
         </Field>
         <StringListEditor
@@ -261,9 +258,7 @@ function LanguageSelect({
           {language.label} ({language.code})
         </option>
       ))}
-      {value && !languages.some((language) => language.code === value) ? (
-        <option value={value}>{value}</option>
-      ) : null}
+      <UnknownValueOption value={value} known={languages.map((language) => language.code)} />
     </Select>
   );
 }

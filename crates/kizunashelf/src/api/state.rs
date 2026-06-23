@@ -1,3 +1,4 @@
+use super::error::ApiError;
 use crate::contract::{AnalyticsResponse, AssetDownloadJob};
 use crate::library::{
     load_vault_config_via_vfs, read_library, read_library_cached, read_raw_vault_config_via_vfs,
@@ -462,4 +463,15 @@ async fn build_index_cache_context(
 
 pub(crate) fn content_writes_enabled(state: &AppState, library: &Library) -> bool {
     state.options.content_writable && library.config.content_writable.unwrap_or(true)
+}
+
+/// Loads the library and rejects the request with 403 when content writes are
+/// disabled. The single entry point every mutation/asset-download handler uses to
+/// gate writes, so the read-only check (and its error) lives in one place.
+pub(crate) async fn require_content_writes(state: &AppState) -> Result<Arc<Library>, ApiError> {
+    let library = get_library(state).await?;
+    if !content_writes_enabled(state, &library) {
+        return Err(ApiError::forbidden("Content writes are disabled"));
+    }
+    Ok(library)
 }

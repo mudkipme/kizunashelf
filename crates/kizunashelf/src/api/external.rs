@@ -359,7 +359,7 @@ fn configured_external_providers(
 fn provider_order(config: &KizunaConfig, entity_type: &str) -> Vec<&'static str> {
     let configured = configured_external_providers(config, entity_type);
     let mut order = Vec::new();
-    if let Some(type_config) = config.types.iter().find(|item| item.id == entity_type) {
+    if let Some(type_config) = config.type_config(entity_type) {
         for provider in &type_config.external_priority {
             if let Some(provider) = provider_for_external_ref(provider) {
                 if configured.contains_key(provider) && !order.contains(&provider) {
@@ -388,6 +388,20 @@ pub(super) fn external_client() -> &'static reqwest::Client {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new())
     })
+}
+
+pub(super) fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
+    ExternalProviderFieldOption {
+        field: field.to_string(),
+        label: label.to_string(),
+    }
+}
+
+pub(super) fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
+    ExternalProviderTypeOption {
+        value: value.to_string(),
+        label: label.to_string(),
+    }
 }
 
 fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {

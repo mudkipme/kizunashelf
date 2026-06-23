@@ -1,4 +1,7 @@
-use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig};
+use super::{
+    external_client, field_option, provider_error, type_option, ExternalProvider,
+    ProviderSearchConfig,
+};
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -198,20 +201,6 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
         type_option("series", "Series"),
         type_option("movie", "Movie"),
     ]
-}
-
-fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
-    ExternalProviderFieldOption {
-        field: field.to_string(),
-        label: label.to_string(),
-    }
-}
-
-fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
-    ExternalProviderTypeOption {
-        value: value.to_string(),
-        label: label.to_string(),
-    }
 }
 
 fn thetvdb_type_filter(external_type: &str) -> Option<String> {

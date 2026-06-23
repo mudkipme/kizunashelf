@@ -1,6 +1,6 @@
 use super::assets::entity_asset_dir;
 use super::error::{ApiError, ApiResult};
-use super::state::{content_writes_enabled, get_library, AppState};
+use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CreateEntityRequest, DeleteEntityRequest, DeleteEntityResponse, EntityMutationResponse,
     UpdateEntityRequest,
@@ -28,16 +28,11 @@ pub(crate) async fn update_entity(
     AxumPath(path): AxumPath<EntityPath>,
     Json(request): Json<UpdateEntityRequest>,
 ) -> ApiResult<EntityMutationResponse> {
-    let library = get_library(&state).await?;
-    if !content_writes_enabled(&state, &library) {
-        return Err(ApiError::forbidden("Content writes are disabled"));
-    }
+    let library = require_content_writes(&state).await?;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    if request.revision != entity.revision {
-        return Err(ApiError::conflict("Entity changed since it was loaded"));
-    }
+    check_revision(&request.revision, &entity.revision)?;
 
     let vfs = state.vault_vfs(&library.config.vault_root);
     let source_rel = entity.summary.path.clone();
@@ -49,9 +44,7 @@ pub(crate) async fn update_entity(
     // cached index. Otherwise an external edit landing between the cache snapshot
     // and this read would still match the client's revision and be silently
     // overwritten (TOCTOU).
-    if request.revision != file_revision(&raw) {
-        return Err(ApiError::conflict("Entity changed since it was loaded"));
-    }
+    check_revision(&request.revision, &file_revision(&raw))?;
     let mut document = split_markdown_document(&raw);
     if let Some(frontmatter) = request.frontmatter {
         apply_frontmatter_patch(&mut document.frontmatter, frontmatter);
@@ -113,16 +106,8 @@ pub(crate) async fn create_entity(
     State(state): State<AppState>,
     Json(request): Json<CreateEntityRequest>,
 ) -> ApiResult<EntityMutationResponse> {
-    let library = get_library(&state).await?;
-    if !content_writes_enabled(&state, &library) {
-        return Err(ApiError::forbidden("Content writes are disabled"));
-    }
-    let Some(type_config) = library
-        .config
-        .types
-        .iter()
-        .find(|item| item.id == request.entity_type)
-    else {
+    let library = require_content_writes(&state).await?;
+    let Some(type_config) = library.config.type_config(&request.entity_type) else {
         return Err(ApiError::bad_request("Unknown entity type"));
     };
     let basename = sanitize_basename(&request.basename)
@@ -153,16 +138,11 @@ pub(crate) async fn delete_entity(
     AxumPath(path): AxumPath<EntityPath>,
     Json(request): Json<DeleteEntityRequest>,
 ) -> ApiResult<DeleteEntityResponse> {
-    let library = get_library(&state).await?;
-    if !content_writes_enabled(&state, &library) {
-        return Err(ApiError::forbidden("Content writes are disabled"));
-    }
+    let library = require_content_writes(&state).await?;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    if request.revision != entity.revision {
-        return Err(ApiError::conflict("Entity changed since it was loaded"));
-    }
+    check_revision(&request.revision, &entity.revision)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     let trash_path = move_to_trash(vfs.as_ref(), &entity.summary.path).await?;
     let asset_dir = entity_asset_dir(library.config.resolved_asset_root(), &entity.summary.path);
@@ -289,6 +269,16 @@ async fn trash_entity_assets(vfs: &dyn Vfs, asset_dir_relative: &str) {
         }
     }
     let _ = vfs.rename(asset_dir_relative, &dest).await;
+}
+
+/// Optimistic-concurrency guard: rejects a write whose client-supplied `expected`
+/// revision no longer matches the entity's `actual` revision, with the uniform 409
+/// shared by every entity/asset write path.
+pub(super) fn check_revision(expected: &str, actual: &str) -> Result<(), ApiError> {
+    if expected != actual {
+        return Err(ApiError::conflict("Entity changed since it was loaded"));
+    }
+    Ok(())
 }
 
 fn apply_frontmatter_patch(target: &mut Map<String, Value>, patch: Map<String, Value>) {

@@ -10,6 +10,21 @@ import { isDesktopRuntime, selectDirectory } from "@/lib/desktop";
 
 import { relativeToBase, replaceArray } from "./settings-model";
 
+/// Renders a fallback `<option>` for a configured value the option list doesn't
+/// recognize, so hand-edited config (an unknown type, sort key, field, or title
+/// language) stays selectable instead of being silently dropped. Render it last
+/// inside a `<Select>`, after the known options. Empty values are skipped.
+export function UnknownValueOption({
+  value,
+  known,
+}: {
+  value: string;
+  known: readonly string[];
+}) {
+  if (!value || known.includes(value)) return null;
+  return <option value={value}>{value}</option>;
+}
+
 export function StringListEditor({
   label,
   values,

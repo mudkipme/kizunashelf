@@ -1,4 +1,7 @@
-use super::{external_client, provider_error, ExternalProvider, ProviderSearchConfig, USER_AGENT};
+use super::{
+    external_client, field_option, provider_error, type_option, ExternalProvider,
+    ProviderSearchConfig, USER_AGENT,
+};
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
 use serde_json::{json, Map, Value};
@@ -138,13 +141,6 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
     ]
 }
 
-fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
-    ExternalProviderFieldOption {
-        field: field.to_string(),
-        label: label.to_string(),
-    }
-}
-
 /// Collects an array's elements into a JSON string array via `extract`, dropping
 /// empties and returning `None` when the source is missing or yields nothing.
 /// Used for list-shaped metadata (tags, genres) that maps onto list-type fields.
@@ -160,13 +156,6 @@ fn string_list<'a>(
         .map(|text| Value::String(text.to_string()))
         .collect();
     (!items.is_empty()).then_some(Value::Array(items))
-}
-
-fn type_option(value: &str, label: &str) -> ExternalProviderTypeOption {
-    ExternalProviderTypeOption {
-        value: value.to_string(),
-        label: label.to_string(),
-    }
 }
 
 fn bangumi_type(external_type: &str) -> Option<u32> {

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getEntities } from "@kizunashelf/api-contract";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { apiFetch, errorMessage, isConflictError } from "@/api/client";
+import { errorMessage, isConflictError } from "@/api/client";
 import { saveEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
+import { useRelationSearch } from "@/api/use-relation-search";
 import {
   capabilitiesQuery,
   configQuery,
@@ -91,26 +91,7 @@ export function EntityEditPage() {
     setError(undefined);
   }
 
-  const searchRelations = useCallback(async ({ relationType, query, signal }: {
-    relationType?: string | null;
-    query: string;
-    signal: AbortSignal;
-  }) => {
-    const type = relationType?.trim();
-    if (!type) return [];
-    const result = await getEntities(
-      {
-        type,
-        q: query.trim() || undefined,
-        pageSize: 25,
-        sort: "title",
-        direction: "asc",
-      },
-      { signal },
-      apiFetch,
-    );
-    return result.items;
-  }, []);
+  const searchRelations = useRelationSearch();
 
   async function save() {
     if (!entity || !contentWritable) return;
