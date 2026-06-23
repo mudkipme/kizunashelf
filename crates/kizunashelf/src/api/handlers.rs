@@ -1,4 +1,3 @@
-use super::entities::sort_entities_for_entity_list;
 use super::error::{ApiError, ApiResult};
 use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{
@@ -12,6 +11,7 @@ use crate::contract::{
     VaultTemplatesResponse,
 };
 use crate::dates::clamp_number;
+use crate::entities::sort_entities_for_entity_list;
 use crate::relations::{build_relation_target_type_summaries, SortDirection};
 use crate::types::{EntityRecord, HomeSectionConfig, Library};
 use axum::extract::{Query, State};

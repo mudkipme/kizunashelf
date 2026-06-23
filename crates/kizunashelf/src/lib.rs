@@ -1,8 +1,10 @@
+pub mod analytics;
 pub mod api;
 pub mod calendar;
 pub mod contract;
 pub mod daily_notes;
 pub mod dates;
+pub mod entities;
 pub mod languages;
 pub mod library;
 pub mod relations;
