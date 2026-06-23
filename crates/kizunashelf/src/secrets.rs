@@ -3,11 +3,11 @@
 //! Two kinds of secrets flow through here:
 //!
 //! - **Credentials** the user supplies (IGDB client id/secret, TheTVDB API key +
-//!   PIN). Desktop reads these from `KIZUNASHELF_*` env vars; iOS reads them from
-//!   the Keychain (the user enters them in Settings).
+//!   PIN). Web reads these from `KIZUNASHELF_*` env vars; desktop and iOS read
+//!   them from the OS keychain (the user enters them in Settings).
 //! - The **provider token cache** (derived OAuth access tokens, managed by the
-//!   core). Desktop persists it to a `0600` JSON file next to the app config; iOS
-//!   stores it in the Keychain.
+//!   core). Web persists it to a `0600` JSON file outside the vault; desktop and
+//!   iOS store it in the keychain.
 //!
 //! Reads/writes are synchronous and expected to be cheap (Keychain access or a
 //! tiny local file). The iOS implementation is a Swift-backed FFI callback.
@@ -43,16 +43,17 @@ pub trait SecretStore: Send + Sync {
     fn set(&self, key: &str, value: &str) -> Result<()>;
 }
 
-/// Desktop/web store: credentials from `KIZUNASHELF_*` env vars (read-only), the
-/// token cache in a `0600` JSON file next to the app config. Behavior matches the
-/// pre-`SecretStore` token file and env-var credential reads.
+/// Web/native test store: credentials from `KIZUNASHELF_*` env vars (read-only),
+/// with the token cache in a `0600` JSON file outside the vault. Desktop and iOS
+/// inject keychain-backed stores instead.
 pub struct NativeSecretStore {
     token_path: PathBuf,
 }
 
 impl NativeSecretStore {
-    /// `config_path` is the app config file; the token cache lives beside it as
-    /// `.kizunashelf.tokens.json`.
+    /// Legacy helper for callers that want a token cache derived from a host
+    /// config path. Modern runtimes usually pass an explicit path with
+    /// [`Self::with_token_path`].
     pub fn new(config_path: &Path) -> Self {
         let token_path = config_path
             .parent()
@@ -62,8 +63,7 @@ impl NativeSecretStore {
     }
 
     /// Builds a store with an explicit token-cache path. Used by the env-only web
-    /// runtime (which has no app config file to anchor the cache beside) and the
-    /// desktop runtime.
+    /// runtime, which has no app config file to anchor the cache beside.
     pub fn with_token_path(token_path: PathBuf) -> Self {
         Self { token_path }
     }
@@ -71,9 +71,10 @@ impl NativeSecretStore {
 
 impl SecretStore for NativeSecretStore {
     fn get(&self, key: &str) -> Option<String> {
-        // The token cache is the only persisted secret on web/desktop; every
-        // other key is a provider credential sourced from its `KIZUNASHELF_*`
-        // env var (derived from the key, so new providers need no edit here).
+        // The token cache is the only persisted secret in this store; every
+        // other key is a web provider credential sourced from its
+        // `KIZUNASHELF_*` env var (derived from the key, so new providers need no
+        // edit here).
         if key == SECRET_PROVIDER_TOKENS {
             return std::fs::read_to_string(&self.token_path).ok();
         }
@@ -81,8 +82,8 @@ impl SecretStore for NativeSecretStore {
     }
 
     fn set(&self, key: &str, value: &str) -> Result<()> {
-        // Credentials are read-only on desktop (env vars); only the token cache is
-        // persisted.
+        // Credentials are read-only in this store (env vars); only the token
+        // cache is persisted.
         if key != SECRET_PROVIDER_TOKENS {
             return Ok(());
         }
@@ -125,12 +126,12 @@ mod tests {
     }
 
     #[test]
-    fn credential_keys_are_read_only_on_desktop() {
+    fn credential_keys_are_read_only_in_env_store() {
         let temp = TempDir::new().unwrap();
         let store = NativeSecretStore::new(&temp.path().join("kizunashelf.yaml"));
 
-        // No env var set → None, and setting a credential key is a no-op (desktop
-        // credentials come from env vars only).
+        // No env var set -> None, and setting a credential key is a no-op:
+        // credentials come from env vars only in this store.
         assert!(store.get(SECRET_IGDB_CLIENT_ID).is_none());
         store.set(SECRET_IGDB_CLIENT_ID, "abc").unwrap();
         assert!(store.get(SECRET_IGDB_CLIENT_ID).is_none());

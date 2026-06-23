@@ -177,8 +177,9 @@ pub struct DailyNotesConfig {
 }
 
 /// App-level configuration. Describes how *this machine* runs KizunaShelf and
-/// where the vault lives on disk. Stored in the local app config file
-/// (`~/.config/kizunashelf.yaml` and friends) and never synced with the vault.
+/// where the vault lives on disk. This is owned by the runtime and passed
+/// inline: env vars for web, the native vault switcher for desktop, and the
+/// host app's local state for iOS. It is never stored in the synced vault config.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AppConfig {
@@ -206,8 +207,8 @@ pub struct VaultConfig {
 
 /// Merged runtime view of the app and vault config. This is the shape consumed
 /// throughout the library, relations, calendar, and API handlers. It is built
-/// from [`AppConfig`] + [`VaultConfig`] at load time and split back into them
-/// when persisting.
+/// from [`AppConfig`] + [`VaultConfig`] at load time; only the vault part is
+/// persisted by the core settings endpoints.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct KizunaConfig {

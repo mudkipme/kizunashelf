@@ -6,9 +6,9 @@
 //! vault). iOS will supply a Swift-backed implementation (security-scoped
 //! bookmarks + `NSFileCoordinator`) — see ../kizunashelf-ios/docs/ios-port-plan.md §5.
 //!
-//! App-private I/O (the app config file, the provider token cache) is *not* part
-//! of this abstraction: it lives outside the vault and stays on direct fs (or, on
-//! iOS, in `@AppStorage`/Keychain).
+//! App-private I/O (desktop vault lists, web token-cache files, keychain-backed
+//! secrets, iOS host state) is *not* part of this abstraction. It lives outside
+//! the vault and is owned by the runtime.
 //!
 //! Path containment is enforced lexically by [`normalize_relative`] (reject `..`
 //! and absolute components) rather than by `canonicalize()` + prefix checks, so
