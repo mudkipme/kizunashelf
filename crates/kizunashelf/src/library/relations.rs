@@ -8,9 +8,9 @@ use anyhow::Result;
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use super::cache_key;
 use super::frontmatter::{fence_regex, strip_wikilink, wikilink_regex};
 use super::index_cache::{fingerprint_hit, CachedDailyNote};
+use super::read::cache_key;
 
 /// The `field` value marking a relation that originates from a daily note (the
 /// only relation kind that requires reading files outside the resident records).
