@@ -17,6 +17,14 @@ impl ExternalProvider for BangumiProvider {
         bangumi_types(provider_config).is_some()
     }
 
+    fn field_options() -> Vec<ExternalProviderFieldOption> {
+        field_options()
+    }
+
+    fn type_options() -> Vec<ExternalProviderTypeOption> {
+        type_options()
+    }
+
     async fn search(
         _state: &super::AppState,
         q: &str,
@@ -124,7 +132,15 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("volumes", "Volumes"),
         field_option("score", "Score"),
         field_option("rank", "Rank"),
+        // Derived from the wiki `infobox` (present on a subject fetch, not search).
+        field_option("language", "Language"),
+        field_option("publisher", "Publisher"),
+        field_option("official_site", "Official site"),
         // Lists — map these to list-type fields (enum list / text list / relation).
+        field_option("aliases", "Aliases"),
+        field_option("director", "Director"),
+        field_option("author", "Author"),
+        field_option("genre", "Genre"),
         field_option("tags", "Tags"),
         field_option("meta_tags", "Meta tags"),
         field_option("summary", "Summary"),
@@ -139,6 +155,42 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
         type_option("4", "Game (4)"),
         type_option("6", "Real (6)"),
     ]
+}
+
+/// Collects values for the given `infobox` keys (tried in order) into a
+/// de-duplicated string list. A Bangumi infobox entry's `value` is either a plain
+/// string or an array of `{ v }` (and sometimes `{ k, v }`) objects.
+fn infobox_collect(infobox: &[Value], keys: &[&str]) -> Vec<String> {
+    let mut values = Vec::new();
+    let mut push = |text: &str| {
+        let text = text.trim();
+        if !text.is_empty() && !values.iter().any(|existing| existing == text) {
+            values.push(text.to_string());
+        }
+    };
+    for key in keys {
+        for entry in infobox {
+            if entry.get("key").and_then(Value::as_str) != Some(*key) {
+                continue;
+            }
+            match entry.get("value") {
+                Some(Value::String(text)) => push(text),
+                Some(Value::Array(items)) => {
+                    for item in items {
+                        if let Some(text) = item
+                            .get("v")
+                            .and_then(Value::as_str)
+                            .or_else(|| item.as_str())
+                        {
+                            push(text);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    values
 }
 
 /// Collects an array's elements into a JSON string array via `extract`, dropping
@@ -183,16 +235,21 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
     }
     let cover_url = item
         .get("images")
-        .and_then(|images| images.get("common").or_else(|| images.get("grid")))
+        .and_then(|images| {
+            // Prefer the largest available.
+            images
+                .get("large")
+                .or_else(|| images.get("common"))
+                .or_else(|| images.get("grid"))
+        })
         .and_then(Value::as_str)
         .map(str::to_string);
     let release_date = item.get("date").and_then(Value::as_str).unwrap_or_default();
     let mut titles = BTreeMap::new();
+    // Only `name_cn` has a reliable language (Chinese). `name` is the original
+    // title in an unknown language, so it is left untagged rather than guessed.
     if !name_cn.is_empty() {
         titles.insert("zh".to_string(), name_cn.to_string());
-    }
-    if !name.is_empty() {
-        titles.insert("ja".to_string(), name.to_string());
     }
     let mut metadata = Map::new();
     metadata.insert("name".to_string(), Value::String(name.to_string()));
@@ -259,6 +316,33 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
     {
         metadata.insert("summary".to_string(), Value::String(summary.to_string()));
     }
+    // The wiki `infobox` (present on a subject fetch, not in search results) holds
+    // structured production metadata under Chinese keys; surface the useful ones.
+    if let Some(infobox) = item.get("infobox").and_then(Value::as_array) {
+        for (field, keys) in [
+            ("aliases", &["别名"][..]),
+            ("director", &["导演", "演出"][..]),
+            ("author", &["作者", "作画", "原作"][..]),
+            ("genre", &["类型", "游戏类型"][..]),
+        ] {
+            let values = infobox_collect(infobox, keys);
+            if !values.is_empty() {
+                metadata.insert(
+                    field.to_string(),
+                    Value::Array(values.into_iter().map(Value::String).collect()),
+                );
+            }
+        }
+        for (field, keys) in [
+            ("language", &["语言"][..]),
+            ("publisher", &["出版社"][..]),
+            ("official_site", &["官方网站", "website"][..]),
+        ] {
+            if let Some(value) = infobox_collect(infobox, keys).into_iter().next() {
+                metadata.insert(field.to_string(), Value::String(value));
+            }
+        }
+    }
     Some(ExternalCandidate {
         provider: "bangumi".to_string(),
         source_id: id,
@@ -303,5 +387,44 @@ mod tests {
         assert_eq!(metadata.get("rank"), Some(&json!(42)));
         assert_eq!(metadata.get("tags"), Some(&json!(["Sci-Fi", "Space"])));
         assert_eq!(metadata.get("meta_tags"), Some(&json!(["TV", "Original"])));
+    }
+
+    #[test]
+    fn candidate_parses_infobox_cover_and_titles() {
+        let candidate = bangumi_candidate(&json!({
+            "id": 8,
+            "name": "Cowboy Bebop",
+            "name_cn": "星际牛仔",
+            "images": { "large": "https://img/large.jpg", "common": "https://img/common.jpg" },
+            "infobox": [
+                { "key": "别名", "value": [{ "v": "カウボーイビバップ" }, { "v": "COWBOY BEBOP" }] },
+                { "key": "导演", "value": "渡边信一郎" },
+                { "key": "类型", "value": "科幻" },
+                { "key": "语言", "value": "日语" },
+                { "key": "官方网站", "value": "https://example.com" }
+            ]
+        }))
+        .unwrap();
+
+        // Cover prefers `large`; the original name is left untagged (only zh known).
+        assert_eq!(
+            candidate.cover_url.as_deref(),
+            Some("https://img/large.jpg")
+        );
+        assert_eq!(candidate.titles.get("zh"), Some(&"星际牛仔".to_string()));
+        assert_eq!(candidate.titles.get("ja"), None);
+
+        let metadata = &candidate.metadata;
+        assert_eq!(
+            metadata.get("aliases"),
+            Some(&json!(["カウボーイビバップ", "COWBOY BEBOP"]))
+        );
+        assert_eq!(metadata.get("director"), Some(&json!(["渡边信一郎"])));
+        assert_eq!(metadata.get("genre"), Some(&json!(["科幻"])));
+        assert_eq!(metadata.get("language"), Some(&json!("日语")));
+        assert_eq!(
+            metadata.get("official_site"),
+            Some(&json!("https://example.com"))
+        );
     }
 }

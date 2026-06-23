@@ -61,7 +61,7 @@ export function SettingsPage() {
         {desktop ? (
           <>
             <VaultSwitcher onChanged={() => void queryClient.invalidateQueries()} />
-            <ProviderCredentials />
+            <ProviderCredentials providers={providerCatalog.data?.providers ?? []} />
           </>
         ) : null}
 

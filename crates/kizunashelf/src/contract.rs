@@ -120,6 +120,27 @@ pub struct ExternalProviderCatalogItem {
     pub fields: Vec<ExternalProviderFieldOption>,
     pub types: Vec<ExternalProviderTypeOption>,
     pub default_external_types: Vec<String>,
+    /// Credential fields this provider needs. Empty for keyless providers. The
+    /// frontend and iOS render their credential editors from this list rather
+    /// than hard-coding per-provider inputs — core is the single source.
+    #[serde(default)]
+    pub credentials: Vec<ExternalProviderCredentialField>,
+    /// Whether the provider supports free-text search. `false` means it only
+    /// resolves a pasted URL/ID (the query box should hint that to the user).
+    pub search_supported: bool,
+}
+
+/// One credential input a provider requires (e.g. an API key). The `key` is the
+/// secret-store key (also the `KIZUNASHELF_<UPPER_KEY>` env var on web/desktop).
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalProviderCredentialField {
+    pub key: String,
+    pub label: String,
+    /// Render as a masked/password input and never echo back the stored value.
+    pub secret: bool,
+    /// A required credential gates the provider; an optional one only refines it.
+    pub required: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -380,6 +401,8 @@ pub struct ExternalProviderSummary {
     pub id: String,
     pub label: String,
     pub enabled: bool,
+    /// Whether the provider supports free-text search (vs. URL/ID resolution only).
+    pub search_supported: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
 }

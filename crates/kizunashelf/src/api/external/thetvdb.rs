@@ -1,5 +1,5 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
     ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
@@ -18,6 +18,31 @@ impl ExternalProvider for ThetvdbProvider {
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         thetvdb_type_filters(provider_config).is_some()
+    }
+
+    fn credentials() -> &'static [CredentialSpec] {
+        &[
+            CredentialSpec {
+                key: SECRET_TVDB_API_KEY,
+                label: "TheTVDB API Key",
+                secret: true,
+                required: true,
+            },
+            CredentialSpec {
+                key: SECRET_TVDB_PIN,
+                label: "TheTVDB PIN (optional)",
+                secret: false,
+                required: false,
+            },
+        ]
+    }
+
+    fn field_options() -> Vec<ExternalProviderFieldOption> {
+        field_options()
+    }
+
+    fn type_options() -> Vec<ExternalProviderTypeOption> {
+        type_options()
     }
 
     fn unavailable_reason(state: &AppState) -> Option<String> {
@@ -188,6 +213,8 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("network", "Network"),
         field_option("director", "Director"),
         field_option("slug", "Slug"),
+        field_option("imdb_code", "IMDb id"),
+        field_option("tmdb_id", "TheMovieDB id"),
         // Lists — map these to list-type fields (enum list / text list / relation).
         field_option("genres", "Genres"),
         field_option("studios", "Studios"),
@@ -340,6 +367,25 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
             metadata.insert(key.to_string(), values);
         }
     }
+    // Search hits carry a `remote_ids` array cross-linking to IMDb/TheMovieDB;
+    // surface those ids so a TVDB pick can seed other providers.
+    if let Some(remote_ids) = item.get("remote_ids").and_then(Value::as_array) {
+        for (field, source_name) in [("imdb_code", "imdb"), ("tmdb_id", "themoviedb")] {
+            if let Some(remote_id) = remote_ids
+                .iter()
+                .find(|remote| {
+                    remote
+                        .get("sourceName")
+                        .and_then(Value::as_str)
+                        .is_some_and(|name| name.to_ascii_lowercase().contains(source_name))
+                })
+                .and_then(|remote| remote.get("id"))
+                .and_then(non_empty_string_or_integer)
+            {
+                metadata.insert(field.to_string(), Value::String(remote_id));
+            }
+        }
+    }
     Some(ExternalCandidate {
         provider: "thetvdb".to_string(),
         source_id,
@@ -437,7 +483,11 @@ mod tests {
             "status": "Continuing",
             "network": "TV Tokyo",
             "genres": ["Anime", "Action"],
-            "studios": ["Studio X"]
+            "studios": ["Studio X"],
+            "remote_ids": [
+                { "id": "tt1234567", "sourceName": "IMDB" },
+                { "id": "98765", "sourceName": "TheMovieDB" }
+            ]
         }))
         .unwrap();
 
@@ -447,5 +497,7 @@ mod tests {
         assert_eq!(metadata.get("network"), Some(&json!("TV Tokyo")));
         assert_eq!(metadata.get("genres"), Some(&json!(["Anime", "Action"])));
         assert_eq!(metadata.get("studios"), Some(&json!(["Studio X"])));
+        assert_eq!(metadata.get("imdb_code"), Some(&json!("tt1234567")));
+        assert_eq!(metadata.get("tmdb_id"), Some(&json!("98765")));
     }
 }

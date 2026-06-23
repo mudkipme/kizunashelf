@@ -6,6 +6,7 @@
  */
 import { z as zod } from 'zod';
 
+export const externalProviderCatalogResponseProvidersItemCredentialsDefault = [];
 export const ExternalProviderCatalogResponse = zod.object({
   "providers": zod.array(zod.object({
   "id": zod.string(),
@@ -18,7 +19,14 @@ export const ExternalProviderCatalogResponse = zod.object({
   "value": zod.string(),
   "label": zod.string()
 })),
-  "defaultExternalTypes": zod.array(zod.string())
+  "defaultExternalTypes": zod.array(zod.string()),
+  "credentials": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean().describe('Render as a masked\/password input and never echo back the stored value.'),
+  "required": zod.boolean().describe('A required credential gates the provider; an optional one only refines it.')
+}).describe('One credential input a provider requires (e.g. an API key). The `key` is the\nsecret-store key (also the `KIZUNASHELF_<UPPER_KEY>` env var on web\/desktop).')).default(externalProviderCatalogResponseProvidersItemCredentialsDefault).describe('Credential fields this provider needs. Empty for keyless providers. The\nfrontend and iOS render their credential editors from this list rather\nthan hard-coding per-provider inputs — core is the single source.'),
+  "searchSupported": zod.boolean().describe('Whether the provider supports free-text search. `false` means it only\nresolves a pasted URL\/ID (the query box should hint that to the user).')
 }))
 })
 

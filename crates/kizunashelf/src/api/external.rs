@@ -1,12 +1,25 @@
 use super::error::{ApiError, ApiResult};
+mod apple_podcast;
 mod bangumi;
+mod bgg;
+mod comicvine;
+mod discogs;
+mod google_books;
+mod hardcover;
 mod igdb;
+mod mal;
+mod mangaupdates;
+mod musicbrainz;
+mod open_library;
+mod spotify;
+mod steam;
 mod thetvdb;
+mod tmdb;
 
 use crate::contract::{
     ExternalCandidate, ExternalProviderCatalogItem, ExternalProviderCatalogResponse,
-    ExternalProviderFieldOption, ExternalProviderSummary, ExternalProviderTypeOption,
-    ExternalSearchResponse,
+    ExternalProviderCredentialField, ExternalProviderFieldOption, ExternalProviderSummary,
+    ExternalProviderTypeOption, ExternalSearchResponse,
 };
 use crate::dates::clamp_number;
 use crate::types::{FieldType, KizunaConfig};
@@ -16,6 +29,8 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::OnceLock;
 use std::time::Duration;
 
@@ -28,6 +43,32 @@ const EXTERNAL_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 trait ExternalProvider {
     const ID: &'static str;
     const LABEL: &'static str;
+    /// Whether the provider answers free-text queries. `false` means it only
+    /// resolves a pasted URL/ID (its `search` returns the resolved candidate for
+    /// a recognized URL/ID and an empty list otherwise).
+    const SEARCHABLE: bool = true;
+
+    /// Credentials this provider requires. Empty (the default) means keyless.
+    fn credentials() -> &'static [CredentialSpec] {
+        &[]
+    }
+
+    /// Values from *this provider's own* [`Self::type_options`] to preselect as
+    /// the `externalTypes` filter when the provider is first wired to a field in
+    /// the schema editor. These are the provider's internal taxonomy (IGDB's
+    /// `game`, Google Books' `book`), **never** a KizunaShelf entity-type id —
+    /// nothing maps a provider to an entity type by name. Multi-type providers
+    /// (Bangumi, TheTVDB) leave this empty so the user picks the constraint.
+    fn default_external_types() -> &'static [&'static str] {
+        &[]
+    }
+
+    /// The external fields this provider can populate, offered in the schema
+    /// editor's field mapping.
+    fn field_options() -> Vec<ExternalProviderFieldOption>;
+
+    /// The external types this provider can be constrained to.
+    fn type_options() -> Vec<ExternalProviderTypeOption>;
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool;
 
@@ -39,13 +80,111 @@ trait ExternalProvider {
         None
     }
 
-    async fn search(
+    fn search(
         state: &AppState,
         q: &str,
         page: usize,
         page_size: usize,
         provider_config: &ProviderSearchConfig,
-    ) -> Result<Vec<ExternalCandidate>, ApiError>;
+    ) -> impl Future<Output = Result<Vec<ExternalCandidate>, ApiError>> + Send;
+}
+
+/// One credential a provider needs. The `key` is the [`crate::secrets`] store key
+/// (and the `KIZUNASHELF_<UPPER_KEY>` env var on web/desktop).
+pub(super) struct CredentialSpec {
+    pub key: &'static str,
+    pub label: &'static str,
+    pub secret: bool,
+    pub required: bool,
+}
+
+/// A future returned by a provider's boxed `search`. Boxed so the registry can
+/// hold every provider behind one uniform, non-generic entry.
+type SearchFut<'a> =
+    Pin<Box<dyn Future<Output = Result<Vec<ExternalCandidate>, ApiError>> + Send + 'a>>;
+
+/// One provider, erased to plain fn pointers so the orchestration can iterate a
+/// `Vec<ProviderEntry>` instead of naming each provider type. Adding a provider
+/// is a single line in [`registry`] — no `tokio::join!` arm or match to update.
+struct ProviderEntry {
+    id: &'static str,
+    label: &'static str,
+    searchable: bool,
+    credentials: &'static [CredentialSpec],
+    default_external_types: &'static [&'static str],
+    field_options: fn() -> Vec<ExternalProviderFieldOption>,
+    type_options: fn() -> Vec<ExternalProviderTypeOption>,
+    configured_and_supported: fn(&ProviderSearchConfig) -> bool,
+    available: fn(&AppState) -> bool,
+    unavailable_reason: fn(&AppState) -> Option<String>,
+    search:
+        for<'a> fn(&'a AppState, &'a str, usize, usize, &'a ProviderSearchConfig) -> SearchFut<'a>,
+}
+
+fn search_boxed<'a, P: ExternalProvider + 'static>(
+    state: &'a AppState,
+    q: &'a str,
+    page: usize,
+    page_size: usize,
+    provider_config: &'a ProviderSearchConfig,
+) -> SearchFut<'a> {
+    Box::pin(P::search(state, q, page, page_size, provider_config))
+}
+
+fn entry<P: ExternalProvider + 'static>() -> ProviderEntry {
+    ProviderEntry {
+        id: P::ID,
+        label: P::LABEL,
+        searchable: P::SEARCHABLE,
+        credentials: P::credentials(),
+        default_external_types: P::default_external_types(),
+        field_options: P::field_options,
+        type_options: P::type_options,
+        configured_and_supported: P::configured_and_supported,
+        available: P::available,
+        unavailable_reason: P::unavailable_reason,
+        search: search_boxed::<P>,
+    }
+}
+
+/// The provider registry: the single source of truth for which external
+/// providers exist. Every other function derives from this — there is no
+/// per-provider branching anywhere else in the orchestration.
+fn registry() -> Vec<ProviderEntry> {
+    vec![
+        entry::<bangumi::BangumiProvider>(),
+        entry::<igdb::IgdbProvider>(),
+        entry::<thetvdb::ThetvdbProvider>(),
+        entry::<google_books::GoogleBooksProvider>(),
+        entry::<open_library::OpenLibraryProvider>(),
+        entry::<apple_podcast::ApplePodcastProvider>(),
+        entry::<steam::SteamProvider>(),
+        entry::<musicbrainz::MusicBrainzProvider>(),
+        entry::<bgg::BoardGameGeekProvider>(),
+        entry::<tmdb::TmdbProvider>(),
+        entry::<spotify::SpotifyProvider>(),
+        entry::<discogs::DiscogsProvider>(),
+        entry::<mal::MyAnimeListProvider>(),
+        entry::<mangaupdates::MangaUpdatesProvider>(),
+        entry::<comicvine::ComicVineProvider>(),
+        entry::<hardcover::HardcoverProvider>(),
+    ]
+}
+
+/// Every distinct credential-store key declared by any provider. Hosts that
+/// enumerate credentials (the desktop keychain editor) derive their key list
+/// from this so it stays in sync with the registry — no hard-coded provider
+/// list outside core.
+pub fn provider_credential_keys() -> Vec<&'static str> {
+    let mut keys = Vec::new();
+    for provider_entry in registry() {
+        for credential in provider_entry.credentials {
+            if !keys.contains(&credential.key) {
+                keys.push(credential.key);
+            }
+        }
+    }
+    keys
 }
 
 #[derive(Clone, Debug, Default)]
@@ -137,46 +276,31 @@ pub(crate) async fn external_search(
     let order = provider_order(&library.config, entity_type);
 
     // Run every selected provider concurrently rather than summing their
-    // latencies sequentially. `tokio::join!` polls all three on this task, so
-    // no spawning or 'static bound is needed; each `search_provider` returns an
-    // empty Vec when its provider is not selected/enabled.
-    let (bangumi_items, igdb_items, thetvdb_items) = tokio::join!(
-        search_provider::<bangumi::BangumiProvider>(
-            &state,
-            &order,
-            requested_provider,
-            &providers,
-            &configured_providers,
-            q,
-            page,
-            page_size,
-        ),
-        search_provider::<igdb::IgdbProvider>(
-            &state,
-            &order,
-            requested_provider,
-            &providers,
-            &configured_providers,
-            q,
-            page,
-            page_size,
-        ),
-        search_provider::<thetvdb::ThetvdbProvider>(
-            &state,
-            &order,
-            requested_provider,
-            &providers,
-            &configured_providers,
-            q,
-            page,
-            page_size,
-        ),
-    );
+    // latencies sequentially. `join_all` polls them all on this task, so no
+    // spawning or 'static bound is needed; a provider not in `order`/disabled is
+    // simply not given a future.
+    let entries = registry();
+    let state_ref = &state;
+    let searches = entries
+        .iter()
+        .filter(|provider_entry| order.contains(&provider_entry.id))
+        .filter(|provider_entry| {
+            should_search_provider(requested_provider, &providers, provider_entry.id)
+        })
+        .filter_map(|provider_entry| {
+            let provider_config = configured_providers.get(provider_entry.id)?;
+            Some(async move {
+                let result =
+                    (provider_entry.search)(state_ref, q, page, page_size, provider_config).await;
+                (provider_entry.id, result)
+            })
+        });
+    let results = futures_util::future::join_all(searches).await;
 
     let mut by_provider: BTreeMap<&'static str, Vec<ExternalCandidate>> = BTreeMap::new();
-    by_provider.insert(bangumi::BangumiProvider::ID, bangumi_items?);
-    by_provider.insert(igdb::IgdbProvider::ID, igdb_items?);
-    by_provider.insert(thetvdb::ThetvdbProvider::ID, thetvdb_items?);
+    for (provider, result) in results {
+        by_provider.insert(provider, result?);
+    }
 
     // Reassemble in priority order so concurrency does not change result order.
     let mut items = Vec::new();
@@ -198,109 +322,72 @@ pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogR
 /// role→field mappings). Shared between the `/api/external/providers` endpoint
 /// and the vault-template builder so external-field wiring has a single source.
 pub(crate) fn provider_catalog_items() -> Vec<ExternalProviderCatalogItem> {
-    vec![
-        provider_catalog_item::<bangumi::BangumiProvider>(
-            bangumi::field_options(),
-            bangumi::type_options(),
-            &[],
-        ),
-        provider_catalog_item::<igdb::IgdbProvider>(
-            igdb::field_options(),
-            igdb::type_options(),
-            &["game"],
-        ),
-        provider_catalog_item::<thetvdb::ThetvdbProvider>(
-            thetvdb::field_options(),
-            thetvdb::type_options(),
-            &[],
-        ),
-    ]
-}
-
-fn provider_catalog_item<P: ExternalProvider>(
-    fields: Vec<ExternalProviderFieldOption>,
-    types: Vec<ExternalProviderTypeOption>,
-    default_external_types: &[&str],
-) -> ExternalProviderCatalogItem {
-    ExternalProviderCatalogItem {
-        id: P::ID.to_string(),
-        label: P::LABEL.to_string(),
-        fields,
-        types,
-        default_external_types: default_external_types
-            .iter()
-            .map(|value| value.to_string())
-            .collect(),
-    }
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn search_provider<P: ExternalProvider>(
-    state: &AppState,
-    order: &[&'static str],
-    requested_provider: Option<&str>,
-    providers: &[ExternalProviderSummary],
-    configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
-    q: &str,
-    page: usize,
-    page_size: usize,
-) -> Result<Vec<ExternalCandidate>, ApiError> {
-    if !order.contains(&P::ID) {
-        return Ok(Vec::new());
-    }
-    if !should_search_provider(requested_provider, providers, P::ID) {
-        return Ok(Vec::new());
-    }
-    let Some(provider_config) = configured_providers.get(P::ID) else {
-        return Ok(Vec::new());
-    };
-    P::search(state, q, page, page_size, provider_config).await
+    registry()
+        .iter()
+        .map(|provider_entry| ExternalProviderCatalogItem {
+            id: provider_entry.id.to_string(),
+            label: provider_entry.label.to_string(),
+            fields: (provider_entry.field_options)(),
+            types: (provider_entry.type_options)(),
+            default_external_types: provider_entry
+                .default_external_types
+                .iter()
+                .map(|value| value.to_string())
+                .collect(),
+            credentials: provider_entry
+                .credentials
+                .iter()
+                .map(|credential| ExternalProviderCredentialField {
+                    key: credential.key.to_string(),
+                    label: credential.label.to_string(),
+                    secret: credential.secret,
+                    required: credential.required,
+                })
+                .collect(),
+            search_supported: provider_entry.searchable,
+        })
+        .collect()
 }
 
 fn provider_summaries(
     state: &AppState,
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> Vec<ExternalProviderSummary> {
-    vec![
-        provider_summary::<bangumi::BangumiProvider>(state, configured_providers),
-        provider_summary::<igdb::IgdbProvider>(state, configured_providers),
-        provider_summary::<thetvdb::ThetvdbProvider>(state, configured_providers),
-    ]
+    registry()
+        .iter()
+        .map(|provider_entry| provider_summary(provider_entry, state, configured_providers))
+        .collect()
 }
 
-fn provider_summary<P: ExternalProvider>(
+fn provider_summary(
+    provider_entry: &ProviderEntry,
     state: &AppState,
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> ExternalProviderSummary {
+    let configured = configured_providers
+        .get(provider_entry.id)
+        .is_some_and(|provider_config| (provider_entry.configured_and_supported)(provider_config));
     ExternalProviderSummary {
-        id: P::ID.to_string(),
-        label: P::LABEL.to_string(),
-        enabled: provider_configured_and_supported::<P>(configured_providers)
-            && P::available(state),
-        reason: provider_reason::<P>(state, configured_providers),
+        id: provider_entry.id.to_string(),
+        label: provider_entry.label.to_string(),
+        enabled: configured && (provider_entry.available)(state),
+        search_supported: provider_entry.searchable,
+        reason: provider_reason(provider_entry, state, configured_providers),
     }
 }
 
-fn provider_reason<P: ExternalProvider>(
+fn provider_reason(
+    provider_entry: &ProviderEntry,
     state: &AppState,
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> Option<String> {
-    if !configured_providers.contains_key(P::ID) {
+    let Some(provider_config) = configured_providers.get(provider_entry.id) else {
         return Some("No external source mapping configured for this source".to_string());
-    }
-    if !provider_configured_and_supported::<P>(configured_providers) {
+    };
+    if !(provider_entry.configured_and_supported)(provider_config) {
         return Some("No supported externalTypes configured for this source".to_string());
     }
-    P::unavailable_reason(state)
-}
-
-fn provider_configured_and_supported<P: ExternalProvider>(
-    configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
-) -> bool {
-    let Some(provider_config) = configured_providers.get(P::ID) else {
-        return false;
-    };
-    P::configured_and_supported(provider_config)
+    (provider_entry.unavailable_reason)(state)
 }
 
 fn should_search_provider(
@@ -317,7 +404,7 @@ fn should_search_provider(
 }
 
 fn is_known_provider(provider: &str) -> bool {
-    matches!(provider, "bangumi" | "igdb" | "thetvdb")
+    registry().iter().any(|entry| entry.id == provider)
 }
 
 fn configured_external_providers(
@@ -368,9 +455,9 @@ fn provider_order(config: &KizunaConfig, entity_type: &str) -> Vec<&'static str>
             }
         }
     }
-    for provider in ["bangumi", "igdb", "thetvdb"] {
-        if configured.contains_key(provider) && !order.contains(&provider) {
-            order.push(provider);
+    for provider_entry in registry() {
+        if configured.contains_key(provider_entry.id) && !order.contains(&provider_entry.id) {
+            order.push(provider_entry.id);
         }
     }
     order
@@ -404,13 +491,44 @@ pub(super) fn type_option(value: &str, label: &str) -> ExternalProviderTypeOptio
     }
 }
 
-fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
-    match external_ref.trim().to_ascii_lowercase().as_str() {
-        "bangumi" => Some("bangumi"),
-        "igdb" => Some("igdb"),
-        "thetvdb" => Some("thetvdb"),
-        _ => None,
+/// Normalizes a book identifier to ISBN-13: a 10-digit ISBN is converted to its
+/// `978`-prefixed EAN-13 form (recomputing the check digit), a 13-digit value is
+/// returned digits-only, and anything else is returned trimmed unchanged. Used by
+/// the book providers so they surface a consistent ISBN-13.
+pub(super) fn normalize_isbn(raw: &str) -> String {
+    let digits: String = raw
+        .chars()
+        .filter(|character| character.is_ascii_digit())
+        .collect();
+    if digits.len() == 13 {
+        return digits;
     }
+    if digits.len() != 10 {
+        return raw.trim().to_string();
+    }
+    let core: String = format!("978{}", &digits[..9]);
+    let sum: u32 = core
+        .bytes()
+        .enumerate()
+        .map(|(index, byte)| {
+            let value = u32::from(byte - b'0');
+            if index % 2 == 0 {
+                value
+            } else {
+                value * 3
+            }
+        })
+        .sum();
+    let check = (10 - (sum % 10)) % 10;
+    format!("{core}{check}")
+}
+
+fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
+    let external_ref = external_ref.trim().to_ascii_lowercase();
+    registry()
+        .iter()
+        .find(|entry| entry.id == external_ref)
+        .map(|entry| entry.id)
 }
 
 fn provider_error(error: reqwest::Error) -> ApiError {
@@ -437,6 +555,16 @@ fn provider_error(error: reqwest::Error) -> ApiError {
 mod tests {
     use super::*;
     use crate::types::{EntityTypeConfig, ExternalBodyMapping, FieldConfig};
+
+    #[test]
+    fn normalize_isbn_converts_isbn10_to_isbn13() {
+        // ISBN-10 → 978-prefixed ISBN-13 with a recomputed check digit.
+        assert_eq!(normalize_isbn("0-306-40615-2"), "9780306406157");
+        // An existing ISBN-13 is returned digits-only.
+        assert_eq!(normalize_isbn("978-1-7185-0310-6"), "9781718503106");
+        // Anything that isn't a 10/13-digit ISBN is returned trimmed.
+        assert_eq!(normalize_isbn("  not-an-isbn "), "not-an-isbn");
+    }
 
     #[test]
     fn external_providers_are_derived_from_schema_mappings() {

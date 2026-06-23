@@ -21,6 +21,21 @@ pub const SECRET_IGDB_CLIENT_ID: &str = "igdb_client_id";
 pub const SECRET_IGDB_CLIENT_SECRET: &str = "igdb_client_secret";
 pub const SECRET_TVDB_API_KEY: &str = "tvdb_api_key";
 pub const SECRET_TVDB_PIN: &str = "tvdb_pin";
+pub const SECRET_TMDB_API_KEY: &str = "tmdb_api_key";
+pub const SECRET_SPOTIFY_CLIENT_ID: &str = "spotify_client_id";
+pub const SECRET_SPOTIFY_CLIENT_SECRET: &str = "spotify_client_secret";
+pub const SECRET_DISCOGS_TOKEN: &str = "discogs_token";
+pub const SECRET_MAL_CLIENT_ID: &str = "mal_client_id";
+pub const SECRET_COMICVINE_API_KEY: &str = "comicvine_api_key";
+pub const SECRET_HARDCOVER_API_KEY: &str = "hardcover_api_key";
+
+/// Maps a credential key to its `KIZUNASHELF_*` env var, e.g. `igdb_client_id` →
+/// `KIZUNASHELF_IGDB_CLIENT_ID`. The provider catalog ([`crate::api`]) is the
+/// single source of which keys exist; the web/desktop env reads derive the var
+/// name here so adding a provider needs no change to this file.
+pub fn credential_env_var(key: &str) -> String {
+    format!("KIZUNASHELF_{}", key.to_ascii_uppercase())
+}
 
 /// Key-value secret store. Keys are the `SECRET_*` constants above.
 pub trait SecretStore: Send + Sync {
@@ -56,14 +71,13 @@ impl NativeSecretStore {
 
 impl SecretStore for NativeSecretStore {
     fn get(&self, key: &str) -> Option<String> {
-        match key {
-            SECRET_PROVIDER_TOKENS => std::fs::read_to_string(&self.token_path).ok(),
-            SECRET_IGDB_CLIENT_ID => env_nonempty("KIZUNASHELF_IGDB_CLIENT_ID"),
-            SECRET_IGDB_CLIENT_SECRET => env_nonempty("KIZUNASHELF_IGDB_CLIENT_SECRET"),
-            SECRET_TVDB_API_KEY => env_nonempty("KIZUNASHELF_TVDB_API_KEY"),
-            SECRET_TVDB_PIN => env_nonempty("KIZUNASHELF_TVDB_PIN"),
-            _ => None,
+        // The token cache is the only persisted secret on web/desktop; every
+        // other key is a provider credential sourced from its `KIZUNASHELF_*`
+        // env var (derived from the key, so new providers need no edit here).
+        if key == SECRET_PROVIDER_TOKENS {
+            return std::fs::read_to_string(&self.token_path).ok();
         }
+        env_nonempty(&credential_env_var(key))
     }
 
     fn set(&self, key: &str, value: &str) -> Result<()> {

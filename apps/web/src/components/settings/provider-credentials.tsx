@@ -3,34 +3,34 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getCredentials, setCredentials, type Credentials } from "@/lib/desktop";
+import type { ExternalProviderCatalogItem } from "@/types/api";
 
 import { Field, SettingsSection } from "./settings-controls";
 
-const EMPTY: Credentials = {
-  igdbClientId: "",
-  igdbClientSecret: "",
-  tvdbApiKey: "",
-  tvdbPin: "",
-};
-
 /**
- * Desktop-only provider credentials editor. Reads/writes the OS keychain via the
- * Tauri commands (the self-hosted web app reads these from env vars instead, so
- * this screen is not shown there).
+ * Desktop-only provider credentials editor. The field list is rendered from the
+ * provider catalog (`credentials` declared per provider in the Rust core), so it
+ * stays in sync with the registry — no per-provider inputs are hard-coded here.
+ * Reads/writes the OS keychain via the Tauri commands (the self-hosted web app
+ * reads these from env vars instead, so this screen is not shown there).
  */
-export function ProviderCredentials() {
-  const [credentials, setCredentialsState] = useState<Credentials>(EMPTY);
+export function ProviderCredentials({ providers }: { providers: ExternalProviderCatalogItem[] }) {
+  const [credentials, setCredentialsState] = useState<Credentials>({});
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
     getCredentials()
-      .then((value) => setCredentialsState({ ...EMPTY, ...value }))
+      .then((value) => setCredentialsState(value ?? {}))
       .catch(() => {});
   }, []);
 
-  function update(key: keyof Credentials) {
+  // Only providers that declare credentials need an editor; keyless ones (Bangumi,
+  // Google Books, …) are configured purely through the schema.
+  const credentialed = providers.filter((provider) => (provider.credentials ?? []).length > 0);
+
+  function update(key: string) {
     return (value: string) => setCredentialsState((current) => ({ ...current, [key]: value }));
   }
 
@@ -48,42 +48,31 @@ export function ProviderCredentials() {
     }
   }
 
+  if (credentialed.length === 0) return null;
+
   return (
     <SettingsSection
       title="Provider Credentials"
-      description="Stored in your system keychain. IGDB (games) and TheTVDB (TV) require credentials; Bangumi needs none."
+      description="Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
     >
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Field label="IGDB Client ID">
-          <Input
-            value={credentials.igdbClientId}
-            autoComplete="off"
-            onChange={(event) => update("igdbClientId")(event.target.value)}
-          />
-        </Field>
-        <Field label="IGDB Client Secret">
-          <Input
-            type="password"
-            value={credentials.igdbClientSecret}
-            autoComplete="off"
-            onChange={(event) => update("igdbClientSecret")(event.target.value)}
-          />
-        </Field>
-        <Field label="TheTVDB API Key">
-          <Input
-            type="password"
-            value={credentials.tvdbApiKey}
-            autoComplete="off"
-            onChange={(event) => update("tvdbApiKey")(event.target.value)}
-          />
-        </Field>
-        <Field label="TheTVDB PIN (optional)">
-          <Input
-            value={credentials.tvdbPin}
-            autoComplete="off"
-            onChange={(event) => update("tvdbPin")(event.target.value)}
-          />
-        </Field>
+      <div className="flex flex-col gap-4">
+        {credentialed.map((provider) => (
+          <div key={provider.id} className="flex flex-col gap-2">
+            <div className="text-sm font-medium">{provider.label}</div>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {(provider.credentials ?? []).map((credential) => (
+                <Field key={credential.key} label={credential.label}>
+                  <Input
+                    type={credential.secret ? "password" : "text"}
+                    value={credentials[credential.key] ?? ""}
+                    autoComplete="off"
+                    onChange={(event) => update(credential.key)(event.target.value)}
+                  />
+                </Field>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
       <div className="mt-3 flex items-center justify-end gap-2">
         {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}

@@ -10,6 +10,7 @@ export const ExternalProviderSummary = zod.object({
   "id": zod.string(),
   "label": zod.string(),
   "enabled": zod.boolean(),
+  "searchSupported": zod.boolean().describe('Whether the provider supports free-text search (vs. URL\/ID resolution only).'),
   "reason": zod.string().nullish()
 })
 

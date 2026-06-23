@@ -21,8 +21,10 @@ aide = { version = "0.16.0-alpha.4", features = ["axum", "axum-json", "axum-quer
 async-trait = "0.1"
 axum = "0.8.7"
 chrono = { version = "0.4.42", features = ["serde"] }
+futures-util = { version = "0.3.32", default-features = false, features = ["std"] }
 icu_collator = "2.2.0"
 icu_locale_core = "2.2.0"
+quick-xml = "0.39.4"
 regex = "1.12.2"
 reqwest = { version = "0.13.4", default-features = false, features = ["json", "query", "form", "rustls"] }
 schemars = { version = "1.1.0", features = ["chrono04"] }

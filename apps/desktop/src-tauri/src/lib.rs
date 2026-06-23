@@ -1,11 +1,8 @@
 use axum::body::{self, Body};
 use axum::http::{header, Method, Request, Response, StatusCode};
 use axum::Router;
-use kizunashelf::api::{router_native, ApiOptions};
-use kizunashelf::secrets::{
-    SecretStore, SECRET_IGDB_CLIENT_ID, SECRET_IGDB_CLIENT_SECRET, SECRET_TVDB_API_KEY,
-    SECRET_TVDB_PIN,
-};
+use kizunashelf::api::{provider_credential_keys, router_native, ApiOptions};
+use kizunashelf::secrets::SecretStore;
 use kizunashelf::types::AppConfig;
 use std::env;
 use std::path::PathBuf;
@@ -56,14 +53,10 @@ struct VaultInfo {
     active: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct Credentials {
-    igdb_client_id: String,
-    igdb_client_secret: String,
-    tvdb_api_key: String,
-    tvdb_pin: String,
-}
+/// Provider credentials as a `secret-key → value` map (e.g. `igdb_client_id`).
+/// The key set is owned by the core provider registry, not duplicated here, so
+/// adding a provider needs no change to this file or the credentials UI.
+type Credentials = std::collections::BTreeMap<String, String>;
 
 #[tauri::command]
 async fn api_request(
@@ -156,27 +149,23 @@ fn remove_vault(state: State<DesktopState>, path: String) -> Result<Vec<VaultInf
 #[tauri::command]
 fn get_credentials(state: State<DesktopState>) -> Credentials {
     let store = &state.secret_store;
-    Credentials {
-        igdb_client_id: store.get(SECRET_IGDB_CLIENT_ID).unwrap_or_default(),
-        igdb_client_secret: store.get(SECRET_IGDB_CLIENT_SECRET).unwrap_or_default(),
-        tvdb_api_key: store.get(SECRET_TVDB_API_KEY).unwrap_or_default(),
-        tvdb_pin: store.get(SECRET_TVDB_PIN).unwrap_or_default(),
-    }
+    provider_credential_keys()
+        .into_iter()
+        .map(|key| (key.to_string(), store.get(key).unwrap_or_default()))
+        .collect()
 }
 
 #[tauri::command]
 fn set_credentials(state: State<DesktopState>, credentials: Credentials) -> Result<(), String> {
     let store = &state.secret_store;
-    for (key, value) in [
-        (SECRET_IGDB_CLIENT_ID, credentials.igdb_client_id.trim()),
-        (
-            SECRET_IGDB_CLIENT_SECRET,
-            credentials.igdb_client_secret.trim(),
-        ),
-        (SECRET_TVDB_API_KEY, credentials.tvdb_api_key.trim()),
-        (SECRET_TVDB_PIN, credentials.tvdb_pin.trim()),
-    ] {
-        store.set(key, value).map_err(|error| error.to_string())?;
+    // Only write keys the core registry actually declares, so a stale or crafted
+    // payload can't stash arbitrary entries in the keychain.
+    for key in provider_credential_keys() {
+        if let Some(value) = credentials.get(key) {
+            store
+                .set(key, value.trim())
+                .map_err(|error| error.to_string())?;
+        }
     }
     Ok(())
 }

@@ -3670,6 +3670,18 @@
             "items": {
               "type": "string"
             }
+          },
+          "credentials": {
+            "description": "Credential fields this provider needs. Empty for keyless providers. The\nfrontend and iOS render their credential editors from this list rather\nthan hard-coding per-provider inputs — core is the single source.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalProviderCredentialField"
+            },
+            "default": []
+          },
+          "searchSupported": {
+            "description": "Whether the provider supports free-text search. `false` means it only\nresolves a pasted URL/ID (the query box should hint that to the user).",
+            "type": "boolean"
           }
         },
         "required": [
@@ -3677,7 +3689,8 @@
           "label",
           "fields",
           "types",
-          "defaultExternalTypes"
+          "defaultExternalTypes",
+          "searchSupported"
         ]
       },
       "ExternalProviderFieldOption": {
@@ -3708,6 +3721,32 @@
         "required": [
           "value",
           "label"
+        ]
+      },
+      "ExternalProviderCredentialField": {
+        "description": "One credential input a provider requires (e.g. an API key). The `key` is the\nsecret-store key (also the `KIZUNASHELF_<UPPER_KEY>` env var on web/desktop).",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "secret": {
+            "description": "Render as a masked/password input and never echo back the stored value.",
+            "type": "boolean"
+          },
+          "required": {
+            "description": "A required credential gates the provider; an optional one only refines it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "secret",
+          "required"
         ]
       },
       "ExternalSearchQuery": {
@@ -3780,6 +3819,10 @@
           "enabled": {
             "type": "boolean"
           },
+          "searchSupported": {
+            "description": "Whether the provider supports free-text search (vs. URL/ID resolution only).",
+            "type": "boolean"
+          },
           "reason": {
             "type": [
               "string",
@@ -3790,7 +3833,8 @@
         "required": [
           "id",
           "label",
-          "enabled"
+          "enabled",
+          "searchSupported"
         ]
       },
       "ExternalCandidate": {

@@ -130,6 +130,8 @@ function catalogWith(providerId: string): ExternalProviderCatalog {
         fields: [{ field: "name", label: "Name" }],
         types: [],
         defaultExternalTypes: [],
+        credentials: [],
+        searchSupported: true,
       },
     ],
   };

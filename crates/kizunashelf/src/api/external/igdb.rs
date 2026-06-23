@@ -1,5 +1,5 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
     ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
@@ -18,6 +18,35 @@ impl ExternalProvider for IgdbProvider {
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         igdb_external_types_match(provider_config)
+    }
+
+    fn credentials() -> &'static [CredentialSpec] {
+        &[
+            CredentialSpec {
+                key: SECRET_IGDB_CLIENT_ID,
+                label: "IGDB Client ID",
+                secret: false,
+                required: true,
+            },
+            CredentialSpec {
+                key: SECRET_IGDB_CLIENT_SECRET,
+                label: "IGDB Client Secret",
+                secret: true,
+                required: true,
+            },
+        ]
+    }
+
+    fn default_external_types() -> &'static [&'static str] {
+        &["game"]
+    }
+
+    fn field_options() -> Vec<ExternalProviderFieldOption> {
+        field_options()
+    }
+
+    fn type_options() -> Vec<ExternalProviderTypeOption> {
+        type_options()
     }
 
     fn unavailable_reason(state: &AppState) -> Option<String> {
@@ -109,7 +138,10 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("rating", "User rating"),
         field_option("aggregated_rating", "Critic rating"),
         field_option("total_rating", "Total rating"),
+        field_option("total_rating_count", "Total rating count"),
+        field_option("format", "Type"),
         field_option("franchise", "Franchise"),
+        field_option("official_site", "Official site"),
         // Lists — map these to list-type fields (enum list / text list / relation).
         field_option("alternative_names", "Alternative names"),
         field_option("genres", "Genres"),
@@ -143,9 +175,9 @@ fn named_list(value: Option<&Value>) -> Option<Value> {
 }
 
 fn igdb_query_body(q: &str, page_size: usize, offset: usize) -> String {
-    let fields = "fields name,url,summary,storyline,first_release_date,cover.url,\
-rating,aggregated_rating,total_rating,\
-alternative_names.name,genres.name,platforms.name,themes.name,game_modes.name,\
+    let fields = "fields name,url,summary,storyline,first_release_date,cover.url,game_type,\
+rating,aggregated_rating,total_rating,total_rating_count,websites.url,websites.category,\
+alternative_names.name,genres.name,platforms.id,platforms.name,themes.name,game_modes.name,\
 player_perspectives.name,game_engines.name,franchises.name,collection.name,\
 involved_companies.developer,involved_companies.publisher,involved_companies.company.name;";
     let trimmed = q.trim();
@@ -313,11 +345,23 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
             );
         }
     }
+    if let Some(count) = item
+        .get("total_rating_count")
+        .and_then(Value::as_i64)
+        .filter(|count| *count > 0)
+    {
+        metadata.insert(
+            "total_rating_count".to_string(),
+            Value::Number(count.into()),
+        );
+    }
+    if let Some(format) = igdb_game_type(item.get("game_type").and_then(Value::as_i64)) {
+        metadata.insert("format".to_string(), Value::String(format.to_string()));
+    }
     // `*.name` reference arrays → JSON string arrays for list-type fields.
     for key in [
         "alternative_names",
         "genres",
-        "platforms",
         "themes",
         "game_modes",
         "player_perspectives",
@@ -326,6 +370,42 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         if let Some(values) = named_list(item.get(key)) {
             metadata.insert(key.to_string(), values);
         }
+    }
+    // Platforms get the same treatment, but IGDB id 6 is "PC (Microsoft Windows)".
+    if let Some(platforms) = item.get("platforms").and_then(Value::as_array) {
+        let platforms: Vec<Value> = platforms
+            .iter()
+            .filter_map(|platform| {
+                let name = platform.get("name").and_then(Value::as_str)?;
+                let name = if platform.get("id").and_then(Value::as_i64) == Some(6) {
+                    "Windows"
+                } else {
+                    name
+                };
+                (!name.is_empty()).then(|| Value::String(name.to_string()))
+            })
+            .collect();
+        if !platforms.is_empty() {
+            metadata.insert("platforms".to_string(), Value::Array(platforms));
+        }
+    }
+    // Official site: IGDB website category 1 is the official homepage.
+    if let Some(official_site) = item
+        .get("websites")
+        .and_then(Value::as_array)
+        .and_then(|websites| {
+            websites
+                .iter()
+                .find(|website| website.get("category").and_then(Value::as_i64) == Some(1))
+        })
+        .and_then(|website| website.get("url"))
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+    {
+        metadata.insert(
+            "official_site".to_string(),
+            Value::String(official_site.to_string()),
+        );
     }
     // Franchise: prefer an explicit franchise, fall back to the collection name.
     if let Some(franchise) = item
@@ -375,16 +455,49 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         url,
         original_title: Some(title.clone()),
         title,
-        brief: item
-            .get("summary")
-            .or_else(|| item.get("storyline"))
-            .and_then(Value::as_str)
-            .filter(|value| !value.is_empty())
-            .map(str::to_string),
+        brief: igdb_brief(item),
         cover_url,
         titles: BTreeMap::new(),
         metadata,
     })
+}
+
+/// Maps IGDB's `game_type` enum to a readable label (Main game/DLC/Expansion/…).
+fn igdb_game_type(game_type: Option<i64>) -> Option<&'static str> {
+    Some(match game_type? {
+        0 => "Main game",
+        1 => "DLC / Add-on",
+        2 => "Expansion",
+        3 => "Bundle",
+        4 => "Standalone expansion",
+        5 => "Mod",
+        6 => "Episode",
+        7 => "Season",
+        8 => "Remake",
+        9 => "Remaster",
+        10 => "Expanded game",
+        11 => "Port",
+        12 => "Fork",
+        13 => "Pack",
+        14 => "Update",
+        _ => return None,
+    })
+}
+
+/// Combines summary and storyline into one brief, falling back to whichever is present.
+fn igdb_brief(item: &Value) -> Option<String> {
+    let text = |key: &str| {
+        item.get(key)
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+    };
+    match (text("summary"), text("storyline")) {
+        (Some(summary), Some(storyline)) => Some(format!("{summary}\n\n{storyline}")),
+        (Some(summary), None) => Some(summary.to_string()),
+        (None, Some(storyline)) => Some(storyline.to_string()),
+        (None, None) => None,
+    }
 }
 
 #[cfg(test)]
@@ -399,6 +512,8 @@ mod tests {
             "name": "Hollow Knight",
             "url": "https://www.igdb.com/games/hollow-knight",
             "total_rating": 91.4,
+            "total_rating_count": 1200,
+            "game_type": 0,
             "genres": [{ "name": "Platform" }, { "name": "Adventure" }],
             "game_modes": [{ "name": "Single player" }],
             "franchises": [{ "name": "Hollow Knight" }],
@@ -411,6 +526,8 @@ mod tests {
 
         let metadata = &candidate.metadata;
         assert_eq!(metadata.get("total_rating"), Some(&json!(91)));
+        assert_eq!(metadata.get("total_rating_count"), Some(&json!(1200)));
+        assert_eq!(metadata.get("format"), Some(&json!("Main game")));
         assert_eq!(
             metadata.get("genres"),
             Some(&json!(["Platform", "Adventure"]))
@@ -421,6 +538,42 @@ mod tests {
         assert_eq!(
             metadata.get("publishers"),
             Some(&json!(["Team Cherry", "Some Publisher"]))
+        );
+    }
+
+    #[test]
+    fn candidate_combines_brief_and_normalizes_platform_and_site() {
+        let candidate = igdb_candidate(&json!({
+            "id": 2,
+            "name": "Celeste",
+            "url": "https://www.igdb.com/games/celeste",
+            "summary": "Climb the mountain.",
+            "storyline": "Help Madeline.",
+            "platforms": [
+                { "id": 6, "name": "PC (Microsoft Windows)" },
+                { "id": 130, "name": "Nintendo Switch" }
+            ],
+            "websites": [
+                { "category": 13, "url": "https://store.steampowered.com/app/504230" },
+                { "category": 1, "url": "https://www.celestegame.com" }
+            ]
+        }))
+        .unwrap();
+
+        // summary + storyline are concatenated into the brief.
+        assert_eq!(
+            candidate.brief.as_deref(),
+            Some("Climb the mountain.\n\nHelp Madeline.")
+        );
+        // IGDB platform id 6 is shortened to "Windows".
+        assert_eq!(
+            candidate.metadata.get("platforms"),
+            Some(&json!(["Windows", "Nintendo Switch"]))
+        );
+        // Official site is website category 1 (not the Steam link, category 13).
+        assert_eq!(
+            candidate.metadata.get("official_site"),
+            Some(&json!("https://www.celestegame.com"))
         );
     }
 }

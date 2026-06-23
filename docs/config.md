@@ -131,8 +131,15 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_IGDB_CLIENT_SECRET` | IGDB client secret for external matching. |
 | `KIZUNASHELF_TVDB_API_KEY` | TheTVDB API key for external matching. |
 | `KIZUNASHELF_TVDB_PIN` | Optional TheTVDB PIN. |
+| `KIZUNASHELF_TMDB_API_KEY` | TMDB API key (v3) for movie/TV/person matching. |
+| `KIZUNASHELF_SPOTIFY_CLIENT_ID` | Spotify client id for album/artist matching. |
+| `KIZUNASHELF_SPOTIFY_CLIENT_SECRET` | Spotify client secret. |
+| `KIZUNASHELF_DISCOGS_TOKEN` | Discogs personal access token for release/master matching. |
+| `KIZUNASHELF_MAL_CLIENT_ID` | MyAnimeList API client id for anime/manga matching. |
+| `KIZUNASHELF_COMICVINE_API_KEY` | Comic Vine API key for comic matching. |
+| `KIZUNASHELF_HARDCOVER_API_KEY` | Hardcover API token (the full `Bearer …` value) for book matching. |
 
-The four provider-credential variables apply to the **web** runtime only. The desktop and iOS apps read credentials from the OS keychain (entered in Settings), not from the environment. Run multiple instances — each with its own `KIZUNASHELF_VAULT_ROOT` and `PORT` — to serve multiple vaults.
+These provider-credential variables apply to the **web** runtime only. Each is derived mechanically from the credential key a provider declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. The desktop and iOS apps read credentials from the OS keychain (entered in Settings → Provider Credentials, rendered from the same catalog), not from the environment. Run multiple instances — each with its own `KIZUNASHELF_VAULT_ROOT` and `PORT` — to serve multiple vaults.
 
 The server does not enable wildcard CORS by default. Use the Vite dev proxy during development, or serve the built web app from the Rust process for production.
 
@@ -423,13 +430,34 @@ External metadata support has two pieces:
 2. `externalFields` map provider metadata into local fields.
 3. `bodyMappings` map provider metadata into Markdown body sections.
 
-Supported providers:
+Each provider exposes one `search` entry point that either resolves a pasted
+URL/id it recognizes or runs a free-text query. Providers that only resolve
+URLs/ids (no catalog search API) return nothing for free-text and resolve when
+handed their URL/id — the catalog's `searchSupported` flag tells clients which
+is which. The provider list, each provider's fields/types, and its credential
+requirements all live in the Rust core and are exposed via
+`/api/external/providers`; clients render from that rather than hard-coding.
 
-- Bangumi: works without extra credentials.
-- IGDB: requires an IGDB (Twitch) client id and secret.
-- TheTVDB: requires a TheTVDB API key; a PIN is optional.
+Supported providers (keyless unless noted):
 
-Credentials are supplied per runtime: the web app reads `KIZUNASHELF_IGDB_CLIENT_ID`, `KIZUNASHELF_IGDB_CLIENT_SECRET`, `KIZUNASHELF_TVDB_API_KEY`, and `KIZUNASHELF_TVDB_PIN` from the environment; the desktop and iOS apps store them in the OS keychain (entered under Settings → Provider Credentials).
+- **Bangumi** — books, anime, music, games, real (search + resolve).
+- **TMDB** — movies, TV, people (search + resolve). Requires a TMDB API key.
+- **IGDB** — games (search + resolve). Requires an IGDB (Twitch) client id and secret.
+- **TheTVDB** — series, movies (search + resolve). Requires a TheTVDB API key; a PIN is optional.
+- **Spotify** — albums, artists (search + resolve). Requires a Spotify client id and secret.
+- **MusicBrainz** — releases, artists, release groups (search + resolve).
+- **Discogs** — releases, masters (search + resolve). Requires a Discogs token.
+- **Google Books** — books (search + resolve).
+- **Open Library** — books, works (search + resolve).
+- **Hardcover** — books (search + resolve, via the GraphQL API). Requires a Hardcover API token.
+- **MyAnimeList** — anime, manga (search + resolve). Requires a MyAnimeList API client id.
+- **MangaUpdates** — manga (search + resolve).
+- **Comic Vine** — comic volumes (search + resolve). Requires a Comic Vine API key.
+- **Apple Podcasts** — podcasts (search + resolve, via the iTunes API).
+- **BoardGameGeek** — board games and expansions (search + resolve, via the BGG XML API).
+- **Steam** — games (resolve a store URL/app id only; Steam has no public catalog search).
+
+Credentials are supplied per runtime: the web app reads them from `KIZUNASHELF_*` environment variables (see the env table above — the var name is `KIZUNASHELF_<UPPER_KEY>` for each catalog credential key); the desktop and iOS apps store them in the OS keychain (entered under Settings → Provider Credentials, which renders its fields from the provider catalog).
 
 ```yaml
 externalPriority:

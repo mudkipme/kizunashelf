@@ -61,7 +61,10 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(capabilities["externalApplyEnabled"], true);
 
     let external_providers = server.ok_json("/api/external/providers").await;
-    assert_eq!(external_providers["providers"].as_array().unwrap().len(), 3);
+    let provider_list = external_providers["providers"].as_array().unwrap();
+    // The first three providers are stable; the registry grows as sources are
+    // added, so assert a lower bound rather than an exact count.
+    assert!(provider_list.len() >= 12);
     assert_eq!(external_providers["providers"][0]["id"], "bangumi");
     assert_eq!(
         external_providers["providers"][0]["fields"][0]["field"],
@@ -72,9 +75,20 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert!(external_providers["providers"][0]
         .get("defaultFieldMappings")
         .is_none());
+    // Bangumi is keyless and supports free-text search; the contract surfaces
+    // both facts for the frontend/iOS to render from.
+    assert_eq!(external_providers["providers"][0]["credentials"], json!([]));
+    assert_eq!(external_providers["providers"][0]["searchSupported"], true);
+    assert_eq!(external_providers["providers"][1]["id"], "igdb");
     assert_eq!(
         external_providers["providers"][1]["defaultExternalTypes"],
         json!(["game"])
+    );
+    // IGDB declares its credential fields in the catalog (the single source the
+    // desktop/iOS credential editors render from).
+    assert_eq!(
+        external_providers["providers"][1]["credentials"][0]["key"],
+        "igdb_client_id"
     );
 
     let languages = server.ok_json("/api/languages").await;

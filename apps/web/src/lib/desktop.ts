@@ -24,13 +24,12 @@ export async function selectDirectory(initial?: string) {
 /** A remembered desktop vault. */
 export type VaultInfo = { name: string; path: string; active: boolean };
 
-/** External-provider credentials, stored in the OS keychain on desktop. */
-export type Credentials = {
-  igdbClientId: string;
-  igdbClientSecret: string;
-  tvdbApiKey: string;
-  tvdbPin: string;
-};
+/**
+ * External-provider credentials, stored in the OS keychain on desktop. Keyed by
+ * the secret-store key each provider declares in its catalog `credentials` (e.g.
+ * `igdb_client_id`) — the key set lives in the Rust core, never hard-coded here.
+ */
+export type Credentials = Record<string, string>;
 
 async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   const module = await import("@tauri-apps/api/core");
