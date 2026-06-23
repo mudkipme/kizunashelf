@@ -4,16 +4,21 @@ mod types;
 pub use types::*;
 
 use crate::contract::{CalendarFilters, CalendarResponse, CalendarTotals};
-use crate::daily_notes::{daily_note_files, normalize_wikilink_target, strip_frontmatter};
+use crate::daily_notes::{
+    daily_note_candidates, daily_note_files, normalize_wikilink_target, read_daily_note_contents,
+    strip_frontmatter,
+};
 use crate::dates::{is_in_month, normalize_date, parse_exact_date};
-use crate::library::{compare_string, wikilink_regex};
+use crate::library::{
+    compare_string, parse_daily_note_source_id, wikilink_regex, DAILY_NOTE_RELATION_FIELD,
+};
 use crate::relations::summary_by_id;
 use crate::types::{DateRole, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use chrono::Datelike;
 use mentions::{clean_mention_snippet, mention_blocks};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Maximum character length of the cleaned context preview shown for a
 /// daily-note mention before it is truncated with an ellipsis.
@@ -478,14 +483,51 @@ async fn entity_daily_note_entries(
     vfs: &dyn Vfs,
     entity: &EntitySummary,
 ) -> Result<Vec<EntityDateDailyNoteEntry>> {
-    let daily_files = daily_note_files(&library.config, vfs, None, None, true).await?;
+    // The resident relation graph already records, for every daily note, which
+    // entity basenames it wikilinks — so we read only the notes that can mention
+    // this entity rather than every daily note in the vault. Match on the link's
+    // basename (not the resolved `target_id`): relation resolution picks the first
+    // basename candidate, while the per-block check below is type-aware, so the
+    // basename set is a complete superset and the block check does the precise
+    // matching — the result is identical to scanning every note.
+    let target_key = normalize_wikilink_target(&entity.basename);
+    let wanted: HashSet<&str> = library
+        .relations
+        .iter()
+        .filter(|relation| relation.field == DAILY_NOTE_RELATION_FIELD)
+        .filter(|relation| normalize_wikilink_target(&relation.target_title) == target_key)
+        .filter_map(|relation| parse_daily_note_source_id(&relation.source_id))
+        .map(|(_, path)| path)
+        .collect();
+    if wanted.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // Authoritative dates (and existence) come from the cheap, body-free discovery
+    // walk; only the matched notes' bodies are then read.
+    let pending: Vec<_> = daily_note_candidates(&library.config, vfs, None, None, true)
+        .await?
+        .into_iter()
+        .filter(|note| wanted.contains(note.relative_path.as_str()))
+        .collect();
+    let paths: Vec<String> = pending
+        .iter()
+        .map(|note| note.relative_path.clone())
+        .collect();
+    let mut contents_by_path: HashMap<String, String> = read_daily_note_contents(vfs, &paths)
+        .await?
+        .into_iter()
+        .collect();
+
     let by_basename = entity_basename_index(library);
     let mut grouped: HashMap<String, EntityDateDailyNoteEntry> = HashMap::new();
-    for file in daily_files {
-        let Some(file_date) = file.date.as_ref() else {
+    for note in pending {
+        let Some(file_date) = note.date.as_ref() else {
             continue;
         };
-        let raw = file.contents.clone();
+        let Some(raw) = contents_by_path.remove(&note.relative_path) else {
+            continue;
+        };
         for block in mention_blocks(&strip_frontmatter(&raw)) {
             let mentions_entity = wikilink_regex().captures_iter(&block.text).any(|captures| {
                 captures
@@ -505,7 +547,7 @@ async fn entity_daily_note_entries(
                     .or_insert_with(|| EntityDateDailyNoteEntry {
                         id: format!("daily-note:{}:{}", file_date, entity.id),
                         date: file_date.clone(),
-                        note_path: file.relative_path.clone(),
+                        note_path: note.relative_path.clone(),
                         snippets: Vec::new(),
                     });
             let snippet = CalendarSnippet {

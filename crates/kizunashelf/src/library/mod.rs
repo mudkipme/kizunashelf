@@ -30,6 +30,7 @@ pub use read::read_library;
 
 pub(crate) use parse::{file_revision, load_entity};
 pub(crate) use read::{compute_listing_fingerprint, read_library_cached};
+pub(crate) use relations::{parse_daily_note_source_id, DAILY_NOTE_RELATION_FIELD};
 
 #[cfg(test)]
 mod tests;

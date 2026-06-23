@@ -14,7 +14,24 @@ use super::read::cache_key;
 
 /// The `field` value marking a relation that originates from a daily note (the
 /// only relation kind that requires reading files outside the resident records).
-pub(super) const DAILY_NOTE_RELATION_FIELD: &str = "daily-note";
+pub(crate) const DAILY_NOTE_RELATION_FIELD: &str = "daily-note";
+
+/// Encodes a daily-note relation's `source_id` as `daily-note:{label}:{path}`.
+/// Paired with [`parse_daily_note_source_id`] so the encoding lives in one place.
+pub(super) fn daily_note_source_id(source_label: &str, relative_path: &str) -> String {
+    format!("{DAILY_NOTE_RELATION_FIELD}:{source_label}:{relative_path}")
+}
+
+/// Recovers `(source_label, relative_path)` from a daily-note relation's
+/// `source_id`, or `None` for any other relation kind. A dated note's label is a
+/// `YYYY-MM-DD` string (never contains `:`), so the first `:` after the prefix
+/// splits cleanly.
+pub(crate) fn parse_daily_note_source_id(source_id: &str) -> Option<(&str, &str)> {
+    source_id
+        .strip_prefix(DAILY_NOTE_RELATION_FIELD)?
+        .strip_prefix(':')?
+        .split_once(':')
+}
 
 /// The shared entity-to-entity relation pass: each record's owned outgoing edges
 /// against `by_basename`. Factored out of [`build_relations`] so the loop has a
@@ -183,7 +200,7 @@ pub(super) async fn read_daily_note_links(
     let mut miss_meta: HashMap<String, (String, u64, u128)> = HashMap::new();
 
     for note in candidates {
-        let source_id = format!("daily-note:{}:{}", note.source_label, note.relative_path);
+        let source_id = daily_note_source_id(&note.source_label, &note.relative_path);
         let key = cache_key(&note.relative_path);
         if let Some(cached) = loaded.get(&key) {
             if fingerprint_hit(
