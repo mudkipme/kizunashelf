@@ -48,11 +48,21 @@ pub(crate) async fn cleanup_queues(
     State(state): State<AppState>,
 ) -> ApiResult<CleanupQueuesResponse> {
     let library = get_library(&state).await?;
+    if let Some(cached) = state.cached_cleanup(&library.content_revision).await {
+        return Ok(Json((*cached).clone()));
+    }
+    // Single-flight the build: it scans the whole library and stats every local
+    // cover through the VFS. Serialize, then re-check the memo a winner may have
+    // just filled before doing the work ourselves (mirrors `analytics`).
+    let _build = state.cleanup_build_lock().lock().await;
+    if let Some(cached) = state.cached_cleanup(&library.content_revision).await {
+        return Ok(Json((*cached).clone()));
+    }
     let vfs = state.vault_vfs(&library.config.vault_root);
     let (broken_assets, broken_total) = broken_local_assets(&library, vfs.as_ref()).await;
-    Ok(Json(build_cleanup_queues(
-        &library,
-        broken_assets,
-        broken_total,
-    )))
+    let response = std::sync::Arc::new(build_cleanup_queues(&library, broken_assets, broken_total));
+    state
+        .store_cleanup(&library.content_revision, std::sync::Arc::clone(&response))
+        .await;
+    Ok(Json((*response).clone()))
 }

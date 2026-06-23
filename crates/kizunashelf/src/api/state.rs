@@ -1,5 +1,5 @@
 use super::error::ApiError;
-use crate::contract::{AnalyticsResponse, AssetDownloadJob};
+use crate::contract::{AnalyticsResponse, AssetDownloadJob, CleanupQueuesResponse};
 use crate::library::{
     compute_listing_fingerprint, load_vault_config_via_vfs, read_library, read_library_cached,
     read_raw_vault_config_via_vfs, IndexCacheContext, MemoryIndexCache,
@@ -86,6 +86,13 @@ pub(crate) struct AppState {
     /// request. Callers take it, re-check the memo, and only then build (mirrors
     /// the [`get_library`] reload lock and [`token_fetch_lock`]).
     analytics_build_lock: Arc<Mutex<()>>,
+    /// Memoized cleanup queues keyed on the library's `content_revision`. Like
+    /// [`analytics_cache`], the build is a whole-library pass — and additionally
+    /// stats every entity's local cover through the VFS (one round trip per cover
+    /// on iOS) — so repeated `/cleanup` hits over unchanged content reuse it.
+    cleanup_cache: Arc<Mutex<Option<CachedCleanup>>>,
+    /// Single-flights the cleanup build (mirrors [`analytics_build_lock`]).
+    cleanup_build_lock: Arc<Mutex<()>>,
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
@@ -94,6 +101,11 @@ pub(crate) struct AppState {
 struct CachedAnalytics {
     content_revision: String,
     response: Arc<AnalyticsResponse>,
+}
+
+struct CachedCleanup {
+    content_revision: String,
+    response: Arc<CleanupQueuesResponse>,
 }
 
 #[derive(Clone)]
@@ -158,6 +170,8 @@ impl AppState {
             token_disk_lock: Arc::new(Mutex::new(())),
             analytics_cache: Arc::new(Mutex::new(None)),
             analytics_build_lock: Arc::new(Mutex::new(())),
+            cleanup_cache: Arc::new(Mutex::new(None)),
+            cleanup_build_lock: Arc::new(Mutex::new(())),
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
@@ -269,6 +283,37 @@ impl AppState {
     ) {
         let mut cache = self.analytics_cache.lock().await;
         *cache = Some(CachedAnalytics {
+            content_revision: content_revision.to_string(),
+            response,
+        });
+    }
+
+    /// Returns memoized cleanup queues if built for this `content_revision`.
+    pub(crate) async fn cached_cleanup(
+        &self,
+        content_revision: &str,
+    ) -> Option<Arc<CleanupQueuesResponse>> {
+        let cache = self.cleanup_cache.lock().await;
+        cache
+            .as_ref()
+            .filter(|cached| cached.content_revision == content_revision)
+            .map(|cached| Arc::clone(&cached.response))
+    }
+
+    /// The lock that single-flights the cleanup build. Callers acquire it,
+    /// re-check [`cached_cleanup`], and only then build + [`store_cleanup`].
+    pub(crate) fn cleanup_build_lock(&self) -> &Arc<Mutex<()>> {
+        &self.cleanup_build_lock
+    }
+
+    /// Stores cleanup queues keyed on the library content it was built from.
+    pub(crate) async fn store_cleanup(
+        &self,
+        content_revision: &str,
+        response: Arc<CleanupQueuesResponse>,
+    ) {
+        let mut cache = self.cleanup_cache.lock().await;
+        *cache = Some(CachedCleanup {
             content_revision: content_revision.to_string(),
             response,
         });
