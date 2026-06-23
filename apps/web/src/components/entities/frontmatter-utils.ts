@@ -98,10 +98,13 @@ export function parseSeasonValue(value: string): SeasonRow {
   const year = /(?:19|20)\d{2}/.exec(value)?.[0];
   const normalized = value.toLowerCase();
   let season: SeasonKey | undefined;
-  if (value.includes("冬季") || normalized.includes("winter")) season = "winter";
-  else if (value.includes("夏季") || normalized.includes("summer")) season = "summer";
-  else if (value.includes("秋季") || normalized.includes("autumn") || normalized.includes("fall")) season = "autumn";
-  else if (value.includes("春季") || normalized.includes("spring")) season = "spring";
+  // Match the bare CJK kanji (冬/夏/秋/春) so both the Chinese 季-suffixed form
+  // (冬季) and the Japanese short form (冬) parse — `formatSeasonValue` emits the
+  // latter for `ja`, so it must round-trip.
+  if (value.includes("冬") || normalized.includes("winter")) season = "winter";
+  else if (value.includes("夏") || normalized.includes("summer")) season = "summer";
+  else if (value.includes("秋") || normalized.includes("autumn") || normalized.includes("fall")) season = "autumn";
+  else if (value.includes("春") || normalized.includes("spring")) season = "spring";
   if (!year || !season) return { kind: "raw", value };
   return { kind: "season", year, season };
 }

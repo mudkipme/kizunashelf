@@ -49,6 +49,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm test:web
       - run: cargo fmt --check
       - run: cargo clippy -p kizunashelf --all-targets -- -D warnings
       - run: pnpm test
