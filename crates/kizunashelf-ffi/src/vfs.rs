@@ -14,11 +14,20 @@ use async_trait::async_trait;
 use kizunashelf::vfs::{self, Vfs};
 
 /// One directory entry returned by [`VaultFileSystem::read_dir`].
+///
+/// `len` and `modified_unix_nanos` are the index-cache change-detection
+/// fingerprint; the host fills them from the same enumeration that lists the
+/// directory (no per-file read). `modified_unix_nanos` is `0` when the host can't
+/// report a modification time during listing (nanoseconds since the Unix epoch
+/// fit in `u64` until 2554) — the cache then re-parses that file rather than
+/// risking a stale hit.
 #[derive(uniffi::Record)]
 pub struct VfsDirEntry {
     pub name: String,
     pub is_dir: bool,
     pub is_file: bool,
+    pub len: u64,
+    pub modified_unix_nanos: u64,
 }
 
 /// File metadata. `modified_unix_nanos` is `0` when the host cannot report a
@@ -155,6 +164,8 @@ impl Vfs for FfiVfs {
                 name: entry.name,
                 is_dir: entry.is_dir,
                 is_file: entry.is_file,
+                len: entry.len,
+                modified_unix_nanos: entry.modified_unix_nanos as u128,
             })
             .collect())
     }

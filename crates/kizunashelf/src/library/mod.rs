@@ -1,6 +1,9 @@
 mod collation;
 mod frontmatter;
+mod index_cache;
 mod relations;
+
+pub(crate) use index_cache::IndexCacheContext;
 
 pub use collation::{compare_optional_string, compare_string, compare_string_for_title_language};
 pub use frontmatter::{
@@ -9,7 +12,7 @@ pub use frontmatter::{
 
 use crate::types::{
     DateRole, Entity, EntityRecord, EntitySummary, EntityTypeConfig, FieldType, KizunaConfig,
-    Library, LibraryDiagnostic, Relation, RelationDirection, VaultConfig,
+    Library, LibraryDiagnostic, Relation, VaultConfig,
 };
 use crate::vfs::{Vfs, VfsError};
 use anyhow::{Context, Result};
@@ -17,14 +20,16 @@ use frontmatter::{
     date_values, external_refs, extract_summary, first_string, parse_markdown, resolve_title,
     title_languages,
 };
+use index_cache::{fingerprint_hit, CachedEntry};
 use relations::{
-    build_record_outgoing, build_relations, dedupe_relations, extract_body_links,
-    normalized_entity_basename_index,
+    build_entity_relations, build_relations, dedupe_relations, extract_body_links,
+    read_daily_note_links, DAILY_NOTE_RELATION_FIELD,
 };
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::path::{Component, Path};
 use std::sync::Arc;
+use unicode_normalization::UnicodeNormalization;
 
 /// Vault-relative location of the vault config file inside `<vaultRoot>`.
 pub const VAULT_CONFIG_RELATIVE_PATH: &str = ".kizunashelf/config.yaml";
@@ -136,18 +141,59 @@ pub async fn load_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<VaultConfig> {
     serde_yaml::from_str(&raw).context("invalid vault config")
 }
 
+/// Reads the whole library from the vault, parsing every entity fresh. This is
+/// the uncached path (web/desktop without a configured cache dir, and tests).
 pub async fn read_library(config: KizunaConfig, vfs: Arc<dyn Vfs>) -> Result<Library> {
+    read_library_inner(config, vfs, None).await
+}
+
+/// Reads the library using the persistent index cache: files whose
+/// directory-listing fingerprint is unchanged reuse their cached parse result;
+/// only changed/new files are read and re-parsed. The result is value-equivalent
+/// (up to `generated_at`) to [`read_library`]; the cache only avoids redundant
+/// reads + parses. See [`index_cache`].
+pub(crate) async fn read_library_cached(
+    config: KizunaConfig,
+    vfs: Arc<dyn Vfs>,
+    cache: IndexCacheContext,
+) -> Result<Library> {
+    read_library_inner(config, vfs, Some(cache)).await
+}
+
+async fn read_library_inner(
+    config: KizunaConfig,
+    vfs: Arc<dyn Vfs>,
+    cache: Option<IndexCacheContext>,
+) -> Result<Library> {
     validate_library_roots(&config, vfs.as_ref()).await?;
+    // Load whatever the cache can vouch for (empty when absent/stale/mismatched);
+    // every file not reused from here is read and parsed fresh below.
+    let loaded = cache.as_ref().map(|cache| cache.load()).unwrap_or_default();
+
     // Per-directory streaming: bodies/raw are extracted into compact records +
     // body-link lists and dropped before the next directory, so resident memory
     // never holds the whole vault's content.
-    let (mut records, body_links, diagnostics) = read_entities(&config, &vfs).await?;
-    let body_links: HashMap<String, Vec<String>> = body_links.into_iter().collect();
-    let relations = build_relations(&config, &records, &body_links, vfs.as_ref()).await?;
+    let read = read_entities(&config, &vfs, &loaded.entries).await?;
+    let mut records = read.records;
+    let diagnostics = read.diagnostics;
+    // Daily-note wikilinks, reusing the cache for unchanged notes so a vault with
+    // many daily notes doesn't re-read every one on a cold start. Relation
+    // building itself is then pure (no I/O).
+    let daily = read_daily_note_links(&config, vfs.as_ref(), &loaded.daily_notes).await?;
+    let relations = build_relations(&config, &records, &daily.links);
     let relation_count_by_id = unique_relation_count_by_id(&relations);
 
     for record in &mut records {
         record.summary.relation_count = *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
+    }
+
+    // Persist the freshly assembled per-file entries + daily-note links (current
+    // listing only, so deleted files drop out) — but only when something actually
+    // changed, to avoid rewriting an unchanged cache on every load.
+    if let Some(cache) = &cache {
+        if read.cache_dirty || daily.dirty {
+            cache.save(read.entries, daily.cache);
+        }
     }
 
     Ok(Library::new(
@@ -221,12 +267,16 @@ pub(crate) async fn rebuild_for_edited_entity(
         // The file vanished or is unreadable: let a full reload reconcile it.
         Err(_) => return Ok(None),
     };
-    let parsed = parse_entity(type_config, edited_path.to_string(), bytes)?;
-    let body_links = extract_body_links(&parsed.entity.body);
+    let EntityReadResult {
+        entity,
+        body_links,
+        diagnostics: parse_diagnostics,
+    } = parse_entity(type_config, edited_path.to_string(), bytes)?;
     let new_record = EntityRecord {
-        summary: parsed.entity.summary,
-        revision: parsed.entity.revision,
-        frontmatter: parsed.entity.frontmatter,
+        body_links,
+        summary: entity.summary,
+        revision: entity.revision,
+        frontmatter: entity.frontmatter,
     };
 
     // Structural change → full reload (it can re-resolve other entities' links).
@@ -237,36 +287,27 @@ pub(crate) async fn rebuild_for_edited_entity(
     let mut records = base.records.clone();
     records[index] = new_record;
 
-    // Rebuild only this entity's outgoing relations against the current entity
-    // set; `by_basename` borrows `records`, so finish with it before mutating.
-    let fresh = {
-        let by_basename = normalized_entity_basename_index(&records);
-        build_record_outgoing(&base.config, &records[index], &body_links, &by_basename)
-    };
-
-    // Drop the relations this entity owns (its outgoing edges and the reflections
-    // of its resolved outgoing links), keep everyone else's, then append the fresh
-    // set. Incoming edges from other entities have `source_id != old_id` and
-    // `In` edges reflecting them have `target_id != old_id`, so they survive.
-    let mut relations: Vec<Relation> = base
-        .relations
-        .iter()
-        .filter(|relation| {
-            !((relation.direction == RelationDirection::Out && relation.source_id == old_id)
-                || (relation.direction == RelationDirection::In
-                    && relation.target_id.as_deref() == Some(old_id.as_str())))
-        })
-        .cloned()
-        .collect();
-    relations.extend(fresh);
-    let relations = dedupe_relations(relations);
-
     // A title edit can change this record's sort position; re-establish the same
     // resident order a full load would produce.
     sort_records(&mut records);
 
-    // Recompute every entity's relation_count from the updated graph (in-memory,
-    // cheap); the edit changes counts for this entity and its old/new targets.
+    // Recompute the entity-to-entity relations in memory from the resident
+    // records — each carries its own `body_links`, so this matches a full reload
+    // without re-reading the other (unchanged) files. Daily-note relations resolve
+    // daily-note wikilinks to entities by basename and store the entity's id/type;
+    // an in-place edit changes none of those (the structural bailout above keeps
+    // the id/path, and the type/basename come from the unchanged file
+    // location/name), so the daily notes can't have gained or lost a link to this
+    // entity. Reuse the resident daily-note relations from `base` instead of
+    // re-reading every daily note from disk.
+    let mut relations = build_entity_relations(&base.config, &records);
+    relations.extend(
+        base.relations
+            .iter()
+            .filter(|relation| relation.field == DAILY_NOTE_RELATION_FIELD)
+            .cloned(),
+    );
+    let relations = dedupe_relations(relations);
     let relation_count_by_id = unique_relation_count_by_id(&relations);
     for record in &mut records {
         record.summary.relation_count = *relation_count_by_id.get(&record.summary.id).unwrap_or(&0);
@@ -279,7 +320,7 @@ pub(crate) async fn rebuild_for_edited_entity(
         .filter(|diagnostic| diagnostic.path != edited_path)
         .cloned()
         .collect();
-    diagnostics.extend(parsed.diagnostics);
+    diagnostics.extend(parse_diagnostics);
 
     Ok(Some(Library::new(
         base.config.clone(),
@@ -393,29 +434,58 @@ fn validate_relative_config_path(label: &str, value: &str) -> Result<()> {
     Ok(())
 }
 
-/// Reads every entity, returning the slim resident records, the per-entity body
-/// wikilink targets (id → targets, for relation building), and any diagnostics.
-/// Each type directory is read and reduced to records before the next, so the
-/// full file contents of at most one directory are in memory at a time.
+/// The assembled result of reading every entity: the slim resident records (each
+/// carrying its body wikilinks), diagnostics, the per-file cache entries to
+/// persist (current listing only, so deletions drop out), and whether the cache
+/// changed and should be rewritten.
+struct LibraryRead {
+    records: Vec<EntityRecord>,
+    diagnostics: Vec<LibraryDiagnostic>,
+    entries: BTreeMap<String, CachedEntry>,
+    cache_dirty: bool,
+}
+
+/// Reads every entity. Files whose directory-listing fingerprint matches a
+/// `loaded` cache entry reuse it (no read/parse); the rest are read and parsed.
+/// Each type directory is read and reduced before the next, so the full file
+/// contents of at most one directory are in memory at a time.
 async fn read_entities(
     config: &KizunaConfig,
     vfs: &Arc<dyn Vfs>,
-) -> Result<(
-    Vec<EntityRecord>,
-    Vec<(String, Vec<String>)>,
-    Vec<LibraryDiagnostic>,
-)> {
+    loaded: &HashMap<String, CachedEntry>,
+) -> Result<LibraryRead> {
     let mut records = Vec::new();
-    let mut body_links = Vec::new();
     let mut diagnostics = Vec::new();
+    let mut entries: BTreeMap<String, CachedEntry> = BTreeMap::new();
+    let mut misses = 0usize;
     for type_config in &config.types {
-        let result = read_entities_for_type(config, type_config, vfs).await?;
-        records.extend(result.records);
-        body_links.extend(result.body_links);
-        diagnostics.extend(result.diagnostics);
+        let batch = read_entities_for_type(config, type_config, vfs, loaded).await?;
+        misses += batch.misses;
+        for (key, entry) in batch.entries {
+            records.push(entry.record.clone());
+            diagnostics.extend(entry.diagnostics.clone());
+            entries.insert(key, entry);
+        }
     }
     sort_records(&mut records);
-    Ok((records, body_links, diagnostics))
+    // Rewrite the cache when anything was re-parsed, or when the set of files
+    // shrank (a deletion the `loaded` map still held). A clean warm load (no
+    // misses, same count) leaves the cache file untouched.
+    let cache_dirty = misses > 0 || entries.len() != loaded.len();
+    Ok(LibraryRead {
+        records,
+        diagnostics,
+        entries,
+        cache_dirty,
+    })
+}
+
+/// The NFC-normalized cache key for a vault-relative path. Apple filesystems hand
+/// back NFD-decomposed names; normalizing here keeps cache keys stable across the
+/// NFC/NFD divide so a file isn't perpetually missed (or duplicated) by composing
+/// marks in its name.
+pub(super) fn cache_key(path: &str) -> String {
+    path.nfc().collect()
 }
 
 /// Orders resident records by type label then title — the stable resident order
@@ -431,14 +501,19 @@ fn sort_records(records: &mut [EntityRecord]) {
     });
 }
 
-struct EntityReadBatch {
-    records: Vec<EntityRecord>,
-    body_links: Vec<(String, Vec<String>)>,
-    diagnostics: Vec<LibraryDiagnostic>,
+/// One type directory's read: the per-file cache entries (cached hits + freshly
+/// parsed misses, keyed by NFC path) and how many files were re-parsed.
+struct TypeRead {
+    entries: Vec<(String, CachedEntry)>,
+    misses: usize,
 }
 
 struct EntityReadResult {
     entity: Entity,
+    /// Body wikilink targets, extracted from the body during the parse (while it
+    /// is in hand) so the resident [`EntityRecord`] can carry them after the body
+    /// is dropped. See [`EntityRecord::body_links`].
+    body_links: Vec<String>,
     diagnostics: Vec<LibraryDiagnostic>,
 }
 
@@ -446,19 +521,19 @@ async fn read_entities_for_type(
     config: &KizunaConfig,
     type_config: &EntityTypeConfig,
     vfs: &Arc<dyn Vfs>,
-) -> Result<EntityReadBatch> {
+    loaded: &HashMap<String, CachedEntry>,
+) -> Result<TypeRead> {
     let relative_dir = format!(
         "{}/{}",
         config.taxonomy_root.trim_end_matches('/'),
         type_config.path
     );
-    let entries = match vfs.read_dir(&relative_dir).await {
+    let dir_entries = match vfs.read_dir(&relative_dir).await {
         Ok(entries) => entries,
         Err(VfsError::NotFound) => {
-            return Ok(EntityReadBatch {
-                records: Vec::new(),
-                body_links: Vec::new(),
-                diagnostics: Vec::new(),
+            return Ok(TypeRead {
+                entries: Vec::new(),
+                misses: 0,
             });
         }
         Err(error) => {
@@ -467,49 +542,77 @@ async fn read_entities_for_type(
             ));
         }
     };
-    let md_paths: Vec<String> = entries
-        .into_iter()
-        .filter(|entry| entry.is_file && entry.name.ends_with(".md"))
-        .map(|entry| format!("{relative_dir}/{}", entry.name))
-        .collect();
 
-    // One batched read for the whole type directory, rather than a read (and a
+    // Split the listing into cache hits (fingerprint unchanged, reused without a
+    // read) and misses (read + parsed below). The fingerprint — size + mtime —
+    // comes from this same enumeration pass; no per-file stat or read.
+    let mut entries: Vec<(String, CachedEntry)> = Vec::new();
+    let mut miss_paths: Vec<String> = Vec::new();
+    let mut miss_fingerprints: HashMap<String, (u64, u128)> = HashMap::new();
+    for entry in dir_entries {
+        if !(entry.is_file && entry.name.ends_with(".md")) {
+            continue;
+        }
+        let path = format!("{relative_dir}/{}", entry.name);
+        let key = cache_key(&path);
+        if let Some(cached) = loaded.get(&key) {
+            if fingerprint_hit(
+                cached.len,
+                cached.modified_unix_nanos,
+                entry.len,
+                entry.modified_unix_nanos,
+            ) {
+                entries.push((key, cached.clone()));
+                continue;
+            }
+        }
+        miss_fingerprints.insert(path.clone(), (entry.len, entry.modified_unix_nanos));
+        miss_paths.push(path);
+    }
+
+    let misses = miss_paths.len();
+    // One batched read for the changed/new files only, rather than a read (and a
     // stat) per file — the per-call FFI + file-coordination overhead on iOS makes
     // per-file round trips the dominant load cost.
     let files = vfs
-        .read_files(&md_paths)
+        .read_files(&miss_paths)
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entities in {relative_dir}: {error}"))?;
 
-    let mut records = Vec::new();
-    let mut body_links = Vec::new();
-    let mut diagnostics = Vec::new();
     for (relative_path, bytes) in files {
-        let result = parse_entity(type_config, relative_path, bytes)?;
-        diagnostics.extend(result.diagnostics);
-        let entity = result.entity;
-        // Extract body wikilinks now, while the body is in hand, so it can be
-        // dropped along with `raw` instead of staying resident.
-        let links = extract_body_links(&entity.body);
-        if !links.is_empty() {
-            body_links.push((entity.summary.id.clone(), links));
-        }
-        records.push(EntityRecord {
-            summary: entity.summary,
-            revision: entity.revision,
-            frontmatter: entity.frontmatter,
-        });
+        let (len, modified_unix_nanos) = miss_fingerprints
+            .get(&relative_path)
+            .copied()
+            .unwrap_or((0, 0));
+        let key = cache_key(&relative_path);
+        let EntityReadResult {
+            entity,
+            body_links,
+            diagnostics,
+        } = parse_entity(type_config, relative_path, bytes)?;
+        entries.push((
+            key,
+            CachedEntry {
+                len,
+                modified_unix_nanos,
+                record: EntityRecord {
+                    body_links,
+                    summary: entity.summary,
+                    revision: entity.revision,
+                    frontmatter: entity.frontmatter,
+                },
+                diagnostics,
+            },
+        ));
     }
-    Ok(EntityReadBatch {
-        records,
-        body_links,
-        diagnostics,
-    })
+    Ok(TypeRead { entries, misses })
 }
 
 /// Parses one entity from its raw bytes — no I/O. The revision is derived from
 /// the content (hash + length); a separate `metadata` call for the mtime is not
-/// worth its per-file cost, and the content hash already detects edits.
+/// worth its per-file cost, and the content hash already detects edits. Body
+/// wikilinks are extracted here too (while the body is in hand) and returned in
+/// the result, so callers building a resident [`EntityRecord`] don't re-scan.
 fn parse_entity(
     type_config: &EntityTypeConfig,
     relative_path: String,
@@ -557,6 +660,7 @@ fn parse_entity(
     };
 
     Ok(EntityReadResult {
+        body_links: extract_body_links(&parsed.body),
         entity: Entity {
             summary,
             revision,
@@ -624,7 +728,10 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{compare_string, load_entity, read_library, rebuild_for_edited_entity};
+    use super::{
+        compare_string, load_entity, read_library, read_library_cached, rebuild_for_edited_entity,
+        IndexCacheContext,
+    };
     use crate::types::{
         EntityTypeConfig, FieldConfig, FieldType, FilenameConfig, KizunaConfig, Library, Relation,
     };
@@ -984,5 +1091,330 @@ mod tests {
                 }],
             }],
         }
+    }
+
+    // --- Persistent index cache ----------------------------------------------
+
+    fn cache_ctx(dir: &std::path::Path, schema: &str) -> IndexCacheContext {
+        IndexCacheContext::new(dir.to_path_buf(), schema, "test-vault")
+    }
+
+    fn seed_one(vfs: &InMemoryVfs, title: &str) {
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file(
+            "Taxonomy/Anime/Star Voyager.md",
+            &format!("---\ntitle: {title}\n---\n\nBody.\n"),
+        );
+    }
+
+    /// An unchanged fingerprint reuses the cached parse without re-reading the
+    /// file: we edit the bytes but preserve size + mtime, then assert the load
+    /// still serves the *old* title — only possible if the file was never read.
+    #[tokio::test]
+    async fn index_cache_reuses_unchanged_entries_without_rereading() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = Arc::new(InMemoryVfs::new());
+        seed_one(&vfs, "AAAA");
+
+        let first = read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        assert_eq!(first.summaries().next().unwrap().title, "AAAA");
+
+        vfs.overwrite_preserving_stamp(
+            "Taxonomy/Anime/Star Voyager.md",
+            "---\ntitle: BBBB\n---\n\nBody.\n",
+        );
+        let second = read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            second.summaries().next().unwrap().title,
+            "AAAA",
+            "unchanged fingerprint must serve the cached parse"
+        );
+    }
+
+    /// A changed fingerprint (mtime bump from a normal edit) re-reads and
+    /// re-parses the file.
+    #[tokio::test]
+    async fn index_cache_reparses_when_fingerprint_changes() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = Arc::new(InMemoryVfs::new());
+        seed_one(&vfs, "AAAA");
+
+        read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+
+        vfs.insert_file(
+            "Taxonomy/Anime/Star Voyager.md",
+            "---\ntitle: CCCC\n---\n\nBody.\n",
+        );
+        let updated = read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        assert_eq!(updated.summaries().next().unwrap().title, "CCCC");
+    }
+
+    /// A different schema fingerprint discards the whole cache even when every
+    /// file's fingerprint is unchanged — because all derivation flows from the
+    /// schema.
+    #[tokio::test]
+    async fn index_cache_busts_when_schema_fingerprint_changes() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = Arc::new(InMemoryVfs::new());
+        seed_one(&vfs, "AAAA");
+
+        read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+
+        vfs.overwrite_preserving_stamp(
+            "Taxonomy/Anime/Star Voyager.md",
+            "---\ntitle: BBBB\n---\n\nBody.\n",
+        );
+        let updated = read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v2"),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            updated.summaries().next().unwrap().title,
+            "BBBB",
+            "a schema change must invalidate every cached record"
+        );
+    }
+
+    /// Files absent from the current listing drop out of the cache (delete).
+    #[tokio::test]
+    async fn index_cache_drops_deleted_entries() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file("Taxonomy/Anime/A.md", "---\ntitle: A\n---\n");
+        vfs.insert_file("Taxonomy/Anime/B.md", "---\ntitle: B\n---\n");
+
+        read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+
+        vfs.remove_file("Taxonomy/Anime/B.md").await.unwrap();
+        let after = read_library_cached(
+            test_config("/virtual-vault"),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        let titles: Vec<&str> = after
+            .summaries()
+            .map(|summary| summary.title.as_str())
+            .collect();
+        assert_eq!(titles, vec!["A"]);
+    }
+
+    /// The cached load (cold and warm) is value-equivalent to a full
+    /// [`read_library`], including the recomputed relation graph and counts.
+    #[tokio::test]
+    async fn cached_load_matches_uncached_read_library() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = make_relation_vault(
+            "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n\nSee [[Gamma]].\n",
+        );
+
+        let cold = read_library_cached(
+            relation_test_config(),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        let uncached = read_library(relation_test_config(), Arc::clone(&vfs) as Arc<dyn Vfs>)
+            .await
+            .unwrap();
+        assert_libraries_equivalent(&cold, &uncached, "cold-cached", "uncached");
+
+        // A second cached load reuses every entry from the warm cache.
+        let warm = read_library_cached(
+            relation_test_config(),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        assert_libraries_equivalent(&warm, &uncached, "warm-cached", "uncached");
+    }
+
+    // --- Daily-note relation reuse on edit -----------------------------------
+
+    fn daily_notes_config() -> KizunaConfig {
+        let mut config = relation_test_config();
+        config.daily_notes = Some(crate::types::DailyNotesConfig {
+            paths: vec!["Journal".to_string()],
+            date_format: None,
+        });
+        config
+    }
+
+    fn daily_notes_vault(alpha: &str, journal: &str) -> Arc<InMemoryVfs> {
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file("Taxonomy/Anime/Alpha.md", alpha);
+        vfs.insert_file("Taxonomy/Anime/Beta.md", "---\ntitle: Beta\n---\n");
+        vfs.insert_dir("Journal");
+        vfs.insert_file("Journal/2026-06-16.md", journal);
+        vfs
+    }
+
+    fn daily_note_relation_count(library: &Library) -> usize {
+        library
+            .relations
+            .iter()
+            .filter(|relation| relation.field == "daily-note")
+            .count()
+    }
+
+    /// An in-place entity edit, recomputed surgically, keeps the daily-note
+    /// relations and stays value-equivalent to a full reload.
+    #[tokio::test]
+    async fn surgical_update_preserves_daily_note_relations() {
+        let config = daily_notes_config();
+        let vfs = daily_notes_vault("---\ntitle: Alpha\n---\n", "Watched [[Alpha]] today.\n");
+
+        let base = read_library(config.clone(), Arc::clone(&vfs) as Arc<dyn Vfs>)
+            .await
+            .unwrap();
+        assert_eq!(daily_note_relation_count(&base), 1, "fixture sanity");
+
+        vfs.insert_file("Taxonomy/Anime/Alpha.md", "---\ntitle: Alphaz\n---\n");
+        let surgical = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Alpha.md")
+            .await
+            .unwrap()
+            .expect("in-place edit takes the surgical path");
+        let full = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
+            .await
+            .unwrap();
+
+        assert_libraries_equivalent(&surgical, &full, "daily-note base", "daily-note edited");
+    }
+
+    /// The surgical path must reuse the resident daily-note relations rather than
+    /// re-reading the journal: we drop the link from the daily note on disk *after*
+    /// the base load, then edit the entity — the relation survives only if it came
+    /// from memory. (This would fail if the edit path re-read daily notes.)
+    #[tokio::test]
+    async fn surgical_update_reuses_daily_note_relations_without_rereading() {
+        let config = daily_notes_config();
+        let vfs = daily_notes_vault("---\ntitle: Alpha\n---\n", "Watched [[Alpha]] today.\n");
+
+        let base = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
+            .await
+            .unwrap();
+        assert_eq!(daily_note_relation_count(&base), 1, "fixture sanity");
+
+        // Disk no longer has the link; only memory (base) still does.
+        vfs.insert_file("Journal/2026-06-16.md", "Nothing linked today.\n");
+        vfs.insert_file("Taxonomy/Anime/Alpha.md", "---\ntitle: Alphaz\n---\n");
+        let surgical = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Alpha.md")
+            .await
+            .unwrap()
+            .expect("in-place edit takes the surgical path");
+
+        assert_eq!(
+            daily_note_relation_count(&surgical),
+            1,
+            "daily-note relations must be reused from memory, not re-read from disk"
+        );
+    }
+
+    /// A cached cold start reuses an unchanged daily note's links without reading
+    /// its body: we edit the journal bytes but keep size + mtime, then assert the
+    /// relation persists — only possible if the note was not re-read.
+    #[tokio::test]
+    async fn index_cache_reuses_daily_note_links_without_rereading() {
+        let dir = tempfile::tempdir().unwrap();
+        let journal = "Watched [[Alpha]] today\n";
+        let vfs = daily_notes_vault("---\ntitle: Alpha\n---\n", journal);
+
+        let first = read_library_cached(
+            daily_notes_config(),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        assert_eq!(daily_note_relation_count(&first), 1, "fixture sanity");
+
+        // Same byte length (so the size matches) + preserved mtime → a change the
+        // fingerprint can't see. A hit must reuse the cached links.
+        let linkless = format!("{:width$}\n", "no link", width = journal.len() - 1);
+        assert_eq!(linkless.len(), journal.len());
+        vfs.overwrite_preserving_stamp("Journal/2026-06-16.md", &linkless);
+
+        let second = read_library_cached(
+            daily_notes_config(),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            daily_note_relation_count(&second),
+            1,
+            "unchanged daily-note fingerprint must serve cached links, not re-read"
+        );
+    }
+
+    /// When a daily note actually changes (mtime bumped), its links are re-read.
+    #[tokio::test]
+    async fn index_cache_reparses_daily_note_when_fingerprint_changes() {
+        let dir = tempfile::tempdir().unwrap();
+        let vfs = daily_notes_vault("---\ntitle: Alpha\n---\n", "Watched [[Alpha]] today.\n");
+
+        read_library_cached(
+            daily_notes_config(),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+
+        // A normal write bumps the mtime, so the note is re-read and the link drops.
+        vfs.insert_file("Journal/2026-06-16.md", "Nothing linked today.\n");
+        let updated = read_library_cached(
+            daily_notes_config(),
+            Arc::clone(&vfs) as Arc<dyn Vfs>,
+            cache_ctx(dir.path(), "schema-v1"),
+        )
+        .await
+        .unwrap();
+        assert_eq!(daily_note_relation_count(&updated), 0);
     }
 }

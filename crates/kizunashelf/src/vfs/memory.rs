@@ -36,6 +36,19 @@ impl InMemoryVfs {
             .insert(path, (contents.as_bytes().to_vec(), stamp));
     }
 
+    /// Test helper: replace a file's bytes while preserving its recorded mtime,
+    /// simulating an edit the index cache's `(size, mtime)` fingerprint can't see
+    /// (e.g. a same-length change within mtime granularity). A normal
+    /// [`insert_file`](Self::insert_file) bumps the mtime instead.
+    pub fn overwrite_preserving_stamp(&self, path: &str, contents: &str) {
+        let path = normalize_relative(path).expect("valid seed path");
+        let mut state = self.state.lock().unwrap();
+        let stamp = state.files.get(&path).map(|(_, stamp)| *stamp).unwrap_or(0);
+        state
+            .files
+            .insert(path, (contents.as_bytes().to_vec(), stamp));
+    }
+
     /// Test helper: create an (empty) directory.
     pub fn insert_dir(&self, path: &str) {
         let path = normalize_relative(path).expect("valid seed path");
@@ -110,7 +123,7 @@ impl Vfs for InMemoryVfs {
         }
 
         let mut names: HashMap<String, DirEntry> = HashMap::new();
-        for file in state.files.keys() {
+        for (file, (bytes, modified)) in &state.files {
             if parent_of(file) == dir {
                 let name = file.rsplit('/').next().unwrap_or(file).to_string();
                 names.insert(
@@ -119,6 +132,8 @@ impl Vfs for InMemoryVfs {
                         name,
                         is_dir: false,
                         is_file: true,
+                        len: bytes.len() as u64,
+                        modified_unix_nanos: *modified,
                     },
                 );
             }
@@ -132,6 +147,8 @@ impl Vfs for InMemoryVfs {
                         name,
                         is_dir: true,
                         is_file: false,
+                        len: 0,
+                        modified_unix_nanos: 0,
                     },
                 );
             }

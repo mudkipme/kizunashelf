@@ -68,10 +68,26 @@ impl Vfs for NativeVfs {
         let mut result = Vec::new();
         while let Some(entry) = entries.next_entry().await.map_err(map_io)? {
             let file_type = entry.file_type().await.map_err(map_io)?;
+            // Fetch size + mtime in the same pass so the index cache has its
+            // change-detection fingerprint without a separate stat per file.
+            let (len, modified_unix_nanos) = match entry.metadata().await {
+                Ok(metadata) => (
+                    metadata.len(),
+                    metadata
+                        .modified()
+                        .ok()
+                        .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+                        .map(|duration| duration.as_nanos())
+                        .unwrap_or_default(),
+                ),
+                Err(_) => (0, 0),
+            };
             result.push(DirEntry {
                 name: entry.file_name().to_string_lossy().to_string(),
                 is_dir: file_type.is_dir(),
                 is_file: file_type.is_file(),
+                len,
+                modified_unix_nanos,
             });
         }
         Ok(result)

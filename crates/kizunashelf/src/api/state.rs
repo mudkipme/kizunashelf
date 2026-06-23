@@ -1,5 +1,8 @@
 use crate::contract::{AnalyticsResponse, AssetDownloadJob};
-use crate::library::{load_vault_config_via_vfs, read_library};
+use crate::library::{
+    load_vault_config_via_vfs, read_library, read_library_cached, read_raw_vault_config_via_vfs,
+    IndexCacheContext,
+};
 use crate::secrets::{SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
 use crate::vfs::{NativeVfs, Vfs};
@@ -30,6 +33,11 @@ pub struct ApiOptions {
     pub web_dist_path: Option<PathBuf>,
     pub settings_writable: bool,
     pub content_writable: bool,
+    /// Host directory for the persistent index cache (NOT inside the vault — a
+    /// real app-container path the in-process core can touch with `std::fs`).
+    /// `None` disables the cache (cold starts re-parse the whole vault). It is a
+    /// pure optimization; see [`crate::library`]'s index cache.
+    pub index_cache_dir: Option<PathBuf>,
 }
 
 #[derive(Clone)]
@@ -431,7 +439,25 @@ async fn load_library(state: &AppState) -> Result<Library> {
     }
     let vfs = state.vault_vfs(&app.vault_root);
     let vault = load_vault_config_via_vfs(vfs.as_ref()).await?;
-    read_library(KizunaConfig::from_parts(app, vault), vfs).await
+    let config = KizunaConfig::from_parts(app, vault);
+    match build_index_cache_context(state, vfs.as_ref(), &config).await {
+        Some(cache) => read_library_cached(config, vfs, cache).await,
+        None => read_library(config, vfs).await,
+    }
+}
+
+/// Builds the index-cache context when a cache dir is configured. The schema
+/// fingerprint comes from the raw vault config text (so any schema edit busts the
+/// whole cache); the vault root is the per-vault identity. Returns `None` — i.e.
+/// the uncached path — when no cache dir is set or the raw config can't be read.
+async fn build_index_cache_context(
+    state: &AppState,
+    vfs: &dyn Vfs,
+    config: &KizunaConfig,
+) -> Option<IndexCacheContext> {
+    let dir = state.options.index_cache_dir.clone()?;
+    let raw = read_raw_vault_config_via_vfs(vfs).await.ok().flatten()?;
+    Some(IndexCacheContext::new(dir, &raw, &config.vault_root))
 }
 
 pub(crate) fn content_writes_enabled(state: &AppState, library: &Library) -> bool {

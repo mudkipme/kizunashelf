@@ -93,6 +93,8 @@ impl VaultFileSystem for FakeVault {
                         name: dir.to_string(),
                         is_dir: true,
                         is_file: false,
+                        len: 0,
+                        modified_unix_nanos: 0,
                     });
                 }
                 None => {
@@ -102,6 +104,8 @@ impl VaultFileSystem for FakeVault {
                             name: rest.to_string(),
                             is_dir: false,
                             is_file: true,
+                            len: files.get(key).map(|bytes| bytes.len() as u64).unwrap_or(0),
+                            modified_unix_nanos: 0,
                         },
                     );
                 }
@@ -193,6 +197,7 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
             vault_root_label: "My Vault".to_string(),
             content_writable: false,
             cache_ttl_ms: Some(0),
+            index_cache_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),
@@ -244,6 +249,7 @@ fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
             vault_root_label: "My Vault".to_string(),
             content_writable: true,
             cache_ttl_ms: Some(0),
+            index_cache_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),
@@ -307,6 +313,7 @@ fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
             vault_root_label: "Vault".to_string(),
             content_writable: false,
             cache_ttl_ms: Some(0),
+            index_cache_dir: None,
         },
         Box::new(vault),
         Box::new(secrets),
@@ -370,6 +377,7 @@ fn ios_settings_write_vault_config_through_the_vfs() {
             vault_root_label: "My Vault".to_string(),
             content_writable: true,
             cache_ttl_ms: Some(0),
+            index_cache_dir: None,
         },
         Box::new(vault),
         Box::new(FakeSecretStore::default()),

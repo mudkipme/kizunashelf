@@ -23,6 +23,10 @@ pub(crate) struct PendingDailyNote {
     pub(crate) relative_path: String,
     pub(crate) date: Option<String>,
     pub(crate) source_label: String,
+    /// Directory-listing fingerprint (size, mtime) for the index cache, so an
+    /// unchanged daily note's wikilinks can be reused without reading its body.
+    pub(crate) len: u64,
+    pub(crate) modified_unix_nanos: u128,
 }
 
 pub async fn daily_note_files(
@@ -78,7 +82,9 @@ pub(crate) async fn daily_note_candidates(
 
     let mut pending = Vec::new();
     for path in daily_note_paths(config) {
-        for relative_path in vfs::walk_markdown_files(vfs, &path).await? {
+        for (relative_path, len, modified_unix_nanos) in
+            vfs::walk_markdown_files_with_meta(vfs, &path).await?
+        {
             let basename = relative_path
                 .rsplit('/')
                 .next()
@@ -114,6 +120,8 @@ pub(crate) async fn daily_note_candidates(
                 relative_path,
                 date,
                 source_label,
+                len,
+                modified_unix_nanos,
             });
         }
     }

@@ -29,6 +29,7 @@ fn inline_router(vault_root: &Path, settings_writable: bool, content_writable: b
             web_dist_path: None,
             settings_writable,
             content_writable,
+            index_cache_dir: None,
         },
         AppConfig {
             vault_root: vault_root.to_string_lossy().to_string(),

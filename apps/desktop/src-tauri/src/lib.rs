@@ -35,6 +35,9 @@ struct DesktopState {
     vaults_path: PathBuf,
     cache_ttl: Duration,
     secret_store: Arc<dyn SecretStore>,
+    /// Persistent index-cache directory (the OS cache dir, resolved at setup).
+    /// Shared across vaults; per-vault entries are keyed inside it.
+    index_cache_dir: PathBuf,
 }
 
 #[derive(serde::Serialize)]
@@ -194,10 +197,14 @@ fn apply(
 }
 
 fn rebuild_active(state: &DesktopState, data: &VaultStoreData) {
-    let router = data
-        .active
-        .as_ref()
-        .map(|path| build_router(path, state.cache_ttl, Arc::clone(&state.secret_store)));
+    let router = data.active.as_ref().map(|path| {
+        build_router(
+            path,
+            state.cache_ttl,
+            Arc::clone(&state.secret_store),
+            state.index_cache_dir.clone(),
+        )
+    });
     *state.api.lock().unwrap() = router;
 }
 
@@ -216,6 +223,7 @@ fn build_router(
     vault_root: &str,
     cache_ttl: Duration,
     secret_store: Arc<dyn SecretStore>,
+    index_cache_dir: PathBuf,
 ) -> Router {
     router_native(
         ApiOptions {
@@ -226,6 +234,11 @@ fn build_router(
             web_dist_path: None,
             settings_writable: true,
             content_writable: true,
+            // Persistent index cache (outside the vault, in the OS cache dir) to
+            // speed up cold starts on large vaults. A disposable cache; per-vault
+            // entries are keyed by vault identity inside the dir, so one dir is
+            // shared across vaults.
+            index_cache_dir: Some(index_cache_dir),
         },
         AppConfig {
             vault_root: vault_root.to_string(),
@@ -295,6 +308,10 @@ pub fn run() {
         })
         .setup(|app| {
             let vaults_path = app.path().app_data_dir()?.join("vaults.json");
+            // The OS cache dir (XDG_CACHE_HOME / ~/.cache on Linux, ~/Library/Caches
+            // on macOS, %LOCALAPPDATA% on Windows), resolved the same way as the app
+            // data dir above. Holds the disposable persistent index cache.
+            let index_cache_dir = app.path().app_cache_dir()?.join("KizunaIndexCache");
             let cache_ttl = env::var("KIZUNASHELF_CACHE_TTL_MS")
                 .ok()
                 .and_then(|ttl| ttl.parse::<u64>().ok())
@@ -303,15 +320,20 @@ pub fn run() {
             let secret_store: Arc<dyn SecretStore> = Arc::new(KeyringSecretStore::new());
 
             let data = vaults::load(&vaults_path);
-            let api = data
-                .active
-                .as_ref()
-                .map(|path| build_router(path, cache_ttl, Arc::clone(&secret_store)));
+            let api = data.active.as_ref().map(|path| {
+                build_router(
+                    path,
+                    cache_ttl,
+                    Arc::clone(&secret_store),
+                    index_cache_dir.clone(),
+                )
+            });
             app.manage(DesktopState {
                 api: Mutex::new(api),
                 vaults_path,
                 cache_ttl,
                 secret_store,
+                index_cache_dir,
             });
             Ok(())
         })

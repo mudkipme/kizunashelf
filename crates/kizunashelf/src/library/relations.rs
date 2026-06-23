@@ -6,51 +6,81 @@ use crate::types::{EntityRecord, FieldType, KizunaConfig, Relation, RelationDire
 use crate::vfs::Vfs;
 use anyhow::Result;
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
+use super::cache_key;
 use super::frontmatter::{fence_regex, strip_wikilink, wikilink_regex};
+use super::index_cache::{fingerprint_hit, CachedDailyNote};
 
-/// Builds the relation graph from the resident [`EntityRecord`]s. Frontmatter
-/// relation fields are read from each record (resident); body wikilinks are
-/// supplied via `body_links` (keyed by entity id), pre-extracted during the load
-/// pass before each body was dropped, so this function never needs entity bodies
-/// in memory. Daily-note wikilinks are read from disk in bounded chunks.
-pub(super) async fn build_relations(
+/// The `field` value marking a relation that originates from a daily note (the
+/// only relation kind that requires reading files outside the resident records).
+pub(super) const DAILY_NOTE_RELATION_FIELD: &str = "daily-note";
+
+/// Builds the entity-to-entity relation graph from the resident [`EntityRecord`]s
+/// alone — frontmatter relation fields and body wikilink targets
+/// ([`EntityRecord::body_links`]). Pure and synchronous: no I/O, no daily notes,
+/// so it can be re-run in memory after an edit. Not deduped; callers that combine
+/// it with other relations dedupe the union.
+pub(super) fn build_entity_relations(
     config: &KizunaConfig,
     records: &[EntityRecord],
-    body_links: &HashMap<String, Vec<String>>,
-    vfs: &dyn Vfs,
-) -> Result<Vec<Relation>> {
-    let by_basename = normalized_entity_basename_index(records);
+) -> Vec<Relation> {
+    entity_outgoing(config, records, &normalized_entity_basename_index(records))
+}
 
+/// The shared entity-to-entity relation pass: each record's owned outgoing edges
+/// against `by_basename`. Both [`build_entity_relations`] and [`build_relations`]
+/// build on this so the loop isn't duplicated.
+fn entity_outgoing(
+    config: &KizunaConfig,
+    records: &[EntityRecord],
+    by_basename: &HashMap<String, Vec<&EntityRecord>>,
+) -> Vec<Relation> {
     let mut relations = Vec::new();
     for record in records {
-        let record_body_links = body_links
-            .get(&record.summary.id)
-            .map(Vec::as_slice)
-            .unwrap_or(&[]);
-        relations.extend(build_record_outgoing(
-            config,
-            record,
-            record_body_links,
-            &by_basename,
-        ));
+        relations.extend(build_record_outgoing(config, record, by_basename));
+    }
+    relations
+}
+
+/// Builds the full relation graph from resident data only: the entity-to-entity
+/// relations plus the pre-gathered daily-note links (see [`read_daily_note_links`],
+/// which does the I/O). Pure — no file reads — so the daily-note reading can be
+/// cached in the load pass like entities.
+pub(super) fn build_relations(
+    config: &KizunaConfig,
+    records: &[EntityRecord],
+    daily_note_links: &[(String, Vec<String>)],
+) -> Vec<Relation> {
+    let by_basename = normalized_entity_basename_index(records);
+    let mut relations = entity_outgoing(config, records, &by_basename);
+
+    // Resolve each daily note's wikilinks against the current entity set.
+    for (source_id, links) in daily_note_links {
+        for target_title in links {
+            let Some(target) = find_target_for_wikilink(target_title, &by_basename) else {
+                continue;
+            };
+            relations.push(Relation {
+                source_id: source_id.clone(),
+                target_id: Some(target.summary.id.clone()),
+                target_title: target_title.clone(),
+                target_type: Some(target.summary.entity_type.clone()),
+                field: DAILY_NOTE_RELATION_FIELD.to_string(),
+                direction: RelationDirection::Out,
+            });
+        }
     }
 
-    relations.extend(daily_note_relations(config, records, vfs).await?);
-
-    Ok(dedupe_relations(relations))
+    dedupe_relations(relations)
 }
 
 /// Builds one record's outgoing relations — its frontmatter relation fields and
-/// body wikilinks — plus the `In` reflection on each *resolved* frontmatter
-/// target. These are exactly the relations a record "owns": the surgical cache
-/// update removes a record's old owned relations and re-runs this to produce the
-/// new ones, leaving every other entity's links untouched.
+/// its body wikilinks ([`EntityRecord::body_links`]) — plus the `In` reflection
+/// on each *resolved* frontmatter target.
 pub(super) fn build_record_outgoing(
     config: &KizunaConfig,
     record: &EntityRecord,
-    body_links: &[String],
     by_basename: &HashMap<String, Vec<&EntityRecord>>,
 ) -> Vec<Relation> {
     let mut relations = Vec::new();
@@ -82,7 +112,7 @@ pub(super) fn build_record_outgoing(
         }
     }
 
-    for target_title in body_links {
+    for target_title in &record.body_links {
         let Some(target) = find_target(target_title, None, by_basename) else {
             continue;
         };
@@ -136,49 +166,86 @@ fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<RelationFiel
     fields
 }
 
-async fn daily_note_relations(
-    config: &KizunaConfig,
-    records: &[EntityRecord],
-    vfs: &dyn Vfs,
-) -> Result<Vec<Relation>> {
-    let by_basename = normalized_entity_basename_index(records);
-    let mut relations = Vec::new();
+/// The daily-note wikilinks gathered for a load: the `(source_id, link targets)`
+/// pairs to resolve into relations, the per-note cache map to persist (current
+/// notes only, so deletions drop out), and whether anything was re-read.
+pub(super) struct DailyNoteRead {
+    pub(super) links: Vec<(String, Vec<String>)>,
+    pub(super) cache: BTreeMap<String, CachedDailyNote>,
+    pub(super) dirty: bool,
+}
 
-    // Discover all daily notes up front (cheap), then read their contents in
-    // bounded chunks so a vault with very many/large daily notes can't OOM here.
+/// Gathers each daily note's wikilink targets, reusing `loaded` cache entries for
+/// notes whose `(size, mtime)` fingerprint is unchanged and reading + extracting
+/// only the changed/new ones. Only the link targets are cached — never the body —
+/// so a cold start over a vault with thousands of daily notes skips re-reading
+/// every unchanged note. Discovery (`read_dir`, which carries the fingerprint) is
+/// always done; the saved cost is the per-note content read.
+pub(super) async fn read_daily_note_links(
+    config: &KizunaConfig,
+    vfs: &dyn Vfs,
+    loaded: &HashMap<String, CachedDailyNote>,
+) -> Result<DailyNoteRead> {
     let candidates = daily_note_candidates(config, vfs, None, None, false).await?;
-    for chunk in candidates.chunks(DAILY_NOTE_READ_CHUNK) {
-        let label_by_path: HashMap<&str, &str> = chunk
-            .iter()
-            .map(|note| (note.relative_path.as_str(), note.source_label.as_str()))
-            .collect();
-        let paths: Vec<String> = chunk
-            .iter()
-            .map(|note| note.relative_path.clone())
-            .collect();
-        for (relative_path, contents) in read_daily_note_contents(vfs, &paths).await? {
-            let source_label = label_by_path
-                .get(relative_path.as_str())
-                .copied()
-                .unwrap_or(relative_path.as_str());
-            let source_id = format!("daily-note:{source_label}:{relative_path}");
-            for target_title in daily_note_wikilinks(&contents) {
-                let Some(target) = find_target_for_wikilink(&target_title, &by_basename) else {
-                    continue;
-                };
-                relations.push(Relation {
-                    source_id: source_id.clone(),
-                    target_id: Some(target.summary.id.clone()),
-                    target_title,
-                    target_type: Some(target.summary.entity_type.clone()),
-                    field: "daily-note".to_string(),
-                    direction: RelationDirection::Out,
-                });
+
+    let mut links: Vec<(String, Vec<String>)> = Vec::new();
+    let mut cache: BTreeMap<String, CachedDailyNote> = BTreeMap::new();
+    let mut miss_paths: Vec<String> = Vec::new();
+    // path -> (source_id, len, mtime) for the notes we must read.
+    let mut miss_meta: HashMap<String, (String, u64, u128)> = HashMap::new();
+
+    for note in candidates {
+        let source_id = format!("daily-note:{}:{}", note.source_label, note.relative_path);
+        let key = cache_key(&note.relative_path);
+        if let Some(cached) = loaded.get(&key) {
+            if fingerprint_hit(
+                cached.len,
+                cached.modified_unix_nanos,
+                note.len,
+                note.modified_unix_nanos,
+            ) {
+                links.push((source_id, cached.links.clone()));
+                cache.insert(key, cached.clone());
+                continue;
             }
+        }
+        miss_meta.insert(
+            note.relative_path.clone(),
+            (source_id, note.len, note.modified_unix_nanos),
+        );
+        miss_paths.push(note.relative_path);
+    }
+
+    let misses = miss_paths.len();
+    // Read changed/new notes in bounded chunks so a vault with very many/large
+    // daily notes can't OOM here.
+    for chunk in miss_paths.chunks(DAILY_NOTE_READ_CHUNK) {
+        for (relative_path, contents) in read_daily_note_contents(vfs, chunk).await? {
+            let Some((source_id, len, modified_unix_nanos)) = miss_meta.remove(&relative_path)
+            else {
+                continue;
+            };
+            let note_links = daily_note_wikilinks(&contents);
+            cache.insert(
+                cache_key(&relative_path),
+                CachedDailyNote {
+                    len,
+                    modified_unix_nanos,
+                    links: note_links.clone(),
+                },
+            );
+            links.push((source_id, note_links));
         }
     }
 
-    Ok(relations)
+    // Rewrite the cache when anything was re-read, or when the note set shrank (a
+    // deletion the `loaded` map still held).
+    let dirty = misses > 0 || cache.len() != loaded.len();
+    Ok(DailyNoteRead {
+        links,
+        cache,
+        dirty,
+    })
 }
 
 fn daily_note_wikilinks(raw: &str) -> Vec<String> {

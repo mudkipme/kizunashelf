@@ -758,6 +758,7 @@ mod tests {
             summary,
             revision: String::new(),
             frontmatter: serde_json::Map::new(),
+            body_links: Vec::new(),
         }
     }
 

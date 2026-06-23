@@ -56,6 +56,12 @@ async fn main() -> Result<()> {
         content_writable: Some(content_writable),
     };
     let secret_store = Arc::new(NativeSecretStore::with_token_path(token_cache));
+    // Optional persistent index cache (outside the vault). Off by default for the
+    // web server (long-lived process, OS page cache makes re-reads cheap); set
+    // `KIZUNASHELF_INDEX_CACHE_DIR` to speed up restarts on large vaults.
+    let index_cache_dir = std::env::var("KIZUNASHELF_INDEX_CACHE_DIR")
+        .ok()
+        .map(PathBuf::from);
     let options = ApiOptions {
         // No app config file in the web runtime; the app config is inline.
         config_path: PathBuf::new(),
@@ -63,6 +69,7 @@ async fn main() -> Result<()> {
         web_dist_path,
         settings_writable,
         content_writable,
+        index_cache_dir,
     };
     let app = router_native(options, app_config, secret_store);
 

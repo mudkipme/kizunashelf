@@ -50,6 +50,11 @@ pub struct VaultOptions {
     /// allowed. Phase 2 browsing uses `false`.
     pub content_writable: bool,
     pub cache_ttl_ms: Option<u64>,
+    /// Host directory for the persistent index cache, e.g. the app container's
+    /// Caches dir. It is a real on-device path the in-process core touches with
+    /// `std::fs` (NOT the security-scoped vault), so it needs no bookmark. `None`
+    /// disables the cache; entries are keyed per vault inside the dir.
+    pub index_cache_dir: Option<String>,
 }
 
 /// One response from the core: HTTP-like status, body, and content type.
@@ -108,6 +113,7 @@ impl KizunaEngine {
             // settings handlers; the app config stays in Swift's @AppStorage.
             settings_writable: true,
             content_writable: options.content_writable,
+            index_cache_dir: options.index_cache_dir.map(PathBuf::from),
         };
         let router = router_with_vault(core_options, vault_fs, app_config, secret_store);
 

@@ -61,11 +61,21 @@ impl fmt::Display for VfsError {
 impl std::error::Error for VfsError {}
 
 /// One entry returned by [`Vfs::read_dir`].
+///
+/// `len` and `modified_unix_nanos` are the cheap change-detection fingerprint
+/// for the persistent index cache: they come from the *same* directory
+/// enumeration pass (no per-file read), so a cold start can decide which entities
+/// to re-parse without reading their contents. `modified_unix_nanos` is `0` when
+/// the backend can't report a modification time during listing; the cache treats
+/// a `0` mtime as "always re-parse" (never a cache hit), so a backend that can't
+/// supply it stays correct, just without the speedup.
 #[derive(Clone, Debug)]
 pub struct DirEntry {
     pub name: String,
     pub is_dir: bool,
     pub is_file: bool,
+    pub len: u64,
+    pub modified_unix_nanos: u128,
 }
 
 /// File metadata. `modified_unix_nanos` is `0` when the backend cannot report a
@@ -155,6 +165,21 @@ pub fn normalize_relative(path: &str) -> VfsResult<String> {
 /// vault-relative directory). A missing directory yields an empty list. Used for
 /// the daily-notes walk.
 pub async fn walk_markdown_files(vfs: &dyn Vfs, root: &str) -> VfsResult<Vec<String>> {
+    Ok(walk_markdown_files_with_meta(vfs, root)
+        .await?
+        .into_iter()
+        .map(|(path, _, _)| path)
+        .collect())
+}
+
+/// Like [`walk_markdown_files`] but also returns each file's `(len,
+/// modified_unix_nanos)` fingerprint — taken from the same `read_dir`
+/// enumeration, no extra stat — so callers (the daily-note index cache) can
+/// decide what to re-read without reading contents.
+pub async fn walk_markdown_files_with_meta(
+    vfs: &dyn Vfs,
+    root: &str,
+) -> VfsResult<Vec<(String, u64, u128)>> {
     let mut files = Vec::new();
     let mut stack = vec![normalize_relative(root)?];
     while let Some(dir) = stack.pop() {
@@ -172,7 +197,7 @@ pub async fn walk_markdown_files(vfs: &dyn Vfs, root: &str) -> VfsResult<Vec<Str
             if entry.is_dir {
                 stack.push(child);
             } else if entry.is_file && child.ends_with(".md") {
-                files.push(child);
+                files.push((child, entry.len, entry.modified_unix_nanos));
             }
         }
     }

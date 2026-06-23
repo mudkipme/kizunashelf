@@ -310,11 +310,16 @@ pub struct Entity {
 }
 
 /// The slim, resident representation of an entity kept in the cached [`Library`].
-/// It carries the summary, frontmatter (for in-memory list/home/asset filtering)
-/// and revision, but deliberately omits `body`/`raw` — those are loaded on demand
-/// from disk via [`crate::library::load_entity`] when a full [`Entity`] is needed
-/// (detail page, mutations, asset writes). This keeps resident memory from scaling
-/// with the total body/raw size of the vault.
+/// It carries the summary, frontmatter (for in-memory list/home/asset filtering),
+/// revision, and the body's wikilink targets (`body_links`), but deliberately
+/// omits the full `body`/`raw` — those are loaded on demand from disk via
+/// [`crate::library::load_entity`] when a full [`Entity`] is needed (detail page,
+/// mutations, asset writes). Keeping `body_links` resident (they are small — just
+/// the link targets, not the body) lets the relation graph be recomputed wholly
+/// in memory after an edit, instead of surgically patching it.
+///
+/// This is an internal/resident type: API responses are always built from
+/// [`EntitySummary`], so `body_links` never reaches a client.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EntityRecord {
@@ -322,6 +327,10 @@ pub struct EntityRecord {
     pub summary: EntitySummary,
     pub revision: String,
     pub frontmatter: Map<String, Value>,
+    /// Wikilink targets extracted from the body at parse time (for relation
+    /// building). Empty for entities with no body links.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub body_links: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
