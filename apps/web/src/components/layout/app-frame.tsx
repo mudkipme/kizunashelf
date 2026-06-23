@@ -114,7 +114,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <AppLogo />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">KizunaShelf</span>
-            <span className="block text-xs leading-4 text-muted-foreground">A personal memory graph</span>
+            <span className="hidden text-xs leading-4 text-muted-foreground sm:block">A personal memory graph</span>
           </span>
         </Link>
         <Button
