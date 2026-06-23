@@ -15,6 +15,8 @@ impl ExternalProvider for BangumiProvider {
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         bangumi_types(provider_config).is_some()
+            || bangumi_wants_characters(provider_config)
+            || bangumi_wants_persons(provider_config)
     }
 
     fn field_options() -> Vec<ExternalProviderFieldOption> {
@@ -42,14 +44,59 @@ async fn search_bangumi(
     page_size: usize,
     provider_config: &ProviderSearchConfig,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
-    let Some(filter_types) = bangumi_types(provider_config) else {
+    let subject_types = bangumi_types(provider_config);
+    let wants_characters = bangumi_wants_characters(provider_config);
+    let wants_persons = bangumi_wants_persons(provider_config);
+    if subject_types.is_none() && !wants_characters && !wants_persons {
         return Ok(Vec::new());
-    };
+    }
     let client = external_client();
-    if let Some(subject_id) = bangumi_subject_id(q) {
-        let value = client
-            .get(format!("https://api.bgm.tv/v0/subjects/{subject_id}"))
+    // Resolve a pasted person URL (or a bare id when the field is persons-only).
+    if let Some(person_id) = bangumi_person_id(
+        q,
+        subject_types.is_none() && wants_persons && !wants_characters,
+    ) {
+        let value = bangumi_get(
+            client,
+            &format!("https://api.bgm.tv/v0/persons/{person_id}"),
+        )
+        .await?;
+        return Ok(bangumi_person_candidate(&value).into_iter().collect());
+    }
+    // Resolve a pasted character URL (or a bare id when the field is
+    // characters-only) via the dedicated characters endpoint.
+    if let Some(character_id) = bangumi_character_id(
+        q,
+        subject_types.is_none() && wants_characters && !wants_persons,
+    ) {
+        let value = bangumi_get(
+            client,
+            &format!("https://api.bgm.tv/v0/characters/{character_id}"),
+        )
+        .await?;
+        return Ok(bangumi_character_candidate(&value).into_iter().collect());
+    }
+    // Resolve a pasted subject URL/id (subjects mode only).
+    if subject_types.is_some() {
+        if let Some(subject_id) = bangumi_subject_id(q) {
+            let value = bangumi_get(
+                client,
+                &format!("https://api.bgm.tv/v0/subjects/{subject_id}"),
+            )
+            .await?;
+            return Ok(bangumi_candidate(&value).into_iter().collect());
+        }
+    }
+
+    let offset = (page - 1) * page_size;
+    let mut items = Vec::new();
+    if let Some(filter_types) = &subject_types {
+        let response = client
+            .post(format!(
+                "https://api.bgm.tv/v0/search/subjects?limit={page_size}&offset={offset}"
+            ))
             .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .json(&json!({ "keyword": q, "filter": { "type": filter_types } }))
             .send()
             .await
             .map_err(provider_error)?
@@ -58,20 +105,55 @@ async fn search_bangumi(
             .json::<Value>()
             .await
             .map_err(provider_error)?;
-        return Ok(bangumi_candidate(&value).into_iter().collect());
+        if let Some(data) = response.get("data").and_then(Value::as_array) {
+            items.extend(data.iter().filter_map(bangumi_candidate));
+        }
     }
-    let response = client
-        .post(format!(
-            "https://api.bgm.tv/v0/search/subjects?limit={page_size}&offset={}",
-            (page - 1) * page_size
-        ))
+    if wants_characters {
+        let response = client
+            .post(format!(
+                "https://api.bgm.tv/v0/search/characters?limit={page_size}&offset={offset}"
+            ))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .json(&json!({ "keyword": q }))
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status()
+            .map_err(provider_error)?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)?;
+        if let Some(data) = response.get("data").and_then(Value::as_array) {
+            items.extend(data.iter().filter_map(bangumi_character_candidate));
+        }
+    }
+    if wants_persons {
+        let response = client
+            .post(format!(
+                "https://api.bgm.tv/v0/search/persons?limit={page_size}&offset={offset}"
+            ))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .json(&json!({ "keyword": q }))
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status()
+            .map_err(provider_error)?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)?;
+        if let Some(data) = response.get("data").and_then(Value::as_array) {
+            items.extend(data.iter().filter_map(bangumi_person_candidate));
+        }
+    }
+    Ok(items)
+}
+
+async fn bangumi_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiError> {
+    client
+        .get(url)
         .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .json(&json!({
-            "keyword": q,
-            "filter": {
-                "type": filter_types
-            }
-        }))
         .send()
         .await
         .map_err(provider_error)?
@@ -79,13 +161,7 @@ async fn search_bangumi(
         .map_err(provider_error)?
         .json::<Value>()
         .await
-        .map_err(provider_error)?;
-    let data = response
-        .get("data")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-    Ok(data.iter().filter_map(bangumi_candidate).collect())
+        .map_err(provider_error)
 }
 
 fn bangumi_subject_id(q: &str) -> Option<String> {
@@ -102,6 +178,188 @@ fn bangumi_subject_id(q: &str) -> Option<String> {
         .trim();
     (!id.is_empty() && id.chars().all(|character| character.is_ascii_digit()))
         .then(|| id.to_string())
+}
+
+/// Whether the field opted into Bangumi character search/resolution via an
+/// explicit `character` external type. Unconstrained fields stay subjects-only.
+pub(super) fn bangumi_wants_characters(provider_config: &ProviderSearchConfig) -> bool {
+    provider_config
+        .external_types()
+        .is_some_and(|external_types| {
+            external_types
+                .iter()
+                .any(|external_type| external_type.trim().eq_ignore_ascii_case("character"))
+        })
+}
+
+/// Whether the field opted into Bangumi person search/resolution via an explicit
+/// `person` external type.
+pub(super) fn bangumi_wants_persons(provider_config: &ProviderSearchConfig) -> bool {
+    provider_config
+        .external_types()
+        .is_some_and(|external_types| {
+            external_types
+                .iter()
+                .any(|external_type| external_type.trim().eq_ignore_ascii_case("person"))
+        })
+}
+
+/// Extracts a Bangumi character id from a `bgm.tv/character/<id>` URL, or — when
+/// `allow_bare` (a characters-only field) — a bare numeric id.
+fn bangumi_character_id(q: &str, allow_bare: bool) -> Option<String> {
+    bangumi_people_id(q, "/character/", allow_bare)
+}
+
+/// Extracts a Bangumi person id from a `bgm.tv/person/<id>` URL, or — when
+/// `allow_bare` (a persons-only field) — a bare numeric id.
+fn bangumi_person_id(q: &str, allow_bare: bool) -> Option<String> {
+    bangumi_people_id(q, "/person/", allow_bare)
+}
+
+fn bangumi_people_id(q: &str, marker: &str, allow_bare: bool) -> Option<String> {
+    let trimmed = q.trim().trim_end_matches('/');
+    if let Some((_, rest)) = trimmed.split_once(marker) {
+        let id = rest
+            .split(['/', '?', '#'])
+            .next()
+            .unwrap_or_default()
+            .trim();
+        return (!id.is_empty() && id.chars().all(|character| character.is_ascii_digit()))
+            .then(|| id.to_string());
+    }
+    (allow_bare
+        && !trimmed.is_empty()
+        && trimmed.chars().all(|character| character.is_ascii_digit()))
+    .then(|| trimmed.to_string())
+}
+
+fn bangumi_character_candidate(item: &Value) -> Option<ExternalCandidate> {
+    bangumi_people_candidate(item, "character")
+}
+
+fn bangumi_person_candidate(item: &Value) -> Option<ExternalCandidate> {
+    bangumi_people_candidate(item, "person")
+}
+
+/// Builds a candidate for a Bangumi character or person (the two endpoints share
+/// a shape). `kind` is `character` or `person` and selects the URL path; persons
+/// additionally carry `career` and an official site.
+fn bangumi_people_candidate(item: &Value, kind: &str) -> Option<ExternalCandidate> {
+    let id = item.get("id")?.as_i64()?.to_string();
+    let url = format!("https://bgm.tv/{kind}/{id}");
+    let name = item.get("name").and_then(Value::as_str).unwrap_or_default();
+    let infobox = item.get("infobox").and_then(Value::as_array);
+    // The zh name and aliases live in the wiki infobox.
+    let name_cn = infobox
+        .map(|infobox| infobox_collect(infobox, &["简体中文名"]))
+        .and_then(|values| values.into_iter().next())
+        .unwrap_or_default();
+    let title = if name_cn.is_empty() { name } else { &name_cn };
+    if title.is_empty() {
+        return None;
+    }
+    let cover_url = item
+        .get("images")
+        .and_then(|images| {
+            images
+                .get("large")
+                .or_else(|| images.get("medium"))
+                .or_else(|| images.get("grid"))
+        })
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
+    let summary = item
+        .get("summary")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
+
+    let mut titles = BTreeMap::new();
+    if !name_cn.is_empty() {
+        titles.insert("zh".to_string(), name_cn.clone());
+    }
+    let mut metadata = Map::new();
+    metadata.insert("name".to_string(), Value::String(name.to_string()));
+    if !name_cn.is_empty() {
+        metadata.insert("name_cn".to_string(), Value::String(name_cn.clone()));
+    }
+    if let Some(cover_url) = &cover_url {
+        metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
+    }
+    if let Some(gender) = item
+        .get("gender")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+    {
+        metadata.insert("gender".to_string(), Value::String(gender.to_string()));
+    }
+    // Birthday: persons usually carry a year, characters usually don't, so the
+    // value may be `YYYY-MM-DD`, `YYYY-MM`, `YYYY`, or a year-less `MM-DD`.
+    if let Some(birthday) = bangumi_birthday(item) {
+        metadata.insert("birthday".to_string(), Value::String(birthday));
+    }
+    if let Some(aliases) = infobox
+        .map(|infobox| infobox_collect(infobox, &["别名"]))
+        .filter(|values| !values.is_empty())
+    {
+        metadata.insert(
+            "aliases".to_string(),
+            Value::Array(aliases.into_iter().map(Value::String).collect()),
+        );
+    }
+    // Persons carry a career list and an official site in the infobox.
+    if kind == "person" {
+        if let Some(career) = item.get("career").and_then(Value::as_array) {
+            let career: Vec<Value> = career
+                .iter()
+                .filter_map(Value::as_str)
+                .filter(|value| !value.is_empty())
+                .map(|value| Value::String(value.to_string()))
+                .collect();
+            if !career.is_empty() {
+                metadata.insert("career".to_string(), Value::Array(career));
+            }
+        }
+        if let Some(site) = infobox
+            .map(|infobox| infobox_collect(infobox, &["官网", "官方网站", "website"]))
+            .and_then(|values| values.into_iter().next())
+        {
+            metadata.insert("official_site".to_string(), Value::String(site));
+        }
+    }
+    if let Some(summary) = &summary {
+        metadata.insert("summary".to_string(), Value::String(summary.clone()));
+    }
+    Some(ExternalCandidate {
+        provider: "bangumi".to_string(),
+        source_id: id,
+        url,
+        original_title: (!name.is_empty()).then(|| name.to_string()),
+        title: title.to_string(),
+        brief: summary,
+        cover_url,
+        titles,
+        metadata,
+    })
+}
+
+/// Assembles a birthday from Bangumi's separate `birth_year`/`birth_mon`/
+/// `birth_day` integers, tolerating any of them being absent.
+fn bangumi_birthday(item: &Value) -> Option<String> {
+    let part = |key: &str| {
+        item.get(key)
+            .and_then(Value::as_i64)
+            .filter(|value| *value > 0)
+    };
+    match (part("birth_year"), part("birth_mon"), part("birth_day")) {
+        (Some(year), Some(month), Some(day)) => Some(format!("{year:04}-{month:02}-{day:02}")),
+        (Some(year), Some(month), None) => Some(format!("{year:04}-{month:02}")),
+        (Some(year), None, None) => Some(format!("{year:04}")),
+        (None, Some(month), Some(day)) => Some(format!("{month:02}-{day:02}")),
+        _ => None,
+    }
 }
 
 pub(super) fn bangumi_types(provider_config: &ProviderSearchConfig) -> Option<Vec<u32>> {
@@ -143,6 +401,12 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("genre", "Genre"),
         field_option("tags", "Tags"),
         field_option("meta_tags", "Meta tags"),
+        // Character/person fields (from the `/v0/characters` & `/v0/persons`
+        // endpoints). `birthday` may be `YYYY-MM-DD`, `YYYY`, or a year-less
+        // `MM-DD` (characters often lack a year); `career` is persons-only.
+        field_option("gender", "Gender"),
+        field_option("birthday", "Birthday"),
+        field_option("career", "Career"),
         field_option("summary", "Summary"),
     ]
 }
@@ -154,6 +418,8 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
         type_option("3", "Music (3)"),
         type_option("4", "Game (4)"),
         type_option("6", "Real (6)"),
+        type_option("character", "Character"),
+        type_option("person", "Person"),
     ]
 }
 
@@ -387,6 +653,86 @@ mod tests {
         assert_eq!(metadata.get("rank"), Some(&json!(42)));
         assert_eq!(metadata.get("tags"), Some(&json!(["Sci-Fi", "Space"])));
         assert_eq!(metadata.get("meta_tags"), Some(&json!(["TV", "Original"])));
+    }
+
+    #[test]
+    fn character_candidate_surfaces_metadata() {
+        let candidate = super::bangumi_character_candidate(&json!({
+            "id": 47,
+            "name": "キョン",
+            "gender": "male",
+            "birth_mon": 10,
+            "birth_day": 11,
+            "images": { "large": "https://img/large.jpg", "grid": "https://img/grid.jpg" },
+            "summary": "本作的主角。",
+            "infobox": [
+                { "key": "简体中文名", "value": "阿虚" },
+                { "key": "别名", "value": [{ "k": "罗马字", "v": "Kyon" }] }
+            ]
+        }))
+        .unwrap();
+
+        assert_eq!(candidate.source_id, "47");
+        assert_eq!(candidate.url, "https://bgm.tv/character/47");
+        // zh name is the display title; the original (ja) name is preserved.
+        assert_eq!(candidate.title, "阿虚");
+        assert_eq!(candidate.original_title.as_deref(), Some("キョン"));
+        assert_eq!(candidate.titles.get("zh"), Some(&"阿虚".to_string()));
+        assert_eq!(
+            candidate.cover_url.as_deref(),
+            Some("https://img/large.jpg")
+        );
+        let metadata = &candidate.metadata;
+        assert_eq!(metadata.get("gender"), Some(&json!("male")));
+        assert_eq!(metadata.get("aliases"), Some(&json!(["Kyon"])));
+        // A character without a birth year yields a year-less `MM-DD`.
+        assert_eq!(metadata.get("birthday"), Some(&json!("10-11")));
+        assert_eq!(metadata.get("career"), None);
+    }
+
+    #[test]
+    fn person_candidate_surfaces_birthday_and_career() {
+        let candidate = super::bangumi_person_candidate(&json!({
+            "id": 4,
+            "name": "水樹奈々",
+            "career": ["artist", "seiyu"],
+            "birth_year": 1980,
+            "birth_mon": 1,
+            "birth_day": 21,
+            "images": { "large": "https://img/p.jpg" },
+            "infobox": [
+                { "key": "简体中文名", "value": "水树奈奈" },
+                { "key": "官网", "value": "https://www.mizukinana.jp" }
+            ]
+        }))
+        .unwrap();
+
+        assert_eq!(candidate.url, "https://bgm.tv/person/4");
+        assert_eq!(candidate.title, "水树奈奈");
+        assert_eq!(candidate.original_title.as_deref(), Some("水樹奈々"));
+        let metadata = &candidate.metadata;
+        // Persons usually carry a year → full ISO date.
+        assert_eq!(metadata.get("birthday"), Some(&json!("1980-01-21")));
+        assert_eq!(metadata.get("career"), Some(&json!(["artist", "seiyu"])));
+        assert_eq!(
+            metadata.get("official_site"),
+            Some(&json!("https://www.mizukinana.jp"))
+        );
+    }
+
+    #[test]
+    fn character_and_person_ids_parse_url_and_bare_when_allowed() {
+        assert_eq!(
+            super::bangumi_character_id("https://bgm.tv/character/47", false),
+            Some("47".to_string())
+        );
+        assert_eq!(
+            super::bangumi_person_id("https://bgm.tv/person/4", false),
+            Some("4".to_string())
+        );
+        // A bare id resolves only when the field is character-/person-only.
+        assert_eq!(super::bangumi_person_id("4", false), None);
+        assert_eq!(super::bangumi_person_id("4", true), Some("4".to_string()));
     }
 
     #[test]
