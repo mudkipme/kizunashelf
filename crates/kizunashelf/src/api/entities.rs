@@ -391,3 +391,421 @@ fn entity_detail_related_entities(
     }
     sort_entities(related, "title", SortDirection::Asc)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{EntityTypeConfig, FieldConfig, KizunaConfig};
+    use serde_json::json;
+    use std::collections::BTreeMap;
+
+    fn field(name: &str, field_type: FieldType) -> FieldConfig {
+        FieldConfig {
+            field: name.to_string(),
+            field_type,
+            display_name: None,
+            title_language: None,
+            title_role: None,
+            external_fields: Vec::new(),
+            enum_options: Vec::new(),
+            total_progress_field: None,
+            date_role: None,
+            season_language: None,
+            external_ref: None,
+            external_types: Vec::new(),
+            relation_type: None,
+        }
+    }
+
+    fn config() -> KizunaConfig {
+        KizunaConfig {
+            vault_root: "/virtual-vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: None,
+            types: vec![EntityTypeConfig {
+                id: "anime".to_string(),
+                label: "Anime".to_string(),
+                icon: None,
+                path: "Anime".to_string(),
+                external_priority: Vec::new(),
+                filename: None,
+                body_mappings: Vec::new(),
+                fields: vec![
+                    field("status", FieldType::Enum),
+                    field("genres", FieldType::EnumList),
+                    field("favorite", FieldType::Bool),
+                    field("notes", FieldType::Text),
+                ],
+            }],
+        }
+    }
+
+    fn summary(id: &str, title: &str) -> EntitySummary {
+        EntitySummary {
+            id: id.to_string(),
+            entity_type: "anime".to_string(),
+            type_label: "Anime".to_string(),
+            title: title.to_string(),
+            titles: BTreeMap::new(),
+            dates: Vec::new(),
+            image: None,
+            summary: None,
+            path: format!("Taxonomy/Anime/{title}.md"),
+            basename: title.to_string(),
+            external_refs: BTreeMap::new(),
+            relation_count: 0,
+        }
+    }
+
+    fn record(id: &str, title: &str, frontmatter: serde_json::Value) -> EntityRecord {
+        EntityRecord {
+            body_links: Vec::new(),
+            summary: summary(id, title),
+            revision: "rev".to_string(),
+            frontmatter: frontmatter.as_object().cloned().unwrap_or_default(),
+        }
+    }
+
+    fn filter(field: &str, values: &[&str]) -> EntityFieldFilter {
+        EntityFieldFilter {
+            field: field.to_string(),
+            values: values.iter().map(|value| value.to_string()).collect(),
+        }
+    }
+
+    // --- parse_entity_field_filters ------------------------------------------
+
+    // `ApiError`/`EntityFieldFilter` don't derive `Debug`, so unwrap the Result
+    // by hand rather than with `.unwrap()`/`.unwrap_err()`.
+    fn parsed(input: Option<&str>) -> Vec<EntityFieldFilter> {
+        match parse_entity_field_filters(input) {
+            Ok(filters) => filters,
+            Err(error) => panic!("expected Ok, got: {}", error.message()),
+        }
+    }
+
+    #[test]
+    fn parse_entity_field_filters_empty_input_is_no_filters() {
+        assert!(parsed(None).is_empty());
+        assert!(parsed(Some("   ")).is_empty());
+    }
+
+    #[test]
+    fn parse_entity_field_filters_parses_trims_and_drops_empties() {
+        let filters = parsed(Some(r#"[{"field":" status ","values":[" Watching ",""]}]"#));
+        assert_eq!(filters.len(), 1);
+        assert_eq!(filters[0].field, "status");
+        assert_eq!(filters[0].values, vec!["Watching".to_string()]);
+    }
+
+    #[test]
+    fn parse_entity_field_filters_drops_filters_with_no_field_or_no_values() {
+        assert!(parsed(Some(
+            r#"[{"field":"","values":["x"]},{"field":"f","values":[]}]"#
+        ))
+        .is_empty());
+    }
+
+    #[test]
+    fn parse_entity_field_filters_rejects_invalid_json() {
+        let result = parse_entity_field_filters(Some("not json"));
+        assert!(result.is_err());
+        assert_eq!(result.err().unwrap().message(), "Invalid entity filters");
+    }
+
+    // --- value matching -------------------------------------------------------
+
+    #[test]
+    fn field_value_matches_filter_by_field_type() {
+        // Enum: scalar string membership.
+        assert!(field_value_matches_filter(
+            &json!("Watching"),
+            FieldType::Enum,
+            &["Watching".to_string()]
+        ));
+        assert!(!field_value_matches_filter(
+            &json!("Watching"),
+            FieldType::Enum,
+            &["Completed".to_string()]
+        ));
+        // EnumList: any array member matches.
+        assert!(field_value_matches_filter(
+            &json!(["SF", "Space"]),
+            FieldType::EnumList,
+            &["Space".to_string()]
+        ));
+        assert!(!field_value_matches_filter(
+            &json!("SF"),
+            FieldType::EnumList,
+            &["SF".to_string()]
+        )); // not an array
+            // Bool: only a real boolean, rendered as "true"/"false".
+        assert!(field_value_matches_filter(
+            &json!(true),
+            FieldType::Bool,
+            &["true".to_string()]
+        ));
+        assert!(!field_value_matches_filter(
+            &json!(true),
+            FieldType::Bool,
+            &["false".to_string()]
+        ));
+        assert!(!field_value_matches_filter(
+            &json!("true"),
+            FieldType::Bool,
+            &["true".to_string()]
+        )); // string, not bool
+            // Non-filterable field types never match.
+        assert!(!field_value_matches_filter(
+            &json!("x"),
+            FieldType::Text,
+            &["x".to_string()]
+        ));
+    }
+
+    #[test]
+    fn frontmatter_scalar_matches_any_covers_string_bool_number() {
+        assert!(frontmatter_scalar_matches_any(
+            &json!("a"),
+            &["a".to_string()]
+        ));
+        assert!(frontmatter_scalar_matches_any(
+            &json!(false),
+            &["false".to_string()]
+        ));
+        assert!(frontmatter_scalar_matches_any(
+            &json!(5),
+            &["5".to_string()]
+        ));
+        assert!(!frontmatter_scalar_matches_any(
+            &json!(["a"]),
+            &["a".to_string()]
+        )); // arrays don't match here
+    }
+
+    // --- schema-driven field eligibility + matching --------------------------
+
+    #[test]
+    fn field_type_for_entity_filter_only_returns_filterable_types() {
+        let entity = record("anime:a", "Alpha", json!({}));
+        let library = Library::new(
+            config(),
+            vec![record("anime:a", "Alpha", json!({}))],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+        assert_eq!(
+            field_type_for_entity_filter(&entity, &library, "status"),
+            Some(FieldType::Enum)
+        );
+        assert_eq!(
+            field_type_for_entity_filter(&entity, &library, "genres"),
+            Some(FieldType::EnumList)
+        );
+        assert_eq!(
+            field_type_for_entity_filter(&entity, &library, "favorite"),
+            Some(FieldType::Bool)
+        );
+        assert_eq!(
+            field_type_for_entity_filter(&entity, &library, "notes"),
+            None
+        ); // Text isn't filterable
+        assert_eq!(
+            field_type_for_entity_filter(&entity, &library, "missing"),
+            None
+        );
+    }
+
+    #[test]
+    fn entity_matches_field_filters_requires_all_filters() {
+        let entity = record(
+            "anime:a",
+            "Alpha",
+            json!({"status": "Watching", "genres": ["SF", "Space"], "favorite": true, "notes": "blah"}),
+        );
+        let library = Library::new(
+            config(),
+            vec![record("anime:a", "Alpha", json!({}))],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+
+        assert!(entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("status", &["Watching"])]
+        ));
+        assert!(!entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("status", &["Completed"])]
+        ));
+        assert!(entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("genres", &["Space"])]
+        ));
+        assert!(entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("favorite", &["true"])]
+        ));
+        // All filters must hold (AND).
+        assert!(entity_matches_field_filters(
+            &entity,
+            &library,
+            &[
+                filter("status", &["Watching"]),
+                filter("favorite", &["true"])
+            ]
+        ));
+        assert!(!entity_matches_field_filters(
+            &entity,
+            &library,
+            &[
+                filter("status", &["Watching"]),
+                filter("favorite", &["false"])
+            ]
+        ));
+        // A non-filterable or unknown field makes the entity fail the filter.
+        assert!(!entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("notes", &["blah"])]
+        ));
+        assert!(!entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("missing", &["x"])]
+        ));
+    }
+
+    // --- sort_entities_for_entity_list ---------------------------------------
+
+    fn titled(id: &str, title: &str, ja: Option<&str>) -> EntitySummary {
+        let mut entity = summary(id, title);
+        if let Some(ja) = ja {
+            entity.titles.insert("ja".to_string(), ja.to_string());
+        }
+        entity
+    }
+
+    fn ids(entities: &[EntitySummary]) -> Vec<&str> {
+        entities.iter().map(|entity| entity.id.as_str()).collect()
+    }
+
+    #[test]
+    fn sort_entities_for_entity_list_sorts_titles_by_direction() {
+        let entities = || vec![titled("b", "Beta", None), titled("a", "Alpha", None)];
+        let asc = sort_entities_for_entity_list(entities(), "title", SortDirection::Asc, None);
+        assert_eq!(ids(&asc), ["a", "b"]);
+        let desc = sort_entities_for_entity_list(entities(), "title", SortDirection::Desc, None);
+        assert_eq!(ids(&desc), ["b", "a"]);
+    }
+
+    #[test]
+    fn sort_entities_for_entity_list_treats_default_and_blank_language_as_none() {
+        // "default"/"" must fall back to entity.title, not a per-language title.
+        let entities = || {
+            vec![
+                titled("a", "Zeta", Some("Apple")),
+                titled("b", "Alpha", Some("Banana")),
+            ]
+        };
+        for language in [None, Some(""), Some("default")] {
+            let sorted =
+                sort_entities_for_entity_list(entities(), "title", SortDirection::Asc, language);
+            assert_eq!(
+                ids(&sorted),
+                ["b", "a"],
+                "language {language:?} should use the fallback title"
+            );
+        }
+    }
+
+    #[test]
+    fn sort_entities_for_entity_list_uses_a_language_specific_title() {
+        let entities = vec![
+            titled("a", "Zeta", Some("Apple")),
+            titled("b", "Alpha", Some("Banana")),
+        ];
+        // By `ja` title, Apple(a) precedes Banana(b), reversing the fallback order.
+        let sorted =
+            sort_entities_for_entity_list(entities, "title", SortDirection::Asc, Some("ja"));
+        assert_eq!(ids(&sorted), ["a", "b"]);
+    }
+
+    // --- entity_detail relation filtering ------------------------------------
+
+    fn relation(source: &str, target: &str, field: &str, direction: RelationDirection) -> Relation {
+        Relation {
+            source_id: source.to_string(),
+            target_id: Some(target.to_string()),
+            target_title: target.to_string(),
+            target_type: Some("anime".to_string()),
+            field: field.to_string(),
+            direction,
+        }
+    }
+
+    fn detail_library() -> Library {
+        let records = vec![
+            record("anime:a", "Alpha", json!({})),
+            record("anime:b", "Beta", json!({})),
+            record("anime:c", "Gamma", json!({})),
+        ];
+        let relations = vec![
+            // a relates to b (and b carries the In reflection).
+            relation("anime:a", "anime:b", "related", RelationDirection::Out),
+            relation("anime:b", "anime:a", "related", RelationDirection::In),
+            // c relates to a (a carries the In reflection).
+            relation("anime:c", "anime:a", "related", RelationDirection::Out),
+            relation("anime:a", "anime:c", "related", RelationDirection::In),
+            // A daily note links a — must be excluded from the detail relations.
+            relation(
+                "daily-note:2026-06-16",
+                "anime:a",
+                "daily-note",
+                RelationDirection::Out,
+            ),
+        ];
+        Library::new(config(), records, relations, Vec::new(), "gen".to_string())
+    }
+
+    #[test]
+    fn entity_detail_relations_dedupes_mirrors_and_excludes_daily_notes() {
+        let library = detail_library();
+        let relations = entity_detail_relations(&library, "anime:a");
+
+        // a's own outgoing edge (a->b) plus the In reflection of c->a (a->c In);
+        // the raw c->a Out is suppressed as a mirror, b->a In is dropped (target,
+        // not Out), and the daily-note edge is excluded.
+        assert_eq!(relations.len(), 2);
+        let mut targets: Vec<_> = relations
+            .iter()
+            .filter_map(|item| item.target_id.clone())
+            .collect();
+        targets.sort();
+        assert_eq!(targets, vec!["anime:b".to_string(), "anime:c".to_string()]);
+        assert!(relations.iter().all(|item| item.field == "related"));
+    }
+
+    #[test]
+    fn entity_detail_related_entities_are_deduped_and_title_sorted() {
+        let library = detail_library();
+        let relations = entity_detail_relations(&library, "anime:a");
+        let related = entity_detail_related_entities(&library, "anime:a", &relations);
+        assert_eq!(
+            related
+                .iter()
+                .map(|entity| entity.title.as_str())
+                .collect::<Vec<_>>(),
+            ["Beta", "Gamma"]
+        );
+    }
+}

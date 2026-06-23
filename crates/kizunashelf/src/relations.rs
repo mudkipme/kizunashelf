@@ -447,9 +447,12 @@ fn entity_date_sort_value(entity: &EntitySummary, field: &str) -> Option<String>
 
 #[cfg(test)]
 mod tests {
-    use super::{sort_entities_with_title_language, SortDirection};
-    use crate::types::{EntityDateValue, EntitySummary};
-    use std::collections::BTreeMap;
+    use super::*;
+    use crate::types::{
+        EntityDateValue, EntityRecord, EntitySummary, EntityTypeConfig, FieldConfig, FieldType,
+        KizunaConfig, Library, Relation, RelationDirection,
+    };
+    use std::collections::{BTreeMap, HashMap};
 
     fn entity(id: &str, title: &str, release: Option<&str>) -> EntitySummary {
         EntitySummary {
@@ -503,5 +506,318 @@ mod tests {
             None,
         );
         assert_eq!(ids(&desc), ["late", "early", "undated"]);
+    }
+
+    // --- relation-graph aggregation ------------------------------------------
+
+    fn summary(id: &str, entity_type: &str, type_label: &str, title: &str) -> EntitySummary {
+        EntitySummary {
+            id: id.to_string(),
+            entity_type: entity_type.to_string(),
+            type_label: type_label.to_string(),
+            title: title.to_string(),
+            titles: BTreeMap::new(),
+            dates: Vec::new(),
+            image: None,
+            summary: None,
+            path: format!("Taxonomy/{title}.md"),
+            basename: title.to_string(),
+            external_refs: BTreeMap::new(),
+            relation_count: 0,
+        }
+    }
+
+    fn record(summary: EntitySummary) -> EntityRecord {
+        EntityRecord {
+            body_links: Vec::new(),
+            summary,
+            revision: "rev".to_string(),
+            frontmatter: serde_json::Map::new(),
+        }
+    }
+
+    fn relation(
+        source: &str,
+        target_id: Option<&str>,
+        target_title: &str,
+        target_type: Option<&str>,
+        field: &str,
+        direction: RelationDirection,
+    ) -> Relation {
+        Relation {
+            source_id: source.to_string(),
+            target_id: target_id.map(str::to_string),
+            target_title: target_title.to_string(),
+            target_type: target_type.map(str::to_string),
+            field: field.to_string(),
+            direction,
+        }
+    }
+
+    fn entity_type(id: &str, label: &str, relation_field: bool) -> EntityTypeConfig {
+        let mut fields = Vec::new();
+        if relation_field {
+            fields.push(FieldConfig {
+                field: "related".to_string(),
+                field_type: FieldType::Relation,
+                display_name: None,
+                title_language: None,
+                title_role: None,
+                external_fields: Vec::new(),
+                enum_options: Vec::new(),
+                total_progress_field: None,
+                date_role: None,
+                season_language: None,
+                external_ref: None,
+                external_types: Vec::new(),
+                relation_type: None,
+            });
+        }
+        EntityTypeConfig {
+            id: id.to_string(),
+            label: label.to_string(),
+            icon: None,
+            path: id.to_string(),
+            external_priority: Vec::new(),
+            filename: None,
+            body_mappings: Vec::new(),
+            fields,
+        }
+    }
+
+    // Alpha(anime) -> Beta(anime), Gamma(game) [related + body], and Ghost
+    // (unresolved); Beta -> Alpha. One incoming reflection that the outgoing
+    // helpers must ignore.
+    fn graph() -> Library {
+        let config = KizunaConfig {
+            vault_root: "/virtual-vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: None,
+            types: vec![
+                entity_type("anime", "Anime", true),
+                entity_type("game", "Game", false),
+            ],
+        };
+        let records = vec![
+            record(summary("anime:a", "anime", "Anime", "Alpha")),
+            record(summary("anime:b", "anime", "Anime", "Beta")),
+            record(summary("game:g", "game", "Game", "Gamma")),
+        ];
+        let relations = vec![
+            relation(
+                "anime:a",
+                Some("anime:b"),
+                "Beta",
+                Some("anime"),
+                "related",
+                RelationDirection::Out,
+            ),
+            relation(
+                "anime:a",
+                Some("game:g"),
+                "Gamma",
+                Some("game"),
+                "related",
+                RelationDirection::Out,
+            ),
+            relation(
+                "anime:a",
+                None,
+                "Ghost",
+                None,
+                "related",
+                RelationDirection::Out,
+            ),
+            relation(
+                "anime:b",
+                Some("anime:a"),
+                "Alpha",
+                Some("anime"),
+                "related",
+                RelationDirection::Out,
+            ),
+            relation(
+                "anime:a",
+                Some("game:g"),
+                "Gamma",
+                Some("game"),
+                "body",
+                RelationDirection::Out,
+            ),
+            relation(
+                "anime:b",
+                Some("anime:a"),
+                "Alpha",
+                Some("anime"),
+                "related",
+                RelationDirection::In,
+            ),
+        ];
+        Library::new(config, records, relations, Vec::new(), "gen".to_string())
+    }
+
+    #[test]
+    fn count_by_sorts_by_count_desc_then_name() {
+        let counts = count_by(&["a", "b", "a", "c", "a", "b"], |item| item.to_string());
+        assert_eq!(
+            counts
+                .iter()
+                .map(|item| (item.name.as_str(), item.count))
+                .collect::<Vec<_>>(),
+            [("a", 3), ("b", 2), ("c", 1)]
+        );
+        // Ties broken by name ascending.
+        let tie = count_by(&["y", "x"], |item| item.to_string());
+        assert_eq!(
+            tie.iter()
+                .map(|item| item.name.as_str())
+                .collect::<Vec<_>>(),
+            ["x", "y"]
+        );
+    }
+
+    #[test]
+    fn target_key_prefers_target_id_then_title() {
+        let resolved = relation(
+            "s",
+            Some("t-id"),
+            "T Title",
+            None,
+            "f",
+            RelationDirection::Out,
+        );
+        let unresolved = relation("s", None, "Ghost", None, "f", RelationDirection::Out);
+        assert_eq!(target_key(&resolved), "t-id");
+        assert_eq!(target_key(&unresolved), "Ghost");
+    }
+
+    #[test]
+    fn relation_source_type_label_falls_back_to_daily_note_or_unknown() {
+        let entity = summary("anime:a", "anime", "Anime", "Alpha");
+        let by_id = HashMap::from([("anime:a", &entity)]);
+        let from = |source: &str| relation(source, None, "x", None, "f", RelationDirection::Out);
+        assert_eq!(
+            relation_source_type_label(&from("anime:a"), &by_id),
+            "Anime"
+        );
+        assert_eq!(
+            relation_source_type_label(&from("daily-note:2026-06-16"), &by_id),
+            "Daily Note"
+        );
+        assert_eq!(
+            relation_source_type_label(&from("missing:z"), &by_id),
+            "Unknown"
+        );
+    }
+
+    #[test]
+    fn type_label_looks_up_label_or_falls_back_to_id() {
+        let library = graph();
+        assert_eq!(
+            type_label(&library, Some(&"anime".to_string())),
+            Some("Anime".to_string())
+        );
+        assert_eq!(
+            type_label(&library, Some(&"unknown".to_string())),
+            Some("unknown".to_string())
+        );
+        assert_eq!(type_label(&library, None), None);
+    }
+
+    #[test]
+    fn outgoing_relations_excludes_incoming_and_filters_by_field() {
+        let library = graph();
+        assert_eq!(outgoing_relations(&library, None).len(), 5); // 5 Out, the 1 In excluded
+        assert_eq!(outgoing_relations(&library, Some("related")).len(), 4);
+        assert_eq!(outgoing_relations(&library, Some("body")).len(), 1);
+    }
+
+    #[test]
+    fn relation_fields_merges_schema_and_data_fields_sorted_and_unique() {
+        let library = graph();
+        assert_eq!(
+            relation_fields(&library),
+            vec!["body".to_string(), "related".to_string()]
+        );
+    }
+
+    #[test]
+    fn build_relation_field_summary_counts_edges_sources_and_targets() {
+        let library = graph();
+        let by_id = summary_by_id(&library);
+        let summary = build_relation_field_summary_with_index(&library, &by_id, "related");
+        assert_eq!(summary.edge_count, 4);
+        assert_eq!(summary.source_count, 2); // Alpha and Beta
+        assert_eq!(summary.unique_targets, 4); // Beta, Gamma, Ghost, Alpha
+        assert_eq!(summary.resolved_targets, 3); // all but Ghost
+    }
+
+    #[test]
+    fn build_relation_hubs_groups_targets_and_orders_by_count() {
+        let hubs = build_relation_hubs(&graph());
+        // Gamma is targeted twice (related + body), so it leads with count 2.
+        assert_eq!(hubs[0].target.target_title, "Gamma");
+        assert_eq!(hubs[0].target.count, 2);
+    }
+
+    #[test]
+    fn relation_type_pairs_labels_source_and_target_types() {
+        let pairs: HashMap<_, _> = relation_type_pairs(&graph())
+            .into_iter()
+            .map(|count| (count.name, count.count))
+            .collect();
+        assert_eq!(pairs.get("Anime -> Anime"), Some(&2)); // a->b and b->a
+        assert_eq!(pairs.get("Anime -> Game"), Some(&2)); // a->g related + body
+        assert_eq!(pairs.get("Anime -> Unresolved"), Some(&1)); // a->Ghost
+    }
+
+    // --- remaining sort modes -------------------------------------------------
+
+    #[test]
+    fn sort_entities_by_title_respects_direction() {
+        let entities = || vec![entity("b", "Beta", None), entity("a", "Alpha", None)];
+        let asc = sort_entities_with_title_language(entities(), "title", SortDirection::Asc, None);
+        assert_eq!(ids(&asc), ["a", "b"]);
+        let desc =
+            sort_entities_with_title_language(entities(), "title", SortDirection::Desc, None);
+        assert_eq!(ids(&desc), ["b", "a"]);
+    }
+
+    #[test]
+    fn sort_entities_by_relation_count() {
+        let mut low = entity("low", "Low", None);
+        let mut high = entity("high", "High", None);
+        low.relation_count = 1;
+        high.relation_count = 5;
+        let sorted = sort_entities_with_title_language(
+            vec![low, high],
+            "relationCount",
+            SortDirection::Desc,
+            None,
+        );
+        assert_eq!(ids(&sorted), ["high", "low"]);
+    }
+
+    #[test]
+    fn sort_entities_by_title_uses_the_language_specific_title_when_present() {
+        let mut a = entity("a", "Z-fallback", None);
+        let mut b = entity("b", "A-fallback", None);
+        a.titles.insert("ja".to_string(), "Apple".to_string());
+        b.titles.insert("ja".to_string(), "Banana".to_string());
+        // By the fallback title, b (A) precedes a (Z)...
+        let by_fallback = sort_entities_with_title_language(
+            vec![a.clone(), b.clone()],
+            "title",
+            SortDirection::Asc,
+            None,
+        );
+        assert_eq!(ids(&by_fallback), ["b", "a"]);
+        // ...but by the `ja` title, a (Apple) precedes b (Banana).
+        let by_ja =
+            sort_entities_with_title_language(vec![a, b], "title", SortDirection::Asc, Some("ja"));
+        assert_eq!(ids(&by_ja), ["a", "b"]);
     }
 }

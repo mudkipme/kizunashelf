@@ -1,5 +1,5 @@
 use super::{
-    compare_string, load_entity, read_library, read_library_cached, rebuild_for_edited_entity,
+    compare_string, compute_listing_fingerprint, load_entity, read_library, read_library_cached,
     IndexCacheContext,
 };
 use crate::types::{
@@ -172,82 +172,75 @@ async fn load_entity_reads_full_body_and_raw_on_demand() {
     assert_eq!(entity.summary.id, summary.id);
 }
 
-// --- Surgical-update equivalence (Phase 3) -----------------------------
-
-/// The contract of [`rebuild_for_edited_entity`]: a surgical update of one
-/// edited file must produce a library value-equivalent (records, relations,
-/// derived counts) to re-reading the whole vault from disk.
+/// The analytics memo keys on `content_revision`, so it must be stable across a
+/// content-identical reload (no spurious rebuild) and flip when content changes.
 #[tokio::test]
-async fn surgical_update_matches_full_reload() {
-    // (initial Alpha.md, edited Alpha.md) — covering retarget, add, remove,
-    // title change (touches the In-reflection title + sort order), an
-    // unresolved target, and a body-wikilink change.
-    let cases = [
-        (
-            "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n\nSee [[Gamma]].\n",
-            "---\ntitle: Alpha\nrelated: \"[[Gamma]]\"\n---\n\nSee [[Gamma]].\n",
-        ),
-        (
-            "---\ntitle: Alpha\n---\n",
-            "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
-        ),
-        (
-            "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
-            "---\ntitle: Alpha\n---\n",
-        ),
-        (
-            "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
-            "---\ntitle: Alphaz\nrelated: \"[[Beta]]\"\n---\n",
-        ),
-        (
-            "---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n",
-            "---\ntitle: Alpha\nrelated: \"[[Ghost]]\"\n---\n",
-        ),
-        (
-            "---\ntitle: Alpha\n---\n\nSee [[Beta]].\n",
-            "---\ntitle: Alpha\n---\n\nSee [[Gamma]].\n",
-        ),
-    ];
-
-    for (initial, edited) in cases {
-        let config = relation_test_config();
-        let vfs = make_relation_vault(initial);
-        let base = read_library(config.clone(), Arc::clone(&vfs) as Arc<dyn Vfs>)
-            .await
-            .unwrap();
-
-        vfs.insert_file("Taxonomy/Anime/Alpha.md", edited);
-        let surgical = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Alpha.md")
-            .await
-            .unwrap()
-            .expect("edit should take the surgical path");
-        let full = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
-            .await
-            .unwrap();
-
-        assert_libraries_equivalent(&surgical, &full, initial, edited);
-    }
-}
-
-#[tokio::test]
-async fn surgical_update_falls_back_on_structural_changes() {
+async fn content_revision_tracks_content_not_load_time() {
     let config = relation_test_config();
     let vfs = make_relation_vault("---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n");
-    let base = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
+    let base = read_library(config.clone(), Arc::clone(&vfs) as Arc<dyn Vfs>)
         .await
         .unwrap();
 
-    // Unknown path (e.g. a rename's new file the base hasn't indexed) → None.
-    let renamed = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Renamed.md")
+    // Identical content, re-read: the fingerprint is stable across the reload
+    // (whereas `generated_at` is a fresh wall-clock stamp every load).
+    let reloaded = read_library(config.clone(), Arc::clone(&vfs) as Arc<dyn Vfs>)
         .await
         .unwrap();
-    assert!(renamed.is_none());
+    assert_eq!(base.content_revision, reloaded.content_revision);
 
-    // A changed id (here: the file vanished from its indexed path) → None.
-    let missing = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Ghost.md")
+    // A content edit flips the fingerprint.
+    vfs.insert_file(
+        "Taxonomy/Anime/Alpha.md",
+        "---\ntitle: Alpha\nrelated: \"[[Gamma]]\"\n---\n",
+    );
+    let edited = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
         .await
         .unwrap();
-    assert!(missing.is_none());
+    assert_ne!(base.content_revision, edited.content_revision);
+}
+
+/// The listing fingerprint backs `get_library`'s "nothing changed → reuse the
+/// cached library" fast path, so it must be stable across a content-identical
+/// re-list and flip on any add, remove, content edit, or schema change.
+#[tokio::test]
+async fn listing_fingerprint_tracks_the_vault_listing() {
+    let config = relation_test_config();
+    let vfs = make_relation_vault("---\ntitle: Alpha\nrelated: \"[[Beta]]\"\n---\n");
+
+    let base = compute_listing_fingerprint(&config, vfs.as_ref())
+        .await
+        .expect("in-memory vfs reports mtimes");
+    // Re-listing identical content yields the same fingerprint.
+    assert_eq!(
+        Some(base),
+        compute_listing_fingerprint(&config, vfs.as_ref()).await
+    );
+
+    // Editing a file (bumps its mtime) flips the fingerprint.
+    vfs.insert_file("Taxonomy/Anime/Alpha.md", "---\ntitle: Alpha\n---\n");
+    let after_edit = compute_listing_fingerprint(&config, vfs.as_ref())
+        .await
+        .unwrap();
+    assert_ne!(base, after_edit);
+
+    // Adding a file flips it.
+    vfs.insert_file("Taxonomy/Anime/Delta.md", "---\ntitle: Delta\n---\n");
+    let after_add = compute_listing_fingerprint(&config, vfs.as_ref())
+        .await
+        .unwrap();
+    assert_ne!(after_edit, after_add);
+
+    // An external schema edit (the config file is neither an entity nor a note)
+    // must still flip the fingerprint so the fast path can't serve a stale schema.
+    vfs.insert_file(
+        crate::library::VAULT_CONFIG_RELATIVE_PATH,
+        "taxonomyRoot: Taxonomy\ntypes: []\n",
+    );
+    let after_config = compute_listing_fingerprint(&config, vfs.as_ref())
+        .await
+        .unwrap();
+    assert_ne!(after_add, after_config);
 }
 
 fn relation_test_config() -> KizunaConfig {
@@ -285,25 +278,33 @@ fn make_relation_vault(alpha: &str) -> Arc<InMemoryVfs> {
     vfs
 }
 
-fn assert_libraries_equivalent(surgical: &Library, full: &Library, initial: &str, edited: &str) {
-    let context = format!("\n  initial: {initial:?}\n  edited:  {edited:?}");
+/// Asserts two libraries are value-equivalent: the same records (incl. derived
+/// `relation_count`) and the same relation graph as a *set* (order isn't part of
+/// the contract). `actual_label`/`expected_label` name the two sides in failures.
+fn assert_libraries_equivalent(
+    actual: &Library,
+    expected: &Library,
+    actual_label: &str,
+    expected_label: &str,
+) {
+    let context = format!("\n  actual:   {actual_label:?}\n  expected: {expected_label:?}");
 
-    let mut surgical_records = surgical.records.clone();
-    let mut full_records = full.records.clone();
-    surgical_records.sort_by(|a, b| a.summary.id.cmp(&b.summary.id));
-    full_records.sort_by(|a, b| a.summary.id.cmp(&b.summary.id));
+    let mut actual_records = actual.records.clone();
+    let mut expected_records = expected.records.clone();
+    actual_records.sort_by(|a, b| a.summary.id.cmp(&b.summary.id));
+    expected_records.sort_by(|a, b| a.summary.id.cmp(&b.summary.id));
     assert_eq!(
-        surgical_records, full_records,
-        "records (incl. derived relation_count) diverge from a full reload{context}"
+        actual_records, expected_records,
+        "records (incl. derived relation_count) diverge{context}"
     );
 
-    let mut surgical_relations: Vec<String> = surgical.relations.iter().map(relation_key).collect();
-    let mut full_relations: Vec<String> = full.relations.iter().map(relation_key).collect();
-    surgical_relations.sort();
-    full_relations.sort();
+    let mut actual_relations: Vec<String> = actual.relations.iter().map(relation_key).collect();
+    let mut expected_relations: Vec<String> = expected.relations.iter().map(relation_key).collect();
+    actual_relations.sort();
+    expected_relations.sort();
     assert_eq!(
-        surgical_relations, full_relations,
-        "relation graph diverges from a full reload{context}"
+        actual_relations, expected_relations,
+        "relation graph diverges{context}"
     );
 }
 
@@ -534,7 +535,7 @@ async fn cached_load_matches_uncached_read_library() {
     assert_libraries_equivalent(&warm, &uncached, "warm-cached", "uncached");
 }
 
-// --- Daily-note relation reuse on edit -----------------------------------
+// --- Daily-note relation handling ----------------------------------------
 
 fn daily_notes_config() -> KizunaConfig {
     let mut config = relation_test_config();
@@ -561,59 +562,6 @@ fn daily_note_relation_count(library: &Library) -> usize {
         .iter()
         .filter(|relation| relation.field == "daily-note")
         .count()
-}
-
-/// An in-place entity edit, recomputed surgically, keeps the daily-note
-/// relations and stays value-equivalent to a full reload.
-#[tokio::test]
-async fn surgical_update_preserves_daily_note_relations() {
-    let config = daily_notes_config();
-    let vfs = daily_notes_vault("---\ntitle: Alpha\n---\n", "Watched [[Alpha]] today.\n");
-
-    let base = read_library(config.clone(), Arc::clone(&vfs) as Arc<dyn Vfs>)
-        .await
-        .unwrap();
-    assert_eq!(daily_note_relation_count(&base), 1, "fixture sanity");
-
-    vfs.insert_file("Taxonomy/Anime/Alpha.md", "---\ntitle: Alphaz\n---\n");
-    let surgical = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Alpha.md")
-        .await
-        .unwrap()
-        .expect("in-place edit takes the surgical path");
-    let full = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
-        .await
-        .unwrap();
-
-    assert_libraries_equivalent(&surgical, &full, "daily-note base", "daily-note edited");
-}
-
-/// The surgical path must reuse the resident daily-note relations rather than
-/// re-reading the journal: we drop the link from the daily note on disk *after*
-/// the base load, then edit the entity — the relation survives only if it came
-/// from memory. (This would fail if the edit path re-read daily notes.)
-#[tokio::test]
-async fn surgical_update_reuses_daily_note_relations_without_rereading() {
-    let config = daily_notes_config();
-    let vfs = daily_notes_vault("---\ntitle: Alpha\n---\n", "Watched [[Alpha]] today.\n");
-
-    let base = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
-        .await
-        .unwrap();
-    assert_eq!(daily_note_relation_count(&base), 1, "fixture sanity");
-
-    // Disk no longer has the link; only memory (base) still does.
-    vfs.insert_file("Journal/2026-06-16.md", "Nothing linked today.\n");
-    vfs.insert_file("Taxonomy/Anime/Alpha.md", "---\ntitle: Alphaz\n---\n");
-    let surgical = rebuild_for_edited_entity(&base, vfs.as_ref(), "Taxonomy/Anime/Alpha.md")
-        .await
-        .unwrap()
-        .expect("in-place edit takes the surgical path");
-
-    assert_eq!(
-        daily_note_relation_count(&surgical),
-        1,
-        "daily-note relations must be reused from memory, not re-read from disk"
-    );
 }
 
 /// A cached cold start reuses an unchanged daily note's links without reading

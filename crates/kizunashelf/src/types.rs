@@ -322,8 +322,8 @@ pub struct Entity {
 /// omits the full `body`/`raw` — those are loaded on demand from disk via
 /// [`crate::library::load_entity`] when a full [`Entity`] is needed (detail page,
 /// mutations, asset writes). Keeping `body_links` resident (they are small — just
-/// the link targets, not the body) lets the relation graph be recomputed wholly
-/// in memory after an edit, instead of surgically patching it.
+/// the link targets, not the body) lets the relation graph be rebuilt wholly in
+/// memory from the resident records, without re-reading every entity body.
 ///
 /// This is an internal/resident type: API responses are always built from
 /// [`EntitySummary`], so `body_links` never reaches a client.
@@ -353,11 +353,53 @@ pub struct Relation {
     pub direction: RelationDirection,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum RelationDirection {
     Out,
     In,
+}
+
+/// Hashes everything the memoized derived views depend on into a stable
+/// fingerprint: the schema (all derivation flows schema → behavior), each
+/// record's content `revision`, and the relation graph (which also captures
+/// daily-note-driven changes that no entity `revision` would reflect). Two loads
+/// of identical vault content produce the same value, so a warm reload keeps a
+/// memoized analytics result valid; any content or schema change flips it.
+fn content_revision(
+    config: &KizunaConfig,
+    records: &[EntityRecord],
+    relations: &[Relation],
+) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    let mut hasher = DefaultHasher::new();
+    // Serialization failure is implausible for an in-memory config; fall back to a
+    // constant so the rest of the fingerprint still discriminates content.
+    serde_json::to_vec(config)
+        .unwrap_or_default()
+        .hash(&mut hasher);
+    // Records carry a deterministic resident order (type then title), so hash them
+    // in order.
+    for record in records {
+        record.summary.id.hash(&mut hasher);
+        record.revision.hash(&mut hasher);
+    }
+    // The relation list's order is not a guaranteed-stable part of the library —
+    // value-equivalence compares it as a *set* (see the cache tests' relation
+    // assertions) — so fold each relation order-independently (XOR of per-relation
+    // hashes) to keep the fingerprint stable regardless of relation ordering.
+    let relations_digest = relations.iter().fold(0u64, |acc, relation| {
+        let mut relation_hasher = DefaultHasher::new();
+        relation.source_id.hash(&mut relation_hasher);
+        relation.target_id.hash(&mut relation_hasher);
+        relation.target_title.hash(&mut relation_hasher);
+        relation.field.hash(&mut relation_hasher);
+        relation.direction.hash(&mut relation_hasher);
+        acc ^ relation_hasher.finish()
+    });
+    relations_digest.hash(&mut hasher);
+    format!("{:x}", hasher.finish())
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -369,6 +411,14 @@ pub struct Library {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub diagnostics: Vec<LibraryDiagnostic>,
     pub generated_at: String,
+    // A content-derived fingerprint of everything the memoized derived views
+    // (analytics) depend on: the schema, every record's content `revision`, and
+    // the relation graph. Unlike `generated_at` (a fresh wall-clock stamp on every
+    // load) it is stable across a no-op reload, so a warm reload that re-reads the
+    // same content keeps memoized views valid instead of discarding them. Derived
+    // state, so `#[serde(skip)]` and only ever set by `Library::new`.
+    #[serde(skip)]
+    pub content_revision: String,
     // Lookup indices over `records`/`relations`, rebuilt by `reindex`. Private and
     // `#[serde(skip)]`: they are pure derived state (so construction must go
     // through `Library::new`), and they are not part of the serialized shape.
@@ -391,12 +441,14 @@ impl Library {
         diagnostics: Vec<LibraryDiagnostic>,
         generated_at: String,
     ) -> Self {
+        let content_revision = content_revision(&config, &records, &relations);
         let mut library = Self {
             config,
             records,
             relations,
             diagnostics,
             generated_at,
+            content_revision,
             by_id: HashMap::new(),
             by_path: HashMap::new(),
             relations_by_source: HashMap::new(),
@@ -408,7 +460,7 @@ impl Library {
 
     /// Rebuilds the id/path/relation lookup indices from `records`/`relations`.
     /// Must be called whenever those collections are mutated in place (the
-    /// constructor and the surgical cache update both do this).
+    /// constructor does this).
     pub fn reindex(&mut self) {
         self.by_id = self
             .records
@@ -452,12 +504,6 @@ impl Library {
     /// O(1) lookup of a resident record by its vault-relative path.
     pub fn record_by_path(&self, path: &str) -> Option<&EntityRecord> {
         self.by_path.get(path).map(|&index| &self.records[index])
-    }
-
-    /// O(1) lookup of a resident record's index by its vault-relative path, for
-    /// callers that need to swap the record in a cloned `records` vector.
-    pub fn record_index_by_path(&self, path: &str) -> Option<usize> {
-        self.by_path.get(path).copied()
     }
 
     /// Relations whose `source_id` is `id`. Because every incoming link's `In`

@@ -16,21 +16,9 @@ use super::read::cache_key;
 /// only relation kind that requires reading files outside the resident records).
 pub(super) const DAILY_NOTE_RELATION_FIELD: &str = "daily-note";
 
-/// Builds the entity-to-entity relation graph from the resident [`EntityRecord`]s
-/// alone — frontmatter relation fields and body wikilink targets
-/// ([`EntityRecord::body_links`]). Pure and synchronous: no I/O, no daily notes,
-/// so it can be re-run in memory after an edit. Not deduped; callers that combine
-/// it with other relations dedupe the union.
-pub(super) fn build_entity_relations(
-    config: &KizunaConfig,
-    records: &[EntityRecord],
-) -> Vec<Relation> {
-    entity_outgoing(config, records, &normalized_entity_basename_index(records))
-}
-
 /// The shared entity-to-entity relation pass: each record's owned outgoing edges
-/// against `by_basename`. Both [`build_entity_relations`] and [`build_relations`]
-/// build on this so the loop isn't duplicated.
+/// against `by_basename`. Factored out of [`build_relations`] so the loop has a
+/// single home.
 fn entity_outgoing(
     config: &KizunaConfig,
     records: &[EntityRecord],

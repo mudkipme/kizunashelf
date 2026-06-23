@@ -2,16 +2,18 @@
 //! paths, the per-directory streaming read, and the derived relation counts.
 
 use super::collation::compare_string;
-use super::config_io::validate_config_paths;
+use super::config_io::{read_raw_vault_config_via_vfs, validate_config_paths};
 use super::index_cache::{fingerprint_hit, CachedEntry, IndexCacheContext};
 use super::parse::{parse_entity, EntityReadResult};
 use super::relations::{build_relations, read_daily_note_links};
+use crate::daily_notes::daily_note_candidates;
 use crate::types::{
     EntityRecord, EntityTypeConfig, KizunaConfig, Library, LibraryDiagnostic, Relation,
 };
 use crate::vfs::{Vfs, VfsError};
 use anyhow::Result;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use unicode_normalization::UnicodeNormalization;
 
@@ -32,6 +34,76 @@ pub(crate) async fn read_library_cached(
     cache: IndexCacheContext,
 ) -> Result<Library> {
     read_library_inner(config, vfs, Some(cache)).await
+}
+
+/// A cheap fingerprint of everything that determines the derived library,
+/// computed from `read_dir` listings alone (no content reads): the raw vault
+/// config (the schema, which gates all derivation), plus every entity `.md` file's
+/// and every daily note's `(path, len, mtime)`. Two reloads with equal
+/// fingerprints have an unchanged schema and an unchanged set of file contents, so
+/// the previously built [`Library`] is still valid and can be reused without
+/// re-reading, re-parsing, or rebuilding relations.
+///
+/// Returns `None` — "can't vouch for unchangedness, reload fully" — when the
+/// config can't be read or any file reports a `0` mtime (a backend that can't
+/// report one during listing, the same case [`fingerprint_hit`] treats as
+/// never-cacheable). Folded order-independently (XOR), so listing order is
+/// irrelevant.
+pub(crate) async fn compute_listing_fingerprint(
+    config: &KizunaConfig,
+    vfs: &dyn Vfs,
+) -> Option<u64> {
+    // The schema gates all derivation, so an external config edit must bust the
+    // fingerprint even though the config file is neither an entity nor a note.
+    let raw_config = read_raw_vault_config_via_vfs(vfs).await.ok()?;
+    let mut config_hasher = std::collections::hash_map::DefaultHasher::new();
+    raw_config.hash(&mut config_hasher);
+    let mut digest: u64 = config_hasher.finish();
+
+    for type_config in &config.types {
+        let relative_dir = format!(
+            "{}/{}",
+            config.taxonomy_root.trim_end_matches('/'),
+            type_config.path
+        );
+        let dir_entries = match vfs.read_dir(&relative_dir).await {
+            Ok(entries) => entries,
+            Err(VfsError::NotFound) => continue,
+            Err(_) => return None,
+        };
+        for entry in dir_entries {
+            if !(entry.is_file && entry.name.ends_with(".md")) {
+                continue;
+            }
+            let path = format!("{relative_dir}/{}", entry.name);
+            digest ^= listing_entry_hash(&path, entry.len, entry.modified_unix_nanos)?;
+        }
+    }
+
+    // Daily notes use the same discovery pass as the load itself, so the fingerprint
+    // covers exactly the notes that contribute relations.
+    let candidates = daily_note_candidates(config, vfs, None, None, false)
+        .await
+        .ok()?;
+    for note in candidates {
+        digest ^= listing_entry_hash(&note.relative_path, note.len, note.modified_unix_nanos)?;
+    }
+
+    Some(digest)
+}
+
+/// Hash of one listed file's `(path, len, mtime)`, or `None` when its mtime is `0`
+/// — which makes the whole fingerprint `None`, so a backend that can't report
+/// modification times never lets us conclude "unchanged".
+fn listing_entry_hash(path: &str, len: u64, modified_unix_nanos: u128) -> Option<u64> {
+    if modified_unix_nanos == 0 {
+        return None;
+    }
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    path.hash(&mut hasher);
+    len.hash(&mut hasher);
+    modified_unix_nanos.hash(&mut hasher);
+    Some(hasher.finish())
 }
 
 async fn read_library_inner(
@@ -198,8 +270,8 @@ pub(super) fn cache_key(path: &str) -> String {
 }
 
 /// Orders resident records by type label then title — the stable resident order
-/// produced by a full load, which the surgical update also re-establishes so an
-/// edited title lands in the same position it would after a reload.
+/// every load produces, so an entity lands in the same position regardless of the
+/// order its file was read in.
 pub(super) fn sort_records(records: &mut [EntityRecord]) {
     records.sort_by(|a, b| {
         let type_compare = compare_string(&a.summary.type_label, &b.summary.type_label);

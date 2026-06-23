@@ -106,12 +106,19 @@ pub(crate) async fn stats(
 
 pub(crate) async fn analytics(State(state): State<AppState>) -> ApiResult<AnalyticsResponse> {
     let library = get_library(&state).await?;
-    if let Some(cached) = state.cached_analytics(&library.generated_at).await {
+    if let Some(cached) = state.cached_analytics(&library.content_revision).await {
+        return Ok(Json((*cached).clone()));
+    }
+    // Single-flight the build: concurrent first hits would otherwise each run the
+    // whole-library scan. Serialize, then re-check the memo a winner may have just
+    // filled before doing the work ourselves.
+    let _build = state.analytics_build_lock().lock().await;
+    if let Some(cached) = state.cached_analytics(&library.content_revision).await {
         return Ok(Json((*cached).clone()));
     }
     let response = std::sync::Arc::new(build_analytics(&library));
     state
-        .store_analytics(&library.generated_at, std::sync::Arc::clone(&response))
+        .store_analytics(&library.content_revision, std::sync::Arc::clone(&response))
         .await;
     Ok(Json((*response).clone()))
 }
@@ -536,5 +543,227 @@ fn build_activity(
 
 /// Zero-based month bucket (0 = January) for a 1..=12 month value.
 fn month_index(month: u32) -> Option<usize> {
-    (1..=12).contains(&month).then_some((month - 1) as usize)
+    // `then` (lazy), not `then_some` (eager): `month - 1` must not be evaluated
+    // for an out-of-range month like 0, which would underflow `u32` and panic.
+    (1..=12).contains(&month).then(|| (month - 1) as usize)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::library::read_library;
+    use crate::types::{EntityTypeConfig, FieldConfig, KizunaConfig};
+    use crate::vfs::InMemoryVfs;
+    use std::sync::Arc;
+
+    fn field(name: &str, field_type: FieldType, date_role: Option<DateRole>) -> FieldConfig {
+        FieldConfig {
+            field: name.to_string(),
+            field_type,
+            display_name: None,
+            title_language: None,
+            title_role: None,
+            external_fields: Vec::new(),
+            enum_options: Vec::new(),
+            total_progress_field: None,
+            date_role,
+            season_language: None,
+            external_ref: None,
+            external_types: Vec::new(),
+            relation_type: None,
+        }
+    }
+
+    fn entity_type(
+        id: &str,
+        label: &str,
+        path: &str,
+        fields: Vec<FieldConfig>,
+    ) -> EntityTypeConfig {
+        EntityTypeConfig {
+            id: id.to_string(),
+            label: label.to_string(),
+            icon: None,
+            path: path.to_string(),
+            external_priority: Vec::new(),
+            filename: None,
+            body_mappings: Vec::new(),
+            fields,
+        }
+    }
+
+    // Two types: `anime` declares cover/externalRef/relation/date fields (so its
+    // entities are eligible for the cover/refs/relations quality queues and feed
+    // the activity heatmap); `note` declares none (so its entities never count
+    // toward those denominators — the schema decides eligibility, not the data).
+    fn config() -> KizunaConfig {
+        KizunaConfig {
+            vault_root: "/virtual-vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: None,
+            types: vec![
+                entity_type(
+                    "anime",
+                    "Anime",
+                    "Anime",
+                    vec![
+                        field("title", FieldType::Title, None),
+                        field("cover", FieldType::Image, None),
+                        field("bangumi", FieldType::ExternalRef, None),
+                        field("related", FieldType::Relation, None),
+                        field("aired", FieldType::Date, Some(DateRole::Completed)),
+                    ],
+                ),
+                entity_type(
+                    "note",
+                    "Note",
+                    "Note",
+                    vec![field("title", FieldType::Title, None)],
+                ),
+            ],
+        }
+    }
+
+    // A is fully populated and connected; B is missing cover/refs but linked from A
+    // (so not isolated); C is missing everything and isolated; N is a note (not
+    // eligible for any quality queue).
+    async fn fixture() -> (Library, Arc<InMemoryVfs>) {
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file(
+            "Taxonomy/Anime/A.md",
+            "---\ntitle: A\ncover: Assets/Taxonomy/Anime/A/cover.jpg\nbangumi: \"123\"\nrelated: \"[[B]]\"\naired: 2023-05-01\n---\n",
+        );
+        vfs.insert_file("Taxonomy/Anime/B.md", "---\ntitle: B\n---\n");
+        vfs.insert_file("Taxonomy/Anime/C.md", "---\ntitle: C\n---\n");
+        vfs.insert_dir("Taxonomy/Note");
+        vfs.insert_file("Taxonomy/Note/N.md", "---\ntitle: N\n---\n");
+        let library = read_library(config(), vfs.clone()).await.unwrap();
+        (library, vfs)
+    }
+
+    fn titles(items: &[EntitySummary]) -> Vec<&str> {
+        items.iter().map(|item| item.title.as_str()).collect()
+    }
+
+    #[test]
+    fn month_index_buckets_valid_months_only() {
+        assert_eq!(month_index(1), Some(0));
+        assert_eq!(month_index(12), Some(11));
+        assert_eq!(month_index(0), None);
+        assert_eq!(month_index(13), None);
+    }
+
+    #[test]
+    fn cleanup_queue_summaries_skips_zero_total_queues() {
+        let queues =
+            cleanup_queue_summaries(&[("a", "A", 2, 5), ("b", "B", 0, 0), ("c", "C", 1, 3)]);
+        assert_eq!(queues.len(), 2);
+        assert_eq!(queues[0].id, "a");
+        assert_eq!(queues[0].remaining, 2);
+        assert_eq!(queues[0].total, 5);
+        assert_eq!(queues[1].id, "c");
+    }
+
+    #[test]
+    fn is_remote_or_data_url_detects_remote_and_inline() {
+        assert!(is_remote_or_data_url("https://example.com/a.jpg"));
+        assert!(is_remote_or_data_url("HTTP://example.com/a.jpg"));
+        assert!(is_remote_or_data_url("data:image/png;base64,AAAA"));
+        assert!(is_remote_or_data_url("blob:abc"));
+        assert!(!is_remote_or_data_url("Assets/Anime/A/cover.jpg"));
+    }
+
+    #[tokio::test]
+    async fn build_analytics_totals_and_distributions() {
+        let (library, _vfs) = fixture().await;
+        let analytics = build_analytics(&library);
+
+        assert_eq!(analytics.totals.entities, 4);
+        assert_eq!(analytics.totals.relations, 1); // A -> B (Out)
+        assert_eq!(analytics.totals.unresolved_relations, 0);
+        assert_eq!(analytics.totals.dated_entities, 1); // only A has a parseable date
+        assert_eq!(analytics.totals.connected_entities, 2); // A and B (anime, relation_count > 0)
+
+        let by_type: HashMap<_, _> = analytics
+            .distributions
+            .by_type
+            .iter()
+            .map(|item| (item.id.as_str(), item.count))
+            .collect();
+        assert_eq!(by_type["anime"], 3);
+        assert_eq!(by_type["note"], 1);
+    }
+
+    #[tokio::test]
+    async fn build_analytics_data_quality_respects_schema_eligibility() {
+        let (library, _vfs) = fixture().await;
+        let analytics = build_analytics(&library);
+
+        // Eligible (anime) entities with no cover/refs; the note N is never eligible.
+        assert_eq!(titles(&analytics.data_quality.missing_cover), ["B", "C"]);
+        assert_eq!(
+            titles(&analytics.data_quality.missing_external_refs),
+            ["B", "C"]
+        );
+        // Only the entity with relation_count 0 is isolated (B is linked from A).
+        assert_eq!(titles(&analytics.data_quality.isolated), ["C"]);
+    }
+
+    #[tokio::test]
+    async fn build_analytics_activity_buckets_by_year_and_month() {
+        let (library, _vfs) = fixture().await;
+        let analytics = build_analytics(&library);
+
+        assert_eq!(analytics.activity.total_dated, 1);
+        assert_eq!(analytics.activity.years.len(), 1);
+        let year = &analytics.activity.years[0];
+        assert_eq!(year.year, 2023);
+        assert_eq!(year.total, 1);
+        assert_eq!(year.months[4], 1); // May (0-based)
+        assert_eq!(year.months.iter().sum::<u32>(), 1);
+        assert_eq!(analytics.activity.types.len(), 1);
+        assert_eq!(analytics.activity.types[0].id, "anime");
+    }
+
+    #[tokio::test]
+    async fn build_cleanup_queues_summaries_and_lists() {
+        let (library, _vfs) = fixture().await;
+        let response = build_cleanup_queues(&library, Vec::new(), 0);
+
+        let queue_ids: Vec<_> = response
+            .queues
+            .iter()
+            .map(|item| item.id.as_str())
+            .collect();
+        assert!(queue_ids.contains(&"missing-cover"));
+        assert!(queue_ids.contains(&"isolated"));
+        // broken-asset total is 0 here, so that queue is omitted.
+        assert!(!queue_ids.contains(&"broken-asset"));
+
+        let cover = response
+            .queues
+            .iter()
+            .find(|item| item.id == "missing-cover")
+            .unwrap();
+        assert_eq!(cover.total, 3); // all anime entities are cover-eligible
+        assert_eq!(cover.remaining, 2); // B and C lack a cover
+
+        assert_eq!(titles(&response.missing_cover), ["B", "C"]);
+        assert_eq!(titles(&response.isolated), ["C"]);
+        assert!(response.unresolved_relations.is_empty());
+    }
+
+    #[tokio::test]
+    async fn broken_local_assets_flags_missing_local_covers_only() {
+        let (library, vfs) = fixture().await;
+        let (broken, local_total) = broken_local_assets(&library, vfs.as_ref()).await;
+
+        // A is the only entity with a local cover path, and that file doesn't exist.
+        assert_eq!(local_total, 1);
+        assert_eq!(titles(&broken), ["A"]);
+    }
 }

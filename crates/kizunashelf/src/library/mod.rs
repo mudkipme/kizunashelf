@@ -5,12 +5,10 @@
 //! - [`config_io`]: vault-config file I/O (`.kizunashelf/config.yaml`) + path validation
 //! - [`read`]: the full and index-cached library reads
 //! - [`parse`]: parsing one entity, the on-demand full load, field-name lookups
-//! - [`edit`]: the surgical rebuild after a single in-place edit
 //! - [`collation`], [`frontmatter`], [`index_cache`], [`relations`]: leaf helpers
 
 mod collation;
 mod config_io;
-mod edit;
 mod frontmatter;
 mod index_cache;
 mod parse;
@@ -30,9 +28,8 @@ pub use frontmatter::{
 };
 pub use read::read_library;
 
-pub(crate) use edit::rebuild_for_edited_entity;
 pub(crate) use parse::{file_revision, load_entity};
-pub(crate) use read::read_library_cached;
+pub(crate) use read::{compute_listing_fingerprint, read_library_cached};
 
 #[cfg(test)]
 mod tests;

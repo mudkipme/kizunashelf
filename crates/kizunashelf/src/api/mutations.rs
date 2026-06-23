@@ -91,9 +91,11 @@ pub(crate) async fn update_entity(
             anyhow::anyhow!("failed to remove old entity {source_rel}: {error}")
         })?;
     }
-    // Patch the cached library in place for this edit (full reload only on a
-    // structural change), instead of re-reading the whole vault from disk.
-    let reloaded = state.apply_entity_edit(&target_rel).await?;
+    // Reflect the write by invalidating the cache and reloading, like every other
+    // mutation. The index cache keeps this cheap — only the edited file is a miss
+    // and re-read; unchanged entities and daily notes are reused by fingerprint.
+    state.invalidate_cache().await;
+    let reloaded = get_library(&state).await?;
     let record = reloaded
         .record_by_path(&target_rel)
         .or_else(|| reloaded.record_by_id(&path.id))
@@ -354,4 +356,85 @@ pub(super) async fn write_entity_raw(vfs: &dyn Vfs, relative: &str, raw: &str) -
 /// vault root.
 pub(super) fn parent_dir(relative: &str) -> Option<&str> {
     relative.rsplit_once('/').map(|(parent, _)| parent)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn sanitize_basename_accepts_a_plain_name_and_trims() {
+        assert_eq!(
+            sanitize_basename("  Star Voyager  ").unwrap(),
+            "Star Voyager"
+        );
+    }
+
+    #[test]
+    fn sanitize_basename_rejects_empty() {
+        let error = sanitize_basename("   ").unwrap_err().to_string();
+        assert!(error.contains("cannot be empty"));
+    }
+
+    #[test]
+    fn sanitize_basename_rejects_the_md_extension() {
+        assert!(sanitize_basename("Star.md").is_err());
+        assert!(sanitize_basename("Star.MD").is_err());
+    }
+
+    #[test]
+    fn sanitize_basename_rejects_path_traversal_and_separators() {
+        for bad in ["..", ".", "a/b", "a\\b", "../escape", "sub/Note"] {
+            assert!(
+                sanitize_basename(bad).is_err(),
+                "{bad:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn sanitize_basename_rejects_forbidden_and_control_chars() {
+        for bad in [
+            "a:b",
+            "a*b",
+            "a?b",
+            "a\"b",
+            "a<b",
+            "a>b",
+            "a|b",
+            "a\u{0007}b",
+        ] {
+            assert!(
+                sanitize_basename(bad).is_err(),
+                "{bad:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn apply_frontmatter_patch_inserts_updates_and_removes_on_null() {
+        let mut target = Map::new();
+        target.insert("keep".to_string(), json!("old"));
+        target.insert("drop".to_string(), json!("gone"));
+
+        let mut patch = Map::new();
+        patch.insert("keep".to_string(), json!("new"));
+        patch.insert("add".to_string(), json!(5));
+        patch.insert("drop".to_string(), Value::Null);
+        apply_frontmatter_patch(&mut target, patch);
+
+        assert_eq!(target.get("keep"), Some(&json!("new")));
+        assert_eq!(target.get("add"), Some(&json!(5)));
+        assert!(
+            !target.contains_key("drop"),
+            "a null patch value removes the key"
+        );
+    }
+
+    #[test]
+    fn parent_dir_returns_the_directory_or_none_at_root() {
+        assert_eq!(parent_dir("Taxonomy/Anime/Foo.md"), Some("Taxonomy/Anime"));
+        assert_eq!(parent_dir("Foo.md"), None);
+    }
 }

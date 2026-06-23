@@ -1,8 +1,8 @@
 use super::error::ApiError;
 use crate::contract::{AnalyticsResponse, AssetDownloadJob};
 use crate::library::{
-    load_vault_config_via_vfs, read_library, read_library_cached, read_raw_vault_config_via_vfs,
-    IndexCacheContext,
+    compute_listing_fingerprint, load_vault_config_via_vfs, read_library, read_library_cached,
+    read_raw_vault_config_via_vfs, IndexCacheContext,
 };
 use crate::secrets::{SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
@@ -60,17 +60,31 @@ pub(crate) struct AppState {
     /// Per-provider locks that single-flight token acquisition so a cold cache
     /// under concurrent searches does not stampede the upstream token endpoint.
     token_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
-    /// Memoized analytics keyed on the library's `generated_at`. Analytics is an
-    /// expensive whole-library scan; the cache turns repeated `/analytics` hits
-    /// into a single build per library generation.
+    /// Serializes the read-modify-write of the *shared* on-disk token blob across
+    /// providers. `token_locks` is per provider, so it does not stop provider A
+    /// and provider B from both reading the same blob and the second write
+    /// clobbering the first's token (a lost update that forces a needless re-auth
+    /// after restart). Every disk-token mutation holds this lock around its whole
+    /// read→modify→write.
+    token_disk_lock: Arc<Mutex<()>>,
+    /// Memoized analytics keyed on the library's `content_revision`. Analytics is
+    /// an expensive whole-library scan; the cache turns repeated `/analytics` hits
+    /// into a single build per distinct library content. Keying on the
+    /// content fingerprint (not `generated_at`) means a warm reload that re-reads
+    /// identical content keeps the memoized result instead of rebuilding it.
     analytics_cache: Arc<Mutex<Option<CachedAnalytics>>>,
+    /// Single-flights the analytics build so a cold memo under concurrent
+    /// `/analytics` hits does the expensive whole-library scan once, not once per
+    /// request. Callers take it, re-check the memo, and only then build (mirrors
+    /// the [`get_library`] reload lock and [`token_fetch_lock`]).
+    analytics_build_lock: Arc<Mutex<()>>,
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
 }
 
 struct CachedAnalytics {
-    generated_at: String,
+    content_revision: String,
     response: Arc<AnalyticsResponse>,
 }
 
@@ -78,6 +92,13 @@ struct CachedAnalytics {
 struct CachedLibrary {
     library: Arc<Library>,
     cached_at: Instant,
+    /// Fingerprint of the vault file listing this library was built from (schema +
+    /// every entity/daily-note file's `(path, len, mtime)`). On a reload, an
+    /// unchanged fingerprint means the library is still valid and can be reused
+    /// without re-reading the vault. `None` disables that fast path for the next
+    /// reload (the listing couldn't be fingerprinted — e.g. a backend that can't
+    /// report mtimes, or an unreadable config).
+    listing_fingerprint: Option<u64>,
 }
 
 #[derive(Clone)]
@@ -125,7 +146,9 @@ impl AppState {
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
             token_locks: Arc::new(Mutex::new(HashMap::new())),
+            token_disk_lock: Arc::new(Mutex::new(())),
             analytics_cache: Arc::new(Mutex::new(None)),
+            analytics_build_lock: Arc::new(Mutex::new(())),
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
@@ -200,58 +223,6 @@ impl AppState {
         *cache = None;
     }
 
-    /// Reflects a single-entity edit into the cached library without re-reading
-    /// the whole vault. Attempts a surgical patch against the *fresh* cache; falls
-    /// back to a full invalidate + reload when the cache is cold/expired or the
-    /// edit is structural (rename, id-field change, vanished file). Returns the
-    /// resulting library so the mutation handler can serve fresh data.
-    pub(crate) async fn apply_entity_edit(&self, edited_path: &str) -> Result<Arc<Library>> {
-        let surgical = {
-            // Serialize against concurrent reloads while we read the base and swap
-            // in the patched library; never call `get_library` here (it takes the
-            // same lock) to avoid a deadlock.
-            let _reload = self.reload.lock().await;
-            let base = {
-                let cache = self.cache.lock().await;
-                cache
-                    .as_ref()
-                    .filter(|cached| cached.cached_at.elapsed() < self.options.cache_ttl)
-                    .map(|cached| Arc::clone(&cached.library))
-            };
-            match base {
-                Some(base) => {
-                    let vfs = self.vault_vfs(&base.config.vault_root);
-                    match crate::library::rebuild_for_edited_entity(
-                        &base,
-                        vfs.as_ref(),
-                        edited_path,
-                    )
-                    .await?
-                    {
-                        Some(updated) => {
-                            let updated = Arc::new(updated);
-                            let mut cache = self.cache.lock().await;
-                            *cache = Some(CachedLibrary {
-                                library: Arc::clone(&updated),
-                                cached_at: Instant::now(),
-                            });
-                            Some(updated)
-                        }
-                        None => None,
-                    }
-                }
-                None => None,
-            }
-        };
-        match surgical {
-            Some(updated) => Ok(updated),
-            None => {
-                self.invalidate_cache().await;
-                get_library(self).await
-            }
-        }
-    }
-
     /// Returns the per-provider lock used to single-flight token acquisition.
     /// Callers acquire it, re-check the token cache, and only then fetch.
     pub(crate) async fn token_fetch_lock(&self, key: &str) -> Arc<Mutex<()>> {
@@ -263,27 +234,33 @@ impl AppState {
         )
     }
 
-    /// Returns memoized analytics if it was built for this `generated_at`.
+    /// Returns memoized analytics if it was built for this `content_revision`.
     pub(crate) async fn cached_analytics(
         &self,
-        generated_at: &str,
+        content_revision: &str,
     ) -> Option<Arc<AnalyticsResponse>> {
         let cache = self.analytics_cache.lock().await;
         cache
             .as_ref()
-            .filter(|cached| cached.generated_at == generated_at)
+            .filter(|cached| cached.content_revision == content_revision)
             .map(|cached| Arc::clone(&cached.response))
     }
 
-    /// Stores analytics keyed on the library generation it was built from.
+    /// The lock that single-flights the analytics build. Callers acquire it,
+    /// re-check [`cached_analytics`], and only then build + [`store_analytics`].
+    pub(crate) fn analytics_build_lock(&self) -> &Arc<Mutex<()>> {
+        &self.analytics_build_lock
+    }
+
+    /// Stores analytics keyed on the library content it was built from.
     pub(crate) async fn store_analytics(
         &self,
-        generated_at: &str,
+        content_revision: &str,
         response: Arc<AnalyticsResponse>,
     ) {
         let mut cache = self.analytics_cache.lock().await;
         *cache = Some(CachedAnalytics {
-            generated_at: generated_at.to_string(),
+            content_revision: content_revision.to_string(),
             response,
         });
     }
@@ -299,11 +276,19 @@ impl AppState {
                 return Some(token);
             }
         }
-        let mut disk_tokens = self.read_disk_tokens().ok()?;
-        let disk_token = disk_tokens.remove(key)?;
-        let Some(token) = cached_token_from_disk(disk_token) else {
-            let _ = self.write_disk_tokens(&disk_tokens);
-            return None;
+        let token = {
+            // Hold the disk lock across the read and the prune-write so a
+            // concurrent store for another provider can't be lost.
+            let _disk = self.token_disk_lock.lock().await;
+            let mut disk_tokens = self.read_disk_tokens().ok()?;
+            let disk_token = disk_tokens.remove(key)?;
+            match cached_token_from_disk(disk_token) {
+                Some(token) => token,
+                None => {
+                    let _ = self.write_disk_tokens(&disk_tokens);
+                    return None;
+                }
+            }
         };
         self.store_memory_access_token(key, token.clone()).await;
         Some(token)
@@ -315,14 +300,14 @@ impl AppState {
         token: CachedAccessToken,
     ) -> Result<()> {
         self.store_memory_access_token(key, token.clone()).await;
-        self.store_disk_access_token(key, &token)
+        self.store_disk_access_token(key, &token).await
     }
 
     pub(crate) async fn invalidate_access_token(&self, key: &str) {
         let mut tokens = self.external_tokens.lock().await;
         tokens.remove(key);
         drop(tokens);
-        let _ = self.remove_disk_access_token(key);
+        let _ = self.remove_disk_access_token(key).await;
     }
 
     async fn store_memory_access_token(&self, key: &str, token: CachedAccessToken) {
@@ -330,7 +315,10 @@ impl AppState {
         tokens.insert(key.to_string(), token);
     }
 
-    fn store_disk_access_token(&self, key: &str, token: &CachedAccessToken) -> Result<()> {
+    async fn store_disk_access_token(&self, key: &str, token: &CachedAccessToken) -> Result<()> {
+        // Hold the disk lock across read→modify→write so a concurrent mutation for
+        // another provider can't clobber this token in the shared blob.
+        let _disk = self.token_disk_lock.lock().await;
         let mut tokens = self.read_disk_tokens().unwrap_or_default();
         tokens.insert(
             key.to_string(),
@@ -343,7 +331,8 @@ impl AppState {
         self.write_disk_tokens(&tokens)
     }
 
-    fn remove_disk_access_token(&self, key: &str) -> Result<()> {
+    async fn remove_disk_access_token(&self, key: &str) -> Result<()> {
+        let _disk = self.token_disk_lock.lock().await;
         let mut tokens = self.read_disk_tokens().unwrap_or_default();
         tokens.remove(key);
         self.write_disk_tokens(&tokens)
@@ -410,20 +399,47 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
     }
 
     let _reload = state.reload.lock().await;
-    {
+    // Re-check: a concurrent reload may have just refreshed the cache.
+    let previous = {
         let cache = state.cache.lock().await;
-        if let Some(cached) = cache.as_ref() {
-            if cached.cached_at.elapsed() < state.options.cache_ttl {
+        match cache.as_ref() {
+            Some(cached) if cached.cached_at.elapsed() < state.options.cache_ttl => {
                 return Ok(Arc::clone(&cached.library));
             }
+            Some(cached) => cached
+                .listing_fingerprint
+                .map(|fingerprint| (Arc::clone(&cached.library), fingerprint)),
+            None => None,
+        }
+    };
+
+    // Fast path: the cache is stale, but if the vault's file listing (schema +
+    // every entity/daily-note file's size+mtime) is unchanged since the cached
+    // library was built, that library is still valid. Reuse it, skipping the whole
+    // read + parse + relation rebuild — the directory listing is the only cost.
+    if let Some((library, fingerprint)) = previous {
+        let vfs = state.vault_vfs(&library.config.vault_root);
+        if compute_listing_fingerprint(&library.config, vfs.as_ref()).await == Some(fingerprint) {
+            let mut cache = state.cache.lock().await;
+            *cache = Some(CachedLibrary {
+                library: Arc::clone(&library),
+                cached_at: Instant::now(),
+                listing_fingerprint: Some(fingerprint),
+            });
+            return Ok(library);
         }
     }
 
     let library = Arc::new(load_library(state).await?);
+    let listing_fingerprint = {
+        let vfs = state.vault_vfs(&library.config.vault_root);
+        compute_listing_fingerprint(&library.config, vfs.as_ref()).await
+    };
     let mut cache = state.cache.lock().await;
     *cache = Some(CachedLibrary {
         library: Arc::clone(&library),
         cached_at: Instant::now(),
+        listing_fingerprint,
     });
     Ok(library)
 }
