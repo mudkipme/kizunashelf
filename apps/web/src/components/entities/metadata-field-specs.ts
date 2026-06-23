@@ -4,6 +4,7 @@ import {
   isListFieldType,
   type FieldConfig,
 } from "@/lib/type-config";
+import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
 import { currentOptions } from "./frontmatter-utils";
@@ -21,6 +22,7 @@ export function editableFieldSpecs(
   frontmatter: FrontmatterDraft,
   relationSuggestions: EntitySummary[],
   onRelationSearch: RelationSuggestionSearch | undefined,
+  language: string,
 ) {
   const specs: EditableFieldSpec[] = [];
   const seen = new Set<string>();
@@ -34,10 +36,18 @@ export function editableFieldSpecs(
       label: configuredFieldLabel(field),
       kind: fieldKind(field, frontmatter[key]),
       options: optionsForConfiguredField(field, frontmatter[key]),
-      relationOptions: field.fieldType === "relation" ? relationOptionsForField(field, relationSuggestions) : [],
+      relationOptions:
+        field.fieldType === "relation"
+          ? relationOptionsForField(field, relationSuggestions, language)
+          : [],
       loadRelationOptions:
         field.fieldType === "relation" && onRelationSearch
-          ? async (query, signal) => relationOptionsForField(field, await onRelationSearch({ relationType: field.relationType, query, signal }))
+          ? async (query, signal) =>
+              relationOptionsForField(
+                field,
+                await onRelationSearch({ relationType: field.relationType, query, signal }),
+                language,
+              )
           : undefined,
       relationType: field.fieldType === "relation" ? field.relationType : undefined,
       seasonLanguage: normalizeSeasonLanguage(field.seasonLanguage),
@@ -85,13 +95,13 @@ function optionsForConfiguredField(field: FieldConfig, value: FrontmatterValue |
   return [...options];
 }
 
-function relationOptionsForField(field: FieldConfig, suggestions: EntitySummary[]) {
+function relationOptionsForField(field: FieldConfig, suggestions: EntitySummary[], language: string) {
   const relationType = normalizeRelationType(field.relationType);
   return suggestions
     .filter((item) => !relationType || entityMatchesRelationType(item, relationType))
     .map((item) => ({
       value: item.basename,
-      label: item.title,
+      label: entityTitle(item, language),
     }))
     .filter((item) => item.value);
 }

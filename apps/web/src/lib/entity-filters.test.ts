@@ -112,4 +112,17 @@ describe("compareEntitiesByTypeThenTitle", () => {
       "Aaa",
     ]);
   });
+
+  it("orders by the viewer's language title when given a language", () => {
+    // Canonical titles order a-before-b, but the `ja` titles reverse it.
+    const a = summary({ typeLabel: "Anime", title: "Alpha", titles: { ja: "ベータ" } });
+    const b = summary({ typeLabel: "Anime", title: "Beta", titles: { ja: "アルファ" } });
+    expect(
+      [a, b].sort((x, y) => compareEntitiesByTypeThenTitle(x, y, "ja")).map((entity) => entity.title),
+    ).toEqual(["Beta", "Alpha"]);
+    // A language with no title falls back to the canonical title.
+    expect(
+      [a, b].sort((x, y) => compareEntitiesByTypeThenTitle(x, y, "en")).map((entity) => entity.title),
+    ).toEqual(["Alpha", "Beta"]);
+  });
 });

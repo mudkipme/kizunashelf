@@ -4,6 +4,7 @@ import { CheckIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useTitleLanguage } from "@/lib/language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
 import { FieldValueInput } from "./metadata-inputs";
@@ -56,9 +57,10 @@ export function MetadataEditor({
   onCancel?: () => void;
 }) {
   const [newFieldName, setNewFieldName] = useState("");
+  const language = useTitleLanguage();
   const fieldSpecs = useMemo(
-    () => editableFieldSpecs(typeConfig, frontmatter, relationSuggestions, onRelationSearch),
-    [typeConfig, frontmatter, relationSuggestions, onRelationSearch],
+    () => editableFieldSpecs(typeConfig, frontmatter, relationSuggestions, onRelationSearch, language),
+    [typeConfig, frontmatter, relationSuggestions, onRelationSearch, language],
   );
 
   function updateField(key: string, value: FrontmatterValue | undefined) {

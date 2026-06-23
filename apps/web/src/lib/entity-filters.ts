@@ -1,3 +1,4 @@
+import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
 export const allEntityFilter = "all";
@@ -56,9 +57,15 @@ export function entityMatchesDate(entity: EntitySummary, selectedDate: string) {
   return true;
 }
 
-export function compareEntitiesByTypeThenTitle(a: EntitySummary, b: EntitySummary) {
+export function compareEntitiesByTypeThenTitle(
+  a: EntitySummary,
+  b: EntitySummary,
+  language?: string,
+) {
   if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
-  return a.title.localeCompare(b.title);
+  const titleA = language ? entityTitle(a, language) : a.title;
+  const titleB = language ? entityTitle(b, language) : b.title;
+  return titleA.localeCompare(titleB);
 }
 
 function countBy<T>(items: T[], key: (item: T) => string) {

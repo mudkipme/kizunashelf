@@ -24,6 +24,8 @@ import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
 import { applyExternalBodySections } from "@/lib/external-metadata";
+import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 
 export function EntityEditPage() {
   const { id } = useParams();
@@ -46,6 +48,7 @@ export function EntityEditPage() {
   const queryError = detail.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
   const entity = detail.data?.entity;
   const contentWritable = capabilities.data?.contentWritable !== false;
+  const language = useTitleLanguage();
   const typeConfig = useMemo(
     () => config.data?.types.find((type) => type.id === entity?.type),
     [config.data, entity?.type],
@@ -146,7 +149,7 @@ export function EntityEditPage() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">
-              {entity ? `Edit ${entity.title}` : "Edit Entity"}
+              {entity ? `Edit ${entityTitle(entity, language)}` : "Edit Entity"}
             </h1>
             <p className="mt-1 truncate text-xs text-muted-foreground">
               {entity?.path ?? "Loading entity"}

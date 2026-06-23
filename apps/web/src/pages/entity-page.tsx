@@ -57,7 +57,9 @@ import { Input } from "@/components/ui/input";
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { applyExternalBodySections } from "@/lib/external-metadata";
+import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
+import { entityTitle } from "@/lib/title-language";
 import type {
   Entity,
 } from "@/types/api";
@@ -318,6 +320,7 @@ function EntityActions({
   onDelete: () => void;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const language = useTitleLanguage();
 
   return (
     <>
@@ -370,7 +373,7 @@ function EntityActions({
           <AlertDialogHeader>
             <AlertDialogTitle>Move to trash?</AlertDialogTitle>
             <AlertDialogDescription>
-              This moves {entity.title} to the vault's <code>.trash</code> folder. You can restore it from there if needed.
+              This moves {entityTitle(entity, language)} to the vault's <code>.trash</code> folder. You can restore it from there if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

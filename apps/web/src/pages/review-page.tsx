@@ -87,6 +87,7 @@ export function ReviewPage() {
   const summaries = cleanup.data?.queues ?? [];
   const activeSummary = summaries.find((queue) => queue.id === activeQueue?.id);
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
+  const language = useTitleLanguage();
   const items = useMemo(
     () => (cleanup.data && activeQueue ? queueItems(cleanup.data, activeQueue) : []),
     [cleanup.data, activeQueue],
@@ -100,8 +101,8 @@ export function ReviewPage() {
         .filter((item) => matchesQuery(item, query))
         .filter((item) => selectedType === allEntityFilter || item.entity.type === selectedType)
         .filter((item) => entityMatchesDate(item.entity, selectedDate))
-        .sort(compareItems),
-    [items, query, selectedType, selectedDate],
+        .sort((a, b) => compareItems(a, b, language)),
+    [items, query, selectedType, selectedDate, language],
   );
 
   return (
@@ -363,6 +364,6 @@ function matchesQuery(item: FilterableItem, query: string) {
   return entityMatchesQuery(item.entity, query, extraValues);
 }
 
-function compareItems(a: FilterableItem, b: FilterableItem) {
-  return compareEntitiesByTypeThenTitle(a.entity, b.entity);
+function compareItems(a: FilterableItem, b: FilterableItem, language: string) {
+  return compareEntitiesByTypeThenTitle(a.entity, b.entity, language);
 }
