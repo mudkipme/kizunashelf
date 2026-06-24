@@ -101,6 +101,11 @@ pub struct ConfigResponse {
     pub vault_root: String,
     /// Vault-relative directory where downloaded assets are stored.
     pub asset_root: String,
+    /// The resolved frontmatter key for the built-in tags field (configured via
+    /// `tags.field`, defaulting to `tags`). Clients use this for the tag editor,
+    /// the Library tag filter, and to hide tags from the generic "Details" view —
+    /// so the name lives in one place instead of being hardcoded per client.
+    pub tags_field: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub home: Option<HomeConfig>,
     pub types: Vec<EntityTypeConfig>,
@@ -315,6 +320,14 @@ pub struct ListSummary {
     /// "manage lists" membership toggles); omitted otherwise.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub contains: Option<bool>,
+}
+
+/// The vault's full tag vocabulary (sorted, deduped) — backs tag autocomplete in
+/// the editor and the Library tag filter.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TagsResponse {
+    pub tags: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

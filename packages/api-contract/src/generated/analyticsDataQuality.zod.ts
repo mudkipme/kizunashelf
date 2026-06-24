@@ -10,18 +10,21 @@ export const analyticsDataQualityMissingCoverItemDatesItemParsedOneMonthMin = 0;
 
 export const analyticsDataQualityMissingCoverItemDatesItemParsedOneDayMin = 0;
 
+export const analyticsDataQualityMissingCoverItemTagsDefault = [];
 export const analyticsDataQualityMissingCoverItemRelationCountMin = 0;
 
 export const analyticsDataQualityMissingExternalRefsItemDatesItemParsedOneMonthMin = 0;
 
 export const analyticsDataQualityMissingExternalRefsItemDatesItemParsedOneDayMin = 0;
 
+export const analyticsDataQualityMissingExternalRefsItemTagsDefault = [];
 export const analyticsDataQualityMissingExternalRefsItemRelationCountMin = 0;
 
 export const analyticsDataQualityIsolatedItemDatesItemParsedOneMonthMin = 0;
 
 export const analyticsDataQualityIsolatedItemDatesItemParsedOneDayMin = 0;
 
+export const analyticsDataQualityIsolatedItemTagsDefault = [];
 export const analyticsDataQualityIsolatedItemRelationCountMin = 0;
 
 
@@ -49,6 +52,7 @@ export const AnalyticsDataQuality = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(analyticsDataQualityMissingCoverItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(analyticsDataQualityMissingCoverItemRelationCountMin)
 })),
   "missingExternalRefs": zod.array(zod.object({
@@ -74,6 +78,7 @@ export const AnalyticsDataQuality = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(analyticsDataQualityMissingExternalRefsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(analyticsDataQualityMissingExternalRefsItemRelationCountMin)
 })),
   "isolated": zod.array(zod.object({
@@ -99,6 +104,7 @@ export const AnalyticsDataQuality = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(analyticsDataQualityIsolatedItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(analyticsDataQualityIsolatedItemRelationCountMin)
 }))
 })

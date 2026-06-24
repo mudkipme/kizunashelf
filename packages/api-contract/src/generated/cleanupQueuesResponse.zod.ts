@@ -14,30 +14,35 @@ export const cleanupQueuesResponseMissingCoverItemDatesItemParsedOneMonthMin = 0
 
 export const cleanupQueuesResponseMissingCoverItemDatesItemParsedOneDayMin = 0;
 
+export const cleanupQueuesResponseMissingCoverItemTagsDefault = [];
 export const cleanupQueuesResponseMissingCoverItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneMonthMin = 0;
 
 export const cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneDayMin = 0;
 
+export const cleanupQueuesResponseMissingExternalRefsItemTagsDefault = [];
 export const cleanupQueuesResponseMissingExternalRefsItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneMonthMin = 0;
 
 export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneDayMin = 0;
 
+export const cleanupQueuesResponseIsolatedItemTagsDefault = [];
 export const cleanupQueuesResponseIsolatedItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneMonthMin = 0;
 
 export const cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneDayMin = 0;
 
+export const cleanupQueuesResponseBrokenAssetsItemTagsDefault = [];
 export const cleanupQueuesResponseBrokenAssetsItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneMonthMin = 0;
 
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneDayMin = 0;
 
+export const cleanupQueuesResponseUnresolvedRelationsItemSourceTagsDefault = [];
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceRelationCountMin = 0;
 
 
@@ -72,6 +77,7 @@ export const CleanupQueuesResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(cleanupQueuesResponseMissingCoverItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(cleanupQueuesResponseMissingCoverItemRelationCountMin)
 })),
   "missingExternalRefs": zod.array(zod.object({
@@ -97,6 +103,7 @@ export const CleanupQueuesResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(cleanupQueuesResponseMissingExternalRefsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(cleanupQueuesResponseMissingExternalRefsItemRelationCountMin)
 })),
   "isolated": zod.array(zod.object({
@@ -122,6 +129,7 @@ export const CleanupQueuesResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(cleanupQueuesResponseIsolatedItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(cleanupQueuesResponseIsolatedItemRelationCountMin)
 })),
   "brokenAssets": zod.array(zod.object({
@@ -147,6 +155,7 @@ export const CleanupQueuesResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(cleanupQueuesResponseBrokenAssetsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(cleanupQueuesResponseBrokenAssetsItemRelationCountMin)
 })).describe('Entities whose local cover path points to a file that no longer exists.'),
   "unresolvedRelations": zod.array(zod.object({
@@ -173,6 +182,7 @@ export const CleanupQueuesResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(cleanupQueuesResponseUnresolvedRelationsItemSourceTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(cleanupQueuesResponseUnresolvedRelationsItemSourceRelationCountMin)
 }),
   "relation": zod.object({

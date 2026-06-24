@@ -93,6 +93,10 @@ pub(crate) struct AppState {
     cleanup_cache: Arc<Mutex<Option<CachedCleanup>>>,
     /// Single-flights the cleanup build (mirrors [`analytics_build_lock`]).
     cleanup_build_lock: Arc<Mutex<()>>,
+    /// Memoized "all tags" vocabulary keyed on `content_revision`. The build is a
+    /// cheap resident scan, so no single-flight lock is needed — it just avoids
+    /// recomputing the sorted set on every autocomplete/filter request.
+    tags_cache: Arc<Mutex<Option<CachedTags>>>,
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
@@ -106,6 +110,11 @@ struct CachedAnalytics {
 struct CachedCleanup {
     content_revision: String,
     response: Arc<CleanupQueuesResponse>,
+}
+
+struct CachedTags {
+    content_revision: String,
+    tags: Arc<Vec<String>>,
 }
 
 #[derive(Clone)]
@@ -172,6 +181,7 @@ impl AppState {
             analytics_build_lock: Arc::new(Mutex::new(())),
             cleanup_cache: Arc::new(Mutex::new(None)),
             cleanup_build_lock: Arc::new(Mutex::new(())),
+            tags_cache: Arc::new(Mutex::new(None)),
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
@@ -327,6 +337,24 @@ impl AppState {
         *cache = Some(CachedCleanup {
             content_revision: content_revision.to_string(),
             response,
+        });
+    }
+
+    /// Returns the memoized tag vocabulary if built for this `content_revision`.
+    pub(crate) async fn cached_all_tags(&self, content_revision: &str) -> Option<Arc<Vec<String>>> {
+        let cache = self.tags_cache.lock().await;
+        cache
+            .as_ref()
+            .filter(|cached| cached.content_revision == content_revision)
+            .map(|cached| Arc::clone(&cached.tags))
+    }
+
+    /// Stores the tag vocabulary keyed on the library content it was built from.
+    pub(crate) async fn store_all_tags(&self, content_revision: &str, tags: Arc<Vec<String>>) {
+        let mut cache = self.tags_cache.lock().await;
+        *cache = Some(CachedTags {
+            content_revision: content_revision.to_string(),
+            tags,
         });
     }
 

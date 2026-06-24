@@ -17,6 +17,7 @@ fn ambiguous_daily_note_wikilinks_do_not_prefer_franchise_type() {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![
                 entity_type("anime", "Anime"),
                 entity_type("franchise", "Franchise"),
@@ -69,6 +70,7 @@ fn summary(entity_type: &str, type_label: &str, basename: &str) -> EntitySummary
         path: format!("Taxonomy/{type_label}/{basename}.md"),
         basename: basename.to_string(),
         external_refs: BTreeMap::new(),
+        tags: Vec::new(),
         relation_count: 0,
     }
 }
@@ -327,6 +329,7 @@ fn metadata_date_entries_only_includes_schema_date_fields_with_a_role() {
         content_writable: None,
         home: None,
         daily_notes: None,
+        tags: None,
         types: vec![EntityTypeConfig {
             id: "anime".to_string(),
             label: "Anime".to_string(),

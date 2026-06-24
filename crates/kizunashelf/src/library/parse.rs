@@ -2,8 +2,8 @@
 //! load, and the schema-driven field-name lookups the summary derivation needs.
 
 use super::frontmatter::{
-    date_values, external_refs, extract_summary, first_list_value, first_string, parse_markdown,
-    resolve_title, title_languages,
+    date_values, external_refs, extract_summary, extract_tags, first_list_value, first_string,
+    parse_markdown, resolve_title, title_languages,
 };
 use super::relations::extract_body_links;
 use crate::types::{
@@ -32,7 +32,13 @@ pub(crate) async fn load_entity(
         .read(&summary.path)
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entity {}: {error}", summary.path))?;
-    let mut entity = parse_entity(type_config, summary.path.clone(), bytes)?.entity;
+    let mut entity = parse_entity(
+        type_config,
+        config.tags_field(),
+        summary.path.clone(),
+        bytes,
+    )?
+    .entity;
     // `relation_count` is a library-wide derived value (from the relation graph),
     // not something a single file knows; carry it over from the resident summary.
     entity.summary.relation_count = summary.relation_count;
@@ -56,6 +62,7 @@ pub(super) struct EntityReadResult {
 /// don't re-scan.
 pub(super) fn parse_entity(
     type_config: &EntityTypeConfig,
+    tags_field: &str,
     relative_path: String,
     bytes: Vec<u8>,
 ) -> Result<EntityReadResult> {
@@ -97,6 +104,7 @@ pub(super) fn parse_entity(
             &parsed.frontmatter,
             &field_names(type_config, FieldType::ExternalRef),
         ),
+        tags: extract_tags(&parsed.frontmatter, tags_field),
         relation_count: 0,
     };
 
@@ -219,10 +227,15 @@ mod tests {
     }
 
     fn summary_of(type_config: &EntityTypeConfig, path: &str, raw: &str) -> EntitySummary {
-        parse_entity(type_config, path.to_string(), raw.as_bytes().to_vec())
-            .expect("parse")
-            .entity
-            .summary
+        parse_entity(
+            type_config,
+            crate::types::DEFAULT_TAGS_FIELD,
+            path.to_string(),
+            raw.as_bytes().to_vec(),
+        )
+        .expect("parse")
+        .entity
+        .summary
     }
 
     fn date_fields(dates: &[EntityDateValue]) -> Vec<&str> {

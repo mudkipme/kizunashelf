@@ -10,6 +10,7 @@ export const entityListResponseItemsItemDatesItemParsedOneMonthMin = 0;
 
 export const entityListResponseItemsItemDatesItemParsedOneDayMin = 0;
 
+export const entityListResponseItemsItemTagsDefault = [];
 export const entityListResponseItemsItemRelationCountMin = 0;
 
 export const entityListResponseTotalMin = 0;
@@ -39,6 +40,7 @@ export const EntityListResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(entityListResponseItemsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(entityListResponseItemsItemRelationCountMin)
 })),
   "total": zod.number().min(entityListResponseTotalMin),

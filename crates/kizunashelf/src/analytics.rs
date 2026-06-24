@@ -561,6 +561,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![
                 entity_type(
                     "anime",

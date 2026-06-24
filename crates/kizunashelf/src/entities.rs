@@ -43,6 +43,19 @@ pub struct EntityListParams<'a> {
     pub page_size: f64,
 }
 
+/// Every distinct tag across the library, sorted. The vocabulary backing tag
+/// autocomplete and the Library tag filter; derived from the resident
+/// [`EntitySummary::tags`], so no bodies are read.
+pub fn all_tags(library: &Library) -> Vec<String> {
+    let mut set = std::collections::BTreeSet::new();
+    for record in &library.records {
+        for tag in &record.summary.tags {
+            set.insert(tag.clone());
+        }
+    }
+    set.into_iter().collect()
+}
+
 /// Filters, sorts, and paginates the library's entities into an
 /// [`EntityListResponse`] per the parsed `params`.
 pub fn build_entity_list(library: &Library, params: &EntityListParams) -> EntityListResponse {
@@ -167,6 +180,14 @@ fn entity_matches_field_filters(
     filters: &[EntityFieldFilter],
 ) -> bool {
     filters.iter().all(|filter| {
+        // The built-in tags field matches against the normalized tag list (any
+        // selected tag → match), independent of the schema field machinery.
+        if filter.field == library.config.tags_field() {
+            return filter
+                .values
+                .iter()
+                .any(|wanted| entity.summary.tags.iter().any(|tag| tag == wanted));
+        }
         let Some(field_type) = field_type_for_entity_filter(entity, library, &filter.field) else {
             return false;
         };
@@ -381,6 +402,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![EntityTypeConfig {
                 id: "anime".to_string(),
                 label: "Anime".to_string(),
@@ -412,6 +434,7 @@ mod tests {
             path: format!("Taxonomy/Anime/{title}.md"),
             basename: title.to_string(),
             external_refs: BTreeMap::new(),
+            tags: Vec::new(),
             relation_count: 0,
         }
     }

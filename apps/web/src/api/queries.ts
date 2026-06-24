@@ -11,6 +11,7 @@ import {
   getHome,
   getRelationGroups,
   getStats,
+  getTags,
   type GetCalendarParams,
   type GetCalendarPlanningParams,
   type GetEntitiesParams,
@@ -42,8 +43,20 @@ export const queryKeys = {
   settingsConfig: ["settingsConfig"] as const,
   rawSettingsConfig: ["rawSettingsConfig"] as const,
   stats: (params?: GetStatsParams) => ["stats", params ?? {}] as const,
+  tags: ["tags"] as const,
   vaultTemplates: ["vaultTemplates"] as const,
 };
+
+// The vault's whole tag vocabulary, cached client-side (it changes rarely and is
+// read by the tag editor combobox + the Library tag filter). The server memoizes
+// it per content revision; a long staleTime avoids refetching on every mount.
+export function allTagsQuery() {
+  return queryOptions({
+    queryKey: queryKeys.tags,
+    queryFn: ({ signal }) => getTags({ signal }, apiFetch),
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 export function analyticsQuery() {
   return queryOptions({

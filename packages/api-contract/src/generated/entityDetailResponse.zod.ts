@@ -10,12 +10,14 @@ export const entityDetailResponseEntityDatesItemParsedOneMonthMin = 0;
 
 export const entityDetailResponseEntityDatesItemParsedOneDayMin = 0;
 
+export const entityDetailResponseEntityTagsDefault = [];
 export const entityDetailResponseEntityRelationCountMin = 0;
 
 export const entityDetailResponseRelatedEntitiesItemDatesItemParsedOneMonthMin = 0;
 
 export const entityDetailResponseRelatedEntitiesItemDatesItemParsedOneDayMin = 0;
 
+export const entityDetailResponseRelatedEntitiesItemTagsDefault = [];
 export const entityDetailResponseRelatedEntitiesItemRelationCountMin = 0;
 
 
@@ -43,6 +45,7 @@ export const EntityDetailResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(entityDetailResponseEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(entityDetailResponseEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),
@@ -80,6 +83,7 @@ export const EntityDetailResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(entityDetailResponseRelatedEntitiesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(entityDetailResponseRelatedEntitiesItemRelationCountMin)
 }))
 })

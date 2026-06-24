@@ -14,6 +14,7 @@ export const homeResponseSectionsItemItemsItemDatesItemParsedOneMonthMin = 0;
 
 export const homeResponseSectionsItemItemsItemDatesItemParsedOneDayMin = 0;
 
+export const homeResponseSectionsItemItemsItemTagsDefault = [];
 export const homeResponseSectionsItemItemsItemRelationCountMin = 0;
 
 
@@ -56,6 +57,7 @@ export const HomeResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(homeResponseSectionsItemItemsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(homeResponseSectionsItemItemsItemRelationCountMin)
 }))
 }))

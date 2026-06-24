@@ -327,6 +327,7 @@ fn test_config(vault_root: &str) -> KizunaConfig {
         content_writable: None,
         home: None,
         daily_notes: None,
+        tags: None,
         types: vec![EntityTypeConfig {
             id: "anime".to_string(),
             label: "Anime".to_string(),

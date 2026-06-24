@@ -10,6 +10,7 @@ export const calendarDayEntriesItemEntityDatesItemParsedOneMonthMin = 0;
 
 export const calendarDayEntriesItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarDayEntriesItemEntityTagsDefault = [];
 export const calendarDayEntriesItemEntityRelationCountMin = 0;
 
 export const calendarDayEntriesItemSnippetsItemLineMin = 0;
@@ -50,6 +51,7 @@ export const CalendarDay = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarDayEntriesItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarDayEntriesItemEntityRelationCountMin)
 }),
   "dateField": zod.string().nullish(),

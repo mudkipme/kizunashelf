@@ -3,6 +3,10 @@ import { ExternalLinkIcon } from "lucide-react";
 import { EmptyLine } from "@/components/assets/detail-section";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars, ratingNumber } from "@/components/ui/rating-stars";
+import { useQuery } from "@tanstack/react-query";
+
+import { configQuery } from "@/api/queries";
+import { defaultTagsField } from "@/lib/constants";
 import { configFields, fieldsByType, fieldLabelForKey, type FieldType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type { Entity, Relation, TypeConfig } from "@/types/api";
@@ -19,7 +23,8 @@ export function FrontmatterPanel({
   relationGroups: Array<{ field: string; items: Relation[] }>;
   typeConfig?: TypeConfig;
 }) {
-  const entries = visibleFrontmatterEntries(entity, relationGroups, typeConfig);
+  const tagsFieldName = useQuery(configQuery()).data?.tagsField ?? defaultTagsField;
+  const entries = visibleFrontmatterEntries(entity, relationGroups, typeConfig, tagsFieldName);
   const fieldTypes = new Map(configFields(typeConfig).map((field) => [field.field, field.fieldType]));
 
   if (entries.length === 0) {
@@ -51,8 +56,11 @@ function visibleFrontmatterEntries(
   entity: Entity,
   relationGroups: Array<{ field: string; items: Relation[] }>,
   typeConfig: TypeConfig | undefined,
+  tagsFieldName: string,
 ): Array<[string, FrontmatterValue | undefined]> {
   const hiddenKeys = new Set<string>([
+    // Tags have their own display next to the type chip; never in "Details".
+    tagsFieldName,
     ...fieldsByType(typeConfig, "title").map((field) => field.field),
     ...entity.dates.map((date) => date.field),
     ...Object.keys(entity.externalRefs),

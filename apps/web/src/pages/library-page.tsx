@@ -4,7 +4,7 @@ import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { capabilitiesQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
+import { allTagsQuery, capabilitiesQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import type { FieldFilter, FieldFilterOption } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
@@ -20,6 +20,7 @@ import {
   defaultSort,
   defaultView,
   pageSize,
+  defaultTagsField,
 } from "@/lib/constants";
 import {
   fieldDisplayLabel,
@@ -77,10 +78,29 @@ export function LibraryPage() {
     scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["image", "imageList"]));
   const effectiveRefs = supportsRefsFilter ? refs : allOptions;
   const effectiveCover = supportsCoverFilter ? cover : allOptions;
-  const fieldFilters = useMemo(
-    () => fieldFiltersForTypes(scopeTypeConfigs, searchParams),
-    [scopeTypeConfigs, searchParams],
+  const allTagsData = useQuery(allTagsQuery()).data?.tags;
+  const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
+  // The built-in tags filter is universal (not schema-derived). Its selected
+  // values are read straight from the URL — not restricted to the current
+  // vocabulary — so they survive while `allTags` loads and serialize through the
+  // same `filters` param as schema field filters (server OR-matches them).
+  const tagsFieldName = config.data?.tagsField ?? defaultTagsField;
+  const tagFilter: FieldFilter = useMemo(
+    () => ({
+      field: tagsFieldName,
+      label: "Tags",
+      kind: "multi",
+      options: allTags.map((value) => ({ value })),
+      values: uniqueStrings(searchParams.getAll(fieldFilterParamKey(tagsFieldName))),
+    }),
+    [allTags, searchParams, tagsFieldName],
   );
+  const fieldFilters = useMemo(() => {
+    const schemaFilters = fieldFiltersForTypes(scopeTypeConfigs, searchParams);
+    // Hide the tags filter only when the vault has no tags and none are selected.
+    const showTags = tagFilter.options.length > 0 || tagFilter.values.length > 0;
+    return showTags ? [tagFilter, ...schemaFilters] : schemaFilters;
+  }, [tagFilter, scopeTypeConfigs, searchParams]);
   const activeFieldFilters = fieldFilters.filter((filter) => filter.values.length > 0);
   const effectiveSort =
     scopeStats &&

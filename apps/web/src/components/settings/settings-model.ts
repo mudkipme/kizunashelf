@@ -33,6 +33,9 @@ export function normalizeVaultConfig(vault?: VaultConfig): VaultConfig {
         : null
       : base.dailyNotes,
     home: vault ? (vault.home ? normalizeHome(vault.home) : null) : base.home,
+    // The tags block has no editor UI; carry it through verbatim so the schema
+    // editor never drops a hand-set `tags.field` (preserve unknown values).
+    tags: vault?.tags,
     types: vault ? (vault.types ?? []).map(normalizeEntityType) : base.types,
   };
 }
@@ -117,6 +120,8 @@ export function cleanVaultConfig(
             })),
           }
         : undefined,
+      // No tags UI, but round-trip the block so saving the schema never drops it.
+      tags: config.tags,
       types: config.types.map((typeConfig) => ({
         id: typeConfig.id,
         label: typeConfig.label,

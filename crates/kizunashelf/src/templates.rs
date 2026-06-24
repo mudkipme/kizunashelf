@@ -35,6 +35,7 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 taxonomy_root: TAXONOMY_ROOT.to_string(),
                 asset_root: Some(ASSET_ROOT.to_string()),
                 daily_notes: Some(default_daily_notes()),
+                tags: None,
                 home: Some(HomeConfig {
                     title: Some("Home".to_string()),
                     sections: vec![
@@ -99,6 +100,7 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 taxonomy_root: TAXONOMY_ROOT.to_string(),
                 asset_root: Some(ASSET_ROOT.to_string()),
                 daily_notes: Some(default_daily_notes()),
+                tags: None,
                 home: Some(empty_home()),
                 types: vec![
                     media_type(
@@ -141,6 +143,7 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 taxonomy_root: TAXONOMY_ROOT.to_string(),
                 asset_root: Some(ASSET_ROOT.to_string()),
                 daily_notes: Some(default_daily_notes()),
+                tags: None,
                 home: Some(empty_home()),
                 types: vec![media_type(
                     &catalog,
@@ -161,6 +164,7 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 taxonomy_root: TAXONOMY_ROOT.to_string(),
                 asset_root: Some(ASSET_ROOT.to_string()),
                 daily_notes: Some(default_daily_notes()),
+                tags: None,
                 home: Some(empty_home()),
                 types: vec![media_type(
                     &catalog,
@@ -181,6 +185,7 @@ pub fn vault_templates() -> Vec<VaultTemplate> {
                 taxonomy_root: TAXONOMY_ROOT.to_string(),
                 asset_root: Some(ASSET_ROOT.to_string()),
                 daily_notes: Some(default_daily_notes()),
+                tags: None,
                 home: Some(empty_home()),
                 types: vec![blank_type()],
             },

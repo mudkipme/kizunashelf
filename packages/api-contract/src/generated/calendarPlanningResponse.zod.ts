@@ -22,6 +22,7 @@ export const calendarPlanningResponseYearMonthsItemEntriesItemEntityDatesItemPar
 
 export const calendarPlanningResponseYearMonthsItemEntriesItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningResponseYearMonthsItemEntriesItemEntityTagsDefault = [];
 export const calendarPlanningResponseYearMonthsItemEntriesItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseYearMonthsItemEntriesItemMonthMin = 0;
@@ -30,6 +31,7 @@ export const calendarPlanningResponseSeasonsItemEntriesItemEntityDatesItemParsed
 
 export const calendarPlanningResponseSeasonsItemEntriesItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningResponseSeasonsItemEntriesItemEntityTagsDefault = [];
 export const calendarPlanningResponseSeasonsItemEntriesItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseSeasonsItemEntriesItemMonthMin = 0;
@@ -38,6 +40,7 @@ export const calendarPlanningResponseBoardUpcomingItemEntityDatesItemParsedOneMo
 
 export const calendarPlanningResponseBoardUpcomingItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningResponseBoardUpcomingItemEntityTagsDefault = [];
 export const calendarPlanningResponseBoardUpcomingItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseBoardUpcomingItemMonthMin = 0;
@@ -46,6 +49,7 @@ export const calendarPlanningResponseBoardRecentlyCompletedItemEntityDatesItemPa
 
 export const calendarPlanningResponseBoardRecentlyCompletedItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningResponseBoardRecentlyCompletedItemEntityTagsDefault = [];
 export const calendarPlanningResponseBoardRecentlyCompletedItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseBoardRecentlyCompletedItemMonthMin = 0;
@@ -54,6 +58,7 @@ export const calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOn
 
 export const calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningResponseBoardJustStartedItemEntityTagsDefault = [];
 export const calendarPlanningResponseBoardJustStartedItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseBoardJustStartedItemMonthMin = 0;
@@ -103,6 +108,7 @@ export const CalendarPlanningResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningResponseYearMonthsItemEntriesItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningResponseYearMonthsItemEntriesItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -143,6 +149,7 @@ export const CalendarPlanningResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningResponseSeasonsItemEntriesItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningResponseSeasonsItemEntriesItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -180,6 +187,7 @@ export const CalendarPlanningResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningResponseBoardUpcomingItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningResponseBoardUpcomingItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -215,6 +223,7 @@ export const CalendarPlanningResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningResponseBoardRecentlyCompletedItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningResponseBoardRecentlyCompletedItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -250,6 +259,7 @@ export const CalendarPlanningResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningResponseBoardJustStartedItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningResponseBoardJustStartedItemEntityRelationCountMin)
 }),
   "field": zod.string(),

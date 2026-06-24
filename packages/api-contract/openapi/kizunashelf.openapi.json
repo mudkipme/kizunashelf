@@ -1604,6 +1604,33 @@
         }
       }
     },
+    "/api/tags": {
+      "get": {
+        "operationId": "getTags",
+        "responses": {
+          "200": {
+            "description": "The vault's full tag vocabulary (sorted, deduped) — backs tag autocomplete in\nthe editor and the Library tag filter.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/lists": {
       "get": {
         "operationId": "getLists",
@@ -2189,6 +2216,10 @@
             "description": "Vault-relative directory where downloaded assets are stored.",
             "type": "string"
           },
+          "tagsField": {
+            "description": "The resolved frontmatter key for the built-in tags field (configured via\n`tags.field`, defaulting to `tags`). Clients use this for the tag editor,\nthe Library tag filter, and to hide tags from the generic \"Details\" view —\nso the name lives in one place instead of being hardcoded per client.",
+            "type": "string"
+          },
           "home": {
             "anyOf": [
               {
@@ -2210,6 +2241,7 @@
           "taxonomyRoot",
           "vaultRoot",
           "assetRoot",
+          "tagsField",
           "types"
         ]
       },
@@ -2646,6 +2678,16 @@
               }
             ]
           },
+          "tags": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TagsConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "types": {
             "type": "array",
             "items": {
@@ -2669,6 +2711,19 @@
           },
           "dateFormat": {
             "description": "Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY/MM/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TagsConfig": {
+        "description": "Configuration for the built-in **tags** field — a universal, cross-type label\nlist. Tags are a vault-level \"well-known field\": the *name* is configured here\n(defaulting to `tags`), so the engine reads the field name from config rather\nthan hardcoding it. A schema field that happens to share this name is ignored\nin favor of the built-in. This is a deliberate, narrow extension of the\nschema-driven model — meaning still flows config → behavior, just at the vault\nscope rather than the per-type scope.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "description": "The frontmatter key holding the entity's tag list. Defaults to `tags`.",
             "type": [
               "string",
               "null"
@@ -2952,6 +3007,14 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "tags": {
+            "description": "The entity's built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
           },
           "relationCount": {
             "type": "integer",
@@ -4686,6 +4749,14 @@
               "type": "string"
             }
           },
+          "tags": {
+            "description": "The entity's built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
           "relationCount": {
             "type": "integer",
             "format": "uint32",
@@ -5380,6 +5451,21 @@
           "resolvedTargets",
           "fields",
           "topTargets"
+        ]
+      },
+      "TagsResponse": {
+        "description": "The vault's full tag vocabulary (sorted, deduped) — backs tag autocomplete in\nthe editor and the Library tag filter.",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tags"
         ]
       },
       "ListsQuery": {

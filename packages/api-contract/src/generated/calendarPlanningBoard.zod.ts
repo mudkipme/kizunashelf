@@ -10,6 +10,7 @@ export const calendarPlanningBoardUpcomingItemEntityDatesItemParsedOneMonthMin =
 
 export const calendarPlanningBoardUpcomingItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningBoardUpcomingItemEntityTagsDefault = [];
 export const calendarPlanningBoardUpcomingItemEntityRelationCountMin = 0;
 
 export const calendarPlanningBoardUpcomingItemMonthMin = 0;
@@ -18,6 +19,7 @@ export const calendarPlanningBoardRecentlyCompletedItemEntityDatesItemParsedOneM
 
 export const calendarPlanningBoardRecentlyCompletedItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningBoardRecentlyCompletedItemEntityTagsDefault = [];
 export const calendarPlanningBoardRecentlyCompletedItemEntityRelationCountMin = 0;
 
 export const calendarPlanningBoardRecentlyCompletedItemMonthMin = 0;
@@ -26,6 +28,7 @@ export const calendarPlanningBoardJustStartedItemEntityDatesItemParsedOneMonthMi
 
 export const calendarPlanningBoardJustStartedItemEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningBoardJustStartedItemEntityTagsDefault = [];
 export const calendarPlanningBoardJustStartedItemEntityRelationCountMin = 0;
 
 export const calendarPlanningBoardJustStartedItemMonthMin = 0;
@@ -56,6 +59,7 @@ export const CalendarPlanningBoard = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningBoardUpcomingItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningBoardUpcomingItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -91,6 +95,7 @@ export const CalendarPlanningBoard = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningBoardRecentlyCompletedItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningBoardRecentlyCompletedItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -126,6 +131,7 @@ export const CalendarPlanningBoard = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningBoardJustStartedItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningBoardJustStartedItemEntityRelationCountMin)
 }),
   "field": zod.string(),

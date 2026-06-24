@@ -31,6 +31,9 @@ export const VaultConfig = zod.object({
   "paths": zod.array(zod.string()).optional(),
   "dateFormat": zod.string().nullish().describe('Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY\/MM\/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.')
 }),zod.null()]).optional(),
+  "tags": zod.union([zod.object({
+  "field": zod.string().nullish().describe('The frontmatter key holding the entity\'s tag list. Defaults to `tags`.')
+}).describe('Configuration for the built-in \*\*tags\*\* field — a universal, cross-type label\nlist. Tags are a vault-level \"well-known field\": the \*name\* is configured here\n(defaulting to `tags`), so the engine reads the field name from config rather\nthan hardcoding it. A schema field that happens to share this name is ignored\nin favor of the built-in. This is a deliberate, narrow extension of the\nschema-driven model — meaning still flows config → behavior, just at the vault\nscope rather than the per-type scope.'),zod.null()]).optional(),
   "types": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),

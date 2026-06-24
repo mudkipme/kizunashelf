@@ -475,6 +475,7 @@ mod tests {
             path: format!("Taxonomy/Game/{title}.md"),
             basename: title.to_string(),
             external_refs: BTreeMap::new(),
+            tags: Vec::new(),
             relation_count: 0,
         }
     }
@@ -523,6 +524,7 @@ mod tests {
             path: format!("Taxonomy/{title}.md"),
             basename: title.to_string(),
             external_refs: BTreeMap::new(),
+            tags: Vec::new(),
             relation_count: 0,
         }
     }
@@ -596,6 +598,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![
                 entity_type("anime", "Anime", true),
                 entity_type("game", "Game", false),

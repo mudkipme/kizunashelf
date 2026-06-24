@@ -93,6 +93,7 @@ export * from "./generated/language.zod.js";
 export * from "./generated/languagesResponse.zod.js";
 export * from "./generated/vaultTemplate.zod.js";
 export * from "./generated/vaultTemplatesResponse.zod.js";
+export * from "./generated/tagsResponse.zod.js";
 export * from "./generated/listsResponse.zod.js";
 export * from "./generated/listSummary.zod.js";
 export * from "./generated/listDetail.zod.js";

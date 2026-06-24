@@ -10,6 +10,7 @@ export const listItemEntityOneDatesItemParsedOneMonthMin = 0;
 
 export const listItemEntityOneDatesItemParsedOneDayMin = 0;
 
+export const listItemEntityOneTagsDefault = [];
 export const listItemEntityOneRelationCountMin = 0;
 
 
@@ -39,6 +40,7 @@ export const ListItem = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(listItemEntityOneTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(listItemEntityOneRelationCountMin)
 }),zod.null()]).optional()
 }).describe('One item of a list. `text` is the raw Markdown content after the list marker\n(preserving any annotation); `target` is the first wikilink target in it; and\n`entity` is the resolved entity when the target matches an indexed note. An\nunresolved item keeps its `text`\/`target` and a `null` `entity`.')

@@ -175,6 +175,13 @@ pub(super) fn date_values(
     dates
 }
 
+/// The built-in tags: the frontmatter value under `tags_field` read as a list of
+/// strings (a bare scalar is treated as a single-element list). Empty when absent.
+/// `tags_field` is the configured key (see [`crate::types::KizunaConfig::tags_field`]).
+pub(super) fn extract_tags(frontmatter: &Map<String, Value>, tags_field: &str) -> Vec<String> {
+    normalize_values(frontmatter.get(tags_field))
+}
+
 pub(super) fn first_string(frontmatter: &Map<String, Value>, keys: &[String]) -> Option<String> {
     keys.iter()
         .filter_map(|key| normalize_value(frontmatter.get(key)))

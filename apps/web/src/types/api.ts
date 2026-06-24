@@ -55,6 +55,7 @@ export type {
   SaveSettingsRequest,
   SettingsConfigResponse,
   StatsResponse,
+  TagsResponse,
   TypeConfig,
   VaultTemplate,
   VaultTemplatesResponse,

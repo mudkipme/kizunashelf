@@ -181,6 +181,7 @@ types: [...]
 | `taxonomyRoot` | yes | string | Path inside `vaultRoot` that contains typed entity folders. Must be relative. |
 | `assetRoot` | no | string | Vault-relative directory where downloaded assets are stored. Defaults to `Assets`. |
 | `dailyNotes` | no | object | Daily note paths and date extraction settings. |
+| `tags` | no | object | Built-in tags field (see [Tags](#tags)). |
 | `home` | no | object | Home dashboard sections. |
 | `types` | yes | array | Entity type definitions. |
 
@@ -586,6 +587,34 @@ Common sort keys:
 | `date:<field>` | Sort by a configured date/season field. |
 | `relationCount` | Sort by number of related entities. |
 | `path` | Sort by Markdown path. |
+
+## Tags
+
+`tags` is a **built-in, universal field**: a free-form list of labels every entity can
+have, independent of its type. You don't declare it per type — it's always available, edited
+with a search-and-add combobox over the whole vault's tag vocabulary, shown next to the type
+on the detail view (not in "Details"), and filterable on the Library page.
+
+```yaml
+tags:
+  field: tags   # the frontmatter key holding the tag list; defaults to "tags"
+```
+
+| Key | Required | Type | Description |
+| --- | --- | --- | --- |
+| `field` | no | string | Frontmatter key that holds an entity's tag list. Defaults to `tags`. |
+
+Tags are the one place the engine treats a field by a fixed *role* across all types rather
+than deriving meaning purely from per-type schema. To keep that honest, the **name is still
+config**, not hardcoded: behavior reads `tags.field` (default `tags`), so you can rename or
+relocate it vault-wide. A per-type schema field that happens to share this name is ignored in
+favor of the built-in.
+
+> **Why this is a vault-level field, not a `fieldType`.** A field earns built-in status only
+> when it is (1) genuinely cross-type and universal, (2) declared in vault config with a
+> default, (3) read from config rather than hardcoded, and (4) doing something the per-type
+> schema can't express (here: a single global vocabulary and facet). Concepts that are
+> per-type and schema-expressible (rating, status, …) stay ordinary schema fields.
 
 ## Daily Notes
 

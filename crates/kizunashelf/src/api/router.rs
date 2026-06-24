@@ -16,6 +16,7 @@ use super::lists::{
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
+use super::tags::tags;
 use crate::calendar::{CalendarPlanningResponse, EntityDatesResponse};
 use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
@@ -25,7 +26,7 @@ use crate::contract::{
     ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse, HomeResponse,
     LanguagesResponse, ListDetail, ListsResponse, PathSuggestionsResponse, RawConfigResponse,
     RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, StatsResponse,
-    VaultTemplatesResponse,
+    TagsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -396,6 +397,14 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(relation_groups, |op| {
                 op.id("getRelationGroups")
                     .response::<200, Json<RelationGroupsResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/tags",
+            get_with(tags, |op| {
+                op.id("getTags")
+                    .response::<200, Json<TagsResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )

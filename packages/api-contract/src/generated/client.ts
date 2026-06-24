@@ -196,6 +196,10 @@ import {
   StatsResponse
 } from './statsResponse.zod';
 
+import {
+  TagsResponse
+} from './tagsResponse.zod';
+
 import type {
   UpdateEntityRequest
 } from './updateEntityRequest.zod';
@@ -1249,6 +1253,35 @@ export const getRelationGroups = async ( options?: RequestInit, fetchFn?: typeof
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? RelationGroupsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetTagsUrl = () => {
+
+
+
+
+  return `/api/tags`
+}
+
+export const getTags = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<TagsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetTagsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? TagsResponse.parse(parsedBody) : parsedBody
   return data
 }
 

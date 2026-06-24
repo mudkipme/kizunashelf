@@ -44,8 +44,12 @@ export function EntityEditPage() {
   // of the same entity doesn't clobber in-progress edits.
   const seededEntityIdRef = useRef<string | undefined>(undefined);
   const loading =
-    detail.isPending || config.isPending || providerCatalog.isPending || capabilities.isPending;
-  const queryError = detail.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
+    detail.isPending ||
+    config.isPending ||
+    providerCatalog.isPending ||
+    capabilities.isPending;
+  const queryError =
+    detail.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
   const entity = detail.data?.entity;
   const contentWritable = capabilities.data?.contentWritable !== false;
   const language = useTitleLanguage();
@@ -138,13 +142,21 @@ export function EntityEditPage() {
       ...external.selectedPatch(),
     };
     setFrontmatter(normalizeFrontmatter(next));
-    setBody((currentBody) => applyExternalBodySections(currentBody, external.selectedBodyPatch()));
+    setBody((currentBody) =>
+      applyExternalBodySections(currentBody, external.selectedBodyPatch()),
+    );
     external.setQuery(external.selectedCandidate.title);
     external.setOpen(false);
   }
 
   return (
-    <AppFrame error={conflict ? undefined : error ?? (queryError ? errorMessage(queryError) : undefined)}>
+    <AppFrame
+      error={
+        conflict
+          ? undefined
+          : (error ?? (queryError ? errorMessage(queryError) : undefined))
+      }
+    >
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -156,16 +168,21 @@ export function EntityEditPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => external.setOpen(true)}
-                disabled={!external.externalSearchEnabled}
-              >
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => external.setOpen(true)}
+              disabled={!external.externalSearchEnabled}
+            >
               <SearchIcon data-icon="inline-start" />
               Match
             </Button>
-            <Button type="button" variant="outline" onClick={cancel} disabled={saving}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cancel}
+              disabled={saving}
+            >
               <ArrowLeftIcon data-icon="inline-start" />
               Back
             </Button>
@@ -181,14 +198,22 @@ export function EntityEditPage() {
         {conflict ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
             <span className="min-w-0">{error}</span>
-            <Button type="button" variant="outline" size="sm" onClick={() => void reloadLatest()} disabled={saving}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void reloadLatest()}
+              disabled={saving}
+            >
               Reload latest version
             </Button>
           </div>
         ) : null}
 
         {loading ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+            Loading
+          </div>
         ) : entity ? (
           <>
             <ExternalMatchDialog

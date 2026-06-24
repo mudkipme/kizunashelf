@@ -575,6 +575,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![
                 entity_type("animation", "BGM Link", "bangumi"),
                 entity_type("interactive", "IGDB Link", "igdb"),
@@ -604,6 +605,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![type_config],
         };
 
@@ -629,6 +631,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![type_config],
         };
 
@@ -649,6 +652,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![
                 entity_type_with_external_types("animation", "BGM Link", "bangumi", &["2"]),
                 entity_type_with_external_types("series", "TVDB Link", "thetvdb", &["series"]),
@@ -691,6 +695,7 @@ mod tests {
             content_writable: None,
             home: None,
             daily_notes: None,
+            tags: None,
             types: vec![entity_type("animation", "Bangumi Link", "bangumi")],
         };
 

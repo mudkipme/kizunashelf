@@ -22,6 +22,7 @@ export const relationTargetTypeSummaryTopTargetsItemExamplesItemDatesItemParsedO
 
 export const relationTargetTypeSummaryTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
 
+export const relationTargetTypeSummaryTopTargetsItemExamplesItemTagsDefault = [];
 export const relationTargetTypeSummaryTopTargetsItemExamplesItemRelationCountMin = 0;
 
 
@@ -70,6 +71,7 @@ export const RelationTargetTypeSummary = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(relationTargetTypeSummaryTopTargetsItemExamplesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(relationTargetTypeSummaryTopTargetsItemExamplesItemRelationCountMin)
 }))
 }))

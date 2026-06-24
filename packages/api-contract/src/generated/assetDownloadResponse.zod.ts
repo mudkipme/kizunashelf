@@ -10,6 +10,7 @@ export const assetDownloadResponseEntityDatesItemParsedOneMonthMin = 0;
 
 export const assetDownloadResponseEntityDatesItemParsedOneDayMin = 0;
 
+export const assetDownloadResponseEntityTagsDefault = [];
 export const assetDownloadResponseEntityRelationCountMin = 0;
 
 
@@ -37,6 +38,7 @@ export const AssetDownloadResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(assetDownloadResponseEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(assetDownloadResponseEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),

@@ -4,6 +4,7 @@ import {
   isListFieldType,
   type FieldConfig,
 } from "@/lib/type-config";
+import { defaultTagsField } from "@/lib/constants";
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
@@ -23,9 +24,26 @@ export function editableFieldSpecs(
   relationSuggestions: EntitySummary[],
   onRelationSearch: RelationSuggestionSearch | undefined,
   language: string,
+  allTags: string[] = [],
+  tagsFieldName: string = defaultTagsField,
 ) {
   const specs: EditableFieldSpec[] = [];
   const seen = new Set<string>();
+
+  // The built-in tags field is always editable (a list with autocomplete over the
+  // whole tag vocabulary, plus free entry). Claim its key up front so a
+  // schema-configured or hand-written field of the same name isn't rendered twice.
+  seen.add(tagsFieldName);
+  specs.push({
+    key: tagsFieldName,
+    label: "Tags",
+    kind: "list",
+    options: allTags,
+    relationOptions: [],
+    loadRelationOptions: undefined,
+    seasonLanguage: "zh",
+    configured: true,
+  });
 
   for (const field of configFields(typeConfig)) {
     const key = field.field.trim();

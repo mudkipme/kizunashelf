@@ -22,6 +22,7 @@ export const analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemP
 
 export const analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
 
+export const analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemTagsDefault = [];
 export const analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemRelationCountMin = 0;
 
 export const analyticsRelationsTopTargetsItemCountMin = 0;
@@ -32,6 +33,7 @@ export const analyticsRelationsTopTargetsItemExamplesItemDatesItemParsedOneMonth
 
 export const analyticsRelationsTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
 
+export const analyticsRelationsTopTargetsItemExamplesItemTagsDefault = [];
 export const analyticsRelationsTopTargetsItemExamplesItemRelationCountMin = 0;
 
 export const analyticsRelationsUnresolvedCountMin = 0;
@@ -79,6 +81,7 @@ export const AnalyticsRelations = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(analyticsRelationsTopFieldsItemTopTargetsItemExamplesItemRelationCountMin)
 }))
 }))
@@ -118,6 +121,7 @@ export const AnalyticsRelations = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(analyticsRelationsTopTargetsItemExamplesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(analyticsRelationsTopTargetsItemExamplesItemRelationCountMin)
 }))
 })),

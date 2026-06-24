@@ -10,6 +10,7 @@ export const entityMutationResponseEntityDatesItemParsedOneMonthMin = 0;
 
 export const entityMutationResponseEntityDatesItemParsedOneDayMin = 0;
 
+export const entityMutationResponseEntityTagsDefault = [];
 export const entityMutationResponseEntityRelationCountMin = 0;
 
 
@@ -37,6 +38,7 @@ export const EntityMutationResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(entityMutationResponseEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(entityMutationResponseEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),

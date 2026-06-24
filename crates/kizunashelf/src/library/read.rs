@@ -361,7 +361,7 @@ async fn read_entities_for_type(
             entity,
             body_links,
             diagnostics,
-        } = parse_entity(type_config, relative_path, bytes)?;
+        } = parse_entity(type_config, config.tags_field(), relative_path, bytes)?;
         entries.push((
             key,
             CachedEntry {

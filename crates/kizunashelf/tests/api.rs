@@ -2141,3 +2141,148 @@ async fn lists_writes_blocked_in_read_only_mode() {
     .await;
     assert_eq!(created.0, StatusCode::FORBIDDEN, "{}", created.1);
 }
+
+#[tokio::test]
+async fn tags_surface_on_summary_filter_and_vocabulary() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    // A configured `tags` field (here a relation) must be IGNORED — the built-in
+    // tags feature owns the name, so no relations are built from it.
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "anime", "label": "Anime", "path": "Anime",
+                "filename": { "titleLanguage": "zh" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },
+                    { "field": "tags", "fieldType": "relation", "displayName": "Tags", "relationType": "tag" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Alpha.md"),
+        "---\ntitle: Alpha\ntags: [action, rpg]\n---\nBody\n",
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Beta.md"),
+        "---\ntitle: Beta\ntags: [rpg, drama]\n---\nBody\n",
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Gamma.md"),
+        "---\ntitle: Gamma\n---\nBody\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // Tags surface on the entity summary (empty array when absent).
+    let entities = request_json(&app, Method::GET, "/api/entities?type=anime", None).await;
+    assert_eq!(entities.0, StatusCode::OK, "{}", entities.1);
+    let items = entities.1["items"].as_array().unwrap();
+    let alpha = items.iter().find(|e| e["title"] == "Alpha").unwrap();
+    assert_eq!(alpha["tags"], json!(["action", "rpg"]));
+    let gamma = items.iter().find(|e| e["title"] == "Gamma").unwrap();
+    assert_eq!(gamma["tags"], json!([]));
+    // The configured `tags` relation field was ignored — no relation built from it.
+    assert_eq!(alpha["relationCount"], 0);
+
+    // The vocabulary is the sorted union of every tag.
+    let tags = request_json(&app, Method::GET, "/api/tags", None).await;
+    assert_eq!(tags.0, StatusCode::OK, "{}", tags.1);
+    assert_eq!(tags.1["tags"], json!(["action", "drama", "rpg"]));
+
+    // Filter by a single tag via the shared `filters` param:
+    // [{"field":"tags","values":["action"]}]
+    let one = request_json(
+        &app,
+        Method::GET,
+        "/api/entities?type=anime&filters=%5B%7B%22field%22%3A%22tags%22%2C%22values%22%3A%5B%22action%22%5D%7D%5D",
+        None,
+    )
+    .await;
+    assert_eq!(one.0, StatusCode::OK, "{}", one.1);
+    let one_titles: Vec<_> = one.1["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["title"].as_str().unwrap())
+        .collect();
+    assert_eq!(one_titles, ["Alpha"]);
+
+    // ANY/OR semantics: action OR drama → Alpha + Beta.
+    let many = request_json(
+        &app,
+        Method::GET,
+        "/api/entities?type=anime&filters=%5B%7B%22field%22%3A%22tags%22%2C%22values%22%3A%5B%22action%22%2C%22drama%22%5D%7D%5D",
+        None,
+    )
+    .await;
+    let mut many_titles: Vec<_> = many.1["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["title"].as_str().unwrap())
+        .collect();
+    many_titles.sort();
+    assert_eq!(many_titles, ["Alpha", "Beta"]);
+}
+
+#[tokio::test]
+async fn tags_field_name_is_configurable() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    // Rename the built-in tags field to `labels` at the vault level.
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "tags": { "field": "labels" },
+            "types": [{
+                "id": "anime", "label": "Anime", "path": "Anime",
+                "filename": { "titleLanguage": "zh" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Alpha.md"),
+        "---\ntitle: Alpha\nlabels: [action, rpg]\ntags: ignored\n---\nBody\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // The config surfaces the resolved name for clients.
+    let config = request_json(&app, Method::GET, "/api/config", None).await;
+    assert_eq!(config.0, StatusCode::OK, "{}", config.1);
+    assert_eq!(config.1["tagsField"], "labels");
+
+    // Tags are derived from `labels`, not the default `tags` key.
+    let entities = request_json(&app, Method::GET, "/api/entities?type=anime", None).await;
+    let alpha = entities.1["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["title"] == "Alpha")
+        .unwrap();
+    assert_eq!(alpha["tags"], json!(["action", "rpg"]));
+
+    // The vocabulary + filter use the configured field too.
+    let tags = request_json(&app, Method::GET, "/api/tags", None).await;
+    assert_eq!(tags.1["tags"], json!(["action", "rpg"]));
+    let filtered = request_json(
+        &app,
+        Method::GET,
+        "/api/entities?type=anime&filters=%5B%7B%22field%22%3A%22labels%22%2C%22values%22%3A%5B%22rpg%22%5D%7D%5D",
+        None,
+    )
+    .await;
+    let titles: Vec<_> = filtered.1["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["title"].as_str().unwrap())
+        .collect();
+    assert_eq!(titles, ["Alpha"]);
+}

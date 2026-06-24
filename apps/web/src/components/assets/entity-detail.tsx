@@ -57,6 +57,14 @@ export function EntityDetail({
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">{entity.typeLabel}</Badge>
+                  {(entity.tags ?? []).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
                 </div>
                 <h2 className="mt-2 text-xl font-semibold leading-snug">{displayTitle}</h2>
                 {subtitleTitles.length > 0 ? (

@@ -165,6 +165,21 @@ pub struct HomeConfig {
     pub sections: Vec<HomeSectionConfig>,
 }
 
+/// Configuration for the built-in **tags** field — a universal, cross-type label
+/// list. Tags are a vault-level "well-known field": the *name* is configured here
+/// (defaulting to `tags`), so the engine reads the field name from config rather
+/// than hardcoding it. A schema field that happens to share this name is ignored
+/// in favor of the built-in. This is a deliberate, narrow extension of the
+/// schema-driven model — meaning still flows config → behavior, just at the vault
+/// scope rather than the per-type scope.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TagsConfig {
+    /// The frontmatter key holding the entity's tag list. Defaults to `tags`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub field: Option<String>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DailyNotesConfig {
@@ -203,6 +218,8 @@ pub struct VaultConfig {
     pub home: Option<HomeConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub daily_notes: Option<DailyNotesConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tags: Option<TagsConfig>,
     pub types: Vec<EntityTypeConfig>,
 }
 
@@ -223,10 +240,18 @@ pub struct KizunaConfig {
     pub home: Option<HomeConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub daily_notes: Option<DailyNotesConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tags: Option<TagsConfig>,
     pub types: Vec<EntityTypeConfig>,
 }
 
 pub const DEFAULT_ASSET_ROOT: &str = "Assets";
+
+/// Default frontmatter key for the built-in tags field when the vault config does
+/// not set one (the common case). This is a *default value*, not a hardcoded
+/// branch: behavior reads [`KizunaConfig::tags_field`], which returns this only as
+/// a fallback.
+pub const DEFAULT_TAGS_FIELD: &str = "tags";
 
 impl KizunaConfig {
     /// The type config whose `id` matches `type_id`, or `None` for an unknown
@@ -245,6 +270,18 @@ impl KizunaConfig {
             .unwrap_or(DEFAULT_ASSET_ROOT)
     }
 
+    /// The frontmatter key for the built-in tags field — configured via
+    /// `tags.field`, defaulting to [`DEFAULT_TAGS_FIELD`]. The single resolution
+    /// point so no code hardcodes the tag field name.
+    pub fn tags_field(&self) -> &str {
+        self.tags
+            .as_ref()
+            .and_then(|tags| tags.field.as_deref())
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .unwrap_or(DEFAULT_TAGS_FIELD)
+    }
+
     /// Builds the merged runtime config from its on-disk parts.
     pub fn from_parts(app: AppConfig, vault: VaultConfig) -> Self {
         Self {
@@ -254,6 +291,7 @@ impl KizunaConfig {
             asset_root: vault.asset_root,
             home: vault.home,
             daily_notes: vault.daily_notes,
+            tags: vault.tags,
             types: vault.types,
         }
     }
@@ -270,6 +308,7 @@ impl KizunaConfig {
                 asset_root: self.asset_root,
                 home: self.home,
                 daily_notes: self.daily_notes,
+                tags: self.tags,
                 types: self.types,
             },
         )
@@ -304,6 +343,10 @@ pub struct EntitySummary {
     pub path: String,
     pub basename: String,
     pub external_refs: BTreeMap<String, String>,
+    /// The entity's built-in tags (the frontmatter `tags` list). Always present
+    /// (empty when none) so clients can render it without a null check.
+    #[serde(default)]
+    pub tags: Vec<String>,
     pub relation_count: u32,
 }
 

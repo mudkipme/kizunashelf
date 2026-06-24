@@ -10,6 +10,7 @@ export const calendarPlanningDatePointEntityDatesItemParsedOneMonthMin = 0;
 
 export const calendarPlanningDatePointEntityDatesItemParsedOneDayMin = 0;
 
+export const calendarPlanningDatePointEntityTagsDefault = [];
 export const calendarPlanningDatePointEntityRelationCountMin = 0;
 
 export const calendarPlanningDatePointMonthMin = 0;
@@ -39,6 +40,7 @@ export const CalendarPlanningDatePoint = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(calendarPlanningDatePointEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "relationCount": zod.number().min(calendarPlanningDatePointEntityRelationCountMin)
 }),
   "field": zod.string(),

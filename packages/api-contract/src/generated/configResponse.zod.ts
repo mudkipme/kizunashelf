@@ -13,6 +13,7 @@ export const ConfigResponse = zod.object({
   "taxonomyRoot": zod.string(),
   "vaultRoot": zod.string().describe('Absolute vault root, used by the desktop runtime to resolve local assets\ndirectly from disk (the web runtime uses the `\/api\/assets` route instead).'),
   "assetRoot": zod.string().describe('Vault-relative directory where downloaded assets are stored.'),
+  "tagsField": zod.string().describe('The resolved frontmatter key for the built-in tags field (configured via\n`tags.field`, defaulting to `tags`). Clients use this for the tag editor,\nthe Library tag filter, and to hide tags from the generic \"Details\" view —\nso the name lives in one place instead of being hardcoded per client.'),
   "home": zod.union([zod.object({
   "title": zod.string().nullish(),
   "sections": zod.array(zod.object({
