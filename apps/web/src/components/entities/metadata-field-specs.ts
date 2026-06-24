@@ -7,7 +7,7 @@ import {
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
-import { currentOptions } from "./frontmatter-utils";
+import { currentOptions, parseDateValue } from "./frontmatter-utils";
 import type {
   EditableFieldSpec,
   FieldKind,
@@ -61,7 +61,7 @@ export function editableFieldSpecs(
     specs.push({
       key,
       label: humanizeField(key),
-      kind: "text",
+      kind: unknownFieldKind(frontmatter[key]),
       options: [],
       relationOptions: [],
       loadRelationOptions: undefined,
@@ -71,6 +71,21 @@ export function editableFieldSpecs(
   }
 
   return specs;
+}
+
+// Unknown (schema-less) fields default to a plain text input, but when the raw
+// frontmatter value is clearly a non-string scalar/list we route it to the same
+// editor the configured fields use so editing round-trips the type. We only
+// promote shapes we can represent losslessly: string lists, numbers, booleans,
+// and ISO dates. Anything else (mixed/object lists, nested objects) stays text.
+function unknownFieldKind(value: FrontmatterValue | undefined): FieldKind {
+  if (typeof value === "boolean") return "boolean";
+  if (typeof value === "number") return "number";
+  if (Array.isArray(value)) {
+    return value.every((item) => typeof item === "string") ? "list" : "text";
+  }
+  if (typeof value === "string" && parseDateValue(value)) return "date";
+  return "text";
 }
 
 function fieldKind(field: FieldConfig, value: FrontmatterValue | undefined): FieldKind {
