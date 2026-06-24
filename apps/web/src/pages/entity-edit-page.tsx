@@ -57,7 +57,7 @@ export function EntityEditPage() {
     typeConfig,
     providerCatalog: providerCatalog.data,
     entityType: entity?.type,
-    defaultQuery: entity?.title,
+    defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
     assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
     onError: setError,
@@ -69,9 +69,9 @@ export function EntityEditPage() {
       seededEntityIdRef.current = source.id;
       setFrontmatter(normalizeFrontmatter(source.frontmatter));
       setBody(source.body);
-      setMatchQuery(source.title);
+      setMatchQuery(entityTitle(source, language));
     },
-    [setMatchQuery],
+    [language, setMatchQuery],
   );
 
   useEffect(() => {

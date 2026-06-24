@@ -73,6 +73,7 @@ export function EntityPage() {
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useQuery(capabilitiesQuery());
+  const language = useTitleLanguage();
   const [error, setError] = useState<string>();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
@@ -97,7 +98,7 @@ export function EntityPage() {
     typeConfig,
     providerCatalog: providerCatalog.data,
     entityType: entity?.type,
-    defaultQuery: entity?.title,
+    defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
     assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
     onError: setError,
@@ -123,8 +124,8 @@ export function EntityPage() {
   useEffect(() => {
     if (!entity) return;
     setRenameBasename(entity.basename);
-    setMatchQuery(entity.title);
-  }, [entity, setMatchQuery]);
+    setMatchQuery(entityTitle(entity, language));
+  }, [entity, language, setMatchQuery]);
 
   async function saveRename() {
     if (!entity) return;
