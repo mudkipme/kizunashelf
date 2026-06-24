@@ -330,7 +330,7 @@ export function EntityTypeForm({
                 }
               />
             </Field>
-            <Field label="Filename title role">
+            <Field label="Filename title — used as">
               <Select
                 value={config.filename?.titleRole ?? ""}
                 onChange={(event) =>
@@ -344,7 +344,7 @@ export function EntityTypeForm({
                 }
                 className="h-9 w-full text-base md:text-sm"
               >
-                <option value="">No role</option>
+                <option value="">None</option>
                 <option value="original">Original (filename is the title)</option>
               </Select>
             </Field>
@@ -588,7 +588,7 @@ function FieldOptionEditor({
             onChange={(titleLanguage) => onChange({ ...field, titleLanguage: titleLanguage || undefined })}
           />
         </Field>
-        <Field label="Title role">
+        <Field label="Used as">
           <Select
             value={field.titleRole ?? ""}
             onChange={(event) =>
@@ -641,7 +641,7 @@ function FieldOptionEditor({
 
   if (optionKey === "dateRole") {
     return (
-      <Field label="Date role">
+      <Field label="Used as">
         <Select
           value={field.dateRole ?? ""}
           onChange={(event) =>

@@ -43,8 +43,8 @@ type FilterableItem =
 const queueDefinitions: QueueDefinition[] = [
   { id: "missing-cover", label: "Missing Cover", kind: "entity" },
   { id: "broken-asset", label: "Broken Assets", kind: "entity" },
-  { id: "missing-refs", label: "Missing External Refs", kind: "entity" },
-  { id: "isolated", label: "Isolated Nodes", kind: "entity" },
+  { id: "missing-refs", label: "Missing Links", kind: "entity" },
+  { id: "isolated", label: "Unlinked Items", kind: "entity" },
   { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
 ];
 
@@ -300,7 +300,6 @@ function EntitySummaryCell({
       </div>
       <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <EntityDateList entity={entity} compact labelsByType={labelsByType} />
-        <span className="min-w-0 truncate">{entity.path}</span>
       </div>
       {!compact && entity.summary ? (
         <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">{entity.summary}</div>

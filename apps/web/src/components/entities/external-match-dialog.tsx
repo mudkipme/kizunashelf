@@ -107,7 +107,7 @@ export function ExternalMatchDialog({
         <DialogHeader className="border-b px-4 py-4 pr-12 sm:px-6">
           <DialogTitle>External Match</DialogTitle>
           <DialogDescription>
-            Search configured metadata sources and choose which fields to apply.
+            Search online sources and choose which details to apply.
           </DialogDescription>
         </DialogHeader>
 

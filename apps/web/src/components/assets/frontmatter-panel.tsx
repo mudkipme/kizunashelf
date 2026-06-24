@@ -23,7 +23,7 @@ export function FrontmatterPanel({
   const fieldTypes = new Map(configFields(typeConfig).map((field) => [field.field, field.fieldType]));
 
   if (entries.length === 0) {
-    return <EmptyLine>No additional frontmatter</EmptyLine>;
+    return <EmptyLine>No other details</EmptyLine>;
   }
 
   return (

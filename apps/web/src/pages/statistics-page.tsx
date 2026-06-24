@@ -45,7 +45,7 @@ export function StatisticsPage() {
           <>
             <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
               <StatTile label="Entities" value={data.totals.entities} />
-              <StatTile label="Relations" value={data.totals.relations} />
+              <StatTile label="Connections" value={data.totals.relations} />
               <StatTile label="Dated" value={data.totals.datedEntities} />
               <StatTile label="Connected" value={data.totals.connectedEntities} />
               <StatTile label="Unresolved" value={data.totals.unresolvedRelations} />
@@ -63,7 +63,7 @@ export function StatisticsPage() {
                 />
               </AnalyticsSection>
 
-              <AnalyticsSection title="Relation Fields">
+              <AnalyticsSection title="Connection Fields">
                 <BarList
                   items={data.distributions.byRelationField.map((item) => ({
                     ...item,

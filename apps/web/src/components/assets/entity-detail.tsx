@@ -77,12 +77,12 @@ export function EntityDetail({
             </div>
           </div>
           <div className="p-4">
-            <DetailSection title="Frontmatter" icon={<BookOpenIcon />}>
+            <DetailSection title="Details" icon={<BookOpenIcon />}>
               <FrontmatterPanel entity={entity} relationGroups={relationGroups} typeConfig={typeConfig} />
             </DetailSection>
 
             {entity.body.trim() ? (
-              <DetailSection title="Markdown" icon={<FileTextIcon />}>
+              <DetailSection title="Notes" icon={<FileTextIcon />}>
                 <MarkdownView markdown={entity.body} relations={relations} />
               </DetailSection>
             ) : null}
@@ -90,7 +90,7 @@ export function EntityDetail({
         </section>
 
         <aside className="min-w-0 rounded-md border p-4">
-          <DetailSection title="External refs" icon={<LinkIcon />}>
+          <DetailSection title="Links" icon={<LinkIcon />}>
             {Object.entries(entity.externalRefs).length > 0 ? (
               <div className="flex flex-col gap-2">
                 {Object.entries(entity.externalRefs).map(([key, value]) => (
@@ -106,7 +106,7 @@ export function EntityDetail({
                 ))}
               </div>
             ) : (
-              <EmptyLine>No external refs</EmptyLine>
+              <EmptyLine>No links yet</EmptyLine>
             )}
           </DetailSection>
 
@@ -114,18 +114,18 @@ export function EntityDetail({
             <EntityDates dates={dates} typeConfig={typeConfig} />
           </DetailSection>
 
-          <DetailSection title="Relations" icon={<CircleDotIcon />}>
+          <DetailSection title="Connections" icon={<CircleDotIcon />}>
             {relationGroups.length > 0 ? (
               <div className="flex flex-col gap-4">
                 <RelationDirectionSection
-                  title="Outgoing"
+                  title="Links to"
                   groups={outgoingRelationGroups}
                   entityId={entity.id}
                   relatedById={relatedById}
                   typeConfig={typeConfig}
                 />
                 <RelationDirectionSection
-                  title="Incoming"
+                  title="Linked from"
                   groups={incomingRelationGroups}
                   entityId={entity.id}
                   relatedById={relatedById}
@@ -133,7 +133,7 @@ export function EntityDetail({
                 />
               </div>
             ) : (
-              <EmptyLine>No relations</EmptyLine>
+              <EmptyLine>Nothing connected yet</EmptyLine>
             )}
           </DetailSection>
         </aside>

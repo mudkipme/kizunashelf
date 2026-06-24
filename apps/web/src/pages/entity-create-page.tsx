@@ -139,12 +139,12 @@ export function EntityCreatePage() {
               </Select>
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Filename
+              File name
               <Input
                 value={basename}
                 onChange={(event) => setBasename(event.target.value)}
                 onBlur={() => setBasename(normalizeBasename(basename))}
-                placeholder="Entity title"
+                placeholder="Title"
                 disabled={!contentWritable}
                 aria-invalid={showBasenameError}
               />

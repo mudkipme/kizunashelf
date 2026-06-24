@@ -126,8 +126,8 @@ export function AssetToolbar({
             Sort by {dateFieldLabel(field)}
           </option>
         ))}
-        <option value="relationCount">Sort by relation count</option>
-        <option value="path">Sort by path</option>
+        <option value="relationCount">Sort by connections</option>
+        <option value="path">Sort by location</option>
       </Select>
       <Select
         value={direction}

@@ -397,7 +397,7 @@ function EntityActions({
           <AlertDialogHeader>
             <AlertDialogTitle>Move to trash?</AlertDialogTitle>
             <AlertDialogDescription>
-              This moves {entityTitle(entity, language)} to the vault's <code>.trash</code> folder. You can restore it from there if needed.
+              This moves {entityTitle(entity, language)} to the Trash. You can restore it later if you need it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -582,7 +582,7 @@ function RenameDialog({
         <DialogHeader>
           <DialogTitle>Rename</DialogTitle>
           <DialogDescription>
-            File path stays in the same folder. Only the Markdown basename changes.
+            Only the name changes — everything else stays the same.
           </DialogDescription>
         </DialogHeader>
         <form

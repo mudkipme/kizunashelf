@@ -316,7 +316,7 @@ export function ListDetailPage() {
             <MarkdownField
               label="Notes"
               value={trailing}
-              placeholder="Markdown shown below the items…"
+              placeholder="Notes shown below the items…"
               disabled={!contentWritable}
               onChange={setTrailing}
             />
@@ -341,8 +341,8 @@ export function ListDetailPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Move list to trash?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This moves <strong>{data.name}</strong> to the vault's <code>.trash</code> folder. The entities it
-                    references are untouched.
+                    This moves <strong>{data.name}</strong> to the Trash. The items it contains are
+                    untouched.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -591,7 +591,7 @@ function RenameListDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Rename list</DialogTitle>
-          <DialogDescription>Renames the Markdown file in the Lists folder.</DialogDescription>
+          <DialogDescription>Changes the list's name.</DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(event) => {

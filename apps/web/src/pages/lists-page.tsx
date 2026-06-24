@@ -35,7 +35,7 @@ export function ListsPage() {
           <div>
             <h1 className="text-lg font-semibold">Lists</h1>
             <p className="text-xs text-muted-foreground">
-              Curated collections kept as plain Markdown in <code>KizunaShelf/Lists</code>.
+              Curated collections of your items, saved as plain files you own.
             </p>
           </div>
           <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setCreateOpen(true)}>
@@ -119,7 +119,7 @@ function CreateListDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New list</DialogTitle>
-          <DialogDescription>The name becomes the Markdown file name under the Lists folder.</DialogDescription>
+          <DialogDescription>Give your list a name.</DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(event) => {

@@ -139,7 +139,7 @@ export function MetadataEditor({
 
       <div className="mt-4">
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Markdown Body
+          Notes
           <Textarea
             className="min-h-72 font-mono text-xs"
             value={bodyText}

@@ -66,7 +66,7 @@ export function AssetDownloadPanel() {
         <div className="min-w-0">
           <h2 className="text-sm font-semibold">Download remote covers</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Fetch external cover images into the vault so the files are yours.
+            Download cover images so you keep your own copy.
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
