@@ -72,12 +72,19 @@ pub(crate) async fn create_asset_job(
         finished_at: None,
     };
     let cancel = Arc::new(AtomicBool::new(false));
-    state
-        .insert_asset_job(AssetJobRecord {
+    // Only one batch download may run at a time: a second job would allocate its
+    // own concurrency semaphore, so N concurrent jobs mean 4*N parallel downloads
+    // against the same hosts. The check-and-insert is atomic (one lock) so two
+    // simultaneous requests can't both slip through.
+    let inserted = state
+        .insert_asset_job_if_idle(AssetJobRecord {
             job: job.clone(),
             cancel: Arc::clone(&cancel),
         })
         .await;
+    if !inserted {
+        return Err(ApiError::conflict("A download job is already running"));
+    }
 
     let worker_state = state.clone();
     let job_id = job.id.clone();

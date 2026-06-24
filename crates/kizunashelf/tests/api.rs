@@ -1378,6 +1378,13 @@ async fn start_mock_image_server() -> std::net::SocketAddr {
         .route(
             "/missing",
             axum::routing::get(|| async { StatusCode::NOT_FOUND }),
+        )
+        .route(
+            "/slow.png",
+            axum::routing::get(|| async {
+                tokio::time::sleep(Duration::from_millis(300)).await;
+                ([(header::CONTENT_TYPE, "image/png")], PNG_1X1.to_vec())
+            }),
         );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
@@ -1687,6 +1694,45 @@ async fn asset_batch_job_downloads_remote_covers() {
         .unwrap()
         .iter()
         .any(|item| item["id"] == job_id));
+}
+
+#[tokio::test]
+async fn asset_batch_job_rejects_a_second_job_while_one_is_running() {
+    let addr = start_mock_image_server().await;
+    // The slow endpoint keeps the first job in flight long enough to fire a second.
+    let cover = format!("http://{addr}/slow.png");
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+        );
+    });
+
+    let first = request_json(&app, Method::POST, "/api/asset-jobs", Some(json!({}))).await;
+    assert_eq!(first.0, StatusCode::OK, "{}", first.1);
+    let job_id = first.1["id"].as_str().unwrap().to_string();
+
+    // The first job is inserted (queued/running) before its POST returns, so a
+    // second request must be rejected while it is still in flight.
+    let second = request_json(&app, Method::POST, "/api/asset-jobs", Some(json!({}))).await;
+    assert_eq!(second.0, StatusCode::CONFLICT, "{}", second.1);
+
+    // Once the first job finishes, a new job is allowed again.
+    for _ in 0..100 {
+        let polled = request_json(
+            &app,
+            Method::GET,
+            &format!("/api/asset-jobs/{}", urlencoding::encode(&job_id)),
+            None,
+        )
+        .await;
+        if polled.1["status"] == "completed" {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    let third = request_json(&app, Method::POST, "/api/asset-jobs", Some(json!({}))).await;
+    assert_eq!(third.0, StatusCode::OK, "{}", third.1);
 }
 
 #[tokio::test]

@@ -204,11 +204,21 @@ impl AppState {
         format!("job-{}-{}", unix_seconds_now(), counter)
     }
 
-    /// Inserts a new job, pruning the oldest finished jobs beyond the retention
-    /// limit.
-    pub(crate) async fn insert_asset_job(&self, record: AssetJobRecord) {
+    /// Inserts a new job unless one is already queued or running, pruning the
+    /// oldest finished jobs beyond the retention limit. The running-check and the
+    /// insert happen under a single lock so concurrent callers can't both start a
+    /// job. Returns `false` (and inserts nothing) when a job is already in flight.
+    pub(crate) async fn insert_asset_job_if_idle(&self, record: AssetJobRecord) -> bool {
         use crate::contract::AssetDownloadJobStatus;
         let mut jobs = self.asset_jobs.lock().await;
+        if jobs.values().any(|existing| {
+            matches!(
+                existing.job.status,
+                AssetDownloadJobStatus::Queued | AssetDownloadJobStatus::Running
+            )
+        }) {
+            return false;
+        }
         jobs.insert(record.job.id.clone(), record);
         if jobs.len() > MAX_RETAINED_JOBS {
             let mut finished: Vec<(String, String)> = jobs
@@ -227,6 +237,7 @@ impl AppState {
                 jobs.remove(&id);
             }
         }
+        true
     }
 
     /// Applies `update` to the stored job, if it still exists.
