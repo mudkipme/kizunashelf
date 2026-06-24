@@ -6,9 +6,8 @@
  */
 import { z as zod } from 'zod';
 
-export const planQueryEntityTypeDefault = null;
 export const PlanQuery = zod.object({
-  "entityType": zod.string().nullish().default(planQueryEntityTypeDefault).describe('Restrict the plan to one entity type; when omitted, the whole library.')
+  "entityType": zod.string().nullish().describe('Restrict the plan to one entity type; when omitted, the whole library.')
 })
 
 export type PlanQuery = zod.input<typeof PlanQuery>;

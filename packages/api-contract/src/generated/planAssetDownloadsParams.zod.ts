@@ -6,9 +6,8 @@
  */
 import { z as zod } from 'zod';
 
-export const planAssetDownloadsParamsEntityTypeDefault = null;
 export const PlanAssetDownloadsParams = zod.object({
-  "entityType": zod.string().default(planAssetDownloadsParamsEntityTypeDefault).describe('Restrict the plan to one entity type; when omitted, the whole library.')
+  "entityType": zod.string().optional().describe('Restrict the plan to one entity type; when omitted, the whole library.')
 })
 
 export type PlanAssetDownloadsParams = zod.input<typeof PlanAssetDownloadsParams>;

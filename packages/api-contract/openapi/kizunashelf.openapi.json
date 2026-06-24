@@ -1414,8 +1414,7 @@
             "description": "Restrict the plan to one entity type; when omitted, the whole library.",
             "schema": {
               "description": "Restrict the plan to one entity type; when omitted, the whole library.",
-              "type": "string",
-              "default": null
+              "type": "string"
             },
             "style": "form"
           }
@@ -4690,8 +4689,7 @@
             "type": [
               "string",
               "null"
-            ],
-            "default": null
+            ]
           }
         }
       },

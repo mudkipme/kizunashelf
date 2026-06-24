@@ -103,7 +103,7 @@ pub(crate) async fn download_entity_assets(
 #[serde(rename_all = "camelCase")]
 pub(crate) struct PlanQuery {
     /// Restrict the plan to one entity type; when omitted, the whole library.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     entity_type: Option<String>,
 }
 
