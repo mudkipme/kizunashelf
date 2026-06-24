@@ -395,6 +395,61 @@ pub struct AssetDownloadJobListResponse {
     pub jobs: Vec<AssetDownloadJob>,
 }
 
+/// One remote image awaiting download, returned by the `plan` endpoint so a host
+/// (e.g. iOS) can fetch it itself — via a background `URLSession` — instead of
+/// having the core download it through `reqwest`.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadPlanItem {
+    pub entity_id: String,
+    pub entity_title: String,
+    pub entity_type: String,
+    pub field: String,
+    /// For image-list fields, the element's URL (used to derive a stable
+    /// filename); absent for single image fields.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub list_key: Option<String>,
+    pub source_url: String,
+    /// Entity revision at plan time (advisory; ingest re-reads the entity).
+    pub revision: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDownloadPlan {
+    /// Human-readable scope, e.g. `all` or `type:anime`.
+    pub scope: String,
+    pub items: Vec<AssetDownloadPlanItem>,
+}
+
+/// Hands the core one externally-downloaded image to validate, place under the
+/// vault, and write into a single frontmatter field.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetIngestRequest {
+    pub field: String,
+    /// Present iff `field` is an image-list field; the list element's URL.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub list_key: Option<String>,
+    pub source_url: String,
+    /// Absolute host path of the file the client already downloaded. The core
+    /// reads it directly (like `indexCacheDir`) and deletes it afterward.
+    pub source_path: String,
+    /// Content-Type the host observed, used as an image sniff hint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_type: Option<String>,
+    /// Advisory; ingest re-reads the entity rather than enforcing this.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetIngestResponse {
+    pub entity: Entity,
+    pub result: AssetDownloadItemResult,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalProviderSummary {

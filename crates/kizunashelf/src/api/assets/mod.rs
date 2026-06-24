@@ -16,20 +16,29 @@ pub(crate) use job::{cancel_asset_job, create_asset_job, get_asset_job, list_ass
 pub(crate) use util::entity_asset_dir;
 
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, EntityPath};
+use super::mutations::{check_revision, write_entity_raw, EntityPath};
 use super::state::{get_library, require_content_writes, AppState};
-use crate::contract::{AssetDownloadRequest, AssetDownloadResponse, AssetDownloadStatus};
-use crate::library::load_entity;
+use crate::contract::{
+    AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest, AssetDownloadResponse,
+    AssetDownloadStatus, AssetIngestRequest, AssetIngestResponse,
+};
+use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
+use crate::types::FieldType;
 use crate::vfs::normalize_relative;
 use axum::body::Body;
-use axum::extract::{Path as AxumPath, State};
+use axum::extract::{Path as AxumPath, Query, State};
 use axum::http::header;
 use axum::response::Response;
 use axum::Json;
+use schemars::JsonSchema;
+use serde::Deserialize;
 use std::path::Path;
 
-use download::download_entity_core;
-use util::{all_local_asset_paths, content_type_for_extension};
+use download::{download_entity_core, ingest_field_bytes, DownloadContext, IngestField};
+use util::{
+    all_local_asset_paths, content_type_for_extension, entity_local_asset_paths, is_remote_url,
+    value_to_list,
+};
 
 // ----------------------------------------------------------------------------
 // Single-entity download endpoint
@@ -81,6 +90,172 @@ pub(crate) async fn download_entity_assets(
         .ok_or_else(|| ApiError::not_found("Entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(AssetDownloadResponse { entity, results }))
+}
+
+// ----------------------------------------------------------------------------
+// Host-driven download: plan + ingest
+//
+// These let a host (iOS) do the HTTP itself via a background URLSession while the
+// core keeps owning validation, placement, and the frontmatter rewrite.
+// ----------------------------------------------------------------------------
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PlanQuery {
+    /// Restrict the plan to one entity type; when omitted, the whole library.
+    #[serde(default)]
+    entity_type: Option<String>,
+}
+
+/// Enumerates every remote image URL eligible for download. The host fetches each
+/// `source_url` itself and calls `ingest_entity_asset` per result.
+///
+/// Note: unlike the reqwest path, the host follows redirects without per-hop SSRF
+/// re-validation. Acceptable for a local single-user app fetching user-entered
+/// cover URLs; the core still validates the bytes are an image at ingest time.
+pub(crate) async fn plan_asset_downloads(
+    State(state): State<AppState>,
+    Query(query): Query<PlanQuery>,
+) -> ApiResult<AssetDownloadPlan> {
+    let library = get_library(&state).await?;
+    if let Some(entity_type) = query.entity_type.as_deref() {
+        if library.config.type_config(entity_type).is_none() {
+            return Err(ApiError::bad_request("Unknown entity type"));
+        }
+    }
+
+    let mut items = Vec::new();
+    for entity in &library.records {
+        if let Some(entity_type) = query.entity_type.as_deref() {
+            if entity.summary.entity_type != entity_type {
+                continue;
+            }
+        }
+        let Some(type_config) = library.config.type_config(&entity.summary.entity_type) else {
+            continue;
+        };
+        for field in &type_config.fields {
+            let is_list = match field.field_type {
+                FieldType::Image => false,
+                FieldType::ImageList => true,
+                _ => continue,
+            };
+            for url in value_to_list(entity.frontmatter.get(&field.field)) {
+                let url = url.trim();
+                if !is_remote_url(url) {
+                    continue;
+                }
+                items.push(AssetDownloadPlanItem {
+                    entity_id: entity.summary.id.clone(),
+                    entity_title: entity.summary.title.clone(),
+                    entity_type: entity.summary.entity_type.clone(),
+                    field: field.field.clone(),
+                    list_key: is_list.then(|| url.to_string()),
+                    source_url: url.to_string(),
+                    revision: entity.revision.clone(),
+                });
+            }
+        }
+    }
+
+    let scope = query
+        .entity_type
+        .as_deref()
+        .map(|entity_type| format!("type:{entity_type}"))
+        .unwrap_or_else(|| "all".to_string());
+    Ok(Json(AssetDownloadPlan { scope, items }))
+}
+
+/// Validates + places one already-downloaded image and rewrites its frontmatter
+/// field. The entity is re-read fresh so out-of-order ingests don't clobber each
+/// other, and an idempotency guard skips fields the user has since changed.
+pub(crate) async fn ingest_entity_asset(
+    State(state): State<AppState>,
+    AxumPath(path): AxumPath<EntityPath>,
+    Json(request): Json<AssetIngestRequest>,
+) -> ApiResult<AssetIngestResponse> {
+    let library = require_content_writes(&state).await?;
+    let Some(entity) = library
+        .records
+        .iter()
+        .find(|item| item.summary.id == path.id)
+    else {
+        return Err(ApiError::not_found("Entity not found"));
+    };
+    let Some(type_config) = library.config.type_config(&entity.summary.entity_type) else {
+        return Err(ApiError::bad_request("Unknown entity type"));
+    };
+    let Some(field_config) = type_config
+        .fields
+        .iter()
+        .find(|field| field.field == request.field)
+    else {
+        return Err(ApiError::bad_request("Unknown field"));
+    };
+    let is_list = match field_config.field_type {
+        FieldType::Image => false,
+        FieldType::ImageList => true,
+        _ => return Err(ApiError::bad_request("Field is not an image field")),
+    };
+
+    let entity_id = entity.summary.id.clone();
+    let entity_path = entity.summary.path.clone();
+    let asset_root = library.config.resolved_asset_root().to_string();
+    let asset_dir = entity_asset_dir(&asset_root, &entity_path);
+    let all_local = all_local_asset_paths(&library);
+
+    // Read the host-temp file the client downloaded (mirrors `indexCacheDir`'s
+    // direct host-path access), then delete it regardless of outcome.
+    let bytes = tokio::fs::read(&request.source_path)
+        .await
+        .map_err(|error| ApiError::bad_request(&format!("Cannot read downloaded file: {error}")))?;
+    let _ = tokio::fs::remove_file(&request.source_path).await;
+
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let raw = vfs
+        .read_to_string(&entity_path)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {entity_path}: {error}"))?;
+    let mut document = split_markdown_document(&raw);
+    let owned = entity_local_asset_paths(&document.frontmatter, type_config);
+
+    let ctx = DownloadContext {
+        vfs: vfs.as_ref(),
+        asset_dir: &asset_dir,
+        referenced: &all_local,
+        owned: &owned,
+        entity_id: &entity_id,
+    };
+    let content_type = request.content_type.clone().unwrap_or_default();
+    let field = IngestField {
+        name: &request.field,
+        is_list,
+        list_key: request.list_key.as_deref(),
+        source_url: &request.source_url,
+    };
+    let (changed, result) = ingest_field_bytes(
+        &ctx,
+        &mut document.frontmatter,
+        &field,
+        bytes,
+        &content_type,
+    )
+    .await;
+
+    if changed {
+        let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
+        write_entity_raw(vfs.as_ref(), &entity_path, &new_raw).await?;
+        state.invalidate_cache().await;
+    }
+
+    let reloaded = get_library(&state).await?;
+    let record = reloaded
+        .records
+        .iter()
+        .find(|item| item.summary.id == entity_id)
+        .ok_or_else(|| ApiError::not_found("Entity was not indexed"))?;
+    let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
+    Ok(Json(AssetIngestResponse { entity, result }))
 }
 
 // ----------------------------------------------------------------------------

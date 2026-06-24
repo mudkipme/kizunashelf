@@ -1404,6 +1404,135 @@
         }
       }
     },
+    "/api/asset-downloads/plan": {
+      "get": {
+        "operationId": "planAssetDownloads",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "entityType",
+            "description": "Restrict the plan to one entity type; when omitted, the whole library.",
+            "schema": {
+              "description": "Restrict the plan to one entity type; when omitted, the whole library.",
+              "type": "string",
+              "default": null
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDownloadPlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/entities/{id}/assets/ingest": {
+      "post": {
+        "operationId": "ingestEntityAsset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Hands the core one externally-downloaded image to validate, place under the\nvault, and write into a single frontmatter field.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetIngestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/relations": {
       "get": {
         "operationId": "getRelations",
@@ -4551,6 +4680,135 @@
         },
         "required": [
           "id"
+        ]
+      },
+      "PlanQuery": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "description": "Restrict the plan to one entity type; when omitted, the whole library.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        }
+      },
+      "AssetDownloadPlan": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "description": "Human-readable scope, e.g. `all` or `type:anime`.",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadPlanItem"
+            }
+          }
+        },
+        "required": [
+          "scope",
+          "items"
+        ]
+      },
+      "AssetDownloadPlanItem": {
+        "description": "One remote image awaiting download, returned by the `plan` endpoint so a host\n(e.g. iOS) can fetch it itself — via a background `URLSession` — instead of\nhaving the core download it through `reqwest`.",
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string"
+          },
+          "entityTitle": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "listKey": {
+            "description": "For image-list fields, the element's URL (used to derive a stable\nfilename); absent for single image fields.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "revision": {
+            "description": "Entity revision at plan time (advisory; ingest re-reads the entity).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entityId",
+          "entityTitle",
+          "entityType",
+          "field",
+          "sourceUrl",
+          "revision"
+        ]
+      },
+      "AssetIngestRequest": {
+        "description": "Hands the core one externally-downloaded image to validate, place under the\nvault, and write into a single frontmatter field.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "listKey": {
+            "description": "Present iff `field` is an image-list field; the list element's URL.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "sourcePath": {
+            "description": "Absolute host path of the file the client already downloaded. The core\nreads it directly (like `indexCacheDir`) and deletes it afterward.",
+            "type": "string"
+          },
+          "contentType": {
+            "description": "Content-Type the host observed, used as an image sniff hint.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revision": {
+            "description": "Advisory; ingest re-reads the entity rather than enforcing this.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "sourceUrl",
+          "sourcePath"
+        ]
+      },
+      "AssetIngestResponse": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          },
+          "result": {
+            "$ref": "#/components/schemas/AssetDownloadItemResult"
+          }
+        },
+        "required": [
+          "entity",
+          "result"
         ]
       },
       "RelationsQuery": {

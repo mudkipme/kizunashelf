@@ -1569,6 +1569,162 @@ async fn asset_download_handles_image_list_partially() {
 }
 
 #[tokio::test]
+async fn plan_lists_remote_image_fields_only() {
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\ncover_url: https://img.example/cover.jpg\nshots:\n  - https://img.example/a.png\n  - Assets/Taxonomy/Anime/Star Voyager/shots/local.png\n---\nBody\n",
+        );
+    });
+
+    let (status, body) = request_json(&app, Method::GET, "/api/asset-downloads/plan", None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["scope"], "all");
+
+    let items = body["items"].as_array().unwrap();
+    // cover_url (single) + one remote shots element; the local shot is excluded.
+    assert_eq!(items.len(), 2, "{body}");
+
+    let cover = items
+        .iter()
+        .find(|item| item["field"] == "cover_url")
+        .unwrap();
+    assert_eq!(cover["entityId"], "anime:Star Voyager");
+    assert_eq!(cover["sourceUrl"], "https://img.example/cover.jpg");
+    assert!(cover["listKey"].is_null());
+
+    let shot = items.iter().find(|item| item["field"] == "shots").unwrap();
+    assert_eq!(shot["sourceUrl"], "https://img.example/a.png");
+    // List fields carry the element URL as the list key.
+    assert_eq!(shot["listKey"], "https://img.example/a.png");
+
+    let (status, _) = request_json(
+        &app,
+        Method::GET,
+        "/api/asset-downloads/plan?entityType=nope",
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn ingest_places_host_downloaded_file_and_rewrites_single_field() {
+    let (app, temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\ncover_url: https://img.example/cover.jpg\n---\nBody\n",
+        );
+    });
+
+    // The host (iOS) already downloaded the bytes to an app-temp file outside the vault.
+    let source = temp.path().join("ingest-cover.png");
+    fs::write(&source, PNG_1X1).unwrap();
+
+    let id = "anime:Star Voyager";
+    let (status, body) = request_json(
+        &app,
+        Method::POST,
+        &format!("/api/entities/{}/assets/ingest", urlencoding::encode(id)),
+        Some(json!({
+            "field": "cover_url",
+            "sourceUrl": "https://img.example/cover.jpg",
+            "sourcePath": source.to_string_lossy(),
+            "contentType": "image/png",
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["result"]["status"], "downloaded");
+    assert_eq!(
+        body["entity"]["frontmatter"]["cover_url"],
+        "Assets/Taxonomy/Anime/Star Voyager/cover_url.png"
+    );
+    assert!(vault
+        .join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png")
+        .exists());
+    // The host-temp source file is consumed (deleted) by the core.
+    assert!(!source.exists());
+}
+
+#[tokio::test]
+async fn ingest_rewrites_one_list_element() {
+    let (app, temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\nshots:\n  - https://img.example/a.png\n  - https://img.example/b.png\n---\nBody\n",
+        );
+    });
+
+    let source = temp.path().join("shot-a.png");
+    fs::write(&source, PNG_1X1).unwrap();
+
+    let id = "anime:Star Voyager";
+    let (status, body) = request_json(
+        &app,
+        Method::POST,
+        &format!("/api/entities/{}/assets/ingest", urlencoding::encode(id)),
+        Some(json!({
+            "field": "shots",
+            "listKey": "https://img.example/a.png",
+            "sourceUrl": "https://img.example/a.png",
+            "sourcePath": source.to_string_lossy(),
+            "contentType": "image/png",
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["result"]["status"], "downloaded");
+
+    let shots = body["entity"]["frontmatter"]["shots"].as_array().unwrap();
+    // The ingested element became a local hashed path; the other keeps its URL.
+    assert!(shots[0]
+        .as_str()
+        .unwrap()
+        .starts_with("Assets/Taxonomy/Anime/Star Voyager/shots/"));
+    assert!(shots[0].as_str().unwrap().ends_with(".png"));
+    assert_eq!(shots[1], "https://img.example/b.png");
+}
+
+#[tokio::test]
+async fn ingest_skips_when_source_url_no_longer_matches() {
+    let (app, temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\ncover_url: https://img.example/new.jpg\n---\nBody\n",
+        );
+    });
+
+    let source = temp.path().join("stale.png");
+    fs::write(&source, PNG_1X1).unwrap();
+
+    let id = "anime:Star Voyager";
+    let (status, body) = request_json(
+        &app,
+        Method::POST,
+        &format!("/api/entities/{}/assets/ingest", urlencoding::encode(id)),
+        Some(json!({
+            "field": "cover_url",
+            // A download that began against a URL the user has since changed.
+            "sourceUrl": "https://img.example/old.jpg",
+            "sourcePath": source.to_string_lossy(),
+            "contentType": "image/png",
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["result"]["status"], "skipped");
+    // Frontmatter keeps the user's current value; nothing is written.
+    assert_eq!(
+        body["entity"]["frontmatter"]["cover_url"],
+        "https://img.example/new.jpg"
+    );
+    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    // Even on skip, the stale temp file is cleaned up.
+    assert!(!source.exists());
+}
+
+#[tokio::test]
 async fn asset_download_avoids_overwriting_another_entitys_file() {
     let addr = start_mock_image_server().await;
     let cover = format!("http://{addr}/image.png");

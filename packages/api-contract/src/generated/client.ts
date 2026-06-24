@@ -20,6 +20,10 @@ import type {
   AssetDownloadJobRequest
 } from './assetDownloadJobRequest.zod';
 
+import {
+  AssetDownloadPlan
+} from './assetDownloadPlan.zod';
+
 import type {
   AssetDownloadRequest
 } from './assetDownloadRequest.zod';
@@ -27,6 +31,14 @@ import type {
 import {
   AssetDownloadResponse
 } from './assetDownloadResponse.zod';
+
+import type {
+  AssetIngestRequest
+} from './assetIngestRequest.zod';
+
+import {
+  AssetIngestResponse
+} from './assetIngestResponse.zod';
 
 import {
   CalendarPlanningResponse
@@ -123,6 +135,10 @@ import {
 import {
   PathSuggestionsResponse
 } from './pathSuggestionsResponse.zod';
+
+import type {
+  PlanAssetDownloadsParams
+} from './planAssetDownloadsParams.zod';
 
 import {
   RawConfigResponse
@@ -1074,6 +1090,72 @@ export const cancelAssetJob = async (id: string, options?: RequestInit, fetchFn?
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? AssetDownloadJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getPlanAssetDownloadsUrl = (params?: PlanAssetDownloadsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/asset-downloads/plan?${stringifiedParams}` : `/api/asset-downloads/plan`
+}
+
+export const planAssetDownloads = async (params?: PlanAssetDownloadsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetDownloadPlan> => {
+
+  const res = await (fetchFn ?? fetch)(getPlanAssetDownloadsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetDownloadPlan.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getIngestEntityAssetUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/assets/ingest`
+}
+
+export const ingestEntityAsset = async (id: string,
+    assetIngestRequest: AssetIngestRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetIngestResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getIngestEntityAssetUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(assetIngestRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetIngestResponse.parse(parsedBody) : parsedBody
   return data
 }
 

@@ -1,7 +1,7 @@
 use super::analytics::{analytics, cleanup_queues, stats};
 use super::assets::{
-    cancel_asset_job, create_asset_job, download_entity_assets, get_asset_job, list_asset_jobs,
-    serve_asset,
+    cancel_asset_job, create_asset_job, download_entity_assets, get_asset_job, ingest_entity_asset,
+    list_asset_jobs, plan_asset_downloads, serve_asset,
 };
 use super::entities::{entities, entity_dates, entity_detail};
 use super::external::{external_provider_catalog, external_search};
@@ -15,13 +15,13 @@ use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
 use crate::calendar::{CalendarPlanningResponse, EntityDatesResponse};
 use crate::contract::{
-    AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadResponse,
-    CalendarResponse, CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse,
-    DeleteEntityResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
-    ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
-    HomeResponse, LanguagesResponse, PathSuggestionsResponse, RawConfigResponse,
-    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, StatsResponse,
-    VaultTemplatesResponse,
+    AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
+    AssetDownloadResponse, AssetIngestResponse, CalendarResponse, CapabilitiesResponse,
+    CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse, EntityDetailResponse,
+    EntityListResponse, EntityMutationResponse, ErrorResponse, ExternalProviderCatalogResponse,
+    ExternalSearchResponse, HealthResponse, HomeResponse, LanguagesResponse,
+    PathSuggestionsResponse, RawConfigResponse, RelationGroupsResponse, RelationListResponse,
+    SettingsConfigResponse, StatsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -355,6 +355,26 @@ fn api_router() -> ApiRouter<AppState> {
             post_with(cancel_asset_job, |op| {
                 op.id("cancelAssetJob")
                     .response::<200, Json<AssetDownloadJob>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/asset-downloads/plan",
+            get_with(plan_asset_downloads, |op| {
+                op.id("planAssetDownloads")
+                    .response::<200, Json<AssetDownloadPlan>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/assets/ingest",
+            post_with(ingest_entity_asset, |op| {
+                op.id("ingestEntityAsset")
+                    .response::<200, Json<AssetIngestResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),

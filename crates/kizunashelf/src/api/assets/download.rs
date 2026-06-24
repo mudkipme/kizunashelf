@@ -50,8 +50,7 @@ pub(super) async fn download_entity_core(
         .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
     let mut document = split_markdown_document(&raw);
 
-    let mut ctx = DownloadContext {
-        client,
+    let ctx = DownloadContext {
         vfs,
         asset_dir: &asset_dir,
         referenced: all_local,
@@ -62,8 +61,14 @@ pub(super) async fn download_entity_core(
     let mut results = Vec::new();
     let mut changed = false;
     for field in fields {
-        let field_changed =
-            process_field(&mut ctx, &mut document.frontmatter, &field, &mut results).await?;
+        let field_changed = process_field(
+            client,
+            &ctx,
+            &mut document.frontmatter,
+            &field,
+            &mut results,
+        )
+        .await?;
         changed = changed || field_changed;
     }
 
@@ -75,15 +80,14 @@ pub(super) async fn download_entity_core(
     Ok(results)
 }
 
-struct DownloadContext<'a> {
-    client: &'a reqwest::Client,
-    vfs: &'a dyn Vfs,
-    asset_dir: &'a str,
+pub(super) struct DownloadContext<'a> {
+    pub(super) vfs: &'a dyn Vfs,
+    pub(super) asset_dir: &'a str,
     /// All local asset paths across the library (collision detection).
-    referenced: &'a HashSet<String>,
+    pub(super) referenced: &'a HashSet<String>,
     /// Local asset paths owned by the current entity (safe to overwrite).
-    owned: &'a HashSet<String>,
-    entity_id: &'a str,
+    pub(super) owned: &'a HashSet<String>,
+    pub(super) entity_id: &'a str,
 }
 
 struct ImageField {
@@ -107,7 +111,8 @@ fn image_fields(type_config: &EntityTypeConfig, only: Option<&[String]>) -> Vec<
 /// Downloads remote URLs for one field, rewriting `frontmatter` in place.
 /// Returns whether the frontmatter value changed.
 async fn process_field(
-    ctx: &mut DownloadContext<'_>,
+    client: &reqwest::Client,
+    ctx: &DownloadContext<'_>,
     frontmatter: &mut Map<String, Value>,
     field: &ImageField,
     results: &mut Vec<AssetDownloadItemResult>,
@@ -130,7 +135,7 @@ async fn process_field(
                 rewritten.push(element);
                 continue;
             }
-            match download_to_asset(ctx, &field.name, Some(url), url).await {
+            match download_to_asset(client, ctx, &field.name, Some(url), url).await {
                 Ok(outcome) => {
                     results.push(downloaded(&field.name, url, &outcome));
                     rewritten.push(outcome.path);
@@ -161,7 +166,7 @@ async fn process_field(
             results.push(skipped(&field.name, &url, skip_reason(&url)));
             return Ok(false);
         }
-        match download_to_asset(ctx, &field.name, None, &url).await {
+        match download_to_asset(client, ctx, &field.name, None, &url).await {
             Ok(outcome) => {
                 results.push(downloaded(&field.name, &url, &outcome));
                 frontmatter.insert(field.name.clone(), Value::String(outcome.path));
@@ -184,13 +189,25 @@ struct AssetOutcome {
 /// Downloads a single URL and writes it under the entity's asset directory,
 /// applying the cross-entity collision rule.
 async fn download_to_asset(
+    client: &reqwest::Client,
     ctx: &DownloadContext<'_>,
     field_name: &str,
     list_key: Option<&str>,
     url: &str,
 ) -> Result<AssetOutcome, DownloadError> {
-    let asset = download_one(ctx.client, url).await?;
+    let asset = download_one(client, url).await?;
+    place_asset(ctx, field_name, list_key, asset).await
+}
 
+/// Writes an already-fetched asset under the entity's asset directory, applying
+/// the cross-entity collision rule. Shared by the reqwest path and the ingest
+/// path (where an iOS client fetched the bytes via a background URLSession).
+async fn place_asset(
+    ctx: &DownloadContext<'_>,
+    field_name: &str,
+    list_key: Option<&str>,
+    asset: DownloadedAsset,
+) -> Result<AssetOutcome, DownloadError> {
     // Compute the intended vault-relative destination.
     let (dir, stem) = match list_key {
         Some(key) => (format!("{}/{}", ctx.asset_dir, field_name), short_hash(key)),
@@ -215,6 +232,74 @@ async fn download_to_asset(
         path: relative,
         conflict_resolved,
     })
+}
+
+/// Identifies the single image field an ingest targets.
+pub(super) struct IngestField<'a> {
+    pub(super) name: &'a str,
+    pub(super) is_list: bool,
+    /// Stable key for list-field filenames (the element URL); `None` for single
+    /// image fields.
+    pub(super) list_key: Option<&'a str>,
+    /// The remote URL the host downloaded, used for the idempotency guard.
+    pub(super) source_url: &'a str,
+}
+
+/// Ingests externally-downloaded bytes for ONE field: validates + places the file
+/// and rewrites that field in `frontmatter`. Honors an idempotency guard so a
+/// replayed or out-of-order ingest won't clobber a value the user has since
+/// changed. Returns whether the frontmatter changed and the per-field result.
+pub(super) async fn ingest_field_bytes(
+    ctx: &DownloadContext<'_>,
+    frontmatter: &mut Map<String, Value>,
+    field: &IngestField<'_>,
+    bytes: Vec<u8>,
+    content_type: &str,
+) -> (bool, AssetDownloadItemResult) {
+    let source_url = field.source_url;
+    let still_present = if field.is_list {
+        value_to_list(frontmatter.get(field.name))
+            .iter()
+            .any(|value| value.trim() == source_url)
+    } else {
+        frontmatter
+            .get(field.name)
+            .and_then(Value::as_str)
+            .is_some_and(|value| value.trim() == source_url)
+    };
+    if !still_present {
+        return (
+            false,
+            skipped(field.name, source_url, "Source URL is no longer present"),
+        );
+    }
+
+    let asset = match process_downloaded_bytes(bytes, content_type, source_url) {
+        Ok(asset) => asset,
+        Err(error) => return (false, failed(field.name, source_url, &error.to_string())),
+    };
+    let outcome = match place_asset(ctx, field.name, field.list_key, asset).await {
+        Ok(outcome) => outcome,
+        Err(error) => return (false, failed(field.name, source_url, &error.to_string())),
+    };
+
+    if field.is_list {
+        let rewritten: Vec<Value> = value_to_list(frontmatter.get(field.name))
+            .into_iter()
+            .map(|element| {
+                if element.trim() == source_url {
+                    Value::String(outcome.path.clone())
+                } else {
+                    Value::String(element)
+                }
+            })
+            .collect();
+        frontmatter.insert(field.name.to_string(), Value::Array(rewritten));
+    } else {
+        frontmatter.insert(field.name.to_string(), Value::String(outcome.path.clone()));
+    }
+    let result = downloaded(field.name, source_url, &outcome);
+    (true, result)
 }
 
 struct DownloadedAsset {
@@ -272,22 +357,32 @@ async fn download_one(
         .headers()
         .get(header::CONTENT_TYPE)
         .and_then(|value| value.to_str().ok())
-        .map(|value| {
-            value
-                .split(';')
-                .next()
-                .unwrap_or(value)
-                .trim()
-                .to_lowercase()
-        })
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .to_string();
     let bytes = response
         .bytes()
         .await
         .map_err(|error| DownloadError::Request(error.to_string()))?;
+    process_downloaded_bytes(bytes.to_vec(), &content_type, url)
+}
+
+/// Validates already-downloaded bytes are an image within the size limit and
+/// resolves the file extension. Shared by the reqwest path and the ingest path
+/// (where an iOS client fetched the bytes via a background URLSession).
+fn process_downloaded_bytes(
+    bytes: Vec<u8>,
+    content_type: &str,
+    url: &str,
+) -> Result<DownloadedAsset, DownloadError> {
     if bytes.len() as u64 > MAX_ASSET_BYTES {
         return Err(DownloadError::TooLarge);
     }
+    let content_type = content_type
+        .split(';')
+        .next()
+        .unwrap_or(content_type)
+        .trim()
+        .to_ascii_lowercase();
     let sniffed = sniff_image_ext(&bytes);
     if !content_type.starts_with("image/") && sniffed.is_none() {
         return Err(DownloadError::NotAnImage);
@@ -297,10 +392,7 @@ async fn download_one(
         .or_else(|| sniffed.map(str::to_string))
         .or_else(|| extension_from_url(url))
         .unwrap_or_else(|| "img".to_string());
-    Ok(DownloadedAsset {
-        bytes: bytes.to_vec(),
-        ext,
-    })
+    Ok(DownloadedAsset { bytes, ext })
 }
 
 /// Writes bytes atomically under the vault. Containment and the backend-specific
