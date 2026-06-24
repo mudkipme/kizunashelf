@@ -10,6 +10,7 @@ use super::handlers::{
     raw_settings_config, refresh, relation_groups, relations, save_raw_settings_config,
     save_settings_config, settings_config, vault_templates,
 };
+use super::lists::{add_list_item, create_list, delete_list, get_list, get_lists, update_list};
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
@@ -17,11 +18,12 @@ use crate::calendar::{CalendarPlanningResponse, EntityDatesResponse};
 use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
     AssetDownloadResponse, AssetIngestResponse, CalendarResponse, CapabilitiesResponse,
-    CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse, EntityDetailResponse,
-    EntityListResponse, EntityMutationResponse, ErrorResponse, ExternalProviderCatalogResponse,
-    ExternalSearchResponse, HealthResponse, HomeResponse, LanguagesResponse,
-    PathSuggestionsResponse, RawConfigResponse, RelationGroupsResponse, RelationListResponse,
-    SettingsConfigResponse, StatsResponse, VaultTemplatesResponse,
+    CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse, DeleteListResponse,
+    EntityDetailResponse, EntityListResponse, EntityMutationResponse, ErrorResponse,
+    ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse, HomeResponse,
+    LanguagesResponse, ListDetail, ListsResponse, PathSuggestionsResponse, RawConfigResponse,
+    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, StatsResponse,
+    VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -392,6 +394,60 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(relation_groups, |op| {
                 op.id("getRelationGroups")
                     .response::<200, Json<RelationGroupsResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/lists",
+            get_with(get_lists, |op| {
+                op.id("getLists")
+                    .response::<200, Json<ListsResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .post_with(create_list, |op| {
+                op.id("createList")
+                    .response::<200, Json<ListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/lists/{id}",
+            get_with(get_list, |op| {
+                op.id("getList")
+                    .response::<200, Json<ListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .post_with(update_list, |op| {
+                op.id("updateList")
+                    .response::<200, Json<ListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .delete_with(delete_list, |op| {
+                op.id("deleteList")
+                    .response::<200, Json<DeleteListResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/lists/{id}/items",
+            post_with(add_list_item, |op| {
+                op.id("addListItem")
+                    .response::<200, Json<ListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )

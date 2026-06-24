@@ -7,6 +7,7 @@ pub mod dates;
 pub mod entities;
 pub mod languages;
 pub mod library;
+pub mod lists;
 pub mod relations;
 pub mod secrets;
 pub mod templates;

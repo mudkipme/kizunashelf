@@ -27,6 +27,7 @@ pub use frontmatter::{
     serialize_markdown_document, split_markdown_document, wikilink_regex, MarkdownDocument,
 };
 pub use read::read_library;
+pub use relations::{find_target, normalized_entity_basename_index};
 
 pub(crate) use parse::{file_revision, load_entity};
 pub(crate) use read::{compute_listing_fingerprint, read_library_cached};

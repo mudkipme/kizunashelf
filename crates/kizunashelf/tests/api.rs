@@ -1979,3 +1979,131 @@ async fn broken_asset_cleanup_queue_flags_missing_files() {
         .iter()
         .any(|queue| queue["id"] == "broken-asset"));
 }
+
+#[tokio::test]
+async fn lists_crud_add_reorder_and_delete() {
+    let server = TestServer::new();
+    let app = &server.app;
+
+    // No lists yet.
+    let empty = request_json(app, Method::GET, "/api/lists", None).await;
+    assert_eq!(empty.0, StatusCode::OK, "{}", empty.1);
+    assert_eq!(empty.1["items"].as_array().unwrap().len(), 0);
+
+    // Create a list (plain Markdown under KizunaShelf/Lists).
+    let created = request_json(
+        app,
+        Method::POST,
+        "/api/lists",
+        Some(json!({ "name": "Watchlist" })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+    assert_eq!(created.1["id"], "Watchlist");
+    assert_eq!(created.1["path"], "KizunaShelf/Lists/Watchlist.md");
+    assert_eq!(created.1["items"].as_array().unwrap().len(), 0);
+
+    // Add an entity from "another page" (no revision needed). The server resolves
+    // the entity and writes the disambiguated wikilink.
+    let added = request_json(
+        app,
+        Method::POST,
+        "/api/lists/Watchlist/items",
+        Some(json!({ "entityId": "anime:Star Voyager" })),
+    )
+    .await;
+    assert_eq!(added.0, StatusCode::OK, "{}", added.1);
+    assert_eq!(added.1["items"].as_array().unwrap().len(), 1);
+    assert_eq!(added.1["items"][0]["text"], "[[Star Voyager]]");
+    assert_eq!(added.1["items"][0]["entity"]["id"], "anime:Star Voyager");
+
+    // Adding the same entity again is idempotent.
+    let again = request_json(
+        app,
+        Method::POST,
+        "/api/lists/Watchlist/items",
+        Some(json!({ "entityId": "anime:Star Voyager" })),
+    )
+    .await;
+    assert_eq!(again.0, StatusCode::OK, "{}", again.1);
+    assert_eq!(again.1["items"].as_array().unwrap().len(), 1);
+
+    // Add a second entity.
+    let added2 = request_json(
+        app,
+        Method::POST,
+        "/api/lists/Watchlist/items",
+        Some(json!({ "entityId": "games:Moon Quest" })),
+    )
+    .await;
+    assert_eq!(added2.0, StatusCode::OK, "{}", added2.1);
+    assert_eq!(added2.1["items"].as_array().unwrap().len(), 2);
+
+    // Read the list back and capture the revision for the optimistic write.
+    let detail = request_json(app, Method::GET, "/api/lists/Watchlist", None).await;
+    assert_eq!(detail.0, StatusCode::OK, "{}", detail.1);
+    let revision = detail.1["revision"].as_str().unwrap().to_string();
+
+    // Full rewrite: reorder, switch to an ordered list, set description + trailing.
+    let update_body = json!({
+        "revision": revision,
+        "description": "My picks",
+        "trailing": "More below.",
+        "ordered": true,
+        "items": [
+            { "text": "[[Moon Quest]]" },
+            { "text": "[[Star Voyager]]" }
+        ]
+    });
+    let updated = request_json(
+        app,
+        Method::POST,
+        "/api/lists/Watchlist",
+        Some(update_body.clone()),
+    )
+    .await;
+    assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
+    assert_eq!(updated.1["ordered"], true);
+    assert_eq!(updated.1["description"], "My picks");
+    assert_eq!(updated.1["items"][0]["entity"]["id"], "games:Moon Quest");
+    assert_eq!(updated.1["items"][1]["entity"]["id"], "anime:Star Voyager");
+
+    // The stale revision is now rejected.
+    let stale = request_json(app, Method::POST, "/api/lists/Watchlist", Some(update_body)).await;
+    assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
+
+    // The index reflects the summary (ordered + item count + description).
+    let index = request_json(app, Method::GET, "/api/lists", None).await;
+    assert_eq!(index.1["items"].as_array().unwrap().len(), 1);
+    assert_eq!(index.1["items"][0]["itemCount"], 2);
+    assert_eq!(index.1["items"][0]["ordered"], true);
+    assert_eq!(index.1["items"][0]["description"], "My picks");
+
+    // Delete moves it to the trash; the list is then gone.
+    let deleted = request_json(app, Method::DELETE, "/api/lists/Watchlist", None).await;
+    assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);
+    assert!(deleted.1["backupPath"]
+        .as_str()
+        .unwrap()
+        .starts_with(".trash/"));
+    let missing = request_json(app, Method::GET, "/api/lists/Watchlist", None).await;
+    assert_eq!(missing.0, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn lists_writes_blocked_in_read_only_mode() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_fixture_vault(&vault);
+    write_vault_config(&vault, &json!({ "taxonomyRoot": "Taxonomy", "types": [] }));
+    let app = inline_router(&vault, true, false);
+
+    let created = request_json(
+        &app,
+        Method::POST,
+        "/api/lists",
+        Some(json!({ "name": "Watchlist" })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::FORBIDDEN, "{}", created.1);
+}

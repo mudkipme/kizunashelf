@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
   DownloadIcon,
   FilePenLineIcon,
+  ListPlusIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  PlusIcon,
   SearchIcon,
   Trash2Icon,
   XIcon,
@@ -14,13 +16,16 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage, isConflictError } from "@/api/client";
 import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
+import { addItemToList, addList } from "@/api/lists";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import {
   capabilitiesQuery,
   configQuery,
   entityDatesQuery,
   entityQuery,
+  listsQuery,
   providerCatalogQuery,
+  queryKeys,
 } from "@/api/queries";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
@@ -77,6 +82,7 @@ export function EntityPage() {
   const [error, setError] = useState<string>();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
+  const [addToListOpen, setAddToListOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const loading =
@@ -282,11 +288,20 @@ export function EntityPage() {
                   showDownloadCover={canDownloadCover}
                   onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
                   onRename={() => setRenameOpen(true)}
+                  onAddToList={() => setAddToListOpen(true)}
                   onMatch={() => external.setOpen(true)}
                   onDownloadCover={downloadCover}
                   onDelete={deleteCurrentEntity}
                 />
               }
+            />
+            <AddToListDialog
+              open={addToListOpen}
+              onOpenChange={setAddToListOpen}
+              entityId={entity.id}
+              entityName={entityTitle(entity, language)}
+              contentWritable={contentWritable}
+              onError={setError}
             />
           </>
         ) : (
@@ -306,6 +321,7 @@ function EntityActions({
   showDownloadCover,
   onEdit,
   onRename,
+  onAddToList,
   onMatch,
   onDownloadCover,
   onDelete,
@@ -316,6 +332,7 @@ function EntityActions({
   showDownloadCover: boolean;
   onEdit: () => void;
   onRename: () => void;
+  onAddToList: () => void;
   onMatch: () => void;
   onDownloadCover: () => void;
   onDelete: () => void;
@@ -340,6 +357,10 @@ function EntityActions({
           <DropdownMenuItem onSelect={onRename} disabled={!contentWritable || saving}>
             <FilePenLineIcon />
             Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onAddToList} disabled={!contentWritable}>
+            <ListPlusIcon />
+            Add to list
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onMatch}>
             <SearchIcon />
@@ -386,6 +407,146 @@ function EntityActions({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+function AddToListDialog({
+  open,
+  onOpenChange,
+  entityId,
+  entityName,
+  contentWritable,
+  onError,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  entityId: string;
+  entityName: string;
+  contentWritable: boolean;
+  onError: (message?: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const lists = useQuery({ ...listsQuery(), enabled: open });
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [pendingId, setPendingId] = useState<string>();
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setAddedIds(new Set());
+      setNewName("");
+    }
+  }, [open]);
+
+  const newNameError = newName.trim() ? basenameValidationError(normalizeBasename(newName)) : undefined;
+  const items = lists.data?.items ?? [];
+
+  async function add(listId: string) {
+    setPendingId(listId);
+    onError(undefined);
+    try {
+      await addItemToList(listId, { entityId });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
+      ]);
+      setAddedIds((current) => new Set(current).add(listId));
+    } catch (error) {
+      onError(errorMessage(error));
+    } finally {
+      setPendingId(undefined);
+    }
+  }
+
+  async function createAndAdd() {
+    const name = normalizeBasename(newName);
+    if (!name.trim() || newNameError) return;
+    setCreating(true);
+    onError(undefined);
+    try {
+      const created = await addList({ name });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+      setNewName("");
+      await add(created.id);
+    } catch (error) {
+      onError(errorMessage(error));
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add to list</DialogTitle>
+          <DialogDescription className="truncate">Add {entityName} to one of your lists.</DialogDescription>
+        </DialogHeader>
+        <div className="flex max-h-72 flex-col gap-1 overflow-auto">
+          {lists.isPending ? (
+            <p className="p-3 text-center text-sm text-muted-foreground">Loading</p>
+          ) : items.length === 0 ? (
+            <p className="p-3 text-center text-sm text-muted-foreground">No lists yet. Create one below.</p>
+          ) : (
+            items.map((list) => {
+              const added = addedIds.has(list.id);
+              return (
+                <div key={list.id} className="flex items-center gap-2 rounded-md p-1">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{list.name}</span>
+                  {added ? (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <CheckIcon className="size-4" />
+                      Added
+                    </span>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={!contentWritable || pendingId === list.id}
+                      onClick={() => void add(list.id)}
+                    >
+                      <PlusIcon data-icon="inline-start" />
+                      Add
+                    </Button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void createAndAdd();
+          }}
+          className="flex flex-col gap-2 border-t pt-3"
+        >
+          <label className="text-sm font-medium">New list</label>
+          <div className="flex gap-2">
+            <Input
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              placeholder="Watchlist"
+              disabled={!contentWritable || creating}
+              aria-invalid={Boolean(newNameError)}
+            />
+            <Button type="submit" disabled={!contentWritable || creating || !newName.trim() || Boolean(newNameError)}>
+              <PlusIcon data-icon="inline-start" />
+              {creating ? "Creating" : "Create & add"}
+            </Button>
+          </div>
+          {newNameError ? <p className="text-xs text-destructive">{newNameError}</p> : null}
+        </form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <XIcon data-icon="inline-start" />
+            Done
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
