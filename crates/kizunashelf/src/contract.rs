@@ -296,6 +296,106 @@ pub struct DeleteEntityResponse {
     pub backup_path: String,
 }
 
+/// One row in the lists index. `description` is the prose above the first list;
+/// `itemCount` and `ordered` summarize the list without its full contents.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListSummary {
+    /// Stable identifier: the list file's basename (without `.md`).
+    pub id: String,
+    /// Display name (the basename).
+    pub name: String,
+    /// Vault-relative path of the Markdown file.
+    pub path: String,
+    pub description: String,
+    pub item_count: usize,
+    pub ordered: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListsResponse {
+    pub items: Vec<ListSummary>,
+}
+
+/// One item of a list. `text` is the raw Markdown content after the list marker
+/// (preserving any annotation); `target` is the first wikilink target in it; and
+/// `entity` is the resolved entity when the target matches an indexed note. An
+/// unresolved item keeps its `text`/`target` and a `null` `entity`.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListItem {
+    pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entity: Option<EntitySummary>,
+}
+
+/// A list's full editable state: description, the resolved items of the first
+/// list, the ordered flag, and the trailing Markdown. `revision` guards writes.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListDetail {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub description: String,
+    pub items: Vec<ListItem>,
+    pub ordered: bool,
+    pub trailing: String,
+    pub revision: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateListRequest {
+    pub name: String,
+}
+
+/// One item as supplied by the client on a full list rewrite. Only the raw `text`
+/// is sent; the server re-derives the target/entity on the next read.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListItemInput {
+    pub text: String,
+}
+
+/// Full rewrite of a list (reorder, ordered toggle, description/trailing edits,
+/// item removal). The server renders the whole body from these parts, so the item
+/// order in `items` is authoritative.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateListRequest {
+    pub revision: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub trailing: String,
+    #[serde(default)]
+    pub ordered: bool,
+    #[serde(default)]
+    pub items: Vec<ListItemInput>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rename_to: Option<String>,
+}
+
+/// Adds a single entity to a list's first list block. Used cross-page (from an
+/// entity detail page), so it carries no client revision — it reads the file
+/// fresh, appends, and writes. The server computes the disambiguated wikilink.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AddListItemRequest {
+    pub entity_id: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteListResponse {
+    pub deleted_id: String,
+    pub backup_path: String,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AssetDownloadRequest {

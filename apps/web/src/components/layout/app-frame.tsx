@@ -8,6 +8,7 @@ import {
   ClipboardCheckIcon,
   DatabaseIcon,
   HomeIcon,
+  ListIcon,
   type LucideIcon,
   Link2Icon,
   MenuIcon,
@@ -333,6 +334,9 @@ function SidebarContent({
         </SidebarNavLink>
         <SidebarNavLink to="/relations" icon={Link2Icon} onNavigate={onNavigate}>
           Relations
+        </SidebarNavLink>
+        <SidebarNavLink to="/lists" icon={ListIcon} onNavigate={onNavigate}>
+          Lists
         </SidebarNavLink>
       </section>
 

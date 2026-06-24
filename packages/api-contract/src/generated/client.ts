@@ -4,6 +4,10 @@
  * KizunaShelf API
  * OpenAPI spec version: 0.5.0
  */
+import type {
+  AddListItemRequest
+} from './addListItemRequest.zod';
+
 import {
   AnalyticsResponse
 } from './analyticsResponse.zod';
@@ -65,12 +69,20 @@ import type {
 } from './createEntityRequest.zod';
 
 import type {
+  CreateListRequest
+} from './createListRequest.zod';
+
+import type {
   DeleteEntityRequest
 } from './deleteEntityRequest.zod';
 
 import {
   DeleteEntityResponse
 } from './deleteEntityResponse.zod';
+
+import {
+  DeleteListResponse
+} from './deleteListResponse.zod';
 
 import {
   EntityDatesResponse
@@ -133,6 +145,14 @@ import {
 } from './languagesResponse.zod';
 
 import {
+  ListDetail
+} from './listDetail.zod';
+
+import {
+  ListsResponse
+} from './listsResponse.zod';
+
+import {
   PathSuggestionsResponse
 } from './pathSuggestionsResponse.zod';
 
@@ -175,6 +195,10 @@ import {
 import type {
   UpdateEntityRequest
 } from './updateEntityRequest.zod';
+
+import type {
+  UpdateListRequest
+} from './updateListRequest.zod';
 
 import {
   VaultTemplatesResponse
@@ -1221,5 +1245,181 @@ export const getRelationGroups = async ( options?: RequestInit, fetchFn?: typeof
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? RelationGroupsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetListsUrl = () => {
+
+
+
+
+  return `/api/lists`
+}
+
+export const getLists = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetListsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ListsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCreateListUrl = () => {
+
+
+
+
+  return `/api/lists`
+}
+
+export const createList = async (createListRequest: CreateListRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getCreateListUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createListRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetListUrl = (id: string,) => {
+
+
+
+
+  return `/api/lists/${encodeURIComponent(String(id))}`
+}
+
+export const getList = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getGetListUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getUpdateListUrl = (id: string,) => {
+
+
+
+
+  return `/api/lists/${encodeURIComponent(String(id))}`
+}
+
+export const updateList = async (id: string,
+    updateListRequest: UpdateListRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getUpdateListUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateListRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getDeleteListUrl = (id: string,) => {
+
+
+
+
+  return `/api/lists/${encodeURIComponent(String(id))}`
+}
+
+export const deleteList = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<DeleteListResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getDeleteListUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? DeleteListResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getAddListItemUrl = (id: string,) => {
+
+
+
+
+  return `/api/lists/${encodeURIComponent(String(id))}/items`
+}
+
+export const addListItem = async (id: string,
+    addListItemRequest: AddListItemRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getAddListItemUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(addListItemRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ListDetail.parse(parsedBody) : parsedBody
   return data
 }

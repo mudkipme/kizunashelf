@@ -4,6 +4,7 @@ mod entities;
 mod error;
 pub(crate) mod external;
 mod handlers;
+mod lists;
 mod mutations;
 mod path_suggestions;
 mod router;

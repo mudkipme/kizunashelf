@@ -211,7 +211,7 @@ fn rewrite_asset_prefix(frontmatter: &mut Map<String, Value>, old_dir: &str, new
 /// Moves an entity's Markdown file into the vault's `.trash` folder, mirroring
 /// Obsidian's local trash. Returns the vault-relative trash path. Disambiguates
 /// name collisions by appending ` 1`, ` 2`, … before the extension.
-async fn move_to_trash(vfs: &dyn Vfs, source_relative: &str) -> Result<String> {
+pub(super) async fn move_to_trash(vfs: &dyn Vfs, source_relative: &str) -> Result<String> {
     let file_name = source_relative
         .rsplit('/')
         .next()
@@ -293,7 +293,7 @@ fn apply_frontmatter_patch(target: &mut Map<String, Value>, patch: Map<String, V
     }
 }
 
-fn sanitize_basename(value: &str) -> Result<String> {
+pub(super) fn sanitize_basename(value: &str) -> Result<String> {
     let basename = value.trim();
     if basename.is_empty() {
         anyhow::bail!("Entity filename cannot be empty");

@@ -20,6 +20,7 @@ import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import { getProviderCatalog } from "@/api/external";
+import { fetchList, fetchLists } from "@/api/lists";
 import { getLanguages, getRawSettingsConfig, getSettingsConfig, getVaultTemplates } from "@/api/settings";
 
 export const queryKeys = {
@@ -34,6 +35,8 @@ export const queryKeys = {
   entityDates: (id: string) => ["entityDates", id] as const,
   home: ["home"] as const,
   languages: ["languages"] as const,
+  lists: ["lists"] as const,
+  list: (id: string) => ["list", id] as const,
   providerCatalog: ["providerCatalog"] as const,
   relationGroups: ["relationGroups"] as const,
   settingsConfig: ["settingsConfig"] as const,
@@ -108,6 +111,20 @@ export function entityDatesQuery(id: string) {
   return queryOptions({
     queryKey: queryKeys.entityDates(id),
     queryFn: ({ signal }) => getEntityDates(id, { signal }, apiFetch),
+  });
+}
+
+export function listsQuery() {
+  return queryOptions({
+    queryKey: queryKeys.lists,
+    queryFn: ({ signal }) => fetchLists({ signal }),
+  });
+}
+
+export function listQuery(id: string) {
+  return queryOptions({
+    queryKey: queryKeys.list(id),
+    queryFn: ({ signal }) => fetchList(id, { signal }),
   });
 }
 
