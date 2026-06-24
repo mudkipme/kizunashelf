@@ -133,7 +133,7 @@ pub struct CalendarPlanningTotals {
     pub dated_entries: usize,
     pub upcoming: usize,
     pub recently_completed: usize,
-    pub unscheduled: usize,
+    pub just_started: usize,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -173,7 +173,7 @@ pub struct CalendarPlanningSeason {
 pub struct CalendarPlanningBoard {
     pub upcoming: Vec<CalendarPlanningDatePoint>,
     pub recently_completed: Vec<CalendarPlanningDatePoint>,
-    pub unscheduled: Vec<EntitySummary>,
+    pub just_started: Vec<CalendarPlanningDatePoint>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]

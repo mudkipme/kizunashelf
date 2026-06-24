@@ -651,6 +651,7 @@ function FieldOptionEditor({
         >
           <option value="">None</option>
           <option value="planning">Planning</option>
+          <option value="started">Started</option>
           <option value="completed">Completed</option>
         </Select>
       </Field>

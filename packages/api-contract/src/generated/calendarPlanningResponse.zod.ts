@@ -14,7 +14,7 @@ export const calendarPlanningResponseTotalsUpcomingMin = 0;
 
 export const calendarPlanningResponseTotalsRecentlyCompletedMin = 0;
 
-export const calendarPlanningResponseTotalsUnscheduledMin = 0;
+export const calendarPlanningResponseTotalsJustStartedMin = 0;
 
 export const calendarPlanningResponseYearMonthsItemMonthMin = 0;
 
@@ -50,11 +50,13 @@ export const calendarPlanningResponseBoardRecentlyCompletedItemEntityRelationCou
 
 export const calendarPlanningResponseBoardRecentlyCompletedItemMonthMin = 0;
 
-export const calendarPlanningResponseBoardUnscheduledItemDatesItemParsedOneMonthMin = 0;
+export const calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOneMonthMin = 0;
 
-export const calendarPlanningResponseBoardUnscheduledItemDatesItemParsedOneDayMin = 0;
+export const calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOneDayMin = 0;
 
-export const calendarPlanningResponseBoardUnscheduledItemRelationCountMin = 0;
+export const calendarPlanningResponseBoardJustStartedItemEntityRelationCountMin = 0;
+
+export const calendarPlanningResponseBoardJustStartedItemMonthMin = 0;
 
 
 export const CalendarPlanningResponse = zod.object({
@@ -72,7 +74,7 @@ export const CalendarPlanningResponse = zod.object({
   "datedEntries": zod.number().min(calendarPlanningResponseTotalsDatedEntriesMin),
   "upcoming": zod.number().min(calendarPlanningResponseTotalsUpcomingMin),
   "recentlyCompleted": zod.number().min(calendarPlanningResponseTotalsRecentlyCompletedMin),
-  "unscheduled": zod.number().min(calendarPlanningResponseTotalsUnscheduledMin)
+  "justStarted": zod.number().min(calendarPlanningResponseTotalsJustStartedMin)
 }),
   "yearMonths": zod.array(zod.object({
   "month": zod.number().min(calendarPlanningResponseYearMonthsItemMonthMin),
@@ -110,7 +112,7 @@ export const CalendarPlanningResponse = zod.object({
   "month": zod.number().min(calendarPlanningResponseYearMonthsItemEntriesItemMonthMin),
   "sortKey": zod.string(),
   "season": zod.string().nullish(),
-  "role": zod.enum(['planning', 'completed'])
+  "role": zod.enum(['planning', 'started', 'completed'])
 }))
 })),
   "seasons": zod.array(zod.object({
@@ -150,7 +152,7 @@ export const CalendarPlanningResponse = zod.object({
   "month": zod.number().min(calendarPlanningResponseSeasonsItemEntriesItemMonthMin),
   "sortKey": zod.string(),
   "season": zod.string().nullish(),
-  "role": zod.enum(['planning', 'completed'])
+  "role": zod.enum(['planning', 'started', 'completed'])
 }))
 })),
   "board": zod.object({
@@ -187,7 +189,7 @@ export const CalendarPlanningResponse = zod.object({
   "month": zod.number().min(calendarPlanningResponseBoardUpcomingItemMonthMin),
   "sortKey": zod.string(),
   "season": zod.string().nullish(),
-  "role": zod.enum(['planning', 'completed'])
+  "role": zod.enum(['planning', 'started', 'completed'])
 })),
   "recentlyCompleted": zod.array(zod.object({
   "entity": zod.object({
@@ -222,9 +224,10 @@ export const CalendarPlanningResponse = zod.object({
   "month": zod.number().min(calendarPlanningResponseBoardRecentlyCompletedItemMonthMin),
   "sortKey": zod.string(),
   "season": zod.string().nullish(),
-  "role": zod.enum(['planning', 'completed'])
+  "role": zod.enum(['planning', 'started', 'completed'])
 })),
-  "unscheduled": zod.array(zod.object({
+  "justStarted": zod.array(zod.object({
+  "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
@@ -235,8 +238,8 @@ export const CalendarPlanningResponse = zod.object({
   "value": zod.string(),
   "parsed": zod.union([zod.object({
   "year": zod.number(),
-  "month": zod.number().min(calendarPlanningResponseBoardUnscheduledItemDatesItemParsedOneMonthMin).nullish(),
-  "day": zod.number().min(calendarPlanningResponseBoardUnscheduledItemDatesItemParsedOneDayMin).nullish(),
+  "month": zod.number().min(calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOneDayMin).nullish(),
   "season": zod.string().nullish(),
   "seasonKey": zod.string().nullish()
 }),zod.null()]).optional(),
@@ -247,7 +250,16 @@ export const CalendarPlanningResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
-  "relationCount": zod.number().min(calendarPlanningResponseBoardUnscheduledItemRelationCountMin)
+  "relationCount": zod.number().min(calendarPlanningResponseBoardJustStartedItemEntityRelationCountMin)
+}),
+  "field": zod.string(),
+  "fieldLabel": zod.string(),
+  "value": zod.string(),
+  "year": zod.number(),
+  "month": zod.number().min(calendarPlanningResponseBoardJustStartedItemMonthMin),
+  "sortKey": zod.string(),
+  "season": zod.string().nullish(),
+  "role": zod.enum(['planning', 'started', 'completed'])
 }))
 })
 })

@@ -6,7 +6,6 @@ import { entityTitle } from "@/lib/title-language";
 import type {
   CalendarPlanningDatePoint,
   CalendarPlanningResponse,
-  EntitySummary,
 } from "@/types/api";
 
 export type PlanningMode = "year" | "seasons" | "planning";
@@ -135,7 +134,7 @@ function PlanningBoard({
         title="Recently Completed"
         points={data.board.recentlyCompleted}
       />
-      <EntityPlanningList title="Unscheduled" entities={data.board.unscheduled} />
+      <PlanningList title="Just Started" points={data.board.justStarted} />
     </div>
   );
 }
@@ -201,52 +200,6 @@ function PlanningEntityRow({
         </Badge>
         <span className="tabular-nums">{point.value}</span>
       </span>
-    </Link>
-  );
-}
-
-function EntityPlanningList({
-  title,
-  entities,
-}: {
-  title: string;
-  entities: EntitySummary[];
-}) {
-  return (
-    <section className="rounded-md border">
-      <header className="flex items-center gap-2 border-b px-3 py-2">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        <Badge variant="secondary" className="ml-auto">
-          {entities.length}
-        </Badge>
-      </header>
-      <div className="flex flex-col md:max-h-[720px] md:overflow-auto">
-        {entities.length > 0 ? (
-          entities.map((entity) => <PlanningEntitySummaryRow key={entity.id} entity={entity} />)
-        ) : (
-          <div className="p-6 text-center text-sm text-muted-foreground">No entries</div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function PlanningEntitySummaryRow({ entity }: { entity: EntitySummary }) {
-  const language = useTitleLanguage();
-  return (
-    <Link
-      to={`/entities/${encodeURIComponent(entity.id)}`}
-      className="flex min-w-0 flex-col gap-1 border-b px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-    >
-      <span className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="min-w-0 truncate text-sm font-medium">
-          {entityTitle(entity, language)}
-        </span>
-        <Badge variant="outline">{entity.typeLabel}</Badge>
-      </span>
-      {entity.summary ? (
-        <span className="line-clamp-2 text-xs leading-5 text-muted-foreground">{entity.summary}</span>
-      ) : null}
     </Link>
   );
 }

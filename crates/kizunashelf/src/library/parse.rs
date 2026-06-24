@@ -164,7 +164,7 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
             matches!(field.field_type, FieldType::Date | FieldType::Season)
                 && matches!(
                     field.date_role,
-                    Some(DateRole::Planning | DateRole::Completed)
+                    Some(DateRole::Planning | DateRole::Started | DateRole::Completed)
                 )
         })
         .map(|field| field.field.clone())

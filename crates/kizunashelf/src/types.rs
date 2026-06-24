@@ -109,6 +109,7 @@ pub struct ExternalBodyMapping {
 #[serde(rename_all = "lowercase")]
 pub enum DateRole {
     Planning,
+    Started,
     Completed,
 }
 

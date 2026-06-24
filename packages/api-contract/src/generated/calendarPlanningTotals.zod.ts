@@ -14,7 +14,7 @@ export const calendarPlanningTotalsUpcomingMin = 0;
 
 export const calendarPlanningTotalsRecentlyCompletedMin = 0;
 
-export const calendarPlanningTotalsUnscheduledMin = 0;
+export const calendarPlanningTotalsJustStartedMin = 0;
 
 
 export const CalendarPlanningTotals = zod.object({
@@ -22,7 +22,7 @@ export const CalendarPlanningTotals = zod.object({
   "datedEntries": zod.number().min(calendarPlanningTotalsDatedEntriesMin),
   "upcoming": zod.number().min(calendarPlanningTotalsUpcomingMin),
   "recentlyCompleted": zod.number().min(calendarPlanningTotalsRecentlyCompletedMin),
-  "unscheduled": zod.number().min(calendarPlanningTotalsUnscheduledMin)
+  "justStarted": zod.number().min(calendarPlanningTotalsJustStartedMin)
 })
 
 export type CalendarPlanningTotals = zod.input<typeof CalendarPlanningTotals>;

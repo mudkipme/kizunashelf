@@ -53,7 +53,7 @@ export const CalendarPlanningMonth = zod.object({
   "month": zod.number().min(calendarPlanningMonthEntriesItemMonthMin),
   "sortKey": zod.string(),
   "season": zod.string().nullish(),
-  "role": zod.enum(['planning', 'completed'])
+  "role": zod.enum(['planning', 'started', 'completed'])
 }))
 })
 

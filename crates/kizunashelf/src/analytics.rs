@@ -77,7 +77,7 @@ pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsRespons
                         matches!(field.field_type, FieldType::Date | FieldType::Season)
                             && matches!(
                                 field.date_role,
-                                Some(DateRole::Planning | DateRole::Completed)
+                                Some(DateRole::Planning | DateRole::Started | DateRole::Completed)
                             )
                     })
                     .map(|field| field.field.clone())

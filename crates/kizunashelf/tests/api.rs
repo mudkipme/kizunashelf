@@ -622,11 +622,11 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
         .ok_json("/api/calendar/planning?year=2025&type=games")
         .await;
     assert_eq!(game_planning["filters"]["type"], "games");
-    assert!(game_planning["board"]["unscheduled"]
+    assert!(game_planning["board"]["justStarted"]
         .as_array()
         .unwrap()
         .iter()
-        .all(|item| item["type"] == "games"));
+        .all(|item| item["entity"]["type"] == "games" && item["role"] == "started"));
 
     let dates = server
         .ok_json(&format!(

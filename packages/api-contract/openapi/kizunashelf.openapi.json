@@ -1938,6 +1938,7 @@
         "type": "string",
         "enum": [
           "planning",
+          "started",
           "completed"
         ]
       },
@@ -3490,7 +3491,7 @@
             "format": "uint",
             "minimum": 0
           },
-          "unscheduled": {
+          "justStarted": {
             "type": "integer",
             "format": "uint",
             "minimum": 0
@@ -3501,7 +3502,7 @@
           "datedEntries",
           "upcoming",
           "recentlyCompleted",
-          "unscheduled"
+          "justStarted"
         ]
       },
       "CalendarPlanningMonth": {
@@ -3617,17 +3618,17 @@
               "$ref": "#/components/schemas/CalendarPlanningDatePoint"
             }
           },
-          "unscheduled": {
+          "justStarted": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/EntitySummary"
+              "$ref": "#/components/schemas/CalendarPlanningDatePoint"
             }
           }
         },
         "required": [
           "upcoming",
           "recentlyCompleted",
-          "unscheduled"
+          "justStarted"
         ]
       },
       "ExternalProviderCatalogResponse": {

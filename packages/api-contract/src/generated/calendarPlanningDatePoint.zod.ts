@@ -48,7 +48,7 @@ export const CalendarPlanningDatePoint = zod.object({
   "month": zod.number().min(calendarPlanningDatePointMonthMin),
   "sortKey": zod.string(),
   "season": zod.string().nullish(),
-  "role": zod.enum(['planning', 'completed'])
+  "role": zod.enum(['planning', 'started', 'completed'])
 })
 
 export type CalendarPlanningDatePoint = zod.input<typeof CalendarPlanningDatePoint>;

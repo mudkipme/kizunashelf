@@ -105,18 +105,16 @@ pub fn build_calendar_planning(
         .take(12)
         .collect::<Vec<_>>();
 
-    let future_planning_entity_ids = points
+    let mut started = points
         .iter()
-        .filter(|point| point.sort_key >= today && point.role == DateRole::Planning)
-        .map(|point| point.entity.id.as_str())
-        .collect::<std::collections::HashSet<_>>();
-    let mut unscheduled = entities
-        .iter()
-        .filter(|entity| !future_planning_entity_ids.contains(entity.id.as_str()))
+        .filter(|point| point.sort_key <= today && point.role == DateRole::Started)
         .cloned()
         .collect::<Vec<_>>();
-    unscheduled.sort_by(compare_entity_summaries);
-    unscheduled.truncate(12);
+    started.sort_by(compare_planning_points_desc);
+    let just_started = unique_planning_points_by_entity(started)
+        .into_iter()
+        .take(12)
+        .collect::<Vec<_>>();
 
     CalendarPlanningResponse {
         generated_at: library.generated_at.clone(),
@@ -130,14 +128,14 @@ pub fn build_calendar_planning(
             dated_entries: points.len(),
             upcoming: upcoming.len(),
             recently_completed: recently_completed.len(),
-            unscheduled: unscheduled.len(),
+            just_started: just_started.len(),
         },
         year_months,
         seasons,
         board: CalendarPlanningBoard {
             upcoming,
             recently_completed,
-            unscheduled,
+            just_started,
         },
     }
 }
@@ -231,7 +229,7 @@ fn metadata_date_entries(
                     matches!(field.field_type, FieldType::Date | FieldType::Season)
                         && matches!(
                             field.date_role,
-                            Some(DateRole::Planning | DateRole::Completed)
+                            Some(DateRole::Planning | DateRole::Started | DateRole::Completed)
                         )
                 })
                 .map(|field| field.field.clone())
@@ -292,7 +290,7 @@ fn has_planning_surface(entity_type: &EntityTypeConfig) -> bool {
         matches!(field.field_type, FieldType::Enum)
             || matches!(
                 field.date_role,
-                Some(DateRole::Planning | DateRole::Completed)
+                Some(DateRole::Planning | DateRole::Started | DateRole::Completed)
             )
     })
 }
@@ -445,10 +443,6 @@ fn compare_planning_points_desc(
 ) -> std::cmp::Ordering {
     compare_string(&b.sort_key, &a.sort_key)
         .then_with(|| compare_string(&a.entity.title, &b.entity.title))
-}
-
-fn compare_entity_summaries(a: &EntitySummary, b: &EntitySummary) -> std::cmp::Ordering {
-    compare_string(&a.type_label, &b.type_label).then_with(|| compare_string(&a.title, &b.title))
 }
 
 fn month_labels() -> [&'static str; 12] {

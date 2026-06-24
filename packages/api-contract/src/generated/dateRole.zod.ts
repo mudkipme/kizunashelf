@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const DateRole = zod.enum(['planning', 'completed'])
+export const DateRole = zod.enum(['planning', 'started', 'completed'])
 
 export type DateRole = zod.input<typeof DateRole>;
 export type DateRoleOutput = zod.output<typeof DateRole>;

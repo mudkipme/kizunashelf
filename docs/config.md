@@ -255,7 +255,7 @@ fields:
 | `externalFields` | no | array | most fields | Maps external provider metadata fields into this frontmatter field. |
 | `enumOptions` | no | string[] | `enum`, `enumList` | Allowed or suggested values in editors and filters. |
 | `totalProgressField` | no | string | `progress` | Field that stores the total count for progress. |
-| `dateRole` | no | enum | `date`, `season` | Whether the date is for planning or completion. |
+| `dateRole` | no | enum | `date`, `season` | Whether the date is for planning, started, or completion. |
 | `seasonLanguage` | no | enum | `season` | Season display/parser language: `zh`, `ja`, or `en`. |
 | `externalRef` | no | string | `externalRef` | External provider represented by this URL/id field. |
 | `externalTypes` | no | string[] | `externalRef` | Provider-specific type filters for external search. |
@@ -363,7 +363,8 @@ Supported roles:
 
 | `dateRole` | Meaning |
 | --- | --- |
-| `planning` | Future, release, airing, publish, start, or schedule date. |
+| `planning` | Future, release, airing, publish, or schedule date. |
+| `started` | The date you started the entity (began watching, reading, or playing). Drives the "Just Started" planning list. |
 | `completed` | Finished, watched, read, played, or completed date. |
 
 `fieldType: season` can also use `dateRole`. It is useful when a collection uses seasons instead of exact dates.

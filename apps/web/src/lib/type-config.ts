@@ -128,7 +128,12 @@ export function configuredFieldLabel(field: FieldConfig) {
   if (field.fieldType === "title" && field.titleRole === "original") return `Original title: ${field.field}`;
   if (field.fieldType === "title" && field.titleLanguage) return `${field.titleLanguage} title: ${field.field}`;
   if (field.fieldType === "date") {
-    const role = field.dateRole === "completed" ? "Completed date" : "Planning date";
+    const role =
+      field.dateRole === "completed"
+        ? "Completed date"
+        : field.dateRole === "started"
+          ? "Started date"
+          : "Planning date";
     return `${role}: ${field.field}`;
   }
   if (field.fieldType === "totalProgress") return `Total progress: ${field.field}`;
