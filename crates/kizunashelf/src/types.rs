@@ -191,7 +191,7 @@ pub struct AppConfig {
 
 /// Vault-level configuration. Describes the vault's content schema (taxonomy,
 /// assets, entity types, home dashboard, daily notes). Stored inside the vault
-/// at `<vaultRoot>/.kizunashelf/config.yaml` so it travels with the vault and is
+/// at `<vaultRoot>/KizunaShelf/config.yaml` so it travels with the vault and is
 /// synced by the vault's own syncing method.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]

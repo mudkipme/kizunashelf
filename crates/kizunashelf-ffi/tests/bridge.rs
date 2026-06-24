@@ -184,7 +184,7 @@ impl HostSecretStore for FakeSecretStore {
 fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
     let vault = FakeVault::default();
     vault.seed(
-        ".kizunashelf/config.yaml",
+        "KizunaShelf/config.yaml",
         "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
     );
     vault.seed(
@@ -236,7 +236,7 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
 fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
     let vault = FakeVault::default();
     vault.seed(
-        ".kizunashelf/config.yaml",
+        "KizunaShelf/config.yaml",
         "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
     );
     // An existing entity so the taxonomy directory exists for the first load.
@@ -305,7 +305,7 @@ const GAMES_CONFIG: &str = "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n-
 
 fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
     let vault = FakeVault::default();
-    vault.seed(".kizunashelf/config.yaml", GAMES_CONFIG);
+    vault.seed("KizunaShelf/config.yaml", GAMES_CONFIG);
     vault.seed("Taxonomy/Games/Zelda.md", "---\ntitle: Zelda\n---\n");
 
     let engine = KizunaEngine::with_vault(
@@ -368,7 +368,7 @@ fn ios_provider_availability_reads_credentials_from_the_secret_store() {
 fn ios_settings_write_vault_config_through_the_vfs() {
     let vault = FakeVault::default();
     vault.seed(
-        ".kizunashelf/config.yaml",
+        "KizunaShelf/config.yaml",
         "taxonomyRoot: Taxonomy\ntypes: []\n",
     );
 

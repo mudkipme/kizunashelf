@@ -199,7 +199,7 @@ pub fn starter_vault_config() -> VaultConfig {
 }
 
 /// The default starter vault config serialized to the YAML written to
-/// `<vault>/.kizunashelf/config.yaml`. Keeps YAML serialization in the core so
+/// `<vault>/KizunaShelf/config.yaml`. Keeps YAML serialization in the core so
 /// frontends that write the file directly need no YAML dependency.
 pub fn starter_vault_config_yaml() -> String {
     serde_yaml::to_string(&starter_vault_config()).expect("starter vault config always serializes")

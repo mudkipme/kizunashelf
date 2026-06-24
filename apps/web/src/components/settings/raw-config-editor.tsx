@@ -16,7 +16,7 @@ type RawConfigEditorProps = {
 };
 
 /**
- * Plain-text editor for `.kizunashelf/config.yaml`. Unlike the structured schema
+ * Plain-text editor for `KizunaShelf/config.yaml`. Unlike the structured schema
  * form, it edits the file verbatim (comments + formatting preserved). On save the
  * server strictly validates the YAML — type errors, missing required fields, and
  * any unknown field are rejected — so the on-disk schema can never be corrupted.

@@ -51,7 +51,7 @@ The native iOS app lives in a **separate repo at `../kizunashelf-ios`** and embe
 
 ## Schema-driven: never guess a field's meaning
 
-A vault's `.kizunashelf/config.yaml` (the **vault config**, synced inside the vault) declares the types, their fields, and each field's **role**. The engine derives *everything* — titles, dates, covers, relations, external refs, progress, ratings — from that schema. There is no built-in idea of what a "movie" or a "rating" is; those concepts exist only as schema configuration.
+A vault's `KizunaShelf/config.yaml` (the **vault config**, synced inside the vault) declares the types, their fields, and each field's **role**. The engine derives *everything* — titles, dates, covers, relations, external refs, progress, ratings — from that schema. There is no built-in idea of what a "movie" or a "rating" is; those concepts exist only as schema configuration.
 
 This is the single most important thing to internalize, because it inverts the usual instinct. The rules that follow all flow from it:
 

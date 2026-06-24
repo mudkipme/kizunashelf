@@ -32,7 +32,7 @@ use tower::ServiceExt;
 uniffi::setup_scaffolding!();
 
 /// The default starter vault schema (the "Media Library" preset) serialized to
-/// the YAML written into `<vault>/.kizunashelf/config.yaml`. Defined once in the
+/// the YAML written into `<vault>/KizunaShelf/config.yaml`. Defined once in the
 /// core (`kizunashelf::templates`) and shared with web onboarding and the desktop
 /// create-vault flow; iOS writes it directly through its `VaultFileSystem`.
 #[uniffi::export]

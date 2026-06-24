@@ -9,7 +9,7 @@ use std::time::Duration;
 
 /// Self-hosted web server. Single-vault by design: the vault directory is mounted
 /// and pointed at by `KIZUNASHELF_VAULT_ROOT` (the schema still lives inside it at
-/// `.kizunashelf/config.yaml`). There is no app config file — runtime behavior is
+/// `KizunaShelf/config.yaml`). There is no app config file — runtime behavior is
 /// controlled entirely by environment variables, so an extra config file beside a
 /// mounted vault would be redundant. For multiple vaults, run multiple instances.
 #[tokio::main]

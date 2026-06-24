@@ -2,7 +2,7 @@
 //!
 //! This file wires the focused submodules together and re-exports the
 //! crate-facing surface:
-//! - [`config_io`]: vault-config file I/O (`.kizunashelf/config.yaml`) + path validation
+//! - [`config_io`]: vault-config file I/O (`KizunaShelf/config.yaml`) + path validation
 //! - [`read`]: the full and index-cached library reads
 //! - [`parse`]: parsing one entity, the on-demand full load, field-name lookups
 //! - [`collation`], [`frontmatter`], [`index_cache`], [`relations`]: leaf helpers
@@ -21,7 +21,7 @@ pub use collation::{compare_optional_string, compare_string, compare_string_for_
 pub use config_io::{
     ensure_config_directories_via_vfs, load_vault_config_via_vfs, parse_vault_config_strict,
     read_raw_vault_config_via_vfs, save_raw_vault_config_via_vfs, save_vault_config_via_vfs,
-    VAULT_CONFIG_RELATIVE_PATH,
+    VAULT_APP_DIR_NAME, VAULT_CONFIG_RELATIVE_PATH,
 };
 pub use frontmatter::{
     serialize_markdown_document, split_markdown_document, wikilink_regex, MarkdownDocument,

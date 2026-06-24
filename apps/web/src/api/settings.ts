@@ -28,7 +28,7 @@ export function saveSettingsConfig(request: SaveSettingsRequest) {
   return requestSaveSettingsConfig(request, undefined, apiFetch);
 }
 
-// The raw-text "advanced" editor: read/write `.kizunashelf/config.yaml` verbatim.
+// The raw-text "advanced" editor: read/write `KizunaShelf/config.yaml` verbatim.
 // Saving strictly validates the YAML server-side (unknown fields are rejected).
 export function getRawSettingsConfig(init?: RequestInit) {
   return requestRawSettingsConfig(init, apiFetch);

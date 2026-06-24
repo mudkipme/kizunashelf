@@ -9,7 +9,7 @@ import { isDesktopRuntime } from "@/lib/desktop";
 
 /**
  * Onboarding. On the desktop app with no open vault, choose/create one via the
- * native vault switcher. Otherwise (a vault is open but has no `.kizunashelf/
+ * native vault switcher. Otherwise (a vault is open but has no `KizunaShelf/
  * config.yaml` yet) configure its schema. The self-hosted web app has a single,
  * env-configured vault, so it lands straight on schema configuration.
  */

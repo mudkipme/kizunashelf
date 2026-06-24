@@ -24,7 +24,7 @@ KizunaShelf is a shelf for what matters to you, and a record book for the life t
 
 KizunaShelf treats Markdown files as the source of truth. When content writes are enabled, it can edit entity frontmatter/body and create or delete entity files. In read-only mode, those content write features are disabled.
 
-The vault schema (`.kizunashelf/config.yaml`) always lives inside the vault and is shared across machines. App-level settings are sourced per runtime:
+The vault schema (`KizunaShelf/config.yaml`) always lives inside the vault and is shared across machines. App-level settings are sourced per runtime:
 
 - **Self-hosted web**: a single vault configured entirely through environment variables — there is no app config file. For multiple vaults, run multiple instances (the image is small).
 - **Desktop**: multiple vaults managed in-app (Obsidian-style switching); provider credentials are stored in the OS keychain.
@@ -37,7 +37,7 @@ pnpm install
 KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 ```
 
-Open `http://localhost:5173/`. The web app points at the single vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `.kizunashelf/config.yaml` yet, KizunaShelf redirects to onboarding to create the schema.
+Open `http://localhost:5173/`. The web app points at the single vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `KizunaShelf/config.yaml` yet, KizunaShelf redirects to onboarding to create the schema.
 
 See [docs/config.md](docs/config.md) for the full schema, per-runtime configuration, Settings behavior, and provider credentials.
 

@@ -7,10 +7,10 @@
 import { z as zod } from 'zod';
 
 export const RawConfigResponse = zod.object({
-  "vaultConfigPath": zod.string().describe('Path to the vault config file (`<vaultRoot>\/.kizunashelf\/config.yaml`).'),
+  "vaultConfigPath": zod.string().describe('Path to the vault config file (`<vaultRoot>\/KizunaShelf\/config.yaml`).'),
   "vaultExists": zod.boolean().describe('Whether the vault config file exists on disk.'),
   "content": zod.string().describe('The raw YAML text of the config file, verbatim (empty when it doesn\'t\nexist yet).')
-}).describe('The raw YAML text of the vault config (`.kizunashelf\/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.')
+}).describe('The raw YAML text of the vault config (`KizunaShelf\/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.')
 
 export type RawConfigResponse = zod.input<typeof RawConfigResponse>;
 export type RawConfigResponseOutput = zod.output<typeof RawConfigResponse>;

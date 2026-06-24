@@ -190,7 +190,7 @@
         "operationId": "getRawSettingsConfig",
         "responses": {
           "200": {
-            "description": "The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
+            "description": "The raw YAML text of the vault config (`KizunaShelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
             "content": {
               "application/json": {
                 "schema": {
@@ -226,7 +226,7 @@
         },
         "responses": {
           "200": {
-            "description": "The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
+            "description": "The raw YAML text of the vault config (`KizunaShelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2094,7 +2094,7 @@
             ]
           },
           "vaultConfigPath": {
-            "description": "Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).\n`None` until a vault root is configured.",
+            "description": "Path to the vault config file (`<vaultRoot>/KizunaShelf/config.yaml`).\n`None` until a vault root is configured.",
             "type": [
               "string",
               "null"
@@ -2144,7 +2144,7 @@
         ]
       },
       "VaultConfig": {
-        "description": "Vault-level configuration. Describes the vault's content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>/.kizunashelf/config.yaml` so it travels with the vault and is\nsynced by the vault's own syncing method.",
+        "description": "Vault-level configuration. Describes the vault's content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>/KizunaShelf/config.yaml` so it travels with the vault and is\nsynced by the vault's own syncing method.",
         "type": "object",
         "properties": {
           "taxonomyRoot": {
@@ -2223,11 +2223,11 @@
         }
       },
       "RawConfigResponse": {
-        "description": "The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
+        "description": "The raw YAML text of the vault config (`KizunaShelf/config.yaml`), for the\nplain-text \"advanced\" editor that bypasses the structured schema form.",
         "type": "object",
         "properties": {
           "vaultConfigPath": {
-            "description": "Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).",
+            "description": "Path to the vault config file (`<vaultRoot>/KizunaShelf/config.yaml`).",
             "type": "string"
           },
           "vaultExists": {

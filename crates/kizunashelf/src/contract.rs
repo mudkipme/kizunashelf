@@ -41,7 +41,7 @@ pub struct SettingsConfigResponse {
     /// The inline app config (vault root + write mode), owned by the runtime.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub app: Option<AppConfig>,
-    /// Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).
+    /// Path to the vault config file (`<vaultRoot>/KizunaShelf/config.yaml`).
     /// `None` until a vault root is configured.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vault_config_path: Option<String>,
@@ -63,12 +63,12 @@ pub struct SaveSettingsRequest {
     pub vault: Option<VaultConfig>,
 }
 
-/// The raw YAML text of the vault config (`.kizunashelf/config.yaml`), for the
+/// The raw YAML text of the vault config (`KizunaShelf/config.yaml`), for the
 /// plain-text "advanced" editor that bypasses the structured schema form.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RawConfigResponse {
-    /// Path to the vault config file (`<vaultRoot>/.kizunashelf/config.yaml`).
+    /// Path to the vault config file (`<vaultRoot>/KizunaShelf/config.yaml`).
     pub vault_config_path: String,
     /// Whether the vault config file exists on disk.
     pub vault_exists: bool,

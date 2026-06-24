@@ -1,7 +1,7 @@
 use super::error::{ApiError, ApiResult};
 use super::state::AppState;
 use crate::contract::PathSuggestionsResponse;
-use crate::library::compare_string;
+use crate::library::{compare_string, VAULT_APP_DIR_NAME};
 use crate::vfs::{normalize_relative, Vfs};
 use axum::extract::{Query, State};
 use axum::Json;
@@ -74,9 +74,15 @@ async fn suggest_directories(vfs: &dyn Vfs, base: &str, input: &str) -> Vec<Stri
         .into_iter()
         .filter(|entry| entry.is_dir)
         .filter(|entry| {
-            // Hide dot-directories (`.git`, `.obsidian`, `.kizunashelf`, `.trash`)
-            // unless the user explicitly typed a leading dot to navigate into one.
+            // Hide dot-directories (`.git`, `.obsidian`, `.trash`) unless the user
+            // explicitly typed a leading dot to navigate into one.
             if entry.name.starts_with('.') && !typed_prefix.starts_with('.') {
+                return false;
+            }
+            // Hide the app folder (`KizunaShelf`, which holds the config) from the
+            // default listing so users don't nest entity collections inside it; it
+            // still appears once the user starts typing a matching prefix.
+            if typed_lower.is_empty() && entry.name.eq_ignore_ascii_case(VAULT_APP_DIR_NAME) {
                 return false;
             }
             typed_lower.is_empty() || entry.name.to_lowercase().starts_with(&typed_lower)

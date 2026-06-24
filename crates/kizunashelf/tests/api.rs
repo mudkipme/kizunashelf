@@ -696,7 +696,7 @@ async fn settings_save_and_read_vault_config() {
     assert_eq!(saved.0, StatusCode::OK);
     assert_eq!(saved.1["vaultExists"], true);
     assert_eq!(saved.1["vault"]["types"].as_array().unwrap().len(), 1);
-    assert!(vault.join(".kizunashelf/config.yaml").is_file());
+    assert!(vault.join("KizunaShelf/config.yaml").is_file());
 
     let read_back = request_json(&app, Method::GET, "/api/settings/config", None).await;
     assert_eq!(read_back.0, StatusCode::OK);
@@ -730,7 +730,7 @@ async fn raw_settings_config_round_trips_yaml_verbatim() {
     assert_eq!(saved.1["vaultExists"], true);
     assert_eq!(saved.1["content"], yaml);
     assert_eq!(
-        std::fs::read_to_string(vault.join(".kizunashelf/config.yaml")).unwrap(),
+        std::fs::read_to_string(vault.join("KizunaShelf/config.yaml")).unwrap(),
         yaml
     );
 
@@ -758,7 +758,7 @@ async fn raw_settings_config_rejects_unknown_fields() {
         .unwrap()
         .contains("unknown config field"));
     // A rejected write must not touch the file.
-    assert!(!vault.join(".kizunashelf/config.yaml").exists());
+    assert!(!vault.join("KizunaShelf/config.yaml").exists());
 }
 
 #[tokio::test]
@@ -1147,11 +1147,11 @@ impl TestServer {
     }
 }
 
-/// Writes a vault config (the schema) to `<vault_root>/.kizunashelf/config.yaml`.
+/// Writes a vault config (the schema) to `<vault_root>/KizunaShelf/config.yaml`.
 /// The vault root is owned by the runtime, so it is passed separately rather than
 /// embedded in the config object.
 fn write_vault_config(vault_root: &Path, config: &Value) {
-    write_yaml_file(&vault_root.join(".kizunashelf/config.yaml"), config);
+    write_yaml_file(&vault_root.join("KizunaShelf/config.yaml"), config);
 }
 
 fn write_yaml_file(path: &Path, value: &Value) {

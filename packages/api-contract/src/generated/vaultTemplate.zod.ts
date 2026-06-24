@@ -68,7 +68,7 @@ export const VaultTemplate = zod.object({
   "relationType": zod.string().nullish()
 }))
 }))
-}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
+}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/KizunaShelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
 }).describe('A ready-made starter vault schema offered during onboarding \/ vault creation.\nThe single source of truth for every frontend (web onboarding, desktop &\niOS create-vault) — see [`crate::templates`].')
 
 export type VaultTemplate = zod.input<typeof VaultTemplate>;

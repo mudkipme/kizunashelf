@@ -65,7 +65,7 @@ export const VaultConfig = zod.object({
   "relationType": zod.string().nullish()
 }))
 }))
-}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/.kizunashelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
+}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/KizunaShelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
 
 export type VaultConfig = zod.input<typeof VaultConfig>;
 export type VaultConfigOutput = zod.output<typeof VaultConfig>;

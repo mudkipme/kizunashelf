@@ -79,7 +79,7 @@ export function SettingsEditor({
   // The server only reports vaultConfigPath once a vault root is saved; during
   // onboarding derive it from the vault root for display.
   const vaultPath =
-    vaultConfigPath ?? (vaultRoot ? joinPath(vaultRoot, ".kizunashelf/config.yaml") : undefined);
+    vaultConfigPath ?? (vaultRoot ? joinPath(vaultRoot, "KizunaShelf/config.yaml") : undefined);
   const totalFields = config.types.reduce((sum, typeConfig) => sum + typeConfig.fields.length, 0);
   const configuredProviderCount = new Set(
     config.types.flatMap((typeConfig) => [
