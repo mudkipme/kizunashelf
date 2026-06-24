@@ -1607,6 +1607,18 @@
     "/api/lists": {
       "get": {
         "operationId": "getLists",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "entity",
+            "description": "When set, each summary reports whether it contains this entity id\n(membership for the entity page's \"manage lists\").",
+            "schema": {
+              "description": "When set, each summary reports whether it contains this entity id\n(membership for the entity page's \"manage lists\").",
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -1932,6 +1944,83 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lists/{id}/items/{entityId}": {
+      "delete": {
+        "operationId": "removeListItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "in": "path",
+            "name": "entityId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
         "responses": {
           "200": {
             "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
@@ -5293,6 +5382,18 @@
           "topTargets"
         ]
       },
+      "ListsQuery": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "description": "When set, each summary reports whether it contains this entity id\n(membership for the entity page's \"manage lists\").",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "ListsResponse": {
         "type": "object",
         "properties": {
@@ -5333,6 +5434,13 @@
           },
           "ordered": {
             "type": "boolean"
+          },
+          "contains": {
+            "description": "Whether the list contains the entity named by the `entity` query param.\nOnly present when that param was supplied (drives the entity page's\n\"manage lists\" membership toggles); omitted otherwise.",
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         },
         "required": [
@@ -5510,6 +5618,21 @@
           }
         },
         "required": [
+          "entityId"
+        ]
+      },
+      "ListItemPath": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
           "entityId"
         ]
       }

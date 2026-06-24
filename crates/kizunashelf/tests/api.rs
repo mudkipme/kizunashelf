@@ -2079,6 +2079,40 @@ async fn lists_crud_add_reorder_and_delete() {
     assert_eq!(index.1["items"][0]["ordered"], true);
     assert_eq!(index.1["items"][0]["description"], "My picks");
 
+    // Membership: ?entity= reports whether each list contains that entity (drives
+    // the entity page's "manage lists"). `%3A`/`%20` encode the `:` and space.
+    let member = request_json(
+        app,
+        Method::GET,
+        "/api/lists?entity=anime%3AStar%20Voyager",
+        None,
+    )
+    .await;
+    assert_eq!(member.0, StatusCode::OK, "{}", member.1);
+    assert_eq!(member.1["items"][0]["contains"], true);
+    // Without the param, `contains` is omitted entirely.
+    assert!(index.1["items"][0].get("contains").is_none());
+
+    // Remove the entity from the list; it drops out and membership flips.
+    let removed = request_json(
+        app,
+        Method::DELETE,
+        "/api/lists/Watchlist/items/anime%3AStar%20Voyager",
+        None,
+    )
+    .await;
+    assert_eq!(removed.0, StatusCode::OK, "{}", removed.1);
+    assert_eq!(removed.1["items"].as_array().unwrap().len(), 1);
+    assert_eq!(removed.1["items"][0]["entity"]["id"], "games:Moon Quest");
+    let member_after = request_json(
+        app,
+        Method::GET,
+        "/api/lists?entity=anime%3AStar%20Voyager",
+        None,
+    )
+    .await;
+    assert_eq!(member_after.1["items"][0]["contains"], false);
+
     // Delete moves it to the trash; the list is then gone.
     let deleted = request_json(app, Method::DELETE, "/api/lists/Watchlist", None).await;
     assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);

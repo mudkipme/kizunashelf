@@ -16,7 +16,8 @@ export const ListsResponse = zod.object({
   "path": zod.string().describe('Vault-relative path of the Markdown file.'),
   "description": zod.string(),
   "itemCount": zod.number().min(listsResponseItemsItemItemCountMin),
-  "ordered": zod.boolean()
+  "ordered": zod.boolean(),
+  "contains": zod.boolean().nullish().describe('Whether the list contains the entity named by the `entity` query param.\nOnly present when that param was supplied (drives the entity page\'s\n\"manage lists\" membership toggles); omitted otherwise.')
 }).describe('One row in the lists index. `description` is the prose above the first list;\n`itemCount` and `ordered` summarize the list without its full contents.'))
 })
 

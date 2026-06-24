@@ -77,6 +77,7 @@ export * from "./generated/externalSearchResponse.zod.js";
 export * from "./generated/getCalendarPlanningParams.zod.js";
 export * from "./generated/getCalendarParams.zod.js";
 export * from "./generated/getEntitiesParams.zod.js";
+export * from "./generated/getListsParams.zod.js";
 export * from "./generated/getRelationsParams.zod.js";
 export * from "./generated/getStatsParams.zod.js";
 export * from "./generated/healthResponse.zod.js";

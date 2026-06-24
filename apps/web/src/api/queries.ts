@@ -117,7 +117,17 @@ export function entityDatesQuery(id: string) {
 export function listsQuery() {
   return queryOptions({
     queryKey: queryKeys.lists,
-    queryFn: ({ signal }) => fetchLists({ signal }),
+    queryFn: ({ signal }) => fetchLists(undefined, { signal }),
+  });
+}
+
+// Lists annotated with `contains` membership for one entity — backs the entity
+// page's "manage lists". Shares the `["lists"]` key prefix so a single
+// invalidation refreshes both this and the plain index.
+export function entityListsQuery(entityId: string) {
+  return queryOptions({
+    queryKey: [...queryKeys.lists, { entity: entityId }] as const,
+    queryFn: ({ signal }) => fetchLists({ entity: entityId }, { signal }),
   });
 }
 

@@ -17,7 +17,7 @@ use crate::lists::{
 };
 use crate::types::{EntityRecord, Library};
 use crate::vfs::Vfs;
-use axum::extract::{Path as AxumPath, State};
+use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -28,7 +28,24 @@ pub(crate) struct ListPath {
     id: String,
 }
 
-pub(crate) async fn get_lists(State(state): State<AppState>) -> ApiResult<ListsResponse> {
+#[derive(Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ListItemPath {
+    id: String,
+    entity_id: String,
+}
+
+#[derive(Deserialize, JsonSchema)]
+pub(crate) struct ListsQuery {
+    /// When set, each summary reports whether it contains this entity id
+    /// (membership for the entity page's "manage lists").
+    entity: Option<String>,
+}
+
+pub(crate) async fn get_lists(
+    State(state): State<AppState>,
+    Query(query): Query<ListsQuery>,
+) -> ApiResult<ListsResponse> {
     let library = get_library(&state).await?;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
@@ -48,6 +65,12 @@ pub(crate) async fn get_lists(State(state): State<AppState>) -> ApiResult<ListsR
         .await
         .map_err(|err| anyhow::anyhow!("failed to read lists: {err}"))?;
 
+    // Only build the (O(n) records) resolution index when membership is requested.
+    let index = query
+        .entity
+        .as_ref()
+        .map(|_| normalized_entity_basename_index(&library.records));
+
     let mut items: Vec<ListSummary> = files
         .into_iter()
         .filter_map(|(path, bytes)| String::from_utf8(bytes).ok().map(|raw| (path, raw)))
@@ -55,6 +78,12 @@ pub(crate) async fn get_lists(State(state): State<AppState>) -> ApiResult<ListsR
             let (_, body) = split_frontmatter(&raw);
             let parsed = parse_list(&body);
             let id = list_id(&path);
+            let contains = match (&query.entity, &index) {
+                (Some(entity_id), Some(index)) => {
+                    Some(list_contains_entity(&parsed.items, entity_id, index))
+                }
+                _ => None,
+            };
             ListSummary {
                 name: id.clone(),
                 description: parsed.description.trim().to_string(),
@@ -62,6 +91,7 @@ pub(crate) async fn get_lists(State(state): State<AppState>) -> ApiResult<ListsR
                 ordered: parsed.ordered,
                 id,
                 path,
+                contains,
             }
         })
         .collect();
@@ -211,6 +241,53 @@ pub(crate) async fn add_list_item(
         return Ok(Json(detail_from_parts(&path, parsed, &new_raw, &index)));
     }
     Ok(Json(detail_from_parts(&path, parsed, &raw, &index)))
+}
+
+pub(crate) async fn remove_list_item(
+    State(state): State<AppState>,
+    AxumPath(path_param): AxumPath<ListItemPath>,
+) -> ApiResult<ListDetail> {
+    let library = require_content_writes(&state).await?;
+    let path = list_path(&path_param.id)?;
+    let vfs = state.vault_vfs(&library.config.vault_root);
+
+    let raw = read_list_raw(vfs.as_ref(), &path).await?;
+    let (frontmatter, body) = split_frontmatter(&raw);
+    let mut parsed = parse_list(&body);
+
+    let index = normalized_entity_basename_index(&library.records);
+    let before = parsed.items.len();
+    // Drop every item that resolves to the named entity (unresolved items are kept).
+    parsed.items.retain(|item| {
+        item_target(item)
+            .and_then(|target| find_target(&target, None, &index))
+            .is_none_or(|found| found.summary.id != path_param.entity_id)
+    });
+    if parsed.items.len() != before {
+        let new_body = render_list(
+            &parsed.description,
+            &parsed.items,
+            parsed.ordered,
+            &parsed.trailing,
+        );
+        let new_raw = compose_document(&frontmatter, &new_body);
+        write_entity_raw(vfs.as_ref(), &path, &new_raw).await?;
+        return Ok(Json(detail_from_parts(&path, parsed, &new_raw, &index)));
+    }
+    Ok(Json(detail_from_parts(&path, parsed, &raw, &index)))
+}
+
+/// Whether any item in `items` resolves to `entity_id`.
+fn list_contains_entity(
+    items: &[String],
+    entity_id: &str,
+    index: &HashMap<String, Vec<&EntityRecord>>,
+) -> bool {
+    items.iter().any(|item| {
+        item_target(item)
+            .and_then(|target| find_target(&target, None, index))
+            .is_some_and(|found| found.summary.id == entity_id)
+    })
 }
 
 /// Vault-relative path of a list from its id, validated for containment.

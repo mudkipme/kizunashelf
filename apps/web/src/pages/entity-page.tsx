@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  CheckCircle2Icon,
   CheckIcon,
+  CircleIcon,
   DownloadIcon,
   FilePenLineIcon,
-  ListPlusIcon,
+  ListChecksIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -16,14 +18,14 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage, isConflictError } from "@/api/client";
 import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
-import { addItemToList, addList } from "@/api/lists";
+import { addItemToList, addList, removeItemFromList } from "@/api/lists";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import {
   capabilitiesQuery,
   configQuery,
   entityDatesQuery,
+  entityListsQuery,
   entityQuery,
-  listsQuery,
   providerCatalogQuery,
   queryKeys,
 } from "@/api/queries";
@@ -82,7 +84,7 @@ export function EntityPage() {
   const [error, setError] = useState<string>();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
-  const [addToListOpen, setAddToListOpen] = useState(false);
+  const [manageListsOpen, setManageListsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const loading =
@@ -288,16 +290,16 @@ export function EntityPage() {
                   showDownloadCover={canDownloadCover}
                   onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
                   onRename={() => setRenameOpen(true)}
-                  onAddToList={() => setAddToListOpen(true)}
+                  onManageLists={() => setManageListsOpen(true)}
                   onMatch={() => external.setOpen(true)}
                   onDownloadCover={downloadCover}
                   onDelete={deleteCurrentEntity}
                 />
               }
             />
-            <AddToListDialog
-              open={addToListOpen}
-              onOpenChange={setAddToListOpen}
+            <ManageListsDialog
+              open={manageListsOpen}
+              onOpenChange={setManageListsOpen}
               entityId={entity.id}
               entityName={entityTitle(entity, language)}
               contentWritable={contentWritable}
@@ -321,7 +323,7 @@ function EntityActions({
   showDownloadCover,
   onEdit,
   onRename,
-  onAddToList,
+  onManageLists,
   onMatch,
   onDownloadCover,
   onDelete,
@@ -332,7 +334,7 @@ function EntityActions({
   showDownloadCover: boolean;
   onEdit: () => void;
   onRename: () => void;
-  onAddToList: () => void;
+  onManageLists: () => void;
   onMatch: () => void;
   onDownloadCover: () => void;
   onDelete: () => void;
@@ -358,9 +360,9 @@ function EntityActions({
             <FilePenLineIcon />
             Rename
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onAddToList} disabled={!contentWritable}>
-            <ListPlusIcon />
-            Add to list
+          <DropdownMenuItem onSelect={onManageLists} disabled={!contentWritable}>
+            <ListChecksIcon />
+            Manage lists
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onMatch}>
             <SearchIcon />
@@ -410,7 +412,7 @@ function EntityActions({
   );
 }
 
-function AddToListDialog({
+function ManageListsDialog({
   open,
   onOpenChange,
   entityId,
@@ -426,32 +428,35 @@ function AddToListDialog({
   onError: (message?: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const lists = useQuery({ ...listsQuery(), enabled: open });
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  // Membership-annotated list of every list (each carries `contains`).
+  const lists = useQuery({ ...entityListsQuery(entityId), enabled: open });
   const [pendingId, setPendingId] = useState<string>();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setAddedIds(new Set());
-      setNewName("");
-    }
+    if (open) setNewName("");
   }, [open]);
 
   const newNameError = newName.trim() ? basenameValidationError(normalizeBasename(newName)) : undefined;
   const items = lists.data?.items ?? [];
 
-  async function add(listId: string) {
+  // Refetch the membership view (and any open detail) after a change. The
+  // `["lists"]` prefix covers both the plain index and this entity-scoped query.
+  function invalidate(listId: string) {
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) }),
+    ]);
+  }
+
+  async function toggle(listId: string, contains: boolean) {
     setPendingId(listId);
     onError(undefined);
     try {
-      await addItemToList(listId, { entityId });
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
-      ]);
-      setAddedIds((current) => new Set(current).add(listId));
+      if (contains) await removeItemFromList(listId, entityId);
+      else await addItemToList(listId, { entityId });
+      await invalidate(listId);
     } catch (error) {
       onError(errorMessage(error));
     } finally {
@@ -466,9 +471,9 @@ function AddToListDialog({
     onError(undefined);
     try {
       const created = await addList({ name });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.lists });
       setNewName("");
-      await add(created.id);
+      await addItemToList(created.id, { entityId });
+      await invalidate(created.id);
     } catch (error) {
       onError(errorMessage(error));
     } finally {
@@ -480,8 +485,8 @@ function AddToListDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add to list</DialogTitle>
-          <DialogDescription className="truncate">Add {entityName} to one of your lists.</DialogDescription>
+          <DialogTitle>Manage lists</DialogTitle>
+          <DialogDescription className="truncate">Choose which lists {entityName} belongs to.</DialogDescription>
         </DialogHeader>
         <div className="flex max-h-72 flex-col gap-1 overflow-auto">
           {lists.isPending ? (
@@ -490,28 +495,27 @@ function AddToListDialog({
             <p className="p-3 text-center text-sm text-muted-foreground">No lists yet. Create one below.</p>
           ) : (
             items.map((list) => {
-              const added = addedIds.has(list.id);
+              const contains = list.contains === true;
               return (
-                <div key={list.id} className="flex items-center gap-2 rounded-md p-1">
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{list.name}</span>
-                  {added ? (
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <CheckIcon className="size-4" />
-                      Added
+                <button
+                  key={list.id}
+                  type="button"
+                  disabled={!contentWritable || pendingId === list.id}
+                  onClick={() => void toggle(list.id, contains)}
+                  className="flex items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-accent disabled:opacity-60"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{list.name}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {list.itemCount} {list.itemCount === 1 ? "item" : "items"}
                     </span>
+                  </span>
+                  {contains ? (
+                    <CheckCircle2Icon className="size-5 shrink-0 text-primary" />
                   ) : (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={!contentWritable || pendingId === list.id}
-                      onClick={() => void add(list.id)}
-                    >
-                      <PlusIcon data-icon="inline-start" />
-                      Add
-                    </Button>
+                    <CircleIcon className="size-5 shrink-0 text-muted-foreground" />
                   )}
-                </div>
+                </button>
               );
             })
           )}

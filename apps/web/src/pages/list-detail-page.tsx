@@ -437,7 +437,10 @@ function MarkdownField({
   disabled: boolean;
   onChange: (value: string) => void;
 }) {
-  const [preview, setPreview] = useState(false);
+  // Default to the rendered preview; the toggle switches to editing. (Local edit
+  // state populates a render after the list loads, so a content-based initial
+  // value would latch to edit mode — hence an unconditional default.)
+  const [preview, setPreview] = useState(true);
 
   return (
     <section className="flex flex-col gap-1">

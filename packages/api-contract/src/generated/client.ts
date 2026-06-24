@@ -121,6 +121,10 @@ import type {
 } from './getEntitiesParams.zod';
 
 import type {
+  GetListsParams
+} from './getListsParams.zod';
+
+import type {
   GetPathSuggestionsParams
 } from './getPathSuggestionsParams.zod';
 
@@ -1250,17 +1254,24 @@ export const getRelationGroups = async ( options?: RequestInit, fetchFn?: typeof
 
 
 
-export const getGetListsUrl = () => {
+export const getGetListsUrl = (params?: GetListsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/lists`
+  return stringifiedParams.length > 0 ? `/api/lists?${stringifiedParams}` : `/api/lists`
 }
 
-export const getLists = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListsResponse> => {
+export const getLists = async (params?: GetListsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListsResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getGetListsUrl(),
+  const res = await (fetchFn ?? fetch)(getGetListsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1413,6 +1424,37 @@ export const addListItem = async (id: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(addListItemRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getRemoveListItemUrl = (id: string,
+    entityId: string,) => {
+
+
+
+
+  return `/api/lists/${encodeURIComponent(String(id))}/items/${encodeURIComponent(String(entityId))}`
+}
+
+export const removeListItem = async (id: string,
+    entityId: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getRemoveListItemUrl(id,entityId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
   }
 )
 

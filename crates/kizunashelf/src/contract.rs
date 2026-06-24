@@ -310,6 +310,11 @@ pub struct ListSummary {
     pub description: String,
     pub item_count: usize,
     pub ordered: bool,
+    /// Whether the list contains the entity named by the `entity` query param.
+    /// Only present when that param was supplied (drives the entity page's
+    /// "manage lists" membership toggles); omitted otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub contains: Option<bool>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

@@ -10,7 +10,9 @@ use super::handlers::{
     raw_settings_config, refresh, relation_groups, relations, save_raw_settings_config,
     save_settings_config, settings_config, vault_templates,
 };
-use super::lists::{add_list_item, create_list, delete_list, get_list, get_lists, update_list};
+use super::lists::{
+    add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
+};
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
@@ -28,7 +30,7 @@ use crate::contract::{
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
 use crate::vfs::Vfs;
-use aide::axum::routing::{get_with, post_with};
+use aide::axum::routing::{delete_with, get_with, post_with};
 use aide::axum::ApiRouter;
 use aide::openapi::{Info, OpenApi};
 use axum::http::StatusCode;
@@ -444,6 +446,17 @@ fn api_router() -> ApiRouter<AppState> {
             "/api/lists/{id}/items",
             post_with(add_list_item, |op| {
                 op.id("addListItem")
+                    .response::<200, Json<ListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/lists/{id}/items/{entityId}",
+            delete_with(remove_list_item, |op| {
+                op.id("removeListItem")
                     .response::<200, Json<ListDetail>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
