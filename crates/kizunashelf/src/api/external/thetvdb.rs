@@ -4,7 +4,10 @@ use super::{
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use crate::secrets::{SECRET_TVDB_API_KEY, SECRET_TVDB_PIN};
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -64,6 +67,153 @@ impl ExternalProvider for ThetvdbProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_thetvdb(state, q, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        state: &AppState,
+        ref_value: &str,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_thetvdb_episodes(state, ref_value).await
+    }
+}
+
+/// The TheTVDB login body (`{ apikey, pin? }`) from the configured credentials.
+fn thetvdb_login(state: &AppState) -> Option<Map<String, Value>> {
+    let mut login = Map::new();
+    login.insert("apikey".to_string(), Value::String(tvdb_api_key(state)?));
+    if let Some(pin) = state
+        .secret_store()
+        .get(SECRET_TVDB_PIN)
+        .filter(|value| !value.is_empty())
+    {
+        login.insert("pin".to_string(), Value::String(pin));
+    }
+    Some(login)
+}
+
+/// A TheTVDB series reference parsed from a stored ref value.
+enum SeriesRef {
+    /// A numeric series id (the `…/dereferrer/series/{id}` URL we store, or a bare id).
+    Id(String),
+    /// A URL slug (the human `thetvdb.com/series/{slug}` form) — resolved to an id.
+    Slug(String),
+}
+
+/// Parses a stored TheTVDB ref into an id or a slug. `None` for movie links or
+/// anything without a series segment (movies have no episodes).
+fn thetvdb_series_ref(ref_value: &str) -> Option<SeriesRef> {
+    let trimmed = ref_value.trim().trim_end_matches('/');
+    if !trimmed.is_empty() && trimmed.chars().all(|c| c.is_ascii_digit()) {
+        return Some(SeriesRef::Id(trimmed.to_string()));
+    }
+    // The dereferrer form carries a numeric id.
+    if let Some((_, rest)) = trimmed.split_once("dereferrer/series/") {
+        let id: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        return (!id.is_empty()).then_some(SeriesRef::Id(id));
+    }
+    // The human URL carries a slug (e.g. `series/answer-me-1988`).
+    let (_, rest) = trimmed.split_once("series/")?;
+    let slug = rest
+        .split(['/', '?', '#'])
+        .next()
+        .unwrap_or_default()
+        .trim();
+    (!slug.is_empty()).then(|| SeriesRef::Slug(slug.to_string()))
+}
+
+/// A bearer GET against the TheTVDB v4 API returning the parsed JSON.
+async fn thetvdb_get(client: &reqwest::Client, token: &str, url: &str) -> Result<Value, ApiError> {
+    client
+        .get(url)
+        .bearer_auth(token)
+        .send()
+        .await
+        .map_err(provider_error)?
+        .error_for_status()
+        .map_err(provider_error)?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)
+}
+
+/// Fetches a series' episodes grouped by season (season 0 → "Specials"), following
+/// the official-order episode pages. A slug ref is resolved to an id first.
+async fn fetch_thetvdb_episodes(
+    state: &AppState,
+    ref_value: &str,
+) -> Result<ProviderEpisodes, ApiError> {
+    let series_ref = thetvdb_series_ref(ref_value)
+        .ok_or_else(|| ApiError::bad_request("Not a TheTVDB series link"))?;
+    let login = thetvdb_login(state)
+        .ok_or_else(|| ApiError::bad_request("TheTVDB API key is not configured"))?;
+    let client = external_client();
+    let token = thetvdb_access_token(state, client, &login, false).await?;
+
+    let series_id = match series_ref {
+        SeriesRef::Id(id) => id,
+        SeriesRef::Slug(slug) => {
+            let value = thetvdb_get(
+                client,
+                &token,
+                &format!("https://api4.thetvdb.com/v4/series/slug/{slug}"),
+            )
+            .await?;
+            value
+                .pointer("/data/id")
+                .and_then(Value::as_i64)
+                .map(|id| id.to_string())
+                .ok_or_else(|| ApiError::bad_request("TheTVDB series not found"))?
+        }
+    };
+
+    let mut by_season: BTreeMap<i64, Vec<ProviderEpisodeItem>> = BTreeMap::new();
+    let mut url =
+        format!("https://api4.thetvdb.com/v4/series/{series_id}/episodes/official?page=0");
+    let mut pages = 0;
+    loop {
+        let value = thetvdb_get(client, &token, &url).await?;
+        if let Some(episodes) = value.pointer("/data/episodes").and_then(Value::as_array) {
+            for episode in episodes {
+                let season = episode
+                    .get("seasonNumber")
+                    .and_then(Value::as_i64)
+                    .unwrap_or(0);
+                let key = episode
+                    .get("number")
+                    .and_then(Value::as_i64)
+                    .map(|number| number.to_string())
+                    .unwrap_or_default();
+                let title = episode
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .map(|name| name.trim().to_string())
+                    .unwrap_or_default();
+                by_season
+                    .entry(season)
+                    .or_default()
+                    .push(ProviderEpisodeItem { key, title });
+            }
+        }
+        pages += 1;
+        match value.pointer("/links/next").and_then(Value::as_str) {
+            Some(next) if !next.is_empty() && pages < 50 => url = next.to_string(),
+            _ => break,
+        }
+    }
+
+    let groups = by_season
+        .into_iter()
+        .map(|(season, items)| ProviderEpisodeGroup {
+            label: if season == 0 {
+                "Specials".to_string()
+            } else {
+                format!("Season {season}")
+            },
+            items,
+        })
+        .collect();
+    Ok(ProviderEpisodes { groups })
 }
 
 fn tvdb_api_key(state: &AppState) -> Option<String> {
@@ -439,8 +589,27 @@ fn non_empty_string_or_integer(value: &Value) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::thetvdb_candidate;
+    use super::{thetvdb_candidate, thetvdb_series_ref, SeriesRef};
     use serde_json::{json, Value};
+
+    #[test]
+    fn series_ref_parses_id_dereferrer_and_slug() {
+        assert!(matches!(
+            thetvdb_series_ref("https://thetvdb.com/dereferrer/series/289882"),
+            Some(SeriesRef::Id(id)) if id == "289882"
+        ));
+        assert!(matches!(
+            thetvdb_series_ref("289882"),
+            Some(SeriesRef::Id(id)) if id == "289882"
+        ));
+        // The human URL is a slug, resolved to an id at fetch time.
+        assert!(matches!(
+            thetvdb_series_ref("https://thetvdb.com/series/answer-me-1988"),
+            Some(SeriesRef::Slug(slug)) if slug == "answer-me-1988"
+        ));
+        // A movie link has no series segment.
+        assert!(thetvdb_series_ref("https://thetvdb.com/dereferrer/movie/100").is_none());
+    }
 
     #[test]
     fn candidate_uses_numeric_year_metadata() {

@@ -1,27 +1,36 @@
-import { CheckIcon } from "lucide-react";
+import { useState } from "react";
+import { CheckIcon, RefreshCwIcon } from "lucide-react";
 
+import { EpisodeSyncDialog } from "@/components/assets/episode-sync-dialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { EntityEpisodes, EpisodeGroup } from "@/types/api";
 
 /// Displays an entity's episodes/tracks list (grouped by season/disc) with a
 /// watched/total roll-up. When the section uses checklist tracking, each item is a
 /// toggle; toggling persists the whole list via `onSave` (the Markdown body stays
-/// the source of truth). Structural edits (add/remove/reorder) are done in the
-/// Markdown body for now.
+/// the source of truth). A "Sync" action imports from external providers. Structural
+/// edits (add/remove/reorder) are done in the Markdown body for now.
 export function EntityEpisodesPanel({
   episodes,
   disabled,
   saving,
   onSave,
+  entityId,
+  revision,
 }: {
   episodes: EntityEpisodes;
   disabled: boolean;
   saving: boolean;
   onSave: (groups: EpisodeGroup[]) => void;
+  entityId?: string;
+  revision?: string;
 }) {
   const checklist = episodes.tracking === "checklist";
   const percent = episodes.total > 0 ? Math.round((episodes.watched / episodes.total) * 100) : 0;
   const interactive = checklist && !disabled && !saving;
+  const [syncOpen, setSyncOpen] = useState(false);
+  const canSync = Boolean(entityId && revision != null && !disabled);
 
   function toggle(groupIndex: number, itemIndex: number) {
     if (!interactive) return;
@@ -38,17 +47,42 @@ export function EntityEpisodesPanel({
     onSave(groups);
   }
 
+  const syncButton = canSync ? (
+    <Button type="button" variant="outline" size="sm" onClick={() => setSyncOpen(true)}>
+      <RefreshCwIcon data-icon="inline-start" />
+      Sync
+    </Button>
+  ) : null;
+  const syncDialog =
+    canSync && entityId && revision != null ? (
+      <EpisodeSyncDialog
+        open={syncOpen}
+        onOpenChange={setSyncOpen}
+        entityId={entityId}
+        revision={revision}
+        episodes={episodes}
+      />
+    ) : null;
+
   if (episodes.total === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No {episodes.itemNoun.toLowerCase()}s yet — add a list under the{" "}
-        <code>{episodes.heading}</code> heading in the body.
-      </p>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">
+            No {episodes.itemNoun.toLowerCase()}s yet — sync from a provider or add a list under the{" "}
+            <code>{episodes.heading}</code> heading.
+          </p>
+          {syncButton}
+        </div>
+        {syncDialog}
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-3">
+      {syncButton ? <div className="flex justify-end">{syncButton}</div> : null}
+      {syncDialog}
       {checklist ? (
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">

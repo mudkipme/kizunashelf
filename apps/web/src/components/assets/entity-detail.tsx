@@ -114,6 +114,8 @@ export function EntityDetail({
                   disabled={!contentWritable || !onSaveEpisodes}
                   saving={episodesSaving}
                   onSave={(groups) => onSaveEpisodes?.(groups)}
+                  entityId={entity.id}
+                  revision={entity.revision}
                 />
               </DetailSection>
             ) : null}

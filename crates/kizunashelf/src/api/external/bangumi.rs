@@ -3,7 +3,10 @@ use super::{
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use serde_json::{json, Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -36,6 +39,83 @@ impl ExternalProvider for BangumiProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_bangumi(q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        _state: &super::AppState,
+        ref_value: &str,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_bangumi_episodes(ref_value).await
+    }
+}
+
+/// Fetches a Bangumi subject's episodes as a single flat group. A subject is one
+/// season, so there are no sub-groups (matching the per-season-entity convention).
+async fn fetch_bangumi_episodes(ref_value: &str) -> Result<ProviderEpisodes, ApiError> {
+    let subject_id = bangumi_subject_id(ref_value)
+        .ok_or_else(|| ApiError::bad_request("Not a Bangumi subject link or id"))?;
+    let client = external_client();
+    let mut items: Vec<ProviderEpisodeItem> = Vec::new();
+    let mut offset = 0usize;
+    // Page through `/v0/episodes` (limit 100) until we've collected `total`, with a
+    // hard cap so a malformed response can't loop forever.
+    loop {
+        let url = format!(
+            "https://api.bgm.tv/v0/episodes?subject_id={subject_id}&limit=100&offset={offset}"
+        );
+        let page = bangumi_get(client, &url).await?;
+        let data = page.get("data").and_then(Value::as_array);
+        let Some(data) = data else { break };
+        if data.is_empty() {
+            break;
+        }
+        for episode in data {
+            let key = episode
+                .get("sort")
+                .or_else(|| episode.get("ep"))
+                .and_then(format_episode_number)
+                .unwrap_or_default();
+            let title = first_non_empty(episode, &["name_cn", "name"]);
+            if key.is_empty() && title.is_empty() {
+                continue;
+            }
+            items.push(ProviderEpisodeItem { key, title });
+        }
+        offset += 100;
+        let total = page.get("total").and_then(Value::as_u64).unwrap_or(0) as usize;
+        if offset >= total || offset >= 2000 {
+            break;
+        }
+    }
+    Ok(ProviderEpisodes {
+        groups: vec![ProviderEpisodeGroup {
+            label: String::new(),
+            items,
+        }],
+    })
+}
+
+/// Formats a JSON number as an episode key: integers as `12`, decimals as `12.5`.
+fn format_episode_number(value: &Value) -> Option<String> {
+    let number = value.as_f64()?;
+    if number == number.trunc() {
+        Some((number as i64).to_string())
+    } else {
+        Some(format!("{number}"))
+    }
+}
+
+fn first_non_empty(value: &Value, keys: &[&str]) -> String {
+    for key in keys {
+        if let Some(text) = value.get(*key).and_then(Value::as_str) {
+            let trimmed = text.trim();
+            if !trimmed.is_empty() {
+                return trimmed.to_string();
+            }
+        }
+    }
+    String::new()
 }
 
 async fn search_bangumi(
@@ -631,8 +711,20 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
 
 #[cfg(test)]
 mod tests {
-    use super::bangumi_candidate;
+    use super::{bangumi_candidate, format_episode_number};
     use serde_json::json;
+
+    #[test]
+    fn episode_number_keeps_specials_and_drops_trailing_zero() {
+        assert_eq!(format_episode_number(&json!(12)), Some("12".to_string()));
+        assert_eq!(format_episode_number(&json!(0)), Some("0".to_string()));
+        assert_eq!(
+            format_episode_number(&json!(12.5)),
+            Some("12.5".to_string())
+        );
+        assert_eq!(format_episode_number(&json!(13.0)), Some("13".to_string()));
+        assert_eq!(format_episode_number(&json!("nope")), None);
+    }
 
     #[test]
     fn candidate_surfaces_extended_metadata() {

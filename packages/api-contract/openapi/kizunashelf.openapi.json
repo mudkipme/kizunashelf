@@ -1227,6 +1227,163 @@
         }
       }
     },
+    "/api/entities/{id}/episodes/fetch": {
+      "post": {
+        "operationId": "fetchEpisodes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchEpisodesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Response of the episodes `fetch`: the providers that can supply episodes for\nthis entity, plus the structured episodes from the chosen one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeSyncResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/entities/{id}/episodes/import": {
+      "post": {
+        "operationId": "importEpisodes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Imports provider episodes (the chosen subset, already grouped/flattened by the\nclient) by merging them into the entity's existing episodes.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportEpisodesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/assets/download": {
       "post": {
         "operationId": "downloadEntityAssets",
@@ -5284,6 +5441,114 @@
       },
       "UpdateEpisodesRequest": {
         "description": "Full rewrite of an entity's episodes section (toggle / add / remove / reorder /\nrename / regroup). The server renders these groups back into the body, replacing\nonly the episodes section.",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeGroup"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "groups"
+        ]
+      },
+      "FetchEpisodesRequest": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "description": "Provider id to fetch from; defaults to the entity's first episode source.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "EpisodeSyncResponse": {
+        "description": "Response of the episodes `fetch`: the providers that can supply episodes for\nthis entity, plus the structured episodes from the chosen one.",
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeSource"
+            }
+          },
+          "provider": {
+            "description": "The provider these `groups` came from (empty when there are no sources).",
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderEpisodeGroup"
+            }
+          }
+        },
+        "required": [
+          "sources",
+          "provider",
+          "groups"
+        ]
+      },
+      "EpisodeSource": {
+        "description": "A provider that can supply episodes for an entity (it supports episode import\nand the entity has a matching external ref with a value).",
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "label"
+        ]
+      },
+      "ProviderEpisodeGroup": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Season/disc label (e.g. \"Season 1\"); empty for a flat provider.",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderEpisodeItem"
+            }
+          }
+        },
+        "required": [
+          "label",
+          "items"
+        ]
+      },
+      "ProviderEpisodeItem": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title"
+        ]
+      },
+      "ImportEpisodesRequest": {
+        "description": "Imports provider episodes (the chosen subset, already grouped/flattened by the\nclient) by merging them into the entity's existing episodes.",
         "type": "object",
         "properties": {
           "revision": {

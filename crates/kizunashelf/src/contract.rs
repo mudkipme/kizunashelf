@@ -278,7 +278,7 @@ pub struct EntityEpisodes {
     pub watched: usize,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EpisodeGroup {
     /// Sub-heading label (season/disc); empty for the ungrouped group.
@@ -286,7 +286,7 @@ pub struct EpisodeGroup {
     pub items: Vec<Episode>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Episode {
     /// The episode/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be
@@ -302,6 +302,67 @@ pub struct Episode {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateEpisodesRequest {
+    pub revision: String,
+    pub groups: Vec<EpisodeGroup>,
+}
+
+/// Episodes/tracks fetched from an external provider for an entity, mirroring the
+/// provider's structure: a flat list comes back as one unlabeled group; a
+/// season/disc-structured set as one group per season/disc.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderEpisodes {
+    pub groups: Vec<ProviderEpisodeGroup>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderEpisodeGroup {
+    /// Season/disc label (e.g. "Season 1"); empty for a flat provider.
+    pub label: String,
+    pub items: Vec<ProviderEpisodeItem>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderEpisodeItem {
+    pub key: String,
+    pub title: String,
+}
+
+/// A provider that can supply episodes for an entity (it supports episode import
+/// and the entity has a matching external ref with a value).
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeSource {
+    pub provider: String,
+    pub label: String,
+}
+
+/// Response of the episodes `fetch`: the providers that can supply episodes for
+/// this entity, plus the structured episodes from the chosen one.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeSyncResponse {
+    pub sources: Vec<EpisodeSource>,
+    /// The provider these `groups` came from (empty when there are no sources).
+    pub provider: String,
+    pub groups: Vec<ProviderEpisodeGroup>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchEpisodesRequest {
+    /// Provider id to fetch from; defaults to the entity's first episode source.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+}
+
+/// Imports provider episodes (the chosen subset, already grouped/flattened by the
+/// client) by merging them into the entity's existing episodes.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportEpisodesRequest {
     pub revision: String,
     pub groups: Vec<EpisodeGroup>,
 }

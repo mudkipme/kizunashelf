@@ -228,6 +228,61 @@ pub fn apply_episodes(body: &str, section: &BodySection, groups: &[EpisodeGroup]
     splice_section(body, &section.heading, &rendered)
 }
 
+/// Merges provider-fetched `incoming` episode groups into the entity's `existing`
+/// episodes, returning the merged groups (to be rendered + written). The merge is
+/// deliberately non-destructive (the import UX promise):
+/// - existing groups/items are the base — order and **watched** state are kept;
+/// - a matched item (same group label + `key`) keeps its watched flag and only
+///   gains a title when its existing title is empty (never overwrites an edit);
+/// - new incoming items are appended to their group, new incoming groups appended;
+/// - existing items/groups absent from `incoming` are kept (hand-added or
+///   removed-upstream entries survive). Re-syncing unchanged data is a no-op.
+pub fn merge_episodes(existing: &EntityEpisodes, incoming: &[EpisodeGroup]) -> Vec<EpisodeGroup> {
+    let mut result: Vec<EpisodeGroup> = existing.groups.clone();
+    for incoming_group in incoming {
+        match result
+            .iter_mut()
+            .find(|group| same_label(&group.label, &incoming_group.label))
+        {
+            Some(group) => {
+                for item in &incoming_group.items {
+                    match group.items.iter_mut().find(|existing_item| {
+                        !item.key.trim().is_empty() && existing_item.key.trim() == item.key.trim()
+                    }) {
+                        Some(existing_item) => {
+                            if existing_item.title.trim().is_empty() {
+                                existing_item.title = item.title.clone();
+                            }
+                        }
+                        None => group.items.push(Episode {
+                            key: item.key.clone(),
+                            title: item.title.clone(),
+                            watched: false,
+                        }),
+                    }
+                }
+            }
+            None => result.push(EpisodeGroup {
+                label: incoming_group.label.clone(),
+                items: incoming_group
+                    .items
+                    .iter()
+                    .map(|item| Episode {
+                        key: item.key.clone(),
+                        title: item.title.clone(),
+                        watched: false,
+                    })
+                    .collect(),
+            }),
+        }
+    }
+    result
+}
+
+fn same_label(a: &str, b: &str) -> bool {
+    a.trim().eq_ignore_ascii_case(b.trim())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -240,6 +295,97 @@ mod tests {
             item_noun: Some("Episode".to_string()),
             tracking: Some(EpisodeTracking::Checklist),
         }
+    }
+
+    fn episode(key: &str, title: &str, watched: bool) -> Episode {
+        Episode {
+            key: key.to_string(),
+            title: title.to_string(),
+            watched,
+        }
+    }
+
+    fn unwatched(key: &str, title: &str) -> Episode {
+        episode(key, title, false)
+    }
+
+    fn entity_episodes(groups: Vec<EpisodeGroup>) -> EntityEpisodes {
+        EntityEpisodes {
+            heading: "Episodes".to_string(),
+            item_noun: "Episode".to_string(),
+            tracking: EpisodeTracking::Checklist,
+            total: groups.iter().map(|g| g.items.len()).sum(),
+            watched: groups
+                .iter()
+                .flat_map(|g| &g.items)
+                .filter(|e| e.watched)
+                .count(),
+            groups,
+        }
+    }
+
+    #[test]
+    fn merge_keeps_watched_fills_empty_titles_and_keeps_extras() {
+        let existing = entity_episodes(vec![EpisodeGroup {
+            label: "Season 1".to_string(),
+            items: vec![
+                episode("1", "Pilot", true),     // watched + edited title
+                episode("2", "", false),         // title to be filled
+                episode("99", "My Extra", true), // local-only, must survive
+            ],
+        }]);
+        let incoming = vec![EpisodeGroup {
+            label: "season 1".to_string(), // label match is case/space-insensitive
+            items: vec![
+                unwatched("1", "Pilot (provider)"),
+                unwatched("2", "Journey"),
+                unwatched("3", "Dawn"),
+            ],
+        }];
+
+        let merged = merge_episodes(&existing, &incoming);
+        assert_eq!(merged.len(), 1);
+        let items = &merged[0].items;
+        assert_eq!(items[0].key, "1");
+        assert_eq!(items[0].title, "Pilot"); // edited title NOT overwritten
+        assert!(items[0].watched); // watched preserved
+        assert_eq!(items[1].title, "Journey"); // empty title filled
+        assert!(items.iter().any(|e| e.key == "99" && e.watched)); // extra kept
+        assert!(items.iter().any(|e| e.key == "3")); // new appended
+
+        // Re-syncing the same incoming is a no-op.
+        let again = merge_episodes(&entity_episodes(merged.clone()), &incoming);
+        assert_eq!(again, merged);
+    }
+
+    #[test]
+    fn merge_appends_new_groups_and_flat_into_ungrouped() {
+        // New season group is appended.
+        let existing = entity_episodes(vec![EpisodeGroup {
+            label: "Season 1".to_string(),
+            items: vec![episode("1", "A", true)],
+        }]);
+        let incoming = vec![EpisodeGroup {
+            label: "Season 2".to_string(),
+            items: vec![unwatched("1", "B")],
+        }];
+        let merged = merge_episodes(&existing, &incoming);
+        assert_eq!(merged.len(), 2);
+        assert_eq!(merged[1].label, "Season 2");
+
+        // Flat import merges into the existing ungrouped group.
+        let flat_existing = entity_episodes(vec![EpisodeGroup {
+            label: String::new(),
+            items: vec![episode("1", "A", true)],
+        }]);
+        let flat_incoming = vec![EpisodeGroup {
+            label: String::new(),
+            items: vec![unwatched("1", "A"), unwatched("2", "B")],
+        }];
+        let flat_merged = merge_episodes(&flat_existing, &flat_incoming);
+        assert_eq!(flat_merged.len(), 1);
+        assert_eq!(flat_merged[0].items.len(), 2);
+        assert!(flat_merged[0].items[0].watched); // ep 1 stays watched
     }
 
     #[test]

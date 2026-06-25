@@ -101,12 +101,20 @@ import {
 } from './entityMutationResponse.zod';
 
 import {
+  EpisodeSyncResponse
+} from './episodeSyncResponse.zod';
+
+import {
   ExternalProviderCatalogResponse
 } from './externalProviderCatalogResponse.zod';
 
 import {
   ExternalSearchResponse
 } from './externalSearchResponse.zod';
+
+import type {
+  FetchEpisodesRequest
+} from './fetchEpisodesRequest.zod';
 
 import type {
   GetCalendarParams
@@ -143,6 +151,10 @@ import {
 import {
   HomeResponse
 } from './homeResponse.zod';
+
+import type {
+  ImportEpisodesRequest
+} from './importEpisodesRequest.zod';
 
 import {
   LanguagesResponse
@@ -1002,6 +1014,66 @@ export const updateEpisodes = async (id: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(updateEpisodesRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityDetailResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getFetchEpisodesUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/episodes/fetch`
+}
+
+export const fetchEpisodes = async (id: string,
+    fetchEpisodesRequest: FetchEpisodesRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EpisodeSyncResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getFetchEpisodesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(fetchEpisodesRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EpisodeSyncResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getImportEpisodesUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/episodes/import`
+}
+
+export const importEpisodes = async (id: string,
+    importEpisodesRequest: ImportEpisodesRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityDetailResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getImportEpisodesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(importEpisodesRequest)
   }
 )
 

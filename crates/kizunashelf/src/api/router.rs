@@ -4,7 +4,7 @@ use super::assets::{
     list_asset_jobs, plan_asset_downloads, serve_asset,
 };
 use super::entities::{entities, entity_dates, entity_detail};
-use super::episodes::update_episodes;
+use super::episodes::{fetch_episodes, import_episodes, update_episodes};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
     calendar, calendar_planning, capabilities, config, health, home, languages,
@@ -23,11 +23,11 @@ use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
     AssetDownloadResponse, AssetIngestResponse, CalendarResponse, CapabilitiesResponse,
     CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse, DeleteListResponse,
-    EntityDetailResponse, EntityListResponse, EntityMutationResponse, ErrorResponse,
-    ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse, HomeResponse,
-    LanguagesResponse, ListDetail, ListsResponse, PathSuggestionsResponse, RawConfigResponse,
-    RelationGroupsResponse, RelationListResponse, SettingsConfigResponse, StatsResponse,
-    TagsResponse, VaultTemplatesResponse,
+    EntityDetailResponse, EntityListResponse, EntityMutationResponse, EpisodeSyncResponse,
+    ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
+    HomeResponse, LanguagesResponse, ListDetail, ListsResponse, PathSuggestionsResponse,
+    RawConfigResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
+    StatsResponse, TagsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -323,6 +323,28 @@ fn api_router() -> ApiRouter<AppState> {
             "/api/entities/{id}/episodes",
             post_with(update_episodes, |op| {
                 op.id("updateEpisodes")
+                    .response::<200, Json<EntityDetailResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/episodes/fetch",
+            post_with(fetch_episodes, |op| {
+                op.id("fetchEpisodes")
+                    .response::<200, Json<EpisodeSyncResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/episodes/import",
+            post_with(import_episodes, |op| {
+                op.id("importEpisodes")
                     .response::<200, Json<EntityDetailResponse>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()

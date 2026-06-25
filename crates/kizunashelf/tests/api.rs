@@ -2360,3 +2360,91 @@ async fn episodes_detail_progress_update_and_revision_guard() {
     .await;
     assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
 }
+
+#[tokio::test]
+async fn episodes_import_merges_and_fetch_lists_sources() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "anime", "label": "Anime", "path": "Anime",
+                "filename": { "titleLanguage": "zh" },
+                "bodySections": [
+                    { "heading": "Episodes", "kind": "episodes", "itemNoun": "Episode", "tracking": "checklist" }
+                ],
+                "fields": [
+                    { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },
+                    { "field": "igdb_url", "fieldType": "externalRef", "displayName": "IGDB", "externalRef": "igdb" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Show.md"),
+        "---\ntitle: Show\nigdb_url: https://www.igdb.com/games/x\n---\n## Episodes\n- [x] 1 · Pilot\n- [ ] 2\n- [x] 99 · My Extra\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // Fetch lists only episode-capable sources — IGDB doesn't support episodes, so none.
+    let fetched = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/episodes/fetch",
+        Some(json!({})),
+    )
+    .await;
+    assert_eq!(fetched.0, StatusCode::OK, "{}", fetched.1);
+    assert_eq!(fetched.1["sources"], json!([]));
+    assert_eq!(fetched.1["groups"], json!([]));
+
+    let detail = request_json(&app, Method::GET, "/api/entities/anime%3AShow", None).await;
+    let revision = detail.1["entity"]["revision"].as_str().unwrap().to_string();
+
+    // Import (as a provider would supply): merge preserves watched + extras, fills only empty titles.
+    let body = json!({
+        "revision": revision,
+        "groups": [{
+            "label": "",
+            "items": [
+                { "key": "1", "title": "Pilot (provider)", "watched": false },
+                { "key": "2", "title": "Journey", "watched": false },
+                { "key": "3", "title": "Dawn", "watched": false }
+            ]
+        }]
+    });
+    let imported = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/episodes/import",
+        Some(body.clone()),
+    )
+    .await;
+    assert_eq!(imported.0, StatusCode::OK, "{}", imported.1);
+    let group = &imported.1["episodes"]["groups"][0]["items"];
+    assert_eq!(imported.1["episodes"]["total"], 4);
+    assert_eq!(imported.1["episodes"]["watched"], 2); // ep1 + ep99 stay watched
+    assert_eq!(
+        group[0],
+        json!({ "key": "1", "title": "Pilot", "watched": true })
+    ); // title not overwritten
+    assert_eq!(group[1]["title"], "Journey"); // empty title filled
+    assert!(group
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|e| e["key"] == "99" && e["watched"] == true)); // extra kept
+    assert!(group.as_array().unwrap().iter().any(|e| e["key"] == "3")); // new added
+
+    // Stale revision rejected.
+    let stale = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/episodes/import",
+        Some(body),
+    )
+    .await;
+    assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
+}

@@ -19,7 +19,7 @@ mod tmdb;
 use crate::contract::{
     ExternalCandidate, ExternalProviderCatalogItem, ExternalProviderCatalogResponse,
     ExternalProviderCredentialField, ExternalProviderFieldOption, ExternalProviderSummary,
-    ExternalProviderTypeOption, ExternalSearchResponse,
+    ExternalProviderTypeOption, ExternalSearchResponse, ProviderEpisodes,
 };
 use crate::dates::clamp_number;
 use crate::types::{BodySectionKind, FieldType, KizunaConfig};
@@ -87,6 +87,23 @@ trait ExternalProvider {
         page_size: usize,
         provider_config: &ProviderSearchConfig,
     ) -> impl Future<Output = Result<Vec<ExternalCandidate>, ApiError>> + Send;
+
+    /// Whether this provider can supply an entity's episodes/tracks (`fetch_episodes`).
+    const SUPPORTS_EPISODES: bool = false;
+
+    /// Fetches an entity's episodes/tracks given its stored external ref value (a
+    /// URL or id — the provider reuses its own URL→id parser). The default rejects;
+    /// providers that set `SUPPORTS_EPISODES = true` override this.
+    fn fetch_episodes(
+        _state: &AppState,
+        _ref_value: &str,
+    ) -> impl Future<Output = Result<ProviderEpisodes, ApiError>> + Send {
+        async {
+            Err(ApiError::bad_request(
+                "This provider does not support episode import",
+            ))
+        }
+    }
 }
 
 /// One credential a provider needs. The `key` is the [`crate::secrets`] store key
@@ -102,6 +119,10 @@ pub(super) struct CredentialSpec {
 /// hold every provider behind one uniform, non-generic entry.
 type SearchFut<'a> =
     Pin<Box<dyn Future<Output = Result<Vec<ExternalCandidate>, ApiError>> + Send + 'a>>;
+
+/// The boxed counterpart for `fetch_episodes`.
+type EpisodesFut<'a> =
+    Pin<Box<dyn Future<Output = Result<ProviderEpisodes, ApiError>> + Send + 'a>>;
 
 /// One provider, erased to plain fn pointers so the orchestration can iterate a
 /// `Vec<ProviderEntry>` instead of naming each provider type. Adding a provider
@@ -119,6 +140,8 @@ struct ProviderEntry {
     unavailable_reason: fn(&AppState) -> Option<String>,
     search:
         for<'a> fn(&'a AppState, &'a str, usize, usize, &'a ProviderSearchConfig) -> SearchFut<'a>,
+    supports_episodes: bool,
+    fetch_episodes: for<'a> fn(&'a AppState, &'a str) -> EpisodesFut<'a>,
 }
 
 fn search_boxed<'a, P: ExternalProvider + 'static>(
@@ -129,6 +152,13 @@ fn search_boxed<'a, P: ExternalProvider + 'static>(
     provider_config: &'a ProviderSearchConfig,
 ) -> SearchFut<'a> {
     Box::pin(P::search(state, q, page, page_size, provider_config))
+}
+
+fn fetch_episodes_boxed<'a, P: ExternalProvider + 'static>(
+    state: &'a AppState,
+    ref_value: &'a str,
+) -> EpisodesFut<'a> {
+    Box::pin(P::fetch_episodes(state, ref_value))
 }
 
 fn entry<P: ExternalProvider + 'static>() -> ProviderEntry {
@@ -144,7 +174,42 @@ fn entry<P: ExternalProvider + 'static>() -> ProviderEntry {
         available: P::available,
         unavailable_reason: P::unavailable_reason,
         search: search_boxed::<P>,
+        supports_episodes: P::SUPPORTS_EPISODES,
+        fetch_episodes: fetch_episodes_boxed::<P>,
     }
+}
+
+/// Whether a provider id can supply episodes (supports import + is configured).
+pub(super) fn provider_supports_episodes(state: &AppState, provider_id: &str) -> bool {
+    registry()
+        .iter()
+        .any(|entry| entry.id == provider_id && entry.supports_episodes && (entry.available)(state))
+}
+
+/// The display label for a provider id, if known.
+pub(super) fn provider_label(provider_id: &str) -> Option<&'static str> {
+    registry()
+        .iter()
+        .find(|entry| entry.id == provider_id)
+        .map(|entry| entry.label)
+}
+
+/// Fetches episodes from `provider_id` for an entity's stored external `ref_value`.
+pub(super) async fn provider_fetch_episodes(
+    state: &AppState,
+    provider_id: &str,
+    ref_value: &str,
+) -> Result<ProviderEpisodes, ApiError> {
+    let Some(fetch) = registry()
+        .iter()
+        .find(|entry| entry.id == provider_id && entry.supports_episodes)
+        .map(|entry| entry.fetch_episodes)
+    else {
+        return Err(ApiError::bad_request(
+            "This provider does not support episode import",
+        ));
+    };
+    fetch(state, ref_value).await
 }
 
 /// The provider registry: the single source of truth for which external
@@ -528,7 +593,7 @@ pub(super) fn normalize_isbn(raw: &str) -> String {
     format!("{core}{check}")
 }
 
-fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
+pub(super) fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {
     let external_ref = external_ref.trim().to_ascii_lowercase();
     registry()
         .iter()
