@@ -31,6 +31,8 @@ import {
   PencilIcon,
   PlusIcon,
   SaveIcon,
+  SquareCheckIcon,
+  SquareIcon,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
@@ -83,25 +85,27 @@ import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
-import type { ListItem, ListSection } from "@/types/api";
+import type { ListItem, ListMarker, ListSection } from "@/types/api";
 
 type EditableItem = ListItem & { key: string };
 type EditableSection = {
   key: string;
   heading: string | null;
-  ordered: boolean;
+  marker: ListMarker;
   items: EditableItem[];
 };
 
 // A stable-ish signature of the editable sections, for dirty-tracking and for
 // comparing local edits against the server's last-loaded state. Only the parts
-// that round-trip to Markdown matter (heading text, marker style, item order).
-function sectionsSignature(sections: Array<{ heading: string | null; ordered: boolean; items: Array<{ text: string }> }>) {
+// that round-trip to Markdown matter (heading, marker, item order + task state).
+function sectionsSignature(
+  sections: Array<{ heading: string | null; marker: ListMarker; items: Array<{ text: string; checked?: boolean | null }> }>,
+) {
   return JSON.stringify(
     sections.map((section) => ({
       heading: section.heading,
-      ordered: section.ordered,
-      items: section.items.map((item) => item.text),
+      marker: section.marker,
+      items: section.items.map((item) => ({ text: item.text, checked: item.checked ?? null })),
     })),
   );
 }
@@ -109,7 +113,7 @@ function sectionsSignature(sections: Array<{ heading: string | null; ordered: bo
 function serverSections(sections: ListSection[]) {
   return sections.map((section) => ({
     heading: section.heading ?? null,
-    ordered: section.ordered,
+    marker: section.marker,
     items: section.items,
   }));
 }
@@ -148,7 +152,7 @@ export function ListDetailPage() {
       data.sections.map((section, sectionIndex) => ({
         key: `srv-${sectionIndex}`,
         heading: section.heading ?? null,
-        ordered: section.ordered,
+        marker: section.marker,
         items: section.items.map((item, itemIndex) => ({ ...item, key: `srv-${sectionIndex}-${itemIndex}` })),
       })),
     );
@@ -191,8 +195,8 @@ export function ListDetailPage() {
       trailing,
       sections: sections.map((section) => ({
         heading: section.heading,
-        ordered: section.ordered,
-        items: section.items.map((item) => ({ text: item.text })),
+        marker: section.marker,
+        items: section.items.map((item) => ({ text: item.text, checked: item.checked })),
       })),
     };
   }
@@ -276,7 +280,7 @@ export function ListDetailPage() {
   function addSection() {
     setSections((current) => [
       ...current,
-      { key: nextKey("sec"), heading: "New section", ordered: false, items: [] },
+      { key: nextKey("sec"), heading: "New section", marker: "unordered", items: [] },
     ]);
   }
 
@@ -290,7 +294,7 @@ export function ListDetailPage() {
       if (target.items.length === 0) return rest;
       const ungroupedIndex = rest.findIndex((section) => section.heading === null);
       if (ungroupedIndex === -1) {
-        return [{ key: nextKey("sec"), heading: null, ordered: false, items: target.items }, ...rest];
+        return [{ key: nextKey("sec"), heading: null, marker: "unordered", items: target.items }, ...rest];
       }
       return rest.map((section, index) =>
         index === ungroupedIndex ? { ...section, items: [...section.items, ...target.items] } : section,
@@ -305,6 +309,17 @@ export function ListDetailPage() {
   function removeItem(itemKey: string) {
     setSections((current) =>
       current.map((section) => ({ ...section, items: section.items.filter((item) => item.key !== itemKey) })),
+    );
+  }
+
+  function toggleItem(itemKey: string) {
+    setSections((current) =>
+      current.map((section) => ({
+        ...section,
+        items: section.items.map((item) =>
+          item.key === itemKey ? { ...item, checked: !(item.checked ?? false) } : item,
+        ),
+      })),
     );
   }
 
@@ -414,9 +429,10 @@ export function ListDetailPage() {
                         language={language}
                         disabled={!contentWritable}
                         onHeadingChange={(heading) => updateSection(section.key, { heading })}
-                        onOrderedChange={(ordered) => updateSection(section.key, { ordered })}
+                        onMarkerChange={(marker) => updateSection(section.key, { marker })}
                         onRemoveSection={() => removeSection(section.key)}
                         onRemoveItem={removeItem}
+                        onToggleItem={toggleItem}
                       />
                     ))}
                   </div>
@@ -476,17 +492,19 @@ function SectionBlock({
   language,
   disabled,
   onHeadingChange,
-  onOrderedChange,
+  onMarkerChange,
   onRemoveSection,
   onRemoveItem,
+  onToggleItem,
 }: {
   section: EditableSection;
   language: string;
   disabled: boolean;
   onHeadingChange: (heading: string) => void;
-  onOrderedChange: (ordered: boolean) => void;
+  onMarkerChange: (marker: ListMarker) => void;
   onRemoveSection: () => void;
   onRemoveItem: (itemKey: string) => void;
+  onToggleItem: (itemKey: string) => void;
 }) {
   // Each section is a drop target in its own right, so items can be dragged into
   // an empty one (where there are no item rows to drop onto).
@@ -552,18 +570,22 @@ function SectionBlock({
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuLabel>Marker style</DropdownMenuLabel>
+            <DropdownMenuLabel>List style</DropdownMenuLabel>
             <DropdownMenuRadioGroup
-              value={section.ordered ? "ordered" : "bulleted"}
-              onValueChange={(value) => onOrderedChange(value === "ordered")}
+              value={section.marker}
+              onValueChange={(value) => onMarkerChange(value as ListMarker)}
             >
-              <DropdownMenuRadioItem value="bulleted">
+              <DropdownMenuRadioItem value="unordered">
                 <ListIcon />
-                Bulleted
+                Unordered
               </DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="ordered">
                 <ListOrderedIcon />
-                Numbered
+                Ordered
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="todo">
+                <SquareCheckIcon />
+                Todo
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
@@ -587,10 +609,11 @@ function SectionBlock({
                 key={item.key}
                 item={item}
                 index={index}
-                ordered={section.ordered}
+                marker={section.marker}
                 language={language}
                 disabled={disabled}
                 onRemove={() => onRemoveItem(item.key)}
+                onToggle={() => onToggleItem(item.key)}
               />
             ))
           )}
@@ -603,20 +626,23 @@ function SectionBlock({
 function SortableRow({
   item,
   index,
-  ordered,
+  marker,
   language,
   disabled,
   onRemove,
+  onToggle,
 }: {
   item: EditableItem;
   index: number;
-  ordered: boolean;
+  marker: ListMarker;
   language: string;
   disabled: boolean;
   onRemove: () => void;
+  onToggle: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.key });
   const style = { transform: CSS.Transform.toString(transform), transition };
+  const checked = item.checked ?? false;
 
   return (
     <li
@@ -625,6 +651,8 @@ function SortableRow({
       className={cn(
         "group flex items-center gap-2 rounded-md border bg-card p-2",
         isDragging && "opacity-60 shadow-sm",
+        // A checked-off task reads as "done": dimmed and struck through.
+        marker === "todo" && checked && "opacity-60",
       )}
     >
       <button
@@ -642,9 +670,23 @@ function SortableRow({
       >
         <GripVerticalIcon className="size-4" />
       </button>
-      <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">
-        {ordered ? `${index + 1}.` : "•"}
-      </span>
+      {/* Marker column: a checkbox for todo, the position for ordered, and nothing
+          for unordered (the card itself already separates rows). */}
+      {marker === "todo" ? (
+        <button
+          type="button"
+          className="flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          role="checkbox"
+          aria-checked={checked}
+          aria-label={checked ? "Mark as not done" : "Mark as done"}
+          disabled={disabled}
+          onClick={onToggle}
+        >
+          {checked ? <SquareCheckIcon className="size-4 text-primary" /> : <SquareIcon className="size-4" />}
+        </button>
+      ) : marker === "ordered" ? (
+        <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">{index + 1}.</span>
+      ) : null}
       {item.entity ? (
         <Link
           to={`/entities/${encodeURIComponent(item.entity.id)}`}
@@ -652,13 +694,15 @@ function SortableRow({
         >
           <EntityCover entity={item.entity} />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">{entityTitle(item.entity, language)}</span>
+            <span className={cn("block truncate text-sm font-medium", marker === "todo" && checked && "line-through")}>
+              {entityTitle(item.entity, language)}
+            </span>
             <span className="block truncate text-xs text-muted-foreground">{item.entity.typeLabel}</span>
           </span>
         </Link>
       ) : (
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-sm">{item.text}</span>
+          <span className={cn("truncate text-sm", marker === "todo" && checked && "line-through")}>{item.text}</span>
           <span className="text-xs text-muted-foreground">Unresolved link</span>
         </span>
       )}

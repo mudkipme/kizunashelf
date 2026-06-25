@@ -50,8 +50,9 @@ export const ListItem = zod.object({
   "total": zod.number().min(listItemEntityOneEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(listItemEntityOneRelationCountMin)
-}),zod.null()]).optional()
-}).describe('One item of a list. `text` is the raw Markdown content after the list marker\n(preserving any annotation); `target` is the first wikilink target in it; and\n`entity` is the resolved entity when the target matches an indexed note. An\nunresolved item keeps its `text`\/`target` and a `null` `entity`.')
+}),zod.null()]).optional(),
+  "checked": zod.boolean().nullish()
+}).describe('One item of a list. `text` is the Markdown content after the list marker (and\nafter any task checkbox), preserving annotations; `target` is the first\nwikilink target in it; `entity` is the resolved entity when the target matches\nan indexed note (else `null`); and `checked` is the task state for items in a\n`todo` section (`null` for non-task items).')
 
 export type ListItem = zod.input<typeof ListItem>;
 export type ListItemOutput = zod.output<typeof ListItem>;

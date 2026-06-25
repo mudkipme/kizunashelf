@@ -6155,8 +6155,8 @@
               "null"
             ]
           },
-          "ordered": {
-            "type": "boolean"
+          "marker": {
+            "$ref": "#/components/schemas/ListMarker"
           },
           "items": {
             "type": "array",
@@ -6166,12 +6166,21 @@
           }
         },
         "required": [
-          "ordered",
+          "marker",
           "items"
         ]
       },
+      "ListMarker": {
+        "description": "How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.",
+        "type": "string",
+        "enum": [
+          "unordered",
+          "ordered",
+          "todo"
+        ]
+      },
       "ListItem": {
-        "description": "One item of a list. `text` is the raw Markdown content after the list marker\n(preserving any annotation); `target` is the first wikilink target in it; and\n`entity` is the resolved entity when the target matches an indexed note. An\nunresolved item keeps its `text`/`target` and a `null` `entity`.",
+        "description": "One item of a list. `text` is the Markdown content after the list marker (and\nafter any task checkbox), preserving annotations; `target` is the first\nwikilink target in it; `entity` is the resolved entity when the target matches\nan indexed note (else `null`); and `checked` is the task state for items in a\n`todo` section (`null` for non-task items).",
         "type": "object",
         "properties": {
           "text": {
@@ -6191,6 +6200,12 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "checked": {
+            "type": [
+              "boolean",
+              "null"
             ]
           }
         },
@@ -6252,9 +6267,13 @@
               "null"
             ]
           },
-          "ordered": {
-            "type": "boolean",
-            "default": false
+          "marker": {
+            "default": "unordered",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMarker"
+              }
+            ]
           },
           "items": {
             "type": "array",
@@ -6271,6 +6290,13 @@
         "properties": {
           "text": {
             "type": "string"
+          },
+          "checked": {
+            "description": "Task state for an item in a `todo` section; `null`/omitted otherwise.",
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         },
         "required": [

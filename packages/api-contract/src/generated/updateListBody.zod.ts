@@ -8,7 +8,7 @@ import { z as zod } from 'zod';
 
 export const updateListBodyDescriptionDefault = ``;
 export const updateListBodyTrailingDefault = ``;
-export const updateListBodySectionsItemOrderedDefault = false;
+export const updateListBodySectionsItemMarkerDefault = `unordered`;
 export const updateListBodySectionsItemItemsDefault = [];
 export const updateListBodySectionsDefault = [];
 export const UpdateListBody = zod.object({
@@ -17,9 +17,10 @@ export const UpdateListBody = zod.object({
   "trailing": zod.string().default(updateListBodyTrailingDefault),
   "sections": zod.array(zod.object({
   "heading": zod.string().nullish(),
-  "ordered": zod.boolean().default(updateListBodySectionsItemOrderedDefault),
+  "marker": zod.enum(['unordered', 'ordered', 'todo']).describe('How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.').default(updateListBodySectionsItemMarkerDefault),
   "items": zod.array(zod.object({
-  "text": zod.string()
+  "text": zod.string(),
+  "checked": zod.boolean().nullish().describe('Task state for an item in a `todo` section; `null`\/omitted otherwise.')
 }).describe('One item as supplied by the client on a full list rewrite. Only the raw `text`\nis sent; the server re-derives the target\/entity on the next read.')).default(updateListBodySectionsItemItemsDefault)
 }).describe('One section as supplied by the client on a full list rewrite: an optional\nheading (`null`\/empty for the ungrouped block), its marker style, and its items\nin their authoritative order.')).default(updateListBodySectionsDefault),
   "renameTo": zod.string().nullish()

@@ -6,13 +6,14 @@
  */
 import { z as zod } from 'zod';
 
-export const listSectionInputOrderedDefault = false;
+export const listSectionInputMarkerDefault = `unordered`;
 export const listSectionInputItemsDefault = [];
 export const ListSectionInput = zod.object({
   "heading": zod.string().nullish(),
-  "ordered": zod.boolean().default(listSectionInputOrderedDefault),
+  "marker": zod.enum(['unordered', 'ordered', 'todo']).describe('How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.').default(listSectionInputMarkerDefault),
   "items": zod.array(zod.object({
-  "text": zod.string()
+  "text": zod.string(),
+  "checked": zod.boolean().nullish().describe('Task state for an item in a `todo` section; `null`\/omitted otherwise.')
 }).describe('One item as supplied by the client on a full list rewrite. Only the raw `text`\nis sent; the server re-derives the target\/entity on the next read.')).default(listSectionInputItemsDefault)
 }).describe('One section as supplied by the client on a full list rewrite: an optional\nheading (`null`\/empty for the ungrouped block), its marker style, and its items\nin their authoritative order.')
 

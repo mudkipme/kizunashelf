@@ -7,7 +7,8 @@
 import { z as zod } from 'zod';
 
 export const ListItemInput = zod.object({
-  "text": zod.string()
+  "text": zod.string(),
+  "checked": zod.boolean().nullish().describe('Task state for an item in a `todo` section; `null`\/omitted otherwise.')
 }).describe('One item as supplied by the client on a full list rewrite. Only the raw `text`\nis sent; the server re-derives the target\/entity on the next read.')
 
 export type ListItemInput = zod.input<typeof ListItemInput>;

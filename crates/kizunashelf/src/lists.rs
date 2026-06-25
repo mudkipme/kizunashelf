@@ -38,19 +38,39 @@ use std::sync::OnceLock;
 /// (`KizunaShelf/config.yaml`) so lists travel inside the vault on sync.
 pub const LISTS_DIR: &str = "KizunaShelf/Lists";
 
+/// How a section's list renders: plain bullets, a numbered list, or a task list
+/// with checkboxes. Each `## section` (and the ungrouped block) carries its own
+/// marker, since each Markdown list block is independent.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ListMarker {
+    #[default]
+    Unordered,
+    Ordered,
+    Todo,
+}
+
+/// One top-level list item: the raw content after the marker (and after any task
+/// checkbox), plus the checkbox state when the item is a task (`- [ ]`/`- [x]`).
+/// `text` keeps annotations like `[[X]] — rewatch` and any nested continuation
+/// lines verbatim, so a re-render round-trips.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ParsedItem {
+    pub text: String,
+    /// `Some(true|false)` when the item is a task; `None` for a plain item.
+    pub checked: Option<bool>,
+}
+
 /// One section of a list: a run of items under an optional `## heading`. The
 /// leading block of items before the first heading has `heading: None`; every
-/// `## …` in the body opens a new named section. Each section keeps its own
-/// `ordered` marker style, since each Markdown list block is independent.
+/// `## …` in the body opens a new named section.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ParsedSection {
     /// The `## …` heading text, or `None` for the ungrouped leading block.
     pub heading: Option<String>,
-    /// One entry per top-level item, holding the raw content after the list marker
-    /// (so annotations like `[[X]] — rewatch` and nested lines are preserved).
-    pub items: Vec<String>,
-    /// `true` when this section's list uses an ordered marker (`1.`/`1)`).
-    pub ordered: bool,
+    /// The section's items, in order.
+    pub items: Vec<ParsedItem>,
+    /// This section's list style (bullets / numbered / task list).
+    pub marker: ListMarker,
 }
 
 /// A list's body decomposed into the document description, its sections (split on
@@ -76,10 +96,24 @@ pub struct ParsedList {
 /// splitting). The building block both [`parse_list`] and the section walk use.
 struct ListBlock {
     description: String,
-    items: Vec<String>,
+    items: Vec<ParsedItem>,
     ordered: bool,
     trailing: String,
     has_list: bool,
+}
+
+impl ListBlock {
+    /// The section marker implied by this block: numbered when the markers are
+    /// ordered (`1.`), a task list when any item carries a checkbox, else bullets.
+    fn marker(&self) -> ListMarker {
+        if self.ordered {
+            ListMarker::Ordered
+        } else if self.items.iter().any(|item| item.checked.is_some()) {
+            ListMarker::Todo
+        } else {
+            ListMarker::Unordered
+        }
+    }
 }
 
 /// Splits a raw list file into `(frontmatter_block, body)`. The frontmatter block
@@ -134,6 +168,22 @@ fn parse_item_line(line: &str) -> Option<ItemLine<'_>> {
     })
 }
 
+fn task_checkbox_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    // A GFM task-list checkbox at the very start of an item's content, e.g.
+    // `[ ] read me` / `[x] done`.
+    RE.get_or_init(|| Regex::new(r"^\[([ xX])\][ \t]+(.*)$").unwrap())
+}
+
+/// Splits a leading `[ ]`/`[x]` task checkbox off an item's content, returning the
+/// checked state (`None` when the item is not a task) and the remaining text.
+fn split_checkbox(content: &str) -> (Option<bool>, String) {
+    match task_checkbox_regex().captures(content) {
+        Some(caps) => (Some(&caps[1] != " "), caps[2].to_string()),
+        None => (None, content.to_string()),
+    }
+}
+
 /// Parses a list body into the document description, its sections (split on the
 /// `## headings`), the per-section items/marker style, and the trailing Markdown.
 ///
@@ -154,8 +204,8 @@ pub fn parse_list(body: &str) -> ParsedList {
         if !block.items.is_empty() {
             sections.push(ParsedSection {
                 heading: None,
+                marker: block.marker(),
                 items: block.items,
-                ordered: block.ordered,
             });
         }
         return ParsedList {
@@ -169,13 +219,14 @@ pub fn parse_list(body: &str) -> ParsedList {
     // Leading region (before the first `##`): the document description, plus any
     // ungrouped items that sit above the first heading.
     let lead = parse_block(&body[..dividers[0].start]);
+    let lead_marker = lead.marker();
     let description = lead.description;
     let mut sections = Vec::new();
     if !lead.items.is_empty() {
         sections.push(ParsedSection {
             heading: None,
+            marker: lead_marker,
             items: lead.items,
-            ordered: lead.ordered,
         });
     }
 
@@ -188,8 +239,8 @@ pub fn parse_list(body: &str) -> ParsedList {
         let block = parse_block(&body[start..end]);
         sections.push(ParsedSection {
             heading: Some(heading.text.clone()),
+            marker: block.marker(),
             items: block.items,
-            ordered: block.ordered,
         });
         if index + 1 == dividers.len() {
             // Trailing notes follow the last section's list; a heading-only last
@@ -230,7 +281,7 @@ fn parse_block(body: &str) -> ListBlock {
     };
 
     let description = lines[..start].join("\n");
-    let mut items: Vec<String> = Vec::new();
+    let mut items: Vec<ParsedItem> = Vec::new();
     // Index just past the last line consumed into the list block; anything from
     // here on (including a blank line that terminated the block) is trailing.
     let mut consumed_end = start;
@@ -239,12 +290,19 @@ fn parse_block(body: &str) -> ListBlock {
         let line = lines[i];
         if let Some(item) = parse_item_line(line) {
             if item.indent == base_indent {
-                items.push(item.content.to_string());
+                // Task checkboxes only apply to bullet lists; an ordered list keeps
+                // any `[ ]` as literal text.
+                let (checked, text) = if ordered {
+                    (None, item.content.to_string())
+                } else {
+                    split_checkbox(item.content)
+                };
+                items.push(ParsedItem { text, checked });
             } else if let Some(last) = items.last_mut() {
                 // A more/less indented marker is a nested item — keep it attached to
                 // the current top-level item so it survives a re-render.
-                last.push('\n');
-                last.push_str(line);
+                last.text.push('\n');
+                last.text.push_str(line);
             } else {
                 break;
             }
@@ -272,8 +330,8 @@ fn parse_block(body: &str) -> ListBlock {
         if line.starts_with(' ') || line.starts_with('\t') {
             // Indented continuation paragraph under the current item.
             if let Some(last) = items.last_mut() {
-                last.push('\n');
-                last.push_str(line);
+                last.text.push('\n');
+                last.text.push_str(line);
                 consumed_end = i + 1;
                 i += 1;
                 continue;
@@ -298,9 +356,9 @@ fn parse_block(body: &str) -> ListBlock {
 }
 
 /// Renders a list body from its parts. Blocks are separated by a single blank line;
-/// each section emits its `## heading` (when named) followed by its items with `- `
-/// (unordered) or `1.`, `2.`, … (ordered) markers, so the output is clean and
-/// idempotent under re-parsing.
+/// each section emits its `## heading` (when named) followed by its items with the
+/// section's marker — `- ` (unordered), `1.`, `2.`, … (ordered), or `- [ ]`/`- [x]`
+/// (todo) — so the output is clean and idempotent under re-parsing.
 pub fn render_list(description: &str, sections: &[ParsedSection], trailing: &str) -> String {
     let mut blocks: Vec<String> = Vec::new();
     let description = description.trim();
@@ -316,12 +374,13 @@ pub fn render_list(description: &str, sections: &[ParsedSection], trailing: &str
                 .items
                 .iter()
                 .enumerate()
-                .map(|(index, item)| {
-                    if section.ordered {
-                        format!("{}. {item}", index + 1)
-                    } else {
-                        format!("- {item}")
+                .map(|(index, item)| match section.marker {
+                    ListMarker::Ordered => format!("{}. {}", index + 1, item.text),
+                    ListMarker::Todo => {
+                        let box_ = if item.checked == Some(true) { "x" } else { " " };
+                        format!("- [{box_}] {}", item.text)
                     }
+                    ListMarker::Unordered => format!("- {}", item.text),
                 })
                 .collect();
             blocks.push(rendered.join("\n"));
@@ -370,12 +429,23 @@ pub fn entity_wikilink(basename: &str, path: &str, ambiguous: bool) -> String {
 mod tests {
     use super::*;
 
-    /// A single ungrouped section: `[items]`, with no heading.
-    fn ungrouped(items: &[&str], ordered: bool) -> ParsedSection {
+    /// Plain (non-task) items from their text.
+    fn items(texts: &[&str]) -> Vec<ParsedItem> {
+        texts
+            .iter()
+            .map(|text| ParsedItem {
+                text: text.to_string(),
+                checked: None,
+            })
+            .collect()
+    }
+
+    /// A single ungrouped section (no heading) with the given marker.
+    fn ungrouped(texts: &[&str], marker: ListMarker) -> ParsedSection {
         ParsedSection {
             heading: None,
-            items: items.iter().map(|item| item.to_string()).collect(),
-            ordered,
+            items: items(texts),
+            marker,
         }
     }
 
@@ -385,14 +455,46 @@ mod tests {
         let parsed = parse_list(body);
         assert!(parsed.has_list);
         assert_eq!(parsed.description, "My favourites.\n");
-        assert_eq!(parsed.sections, vec![ungrouped(&["[[A]]", "[[B]]"], false)]);
+        assert_eq!(
+            parsed.sections,
+            vec![ungrouped(&["[[A]]", "[[B]]"], ListMarker::Unordered)]
+        );
         assert_eq!(parsed.trailing, "\nSee also below.");
     }
 
     #[test]
     fn detects_ordered_lists() {
         let parsed = parse_list("1. [[A]]\n2. [[B]]");
-        assert_eq!(parsed.sections, vec![ungrouped(&["[[A]]", "[[B]]"], true)]);
+        assert_eq!(
+            parsed.sections,
+            vec![ungrouped(&["[[A]]", "[[B]]"], ListMarker::Ordered)]
+        );
+    }
+
+    #[test]
+    fn parses_and_renders_todo_lists() {
+        let body = "## Tasks\n\n- [ ] [[A]]\n- [x] [[B]] — note\n";
+        let parsed = parse_list(body);
+        assert_eq!(
+            parsed.sections,
+            vec![ParsedSection {
+                heading: Some("Tasks".to_string()),
+                marker: ListMarker::Todo,
+                items: vec![
+                    ParsedItem {
+                        text: "[[A]]".to_string(),
+                        checked: Some(false),
+                    },
+                    ParsedItem {
+                        text: "[[B]] — note".to_string(),
+                        checked: Some(true),
+                    },
+                ],
+            }]
+        );
+        let rendered = render_list(&parsed.description, &parsed.sections, &parsed.trailing);
+        assert_eq!(rendered, body);
+        assert_eq!(parse_list(&rendered).sections, parsed.sections);
     }
 
     #[test]
@@ -411,16 +513,16 @@ mod tests {
         assert_eq!(
             parsed.sections,
             vec![
-                ungrouped(&["[[A]]"], false),
+                ungrouped(&["[[A]]"], ListMarker::Unordered),
                 ParsedSection {
                     heading: Some("Watched".to_string()),
-                    items: vec!["[[B]]".to_string(), "[[C]]".to_string()],
-                    ordered: true,
+                    marker: ListMarker::Ordered,
+                    items: items(&["[[B]]", "[[C]]"]),
                 },
                 ParsedSection {
                     heading: Some("On hold".to_string()),
-                    items: vec!["[[D]]".to_string()],
-                    ordered: false,
+                    marker: ListMarker::Unordered,
+                    items: items(&["[[D]]"]),
                 },
             ]
         );
@@ -433,8 +535,8 @@ mod tests {
             parsed.sections,
             vec![ParsedSection {
                 heading: Some("Later".to_string()),
+                marker: ListMarker::Unordered,
                 items: Vec::new(),
-                ordered: false,
             }]
         );
         // It survives a render round-trip rather than collapsing away.
@@ -462,13 +564,13 @@ mod tests {
     }
 
     #[test]
-    fn per_section_ordered_markers_render() {
+    fn per_section_markers_render() {
         let sections = vec![
-            ungrouped(&["[[A]]"], false),
+            ungrouped(&["[[A]]"], ListMarker::Unordered),
             ParsedSection {
                 heading: Some("Ranked".to_string()),
-                items: vec!["[[B]]".to_string(), "[[C]]".to_string()],
-                ordered: true,
+                marker: ListMarker::Ordered,
+                items: items(&["[[B]]", "[[C]]"]),
             },
         ];
         let rendered = render_list("", &sections, "");
@@ -478,7 +580,10 @@ mod tests {
     #[test]
     fn loose_list_with_blank_lines_between_items() {
         let parsed = parse_list("- [[A]]\n\n- [[B]]\n\nAfter.");
-        assert_eq!(parsed.sections, vec![ungrouped(&["[[A]]", "[[B]]"], false)]);
+        assert_eq!(
+            parsed.sections,
+            vec![ungrouped(&["[[A]]", "[[B]]"], ListMarker::Unordered)]
+        );
         assert_eq!(parsed.trailing.trim(), "After.");
     }
 

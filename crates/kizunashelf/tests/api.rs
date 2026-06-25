@@ -2056,21 +2056,21 @@ async fn lists_crud_add_reorder_and_delete() {
     assert_eq!(detail.0, StatusCode::OK, "{}", detail.1);
     let revision = detail.1["revision"].as_str().unwrap().to_string();
 
-    // Full rewrite: move one item into a new numbered "Finished" section, keep the
-    // other ungrouped, set description + trailing.
+    // Full rewrite: move one item into a numbered "Finished" section, put the other
+    // in a "Todo" task section (checked), set description + trailing.
     let update_body = json!({
         "revision": revision,
         "description": "My picks",
         "trailing": "More below.",
         "sections": [
             {
-                "heading": null,
-                "ordered": false,
-                "items": [{ "text": "[[Moon Quest]]" }]
+                "heading": "Todo",
+                "marker": "todo",
+                "items": [{ "text": "[[Moon Quest]]", "checked": true }]
             },
             {
                 "heading": "Finished",
-                "ordered": true,
+                "marker": "ordered",
                 "items": [{ "text": "[[Star Voyager]]" }]
             }
         ]
@@ -2085,14 +2085,19 @@ async fn lists_crud_add_reorder_and_delete() {
     assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
     assert_eq!(updated.1["description"], "My picks");
     assert_eq!(updated.1["sections"].as_array().unwrap().len(), 2);
-    assert!(updated.1["sections"][0]["heading"].is_null());
-    assert_eq!(updated.1["sections"][0]["ordered"], false);
+    assert_eq!(updated.1["sections"][0]["heading"], "Todo");
+    assert_eq!(updated.1["sections"][0]["marker"], "todo");
+    assert_eq!(updated.1["sections"][0]["items"][0]["checked"], true);
     assert_eq!(
         updated.1["sections"][0]["items"][0]["entity"]["id"],
         "games:Moon Quest"
     );
     assert_eq!(updated.1["sections"][1]["heading"], "Finished");
-    assert_eq!(updated.1["sections"][1]["ordered"], true);
+    assert_eq!(updated.1["sections"][1]["marker"], "ordered");
+    // A non-task item carries no `checked` field.
+    assert!(updated.1["sections"][1]["items"][0]
+        .get("checked")
+        .is_none());
     assert_eq!(
         updated.1["sections"][1]["items"][0]["entity"]["id"],
         "anime:Star Voyager"
@@ -2106,7 +2111,7 @@ async fn lists_crud_add_reorder_and_delete() {
     let index = request_json(app, Method::GET, "/api/lists", None).await;
     assert_eq!(index.1["items"].as_array().unwrap().len(), 1);
     assert_eq!(index.1["items"][0]["itemCount"], 2);
-    assert_eq!(index.1["items"][0]["sectionCount"], 1);
+    assert_eq!(index.1["items"][0]["sectionCount"], 2);
     assert_eq!(index.1["items"][0]["description"], "My picks");
 
     // Membership: ?entity= reports whether each list contains that entity (drives

@@ -227,8 +227,8 @@ function hasAppBackStack() {
 function AppLogo() {
   return (
     <span className="relative size-8 shrink-0 overflow-hidden rounded-md" aria-hidden="true">
-      <img src="/icon.svg" alt="" className="size-full dark:hidden" />
-      <img src="/icon-dark.svg" alt="" className="hidden size-full dark:block" />
+      <img src="/icon.png" alt="" className="size-full dark:hidden" />
+      <img src="/icon-dark.png" alt="" className="hidden size-full dark:block" />
     </span>
   );
 }

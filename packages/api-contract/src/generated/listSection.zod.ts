@@ -20,7 +20,7 @@ export const listSectionItemsItemEntityOneRelationCountMin = 0;
 
 export const ListSection = zod.object({
   "heading": zod.string().nullish(),
-  "ordered": zod.boolean(),
+  "marker": zod.enum(['unordered', 'ordered', 'todo']).describe('How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.'),
   "items": zod.array(zod.object({
   "text": zod.string(),
   "target": zod.string().nullish(),
@@ -53,8 +53,9 @@ export const ListSection = zod.object({
   "total": zod.number().min(listSectionItemsItemEntityOneEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(listSectionItemsItemEntityOneRelationCountMin)
-}),zod.null()]).optional()
-}).describe('One item of a list. `text` is the raw Markdown content after the list marker\n(preserving any annotation); `target` is the first wikilink target in it; and\n`entity` is the resolved entity when the target matches an indexed note. An\nunresolved item keeps its `text`\/`target` and a `null` `entity`.'))
+}),zod.null()]).optional(),
+  "checked": zod.boolean().nullish()
+}).describe('One item of a list. `text` is the Markdown content after the list marker (and\nafter any task checkbox), preserving annotations; `target` is the first\nwikilink target in it; `entity` is the resolved entity when the target matches\nan indexed note (else `null`); and `checked` is the task state for items in a\n`todo` section (`null` for non-task items).'))
 }).describe('One section of a list: an optional `## heading`, its marker style, and the\nresolved items beneath it. `heading` is `null` for the ungrouped block of items\nabove the first heading (and for a flat list, which is a single such section).')
 
 export type ListSection = zod.input<typeof ListSection>;

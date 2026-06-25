@@ -7,13 +7,13 @@ use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, move_to_trash, sanitize_basename, write_entity_raw};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
-    AddListItemRequest, CreateListRequest, DeleteListResponse, ListDetail, ListItem, ListSection,
-    ListSummary, ListsResponse, UpdateListRequest,
+    AddListItemRequest, CreateListRequest, DeleteListResponse, ListDetail, ListItem, ListMarker,
+    ListSection, ListSummary, ListsResponse, UpdateListRequest,
 };
 use crate::library::{file_revision, find_target, normalized_entity_basename_index};
 use crate::lists::{
     basename_ambiguous, compose_document, entity_wikilink, item_target, parse_list, render_list,
-    split_frontmatter, ParsedList, ParsedSection, LISTS_DIR,
+    split_frontmatter, ListMarker as CoreMarker, ParsedItem, ParsedList, ParsedSection, LISTS_DIR,
 };
 use crate::types::{EntityRecord, Library};
 use crate::vfs::Vfs;
@@ -82,6 +82,7 @@ pub(crate) async fn get_lists(
                 .sections
                 .iter()
                 .flat_map(|s| s.items.iter())
+                .map(|item| &item.text)
                 .collect();
             let contains = match (&query.entity, &index) {
                 (Some(entity_id), Some(index)) => {
@@ -160,8 +161,15 @@ pub(crate) async fn update_list(
         .map(|section| ParsedSection {
             // An empty/whitespace heading means the ungrouped block.
             heading: section.heading.filter(|heading| !heading.trim().is_empty()),
-            items: section.items.into_iter().map(|item| item.text).collect(),
-            ordered: section.ordered,
+            marker: to_core_marker(section.marker),
+            items: section
+                .items
+                .into_iter()
+                .map(|item| ParsedItem {
+                    text: item.text,
+                    checked: item.checked,
+                })
+                .collect(),
         })
         .collect();
     let body = render_list(&request.description, &sections, &request.trailing);
@@ -239,23 +247,27 @@ pub(crate) async fn add_list_item(
         .iter()
         .flat_map(|s| s.items.iter())
         .any(|item| {
-            item_target(item)
+            item_target(&item.text)
                 .and_then(|target| find_target(&target, None, &index))
                 .is_some_and(|found| found.summary.id == record.summary.id)
         });
     if !already_present {
         let ambiguous = basename_ambiguous(&index, &record.summary.basename);
         let wikilink = entity_wikilink(&record.summary.basename, &record.summary.path, ambiguous);
+        let item = ParsedItem {
+            text: wikilink,
+            checked: None,
+        };
         // New items land in the ungrouped block; create it at the front when the
         // list is sectioned and has no ungrouped block yet.
         match parsed.sections.iter_mut().find(|s| s.heading.is_none()) {
-            Some(ungrouped) => ungrouped.items.push(wikilink),
+            Some(ungrouped) => ungrouped.items.push(item),
             None => parsed.sections.insert(
                 0,
                 ParsedSection {
                     heading: None,
-                    items: vec![wikilink],
-                    ordered: false,
+                    marker: CoreMarker::Unordered,
+                    items: vec![item],
                 },
             ),
         }
@@ -285,7 +297,7 @@ pub(crate) async fn remove_list_item(
     // (unresolved items are kept).
     for section in &mut parsed.sections {
         section.items.retain(|item| {
-            item_target(item)
+            item_target(&item.text)
                 .and_then(|target| find_target(&target, None, &index))
                 .is_none_or(|found| found.summary.id != path_param.entity_id)
         });
@@ -298,6 +310,24 @@ pub(crate) async fn remove_list_item(
         return Ok(Json(detail_from_parts(&path, parsed, &new_raw, &index)));
     }
     Ok(Json(detail_from_parts(&path, parsed, &raw, &index)))
+}
+
+/// Maps a contract marker to the core enum (the two are deliberately separate so
+/// `crate::lists` stays free of contract types).
+fn to_core_marker(marker: ListMarker) -> CoreMarker {
+    match marker {
+        ListMarker::Unordered => CoreMarker::Unordered,
+        ListMarker::Ordered => CoreMarker::Ordered,
+        ListMarker::Todo => CoreMarker::Todo,
+    }
+}
+
+fn to_contract_marker(marker: CoreMarker) -> ListMarker {
+    match marker {
+        CoreMarker::Unordered => ListMarker::Unordered,
+        CoreMarker::Ordered => ListMarker::Ordered,
+        CoreMarker::Todo => ListMarker::Todo,
+    }
 }
 
 /// Whether any item in `items` resolves to `entity_id`.
@@ -360,7 +390,7 @@ fn detail_from_parts(
             .iter()
             .map(|section| ListSection {
                 heading: section.heading.clone(),
-                ordered: section.ordered,
+                marker: to_contract_marker(section.marker),
                 items: resolve_items(&section.items, index),
             })
             .collect(),
@@ -372,21 +402,26 @@ fn detail_from_parts(
     }
 }
 
-/// Resolves each raw item to its wikilink target and (when matched) the indexed
-/// entity. Unresolved items keep their text/target with a `None` entity.
-fn resolve_items(items: &[String], index: &HashMap<String, Vec<&EntityRecord>>) -> Vec<ListItem> {
+/// Resolves each item to its wikilink target and (when matched) the indexed
+/// entity, carrying the task `checked` state through. Unresolved items keep their
+/// text/target with a `None` entity.
+fn resolve_items(
+    items: &[ParsedItem],
+    index: &HashMap<String, Vec<&EntityRecord>>,
+) -> Vec<ListItem> {
     items
         .iter()
-        .map(|content| {
-            let target = item_target(content);
+        .map(|item| {
+            let target = item_target(&item.text);
             let entity = target
                 .as_deref()
                 .and_then(|target| find_target(target, None, index))
                 .map(|record| record.summary.clone());
             ListItem {
-                text: content.clone(),
+                text: item.text.clone(),
                 target,
                 entity,
+                checked: item.checked,
             }
         })
         .collect()

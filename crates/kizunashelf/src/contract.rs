@@ -460,10 +460,22 @@ pub struct ListsResponse {
     pub items: Vec<ListSummary>,
 }
 
-/// One item of a list. `text` is the raw Markdown content after the list marker
-/// (preserving any annotation); `target` is the first wikilink target in it; and
-/// `entity` is the resolved entity when the target matches an indexed note. An
-/// unresolved item keeps its `text`/`target` and a `null` `entity`.
+/// How a list section renders: plain bullets, a numbered list, or a task list
+/// with checkboxes. Per-section, since each Markdown list block is independent.
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ListMarker {
+    #[default]
+    Unordered,
+    Ordered,
+    Todo,
+}
+
+/// One item of a list. `text` is the Markdown content after the list marker (and
+/// after any task checkbox), preserving annotations; `target` is the first
+/// wikilink target in it; `entity` is the resolved entity when the target matches
+/// an indexed note (else `null`); and `checked` is the task state for items in a
+/// `todo` section (`null` for non-task items).
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ListItem {
@@ -472,6 +484,8 @@ pub struct ListItem {
     pub target: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entity: Option<EntitySummary>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checked: Option<bool>,
 }
 
 /// One section of a list: an optional `## heading`, its marker style, and the
@@ -482,7 +496,7 @@ pub struct ListItem {
 pub struct ListSection {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub heading: Option<String>,
-    pub ordered: bool,
+    pub marker: ListMarker,
     pub items: Vec<ListItem>,
 }
 
@@ -513,6 +527,9 @@ pub struct CreateListRequest {
 #[serde(rename_all = "camelCase")]
 pub struct ListItemInput {
     pub text: String,
+    /// Task state for an item in a `todo` section; `null`/omitted otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checked: Option<bool>,
 }
 
 /// One section as supplied by the client on a full list rewrite: an optional
@@ -524,7 +541,7 @@ pub struct ListSectionInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub heading: Option<String>,
     #[serde(default)]
-    pub ordered: bool,
+    pub marker: ListMarker,
     #[serde(default)]
     pub items: Vec<ListItemInput>,
 }
