@@ -8,7 +8,6 @@ import { z as zod } from 'zod';
 
 export const updateListRequestDescriptionDefault = ``;
 export const updateListRequestTrailingDefault = ``;
-export const updateListRequestSectionsItemMarkerDefault = `unordered`;
 export const updateListRequestSectionsItemItemsDefault = [];
 export const updateListRequestSectionsDefault = [];
 export const UpdateListRequest = zod.object({
@@ -17,7 +16,7 @@ export const UpdateListRequest = zod.object({
   "trailing": zod.string().default(updateListRequestTrailingDefault),
   "sections": zod.array(zod.object({
   "heading": zod.string().nullish(),
-  "marker": zod.enum(['unordered', 'ordered', 'todo']).describe('How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.').default(updateListRequestSectionsItemMarkerDefault),
+  "marker": zod.enum(['unordered', 'ordered', 'todo']).describe('How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.'),
   "items": zod.array(zod.object({
   "text": zod.string(),
   "checked": zod.boolean().nullish().describe('Task state for an item in a `todo` section; `null`\/omitted otherwise.')

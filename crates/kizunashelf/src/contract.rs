@@ -540,7 +540,10 @@ pub struct ListItemInput {
 pub struct ListSectionInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub heading: Option<String>,
+    // Keep serde's backward-compatible default, but make OpenAPI clients send the
+    // enum directly instead of generating a default+allOf wrapper.
     #[serde(default)]
+    #[schemars(!default)]
     pub marker: ListMarker,
     #[serde(default)]
     pub items: Vec<ListItemInput>,

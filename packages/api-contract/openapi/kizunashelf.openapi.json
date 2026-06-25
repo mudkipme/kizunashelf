@@ -6268,12 +6268,7 @@
             ]
           },
           "marker": {
-            "default": "unordered",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ListMarker"
-              }
-            ]
+            "$ref": "#/components/schemas/ListMarker"
           },
           "items": {
             "type": "array",
@@ -6282,7 +6277,10 @@
             },
             "default": []
           }
-        }
+        },
+        "required": [
+          "marker"
+        ]
       },
       "ListItemInput": {
         "description": "One item as supplied by the client on a full list rewrite. Only the raw `text`\nis sent; the server re-derives the target/entity on the next read.",

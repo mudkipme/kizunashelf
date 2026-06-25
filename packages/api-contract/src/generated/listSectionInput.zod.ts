@@ -6,11 +6,10 @@
  */
 import { z as zod } from 'zod';
 
-export const listSectionInputMarkerDefault = `unordered`;
 export const listSectionInputItemsDefault = [];
 export const ListSectionInput = zod.object({
   "heading": zod.string().nullish(),
-  "marker": zod.enum(['unordered', 'ordered', 'todo']).describe('How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.').default(listSectionInputMarkerDefault),
+  "marker": zod.enum(['unordered', 'ordered', 'todo']).describe('How a list section renders: plain bullets, a numbered list, or a task list\nwith checkboxes. Per-section, since each Markdown list block is independent.'),
   "items": zod.array(zod.object({
   "text": zod.string(),
   "checked": zod.boolean().nullish().describe('Task state for an item in a `todo` section; `null`\/omitted otherwise.')
