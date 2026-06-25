@@ -191,16 +191,13 @@ function FieldFilterControl({
   }
 
   return (
-    <label className={cn("w-56 text-xs text-muted-foreground", compact ? "col-span-2 w-full min-w-0" : "shrink-0")}>
-      <span className="mb-1 block truncate">{filter.label}</span>
-      <MultiValueCombobox
-        values={filter.values}
-        options={filter.options}
-        placeholder={`Any ${filter.label}`}
-        ariaLabel={filter.label}
-        className="min-h-8 px-2 py-1 text-xs"
-        onChange={onChange}
-      />
-    </label>
+    <MultiValueCombobox
+      values={filter.values}
+      options={filter.options}
+      placeholder={`Any ${filter.label}`}
+      ariaLabel={filter.label}
+      className={cn("min-h-8 px-2 py-1 text-xs", compact ? "col-span-2 w-full min-w-0" : "w-56 shrink-0")}
+      onChange={onChange}
+    />
   );
 }
