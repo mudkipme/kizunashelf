@@ -2299,7 +2299,7 @@ async fn episodes_detail_progress_update_and_revision_guard() {
                 "id": "anime", "label": "Anime", "path": "Anime",
                 "filename": { "titleLanguage": "zh" },
                 "bodySections": [
-                    { "heading": "Episodes", "kind": "episodes", "itemNoun": "Episode", "tracking": "checklist" }
+                    { "heading": "Episodes", "kind": "episodes", "tracking": "checklist" }
                 ],
                 "fields": [
                     { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" }
@@ -2373,7 +2373,7 @@ async fn episodes_import_merges_and_fetch_lists_sources() {
                 "id": "anime", "label": "Anime", "path": "Anime",
                 "filename": { "titleLanguage": "zh" },
                 "bodySections": [
-                    { "heading": "Episodes", "kind": "episodes", "itemNoun": "Episode", "tracking": "checklist" }
+                    { "heading": "Episodes", "kind": "episodes", "tracking": "checklist" }
                 ],
                 "fields": [
                     { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },

@@ -270,8 +270,6 @@ pub struct EntityDetailResponse {
 #[serde(rename_all = "camelCase")]
 pub struct EntityEpisodes {
     pub heading: String,
-    /// UI noun for one item (`Episode` / `Track` / `Chapter`).
-    pub item_noun: String,
     pub tracking: EpisodeTracking,
     pub groups: Vec<EpisodeGroup>,
     pub total: usize,

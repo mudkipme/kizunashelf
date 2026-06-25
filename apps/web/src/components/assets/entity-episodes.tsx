@@ -69,7 +69,7 @@ export function EntityEpisodesPanel({
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">
-            No {episodes.itemNoun.toLowerCase()}s yet — sync from a provider or add a list under the{" "}
+            No items yet — sync from a provider or add a list under the{" "}
             <code>{episodes.heading}</code> heading.
           </p>
           {syncButton}

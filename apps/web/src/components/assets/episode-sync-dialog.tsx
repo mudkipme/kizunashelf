@@ -122,7 +122,7 @@ export function EpisodeSyncDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Sync {episodes.itemNoun.toLowerCase()}s</DialogTitle>
+          <DialogTitle>Sync from a provider</DialogTitle>
           <DialogDescription>
             Import from a provider, merging into your list — watched state and your own entries are kept.
           </DialogDescription>
@@ -167,7 +167,7 @@ export function EpisodeSyncDialog({
             </>
           ) : (
             <p className="p-3 text-sm text-muted-foreground">
-              {groups[0]?.items.length ?? 0} {episodes.itemNoun.toLowerCase()}s available.
+              {groups[0]?.items.length ?? 0} items available.
             </p>
           )}
         </div>

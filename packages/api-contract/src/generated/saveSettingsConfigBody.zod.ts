@@ -52,7 +52,6 @@ export const SaveSettingsConfigBody = zod.object({
   "source": zod.string(),
   "field": zod.string()
 })).optional().describe('`kind = external`: the provider field(s) that fill this heading. The matched\ncandidate\'s source is chosen, exactly like [`FieldConfig::external_fields`],\nso one heading can be filled from multiple providers.'),
-  "itemNoun": zod.string().nullish().describe('`kind = episodes`: the UI noun for one item — `Episode` \/ `Track` \/ `Chapter`.'),
   "tracking": zod.union([zod.union([zod.literal("checklist").describe('Per-item checkboxes (`- [ ]` \/ `- [x]`) — tracks exactly which are watched.'),zod.literal("progress").describe('Count only; pairs with a `progress` field rather than per-item checkboxes.'),zod.literal("none").describe('No tracking — a plain ordered list.')]),zod.null()]).optional().describe('`kind = episodes`: how watched\/read state is tracked. Defaults to `checklist`.')
 }).describe('A declared section of an entity\'s Markdown body, addressed by its heading.\nGeneralizes the old `bodyMappings`: a flat struct discriminated by `kind`\n(mirroring `FieldConfig`), so the same per-type mechanism covers\nexternal-metadata sections \*and\* the built-in episodes\/tracks list.')).optional(),
   "fields": zod.array(zod.object({

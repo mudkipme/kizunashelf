@@ -13,7 +13,6 @@ export const entityEpisodesWatchedMin = 0;
 
 export const EntityEpisodes = zod.object({
   "heading": zod.string(),
-  "itemNoun": zod.string().describe('UI noun for one item (`Episode` \/ `Track` \/ `Chapter`).'),
   "tracking": zod.union([zod.literal("checklist").describe('Per-item checkboxes (`- [ ]` \/ `- [x]`) — tracks exactly which are watched.'),zod.literal("progress").describe('Count only; pairs with a `progress` field rather than per-item checkboxes.'),zod.literal("none").describe('No tracking — a plain ordered list.')]),
   "groups": zod.array(zod.object({
   "label": zod.string().describe('Sub-heading label (season\/disc); empty for the ungrouped group.'),

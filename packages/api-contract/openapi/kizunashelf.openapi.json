@@ -2681,13 +2681,6 @@
               "$ref": "#/components/schemas/ExternalFieldMapping"
             }
           },
-          "itemNoun": {
-            "description": "`kind = episodes`: the UI noun for one item — `Episode` / `Track` / `Chapter`.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "tracking": {
             "description": "`kind = episodes`: how watched/read state is tracked. Defaults to `checklist`.",
             "anyOf": [
@@ -5300,10 +5293,6 @@
           "heading": {
             "type": "string"
           },
-          "itemNoun": {
-            "description": "UI noun for one item (`Episode` / `Track` / `Chapter`).",
-            "type": "string"
-          },
           "tracking": {
             "$ref": "#/components/schemas/EpisodeTracking"
           },
@@ -5326,7 +5315,6 @@
         },
         "required": [
           "heading",
-          "itemNoun",
           "tracking",
           "groups",
           "total",

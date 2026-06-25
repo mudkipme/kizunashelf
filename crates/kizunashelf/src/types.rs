@@ -112,9 +112,6 @@ pub struct BodySection {
     /// so one heading can be filled from multiple providers.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub external_fields: Vec<ExternalFieldMapping>,
-    /// `kind = episodes`: the UI noun for one item — `Episode` / `Track` / `Chapter`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub item_noun: Option<String>,
     /// `kind = episodes`: how watched/read state is tracked. Defaults to `checklist`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tracking: Option<EpisodeTracking>,

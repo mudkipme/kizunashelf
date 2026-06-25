@@ -490,7 +490,6 @@ fn default_external_body_mappings(source: &str, role: &str, heading: &str) -> Ve
                 source: source.to_string(),
                 field: field.to_string(),
             }],
-            item_noun: None,
             tracking: None,
         }],
         None => Vec::new(),

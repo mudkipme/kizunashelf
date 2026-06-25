@@ -99,11 +99,6 @@ pub fn parse_episodes(body: &str, section: &BodySection) -> EntityEpisodes {
         .count();
     EntityEpisodes {
         heading: section.heading.clone(),
-        item_noun: section
-            .item_noun
-            .clone()
-            .filter(|noun| !noun.trim().is_empty())
-            .unwrap_or_else(|| "Episode".to_string()),
         tracking,
         groups,
         total,
@@ -292,7 +287,6 @@ mod tests {
             heading: "Episodes".to_string(),
             kind: BodySectionKind::Episodes,
             external_fields: Vec::new(),
-            item_noun: Some("Episode".to_string()),
             tracking: Some(EpisodeTracking::Checklist),
         }
     }
@@ -312,7 +306,6 @@ mod tests {
     fn entity_episodes(groups: Vec<EpisodeGroup>) -> EntityEpisodes {
         EntityEpisodes {
             heading: "Episodes".to_string(),
-            item_noun: "Episode".to_string(),
             tracking: EpisodeTracking::Checklist,
             total: groups.iter().map(|g| g.items.len()).sum(),
             watched: groups

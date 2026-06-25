@@ -680,7 +680,6 @@ mod tests {
                 source: "igdb".to_string(),
                 field: "summary".to_string(),
             }],
-            item_noun: None,
             tracking: None,
         }];
         let config = KizunaConfig {
@@ -711,7 +710,6 @@ mod tests {
                 source: "thetvdb".to_string(),
                 field: "overview".to_string(),
             }],
-            item_noun: None,
             tracking: None,
         }];
         let config = KizunaConfig {

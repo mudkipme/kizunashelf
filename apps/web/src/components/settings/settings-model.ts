@@ -227,7 +227,6 @@ function cleanBodySections(
       cleaned.push({
         heading,
         kind: "episodes",
-        itemNoun: emptyToUndefined(section.itemNoun),
         tracking: section.tracking ?? undefined,
       });
       continue;

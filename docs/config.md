@@ -525,7 +525,6 @@ heading. A section's `kind` chooses its behavior. (This generalizes the former `
 | `heading` | yes | string | The Markdown heading (text only) the section lives under. |
 | `kind` | yes | `external` \| `episodes` | What the section is. |
 | `externalFields` | for `external` | `{ source, field }[]` | Provider fields that fill this heading on match. One heading can list multiple sources — the matched candidate's provider is chosen (like a field's `externalFields`). |
-| `itemNoun` | for `episodes` | string | UI noun for one item (`Episode` / `Track` / `Chapter`). Default `Episode`. |
 | `tracking` | for `episodes` | `checklist` \| `progress` \| `none` | How watch/read state is tracked. Default `checklist`. |
 
 ```yaml
@@ -539,7 +538,6 @@ bodySections:
   # Episodes section: an ordered, checkable list under "Episodes".
   - heading: Episodes
     kind: episodes
-    itemNoun: Episode
     tracking: checklist
 ```
 
