@@ -90,9 +90,10 @@ fn strip_leading_separator(value: &str) -> &str {
 /// An absent heading yields an empty (but configured) result.
 pub fn parse_episodes(body: &str, section: &BodySection) -> EntityEpisodes {
     let tracking = resolved_tracking(section);
-    let groups = parse_groups(body, &section.heading);
-    let total = groups.iter().map(|group| group.items.len()).sum();
-    let watched = groups
+    let parsed = parse_section(body, &section.heading);
+    let total = parsed.groups.iter().map(|group| group.items.len()).sum();
+    let watched = parsed
+        .groups
         .iter()
         .flat_map(|group| &group.items)
         .filter(|episode| episode.watched)
@@ -100,9 +101,11 @@ pub fn parse_episodes(body: &str, section: &BodySection) -> EntityEpisodes {
     EntityEpisodes {
         heading: section.heading.clone(),
         tracking,
-        groups,
+        groups: parsed.groups,
         total,
         watched,
+        description: parsed.description,
+        trailing: parsed.trailing,
     }
 }
 
@@ -129,11 +132,30 @@ pub fn episode_progress(body: &str, section: &BodySection) -> EpisodeProgress {
     EpisodeProgress { watched, total }
 }
 
-fn parse_groups(body: &str, heading: &str) -> Vec<EpisodeGroup> {
+/// The parsed episodes section: the structured groups plus the free prose that
+/// sits *above* the first list item/sub-heading (`description`) and *below* the
+/// last list item (`trailing`). The prose is kept so the dedicated episodes UI can
+/// display hand-written notes the user wraps around the list — the body's generic
+/// render drops the whole section to avoid duplication.
+struct ParsedSection {
+    groups: Vec<EpisodeGroup>,
+    description: String,
+    trailing: String,
+}
+
+fn parse_section(body: &str, heading: &str) -> ParsedSection {
     let Some(section) = find_section(body, heading) else {
-        return Vec::new();
+        return ParsedSection {
+            groups: Vec::new(),
+            description: String::new(),
+            trailing: String::new(),
+        };
     };
     let content = &body[section.content_start..section.end];
+    // Byte offset of the first structural line (a group sub-heading or list item)
+    // and the end of the last list item — the boundaries of the surrounding prose.
+    let mut first_struct: Option<usize> = None;
+    let mut last_item_end: Option<usize> = None;
     // Sub-headings inside the section are group labels (find_section already stopped
     // at the next same/higher heading, so every heading here is deeper).
     let group_starts: std::collections::HashMap<usize, String> = headings(content)
@@ -151,6 +173,7 @@ fn parse_groups(body: &str, heading: &str) -> Vec<EpisodeGroup> {
         let line_start = offset;
         offset += line.len();
         if let Some(label) = group_starts.get(&line_start) {
+            first_struct.get_or_insert(line_start);
             if !current.label.is_empty() || !current.items.is_empty() {
                 groups.push(std::mem::replace(
                     &mut current,
@@ -165,6 +188,8 @@ fn parse_groups(body: &str, heading: &str) -> Vec<EpisodeGroup> {
         }
         let text = line.strip_suffix('\n').unwrap_or(line);
         if let Some(item) = parse_item(text) {
+            first_struct.get_or_insert(line_start);
+            last_item_end = Some(offset);
             let (key, title) = split_key_title(item.content, item.marker_number);
             current.items.push(Episode {
                 key,
@@ -176,7 +201,25 @@ fn parse_groups(body: &str, heading: &str) -> Vec<EpisodeGroup> {
     if !current.label.is_empty() || !current.items.is_empty() {
         groups.push(current);
     }
-    groups
+
+    // Prose above the first structural line, and after the last list item. With no
+    // structure at all, the whole section is treated as leading prose.
+    let description = match first_struct {
+        Some(start) => content[..start].trim(),
+        None => content.trim(),
+    }
+    .to_string();
+    let trailing = match last_item_end {
+        Some(end) => content[end..].trim(),
+        None => "",
+    }
+    .to_string();
+
+    ParsedSection {
+        groups,
+        description,
+        trailing,
+    }
 }
 
 /// Renders the episodes section body (without the heading line) for `splice_section`.
@@ -314,7 +357,29 @@ mod tests {
                 .filter(|e| e.watched)
                 .count(),
             groups,
+            description: String::new(),
+            trailing: String::new(),
         }
+    }
+
+    #[test]
+    fn parse_captures_prose_above_and_below_the_list() {
+        let body =
+            "## Episodes\nWatch order notes.\n\n- 1 · Pilot\n- 2 · Dawn\n\nMore after the list.\n";
+        let parsed = parse_episodes(body, &section());
+        assert_eq!(parsed.description, "Watch order notes.");
+        assert_eq!(parsed.trailing, "More after the list.");
+        assert_eq!(parsed.total, 2);
+    }
+
+    #[test]
+    fn parse_prose_with_groups_is_above_first_subheading() {
+        let body = "## Episodes\nIntro.\n\n### Season 1\n- 1 · A\n\nOutro.\n";
+        let parsed = parse_episodes(body, &section());
+        assert_eq!(parsed.description, "Intro.");
+        assert_eq!(parsed.trailing, "Outro.");
+        assert_eq!(parsed.groups.len(), 1);
+        assert_eq!(parsed.groups[0].label, "Season 1");
     }
 
     #[test]

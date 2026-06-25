@@ -108,16 +108,24 @@ pub(super) async fn build_entity_detail(
     // The full body/raw is not resident; load it from disk on demand.
     let vfs = state.vault_vfs(&library.config.vault_root);
     let entity = load_entity(&library.config, vfs.as_ref(), summary).await?;
-    // Parse the episodes/tracks section (if the type declares one) from the body.
-    let episodes = library
+    // Parse the episodes/tracks section (if the type declares one) from the body,
+    // and drop that section from the body shown in the generic "Notes" view so it
+    // isn't rendered twice. `entity.body` stays raw — the edit path reads it, so a
+    // round-trip through the editor preserves the episodes section verbatim.
+    let section = library
         .config
         .type_config(&summary.entity_type)
-        .and_then(crate::episodes::episode_section)
-        .map(|section| crate::episodes::parse_episodes(&entity.body, section));
+        .and_then(crate::episodes::episode_section);
+    let episodes = section.map(|section| crate::episodes::parse_episodes(&entity.body, section));
+    let notes_body = match section {
+        Some(section) => crate::markdown::remove_section(&entity.body, &section.heading),
+        None => entity.body.clone(),
+    };
     Ok(EntityDetailResponse {
         entity,
         relations,
         related_entities,
         episodes,
+        notes_body,
     })
 }

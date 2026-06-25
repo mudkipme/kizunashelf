@@ -118,8 +118,11 @@ export const EntityDetailResponse = zod.object({
 }))
 })),
   "total": zod.number().min(entityDetailResponseEpisodesOneTotalMin),
-  "watched": zod.number().min(entityDetailResponseEpisodesOneWatchedMin)
-}).describe('The parsed contents of an entity\'s episodes\/tracks body section: groups\n(season\/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched\/total roll-up. Derived from the Markdown body, which stays the source\nof truth.'),zod.null()]).optional().describe('The parsed episodes\/tracks list, when the entity\'s type declares an\n`episodes` body section. `None` otherwise.')
+  "watched": zod.number().min(entityDetailResponseEpisodesOneWatchedMin),
+  "description": zod.string().describe('Free-text Markdown the user wrote \*above\* the list (between the heading and\nthe first item\/sub-heading); empty when there is none. Shown by the\ndedicated episodes UI since the body\'s generic render drops this section.'),
+  "trailing": zod.string().describe('Free-text Markdown \*below\* the last list item; empty when there is none.')
+}).describe('The parsed contents of an entity\'s episodes\/tracks body section: groups\n(season\/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched\/total roll-up. Derived from the Markdown body, which stays the source\nof truth.'),zod.null()]).optional().describe('The parsed episodes\/tracks list, when the entity\'s type declares an\n`episodes` body section. `None` otherwise.'),
+  "notesBody": zod.string().describe('The entity body to render in the generic \"Notes\" view: identical to\n`entity.body` except sections that have a dedicated UI (the episodes\nsection) are removed, so they aren\'t shown twice. `entity.body` stays the\nraw source of truth for editing.')
 })
 
 export type EntityDetailResponse = zod.input<typeof EntityDetailResponse>;

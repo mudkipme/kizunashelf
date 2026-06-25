@@ -23,7 +23,9 @@ export const EntityEpisodes = zod.object({
 }))
 })),
   "total": zod.number().min(entityEpisodesTotalMin),
-  "watched": zod.number().min(entityEpisodesWatchedMin)
+  "watched": zod.number().min(entityEpisodesWatchedMin),
+  "description": zod.string().describe('Free-text Markdown the user wrote \*above\* the list (between the heading and\nthe first item\/sub-heading); empty when there is none. Shown by the\ndedicated episodes UI since the body\'s generic render drops this section.'),
+  "trailing": zod.string().describe('Free-text Markdown \*below\* the last list item; empty when there is none.')
 }).describe('The parsed contents of an entity\'s episodes\/tracks body section: groups\n(season\/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched\/total roll-up. Derived from the Markdown body, which stays the source\nof truth.')
 
 export type EntityEpisodes = zod.input<typeof EntityEpisodes>;

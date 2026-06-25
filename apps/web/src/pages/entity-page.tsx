@@ -306,6 +306,7 @@ export function EntityPage() {
               typeConfig={typeConfig}
               episodes={detail.data?.episodes ?? undefined}
               episodesSaving={episodesSaving}
+              notesBody={detail.data?.notesBody}
               contentWritable={contentWritable}
               onSaveEpisodes={saveEpisodeGroups}
               actions={

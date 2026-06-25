@@ -180,6 +180,24 @@ pub fn splice_section(body: &str, heading: &str, content: &str) -> String {
     }
 }
 
+/// Returns `body` with the entire section under `heading` removed — the heading
+/// line *and* its content (down to the next same/higher heading) — collapsing the
+/// surrounding blank lines so no double gap is left. Unchanged when the heading is
+/// absent. Used to drop a section that has a dedicated UI (e.g. episodes) from the
+/// generic body render without re-parsing Markdown in each client.
+pub fn remove_section(body: &str, heading: &str) -> String {
+    let Some(section) = find_section(body, heading) else {
+        return body.to_string();
+    };
+    let before = body[..section.start].trim_end();
+    let after = body[section.end..].trim_start_matches('\n').trim_end();
+    match (before.is_empty(), after.is_empty()) {
+        (true, _) => after.to_string(),
+        (false, true) => before.to_string(),
+        (false, false) => format!("{before}\n\n{after}"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -211,5 +229,24 @@ mod tests {
     fn splice_appends_when_heading_absent() {
         let next = splice_section("Just a body.", "Episodes", "- [ ] 1");
         assert_eq!(next, "Just a body.\n\n## Episodes\n\n- [ ] 1\n");
+    }
+
+    #[test]
+    fn remove_section_drops_heading_and_content_between_neighbours() {
+        let body = "## Summary\nkeep\n\n## Episodes\n- [ ] 1\n- [ ] 2\n\n## Notes\nkeep too\n";
+        let next = remove_section(body, "Episodes");
+        assert_eq!(next, "## Summary\nkeep\n\n## Notes\nkeep too");
+        assert!(!next.contains("Episodes"));
+    }
+
+    #[test]
+    fn remove_section_handles_leading_and_absent() {
+        // Section at the very start.
+        assert_eq!(
+            remove_section("## Episodes\n- 1\n\n## Notes\nx\n", "Episodes"),
+            "## Notes\nx"
+        );
+        // Absent heading → unchanged.
+        assert_eq!(remove_section("## Notes\nx\n", "Episodes"), "## Notes\nx\n");
     }
 }

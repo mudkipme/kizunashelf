@@ -42,6 +42,7 @@ export function EntityDetail({
   typeConfig,
   episodes,
   episodesSaving = false,
+  notesBody,
   contentWritable = true,
   onSaveEpisodes,
   actions,
@@ -54,6 +55,9 @@ export function EntityDetail({
   typeConfig?: TypeConfig;
   episodes?: EntityEpisodes;
   episodesSaving?: boolean;
+  /// The body to render in "Notes" — `entity.body` with the episodes section
+  /// stripped (it has its own panel). Falls back to `entity.body` while loading.
+  notesBody?: string;
   contentWritable?: boolean;
   onSaveEpisodes?: (groups: EpisodeGroup[]) => void;
   actions?: ReactNode;
@@ -109,6 +113,11 @@ export function EntityDetail({
 
             {episodes ? (
               <DetailSection title={episodes.heading} icon={<ListChecksIcon />}>
+                {/* Prose the user wrote around the list in the Markdown source —
+                    rendered read-only here since the body view drops the section. */}
+                {episodes.description.trim() ? (
+                  <MarkdownView markdown={episodes.description} relations={relations} />
+                ) : null}
                 <EntityEpisodesPanel
                   episodes={episodes}
                   disabled={!contentWritable || !onSaveEpisodes}
@@ -117,12 +126,15 @@ export function EntityDetail({
                   entityId={entity.id}
                   revision={entity.revision}
                 />
+                {episodes.trailing.trim() ? (
+                  <MarkdownView markdown={episodes.trailing} relations={relations} />
+                ) : null}
               </DetailSection>
             ) : null}
 
-            {entity.body.trim() ? (
+            {(notesBody ?? entity.body).trim() ? (
               <DetailSection title="Notes" icon={<FileTextIcon />}>
-                <MarkdownView markdown={entity.body} relations={relations} />
+                <MarkdownView markdown={notesBody ?? entity.body} relations={relations} />
               </DetailSection>
             ) : null}
           </div>

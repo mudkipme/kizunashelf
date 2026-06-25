@@ -5260,12 +5260,17 @@
                 "type": "null"
               }
             ]
+          },
+          "notesBody": {
+            "description": "The entity body to render in the generic \"Notes\" view: identical to\n`entity.body` except sections that have a dedicated UI (the episodes\nsection) are removed, so they aren't shown twice. `entity.body` stays the\nraw source of truth for editing.",
+            "type": "string"
           }
         },
         "required": [
           "entity",
           "relations",
-          "relatedEntities"
+          "relatedEntities",
+          "notesBody"
         ]
       },
       "EntityEpisodes": {
@@ -5293,6 +5298,14 @@
             "type": "integer",
             "format": "uint",
             "minimum": 0
+          },
+          "description": {
+            "description": "Free-text Markdown the user wrote *above* the list (between the heading and\nthe first item/sub-heading); empty when there is none. Shown by the\ndedicated episodes UI since the body's generic render drops this section.",
+            "type": "string"
+          },
+          "trailing": {
+            "description": "Free-text Markdown *below* the last list item; empty when there is none.",
+            "type": "string"
           }
         },
         "required": [
@@ -5300,7 +5313,9 @@
           "tracking",
           "groups",
           "total",
-          "watched"
+          "watched",
+          "description",
+          "trailing"
         ]
       },
       "EpisodeGroup": {

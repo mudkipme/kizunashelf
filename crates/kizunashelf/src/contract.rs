@@ -260,6 +260,11 @@ pub struct EntityDetailResponse {
     /// `episodes` body section. `None` otherwise.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub episodes: Option<EntityEpisodes>,
+    /// The entity body to render in the generic "Notes" view: identical to
+    /// `entity.body` except sections that have a dedicated UI (the episodes
+    /// section) are removed, so they aren't shown twice. `entity.body` stays the
+    /// raw source of truth for editing.
+    pub notes_body: String,
 }
 
 /// The parsed contents of an entity's episodes/tracks body section: groups
@@ -274,6 +279,12 @@ pub struct EntityEpisodes {
     pub groups: Vec<EpisodeGroup>,
     pub total: usize,
     pub watched: usize,
+    /// Free-text Markdown the user wrote *above* the list (between the heading and
+    /// the first item/sub-heading); empty when there is none. Shown by the
+    /// dedicated episodes UI since the body's generic render drops this section.
+    pub description: String,
+    /// Free-text Markdown *below* the last list item; empty when there is none.
+    pub trailing: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
