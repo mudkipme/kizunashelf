@@ -8,6 +8,8 @@ import { z as zod } from 'zod';
 
 export const listsResponseItemsItemItemCountMin = 0;
 
+export const listsResponseItemsItemSectionCountMin = 0;
+
 
 export const ListsResponse = zod.object({
   "items": zod.array(zod.object({
@@ -15,8 +17,8 @@ export const ListsResponse = zod.object({
   "name": zod.string().describe('Display name (the basename).'),
   "path": zod.string().describe('Vault-relative path of the Markdown file.'),
   "description": zod.string(),
-  "itemCount": zod.number().min(listsResponseItemsItemItemCountMin),
-  "ordered": zod.boolean(),
+  "itemCount": zod.number().min(listsResponseItemsItemItemCountMin).describe('Total item count across every section.'),
+  "sectionCount": zod.number().min(listsResponseItemsItemSectionCountMin).describe('Number of named (`## heading`) sections; `0` for a flat list.'),
   "contains": zod.boolean().nullish().describe('Whether the list contains the entity named by the `entity` query param.\nOnly present when that param was supplied (drives the entity page\'s\n\"manage lists\" membership toggles); omitted otherwise.')
 }).describe('One row in the lists index. `description` is the prose above the first list;\n`itemCount` and `ordered` summarize the list without its full contents.'))
 })

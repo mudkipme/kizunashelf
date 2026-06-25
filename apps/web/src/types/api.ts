@@ -47,6 +47,7 @@ export type {
   ProviderEpisodeItem,
   ListItem,
   ListItemInput,
+  ListSection,
   ListsResponse,
   ListSummary,
   PathSuggestionsResponse,

@@ -110,6 +110,8 @@ export * from "./generated/importEpisodesRequest.zod.js";
 export * from "./generated/listsResponse.zod.js";
 export * from "./generated/listSummary.zod.js";
 export * from "./generated/listDetail.zod.js";
+export * from "./generated/listSection.zod.js";
+export * from "./generated/listSectionInput.zod.js";
 export * from "./generated/listItem.zod.js";
 export * from "./generated/listItemInput.zod.js";
 export * from "./generated/createListRequest.zod.js";

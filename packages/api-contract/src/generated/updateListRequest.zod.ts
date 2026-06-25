@@ -8,18 +8,22 @@ import { z as zod } from 'zod';
 
 export const updateListRequestDescriptionDefault = ``;
 export const updateListRequestTrailingDefault = ``;
-export const updateListRequestOrderedDefault = false;
-export const updateListRequestItemsDefault = [];
+export const updateListRequestSectionsItemOrderedDefault = false;
+export const updateListRequestSectionsItemItemsDefault = [];
+export const updateListRequestSectionsDefault = [];
 export const UpdateListRequest = zod.object({
   "revision": zod.string(),
   "description": zod.string().default(updateListRequestDescriptionDefault),
   "trailing": zod.string().default(updateListRequestTrailingDefault),
-  "ordered": zod.boolean().default(updateListRequestOrderedDefault),
+  "sections": zod.array(zod.object({
+  "heading": zod.string().nullish(),
+  "ordered": zod.boolean().default(updateListRequestSectionsItemOrderedDefault),
   "items": zod.array(zod.object({
   "text": zod.string()
-}).describe('One item as supplied by the client on a full list rewrite. Only the raw `text`\nis sent; the server re-derives the target\/entity on the next read.')).default(updateListRequestItemsDefault),
+}).describe('One item as supplied by the client on a full list rewrite. Only the raw `text`\nis sent; the server re-derives the target\/entity on the next read.')).default(updateListRequestSectionsItemItemsDefault)
+}).describe('One section as supplied by the client on a full list rewrite: an optional\nheading (`null`\/empty for the ungrouped block), its marker style, and its items\nin their authoritative order.')).default(updateListRequestSectionsDefault),
   "renameTo": zod.string().nullish()
-}).describe('Full rewrite of a list (reorder, ordered toggle, description\/trailing edits,\nitem removal). The server renders the whole body from these parts, so the item\norder in `items` is authoritative.')
+}).describe('Full rewrite of a list (reorder within and across sections, section add\/rename,\nper-section marker toggle, description\/trailing edits, item removal). The server\nrenders the whole body from these parts, so the section and item order is\nauthoritative.')
 
 export type UpdateListRequest = zod.input<typeof UpdateListRequest>;
 export type UpdateListRequestOutput = zod.output<typeof UpdateListRequest>;

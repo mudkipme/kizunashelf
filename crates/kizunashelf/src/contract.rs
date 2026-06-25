@@ -435,8 +435,10 @@ pub struct ListSummary {
     /// Vault-relative path of the Markdown file.
     pub path: String,
     pub description: String,
+    /// Total item count across every section.
     pub item_count: usize,
-    pub ordered: bool,
+    /// Number of named (`## heading`) sections; `0` for a flat list.
+    pub section_count: usize,
     /// Whether the list contains the entity named by the `entity` query param.
     /// Only present when that param was supplied (drives the entity page's
     /// "manage lists" membership toggles); omitted otherwise.
@@ -472,8 +474,21 @@ pub struct ListItem {
     pub entity: Option<EntitySummary>,
 }
 
-/// A list's full editable state: description, the resolved items of the first
-/// list, the ordered flag, and the trailing Markdown. `revision` guards writes.
+/// One section of a list: an optional `## heading`, its marker style, and the
+/// resolved items beneath it. `heading` is `null` for the ungrouped block of items
+/// above the first heading (and for a flat list, which is a single such section).
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListSection {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub heading: Option<String>,
+    pub ordered: bool,
+    pub items: Vec<ListItem>,
+}
+
+/// A list's full editable state: description, its sections (each with its own
+/// heading, marker style, and resolved items), and the trailing Markdown.
+/// `revision` guards writes.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ListDetail {
@@ -481,8 +496,7 @@ pub struct ListDetail {
     pub name: String,
     pub path: String,
     pub description: String,
-    pub items: Vec<ListItem>,
-    pub ordered: bool,
+    pub sections: Vec<ListSection>,
     pub trailing: String,
     pub revision: String,
 }
@@ -501,9 +515,24 @@ pub struct ListItemInput {
     pub text: String,
 }
 
-/// Full rewrite of a list (reorder, ordered toggle, description/trailing edits,
-/// item removal). The server renders the whole body from these parts, so the item
-/// order in `items` is authoritative.
+/// One section as supplied by the client on a full list rewrite: an optional
+/// heading (`null`/empty for the ungrouped block), its marker style, and its items
+/// in their authoritative order.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ListSectionInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub heading: Option<String>,
+    #[serde(default)]
+    pub ordered: bool,
+    #[serde(default)]
+    pub items: Vec<ListItemInput>,
+}
+
+/// Full rewrite of a list (reorder within and across sections, section add/rename,
+/// per-section marker toggle, description/trailing edits, item removal). The server
+/// renders the whole body from these parts, so the section and item order is
+/// authoritative.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateListRequest {
@@ -513,9 +542,7 @@ pub struct UpdateListRequest {
     #[serde(default)]
     pub trailing: String,
     #[serde(default)]
-    pub ordered: bool,
-    #[serde(default)]
-    pub items: Vec<ListItemInput>,
+    pub sections: Vec<ListSectionInput>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rename_to: Option<String>,
 }

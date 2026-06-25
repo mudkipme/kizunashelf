@@ -109,7 +109,7 @@ pub fn normalize_heading(value: &str) -> String {
 }
 
 /// Sanitizes a heading for rendering: strips newlines/`#`, collapses whitespace.
-fn sanitize_heading(value: &str) -> String {
+pub fn sanitize_heading(value: &str) -> String {
     let cleaned: String = value
         .chars()
         .map(|c| {

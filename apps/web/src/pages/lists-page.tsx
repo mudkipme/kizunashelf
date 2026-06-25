@@ -69,7 +69,11 @@ export function ListsPage() {
                   <Badge variant="outline">
                     {list.itemCount} {list.itemCount === 1 ? "item" : "items"}
                   </Badge>
-                  <Badge variant="outline">{list.ordered ? "Ordered" : "Unordered"}</Badge>
+                  {list.sectionCount > 0 ? (
+                    <Badge variant="outline">
+                      {list.sectionCount} {list.sectionCount === 1 ? "section" : "sections"}
+                    </Badge>
+                  ) : null}
                 </div>
               </Link>
             ))}

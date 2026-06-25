@@ -4,10 +4,12 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
+  closestCorners,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -21,6 +23,7 @@ import {
   CheckIcon,
   EyeIcon,
   FilePenLineIcon,
+  FolderPlusIcon,
   GripVerticalIcon,
   ListIcon,
   ListOrderedIcon,
@@ -69,9 +72,36 @@ import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
-import type { ListItem } from "@/types/api";
+import type { ListItem, ListSection } from "@/types/api";
 
 type EditableItem = ListItem & { key: string };
+type EditableSection = {
+  key: string;
+  heading: string | null;
+  ordered: boolean;
+  items: EditableItem[];
+};
+
+// A stable-ish signature of the editable sections, for dirty-tracking and for
+// comparing local edits against the server's last-loaded state. Only the parts
+// that round-trip to Markdown matter (heading text, marker style, item order).
+function sectionsSignature(sections: Array<{ heading: string | null; ordered: boolean; items: Array<{ text: string }> }>) {
+  return JSON.stringify(
+    sections.map((section) => ({
+      heading: section.heading,
+      ordered: section.ordered,
+      items: section.items.map((item) => item.text),
+    })),
+  );
+}
+
+function serverSections(sections: ListSection[]) {
+  return sections.map((section) => ({
+    heading: section.heading ?? null,
+    ordered: section.ordered,
+    items: section.items,
+  }));
+}
 
 export function ListDetailPage() {
   const { id = "" } = useParams();
@@ -83,14 +113,17 @@ export function ListDetailPage() {
   const capabilities = useQuery(capabilitiesQuery());
   const contentWritable = capabilities.data?.contentWritable !== false;
 
-  const [items, setItems] = useState<EditableItem[]>([]);
+  const [sections, setSections] = useState<EditableSection[]>([]);
   const [description, setDescription] = useState("");
   const [trailing, setTrailing] = useState("");
-  const [ordered, setOrdered] = useState(false);
   const [error, setError] = useState<string>();
   const [addOpen, setAddOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // Monotonic counter for fresh React keys on locally-created sections/items, so
+  // dnd-kit identities stay stable across edits without colliding with `srv-*`.
+  const keyCounter = useRef(0);
+  const nextKey = (prefix: string) => `${prefix}-${(keyCounter.current += 1)}`;
   // Re-sync local edit state from the server only when a different revision
   // arrives (initial load, or after our own save/add), so a background refetch
   // never clobbers in-progress edits.
@@ -100,10 +133,16 @@ export function ListDetailPage() {
   useEffect(() => {
     if (!data || loadedRevision.current === data.revision) return;
     loadedRevision.current = data.revision;
-    setItems(data.items.map((item, index) => ({ ...item, key: `srv-${index}` })));
+    setSections(
+      data.sections.map((section, sectionIndex) => ({
+        key: `srv-${sectionIndex}`,
+        heading: section.heading ?? null,
+        ordered: section.ordered,
+        items: section.items.map((item, itemIndex) => ({ ...item, key: `srv-${sectionIndex}-${itemIndex}` })),
+      })),
+    );
     setDescription(data.description);
     setTrailing(data.trailing);
-    setOrdered(data.ordered);
   }, [data]);
 
   const sensors = useSensors(
@@ -115,9 +154,7 @@ export function ListDetailPage() {
     data &&
       (description !== data.description ||
         trailing !== data.trailing ||
-        ordered !== data.ordered ||
-        items.length !== data.items.length ||
-        items.some((item, index) => item.text !== data.items[index]?.text)),
+        sectionsSignature(sections) !== sectionsSignature(serverSections(data.sections))),
   );
 
   function invalidate() {
@@ -141,8 +178,11 @@ export function ListDetailPage() {
       revision: data?.revision ?? "",
       description,
       trailing,
-      ordered,
-      items: items.map((item) => ({ text: item.text })),
+      sections: sections.map((section) => ({
+        heading: section.heading,
+        ordered: section.ordered,
+        items: section.items.map((item) => ({ text: item.text })),
+      })),
     };
   }
 
@@ -169,15 +209,92 @@ export function ListDetailPage() {
     }
   }
 
+  // The section key that owns a draggable id — either a section container id
+  // (an empty section is droppable directly) or one of its item keys.
+  function containerOf(current: EditableSection[], id: string) {
+    if (current.some((section) => section.key === id)) return id;
+    return current.find((section) => section.items.some((item) => item.key === id))?.key;
+  }
+
+  // While dragging across sections, relocate the active item into the section
+  // under the cursor so the move previews live (the dnd-kit multi-container
+  // pattern); same-section reordering is finalized in onDragEnd.
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    if (!over) return;
+    setSections((current) => {
+      const fromKey = containerOf(current, String(active.id));
+      const toKey = containerOf(current, String(over.id));
+      if (!fromKey || !toKey || fromKey === toKey) return current;
+      const fromSection = current.find((section) => section.key === fromKey)!;
+      const moved = fromSection.items.find((item) => item.key === active.id);
+      if (!moved) return current;
+      const toSection = current.find((section) => section.key === toKey)!;
+      const overIndex = toSection.items.findIndex((item) => item.key === over.id);
+      const insertAt = overIndex === -1 ? toSection.items.length : overIndex;
+      return current.map((section) => {
+        if (section.key === fromKey) {
+          return { ...section, items: section.items.filter((item) => item.key !== active.id) };
+        }
+        if (section.key === toKey) {
+          const items = [...section.items];
+          items.splice(insertAt, 0, moved);
+          return { ...section, items };
+        }
+        return section;
+      });
+    });
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    setItems((current) => {
-      const from = current.findIndex((item) => item.key === active.id);
-      const to = current.findIndex((item) => item.key === over.id);
-      if (from === -1 || to === -1) return current;
-      return arrayMove(current, from, to);
+    setSections((current) => {
+      const key = containerOf(current, String(active.id));
+      if (!key || key !== containerOf(current, String(over.id))) return current;
+      return current.map((section) => {
+        if (section.key !== key) return section;
+        const from = section.items.findIndex((item) => item.key === active.id);
+        const to = section.items.findIndex((item) => item.key === over.id);
+        if (from === -1 || to === -1) return section;
+        return { ...section, items: arrayMove(section.items, from, to) };
+      });
     });
+  }
+
+  function addSection() {
+    setSections((current) => [
+      ...current,
+      { key: nextKey("sec"), heading: "New section", ordered: false, items: [] },
+    ]);
+  }
+
+  // Removing a section keeps its items: they fold into the ungrouped block (which
+  // is created at the front if the list had none), so nothing is lost.
+  function removeSection(key: string) {
+    setSections((current) => {
+      const target = current.find((section) => section.key === key);
+      if (!target) return current;
+      const rest = current.filter((section) => section.key !== key);
+      if (target.items.length === 0) return rest;
+      const ungroupedIndex = rest.findIndex((section) => section.heading === null);
+      if (ungroupedIndex === -1) {
+        return [{ key: nextKey("sec"), heading: null, ordered: false, items: target.items }, ...rest];
+      }
+      return rest.map((section, index) =>
+        index === ungroupedIndex ? { ...section, items: [...section.items, ...target.items] } : section,
+      );
+    });
+  }
+
+  function updateSection(key: string, patch: Partial<EditableSection>) {
+    setSections((current) => current.map((section) => (section.key === key ? { ...section, ...patch } : section)));
+  }
+
+  function removeItem(itemKey: string) {
+    setSections((current) =>
+      current.map((section) => ({ ...section, items: section.items.filter((item) => item.key !== itemKey) })),
+    );
   }
 
   const rename = useMutation({
@@ -201,7 +318,10 @@ export function ListDetailPage() {
   });
 
   const busy = save.isPending || remove.isPending || rename.isPending;
-  const existingIds = new Set(items.map((item) => item.entity?.id).filter(Boolean) as string[]);
+  const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0);
+  const existingIds = new Set(
+    sections.flatMap((section) => section.items.map((item) => item.entity?.id)).filter(Boolean) as string[],
+  );
 
   return (
     <AppFrame error={error ?? (list.error ? errorMessage(list.error) : undefined)}>
@@ -249,66 +369,46 @@ export function ListDetailPage() {
               onChange={setDescription}
             />
 
-            <section className="flex flex-col gap-2">
+            <section className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <h2 className="mr-auto text-sm font-medium">
-                  Items <span className="text-muted-foreground">({items.length})</span>
+                  Items <span className="text-muted-foreground">({totalItems})</span>
                 </h2>
-                <div className="flex overflow-hidden rounded-md border">
-                  <button
-                    type="button"
-                    className={cn(
-                      "flex h-8 items-center gap-1 px-2 text-xs transition-colors",
-                      !ordered ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50",
-                    )}
-                    disabled={!contentWritable}
-                    aria-pressed={!ordered}
-                    onClick={() => setOrdered(false)}
-                  >
-                    <ListIcon className="size-3.5" />
-                    Bulleted
-                  </button>
-                  <button
-                    type="button"
-                    className={cn(
-                      "flex h-8 items-center gap-1 border-l px-2 text-xs transition-colors",
-                      ordered ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50",
-                    )}
-                    disabled={!contentWritable}
-                    aria-pressed={ordered}
-                    onClick={() => setOrdered(true)}
-                  >
-                    <ListOrderedIcon className="size-3.5" />
-                    Numbered
-                  </button>
-                </div>
+                <Button type="button" variant="outline" size="sm" disabled={!contentWritable} onClick={addSection}>
+                  <FolderPlusIcon data-icon="inline-start" />
+                  Add section
+                </Button>
                 <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setAddOpen(true)}>
                   <PlusIcon data-icon="inline-start" />
                   Add items
                 </Button>
               </div>
 
-              {items.length === 0 ? (
+              {sections.length === 0 ? (
                 <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  No items yet. Use “Add items” to put entities on this list.
+                  No items yet. Use “Add items” to put entities on this list, or “Add section” to group them.
                 </div>
               ) : (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={items.map((item) => item.key)} strategy={verticalListSortingStrategy}>
-                    <ol className="flex flex-col gap-2">
-                      {items.map((item, index) => (
-                        <SortableRow
-                          key={item.key}
-                          item={item}
-                          index={index}
-                          ordered={ordered}
-                          language={language}
-                          disabled={!contentWritable}
-                          onRemove={() => setItems((current) => current.filter((entry) => entry.key !== item.key))}
-                        />
-                      ))}
-                    </ol>
-                  </SortableContext>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCorners}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="flex flex-col gap-3">
+                    {sections.map((section) => (
+                      <SectionBlock
+                        key={section.key}
+                        section={section}
+                        language={language}
+                        disabled={!contentWritable}
+                        onHeadingChange={(heading) => updateSection(section.key, { heading })}
+                        onOrderedChange={(ordered) => updateSection(section.key, { ordered })}
+                        onRemoveSection={() => removeSection(section.key)}
+                        onRemoveItem={removeItem}
+                      />
+                    ))}
+                  </div>
                 </DndContext>
               )}
             </section>
@@ -357,6 +457,131 @@ export function ListDetailPage() {
         )}
       </div>
     </AppFrame>
+  );
+}
+
+function MarkerToggle({
+  ordered,
+  disabled,
+  onChange,
+}: {
+  ordered: boolean;
+  disabled: boolean;
+  onChange: (ordered: boolean) => void;
+}) {
+  return (
+    <div className="flex overflow-hidden rounded-md border">
+      <button
+        type="button"
+        className={cn(
+          "flex h-8 items-center gap-1 px-2 text-xs transition-colors",
+          !ordered ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50",
+        )}
+        disabled={disabled}
+        aria-pressed={!ordered}
+        onClick={() => onChange(false)}
+      >
+        <ListIcon className="size-3.5" />
+        Bulleted
+      </button>
+      <button
+        type="button"
+        className={cn(
+          "flex h-8 items-center gap-1 border-l px-2 text-xs transition-colors",
+          ordered ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50",
+        )}
+        disabled={disabled}
+        aria-pressed={ordered}
+        onClick={() => onChange(true)}
+      >
+        <ListOrderedIcon className="size-3.5" />
+        Numbered
+      </button>
+    </div>
+  );
+}
+
+function SectionBlock({
+  section,
+  language,
+  disabled,
+  onHeadingChange,
+  onOrderedChange,
+  onRemoveSection,
+  onRemoveItem,
+}: {
+  section: EditableSection;
+  language: string;
+  disabled: boolean;
+  onHeadingChange: (heading: string) => void;
+  onOrderedChange: (ordered: boolean) => void;
+  onRemoveSection: () => void;
+  onRemoveItem: (itemKey: string) => void;
+}) {
+  // Each section is a drop target in its own right, so items can be dragged into
+  // an empty one (where there are no item rows to drop onto).
+  const { setNodeRef, isOver } = useDroppable({ id: section.key });
+  const ungrouped = section.heading === null;
+
+  return (
+    <div className="rounded-md border bg-muted/30 p-2">
+      <div className="mb-2 flex items-center gap-2">
+        {ungrouped ? (
+          <span className="mr-auto px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Ungrouped
+          </span>
+        ) : (
+          <Input
+            value={section.heading ?? ""}
+            placeholder="Section heading"
+            disabled={disabled}
+            aria-label="Section heading"
+            className="mr-auto h-8 max-w-xs text-sm font-medium"
+            onChange={(event) => onHeadingChange(event.target.value)}
+          />
+        )}
+        <MarkerToggle ordered={section.ordered} disabled={disabled} onChange={onOrderedChange} />
+        {ungrouped ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={disabled}
+            aria-label="Remove section"
+            onClick={onRemoveSection}
+          >
+            <Trash2Icon />
+          </Button>
+        )}
+      </div>
+      <SortableContext items={section.items.map((item) => item.key)} strategy={verticalListSortingStrategy}>
+        <ol
+          ref={setNodeRef}
+          className={cn(
+            "flex min-h-10 flex-col gap-2 rounded-md transition-colors",
+            isOver && "bg-accent/40",
+            section.items.length === 0 &&
+              "items-center justify-center border border-dashed p-3 text-center text-xs text-muted-foreground",
+          )}
+        >
+          {section.items.length === 0 ? (
+            <span className="pointer-events-none">Drag items here</span>
+          ) : (
+            section.items.map((item, index) => (
+              <SortableRow
+                key={item.key}
+                item={item}
+                index={index}
+                ordered={section.ordered}
+                language={language}
+                disabled={disabled}
+                onRemove={() => onRemoveItem(item.key)}
+              />
+            ))
+          )}
+        </ol>
+      </SortableContext>
+    </div>
   );
 }
 

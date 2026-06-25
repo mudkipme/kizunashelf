@@ -1929,7 +1929,7 @@
         },
         "responses": {
           "200": {
-            "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
+            "description": "A list's full editable state: description, its sections (each with its own\nheading, marker style, and resolved items), and the trailing Markdown.\n`revision` guards writes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1997,7 +1997,7 @@
         ],
         "responses": {
           "200": {
-            "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
+            "description": "A list's full editable state: description, its sections (each with its own\nheading, marker style, and resolved items), and the trailing Markdown.\n`revision` guards writes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2052,7 +2052,7 @@
           }
         ],
         "requestBody": {
-          "description": "Full rewrite of a list (reorder, ordered toggle, description/trailing edits,\nitem removal). The server renders the whole body from these parts, so the item\norder in `items` is authoritative.",
+          "description": "Full rewrite of a list (reorder within and across sections, section add/rename,\nper-section marker toggle, description/trailing edits, item removal). The server\nrenders the whole body from these parts, so the section and item order is\nauthoritative.",
           "content": {
             "application/json": {
               "schema": {
@@ -2064,7 +2064,7 @@
         },
         "responses": {
           "200": {
-            "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
+            "description": "A list's full editable state: description, its sections (each with its own\nheading, marker style, and resolved items), and the trailing Markdown.\n`revision` guards writes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2219,7 +2219,7 @@
         },
         "responses": {
           "200": {
-            "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
+            "description": "A list's full editable state: description, its sections (each with its own\nheading, marker style, and resolved items), and the trailing Markdown.\n`revision` guards writes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2296,7 +2296,7 @@
         ],
         "responses": {
           "200": {
-            "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
+            "description": "A list's full editable state: description, its sections (each with its own\nheading, marker style, and resolved items), and the trailing Markdown.\n`revision` guards writes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6067,12 +6067,16 @@
             "type": "string"
           },
           "itemCount": {
+            "description": "Total item count across every section.",
             "type": "integer",
             "format": "uint",
             "minimum": 0
           },
-          "ordered": {
-            "type": "boolean"
+          "sectionCount": {
+            "description": "Number of named (`## heading`) sections; `0` for a flat list.",
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
           },
           "contains": {
             "description": "Whether the list contains the entity named by the `entity` query param.\nOnly present when that param was supplied (drives the entity page's\n\"manage lists\" membership toggles); omitted otherwise.",
@@ -6088,7 +6092,7 @@
           "path",
           "description",
           "itemCount",
-          "ordered"
+          "sectionCount"
         ]
       },
       "CreateListRequest": {
@@ -6103,7 +6107,7 @@
         ]
       },
       "ListDetail": {
-        "description": "A list's full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.",
+        "description": "A list's full editable state: description, its sections (each with its own\nheading, marker style, and resolved items), and the trailing Markdown.\n`revision` guards writes.",
         "type": "object",
         "properties": {
           "id": {
@@ -6118,14 +6122,11 @@
           "description": {
             "type": "string"
           },
-          "items": {
+          "sections": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ListItem"
+              "$ref": "#/components/schemas/ListSection"
             }
-          },
-          "ordered": {
-            "type": "boolean"
           },
           "trailing": {
             "type": "string"
@@ -6139,10 +6140,34 @@
           "name",
           "path",
           "description",
-          "items",
-          "ordered",
+          "sections",
           "trailing",
           "revision"
+        ]
+      },
+      "ListSection": {
+        "description": "One section of a list: an optional `## heading`, its marker style, and the\nresolved items beneath it. `heading` is `null` for the ungrouped block of items\nabove the first heading (and for a flat list, which is a single such section).",
+        "type": "object",
+        "properties": {
+          "heading": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ordered": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListItem"
+            }
+          }
+        },
+        "required": [
+          "ordered",
+          "items"
         ]
       },
       "ListItem": {
@@ -6185,7 +6210,7 @@
         ]
       },
       "UpdateListRequest": {
-        "description": "Full rewrite of a list (reorder, ordered toggle, description/trailing edits,\nitem removal). The server renders the whole body from these parts, so the item\norder in `items` is authoritative.",
+        "description": "Full rewrite of a list (reorder within and across sections, section add/rename,\nper-section marker toggle, description/trailing edits, item removal). The server\nrenders the whole body from these parts, so the section and item order is\nauthoritative.",
         "type": "object",
         "properties": {
           "revision": {
@@ -6199,14 +6224,10 @@
             "type": "string",
             "default": ""
           },
-          "ordered": {
-            "type": "boolean",
-            "default": false
-          },
-          "items": {
+          "sections": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ListItemInput"
+              "$ref": "#/components/schemas/ListSectionInput"
             },
             "default": []
           },
@@ -6220,6 +6241,29 @@
         "required": [
           "revision"
         ]
+      },
+      "ListSectionInput": {
+        "description": "One section as supplied by the client on a full list rewrite: an optional\nheading (`null`/empty for the ungrouped block), its marker style, and its items\nin their authoritative order.",
+        "type": "object",
+        "properties": {
+          "heading": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ordered": {
+            "type": "boolean",
+            "default": false
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListItemInput"
+            },
+            "default": []
+          }
+        }
       },
       "ListItemInput": {
         "description": "One item as supplied by the client on a full list rewrite. Only the raw `text`\nis sent; the server re-derives the target/entity on the next read.",

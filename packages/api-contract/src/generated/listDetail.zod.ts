@@ -6,16 +6,16 @@
  */
 import { z as zod } from 'zod';
 
-export const listDetailItemsItemEntityOneDatesItemParsedOneMonthMin = 0;
+export const listDetailSectionsItemItemsItemEntityOneDatesItemParsedOneMonthMin = 0;
 
-export const listDetailItemsItemEntityOneDatesItemParsedOneDayMin = 0;
+export const listDetailSectionsItemItemsItemEntityOneDatesItemParsedOneDayMin = 0;
 
-export const listDetailItemsItemEntityOneTagsDefault = [];
-export const listDetailItemsItemEntityOneEpisodeProgressOneWatchedMin = 0;
+export const listDetailSectionsItemItemsItemEntityOneTagsDefault = [];
+export const listDetailSectionsItemItemsItemEntityOneEpisodeProgressOneWatchedMin = 0;
 
-export const listDetailItemsItemEntityOneEpisodeProgressOneTotalMin = 0;
+export const listDetailSectionsItemItemsItemEntityOneEpisodeProgressOneTotalMin = 0;
 
-export const listDetailItemsItemEntityOneRelationCountMin = 0;
+export const listDetailSectionsItemItemsItemEntityOneRelationCountMin = 0;
 
 
 export const ListDetail = zod.object({
@@ -23,6 +23,9 @@ export const ListDetail = zod.object({
   "name": zod.string(),
   "path": zod.string(),
   "description": zod.string(),
+  "sections": zod.array(zod.object({
+  "heading": zod.string().nullish(),
+  "ordered": zod.boolean(),
   "items": zod.array(zod.object({
   "text": zod.string(),
   "target": zod.string().nullish(),
@@ -37,8 +40,8 @@ export const ListDetail = zod.object({
   "value": zod.string(),
   "parsed": zod.union([zod.object({
   "year": zod.number(),
-  "month": zod.number().min(listDetailItemsItemEntityOneDatesItemParsedOneMonthMin).nullish(),
-  "day": zod.number().min(listDetailItemsItemEntityOneDatesItemParsedOneDayMin).nullish(),
+  "month": zod.number().min(listDetailSectionsItemItemsItemEntityOneDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(listDetailSectionsItemItemsItemEntityOneDatesItemParsedOneDayMin).nullish(),
   "season": zod.string().nullish(),
   "seasonKey": zod.string().nullish()
 }),zod.null()]).optional(),
@@ -49,18 +52,18 @@ export const ListDetail = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
-  "tags": zod.array(zod.string()).default(listDetailItemsItemEntityOneTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "tags": zod.array(zod.string()).default(listDetailSectionsItemItemsItemEntityOneTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "episodeProgress": zod.union([zod.object({
-  "watched": zod.number().min(listDetailItemsItemEntityOneEpisodeProgressOneWatchedMin),
-  "total": zod.number().min(listDetailItemsItemEntityOneEpisodeProgressOneTotalMin)
+  "watched": zod.number().min(listDetailSectionsItemItemsItemEntityOneEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(listDetailSectionsItemItemsItemEntityOneEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
-  "relationCount": zod.number().min(listDetailItemsItemEntityOneRelationCountMin)
+  "relationCount": zod.number().min(listDetailSectionsItemItemsItemEntityOneRelationCountMin)
 }),zod.null()]).optional()
-}).describe('One item of a list. `text` is the raw Markdown content after the list marker\n(preserving any annotation); `target` is the first wikilink target in it; and\n`entity` is the resolved entity when the target matches an indexed note. An\nunresolved item keeps its `text`\/`target` and a `null` `entity`.')),
-  "ordered": zod.boolean(),
+}).describe('One item of a list. `text` is the raw Markdown content after the list marker\n(preserving any annotation); `target` is the first wikilink target in it; and\n`entity` is the resolved entity when the target matches an indexed note. An\nunresolved item keeps its `text`\/`target` and a `null` `entity`.'))
+}).describe('One section of a list: an optional `## heading`, its marker style, and the\nresolved items beneath it. `heading` is `null` for the ungrouped block of items\nabove the first heading (and for a flat list, which is a single such section).')),
   "trailing": zod.string(),
   "revision": zod.string()
-}).describe('A list\'s full editable state: description, the resolved items of the first\nlist, the ordered flag, and the trailing Markdown. `revision` guards writes.')
+}).describe('A list\'s full editable state: description, its sections (each with its own\nheading, marker style, and resolved items), and the trailing Markdown.\n`revision` guards writes.')
 
 export type ListDetail = zod.input<typeof ListDetail>;
 export type ListDetailOutput = zod.output<typeof ListDetail>;
