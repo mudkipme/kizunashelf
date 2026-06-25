@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Drive `dark:` utilities off the `.dark` class (set in lib/theme.ts) instead of
+   the default prefers-color-scheme media query, so manual theme switching works. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   --color-background: hsl(40 45% 98%);
