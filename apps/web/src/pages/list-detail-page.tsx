@@ -27,6 +27,7 @@ import {
   GripVerticalIcon,
   ListIcon,
   ListOrderedIcon,
+  MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
   SaveIcon,
@@ -66,6 +67,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
@@ -460,47 +471,6 @@ export function ListDetailPage() {
   );
 }
 
-function MarkerToggle({
-  ordered,
-  disabled,
-  onChange,
-}: {
-  ordered: boolean;
-  disabled: boolean;
-  onChange: (ordered: boolean) => void;
-}) {
-  return (
-    <div className="flex overflow-hidden rounded-md border">
-      <button
-        type="button"
-        className={cn(
-          "flex h-8 items-center gap-1 px-2 text-xs transition-colors",
-          !ordered ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50",
-        )}
-        disabled={disabled}
-        aria-pressed={!ordered}
-        onClick={() => onChange(false)}
-      >
-        <ListIcon className="size-3.5" />
-        Bulleted
-      </button>
-      <button
-        type="button"
-        className={cn(
-          "flex h-8 items-center gap-1 border-l px-2 text-xs transition-colors",
-          ordered ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50",
-        )}
-        disabled={disabled}
-        aria-pressed={ordered}
-        onClick={() => onChange(true)}
-      >
-        <ListOrderedIcon className="size-3.5" />
-        Numbered
-      </button>
-    </div>
-  );
-}
-
 function SectionBlock({
   section,
   language,
@@ -522,6 +492,8 @@ function SectionBlock({
   // an empty one (where there are no item rows to drop onto).
   const { setNodeRef, isOver } = useDroppable({ id: section.key });
   const ungrouped = section.heading === null;
+  // The heading reads as plain text until the user picks "Rename" from the menu.
+  const [renaming, setRenaming] = useState(false);
 
   return (
     <div className="rounded-md border bg-muted/30 p-2">
@@ -530,29 +502,72 @@ function SectionBlock({
           <span className="mr-auto px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Ungrouped
           </span>
-        ) : (
+        ) : renaming ? (
           <Input
+            autoFocus
             value={section.heading ?? ""}
             placeholder="Section heading"
             disabled={disabled}
             aria-label="Section heading"
-            className="mr-auto h-8 max-w-xs text-sm font-medium"
+            className="mr-auto h-7 max-w-xs text-sm font-medium"
             onChange={(event) => onHeadingChange(event.target.value)}
+            onBlur={() => setRenaming(false)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === "Escape") {
+                event.preventDefault();
+                setRenaming(false);
+              }
+            }}
           />
+        ) : (
+          <h3 className="mr-auto truncate px-1 text-sm font-semibold">
+            {section.heading || "Untitled section"}
+          </h3>
         )}
-        <MarkerToggle ordered={section.ordered} disabled={disabled} onChange={onOrderedChange} />
-        {ungrouped ? null : (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            disabled={disabled}
-            aria-label="Remove section"
-            onClick={onRemoveSection}
-          >
-            <Trash2Icon />
-          </Button>
-        )}
+        <span className="text-xs tabular-nums text-muted-foreground">{section.items.length}</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              disabled={disabled}
+              aria-label="Section actions"
+            >
+              <MoreHorizontalIcon />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            {ungrouped ? null : (
+              <>
+                <DropdownMenuItem onSelect={() => setRenaming(true)}>
+                  <FilePenLineIcon />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onSelect={onRemoveSection}>
+                  <Trash2Icon />
+                  Delete
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuLabel>Marker style</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={section.ordered ? "ordered" : "bulleted"}
+              onValueChange={(value) => onOrderedChange(value === "ordered")}
+            >
+              <DropdownMenuRadioItem value="bulleted">
+                <ListIcon />
+                Bulleted
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="ordered">
+                <ListOrderedIcon />
+                Numbered
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <SortableContext items={section.items.map((item) => item.key)} strategy={verticalListSortingStrategy}>
         <ol
@@ -608,13 +623,18 @@ function SortableRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-2 rounded-md border bg-card p-2",
+        "group flex items-center gap-2 rounded-md border bg-card p-2",
         isDragging && "opacity-60 shadow-sm",
       )}
     >
       <button
         type="button"
-        className="flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+        className={cn(
+          "flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground transition-opacity hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
+          // Keep rows reading as content; the grip surfaces on hover/focus.
+          "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
+          disabled && "hidden",
+        )}
         aria-label="Drag to reorder"
         disabled={disabled}
         {...attributes}
@@ -642,7 +662,19 @@ function SortableRow({
           <span className="text-xs text-muted-foreground">Unresolved link</span>
         </span>
       )}
-      <Button type="button" variant="ghost" size="icon" onClick={onRemove} disabled={disabled} aria-label="Remove item">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={cn(
+          "shrink-0 text-muted-foreground transition-opacity",
+          "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
+          disabled && "hidden",
+        )}
+        onClick={onRemove}
+        disabled={disabled}
+        aria-label="Remove item"
+      >
         <Trash2Icon />
       </Button>
     </li>
