@@ -129,6 +129,10 @@ export function ListDetailPage() {
   const contentWritable = capabilities.data?.contentWritable !== false;
 
   const [sections, setSections] = useState<EditableSection[]>([]);
+  // Mirrors `sections` for the debounced toggle auto-save, whose timer fires after
+  // its scheduling render — reading the ref keeps it on the latest state.
+  const sectionsRef = useRef(sections);
+  sectionsRef.current = sections;
   const [description, setDescription] = useState("");
   const [trailing, setTrailing] = useState("");
   const [error, setError] = useState<string>();
@@ -188,12 +192,12 @@ export function ListDetailPage() {
     }
   }
 
-  function listPayload() {
+  function listPayload(secs: EditableSection[] = sections) {
     return {
       revision: data?.revision ?? "",
       description,
       trailing,
-      sections: sections.map((section) => ({
+      sections: secs.map((section) => ({
         heading: section.heading,
         marker: section.marker,
         items: section.items.map((item) => ({ text: item.text, checked: item.checked })),
@@ -210,11 +214,41 @@ export function ListDetailPage() {
     onError: reportError,
   });
 
+  // Ticking a todo persists on its own — no trip to the Save button. A short
+  // debounce coalesces rapid checks into one write; on success we adopt the new
+  // revision and the saved detail in place (no refetch/re-sync), so the toggle
+  // stays put and any other in-progress edits aren't clobbered or reset.
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const autoSave = useMutation({
+    mutationFn: (payload: ReturnType<typeof listPayload>) => saveList(id, payload),
+    onSuccess: (detail) => {
+      setError(undefined);
+      loadedRevision.current = detail.revision;
+      queryClient.setQueryData(queryKeys.list(id), detail);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+    },
+    onError: reportError,
+  });
+
+  function scheduleAutoSave() {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => autoSave.mutate(listPayload(sectionsRef.current)), 500);
+  }
+
+  useEffect(() => () => clearTimeout(autoSaveTimer.current), []);
+
+  // Drop a pending toggle auto-save before any explicit write so a late timer
+  // can't fire a redundant save or a stale-revision 409 over it.
+  function cancelAutoSave() {
+    clearTimeout(autoSaveTimer.current);
+  }
+
   // Adding an entity writes to the file directly (server-side wikilink
   // disambiguation), so persist any pending edits first — otherwise the append
   // would build on the stale on-disk version and the local edits would be lost.
   async function addEntity(entityId: string) {
     setError(undefined);
+    cancelAutoSave();
     try {
       if (dirty) await saveList(id, listPayload());
       await addItemToList(id, { entityId });
@@ -321,6 +355,7 @@ export function ListDetailPage() {
         ),
       })),
     );
+    scheduleAutoSave();
   }
 
   const rename = useMutation({
@@ -381,7 +416,15 @@ export function ListDetailPage() {
                 <Trash2Icon data-icon="inline-start" />
                 Delete
               </Button>
-              <Button type="button" size="sm" disabled={!contentWritable || !dirty || busy} onClick={() => save.mutate()}>
+              <Button
+                type="button"
+                size="sm"
+                disabled={!contentWritable || !dirty || busy}
+                onClick={() => {
+                  cancelAutoSave();
+                  save.mutate();
+                }}
+              >
                 <SaveIcon data-icon="inline-start" />
                 {save.isPending ? "Saving" : "Save"}
               </Button>
@@ -461,7 +504,10 @@ export function ListDetailPage() {
               currentName={data.name}
               saving={rename.isPending}
               disabled={!contentWritable}
-              onRename={(value) => rename.mutate(value)}
+              onRename={(value) => {
+                cancelAutoSave();
+                rename.mutate(value);
+              }}
             />
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <AlertDialogContent>
@@ -474,7 +520,13 @@ export function ListDetailPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={remove.isPending}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => remove.mutate()} disabled={remove.isPending}>
+                  <AlertDialogAction
+                    onClick={() => {
+                      cancelAutoSave();
+                      remove.mutate();
+                    }}
+                    disabled={remove.isPending}
+                  >
                     Move to Trash
                   </AlertDialogAction>
                 </AlertDialogFooter>
