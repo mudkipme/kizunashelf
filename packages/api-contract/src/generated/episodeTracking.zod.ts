@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const EpisodeTracking = zod.union([zod.literal("checklist").describe('Per-item checkboxes (`- [ ]` \/ `- [x]`) — tracks exactly which are watched.'),zod.literal("progress").describe('Count only; pairs with a `progress` field rather than per-item checkboxes.'),zod.literal("none").describe('No tracking — a plain ordered list.')])
+export const EpisodeTracking = zod.enum(['checklist', 'progress', 'none'])
 
 export type EpisodeTracking = zod.input<typeof EpisodeTracking>;
 export type EpisodeTrackingOutput = zod.output<typeof EpisodeTracking>;

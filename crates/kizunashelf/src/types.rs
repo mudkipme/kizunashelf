@@ -120,21 +120,28 @@ pub struct BodySection {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum BodySectionKind {
-    /// Filled from an external provider field on match (the old `bodyMappings`).
+    // Plain `//` (not `///`): doc comments on variants make schemars emit the enum
+    // as `oneOf` of consts, which swift-openapi-generator can't render as a Swift
+    // enum with named cases. Keep it a flat string enum, like `FieldType`/`DateRole`.
+    //
+    // Filled from an external provider field on match (the old `bodyMappings`).
     External,
-    /// The built-in episodes/tracks list (an ordered, optionally-checkable list,
-    /// optionally grouped by season/disc sub-headings).
+    // The built-in episodes/tracks list (an ordered, optionally-checkable list,
+    // optionally grouped by season/disc sub-headings).
     Episodes,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum EpisodeTracking {
-    /// Per-item checkboxes (`- [ ]` / `- [x]`) — tracks exactly which are watched.
+    // Plain `//` comments (see `BodySectionKind`): keep this a flat string enum so
+    // swift-openapi-generator renders proper `.checklist`/`.progress`/`.none` cases.
+    //
+    // Per-item checkboxes (`- [ ]` / `- [x]`) — tracks exactly which are watched.
     Checklist,
-    /// Count only; pairs with a `progress` field rather than per-item checkboxes.
+    // Count only; pairs with a `progress` field rather than per-item checkboxes.
     Progress,
-    /// No tracking — a plain ordered list.
+    // No tracking — a plain ordered list.
     None,
 }
 

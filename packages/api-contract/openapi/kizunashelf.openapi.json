@@ -2699,17 +2699,10 @@
         ]
       },
       "BodySectionKind": {
-        "oneOf": [
-          {
-            "description": "Filled from an external provider field on match (the old `bodyMappings`).",
-            "type": "string",
-            "const": "external"
-          },
-          {
-            "description": "The built-in episodes/tracks list (an ordered, optionally-checkable list,\noptionally grouped by season/disc sub-headings).",
-            "type": "string",
-            "const": "episodes"
-          }
+        "type": "string",
+        "enum": [
+          "external",
+          "episodes"
         ]
       },
       "ExternalFieldMapping": {
@@ -2728,22 +2721,11 @@
         ]
       },
       "EpisodeTracking": {
-        "oneOf": [
-          {
-            "description": "Per-item checkboxes (`- [ ]` / `- [x]`) — tracks exactly which are watched.",
-            "type": "string",
-            "const": "checklist"
-          },
-          {
-            "description": "Count only; pairs with a `progress` field rather than per-item checkboxes.",
-            "type": "string",
-            "const": "progress"
-          },
-          {
-            "description": "No tracking — a plain ordered list.",
-            "type": "string",
-            "const": "none"
-          }
+        "type": "string",
+        "enum": [
+          "checklist",
+          "progress",
+          "none"
         ]
       },
       "FieldConfig": {

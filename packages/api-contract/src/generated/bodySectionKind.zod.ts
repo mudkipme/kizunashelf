@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const BodySectionKind = zod.union([zod.literal("external").describe('Filled from an external provider field on match (the old `bodyMappings`).'),zod.literal("episodes").describe('The built-in episodes\/tracks list (an ordered, optionally-checkable list,\noptionally grouped by season\/disc sub-headings).')])
+export const BodySectionKind = zod.enum(['external', 'episodes'])
 
 export type BodySectionKind = zod.input<typeof BodySectionKind>;
 export type BodySectionKindOutput = zod.output<typeof BodySectionKind>;
