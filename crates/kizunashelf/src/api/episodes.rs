@@ -199,7 +199,7 @@ pub(crate) async fn import_episodes(
     // Merge the incoming groups into the existing episodes (preserve watched + extras,
     // fill empty titles only), then write the merged result back.
     let existing = parse_episodes(&document.body, &section);
-    let merged = merge_episodes(&existing, &request.groups);
+    let merged = merge_episodes(&existing, &request.groups, request.overwrite);
     document.body = apply_episodes(&document.body, &section, &merged);
     let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
     write_entity_raw(vfs.as_ref(), &source_rel, &new_raw).await?;

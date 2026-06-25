@@ -5551,6 +5551,11 @@
             "items": {
               "$ref": "#/components/schemas/EpisodeGroup"
             }
+          },
+          "overwrite": {
+            "description": "When true, a matched existing item's title is overwritten with the incoming\none (the client ticked it). Defaults false — matched titles are only filled\nwhen empty, never replacing a hand edit — so older clients keep that behavior.",
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [

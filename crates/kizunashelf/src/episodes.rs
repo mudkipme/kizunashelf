@@ -270,12 +270,17 @@ pub fn apply_episodes(body: &str, section: &BodySection, groups: &[EpisodeGroup]
 /// episodes, returning the merged groups (to be rendered + written). The merge is
 /// deliberately non-destructive (the import UX promise):
 /// - existing groups/items are the base — order and **watched** state are kept;
-/// - a matched item (same group label + `key`) keeps its watched flag and only
-///   gains a title when its existing title is empty (never overwrites an edit);
+/// - a matched item (same group label + `key`) keeps its watched flag and gains a
+///   title when its existing title is empty; when `overwrite` is set it also takes
+///   the incoming title over a non-empty existing one (the user ticked it to update);
 /// - new incoming items are appended to their group, new incoming groups appended;
 /// - existing items/groups absent from `incoming` are kept (hand-added or
 ///   removed-upstream entries survive). Re-syncing unchanged data is a no-op.
-pub fn merge_episodes(existing: &EntityEpisodes, incoming: &[EpisodeGroup]) -> Vec<EpisodeGroup> {
+pub fn merge_episodes(
+    existing: &EntityEpisodes,
+    incoming: &[EpisodeGroup],
+    overwrite: bool,
+) -> Vec<EpisodeGroup> {
     let mut result: Vec<EpisodeGroup> = existing.groups.clone();
     for incoming_group in incoming {
         match result
@@ -288,7 +293,11 @@ pub fn merge_episodes(existing: &EntityEpisodes, incoming: &[EpisodeGroup]) -> V
                         !item.key.trim().is_empty() && existing_item.key.trim() == item.key.trim()
                     }) {
                         Some(existing_item) => {
-                            if existing_item.title.trim().is_empty() {
+                            // Fill an empty title always; overwrite a non-empty one only
+                            // when asked and the incoming title isn't itself empty.
+                            if existing_item.title.trim().is_empty()
+                                || (overwrite && !item.title.trim().is_empty())
+                            {
                                 existing_item.title = item.title.clone();
                             }
                         }
@@ -401,7 +410,7 @@ mod tests {
             ],
         }];
 
-        let merged = merge_episodes(&existing, &incoming);
+        let merged = merge_episodes(&existing, &incoming, false);
         assert_eq!(merged.len(), 1);
         let items = &merged[0].items;
         assert_eq!(items[0].key, "1");
@@ -412,8 +421,32 @@ mod tests {
         assert!(items.iter().any(|e| e.key == "3")); // new appended
 
         // Re-syncing the same incoming is a no-op.
-        let again = merge_episodes(&entity_episodes(merged.clone()), &incoming);
+        let again = merge_episodes(&entity_episodes(merged.clone()), &incoming, false);
         assert_eq!(again, merged);
+    }
+
+    #[test]
+    fn merge_overwrite_replaces_titles_but_keeps_watched_and_empty_incoming() {
+        let existing = entity_episodes(vec![EpisodeGroup {
+            label: "Season 1".to_string(),
+            items: vec![
+                episode("1", "Pilot", true), // watched + edited title
+                episode("2", "Old name", false),
+            ],
+        }]);
+        let incoming = vec![EpisodeGroup {
+            label: "Season 1".to_string(),
+            items: vec![
+                unwatched("1", "Pilot (provider)"),
+                unwatched("2", ""), // empty incoming title must not blank the existing one
+            ],
+        }];
+
+        let merged = merge_episodes(&existing, &incoming, true);
+        let items = &merged[0].items;
+        assert_eq!(items[0].title, "Pilot (provider)"); // overwritten on request
+        assert!(items[0].watched); // watched still preserved
+        assert_eq!(items[1].title, "Old name"); // empty incoming leaves the title alone
     }
 
     #[test]
@@ -427,7 +460,7 @@ mod tests {
             label: "Season 2".to_string(),
             items: vec![unwatched("1", "B")],
         }];
-        let merged = merge_episodes(&existing, &incoming);
+        let merged = merge_episodes(&existing, &incoming, false);
         assert_eq!(merged.len(), 2);
         assert_eq!(merged[1].label, "Season 2");
 
@@ -440,7 +473,7 @@ mod tests {
             label: String::new(),
             items: vec![unwatched("1", "A"), unwatched("2", "B")],
         }];
-        let flat_merged = merge_episodes(&flat_existing, &flat_incoming);
+        let flat_merged = merge_episodes(&flat_existing, &flat_incoming, false);
         assert_eq!(flat_merged.len(), 1);
         assert_eq!(flat_merged[0].items.len(), 2);
         assert!(flat_merged[0].items[0].watched); // ep 1 stays watched

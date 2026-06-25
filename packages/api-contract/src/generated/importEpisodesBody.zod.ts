@@ -6,6 +6,7 @@
  */
 import { z as zod } from 'zod';
 
+export const importEpisodesBodyOverwriteDefault = false;
 export const ImportEpisodesBody = zod.object({
   "revision": zod.string(),
   "groups": zod.array(zod.object({
@@ -15,7 +16,8 @@ export const ImportEpisodesBody = zod.object({
   "title": zod.string(),
   "watched": zod.boolean()
 }))
-}))
+})),
+  "overwrite": zod.boolean().default(importEpisodesBodyOverwriteDefault).describe('When true, a matched existing item\'s title is overwritten with the incoming\none (the client ticked it). Defaults false — matched titles are only filled\nwhen empty, never replacing a hand edit — so older clients keep that behavior.')
 }).describe('Imports provider episodes (the chosen subset, already grouped\/flattened by the\nclient) by merging them into the entity\'s existing episodes.')
 
 export type ImportEpisodesBody = zod.input<typeof ImportEpisodesBody>;

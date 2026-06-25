@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, DownloadIcon, RefreshCwIcon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+  MinusIcon,
+  RefreshCwIcon,
+  XIcon,
+} from "lucide-react";
 
 import { errorMessage } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
@@ -17,12 +24,26 @@ import {
 } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { EntityEpisodes, EpisodeGroup, ProviderEpisodeGroup } from "@/types/api";
+import type {
+  EntityEpisodes,
+  EpisodeGroup,
+  ProviderEpisodeGroup,
+  ProviderEpisodeItem,
+} from "@/types/api";
 
-/// Pulls episodes from an external provider and merges them into the entity. The
-/// import mirrors the provider's structure with one explicit scope/grouping choice
-/// (see the agreed UX); merging always keeps local episodes + watched ticks and
-/// only fills empty titles (handled by the server).
+// Selection is per episode: an id keys a (season label, episode key) pair. The
+// separator is a NUL so it never collides with real labels/keys.
+const SEP = "\u0000";
+const itemId = (label: string, key: string) => `${label}${SEP}${key}`;
+
+/// Pulls a list from an external provider and merges it into the entity. The list is
+/// schema-defined and need not be episodes — it may be tracks, chapters, a walkthrough,
+/// etc. — so the wording stays generic ("items"). The preview shows every fetched item
+/// (groups are collapsible for long TheTVDB-style lists); a tick means "write this from
+/// the provider". Items already in the user's list start unticked so their edits are kept
+/// — ticking one updates its title; unticked new items (e.g. Bangumi's semi-specials) are
+/// skipped. One grouping choice mirrors the provider's structure or flattens it; progress
+/// is always preserved server-side.
 export function EpisodeSyncDialog({
   open,
   onOpenChange,
@@ -40,6 +61,7 @@ export function EpisodeSyncDialog({
   const language = useTitleLanguage();
   const [provider, setProvider] = useState<string>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [groupBySeason, setGroupBySeason] = useState(true);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string>();
@@ -59,42 +81,116 @@ export function EpisodeSyncDialog({
     episodes.groups.length === 0 ||
     (episodes.groups.length === 1 && episodes.groups[0].label.trim() === "");
 
-  // Reset the scope/grouping defaults whenever a fresh fetch lands (per the agreed
-  // table: empty/grouped entity → all seasons grouped; flat entity → one season flat).
+  // Reset scope/grouping defaults whenever a fresh fetch lands (per the agreed table:
+  // empty/grouped entity → all seasons grouped; flat entity → one season flat). Only
+  // episodes *not* already in the user's list start ticked, so a sync defaults to
+  // adding new episodes without touching existing titles; long lists collapse.
   useEffect(() => {
     if (!data) return;
     const labels = groups.map((group) => group.label);
+    const willGroup = seasoned && existingIsFlat ? false : seasoned;
+    const localKeys = new Set<string>();
+    for (const group of episodes.groups) {
+      for (const item of group.items) {
+        localKeys.add(itemId(group.label.trim().toLowerCase(), item.key.trim()));
+      }
+    }
+    const isNew = (seasonLabel: string, key: string) => {
+      const target = willGroup ? seasonLabel : "";
+      return !localKeys.has(itemId(target.trim().toLowerCase(), key.trim()));
+    };
+    const freshIds = (gs: ProviderEpisodeGroup[]) =>
+      new Set(
+        gs.flatMap((group) =>
+          group.items
+            .filter((item) => isNew(group.label, item.key))
+            .map((item) => itemId(group.label, item.key)),
+        ),
+      );
     if (seasoned && existingIsFlat) {
       setGroupBySeason(false);
-      setSelected(new Set(labels.slice(0, 1)));
+      setSelected(freshIds(groups.slice(0, 1)));
+      setExpanded(new Set(labels.slice(0, 1)));
     } else {
       setGroupBySeason(seasoned);
-      setSelected(new Set(labels));
+      setSelected(freshIds(groups));
+      setExpanded(new Set(labels.length <= 3 ? labels : []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  const chosen = groups.filter((group) => selected.has(group.label));
+  const allIds = useMemo(
+    () => groups.flatMap((group) => group.items.map((item) => itemId(group.label, item.key))),
+    [groups],
+  );
+  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
 
-  // Build the payload groups (subset, grouped or flattened) the server will merge.
+  function toggleItem(label: string, key: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      const id = itemId(label, key);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleGroup(group: ProviderEpisodeGroup) {
+    const ids = group.items.map((item) => itemId(group.label, item.key));
+    const everySelected = ids.every((id) => selected.has(id));
+    setSelected((current) => {
+      const next = new Set(current);
+      for (const id of ids) {
+        if (everySelected) next.delete(id);
+        else next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleExpand(label: string) {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  }
+
+  // Build the payload groups (selected items only, grouped or flattened) to merge.
   const payloadGroups: EpisodeGroup[] = useMemo(() => {
-    if (groupBySeason && seasoned) {
-      return chosen.map((group) => ({
+    const picked = groups
+      .map((group) => ({
         label: group.label,
-        items: group.items.map((item) => ({ key: item.key, title: item.title, watched: false })),
-      }));
+        items: group.items.filter((item) => selected.has(itemId(group.label, item.key))),
+      }))
+      .filter((group) => group.items.length > 0);
+    const toEpisode = (item: ProviderEpisodeItem) => ({
+      key: item.key,
+      title: item.title,
+      watched: false,
+    });
+    if (groupBySeason && seasoned) {
+      return picked.map((group) => ({ label: group.label, items: group.items.map(toEpisode) }));
     }
-    return [
-      {
-        label: "",
-        items: chosen.flatMap((group) => group.items).map((item) => ({
-          key: item.key,
-          title: item.title,
-          watched: false,
-        })),
-      },
-    ];
-  }, [chosen, groupBySeason, seasoned]);
+    return [{ label: "", items: picked.flatMap((group) => group.items).map(toEpisode) }];
+  }, [groups, selected, groupBySeason, seasoned]);
+
+  // The local episode (target group, key) pairs, to mark already-tracked rows. The
+  // target group depends on whether we keep seasons (import label) or flatten ("").
+  const existingKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const group of episodes.groups) {
+      for (const item of group.items) {
+        set.add(itemId(group.label.trim().toLowerCase(), item.key.trim()));
+      }
+    }
+    return set;
+  }, [episodes]);
+  function isTracked(groupLabel: string, key: string) {
+    const target = groupBySeason && seasoned ? groupLabel : "";
+    return existingKeys.has(itemId(target.trim().toLowerCase(), key.trim()));
+  }
 
   const { incoming, already } = useMemo(
     () => previewCounts(episodes, payloadGroups),
@@ -105,7 +201,8 @@ export function EpisodeSyncDialog({
     setImporting(true);
     setError(undefined);
     try {
-      const detail = await syncEpisodes(entityId, { revision, groups: payloadGroups });
+      // Ticked items are deliberate writes: overwrite matched titles, add new ones.
+      const detail = await syncEpisodes(entityId, { revision, groups: payloadGroups, overwrite: true });
       queryClient.setQueryData(queryKeys.entity(entityId), detail);
       void queryClient.invalidateQueries({ queryKey: ["entities"] });
       onOpenChange(false);
@@ -117,14 +214,17 @@ export function EpisodeSyncDialog({
   }
 
   const noSources = Boolean(data && data.sources.length === 0);
+  const ready = Boolean(data) && !sources.isPending && !sources.error && !noSources;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Sync from a provider</DialogTitle>
           <DialogDescription>
-            Import from a provider, merging into your list — watched state and your own entries are kept.
+            Tick the items to write from the provider — new ones are added, ticked existing ones have
+            their title updated. Items already in your list start unticked, and your progress is always
+            kept.
           </DialogDescription>
         </DialogHeader>
 
@@ -145,30 +245,55 @@ export function EpisodeSyncDialog({
           </label>
         ) : null}
 
-        <div className="flex max-h-72 flex-col gap-2 overflow-auto">
+        {ready ? (
+          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span className="tabular-nums">
+              {selected.size} of {allIds.length} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelected(allSelected ? new Set() : new Set(allIds))}
+              className="font-medium text-foreground hover:underline"
+            >
+              {allSelected ? "Clear all" : "Select all"}
+            </button>
+          </div>
+        ) : null}
+
+        <div className="flex max-h-[55vh] flex-col gap-0.5 overflow-auto rounded-md border p-1">
           {sources.isPending ? (
             <p className="p-3 text-center text-sm text-muted-foreground">Loading</p>
           ) : sources.error ? (
             <p className="p-3 text-center text-sm text-destructive">{errorMessage(sources.error)}</p>
           ) : noSources ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
-              No provider with episodes is linked on this entity.
+              No provider with a list is linked on this entity.
             </p>
           ) : seasoned ? (
-            <>
-              {groups.map((group) => (
-                <SeasonRow
-                  key={group.label}
-                  group={group}
-                  checked={selected.has(group.label)}
-                  onToggle={() => toggle(setSelected, group.label)}
+            groups.map((group) => (
+              <ProviderGroup
+                key={group.label}
+                group={group}
+                selected={selected}
+                expanded={expanded.has(group.label)}
+                isTracked={isTracked}
+                onToggleGroup={() => toggleGroup(group)}
+                onToggleExpand={() => toggleExpand(group.label)}
+                onToggleItem={toggleItem}
+              />
+            ))
+          ) : (
+            <ul className="flex flex-col">
+              {(groups[0]?.items ?? []).map((item) => (
+                <ItemRow
+                  key={item.key}
+                  item={item}
+                  checked={selected.has(itemId("", item.key))}
+                  tracked={isTracked("", item.key)}
+                  onToggle={() => toggleItem("", item.key)}
                 />
               ))}
-            </>
-          ) : (
-            <p className="p-3 text-sm text-muted-foreground">
-              {groups[0]?.items.length ?? 0} items available.
-            </p>
+            </ul>
           )}
         </div>
 
@@ -186,7 +311,7 @@ export function EpisodeSyncDialog({
             >
               {groupBySeason ? <CheckIcon className="size-3" /> : null}
             </span>
-            Keep seasons as groups
+            Keep groups
           </button>
         ) : null}
 
@@ -203,7 +328,7 @@ export function EpisodeSyncDialog({
             disabled={importing || noSources || incoming === 0}
           >
             {importing ? <RefreshCwIcon data-icon="inline-start" className="animate-spin" /> : <DownloadIcon data-icon="inline-start" />}
-            {importing ? "Importing" : `Import (${already > 0 ? `${incoming - already} new · ${already} tracked` : `${incoming}`})`}
+            {importing ? "Importing" : `Import (${already > 0 ? `${incoming - already} new · ${already} updated` : `${incoming}`})`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -211,42 +336,116 @@ export function EpisodeSyncDialog({
   );
 }
 
-function SeasonRow({
+function ProviderGroup({
   group,
-  checked,
-  onToggle,
+  selected,
+  expanded,
+  isTracked,
+  onToggleGroup,
+  onToggleExpand,
+  onToggleItem,
 }: {
   group: ProviderEpisodeGroup;
-  checked: boolean;
-  onToggle: () => void;
+  selected: Set<string>;
+  expanded: boolean;
+  isTracked: (label: string, key: string) => boolean;
+  onToggleGroup: () => void;
+  onToggleExpand: () => void;
+  onToggleItem: (label: string, key: string) => void;
 }) {
+  const chosen = group.items.filter((item) => selected.has(itemId(group.label, item.key))).length;
+  const state = chosen === 0 ? "none" : chosen === group.items.length ? "all" : "some";
+
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="flex items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-accent"
-    >
-      <span
-        className={cn(
-          "flex size-4 shrink-0 items-center justify-center rounded border",
-          checked ? "border-primary bg-primary text-primary-foreground" : "border-input",
-        )}
-      >
-        {checked ? <CheckIcon className="size-3" /> : null}
-      </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{group.label || "Episodes"}</span>
-      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{group.items.length}</span>
-    </button>
+    <div className="flex flex-col">
+      <div className="flex items-center gap-2 rounded-md pr-2 transition-colors hover:bg-accent">
+        <button
+          type="button"
+          onClick={onToggleGroup}
+          aria-label={state === "all" ? "Deselect group" : "Select group"}
+          className="flex items-center py-2 pl-2"
+        >
+          <span
+            className={cn(
+              "flex size-4 shrink-0 items-center justify-center rounded border",
+              state === "none" ? "border-input" : "border-primary bg-primary text-primary-foreground",
+            )}
+          >
+            {state === "all" ? <CheckIcon className="size-3" /> : null}
+            {state === "some" ? <MinusIcon className="size-3" /> : null}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          aria-expanded={expanded}
+          className="flex min-w-0 flex-1 items-center gap-1.5 py-2 text-left"
+        >
+          <ChevronRightIcon
+            className={cn("size-4 shrink-0 text-muted-foreground transition-transform", expanded && "rotate-90")}
+          />
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{group.label || "Items"}</span>
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+            {chosen}/{group.items.length}
+          </span>
+        </button>
+      </div>
+      {expanded ? (
+        <ul className="flex flex-col pl-6">
+          {group.items.map((item) => (
+            <ItemRow
+              key={item.key}
+              item={item}
+              checked={selected.has(itemId(group.label, item.key))}
+              tracked={isTracked(group.label, item.key)}
+              onToggle={() => onToggleItem(group.label, item.key)}
+            />
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }
 
-function toggle(setSelected: (updater: (current: Set<string>) => Set<string>) => void, label: string) {
-  setSelected((current) => {
-    const next = new Set(current);
-    if (next.has(label)) next.delete(label);
-    else next.add(label);
-    return next;
-  });
+function ItemRow({
+  item,
+  checked,
+  tracked,
+  onToggle,
+}: {
+  item: ProviderEpisodeItem;
+  checked: boolean;
+  tracked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={checked}
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors hover:bg-accent"
+      >
+        <span
+          className={cn(
+            "flex size-4 shrink-0 items-center justify-center rounded border",
+            checked ? "border-primary bg-primary text-primary-foreground" : "border-input",
+          )}
+        >
+          {checked ? <CheckIcon className="size-3" /> : null}
+        </span>
+        {item.key ? (
+          <span className="shrink-0 tabular-nums text-xs text-muted-foreground">{item.key}</span>
+        ) : null}
+        <span className="min-w-0 flex-1 truncate">{item.title || "—"}</span>
+        {tracked ? (
+          <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            in list
+          </span>
+        ) : null}
+      </button>
+    </li>
+  );
 }
 
 /// Counts how many of the payload items already exist locally (matched by target

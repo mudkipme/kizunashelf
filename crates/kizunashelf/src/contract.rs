@@ -378,6 +378,11 @@ pub struct FetchEpisodesRequest {
 pub struct ImportEpisodesRequest {
     pub revision: String,
     pub groups: Vec<EpisodeGroup>,
+    /// When true, a matched existing item's title is overwritten with the incoming
+    /// one (the client ticked it). Defaults false — matched titles are only filled
+    /// when empty, never replacing a hand edit — so older clients keep that behavior.
+    #[serde(default)]
+    pub overwrite: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
