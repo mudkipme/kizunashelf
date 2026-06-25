@@ -90,14 +90,34 @@ pub(crate) async fn entity_detail(
     let Some(record) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    let relations = entity_detail_relations(&library, &record.summary.id);
-    let related_entities = entity_detail_related_entities(&library, &record.summary.id, &relations);
+    Ok(Json(
+        build_entity_detail(&state, &library, &record.summary).await?,
+    ))
+}
+
+/// Assembles the full entity-detail response (relations, related entities, the
+/// on-demand-loaded body, and the parsed episodes section). Shared by the detail
+/// `GET` and the episodes write so both return the identical shape.
+pub(super) async fn build_entity_detail(
+    state: &AppState,
+    library: &crate::types::Library,
+    summary: &crate::types::EntitySummary,
+) -> Result<EntityDetailResponse, ApiError> {
+    let relations = entity_detail_relations(library, &summary.id);
+    let related_entities = entity_detail_related_entities(library, &summary.id, &relations);
     // The full body/raw is not resident; load it from disk on demand.
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let entity = load_entity(&library.config, vfs.as_ref(), &record.summary).await?;
-    Ok(Json(EntityDetailResponse {
+    let entity = load_entity(&library.config, vfs.as_ref(), summary).await?;
+    // Parse the episodes/tracks section (if the type declares one) from the body.
+    let episodes = library
+        .config
+        .type_config(&summary.entity_type)
+        .and_then(crate::episodes::episode_section)
+        .map(|section| crate::episodes::parse_episodes(&entity.body, section));
+    Ok(EntityDetailResponse {
         entity,
         relations,
         related_entities,
-    }))
+        episodes,
+    })
 }

@@ -23,6 +23,10 @@ export const calendarPlanningResponseYearMonthsItemEntriesItemEntityDatesItemPar
 export const calendarPlanningResponseYearMonthsItemEntriesItemEntityDatesItemParsedOneDayMin = 0;
 
 export const calendarPlanningResponseYearMonthsItemEntriesItemEntityTagsDefault = [];
+export const calendarPlanningResponseYearMonthsItemEntriesItemEntityEpisodeProgressOneWatchedMin = 0;
+
+export const calendarPlanningResponseYearMonthsItemEntriesItemEntityEpisodeProgressOneTotalMin = 0;
+
 export const calendarPlanningResponseYearMonthsItemEntriesItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseYearMonthsItemEntriesItemMonthMin = 0;
@@ -32,6 +36,10 @@ export const calendarPlanningResponseSeasonsItemEntriesItemEntityDatesItemParsed
 export const calendarPlanningResponseSeasonsItemEntriesItemEntityDatesItemParsedOneDayMin = 0;
 
 export const calendarPlanningResponseSeasonsItemEntriesItemEntityTagsDefault = [];
+export const calendarPlanningResponseSeasonsItemEntriesItemEntityEpisodeProgressOneWatchedMin = 0;
+
+export const calendarPlanningResponseSeasonsItemEntriesItemEntityEpisodeProgressOneTotalMin = 0;
+
 export const calendarPlanningResponseSeasonsItemEntriesItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseSeasonsItemEntriesItemMonthMin = 0;
@@ -41,6 +49,10 @@ export const calendarPlanningResponseBoardUpcomingItemEntityDatesItemParsedOneMo
 export const calendarPlanningResponseBoardUpcomingItemEntityDatesItemParsedOneDayMin = 0;
 
 export const calendarPlanningResponseBoardUpcomingItemEntityTagsDefault = [];
+export const calendarPlanningResponseBoardUpcomingItemEntityEpisodeProgressOneWatchedMin = 0;
+
+export const calendarPlanningResponseBoardUpcomingItemEntityEpisodeProgressOneTotalMin = 0;
+
 export const calendarPlanningResponseBoardUpcomingItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseBoardUpcomingItemMonthMin = 0;
@@ -50,6 +62,10 @@ export const calendarPlanningResponseBoardRecentlyCompletedItemEntityDatesItemPa
 export const calendarPlanningResponseBoardRecentlyCompletedItemEntityDatesItemParsedOneDayMin = 0;
 
 export const calendarPlanningResponseBoardRecentlyCompletedItemEntityTagsDefault = [];
+export const calendarPlanningResponseBoardRecentlyCompletedItemEntityEpisodeProgressOneWatchedMin = 0;
+
+export const calendarPlanningResponseBoardRecentlyCompletedItemEntityEpisodeProgressOneTotalMin = 0;
+
 export const calendarPlanningResponseBoardRecentlyCompletedItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseBoardRecentlyCompletedItemMonthMin = 0;
@@ -59,6 +75,10 @@ export const calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOn
 export const calendarPlanningResponseBoardJustStartedItemEntityDatesItemParsedOneDayMin = 0;
 
 export const calendarPlanningResponseBoardJustStartedItemEntityTagsDefault = [];
+export const calendarPlanningResponseBoardJustStartedItemEntityEpisodeProgressOneWatchedMin = 0;
+
+export const calendarPlanningResponseBoardJustStartedItemEntityEpisodeProgressOneTotalMin = 0;
+
 export const calendarPlanningResponseBoardJustStartedItemEntityRelationCountMin = 0;
 
 export const calendarPlanningResponseBoardJustStartedItemMonthMin = 0;
@@ -109,6 +129,10 @@ export const CalendarPlanningResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(calendarPlanningResponseYearMonthsItemEntriesItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(calendarPlanningResponseYearMonthsItemEntriesItemEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarPlanningResponseYearMonthsItemEntriesItemEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(calendarPlanningResponseYearMonthsItemEntriesItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -150,6 +174,10 @@ export const CalendarPlanningResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(calendarPlanningResponseSeasonsItemEntriesItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(calendarPlanningResponseSeasonsItemEntriesItemEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarPlanningResponseSeasonsItemEntriesItemEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(calendarPlanningResponseSeasonsItemEntriesItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -188,6 +216,10 @@ export const CalendarPlanningResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(calendarPlanningResponseBoardUpcomingItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(calendarPlanningResponseBoardUpcomingItemEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarPlanningResponseBoardUpcomingItemEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(calendarPlanningResponseBoardUpcomingItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -224,6 +256,10 @@ export const CalendarPlanningResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(calendarPlanningResponseBoardRecentlyCompletedItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(calendarPlanningResponseBoardRecentlyCompletedItemEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarPlanningResponseBoardRecentlyCompletedItemEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(calendarPlanningResponseBoardRecentlyCompletedItemEntityRelationCountMin)
 }),
   "field": zod.string(),
@@ -260,6 +296,10 @@ export const CalendarPlanningResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(calendarPlanningResponseBoardJustStartedItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(calendarPlanningResponseBoardJustStartedItemEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarPlanningResponseBoardJustStartedItemEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(calendarPlanningResponseBoardJustStartedItemEntityRelationCountMin)
 }),
   "field": zod.string(),

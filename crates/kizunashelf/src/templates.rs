@@ -11,9 +11,9 @@
 use crate::api::external::provider_catalog_items;
 use crate::contract::{ExternalProviderCatalogItem, VaultTemplate};
 use crate::types::{
-    DailyNotesConfig, DateRole, EntityTypeConfig, ExternalBodyMapping, ExternalFieldMapping,
-    FieldConfig, FieldType, FilenameConfig, HomeConfig, HomeSectionConfig, SeasonLanguage,
-    SortDirection, VaultConfig,
+    BodySection, BodySectionKind, DailyNotesConfig, DateRole, EntityTypeConfig,
+    ExternalFieldMapping, FieldConfig, FieldType, FilenameConfig, HomeConfig, HomeSectionConfig,
+    SeasonLanguage, SortDirection, VaultConfig,
 };
 
 const TAXONOMY_ROOT: &str = "Taxonomy";
@@ -350,7 +350,7 @@ fn media_type(
             title_language: Some("zh".to_string()),
             title_role: None,
         }),
-        body_mappings: default_external_body_mappings(primary_source, "summary", "Summary"),
+        body_sections: default_external_body_mappings(primary_source, "summary", "Summary"),
         fields,
     }
 }
@@ -396,7 +396,7 @@ fn blank_type() -> EntityTypeConfig {
             title_language: None,
             title_role: Some(crate::types::TitleRole::Original),
         }),
-        body_mappings: Vec::new(),
+        body_sections: Vec::new(),
         fields: vec![
             field("id", FieldType::Id, "ID"),
             state,
@@ -481,16 +481,17 @@ fn default_external_mappings(source: &str, role: &str) -> Vec<ExternalFieldMappi
     }
 }
 
-fn default_external_body_mappings(
-    source: &str,
-    role: &str,
-    heading: &str,
-) -> Vec<ExternalBodyMapping> {
+fn default_external_body_mappings(source: &str, role: &str, heading: &str) -> Vec<BodySection> {
     match template_default_field(source, role) {
-        Some(field) => vec![ExternalBodyMapping {
-            source: source.to_string(),
-            field: field.to_string(),
+        Some(field) => vec![BodySection {
             heading: heading.to_string(),
+            kind: BodySectionKind::External,
+            external_fields: vec![ExternalFieldMapping {
+                source: source.to_string(),
+                field: field.to_string(),
+            }],
+            item_noun: None,
+            tracking: None,
         }],
         None => Vec::new(),
     }
@@ -554,9 +555,9 @@ mod tests {
         // The external-ref field carries the provider id.
         assert!(anime.fields.iter().any(|field| field.field == "bangumi_url"
             && field.external_ref.as_deref() == Some("bangumi")));
-        // Summary body mapping is wired from the catalog.
-        assert_eq!(anime.body_mappings.len(), 1);
-        assert_eq!(anime.body_mappings[0].field, "summary");
+        // Summary body section is wired from the catalog.
+        assert_eq!(anime.body_sections.len(), 1);
+        assert_eq!(anime.body_sections[0].external_fields[0].field, "summary");
     }
 
     #[test]

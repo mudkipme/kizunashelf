@@ -11,6 +11,10 @@ export const calendarPlanningDatePointEntityDatesItemParsedOneMonthMin = 0;
 export const calendarPlanningDatePointEntityDatesItemParsedOneDayMin = 0;
 
 export const calendarPlanningDatePointEntityTagsDefault = [];
+export const calendarPlanningDatePointEntityEpisodeProgressOneWatchedMin = 0;
+
+export const calendarPlanningDatePointEntityEpisodeProgressOneTotalMin = 0;
+
 export const calendarPlanningDatePointEntityRelationCountMin = 0;
 
 export const calendarPlanningDatePointMonthMin = 0;
@@ -41,6 +45,10 @@ export const CalendarPlanningDatePoint = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(calendarPlanningDatePointEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(calendarPlanningDatePointEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarPlanningDatePointEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(calendarPlanningDatePointEntityRelationCountMin)
 }),
   "field": zod.string(),

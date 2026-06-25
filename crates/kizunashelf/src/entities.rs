@@ -410,7 +410,7 @@ mod tests {
                 path: "Anime".to_string(),
                 external_priority: Vec::new(),
                 filename: None,
-                body_mappings: Vec::new(),
+                body_sections: Vec::new(),
                 fields: vec![
                     field("status", FieldType::Enum),
                     field("genres", FieldType::EnumList),
@@ -435,6 +435,7 @@ mod tests {
             basename: title.to_string(),
             external_refs: BTreeMap::new(),
             tags: Vec::new(),
+            episode_progress: None,
             relation_count: 0,
         }
     }

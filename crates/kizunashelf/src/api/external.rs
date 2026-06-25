@@ -22,7 +22,7 @@ use crate::contract::{
     ExternalProviderTypeOption, ExternalSearchResponse,
 };
 use crate::dates::clamp_number;
-use crate::types::{FieldType, KizunaConfig};
+use crate::types::{BodySectionKind, FieldType, KizunaConfig};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -431,8 +431,13 @@ fn configured_external_providers(
                     .add_external_types(&field.external_types);
             }
         }
-        for mapping in &type_config.body_mappings {
-            if let Some(provider) = provider_for_external_ref(&mapping.source) {
+        for external in type_config
+            .body_sections
+            .iter()
+            .filter(|section| section.kind == BodySectionKind::External)
+            .flat_map(|section| &section.external_fields)
+        {
+            if let Some(provider) = provider_for_external_ref(&external.source) {
                 providers
                     .entry(provider)
                     .or_insert_with(ProviderSearchConfig::default)
@@ -554,7 +559,9 @@ fn provider_error(error: reqwest::Error) -> ApiError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{EntityTypeConfig, ExternalBodyMapping, FieldConfig};
+    use crate::types::{
+        BodySection, BodySectionKind, EntityTypeConfig, ExternalFieldMapping, FieldConfig,
+    };
 
     #[test]
     fn normalize_isbn_converts_isbn10_to_isbn13() {
@@ -593,10 +600,15 @@ mod tests {
     fn external_body_mappings_enable_provider_without_guessing_type_name() {
         let mut type_config = entity_type("drama", "IGDB Body", "igdb");
         type_config.fields.clear();
-        type_config.body_mappings = vec![ExternalBodyMapping {
-            source: "igdb".to_string(),
-            field: "summary".to_string(),
+        type_config.body_sections = vec![BodySection {
             heading: "Summary".to_string(),
+            kind: BodySectionKind::External,
+            external_fields: vec![ExternalFieldMapping {
+                source: "igdb".to_string(),
+                field: "summary".to_string(),
+            }],
+            item_noun: None,
+            tracking: None,
         }];
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
@@ -619,10 +631,15 @@ mod tests {
     fn external_body_mappings_do_not_override_external_ref_type_filters() {
         let mut type_config =
             entity_type_with_external_types("drama", "TVDB Link", "thetvdb", &["series"]);
-        type_config.body_mappings = vec![ExternalBodyMapping {
-            source: "thetvdb".to_string(),
-            field: "overview".to_string(),
+        type_config.body_sections = vec![BodySection {
             heading: "Summary".to_string(),
+            kind: BodySectionKind::External,
+            external_fields: vec![ExternalFieldMapping {
+                source: "thetvdb".to_string(),
+                field: "overview".to_string(),
+            }],
+            item_noun: None,
+            tracking: None,
         }];
         let config = KizunaConfig {
             vault_root: "/vault".to_string(),
@@ -719,7 +736,7 @@ mod tests {
             path: id.to_string(),
             external_priority: Vec::new(),
             filename: None,
-            body_mappings: Vec::new(),
+            body_sections: Vec::new(),
             fields: vec![FieldConfig {
                 field: field.to_string(),
                 field_type: FieldType::ExternalRef,

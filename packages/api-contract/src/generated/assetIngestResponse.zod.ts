@@ -11,6 +11,10 @@ export const assetIngestResponseEntityDatesItemParsedOneMonthMin = 0;
 export const assetIngestResponseEntityDatesItemParsedOneDayMin = 0;
 
 export const assetIngestResponseEntityTagsDefault = [];
+export const assetIngestResponseEntityEpisodeProgressOneWatchedMin = 0;
+
+export const assetIngestResponseEntityEpisodeProgressOneTotalMin = 0;
+
 export const assetIngestResponseEntityRelationCountMin = 0;
 
 
@@ -39,6 +43,10 @@ export const AssetIngestResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(assetIngestResponseEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(assetIngestResponseEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(assetIngestResponseEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(assetIngestResponseEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),

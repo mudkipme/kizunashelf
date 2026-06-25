@@ -544,7 +544,7 @@ mod tests {
             path: path.to_string(),
             external_priority: Vec::new(),
             filename: None,
-            body_mappings: Vec::new(),
+            body_sections: Vec::new(),
             fields,
         }
     }

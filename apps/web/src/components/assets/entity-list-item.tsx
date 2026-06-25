@@ -29,7 +29,14 @@ export function EntityListItem({
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <EntityDateList entity={entity} compact labelsByType={labelsByType} />
-          <span className="ml-auto shrink-0">{entity.relationCount} links</span>
+          {entity.episodeProgress ? (
+            <span className="ml-auto shrink-0 tabular-nums">
+              {entity.episodeProgress.watched}/{entity.episodeProgress.total}
+            </span>
+          ) : null}
+          <span className={entity.episodeProgress ? "shrink-0" : "ml-auto shrink-0"}>
+            {entity.relationCount} links
+          </span>
         </span>
         {entity.summary ? (
           <span className="mt-1 line-clamp-2 text-xs text-muted-foreground">{entity.summary}</span>

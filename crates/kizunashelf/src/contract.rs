@@ -1,8 +1,8 @@
 use crate::calendar::{CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse};
 use crate::relations::Count;
 use crate::types::{
-    AppConfig, Entity, EntitySummary, EntityTypeConfig, HomeConfig, HomeSectionFilterConfig,
-    KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
+    AppConfig, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking, HomeConfig,
+    HomeSectionFilterConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -256,6 +256,54 @@ pub struct EntityDetailResponse {
     pub entity: Entity,
     pub relations: Vec<Relation>,
     pub related_entities: Vec<EntitySummary>,
+    /// The parsed episodes/tracks list, when the entity's type declares an
+    /// `episodes` body section. `None` otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episodes: Option<EntityEpisodes>,
+}
+
+/// The parsed contents of an entity's episodes/tracks body section: groups
+/// (season/disc sub-headings; ungrouped items land in one unlabeled group) and a
+/// watched/total roll-up. Derived from the Markdown body, which stays the source
+/// of truth.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityEpisodes {
+    pub heading: String,
+    /// UI noun for one item (`Episode` / `Track` / `Chapter`).
+    pub item_noun: String,
+    pub tracking: EpisodeTracking,
+    pub groups: Vec<EpisodeGroup>,
+    pub total: usize,
+    pub watched: usize,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeGroup {
+    /// Sub-heading label (season/disc); empty for the ungrouped group.
+    pub label: String,
+    pub items: Vec<Episode>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Episode {
+    /// The episode/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be
+    /// empty for an item with no parseable number.
+    pub key: String,
+    pub title: String,
+    pub watched: bool,
+}
+
+/// Full rewrite of an entity's episodes section (toggle / add / remove / reorder /
+/// rename / regroup). The server renders these groups back into the body, replacing
+/// only the episodes section.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateEpisodesRequest {
+    pub revision: String,
+    pub groups: Vec<EpisodeGroup>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

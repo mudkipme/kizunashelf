@@ -16,7 +16,7 @@ pub struct EntityTypeConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filename: Option<FilenameConfig>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub body_mappings: Vec<ExternalBodyMapping>,
+    pub body_sections: Vec<BodySection>,
     // Required (and so non-optional in generated clients): a type always carries
     // a `fields` array, even if empty. The editor and templates always write it.
     pub fields: Vec<FieldConfig>,
@@ -97,12 +97,48 @@ pub struct ExternalFieldMapping {
     pub field: String,
 }
 
+/// A declared section of an entity's Markdown body, addressed by its heading.
+/// Generalizes the old `bodyMappings`: a flat struct discriminated by `kind`
+/// (mirroring `FieldConfig`), so the same per-type mechanism covers
+/// external-metadata sections *and* the built-in episodes/tracks list.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ExternalBodyMapping {
-    pub source: String,
-    pub field: String,
+pub struct BodySection {
+    /// The Markdown heading (text only, no `#`s) this section lives under.
     pub heading: String,
+    pub kind: BodySectionKind,
+    /// `kind = external`: the provider field(s) that fill this heading. The matched
+    /// candidate's source is chosen, exactly like [`FieldConfig::external_fields`],
+    /// so one heading can be filled from multiple providers.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub external_fields: Vec<ExternalFieldMapping>,
+    /// `kind = episodes`: the UI noun for one item — `Episode` / `Track` / `Chapter`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub item_noun: Option<String>,
+    /// `kind = episodes`: how watched/read state is tracked. Defaults to `checklist`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tracking: Option<EpisodeTracking>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum BodySectionKind {
+    /// Filled from an external provider field on match (the old `bodyMappings`).
+    External,
+    /// The built-in episodes/tracks list (an ordered, optionally-checkable list,
+    /// optionally grouped by season/disc sub-headings).
+    Episodes,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum EpisodeTracking {
+    /// Per-item checkboxes (`- [ ]` / `- [x]`) — tracks exactly which are watched.
+    Checklist,
+    /// Count only; pairs with a `progress` field rather than per-item checkboxes.
+    Progress,
+    /// No tracking — a plain ordered list.
+    None,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
@@ -347,7 +383,20 @@ pub struct EntitySummary {
     /// (empty when none) so clients can render it without a null check.
     #[serde(default)]
     pub tags: Vec<String>,
+    /// Watched/total for the type's episodes section, when it declares one — a
+    /// resident derived stat (computed at parse time) so list/grid views can show
+    /// progress without reading bodies. `None` for types without episodes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episode_progress: Option<EpisodeProgress>,
     pub relation_count: u32,
+}
+
+/// A watched/total count for an entity's episodes/tracks section.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeProgress {
+    pub watched: usize,
+    pub total: usize,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize, JsonSchema)]

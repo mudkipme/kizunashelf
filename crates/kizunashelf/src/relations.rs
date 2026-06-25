@@ -476,6 +476,7 @@ mod tests {
             basename: title.to_string(),
             external_refs: BTreeMap::new(),
             tags: Vec::new(),
+            episode_progress: None,
             relation_count: 0,
         }
     }
@@ -525,6 +526,7 @@ mod tests {
             basename: title.to_string(),
             external_refs: BTreeMap::new(),
             tags: Vec::new(),
+            episode_progress: None,
             relation_count: 0,
         }
     }
@@ -582,7 +584,7 @@ mod tests {
             path: id.to_string(),
             external_priority: Vec::new(),
             filename: None,
-            body_mappings: Vec::new(),
+            body_sections: Vec::new(),
             fields,
         }
     }

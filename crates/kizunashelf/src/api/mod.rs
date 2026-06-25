@@ -1,6 +1,7 @@
 mod analytics;
 mod assets;
 mod entities;
+mod episodes;
 mod error;
 pub(crate) mod external;
 mod handlers;

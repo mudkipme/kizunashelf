@@ -63,17 +63,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { saveEpisodes } from "@/api/episodes";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
 import { entityTitle } from "@/lib/title-language";
 import type {
   Entity,
+  EpisodeGroup,
 } from "@/types/api";
 
 export function EntityPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const invalidateEntityData = useInvalidateEntityData();
   const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
   const dates = useQuery({ ...entityDatesQuery(id ?? ""), enabled: Boolean(id) });
@@ -86,6 +89,7 @@ export function EntityPage() {
   const [renameBasename, setRenameBasename] = useState("");
   const [manageListsOpen, setManageListsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [episodesSaving, setEpisodesSaving] = useState(false);
 
   const loading =
     detail.isPending ||
@@ -222,6 +226,24 @@ export function EntityPage() {
     }
   }
 
+  async function saveEpisodeGroups(groups: EpisodeGroup[]) {
+    if (!entity) return;
+    setEpisodesSaving(true);
+    try {
+      // The endpoint re-renders the episodes section into the body and returns the
+      // refreshed detail — adopt it so the checklist reflects the new revision.
+      const updated = await saveEpisodes(entity.id, { revision: entity.revision, groups });
+      queryClient.setQueryData(queryKeys.entity(entity.id), updated);
+      // Refresh the resident watched/total badge in list views.
+      void queryClient.invalidateQueries({ queryKey: ["entities"] });
+      setError(undefined);
+    } catch (error) {
+      reportActionError(error);
+    } finally {
+      setEpisodesSaving(false);
+    }
+  }
+
   return (
     <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
@@ -282,6 +304,10 @@ export function EntityPage() {
               relationGroups={relationGroups}
               dates={dates.data}
               typeConfig={typeConfig}
+              episodes={detail.data?.episodes ?? undefined}
+              episodesSaving={episodesSaving}
+              contentWritable={contentWritable}
+              onSaveEpisodes={saveEpisodeGroups}
               actions={
                 <EntityActions
                   entity={entity}

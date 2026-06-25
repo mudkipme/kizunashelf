@@ -158,7 +158,9 @@ function ListHeader({ title, count, addLabel, onAdd }: { title: string; count: n
 function typeProviderCount(type: EntityTypeConfig) {
   return new Set([
     ...(type.externalPriority ?? []),
-    ...(type.bodyMappings ?? []).map((mapping) => mapping.source),
+    ...(type.bodySections ?? []).flatMap((section) =>
+      section.kind === "external" ? (section.externalFields ?? []).map((field) => field.source) : [],
+    ),
     ...type.fields
       .filter((field) => field.fieldType === "externalRef")
       .map((field) => field.externalRef ?? "")

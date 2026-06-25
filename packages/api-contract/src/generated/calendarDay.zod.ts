@@ -11,6 +11,10 @@ export const calendarDayEntriesItemEntityDatesItemParsedOneMonthMin = 0;
 export const calendarDayEntriesItemEntityDatesItemParsedOneDayMin = 0;
 
 export const calendarDayEntriesItemEntityTagsDefault = [];
+export const calendarDayEntriesItemEntityEpisodeProgressOneWatchedMin = 0;
+
+export const calendarDayEntriesItemEntityEpisodeProgressOneTotalMin = 0;
+
 export const calendarDayEntriesItemEntityRelationCountMin = 0;
 
 export const calendarDayEntriesItemSnippetsItemLineMin = 0;
@@ -52,6 +56,10 @@ export const CalendarDay = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(calendarDayEntriesItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(calendarDayEntriesItemEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarDayEntriesItemEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(calendarDayEntriesItemEntityRelationCountMin)
 }),
   "dateField": zod.string().nullish(),

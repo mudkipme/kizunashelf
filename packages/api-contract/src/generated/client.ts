@@ -205,6 +205,10 @@ import type {
 } from './updateEntityRequest.zod';
 
 import type {
+  UpdateEpisodesRequest
+} from './updateEpisodesRequest.zod';
+
+import type {
   UpdateListRequest
 } from './updateListRequest.zod';
 
@@ -976,6 +980,36 @@ export const deleteEntity = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? DeleteEntityResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getUpdateEpisodesUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/episodes`
+}
+
+export const updateEpisodes = async (id: string,
+    updateEpisodesRequest: UpdateEpisodesRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityDetailResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getUpdateEpisodesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateEpisodesRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityDetailResponse.parse(parsedBody) : parsedBody
   return data
 }
 

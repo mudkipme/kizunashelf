@@ -1138,6 +1138,95 @@
         }
       }
     },
+    "/api/entities/{id}/episodes": {
+      "post": {
+        "operationId": "updateEpisodes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Full rewrite of an entity's episodes section (toggle / add / remove / reorder /\nrename / regroup). The server renders these groups back into the body, replacing\nonly the episodes section.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEpisodesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/assets/download": {
       "post": {
         "operationId": "downloadEntityAssets",
@@ -2369,10 +2458,10 @@
               }
             ]
           },
-          "bodyMappings": {
+          "bodySections": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ExternalBodyMapping"
+              "$ref": "#/components/schemas/BodySection"
             }
           },
           "fields": {
@@ -2417,7 +2506,63 @@
           "original"
         ]
       },
-      "ExternalBodyMapping": {
+      "BodySection": {
+        "description": "A declared section of an entity's Markdown body, addressed by its heading.\nGeneralizes the old `bodyMappings`: a flat struct discriminated by `kind`\n(mirroring `FieldConfig`), so the same per-type mechanism covers\nexternal-metadata sections *and* the built-in episodes/tracks list.",
+        "type": "object",
+        "properties": {
+          "heading": {
+            "description": "The Markdown heading (text only, no `#`s) this section lives under.",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/BodySectionKind"
+          },
+          "externalFields": {
+            "description": "`kind = external`: the provider field(s) that fill this heading. The matched\ncandidate's source is chosen, exactly like [`FieldConfig::external_fields`],\nso one heading can be filled from multiple providers.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalFieldMapping"
+            }
+          },
+          "itemNoun": {
+            "description": "`kind = episodes`: the UI noun for one item — `Episode` / `Track` / `Chapter`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tracking": {
+            "description": "`kind = episodes`: how watched/read state is tracked. Defaults to `checklist`.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeTracking"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "heading",
+          "kind"
+        ]
+      },
+      "BodySectionKind": {
+        "oneOf": [
+          {
+            "description": "Filled from an external provider field on match (the old `bodyMappings`).",
+            "type": "string",
+            "const": "external"
+          },
+          {
+            "description": "The built-in episodes/tracks list (an ordered, optionally-checkable list,\noptionally grouped by season/disc sub-headings).",
+            "type": "string",
+            "const": "episodes"
+          }
+        ]
+      },
+      "ExternalFieldMapping": {
         "type": "object",
         "properties": {
           "source": {
@@ -2425,15 +2570,30 @@
           },
           "field": {
             "type": "string"
-          },
-          "heading": {
-            "type": "string"
           }
         },
         "required": [
           "source",
-          "field",
-          "heading"
+          "field"
+        ]
+      },
+      "EpisodeTracking": {
+        "oneOf": [
+          {
+            "description": "Per-item checkboxes (`- [ ]` / `- [x]`) — tracks exactly which are watched.",
+            "type": "string",
+            "const": "checklist"
+          },
+          {
+            "description": "Count only; pairs with a `progress` field rather than per-item checkboxes.",
+            "type": "string",
+            "const": "progress"
+          },
+          {
+            "description": "No tracking — a plain ordered list.",
+            "type": "string",
+            "const": "none"
+          }
         ]
       },
       "FieldConfig": {
@@ -2548,21 +2708,6 @@
           "relation",
           "text",
           "textList"
-        ]
-      },
-      "ExternalFieldMapping": {
-        "type": "object",
-        "properties": {
-          "source": {
-            "type": "string"
-          },
-          "field": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "source",
-          "field"
         ]
       },
       "DateRole": {
@@ -3016,6 +3161,17 @@
             },
             "default": []
           },
+          "episodeProgress": {
+            "description": "Watched/total for the type's episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list/grid views can show\nprogress without reading bodies. `None` for types without episodes.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeProgress"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "relationCount": {
             "type": "integer",
             "format": "uint32",
@@ -3104,6 +3260,26 @@
         },
         "required": [
           "year"
+        ]
+      },
+      "EpisodeProgress": {
+        "description": "A watched/total count for an entity's episodes/tracks section.",
+        "type": "object",
+        "properties": {
+          "watched": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "watched",
+          "total"
         ]
       },
       "StatsQuery": {
@@ -4757,6 +4933,17 @@
             },
             "default": []
           },
+          "episodeProgress": {
+            "description": "Watched/total for the type's episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list/grid views can show\nprogress without reading bodies. `None` for types without episodes.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeProgress"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "relationCount": {
             "type": "integer",
             "format": "uint32",
@@ -4930,12 +5117,102 @@
             "items": {
               "$ref": "#/components/schemas/EntitySummary"
             }
+          },
+          "episodes": {
+            "description": "The parsed episodes/tracks list, when the entity's type declares an\n`episodes` body section. `None` otherwise.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityEpisodes"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "entity",
           "relations",
           "relatedEntities"
+        ]
+      },
+      "EntityEpisodes": {
+        "description": "The parsed contents of an entity's episodes/tracks body section: groups\n(season/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched/total roll-up. Derived from the Markdown body, which stays the source\nof truth.",
+        "type": "object",
+        "properties": {
+          "heading": {
+            "type": "string"
+          },
+          "itemNoun": {
+            "description": "UI noun for one item (`Episode` / `Track` / `Chapter`).",
+            "type": "string"
+          },
+          "tracking": {
+            "$ref": "#/components/schemas/EpisodeTracking"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeGroup"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "watched": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "heading",
+          "itemNoun",
+          "tracking",
+          "groups",
+          "total",
+          "watched"
+        ]
+      },
+      "EpisodeGroup": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Sub-heading label (season/disc); empty for the ungrouped group.",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Episode"
+            }
+          }
+        },
+        "required": [
+          "label",
+          "items"
+        ]
+      },
+      "Episode": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "description": "The episode/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be\nempty for an item with no parseable number.",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "watched": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "watched"
         ]
       },
       "EntityPath2": {
@@ -5003,6 +5280,25 @@
         "required": [
           "deletedId",
           "backupPath"
+        ]
+      },
+      "UpdateEpisodesRequest": {
+        "description": "Full rewrite of an entity's episodes section (toggle / add / remove / reorder /\nrename / regroup). The server renders these groups back into the body, replacing\nonly the episodes section.",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeGroup"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "groups"
         ]
       },
       "AssetDownloadRequest": {

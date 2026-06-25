@@ -201,10 +201,11 @@ types:
   - bangumi
   filename:
     titleLanguage: zh
-  bodyMappings:
-  - source: bangumi
-    field: summary
-    heading: Summary
+  bodySections:
+  - heading: Summary
+    kind: external
+    externalFields:
+    - { source: bangumi, field: summary }
   fields:
   - field: title
     fieldType: title
@@ -220,7 +221,7 @@ types:
 | `path` | yes | string | Folder under `taxonomyRoot` that contains this type's Markdown files. |
 | `externalPriority` | no | string[] | Preferred external metadata providers for match/search workflows. |
 | `filename` | no | object | How the Markdown filename participates in titles. |
-| `bodyMappings` | no | array | Maps external provider metadata fields into Markdown body sections by heading. |
+| `bodySections` | no | array | Declared body sections by heading: external-metadata mappings and the built-in episodes list. See [bodySections](#bodysections). |
 | `fields` | no | array | Frontmatter field definitions. |
 
 ### Filename Config
@@ -434,7 +435,7 @@ External metadata support has two pieces:
 
 1. `externalRef` fields store links/ids to providers.
 2. `externalFields` map provider metadata into local fields.
-3. `bodyMappings` map provider metadata into Markdown body sections.
+3. `bodySections` of `kind: external` map provider metadata into Markdown body sections.
 
 Each provider exposes one `search` entry point that either resolves a pasted
 URL/id it recognizes or runs a free-text query. Providers that only resolve
@@ -489,7 +490,7 @@ fields:
 
 ### `externalPriority`
 
-At the type level, `externalPriority` controls provider order in external match/search workflows. Providers not configured through an `externalRef` field or `bodyMappings` are ignored.
+At the type level, `externalPriority` controls provider order in external match/search workflows. Providers not configured through an `externalRef` field or an external `bodySections` entry are ignored.
 
 ### `externalRef`
 
@@ -514,21 +515,58 @@ For example:
     field: cover_url
 ```
 
-### `bodyMappings`
+### `bodySections`
 
-`bodyMappings` maps provider result metadata into Markdown body sections. The heading is matched from the schema, not inferred from an entity type id or provider name.
+`bodySections` declares named sections of an entity's Markdown **body**, each addressed by its
+heading. A section's `kind` chooses its behavior. (This generalizes the former `bodyMappings`.)
 
-When applying a selected body mapping, KizunaShelf replaces the matching heading section if it exists. If the heading does not exist, it appends a new section. Other body content is preserved.
+| Key | Required | Type | Description |
+| --- | --- | --- | --- |
+| `heading` | yes | string | The Markdown heading (text only) the section lives under. |
+| `kind` | yes | `external` \| `episodes` | What the section is. |
+| `externalFields` | for `external` | `{ source, field }[]` | Provider fields that fill this heading on match. One heading can list multiple sources — the matched candidate's provider is chosen (like a field's `externalFields`). |
+| `itemNoun` | for `episodes` | string | UI noun for one item (`Episode` / `Track` / `Chapter`). Default `Episode`. |
+| `tracking` | for `episodes` | `checklist` \| `progress` \| `none` | How watch/read state is tracked. Default `checklist`. |
 
 ```yaml
-bodyMappings:
-- source: bangumi
-  field: summary
-  heading: Summary
-- source: thetvdb
-  field: overview
-  heading: Summary
+bodySections:
+  # External-metadata section: "Summary" filled from whichever provider matched.
+  - heading: Summary
+    kind: external
+    externalFields:
+      - { source: bangumi, field: summary }
+      - { source: thetvdb, field: overview }
+  # Episodes section: an ordered, checkable list under "Episodes".
+  - heading: Episodes
+    kind: episodes
+    itemNoun: Episode
+    tracking: checklist
 ```
+
+When an external section is applied, KizunaShelf replaces the matching heading section if it
+exists, else appends one; other body content is preserved.
+
+### Episodes / tracks / chapters
+
+An `episodes` body section is the built-in episode tracker. The section's body is an ordered
+Markdown list, optionally grouped by **season/disc sub-headings**, with the item number written
+in the item text (so `0`, `12.5`, specials work — Markdown ordered-list markers can't). With
+`tracking: checklist`, items are task-list checkboxes that record exactly which are watched
+(handling skips a `progress` field can't); the engine derives a watched/total roll-up shown in
+the library and on the detail page.
+
+```markdown
+## Episodes
+### Season 1
+- [x] 1 · Pilot
+- [ ] 12.5 · Recap (special)
+### Season 2
+- [ ] 1 · New Dawn
+```
+
+Multiple seasons can live as sub-headings in **one** entity, or as **separate** entities linked
+by relations — the engine mirrors whatever the files contain and never merges or splits them.
+The list is plain Markdown: edit it directly in Obsidian, or toggle items on the detail page.
 
 ## Home Page
 

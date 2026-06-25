@@ -15,6 +15,10 @@ export const cleanupQueuesResponseMissingCoverItemDatesItemParsedOneMonthMin = 0
 export const cleanupQueuesResponseMissingCoverItemDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseMissingCoverItemTagsDefault = [];
+export const cleanupQueuesResponseMissingCoverItemEpisodeProgressOneWatchedMin = 0;
+
+export const cleanupQueuesResponseMissingCoverItemEpisodeProgressOneTotalMin = 0;
+
 export const cleanupQueuesResponseMissingCoverItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneMonthMin = 0;
@@ -22,6 +26,10 @@ export const cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneMonth
 export const cleanupQueuesResponseMissingExternalRefsItemDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseMissingExternalRefsItemTagsDefault = [];
+export const cleanupQueuesResponseMissingExternalRefsItemEpisodeProgressOneWatchedMin = 0;
+
+export const cleanupQueuesResponseMissingExternalRefsItemEpisodeProgressOneTotalMin = 0;
+
 export const cleanupQueuesResponseMissingExternalRefsItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneMonthMin = 0;
@@ -29,6 +37,10 @@ export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneMonthMin = 0;
 export const cleanupQueuesResponseIsolatedItemDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseIsolatedItemTagsDefault = [];
+export const cleanupQueuesResponseIsolatedItemEpisodeProgressOneWatchedMin = 0;
+
+export const cleanupQueuesResponseIsolatedItemEpisodeProgressOneTotalMin = 0;
+
 export const cleanupQueuesResponseIsolatedItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneMonthMin = 0;
@@ -36,6 +48,10 @@ export const cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneMonthMin = 0
 export const cleanupQueuesResponseBrokenAssetsItemDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseBrokenAssetsItemTagsDefault = [];
+export const cleanupQueuesResponseBrokenAssetsItemEpisodeProgressOneWatchedMin = 0;
+
+export const cleanupQueuesResponseBrokenAssetsItemEpisodeProgressOneTotalMin = 0;
+
 export const cleanupQueuesResponseBrokenAssetsItemRelationCountMin = 0;
 
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneMonthMin = 0;
@@ -43,6 +59,10 @@ export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOn
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceDatesItemParsedOneDayMin = 0;
 
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceTagsDefault = [];
+export const cleanupQueuesResponseUnresolvedRelationsItemSourceEpisodeProgressOneWatchedMin = 0;
+
+export const cleanupQueuesResponseUnresolvedRelationsItemSourceEpisodeProgressOneTotalMin = 0;
+
 export const cleanupQueuesResponseUnresolvedRelationsItemSourceRelationCountMin = 0;
 
 
@@ -78,6 +98,10 @@ export const CleanupQueuesResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(cleanupQueuesResponseMissingCoverItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(cleanupQueuesResponseMissingCoverItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(cleanupQueuesResponseMissingCoverItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(cleanupQueuesResponseMissingCoverItemRelationCountMin)
 })),
   "missingExternalRefs": zod.array(zod.object({
@@ -104,6 +128,10 @@ export const CleanupQueuesResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(cleanupQueuesResponseMissingExternalRefsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(cleanupQueuesResponseMissingExternalRefsItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(cleanupQueuesResponseMissingExternalRefsItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(cleanupQueuesResponseMissingExternalRefsItemRelationCountMin)
 })),
   "isolated": zod.array(zod.object({
@@ -130,6 +158,10 @@ export const CleanupQueuesResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(cleanupQueuesResponseIsolatedItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(cleanupQueuesResponseIsolatedItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(cleanupQueuesResponseIsolatedItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(cleanupQueuesResponseIsolatedItemRelationCountMin)
 })),
   "brokenAssets": zod.array(zod.object({
@@ -156,6 +188,10 @@ export const CleanupQueuesResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(cleanupQueuesResponseBrokenAssetsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(cleanupQueuesResponseBrokenAssetsItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(cleanupQueuesResponseBrokenAssetsItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(cleanupQueuesResponseBrokenAssetsItemRelationCountMin)
 })).describe('Entities whose local cover path points to a file that no longer exists.'),
   "unresolvedRelations": zod.array(zod.object({
@@ -183,6 +219,10 @@ export const CleanupQueuesResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(cleanupQueuesResponseUnresolvedRelationsItemSourceTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(cleanupQueuesResponseUnresolvedRelationsItemSourceEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(cleanupQueuesResponseUnresolvedRelationsItemSourceEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(cleanupQueuesResponseUnresolvedRelationsItemSourceRelationCountMin)
 }),
   "relation": zod.object({

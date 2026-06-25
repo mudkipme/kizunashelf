@@ -419,7 +419,7 @@ mod tests {
             path: "Anime".to_string(),
             external_priority: Vec::new(),
             filename,
-            body_mappings: Vec::new(),
+            body_sections: Vec::new(),
             fields,
         }
     }

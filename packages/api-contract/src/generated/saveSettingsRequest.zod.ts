@@ -45,11 +45,16 @@ export const SaveSettingsRequest = zod.object({
   "titleLanguage": zod.string().nullish(),
   "titleRole": zod.union([zod.enum(['original']),zod.null()]).optional().describe('When `original`, the filename basename is the language-agnostic fallback\ntitle (mirrors a title field\'s `titleRole`). The viewer\'s language picks\nthe displayed title; this is the floor when no language matches.')
 }),zod.null()]).optional(),
-  "bodyMappings": zod.array(zod.object({
+  "bodySections": zod.array(zod.object({
+  "heading": zod.string().describe('The Markdown heading (text only, no `#`s) this section lives under.'),
+  "kind": zod.union([zod.literal("external").describe('Filled from an external provider field on match (the old `bodyMappings`).'),zod.literal("episodes").describe('The built-in episodes\/tracks list (an ordered, optionally-checkable list,\noptionally grouped by season\/disc sub-headings).')]),
+  "externalFields": zod.array(zod.object({
   "source": zod.string(),
-  "field": zod.string(),
-  "heading": zod.string()
-})).optional(),
+  "field": zod.string()
+})).optional().describe('`kind = external`: the provider field(s) that fill this heading. The matched\ncandidate\'s source is chosen, exactly like [`FieldConfig::external_fields`],\nso one heading can be filled from multiple providers.'),
+  "itemNoun": zod.string().nullish().describe('`kind = episodes`: the UI noun for one item — `Episode` \/ `Track` \/ `Chapter`.'),
+  "tracking": zod.union([zod.union([zod.literal("checklist").describe('Per-item checkboxes (`- [ ]` \/ `- [x]`) — tracks exactly which are watched.'),zod.literal("progress").describe('Count only; pairs with a `progress` field rather than per-item checkboxes.'),zod.literal("none").describe('No tracking — a plain ordered list.')]),zod.null()]).optional().describe('`kind = episodes`: how watched\/read state is tracked. Defaults to `checklist`.')
+}).describe('A declared section of an entity\'s Markdown body, addressed by its heading.\nGeneralizes the old `bodyMappings`: a flat struct discriminated by `kind`\n(mirroring `FieldConfig`), so the same per-type mechanism covers\nexternal-metadata sections \*and\* the built-in episodes\/tracks list.')).optional(),
   "fields": zod.array(zod.object({
   "field": zod.string(),
   "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'bool', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),

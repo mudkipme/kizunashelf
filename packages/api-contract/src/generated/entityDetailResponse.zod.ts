@@ -11,6 +11,10 @@ export const entityDetailResponseEntityDatesItemParsedOneMonthMin = 0;
 export const entityDetailResponseEntityDatesItemParsedOneDayMin = 0;
 
 export const entityDetailResponseEntityTagsDefault = [];
+export const entityDetailResponseEntityEpisodeProgressOneWatchedMin = 0;
+
+export const entityDetailResponseEntityEpisodeProgressOneTotalMin = 0;
+
 export const entityDetailResponseEntityRelationCountMin = 0;
 
 export const entityDetailResponseRelatedEntitiesItemDatesItemParsedOneMonthMin = 0;
@@ -18,7 +22,15 @@ export const entityDetailResponseRelatedEntitiesItemDatesItemParsedOneMonthMin =
 export const entityDetailResponseRelatedEntitiesItemDatesItemParsedOneDayMin = 0;
 
 export const entityDetailResponseRelatedEntitiesItemTagsDefault = [];
+export const entityDetailResponseRelatedEntitiesItemEpisodeProgressOneWatchedMin = 0;
+
+export const entityDetailResponseRelatedEntitiesItemEpisodeProgressOneTotalMin = 0;
+
 export const entityDetailResponseRelatedEntitiesItemRelationCountMin = 0;
+
+export const entityDetailResponseEpisodesOneTotalMin = 0;
+
+export const entityDetailResponseEpisodesOneWatchedMin = 0;
 
 
 export const EntityDetailResponse = zod.object({
@@ -46,6 +58,10 @@ export const EntityDetailResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(entityDetailResponseEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(entityDetailResponseEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(entityDetailResponseEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(entityDetailResponseEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),
@@ -84,8 +100,27 @@ export const EntityDetailResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(entityDetailResponseRelatedEntitiesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(entityDetailResponseRelatedEntitiesItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(entityDetailResponseRelatedEntitiesItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(entityDetailResponseRelatedEntitiesItemRelationCountMin)
+})),
+  "episodes": zod.union([zod.object({
+  "heading": zod.string(),
+  "itemNoun": zod.string().describe('UI noun for one item (`Episode` \/ `Track` \/ `Chapter`).'),
+  "tracking": zod.union([zod.literal("checklist").describe('Per-item checkboxes (`- [ ]` \/ `- [x]`) — tracks exactly which are watched.'),zod.literal("progress").describe('Count only; pairs with a `progress` field rather than per-item checkboxes.'),zod.literal("none").describe('No tracking — a plain ordered list.')]),
+  "groups": zod.array(zod.object({
+  "label": zod.string().describe('Sub-heading label (season\/disc); empty for the ungrouped group.'),
+  "items": zod.array(zod.object({
+  "key": zod.string().describe('The episode\/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be\nempty for an item with no parseable number.'),
+  "title": zod.string(),
+  "watched": zod.boolean()
 }))
+})),
+  "total": zod.number().min(entityDetailResponseEpisodesOneTotalMin),
+  "watched": zod.number().min(entityDetailResponseEpisodesOneWatchedMin)
+}).describe('The parsed contents of an entity\'s episodes\/tracks body section: groups\n(season\/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched\/total roll-up. Derived from the Markdown body, which stays the source\nof truth.'),zod.null()]).optional().describe('The parsed episodes\/tracks list, when the entity\'s type declares an\n`episodes` body section. `None` otherwise.')
 })
 
 export type EntityDetailResponse = zod.input<typeof EntityDetailResponse>;

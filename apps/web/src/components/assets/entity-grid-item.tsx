@@ -46,7 +46,11 @@ export function EntityGridItem({
               entity.basename
             )}
           </span>
-          <span className="shrink-0">{entity.relationCount} links</span>
+          <span className="shrink-0">
+            {entity.episodeProgress
+              ? `${entity.episodeProgress.watched}/${entity.episodeProgress.total}`
+              : `${entity.relationCount} links`}
+          </span>
         </div>
       </div>
     </Link>

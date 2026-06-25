@@ -105,6 +105,8 @@ pub(super) fn parse_entity(
             &field_names(type_config, FieldType::ExternalRef),
         ),
         tags: extract_tags(&parsed.frontmatter, tags_field),
+        episode_progress: crate::episodes::episode_section(type_config)
+            .map(|section| crate::episodes::episode_progress(&parsed.body, section)),
         relation_count: 0,
     };
 
@@ -221,7 +223,7 @@ mod tests {
             path: "Anime".to_string(),
             external_priority: Vec::new(),
             filename: None,
-            body_mappings: Vec::new(),
+            body_sections: Vec::new(),
             fields,
         }
     }

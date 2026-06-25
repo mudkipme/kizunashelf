@@ -11,6 +11,10 @@ export const entityMutationResponseEntityDatesItemParsedOneMonthMin = 0;
 export const entityMutationResponseEntityDatesItemParsedOneDayMin = 0;
 
 export const entityMutationResponseEntityTagsDefault = [];
+export const entityMutationResponseEntityEpisodeProgressOneWatchedMin = 0;
+
+export const entityMutationResponseEntityEpisodeProgressOneTotalMin = 0;
+
 export const entityMutationResponseEntityRelationCountMin = 0;
 
 
@@ -39,6 +43,10 @@ export const EntityMutationResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(entityMutationResponseEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(entityMutationResponseEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(entityMutationResponseEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(entityMutationResponseEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),

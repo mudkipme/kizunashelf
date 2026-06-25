@@ -15,6 +15,10 @@ export const homeSectionResponseItemsItemDatesItemParsedOneMonthMin = 0;
 export const homeSectionResponseItemsItemDatesItemParsedOneDayMin = 0;
 
 export const homeSectionResponseItemsItemTagsDefault = [];
+export const homeSectionResponseItemsItemEpisodeProgressOneWatchedMin = 0;
+
+export const homeSectionResponseItemsItemEpisodeProgressOneTotalMin = 0;
+
 export const homeSectionResponseItemsItemRelationCountMin = 0;
 
 
@@ -55,6 +59,10 @@ export const HomeSectionResponse = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(homeSectionResponseItemsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(homeSectionResponseItemsItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(homeSectionResponseItemsItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(homeSectionResponseItemsItemRelationCountMin)
 }))
 })

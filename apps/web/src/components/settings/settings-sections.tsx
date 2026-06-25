@@ -14,7 +14,6 @@ import { fieldDisplayLabel, fieldTypeLabel, isDateFieldType, supportsEnumOptions
 import type {
   DailyNotesConfig,
   EntityTypeConfig,
-  ExternalBodyMapping,
   ExternalFieldMapping,
   ExternalProviderCatalog,
   FieldConfig,
@@ -40,7 +39,12 @@ import {
   fieldTypeOptions,
   type FieldOptionKey,
 } from "./settings-field-descriptors";
-import { arrayEditor } from "./settings-model";
+import {
+  arrayEditor,
+  bodySectionsFromRows,
+  externalBodyRows,
+  type ExternalBodyRow,
+} from "./settings-model";
 
 export function DailyNotesEditor({
   config,
@@ -308,8 +312,10 @@ export function EntityTypeForm({
           />
           <ExternalBodyMappingsEditor
             providerCatalog={providerCatalog}
-            values={config.bodyMappings ?? []}
-            onChange={(bodyMappings) => onChange({ ...config, bodyMappings })}
+            values={externalBodyRows(config.bodySections ?? [])}
+            onChange={(rows) =>
+              onChange({ ...config, bodySections: bodySectionsFromRows(rows, config.bodySections ?? []) })
+            }
           />
         </ConfigSubsection>
 
@@ -428,8 +434,8 @@ function ExternalBodyMappingsEditor({
   onChange,
 }: {
   providerCatalog?: ExternalProviderCatalog;
-  values: ExternalBodyMapping[];
-  onChange: (values: ExternalBodyMapping[]) => void;
+  values: ExternalBodyRow[];
+  onChange: (values: ExternalBodyRow[]) => void;
 }) {
   const sourceOptions = externalSourceOptions(providerCatalog);
   const list = arrayEditor(values, onChange);

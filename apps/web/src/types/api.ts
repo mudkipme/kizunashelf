@@ -61,7 +61,12 @@ export type {
   VaultTemplatesResponse,
 } from "@kizunashelf/api-contract";
 
-import type { SaveSettingsRequest, SettingsConfigResponse } from "@kizunashelf/api-contract";
+import type {
+  EntityDetailResponse,
+  EntitySummary,
+  SaveSettingsRequest,
+  SettingsConfigResponse,
+} from "@kizunashelf/api-contract";
 
 // Editor config types, derived by indexed access into the generated request type
 // so they are structurally identical to what the save endpoint accepts (avoids
@@ -73,7 +78,13 @@ export type FieldConfig = EntityTypeConfig["fields"][number];
 export type FieldType = FieldConfig["fieldType"];
 export type FilenameConfig = NonNullable<EntityTypeConfig["filename"]>;
 export type ExternalFieldMapping = NonNullable<FieldConfig["externalFields"]>[number];
-export type ExternalBodyMapping = NonNullable<EntityTypeConfig["bodyMappings"]>[number];
+export type BodySection = NonNullable<EntityTypeConfig["bodySections"]>[number];
+export type BodySectionKind = BodySection["kind"];
+export type EntityEpisodes = NonNullable<EntityDetailResponse["episodes"]>;
+export type EpisodeGroup = EntityEpisodes["groups"][number];
+export type Episode = EpisodeGroup["items"][number];
+export type EpisodeTracking = EntityEpisodes["tracking"];
+export type EpisodeProgress = NonNullable<EntitySummary["episodeProgress"]>;
 export type DateRole = NonNullable<FieldConfig["dateRole"]>;
 export type SeasonLanguage = NonNullable<FieldConfig["seasonLanguage"]>;
 export type TitleRole = NonNullable<FieldConfig["titleRole"]>;

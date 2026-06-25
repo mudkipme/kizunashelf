@@ -5,6 +5,7 @@ import {
   FileTextIcon,
   LanguagesIcon,
   LinkIcon,
+  ListChecksIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -12,6 +13,7 @@ import { Link } from "react-router-dom";
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
 import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
+import { EntityEpisodesPanel } from "@/components/assets/entity-episodes";
 import { FrontmatterPanel } from "@/components/assets/frontmatter-panel";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { RelationLocalGraph } from "@/components/relations/relation-local-graph";
@@ -21,7 +23,15 @@ import { useTitleLanguage } from "@/lib/language";
 import { relationKey } from "@/lib/relations";
 import { fieldLabelForKey, titleLabelForKey } from "@/lib/type-config";
 import { entityTitle, titleLanguageLabel } from "@/lib/title-language";
-import type { Entity, EntityDatesResponse, EntitySummary, Relation, TypeConfig } from "@/types/api";
+import type {
+  Entity,
+  EntityDatesResponse,
+  EntityEpisodes,
+  EntitySummary,
+  EpisodeGroup,
+  Relation,
+  TypeConfig,
+} from "@/types/api";
 
 export function EntityDetail({
   entity,
@@ -30,6 +40,10 @@ export function EntityDetail({
   relationGroups,
   dates,
   typeConfig,
+  episodes,
+  episodesSaving = false,
+  contentWritable = true,
+  onSaveEpisodes,
   actions,
 }: {
   entity: Entity;
@@ -38,6 +52,10 @@ export function EntityDetail({
   relationGroups: Array<{ field: string; items: Relation[] }>;
   dates?: EntityDatesResponse;
   typeConfig?: TypeConfig;
+  episodes?: EntityEpisodes;
+  episodesSaving?: boolean;
+  contentWritable?: boolean;
+  onSaveEpisodes?: (groups: EpisodeGroup[]) => void;
   actions?: ReactNode;
 }) {
   const language = useTitleLanguage();
@@ -88,6 +106,17 @@ export function EntityDetail({
             <DetailSection title="Details" icon={<BookOpenIcon />}>
               <FrontmatterPanel entity={entity} relationGroups={relationGroups} typeConfig={typeConfig} />
             </DetailSection>
+
+            {episodes ? (
+              <DetailSection title={episodes.heading} icon={<ListChecksIcon />}>
+                <EntityEpisodesPanel
+                  episodes={episodes}
+                  disabled={!contentWritable || !onSaveEpisodes}
+                  saving={episodesSaving}
+                  onSave={(groups) => onSaveEpisodes?.(groups)}
+                />
+              </DetailSection>
+            ) : null}
 
             {entity.body.trim() ? (
               <DetailSection title="Notes" icon={<FileTextIcon />}>

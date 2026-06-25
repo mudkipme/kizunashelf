@@ -4,6 +4,7 @@ use super::assets::{
     list_asset_jobs, plan_asset_downloads, serve_asset,
 };
 use super::entities::{entities, entity_dates, entity_detail};
+use super::episodes::update_episodes;
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
     calendar, calendar_planning, capabilities, config, health, home, languages,
@@ -312,6 +313,18 @@ fn api_router() -> ApiRouter<AppState> {
             .delete_with(delete_entity, |op| {
                 op.id("deleteEntity")
                     .response::<200, Json<DeleteEntityResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/episodes",
+            post_with(update_episodes, |op| {
+                op.id("updateEpisodes")
+                    .response::<200, Json<EntityDetailResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()
                     .response::<409, Json<ErrorResponse>>()

@@ -2286,3 +2286,77 @@ async fn tags_field_name_is_configurable() {
         .collect();
     assert_eq!(titles, ["Alpha"]);
 }
+
+#[tokio::test]
+async fn episodes_detail_progress_update_and_revision_guard() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "anime", "label": "Anime", "path": "Anime",
+                "filename": { "titleLanguage": "zh" },
+                "bodySections": [
+                    { "heading": "Episodes", "kind": "episodes", "itemNoun": "Episode", "tracking": "checklist" }
+                ],
+                "fields": [
+                    { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Show.md"),
+        "---\ntitle: Show\n---\n## Episodes\n### Season 1\n- [x] 1 · Pilot\n- [ ] 12.5 · Recap\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // Resident progress reaches the list view.
+    let list = request_json(&app, Method::GET, "/api/entities?type=anime", None).await;
+    let item = &list.1["items"][0];
+    assert_eq!(item["episodeProgress"], json!({ "watched": 1, "total": 2 }));
+
+    // Detail parses the grouped episodes (including the 12.5 special).
+    let detail = request_json(&app, Method::GET, "/api/entities/anime%3AShow", None).await;
+    assert_eq!(detail.0, StatusCode::OK, "{}", detail.1);
+    let episodes = &detail.1["episodes"];
+    assert_eq!(episodes["total"], 2);
+    assert_eq!(episodes["watched"], 1);
+    assert_eq!(episodes["groups"][0]["label"], "Season 1");
+    assert_eq!(episodes["groups"][0]["items"][1]["key"], "12.5");
+    assert_eq!(episodes["groups"][0]["items"][1]["title"], "Recap");
+    let revision = detail.1["entity"]["revision"].as_str().unwrap().to_string();
+
+    // Toggle the recap watched via the episodes write.
+    let body = json!({
+        "revision": revision,
+        "groups": [{
+            "label": "Season 1",
+            "items": [
+                { "key": "1", "title": "Pilot", "watched": true },
+                { "key": "12.5", "title": "Recap", "watched": true }
+            ]
+        }]
+    });
+    let updated = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/episodes",
+        Some(body.clone()),
+    )
+    .await;
+    assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
+    assert_eq!(updated.1["episodes"]["watched"], 2);
+
+    // The stale revision is now rejected.
+    let stale = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/episodes",
+        Some(body),
+    )
+    .await;
+    assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
+}

@@ -43,7 +43,7 @@ fn entity_type(id: &str, label: &str) -> EntityTypeConfig {
         path: label.to_string(),
         external_priority: Vec::new(),
         filename: None,
-        body_mappings: Vec::new(),
+        body_sections: Vec::new(),
         fields: Vec::new(),
     }
 }
@@ -71,6 +71,7 @@ fn summary(entity_type: &str, type_label: &str, basename: &str) -> EntitySummary
         basename: basename.to_string(),
         external_refs: BTreeMap::new(),
         tags: Vec::new(),
+        episode_progress: None,
         relation_count: 0,
     }
 }
@@ -337,7 +338,7 @@ fn metadata_date_entries_only_includes_schema_date_fields_with_a_role() {
             path: "Anime".to_string(),
             external_priority: Vec::new(),
             filename: None,
-            body_mappings: Vec::new(),
+            body_sections: Vec::new(),
             fields: vec![
                 date_field("aired", Some(DateRole::Completed)),
                 date_field("planned", Some(DateRole::Planning)),

@@ -5,9 +5,9 @@ import {
 } from "@/lib/external-metadata";
 import { isIso639TitleLanguage } from "@/lib/title-language";
 import type {
+  BodySection,
   DailyNotesConfig,
   EntityTypeConfig,
-  ExternalBodyMapping,
   ExternalFieldMapping,
   ExternalProviderCatalog,
   FieldConfig,
@@ -67,9 +67,42 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
           titleRole: config.filename.titleRole ?? null,
         }
       : null,
-    bodyMappings: config.bodyMappings ?? [],
+    bodySections: config.bodySections ?? [],
     fields: (config.fields ?? []).map(normalizeField),
   };
+}
+
+/** One editable row of the external-body-sections editor (heading + one source field). */
+export type ExternalBodyRow = { source: string; field: string; heading: string };
+
+/** Expands a type's external body sections into per-source editor rows. */
+export function externalBodyRows(sections: BodySection[]): ExternalBodyRow[] {
+  const rows: ExternalBodyRow[] = [];
+  for (const section of sections) {
+    if (section.kind !== "external") continue;
+    for (const externalField of section.externalFields ?? []) {
+      rows.push({ source: externalField.source, field: externalField.field, heading: section.heading });
+    }
+  }
+  return rows;
+}
+
+/** Folds editor rows back into body sections (grouping by heading so one heading
+ * can carry multiple sources), preserving any non-external sections (episodes). */
+export function bodySectionsFromRows(rows: ExternalBodyRow[], existing: BodySection[]): BodySection[] {
+  const byHeading = new Map<string, ExternalBodyRow[]>();
+  for (const row of rows) {
+    const group = byHeading.get(row.heading) ?? [];
+    group.push(row);
+    byHeading.set(row.heading, group);
+  }
+  const externalSections: BodySection[] = [...byHeading.entries()].map(([heading, group]) => ({
+    heading,
+    kind: "external" as const,
+    externalFields: group.map((row) => ({ source: row.source, field: row.field })),
+  }));
+  const preserved = existing.filter((section) => section.kind !== "external");
+  return [...externalSections, ...preserved];
 }
 
 function normalizeField(field: FieldConfig): FieldConfig {
@@ -129,7 +162,7 @@ export function cleanVaultConfig(
         path: typeConfig.path,
         externalPriority: cleanExternalPriority(providerCatalog, typeConfig.externalPriority ?? []),
         filename: cleanFilename(typeConfig.filename),
-        bodyMappings: cleanExternalBodyMappings(typeConfig.bodyMappings ?? [], providerCatalog),
+        bodySections: cleanBodySections(typeConfig.bodySections ?? [], providerCatalog),
         fields: typeConfig.fields
           .map((field) => cleanField(field, providerCatalog))
           .filter((field): field is FieldConfig => Boolean(field)),
@@ -181,28 +214,46 @@ function cleanExternalFieldMappings(values: ExternalFieldMapping[], providerCata
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
-function cleanExternalBodyMappings(values: ExternalBodyMapping[], providerCatalog?: ExternalProviderCatalog) {
-  const seen = new Set<string>();
-  const cleaned = values
-    .map((value) => ({
-      source: value.source.trim(),
-      field: value.field.trim(),
-      heading: value.heading.trim(),
-    }))
-    .filter((value) => {
-      if (!value.heading) return false;
-      // Skip catalog validation when the catalog is unavailable (see above).
-      if (
-        providerCatalog !== undefined &&
-        !externalFieldOptionsForSource(providerCatalog, value.source).some((option) => option.field === value.field)
-      ) {
-        return false;
-      }
-      const key = `${value.source}:${value.field}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+function cleanBodySections(
+  sections: BodySection[],
+  providerCatalog?: ExternalProviderCatalog,
+): BodySection[] | undefined {
+  const cleaned: BodySection[] = [];
+  for (const section of sections) {
+    const heading = section.heading.trim();
+    if (!heading) continue;
+    if (section.kind === "episodes") {
+      // No structured editor yet — carry episodes sections through verbatim.
+      cleaned.push({
+        heading,
+        kind: "episodes",
+        itemNoun: emptyToUndefined(section.itemNoun),
+        tracking: section.tracking ?? undefined,
+      });
+      continue;
+    }
+    const seen = new Set<string>();
+    const externalFields = (section.externalFields ?? [])
+      .map((value) => ({ source: value.source.trim(), field: value.field.trim() }))
+      .filter((value) => {
+        if (!value.field) return false;
+        // Skip catalog validation when the catalog is unavailable (see above).
+        if (
+          providerCatalog !== undefined &&
+          !externalFieldOptionsForSource(providerCatalog, value.source).some(
+            (option) => option.field === value.field,
+          )
+        ) {
+          return false;
+        }
+        const key = `${value.source}:${value.field}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    if (externalFields.length === 0) continue;
+    cleaned.push({ heading, kind: "external", externalFields });
+  }
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
@@ -295,7 +346,7 @@ export function defaultEntityType(): EntityTypeConfig {
     path: "Type",
     externalPriority: [],
     filename: { titleRole: "original" },
-    bodyMappings: [],
+    bodySections: [],
     fields: [
       { field: "id", fieldType: "id", displayName: "ID" },
       {

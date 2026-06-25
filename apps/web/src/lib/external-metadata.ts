@@ -81,8 +81,8 @@ export function externalProviderPriority(
   for (const field of configFields(typeConfig)) {
     if (field.fieldType === "externalRef") addKnownSource(catalog, supported, field.externalRef ?? "");
   }
-  for (const mapping of typeConfig?.bodyMappings ?? []) {
-    addKnownSource(catalog, supported, mapping.source);
+  for (const source of externalSectionSources(typeConfig)) {
+    addKnownSource(catalog, supported, source);
   }
 
   const priority = new Set<string>();
@@ -93,8 +93,8 @@ export function externalProviderPriority(
   for (const field of configFields(typeConfig)) {
     if (field.fieldType === "externalRef") addKnownSupportedSource(priority, supported, field.externalRef ?? "");
   }
-  for (const mapping of typeConfig?.bodyMappings ?? []) {
-    addKnownSupportedSource(priority, supported, mapping.source);
+  for (const source of externalSectionSources(typeConfig)) {
+    addKnownSupportedSource(priority, supported, source);
   }
 
   return [...priority];
@@ -150,20 +150,36 @@ export function candidateBodyPreviewEntries(
   typeConfig: TypeConfig | undefined,
 ): ExternalBodyPreviewEntry[] {
   const metadata = (candidate.metadata ?? {}) as Record<string, unknown>;
-  return (typeConfig?.bodyMappings ?? [])
-    .filter((mapping) => externalSourceMatches(candidate.provider, mapping.source))
-    .map((mapping) => {
-      const markdown = formatExternalBodyValue(metadata[mapping.field]);
-      return {
-        key: externalBodyMappingKey(mapping),
-        source: mapping.source,
-        externalField: mapping.field,
-        heading: mapping.heading,
-        value: metadata[mapping.field],
+  const entries: ExternalBodyPreviewEntry[] = [];
+  // One heading can be filled from multiple sources; emit a preview per external
+  // field whose source matches the candidate's provider.
+  for (const section of typeConfig?.bodySections ?? []) {
+    if (section.kind !== "external") continue;
+    for (const externalField of section.externalFields ?? []) {
+      if (!externalSourceMatches(candidate.provider, externalField.source)) continue;
+      const markdown = formatExternalBodyValue(metadata[externalField.field]);
+      entries.push({
+        key: `${section.heading}:${externalField.source}:${externalField.field}`,
+        source: externalField.source,
+        externalField: externalField.field,
+        heading: section.heading,
+        value: metadata[externalField.field],
         markdown,
         hasValue: hasValue(markdown),
-      };
-    });
+      });
+    }
+  }
+  return entries;
+}
+
+/// Every external-source id referenced by a type's external body sections.
+function externalSectionSources(typeConfig: TypeConfig | undefined): string[] {
+  const sources: string[] = [];
+  for (const section of typeConfig?.bodySections ?? []) {
+    if (section.kind !== "external") continue;
+    for (const externalField of section.externalFields ?? []) sources.push(externalField.source);
+  }
+  return sources;
 }
 
 export function candidateBodyPatch(
@@ -279,9 +295,6 @@ function hasValue(value: unknown): value is NonNullable<unknown> {
   return true;
 }
 
-function externalBodyMappingKey(mapping: { source: string; field: string; heading: string }) {
-  return `${mapping.source}:${mapping.field}:${mapping.heading}`;
-}
 
 function formatExternalBodyValue(value: unknown): string {
   if (value === null || value === undefined) return "";

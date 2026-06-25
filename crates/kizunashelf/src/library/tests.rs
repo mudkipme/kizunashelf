@@ -338,7 +338,7 @@ fn test_config(vault_root: &str) -> KizunaConfig {
                 title_language: Some("zh".to_string()),
                 title_role: None,
             }),
-            body_mappings: Vec::new(),
+            body_sections: Vec::new(),
             fields: vec![FieldConfig {
                 field: "title".to_string(),
                 field_type: FieldType::Title,

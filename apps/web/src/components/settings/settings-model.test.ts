@@ -104,7 +104,7 @@ function type(extra: Partial<EntityTypeConfig>): EntityTypeConfig {
     path: "Anime",
     externalPriority: [],
     filename: null,
-    bodyMappings: [],
+    bodySections: [],
     fields: [],
     ...extra,
   } as EntityTypeConfig;
@@ -164,7 +164,7 @@ describe("normalizeVaultConfig", () => {
       vault({ types: [type({ fields: [field({ field: "title", fieldType: "title" })] })] }),
     );
     const [entityType] = result.types;
-    expect(entityType).toMatchObject({ icon: "", externalPriority: [], filename: null, bodyMappings: [] });
+    expect(entityType).toMatchObject({ icon: "", externalPriority: [], filename: null, bodySections: [] });
     expect(entityType.fields[0]).toMatchObject({
       field: "title",
       fieldType: "title",

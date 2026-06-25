@@ -23,6 +23,10 @@ export const relationTargetTypeSummaryTopTargetsItemExamplesItemDatesItemParsedO
 export const relationTargetTypeSummaryTopTargetsItemExamplesItemDatesItemParsedOneDayMin = 0;
 
 export const relationTargetTypeSummaryTopTargetsItemExamplesItemTagsDefault = [];
+export const relationTargetTypeSummaryTopTargetsItemExamplesItemEpisodeProgressOneWatchedMin = 0;
+
+export const relationTargetTypeSummaryTopTargetsItemExamplesItemEpisodeProgressOneTotalMin = 0;
+
 export const relationTargetTypeSummaryTopTargetsItemExamplesItemRelationCountMin = 0;
 
 
@@ -72,6 +76,10 @@ export const RelationTargetTypeSummary = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(relationTargetTypeSummaryTopTargetsItemExamplesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(relationTargetTypeSummaryTopTargetsItemExamplesItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(relationTargetTypeSummaryTopTargetsItemExamplesItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(relationTargetTypeSummaryTopTargetsItemExamplesItemRelationCountMin)
 }))
 }))

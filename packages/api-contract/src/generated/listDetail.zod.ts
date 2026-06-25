@@ -11,6 +11,10 @@ export const listDetailItemsItemEntityOneDatesItemParsedOneMonthMin = 0;
 export const listDetailItemsItemEntityOneDatesItemParsedOneDayMin = 0;
 
 export const listDetailItemsItemEntityOneTagsDefault = [];
+export const listDetailItemsItemEntityOneEpisodeProgressOneWatchedMin = 0;
+
+export const listDetailItemsItemEntityOneEpisodeProgressOneTotalMin = 0;
+
 export const listDetailItemsItemEntityOneRelationCountMin = 0;
 
 
@@ -46,6 +50,10 @@ export const ListDetail = zod.object({
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
   "tags": zod.array(zod.string()).default(listDetailItemsItemEntityOneTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(listDetailItemsItemEntityOneEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(listDetailItemsItemEntityOneEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "relationCount": zod.number().min(listDetailItemsItemEntityOneRelationCountMin)
 }),zod.null()]).optional()
 }).describe('One item of a list. `text` is the raw Markdown content after the list marker\n(preserving any annotation); `target` is the first wikilink target in it; and\n`entity` is the resolved entity when the target matches an indexed note. An\nunresolved item keeps its `text`\/`target` and a `null` `entity`.')),
