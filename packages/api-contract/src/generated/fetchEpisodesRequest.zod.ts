@@ -7,7 +7,8 @@
 import { z as zod } from 'zod';
 
 export const FetchEpisodesRequest = zod.object({
-  "provider": zod.string().nullish().describe('Provider id to fetch from; defaults to the entity\'s first episode source.')
+  "provider": zod.string().nullish().describe('Provider id to fetch from; defaults to the entity\'s first episode source.'),
+  "language": zod.string().nullish().describe('Preferred episode-title language (ISO 639-1, the viewer\'s content language);\nproviders that support translations use it.')
 })
 
 export type FetchEpisodesRequest = zod.input<typeof FetchEpisodesRequest>;

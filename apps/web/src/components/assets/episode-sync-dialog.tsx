@@ -5,6 +5,7 @@ import { CheckIcon, DownloadIcon, RefreshCwIcon, XIcon } from "lucide-react";
 import { errorMessage } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
 import { queryKeys } from "@/api/queries";
+import { useTitleLanguage } from "@/lib/language";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,7 @@ export function EpisodeSyncDialog({
   episodes: EntityEpisodes;
 }) {
   const queryClient = useQueryClient();
+  const language = useTitleLanguage();
   const [provider, setProvider] = useState<string>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [groupBySeason, setGroupBySeason] = useState(true);
@@ -43,9 +45,9 @@ export function EpisodeSyncDialog({
   const [error, setError] = useState<string>();
 
   const sources = useQuery({
-    queryKey: ["episodeSources", entityId, provider ?? ""],
+    queryKey: ["episodeSources", entityId, provider ?? "", language],
     queryFn: ({ signal }) =>
-      fetchEpisodeSources(entityId, provider ? { provider } : {}, { signal }),
+      fetchEpisodeSources(entityId, { ...(provider ? { provider } : {}), language }, { signal }),
     enabled: open,
   });
 

@@ -356,6 +356,10 @@ pub struct FetchEpisodesRequest {
     /// Provider id to fetch from; defaults to the entity's first episode source.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
+    /// Preferred episode-title language (ISO 639-1, the viewer's content language);
+    /// providers that support translations use it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
 }
 
 /// Imports provider episodes (the chosen subset, already grouped/flattened by the

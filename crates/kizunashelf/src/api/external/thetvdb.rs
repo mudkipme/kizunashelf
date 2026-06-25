@@ -8,9 +8,10 @@ use crate::contract::{
     ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
     ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
 };
+use crate::languages::thetvdb_language;
 use crate::secrets::{SECRET_TVDB_API_KEY, SECRET_TVDB_PIN};
 use serde_json::{Map, Value};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::time::{Duration, Instant};
 
 pub(super) struct ThetvdbProvider;
@@ -73,8 +74,9 @@ impl ExternalProvider for ThetvdbProvider {
     async fn fetch_episodes(
         state: &AppState,
         ref_value: &str,
+        language: Option<&str>,
     ) -> Result<ProviderEpisodes, ApiError> {
-        fetch_thetvdb_episodes(state, ref_value).await
+        fetch_thetvdb_episodes(state, ref_value, language).await
     }
 }
 
@@ -137,11 +139,56 @@ async fn thetvdb_get(client: &reqwest::Client, token: &str, url: &str) -> Result
         .map_err(provider_error)
 }
 
-/// Fetches a series' episodes grouped by season (season 0 → "Specials"), following
-/// the official-order episode pages. A slug ref is resolved to an id first.
+/// One parsed episode row: `(season, number-key, title)`.
+type EpisodeRow = (i64, String, String);
+
+/// Paginates an `episodes/{season-type}[/{lang}]` endpoint into ordered rows.
+async fn thetvdb_episode_pages(
+    client: &reqwest::Client,
+    token: &str,
+    start_url: &str,
+) -> Result<Vec<EpisodeRow>, ApiError> {
+    let mut rows: Vec<EpisodeRow> = Vec::new();
+    let mut url = start_url.to_string();
+    let mut pages = 0;
+    loop {
+        let value = thetvdb_get(client, token, &url).await?;
+        if let Some(episodes) = value.pointer("/data/episodes").and_then(Value::as_array) {
+            for episode in episodes {
+                let season = episode
+                    .get("seasonNumber")
+                    .and_then(Value::as_i64)
+                    .unwrap_or(0);
+                let key = episode
+                    .get("number")
+                    .and_then(Value::as_i64)
+                    .map(|number| number.to_string())
+                    .unwrap_or_default();
+                let title = episode
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .map(|name| name.trim().to_string())
+                    .unwrap_or_default();
+                rows.push((season, key, title));
+            }
+        }
+        pages += 1;
+        match value.pointer("/links/next").and_then(Value::as_str) {
+            Some(next) if !next.is_empty() && pages < 50 => url = next.to_string(),
+            _ => break,
+        }
+    }
+    Ok(rows)
+}
+
+/// Fetches a series' episodes grouped by season (season 0 → "Specials"). A slug ref
+/// is resolved to an id first. When the viewer's `language` maps to a TheTVDB code,
+/// translated titles are overlaid onto the default-language list — so episodes with
+/// no translation keep their default title instead of going blank.
 async fn fetch_thetvdb_episodes(
     state: &AppState,
     ref_value: &str,
+    language: Option<&str>,
 ) -> Result<ProviderEpisodes, ApiError> {
     let series_ref = thetvdb_series_ref(ref_value)
         .ok_or_else(|| ApiError::bad_request("Not a TheTVDB series link"))?;
@@ -167,41 +214,37 @@ async fn fetch_thetvdb_episodes(
         }
     };
 
-    let mut by_season: BTreeMap<i64, Vec<ProviderEpisodeItem>> = BTreeMap::new();
-    let mut url =
+    let base_url =
         format!("https://api4.thetvdb.com/v4/series/{series_id}/episodes/official?page=0");
-    let mut pages = 0;
-    loop {
-        let value = thetvdb_get(client, &token, &url).await?;
-        if let Some(episodes) = value.pointer("/data/episodes").and_then(Value::as_array) {
-            for episode in episodes {
-                let season = episode
-                    .get("seasonNumber")
-                    .and_then(Value::as_i64)
-                    .unwrap_or(0);
-                let key = episode
-                    .get("number")
-                    .and_then(Value::as_i64)
-                    .map(|number| number.to_string())
-                    .unwrap_or_default();
-                let title = episode
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .map(|name| name.trim().to_string())
-                    .unwrap_or_default();
-                by_season
-                    .entry(season)
-                    .or_default()
-                    .push(ProviderEpisodeItem { key, title });
+    let mut rows = thetvdb_episode_pages(client, &token, &base_url).await?;
+
+    // Overlay translated titles when a supported language is requested. Best-effort:
+    // a failed/empty translation leaves the default-language titles in place.
+    if let Some(language) = language.and_then(thetvdb_language) {
+        let translated_url = format!(
+            "https://api4.thetvdb.com/v4/series/{series_id}/episodes/official/{language}?page=0"
+        );
+        if let Ok(translated) = thetvdb_episode_pages(client, &token, &translated_url).await {
+            let by_key: HashMap<(i64, &str), &str> = translated
+                .iter()
+                .filter(|(_, _, title)| !title.is_empty())
+                .map(|(season, key, title)| ((*season, key.as_str()), title.as_str()))
+                .collect();
+            for (season, key, title) in rows.iter_mut() {
+                if let Some(translated_title) = by_key.get(&(*season, key.as_str())) {
+                    *title = (*translated_title).to_string();
+                }
             }
-        }
-        pages += 1;
-        match value.pointer("/links/next").and_then(Value::as_str) {
-            Some(next) if !next.is_empty() && pages < 50 => url = next.to_string(),
-            _ => break,
         }
     }
 
+    let mut by_season: BTreeMap<i64, Vec<ProviderEpisodeItem>> = BTreeMap::new();
+    for (season, key, title) in rows {
+        by_season
+            .entry(season)
+            .or_default()
+            .push(ProviderEpisodeItem { key, title });
+    }
     let groups = by_season
         .into_iter()
         .map(|(season, items)| ProviderEpisodeGroup {

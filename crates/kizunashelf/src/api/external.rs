@@ -92,11 +92,14 @@ trait ExternalProvider {
     const SUPPORTS_EPISODES: bool = false;
 
     /// Fetches an entity's episodes/tracks given its stored external ref value (a
-    /// URL or id — the provider reuses its own URL→id parser). The default rejects;
-    /// providers that set `SUPPORTS_EPISODES = true` override this.
+    /// URL or id — the provider reuses its own URL→id parser). `language` is the
+    /// viewer's content language (ISO 639-1); providers that support translated
+    /// titles honor it. The default rejects; providers that set
+    /// `SUPPORTS_EPISODES = true` override this.
     fn fetch_episodes(
         _state: &AppState,
         _ref_value: &str,
+        _language: Option<&str>,
     ) -> impl Future<Output = Result<ProviderEpisodes, ApiError>> + Send {
         async {
             Err(ApiError::bad_request(
@@ -124,6 +127,8 @@ type SearchFut<'a> =
 type EpisodesFut<'a> =
     Pin<Box<dyn Future<Output = Result<ProviderEpisodes, ApiError>> + Send + 'a>>;
 
+type FetchEpisodesFn = for<'a> fn(&'a AppState, &'a str, Option<&'a str>) -> EpisodesFut<'a>;
+
 /// One provider, erased to plain fn pointers so the orchestration can iterate a
 /// `Vec<ProviderEntry>` instead of naming each provider type. Adding a provider
 /// is a single line in [`registry`] — no `tokio::join!` arm or match to update.
@@ -141,7 +146,7 @@ struct ProviderEntry {
     search:
         for<'a> fn(&'a AppState, &'a str, usize, usize, &'a ProviderSearchConfig) -> SearchFut<'a>,
     supports_episodes: bool,
-    fetch_episodes: for<'a> fn(&'a AppState, &'a str) -> EpisodesFut<'a>,
+    fetch_episodes: FetchEpisodesFn,
 }
 
 fn search_boxed<'a, P: ExternalProvider + 'static>(
@@ -157,8 +162,9 @@ fn search_boxed<'a, P: ExternalProvider + 'static>(
 fn fetch_episodes_boxed<'a, P: ExternalProvider + 'static>(
     state: &'a AppState,
     ref_value: &'a str,
+    language: Option<&'a str>,
 ) -> EpisodesFut<'a> {
-    Box::pin(P::fetch_episodes(state, ref_value))
+    Box::pin(P::fetch_episodes(state, ref_value, language))
 }
 
 fn entry<P: ExternalProvider + 'static>() -> ProviderEntry {
@@ -194,11 +200,13 @@ pub(super) fn provider_label(provider_id: &str) -> Option<&'static str> {
         .map(|entry| entry.label)
 }
 
-/// Fetches episodes from `provider_id` for an entity's stored external `ref_value`.
+/// Fetches episodes from `provider_id` for an entity's stored external `ref_value`,
+/// in `language` (ISO 639-1) where the provider supports translated titles.
 pub(super) async fn provider_fetch_episodes(
     state: &AppState,
     provider_id: &str,
     ref_value: &str,
+    language: Option<&str>,
 ) -> Result<ProviderEpisodes, ApiError> {
     let Some(fetch) = registry()
         .iter()
@@ -209,7 +217,7 @@ pub(super) async fn provider_fetch_episodes(
             "This provider does not support episode import",
         ));
     };
-    fetch(state, ref_value).await
+    fetch(state, ref_value, language).await
 }
 
 /// The provider registry: the single source of truth for which external

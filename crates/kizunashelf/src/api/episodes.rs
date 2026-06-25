@@ -155,7 +155,13 @@ pub(crate) async fn fetch_episodes(
             groups: Vec::new(),
         }));
     };
-    let episodes = provider_fetch_episodes(&state, chosen.provider, &chosen.ref_value).await?;
+    let episodes = provider_fetch_episodes(
+        &state,
+        chosen.provider,
+        &chosen.ref_value,
+        request.language.as_deref(),
+    )
+    .await?;
     Ok(Json(EpisodeSyncResponse {
         sources: source_list,
         provider: chosen.provider.to_string(),

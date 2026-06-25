@@ -45,14 +45,20 @@ impl ExternalProvider for BangumiProvider {
     async fn fetch_episodes(
         _state: &super::AppState,
         ref_value: &str,
+        language: Option<&str>,
     ) -> Result<ProviderEpisodes, ApiError> {
-        fetch_bangumi_episodes(ref_value).await
+        fetch_bangumi_episodes(ref_value, language).await
     }
 }
 
 /// Fetches a Bangumi subject's episodes as a single flat group. A subject is one
 /// season, so there are no sub-groups (matching the per-season-entity convention).
-async fn fetch_bangumi_episodes(ref_value: &str) -> Result<ProviderEpisodes, ApiError> {
+/// Bangumi carries a Chinese (`name_cn`) and an original (`name`) title; the
+/// viewer's `language` picks which to prefer (Chinese for `zh`, else the original).
+async fn fetch_bangumi_episodes(
+    ref_value: &str,
+    language: Option<&str>,
+) -> Result<ProviderEpisodes, ApiError> {
     let subject_id = bangumi_subject_id(ref_value)
         .ok_or_else(|| ApiError::bad_request("Not a Bangumi subject link or id"))?;
     let client = external_client();
@@ -76,7 +82,12 @@ async fn fetch_bangumi_episodes(ref_value: &str) -> Result<ProviderEpisodes, Api
                 .or_else(|| episode.get("ep"))
                 .and_then(format_episode_number)
                 .unwrap_or_default();
-            let title = first_non_empty(episode, &["name_cn", "name"]);
+            let title_keys: &[&str] = if language.unwrap_or("zh").starts_with("zh") {
+                &["name_cn", "name"]
+            } else {
+                &["name", "name_cn"]
+            };
+            let title = first_non_empty(episode, title_keys);
             if key.is_empty() && title.is_empty() {
                 continue;
             }

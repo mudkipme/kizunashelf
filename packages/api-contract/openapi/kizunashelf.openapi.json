@@ -5467,6 +5467,13 @@
               "string",
               "null"
             ]
+          },
+          "language": {
+            "description": "Preferred episode-title language (ISO 639-1, the viewer's content language);\nproviders that support translations use it.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
