@@ -19,6 +19,61 @@ use tokio::sync::Mutex;
 /// Maximum number of finished asset-download jobs kept in memory.
 const MAX_RETAINED_JOBS: usize = 20;
 
+/// A value memoized on the library's `content_revision`, with a single-flight
+/// build lock. Several endpoints derive an expensive whole-library view
+/// (analytics, cleanup queues, the tag vocabulary) that only changes when the
+/// library content does; this collapses the "check the memo → take the lock →
+/// re-check → build → store" protocol they all share into one place. Keying on
+/// the content fingerprint (not `generated_at`) means a warm reload that re-reads
+/// identical content keeps the memoized result instead of rebuilding it.
+pub(crate) struct RevisionMemo<T> {
+    cache: Mutex<Option<(String, Arc<T>)>>,
+    build_lock: Mutex<()>,
+}
+
+impl<T> RevisionMemo<T> {
+    fn new() -> Self {
+        Self {
+            cache: Mutex::new(None),
+            build_lock: Mutex::new(()),
+        }
+    }
+
+    /// The memoized value if it was built for this `content_revision`.
+    async fn get(&self, content_revision: &str) -> Option<Arc<T>> {
+        let cache = self.cache.lock().await;
+        cache
+            .as_ref()
+            .filter(|(revision, _)| revision == content_revision)
+            .map(|(_, value)| Arc::clone(value))
+    }
+
+    async fn store(&self, content_revision: &str, value: Arc<T>) {
+        *self.cache.lock().await = Some((content_revision.to_string(), value));
+    }
+
+    /// Returns the memoized value for `content_revision`, running `build` to
+    /// produce it on a miss. The build is single-flighted: concurrent first hits
+    /// serialize on the lock, and the re-check after taking it means a winner's
+    /// freshly stored value is reused instead of the scan running again.
+    pub(crate) async fn get_or_build<F, Fut>(&self, content_revision: &str, build: F) -> Arc<T>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = Arc<T>>,
+    {
+        if let Some(value) = self.get(content_revision).await {
+            return value;
+        }
+        let _build = self.build_lock.lock().await;
+        if let Some(value) = self.get(content_revision).await {
+            return value;
+        }
+        let value = build().await;
+        self.store(content_revision, Arc::clone(&value)).await;
+        value
+    }
+}
+
 /// In-memory record for a batch asset-download job. Jobs do not survive a
 /// restart by design; the user simply re-runs and already-downloaded images are
 /// skipped.
@@ -76,45 +131,22 @@ pub(crate) struct AppState {
     /// read→modify→write.
     token_disk_lock: Arc<Mutex<()>>,
     /// Memoized analytics keyed on the library's `content_revision`. Analytics is
-    /// an expensive whole-library scan; the cache turns repeated `/analytics` hits
-    /// into a single build per distinct library content. Keying on the
-    /// content fingerprint (not `generated_at`) means a warm reload that re-reads
-    /// identical content keeps the memoized result instead of rebuilding it.
-    analytics_cache: Arc<Mutex<Option<CachedAnalytics>>>,
-    /// Single-flights the analytics build so a cold memo under concurrent
-    /// `/analytics` hits does the expensive whole-library scan once, not once per
-    /// request. Callers take it, re-check the memo, and only then build (mirrors
-    /// the [`get_library`] reload lock and [`token_fetch_lock`]).
-    analytics_build_lock: Arc<Mutex<()>>,
+    /// an expensive whole-library scan; the memo turns repeated `/analytics` hits
+    /// into a single build per distinct library content (single-flighted under
+    /// concurrent first hits, mirroring the [`get_library`] reload lock).
+    analytics: Arc<RevisionMemo<AnalyticsResponse>>,
     /// Memoized cleanup queues keyed on the library's `content_revision`. Like
-    /// [`analytics_cache`], the build is a whole-library pass — and additionally
-    /// stats every entity's local cover through the VFS (one round trip per cover
-    /// on iOS) — so repeated `/cleanup` hits over unchanged content reuse it.
-    cleanup_cache: Arc<Mutex<Option<CachedCleanup>>>,
-    /// Single-flights the cleanup build (mirrors [`analytics_build_lock`]).
-    cleanup_build_lock: Arc<Mutex<()>>,
+    /// [`analytics`], the build is a whole-library pass — and additionally stats
+    /// every entity's local cover through the VFS (one round trip per cover on
+    /// iOS) — so repeated `/cleanup` hits over unchanged content reuse it.
+    cleanup: Arc<RevisionMemo<CleanupQueuesResponse>>,
     /// Memoized "all tags" vocabulary keyed on `content_revision`. The build is a
-    /// cheap resident scan, so no single-flight lock is needed — it just avoids
-    /// recomputing the sorted set on every autocomplete/filter request.
-    tags_cache: Arc<Mutex<Option<CachedTags>>>,
+    /// cheap resident scan, so the single-flight lock barely matters here — it
+    /// just avoids recomputing the sorted set on every autocomplete/filter request.
+    tags: Arc<RevisionMemo<Vec<String>>>,
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
-}
-
-struct CachedAnalytics {
-    content_revision: String,
-    response: Arc<AnalyticsResponse>,
-}
-
-struct CachedCleanup {
-    content_revision: String,
-    response: Arc<CleanupQueuesResponse>,
-}
-
-struct CachedTags {
-    content_revision: String,
-    tags: Arc<Vec<String>>,
 }
 
 #[derive(Clone)]
@@ -177,11 +209,9 @@ impl AppState {
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
             token_locks: Arc::new(Mutex::new(HashMap::new())),
             token_disk_lock: Arc::new(Mutex::new(())),
-            analytics_cache: Arc::new(Mutex::new(None)),
-            analytics_build_lock: Arc::new(Mutex::new(())),
-            cleanup_cache: Arc::new(Mutex::new(None)),
-            cleanup_build_lock: Arc::new(Mutex::new(())),
-            tags_cache: Arc::new(Mutex::new(None)),
+            analytics: Arc::new(RevisionMemo::new()),
+            cleanup: Arc::new(RevisionMemo::new()),
+            tags: Arc::new(RevisionMemo::new()),
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
@@ -278,84 +308,19 @@ impl AppState {
         )
     }
 
-    /// Returns memoized analytics if it was built for this `content_revision`.
-    pub(crate) async fn cached_analytics(
-        &self,
-        content_revision: &str,
-    ) -> Option<Arc<AnalyticsResponse>> {
-        let cache = self.analytics_cache.lock().await;
-        cache
-            .as_ref()
-            .filter(|cached| cached.content_revision == content_revision)
-            .map(|cached| Arc::clone(&cached.response))
+    /// The analytics memo, keyed on the library's `content_revision`.
+    pub(crate) fn analytics(&self) -> &RevisionMemo<AnalyticsResponse> {
+        &self.analytics
     }
 
-    /// The lock that single-flights the analytics build. Callers acquire it,
-    /// re-check [`cached_analytics`], and only then build + [`store_analytics`].
-    pub(crate) fn analytics_build_lock(&self) -> &Arc<Mutex<()>> {
-        &self.analytics_build_lock
+    /// The cleanup-queues memo, keyed on the library's `content_revision`.
+    pub(crate) fn cleanup(&self) -> &RevisionMemo<CleanupQueuesResponse> {
+        &self.cleanup
     }
 
-    /// Stores analytics keyed on the library content it was built from.
-    pub(crate) async fn store_analytics(
-        &self,
-        content_revision: &str,
-        response: Arc<AnalyticsResponse>,
-    ) {
-        let mut cache = self.analytics_cache.lock().await;
-        *cache = Some(CachedAnalytics {
-            content_revision: content_revision.to_string(),
-            response,
-        });
-    }
-
-    /// Returns memoized cleanup queues if built for this `content_revision`.
-    pub(crate) async fn cached_cleanup(
-        &self,
-        content_revision: &str,
-    ) -> Option<Arc<CleanupQueuesResponse>> {
-        let cache = self.cleanup_cache.lock().await;
-        cache
-            .as_ref()
-            .filter(|cached| cached.content_revision == content_revision)
-            .map(|cached| Arc::clone(&cached.response))
-    }
-
-    /// The lock that single-flights the cleanup build. Callers acquire it,
-    /// re-check [`cached_cleanup`], and only then build + [`store_cleanup`].
-    pub(crate) fn cleanup_build_lock(&self) -> &Arc<Mutex<()>> {
-        &self.cleanup_build_lock
-    }
-
-    /// Stores cleanup queues keyed on the library content it was built from.
-    pub(crate) async fn store_cleanup(
-        &self,
-        content_revision: &str,
-        response: Arc<CleanupQueuesResponse>,
-    ) {
-        let mut cache = self.cleanup_cache.lock().await;
-        *cache = Some(CachedCleanup {
-            content_revision: content_revision.to_string(),
-            response,
-        });
-    }
-
-    /// Returns the memoized tag vocabulary if built for this `content_revision`.
-    pub(crate) async fn cached_all_tags(&self, content_revision: &str) -> Option<Arc<Vec<String>>> {
-        let cache = self.tags_cache.lock().await;
-        cache
-            .as_ref()
-            .filter(|cached| cached.content_revision == content_revision)
-            .map(|cached| Arc::clone(&cached.tags))
-    }
-
-    /// Stores the tag vocabulary keyed on the library content it was built from.
-    pub(crate) async fn store_all_tags(&self, content_revision: &str, tags: Arc<Vec<String>>) {
-        let mut cache = self.tags_cache.lock().await;
-        *cache = Some(CachedTags {
-            content_revision: content_revision.to_string(),
-            tags,
-        });
+    /// The tag-vocabulary memo, keyed on the library's `content_revision`.
+    pub(crate) fn tags(&self) -> &RevisionMemo<Vec<String>> {
+        &self.tags
     }
 
     pub(crate) async fn cached_access_token(&self, key: &str) -> Option<CachedAccessToken> {

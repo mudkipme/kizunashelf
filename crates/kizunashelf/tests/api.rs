@@ -2631,7 +2631,10 @@ async fn provider_episode_sync_live() {
     // Apple Podcasts — one flat group, episodes numbered 1..N oldest-first. (Titles
     // change as the feed updates, so assert structure, not specific names.)
     let podcast = fetch("applepodcast").await;
-    println!("Apple Podcasts groups: {:?}", group_summary(&podcast["groups"]));
+    println!(
+        "Apple Podcasts groups: {:?}",
+        group_summary(&podcast["groups"])
+    );
     let episodes = podcast["groups"][0]["items"].as_array().unwrap();
     assert_eq!(podcast["groups"][0]["label"], "");
     assert!(!episodes.is_empty(), "expected podcast episodes");
@@ -2642,7 +2645,10 @@ async fn provider_episode_sync_live() {
 
     // Comic Vine — a volume's issues as one flat list, keyed by issue number.
     let comicvine = fetch("comicvine").await;
-    println!("Comic Vine groups: {:?}", group_summary(&comicvine["groups"]));
+    println!(
+        "Comic Vine groups: {:?}",
+        group_summary(&comicvine["groups"])
+    );
     let issues = comicvine["groups"][0]["items"].as_array().unwrap();
     assert_eq!(comicvine["groups"][0]["label"], "");
     assert_eq!(issues[0]["key"], "1");

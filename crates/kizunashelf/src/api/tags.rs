@@ -12,14 +12,11 @@ use std::sync::Arc;
 
 pub(crate) async fn tags(State(state): State<AppState>) -> ApiResult<TagsResponse> {
     let library = get_library(&state).await?;
-    if let Some(cached) = state.cached_all_tags(&library.content_revision).await {
-        return Ok(Json(TagsResponse {
-            tags: (*cached).clone(),
-        }));
-    }
-    let tags = Arc::new(all_tags(&library));
-    state
-        .store_all_tags(&library.content_revision, Arc::clone(&tags))
+    let tags = state
+        .tags()
+        .get_or_build(&library.content_revision, || async {
+            Arc::new(all_tags(&library))
+        })
         .await;
     Ok(Json(TagsResponse {
         tags: (*tags).clone(),
