@@ -3,7 +3,10 @@ use super::{
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
@@ -34,6 +37,108 @@ impl ExternalProvider for MusicBrainzProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_musicbrainz(q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        _state: &super::AppState,
+        ref_value: &str,
+        _language: Option<&str>,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_musicbrainz_tracks(ref_value).await
+    }
+}
+
+/// Fetches a release's tracklist. A single medium → one flat group; multiple media
+/// (e.g. a 2-CD set) → one group per disc. Only `release` links carry a tracklist —
+/// a release-group/artist link is rejected.
+async fn fetch_musicbrainz_tracks(ref_value: &str) -> Result<ProviderEpisodes, ApiError> {
+    let (entity, mbid) = musicbrainz_ref(ref_value)
+        .ok_or_else(|| ApiError::bad_request("Not a MusicBrainz link"))?;
+    if entity != "release" {
+        return Err(ApiError::bad_request(
+            "MusicBrainz track import needs a release link",
+        ));
+    }
+    let client = external_client();
+    let value = client
+        .get(format!("https://musicbrainz.org/ws/2/release/{mbid}"))
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .query(&[("inc", "recordings"), ("fmt", "json")])
+        .send()
+        .await
+        .map_err(provider_error)?
+        .error_for_status()
+        .map_err(provider_error)?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
+    Ok(ProviderEpisodes {
+        groups: musicbrainz_track_groups(&value),
+    })
+}
+
+/// Groups a release's `media[].tracks[]`. Track `number` (vinyl-friendly, e.g. `A1`)
+/// is the key; the disc label is its title or `Disc <position>` when multi-disc.
+fn musicbrainz_track_groups(release: &Value) -> Vec<ProviderEpisodeGroup> {
+    let media = release
+        .get("media")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let multi_disc = media.len() > 1;
+    media
+        .iter()
+        .enumerate()
+        .filter_map(|(index, medium)| {
+            let items: Vec<ProviderEpisodeItem> = medium
+                .get("tracks")
+                .and_then(Value::as_array)
+                .map(|tracks| tracks.iter().filter_map(musicbrainz_track_item).collect())
+                .unwrap_or_default();
+            if items.is_empty() {
+                return None;
+            }
+            let label = if multi_disc {
+                musicbrainz_medium_label(medium, index)
+            } else {
+                String::new()
+            };
+            Some(ProviderEpisodeGroup { label, items })
+        })
+        .collect()
+}
+
+fn musicbrainz_track_item(track: &Value) -> Option<ProviderEpisodeItem> {
+    let key = track
+        .get("number")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    let title = track
+        .get("title")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    (!key.is_empty() || !title.is_empty()).then_some(ProviderEpisodeItem { key, title })
+}
+
+fn musicbrainz_medium_label(medium: &Value, index: usize) -> String {
+    medium
+        .get("title")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|title| !title.is_empty())
+        .map(str::to_string)
+        .unwrap_or_else(|| {
+            let position = medium
+                .get("position")
+                .and_then(Value::as_i64)
+                .unwrap_or((index + 1) as i64);
+            format!("Disc {position}")
+        })
 }
 
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
@@ -440,8 +545,39 @@ fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value
 
 #[cfg(test)]
 mod tests {
-    use super::{musicbrainz_artist, musicbrainz_ref, musicbrainz_release};
+    use super::{
+        musicbrainz_artist, musicbrainz_ref, musicbrainz_release, musicbrainz_track_groups,
+    };
     use serde_json::json;
+
+    #[test]
+    fn single_medium_is_one_flat_group() {
+        let release = json!({
+            "media": [{ "position": 1, "tracks": [
+                { "number": "1", "title": "Airbag" },
+                { "number": "2", "title": "Paranoid Android" },
+            ] }]
+        });
+        let groups = musicbrainz_track_groups(&release);
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].label, "");
+        assert_eq!(groups[0].items[1].key, "2");
+        assert_eq!(groups[0].items[1].title, "Paranoid Android");
+    }
+
+    #[test]
+    fn multi_disc_labels_each_medium() {
+        let release = json!({
+            "media": [
+                { "position": 1, "title": "", "tracks": [{ "number": "1", "title": "A" }] },
+                { "position": 2, "title": "Bonus Disc", "tracks": [{ "number": "1", "title": "B" }] },
+            ]
+        });
+        let groups = musicbrainz_track_groups(&release);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].label, "Disc 1");
+        assert_eq!(groups[1].label, "Bonus Disc");
+    }
 
     #[test]
     fn release_surfaces_metadata() {

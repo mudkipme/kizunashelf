@@ -4,7 +4,10 @@ use super::{
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use crate::secrets::{SECRET_SPOTIFY_CLIENT_ID, SECRET_SPOTIFY_CLIENT_SECRET};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -64,6 +67,112 @@ impl ExternalProvider for SpotifyProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_spotify(state, q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        state: &AppState,
+        ref_value: &str,
+        _language: Option<&str>,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_spotify_tracks(state, ref_value).await
+    }
+}
+
+/// Fetches an album's tracks, grouped by disc when the album spans more than one.
+/// Only `album` links carry a tracklist — an artist link is rejected.
+async fn fetch_spotify_tracks(
+    state: &AppState,
+    ref_value: &str,
+) -> Result<ProviderEpisodes, ApiError> {
+    let (kind, id) =
+        spotify_ref(ref_value).ok_or_else(|| ApiError::bad_request("Not a Spotify link"))?;
+    if kind != "album" {
+        return Err(ApiError::bad_request(
+            "Spotify track import needs an album link",
+        ));
+    }
+    let Some((client_id, client_secret)) = spotify_credentials(state) else {
+        return Err(ApiError::bad_request(
+            "Spotify client ID and secret are not configured",
+        ));
+    };
+    let client = external_client();
+    let endpoint = format!("https://api.spotify.com/v1/albums/{id}/tracks");
+    let mut tracks: Vec<Value> = Vec::new();
+    let mut offset = 0usize;
+    // Page through the album's tracks (50/page) until we've collected `total`, with
+    // a hard cap so a malformed response can't loop forever.
+    loop {
+        let token = spotify_access_token(state, client, &client_id, &client_secret, false).await?;
+        let value = spotify_get(
+            state,
+            client,
+            &endpoint,
+            &[("limit", "50".to_string()), ("offset", offset.to_string())],
+            &client_id,
+            &client_secret,
+            token,
+        )
+        .await?;
+        let Some(page) = value.get("items").and_then(Value::as_array) else {
+            break;
+        };
+        if page.is_empty() {
+            break;
+        }
+        tracks.extend(page.iter().cloned());
+        let total = value.get("total").and_then(Value::as_u64).unwrap_or(0) as usize;
+        offset += 50;
+        if offset >= total || offset >= 2000 {
+            break;
+        }
+    }
+    Ok(ProviderEpisodes {
+        groups: spotify_track_groups(&tracks),
+    })
+}
+
+/// Groups album tracks by `disc_number` (labels appear only when multi-disc); the
+/// key is the in-disc `track_number`.
+fn spotify_track_groups(tracks: &[Value]) -> Vec<ProviderEpisodeGroup> {
+    let mut by_disc: BTreeMap<i64, Vec<ProviderEpisodeItem>> = BTreeMap::new();
+    for track in tracks {
+        let disc = track
+            .get("disc_number")
+            .and_then(Value::as_i64)
+            .unwrap_or(1);
+        let key = track
+            .get("track_number")
+            .and_then(Value::as_i64)
+            .map(|number| number.to_string())
+            .unwrap_or_default();
+        let title = track
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+        if key.is_empty() && title.is_empty() {
+            continue;
+        }
+        by_disc
+            .entry(disc)
+            .or_default()
+            .push(ProviderEpisodeItem { key, title });
+    }
+    let multi_disc = by_disc.len() > 1;
+    by_disc
+        .into_iter()
+        .map(|(disc, items)| ProviderEpisodeGroup {
+            label: if multi_disc {
+                format!("Disc {disc}")
+            } else {
+                String::new()
+            },
+            items,
+        })
+        .collect()
 }
 
 fn spotify_credentials(state: &AppState) -> Option<(String, String)> {
@@ -456,8 +565,33 @@ async fn spotify_access_token(
 
 #[cfg(test)]
 mod tests {
-    use super::{spotify_album, spotify_ref};
+    use super::{spotify_album, spotify_ref, spotify_track_groups};
     use serde_json::json;
+
+    #[test]
+    fn single_disc_album_is_flat() {
+        let tracks = vec![
+            json!({ "disc_number": 1, "track_number": 1, "name": "One" }),
+            json!({ "disc_number": 1, "track_number": 2, "name": "Two" }),
+        ];
+        let groups = spotify_track_groups(&tracks);
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].label, "");
+        assert_eq!(groups[0].items[1].key, "2");
+    }
+
+    #[test]
+    fn multi_disc_album_groups_by_disc() {
+        let tracks = vec![
+            json!({ "disc_number": 1, "track_number": 1, "name": "A" }),
+            json!({ "disc_number": 2, "track_number": 1, "name": "B" }),
+        ];
+        let groups = spotify_track_groups(&tracks);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].label, "Disc 1");
+        assert_eq!(groups[1].label, "Disc 2");
+        assert_eq!(groups[1].items[0].title, "B");
+    }
 
     #[test]
     fn album_surfaces_metadata() {

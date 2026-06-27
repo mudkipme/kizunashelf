@@ -4,9 +4,13 @@ use super::{
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use crate::secrets::SECRET_COMICVINE_API_KEY;
 use serde_json::{Map, Value};
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 pub(super) struct ComicVineProvider;
@@ -63,6 +67,95 @@ impl ExternalProvider for ComicVineProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_comicvine(state, q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        state: &AppState,
+        ref_value: &str,
+        _language: Option<&str>,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_comicvine_issues(state, ref_value).await
+    }
+}
+
+/// Fetches a volume's issues as one flat list, keyed by issue number. The volume
+/// detail's `issues` array already carries each issue's number and name, so no
+/// per-issue request is needed.
+async fn fetch_comicvine_issues(
+    state: &AppState,
+    ref_value: &str,
+) -> Result<ProviderEpisodes, ApiError> {
+    let id = comicvine_id(ref_value)
+        .ok_or_else(|| ApiError::bad_request("Not a Comic Vine volume link or id"))?;
+    let api_key = comicvine_api_key(state)
+        .ok_or_else(|| ApiError::bad_request("Comic Vine API key is not configured"))?;
+    let client = external_client();
+    let value = client
+        .get(format!("{BASE}/volume/{VOLUME_PREFIX}{id}/"))
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .query(&[
+            ("api_key", api_key.as_str()),
+            ("format", "json"),
+            ("field_list", "issues"),
+        ])
+        .send()
+        .await
+        .map_err(provider_error)?
+        .error_for_status()
+        .map_err(provider_error)?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
+    let issues = value
+        .pointer("/results/issues")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let items = comicvine_issue_items(&issues);
+    let groups = if items.is_empty() {
+        Vec::new()
+    } else {
+        vec![ProviderEpisodeGroup {
+            label: String::new(),
+            items,
+        }]
+    };
+    Ok(ProviderEpisodes { groups })
+}
+
+/// Maps a volume's `issues` into items keyed by `issue_number`, sorted ascending by
+/// number (issues with a non-numeric number — e.g. "Annual 1" — sort last).
+fn comicvine_issue_items(issues: &[Value]) -> Vec<ProviderEpisodeItem> {
+    let mut ordered: Vec<(Option<f64>, ProviderEpisodeItem)> = issues
+        .iter()
+        .filter_map(|issue| {
+            let key = issue
+                .get("issue_number")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            let title = issue
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            if key.is_empty() && title.is_empty() {
+                return None;
+            }
+            let order = key.parse::<f64>().ok();
+            Some((order, ProviderEpisodeItem { key, title }))
+        })
+        .collect();
+    ordered.sort_by(|left, right| match (left.0, right.0) {
+        (Some(left), Some(right)) => left.total_cmp(&right),
+        (Some(_), None) => Ordering::Less,
+        (None, Some(_)) => Ordering::Greater,
+        (None, None) => Ordering::Equal,
+    });
+    ordered.into_iter().map(|(_, item)| item).collect()
 }
 
 fn comicvine_api_key(state: &AppState) -> Option<String> {
@@ -311,8 +404,22 @@ fn strip_html(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{comicvine_id, comicvine_volume};
+    use super::{comicvine_id, comicvine_issue_items, comicvine_volume};
     use serde_json::json;
+
+    #[test]
+    fn issue_items_sort_numerically_with_non_numeric_last() {
+        let issues = vec![
+            json!({ "issue_number": "2", "name": "Second" }),
+            json!({ "issue_number": "Annual 1", "name": "Annual" }),
+            json!({ "issue_number": "1", "name": "First" }),
+            json!({ "issue_number": "1.5", "name": "Point One" }),
+        ];
+        let items = comicvine_issue_items(&issues);
+        let keys: Vec<&str> = items.iter().map(|item| item.key.as_str()).collect();
+        assert_eq!(keys, vec!["1", "1.5", "2", "Annual 1"]);
+        assert_eq!(items[0].title, "First");
+    }
 
     #[test]
     fn volume_surfaces_metadata() {

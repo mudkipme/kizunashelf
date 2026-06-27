@@ -566,6 +566,16 @@ Multiple seasons can live as sub-headings in **one** entity, or as **separate** 
 by relations — the engine mirrors whatever the files contain and never merges or splits them.
 The list is plain Markdown: edit it directly in Obsidian, or toggle items on the detail page.
 
+**Syncing from a provider.** When an entity links an `externalRef` to a source that exposes a
+list, the detail page's episodes panel offers a **Sync** action that pulls the provider's list
+into a checkable preview and merges the ticked items in — new items are added and ticked existing
+ones have their title updated, while your watched ticks and hand-added entries are always kept.
+Providers that can supply a list (and what they map to the section): Bangumi, MyAnimeList, TMDB,
+TheTVDB, and Apple Podcasts → episodes; MusicBrainz, Spotify, and Discogs → tracks (grouped by
+disc); Comic Vine → a volume's issues. The provider must be configured (credentials set, if it
+needs any) and linked on the entity; when more than one such source is linked, the dialog lets you
+choose which to sync from.
+
 ## Home Page
 
 The `home` section defines dashboard sections.

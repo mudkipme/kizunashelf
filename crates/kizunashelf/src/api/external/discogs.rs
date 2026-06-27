@@ -4,7 +4,10 @@ use super::{
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use crate::secrets::SECRET_DISCOGS_TOKEN;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -55,6 +58,103 @@ impl ExternalProvider for DiscogsProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_discogs(state, q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        state: &AppState,
+        ref_value: &str,
+        _language: Option<&str>,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_discogs_tracks(state, ref_value).await
+    }
+}
+
+/// Fetches a release/master tracklist. Discogs `heading` rows (vinyl sides, suites)
+/// become group labels; the actual tracks key off their `position` (e.g. `A1`, `1`).
+async fn fetch_discogs_tracks(
+    state: &AppState,
+    ref_value: &str,
+) -> Result<ProviderEpisodes, ApiError> {
+    let (kind, id) =
+        discogs_ref(ref_value).ok_or_else(|| ApiError::bad_request("Not a Discogs link"))?;
+    let token = discogs_token(state)
+        .ok_or_else(|| ApiError::bad_request("Discogs token is not configured"))?;
+    let client = external_client();
+    let value = client
+        .get(format!("https://api.discogs.com/{kind}s/{id}"))
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(
+            reqwest::header::AUTHORIZATION,
+            format!("Discogs token={token}"),
+        )
+        .send()
+        .await
+        .map_err(provider_error)?
+        .error_for_status()
+        .map_err(provider_error)?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
+    Ok(ProviderEpisodes {
+        groups: discogs_track_groups(&value),
+    })
+}
+
+/// Splits a release `tracklist` into groups on `heading` rows. Tracks before any
+/// heading land in a leading unlabeled group; a release with no headings is one
+/// flat group.
+fn discogs_track_groups(release: &Value) -> Vec<ProviderEpisodeGroup> {
+    let Some(tracklist) = release.get("tracklist").and_then(Value::as_array) else {
+        return Vec::new();
+    };
+    let mut groups: Vec<ProviderEpisodeGroup> = Vec::new();
+    let mut current = ProviderEpisodeGroup {
+        label: String::new(),
+        items: Vec::new(),
+    };
+    for entry in tracklist {
+        let entry_type = entry
+            .get("type_")
+            .and_then(Value::as_str)
+            .unwrap_or("track");
+        let title = entry
+            .get("title")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+        if entry_type == "heading" {
+            if !current.label.is_empty() || !current.items.is_empty() {
+                groups.push(std::mem::replace(
+                    &mut current,
+                    ProviderEpisodeGroup {
+                        label: String::new(),
+                        items: Vec::new(),
+                    },
+                ));
+            }
+            current.label = title;
+            continue;
+        }
+        if entry_type != "track" {
+            continue; // index/sub-headings without their own line aren't tracks.
+        }
+        let key = entry
+            .get("position")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+        if key.is_empty() && title.is_empty() {
+            continue;
+        }
+        current.items.push(ProviderEpisodeItem { key, title });
+    }
+    if !current.label.is_empty() || !current.items.is_empty() {
+        groups.push(current);
+    }
+    groups
 }
 
 fn discogs_token(state: &AppState) -> Option<String> {
@@ -373,8 +473,40 @@ fn string_list(value: Option<&Value>) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
-    use super::{discogs_detail, discogs_ref, discogs_search_result};
+    use super::{discogs_detail, discogs_ref, discogs_search_result, discogs_track_groups};
     use serde_json::json;
+
+    #[test]
+    fn tracklist_without_headings_is_one_flat_group() {
+        let release = json!({
+            "tracklist": [
+                { "type_": "track", "position": "1", "title": "Never Gonna Give You Up" },
+                { "type_": "track", "position": "2", "title": "Whenever You Need Somebody" },
+            ]
+        });
+        let groups = discogs_track_groups(&release);
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].label, "");
+        assert_eq!(groups[0].items[0].key, "1");
+    }
+
+    #[test]
+    fn headings_split_tracks_into_groups() {
+        let release = json!({
+            "tracklist": [
+                { "type_": "heading", "title": "Side A" },
+                { "type_": "track", "position": "A1", "title": "One" },
+                { "type_": "heading", "title": "Side B" },
+                { "type_": "track", "position": "B1", "title": "Two" },
+            ]
+        });
+        let groups = discogs_track_groups(&release);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].label, "Side A");
+        assert_eq!(groups[0].items[0].key, "A1");
+        assert_eq!(groups[1].label, "Side B");
+        assert_eq!(groups[1].items[0].title, "Two");
+    }
 
     #[test]
     fn search_result_surfaces_metadata() {

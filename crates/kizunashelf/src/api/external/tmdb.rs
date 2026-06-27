@@ -4,7 +4,10 @@ use super::{
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use crate::secrets::SECRET_TMDB_API_KEY;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -58,6 +61,140 @@ impl ExternalProvider for TmdbProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_tmdb(state, q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        state: &AppState,
+        ref_value: &str,
+        language: Option<&str>,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_tmdb_episodes(state, ref_value, language).await
+    }
+}
+
+/// The TMDB TV id from a stored ref: a `…/tv/{id}` URL, or a bare numeric id
+/// (assumed to be a series, since only TV has episodes). A movie/person link has
+/// no episode list and yields `None`.
+fn tmdb_tv_id(ref_value: &str) -> Option<String> {
+    match tmdb_ref(ref_value) {
+        Some(("tv", id)) => Some(id),
+        Some(_) => None,
+        None => {
+            let trimmed = ref_value.trim();
+            (!trimmed.is_empty() && trimmed.chars().all(|character| character.is_ascii_digit()))
+                .then(|| trimmed.to_string())
+        }
+    }
+}
+
+/// Fetches a TV series' episodes from TMDB, grouped by season (`season 0` →
+/// "Specials"). Seasons are fetched concurrently. `language` (ISO 639-1) selects
+/// localized episode names where TMDB has them, falling back to the default.
+async fn fetch_tmdb_episodes(
+    state: &AppState,
+    ref_value: &str,
+    language: Option<&str>,
+) -> Result<ProviderEpisodes, ApiError> {
+    let id =
+        tmdb_tv_id(ref_value).ok_or_else(|| ApiError::bad_request("Not a TMDB TV series link"))?;
+    let api_key = tmdb_api_key(state)
+        .ok_or_else(|| ApiError::bad_request("TMDB API key is not configured"))?;
+    let client = external_client();
+    let language = language
+        .map(str::to_string)
+        .unwrap_or_else(|| TMDB_LANG.to_string());
+
+    let detail = tmdb_get(client, format!("tv/{id}"), &api_key, &language).await?;
+    let seasons: Vec<i64> = detail
+        .get("seasons")
+        .and_then(Value::as_array)
+        .map(|seasons| {
+            seasons
+                .iter()
+                .filter_map(|season| season.get("season_number").and_then(Value::as_i64))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // Fetch every season concurrently rather than summing their latencies. `join_all`
+    // preserves input order, so seasons stay sorted as TMDB returns them.
+    let season_values = futures_util::future::join_all(seasons.iter().map(|number| {
+        tmdb_get(
+            client,
+            format!("tv/{id}/season/{number}"),
+            &api_key,
+            &language,
+        )
+    }))
+    .await;
+
+    let mut groups = Vec::new();
+    for (number, season) in seasons.iter().zip(season_values) {
+        let items = tmdb_season_items(&season?);
+        if !items.is_empty() {
+            groups.push(ProviderEpisodeGroup {
+                label: tmdb_season_label(*number),
+                items,
+            });
+        }
+    }
+    Ok(ProviderEpisodes { groups })
+}
+
+fn tmdb_season_label(season_number: i64) -> String {
+    if season_number == 0 {
+        "Specials".to_string()
+    } else {
+        format!("Season {season_number}")
+    }
+}
+
+/// Maps a TMDB season detail's `episodes` into items keyed by `episode_number`.
+fn tmdb_season_items(season: &Value) -> Vec<ProviderEpisodeItem> {
+    season
+        .get("episodes")
+        .and_then(Value::as_array)
+        .map(|episodes| {
+            episodes
+                .iter()
+                .filter_map(|episode| {
+                    let key = episode.get("episode_number").and_then(Value::as_i64)?;
+                    let title = episode
+                        .get("name")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
+                    Some(ProviderEpisodeItem {
+                        key: key.to_string(),
+                        title,
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// GETs a TMDB v3 path (relative to `/3/`) as JSON, with the api key and language.
+async fn tmdb_get(
+    client: &reqwest::Client,
+    path: String,
+    api_key: &str,
+    language: &str,
+) -> Result<Value, ApiError> {
+    client
+        .get(format!("https://api.themoviedb.org/3/{path}"))
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .query(&[("api_key", api_key), ("language", language)])
+        .send()
+        .await
+        .map_err(provider_error)?
+        .error_for_status()
+        .map_err(provider_error)?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)
 }
 
 fn tmdb_api_key(state: &AppState) -> Option<String> {
@@ -708,7 +845,7 @@ fn insert_string_list(metadata: &mut Map<String, Value>, key: &str, values: Vec<
 
 #[cfg(test)]
 mod tests {
-    use super::{tmdb_detail, tmdb_ref, tmdb_search_result};
+    use super::{tmdb_detail, tmdb_ref, tmdb_search_result, tmdb_season_items, tmdb_tv_id};
     use serde_json::json;
 
     #[test]
@@ -854,5 +991,30 @@ mod tests {
             Some(("tv", "1399".to_string()))
         );
         assert_eq!(tmdb_ref("inception"), None);
+    }
+
+    #[test]
+    fn tv_id_accepts_tv_url_and_bare_id_but_not_movies() {
+        assert_eq!(
+            tmdb_tv_id("https://www.themoviedb.org/tv/1399/seasons"),
+            Some("1399".to_string())
+        );
+        assert_eq!(tmdb_tv_id("1399"), Some("1399".to_string()));
+        assert_eq!(tmdb_tv_id("https://www.themoviedb.org/movie/27205"), None);
+    }
+
+    #[test]
+    fn season_items_key_by_episode_number() {
+        let season = json!({
+            "episodes": [
+                { "episode_number": 1, "name": "Winter Is Coming" },
+                { "episode_number": 2, "name": "The Kingsroad" },
+            ]
+        });
+        let items = tmdb_season_items(&season);
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].key, "1");
+        assert_eq!(items[0].title, "Winter Is Coming");
+        assert_eq!(items[1].key, "2");
     }
 }

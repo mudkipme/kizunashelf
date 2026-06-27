@@ -4,7 +4,10 @@ use super::{
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use crate::secrets::SECRET_MAL_CLIENT_ID;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
@@ -59,6 +62,100 @@ impl ExternalProvider for MyAnimeListProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_mal(state, q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        _state: &AppState,
+        ref_value: &str,
+        _language: Option<&str>,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_mal_episodes(ref_value).await
+    }
+}
+
+/// The MAL anime id from a stored ref: an `…/anime/{id}` URL, or a bare numeric id
+/// (assumed anime). A manga link has no episode list and yields `None`.
+fn mal_anime_id(ref_value: &str) -> Option<String> {
+    match mal_ref(ref_value) {
+        Some(("anime", id)) => Some(id),
+        Some(_) => None,
+        None => {
+            let trimmed = ref_value.trim();
+            (!trimmed.is_empty() && trimmed.chars().all(|character| character.is_ascii_digit()))
+                .then(|| trimmed.to_string())
+        }
+    }
+}
+
+/// Fetches an anime's episodes as one flat list. MAL's official v2 API exposes only
+/// an episode *count*, not titles, so this uses the keyless Jikan API
+/// (`/v4/anime/{id}/episodes`). The provider is still gated on the MAL client id
+/// being configured (it's the search credential), keeping source selection uniform.
+async fn fetch_mal_episodes(ref_value: &str) -> Result<ProviderEpisodes, ApiError> {
+    let id = mal_anime_id(ref_value)
+        .ok_or_else(|| ApiError::bad_request("Not a MyAnimeList anime link or id"))?;
+    let client = external_client();
+    let mut items: Vec<ProviderEpisodeItem> = Vec::new();
+    let mut page = 1usize;
+    // Page through Jikan (100/page) until it reports no next page, with a hard cap
+    // so a malformed response can't loop forever.
+    loop {
+        let value = client
+            .get(format!(
+                "https://api.jikan.moe/v4/anime/{id}/episodes?page={page}"
+            ))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status()
+            .map_err(provider_error)?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)?;
+        let Some(data) = value.get("data").and_then(Value::as_array) else {
+            break;
+        };
+        if data.is_empty() {
+            break;
+        }
+        items.extend(jikan_episode_items(data));
+        let has_next = value
+            .pointer("/pagination/has_next_page")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        page += 1;
+        if !has_next || page > 50 {
+            break;
+        }
+    }
+    Ok(ProviderEpisodes {
+        groups: vec![ProviderEpisodeGroup {
+            label: String::new(),
+            items,
+        }],
+    })
+}
+
+/// Maps a Jikan `/episodes` page (`data[]`) into items keyed by the MAL episode id
+/// (its 1-based number within the anime).
+fn jikan_episode_items(data: &[Value]) -> Vec<ProviderEpisodeItem> {
+    data.iter()
+        .filter_map(|episode| {
+            let key = episode.get("mal_id").and_then(Value::as_i64)?;
+            let title = episode
+                .get("title")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            Some(ProviderEpisodeItem {
+                key: key.to_string(),
+                title,
+            })
+        })
+        .collect()
 }
 
 fn mal_client_id(state: &AppState) -> Option<String> {
@@ -404,7 +501,7 @@ fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value
 
 #[cfg(test)]
 mod tests {
-    use super::{mal_detail, mal_ref};
+    use super::{jikan_episode_items, mal_anime_id, mal_detail, mal_ref};
     use serde_json::json;
 
     #[test]
@@ -452,5 +549,31 @@ mod tests {
             Some(("manga", "2".to_string()))
         );
         assert_eq!(mal_ref("cowboy bebop"), None);
+    }
+
+    #[test]
+    fn anime_id_accepts_anime_url_and_bare_id_but_not_manga() {
+        assert_eq!(
+            mal_anime_id("https://myanimelist.net/anime/1/Cowboy_Bebop"),
+            Some("1".to_string())
+        );
+        assert_eq!(mal_anime_id("1"), Some("1".to_string()));
+        assert_eq!(
+            mal_anime_id("https://myanimelist.net/manga/2/Berserk"),
+            None
+        );
+    }
+
+    #[test]
+    fn jikan_items_key_by_mal_id() {
+        let data = vec![
+            json!({ "mal_id": 1, "title": "Asteroid Blues" }),
+            json!({ "mal_id": 2, "title": "Stray Dog Strut" }),
+        ];
+        let items = jikan_episode_items(&data);
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].key, "1");
+        assert_eq!(items[0].title, "Asteroid Blues");
+        assert_eq!(items[1].key, "2");
     }
 }

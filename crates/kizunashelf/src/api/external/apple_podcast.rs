@@ -3,7 +3,10 @@ use super::{
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
-use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::contract::{
+    ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
+    ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
+};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
@@ -38,6 +41,82 @@ impl ExternalProvider for ApplePodcastProvider {
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
         search_apple_podcast(q, page, page_size, provider_config).await
     }
+
+    const SUPPORTS_EPISODES: bool = true;
+
+    async fn fetch_episodes(
+        _state: &super::AppState,
+        ref_value: &str,
+        _language: Option<&str>,
+    ) -> Result<ProviderEpisodes, ApiError> {
+        fetch_apple_podcast_episodes(ref_value).await
+    }
+}
+
+/// Fetches a podcast's episodes via the iTunes lookup API (`entity=podcastEpisode`).
+/// One flat list — podcasts have no seasons. The lookup returns at most 200 rows
+/// (the podcast itself plus its latest episodes), so very long back catalogs are
+/// truncated to the most recent 200.
+async fn fetch_apple_podcast_episodes(ref_value: &str) -> Result<ProviderEpisodes, ApiError> {
+    let id = apple_podcast_id(ref_value)
+        .ok_or_else(|| ApiError::bad_request("Not an Apple Podcasts link or id"))?;
+    let client = external_client();
+    let value = client
+        .get(format!(
+            "https://itunes.apple.com/lookup?id={id}&entity=podcastEpisode&limit=200"
+        ))
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .send()
+        .await
+        .map_err(provider_error)?
+        .error_for_status()
+        .map_err(provider_error)?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
+    let results = value
+        .get("results")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    Ok(ProviderEpisodes {
+        groups: vec![ProviderEpisodeGroup {
+            label: String::new(),
+            items: apple_podcast_episode_items(&results),
+        }],
+    })
+}
+
+/// Builds episode items from an iTunes `entity=podcastEpisode` result list (the
+/// first row is the podcast itself). Episodes carry no stable number, so they are
+/// ordered oldest-first (ISO release dates sort lexicographically) and numbered
+/// `1..N` — a stable key that lets a re-sync match instead of duplicating.
+fn apple_podcast_episode_items(results: &[Value]) -> Vec<ProviderEpisodeItem> {
+    let mut episodes: Vec<(&str, String)> = results
+        .iter()
+        .filter(|row| {
+            row.get("wrapperType").and_then(Value::as_str) == Some("podcastEpisode")
+                || row.get("kind").and_then(Value::as_str) == Some("podcast-episode")
+        })
+        .filter_map(|row| {
+            let title = row
+                .get("trackName")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|title| !title.is_empty())?;
+            let date = row.get("releaseDate").and_then(Value::as_str).unwrap_or("");
+            Some((date, title.to_string()))
+        })
+        .collect();
+    episodes.sort_by(|left, right| left.0.cmp(right.0));
+    episodes
+        .into_iter()
+        .enumerate()
+        .map(|(index, (_, title))| ProviderEpisodeItem {
+            key: (index + 1).to_string(),
+            title,
+        })
+        .collect()
 }
 
 pub(super) fn apple_podcast_supported(provider_config: &ProviderSearchConfig) -> bool {
@@ -222,8 +301,24 @@ fn string_list(value: Option<&Value>) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
-    use super::{apple_podcast_candidate, apple_podcast_id};
+    use super::{apple_podcast_candidate, apple_podcast_episode_items, apple_podcast_id};
     use serde_json::json;
+
+    #[test]
+    fn episode_items_drop_podcast_row_and_number_chronologically() {
+        let results = vec![
+            json!({ "wrapperType": "track", "kind": "podcast", "trackName": "The Show" }),
+            json!({ "wrapperType": "podcastEpisode", "trackName": "Newer", "releaseDate": "2024-02-01T00:00:00Z" }),
+            json!({ "wrapperType": "podcastEpisode", "trackName": "Older", "releaseDate": "2024-01-01T00:00:00Z" }),
+        ];
+        let items = apple_podcast_episode_items(&results);
+        assert_eq!(items.len(), 2);
+        // Oldest-first, numbered 1..N.
+        assert_eq!(items[0].key, "1");
+        assert_eq!(items[0].title, "Older");
+        assert_eq!(items[1].key, "2");
+        assert_eq!(items[1].title, "Newer");
+    }
 
     #[test]
     fn candidate_surfaces_podcast_metadata() {
