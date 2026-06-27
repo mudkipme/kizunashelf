@@ -2,7 +2,7 @@
 
 KizunaShelf is schema-driven. There are two kinds of configuration:
 
-- **Vault config (the schema)** — stored inside the vault at `<vaultRoot>/KizunaShelf/config.yaml`. It describes which Markdown folders are entity collections and how frontmatter fields should be interpreted. Because it lives in the vault, it travels with the vault and is synced by the vault's own syncing method, so every machine pointing at the vault shares the same schema. This is the bulk of this document.
+- **Vault config (the schema)** — stored inside the vault at `<vaultRoot>/KizunaShelf/config.yaml`. It describes which Markdown folders are entity collections and how frontmatter fields should be interpreted. Because it lives in the vault, it travels with the vault and is synced by the vault's own syncing method, so every machine pointing at the vault shares the same schema (see [Syncing KizunaShelf](syncing.md)). This is the bulk of this document.
 - **App-level settings** — *where* the vault is and *how this runtime behaves* (writable or read-only). These are **not** a synced file; each runtime sources them differently:
   - **Self-hosted web**: from environment variables only — there is no app config file. One instance serves one vault.
   - **Desktop**: a vault list managed in-app (Obsidian-style switching), stored in the app's data directory.
@@ -77,9 +77,7 @@ The vault config always lives at a fixed location relative to the vault root:
 <vaultRoot>/KizunaShelf/config.yaml
 ```
 
-It lives in a **visible** folder (`KizunaShelf/`, not a hidden dot-folder) on purpose: most Obsidian sync methods skip hidden files — including official Obsidian Sync, which has no hidden-file support at all — so a dot-folder config would silently fail to reach your other devices. A visible folder syncs with every method (Obsidian LiveSync, iCloud, Syncthing, …). The folder also reserves room for future app-owned, sync-worthy artifacts (e.g. saved lists under `KizunaShelf/lists/`). It is excluded from directory autocomplete so you don't nest entity collections inside it.
-
-> **Official Obsidian Sync users:** Markdown always syncs, but `.yaml` is a non-Markdown extension, so enable **Settings → Sync → Sync all other types** (per device) for the config to travel. You may also want **Settings → Files & links → Detect all file extensions** so Obsidian shows the file at all. Other sync tools (LiveSync, iCloud, Syncthing) need no extra setting once the file is out of the dot-folder.
+It lives in a **visible** folder (`KizunaShelf/`, not a hidden dot-folder) on purpose, so that it syncs with every method — see [Syncing KizunaShelf](syncing.md) for why, and for how to sync a vault across devices. The folder also holds other app-owned, sync-worthy artifacts (e.g. saved lists under `KizunaShelf/Lists/`). It is excluded from directory autocomplete so you don't nest entity collections inside it.
 
 An example vault config (generated from the "Media Library" starter template) is available at `config/vault-config.example.yaml`. Onboarding is shown only when the vault has no `KizunaShelf/config.yaml` yet; when the vault already contains a synced one, any machine pointing at the vault picks up the schema automatically. Onboarding's template picker is served from the core by `GET /api/vault-templates`.
 

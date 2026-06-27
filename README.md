@@ -39,7 +39,7 @@ KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 
 Open `http://localhost:5173/`. The web app points at the single vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `KizunaShelf/config.yaml` yet, KizunaShelf redirects to onboarding to create the schema.
 
-See [docs/config.md](docs/config.md) for the full schema, per-runtime configuration, Settings behavior, and provider credentials.
+See [docs/config.md](docs/config.md) for the full schema, per-runtime configuration, Settings behavior, and provider credentials, and [docs/syncing.md](docs/syncing.md) for how to sync a vault across devices.
 
 ## Development
 
