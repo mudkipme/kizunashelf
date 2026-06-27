@@ -2491,3 +2491,187 @@ async fn episodes_import_merges_and_fetch_lists_sources() {
     .await;
     assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
 }
+
+/// Live, network-hitting smoke test for provider episode/track sync. Ignored by
+/// default; run with real credentials exported from `.env`:
+///
+/// ```sh
+/// set -a; . ./.env; set +a
+/// cargo test -p kizunashelf --test api -- --ignored --nocapture provider_episode_sync_live
+/// ```
+///
+/// TMDB and Discogs read their keys from `KIZUNASHELF_*` env vars (via the native
+/// secret store); MusicBrainz is keyless.
+#[tokio::test]
+#[ignore = "hits live TMDB/Discogs/MusicBrainz APIs; needs credentials in env"]
+async fn provider_episode_sync_live() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "media", "label": "Media", "path": "Media",
+                "externalPriority": ["tmdb", "discogs", "musicbrainz", "myanimelist", "applepodcast", "comicvine"],
+                "bodySections": [
+                    { "heading": "Episodes", "kind": "episodes", "tracking": "checklist" }
+                ],
+                "fields": [
+                    { "field": "title", "fieldType": "title", "displayName": "Title" },
+                    { "field": "tmdb_url", "fieldType": "externalRef", "displayName": "TMDB", "externalRef": "tmdb" },
+                    { "field": "discogs_url", "fieldType": "externalRef", "displayName": "Discogs", "externalRef": "discogs" },
+                    { "field": "musicbrainz_url", "fieldType": "externalRef", "displayName": "MusicBrainz", "externalRef": "musicbrainz" },
+                    { "field": "mal_url", "fieldType": "externalRef", "displayName": "MyAnimeList", "externalRef": "myanimelist" },
+                    { "field": "podcast_url", "fieldType": "externalRef", "displayName": "Apple Podcasts", "externalRef": "applepodcast" },
+                    { "field": "comicvine_url", "fieldType": "externalRef", "displayName": "Comic Vine", "externalRef": "comicvine" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Media/Sample.md"),
+        "---\ntitle: Sample\n\
+         tmdb_url: https://www.themoviedb.org/tv/1399\n\
+         discogs_url: https://www.discogs.com/release/249504\n\
+         musicbrainz_url: https://musicbrainz.org/release/4b3d18cc-8937-36f4-8de0-481088be58e6\n\
+         mal_url: https://myanimelist.net/anime/1\n\
+         podcast_url: https://podcasts.apple.com/us/podcast/the-daily/id1200361736\n\
+         comicvine_url: https://comicvine.gamespot.com/volume/4050-18166/\n\
+         ---\n## Episodes\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // All three providers are linked and episode-capable, in priority order.
+    let listed = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/media%3ASample/episodes/fetch",
+        Some(json!({})),
+    )
+    .await;
+    assert_eq!(listed.0, StatusCode::OK, "{}", listed.1);
+    let providers: Vec<&str> = listed.1["sources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|source| source["provider"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        providers,
+        vec![
+            "tmdb",
+            "discogs",
+            "musicbrainz",
+            "myanimelist",
+            "applepodcast",
+            "comicvine"
+        ]
+    );
+
+    let fetch = |provider: &'static str| {
+        let app = app.clone();
+        async move {
+            let response = request_json(
+                &app,
+                Method::POST,
+                "/api/entities/media%3ASample/episodes/fetch",
+                Some(json!({ "provider": provider })),
+            )
+            .await;
+            assert_eq!(response.0, StatusCode::OK, "{provider}: {}", response.1);
+            response.1
+        }
+    };
+
+    // TMDB — TV episodes grouped by season.
+    let tmdb = fetch("tmdb").await;
+    println!("TMDB groups: {:?}", group_summary(&tmdb["groups"]));
+    let season1 = find_group(&tmdb["groups"], "Season 1");
+    assert_eq!(season1[0]["key"], "1");
+    assert_eq!(season1[0]["title"], "Winter Is Coming");
+    assert!(
+        tmdb["groups"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|group| group["label"] == "Specials"),
+        "expected a Specials group"
+    );
+
+    // Discogs — vinyl tracklist (positions A/B), one flat group.
+    let discogs = fetch("discogs").await;
+    println!("Discogs groups: {:?}", group_summary(&discogs["groups"]));
+    let tracks = discogs["groups"][0]["items"].as_array().unwrap();
+    assert_eq!(tracks[0]["key"], "A");
+    assert!(tracks[0]["title"]
+        .as_str()
+        .unwrap()
+        .contains("Never Gonna Give You Up"));
+
+    // MusicBrainz — single-disc release, one flat group keyed by track number.
+    let musicbrainz = fetch("musicbrainz").await;
+    println!(
+        "MusicBrainz groups: {:?}",
+        group_summary(&musicbrainz["groups"])
+    );
+    let tracks = musicbrainz["groups"][0]["items"].as_array().unwrap();
+    assert_eq!(musicbrainz["groups"][0]["label"], "");
+    assert_eq!(tracks[0]["key"], "1");
+    assert_eq!(tracks[0]["title"], "Airbag");
+
+    // MyAnimeList — anime episodes (via keyless Jikan), one flat group keyed by number.
+    let mal = fetch("myanimelist").await;
+    println!("MyAnimeList groups: {:?}", group_summary(&mal["groups"]));
+    let episodes = mal["groups"][0]["items"].as_array().unwrap();
+    assert_eq!(mal["groups"][0]["label"], "");
+    assert_eq!(episodes[0]["key"], "1");
+    assert_eq!(episodes[0]["title"], "Asteroid Blues");
+
+    // Apple Podcasts — one flat group, episodes numbered 1..N oldest-first. (Titles
+    // change as the feed updates, so assert structure, not specific names.)
+    let podcast = fetch("applepodcast").await;
+    println!("Apple Podcasts groups: {:?}", group_summary(&podcast["groups"]));
+    let episodes = podcast["groups"][0]["items"].as_array().unwrap();
+    assert_eq!(podcast["groups"][0]["label"], "");
+    assert!(!episodes.is_empty(), "expected podcast episodes");
+    for (index, episode) in episodes.iter().enumerate() {
+        assert_eq!(episode["key"], (index + 1).to_string());
+        assert!(!episode["title"].as_str().unwrap_or_default().is_empty());
+    }
+
+    // Comic Vine — a volume's issues as one flat list, keyed by issue number.
+    let comicvine = fetch("comicvine").await;
+    println!("Comic Vine groups: {:?}", group_summary(&comicvine["groups"]));
+    let issues = comicvine["groups"][0]["items"].as_array().unwrap();
+    assert_eq!(comicvine["groups"][0]["label"], "");
+    assert_eq!(issues[0]["key"], "1");
+    assert_eq!(issues[0]["title"], "Days Gone Bye, Pt. 1");
+}
+
+/// Finds a fetched group by label and returns its items (panics if absent).
+fn find_group<'a>(groups: &'a Value, label: &str) -> &'a Vec<Value> {
+    groups
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|group| group["label"] == label)
+        .unwrap_or_else(|| panic!("missing group {label:?}"))["items"]
+        .as_array()
+        .unwrap()
+}
+
+/// `[(label, item_count)]` for a fetched groups array — compact test output.
+fn group_summary(groups: &Value) -> Vec<(String, usize)> {
+    groups
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|group| {
+            (
+                group["label"].as_str().unwrap_or_default().to_string(),
+                group["items"].as_array().map(Vec::len).unwrap_or(0),
+            )
+        })
+        .collect()
+}
