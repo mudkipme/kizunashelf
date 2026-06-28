@@ -131,6 +131,7 @@ pub(super) fn apple_podcast_supported(provider_config: &ProviderSearchConfig) ->
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title"),
+        field_option("cover_url", "Cover URL"),
         field_option("host", "Host"),
         field_option("feed_url", "Feed URL"),
         // Lists — map these to list-type fields (enum list / text list / relation).

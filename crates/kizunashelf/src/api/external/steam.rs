@@ -55,6 +55,7 @@ pub(super) fn steam_supported(provider_config: &ProviderSearchConfig) -> bool {
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("name", "Name"),
+        field_option("cover_url", "Cover URL"),
         field_option("release_date", "Release date"),
         field_option("platform", "Platform"),
         // Lists — map these to list-type fields (enum list / text list / relation).

@@ -177,6 +177,7 @@ pub(super) fn comic_supported(provider_config: &ProviderSearchConfig) -> bool {
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title"),
+        field_option("cover_url", "Cover URL"),
         field_option("publisher", "Publisher"),
         field_option("start_year", "Start year"),
         field_option("issues_count", "Issue count"),

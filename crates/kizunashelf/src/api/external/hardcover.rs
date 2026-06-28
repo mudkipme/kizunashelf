@@ -103,6 +103,7 @@ pub(super) fn book_supported(provider_config: &ProviderSearchConfig) -> bool {
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title"),
+        field_option("cover_url", "Cover URL"),
         field_option("format", "Format"),
         field_option("pages", "Pages"),
         field_option("publish_date", "Publish date"),

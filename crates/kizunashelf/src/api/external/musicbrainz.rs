@@ -144,6 +144,7 @@ fn musicbrainz_medium_label(medium: &Value, index: usize) -> String {
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title / Name"),
+        field_option("cover_url", "Cover URL"),
         field_option("release_date", "Release / begin date"),
         field_option("end_date", "End date"),
         field_option("country", "Country"),

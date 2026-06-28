@@ -52,6 +52,7 @@ pub(super) fn manga_supported(provider_config: &ProviderSearchConfig) -> bool {
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title"),
+        field_option("cover_url", "Cover URL"),
         field_option("format", "Type"),
         field_option("year", "Year"),
         field_option("status", "Status"),

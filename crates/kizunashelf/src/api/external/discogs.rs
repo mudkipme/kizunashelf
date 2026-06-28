@@ -186,6 +186,7 @@ fn discogs_types(provider_config: &ProviderSearchConfig) -> Vec<&'static str> {
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title"),
+        field_option("cover_url", "Cover URL"),
         field_option("year", "Year"),
         field_option("format", "Format"),
         // Lists — map these to list-type fields (enum list / text list / relation).

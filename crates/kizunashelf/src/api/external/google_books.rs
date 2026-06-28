@@ -54,6 +54,7 @@ pub(super) fn google_books_supported(provider_config: &ProviderSearchConfig) -> 
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title"),
+        field_option("cover_url", "Cover URL"),
         field_option("subtitle", "Subtitle"),
         field_option("publisher", "Publisher"),
         field_option("published_date", "Published date"),

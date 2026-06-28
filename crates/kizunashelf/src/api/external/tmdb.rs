@@ -226,6 +226,7 @@ fn tmdb_media_types(provider_config: &ProviderSearchConfig) -> Vec<&'static str>
 pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
     vec![
         field_option("title", "Title / Name"),
+        field_option("cover_url", "Cover URL"),
         field_option("original_title", "Original title"),
         field_option("year", "Year"),
         field_option("release_date", "Release / air date"),
