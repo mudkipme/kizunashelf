@@ -135,13 +135,12 @@ pub enum BodySectionKind {
 #[serde(rename_all = "camelCase")]
 pub enum EpisodeTracking {
     // Plain `//` comments (see `BodySectionKind`): keep this a flat string enum so
-    // swift-openapi-generator renders proper `.checklist`/`.progress`/`.none` cases.
+    // swift-openapi-generator renders proper `.checklist`/`.none` cases.
     //
     // Per-item checkboxes (`- [ ]` / `- [x]`) — tracks exactly which are watched.
     Checklist,
-    // Count only; pairs with a `progress` field rather than per-item checkboxes.
-    Progress,
-    // No tracking — a plain ordered list.
+    // No tracking — a plain ordered list. (A count-only mode belongs on a
+    // `progress`/`total` field, not the section, so there's no `progress` variant.)
     None,
 }
 

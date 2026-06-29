@@ -46,7 +46,7 @@ export const ConfigResponse = zod.object({
   "source": zod.string(),
   "field": zod.string()
 })).optional().describe('`kind = external`: the provider field(s) that fill this heading. The matched\ncandidate\'s source is chosen, exactly like [`FieldConfig::external_fields`],\nso one heading can be filled from multiple providers.'),
-  "tracking": zod.union([zod.enum(['checklist', 'progress', 'none']),zod.null()]).optional().describe('`kind = episodes`: how watched\/read state is tracked. Defaults to `checklist`.')
+  "tracking": zod.union([zod.enum(['checklist', 'none']),zod.null()]).optional().describe('`kind = episodes`: how watched\/read state is tracked. Defaults to `checklist`.')
 }).describe('A declared section of an entity\'s Markdown body, addressed by its heading.\nGeneralizes the old `bodyMappings`: a flat struct discriminated by `kind`\n(mirroring `FieldConfig`), so the same per-type mechanism covers\nexternal-metadata sections \*and\* the built-in episodes\/tracks list.')).optional(),
   "fields": zod.array(zod.object({
   "field": zod.string(),

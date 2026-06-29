@@ -72,39 +72,6 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
   };
 }
 
-/** One editable row of the external-body-sections editor (heading + one source field). */
-export type ExternalBodyRow = { source: string; field: string; heading: string };
-
-/** Expands a type's external body sections into per-source editor rows. */
-export function externalBodyRows(sections: BodySection[]): ExternalBodyRow[] {
-  const rows: ExternalBodyRow[] = [];
-  for (const section of sections) {
-    if (section.kind !== "external") continue;
-    for (const externalField of section.externalFields ?? []) {
-      rows.push({ source: externalField.source, field: externalField.field, heading: section.heading });
-    }
-  }
-  return rows;
-}
-
-/** Folds editor rows back into body sections (grouping by heading so one heading
- * can carry multiple sources), preserving any non-external sections (episodes). */
-export function bodySectionsFromRows(rows: ExternalBodyRow[], existing: BodySection[]): BodySection[] {
-  const byHeading = new Map<string, ExternalBodyRow[]>();
-  for (const row of rows) {
-    const group = byHeading.get(row.heading) ?? [];
-    group.push(row);
-    byHeading.set(row.heading, group);
-  }
-  const externalSections: BodySection[] = [...byHeading.entries()].map(([heading, group]) => ({
-    heading,
-    kind: "external" as const,
-    externalFields: group.map((row) => ({ source: row.source, field: row.field })),
-  }));
-  const preserved = existing.filter((section) => section.kind !== "external");
-  return [...externalSections, ...preserved];
-}
-
 function normalizeField(field: FieldConfig): FieldConfig {
   return {
     field: field.field ?? "",

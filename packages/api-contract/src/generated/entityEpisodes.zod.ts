@@ -13,7 +13,7 @@ export const entityEpisodesWatchedMin = 0;
 
 export const EntityEpisodes = zod.object({
   "heading": zod.string(),
-  "tracking": zod.enum(['checklist', 'progress', 'none']),
+  "tracking": zod.enum(['checklist', 'none']),
   "groups": zod.array(zod.object({
   "label": zod.string().describe('Sub-heading label (season\/disc); empty for the ungrouped group.'),
   "items": zod.array(zod.object({

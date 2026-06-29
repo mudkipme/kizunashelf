@@ -12,6 +12,8 @@ import {
 } from "@/lib/external-metadata";
 import { fieldDisplayLabel, fieldTypeLabel, isDateFieldType, supportsEnumOptions } from "@/lib/type-config";
 import type {
+  BodySection,
+  BodySectionKind,
   DailyNotesConfig,
   EntityTypeConfig,
   ExternalFieldMapping,
@@ -39,12 +41,7 @@ import {
   fieldTypeOptions,
   type FieldOptionKey,
 } from "./settings-field-descriptors";
-import {
-  arrayEditor,
-  bodySectionsFromRows,
-  externalBodyRows,
-  type ExternalBodyRow,
-} from "./settings-model";
+import { arrayEditor } from "./settings-model";
 
 export function DailyNotesEditor({
   config,
@@ -310,12 +307,10 @@ export function EntityTypeForm({
             values={config.externalPriority ?? []}
             onChange={(externalPriority) => onChange({ ...config, externalPriority })}
           />
-          <ExternalBodyMappingsEditor
+          <BodySectionsEditor
             providerCatalog={providerCatalog}
-            values={externalBodyRows(config.bodySections ?? [])}
-            onChange={(rows) =>
-              onChange({ ...config, bodySections: bodySectionsFromRows(rows, config.bodySections ?? []) })
-            }
+            values={config.bodySections ?? []}
+            onChange={(bodySections) => onChange({ ...config, bodySections })}
           />
         </ConfigSubsection>
 
@@ -428,16 +423,31 @@ function ExternalPriorityEditor({
   );
 }
 
-function ExternalBodyMappingsEditor({
+type BodySectionTracking = NonNullable<BodySection["tracking"]>;
+
+const EPISODE_TRACKING_OPTIONS: { value: BodySectionTracking; label: string }[] = [
+  { value: "checklist", label: "Checklist (per-item checkboxes)" },
+  { value: "none", label: "None (plain list)" },
+];
+
+/// Reshapes a section when its `kind` changes, dropping the now-irrelevant
+/// payload so the saved config doesn't carry stale fields from the other kind.
+function changeBodySectionKind(section: BodySection, kind: BodySectionKind): BodySection {
+  if (kind === "episodes") {
+    return { heading: section.heading, kind, tracking: section.tracking ?? "checklist" };
+  }
+  return { heading: section.heading, kind, externalFields: section.externalFields ?? [] };
+}
+
+function BodySectionsEditor({
   providerCatalog,
   values,
   onChange,
 }: {
   providerCatalog?: ExternalProviderCatalog;
-  values: ExternalBodyRow[];
-  onChange: (values: ExternalBodyRow[]) => void;
+  values: BodySection[];
+  onChange: (values: BodySection[]) => void;
 }) {
-  const sourceOptions = externalSourceOptions(providerCatalog);
   const list = arrayEditor(values, onChange);
   return (
     <div className="flex flex-col gap-2">
@@ -447,65 +457,89 @@ function ExternalBodyMappingsEditor({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => {
-            const source = sourceOptions[0]?.source ?? "";
-            const field = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
-            list.append({ source, field, heading: "Summary" });
-          }}
-          disabled={sourceOptions.length === 0}
+          onClick={() => list.append({ heading: "Summary", kind: "external", externalFields: [] })}
         >
           <PlusIcon data-icon="inline-start" />
           Section
         </Button>
       </div>
       <div className="flex flex-col gap-2">
-        {values.map((value, index) => {
-          const fieldOptions = externalFieldOptionsForSource(providerCatalog, value.source);
-          return (
-            <div key={index} className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-              <Select
-                value={value.source}
-                onChange={(event) => {
-                  const source = event.target.value;
-                  const field = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
-                  list.update(index, { ...value, source, field });
-                }}
-                aria-label="Body mapping source"
-              >
-                {sourceOptions.map((option) => (
-                  <option key={option.source} value={option.source}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                value={value.field}
-                onChange={(event) => list.update(index, { ...value, field: event.target.value })}
-                aria-label="Body mapping field"
-              >
-                <option value="">Select field</option>
-                {fieldOptions.map((option) => (
-                  <option key={option.field} value={option.field}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-              <TextField
-                label="Heading"
-                value={value.heading}
-                onChange={(heading) => list.update(index, { ...value, heading })}
-              />
-              <div className="flex items-end">
-                <IconButton
-                  label="Remove body mapping"
-                  onClick={() => list.remove(index)}
-                />
-              </div>
-            </div>
-          );
-        })}
+        {values.map((section, index) => (
+          <BodySectionEditor
+            // Index, not heading: the heading is editable; keying on it would
+            // remount and drop focus on each keystroke.
+            key={index}
+            providerCatalog={providerCatalog}
+            section={section}
+            onChange={(next) => list.update(index, next)}
+            onRemove={() => list.remove(index)}
+          />
+        ))}
         {values.length === 0 ? <EmptyConfigLine>No markdown body sections.</EmptyConfigLine> : null}
       </div>
+    </div>
+  );
+}
+
+function BodySectionEditor({
+  providerCatalog,
+  section,
+  onChange,
+  onRemove,
+}: {
+  providerCatalog?: ExternalProviderCatalog;
+  section: BodySection;
+  onChange: (section: BodySection) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+        <TextField
+          label="Heading"
+          value={section.heading}
+          onChange={(heading) => onChange({ ...section, heading })}
+        />
+        <Field label="Kind">
+          <Select
+            value={section.kind}
+            onChange={(event) => onChange(changeBodySectionKind(section, event.target.value as BodySectionKind))}
+            className="h-9 w-full text-base md:text-sm"
+          >
+            <option value="external">External metadata</option>
+            <option value="episodes">Episodes</option>
+            <UnknownValueOption value={section.kind} known={["external", "episodes"]} />
+          </Select>
+        </Field>
+        <div className="flex items-end">
+          <IconButton label="Remove body section" onClick={onRemove} />
+        </div>
+      </div>
+      {section.kind === "episodes" ? (
+        <Field label="Tracking">
+          <Select
+            value={section.tracking ?? "checklist"}
+            onChange={(event) => onChange({ ...section, tracking: event.target.value as BodySectionTracking })}
+            className="h-9 w-full text-base md:text-sm"
+          >
+            {EPISODE_TRACKING_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+            <UnknownValueOption
+              value={section.tracking ?? "checklist"}
+              known={EPISODE_TRACKING_OPTIONS.map((option) => option.value)}
+            />
+          </Select>
+        </Field>
+      ) : (
+        <ExternalFieldMappingsEditor
+          providerCatalog={providerCatalog}
+          values={section.externalFields ?? []}
+          onChange={(externalFields) => onChange({ ...section, externalFields })}
+        />
+      )}
     </div>
   );
 }

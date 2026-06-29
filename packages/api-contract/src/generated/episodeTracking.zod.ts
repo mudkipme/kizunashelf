@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const EpisodeTracking = zod.enum(['checklist', 'progress', 'none'])
+export const EpisodeTracking = zod.enum(['checklist', 'none'])
 
 export type EpisodeTracking = zod.input<typeof EpisodeTracking>;
 export type EpisodeTrackingOutput = zod.output<typeof EpisodeTracking>;

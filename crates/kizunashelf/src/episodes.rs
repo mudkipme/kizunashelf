@@ -247,7 +247,7 @@ fn render_item(episode: &Episode, tracking: EpisodeTracking) -> String {
     let checkbox = match tracking {
         EpisodeTracking::Checklist if episode.watched => "[x] ",
         EpisodeTracking::Checklist => "[ ] ",
-        _ => "",
+        EpisodeTracking::None => "",
     };
     let key = episode.key.trim();
     let title = episode.title.trim();
