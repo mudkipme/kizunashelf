@@ -95,7 +95,6 @@ export function AssetToolbar({
           </option>
         ))}
         <option value="relationCount">Sort by connections</option>
-        <option value="path">Sort by location</option>
       </Select>
       <Select
         value={direction}

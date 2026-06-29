@@ -382,8 +382,6 @@ pub fn sort_entities_with_title_language(
             compare_entity_title(a, b, title_language)
         } else if sort == "relationCount" {
             a.relation_count.cmp(&b.relation_count)
-        } else if sort == "path" {
-            compare_string(&a.path, &b.path)
         } else {
             let type_compare = compare_string(&a.type_label, &b.type_label);
             if type_compare != Ordering::Equal {

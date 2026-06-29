@@ -77,7 +77,7 @@ function normalizePreferences(preferences: Partial<AssetListPreferences> | undef
   const sort = preferences?.sort ?? defaults.sort;
 
   return {
-    sort: sort.startsWith("date:") || sort === "relationCount" || sort === "path" ? sort : defaults.sort,
+    sort: sort.startsWith("date:") || sort === "relationCount" ? sort : defaults.sort,
     direction: preferences?.direction === "desc" ? "desc" : defaults.direction,
     view: preferences?.view === "grid" ? "grid" : defaults.view,
   };
