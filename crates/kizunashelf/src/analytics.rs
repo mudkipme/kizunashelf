@@ -6,20 +6,38 @@
 
 use crate::contract::{
     AnalyticsActivity, AnalyticsActivityType, AnalyticsActivityYear, AnalyticsActivityYearType,
-    AnalyticsDataQuality, AnalyticsDistributions, AnalyticsRelations, AnalyticsResponse,
-    AnalyticsTotals, AnalyticsUnresolvedRelations, CleanupQueueSummary, CleanupQueuesResponse,
-    CleanupUnresolvedRelation, StatsResponse, TypeCount,
+    AnalyticsDataQuality, AnalyticsDistributions, AnalyticsResponse, AnalyticsTotals,
+    CleanupQueueSummary, CleanupQueuesResponse, CleanupUnresolvedRelation, StatsResponse,
+    TypeCount,
 };
 use crate::dates::{parse_entity_date, ParsedEntityDate};
 use crate::library::compare_string;
-use crate::relations::{
-    build_relation_field_summary_with_index, build_relation_hubs, count_by, outgoing_relations,
-    relation_fields, relation_type_pairs, summary_by_id, Count,
-};
+use crate::relations::{count_by, outgoing_relations, relation_type_pairs, summary_by_id, Count};
 use crate::types::{DateRole, EntitySummary, FieldType, Library};
 use crate::vfs::Vfs;
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
+
+/// Per-type entity counts across the whole library, in schema-declared type
+/// order. Both `/stats` (`byType`) and `/analytics` (`distributions.byType`)
+/// surface this same breakdown, so the count lives here once.
+fn count_by_type(library: &Library) -> Vec<TypeCount> {
+    library
+        .config
+        .types
+        .iter()
+        .map(|entity_type| TypeCount {
+            id: entity_type.id.clone(),
+            label: entity_type.label.clone(),
+            icon: entity_type.icon.clone(),
+            count: library
+                .records
+                .iter()
+                .filter(|entity| entity.summary.entity_type == entity_type.id)
+                .count(),
+        })
+        .collect()
+}
 
 /// Builds the `/stats` summary for the whole library, or for a single entity type
 /// when `entity_type` is `Some(id)` (`None` or `"all"` covers every type).
@@ -34,9 +52,6 @@ pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsRespons
         None => library.summaries().cloned().collect(),
     };
     let ids: HashSet<_> = summaries.iter().map(|entity| entity.id.clone()).collect();
-    let mut top_relations = summaries.clone();
-    top_relations.sort_by_key(|item| Reverse(item.relation_count));
-    top_relations.truncate(12);
 
     StatsResponse {
         generated_at: library.generated_at.clone(),
@@ -46,21 +61,7 @@ pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsRespons
             .iter()
             .filter(|relation| ids.contains(&relation.source_id))
             .count(),
-        by_type: library
-            .config
-            .types
-            .iter()
-            .map(|entity_type| TypeCount {
-                id: entity_type.id.clone(),
-                label: entity_type.label.clone(),
-                icon: entity_type.icon.clone(),
-                count: library
-                    .records
-                    .iter()
-                    .filter(|entity| entity.summary.entity_type == entity_type.id)
-                    .count(),
-            })
-            .collect(),
+        by_type: count_by_type(library),
         date_fields: type_filter
             .and_then(|entity_type| {
                 library
@@ -84,12 +85,11 @@ pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsRespons
                     .collect()
             })
             .unwrap_or_default(),
-        top_relations,
     }
 }
 
 /// The full `/analytics` whole-library scan: totals, distributions, the activity
-/// heatmap, relation hubs, and data-quality buckets.
+/// heatmap, and data-quality buckets.
 pub fn build_analytics(library: &Library) -> AnalyticsResponse {
     // Materialize once for the multiple passes below; freed when the (memoized)
     // build returns, unlike a resident duplicate.
@@ -122,7 +122,6 @@ pub fn build_analytics(library: &Library) -> AnalyticsResponse {
         .filter(|entity| entity.relation_count > 0)
         .count();
 
-    let entity_by_id = summary_by_id(library);
     AnalyticsResponse {
         generated_at: library.generated_at.clone(),
         totals: AnalyticsTotals {
@@ -133,20 +132,7 @@ pub fn build_analytics(library: &Library) -> AnalyticsResponse {
             connected_entities: connected_count,
         },
         distributions: AnalyticsDistributions {
-            by_type: library
-                .config
-                .types
-                .iter()
-                .map(|entity_type| TypeCount {
-                    id: entity_type.id.clone(),
-                    label: entity_type.label.clone(),
-                    icon: entity_type.icon.clone(),
-                    count: summaries
-                        .iter()
-                        .filter(|entity| entity.entity_type == entity_type.id)
-                        .count(),
-                })
-                .collect(),
+            by_type: count_by_type(library),
             by_relation_field: count_by(&outgoing, |relation| relation.field.clone())
                 .into_iter()
                 .take(16)
@@ -154,19 +140,6 @@ pub fn build_analytics(library: &Library) -> AnalyticsResponse {
             by_source_target_type: relation_type_pairs(library).into_iter().take(16).collect(),
         },
         activity: build_activity(dated),
-        relations: AnalyticsRelations {
-            top_fields: relation_fields(library)
-                .iter()
-                .map(|field| build_relation_field_summary_with_index(library, &entity_by_id, field))
-                .filter(|field| field.edge_count > 0)
-                .take(12)
-                .collect(),
-            top_targets: build_relation_hubs(library).into_iter().take(12).collect(),
-            unresolved: AnalyticsUnresolvedRelations {
-                count: unresolved.len(),
-                examples: unresolved.into_iter().take(12).collect(),
-            },
-        },
         data_quality: AnalyticsDataQuality {
             missing_cover: summaries
                 .iter()

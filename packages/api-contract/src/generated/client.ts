@@ -137,10 +137,6 @@ import type {
 } from './getPathSuggestionsParams.zod';
 
 import type {
-  GetRelationsParams
-} from './getRelationsParams.zod';
-
-import type {
   GetStatsParams
 } from './getStatsParams.zod';
 
@@ -179,14 +175,6 @@ import type {
 import {
   RawConfigResponse
 } from './rawConfigResponse.zod';
-
-import {
-  RelationGroupsResponse
-} from './relationGroupsResponse.zod';
-
-import {
-  RelationListResponse
-} from './relationListResponse.zod';
 
 import type {
   SaveRawConfigRequest
@@ -1294,71 +1282,6 @@ export const ingestEntityAsset = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? AssetIngestResponse.parse(parsedBody) : parsedBody
-  return data
-}
-
-
-
-export const getGetRelationsUrl = (params?: GetRelationsParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/relations?${stringifiedParams}` : `/api/relations`
-}
-
-export const getRelations = async (params?: GetRelationsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<RelationListResponse> => {
-
-  const res = await (fetchFn ?? fetch)(getGetRelationsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-)
-
-  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
-  const data = contentType.includes('json') ? RelationListResponse.parse(parsedBody) : parsedBody
-  return data
-}
-
-
-
-export const getGetRelationGroupsUrl = () => {
-
-
-
-
-  return `/api/relation-groups`
-}
-
-export const getRelationGroups = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<RelationGroupsResponse> => {
-
-  const res = await (fetchFn ?? fetch)(getGetRelationGroupsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-)
-
-  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
-  const data = contentType.includes('json') ? RelationGroupsResponse.parse(parsedBody) : parsedBody
   return data
 }
 

@@ -14,8 +14,6 @@ import { ExternalSearchResponse as ExternalSearchResponseSchema } from "./genera
 import { ExternalProviderCatalogResponse as ExternalProviderCatalogResponseSchema } from "./generated/externalProviderCatalogResponse.zod.js";
 import { HealthResponse as HealthResponseSchema } from "./generated/healthResponse.zod.js";
 import { HomeResponse as HomeResponseSchema } from "./generated/homeResponse.zod.js";
-import { RelationGroupsResponse as RelationGroupsResponseSchema } from "./generated/relationGroupsResponse.zod.js";
-import { RelationListResponse as RelationListResponseSchema } from "./generated/relationListResponse.zod.js";
 import { StatsResponse as StatsResponseSchema } from "./generated/statsResponse.zod.js";
 import type { AnalyticsResponse } from "./generated/analyticsResponse.zod.js";
 import type { CalendarPlanningResponse } from "./generated/calendarPlanningResponse.zod.js";
@@ -30,9 +28,6 @@ import type { EntityMutationResponse } from "./generated/entityMutationResponse.
 import type { ExternalSearchResponse } from "./generated/externalSearchResponse.zod.js";
 import type { ExternalProviderCatalogResponse } from "./generated/externalProviderCatalogResponse.zod.js";
 import type { HomeResponse } from "./generated/homeResponse.zod.js";
-import type { RelationFieldSummary as RelationFieldSummaryType } from "./generated/relationFieldSummary.zod.js";
-import type { RelationGroupsResponse } from "./generated/relationGroupsResponse.zod.js";
-import type { RelationTargetSummary as RelationTargetSummaryType } from "./generated/relationTargetSummary.zod.js";
 
 export * from "./generated/client.js";
 export * from "./generated/analyticsResponse.zod.js";
@@ -85,16 +80,12 @@ export * from "./generated/getCalendarPlanningParams.zod.js";
 export * from "./generated/getCalendarParams.zod.js";
 export * from "./generated/getEntitiesParams.zod.js";
 export * from "./generated/getListsParams.zod.js";
-export * from "./generated/getRelationsParams.zod.js";
 export * from "./generated/getStatsParams.zod.js";
 export * from "./generated/healthResponse.zod.js";
 export * from "./generated/homeResponse.zod.js";
 export * from "./generated/searchExternalSourcesParams.zod.js";
 export * from "./generated/updateEntityRequest.zod.js";
 export * from "./generated/libraryDiagnostic.zod.js";
-export * from "./generated/relationGroupsResponse.zod.js";
-export * from "./generated/relationListResponse.zod.js";
-export * from "./generated/relationTargetTypeSummary.zod.js";
 export * from "./generated/statsResponse.zod.js";
 export * from "./generated/language.zod.js";
 export * from "./generated/languagesResponse.zod.js";
@@ -139,8 +130,6 @@ export const ApiResponseSchemas = {
   entityDates: EntityDatesResponseSchema,
   externalProviderCatalog: ExternalProviderCatalogResponseSchema,
   externalSearch: ExternalSearchResponseSchema,
-  relations: RelationListResponseSchema,
-  relationGroups: RelationGroupsResponseSchema,
   calendar: CalendarResponseSchema,
   calendarPlanning: CalendarPlanningResponseSchema,
 } as const;
@@ -165,13 +154,8 @@ export type CleanupQueueSummary = CleanupQueuesResponse["queues"][number];
 export type CleanupUnresolvedRelation = CleanupQueuesResponse["unresolvedRelations"][number];
 export type HomeSectionResponse = HomeResponse["sections"][number];
 export type TypeConfig = ConfigResponse["types"][number];
-export type RelationTargetSummary = RelationTargetSummaryType;
-export type RelationTargetTypeSummary = RelationGroupsResponse["targetTypes"][number];
-export type RelationTargetHubSummary = RelationGroupsResponse["targetTypes"][number]["topTargets"][number];
-export type RelationFieldSummary = RelationFieldSummaryType;
 export type AnalyticsActivity = AnalyticsResponse["activity"];
 export type AnalyticsActivityType = AnalyticsResponse["activity"]["types"][number];
 export type AnalyticsActivityYear = AnalyticsResponse["activity"]["years"][number];
-export type AnalyticsRelationHub = AnalyticsResponse["relations"]["topTargets"][number];
 export type EntityDateMetadataEntry = EntityDatesResponse["metadata"][number];
 export type EntityDateDailyNoteEntry = EntityDatesResponse["dailyNotes"][number];

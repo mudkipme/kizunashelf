@@ -54,6 +54,13 @@ export function fieldLabelsByType(typeConfigs: TypeConfig[] | undefined) {
   );
 }
 
+/// Maps each entity type's id to its configured label, so callers can render the
+/// schema label ("Games") for a bare type id ("games") even when no resolved
+/// entity of that type is on hand. Mirrors the server's `EntitySummary.typeLabel`.
+export function typeLabelsById(typeConfigs: TypeConfig[] | undefined) {
+  return new Map((typeConfigs ?? []).map((typeConfig) => [typeConfig.id, typeConfig.label]));
+}
+
 export function entityFieldLabel(
   labelsByType: ReadonlyMap<string, ReadonlyMap<string, string>> | undefined,
   type: string,

@@ -69,7 +69,7 @@ import { saveEpisodes } from "@/api/episodes";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
-import { fieldLabelsByType } from "@/lib/type-config";
+import { fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
 import { entityTitle } from "@/lib/title-language";
 import type {
   Entity,
@@ -120,6 +120,7 @@ export function EntityPage() {
     [detail.data],
   );
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
+  const typeLabels = useMemo(() => typeLabelsById(config.data?.types), [config.data]);
   // Type ids that declare a cover field — their connections render as a cover grid.
   const coverTypes = useMemo(
     () =>
@@ -294,6 +295,7 @@ export function EntityPage() {
               notesBody={detail.data?.notesBody}
               contentWritable={contentWritable}
               labelsByType={labelsByType}
+              typeLabels={typeLabels}
               coverTypes={coverTypes}
               onSaveEpisodes={saveEpisodeGroups}
               actions={

@@ -12,17 +12,6 @@ export const statsResponseRelationsMin = 0;
 
 export const statsResponseByTypeItemCountMin = 0;
 
-export const statsResponseTopRelationsItemDatesItemParsedOneMonthMin = 0;
-
-export const statsResponseTopRelationsItemDatesItemParsedOneDayMin = 0;
-
-export const statsResponseTopRelationsItemTagsDefault = [];
-export const statsResponseTopRelationsItemEpisodeProgressOneWatchedMin = 0;
-
-export const statsResponseTopRelationsItemEpisodeProgressOneTotalMin = 0;
-
-export const statsResponseTopRelationsItemRelationCountMin = 0;
-
 
 export const StatsResponse = zod.object({
   "generatedAt": zod.string(),
@@ -34,37 +23,7 @@ export const StatsResponse = zod.object({
   "icon": zod.string().nullish(),
   "count": zod.number().min(statsResponseByTypeItemCountMin)
 })),
-  "dateFields": zod.array(zod.string()),
-  "topRelations": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.string(),
-  "typeLabel": zod.string(),
-  "title": zod.string(),
-  "titles": zod.record(zod.string(), zod.string()),
-  "dates": zod.array(zod.object({
-  "field": zod.string(),
-  "value": zod.string(),
-  "parsed": zod.union([zod.object({
-  "year": zod.number(),
-  "month": zod.number().min(statsResponseTopRelationsItemDatesItemParsedOneMonthMin).nullish(),
-  "day": zod.number().min(statsResponseTopRelationsItemDatesItemParsedOneDayMin).nullish(),
-  "season": zod.string().nullish(),
-  "seasonKey": zod.string().nullish()
-}),zod.null()]).optional(),
-  "sortKey": zod.string().nullish()
-})),
-  "image": zod.string().nullish(),
-  "summary": zod.string().nullish(),
-  "path": zod.string(),
-  "basename": zod.string(),
-  "externalRefs": zod.record(zod.string(), zod.string()),
-  "tags": zod.array(zod.string()).default(statsResponseTopRelationsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
-  "episodeProgress": zod.union([zod.object({
-  "watched": zod.number().min(statsResponseTopRelationsItemEpisodeProgressOneWatchedMin),
-  "total": zod.number().min(statsResponseTopRelationsItemEpisodeProgressOneTotalMin)
-}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
-  "relationCount": zod.number().min(statsResponseTopRelationsItemRelationCountMin)
-}))
+  "dateFields": zod.array(zod.string())
 })
 
 export type StatsResponse = zod.input<typeof StatsResponse>;

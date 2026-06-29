@@ -227,7 +227,6 @@ pub struct StatsResponse {
     pub relations: usize,
     pub by_type: Vec<TypeCount>,
     pub date_fields: Vec<String>,
-    pub top_relations: Vec<EntitySummary>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -780,64 +779,6 @@ pub struct ExternalSearchResponse {
     pub items: Vec<ExternalCandidate>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationListResponse {
-    pub items: Vec<Relation>,
-    pub total: usize,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationTargetSummary {
-    pub key: String,
-    pub target_title: String,
-    /// The resolved target entity's title map (empty for unresolved targets), so
-    /// clients can show the target in the viewer's language: `targetTitles[lang]
-    /// ?? targetTitle`. Mirrors `EntitySummary.titles`.
-    pub target_titles: std::collections::BTreeMap<String, String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub target_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub target_type: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub target_type_label: Option<String>,
-    pub count: usize,
-    pub source_types: Vec<Count>,
-    pub examples: Vec<EntitySummary>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationTargetTypeSummary {
-    #[serde(rename = "type")]
-    pub target_type: String,
-    pub type_label: String,
-    pub edge_count: usize,
-    pub unique_targets: usize,
-    pub resolved_targets: usize,
-    pub fields: Vec<Count>,
-    pub top_targets: Vec<AnalyticsRelationHub>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationFieldSummary {
-    pub field: String,
-    pub edge_count: usize,
-    pub source_count: usize,
-    pub unique_targets: usize,
-    pub resolved_targets: usize,
-    pub top_targets: Vec<RelationTargetSummary>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct RelationGroupsResponse {
-    pub generated_at: String,
-    pub target_types: Vec<RelationTargetTypeSummary>,
-}
-
 /// Year-over-year activity: a year × month matrix of dated entities, filterable
 /// by type. Backs the statistics heatmap + per-year totals. (Browsing dated
 /// entities by period lives in the calendar's year/season views; this is the
@@ -881,28 +822,6 @@ pub struct AnalyticsActivityYearType {
     pub total: usize,
     /// Twelve monthly counts (Jan..Dec) for this type within the year.
     pub months: Vec<u32>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct AnalyticsRelationHub {
-    #[serde(flatten)]
-    pub target: RelationTargetSummary,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct AnalyticsRelations {
-    pub top_fields: Vec<RelationFieldSummary>,
-    pub top_targets: Vec<AnalyticsRelationHub>,
-    pub unresolved: AnalyticsUnresolvedRelations,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct AnalyticsUnresolvedRelations {
-    pub count: usize,
-    pub examples: Vec<Relation>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -967,7 +886,6 @@ pub struct AnalyticsResponse {
     pub totals: AnalyticsTotals,
     pub distributions: AnalyticsDistributions,
     pub activity: AnalyticsActivity,
-    pub relations: AnalyticsRelations,
     pub data_quality: AnalyticsDataQuality,
 }
 
@@ -1022,8 +940,6 @@ pub struct ApiSchemas {
     pub entities: EntityListResponse,
     pub entity_detail: EntityDetailResponse,
     pub entity_dates: EntityDatesResponse,
-    pub relations: RelationListResponse,
-    pub relation_groups: RelationGroupsResponse,
     pub calendar: CalendarResponse,
     pub calendar_entry: CalendarEntry,
     pub asset_download: AssetDownloadResponse,

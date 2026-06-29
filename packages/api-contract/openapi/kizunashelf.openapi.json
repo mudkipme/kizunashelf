@@ -1762,78 +1762,6 @@
         }
       }
     },
-    "/api/relations": {
-      "get": {
-        "operationId": "getRelations",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "sourceId",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "field",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RelationListResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/relation-groups": {
-      "get": {
-        "operationId": "getRelationGroups",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RelationGroupsResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/tags": {
       "get": {
         "operationId": "getTags",
@@ -3435,12 +3363,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "topRelations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntitySummary"
-            }
           }
         },
         "required": [
@@ -3448,8 +3370,7 @@
           "total",
           "relations",
           "byType",
-          "dateFields",
-          "topRelations"
+          "dateFields"
         ]
       },
       "TypeCount": {
@@ -3494,9 +3415,6 @@
           "activity": {
             "$ref": "#/components/schemas/AnalyticsActivity"
           },
-          "relations": {
-            "$ref": "#/components/schemas/AnalyticsRelations"
-          },
           "dataQuality": {
             "$ref": "#/components/schemas/AnalyticsDataQuality"
           }
@@ -3506,7 +3424,6 @@
           "totals",
           "distributions",
           "activity",
-          "relations",
           "dataQuality"
         ]
       },
@@ -3708,257 +3625,6 @@
           "months"
         ]
       },
-      "AnalyticsRelations": {
-        "type": "object",
-        "properties": {
-          "topFields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RelationFieldSummary"
-            }
-          },
-          "topTargets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AnalyticsRelationHub"
-            }
-          },
-          "unresolved": {
-            "$ref": "#/components/schemas/AnalyticsUnresolvedRelations"
-          }
-        },
-        "required": [
-          "topFields",
-          "topTargets",
-          "unresolved"
-        ]
-      },
-      "RelationFieldSummary": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "edgeCount": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "sourceCount": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "uniqueTargets": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "resolvedTargets": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "topTargets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RelationTargetSummary"
-            }
-          }
-        },
-        "required": [
-          "field",
-          "edgeCount",
-          "sourceCount",
-          "uniqueTargets",
-          "resolvedTargets",
-          "topTargets"
-        ]
-      },
-      "RelationTargetSummary": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "targetTitle": {
-            "type": "string"
-          },
-          "targetTitles": {
-            "description": "The resolved target entity's title map (empty for unresolved targets), so\nclients can show the target in the viewer's language: `targetTitles[lang]\n?? targetTitle`. Mirrors `EntitySummary.titles`.",
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "targetId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "targetType": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "targetTypeLabel": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "count": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "sourceTypes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Count"
-            }
-          },
-          "examples": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntitySummary"
-            }
-          }
-        },
-        "required": [
-          "key",
-          "targetTitle",
-          "targetTitles",
-          "count",
-          "sourceTypes",
-          "examples"
-        ]
-      },
-      "AnalyticsRelationHub": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "targetTitle": {
-            "type": "string"
-          },
-          "targetTitles": {
-            "description": "The resolved target entity's title map (empty for unresolved targets), so\nclients can show the target in the viewer's language: `targetTitles[lang]\n?? targetTitle`. Mirrors `EntitySummary.titles`.",
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "targetId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "targetType": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "targetTypeLabel": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "count": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "sourceTypes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Count"
-            }
-          },
-          "examples": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntitySummary"
-            }
-          }
-        },
-        "required": [
-          "key",
-          "targetTitle",
-          "targetTitles",
-          "count",
-          "sourceTypes",
-          "examples"
-        ]
-      },
-      "AnalyticsUnresolvedRelations": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "examples": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Relation"
-            }
-          }
-        },
-        "required": [
-          "count",
-          "examples"
-        ]
-      },
-      "Relation": {
-        "type": "object",
-        "properties": {
-          "sourceId": {
-            "type": "string"
-          },
-          "targetId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "targetTitle": {
-            "type": "string"
-          },
-          "targetType": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "field": {
-            "type": "string"
-          },
-          "direction": {
-            "$ref": "#/components/schemas/RelationDirection"
-          }
-        },
-        "required": [
-          "sourceId",
-          "targetTitle",
-          "field",
-          "direction"
-        ]
-      },
-      "RelationDirection": {
-        "type": "string",
-        "enum": [
-          "out",
-          "in"
-        ]
-      },
       "AnalyticsDataQuality": {
         "type": "object",
         "properties": {
@@ -4081,6 +3747,48 @@
         "required": [
           "source",
           "relation"
+        ]
+      },
+      "Relation": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetTitle": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "field": {
+            "type": "string"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/RelationDirection"
+          }
+        },
+        "required": [
+          "sourceId",
+          "targetTitle",
+          "field",
+          "direction"
+        ]
+      },
+      "RelationDirection": {
+        "type": "string",
+        "enum": [
+          "out",
+          "in"
         ]
       },
       "CalendarQuery": {
@@ -5878,108 +5586,6 @@
         "required": [
           "entity",
           "result"
-        ]
-      },
-      "RelationsQuery": {
-        "type": "object",
-        "properties": {
-          "sourceId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "field": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "RelationListResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Relation"
-            }
-          },
-          "total": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "items",
-          "total"
-        ]
-      },
-      "RelationGroupsResponse": {
-        "type": "object",
-        "properties": {
-          "generatedAt": {
-            "type": "string"
-          },
-          "targetTypes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RelationTargetTypeSummary"
-            }
-          }
-        },
-        "required": [
-          "generatedAt",
-          "targetTypes"
-        ]
-      },
-      "RelationTargetTypeSummary": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string"
-          },
-          "typeLabel": {
-            "type": "string"
-          },
-          "edgeCount": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "uniqueTargets": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "resolvedTargets": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Count"
-            }
-          },
-          "topTargets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AnalyticsRelationHub"
-            }
-          }
-        },
-        "required": [
-          "type",
-          "typeLabel",
-          "edgeCount",
-          "uniqueTargets",
-          "resolvedTargets",
-          "fields",
-          "topTargets"
         ]
       },
       "TagsResponse": {

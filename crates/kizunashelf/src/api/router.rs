@@ -8,8 +8,8 @@ use super::episodes::{fetch_episodes, import_episodes, update_episodes};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
     calendar, calendar_planning, capabilities, config, health, home, languages,
-    raw_settings_config, refresh, relation_groups, relations, save_raw_settings_config,
-    save_settings_config, settings_config, vault_templates,
+    raw_settings_config, refresh, save_raw_settings_config, save_settings_config, settings_config,
+    vault_templates,
 };
 use super::lists::{
     add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
@@ -26,8 +26,7 @@ use crate::contract::{
     EntityDetailResponse, EntityListResponse, EntityMutationResponse, EpisodeSyncResponse,
     ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
     HomeResponse, LanguagesResponse, ListDetail, ListsResponse, PathSuggestionsResponse,
-    RawConfigResponse, RelationGroupsResponse, RelationListResponse, SettingsConfigResponse,
-    StatsResponse, TagsResponse, VaultTemplatesResponse,
+    RawConfigResponse, SettingsConfigResponse, StatsResponse, TagsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -416,22 +415,6 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()
-                    .response::<500, Json<ErrorResponse>>()
-            }),
-        )
-        .api_route(
-            "/api/relations",
-            get_with(relations, |op| {
-                op.id("getRelations")
-                    .response::<200, Json<RelationListResponse>>()
-                    .response::<500, Json<ErrorResponse>>()
-            }),
-        )
-        .api_route(
-            "/api/relation-groups",
-            get_with(relation_groups, |op| {
-                op.id("getRelationGroups")
-                    .response::<200, Json<RelationGroupsResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )

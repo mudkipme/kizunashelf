@@ -10,7 +10,6 @@ import {
   HomeIcon,
   ListIcon,
   type LucideIcon,
-  Link2Icon,
   MenuIcon,
   SearchIcon,
   SettingsIcon,
@@ -331,9 +330,6 @@ function SidebarContent({
         </SidebarNavLink>
         <SidebarNavLink to="/calendar" icon={CalendarDaysIcon} onNavigate={onNavigate}>
           Calendar
-        </SidebarNavLink>
-        <SidebarNavLink to="/relations" icon={Link2Icon} onNavigate={onNavigate}>
-          Relations
         </SidebarNavLink>
         <SidebarNavLink to="/lists" icon={ListIcon} onNavigate={onNavigate}>
           Lists

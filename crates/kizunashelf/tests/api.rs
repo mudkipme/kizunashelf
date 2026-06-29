@@ -478,50 +478,6 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
 }
 
 #[tokio::test]
-async fn relation_endpoints_group_temp_vault_links() {
-    let server = TestServer::new();
-
-    let relations = server.ok_json("/api/relations").await;
-    assert_eq!(relations["total"], 12);
-
-    let franchise_relations = server.ok_json("/api/relations?field=franchise").await;
-    assert_eq!(franchise_relations["total"], 4);
-
-    let star_voyager_relations = server
-        .ok_json(&format!(
-            "/api/relations?sourceId={}",
-            urlencoding::encode("anime:Star Voyager")
-        ))
-        .await;
-    assert_eq!(star_voyager_relations["total"], 3);
-
-    let daily_note_relations = server.ok_json("/api/relations?field=daily-note").await;
-    assert_eq!(daily_note_relations["total"], 2);
-
-    let groups = server.ok_json("/api/relation-groups").await;
-    let anime_targets = groups["targetTypes"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|group| group["type"] == "anime")
-        .unwrap();
-    assert_eq!(anime_targets["typeLabel"], "Anime");
-    assert_eq!(anime_targets["edgeCount"], 2);
-    assert_eq!(anime_targets["uniqueTargets"], 1);
-    assert_eq!(count_for(&anime_targets["fields"], "body"), 1);
-    assert_eq!(count_for(&anime_targets["fields"], "daily-note"), 1);
-    assert_eq!(anime_targets["topTargets"][0]["targetTitle"], "星之航路");
-    assert_eq!(anime_targets["topTargets"][0]["count"], 2);
-    assert!(anime_targets["topTargets"][0].get("fields").is_none());
-
-    let (status, value) = server
-        .json("/api/relation-groups/franchise?pageSize=1&page=1")
-        .await;
-    assert_eq!(status, StatusCode::NOT_FOUND);
-    assert_eq!(value["error"], "API route not found");
-}
-
-#[tokio::test]
 async fn external_search_lists_providers_without_querying_network_for_empty_searches() {
     let server = TestServer::new();
 

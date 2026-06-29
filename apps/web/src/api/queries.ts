@@ -9,7 +9,6 @@ import {
   getEntity,
   getEntityDates,
   getHome,
-  getRelationGroups,
   getStats,
   getTags,
   type GetCalendarParams,
@@ -39,7 +38,6 @@ export const queryKeys = {
   lists: ["lists"] as const,
   list: (id: string) => ["list", id] as const,
   providerCatalog: ["providerCatalog"] as const,
-  relationGroups: ["relationGroups"] as const,
   settingsConfig: ["settingsConfig"] as const,
   rawSettingsConfig: ["rawSettingsConfig"] as const,
   stats: (params?: GetStatsParams) => ["stats", params ?? {}] as const,
@@ -162,13 +160,6 @@ export function providerCatalogQuery() {
   return queryOptions({
     queryKey: queryKeys.providerCatalog,
     queryFn: ({ signal }) => getProviderCatalog({ signal }),
-  });
-}
-
-export function relationGroupsQuery() {
-  return queryOptions({
-    queryKey: queryKeys.relationGroups,
-    queryFn: ({ signal }) => getRelationGroups({ signal }, apiFetch),
   });
 }
 

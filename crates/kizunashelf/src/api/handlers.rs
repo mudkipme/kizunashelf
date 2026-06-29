@@ -6,15 +6,12 @@ use crate::calendar::{
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
-    HomeSectionResponse, LanguagesResponse, RawConfigResponse, RelationGroupsResponse,
-    RelationListResponse, SaveRawConfigRequest, SaveSettingsRequest, SettingsConfigResponse,
-    VaultTemplatesResponse,
+    HomeSectionResponse, LanguagesResponse, RawConfigResponse, SaveRawConfigRequest,
+    SaveSettingsRequest, SettingsConfigResponse, VaultTemplatesResponse,
 };
 use crate::dates::clamp_number;
 use crate::entities::sort_entities_for_entity_list;
-use crate::relations::{
-    build_relation_target_type_summaries, sort_records_by_modified, SortDirection,
-};
+use crate::relations::{sort_records_by_modified, SortDirection};
 use crate::types::{EntityRecord, HomeSectionConfig, Library};
 use axum::extract::{Query, State};
 use axum::Json;
@@ -295,52 +292,6 @@ pub(crate) async fn calendar_planning(
     )))
 }
 
-#[derive(Deserialize, JsonSchema)]
-pub(crate) struct RelationsQuery {
-    #[serde(rename = "sourceId")]
-    source_id: Option<String>,
-    field: Option<String>,
-}
-
-pub(crate) async fn relations(
-    State(state): State<AppState>,
-    Query(query): Query<RelationsQuery>,
-) -> ApiResult<RelationListResponse> {
-    let library = get_library(&state).await?;
-    // Filter by reference and clone only the matching relations, instead of
-    // cloning the entire shared Vec up front and then discarding most of it.
-    let source_id = query.source_id.as_deref();
-    let field = query.field.as_deref();
-    // With a `sourceId`, scan only that entity's relations via the index; without
-    // one, fall back to a full scan (optionally narrowed by field).
-    let relations: Vec<_> = match source_id {
-        Some(source_id) => library
-            .relations_from(source_id)
-            .filter(|relation| field.is_none_or(|field| relation.field == field))
-            .cloned()
-            .collect(),
-        None => library
-            .relations
-            .iter()
-            .filter(|relation| field.is_none_or(|field| relation.field == field))
-            .cloned()
-            .collect(),
-    };
-    Ok(Json(RelationListResponse {
-        total: relations.len(),
-        items: relations,
-    }))
-}
-
-pub(crate) async fn relation_groups(
-    State(state): State<AppState>,
-) -> ApiResult<RelationGroupsResponse> {
-    let library = get_library(&state).await?;
-    Ok(Json(RelationGroupsResponse {
-        generated_at: library.generated_at.clone(),
-        target_types: build_relation_target_type_summaries(&library),
-    }))
-}
 fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSectionResponse {
     let entity_type = library
         .config

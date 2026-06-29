@@ -46,6 +46,7 @@ export function EntityDetail({
   notesBody,
   contentWritable = true,
   labelsByType,
+  typeLabels,
   coverTypes,
   onSaveEpisodes,
   actions,
@@ -65,6 +66,10 @@ export function EntityDetail({
   /// Field labels by type id, used to resolve "Linked from" field names against
   /// the *source* entity's type (the field lives on the linking type, not this one).
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  /// Type id → configured type label, so connection headers show the schema label
+  /// ("Games") rather than the raw type id ("games") when the related entity that
+  /// would otherwise supply the label isn't resolved.
+  typeLabels?: ReadonlyMap<string, string>;
   /// Type ids that declare an image/imageList field. Connections to these types
   /// render as a cover grid; others fall back to text chips (no cover to show).
   coverTypes?: ReadonlySet<string>;
@@ -78,8 +83,8 @@ export function EntityDetail({
   // "Links to" groups by field; the untyped `body` field is further split by
   // target type ("body · Music"). "Linked from" groups by (source type, field)
   // so e.g. anime-via-franchise and games-via-franchise stay separate.
-  const outgoingGroups = buildOutgoingGroups(relationGroups, relatedById, typeConfig);
-  const incomingGroups = buildIncomingGroups(relations, relatedById, labelsByType);
+  const outgoingGroups = buildOutgoingGroups(relationGroups, relatedById, typeConfig, typeLabels);
+  const incomingGroups = buildIncomingGroups(relations, relatedById, labelsByType, typeLabels);
   const hasConnections = outgoingGroups.length > 0 || incomingGroups.length > 0;
 
   return (
@@ -251,6 +256,7 @@ function buildOutgoingGroups(
   relationGroups: Array<{ field: string; items: Relation[] }>,
   relatedById: Map<string, EntitySummary>,
   typeConfig: TypeConfig | undefined,
+  typeLabels: ReadonlyMap<string, string> | undefined,
 ): RelationGroup[] {
   const result: RelationGroup[] = [];
   for (const group of relationGroups) {
@@ -271,7 +277,7 @@ function buildOutgoingGroups(
       else byType.set(type, [relation]);
     }
     for (const [type, typeItems] of byType) {
-      const typeLabel = relationTypeLabel(typeItems, relatedById) ?? type;
+      const typeLabel = typeLabels?.get(type) ?? relationTypeLabel(typeItems, relatedById) ?? type;
       result.push({
         key: `body::${type}`,
         header: typeLabel ? `${fieldLabel} · ${typeLabel}` : fieldLabel,
@@ -290,6 +296,7 @@ function buildIncomingGroups(
   relations: Relation[],
   relatedById: Map<string, EntitySummary>,
   labelsByType: ReadonlyMap<string, ReadonlyMap<string, string>> | undefined,
+  typeLabels: ReadonlyMap<string, string> | undefined,
 ): RelationGroup[] {
   const groups = new Map<string, RelationGroup>();
   for (const relation of relations) {
@@ -302,7 +309,9 @@ function buildIncomingGroups(
       continue;
     }
     const typeLabel =
-      (relation.targetId ? relatedById.get(relation.targetId)?.typeLabel : undefined) ?? type;
+      typeLabels?.get(type) ??
+      (relation.targetId ? relatedById.get(relation.targetId)?.typeLabel : undefined) ??
+      type;
     const fieldLabel = entityFieldLabel(labelsByType, type, relation.field);
     groups.set(key, {
       key,

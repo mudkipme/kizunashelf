@@ -1,52 +1,7 @@
-use crate::contract::{
-    AnalyticsRelationHub, RelationFieldSummary, RelationTargetSummary, RelationTargetTypeSummary,
-};
 use crate::library::{compare_string, compare_string_for_title_language};
 use crate::types::{EntityRecord, EntitySummary, Library, Relation, RelationDirection};
 use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
-
-pub fn build_relation_hubs(library: &Library) -> Vec<AnalyticsRelationHub> {
-    let entity_by_id = summary_by_id(library);
-    let relations = outgoing_relations(library, None);
-    build_relation_hubs_from_relations(library, &entity_by_id, &relations)
-}
-
-pub fn build_relation_target_type_summaries(library: &Library) -> Vec<RelationTargetTypeSummary> {
-    let entity_by_id = summary_by_id(library);
-    let mut grouped: HashMap<String, Vec<&Relation>> = HashMap::new();
-    for relation in outgoing_relations(library, None) {
-        grouped
-            .entry(relation_target_type_key(library, relation, &entity_by_id))
-            .or_default()
-            .push(relation);
-    }
-
-    let mut summaries = grouped
-        .into_iter()
-        .map(|(key, relations)| {
-            let targets = build_relation_hubs_from_relations(library, &entity_by_id, &relations);
-            RelationTargetTypeSummary {
-                target_type: key.clone(),
-                type_label: relation_target_type_label(library, &key, &relations, &entity_by_id),
-                edge_count: relations.len(),
-                unique_targets: targets.len(),
-                resolved_targets: targets
-                    .iter()
-                    .filter(|target| target.target.target_id.is_some())
-                    .count(),
-                fields: count_by(&relations, |relation| relation.field.clone()),
-                top_targets: targets.into_iter().take(8).collect(),
-            }
-        })
-        .collect::<Vec<_>>();
-    summaries.sort_by(|a, b| {
-        b.edge_count
-            .cmp(&a.edge_count)
-            .then_with(|| compare_string(&a.type_label, &b.type_label))
-    });
-    summaries
-}
+use std::collections::HashMap;
 
 pub fn relation_type_pairs(library: &Library) -> Vec<Count> {
     let by_id = summary_by_id(library);
@@ -70,29 +25,6 @@ pub fn relation_type_pairs(library: &Library) -> Vec<Count> {
     })
 }
 
-pub fn relation_fields(library: &Library) -> Vec<String> {
-    let mut fields = Vec::new();
-    let mut seen = HashSet::new();
-    for field in library.config.types.iter().flat_map(|entity_type| {
-        entity_type
-            .fields
-            .iter()
-            .filter(|field| field.field_type == crate::types::FieldType::Relation)
-            .map(|field| field.field.clone())
-    }) {
-        if seen.insert(field.clone()) {
-            fields.push(field);
-        }
-    }
-    for relation in &library.relations {
-        if relation.direction == RelationDirection::Out && seen.insert(relation.field.clone()) {
-            fields.push(relation.field.clone());
-        }
-    }
-    fields.sort_by(|a, b| compare_string(a, b));
-    fields
-}
-
 pub fn outgoing_relations<'a>(library: &'a Library, field: Option<&str>) -> Vec<&'a Relation> {
     library
         .relations
@@ -102,180 +34,6 @@ pub fn outgoing_relations<'a>(library: &'a Library, field: Option<&str>) -> Vec<
                 && field.map(|field| relation.field == field).unwrap_or(true)
         })
         .collect()
-}
-
-pub fn build_relation_field_summary_with_index(
-    library: &Library,
-    entity_by_id: &HashMap<&str, &EntitySummary>,
-    field: &str,
-) -> RelationFieldSummary {
-    let relations = outgoing_relations(library, Some(field));
-    let targets = build_relation_targets_from_relations(library, entity_by_id, &relations);
-    let sources: HashSet<_> = relations
-        .iter()
-        .map(|relation| &relation.source_id)
-        .collect();
-
-    RelationFieldSummary {
-        field: field.to_string(),
-        edge_count: relations.len(),
-        source_count: sources.len(),
-        unique_targets: targets.len(),
-        resolved_targets: targets
-            .iter()
-            .filter(|target| target.target_id.is_some())
-            .count(),
-        top_targets: targets.into_iter().take(8).collect(),
-    }
-}
-
-fn build_relation_targets_from_relations<'a>(
-    library: &'a Library,
-    entity_by_id: &HashMap<&'a str, &'a EntitySummary>,
-    relations: &[&'a Relation],
-) -> Vec<RelationTargetSummary> {
-    let mut grouped: HashMap<String, Vec<&Relation>> = HashMap::new();
-    for relation in relations {
-        grouped
-            .entry(target_key(relation).to_string())
-            .or_default()
-            .push(*relation);
-    }
-
-    let mut targets: Vec<_> = grouped
-        .into_iter()
-        .map(|(key, relations)| {
-            build_relation_target_summary_with_index(library, entity_by_id, &key, &relations)
-        })
-        .collect();
-    targets.sort_by(|a, b| {
-        b.count
-            .cmp(&a.count)
-            .then_with(|| compare_string(&a.target_title, &b.target_title))
-    });
-    targets
-}
-
-fn build_relation_hubs_from_relations<'a>(
-    library: &'a Library,
-    entity_by_id: &HashMap<&'a str, &'a EntitySummary>,
-    relations: &[&'a Relation],
-) -> Vec<AnalyticsRelationHub> {
-    let mut grouped: HashMap<String, Vec<&Relation>> = HashMap::new();
-    for relation in relations {
-        grouped
-            .entry(target_key(relation).to_string())
-            .or_default()
-            .push(*relation);
-    }
-
-    let mut hubs = grouped
-        .into_iter()
-        .map(|(key, relations)| AnalyticsRelationHub {
-            target: build_relation_target_summary_with_index(
-                library,
-                entity_by_id,
-                &key,
-                &relations,
-            ),
-        })
-        .collect::<Vec<_>>();
-    hubs.sort_by(|a, b| {
-        b.target
-            .count
-            .cmp(&a.target.count)
-            .then_with(|| compare_string(&a.target.target_title, &b.target.target_title))
-    });
-    hubs
-}
-
-fn relation_target_type_key(
-    library: &Library,
-    relation: &Relation,
-    entity_by_id: &HashMap<&str, &EntitySummary>,
-) -> String {
-    relation
-        .target_id
-        .as_ref()
-        .and_then(|target_id| entity_by_id.get(target_id.as_str()))
-        .map(|target| target.entity_type.clone())
-        .or_else(|| relation.target_type.clone())
-        .filter(|target_type| {
-            library
-                .config
-                .types
-                .iter()
-                .any(|type_config| type_config.id == *target_type)
-        })
-        .unwrap_or_else(|| "unresolved".to_string())
-}
-
-fn relation_target_type_label(
-    library: &Library,
-    key: &str,
-    relations: &[&Relation],
-    entity_by_id: &HashMap<&str, &EntitySummary>,
-) -> String {
-    if key == "unresolved" {
-        return "Unresolved".to_string();
-    }
-    relations
-        .iter()
-        .find_map(|relation| {
-            relation
-                .target_id
-                .as_ref()
-                .and_then(|target_id| entity_by_id.get(target_id.as_str()))
-                .map(|target| target.type_label.clone())
-                .or_else(|| type_label(library, relation.target_type.as_ref()))
-        })
-        .unwrap_or_else(|| key.to_string())
-}
-
-fn build_relation_target_summary_with_index(
-    library: &Library,
-    entity_by_id: &HashMap<&str, &EntitySummary>,
-    key: &str,
-    relations: &[&Relation],
-) -> RelationTargetSummary {
-    let first = &relations[0];
-    let target_entity = first
-        .target_id
-        .as_ref()
-        .and_then(|target_id| entity_by_id.get(target_id.as_str()));
-    let mut sources: Vec<EntitySummary> = relations
-        .iter()
-        .filter_map(|relation| {
-            entity_by_id
-                .get(relation.source_id.as_str())
-                .map(|entity| (*entity).clone())
-        })
-        .collect();
-
-    let target_type = target_entity
-        .map(|entity| entity.entity_type.clone())
-        .or_else(|| first.target_type.clone());
-    let target_type_label = target_entity
-        .map(|entity| entity.type_label.clone())
-        .or_else(|| type_label(library, first.target_type.as_ref()));
-    sources = sort_entities(sources, "title", SortDirection::Asc);
-    RelationTargetSummary {
-        key: key.to_string(),
-        target_title: target_entity
-            .map(|entity| entity.title.clone())
-            .unwrap_or_else(|| first.target_title.clone()),
-        target_titles: target_entity
-            .map(|entity| entity.titles.clone())
-            .unwrap_or_default(),
-        target_id: first.target_id.clone(),
-        target_type,
-        target_type_label,
-        count: relations.len(),
-        source_types: count_by(relations, |relation| {
-            relation_source_type_label(relation, entity_by_id)
-        }),
-        examples: sources.into_iter().take(5).collect(),
-    }
 }
 
 pub fn relation_source_type_label(
@@ -721,21 +479,6 @@ mod tests {
     }
 
     #[test]
-    fn target_key_prefers_target_id_then_title() {
-        let resolved = relation(
-            "s",
-            Some("t-id"),
-            "T Title",
-            None,
-            "f",
-            RelationDirection::Out,
-        );
-        let unresolved = relation("s", None, "Ghost", None, "f", RelationDirection::Out);
-        assert_eq!(target_key(&resolved), "t-id");
-        assert_eq!(target_key(&unresolved), "Ghost");
-    }
-
-    #[test]
     fn relation_source_type_label_falls_back_to_daily_note_or_unknown() {
         let entity = summary("anime:a", "anime", "Anime", "Alpha");
         let by_id = HashMap::from([("anime:a", &entity)]);
@@ -774,34 +517,6 @@ mod tests {
         assert_eq!(outgoing_relations(&library, None).len(), 5); // 5 Out, the 1 In excluded
         assert_eq!(outgoing_relations(&library, Some("related")).len(), 4);
         assert_eq!(outgoing_relations(&library, Some("body")).len(), 1);
-    }
-
-    #[test]
-    fn relation_fields_merges_schema_and_data_fields_sorted_and_unique() {
-        let library = graph();
-        assert_eq!(
-            relation_fields(&library),
-            vec!["body".to_string(), "related".to_string()]
-        );
-    }
-
-    #[test]
-    fn build_relation_field_summary_counts_edges_sources_and_targets() {
-        let library = graph();
-        let by_id = summary_by_id(&library);
-        let summary = build_relation_field_summary_with_index(&library, &by_id, "related");
-        assert_eq!(summary.edge_count, 4);
-        assert_eq!(summary.source_count, 2); // Alpha and Beta
-        assert_eq!(summary.unique_targets, 4); // Beta, Gamma, Ghost, Alpha
-        assert_eq!(summary.resolved_targets, 3); // all but Ghost
-    }
-
-    #[test]
-    fn build_relation_hubs_groups_targets_and_orders_by_count() {
-        let hubs = build_relation_hubs(&graph());
-        // Gamma is targeted twice (related + body), so it leads with count 2.
-        assert_eq!(hubs[0].target.target_title, "Gamma");
-        assert_eq!(hubs[0].target.count, 2);
     }
 
     #[test]

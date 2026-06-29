@@ -3,8 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 // Query keys whose data can change when a single entity is created, edited,
 // renamed, or deleted. Anything derived from the entity set (lists, calendar,
-// analytics, cleanup queues, relation groups, stats) is refetched; unrelated
-// caches (config, capabilities, provider catalog) are left untouched.
+// analytics, cleanup queues, stats) is refetched; unrelated caches (config,
+// capabilities, provider catalog) are left untouched.
 const ENTITY_DATA_KEYS = [
   "entity",
   "entityDates",
@@ -13,7 +13,6 @@ const ENTITY_DATA_KEYS = [
   "calendarPlanning",
   "analytics",
   "cleanupQueues",
-  "relationGroups",
   "stats",
 ] as const;
 

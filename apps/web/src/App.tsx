@@ -20,7 +20,6 @@ import { LibraryPage } from "@/pages/library-page";
 import { ListDetailPage } from "@/pages/list-detail-page";
 import { ListsPage } from "@/pages/lists-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
-import { RelationsPage } from "@/pages/relations-page";
 import { ReviewPage } from "@/pages/review-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { StatisticsPage } from "@/pages/statistics-page";
@@ -105,7 +104,6 @@ function AppRoutes() {
       <Route path="/review" element={<ReviewPage />} />
       <Route path="/review/:queueId" element={<ReviewPage />} />
       <Route path="/statistics" element={<StatisticsPage />} />
-      <Route path="/relations" element={<RelationsPage />} />
       <Route path="/lists" element={<ListsPage />} />
       <Route path="/lists/:id" element={<ListDetailPage />} />
       <Route path="/entities/new" element={<EntityCreatePage />} />
