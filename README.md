@@ -70,23 +70,7 @@ The generated contract lives in `packages/api-contract`.
 
 ## Production
 
-Build and serve the production web app:
-
-```bash
-pnpm build
-pnpm serve
-```
-
-`pnpm serve` runs the Rust API and serves the built Vite app from one process. It listens on `127.0.0.1:8787` by default and reads its single vault from `KIZUNASHELF_VAULT_ROOT`.
-
-Build and run the Docker image from the repository root:
-
-```bash
-docker build -t kizunashelf .
-docker run -p 8787:8787 -v /path/to/vault:/vault kizunashelf
-```
-
-Mount the vault directory and the server uses it directly — `KIZUNASHELF_VAULT_ROOT` defaults to `/vault`. There is no app config file to mount. For multiple vaults, run multiple containers (each with its own vault mount and port). See [docs/config.md](docs/config.md#runtime-environment) for all environment variables.
+To self-host the production web app (build, serve, Docker, configuration, multiple vaults, and authentication), see [docs/selfhosting.md](docs/selfhosting.md). KizunaShelf has no built-in authentication — that guide explains how to put it behind a reverse-proxy auth solution (Authentik, Authelia, tinyauth).
 
 For desktop development and builds:
 
