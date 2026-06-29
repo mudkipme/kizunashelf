@@ -69,6 +69,7 @@ import { saveEpisodes } from "@/api/episodes";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
+import { fieldLabelsByType } from "@/lib/type-config";
 import { entityTitle } from "@/lib/title-language";
 import type {
   Entity,
@@ -117,6 +118,21 @@ export function EntityPage() {
   const relationGroups = useMemo(
     () => groupRelations(detail.data?.relations ?? []),
     [detail.data],
+  );
+  const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
+  // Type ids that declare a cover field — their connections render as a cover grid.
+  const coverTypes = useMemo(
+    () =>
+      new Set(
+        (config.data?.types ?? [])
+          .filter((type) =>
+            (type.fields ?? []).some(
+              (field) => field.fieldType === "image" || field.fieldType === "imageList",
+            ),
+          )
+          .map((type) => type.id),
+      ),
+    [config.data],
   );
 
   // A 409 means the entity changed on disk and the action's revision is stale:
@@ -277,6 +293,8 @@ export function EntityPage() {
               episodesSaving={episodesSaving}
               notesBody={detail.data?.notesBody}
               contentWritable={contentWritable}
+              labelsByType={labelsByType}
+              coverTypes={coverTypes}
               onSaveEpisodes={saveEpisodeGroups}
               actions={
                 <EntityActions

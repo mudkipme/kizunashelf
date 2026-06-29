@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { AssetImage } from "@/components/assets/asset-image";
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
 import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
@@ -17,12 +18,11 @@ import { EntityEpisodesPanel, EpisodeSyncButton } from "@/components/assets/enti
 import { FrontmatterPanel } from "@/components/assets/frontmatter-panel";
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
-import { RelationLocalGraph } from "@/components/relations/relation-local-graph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTitleLanguage } from "@/lib/language";
 import { relationKey } from "@/lib/relations";
-import { fieldLabelForKey, titleLabelForKey } from "@/lib/type-config";
+import { entityFieldLabel, fieldLabelForKey, titleLabelForKey } from "@/lib/type-config";
 import { entityTitle, titleLanguageLabel } from "@/lib/title-language";
 import type {
   Entity,
@@ -45,6 +45,8 @@ export function EntityDetail({
   episodesSaving = false,
   notesBody,
   contentWritable = true,
+  labelsByType,
+  coverTypes,
   onSaveEpisodes,
   actions,
 }: {
@@ -60,6 +62,12 @@ export function EntityDetail({
   /// stripped (it has its own panel). Falls back to `entity.body` while loading.
   notesBody?: string;
   contentWritable?: boolean;
+  /// Field labels by type id, used to resolve "Linked from" field names against
+  /// the *source* entity's type (the field lives on the linking type, not this one).
+  labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  /// Type ids that declare an image/imageList field. Connections to these types
+  /// render as a cover grid; others fall back to text chips (no cover to show).
+  coverTypes?: ReadonlySet<string>;
   onSaveEpisodes?: (groups: EpisodeGroup[]) => void;
   actions?: ReactNode;
 }) {
@@ -67,8 +75,12 @@ export function EntityDetail({
   const displayTitle = entityTitle(entity, language);
   const relatedById = new Map(relatedEntities.map((item) => [item.id, item]));
   const subtitleTitles = entitySubtitleTitles(entity, displayTitle, typeConfig);
-  const outgoingRelationGroups = relationGroupsForDirection(relationGroups, "out");
-  const incomingRelationGroups = relationGroupsForDirection(relationGroups, "in");
+  // "Links to" groups by field; the untyped `body` field is further split by
+  // target type ("body · Music"). "Linked from" groups by (source type, field)
+  // so e.g. anime-via-franchise and games-via-franchise stay separate.
+  const outgoingGroups = buildOutgoingGroups(relationGroups, relatedById, typeConfig);
+  const incomingGroups = buildIncomingGroups(relations, relatedById, labelsByType);
+  const hasConnections = outgoingGroups.length > 0 || incomingGroups.length > 0;
 
   return (
     <LightboxProvider>
@@ -144,6 +156,27 @@ export function EntityDetail({
                 </DetailSection>
               ) : null}
 
+              {hasConnections ? (
+                <DetailSection title="Connections" icon={<CircleDotIcon />}>
+                  <div className="flex flex-col gap-4">
+                    <RelationDirectionSection
+                      title="Links to"
+                      groups={outgoingGroups}
+                      entityId={entity.id}
+                      relatedById={relatedById}
+                      coverTypes={coverTypes}
+                    />
+                    <RelationDirectionSection
+                      title="Linked from"
+                      groups={incomingGroups}
+                      entityId={entity.id}
+                      relatedById={relatedById}
+                      coverTypes={coverTypes}
+                    />
+                  </div>
+                </DetailSection>
+              ) : null}
+
               {(notesBody ?? entity.body).trim() ? (
                 <DetailSection title="Notes" icon={<FileTextIcon />}>
                   <MarkdownView markdown={notesBody ?? entity.body} relations={relations} />
@@ -176,43 +209,8 @@ export function EntityDetail({
             <DetailSection title="Dates" icon={<CalendarDaysIcon />}>
               <EntityDates dates={dates} typeConfig={typeConfig} />
             </DetailSection>
-
-            <DetailSection title="Connections" icon={<CircleDotIcon />}>
-              {relationGroups.length > 0 ? (
-                <div className="flex flex-col gap-4">
-                  <RelationDirectionSection
-                    title="Links to"
-                    groups={outgoingRelationGroups}
-                    entityId={entity.id}
-                    relatedById={relatedById}
-                    typeConfig={typeConfig}
-                  />
-                  <RelationDirectionSection
-                    title="Linked from"
-                    groups={incomingRelationGroups}
-                    entityId={entity.id}
-                    relatedById={relatedById}
-                    typeConfig={typeConfig}
-                  />
-                </div>
-              ) : (
-                <EmptyLine>Nothing connected yet</EmptyLine>
-              )}
-            </DetailSection>
           </aside>
         </div>
-
-        {relatedEntities.length > 0 ? (
-          <RelationLocalGraph
-            target={{
-              targetTitle: entity.title,
-              targetTitles: entity.titles,
-              targetTypeLabel: entity.typeLabel,
-              count: relations.length,
-            }}
-            sources={relatedEntities}
-          />
-        ) : null}
       </div>
     </LightboxProvider>
   );
@@ -244,16 +242,89 @@ function entitySubtitleTitles(
   return subtitles;
 }
 
-function relationGroupsForDirection(
+type RelationGroup = { key: string; header: string; type: string; items: Relation[] };
+
+// Groups outgoing ("Links to") relations by field. The untyped `body` field
+// (body wikilinks can target any type) is split further by target type so it
+// reads e.g. "body · Music"; typed relation fields stay a single group.
+function buildOutgoingGroups(
   relationGroups: Array<{ field: string; items: Relation[] }>,
-  direction: Relation["direction"],
-) {
-  return relationGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((relation) => relation.direction === direction),
-    }))
-    .filter((group) => group.items.length > 0);
+  relatedById: Map<string, EntitySummary>,
+  typeConfig: TypeConfig | undefined,
+): RelationGroup[] {
+  const result: RelationGroup[] = [];
+  for (const group of relationGroups) {
+    const items = group.items.filter((relation) => relation.direction === "out");
+    if (items.length === 0) continue;
+    const fieldLabel = fieldLabelForKey(typeConfig, group.field);
+    if (group.field !== "body") {
+      // Typed relation field — all targets share one type.
+      const type = items.find((relation) => relation.targetType)?.targetType ?? "";
+      result.push({ key: group.field, header: fieldLabel, type, items });
+      continue;
+    }
+    const byType = new Map<string, Relation[]>();
+    for (const relation of items) {
+      const type = relation.targetType ?? "";
+      const existing = byType.get(type);
+      if (existing) existing.push(relation);
+      else byType.set(type, [relation]);
+    }
+    for (const [type, typeItems] of byType) {
+      const typeLabel = relationTypeLabel(typeItems, relatedById) ?? type;
+      result.push({
+        key: `body::${type}`,
+        header: typeLabel ? `${fieldLabel} · ${typeLabel}` : fieldLabel,
+        type,
+        items: typeItems,
+      });
+    }
+  }
+  return result;
+}
+
+// Groups incoming ("Linked from") relations by the SOURCE entity's (type, field).
+// The detail entity is the `source_id` of its own relation rows, so the linking
+// entity is `target_id` and its type/field are carried on `targetType`/`field`.
+function buildIncomingGroups(
+  relations: Relation[],
+  relatedById: Map<string, EntitySummary>,
+  labelsByType: ReadonlyMap<string, ReadonlyMap<string, string>> | undefined,
+): RelationGroup[] {
+  const groups = new Map<string, RelationGroup>();
+  for (const relation of relations) {
+    if (relation.direction !== "in") continue;
+    const type = relation.targetType ?? "";
+    const key = `${type}::${relation.field}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.items.push(relation);
+      continue;
+    }
+    const typeLabel =
+      (relation.targetId ? relatedById.get(relation.targetId)?.typeLabel : undefined) ?? type;
+    const fieldLabel = entityFieldLabel(labelsByType, type, relation.field);
+    groups.set(key, {
+      key,
+      header: typeLabel ? `${typeLabel} · ${fieldLabel}` : fieldLabel,
+      type,
+      items: [relation],
+    });
+  }
+  return [...groups.values()];
+}
+
+// The target type label for a group of resolved relations (the first resolved
+// item's related entity), used to label a field that spans types (body links).
+function relationTypeLabel(
+  items: Relation[],
+  relatedById: Map<string, EntitySummary>,
+): string | undefined {
+  for (const relation of items) {
+    const summary = relation.targetId ? relatedById.get(relation.targetId) : undefined;
+    if (summary) return summary.typeLabel;
+  }
+  return undefined;
 }
 
 function RelationDirectionSection({
@@ -261,38 +332,52 @@ function RelationDirectionSection({
   groups,
   entityId,
   relatedById,
-  typeConfig,
+  coverTypes,
 }: {
   title: string;
-  groups: Array<{ field: string; items: Relation[] }>;
+  groups: RelationGroup[];
   entityId: string;
   relatedById: Map<string, EntitySummary>;
-  typeConfig?: TypeConfig;
+  coverTypes?: ReadonlySet<string>;
 }) {
   if (groups.length === 0) return null;
+  const total = groups.reduce((count, group) => count + group.items.length, 0);
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         <span>{title}</span>
-        <Badge variant="outline">{groups.reduce((count, group) => count + group.items.length, 0)}</Badge>
+        <Badge variant="outline">{total}</Badge>
       </div>
       <div className="flex flex-col gap-3">
         {groups.map((group) => (
-          <div key={group.field} className="flex flex-col gap-1">
-            <div className="text-xs font-medium text-muted-foreground">
-              {fieldLabelForKey(typeConfig, group.field)}
-            </div>
-            <div className="flex min-w-0 flex-wrap gap-1">
-              {group.items.map((relation) => (
-                <RelationButton
-                  key={relationKey(relation)}
-                  relation={relation}
-                  entityId={entityId}
-                  relatedById={relatedById}
-                />
-              ))}
-            </div>
+          <div key={group.key} className="flex flex-col gap-1.5">
+            <div className="text-xs font-medium text-muted-foreground">{group.header}</div>
+            {coverTypes?.has(group.type) ? (
+              // Types with a cover field render as a poster grid.
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-3">
+                {group.items.map((relation) => (
+                  <RelationGridItem
+                    key={relationKey(relation)}
+                    relation={relation}
+                    entityId={entityId}
+                    relatedById={relatedById}
+                  />
+                ))}
+              </div>
+            ) : (
+              // Cover-less types fall back to text chips.
+              <div className="flex min-w-0 flex-wrap gap-1">
+                {group.items.map((relation) => (
+                  <RelationChip
+                    key={relationKey(relation)}
+                    relation={relation}
+                    entityId={entityId}
+                    relatedById={relatedById}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -300,7 +385,10 @@ function RelationDirectionSection({
   );
 }
 
-function RelationButton({
+// A single connection rendered as its cover (with a type-initial placeholder when
+// there's no image), linking to that entity. The other end is always `target_id`
+// for this entity's rows; an unresolved link renders a non-clickable placeholder.
+function RelationGridItem({
   relation,
   entityId,
   relatedById,
@@ -309,48 +397,73 @@ function RelationButton({
   entityId: string;
   relatedById: Map<string, EntitySummary>;
 }) {
-  const display = relationDisplay(relation, entityId, relatedById, useTitleLanguage());
-  const className =
-    "h-auto min-h-8 max-w-full justify-start whitespace-normal break-all text-left leading-5";
+  const language = useTitleLanguage();
+  const otherId = relation.sourceId === entityId ? relation.targetId : relation.sourceId;
+  const summary = otherId ? relatedById.get(otherId) : undefined;
+  const label = summary ? entityTitle(summary, language) : relation.targetTitle;
 
-  if (!display.href) {
+  const card = (
+    <>
+      <AssetImage
+        src={summary?.image}
+        alt={label}
+        className="aspect-square w-full rounded-md border object-cover"
+        fallback={
+          <span className="flex aspect-square w-full items-center justify-center rounded-md border bg-muted text-sm font-medium text-muted-foreground">
+            {(summary?.typeLabel ?? label).slice(0, 2)}
+          </span>
+        }
+      />
+      <span className="line-clamp-2 text-xs leading-4">{label}</span>
+    </>
+  );
+
+  if (summary && otherId) {
     return (
-      <Button variant="outline" size="sm" className={className} disabled>
-        {display.label}
-      </Button>
+      <Link
+        to={`/entities/${encodeURIComponent(otherId)}`}
+        title={label}
+        className="flex flex-col gap-1 rounded-md text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {card}
+      </Link>
     );
   }
-
   return (
-    <Button variant="outline" size="sm" className={className} asChild>
-      <Link to={display.href}>{display.label}</Link>
-    </Button>
+    <span title={label} className="flex flex-col gap-1 text-left text-muted-foreground">
+      {card}
+    </span>
   );
 }
 
-function relationDisplay(
-  relation: Relation,
-  entityId: string,
-  relatedById: Map<string, EntitySummary>,
-  language: string,
-) {
-  if (relation.sourceId === entityId) {
-    // Outgoing: resolve the target's title in the viewer language when it's a
-    // known entity, else fall back to the raw wikilink text.
-    const target = relation.targetId ? relatedById.get(relation.targetId) : undefined;
-    return {
-      label: target ? entityTitle(target, language) : relation.targetTitle,
-      href: relation.targetId ? `/entities/${encodeURIComponent(relation.targetId)}` : undefined,
-    };
-  }
+// A connection to a cover-less type, rendered as a text chip (the title), linking
+// to that entity. An unresolved link renders as a disabled chip.
+function RelationChip({
+  relation,
+  entityId,
+  relatedById,
+}: {
+  relation: Relation;
+  entityId: string;
+  relatedById: Map<string, EntitySummary>;
+}) {
+  const language = useTitleLanguage();
+  const otherId = relation.sourceId === entityId ? relation.targetId : relation.sourceId;
+  const summary = otherId ? relatedById.get(otherId) : undefined;
+  const label = summary ? entityTitle(summary, language) : relation.targetTitle;
+  const className =
+    "h-auto min-h-8 max-w-full justify-start whitespace-normal break-all text-left leading-5";
 
-  if (relation.targetId === entityId) {
-    const source = relatedById.get(relation.sourceId);
-    return {
-      label: source ? entityTitle(source, language) : relation.sourceId,
-      href: source ? `/entities/${encodeURIComponent(source.id)}` : undefined,
-    };
+  if (summary && otherId) {
+    return (
+      <Button variant="outline" size="sm" className={className} asChild>
+        <Link to={`/entities/${encodeURIComponent(otherId)}`}>{label}</Link>
+      </Button>
+    );
   }
-
-  return { label: relation.targetTitle };
+  return (
+    <Button variant="outline" size="sm" className={className} disabled>
+      {label}
+    </Button>
+  );
 }
