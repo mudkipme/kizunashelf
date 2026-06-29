@@ -236,11 +236,15 @@ export function LibraryPage() {
   }, [globalStats.data, selectedType, searchParams, sort, direction, view]);
 
   useEffect(() => {
-    if (!list.data || list.data.page === page) return;
+    // Only re-sync the URL to the server's (clamped) page once the real response
+    // settles. While `keepPreviousData` shows the previous page during a page
+    // change, `list.data.page` still reflects the OLD page — syncing then would
+    // snap the URL back and make pagination impossible.
+    if (!list.data || list.isPlaceholderData || list.data.page === page) return;
     const next = new URLSearchParams(searchParams);
     next.set("page", String(list.data.page));
     setSearchParams(next, { replace: true });
-  }, [list.data, page, searchParams, setSearchParams]);
+  }, [list.data, list.isPlaceholderData, page, searchParams, setSearchParams]);
 
   function selectType(type: string) {
     const next = new URLSearchParams(searchParams);

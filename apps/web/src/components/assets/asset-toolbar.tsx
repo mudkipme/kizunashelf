@@ -89,6 +89,7 @@ export function AssetToolbar({
         aria-label="Sort"
       >
         <option value={defaultSort}>Sort by title</option>
+        <option value="recentlyUpdated">Sort by update time</option>
         {stats?.dateFields.map((field) => (
           <option key={field} value={`date:${field}`}>
             Sort by {dateFieldLabel(field)}

@@ -435,6 +435,13 @@ pub struct EntityRecord {
     /// building). Empty for entities with no body links.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub body_links: Vec<String>,
+    /// The vault file's last-modified time (unix nanos), captured from the
+    /// directory enumeration at index time and cached. Resident core-only data
+    /// used ONLY for the "recently updated" sort — never serialized to clients
+    /// and never fed into the calendar (which derives dates from schema fields).
+    /// `0` when the backend can't report a modification time.
+    #[serde(default)]
+    pub file_modified_unix_nanos: u128,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

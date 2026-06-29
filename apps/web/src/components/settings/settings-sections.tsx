@@ -86,6 +86,7 @@ export function HomeSectionForm({
   const filters = section.filters ?? [];
   const sortOptions = [
     { value: "title", label: "Title" },
+    { value: "recentlyUpdated", label: "Update time" },
     { value: "relationCount", label: "Relation count" },
     ...(selectedType?.fields ?? [])
       .filter((field) => isDateFieldType(field.fieldType))

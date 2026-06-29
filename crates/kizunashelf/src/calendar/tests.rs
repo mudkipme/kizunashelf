@@ -54,6 +54,7 @@ fn record(summary: EntitySummary) -> EntityRecord {
         revision: String::new(),
         frontmatter: serde_json::Map::new(),
         body_links: Vec::new(),
+        file_modified_unix_nanos: 0,
     }
 }
 

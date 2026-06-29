@@ -372,6 +372,7 @@ async fn read_entities_for_type(
                     summary: entity.summary,
                     revision: entity.revision,
                     frontmatter: entity.frontmatter,
+                    file_modified_unix_nanos: modified_unix_nanos,
                 },
                 diagnostics,
             },

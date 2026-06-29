@@ -2,7 +2,7 @@ use crate::contract::{
     AnalyticsRelationHub, RelationFieldSummary, RelationTargetSummary, RelationTargetTypeSummary,
 };
 use crate::library::{compare_string, compare_string_for_title_language};
-use crate::types::{EntitySummary, Library, Relation, RelationDirection};
+use crate::types::{EntityRecord, EntitySummary, Library, Relation, RelationDirection};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
@@ -403,6 +403,43 @@ fn apply_direction(ordering: Ordering, direction: SortDirection) -> Ordering {
     }
 }
 
+/// Sorts records by the vault file's modification time, ordered by `direction`
+/// like a date field: `Asc` is oldest-first, `Desc` is newest-first (most
+/// recently updated). Records with an unknown mtime (`0`) always sort last
+/// regardless of direction. Ties break by title.
+///
+/// This is record-level (not summary-level) because the timestamp is resident
+/// only on [`EntityRecord`] and is never serialized to clients.
+pub fn sort_records_by_modified<'a>(
+    mut records: Vec<&'a EntityRecord>,
+    direction: SortDirection,
+    title_language: Option<&str>,
+) -> Vec<&'a EntityRecord> {
+    records.sort_by(|a, b| {
+        match compare_modified_time(
+            a.file_modified_unix_nanos,
+            b.file_modified_unix_nanos,
+            direction,
+        ) {
+            Ordering::Equal => compare_entity_title(&a.summary, &b.summary, title_language),
+            ordering => ordering,
+        }
+    });
+    records
+}
+
+/// Orders two file timestamps by `direction` (older first under `Asc`, newer
+/// first under `Desc`); an unknown time (`0`) always sorts last, independent of
+/// direction.
+fn compare_modified_time(a: u128, b: u128, direction: SortDirection) -> Ordering {
+    match (a, b) {
+        (0, 0) => Ordering::Equal,
+        (0, _) => Ordering::Greater,
+        (_, 0) => Ordering::Less,
+        (a, b) => apply_direction(a.cmp(&b), direction),
+    }
+}
+
 /// Orders two optional sort values so that an absent value always sorts last,
 /// independent of `direction`; present values are compared against each other and
 /// only that comparison follows `direction`. This pins entities with an empty
@@ -535,6 +572,7 @@ mod tests {
             summary,
             revision: "rev".to_string(),
             frontmatter: serde_json::Map::new(),
+            file_modified_unix_nanos: 0,
         }
     }
 

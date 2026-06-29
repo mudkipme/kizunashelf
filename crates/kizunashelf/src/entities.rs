@@ -7,7 +7,8 @@ use crate::contract::EntityListResponse;
 use crate::dates::clamp_number;
 use crate::library::compare_string_for_title_language;
 use crate::relations::{
-    sort_entities, sort_entities_with_title_language, summary_by_id, SortDirection,
+    sort_entities, sort_entities_with_title_language, sort_records_by_modified, summary_by_id,
+    SortDirection,
 };
 use crate::types::{EntityRecord, EntitySummary, FieldType, Library, Relation, RelationDirection};
 use serde::Deserialize;
@@ -100,16 +101,25 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
         entities.retain(|entity| ids.contains(&entity.summary.id));
     }
 
-    let summaries = entities
-        .into_iter()
-        .map(|entity| entity.summary.clone())
-        .collect::<Vec<_>>();
-    let summaries = sort_entities_for_entity_list(
-        summaries,
-        params.sort,
-        params.direction,
-        params.title_language,
-    );
+    // "recentlyUpdated" sorts on the file mtime, which is resident only on the
+    // record (not the serialized summary), so it sorts records before mapping.
+    let summaries = if params.sort == "recentlyUpdated" {
+        sort_records_by_modified(entities, params.direction, params.title_language)
+            .into_iter()
+            .map(|entity| entity.summary.clone())
+            .collect::<Vec<_>>()
+    } else {
+        let summaries = entities
+            .into_iter()
+            .map(|entity| entity.summary.clone())
+            .collect::<Vec<_>>();
+        sort_entities_for_entity_list(
+            summaries,
+            params.sort,
+            params.direction,
+            params.title_language,
+        )
+    };
 
     let page_size = clamp_number(params.page_size, 1, 100);
     let requested_page = clamp_number(params.page, 1, i64::MAX);
@@ -469,6 +479,7 @@ mod tests {
             summary: summary(id, title),
             revision: "rev".to_string(),
             frontmatter: frontmatter.as_object().cloned().unwrap_or_default(),
+            file_modified_unix_nanos: 0,
         }
     }
 
@@ -810,6 +821,54 @@ mod tests {
                 .map(|e| e.title.as_str())
                 .collect::<Vec<_>>(),
             ["Gamma"]
+        );
+    }
+
+    #[test]
+    fn build_entity_list_sorts_by_recently_updated() {
+        let with_mtime = |id: &str, title: &str, mtime: u128| {
+            let mut entity = record(id, title, json!({}));
+            entity.file_modified_unix_nanos = mtime;
+            entity
+        };
+        let library = Library::new(
+            config(),
+            vec![
+                with_mtime("anime:a", "Alpha", 100),
+                with_mtime("anime:b", "Beta", 300),
+                with_mtime("anime:c", "Gamma", 0), // unknown mtime → always last
+                with_mtime("anime:d", "Delta", 200),
+            ],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+
+        // Ascending: oldest first, unknown last.
+        let asc = build_entity_list(
+            &library,
+            &EntityListParams {
+                sort: "recentlyUpdated",
+                ..params()
+            },
+        );
+        assert_eq!(
+            ids(&asc.items),
+            ["anime:a", "anime:d", "anime:b", "anime:c"]
+        );
+
+        // Descending: newest (most recently updated) first, unknown still last.
+        let desc = build_entity_list(
+            &library,
+            &EntityListParams {
+                sort: "recentlyUpdated",
+                direction: SortDirection::Desc,
+                ..params()
+            },
+        );
+        assert_eq!(
+            ids(&desc.items),
+            ["anime:b", "anime:d", "anime:a", "anime:c"]
         );
     }
 

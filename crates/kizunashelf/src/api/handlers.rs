@@ -12,7 +12,9 @@ use crate::contract::{
 };
 use crate::dates::clamp_number;
 use crate::entities::sort_entities_for_entity_list;
-use crate::relations::{build_relation_target_type_summaries, SortDirection};
+use crate::relations::{
+    build_relation_target_type_summaries, sort_records_by_modified, SortDirection,
+};
 use crate::types::{EntityRecord, HomeSectionConfig, Library};
 use axum::extract::{Query, State};
 use axum::Json;
@@ -352,14 +354,26 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         SortDirection::Asc
     };
     let sort = section.sort.as_deref().unwrap_or("title");
-    let mut filtered: Vec<_> = library
+    let matched: Vec<&EntityRecord> = library
         .records
         .iter()
         .filter(|entity| entity.summary.entity_type == section.entity_type)
         .filter(|entity| home_section_filters_match(entity, section))
-        .map(|entity| entity.summary.clone())
         .collect();
-    filtered = sort_entities_for_entity_list(filtered, sort, direction, None);
+    // "recentlyUpdated" sorts on the file mtime, resident only on the record, so
+    // it sorts records before mapping to summaries (mirrors `build_entity_list`).
+    let filtered = if sort == "recentlyUpdated" {
+        sort_records_by_modified(matched, direction, None)
+            .into_iter()
+            .map(|entity| entity.summary.clone())
+            .collect::<Vec<_>>()
+    } else {
+        let summaries = matched
+            .into_iter()
+            .map(|entity| entity.summary.clone())
+            .collect::<Vec<_>>();
+        sort_entities_for_entity_list(summaries, sort, direction, None)
+    };
     let total = filtered.len();
     let items = filtered
         .into_iter()
