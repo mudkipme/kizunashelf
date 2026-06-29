@@ -64,4 +64,3 @@ A typical setup is: reverse proxy (Nginx / Traefik / Caddy) terminates TLS, dele
 
 - [docs/config.md](config.md) — full schema, per-runtime configuration, Settings behavior, and the complete environment-variable table.
 - [docs/syncing.md](syncing.md) — how to sync a vault across devices.
-- [docs/asset-download.md](asset-download.md) — asset/cover download behavior and the SSRF guard.

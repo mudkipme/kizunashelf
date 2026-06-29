@@ -44,7 +44,7 @@ apps/
 packages/
   api-contract/           orval-generated TS client + Zod validators (from the OpenAPI spec)
 scripts/build-ios.sh      builds KizunaFFI.xcframework + the collapsed iOS openapi.json
-docs/                     config.md (the schema reference), asset-download.md, intro.*
+docs/                     config.md (the schema reference), intro.*
 ```
 
 The native iOS app lives in a **separate repo at `../kizunashelf-ios`** and embeds this core in-process. Its internals (UniFFI bridge, security-scoped vault FS, Keychain) are documented in `../kizunashelf-ios/ARCHITECTURE.md` — read that for iOS work. This document covers the core and the cross-cutting seams.
@@ -139,6 +139,5 @@ pnpm contract:generate   # then ensure git diff is clean (CI fails otherwise)
 ## Further reading
 
 - `docs/config.md` — the full schema/config reference (types, fields, roles, per-runtime config, provider credentials). The authority for what the schema means.
-- `docs/asset-download.md` — asset/cover download behavior.
 - `../kizunashelf-ios/ARCHITECTURE.md` — the iOS app's architecture and the regenerate-bindings workflow.
 - `README.md` — product overview and quick start.

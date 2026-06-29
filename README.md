@@ -2,7 +2,7 @@
 
 > A shelf for everything you love — and it stays yours.
 
-Intro: [English](docs/intro.md) / [简体中文](docs/intro.zh.md) / [日本語](docs/intro.ja.md)
+Intro in other languages: [简体中文](docs/intro.zh.md) / [日本語](docs/intro.ja.md)
 
 KizunaShelf starts with the familiar shape of a media tracker: TV shows, movies, books, games, anime, albums, and every small obsession waiting on your shelf. But it is not built around one fixed idea of what a "thing" should be. It is schema-driven from the ground up. You decide the types, fields, dates, titles, covers, states, ratings, progress, external links, and relationships. If your world needs characters, goods, cards, voice actors, artists, live events, or trains, shoes, museums, coffee beans, or something nobody else would think to model, KizunaShelf gives you the grammar to describe it.
 

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 
+import { AssetImage } from "@/components/assets/asset-image";
 import type { Relation } from "@/types/api";
 
 const wikilinkPattern = /\[\[([^\]|#]+)(#[^\]|]+)?(?:\|([^\]]+))?\]\]/g;
@@ -36,6 +37,21 @@ export function MarkdownView({ markdown, relations }: { markdown: string; relati
               >
                 {children}
               </a>
+            );
+          },
+          img({ src, alt }) {
+            if (typeof src !== "string" || !src.trim()) return null;
+            const text = typeof alt === "string" ? alt : "";
+            return (
+              <AssetImage
+                src={src}
+                alt={text}
+                lightbox
+                className="my-1 max-h-96 max-w-full rounded-md border object-contain"
+                fallback={
+                  <span className="text-xs text-muted-foreground">{text || "image"}</span>
+                }
+              />
             );
           },
           h1({ children }) {

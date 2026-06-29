@@ -15,6 +15,7 @@ import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { EntityEpisodesPanel } from "@/components/assets/entity-episodes";
 import { FrontmatterPanel } from "@/components/assets/frontmatter-panel";
+import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { RelationLocalGraph } from "@/components/relations/relation-local-graph";
 import { Badge } from "@/components/ui/badge";
@@ -70,138 +71,140 @@ export function EntityDetail({
   const incomingRelationGroups = relationGroupsForDirection(relationGroups, "in");
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="min-w-0 rounded-md border">
-          <div className="border-b p-4">
-            <div className="flex gap-3">
-              <EntityCover entity={entity} size="lg" />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">{entity.typeLabel}</Badge>
-                  {(entity.tags ?? []).map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+    <LightboxProvider>
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <section className="min-w-0 rounded-md border">
+            <div className="border-b p-4">
+              <div className="flex gap-3">
+                <EntityCover entity={entity} size="lg" lightbox />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary">{entity.typeLabel}</Badge>
+                    {(entity.tags ?? []).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                  <h2 className="mt-2 text-xl font-semibold leading-snug">{displayTitle}</h2>
+                  {subtitleTitles.length > 0 ? (
+                    <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
+                      {subtitleTitles.map((item) => (
+                        <div key={item.key} className="contents">
+                          <dt className="flex items-center gap-1 text-muted-foreground">
+                            <LanguagesIcon />
+                            {item.label}
+                          </dt>
+                          <dd className="min-w-0 truncate font-medium">{item.title}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
+                </div>
+                {actions ? <div className="shrink-0">{actions}</div> : null}
+              </div>
+            </div>
+            <div className="p-4">
+              <DetailSection title="Details" icon={<BookOpenIcon />}>
+                <FrontmatterPanel entity={entity} relationGroups={relationGroups} typeConfig={typeConfig} />
+              </DetailSection>
+
+              {episodes ? (
+                <DetailSection title={episodes.heading} icon={<ListChecksIcon />}>
+                  {/* Prose the user wrote around the list in the Markdown source —
+                      rendered read-only here since the body view drops the section. */}
+                  {episodes.description.trim() ? (
+                    <MarkdownView markdown={episodes.description} relations={relations} />
+                  ) : null}
+                  <EntityEpisodesPanel
+                    episodes={episodes}
+                    disabled={!contentWritable || !onSaveEpisodes}
+                    saving={episodesSaving}
+                    onSave={(groups) => onSaveEpisodes?.(groups)}
+                    entityId={entity.id}
+                    revision={entity.revision}
+                  />
+                  {episodes.trailing.trim() ? (
+                    <MarkdownView markdown={episodes.trailing} relations={relations} />
+                  ) : null}
+                </DetailSection>
+              ) : null}
+
+              {(notesBody ?? entity.body).trim() ? (
+                <DetailSection title="Notes" icon={<FileTextIcon />}>
+                  <MarkdownView markdown={notesBody ?? entity.body} relations={relations} />
+                </DetailSection>
+              ) : null}
+            </div>
+          </section>
+
+          <aside className="min-w-0 rounded-md border p-4">
+            <DetailSection title="Links" icon={<LinkIcon />}>
+              {Object.entries(entity.externalRefs).length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {Object.entries(entity.externalRefs).map(([key, value]) => (
+                    <a
+                      key={key}
+                      href={value}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="truncate rounded-md border px-2 py-1 text-xs hover:bg-accent"
                     >
-                      #{tag}
-                    </span>
+                      {fieldLabelForKey(typeConfig, key)}: {value}
+                    </a>
                   ))}
                 </div>
-                <h2 className="mt-2 text-xl font-semibold leading-snug">{displayTitle}</h2>
-                {subtitleTitles.length > 0 ? (
-                  <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
-                    {subtitleTitles.map((item) => (
-                      <div key={item.key} className="contents">
-                        <dt className="flex items-center gap-1 text-muted-foreground">
-                          <LanguagesIcon />
-                          {item.label}
-                        </dt>
-                        <dd className="min-w-0 truncate font-medium">{item.title}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                ) : null}
-              </div>
-              {actions ? <div className="shrink-0">{actions}</div> : null}
-            </div>
-          </div>
-          <div className="p-4">
-            <DetailSection title="Details" icon={<BookOpenIcon />}>
-              <FrontmatterPanel entity={entity} relationGroups={relationGroups} typeConfig={typeConfig} />
+              ) : (
+                <EmptyLine>No links yet</EmptyLine>
+              )}
             </DetailSection>
 
-            {episodes ? (
-              <DetailSection title={episodes.heading} icon={<ListChecksIcon />}>
-                {/* Prose the user wrote around the list in the Markdown source —
-                    rendered read-only here since the body view drops the section. */}
-                {episodes.description.trim() ? (
-                  <MarkdownView markdown={episodes.description} relations={relations} />
-                ) : null}
-                <EntityEpisodesPanel
-                  episodes={episodes}
-                  disabled={!contentWritable || !onSaveEpisodes}
-                  saving={episodesSaving}
-                  onSave={(groups) => onSaveEpisodes?.(groups)}
-                  entityId={entity.id}
-                  revision={entity.revision}
-                />
-                {episodes.trailing.trim() ? (
-                  <MarkdownView markdown={episodes.trailing} relations={relations} />
-                ) : null}
-              </DetailSection>
-            ) : null}
+            <DetailSection title="Dates" icon={<CalendarDaysIcon />}>
+              <EntityDates dates={dates} typeConfig={typeConfig} />
+            </DetailSection>
 
-            {(notesBody ?? entity.body).trim() ? (
-              <DetailSection title="Notes" icon={<FileTextIcon />}>
-                <MarkdownView markdown={notesBody ?? entity.body} relations={relations} />
-              </DetailSection>
-            ) : null}
-          </div>
-        </section>
+            <DetailSection title="Connections" icon={<CircleDotIcon />}>
+              {relationGroups.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  <RelationDirectionSection
+                    title="Links to"
+                    groups={outgoingRelationGroups}
+                    entityId={entity.id}
+                    relatedById={relatedById}
+                    typeConfig={typeConfig}
+                  />
+                  <RelationDirectionSection
+                    title="Linked from"
+                    groups={incomingRelationGroups}
+                    entityId={entity.id}
+                    relatedById={relatedById}
+                    typeConfig={typeConfig}
+                  />
+                </div>
+              ) : (
+                <EmptyLine>Nothing connected yet</EmptyLine>
+              )}
+            </DetailSection>
+          </aside>
+        </div>
 
-        <aside className="min-w-0 rounded-md border p-4">
-          <DetailSection title="Links" icon={<LinkIcon />}>
-            {Object.entries(entity.externalRefs).length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {Object.entries(entity.externalRefs).map(([key, value]) => (
-                  <a
-                    key={key}
-                    href={value}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="truncate rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                  >
-                    {fieldLabelForKey(typeConfig, key)}: {value}
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <EmptyLine>No links yet</EmptyLine>
-            )}
-          </DetailSection>
-
-          <DetailSection title="Dates" icon={<CalendarDaysIcon />}>
-            <EntityDates dates={dates} typeConfig={typeConfig} />
-          </DetailSection>
-
-          <DetailSection title="Connections" icon={<CircleDotIcon />}>
-            {relationGroups.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                <RelationDirectionSection
-                  title="Links to"
-                  groups={outgoingRelationGroups}
-                  entityId={entity.id}
-                  relatedById={relatedById}
-                  typeConfig={typeConfig}
-                />
-                <RelationDirectionSection
-                  title="Linked from"
-                  groups={incomingRelationGroups}
-                  entityId={entity.id}
-                  relatedById={relatedById}
-                  typeConfig={typeConfig}
-                />
-              </div>
-            ) : (
-              <EmptyLine>Nothing connected yet</EmptyLine>
-            )}
-          </DetailSection>
-        </aside>
+        {relatedEntities.length > 0 ? (
+          <RelationLocalGraph
+            target={{
+              targetTitle: entity.title,
+              targetTitles: entity.titles,
+              targetTypeLabel: entity.typeLabel,
+              count: relations.length,
+            }}
+            sources={relatedEntities}
+          />
+        ) : null}
       </div>
-
-      {relatedEntities.length > 0 ? (
-        <RelationLocalGraph
-          target={{
-            targetTitle: entity.title,
-            targetTitles: entity.titles,
-            targetTypeLabel: entity.typeLabel,
-            count: relations.length,
-          }}
-          sources={relatedEntities}
-        />
-      ) : null}
-    </div>
+    </LightboxProvider>
   );
 }
 
