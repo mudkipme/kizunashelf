@@ -11,6 +11,7 @@ mod path_suggestions;
 mod router;
 mod state;
 mod tags;
+pub mod tunnel;
 
 pub use error::{ApiError, ApiResult};
 pub use external::provider_credential_keys;

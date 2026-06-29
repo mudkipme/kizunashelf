@@ -1,7 +1,6 @@
-use axum::body::{self, Body};
-use axum::http::{header, Method, Request, Response, StatusCode};
+use axum::http::{header, Method, Response, StatusCode};
 use axum::Router;
-use kizunashelf::api::{provider_credential_keys, router_native, ApiOptions};
+use kizunashelf::api::{provider_credential_keys, router_native, tunnel, ApiOptions};
 use kizunashelf::secrets::SecretStore;
 use kizunashelf::types::AppConfig;
 use std::env;
@@ -9,7 +8,6 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Manager, State};
-use tower::ServiceExt;
 
 mod secret_store;
 mod vaults;
@@ -79,35 +77,16 @@ async fn api_request(
     let method = method
         .parse::<Method>()
         .map_err(|error| format!("Invalid method {method}: {error}"))?;
-    let body = body.unwrap_or_default();
-    let response = router
-        .oneshot(
-            Request::builder()
-                .method(method)
-                .uri(url)
-                .header(header::CONTENT_TYPE, "application/json")
-                .body(Body::from(body))
-                .map_err(|error| error.to_string())?,
-        )
+    let response = tunnel::run_json(router, method, &url, body.unwrap_or_default())
         .await
         .map_err(|error| error.to_string())?;
-    let (parts, body) = response.into_parts();
-    let status = parts.status;
-    let content_type = parts
-        .headers
-        .get(header::CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .map(str::to_owned);
-    let bytes = body::to_bytes(body, usize::MAX)
-        .await
-        .map_err(|error| error.to_string())?;
-    let body = String::from_utf8(bytes.to_vec())
+    let body = String::from_utf8(response.body)
         .map_err(|error| format!("API returned non-UTF-8 response: {error}"))?;
 
     Ok(DesktopApiResponse {
-        status: status.as_u16(),
+        status: response.status.as_u16(),
         body,
-        content_type,
+        content_type: response.content_type,
     })
 }
 
@@ -248,32 +227,16 @@ async fn forward_asset_request(
     let Some(api) = router else {
         return asset_error_response();
     };
-    let path = request.uri().path();
-    let forwarded = match Request::builder()
-        .method(Method::GET)
-        .uri(format!("/api/assets{path}"))
-        .body(Body::empty())
-    {
-        Ok(request) => request,
-        Err(_) => return asset_error_response(),
-    };
-    match api.oneshot(forwarded).await {
+    let uri = format!("/api/assets{}", request.uri().path());
+    match tunnel::run_asset(api, &uri).await {
         Ok(response) => {
-            let (parts, body) = response.into_parts();
-            let content_type = parts
-                .headers
-                .get(header::CONTENT_TYPE)
-                .and_then(|value| value.to_str().ok())
-                .unwrap_or("application/octet-stream")
-                .to_string();
-            let bytes = body::to_bytes(body, usize::MAX)
-                .await
-                .map(|bytes| bytes.to_vec())
-                .unwrap_or_default();
+            let content_type = response
+                .content_type
+                .unwrap_or_else(|| "application/octet-stream".to_string());
             Response::builder()
-                .status(parts.status)
+                .status(response.status)
                 .header(header::CONTENT_TYPE, content_type)
-                .body(bytes)
+                .body(response.body)
                 .unwrap_or_else(|_| asset_error_response())
         }
         Err(_) => asset_error_response(),

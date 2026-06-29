@@ -18,16 +18,14 @@ pub use vfs::{FfiVfs, VaultFileSystem, VfsDirEntry, VfsError, VfsFile, VfsMetada
 use std::sync::Arc;
 use std::time::Duration;
 
-use axum::body::{self, Body};
-use axum::http::{header, Method, Request};
+use axum::http::Method;
 use axum::Router;
-use kizunashelf::api::{router_with_vault, ApiOptions as CoreApiOptions};
+use kizunashelf::api::{router_with_vault, tunnel, ApiOptions as CoreApiOptions};
 use kizunashelf::secrets::SecretStore;
 use kizunashelf::types::AppConfig;
 use kizunashelf::vfs::Vfs;
 use std::path::PathBuf;
 use tokio::runtime::Runtime;
-use tower::ServiceExt;
 
 uniffi::setup_scaffolding!();
 
@@ -182,42 +180,17 @@ fn encode_asset_path(path: &str) -> String {
 
 async fn run_asset(router: Router, path: String) -> Result<AssetData, KizunaError> {
     let uri = format!("/api/assets/{}", encode_asset_path(&path));
-    let request = Request::builder()
-        .method(Method::GET)
-        .uri(&uri)
-        .body(Body::empty())
-        .map_err(|error| KizunaError::Bridge {
-            message: format!("invalid asset request: {error}"),
-        })?;
-
-    let response = router
-        .oneshot(request)
+    let response = tunnel::run_asset(router, &uri)
         .await
-        .map_err(|error| KizunaError::Bridge {
-            message: format!("router error: {error}"),
-        })?;
-
-    let (parts, body) = response.into_parts();
-    if !parts.status.is_success() {
+        .map_err(bridge_error)?;
+    if !response.status.is_success() {
         return Err(KizunaError::Bridge {
-            message: format!("asset {path}: HTTP {}", parts.status.as_u16()),
+            message: format!("asset {path}: HTTP {}", response.status.as_u16()),
         });
     }
-    let content_type = parts
-        .headers
-        .get(header::CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .map(str::to_owned);
-    let bytes = body::to_bytes(body, usize::MAX)
-        .await
-        .map_err(|error| KizunaError::Bridge {
-            message: format!("failed to read asset body: {error}"),
-        })?
-        .to_vec();
-
     Ok(AssetData {
-        bytes,
-        content_type,
+        bytes: response.body,
+        content_type: response.content_type,
     })
 }
 
@@ -230,43 +203,21 @@ async fn run_request(
     let method = method.parse::<Method>().map_err(|_| KizunaError::Bridge {
         message: format!("invalid method: {method}"),
     })?;
-
-    let request = Request::builder()
-        .method(method)
-        .uri(&url)
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(body))
-        .map_err(|error| KizunaError::Bridge {
-            message: format!("invalid request: {error}"),
-        })?;
-
-    let response = router
-        .oneshot(request)
+    let response = tunnel::run_json(router, method, &url, body)
         .await
-        .map_err(|error| KizunaError::Bridge {
-            message: format!("router error: {error}"),
-        })?;
-
-    let (parts, response_body) = response.into_parts();
-    let status = parts.status.as_u16();
-    let content_type = parts
-        .headers
-        .get(header::CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .map(str::to_owned);
-
-    let bytes = body::to_bytes(response_body, usize::MAX)
-        .await
-        .map_err(|error| KizunaError::Bridge {
-            message: format!("failed to read body: {error}"),
-        })?;
-    let body = String::from_utf8(bytes.to_vec()).map_err(|_| KizunaError::Bridge {
+        .map_err(bridge_error)?;
+    let body = String::from_utf8(response.body).map_err(|_| KizunaError::Bridge {
         message: "response body was not valid UTF-8".to_string(),
     })?;
-
     Ok(ApiResponse {
-        status,
+        status: response.status.as_u16(),
         body,
-        content_type,
+        content_type: response.content_type,
     })
+}
+
+fn bridge_error(error: tunnel::TunnelError) -> KizunaError {
+    KizunaError::Bridge {
+        message: error.to_string(),
+    }
 }

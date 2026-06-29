@@ -2457,7 +2457,6 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
- "tower",
 ]
 
 [[package]]
@@ -2474,7 +2473,6 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
- "tower",
  "uniffi",
  "urlencoding",
 ]
