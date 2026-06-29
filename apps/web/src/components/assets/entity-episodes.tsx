@@ -2,9 +2,10 @@ import { useState } from "react";
 import { CheckIcon, RefreshCwIcon } from "lucide-react";
 
 import { EpisodeSyncDialog } from "@/components/assets/episode-sync-dialog";
+import { InlineMarkdown } from "@/components/assets/markdown-view";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { EntityEpisodes, EpisodeGroup } from "@/types/api";
+import type { EntityEpisodes, EpisodeGroup, Relation } from "@/types/api";
 
 /// Displays an entity's episodes/tracks list (grouped by season/disc) with a
 /// watched/total roll-up. When the section uses checklist tracking, each item is a
@@ -18,6 +19,7 @@ export function EntityEpisodesPanel({
   onSave,
   entityId,
   revision,
+  relations,
 }: {
   episodes: EntityEpisodes;
   disabled: boolean;
@@ -25,6 +27,7 @@ export function EntityEpisodesPanel({
   onSave: (groups: EpisodeGroup[]) => void;
   entityId?: string;
   revision?: string;
+  relations: Relation[];
 }) {
   const checklist = episodes.tracking === "checklist";
   const percent = episodes.total > 0 ? Math.round((episodes.watched / episodes.total) * 100) : 0;
@@ -103,20 +106,54 @@ export function EntityEpisodesPanel({
               </h4>
             ) : null}
             <ul className="flex flex-col">
-              {group.items.map((item, itemIndex) => (
-                <li key={itemIndex}>
-                  <button
-                    type="button"
-                    disabled={!interactive}
-                    onClick={() => toggle(groupIndex, itemIndex)}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                      interactive && "hover:bg-accent",
-                      !checklist && "cursor-default",
-                    )}
-                    aria-pressed={item.watched}
-                  >
-                    {checklist ? (
+              {group.items.map((item, itemIndex) => {
+                const hasTitle = item.title.trim().length > 0;
+                const title = hasTitle ? (
+                  <InlineMarkdown markdown={item.title} relations={relations} />
+                ) : item.key ? null : (
+                  "—"
+                );
+                const keyLabel = item.key ? (
+                  <span className="shrink-0 tabular-nums text-muted-foreground">{item.key}</span>
+                ) : null;
+
+                // Non-checklist rows are plain, selectable text (no interactive
+                // wrapper) so the list can be copied; checklist rows are a
+                // role="checkbox" div so links inside the title stay valid and
+                // clickable while the row toggles.
+                if (!checklist) {
+                  return (
+                    <li key={itemIndex} className="flex items-start gap-2 px-2 py-1.5 text-sm">
+                      <span className="mt-0.5 text-xs text-muted-foreground">•</span>
+                      {keyLabel}
+                      <span className="min-w-0">{title}</span>
+                    </li>
+                  );
+                }
+
+                return (
+                  <li key={itemIndex}>
+                    <div
+                      role="checkbox"
+                      aria-checked={item.watched}
+                      aria-disabled={interactive ? undefined : true}
+                      tabIndex={interactive ? 0 : -1}
+                      onClick={interactive ? () => toggle(groupIndex, itemIndex) : undefined}
+                      onKeyDown={
+                        interactive
+                          ? (event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                toggle(groupIndex, itemIndex);
+                              }
+                            }
+                          : undefined
+                      }
+                      className={cn(
+                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                        interactive ? "cursor-pointer hover:bg-accent" : "cursor-default",
+                      )}
+                    >
                       <span
                         className={cn(
                           "flex size-4 shrink-0 items-center justify-center rounded border",
@@ -125,18 +162,14 @@ export function EntityEpisodesPanel({
                       >
                         {item.watched ? <CheckIcon className="size-3" /> : null}
                       </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">•</span>
-                    )}
-                    {item.key ? (
-                      <span className="shrink-0 tabular-nums text-muted-foreground">{item.key}</span>
-                    ) : null}
-                    <span className={cn("min-w-0 truncate", item.watched && checklist && "text-muted-foreground")}>
-                      {item.title || (item.key ? "" : "—")}
-                    </span>
-                  </button>
-                </li>
-              ))}
+                      {keyLabel}
+                      <span className={cn("min-w-0 truncate", item.watched && "text-muted-foreground")}>
+                        {title}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}

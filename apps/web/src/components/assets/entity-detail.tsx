@@ -127,6 +127,7 @@ export function EntityDetail({
                     onSave={(groups) => onSaveEpisodes?.(groups)}
                     entityId={entity.id}
                     revision={entity.revision}
+                    relations={relations}
                   />
                   {episodes.trailing.trim() ? (
                     <MarkdownView markdown={episodes.trailing} relations={relations} />

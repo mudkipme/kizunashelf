@@ -1,3 +1,4 @@
+import type { MouseEvent, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 import remarkBreaks from "remark-breaks";
@@ -8,6 +9,54 @@ import type { Relation } from "@/types/api";
 
 const wikilinkPattern = /\[\[([^\]|#]+)(#[^\]|]+)?(?:\|([^\]]+))?\]\]/g;
 
+const linkClassName = "font-medium text-primary underline-offset-4 hover:underline";
+
+// Renders a resolved link (internal entity links via the router, external links
+// in a new tab). Stops click propagation so the link still works when it sits
+// inside a clickable parent (e.g. a toggleable episode row).
+function MarkdownLink({ href, children }: { href?: string; children?: ReactNode }) {
+  const stop = (event: MouseEvent) => event.stopPropagation();
+
+  if (href?.startsWith("/entities/")) {
+    return (
+      <Link to={href} className={linkClassName} onClick={stop}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className={linkClassName} onClick={stop}>
+      {children}
+    </a>
+  );
+}
+
+/**
+ * Renders a short, single-line string (e.g. an episode title) with wikilink and
+ * basic inline Markdown support. Unlike {@link MarkdownView} it produces inline
+ * content — the paragraph wrapper is collapsed — so it can sit inside a list row.
+ */
+export function InlineMarkdown({ markdown, relations }: { markdown: string; relations: Relation[] }) {
+  const transformed = transformWikilinks(markdown, relations);
+
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p({ children }) {
+          return <>{children}</>;
+        },
+        a({ href, children }) {
+          return <MarkdownLink href={href}>{children}</MarkdownLink>;
+        },
+      }}
+    >
+      {transformed}
+    </ReactMarkdown>
+  );
+}
+
 export function MarkdownView({ markdown, relations }: { markdown: string; relations: Relation[] }) {
   const transformed = transformWikilinks(markdown, relations);
 
@@ -17,27 +66,7 @@ export function MarkdownView({ markdown, relations }: { markdown: string; relati
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           a({ href, children }) {
-            if (href?.startsWith("/entities/")) {
-              return (
-                <Link
-                  to={href}
-                  className="font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {children}
-                </Link>
-              );
-            }
-
-            return (
-              <a
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                {children}
-              </a>
-            );
+            return <MarkdownLink href={href}>{children}</MarkdownLink>;
           },
           img({ src, alt }) {
             if (typeof src !== "string" || !src.trim()) return null;
