@@ -78,8 +78,41 @@ async fn main() -> Result<()> {
     let address: SocketAddr = format!("{host}:{port}").parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;
     println!("KizunaShelf listening on http://{}", listener.local_addr()?);
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+    println!("KizunaShelf shut down");
     Ok(())
+}
+
+/// Resolves when the process is asked to stop: SIGINT (Ctrl-C, local runs) or
+/// SIGTERM (`docker stop` / container restart). Installing an explicit handler
+/// matters in containers: as PID 1 the process otherwise *ignores* SIGTERM, so
+/// Docker would wait out its grace period and then SIGKILL it. With this, the
+/// server stops accepting connections, drains in-flight requests, and exits
+/// promptly.
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl-C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {}
+        _ = terminate => {}
+    }
 }
 
 fn parse_bool(value: &str) -> Option<bool> {

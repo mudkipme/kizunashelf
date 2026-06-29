@@ -12,28 +12,57 @@ import type { EntityEpisodes, EpisodeGroup, Relation } from "@/types/api";
 /// toggle; toggling persists the whole list via `onSave` (the Markdown body stays
 /// the source of truth). A "Sync" action imports from external providers. Structural
 /// edits (add/remove/reorder) are done in the Markdown body for now.
+/// The "Sync" action for an episodes section: a button plus its import dialog,
+/// self-contained so it can live in the section header. Renders nothing when
+/// syncing isn't available (read-only, or no entity/revision to guard against).
+export function EpisodeSyncButton({
+  episodes,
+  disabled,
+  entityId,
+  revision,
+}: {
+  episodes: EntityEpisodes;
+  disabled: boolean;
+  entityId?: string;
+  revision?: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (disabled || !entityId || revision == null) return null;
+
+  return (
+    <>
+      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <RefreshCwIcon data-icon="inline-start" />
+        Sync
+      </Button>
+      <EpisodeSyncDialog
+        open={open}
+        onOpenChange={setOpen}
+        entityId={entityId}
+        revision={revision}
+        episodes={episodes}
+      />
+    </>
+  );
+}
+
 export function EntityEpisodesPanel({
   episodes,
   disabled,
   saving,
   onSave,
-  entityId,
-  revision,
   relations,
 }: {
   episodes: EntityEpisodes;
   disabled: boolean;
   saving: boolean;
   onSave: (groups: EpisodeGroup[]) => void;
-  entityId?: string;
-  revision?: string;
   relations: Relation[];
 }) {
   const checklist = episodes.tracking === "checklist";
   const percent = episodes.total > 0 ? Math.round((episodes.watched / episodes.total) * 100) : 0;
   const interactive = checklist && !disabled && !saving;
-  const [syncOpen, setSyncOpen] = useState(false);
-  const canSync = Boolean(entityId && revision != null && !disabled);
 
   function toggle(groupIndex: number, itemIndex: number) {
     if (!interactive) return;
@@ -50,42 +79,17 @@ export function EntityEpisodesPanel({
     onSave(groups);
   }
 
-  const syncButton = canSync ? (
-    <Button type="button" variant="outline" size="sm" onClick={() => setSyncOpen(true)}>
-      <RefreshCwIcon data-icon="inline-start" />
-      Sync
-    </Button>
-  ) : null;
-  const syncDialog =
-    canSync && entityId && revision != null ? (
-      <EpisodeSyncDialog
-        open={syncOpen}
-        onOpenChange={setSyncOpen}
-        entityId={entityId}
-        revision={revision}
-        episodes={episodes}
-      />
-    ) : null;
-
   if (episodes.total === 0) {
     return (
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">
-            No items yet — sync from a provider or add a list under the{" "}
-            <code>{episodes.heading}</code> heading.
-          </p>
-          {syncButton}
-        </div>
-        {syncDialog}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        No items yet — sync from a provider or add a list under the{" "}
+        <code>{episodes.heading}</code> heading.
+      </p>
     );
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {syncButton ? <div className="flex justify-end">{syncButton}</div> : null}
-      {syncDialog}
       {checklist ? (
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">

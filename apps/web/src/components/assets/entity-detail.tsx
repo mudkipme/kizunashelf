@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
 import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
-import { EntityEpisodesPanel } from "@/components/assets/entity-episodes";
+import { EntityEpisodesPanel, EpisodeSyncButton } from "@/components/assets/entity-episodes";
 import { FrontmatterPanel } from "@/components/assets/frontmatter-panel";
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
@@ -114,7 +114,18 @@ export function EntityDetail({
               </DetailSection>
 
               {episodes ? (
-                <DetailSection title={episodes.heading} icon={<ListChecksIcon />}>
+                <DetailSection
+                  title={episodes.heading}
+                  icon={<ListChecksIcon />}
+                  action={
+                    <EpisodeSyncButton
+                      episodes={episodes}
+                      disabled={!contentWritable || !onSaveEpisodes}
+                      entityId={entity.id}
+                      revision={entity.revision}
+                    />
+                  }
+                >
                   {/* Prose the user wrote around the list in the Markdown source —
                       rendered read-only here since the body view drops the section. */}
                   {episodes.description.trim() ? (
@@ -125,8 +136,6 @@ export function EntityDetail({
                     disabled={!contentWritable || !onSaveEpisodes}
                     saving={episodesSaving}
                     onSave={(groups) => onSaveEpisodes?.(groups)}
-                    entityId={entity.id}
-                    revision={entity.revision}
                     relations={relations}
                   />
                   {episodes.trailing.trim() ? (
