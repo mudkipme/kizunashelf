@@ -8,8 +8,6 @@ import { z as zod } from 'zod';
 
 export const EntitiesQuery = zod.object({
   "type": zod.string().nullish(),
-  "refs": zod.string().nullish(),
-  "cover": zod.string().nullish(),
   "sort": zod.string().nullish(),
   "direction": zod.string().nullish(),
   "titleLanguage": zod.string().nullish(),

@@ -5,6 +5,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { allTagsQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
+import { useRelationSearch } from "@/api/use-relation-search";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import type { FieldFilter, FieldFilterOption } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
@@ -26,10 +27,10 @@ import {
   fieldDisplayLabel,
   fieldLabelAcrossTypes,
   fieldLabelsByType,
-  hasAnyFieldType,
 } from "@/lib/type-config";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
+import { entityTitle } from "@/lib/title-language";
 import type { TypeConfig } from "@/types/api";
 import {
   applyPreferencesToSearchParams,
@@ -51,12 +52,11 @@ export function LibraryPage() {
     ...statsQuery({ type: selectedType }),
     enabled: !isGlobalType,
   });
-  const refs = searchParams.get("refs") ?? allOptions;
-  const cover = searchParams.get("cover") ?? allOptions;
   const sort = searchParams.get("sort") ?? defaultSort;
   const direction = searchParams.get("direction") === "desc" ? "desc" : defaultDirection;
   const view = searchParams.get("view") === "grid" ? "grid" : defaultView;
   const language = useTitleLanguage();
+  const onRelationSearch = useRelationSearch();
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -73,13 +73,6 @@ export function LibraryPage() {
     [isGlobalType, config.data, selectedTypeConfig],
   );
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
-  const supportsRefsFilter =
-    !config.data || scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["externalRef"]));
-  const supportsCoverFilter =
-    !config.data ||
-    scopeTypeConfigs.some((typeConfig) => hasAnyFieldType(typeConfig, ["image", "imageList"]));
-  const effectiveRefs = supportsRefsFilter ? refs : allOptions;
-  const effectiveCover = supportsCoverFilter ? cover : allOptions;
   const allTagsData = useQuery(allTagsQuery()).data?.tags;
   const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
   // The built-in tags filter is universal (not schema-derived). Its selected
@@ -97,12 +90,49 @@ export function LibraryPage() {
     }),
     [allTags, searchParams, tagsFieldName],
   );
+  // Relation fields (per selected type) become dynamically-loaded multi-selects,
+  // like enum lists but with suggestions searched on demand. Hidden for "all
+  // types" for the same reason as enum fields — they're type-specific.
+  // Per-field suggestion loaders, memoized WITHOUT `searchParams` so their
+  // identity stays stable as chips are added/removed — otherwise the open
+  // dropdown re-fetches the same suggestions after every selection.
+  const relationLoadOptions = useMemo(() => {
+    const loaders = new Map<string, NonNullable<FieldFilter["loadOptions"]>>();
+    if (isGlobalType || !selectedTypeConfig) return loaders;
+    for (const field of selectedTypeConfig.fields ?? []) {
+      if (field.fieldType !== "relation") continue;
+      loaders.set(field.field, (search, signal) =>
+        onRelationSearch({ relationType: field.relationType, query: search, signal }).then((items) =>
+          items
+            .map((item) => ({ value: item.basename, label: entityTitle(item, language) }))
+            .filter((option) => option.value),
+        ),
+      );
+    }
+    return loaders;
+  }, [isGlobalType, selectedTypeConfig, onRelationSearch, language]);
+  const relationFilters = useMemo<FieldFilter[]>(() => {
+    if (isGlobalType || !selectedTypeConfig) return [];
+    return (selectedTypeConfig.fields ?? [])
+      .filter((field) => field.fieldType === "relation")
+      .map((field) => ({
+        field: field.field,
+        label: fieldDisplayLabel(field),
+        kind: "relation" as const,
+        options: [],
+        values: uniqueStrings(searchParams.getAll(fieldFilterParamKey(field.field))),
+        loadOptions: relationLoadOptions.get(field.field),
+      }));
+  }, [isGlobalType, selectedTypeConfig, searchParams, relationLoadOptions]);
   const fieldFilters = useMemo(() => {
-    const schemaFilters = fieldFiltersForTypes(scopeTypeConfigs, searchParams);
+    // Enum/enumList/bool field filters are type-specific, so only "all types"
+    // keeps the universal Tags filter; a concrete type adds its schema fields.
+    const schemaFilters = isGlobalType ? [] : fieldFiltersForTypes(scopeTypeConfigs, searchParams);
     // Hide the tags filter only when the vault has no tags and none are selected.
     const showTags = tagFilter.options.length > 0 || tagFilter.values.length > 0;
-    return showTags ? [tagFilter, ...schemaFilters] : schemaFilters;
-  }, [tagFilter, scopeTypeConfigs, searchParams]);
+    const base = showTags ? [tagFilter, ...schemaFilters] : schemaFilters;
+    return [...base, ...relationFilters];
+  }, [tagFilter, scopeTypeConfigs, searchParams, isGlobalType, relationFilters]);
   const activeFieldFilters = fieldFilters.filter((filter) => filter.values.length > 0);
   const effectiveSort =
     scopeStats &&
@@ -117,8 +147,6 @@ export function LibraryPage() {
     ? "/entities/new"
     : `/entities/new?type=${encodeURIComponent(selectedType)}`;
   const filtersActive =
-    effectiveRefs !== allOptions ||
-    effectiveCover !== allOptions ||
     activeFieldFilters.length > 0 ||
     effectiveSort !== defaultSort ||
     direction !== defaultDirection ||
@@ -132,8 +160,6 @@ export function LibraryPage() {
       sort: effectiveSort,
       direction,
       titleLanguage: language,
-      ...(effectiveRefs !== allOptions ? { refs: effectiveRefs } : {}),
-      ...(effectiveCover !== allOptions ? { cover: effectiveCover } : {}),
       ...entityFiltersParam(activeFieldFilters),
       ...(query.trim() ? { q: query.trim() } : {}),
     }),
@@ -197,16 +223,6 @@ export function LibraryPage() {
   }, [scopeStats, sort, setQueryParam]);
 
   useEffect(() => {
-    if (!config.data || supportsRefsFilter || refs === allOptions) return;
-    setQueryParam("refs", allOptions);
-  }, [config.data, supportsRefsFilter, refs, setQueryParam]);
-
-  useEffect(() => {
-    if (!config.data || supportsCoverFilter || cover === allOptions) return;
-    setQueryParam("cover", allOptions);
-  }, [config.data, supportsCoverFilter, cover, setQueryParam]);
-
-  useEffect(() => {
     if (!config.data) return;
     const next = cleanUnsupportedFieldFilterParams(searchParams, fieldFilters);
     if (!next) return;
@@ -216,22 +232,8 @@ export function LibraryPage() {
 
   useEffect(() => {
     if (!globalStats.data || !selectedType || !searchParams.has("type")) return;
-    if ((!supportsRefsFilter && refs !== allOptions) || (!supportsCoverFilter && cover !== allOptions)) {
-      return;
-    }
     writeAssetListPreferences(selectedType, preferencesFromSearchParams(searchParams));
-  }, [
-    globalStats.data,
-    selectedType,
-    searchParams,
-    supportsRefsFilter,
-    supportsCoverFilter,
-    refs,
-    cover,
-    sort,
-    direction,
-    view,
-  ]);
+  }, [globalStats.data, selectedType, searchParams, sort, direction, view]);
 
   useEffect(() => {
     if (!list.data || list.data.page === page) return;
@@ -328,17 +330,11 @@ export function LibraryPage() {
                   showLabel={false}
                   className="mt-2"
                   stats={scopeStats}
-                  showRefsFilter={supportsRefsFilter}
-                  showCoverFilter={supportsCoverFilter}
-                  refs={effectiveRefs}
-                  cover={effectiveCover}
                   sort={effectiveSort}
                   direction={direction}
                   view={view}
                   fieldFilters={fieldFilters}
                   dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
-                  onRefsChange={(value) => setQueryParam("refs", value)}
-                  onCoverChange={(value) => setQueryParam("cover", value)}
                   onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
                   onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
                   onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
@@ -350,17 +346,11 @@ export function LibraryPage() {
             <AssetToolbar
               className="hidden md:flex"
               stats={scopeStats}
-              showRefsFilter={supportsRefsFilter}
-              showCoverFilter={supportsCoverFilter}
-              refs={effectiveRefs}
-              cover={effectiveCover}
               sort={effectiveSort}
               direction={direction}
               view={view}
               fieldFilters={fieldFilters}
               dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
-              onRefsChange={(value) => setQueryParam("refs", value)}
-              onCoverChange={(value) => setQueryParam("cover", value)}
               onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
               onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
               onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
@@ -429,7 +419,7 @@ export function LibraryPage() {
 }
 
 function hasPreferenceParams(params: URLSearchParams) {
-  return ["refs", "cover", "sort", "direction", "view"].some((key) => params.has(key));
+  return ["sort", "direction", "view"].some((key) => params.has(key));
 }
 
 function fieldFiltersForTypes(typeConfigs: TypeConfig[], params: URLSearchParams) {

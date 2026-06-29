@@ -700,22 +700,6 @@
           },
           {
             "in": "query",
-            "name": "refs",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "cover",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
             "name": "sort",
             "schema": {
               "type": "string"
@@ -4864,18 +4848,6 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "refs": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "cover": {
             "type": [
               "string",
               "null"

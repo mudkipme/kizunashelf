@@ -8,8 +8,6 @@ import { z as zod } from 'zod';
 
 export const GetEntitiesParams = zod.object({
   "type": zod.string().optional(),
-  "refs": zod.string().optional(),
-  "cover": zod.string().optional(),
   "sort": zod.string().optional(),
   "direction": zod.string().optional(),
   "titleLanguage": zod.string().optional(),

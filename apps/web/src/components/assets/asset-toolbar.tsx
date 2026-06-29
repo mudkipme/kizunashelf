@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import { Grid2X2Icon, ListIcon, SlidersHorizontalIcon } from "lucide-react";
 
+import { isAbortError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
@@ -16,9 +18,11 @@ export type FieldFilterOption = {
 export type FieldFilter = {
   field: string;
   label: string;
-  kind: "multi" | "bool";
+  kind: "multi" | "bool" | "relation";
   options: FieldFilterOption[];
   values: string[];
+  /** For `kind: "relation"`: loads suggestions dynamically as the user types. */
+  loadOptions?: (query: string, signal: AbortSignal) => Promise<FieldFilterOption[]>;
 };
 
 type AssetToolbarProps = {
@@ -26,17 +30,11 @@ type AssetToolbarProps = {
   compact?: boolean;
   showLabel?: boolean;
   stats?: StatsResponse;
-  showRefsFilter?: boolean;
-  showCoverFilter?: boolean;
-  refs: string;
-  cover: string;
   sort: string;
   direction: string;
   view: string;
   fieldFilters?: FieldFilter[];
   dateFieldLabel?: (field: string) => string;
-  onRefsChange: (value: string) => void;
-  onCoverChange: (value: string) => void;
   onSortChange: (value: string) => void;
   onDirectionChange: (value: string) => void;
   onViewChange: (value: string) => void;
@@ -48,17 +46,11 @@ export function AssetToolbar({
   compact = false,
   showLabel = true,
   stats,
-  showRefsFilter = true,
-  showCoverFilter = true,
-  refs,
-  cover,
   sort,
   direction,
   view,
   fieldFilters = [],
   dateFieldLabel = (field) => field,
-  onRefsChange,
-  onCoverChange,
   onSortChange,
   onDirectionChange,
   onViewChange,
@@ -79,30 +71,6 @@ export function AssetToolbar({
           Filters
         </div>
       ) : null}
-      {showRefsFilter ? (
-        <Select
-          value={refs}
-          onChange={(event) => onRefsChange(event.target.value)}
-          className={compact ? "min-w-0" : undefined}
-          aria-label="Refs"
-        >
-          <option value={allOptions}>Any refs</option>
-          <option value="with">With refs</option>
-          <option value="without">Without refs</option>
-        </Select>
-      ) : null}
-      {showCoverFilter ? (
-        <Select
-          value={cover}
-          onChange={(event) => onCoverChange(event.target.value)}
-          className={compact ? "min-w-0" : undefined}
-          aria-label="Cover"
-        >
-          <option value={allOptions}>Any cover</option>
-          <option value="with">With cover</option>
-          <option value="without">Without cover</option>
-        </Select>
-      ) : null}
       {fieldFilters.map((filter) => (
         <FieldFilterControl
           key={filter.field}
@@ -111,7 +79,7 @@ export function AssetToolbar({
           onChange={(values) => onFieldFilterChange?.(filter.field, values)}
         />
       ))}
-      {compact || (!showRefsFilter && !showCoverFilter && !hasFieldFilters) ? null : (
+      {compact || !hasFieldFilters ? null : (
         <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
       )}
       <Select
@@ -190,6 +158,10 @@ function FieldFilterControl({
     );
   }
 
+  if (filter.kind === "relation") {
+    return <RelationFilterControl filter={filter} compact={compact} onChange={onChange} />;
+  }
+
   return (
     <MultiValueCombobox
       values={filter.values}
@@ -197,6 +169,75 @@ function FieldFilterControl({
       placeholder={`Any ${filter.label}`}
       ariaLabel={filter.label}
       className={cn("min-h-8 px-2 py-1 text-xs", compact ? "col-span-2 w-full min-w-0" : "w-56 shrink-0")}
+      onChange={onChange}
+    />
+  );
+}
+
+/**
+ * Relation-field filter: a multi-select whose suggestions are loaded on demand
+ * (entities of the field's relation type), mirroring the metadata editor's
+ * relation input. Selected values are entity basenames; a label cache keeps the
+ * chips showing titles even after the search query changes.
+ */
+function RelationFilterControl({
+  filter,
+  compact,
+  onChange,
+}: {
+  filter: FieldFilter;
+  compact: boolean;
+  onChange: (values: string[]) => void;
+}) {
+  const [inputValue, setInputValue] = useState("");
+  const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState<FieldFilterOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>();
+  const labels = useRef(new Map<string, string>());
+  for (const option of options) {
+    if (option.label) labels.current.set(option.value, option.label);
+  }
+
+  const { loadOptions } = filter;
+  useEffect(() => {
+    if (!open || !loadOptions) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      setError(undefined);
+      loadOptions(inputValue.trim(), controller.signal)
+        .then((items) => {
+          if (!controller.signal.aborted) setOptions(items);
+        })
+        .catch((caught) => {
+          if (isAbortError(caught) || controller.signal.aborted) return;
+          setOptions([]);
+          setError(caught instanceof Error ? caught.message : "Could not load options.");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, 200);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [open, inputValue, loadOptions]);
+
+  return (
+    <MultiValueCombobox
+      values={filter.values}
+      options={options}
+      placeholder={`Any ${filter.label}`}
+      ariaLabel={filter.label}
+      className={cn("min-h-8 px-2 py-1 text-xs", compact ? "col-span-2 w-full min-w-0" : "w-56 shrink-0")}
+      inputValue={inputValue}
+      onInputValueChange={setInputValue}
+      loading={loading}
+      error={error}
+      formatChipLabel={(value) => labels.current.get(value) ?? value}
+      onOpenChange={setOpen}
       onChange={onChange}
     />
   );

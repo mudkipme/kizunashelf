@@ -223,11 +223,14 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .await;
     assert_eq!(relation_count_sort["items"][0]["id"], "anime:Star Voyager");
 
-    let filtered = server
-        .ok_json("/api/entities?type=games&refs=with&cover=without")
+    // Relation-field filter: entities whose `franchise` relation points to Star Saga.
+    let franchise_filter = urlencoding::encode(r#"[{"field":"franchise","values":["Star Saga"]}]"#);
+    let franchise_filtered = server
+        .ok_json(&format!("/api/entities?filters={franchise_filter}"))
         .await;
-    assert_eq!(filtered["total"], 1);
-    assert_eq!(filtered["items"][0]["id"], "games:Moon Quest");
+    assert_eq!(franchise_filtered["total"], 2);
+    assert!(has_entity_title(&franchise_filtered["items"], "星之航路"));
+    assert!(has_entity_title(&franchise_filtered["items"], "Moon Quest"));
 
     let status_filters =
         urlencoding::encode(r#"[{"field":"status","values":["Watching","Playing"]}]"#);

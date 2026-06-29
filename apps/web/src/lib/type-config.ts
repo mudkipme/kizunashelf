@@ -62,10 +62,6 @@ export function entityFieldLabel(
   return labelsByType?.get(type)?.get(field) ?? field;
 }
 
-export function hasAnyFieldType(typeConfig: TypeConfig | undefined, fieldTypes: FieldType[]) {
-  return configFields(typeConfig).some((field) => fieldTypes.includes(field.fieldType));
-}
-
 export function dateRoleFields(typeConfig: TypeConfig | undefined, dateRole: DateRole): FieldConfig[] {
   return configFields(typeConfig).filter(
     (field) => isDateFieldType(field.fieldType) && field.dateRole === dateRole,

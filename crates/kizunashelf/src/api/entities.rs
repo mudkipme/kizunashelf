@@ -21,8 +21,6 @@ use serde::Deserialize;
 pub(crate) struct EntitiesQuery {
     #[serde(rename = "type")]
     entity_type: Option<String>,
-    refs: Option<String>,
-    cover: Option<String>,
     sort: Option<String>,
     direction: Option<String>,
     #[serde(rename = "titleLanguage")]
@@ -49,8 +47,6 @@ pub(crate) async fn entities(
     };
     let params = EntityListParams {
         entity_type: query.entity_type.as_deref(),
-        refs: query.refs.as_deref(),
-        cover: query.cover.as_deref(),
         field_filters,
         query: query.q.as_deref(),
         relation: query.relation.as_deref(),

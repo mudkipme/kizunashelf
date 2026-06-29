@@ -27,10 +27,6 @@ pub struct EntityFieldFilter {
 pub struct EntityListParams<'a> {
     /// `None` or `"all"` lists every type; otherwise restricts to that type id.
     pub entity_type: Option<&'a str>,
-    /// `"with"`/`"without"` filters on having any external ref; else ignored.
-    pub refs: Option<&'a str>,
-    /// `"with"`/`"without"` filters on having a cover image; else ignored.
-    pub cover: Option<&'a str>,
     pub field_filters: Vec<EntityFieldFilter>,
     /// Free-text search across titles/summary/basename/path (case-insensitive).
     pub query: Option<&'a str>,
@@ -65,16 +61,6 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
         .filter(|entity_type| *entity_type != "all")
     {
         entities.retain(|entity| entity.summary.entity_type == entity_type);
-    }
-    match params.refs {
-        Some("with") => entities.retain(|entity| !entity.summary.external_refs.is_empty()),
-        Some("without") => entities.retain(|entity| entity.summary.external_refs.is_empty()),
-        _ => {}
-    }
-    match params.cover {
-        Some("with") => entities.retain(|entity| entity.summary.image.is_some()),
-        Some("without") => entities.retain(|entity| entity.summary.image.is_none()),
-        _ => {}
     }
     if !params.field_filters.is_empty() {
         entities
@@ -191,11 +177,47 @@ fn entity_matches_field_filters(
         let Some(field_type) = field_type_for_entity_filter(entity, library, &filter.field) else {
             return false;
         };
+        // Relation fields aren't matched against frontmatter — the wikilinks are
+        // already resolved into the relation graph, so match there by the target.
+        if field_type == FieldType::Relation {
+            return relation_field_matches(entity, library, filter);
+        }
         let Some(value) = entity.frontmatter.get(&filter.field) else {
             return false;
         };
         field_value_matches_filter(value, field_type, &filter.values)
     })
+}
+
+/// Whether `entity` has an outgoing relation in `filter.field` to any of the
+/// wanted targets. A wanted value matches the target by its resolved basename or
+/// id, or by the raw wikilink text (so a hand-written `[[Title]]` link still
+/// matches). OR within the values, like the other multi-value filters.
+fn relation_field_matches(
+    entity: &EntityRecord,
+    library: &Library,
+    filter: &EntityFieldFilter,
+) -> bool {
+    library.relations.iter().any(|relation| {
+        relation.direction == RelationDirection::Out
+            && relation.source_id == entity.summary.id
+            && relation.field == filter.field
+            && filter
+                .values
+                .iter()
+                .any(|wanted| relation_target_matches(library, relation, wanted))
+    })
+}
+
+fn relation_target_matches(library: &Library, relation: &Relation, wanted: &str) -> bool {
+    if relation.target_title == wanted {
+        return true;
+    }
+    relation
+        .target_id
+        .as_deref()
+        .and_then(|id| library.record_by_id(id))
+        .is_some_and(|target| target.summary.basename == wanted || target.summary.id == wanted)
 }
 
 fn field_type_for_entity_filter(
@@ -218,7 +240,7 @@ fn field_type_for_entity_filter(
         .filter(|field_type| {
             matches!(
                 field_type,
-                FieldType::Enum | FieldType::EnumList | FieldType::Bool
+                FieldType::Enum | FieldType::EnumList | FieldType::Bool | FieldType::Relation
             )
         })
 }
@@ -416,6 +438,7 @@ mod tests {
                     field("genres", FieldType::EnumList),
                     field("favorite", FieldType::Bool),
                     field("notes", FieldType::Text),
+                    field("franchise", FieldType::Relation),
                 ],
             }],
         }
@@ -589,6 +612,10 @@ mod tests {
             Some(FieldType::Bool)
         );
         assert_eq!(
+            field_type_for_entity_filter(&entity, &library, "franchise"),
+            Some(FieldType::Relation)
+        );
+        assert_eq!(
             field_type_for_entity_filter(&entity, &library, "notes"),
             None
         ); // Text isn't filterable
@@ -663,13 +690,71 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn relation_field_filter_matches_outgoing_target() {
+        let entity = record("anime:a", "Alpha", json!({}));
+        let library = Library::new(
+            config(),
+            vec![
+                record("anime:a", "Alpha", json!({})),
+                record("anime:saga", "Saga", json!({})),
+            ],
+            vec![relation(
+                "anime:a",
+                "anime:saga",
+                "franchise",
+                RelationDirection::Out,
+            )],
+            Vec::new(),
+            "gen".to_string(),
+        );
+
+        // Matches by the target's id and by its basename (what the UI sends).
+        assert!(entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("franchise", &["anime:saga"])]
+        ));
+        assert!(entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("franchise", &["Saga"])]
+        ));
+        // No match for an unrelated target.
+        assert!(!entity_matches_field_filters(
+            &entity,
+            &library,
+            &[filter("franchise", &["anime:other"])]
+        ));
+
+        // Only outgoing relations count — an incoming link doesn't match.
+        let incoming = Library::new(
+            config(),
+            vec![
+                record("anime:a", "Alpha", json!({})),
+                record("anime:saga", "Saga", json!({})),
+            ],
+            vec![relation(
+                "anime:a",
+                "anime:saga",
+                "franchise",
+                RelationDirection::In,
+            )],
+            Vec::new(),
+            "gen".to_string(),
+        );
+        assert!(!entity_matches_field_filters(
+            &entity,
+            &incoming,
+            &[filter("franchise", &["anime:saga"])]
+        ));
+    }
+
     // --- build_entity_list ----------------------------------------------------
 
     fn params<'a>() -> EntityListParams<'a> {
         EntityListParams {
             entity_type: None,
-            refs: None,
-            cover: None,
             field_filters: Vec::new(),
             query: None,
             relation: None,
