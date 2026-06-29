@@ -802,13 +802,7 @@ function MarkdownField({
         </Button>
       </div>
       {preview ? (
-        value.trim() ? (
-          <div className="rounded-md border p-3">
-            <MarkdownView markdown={value} relations={[]} />
-          </div>
-        ) : (
-          <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">Nothing to preview.</div>
-        )
+        value.trim() ? <MarkdownView markdown={value} relations={[]} /> : null
       ) : (
         <Textarea
           className="min-h-24 font-mono text-xs"
