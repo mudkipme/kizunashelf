@@ -186,12 +186,7 @@ async fn run_asset_job(
             if cancel.load(Ordering::Relaxed) {
                 return;
             }
-            let Some(entity) = library
-                .records
-                .iter()
-                .find(|item| item.summary.id == entity_id)
-                .cloned()
-            else {
+            let Some(entity) = library.record_by_id(&entity_id).cloned() else {
                 return;
             };
             let Some(type_config) = library

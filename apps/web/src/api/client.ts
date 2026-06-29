@@ -1,4 +1,4 @@
-type TauriInvoke = <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
+import { invoke, isDesktopRuntime } from "@/lib/desktop";
 
 type DesktopApiResponse = {
   status: number;
@@ -6,14 +6,8 @@ type DesktopApiResponse = {
   contentType?: string | null;
 };
 
-declare global {
-  interface Window {
-    __TAURI_INTERNALS__?: unknown;
-  }
-}
-
 export const apiFetch: typeof globalThis.fetch = async (input, init) => {
-  const response = isTauriRuntime()
+  const response = isDesktopRuntime()
     ? await fetchTauriResponse(input, init)
     : await fetch(input, init);
   if (!response.ok) throw await ApiHttpError.fromResponse(response);
@@ -40,15 +34,10 @@ export function isConflictError(error: unknown) {
   return errorStatus(error) === 409;
 }
 
-function isTauriRuntime() {
-  return typeof window !== "undefined" && window.__TAURI_INTERNALS__ != null;
-}
-
 async function fetchTauriResponse(input: RequestInfo | URL, init?: RequestInit) {
   const method = init?.method ?? "GET";
   const signal = init?.signal ?? undefined;
   throwIfAborted(signal);
-  const invoke = await getTauriInvoke();
   // `invoke` can't be cancelled mid-flight, but React Query (and StrictMode in
   // dev) abort the signal to cancel superseded fetches. Native `fetch` rejects
   // immediately on abort; we mirror that by racing the invoke against the
@@ -104,11 +93,6 @@ async function requestBody(body: BodyInit | null | undefined) {
   if (body instanceof Blob) return body.text();
   if (body instanceof ArrayBuffer) return new TextDecoder().decode(body);
   throw new Error("Unsupported desktop API request body");
-}
-
-async function getTauriInvoke(): Promise<TauriInvoke> {
-  const module = await import("@tauri-apps/api/core");
-  return module.invoke as TauriInvoke;
 }
 
 function requestUrl(input: RequestInfo | URL) {

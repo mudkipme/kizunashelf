@@ -8,7 +8,7 @@ use crate::contract::{
 use crate::library::{
     file_revision, load_entity, serialize_markdown_document, split_markdown_document,
 };
-use crate::types::EntityTypeConfig;
+use crate::types::{EntityTypeConfig, KizunaConfig};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use axum::extract::{Path as AxumPath, State};
@@ -109,9 +109,7 @@ pub(crate) async fn create_entity(
     Json(request): Json<CreateEntityRequest>,
 ) -> ApiResult<EntityMutationResponse> {
     let library = require_content_writes(&state).await?;
-    let Some(type_config) = library.config.type_config(&request.entity_type) else {
-        return Err(ApiError::bad_request("Unknown entity type"));
-    };
+    let type_config = type_config_or_err(&library.config, &request.entity_type)?;
     let basename = sanitize_basename(&request.basename)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let vfs = state.vault_vfs(&library.config.vault_root);
@@ -281,6 +279,20 @@ pub(super) fn check_revision(expected: &str, actual: &str) -> Result<(), ApiErro
         return Err(ApiError::conflict("Entity changed since it was loaded"));
     }
     Ok(())
+}
+
+/// Resolve an entity's declared type against the schema, with the uniform 400
+/// every handler should return when the schema has no such type (e.g. a
+/// hand-edited `type:` not present in `config.yaml`). Centralizing this keeps the
+/// status and message consistent — some handlers previously returned a misleading
+/// 404 "Entity not found" for this case.
+pub(super) fn type_config_or_err<'a>(
+    config: &'a KizunaConfig,
+    entity_type: &str,
+) -> Result<&'a EntityTypeConfig, ApiError> {
+    config
+        .type_config(entity_type)
+        .ok_or_else(|| ApiError::bad_request("Unknown entity type"))
 }
 
 fn apply_frontmatter_patch(target: &mut Map<String, Value>, patch: Map<String, Value>) {

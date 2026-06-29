@@ -9,7 +9,7 @@ use super::error::{ApiError, ApiResult};
 use super::external::{
     provider_fetch_episodes, provider_for_external_ref, provider_label, provider_supports_episodes,
 };
-use super::mutations::{check_revision, write_entity_raw, EntityPath};
+use super::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityDetailResponse, EpisodeSource, EpisodeSyncResponse, FetchEpisodesRequest,
@@ -32,9 +32,7 @@ pub(crate) async fn update_episodes(
     let Some(record) = library.record_by_id(&entity_id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    let Some(type_config) = library.config.type_config(&record.summary.entity_type) else {
-        return Err(ApiError::not_found("Entity not found"));
-    };
+    let type_config = type_config_or_err(&library.config, &record.summary.entity_type)?;
     let Some(section) = episode_section(type_config) else {
         return Err(ApiError::bad_request("This type has no episodes section"));
     };
@@ -131,9 +129,7 @@ pub(crate) async fn fetch_episodes(
     let Some(record) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    let Some(type_config) = library.config.type_config(&record.summary.entity_type) else {
-        return Err(ApiError::not_found("Entity not found"));
-    };
+    let type_config = type_config_or_err(&library.config, &record.summary.entity_type)?;
     let sources = episode_sources(&state, type_config, &record.frontmatter);
     let source_list: Vec<EpisodeSource> = sources
         .iter()
@@ -179,9 +175,7 @@ pub(crate) async fn import_episodes(
     let Some(record) = library.record_by_id(&entity_id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    let Some(type_config) = library.config.type_config(&record.summary.entity_type) else {
-        return Err(ApiError::not_found("Entity not found"));
-    };
+    let type_config = type_config_or_err(&library.config, &record.summary.entity_type)?;
     let Some(section) = episode_section(type_config) else {
         return Err(ApiError::bad_request("This type has no episodes section"));
     };

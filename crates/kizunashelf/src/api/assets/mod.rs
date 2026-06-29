@@ -16,7 +16,7 @@ pub(crate) use job::{cancel_asset_job, create_asset_job, get_asset_job, list_ass
 pub(crate) use util::entity_asset_dir;
 
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, write_entity_raw, EntityPath};
+use super::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest, AssetDownloadResponse,
@@ -50,17 +50,11 @@ pub(crate) async fn download_entity_assets(
     Json(request): Json<AssetDownloadRequest>,
 ) -> ApiResult<AssetDownloadResponse> {
     let library = require_content_writes(&state).await?;
-    let Some(entity) = library
-        .records
-        .iter()
-        .find(|item| item.summary.id == path.id)
-    else {
+    let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
     check_revision(&request.revision, &entity.revision)?;
-    let Some(type_config) = library.config.type_config(&entity.summary.entity_type) else {
-        return Err(ApiError::bad_request("Unknown entity type"));
-    };
+    let type_config = type_config_or_err(&library.config, &entity.summary.entity_type)?;
 
     let all_local = all_local_asset_paths(&library);
     let vfs = state.vault_vfs(&library.config.vault_root);
@@ -84,9 +78,7 @@ pub(crate) async fn download_entity_assets(
 
     let reloaded = get_library(&state).await?;
     let record = reloaded
-        .records
-        .iter()
-        .find(|item| item.summary.id == path.id)
+        .record_by_id(&path.id)
         .ok_or_else(|| ApiError::not_found("Entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(AssetDownloadResponse { entity, results }))
@@ -175,16 +167,10 @@ pub(crate) async fn ingest_entity_asset(
     Json(request): Json<AssetIngestRequest>,
 ) -> ApiResult<AssetIngestResponse> {
     let library = require_content_writes(&state).await?;
-    let Some(entity) = library
-        .records
-        .iter()
-        .find(|item| item.summary.id == path.id)
-    else {
+    let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
-    let Some(type_config) = library.config.type_config(&entity.summary.entity_type) else {
-        return Err(ApiError::bad_request("Unknown entity type"));
-    };
+    let type_config = type_config_or_err(&library.config, &entity.summary.entity_type)?;
     let Some(field_config) = type_config
         .fields
         .iter()
@@ -250,9 +236,7 @@ pub(crate) async fn ingest_entity_asset(
 
     let reloaded = get_library(&state).await?;
     let record = reloaded
-        .records
-        .iter()
-        .find(|item| item.summary.id == entity_id)
+        .record_by_id(&entity_id)
         .ok_or_else(|| ApiError::not_found("Entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(AssetIngestResponse { entity, result }))

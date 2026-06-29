@@ -1,9 +1,10 @@
-/** Custom URI scheme the desktop app registers to serve local vault assets. */
-const DESKTOP_ASSET_SCHEME = "kizasset";
+import { isDesktopRuntime } from "@/lib/desktop";
 
-function isTauriRuntime(): boolean {
-  return typeof window !== "undefined" && window.__TAURI_INTERNALS__ != null;
-}
+/**
+ * Custom URI scheme the desktop app registers to serve local vault assets.
+ * Must match `ASSET_SCHEME` in `apps/desktop/src-tauri/src/lib.rs`.
+ */
+const DESKTOP_ASSET_SCHEME = "kizasset";
 
 /**
  * Build the desktop asset URL for the custom `kizasset` scheme. The host form
@@ -36,7 +37,7 @@ export function resolveAssetSrc(value: string | null | undefined): string | unde
     .filter(Boolean)
     .map((segment) => encodeURIComponent(segment))
     .join("/");
-  return isTauriRuntime() ? desktopAssetUrl(encoded) : `/api/assets/${encoded}`;
+  return isDesktopRuntime() ? desktopAssetUrl(encoded) : `/api/assets/${encoded}`;
 }
 
 /** True when `value` is a downloaded local asset rather than a remote URL. */

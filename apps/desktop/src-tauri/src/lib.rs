@@ -20,7 +20,8 @@ use vaults::VaultStoreData;
 /// Custom URI scheme used by the webview to load locally stored vault assets
 /// (downloaded covers). It forwards to the in-process API `/api/assets` route so
 /// binary image data is served directly rather than through the JSON command
-/// bridge.
+/// bridge. Must match `DESKTOP_ASSET_SCHEME` in `apps/web/src/lib/asset-src.ts`,
+/// which builds the URLs the webview requests against this scheme.
 const ASSET_SCHEME: &str = "kizasset";
 
 /// Desktop runtime state. The API router is rebuilt whenever the active vault

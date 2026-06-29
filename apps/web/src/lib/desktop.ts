@@ -31,7 +31,9 @@ export type VaultInfo = { name: string; path: string; active: boolean };
  */
 export type Credentials = Record<string, string>;
 
-async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
+/** Lazily import and call a Tauri command. The desktop runtime check is the
+ * caller's responsibility (see {@link isDesktopRuntime}). */
+export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   const module = await import("@tauri-apps/api/core");
   return (module.invoke as <R>(command: string, args?: Record<string, unknown>) => Promise<R>)<T>(
     command,
