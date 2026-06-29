@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, FolderOpenIcon, FolderPlusIcon, Trash2Icon } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -75,9 +76,9 @@ export function VaultSwitcher({
     >
       <div className="flex flex-col gap-3">
         {error ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert>
             {error}
-          </div>
+          </Alert>
         ) : null}
 
         <div className="flex flex-col gap-1">

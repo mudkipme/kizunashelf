@@ -1,6 +1,7 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
-    ProviderSearchConfig,
+    cached_or_fetch_token, external_client, field_option, non_empty_string_or_integer,
+    provider_error, send_with_token_retry, string_list, type_option, CredentialSpec,
+    ExternalProvider, ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -321,18 +322,14 @@ async fn search_thetvdb_type(
     q: &str,
     type_filter: Option<&str>,
 ) -> Result<Vec<Value>, ApiError> {
-    let request = thetvdb_search_request(client, token, q, type_filter);
-    let response = request.send().await.map_err(provider_error)?;
-    let response = if response.status() == reqwest::StatusCode::UNAUTHORIZED {
-        state.invalidate_access_token("thetvdb").await;
-        let token = thetvdb_access_token(state, client, login, true).await?;
-        thetvdb_search_request(client, &token, q, type_filter)
-            .send()
-            .await
-            .map_err(provider_error)?
-    } else {
-        response
-    };
+    let response = send_with_token_retry(
+        state,
+        "thetvdb",
+        token,
+        |token| thetvdb_search_request(client, token, q, type_filter),
+        || thetvdb_access_token(state, client, login, true),
+    )
+    .await?;
     Ok(response
         .error_for_status()
         .map_err(provider_error)?
@@ -437,48 +434,33 @@ async fn thetvdb_access_token(
     login: &Map<String, Value>,
     force_refresh: bool,
 ) -> Result<String, ApiError> {
-    if !force_refresh {
-        if let Some(token) = state.cached_access_token("thetvdb").await {
-            return Ok(token.access_token);
-        }
-    }
-    // Single-flight the login so concurrent searches don't stampede the endpoint.
-    let fetch_lock = state.token_fetch_lock("thetvdb").await;
-    let _guard = fetch_lock.lock().await;
-    if let Some(token) = state.cached_access_token("thetvdb").await {
-        return Ok(token.access_token);
-    }
-    let value = client
-        .post("https://api4.thetvdb.com/v4/login")
-        .json(login)
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
-    let access_token = value
-        .pointer("/data/token")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .ok_or_else(|| ApiError::bad_request("TheTVDB login response did not include a token"))?;
-    state
-        .store_access_token(
-            "thetvdb",
-            CachedAccessToken {
-                access_token: access_token.clone(),
-                refresh_token: None,
-                expires_at: Instant::now() + Duration::from_secs(23 * 60 * 60),
-                expires_at_unix_seconds: unix_seconds_now() + 23 * 60 * 60,
-            },
-        )
-        .await
-        .map_err(|error| {
-            ApiError::bad_request(&format!("failed to cache TheTVDB token: {error}"))
-        })?;
-    Ok(access_token)
+    cached_or_fetch_token(state, "thetvdb", "TheTVDB", force_refresh, || async {
+        let value = client
+            .post("https://api4.thetvdb.com/v4/login")
+            .json(login)
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status()
+            .map_err(provider_error)?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)?;
+        let access_token = value
+            .pointer("/data/token")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| {
+                ApiError::bad_request("TheTVDB login response did not include a token")
+            })?;
+        Ok(CachedAccessToken {
+            access_token,
+            refresh_token: None,
+            expires_at: Instant::now() + Duration::from_secs(23 * 60 * 60),
+            expires_at_unix_seconds: unix_seconds_now() + 23 * 60 * 60,
+        })
+    })
+    .await
 }
 
 fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
@@ -605,29 +587,6 @@ fn string_or_named(value: &Value) -> Option<String> {
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(str::to_string)
-}
-
-/// Collects a string array into a JSON string array for list-type fields,
-/// returning `None` when missing or empty.
-fn string_list(value: Option<&Value>) -> Option<Value> {
-    let items: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(Value::as_str)
-        .filter(|text| !text.is_empty())
-        .map(|text| Value::String(text.to_string()))
-        .collect();
-    (!items.is_empty()).then_some(Value::Array(items))
-}
-
-fn non_empty_string_or_integer(value: &Value) -> Option<String> {
-    value
-        .as_str()
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(str::to_string)
-        .or_else(|| value.as_i64().map(|value| value.to_string()))
-        .or_else(|| value.as_u64().map(|value| value.to_string()))
 }
 
 #[cfg(test)]

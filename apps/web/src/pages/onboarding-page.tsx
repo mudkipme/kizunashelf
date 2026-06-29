@@ -5,6 +5,8 @@ import { errorMessage } from "@/api/client";
 import { languagesQuery, providerCatalogQuery, settingsConfigQuery, vaultTemplatesQuery } from "@/api/queries";
 import { SettingsEditor } from "@/components/settings/settings-editor";
 import { VaultSwitcher } from "@/components/settings/vault-switcher";
+import { Alert } from "@/components/ui/alert";
+import { Placeholder } from "@/components/ui/placeholder";
 import { isDesktopRuntime } from "@/lib/desktop";
 
 /**
@@ -35,13 +37,13 @@ export function OnboardingPage() {
     languages.isPending
   ) {
     body = (
-      <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+      <Placeholder>Loading</Placeholder>
     );
   } else if (settings.error || providerCatalog.error || templates.error || languages.error) {
     body = (
-      <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+      <Alert>
         {errorMessage(settings.error ?? providerCatalog.error ?? templates.error ?? languages.error)}
-      </div>
+      </Alert>
     );
   } else {
     body = (

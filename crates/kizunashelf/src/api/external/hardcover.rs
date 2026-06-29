@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, normalize_isbn, provider_error, type_option, CredentialSpec,
-    ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, non_empty_string_or_integer, normalize_isbn, provider_error,
+    type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -412,16 +412,6 @@ fn hardcover_url(slug: Option<&str>, id: &str) -> String {
         Some(slug) => format!("https://hardcover.app/books/{slug}"),
         None => format!("https://hardcover.app/books/{id}"),
     }
-}
-
-fn non_empty_string_or_integer(value: &Value) -> Option<String> {
-    value.as_i64().map(|value| value.to_string()).or_else(|| {
-        value
-            .as_str()
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .map(str::to_string)
-    })
 }
 
 #[cfg(test)]

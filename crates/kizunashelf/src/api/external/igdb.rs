@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
-    ProviderSearchConfig,
+    cached_or_fetch_token, external_client, field_option, named_list, provider_error,
+    send_with_token_retry, type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -87,28 +87,20 @@ async fn search_igdb(
     let token = igdb_access_token(state, client, &client_id, &client_secret, false).await?;
     let offset = (page - 1) * page_size;
     let body = igdb_query_body(q, page_size, offset);
-    let response = client
-        .post("https://api.igdb.com/v4/games")
-        .header("Client-ID", &client_id)
-        .bearer_auth(token)
-        .body(body.clone())
-        .send()
-        .await
-        .map_err(provider_error)?;
-    let response = if response.status() == reqwest::StatusCode::UNAUTHORIZED {
-        state.invalidate_access_token("igdb").await;
-        let token = igdb_access_token(state, client, &client_id, &client_secret, true).await?;
-        client
-            .post("https://api.igdb.com/v4/games")
-            .header("Client-ID", &client_id)
-            .bearer_auth(token)
-            .body(body)
-            .send()
-            .await
-            .map_err(provider_error)?
-    } else {
-        response
-    };
+    let response = send_with_token_retry(
+        state,
+        "igdb",
+        &token,
+        |token| {
+            client
+                .post("https://api.igdb.com/v4/games")
+                .header("Client-ID", &client_id)
+                .bearer_auth(token)
+                .body(body.clone())
+        },
+        || igdb_access_token(state, client, &client_id, &client_secret, true),
+    )
+    .await?;
     let data = response
         .error_for_status()
         .map_err(provider_error)?
@@ -161,19 +153,6 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
     vec![type_option("game", "Game")]
 }
 
-/// Collects an array of `{ name }` references into a JSON string array, returning
-/// `None` when the source is missing or empty.
-fn named_list(value: Option<&Value>) -> Option<Value> {
-    let names: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(|element| element.get("name").and_then(Value::as_str))
-        .filter(|name| !name.is_empty())
-        .map(|name| Value::String(name.to_string()))
-        .collect();
-    (!names.is_empty()).then_some(Value::Array(names))
-}
-
 fn igdb_query_body(q: &str, page_size: usize, offset: usize) -> String {
     let fields = "fields name,url,summary,storyline,first_release_date,cover.url,game_type,\
 rating,aggregated_rating,total_rating,total_rating_count,websites.url,websites.category,\
@@ -207,66 +186,48 @@ async fn igdb_access_token(
     client_secret: &str,
     force_refresh: bool,
 ) -> Result<String, ApiError> {
-    if !force_refresh {
-        if let Some(token) = state.cached_access_token("igdb").await {
-            return Ok(token.access_token);
-        }
-    }
-    // Single-flight the token fetch: under concurrent searches a cold cache would
-    // otherwise stampede the Twitch token endpoint and risk rate limits.
-    let fetch_lock = state.token_fetch_lock("igdb").await;
-    let _guard = fetch_lock.lock().await;
-    // Another task may have populated the cache while we waited for the lock.
-    if let Some(token) = state.cached_access_token("igdb").await {
-        return Ok(token.access_token);
-    }
-    let value = client
-        .post("https://id.twitch.tv/oauth2/token")
-        // Credentials go in the form body, never the query string, so they are
-        // not echoed back in any error/log carrying the request URL.
-        .form(&[
-            ("client_id", client_id),
-            ("client_secret", client_secret),
-            ("grant_type", "client_credentials"),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
-    let access_token = value
-        .get("access_token")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .ok_or_else(|| {
-            ApiError::bad_request("IGDB token response did not include an access token")
-        })?;
-    let expires_in = value
-        .get("expires_in")
-        .and_then(Value::as_u64)
-        .unwrap_or(3600)
-        .saturating_sub(60)
-        .max(60);
-    let expires_at_unix_seconds = unix_seconds_now() + expires_in;
-    state
-        .store_access_token(
-            "igdb",
-            CachedAccessToken {
-                access_token: access_token.clone(),
-                refresh_token: value
-                    .get("refresh_token")
-                    .and_then(Value::as_str)
-                    .map(str::to_string),
-                expires_at: Instant::now() + Duration::from_secs(expires_in),
-                expires_at_unix_seconds,
-            },
-        )
-        .await
-        .map_err(|error| ApiError::bad_request(&format!("failed to cache IGDB token: {error}")))?;
-    Ok(access_token)
+    cached_or_fetch_token(state, "igdb", "IGDB", force_refresh, || async {
+        let value = client
+            .post("https://id.twitch.tv/oauth2/token")
+            // Credentials go in the form body, never the query string, so they are
+            // not echoed back in any error/log carrying the request URL.
+            .form(&[
+                ("client_id", client_id),
+                ("client_secret", client_secret),
+                ("grant_type", "client_credentials"),
+            ])
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status()
+            .map_err(provider_error)?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)?;
+        let access_token = value
+            .get("access_token")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| {
+                ApiError::bad_request("IGDB token response did not include an access token")
+            })?;
+        let expires_in = value
+            .get("expires_in")
+            .and_then(Value::as_u64)
+            .unwrap_or(3600)
+            .saturating_sub(60)
+            .max(60);
+        Ok(CachedAccessToken {
+            access_token,
+            refresh_token: value
+                .get("refresh_token")
+                .and_then(Value::as_str)
+                .map(str::to_string),
+            expires_at: Instant::now() + Duration::from_secs(expires_in),
+            expires_at_unix_seconds: unix_seconds_now() + expires_in,
+        })
+    })
+    .await
 }
 
 fn igdb_credentials(state: &AppState) -> Option<(String, String)> {

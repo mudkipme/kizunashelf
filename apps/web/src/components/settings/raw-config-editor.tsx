@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { errorMessage } from "@/api/client";
 import { rawSettingsConfigQuery } from "@/api/queries";
 import { saveRawSettingsConfig } from "@/api/settings";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Placeholder } from "@/components/ui/placeholder";
 import { Textarea } from "@/components/ui/textarea";
 
 type RawConfigEditorProps = {
@@ -86,21 +88,21 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
       </header>
 
       {!settingsWritable ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <Alert>
           Schema editing is disabled on this instance (read-only). Set
           <code className="mx-1">KIZUNASHELF_SETTINGS_WRITABLE=true</code>
           to enable it.
-        </div>
+        </Alert>
       ) : null}
 
       {error ? (
-        <div className="whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <Alert className="whitespace-pre-wrap">
           {error}
-        </div>
+        </Alert>
       ) : null}
 
       {raw.isPending ? (
-        <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+        <Placeholder>Loading</Placeholder>
       ) : (
         <Textarea
           className="min-h-[60vh] font-mono text-xs"

@@ -10,6 +10,7 @@ import { EntityDateList } from "@/components/assets/entity-date-list";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Placeholder } from "@/components/ui/placeholder";
 import { Select } from "@/components/ui/select";
 import {
   allEntityFilter,
@@ -123,7 +124,7 @@ export function ReviewPage() {
         </header>
 
         {cleanup.isPending ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+          <Placeholder>Loading</Placeholder>
         ) : null}
 
         {cleanup.data && (!activeQueue || assetQueueIds.has(activeQueue.id)) ? (
@@ -170,9 +171,9 @@ export function ReviewPage() {
             </section>
 
             {filteredItems.length === 0 ? (
-              <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+              <Placeholder>
                 No queue items match the current filters
-              </div>
+              </Placeholder>
             ) : (
               <section className="rounded-md border">
                 <header className="flex items-center gap-2 border-b px-3 py-2">

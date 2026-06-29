@@ -1,5 +1,5 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, provider_error, string_list, type_option, ExternalProvider,
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
@@ -286,18 +286,6 @@ fn apple_podcast_candidate(item: &Value) -> Option<ExternalCandidate> {
         titles: BTreeMap::new(),
         metadata,
     })
-}
-
-fn string_list(value: Option<&Value>) -> Option<Value> {
-    let items: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(Value::as_str)
-        .map(str::trim)
-        .filter(|text| !text.is_empty())
-        .map(|text| Value::String(text.to_string()))
-        .collect();
-    (!items.is_empty()).then_some(Value::Array(items))
 }
 
 #[cfg(test)]

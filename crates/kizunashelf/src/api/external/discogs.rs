@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, named_strings, provider_error, string_list, type_option,
+    CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -437,39 +437,16 @@ fn insert_year(metadata: &mut Map<String, Value>, value: Option<&Value>) {
     }
 }
 
+/// Names from an array of `{ name }` objects, order-preserving and deduplicated
+/// (discogs repeats artists/labels across roles).
 fn named_list(value: Option<&Value>) -> Vec<String> {
-    value
-        .and_then(Value::as_array)
-        .map(|values| {
-            let mut names = Vec::new();
-            for entry in values {
-                if let Some(name) = entry
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .map(str::trim)
-                    .filter(|name| !name.is_empty())
-                {
-                    let name = name.to_string();
-                    if !names.contains(&name) {
-                        names.push(name);
-                    }
-                }
-            }
-            names
-        })
-        .unwrap_or_default()
-}
-
-fn string_list(value: Option<&Value>) -> Option<Value> {
-    let items: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(Value::as_str)
-        .map(str::trim)
-        .filter(|text| !text.is_empty())
-        .map(|text| Value::String(text.to_string()))
-        .collect();
-    (!items.is_empty()).then_some(Value::Array(items))
+    let mut names: Vec<String> = Vec::new();
+    for name in named_strings(value, "name") {
+        if !names.contains(&name) {
+            names.push(name);
+        }
+    }
+    names
 }
 
 #[cfg(test)]

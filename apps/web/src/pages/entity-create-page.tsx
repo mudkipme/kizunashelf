@@ -7,7 +7,7 @@ import { errorMessage } from "@/api/client";
 import { addEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { useRelationSearch } from "@/api/use-relation-search";
-import { capabilitiesQuery, configQuery, providerCatalogQuery } from "@/api/queries";
+import { configQuery, providerCatalogQuery } from "@/api/queries";
 import {
   type FrontmatterDraft,
   MetadataEditor,
@@ -16,10 +16,13 @@ import {
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useEntityMutation } from "@/hooks/use-entity-mutation";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 
 export function EntityCreatePage() {
@@ -29,15 +32,14 @@ export function EntityCreatePage() {
   const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
-  const capabilities = useQuery(capabilitiesQuery());
-  const [error, setError] = useState<string>();
+  const capabilities = useCapabilities();
+  const { saving: creating, error, setError, run } = useEntityMutation();
   const [typeId, setTypeId] = useState("");
   const [basename, setBasename] = useState("");
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
-  const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<string>();
-  const contentWritable = capabilities.data?.contentWritable !== false;
+  const contentWritable = capabilities.contentWritable;
   const queryError = config.error ?? providerCatalog.error ?? capabilities.error;
   const normalizedBasename = normalizeBasename(basename);
   const basenameError = basenameValidationError(basename);
@@ -60,7 +62,7 @@ export function EntityCreatePage() {
     providerCatalog: providerCatalog.data,
     entityType: typeId,
     defaultQuery: normalizedBasename,
-    assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
+    assetDownloadEnabled: capabilities.assetDownloadEnabled,
     onError: setError,
   });
 
@@ -73,10 +75,8 @@ export function EntityCreatePage() {
       setError(basenameError);
       return;
     }
-    setCreating(true);
     setMessage(undefined);
-    setError(undefined);
-    try {
+    await run(async () => {
       const result = await addEntity({
         type: typeId,
         basename: normalizedBasename,
@@ -86,11 +86,7 @@ export function EntityCreatePage() {
       await external.maybeDownloadCover(result.entity);
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
-    } catch (error) {
-      setError(errorMessage(error));
-    } finally {
-      setCreating(false);
-    }
+    });
   }
 
   function applyCandidate() {
@@ -119,11 +115,7 @@ export function EntityCreatePage() {
           </div>
         </header>
 
-        {!contentWritable ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            Content writes are disabled.
-          </div>
-        ) : null}
+        {!contentWritable ? <Alert>{CONTENT_WRITES_DISABLED}</Alert> : null}
         {message ? <div className="rounded-md border p-3 text-sm text-muted-foreground">{message}</div> : null}
 
         <section className="rounded-md border p-4">

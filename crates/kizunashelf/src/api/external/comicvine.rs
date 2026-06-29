@@ -1,5 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
+    external_client, field_option, named_strings, non_empty_string_or_integer, provider_error,
+    string_array, strip_html_collapsed, type_option, CredentialSpec, ExternalProvider,
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
@@ -307,7 +308,7 @@ fn comicvine_volume(id: &str, volume: &Value) -> Option<ExternalCandidate> {
     let description = volume
         .get("description")
         .and_then(Value::as_str)
-        .map(strip_html)
+        .map(strip_html_collapsed)
         .filter(|value| !value.is_empty());
 
     let mut metadata = Map::new();
@@ -365,42 +366,14 @@ fn comicvine_volume(id: &str, volume: &Value) -> Option<ExternalCandidate> {
     })
 }
 
+/// Up to `limit` names from an array of `{ name }` objects.
 fn named_list(value: Option<&Value>, limit: usize) -> Option<Value> {
-    let names: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(|entry| entry.get("name").and_then(Value::as_str))
-        .map(str::trim)
-        .filter(|name| !name.is_empty())
-        .take(limit)
-        .map(|name| Value::String(name.to_string()))
-        .collect();
-    (!names.is_empty()).then_some(Value::Array(names))
-}
-
-fn non_empty_string_or_integer(value: &Value) -> Option<String> {
-    value
-        .as_str()
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(str::to_string)
-        .or_else(|| value.as_i64().map(|value| value.to_string()))
-}
-
-/// Strips HTML tags from a Comic Vine description, collapsing whitespace.
-fn strip_html(value: &str) -> String {
-    let value = value.replace("<br", "\n<br");
-    let mut out = String::with_capacity(value.len());
-    let mut in_tag = false;
-    for character in value.chars() {
-        match character {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            _ if !in_tag => out.push(character),
-            _ => {}
-        }
-    }
-    out.split_whitespace().collect::<Vec<_>>().join(" ")
+    string_array(
+        named_strings(value, "name")
+            .into_iter()
+            .take(limit)
+            .collect(),
+    )
 }
 
 #[cfg(test)]

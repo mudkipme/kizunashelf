@@ -16,12 +16,11 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { errorMessage, isConflictError } from "@/api/client";
+import { errorMessage } from "@/api/client";
 import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
 import { addItemToList, addList, removeItemFromList } from "@/api/lists";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import {
-  capabilitiesQuery,
   configQuery,
   entityDatesQuery,
   entityListsQuery,
@@ -61,8 +60,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Placeholder } from "@/components/ui/placeholder";
+import { reportEntityError, useEntityMutation } from "@/hooks/use-entity-mutation";
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { saveEpisodes } from "@/api/episodes";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
@@ -82,13 +84,12 @@ export function EntityPage() {
   const dates = useQuery({ ...entityDatesQuery(id ?? ""), enabled: Boolean(id) });
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
-  const capabilities = useQuery(capabilitiesQuery());
+  const capabilities = useCapabilities();
   const language = useTitleLanguage();
-  const [error, setError] = useState<string>();
+  const { saving, error, setError, run } = useEntityMutation();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
   const [manageListsOpen, setManageListsOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [episodesSaving, setEpisodesSaving] = useState(false);
 
   const loading =
@@ -100,11 +101,9 @@ export function EntityPage() {
   const queryError =
     detail.error ?? dates.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
   const entity = detail.data?.entity;
-  const contentWritable = capabilities.data?.contentWritable !== false;
+  const contentWritable = capabilities.contentWritable;
   const canDownloadCover =
-    contentWritable &&
-    capabilities.data?.assetDownloadEnabled === true &&
-    isRemoteAsset(entity?.image);
+    contentWritable && capabilities.assetDownloadEnabled && isRemoteAsset(entity?.image);
   const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
   const external = useExternalMatch({
     typeConfig,
@@ -112,7 +111,7 @@ export function EntityPage() {
     entityType: entity?.type,
     defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
-    assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
+    assetDownloadEnabled: capabilities.assetDownloadEnabled,
     onError: setError,
   });
   const relationGroups = useMemo(
@@ -120,17 +119,9 @@ export function EntityPage() {
     [detail.data],
   );
 
-  // A 409 means the entity changed on disk and the action's revision is stale.
-  // Refetch so a retry uses the latest revision, and explain rather than dumping
-  // a raw "409 …" string.
-  function reportActionError(error: unknown) {
-    if (isConflictError(error)) {
-      setError("This entity changed on disk since it was loaded. Reloaded the latest version — please try again.");
-      void detail.refetch();
-    } else {
-      setError(errorMessage(error));
-    }
-  }
+  // A 409 means the entity changed on disk and the action's revision is stale:
+  // refetch so a retry uses the latest revision (see `useEntityMutation`).
+  const refetchOnConflict = () => void detail.refetch();
   const { setQuery: setMatchQuery } = external;
 
   useEffect(() => {
@@ -152,8 +143,7 @@ export function EntityPage() {
       setRenameOpen(false);
       return;
     }
-    setSaving(true);
-    try {
+    await run(async () => {
       const result = await saveEntity(entity.id, {
         revision: entity.revision,
         renameTo: nextBasename,
@@ -161,19 +151,14 @@ export function EntityPage() {
       setRenameOpen(false);
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
-    } catch (error) {
-      reportActionError(error);
-    } finally {
-      setSaving(false);
-    }
+    }, { onConflict: refetchOnConflict });
   }
 
   async function applyCandidate() {
     if (!entity || !external.selectedCandidate) return;
     const patch = external.selectedPatch();
     const nextBody = applyExternalBodySections(entity.body, external.selectedBodyPatch());
-    setSaving(true);
-    try {
+    await run(async () => {
       const result = await saveEntity(entity.id, {
         revision: entity.revision,
         frontmatter: patch,
@@ -182,17 +167,12 @@ export function EntityPage() {
       external.setOpen(false);
       await external.maybeDownloadCover(result.entity);
       await invalidateEntityData();
-    } catch (error) {
-      reportActionError(error);
-    } finally {
-      setSaving(false);
-    }
+    }, { onConflict: refetchOnConflict });
   }
 
   async function downloadCover() {
     if (!entity) return;
-    setSaving(true);
-    try {
+    await run(async () => {
       const result = await downloadAssets(entity.id, { revision: entity.revision });
       await invalidateEntityData();
       const failures = result.results.filter((item) => item.status === "failed");
@@ -202,28 +182,17 @@ export function EntityPage() {
           .filter(Boolean)
           .join("; ");
         setError(reasons ? `Some images could not be downloaded: ${reasons}` : "Some images could not be downloaded");
-      } else {
-        setError(undefined);
       }
-    } catch (error) {
-      reportActionError(error);
-    } finally {
-      setSaving(false);
-    }
+    }, { onConflict: refetchOnConflict });
   }
 
   async function deleteCurrentEntity() {
     if (!entity) return;
-    setSaving(true);
-    try {
+    await run(async () => {
       await removeEntity(entity.id, { revision: entity.revision });
       await invalidateEntityData();
       navigate("/library");
-    } catch (error) {
-      reportActionError(error);
-    } finally {
-      setSaving(false);
-    }
+    }, { onConflict: refetchOnConflict });
   }
 
   async function saveEpisodeGroups(groups: EpisodeGroup[]) {
@@ -238,7 +207,7 @@ export function EntityPage() {
       void queryClient.invalidateQueries({ queryKey: ["entities"] });
       setError(undefined);
     } catch (error) {
-      reportActionError(error);
+      reportEntityError(error, setError, refetchOnConflict);
     } finally {
       setEpisodesSaving(false);
     }
@@ -248,7 +217,7 @@ export function EntityPage() {
     <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
         {loading ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+          <Placeholder>Loading</Placeholder>
         ) : entity ? (
           <>
             <RenameDialog
@@ -334,9 +303,9 @@ export function EntityPage() {
             />
           </>
         ) : (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+          <Placeholder>
             Entity not found
-          </div>
+          </Placeholder>
         )}
       </div>
     </AppFrame>
@@ -414,7 +383,7 @@ function EntityActions({
           <DropdownMenuLabel className="font-normal break-all text-xs text-muted-foreground">
             {contentWritable
               ? entity.path
-              : "Content writes are disabled. Editing actions are unavailable."}
+              : `${CONTENT_WRITES_DISABLED} Editing actions are unavailable.`}
           </DropdownMenuLabel>
         </DropdownMenuContent>
       </DropdownMenu>

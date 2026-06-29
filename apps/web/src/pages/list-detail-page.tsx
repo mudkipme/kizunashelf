@@ -40,12 +40,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage, isConflictError } from "@/api/client";
 import { addItemToList, removeList, saveList } from "@/api/lists";
-import {
-  capabilitiesQuery,
-  entitiesQuery,
-  listQuery,
-  queryKeys,
-} from "@/api/queries";
+import { entitiesQuery, listQuery, queryKeys } from "@/api/queries";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { AppFrame } from "@/components/layout/app-frame";
@@ -80,8 +75,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Placeholder } from "@/components/ui/placeholder";
 import { Textarea } from "@/components/ui/textarea";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
@@ -125,8 +122,8 @@ export function ListDetailPage() {
   const language = useTitleLanguage();
 
   const list = useQuery({ ...listQuery(id), enabled: Boolean(id) });
-  const capabilities = useQuery(capabilitiesQuery());
-  const contentWritable = capabilities.data?.contentWritable !== false;
+  const capabilities = useCapabilities();
+  const contentWritable = capabilities.contentWritable;
 
   const [sections, setSections] = useState<EditableSection[]>([]);
   // Mirrors `sections` for the debounced toggle auto-save, whose timer fires after
@@ -388,9 +385,9 @@ export function ListDetailPage() {
     <AppFrame error={error ?? (list.error ? errorMessage(list.error) : undefined)}>
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         {list.isPending ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+          <Placeholder>Loading</Placeholder>
         ) : !data ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">List not found</div>
+          <Placeholder>List not found</Placeholder>
         ) : (
           <>
             <header className="flex flex-wrap items-center gap-2">

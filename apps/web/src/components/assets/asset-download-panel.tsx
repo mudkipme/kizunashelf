@@ -4,10 +4,11 @@ import { DownloadIcon, XIcon } from "lucide-react";
 
 import { errorMessage } from "@/api/client";
 import { fetchAssetJob, startAssetJob, stopAssetJob } from "@/api/entities";
-import { capabilitiesQuery, configQuery } from "@/api/queries";
+import { configQuery } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { useCapabilities } from "@/lib/capabilities";
 import type { AssetDownloadJob } from "@/types/api";
 
 const ALL_TYPES = "__all__";
@@ -17,7 +18,7 @@ function isRunning(job?: AssetDownloadJob) {
 }
 
 export function AssetDownloadPanel() {
-  const capabilities = useQuery(capabilitiesQuery());
+  const capabilities = useCapabilities();
   const config = useQuery(configQuery());
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState(ALL_TYPES);
@@ -55,7 +56,7 @@ export function AssetDownloadPanel() {
     onError: (mutationError) => setError(errorMessage(mutationError)),
   });
 
-  if (capabilities.data?.assetDownloadEnabled !== true) return null;
+  if (!capabilities.assetDownloadEnabled) return null;
 
   const current = job.data;
   const running = isRunning(current);

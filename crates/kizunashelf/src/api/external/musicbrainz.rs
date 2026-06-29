@@ -1,5 +1,5 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, insert_str, provider_error, type_option, ExternalProvider,
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
@@ -532,16 +532,6 @@ fn genre_names(item: &Value) -> Option<Value> {
         }
     }
     (!names.is_empty()).then(|| Value::Array(names.into_iter().map(Value::String).collect()))
-}
-
-fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value>) {
-    if let Some(text) = value
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-    {
-        metadata.insert(key.to_string(), Value::String(text.to_string()));
-    }
 }
 
 #[cfg(test)]

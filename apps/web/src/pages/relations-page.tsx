@@ -5,6 +5,7 @@ import { errorMessage } from "@/api/client";
 import { relationGroupsQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
+import { Placeholder } from "@/components/ui/placeholder";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import type {
@@ -32,15 +33,15 @@ export function RelationsPage() {
         </header>
 
         {relations.isPending ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+          <Placeholder>
             Loading
-          </div>
+          </Placeholder>
         ) : null}
 
         {!relations.isPending && relations.data?.targetTypes.length === 0 ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+          <Placeholder>
             No relations
-          </div>
+          </Placeholder>
         ) : null}
 
         {relations.data?.targetTypes.length ? (

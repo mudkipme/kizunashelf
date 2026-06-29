@@ -1,5 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, insert_str, named_strings, non_empty_string_or_integer,
+    provider_error, string_array, strip_html_collapsed, type_option, ExternalProvider,
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
@@ -193,7 +194,7 @@ fn mangaupdates_detail(series: &Value) -> Option<ExternalCandidate> {
     let synopsis = series
         .get("description")
         .and_then(Value::as_str)
-        .map(strip_html)
+        .map(strip_html_collapsed)
         .filter(|value| !value.is_empty());
 
     let mut metadata = Map::new();
@@ -267,51 +268,9 @@ fn mangaupdates_image(value: &Value) -> Option<String> {
         .map(str::to_string)
 }
 
+/// Names pulled from the `key` field of an array of objects.
 fn named_list(value: Option<&Value>, key: &str) -> Option<Value> {
-    let names: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(|entry| entry.get(key).and_then(Value::as_str))
-        .map(str::trim)
-        .filter(|name| !name.is_empty())
-        .map(|name| Value::String(name.to_string()))
-        .collect();
-    (!names.is_empty()).then_some(Value::Array(names))
-}
-
-fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value>) {
-    if let Some(text) = value
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-    {
-        metadata.insert(key.to_string(), Value::String(text.to_string()));
-    }
-}
-
-fn non_empty_string_or_integer(value: &Value) -> Option<String> {
-    value
-        .as_str()
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(str::to_string)
-        .or_else(|| value.as_i64().map(|value| value.to_string()))
-}
-
-/// Strips HTML tags from a description, keeping the text content.
-fn strip_html(value: &str) -> String {
-    let value = value.replace("<br", "\n<br");
-    let mut out = String::with_capacity(value.len());
-    let mut in_tag = false;
-    for character in value.chars() {
-        match character {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            _ if !in_tag => out.push(character),
-            _ => {}
-        }
-    }
-    out.split_whitespace().collect::<Vec<_>>().join(" ")
+    string_array(named_strings(value, key))
 }
 
 #[cfg(test)]

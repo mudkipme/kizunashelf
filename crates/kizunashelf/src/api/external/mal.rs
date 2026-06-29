@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, insert_str, named_list, provider_error, type_option,
+    CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -476,28 +476,6 @@ fn title_case(value: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join(" ")
-}
-
-fn named_list(value: Option<&Value>) -> Option<Value> {
-    let names: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(|entry| entry.get("name").and_then(Value::as_str))
-        .map(str::trim)
-        .filter(|name| !name.is_empty())
-        .map(|name| Value::String(name.to_string()))
-        .collect();
-    (!names.is_empty()).then_some(Value::Array(names))
-}
-
-fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value>) {
-    if let Some(text) = value
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-    {
-        metadata.insert(key.to_string(), Value::String(text.to_string()));
-    }
 }
 
 #[cfg(test)]

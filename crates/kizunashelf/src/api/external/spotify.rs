@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    cached_or_fetch_token, external_client, field_option, provider_error, send_with_token_retry,
+    string_list, type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -301,21 +301,20 @@ async fn spotify_get(
     client_secret: &str,
     token: String,
 ) -> Result<Value, ApiError> {
-    let request = |token: &str| {
-        client
-            .get(url)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .query(query)
-            .bearer_auth(token)
-    };
-    let response = request(&token).send().await.map_err(provider_error)?;
-    let response = if response.status() == reqwest::StatusCode::UNAUTHORIZED {
-        state.invalidate_access_token("spotify").await;
-        let token = spotify_access_token(state, client, client_id, client_secret, true).await?;
-        request(&token).send().await.map_err(provider_error)?
-    } else {
-        response
-    };
+    let response = send_with_token_retry(
+        state,
+        "spotify",
+        &token,
+        |token| {
+            client
+                .get(url)
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .query(query)
+                .bearer_auth(token)
+        },
+        || spotify_access_token(state, client, client_id, client_secret, true),
+    )
+    .await?;
     response
         .error_for_status()
         .map_err(provider_error)?
@@ -489,18 +488,6 @@ fn spotify_artist_names(value: Option<&Value>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-fn string_list(value: Option<&Value>) -> Option<Value> {
-    let items: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(Value::as_str)
-        .map(str::trim)
-        .filter(|text| !text.is_empty())
-        .map(|text| Value::String(text.to_string()))
-        .collect();
-    (!items.is_empty()).then_some(Value::Array(items))
-}
-
 async fn spotify_access_token(
     state: &AppState,
     client: &reqwest::Client,
@@ -508,60 +495,42 @@ async fn spotify_access_token(
     client_secret: &str,
     force_refresh: bool,
 ) -> Result<String, ApiError> {
-    if !force_refresh {
-        if let Some(token) = state.cached_access_token("spotify").await {
-            return Ok(token.access_token);
-        }
-    }
-    // Single-flight the token fetch so concurrent searches don't stampede the
-    // Spotify accounts endpoint on a cold cache.
-    let fetch_lock = state.token_fetch_lock("spotify").await;
-    let _guard = fetch_lock.lock().await;
-    if let Some(token) = state.cached_access_token("spotify").await {
-        return Ok(token.access_token);
-    }
-    let value = client
-        .post("https://accounts.spotify.com/api/token")
-        // `basic_auth` base64-encodes `client_id:client_secret` into the
-        // Authorization header, so the secret never appears in the URL or body.
-        .basic_auth(client_id, Some(client_secret))
-        .form(&[("grant_type", "client_credentials")])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
-    let access_token = value
-        .get("access_token")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .ok_or_else(|| {
-            ApiError::bad_request("Spotify token response did not include an access token")
-        })?;
-    let expires_in = value
-        .get("expires_in")
-        .and_then(Value::as_u64)
-        .unwrap_or(3600)
-        .saturating_sub(60)
-        .max(60);
-    state
-        .store_access_token(
-            "spotify",
-            CachedAccessToken {
-                access_token: access_token.clone(),
-                refresh_token: None,
-                expires_at: Instant::now() + Duration::from_secs(expires_in),
-                expires_at_unix_seconds: unix_seconds_now() + expires_in,
-            },
-        )
-        .await
-        .map_err(|error| {
-            ApiError::bad_request(&format!("failed to cache Spotify token: {error}"))
-        })?;
-    Ok(access_token)
+    cached_or_fetch_token(state, "spotify", "Spotify", force_refresh, || async {
+        let value = client
+            .post("https://accounts.spotify.com/api/token")
+            // `basic_auth` base64-encodes `client_id:client_secret` into the
+            // Authorization header, so the secret never appears in the URL or body.
+            .basic_auth(client_id, Some(client_secret))
+            .form(&[("grant_type", "client_credentials")])
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status()
+            .map_err(provider_error)?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)?;
+        let access_token = value
+            .get("access_token")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| {
+                ApiError::bad_request("Spotify token response did not include an access token")
+            })?;
+        let expires_in = value
+            .get("expires_in")
+            .and_then(Value::as_u64)
+            .unwrap_or(3600)
+            .saturating_sub(60)
+            .max(60);
+        Ok(CachedAccessToken {
+            access_token,
+            refresh_token: None,
+            expires_at: Instant::now() + Duration::from_secs(expires_in),
+            expires_at_unix_seconds: unix_seconds_now() + expires_in,
+        })
+    })
+    .await
 }
 
 #[cfg(test)]

@@ -27,6 +27,7 @@ use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::future::Future;
@@ -34,7 +35,7 @@ use std::pin::Pin;
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use super::state::{get_library, AppState};
+use super::state::{get_library, AppState, CachedAccessToken};
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
 const EXTERNAL_CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
@@ -555,6 +556,73 @@ pub(super) fn external_client() -> &'static reqwest::Client {
     })
 }
 
+/// Single-flighted cached-token acquisition shared by the OAuth/login providers
+/// (IGDB, Spotify, TheTVDB). Returns the cached access token when still fresh;
+/// otherwise takes the per-provider lock, re-checks the cache, and on a miss runs
+/// `fetch` to mint a token, stores it, and returns its access token. `force_refresh`
+/// skips the first cache check (used after a 401); `label` names the provider in
+/// the cache-failure error. This owns the cache/lock/store pattern that each token
+/// function otherwise repeated verbatim.
+pub(super) async fn cached_or_fetch_token<F, Fut>(
+    state: &AppState,
+    key: &str,
+    label: &str,
+    force_refresh: bool,
+    fetch: F,
+) -> Result<String, ApiError>
+where
+    F: FnOnce() -> Fut,
+    Fut: Future<Output = Result<CachedAccessToken, ApiError>>,
+{
+    if !force_refresh {
+        if let Some(token) = state.cached_access_token(key).await {
+            return Ok(token.access_token);
+        }
+    }
+    // Single-flight the fetch: under concurrent searches a cold cache would
+    // otherwise stampede the provider's token endpoint and risk rate limits.
+    let fetch_lock = state.token_fetch_lock(key).await;
+    let _guard = fetch_lock.lock().await;
+    // Another task may have populated the cache while we waited for the lock.
+    if let Some(token) = state.cached_access_token(key).await {
+        return Ok(token.access_token);
+    }
+    let token = fetch().await?;
+    let access_token = token.access_token.clone();
+    state
+        .store_access_token(key, token)
+        .await
+        .map_err(|error| {
+            ApiError::bad_request(&format!("failed to cache {label} token: {error}"))
+        })?;
+    Ok(access_token)
+}
+
+/// Sends a bearer-authenticated request, refreshing the token once on a `401`.
+/// `build` produces the request for a given access token (so the retry
+/// re-authorizes with the fresh token); `refresh` mints a new token after the
+/// cached one is invalidated. Returns the raw response (the caller checks status).
+pub(super) async fn send_with_token_retry<B, R, RFut>(
+    state: &AppState,
+    key: &str,
+    token: &str,
+    build: B,
+    refresh: R,
+) -> Result<reqwest::Response, ApiError>
+where
+    B: Fn(&str) -> reqwest::RequestBuilder,
+    R: FnOnce() -> RFut,
+    RFut: Future<Output = Result<String, ApiError>>,
+{
+    let response = build(token).send().await.map_err(provider_error)?;
+    if response.status() != reqwest::StatusCode::UNAUTHORIZED {
+        return Ok(response);
+    }
+    state.invalidate_access_token(key).await;
+    let token = refresh().await?;
+    build(&token).send().await.map_err(provider_error)
+}
+
 pub(super) fn field_option(field: &str, label: &str) -> ExternalProviderFieldOption {
     ExternalProviderFieldOption {
         field: field.to_string(),
@@ -599,6 +667,122 @@ pub(super) fn normalize_isbn(raw: &str) -> String {
         .sum();
     let check = (10 - (sum % 10)) % 10;
     format!("{core}{check}")
+}
+
+// ---------------------------------------------------------------------------
+// Shared JSON-shaping helpers used by the provider modules. Each provider maps a
+// raw API response into the KizunaShelf candidate shape, and these cover the
+// pieces that were otherwise re-spelled per module: collecting string arrays,
+// pulling a named field out of an array of objects, inserting trimmed strings,
+// coercing scalars, and flattening light HTML. (See `external/*`.)
+// ---------------------------------------------------------------------------
+
+/// Collects a JSON array's items into a trimmed, non-empty `Value::Array`, or
+/// `None` when the input isn't an array or yields nothing. `extract` pulls the
+/// string out of each element — pass [`Value::as_str`] for an array of plain
+/// strings (see [`string_list`]).
+pub(super) fn string_list_with<'a>(
+    value: Option<&'a Value>,
+    extract: impl Fn(&'a Value) -> Option<&'a str>,
+) -> Option<Value> {
+    let items: Vec<Value> = value?
+        .as_array()?
+        .iter()
+        .filter_map(extract)
+        .map(str::trim)
+        .filter(|text| !text.is_empty())
+        .map(|text| Value::String(text.to_string()))
+        .collect();
+    (!items.is_empty()).then_some(Value::Array(items))
+}
+
+/// [`string_list_with`] for a JSON array of plain strings.
+pub(super) fn string_list(value: Option<&Value>) -> Option<Value> {
+    string_list_with(value, Value::as_str)
+}
+
+/// Wraps a list of strings into `Some(Value::Array)`, or `None` when empty.
+pub(super) fn string_array(values: Vec<String>) -> Option<Value> {
+    (!values.is_empty()).then(|| Value::Array(values.into_iter().map(Value::String).collect()))
+}
+
+/// Collects the `key` field of every object in a JSON array into trimmed,
+/// non-empty strings, preserving order (no deduplication).
+pub(super) fn named_strings(value: Option<&Value>, key: &str) -> Vec<String> {
+    value
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|entry| entry.get(key).and_then(Value::as_str))
+                .map(str::trim)
+                .filter(|name| !name.is_empty())
+                .map(str::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// [`named_strings`] over the conventional `"name"` field, as a JSON array.
+pub(super) fn named_list(value: Option<&Value>) -> Option<Value> {
+    string_array(named_strings(value, "name"))
+}
+
+/// Inserts a trimmed, non-empty string under `key`; a no-op when the source is
+/// absent or blank.
+pub(super) fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value>) {
+    if let Some(text) = value
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        metadata.insert(key.to_string(), Value::String(text.to_string()));
+    }
+}
+
+/// Coerces a JSON value to a string: a trimmed non-empty string, else an integer
+/// (`i64` or `u64`) rendered as text. `None` for anything else.
+pub(super) fn non_empty_string_or_integer(value: &Value) -> Option<String> {
+    value
+        .as_str()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+        .or_else(|| value.as_i64().map(|value| value.to_string()))
+        .or_else(|| value.as_u64().map(|value| value.to_string()))
+}
+
+/// Removes `<…>` tags, returning the text between them. Does no trimming or
+/// `<br>` handling — callers layer those on via [`strip_html`].
+fn strip_tags(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    let mut in_tag = false;
+    for character in value.chars() {
+        match character {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => out.push(character),
+            _ => {}
+        }
+    }
+    out
+}
+
+/// Strips HTML tags, turning `<br>` into newlines, then trims — for the light
+/// HTML some providers return in descriptions.
+pub(super) fn strip_html(value: &str) -> String {
+    strip_tags(&value.replace("<br", "\n<br"))
+        .trim()
+        .to_string()
+}
+
+/// Like [`strip_html`] but collapses every run of whitespace (including the
+/// inserted breaks) to single spaces — a one-line plain-text form.
+pub(super) fn strip_html_collapsed(value: &str) -> String {
+    strip_tags(&value.replace("<br", "\n<br"))
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 pub(super) fn provider_for_external_ref(external_ref: &str) -> Option<&'static str> {

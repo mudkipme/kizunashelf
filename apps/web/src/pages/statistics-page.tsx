@@ -7,6 +7,7 @@ import { AnalyticsSection } from "@/components/analytics/analytics-section";
 import { BarList } from "@/components/analytics/bar-list";
 import { StatTile } from "@/components/analytics/stat-tile";
 import { AppFrame } from "@/components/layout/app-frame";
+import { Placeholder } from "@/components/ui/placeholder";
 import { fieldLabelAcrossTypes } from "@/lib/type-config";
 
 export function StatisticsPage() {
@@ -36,9 +37,9 @@ export function StatisticsPage() {
         </header>
 
         {loading ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+          <Placeholder>
             Loading
-          </div>
+          </Placeholder>
         ) : null}
 
         {data ? (

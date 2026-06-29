@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { addList } from "@/api/lists";
-import { capabilitiesQuery, listsQuery, queryKeys } from "@/api/queries";
+import { listsQuery, queryKeys } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Placeholder } from "@/components/ui/placeholder";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { useCapabilities } from "@/lib/capabilities";
 
 export function ListsPage() {
   const lists = useQuery(listsQuery());
-  const capabilities = useQuery(capabilitiesQuery());
-  const contentWritable = capabilities.data?.contentWritable !== false;
+  const capabilities = useCapabilities();
+  const contentWritable = capabilities.contentWritable;
   const [createOpen, setCreateOpen] = useState(false);
   const [error, setError] = useState<string>();
   const items = lists.data?.items ?? [];
@@ -45,11 +47,11 @@ export function ListsPage() {
         </header>
 
         {lists.isPending ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+          <Placeholder>Loading</Placeholder>
         ) : items.length === 0 ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+          <Placeholder>
             No lists yet. Create one to start collecting entities.
-          </div>
+          </Placeholder>
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
             {items.map((list) => (

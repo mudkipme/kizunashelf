@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, provider_error, string_list, strip_html, type_option,
+    ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -199,32 +199,6 @@ fn steam_candidate(appid: &str, data: &Value) -> Option<ExternalCandidate> {
         titles: BTreeMap::new(),
         metadata,
     })
-}
-
-fn string_list(value: Option<&Value>) -> Option<Value> {
-    let items: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(Value::as_str)
-        .map(str::trim)
-        .filter(|text| !text.is_empty())
-        .map(|text| Value::String(text.to_string()))
-        .collect();
-    (!items.is_empty()).then_some(Value::Array(items))
-}
-
-fn strip_html(value: &str) -> String {
-    let mut out = String::with_capacity(value.len());
-    let mut in_tag = false;
-    for character in value.chars() {
-        match character {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            _ if !in_tag => out.push(character),
-            _ => {}
-        }
-    }
-    out.trim().to_string()
 }
 
 #[cfg(test)]

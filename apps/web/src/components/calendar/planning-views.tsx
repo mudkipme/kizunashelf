@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { Placeholder } from "@/components/ui/placeholder";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import type {
@@ -24,11 +25,11 @@ export function CalendarPlanningViews({
   onOpenMonth,
 }: PlanningViewsProps) {
   if (loading) {
-    return <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>;
+    return <Placeholder>Loading</Placeholder>;
   }
 
   if (!data) {
-    return <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">No planning data</div>;
+    return <Placeholder>No planning data</Placeholder>;
   }
 
   if (mode === "year") {

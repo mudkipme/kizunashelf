@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, insert_str, named_list, named_strings, provider_error,
+    type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -630,7 +630,7 @@ fn tmdb_detail(media_type: &str, id: &str, data: &Value) -> Option<ExternalCandi
     let producers = crew_names(crew, |job| matches!(job, "Producer" | "Executive Producer"));
     // TV shows rarely credit a series-level director; fall back to creators.
     let directors = if directors.is_empty() && is_tv {
-        named_list_strings(data.get("created_by"))
+        named_strings(data.get("created_by"), "name")
     } else {
         directors
     };
@@ -788,35 +788,6 @@ fn crew_names(crew: Option<&Value>, job_matches: impl Fn(&str) -> bool) -> Vec<S
         }
     }
     names
-}
-
-fn named_list(value: Option<&Value>) -> Option<Value> {
-    let names = named_list_strings(value);
-    (!names.is_empty()).then(|| Value::Array(names.into_iter().map(Value::String).collect()))
-}
-
-fn named_list_strings(value: Option<&Value>) -> Vec<String> {
-    value
-        .and_then(Value::as_array)
-        .map(|values| {
-            values
-                .iter()
-                .filter_map(|entry| entry.get("name").and_then(Value::as_str))
-                .filter(|name| !name.is_empty())
-                .map(str::to_string)
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
-fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value>) {
-    if let Some(text) = value
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-    {
-        metadata.insert(key.to_string(), Value::String(text.to_string()));
-    }
 }
 
 /// `external_ids` values are strings (`imdb_id`, `wikidata_id`) or integers

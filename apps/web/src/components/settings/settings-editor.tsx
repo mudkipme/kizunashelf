@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { SaveIcon } from "lucide-react";
 
 import { saveSettingsConfig } from "@/api/settings";
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type {
@@ -181,17 +182,17 @@ export function SettingsEditor({
       </header>
 
       {!settingsWritable ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <Alert>
           Schema editing is disabled on this instance (read-only). Set
           <code className="mx-1">KIZUNASHELF_SETTINGS_WRITABLE=true</code>
           to enable it.
-        </div>
+        </Alert>
       ) : null}
 
       {error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <Alert>
           {error}
-        </div>
+        </Alert>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">

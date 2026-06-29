@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { errorMessage } from "@/api/client";
-import { capabilitiesQuery, languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
+import { languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { ProviderCredentials } from "@/components/settings/provider-credentials";
 import { RawConfigEditor } from "@/components/settings/raw-config-editor";
@@ -19,7 +19,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Placeholder } from "@/components/ui/placeholder";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
+import { useCapabilities } from "@/lib/capabilities";
 import { isDesktopRuntime } from "@/lib/desktop";
 
 type EditorMode = "form" | "yaml";
@@ -28,7 +30,7 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
   const settings = useQuery(settingsConfigQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
-  const capabilities = useQuery(capabilitiesQuery());
+  const capabilities = useCapabilities();
   const languages = useQuery(languagesQuery());
   const [mode, setMode] = useState<EditorMode>("form");
   // The active editor reports unsaved edits here; `pendingMode` holds a requested
@@ -39,7 +41,7 @@ export function SettingsPage() {
     settings.isPending || providerCatalog.isPending || capabilities.isPending || languages.isPending;
   const error = settings.error ?? providerCatalog.error ?? capabilities.error ?? languages.error;
   const desktop = isDesktopRuntime();
-  const settingsWritable = capabilities.data?.settingsWritable !== false;
+  const settingsWritable = capabilities.settingsWritable;
 
   // Warn on tab close/reload while edits are unsaved.
   useUnsavedChangesWarning(dirty);
@@ -88,7 +90,7 @@ export function SettingsPage() {
         {mode === "yaml" ? (
           <RawConfigEditor settingsWritable={settingsWritable} onDirtyChange={setDirty} />
         ) : loading ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">Loading</div>
+          <Placeholder>Loading</Placeholder>
         ) : settings.data ? (
           <SettingsEditor
             vaultConfigPath={settings.data.vaultConfigPath ?? undefined}

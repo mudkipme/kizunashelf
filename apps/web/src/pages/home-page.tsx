@@ -4,16 +4,17 @@ import { PlusIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { capabilitiesQuery, configQuery, homeQuery } from "@/api/queries";
+import { configQuery, homeQuery } from "@/api/queries";
 import { HomeSection } from "@/components/home/home-section";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
+import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { fieldLabelsByType } from "@/lib/type-config";
 
 export function HomePage() {
   const home = useQuery(homeQuery());
   const config = useQuery(configQuery());
-  const capabilities = useQuery(capabilitiesQuery());
+  const capabilities = useCapabilities();
   const loading = home.isPending || config.isPending || capabilities.isPending;
   const error = home.error ?? config.error ?? capabilities.error;
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
@@ -30,15 +31,11 @@ export function HomePage() {
           </div>
           <Button
             type="button"
-            disabled={capabilities.data?.contentWritable === false}
-            title={
-              capabilities.data?.contentWritable === false
-                ? "Content writes are disabled"
-                : "Add entity"
-            }
-            asChild={capabilities.data?.contentWritable !== false}
+            disabled={!capabilities.contentWritable}
+            title={!capabilities.contentWritable ? CONTENT_WRITES_DISABLED : "Add entity"}
+            asChild={capabilities.contentWritable}
           >
-            {capabilities.data?.contentWritable === false ? (
+            {!capabilities.contentWritable ? (
               <span>
                 <PlusIcon data-icon="inline-start" />
                 Add

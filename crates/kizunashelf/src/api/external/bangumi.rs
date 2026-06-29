@@ -1,5 +1,5 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, provider_error, string_list_with, type_option, ExternalProvider,
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
@@ -551,23 +551,6 @@ fn infobox_collect(infobox: &[Value], keys: &[&str]) -> Vec<String> {
     values
 }
 
-/// Collects an array's elements into a JSON string array via `extract`, dropping
-/// empties and returning `None` when the source is missing or yields nothing.
-/// Used for list-shaped metadata (tags, genres) that maps onto list-type fields.
-fn string_list<'a>(
-    value: Option<&'a Value>,
-    extract: impl Fn(&'a Value) -> Option<&'a str>,
-) -> Option<Value> {
-    let items: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(extract)
-        .filter(|text| !text.is_empty())
-        .map(|text| Value::String(text.to_string()))
-        .collect();
-    (!items.is_empty()).then_some(Value::Array(items))
-}
-
 fn bangumi_type(external_type: &str) -> Option<u32> {
     match external_type.trim().to_ascii_lowercase().as_str() {
         "1" => Some(1),
@@ -659,12 +642,12 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
     {
         metadata.insert("rank".to_string(), Value::Number(rank.into()));
     }
-    if let Some(tags) = string_list(item.get("tags"), |tag| {
+    if let Some(tags) = string_list_with(item.get("tags"), |tag| {
         tag.get("name").and_then(Value::as_str)
     }) {
         metadata.insert("tags".to_string(), tags);
     }
-    if let Some(meta_tags) = string_list(item.get("meta_tags"), Value::as_str) {
+    if let Some(meta_tags) = string_list_with(item.get("meta_tags"), Value::as_str) {
         metadata.insert("meta_tags".to_string(), meta_tags);
     }
     if let Some(summary) = item

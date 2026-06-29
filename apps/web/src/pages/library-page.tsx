@@ -4,7 +4,7 @@ import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { allTagsQuery, capabilitiesQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
+import { allTagsQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import type { FieldFilter, FieldFilterOption } from "@/components/assets/asset-toolbar";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
@@ -28,6 +28,7 @@ import {
   fieldLabelsByType,
   hasAnyFieldType,
 } from "@/lib/type-config";
+import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
 import type { TypeConfig } from "@/types/api";
 import {
@@ -41,7 +42,8 @@ export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const globalStats = useQuery(statsQuery());
   const config = useQuery(configQuery());
-  const capabilities = useQuery(capabilitiesQuery());
+  const capabilities = useCapabilities();
+  const contentWritable = capabilities.contentWritable;
   const firstType = globalStats.data?.byType[0]?.id ?? allTypes;
   const selectedType = searchParams.get("type") ?? allTypes;
   const isGlobalType = selectedType === allTypes;
@@ -299,16 +301,12 @@ export function LibraryPage() {
                   variant="outline"
                   size="icon"
                   className="shrink-0"
-                  disabled={capabilities.data?.contentWritable === false}
+                  disabled={!contentWritable}
                   aria-label="Add entity"
-                  title={
-                    capabilities.data?.contentWritable === false
-                      ? "Content writes are disabled"
-                      : "Add entity"
-                  }
-                  asChild={capabilities.data?.contentWritable !== false}
+                  title={!contentWritable ? CONTENT_WRITES_DISABLED : "Add entity"}
+                  asChild={contentWritable}
                 >
-                  {capabilities.data?.contentWritable === false ? (
+                  {!contentWritable ? (
                     <span>
                       <PlusIcon />
                     </span>
@@ -382,15 +380,11 @@ export function LibraryPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={capabilities.data?.contentWritable === false}
-                  title={
-                    capabilities.data?.contentWritable === false
-                      ? "Content writes are disabled"
-                      : "Add entity"
-                  }
-                  asChild={capabilities.data?.contentWritable !== false}
+                  disabled={!contentWritable}
+                  title={!contentWritable ? CONTENT_WRITES_DISABLED : "Add entity"}
+                  asChild={contentWritable}
                 >
-                  {capabilities.data?.contentWritable === false ? (
+                  {!contentWritable ? (
                     <span>
                       <PlusIcon data-icon="inline-start" />
                       Add

@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, normalize_isbn, provider_error, type_option, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, insert_str, normalize_isbn, provider_error, string_list,
+    strip_html, type_option, ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -421,47 +421,6 @@ fn open_library_text(value: Option<&Value>) -> Option<String> {
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(str::to_string)
-}
-
-/// Strips HTML tags from an Open Library description (some carry light markup).
-fn strip_html(value: &str) -> String {
-    if !value.contains('<') {
-        return value.trim().to_string();
-    }
-    let value = value.replace("<br", "\n<br");
-    let mut out = String::with_capacity(value.len());
-    let mut in_tag = false;
-    for character in value.chars() {
-        match character {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            _ if !in_tag => out.push(character),
-            _ => {}
-        }
-    }
-    out.trim().to_string()
-}
-
-fn insert_str(metadata: &mut Map<String, Value>, key: &str, value: Option<&Value>) {
-    if let Some(text) = value
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-    {
-        metadata.insert(key.to_string(), Value::String(text.to_string()));
-    }
-}
-
-fn string_list(value: Option<&Value>) -> Option<Value> {
-    let items: Vec<Value> = value?
-        .as_array()?
-        .iter()
-        .filter_map(Value::as_str)
-        .map(str::trim)
-        .filter(|text| !text.is_empty())
-        .map(|text| Value::String(text.to_string()))
-        .collect();
-    (!items.is_empty()).then_some(Value::Array(items))
 }
 
 #[cfg(test)]

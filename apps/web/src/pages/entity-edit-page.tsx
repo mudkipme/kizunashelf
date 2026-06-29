@@ -3,16 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { errorMessage, isConflictError } from "@/api/client";
+import { errorMessage } from "@/api/client";
 import { saveEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { useRelationSearch } from "@/api/use-relation-search";
-import {
-  capabilitiesQuery,
-  configQuery,
-  entityQuery,
-  providerCatalogQuery,
-} from "@/api/queries";
+import { configQuery, entityQuery, providerCatalogQuery } from "@/api/queries";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import {
   type FrontmatterDraft,
@@ -22,7 +17,11 @@ import {
 } from "@/components/entities/metadata-editor";
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Placeholder } from "@/components/ui/placeholder";
+import { ENTITY_EDIT_CONFLICT_MESSAGE, useEntityMutation } from "@/hooks/use-entity-mutation";
+import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
@@ -34,12 +33,11 @@ export function EntityEditPage() {
   const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
-  const capabilities = useQuery(capabilitiesQuery());
-  const [error, setError] = useState<string>();
+  const capabilities = useCapabilities();
+  const { saving, error, setError, run } = useEntityMutation();
   const [conflict, setConflict] = useState(false);
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
-  const [saving, setSaving] = useState(false);
   // Tracks which entity the local draft was seeded from, so a background refetch
   // of the same entity doesn't clobber in-progress edits.
   const seededEntityIdRef = useRef<string | undefined>(undefined);
@@ -51,7 +49,7 @@ export function EntityEditPage() {
   const queryError =
     detail.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
   const entity = detail.data?.entity;
-  const contentWritable = capabilities.data?.contentWritable !== false;
+  const contentWritable = capabilities.contentWritable;
   const language = useTitleLanguage();
   const typeConfig = useMemo(
     () => config.data?.types.find((type) => type.id === entity?.type),
@@ -63,7 +61,7 @@ export function EntityEditPage() {
     entityType: entity?.type,
     defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
-    assetDownloadEnabled: capabilities.data?.assetDownloadEnabled === true,
+    assetDownloadEnabled: capabilities.assetDownloadEnabled,
     onError: setError,
   });
   const { setQuery: setMatchQuery } = external;
@@ -102,32 +100,25 @@ export function EntityEditPage() {
 
   async function save() {
     if (!entity || !contentWritable) return;
-    setSaving(true);
-    setError(undefined);
     setConflict(false);
-    try {
-      const result = await saveEntity(entity.id, {
-        revision: entity.revision,
-        frontmatter: frontmatterPatch(entity.frontmatter, frontmatter),
-        body,
-      });
-      await external.maybeDownloadCover(result.entity);
-      await invalidateEntityData();
-      navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
-    } catch (error) {
-      if (isConflictError(error)) {
-        // The file changed on disk since it was loaded. Keep the user's edits and
-        // offer a reload so they can reapply them against the latest version.
-        setConflict(true);
-        setError(
-          "This entity changed on disk since you opened it. Your edits are kept here — reload the latest version, then reapply them.",
-        );
-      } else {
-        setError(errorMessage(error));
-      }
-    } finally {
-      setSaving(false);
-    }
+    await run(
+      async () => {
+        const result = await saveEntity(entity.id, {
+          revision: entity.revision,
+          frontmatter: frontmatterPatch(entity.frontmatter, frontmatter),
+          body,
+        });
+        await external.maybeDownloadCover(result.entity);
+        await invalidateEntityData();
+        navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
+      },
+      {
+        // A 409 means the file changed on disk since it was loaded. Keep the
+        // user's edits and offer a reload so they can reapply them.
+        conflictMessage: ENTITY_EDIT_CONFLICT_MESSAGE,
+        onConflict: () => setConflict(true),
+      },
+    );
   }
 
   function cancel() {
@@ -189,14 +180,10 @@ export function EntityEditPage() {
           </div>
         </header>
 
-        {!contentWritable ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            Content writes are disabled.
-          </div>
-        ) : null}
+        {!contentWritable ? <Alert>{CONTENT_WRITES_DISABLED}</Alert> : null}
 
         {conflict ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert className="flex flex-wrap items-center justify-between gap-3">
             <span className="min-w-0">{error}</span>
             <Button
               type="button"
@@ -207,13 +194,13 @@ export function EntityEditPage() {
             >
               Reload latest version
             </Button>
-          </div>
+          </Alert>
         ) : null}
 
         {loading ? (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+          <Placeholder>
             Loading
-          </div>
+          </Placeholder>
         ) : entity ? (
           <>
             <ExternalMatchDialog
@@ -270,9 +257,9 @@ export function EntityEditPage() {
             />
           </>
         ) : (
-          <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+          <Placeholder>
             Entity not found
-          </div>
+          </Placeholder>
         )}
       </div>
     </AppFrame>
