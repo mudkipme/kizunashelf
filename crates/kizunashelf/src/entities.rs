@@ -12,7 +12,7 @@ use crate::relations::{
 };
 use crate::types::{EntityRecord, EntitySummary, FieldType, Library, Relation, RelationDirection};
 use serde::Deserialize;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// One parsed `filters` entry: a field and the set of values that match it.
 #[derive(Deserialize)]
@@ -349,6 +349,7 @@ fn entity_sort_title<'entity>(
 pub fn entity_detail_relations(library: &Library, entity_id: &str) -> Vec<Relation> {
     // Only the relations that touch this entity (source or resolved target),
     // visited in stored order so the result matches a full-graph scan.
+    let summaries = summary_by_id(library);
     library
         .relation_indices_touching(entity_id)
         .into_iter()
@@ -361,8 +362,35 @@ pub fn entity_detail_relations(library: &Library, entity_id: &str) -> Vec<Relati
                         && relation.direction == RelationDirection::Out
                         && !has_mirrored_incoming_relation(library, entity_id, relation)))
         })
-        .cloned()
+        .map(|relation| orient_for_entity(entity_id, relation, &summaries))
         .collect()
+}
+
+/// Relations are stored from their source's perspective. One whose *target* is
+/// this entity — an unmirrored inbound link, e.g. a body wikilink written in
+/// another entity's note — is rewritten into this entity's perspective: an
+/// incoming edge whose target is the *linking* entity, carrying that entity's
+/// title and type so clients group it by the linking entity rather than by this
+/// one. Relations already sourced from this entity pass through unchanged.
+fn orient_for_entity(
+    entity_id: &str,
+    relation: &Relation,
+    summaries: &HashMap<&str, &EntitySummary>,
+) -> Relation {
+    if relation.source_id == entity_id {
+        return relation.clone();
+    }
+    let source = summaries.get(relation.source_id.as_str());
+    Relation {
+        source_id: entity_id.to_string(),
+        target_id: Some(relation.source_id.clone()),
+        target_title: source
+            .map(|summary| summary.title.clone())
+            .unwrap_or_else(|| relation.source_id.clone()),
+        target_type: source.map(|summary| summary.entity_type.clone()),
+        field: relation.field.clone(),
+        direction: RelationDirection::In,
+    }
 }
 
 fn has_mirrored_incoming_relation(library: &Library, entity_id: &str, relation: &Relation) -> bool {
@@ -993,6 +1021,43 @@ mod tests {
                 .map(|entity| entity.title.as_str())
                 .collect::<Vec<_>>(),
             ["Beta", "Gamma"]
+        );
+    }
+
+    #[test]
+    fn entity_detail_relations_orients_unmirrored_inbound_body_links_as_incoming() {
+        // Beta's note body-links to Alpha; with no frontmatter relation, the core
+        // stored only the single Out edge b->a (body links get no In reflection).
+        // From Alpha's perspective this must read as an *incoming* link from Beta,
+        // carrying Beta's title/type — not an outgoing edge bucketed by Alpha's own
+        // type (the bug where it surfaced as "body · <Alpha's type>" → Beta).
+        let records = vec![
+            record("anime:a", "Alpha", json!({})),
+            record("anime:b", "Beta", json!({})),
+        ];
+        let relations = vec![relation(
+            "anime:b",
+            "anime:a",
+            "body",
+            RelationDirection::Out,
+        )];
+        let library = Library::new(config(), records, relations, Vec::new(), "gen".to_string());
+
+        let oriented = entity_detail_relations(&library, "anime:a");
+        assert_eq!(oriented.len(), 1);
+        let edge = &oriented[0];
+        assert_eq!(edge.source_id, "anime:a");
+        assert_eq!(edge.target_id.as_deref(), Some("anime:b"));
+        assert_eq!(edge.target_title, "Beta"); // the linking entity's title, not its id
+        assert_eq!(edge.target_type.as_deref(), Some("anime"));
+        assert_eq!(edge.field, "body");
+        assert_eq!(edge.direction, RelationDirection::In);
+
+        // Beta still surfaces as a related entity.
+        let related = entity_detail_related_entities(&library, "anime:a", &oriented);
+        assert_eq!(
+            related.iter().map(|e| e.title.as_str()).collect::<Vec<_>>(),
+            ["Beta"]
         );
     }
 }
