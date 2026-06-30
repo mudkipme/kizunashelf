@@ -18,6 +18,22 @@ use tower::ServiceExt;
 /// root + write mode) is passed inline like every real runtime (web/desktop/iOS),
 /// and only the vault config lives on disk inside the vault.
 fn inline_router(vault_root: &Path, settings_writable: bool, content_writable: bool) -> Router {
+    build_inline_router(vault_root, settings_writable, content_writable, false)
+}
+
+/// Like [`inline_router`] but with host-driven asset ingest enabled — the iOS
+/// in-process-host posture the `plan`/`ingest` endpoints require. The network
+/// server uses [`inline_router`] (off), so the host-path surface is gated there.
+fn host_inline_router(vault_root: &Path, content_writable: bool) -> Router {
+    build_inline_router(vault_root, true, content_writable, true)
+}
+
+fn build_inline_router(
+    vault_root: &Path,
+    settings_writable: bool,
+    content_writable: bool,
+    host_asset_ingest: bool,
+) -> Router {
     let token_path = vault_root
         .parent()
         .map(|parent| parent.join(".tokens.json"))
@@ -30,6 +46,7 @@ fn inline_router(vault_root: &Path, settings_writable: bool, content_writable: b
             settings_writable,
             content_writable,
             index_cache_dir: None,
+            host_asset_ingest,
         },
         AppConfig {
             vault_root: vault_root.to_string_lossy().to_string(),
@@ -1379,7 +1396,9 @@ fn asset_test_app(
         ]
     });
     write_vault_config(&vault, &config);
-    let app = inline_router(&vault, true, content_writable);
+    // Asset plan/ingest is the host-driven (iOS) flow, so the asset tests run with
+    // host-path ingest enabled. A dedicated test covers the network posture (off).
+    let app = host_inline_router(&vault, content_writable);
     (app, temp, vault)
 }
 
@@ -1681,6 +1700,44 @@ async fn ingest_skips_when_source_url_no_longer_matches() {
     assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
     // Even on skip, the stale temp file is cleaned up.
     assert!(!source.exists());
+}
+
+#[tokio::test]
+async fn host_driven_asset_endpoints_are_rejected_on_the_network_runtime() {
+    // The web/desktop runtimes leave `host_asset_ingest` off (TestServer uses
+    // `inline_router`), so the host-path `plan`/`ingest` endpoints — which read and
+    // *delete* a client-supplied absolute path — must be unreachable by an
+    // untrusted caller. (iOS opts in via the FFI host; the asset tests cover that.)
+    let server = TestServer::new();
+
+    // A file outside the vault that an attacker might target for deletion.
+    let temp = TempDir::new().unwrap();
+    let victim = temp.path().join("victim.txt");
+    fs::write(&victim, b"do not delete").unwrap();
+
+    let (status, body) = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}/assets/ingest",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        Some(json!({
+            "field": "cover_url",
+            "sourceUrl": "https://img.example/cover.jpg",
+            "sourcePath": victim.to_string_lossy(),
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
+    // The gate fires before any filesystem access — the host file is untouched.
+    assert!(
+        victim.exists(),
+        "gated ingest must not read or delete host paths"
+    );
+
+    let (status, body) = server.json("/api/asset-downloads/plan").await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
 }
 
 #[tokio::test]

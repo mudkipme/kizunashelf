@@ -89,6 +89,13 @@ pub struct ApiOptions {
     pub web_dist_path: Option<PathBuf>,
     pub settings_writable: bool,
     pub content_writable: bool,
+    /// Whether host-driven asset ingest is permitted — the `plan`/`ingest`
+    /// endpoints that read (and delete) a client-supplied *absolute host path*
+    /// (`AssetIngestRequest::source_path`) with raw `std::fs`, bypassing the VFS.
+    /// Only the in-process host (iOS), which hands the core a sandboxed temp-file
+    /// path over the FFI tunnel, may set this. The network HTTP server and desktop
+    /// leave it `false` so an untrusted caller can't reach that surface.
+    pub host_asset_ingest: bool,
     /// Host directory for the *persistent* index cache (NOT inside the vault — a
     /// real app-container path the in-process core can touch with `std::fs`).
     /// `None` keeps the index cache in process memory instead (lost on restart,
@@ -556,4 +563,19 @@ pub(crate) async fn require_content_writes(state: &AppState) -> Result<Arc<Libra
         return Err(ApiError::forbidden("Content writes are disabled"));
     }
     Ok(library)
+}
+
+/// Gate for the host-driven download endpoints (`plan`/`ingest`), which read and
+/// delete a client-supplied absolute host path. Permitted only on the in-process
+/// host runtime (iOS); the network HTTP server and desktop reject it so that
+/// raw-`std::fs` surface is never reachable by an untrusted client. See
+/// [`ApiOptions::host_asset_ingest`].
+pub(crate) fn require_host_asset_ingest(state: &AppState) -> Result<(), ApiError> {
+    if state.options.host_asset_ingest {
+        Ok(())
+    } else {
+        Err(ApiError::forbidden(
+            "Host-driven asset ingest is not available on this runtime",
+        ))
+    }
 }

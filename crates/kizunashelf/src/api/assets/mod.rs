@@ -17,7 +17,7 @@ pub(crate) use util::entity_asset_dir;
 
 use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
-use super::state::{get_library, require_content_writes, AppState};
+use super::state::{get_library, require_content_writes, require_host_asset_ingest, AppState};
 use crate::contract::{
     AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest, AssetDownloadResponse,
     AssetDownloadStatus, AssetIngestRequest, AssetIngestResponse,
@@ -109,6 +109,7 @@ pub(crate) async fn plan_asset_downloads(
     State(state): State<AppState>,
     Query(query): Query<PlanQuery>,
 ) -> ApiResult<AssetDownloadPlan> {
+    require_host_asset_ingest(&state)?;
     let library = get_library(&state).await?;
     if let Some(entity_type) = query.entity_type.as_deref() {
         if library.config.type_config(entity_type).is_none() {
@@ -166,6 +167,9 @@ pub(crate) async fn ingest_entity_asset(
     AxumPath(path): AxumPath<EntityPath>,
     Json(request): Json<AssetIngestRequest>,
 ) -> ApiResult<AssetIngestResponse> {
+    // Reading + deleting a client-supplied host path is a host-only capability;
+    // reject it before any content-write or filesystem work on every other runtime.
+    require_host_asset_ingest(&state)?;
     let library = require_content_writes(&state).await?;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));

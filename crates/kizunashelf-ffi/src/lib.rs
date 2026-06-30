@@ -112,6 +112,10 @@ impl KizunaEngine {
             settings_writable: true,
             content_writable: options.content_writable,
             index_cache_dir: options.index_cache_dir.map(PathBuf::from),
+            // The in-process host (the Swift app) downloads covers itself and hands
+            // the core a sandboxed temp-file path to ingest. This runtime is the
+            // only trusted caller, so it's the only one allowed host-path ingest.
+            host_asset_ingest: true,
         };
         let router = router_with_vault(core_options, vault_fs, app_config, secret_store);
 

@@ -72,6 +72,10 @@ async fn main() -> Result<()> {
         settings_writable,
         content_writable,
         index_cache_dir,
+        // The network server never does host-path ingest; the web client uses the
+        // reqwest-based download path. Keep this off so the `source_path`
+        // read/delete surface is unreachable here.
+        host_asset_ingest: false,
     };
     let app = router_native(options, app_config, secret_store);
 

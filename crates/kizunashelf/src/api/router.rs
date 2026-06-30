@@ -404,6 +404,7 @@ fn api_router() -> ApiRouter<AppState> {
                 op.id("planAssetDownloads")
                     .response::<200, Json<AssetDownloadPlan>>()
                     .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )
