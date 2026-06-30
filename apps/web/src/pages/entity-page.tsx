@@ -106,8 +106,6 @@ export function EntityPage() {
   const canDownloadCover =
     contentWritable && capabilities.assetDownloadEnabled && isRemoteAsset(entity?.image);
   const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
-  // The log modal is offered when there's something to log: a loggable type, an
-  // episodes list, or a started/completed dated field.
   // The activities offered in the log dialog: always "progress", plus
   // "started"/"completed" only when the schema actually has those date roles to
   // stamp.
@@ -118,12 +116,10 @@ export function EntityPage() {
       ? (["completed"] as const)
       : []),
   ];
-  const canLog =
-    contentWritable &&
-    Boolean(entity) &&
-    (Boolean(typeConfig?.log) ||
-      (detail.data?.episodes?.total ?? 0) > 0 ||
-      logKinds.length > 1);
+  // The Log button is shown only when the type is configured for daily-note
+  // logging. Episode checkboxes tick independently of this (and write a
+  // daily-note line themselves when the type is loggable).
+  const canLog = contentWritable && Boolean(entity) && Boolean(typeConfig?.log);
   const external = useExternalMatch({
     typeConfig,
     providerCatalog: providerCatalog.data,
