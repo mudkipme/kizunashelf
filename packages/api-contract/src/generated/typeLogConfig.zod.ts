@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const TypeLogConfig = zod.object({
   "section": zod.string().nullish(),
   "lineFormat": zod.string().nullish()
-}).describe('Per-type daily-note logging config, under `types[].log`. \*\*Presence opts the\ntype into logging.\*\* The type\'s hashtag is written as a literal inside\n`lineFormat` (e.g. `- [[{title}]] {progress}{note} #Anime`), not a separate\nfield — so it\'s explicit, never inferred from the type name. Unset fields fall\nback to `dailyNotes.log`, then the built-ins.')
+}).describe('Per-type daily-note logging config, under `types[].log`. \*\*Presence opts the\ntype into logging.\*\* The type\'s hashtag is written as a literal inside\n`lineFormat` (e.g. `- {title} {progress}{note} #Anime`), not a separate field —\nso it\'s explicit, never inferred from the type name. Unset fields fall back to\n`dailyNotes.log`, then the built-ins.')
 
 export type TypeLogConfig = zod.input<typeof TypeLogConfig>;
 export type TypeLogConfigOutput = zod.output<typeof TypeLogConfig>;

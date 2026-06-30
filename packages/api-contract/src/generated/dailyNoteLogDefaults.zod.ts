@@ -8,7 +8,7 @@ import { z as zod } from 'zod';
 
 export const DailyNoteLogDefaults = zod.object({
   "section": zod.string().nullish().describe('Heading to write log lines under, as raw heading text (no `#`, default h2) —\nconsistent with `bodySections[].heading`.'),
-  "lineFormat": zod.string().nullish().describe('Line template. Tokens: `{title}` (the entity, rendered as a wikilink),\n`{progress}` (episode number), `{note}` (freeform), `{date}`, `{time}`.\nEmpty tokens collapse with surrounding whitespace.')
+  "lineFormat": zod.string().nullish().describe('Line template. Tokens: `{title}` (the entity — \*\*always rendered as a\n`[[wikilink]]`\*\*, since that link is what ties the line back to the entity;\nwrite `{title}`, not `[[{title}]]`, though the latter isn\'t doubled),\n`{progress}` (episode number), `{note}` (freeform), `{date}`. Empty tokens\ncollapse with surrounding whitespace.')
 }).describe('Global defaults for daily-note logging, under `dailyNotes.log`. Both fields are\noptional; a per-type [`TypeLogConfig`] overrides them, and the built-ins\n([`DEFAULT_LOG_SECTION`] \/ [`DEFAULT_LOG_LINE_FORMAT`]) fill any remaining gap.')
 
 export type DailyNoteLogDefaults = zod.input<typeof DailyNoteLogDefaults>;
