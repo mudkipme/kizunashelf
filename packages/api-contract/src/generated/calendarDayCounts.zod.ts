@@ -12,11 +12,14 @@ export const calendarDayCountsTaxonomyMin = 0;
 
 export const calendarDayCountsDailyNotesMin = 0;
 
+export const calendarDayCountsEpisodesMin = 0;
+
 
 export const CalendarDayCounts = zod.object({
   "total": zod.number().min(calendarDayCountsTotalMin),
   "taxonomy": zod.number().min(calendarDayCountsTaxonomyMin),
-  "dailyNotes": zod.number().min(calendarDayCountsDailyNotesMin)
+  "dailyNotes": zod.number().min(calendarDayCountsDailyNotesMin),
+  "episodes": zod.number().min(calendarDayCountsEpisodesMin)
 })
 
 export type CalendarDayCounts = zod.input<typeof CalendarDayCounts>;

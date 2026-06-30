@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const CalendarEntrySource = zod.enum(['taxonomy', 'daily-note'])
+export const CalendarEntrySource = zod.union([zod.enum(['taxonomy', 'daily-note']),zod.literal("episode").describe('A dated episode\/track from an entity\'s episodes section.')])
 
 export type CalendarEntrySource = zod.input<typeof CalendarEntrySource>;
 export type CalendarEntrySourceOutput = zod.output<typeof CalendarEntrySource>;

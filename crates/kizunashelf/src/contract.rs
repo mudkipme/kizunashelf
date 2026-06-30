@@ -307,16 +307,11 @@ pub struct Episode {
     /// per-item date (e.g. album tracks).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub date: Option<String>,
-}
-
-/// Full rewrite of an entity's episodes section (toggle / add / remove / reorder /
-/// rename / regroup). The server renders these groups back into the body, replacing
-/// only the episodes section.
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateEpisodesRequest {
-    pub revision: String,
-    pub groups: Vec<EpisodeGroup>,
+    /// The completion date (`YYYY-MM-DD`), rendered as an Obsidian Tasks
+    /// `✅ YYYY-MM-DD` suffix. Stamped when the item is checked and cleared when
+    /// unchecked; preserved across external syncs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub done: Option<String>,
 }
 
 /// Episodes/tracks fetched from an external provider for an entity, mirroring the
@@ -377,6 +372,26 @@ pub struct FetchEpisodesRequest {
     /// providers that support translations use it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
+}
+
+/// Checks or unchecks a single episode/track, identified by its group label and
+/// key — so toggling watched state sends just the changed item, not the whole
+/// list. Checking stamps today's completion date (`✅`); unchecking clears it.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ToggleEpisodeRequest {
+    pub revision: String,
+    /// The season/disc group label of the episode (empty for the ungrouped list).
+    #[serde(default)]
+    pub group: String,
+    /// The episode/track key within the group (its number/identifier). Used to
+    /// locate the item when it uniquely identifies one; otherwise `index` wins.
+    pub key: String,
+    /// The item's 0-based position within its group — the fallback locator when
+    /// `key` is empty or duplicated (titles can repeat too, so position is the
+    /// stable tiebreaker; the revision guard keeps it valid).
+    pub index: u32,
+    pub watched: bool,
 }
 
 /// Imports provider episodes (the chosen subset, already grouped/flattened by the
@@ -959,6 +974,7 @@ pub struct CalendarTotals {
     pub entries: usize,
     pub taxonomy: usize,
     pub daily_notes: usize,
+    pub episodes: usize,
     pub days_with_entries: usize,
 }
 

@@ -10,7 +10,8 @@
 use crate::contract::{EntityEpisodes, Episode, EpisodeGroup};
 use crate::markdown::{find_section, headings, splice_section};
 use crate::types::{
-    BodySection, BodySectionKind, EntityTypeConfig, EpisodeProgress, EpisodeTracking,
+    BodySection, BodySectionKind, EntityTypeConfig, EpisodeDate, EpisodeDateRole, EpisodeProgress,
+    EpisodeTracking,
 };
 use regex::Regex;
 use std::sync::OnceLock;
@@ -42,18 +43,29 @@ fn key_regex() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"^(?:#|[eE][pP]?[ \t]*)?(\d+(?:\.\d+)?)").unwrap())
 }
 
-/// An Obsidian Tasks "due date" suffix (`📅 YYYY-MM-DD`) anywhere in an item's
-/// content. We only emit it at the end, but accept it anywhere on the round-trip.
-fn date_regex() -> &'static Regex {
+/// The Obsidian Tasks date suffixes we round-trip: `📅` (due/air date) and `✅`
+/// (completion date). We emit them at the end, but accept them anywhere.
+fn due_date_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| Regex::new(r"📅\s*(\d{4}-\d{2}-\d{2})").unwrap())
 }
 
-/// Splits a `📅`-dated item's content into `(content_without_date, date)`, so the
-/// date survives the round-trip as structured data instead of leaking into the
-/// title. Undated content is returned unchanged.
-fn extract_date(content: &str) -> (String, Option<String>) {
-    let Some(captures) = date_regex().captures(content) else {
+fn done_date_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"✅\s*(\d{4}-\d{2}-\d{2})").unwrap())
+}
+
+/// Strips the `📅` and `✅` date suffixes out of an item's content, returning
+/// `(content_without_dates, due_date, done_date)` so the dates survive the
+/// round-trip as structured data instead of leaking into the title.
+fn extract_dates(content: &str) -> (String, Option<String>, Option<String>) {
+    let (content, due) = strip_emoji_date(content, due_date_regex());
+    let (content, done) = strip_emoji_date(&content, done_date_regex());
+    (content, due, done)
+}
+
+fn strip_emoji_date(content: &str, regex: &Regex) -> (String, Option<String>) {
+    let Some(captures) = regex.captures(content) else {
         return (content.to_string(), None);
     };
     let date = captures.get(1).map(|m| m.as_str().to_string());
@@ -137,6 +149,43 @@ pub fn parse_episodes(body: &str, section: &BodySection) -> EntityEpisodes {
     }
 }
 
+/// Flattens the episodes section into the dated items the calendar places: one
+/// [`EpisodeDate`] per air (`📅`) date and one per completion (`✅`) date.
+/// Undated items contribute nothing. Parsed once at index time and cached on the
+/// record, so the calendar never re-reads bodies.
+pub fn episode_calendar_dates(body: &str, section: &BodySection) -> Vec<EpisodeDate> {
+    let mut dates = Vec::new();
+    for group in parse_section(body, &section.heading).groups {
+        for item in group.items {
+            if let Some(date) = non_empty_date(&item.date) {
+                dates.push(EpisodeDate {
+                    key: item.key.clone(),
+                    title: item.title.clone(),
+                    date,
+                    role: EpisodeDateRole::Scheduled,
+                });
+            }
+            if let Some(date) = non_empty_date(&item.done) {
+                dates.push(EpisodeDate {
+                    key: item.key.clone(),
+                    title: item.title.clone(),
+                    date,
+                    role: EpisodeDateRole::Completed,
+                });
+            }
+        }
+    }
+    dates
+}
+
+fn non_empty_date(value: &Option<String>) -> Option<String> {
+    value
+        .as_deref()
+        .map(str::trim)
+        .filter(|date| !date.is_empty())
+        .map(str::to_string)
+}
+
 /// The cheap resident roll-up for the entity summary — counts items/checked in the
 /// section without building the full structure.
 pub fn episode_progress(body: &str, section: &BodySection) -> EpisodeProgress {
@@ -218,13 +267,14 @@ fn parse_section(body: &str, heading: &str) -> ParsedSection {
         if let Some(item) = parse_item(text) {
             first_struct.get_or_insert(line_start);
             last_item_end = Some(offset);
-            let (content, date) = extract_date(item.content);
+            let (content, date, done) = extract_dates(item.content);
             let (key, title) = split_key_title(&content, item.marker_number);
             current.items.push(Episode {
                 key,
                 title,
                 watched: item.watched,
                 date,
+                done,
             });
         }
     }
@@ -286,12 +336,20 @@ fn render_item(episode: &Episode, tracking: EpisodeTracking) -> String {
         (false, true) => key.to_string(),
         (false, false) => format!("{key} · {title}"),
     };
-    // Obsidian Tasks "due date" emoji — only when the provider gave a date.
-    let date = match episode.date.as_deref().map(str::trim) {
-        Some(date) if !date.is_empty() => format!(" 📅 {date}"),
+    // Obsidian Tasks date suffixes, in the canonical order: due (`📅`, the
+    // air/release date) then done (`✅`, the completion date).
+    format!(
+        "- {checkbox}{label}{}{}",
+        emoji_suffix("📅", episode.date.as_deref()),
+        emoji_suffix("✅", episode.done.as_deref()),
+    )
+}
+
+fn emoji_suffix(emoji: &str, date: Option<&str>) -> String {
+    match date.map(str::trim) {
+        Some(date) if !date.is_empty() => format!(" {emoji} {date}"),
         _ => String::new(),
-    };
-    format!("- {checkbox}{label}{date}")
+    }
 }
 
 /// Renders `groups` back into `body`'s episodes section (replacing only that
@@ -299,6 +357,59 @@ fn render_item(episode: &Episode, tracking: EpisodeTracking) -> String {
 pub fn apply_episodes(body: &str, section: &BodySection, groups: &[EpisodeGroup]) -> String {
     let rendered = render_groups(groups, resolved_tracking(section));
     splice_section(body, &section.heading, &rendered)
+}
+
+/// Checks/unchecks a single episode in `body`, stamping `today` as its `✅`
+/// completion date when checked and clearing it when unchecked. The item is
+/// located within its group by `key` when that uniquely identifies one, else by
+/// `index` (its position in the group) — so keyless or duplicate-keyed items
+/// still resolve. Returns the rewritten body, or `None` if the item isn't found.
+/// Only this one item changes — the rest of the section is re-rendered verbatim.
+pub fn set_episode_watched(
+    body: &str,
+    section: &BodySection,
+    group: &str,
+    key: &str,
+    index: usize,
+    watched: bool,
+    today: &str,
+) -> Option<String> {
+    let mut episodes = parse_episodes(body, section);
+    let target = locate_episode(&mut episodes.groups, group, key, index)?;
+    target.watched = watched;
+    target.done = watched.then(|| today.to_string());
+    Some(apply_episodes(body, section, &episodes.groups))
+}
+
+/// Resolves the episode to toggle: a unique `key` match within the group wins;
+/// otherwise the item at `index`. `None` if the group or index doesn't exist.
+fn locate_episode<'a>(
+    groups: &'a mut [EpisodeGroup],
+    group: &str,
+    key: &str,
+    index: usize,
+) -> Option<&'a mut Episode> {
+    let group = groups
+        .iter_mut()
+        .find(|candidate| same_label(&candidate.label, group))?;
+    let key = key.trim();
+    if !key.is_empty() {
+        let mut unique: Option<usize> = None;
+        let mut ambiguous = false;
+        for (position, item) in group.items.iter().enumerate() {
+            if item.key.trim() == key {
+                if unique.is_some() {
+                    ambiguous = true;
+                    break;
+                }
+                unique = Some(position);
+            }
+        }
+        if let (Some(position), false) = (unique, ambiguous) {
+            return group.items.get_mut(position);
+        }
+    }
+    group.items.get_mut(index)
 }
 
 /// Merges provider-fetched `incoming` episode groups into the entity's `existing`
@@ -347,6 +458,7 @@ pub fn merge_episodes(
                             title: item.title.clone(),
                             watched: false,
                             date: item.date.clone(),
+                            done: item.done.clone(),
                         }),
                     }
                 }
@@ -361,6 +473,7 @@ pub fn merge_episodes(
                         title: item.title.clone(),
                         watched: false,
                         date: item.date.clone(),
+                        done: item.done.clone(),
                     })
                     .collect(),
             }),
@@ -396,6 +509,7 @@ mod tests {
             title: title.to_string(),
             watched,
             date: None,
+            done: None,
         }
     }
 
@@ -598,6 +712,94 @@ mod tests {
             Some("2024-01-15")
         );
         assert_eq!(parsed.groups[0].items[1].date, None);
+    }
+
+    #[test]
+    fn checking_stamps_a_done_date_and_unchecking_clears_it() {
+        let body = "## Episodes\n- [ ] 1 · Pilot 📅 2024-01-15\n";
+        // Check it: today's done date is appended after the air date.
+        let checked =
+            set_episode_watched(body, &section(), "", "1", 0, true, "2024-01-17").unwrap();
+        assert!(checked.contains("- [x] 1 · Pilot 📅 2024-01-15 ✅ 2024-01-17"));
+
+        // Re-parsing keeps both dates structured (not in the title).
+        let parsed = parse_episodes(&checked, &section());
+        assert_eq!(parsed.groups[0].items[0].title, "Pilot");
+        assert_eq!(
+            parsed.groups[0].items[0].date.as_deref(),
+            Some("2024-01-15")
+        );
+        assert_eq!(
+            parsed.groups[0].items[0].done.as_deref(),
+            Some("2024-01-17")
+        );
+
+        // Unchecking removes the ✅ but keeps the 📅 air date.
+        let unchecked =
+            set_episode_watched(&checked, &section(), "", "1", 0, false, "2024-02-01").unwrap();
+        assert!(unchecked.contains("- [ ] 1 · Pilot 📅 2024-01-15\n"));
+        assert!(!unchecked.contains("✅"));
+
+        // A missing episode (bad index, no key match) is a no-op signal.
+        assert!(set_episode_watched(body, &section(), "", "999", 9, true, "2024-01-17").is_none());
+    }
+
+    #[test]
+    fn episode_calendar_dates_flatten_air_and_completion_dates() {
+        let body = "## Episodes\n### Season 1\n- [x] 1 · Pilot 📅 2024-01-15 ✅ 2024-01-17\n- [ ] 2 · Dawn 📅 2024-01-22\n- [ ] 3 · Undated\n";
+        let dates = episode_calendar_dates(body, &section());
+        // Pilot → scheduled + completed; Dawn → scheduled only; Undated → nothing.
+        assert_eq!(dates.len(), 3);
+        assert_eq!(dates[0].title, "Pilot");
+        assert_eq!(dates[0].date, "2024-01-15");
+        assert_eq!(dates[0].role, EpisodeDateRole::Scheduled);
+        assert_eq!(dates[1].date, "2024-01-17");
+        assert_eq!(dates[1].role, EpisodeDateRole::Completed);
+        assert_eq!(dates[2].title, "Dawn");
+        assert_eq!(dates[2].role, EpisodeDateRole::Scheduled);
+    }
+
+    #[test]
+    fn toggle_falls_back_to_index_for_keyless_or_duplicate_items() {
+        // Two keyless items with the same title — only the position disambiguates.
+        let body = "## Episodes\n- [ ] Intro\n- [ ] Intro\n";
+        let checked = set_episode_watched(body, &section(), "", "", 1, true, "2024-01-17").unwrap();
+        let parsed = parse_episodes(&checked, &section());
+        assert!(!parsed.groups[0].items[0].watched); // first Intro untouched
+        assert!(parsed.groups[0].items[1].watched); // second Intro checked by index
+        assert_eq!(
+            parsed.groups[0].items[1].done.as_deref(),
+            Some("2024-01-17")
+        );
+
+        // Duplicate keys also fall back to index rather than toggling the first.
+        let dup = "## Episodes\n- [ ] 1 · A\n- [ ] 1 · B\n";
+        let toggled = set_episode_watched(dup, &section(), "", "1", 1, true, "2024-01-17").unwrap();
+        let parsed = parse_episodes(&toggled, &section());
+        assert!(!parsed.groups[0].items[0].watched);
+        assert!(parsed.groups[0].items[1].watched);
+    }
+
+    #[test]
+    fn sync_overwrite_keeps_the_done_date_while_replacing_text_and_air_date() {
+        let existing = entity_episodes(vec![EpisodeGroup {
+            label: String::new(),
+            items: vec![Episode {
+                date: Some("2024-01-10".to_string()),
+                done: Some("2024-01-17".to_string()),
+                ..episode("1", "Old title", true)
+            }],
+        }]);
+        let incoming = vec![EpisodeGroup {
+            label: String::new(),
+            items: vec![dated("1", "New title", "2024-01-15")],
+        }];
+        let merged = merge_episodes(&existing, &incoming, true);
+        let item = &merged[0].items[0];
+        assert_eq!(item.title, "New title"); // text overwritten
+        assert_eq!(item.date.as_deref(), Some("2024-01-15")); // air date overwritten
+        assert_eq!(item.done.as_deref(), Some("2024-01-17")); // completion date kept
+        assert!(item.watched); // watched kept
     }
 
     #[test]

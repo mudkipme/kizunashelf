@@ -4,7 +4,7 @@ use super::assets::{
     list_asset_jobs, plan_asset_downloads, serve_asset,
 };
 use super::entities::{entities, entity_dates, entity_detail};
-use super::episodes::{fetch_episodes, import_episodes, update_episodes};
+use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
     calendar, calendar_planning, capabilities, config, health, home, languages,
@@ -319,9 +319,9 @@ fn api_router() -> ApiRouter<AppState> {
             }),
         )
         .api_route(
-            "/api/entities/{id}/episodes",
-            post_with(update_episodes, |op| {
-                op.id("updateEpisodes")
+            "/api/entities/{id}/episodes/watch",
+            post_with(toggle_episode, |op| {
+                op.id("toggleEpisode")
                     .response::<200, Json<EntityDetailResponse>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()

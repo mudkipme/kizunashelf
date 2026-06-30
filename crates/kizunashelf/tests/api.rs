@@ -2388,21 +2388,18 @@ async fn episodes_detail_progress_update_and_revision_guard() {
     assert_eq!(episodes["groups"][0]["items"][1]["title"], "Recap");
     let revision = detail.1["entity"]["revision"].as_str().unwrap().to_string();
 
-    // Toggle the recap watched via the episodes write.
+    // Check the recap (the second item in Season 1) via the granular toggle.
     let body = json!({
         "revision": revision,
-        "groups": [{
-            "label": "Season 1",
-            "items": [
-                { "key": "1", "title": "Pilot", "watched": true },
-                { "key": "12.5", "title": "Recap", "watched": true }
-            ]
-        }]
+        "group": "Season 1",
+        "key": "12.5",
+        "index": 1,
+        "watched": true
     });
     let updated = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/episodes",
+        "/api/entities/anime%3AShow/episodes/watch",
         Some(body.clone()),
     )
     .await;
@@ -2413,7 +2410,7 @@ async fn episodes_detail_progress_update_and_revision_guard() {
     let stale = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/episodes",
+        "/api/entities/anime%3AShow/episodes/watch",
         Some(body),
     )
     .await;

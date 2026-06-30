@@ -508,6 +508,7 @@ mod tests {
             revision: "rev".to_string(),
             frontmatter: frontmatter.as_object().cloned().unwrap_or_default(),
             file_modified_unix_nanos: 0,
+            episode_dates: Vec::new(),
         }
     }
 

@@ -14,6 +14,8 @@ export const calendarResponseTotalsTaxonomyMin = 0;
 
 export const calendarResponseTotalsDailyNotesMin = 0;
 
+export const calendarResponseTotalsEpisodesMin = 0;
+
 export const calendarResponseTotalsDaysWithEntriesMin = 0;
 
 export const calendarResponseDaysItemEntriesItemEntityDatesItemParsedOneMonthMin = 0;
@@ -35,6 +37,8 @@ export const calendarResponseDaysItemCountsTaxonomyMin = 0;
 
 export const calendarResponseDaysItemCountsDailyNotesMin = 0;
 
+export const calendarResponseDaysItemCountsEpisodesMin = 0;
+
 
 export const CalendarResponse = zod.object({
   "generatedAt": zod.string(),
@@ -48,6 +52,7 @@ export const CalendarResponse = zod.object({
   "entries": zod.number().min(calendarResponseTotalsEntriesMin),
   "taxonomy": zod.number().min(calendarResponseTotalsTaxonomyMin),
   "dailyNotes": zod.number().min(calendarResponseTotalsDailyNotesMin),
+  "episodes": zod.number().min(calendarResponseTotalsEpisodesMin),
   "daysWithEntries": zod.number().min(calendarResponseTotalsDaysWithEntriesMin)
 }),
   "days": zod.array(zod.object({
@@ -55,7 +60,7 @@ export const CalendarResponse = zod.object({
   "entries": zod.array(zod.object({
   "id": zod.string(),
   "date": zod.string(),
-  "source": zod.enum(['taxonomy', 'daily-note']),
+  "source": zod.union([zod.enum(['taxonomy', 'daily-note']),zod.literal("episode").describe('A dated episode\/track from an entity\'s episodes section.')]),
   "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),
@@ -93,12 +98,19 @@ export const CalendarResponse = zod.object({
   "text": zod.string(),
   "heading": zod.string().nullish(),
   "line": zod.number().min(calendarResponseDaysItemEntriesItemSnippetsItemLineMin)
-})).nullish()
+})).nullish(),
+  "episode": zod.union([zod.object({
+  "key": zod.string(),
+  "title": zod.string(),
+  "role": zod.enum(['scheduled', 'completed']).describe('Which episode date a calendar placement came from: the air\/release date\n(`📅`, \"scheduled\") or the completion date (`✅`, \"completed\").'),
+  "heading": zod.string().describe('The schema-defined heading of the section this item lives under (e.g.\n\"Episodes\", \"Tracks\", \"Tasks\"), so clients label it per the entity\'s type\nrather than with a hardcoded term.')
+}).describe('The item behind an `episode`-source calendar entry.'),zod.null()]).optional().describe('Present only for `episode`-source entries: the episode this date belongs\nto (its number, title, and whether the date is its air or completion).')
 })),
   "counts": zod.object({
   "total": zod.number().min(calendarResponseDaysItemCountsTotalMin),
   "taxonomy": zod.number().min(calendarResponseDaysItemCountsTaxonomyMin),
-  "dailyNotes": zod.number().min(calendarResponseDaysItemCountsDailyNotesMin)
+  "dailyNotes": zod.number().min(calendarResponseDaysItemCountsDailyNotesMin),
+  "episodes": zod.number().min(calendarResponseDaysItemCountsEpisodesMin)
 })
 }))
 })

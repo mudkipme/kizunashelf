@@ -442,6 +442,34 @@ pub struct EntityRecord {
     /// `0` when the backend can't report a modification time.
     #[serde(default)]
     pub file_modified_unix_nanos: u128,
+    /// Per-episode dates (air `📅` / completion `✅`) parsed from the body's
+    /// episodes section at index time and cached, so the calendar can place
+    /// episodes without re-reading raw files. Resident core-only data — never
+    /// serialized to a client (the calendar builds its own entries from it).
+    /// Empty unless the type has an episodes section with dated items.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub episode_dates: Vec<EpisodeDate>,
+}
+
+/// One dated episode/track from an entity's episodes section, flattened for the
+/// calendar: an item with both an air and a completion date yields two of these.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeDate {
+    pub key: String,
+    pub title: String,
+    /// The calendar date (`YYYY-MM-DD`).
+    pub date: String,
+    pub role: EpisodeDateRole,
+}
+
+/// Which episode date a calendar placement came from: the air/release date
+/// (`📅`, "scheduled") or the completion date (`✅`, "completed").
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum EpisodeDateRole {
+    Scheduled,
+    Completed,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

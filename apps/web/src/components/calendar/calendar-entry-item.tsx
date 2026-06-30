@@ -18,7 +18,11 @@ export function CalendarEntryItem({
     <article className="rounded-md border p-3">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Badge variant={entry.source === "taxonomy" ? "secondary" : "outline"}>
-          {entry.source === "taxonomy" ? "Taxonomy" : "Daily Note"}
+          {entry.source === "taxonomy"
+            ? "Taxonomy"
+            : entry.source === "episode"
+              ? entry.episode?.heading || "Item"
+              : "Daily Note"}
         </Badge>
         <Badge variant="outline">{entry.entity.typeLabel}</Badge>
         <Link
@@ -28,6 +32,14 @@ export function CalendarEntryItem({
           {entityTitle(entry.entity, language)}
         </Link>
       </div>
+
+      {entry.episode ? (
+        <div className="mt-2 break-words text-xs text-muted-foreground">
+          {entry.episode.role === "completed" ? "✅ Completed" : "📅 Scheduled"}:{" "}
+          {entry.episode.key ? `${entry.episode.key} · ` : ""}
+          {entry.episode.title || "—"}
+        </div>
+      ) : null}
 
       {entry.rawDate ? (
         <div className="mt-2 text-xs text-muted-foreground">

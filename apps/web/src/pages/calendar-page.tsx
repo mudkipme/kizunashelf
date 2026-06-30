@@ -182,6 +182,7 @@ export function CalendarPage() {
           {mode === "month" && calendar.data ? (
             <div className="flex flex-wrap gap-1">
               <Badge variant="outline">Taxonomy {calendar.data.totals.taxonomy}</Badge>
+              <Badge variant="outline">Items {calendar.data.totals.episodes}</Badge>
               <Badge variant="outline">Daily Notes {calendar.data.totals.dailyNotes}</Badge>
             </div>
           ) : null}

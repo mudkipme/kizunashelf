@@ -65,16 +65,13 @@ import { reportEntityError, useEntityMutation } from "@/hooks/use-entity-mutatio
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
-import { saveEpisodes } from "@/api/episodes";
+import { setEpisodeWatched } from "@/api/episodes";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
 import { coverTypeIds, fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
 import { entityTitle } from "@/lib/title-language";
-import type {
-  Entity,
-  EpisodeGroup,
-} from "@/types/api";
+import type { Entity } from "@/types/api";
 
 export function EntityPage() {
   const { id } = useParams();
@@ -200,13 +197,20 @@ export function EntityPage() {
     }, { onConflict: refetchOnConflict });
   }
 
-  async function saveEpisodeGroups(groups: EpisodeGroup[]) {
+  async function toggleEpisodeWatched(group: string, key: string, index: number, watched: boolean) {
     if (!entity) return;
     setEpisodesSaving(true);
     try {
-      // The endpoint re-renders the episodes section into the body and returns the
-      // refreshed detail — adopt it so the checklist reflects the new revision.
-      const updated = await saveEpisodes(entity.id, { revision: entity.revision, groups });
+      // Sends only the changed episode (group + key, with index as the fallback
+      // locator); the core stamps/clears the ✅ completion date and returns the
+      // refreshed detail (with the new revision).
+      const updated = await setEpisodeWatched(entity.id, {
+        revision: entity.revision,
+        group,
+        key,
+        index,
+        watched,
+      });
       queryClient.setQueryData(queryKeys.entity(entity.id), updated);
       // Refresh the resident watched/total badge in list views.
       void queryClient.invalidateQueries({ queryKey: ["entities"] });
@@ -285,7 +289,7 @@ export function EntityPage() {
               labelsByType={labelsByType}
               typeLabels={typeLabels}
               coverTypes={coverTypes}
-              onSaveEpisodes={saveEpisodeGroups}
+              onToggleEpisode={toggleEpisodeWatched}
               actions={
                 <EntityActions
                   entity={entity}

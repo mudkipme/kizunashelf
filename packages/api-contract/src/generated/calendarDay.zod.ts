@@ -25,13 +25,15 @@ export const calendarDayCountsTaxonomyMin = 0;
 
 export const calendarDayCountsDailyNotesMin = 0;
 
+export const calendarDayCountsEpisodesMin = 0;
+
 
 export const CalendarDay = zod.object({
   "date": zod.string(),
   "entries": zod.array(zod.object({
   "id": zod.string(),
   "date": zod.string(),
-  "source": zod.enum(['taxonomy', 'daily-note']),
+  "source": zod.union([zod.enum(['taxonomy', 'daily-note']),zod.literal("episode").describe('A dated episode\/track from an entity\'s episodes section.')]),
   "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),
@@ -69,12 +71,19 @@ export const CalendarDay = zod.object({
   "text": zod.string(),
   "heading": zod.string().nullish(),
   "line": zod.number().min(calendarDayEntriesItemSnippetsItemLineMin)
-})).nullish()
+})).nullish(),
+  "episode": zod.union([zod.object({
+  "key": zod.string(),
+  "title": zod.string(),
+  "role": zod.enum(['scheduled', 'completed']).describe('Which episode date a calendar placement came from: the air\/release date\n(`📅`, \"scheduled\") or the completion date (`✅`, \"completed\").'),
+  "heading": zod.string().describe('The schema-defined heading of the section this item lives under (e.g.\n\"Episodes\", \"Tracks\", \"Tasks\"), so clients label it per the entity\'s type\nrather than with a hardcoded term.')
+}).describe('The item behind an `episode`-source calendar entry.'),zod.null()]).optional().describe('Present only for `episode`-source entries: the episode this date belongs\nto (its number, title, and whether the date is its air or completion).')
 })),
   "counts": zod.object({
   "total": zod.number().min(calendarDayCountsTotalMin),
   "taxonomy": zod.number().min(calendarDayCountsTaxonomyMin),
-  "dailyNotes": zod.number().min(calendarDayCountsDailyNotesMin)
+  "dailyNotes": zod.number().min(calendarDayCountsDailyNotesMin),
+  "episodes": zod.number().min(calendarDayCountsEpisodesMin)
 })
 })
 

@@ -1,17 +1,17 @@
 import {
   fetchEpisodes,
   importEpisodes,
-  updateEpisodes,
+  toggleEpisode,
   type FetchEpisodesRequest,
   type ImportEpisodesRequest,
-  type UpdateEpisodesRequest,
+  type ToggleEpisodeRequest,
 } from "@kizunashelf/api-contract";
 
 import { apiFetch } from "@/api/client";
 
-/** Rewrites an entity's episodes section; returns the refreshed entity detail. */
-export function saveEpisodes(id: string, request: UpdateEpisodesRequest) {
-  return updateEpisodes(id, request, undefined, apiFetch);
+/** Checks/unchecks a single episode (located by group + key, else index); returns the refreshed detail. */
+export function setEpisodeWatched(id: string, request: ToggleEpisodeRequest) {
+  return toggleEpisode(id, request, undefined, apiFetch);
 }
 
 /** Lists episode sources + fetches one provider's structured episodes. */

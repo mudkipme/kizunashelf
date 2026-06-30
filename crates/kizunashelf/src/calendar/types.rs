@@ -1,4 +1,4 @@
-use crate::types::{DateRole, EntitySummary};
+use crate::types::{DateRole, EntitySummary, EpisodeDateRole};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -48,6 +48,10 @@ pub struct CalendarEntry {
     pub note_path: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub snippets: Option<Vec<CalendarSnippet>>,
+    /// Present only for `episode`-source entries: the episode this date belongs
+    /// to (its number, title, and whether the date is its air or completion).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episode: Option<CalendarEpisode>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
@@ -55,6 +59,21 @@ pub struct CalendarEntry {
 pub enum CalendarEntrySource {
     Taxonomy,
     DailyNote,
+    /// A dated episode/track from an entity's episodes section.
+    Episode,
+}
+
+/// The item behind an `episode`-source calendar entry.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarEpisode {
+    pub key: String,
+    pub title: String,
+    pub role: EpisodeDateRole,
+    /// The schema-defined heading of the section this item lives under (e.g.
+    /// "Episodes", "Tracks", "Tasks"), so clients label it per the entity's type
+    /// rather than with a hardcoded term.
+    pub heading: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -71,6 +90,7 @@ pub struct CalendarDayCounts {
     pub total: usize,
     pub taxonomy: usize,
     pub daily_notes: usize,
+    pub episodes: usize,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]

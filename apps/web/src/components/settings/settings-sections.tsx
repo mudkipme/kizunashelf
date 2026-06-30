@@ -507,7 +507,7 @@ function BodySectionEditor({
             className="h-9 w-full text-base md:text-sm"
           >
             <option value="external">External metadata</option>
-            <option value="episodes">Episodes</option>
+            <option value="episodes">Item list</option>
             <UnknownValueOption value={section.kind} known={["external", "episodes"]} />
           </Select>
         </Field>

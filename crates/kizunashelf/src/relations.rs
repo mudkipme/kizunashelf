@@ -331,6 +331,7 @@ mod tests {
             revision: "rev".to_string(),
             frontmatter: serde_json::Map::new(),
             file_modified_unix_nanos: 0,
+            episode_dates: Vec::new(),
         }
     }
 

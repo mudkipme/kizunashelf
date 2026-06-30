@@ -201,12 +201,12 @@ import {
 } from './tagsResponse.zod';
 
 import type {
-  UpdateEntityRequest
-} from './updateEntityRequest.zod';
+  ToggleEpisodeRequest
+} from './toggleEpisodeRequest.zod';
 
 import type {
-  UpdateEpisodesRequest
-} from './updateEpisodesRequest.zod';
+  UpdateEntityRequest
+} from './updateEntityRequest.zod';
 
 import type {
   UpdateListRequest
@@ -985,23 +985,23 @@ export const deleteEntity = async (id: string,
 
 
 
-export const getUpdateEpisodesUrl = (id: string,) => {
+export const getToggleEpisodeUrl = (id: string,) => {
 
 
 
 
-  return `/api/entities/${encodeURIComponent(String(id))}/episodes`
+  return `/api/entities/${encodeURIComponent(String(id))}/episodes/watch`
 }
 
-export const updateEpisodes = async (id: string,
-    updateEpisodesRequest: UpdateEpisodesRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityDetailResponse> => {
+export const toggleEpisode = async (id: string,
+    toggleEpisodeRequest: ToggleEpisodeRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityDetailResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getUpdateEpisodesUrl(id),
+  const res = await (fetchFn ?? fetch)(getToggleEpisodeUrl(id),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(updateEpisodesRequest)
+    body: JSON.stringify(toggleEpisodeRequest)
   }
 )
 

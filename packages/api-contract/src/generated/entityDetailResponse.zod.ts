@@ -115,7 +115,8 @@ export const EntityDetailResponse = zod.object({
   "key": zod.string().describe('The episode\/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be\nempty for an item with no parseable number.'),
   "title": zod.string(),
   "watched": zod.boolean(),
-  "date": zod.string().nullish().describe('The air\/release date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`📅 YYYY-MM-DD` suffix on the list item. Absent when the provider has no\nper-item date (e.g. album tracks).')
+  "date": zod.string().nullish().describe('The air\/release date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`📅 YYYY-MM-DD` suffix on the list item. Absent when the provider has no\nper-item date (e.g. album tracks).'),
+  "done": zod.string().nullish().describe('The completion date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`✅ YYYY-MM-DD` suffix. Stamped when the item is checked and cleared when\nunchecked; preserved across external syncs.')
 }))
 })),
   "total": zod.number().min(entityDetailResponseEpisodesOneTotalMin),

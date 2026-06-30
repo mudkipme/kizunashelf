@@ -5,7 +5,7 @@ import { EpisodeSyncDialog } from "@/components/assets/episode-sync-dialog";
 import { InlineMarkdown } from "@/components/assets/markdown-view";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { EntityEpisodes, EpisodeGroup, Relation } from "@/types/api";
+import type { EntityEpisodes, Relation } from "@/types/api";
 
 /// Displays an entity's episodes/tracks list (grouped by season/disc) with a
 /// watched/total roll-up. When the section uses checklist tracking, each item is a
@@ -51,13 +51,16 @@ export function EntityEpisodesPanel({
   episodes,
   disabled,
   saving,
-  onSave,
+  onToggle,
   relations,
 }: {
   episodes: EntityEpisodes;
   disabled: boolean;
   saving: boolean;
-  onSave: (groups: EpisodeGroup[]) => void;
+  // Toggling sends only the changed episode (its group label + key, with the
+  // in-group index as the fallback locator), not the whole list; the core
+  // stamps/clears the ✅ completion date.
+  onToggle: (group: string, key: string, index: number, watched: boolean) => void;
   relations: Relation[];
 }) {
   const checklist = episodes.tracking === "checklist";
@@ -66,17 +69,9 @@ export function EntityEpisodesPanel({
 
   function toggle(groupIndex: number, itemIndex: number) {
     if (!interactive) return;
-    const groups = episodes.groups.map((group, gi) =>
-      gi !== groupIndex
-        ? group
-        : {
-            ...group,
-            items: group.items.map((item, ii) =>
-              ii !== itemIndex ? item : { ...item, watched: !item.watched },
-            ),
-          },
-    );
-    onSave(groups);
+    const group = episodes.groups[groupIndex];
+    const item = group.items[itemIndex];
+    onToggle(group.label, item.key, itemIndex, !item.watched);
   }
 
   if (episodes.total === 0) {
@@ -120,9 +115,13 @@ export function EntityEpisodesPanel({
                 const keyLabel = item.key ? (
                   <span className="shrink-0 tabular-nums text-muted-foreground">{item.key}</span>
                 ) : null;
-                const dateLabel = item.date ? (
-                  <span className="shrink-0 tabular-nums text-xs text-muted-foreground">📅 {item.date}</span>
-                ) : null;
+                const dateLabel =
+                  item.date || item.done ? (
+                    <span className="shrink-0 space-x-2 tabular-nums text-xs text-muted-foreground">
+                      {item.date ? <span>📅 {item.date}</span> : null}
+                      {item.done ? <span>✅ {item.done}</span> : null}
+                    </span>
+                  ) : null;
 
                 // Non-checklist rows are plain, selectable text (no interactive
                 // wrapper) so the list can be copied; checklist rows are a

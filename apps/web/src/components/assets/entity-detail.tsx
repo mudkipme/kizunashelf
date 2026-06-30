@@ -34,7 +34,6 @@ import type {
   EntityDatesResponse,
   EntityEpisodes,
   EntitySummary,
-  EpisodeGroup,
   Relation,
   TypeConfig,
 } from "@/types/api";
@@ -53,7 +52,7 @@ export function EntityDetail({
   labelsByType,
   typeLabels,
   coverTypes,
-  onSaveEpisodes,
+  onToggleEpisode,
   actions,
 }: {
   entity: Entity;
@@ -78,7 +77,7 @@ export function EntityDetail({
   /// Type ids that declare an image/imageList field. Connections to these types
   /// render as a cover grid; others fall back to text chips (no cover to show).
   coverTypes?: ReadonlySet<string>;
-  onSaveEpisodes?: (groups: EpisodeGroup[]) => void;
+  onToggleEpisode?: (group: string, key: string, index: number, watched: boolean) => void;
   actions?: ReactNode;
 }) {
   const language = useTitleLanguage();
@@ -145,7 +144,7 @@ export function EntityDetail({
                   action={
                     <EpisodeSyncButton
                       episodes={episodes}
-                      disabled={!contentWritable || !onSaveEpisodes}
+                      disabled={!contentWritable || !onToggleEpisode}
                       entityId={entity.id}
                       revision={entity.revision}
                     />
@@ -158,9 +157,9 @@ export function EntityDetail({
                   ) : null}
                   <EntityEpisodesPanel
                     episodes={episodes}
-                    disabled={!contentWritable || !onSaveEpisodes}
+                    disabled={!contentWritable || !onToggleEpisode}
                     saving={episodesSaving}
-                    onSave={(groups) => onSaveEpisodes?.(groups)}
+                    onToggle={(group, key, index, watched) => onToggleEpisode?.(group, key, index, watched)}
                     relations={relations}
                   />
                   {episodes.trailing.trim() ? (

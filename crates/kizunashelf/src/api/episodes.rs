@@ -13,19 +13,24 @@ use super::mutations::{check_revision, type_config_or_err, write_entity_raw, Ent
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityDetailResponse, EpisodeSource, EpisodeSyncResponse, FetchEpisodesRequest,
-    ImportEpisodesRequest, UpdateEpisodesRequest,
+    ImportEpisodesRequest, ToggleEpisodeRequest,
 };
-use crate::episodes::{apply_episodes, episode_section, merge_episodes, parse_episodes};
+use crate::episodes::{
+    apply_episodes, episode_section, merge_episodes, parse_episodes, set_episode_watched,
+};
 use crate::library::{file_revision, serialize_markdown_document, split_markdown_document};
 use crate::types::{EntityTypeConfig, FieldType};
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
 use serde_json::{Map, Value};
 
-pub(crate) async fn update_episodes(
+/// Checks/unchecks one episode, stamping/clearing its `✅` completion date. Only
+/// the changed item is sent (group + key); the section is otherwise re-rendered
+/// verbatim. Revision-guarded like the other episode writes.
+pub(crate) async fn toggle_episode(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<EntityPath>,
-    Json(request): Json<UpdateEpisodesRequest>,
+    Json(request): Json<ToggleEpisodeRequest>,
 ) -> ApiResult<EntityDetailResponse> {
     let library = require_content_writes(&state).await?;
     let entity_id = path.id;
@@ -44,11 +49,24 @@ pub(crate) async fn update_episodes(
         .read_to_string(&source_rel)
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
-    // Re-check the revision against the freshly read content (TOCTOU), like entity edits.
     check_revision(&request.revision, &file_revision(&raw))?;
 
+    // The local date is the Obsidian Tasks completion date. The clock is read here
+    // (not in the pure episodes module) so the rewrite stays testable.
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let mut document = split_markdown_document(&raw);
-    document.body = apply_episodes(&document.body, &section, &request.groups);
+    let Some(body) = set_episode_watched(
+        &document.body,
+        &section,
+        &request.group,
+        &request.key,
+        request.index as usize,
+        request.watched,
+        &today,
+    ) else {
+        return Err(ApiError::not_found("Episode not found"));
+    };
+    document.body = body;
     let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
     write_entity_raw(vfs.as_ref(), &source_rel, &new_raw).await?;
 

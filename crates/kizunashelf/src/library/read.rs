@@ -360,6 +360,7 @@ async fn read_entities_for_type(
         let EntityReadResult {
             entity,
             body_links,
+            episode_dates,
             diagnostics,
         } = parse_entity(type_config, config.tags_field(), relative_path, bytes)?;
         entries.push((
@@ -373,6 +374,7 @@ async fn read_entities_for_type(
                     revision: entity.revision,
                     frontmatter: entity.frontmatter,
                     file_modified_unix_nanos: modified_unix_nanos,
+                    episode_dates,
                 },
                 diagnostics,
             },

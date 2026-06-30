@@ -1,7 +1,7 @@
 use super::*;
 use crate::types::{
-    DateRole, EntityDateValue, EntityRecord, EntitySummary, EntityTypeConfig, FieldConfig,
-    FieldType, KizunaConfig, Library,
+    DateRole, EntityDateValue, EntityRecord, EntitySummary, EntityTypeConfig, EpisodeDate,
+    EpisodeDateRole, FieldConfig, FieldType, KizunaConfig, Library,
 };
 use std::collections::{BTreeMap, HashMap};
 
@@ -55,6 +55,7 @@ fn record(summary: EntitySummary) -> EntityRecord {
         frontmatter: serde_json::Map::new(),
         body_links: Vec::new(),
         file_modified_unix_nanos: 0,
+        episode_dates: Vec::new(),
     }
 }
 
@@ -89,6 +90,7 @@ fn entry(id: &str, date: &str, source: CalendarEntrySource, title: &str) -> Cale
         raw_date: None,
         note_path: None,
         snippets: None,
+        episode: None,
     }
 }
 
@@ -359,4 +361,75 @@ fn metadata_date_entries_only_includes_schema_date_fields_with_a_role() {
     // Only the two role-bearing date fields, sorted by date descending.
     let fields: Vec<_> = entries.iter().map(|entry| entry.field.as_str()).collect();
     assert_eq!(fields, ["planned", "aired"]);
+}
+
+#[test]
+fn episode_calendar_entries_place_cached_dates_in_the_month() {
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    let mut record = record(entity);
+    record.episode_dates = vec![
+        EpisodeDate {
+            key: "1".to_string(),
+            title: "Pilot".to_string(),
+            date: "2024-02-10".to_string(),
+            role: EpisodeDateRole::Scheduled,
+        },
+        EpisodeDate {
+            key: "1".to_string(),
+            title: "Pilot".to_string(),
+            date: "2024-02-12".to_string(),
+            role: EpisodeDateRole::Completed,
+        },
+        EpisodeDate {
+            key: "2".to_string(),
+            title: "Dawn".to_string(),
+            date: "2024-03-01".to_string(), // other month — excluded
+            role: EpisodeDateRole::Scheduled,
+        },
+    ];
+    let mut anime_type = entity_type("anime", "Anime");
+    anime_type.body_sections = vec![crate::types::BodySection {
+        heading: "Tracks".to_string(),
+        kind: crate::types::BodySectionKind::Episodes,
+        external_fields: Vec::new(),
+        tracking: None,
+    }];
+    let library = Library::new(
+        KizunaConfig {
+            vault_root: String::new(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: None,
+            tags: None,
+            types: vec![anime_type],
+        },
+        vec![record],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let options = CalendarBuildOptions {
+        year: 2024,
+        month: 2,
+        entity_type: None,
+        source: CalendarSource::All,
+    };
+
+    let entries = episode_calendar_entries(&library, &options);
+    assert_eq!(entries.len(), 2); // March entry filtered out
+    assert!(entries
+        .iter()
+        .all(|entry| entry.source == CalendarEntrySource::Episode));
+    let completed = entries
+        .iter()
+        .find(|entry| entry.date == "2024-02-12")
+        .unwrap();
+    let episode = completed.episode.as_ref().unwrap();
+    assert_eq!(episode.role, EpisodeDateRole::Completed);
+    assert_eq!(episode.title, "Pilot");
+    // The heading comes from the type's episodes section (schema-driven).
+    assert_eq!(episode.heading, "Tracks");
 }

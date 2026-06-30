@@ -51,6 +51,9 @@ pub(super) struct EntityReadResult {
     /// is in hand) so the resident [`crate::types::EntityRecord`] can carry them
     /// after the body is dropped. See [`crate::types::EntityRecord::body_links`].
     pub(super) body_links: Vec<String>,
+    /// Per-episode air/completion dates, extracted from the body while it is in
+    /// hand and cached on the record for the calendar.
+    pub(super) episode_dates: Vec<crate::types::EpisodeDate>,
     pub(super) diagnostics: Vec<LibraryDiagnostic>,
 }
 
@@ -110,8 +113,14 @@ pub(super) fn parse_entity(
         relation_count: 0,
     };
 
+    let body_links = extract_body_links(&parsed.body);
+    let episode_dates = crate::episodes::episode_section(type_config)
+        .map(|section| crate::episodes::episode_calendar_dates(&parsed.body, section))
+        .unwrap_or_default();
+
     Ok(EntityReadResult {
-        body_links: extract_body_links(&parsed.body),
+        body_links,
+        episode_dates,
         entity: Entity {
             summary,
             revision,

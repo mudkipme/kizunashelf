@@ -13,7 +13,9 @@ use crate::library::{
     compare_string, parse_daily_note_source_id, wikilink_regex, DAILY_NOTE_RELATION_FIELD,
 };
 use crate::relations::summary_by_id;
-use crate::types::{DateRole, EntitySummary, EntityTypeConfig, FieldConfig, FieldType, Library};
+use crate::types::{
+    DateRole, EntitySummary, EntityTypeConfig, EpisodeDateRole, FieldConfig, FieldType, Library,
+};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use chrono::Datelike;
@@ -32,6 +34,8 @@ pub async fn build_calendar(
     let mut entries = Vec::new();
     if options.source != CalendarSource::DailyNote {
         entries.extend(taxonomy_calendar_entries(library, &options));
+        // Episodes are entity-derived, so they ride with the taxonomy side.
+        entries.extend(episode_calendar_entries(library, &options));
     }
     if options.source != CalendarSource::Taxonomy {
         entries.extend(daily_note_calendar_entries(library, vfs, &options).await?);
@@ -61,6 +65,10 @@ pub async fn build_calendar(
             daily_notes: entries
                 .iter()
                 .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
+                .count(),
+            episodes: entries
+                .iter()
+                .filter(|entry| entry.source == CalendarEntrySource::Episode)
                 .count(),
             days_with_entries: days.iter().filter(|day| !day.entries.is_empty()).count(),
         },
@@ -195,6 +203,7 @@ fn taxonomy_calendar_entries(
                     raw_date: Some(item.value),
                     note_path: None,
                     snippets: None,
+                    episode: None,
                 });
             }
         }
@@ -211,6 +220,64 @@ fn taxonomy_calendar_entries(
             }
         })
         .collect()
+}
+
+/// Calendar entries for dated episodes/tracks, read from each record's cached
+/// `episode_dates` (parsed once at index time) — never re-reading bodies. One
+/// entry per air (`📅`) and completion (`✅`) date that falls in the month.
+fn episode_calendar_entries(
+    library: &Library,
+    options: &CalendarBuildOptions,
+) -> Vec<CalendarEntry> {
+    let summaries = summary_by_id(library);
+    let mut entries = Vec::new();
+    for record in &library.records {
+        let entity = &record.summary;
+        if options
+            .entity_type
+            .as_ref()
+            .is_some_and(|entity_type| entity.entity_type != *entity_type)
+        {
+            continue;
+        }
+        // The section heading is schema config (not body-derived), so resolve it
+        // from the type config — no need to cache it per item.
+        let heading = library
+            .config
+            .type_config(&entity.entity_type)
+            .and_then(crate::episodes::episode_section)
+            .map(|section| section.heading.clone())
+            .unwrap_or_default();
+        for item in &record.episode_dates {
+            if !is_in_month(&item.date, options.year, options.month) {
+                continue;
+            }
+            let role = match item.role {
+                EpisodeDateRole::Scheduled => "scheduled",
+                EpisodeDateRole::Completed => "completed",
+            };
+            entries.push(CalendarEntry {
+                id: format!("episode:{role}:{}:{}:{}", item.key, item.date, entity.id),
+                date: item.date.clone(),
+                source: CalendarEntrySource::Episode,
+                entity: summaries
+                    .get(entity.id.as_str())
+                    .map(|summary| (*summary).clone())
+                    .unwrap_or_else(|| entity.clone()),
+                date_field: None,
+                raw_date: None,
+                note_path: None,
+                snippets: None,
+                episode: Some(CalendarEpisode {
+                    key: item.key.clone(),
+                    title: item.title.clone(),
+                    role: item.role,
+                    heading: heading.clone(),
+                }),
+            });
+        }
+    }
+    entries
 }
 
 fn metadata_date_entries(
@@ -613,6 +680,7 @@ async fn daily_note_calendar_entries(
                     raw_date: None,
                     note_path: Some(file.relative_path.clone()),
                     snippets: Some(Vec::new()),
+                    episode: None,
                 });
                 let snippet = CalendarSnippet {
                     text: clean_mention_snippet(&block.text, SNIPPET_MAX_LENGTH),
@@ -669,6 +737,10 @@ fn calendar_days(year: i32, month: u32, entries: &[CalendarEntry]) -> Vec<Calend
                         .iter()
                         .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
                         .count(),
+                    episodes: day_entries
+                        .iter()
+                        .filter(|entry| entry.source == CalendarEntrySource::Episode)
+                        .count(),
                 },
                 entries: day_entries,
             })
@@ -682,17 +754,23 @@ fn compare_calendar_entries(a: &CalendarEntry, b: &CalendarEntry) -> std::cmp::O
         return date_compare;
     }
     if a.source != b.source {
-        return if a.source == CalendarEntrySource::Taxonomy {
-            std::cmp::Ordering::Less
-        } else {
-            std::cmp::Ordering::Greater
-        };
+        // Stable per-source ordering within a day: taxonomy, then episodes, then
+        // daily notes.
+        return source_rank(a.source).cmp(&source_rank(b.source));
     }
     let type_compare = compare_string(&a.entity.type_label, &b.entity.type_label);
     if !type_compare.is_eq() {
         return type_compare;
     }
     compare_string(&a.entity.title, &b.entity.title)
+}
+
+fn source_rank(source: CalendarEntrySource) -> u8 {
+    match source {
+        CalendarEntrySource::Taxonomy => 0,
+        CalendarEntrySource::Episode => 1,
+        CalendarEntrySource::DailyNote => 2,
+    }
 }
 
 fn entity_basename_index(library: &Library) -> HashMap<String, Vec<EntitySummary>> {

@@ -12,6 +12,8 @@ export const calendarTotalsTaxonomyMin = 0;
 
 export const calendarTotalsDailyNotesMin = 0;
 
+export const calendarTotalsEpisodesMin = 0;
+
 export const calendarTotalsDaysWithEntriesMin = 0;
 
 
@@ -19,6 +21,7 @@ export const CalendarTotals = zod.object({
   "entries": zod.number().min(calendarTotalsEntriesMin),
   "taxonomy": zod.number().min(calendarTotalsTaxonomyMin),
   "dailyNotes": zod.number().min(calendarTotalsDailyNotesMin),
+  "episodes": zod.number().min(calendarTotalsEpisodesMin),
   "daysWithEntries": zod.number().min(calendarTotalsDaysWithEntriesMin)
 })
 
