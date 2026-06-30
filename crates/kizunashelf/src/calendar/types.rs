@@ -19,22 +19,22 @@ pub struct CalendarBuildOptions {
 }
 
 /// Which slice of activity to show. `All` is the full reverse-chronological feed;
-/// `RecentlyCompleted` hides forward-looking dates (planning fields, scheduled
-/// episodes, future daily notes); `UpNext` shows only what's still ahead
-/// (planning fields + scheduled episodes from today on, and future daily notes),
-/// in ascending order.
+/// `Recent` hides forward-looking dates (planning fields, scheduled episodes,
+/// future daily notes) — so it's the recent past, not just completions; `UpNext`
+/// shows only what's still ahead (planning fields + scheduled episodes from today
+/// on, and future daily notes), in ascending order.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum ActivityMode {
     #[default]
     All,
-    RecentlyCompleted,
+    Recent,
     UpNext,
 }
 
 #[derive(Clone, Debug)]
 pub struct ActivityBuildOptions {
     /// Opaque `YYYY-MM` cursor from the previous page; the next page continues
-    /// strictly past it — older for `All`/`RecentlyCompleted`, newer for `UpNext`.
+    /// strictly past it — older for `All`/`Recent`, newer for `UpNext`.
     pub cursor: Option<String>,
     /// How many *non-empty* months to include in this page.
     pub months: u32,

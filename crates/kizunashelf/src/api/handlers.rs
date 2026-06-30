@@ -272,7 +272,7 @@ pub(crate) struct ActivityQuery {
     #[serde(rename = "type")]
     entity_type: Option<String>,
     source: Option<String>,
-    /// `all` (default), `recently-completed`, or `up-next`.
+    /// `all` (default), `recent`, or `up-next`.
     mode: Option<String>,
 }
 
@@ -288,7 +288,7 @@ pub(crate) async fn activity(
         _ => CalendarSource::All,
     };
     let mode = match query.mode.as_deref() {
-        Some("recently-completed") => ActivityMode::RecentlyCompleted,
+        Some("recent") => ActivityMode::Recent,
         Some("up-next") => ActivityMode::UpNext,
         _ => ActivityMode::All,
     };

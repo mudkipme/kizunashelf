@@ -1,7 +1,7 @@
 use super::*;
 use crate::types::{
     DateRole, EntityDateValue, EntityRecord, EntitySummary, EntityTypeConfig, EpisodeDate,
-    EpisodeDateRole, FieldConfig, FieldType, KizunaConfig, Library,
+    EpisodeDateRole, FieldConfig, FieldType, KizunaConfig, Library, Relation, RelationDirection,
 };
 use crate::vfs::InMemoryVfs;
 use std::collections::BTreeMap;
@@ -521,7 +521,7 @@ async fn build_activity_pages_by_month_and_terminates() {
 }
 
 #[tokio::test]
-async fn build_activity_recently_completed_hides_forward_looking() {
+async fn build_activity_recent_hides_forward_looking() {
     let library = Library::new(
         activity_config(None),
         vec![forward_and_back_record()],
@@ -534,7 +534,7 @@ async fn build_activity_recently_completed_hides_forward_looking() {
     let response = build_activity(
         &library,
         &vfs,
-        activity_options_mode(None, 12, ActivityMode::RecentlyCompleted, "2024-06-15"),
+        activity_options_mode(None, 12, ActivityMode::Recent, "2024-06-15"),
     )
     .await
     .unwrap();
@@ -642,4 +642,47 @@ async fn build_activity_up_next_hides_today_items_already_done() {
     // Planning-today is hidden (the entity is completed today) and scheduled
     // episode 5 is hidden (episode 5 is completed today) → nothing remains.
     assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn build_activity_discovers_daily_note_only_months_from_relations() {
+    // No dates and no episodes — August's only signal is a daily-note mention, so
+    // the month must be discovered from the resident (index-cached) relation graph
+    // rather than a VFS walk. This pins the cache-driven discovery.
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    let relation = Relation {
+        source_id: "daily-note:2024-08-20:Journal/2024-08-20.md".to_string(),
+        target_id: Some(entity.id.clone()),
+        target_title: "Star Voyager".to_string(),
+        target_type: Some("anime".to_string()),
+        field: "daily-note".to_string(),
+        direction: RelationDirection::Out,
+    };
+    let library = Library::new(
+        activity_config(Some(vec!["Journal".to_string()])),
+        vec![record(entity)],
+        vec![relation],
+        Vec::new(),
+        String::new(),
+    );
+
+    let vfs = InMemoryVfs::new();
+    vfs.insert_file(
+        "Journal/2024-08-20.md",
+        "- watched [[Star Voyager]] 1 #Anime\n",
+    );
+
+    let response = build_activity(&library, &vfs, activity_options(None, 12))
+        .await
+        .unwrap();
+
+    assert_eq!(response.items.len(), 1);
+    let item = &response.items[0];
+    assert_eq!(item.date, "2024-08-20");
+    assert_eq!(item.entity.id, "anime:sv");
+    assert!(item
+        .entries
+        .iter()
+        .any(|entry| entry.source == CalendarEntrySource::DailyNote));
 }

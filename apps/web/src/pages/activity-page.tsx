@@ -23,7 +23,7 @@ const sources = [
 
 const modes = [
   { value: "all", label: "All" },
-  { value: "recently-completed", label: "Recently completed" },
+  { value: "recent", label: "Recent" },
   { value: "up-next", label: "Up next" },
 ] as const;
 
@@ -258,8 +258,8 @@ function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
   return value === "taxonomy" || value === "daily-note" ? value : "all";
 }
 
-function readMode(value: string | null): "all" | "recently-completed" | "up-next" {
-  return value === "recently-completed" || value === "up-next" ? value : "all";
+function readMode(value: string | null): "all" | "recent" | "up-next" {
+  return value === "recent" || value === "up-next" ? value : "all";
 }
 
 function formatDay(date: string): string {

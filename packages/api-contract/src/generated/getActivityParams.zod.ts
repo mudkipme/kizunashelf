@@ -11,7 +11,7 @@ export const GetActivityParams = zod.object({
   "months": zod.number().optional().describe('Number of non-empty months to return in this page (1–12, default 1).'),
   "type": zod.string().optional(),
   "source": zod.string().optional(),
-  "mode": zod.string().optional().describe('`all` (default), `recently-completed`, or `up-next`.')
+  "mode": zod.string().optional().describe('`all` (default), `recent`, or `up-next`.')
 })
 
 export type GetActivityParams = zod.input<typeof GetActivityParams>;

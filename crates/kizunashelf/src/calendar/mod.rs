@@ -86,7 +86,7 @@ pub async fn build_activity(
 ) -> Result<ActivityResponse> {
     let ascending = options.mode == ActivityMode::UpNext;
     let current_month = month_key(&options.today);
-    let mut months = active_activity_months(library, vfs, &options).await?;
+    let mut months = active_activity_months(library, &options);
     months.retain(|month| {
         if ascending {
             // Up next only looks forward, from the current month on.
@@ -149,13 +149,12 @@ pub async fn build_activity(
     })
 }
 
-/// The set of `YYYY-MM` months that have any activity, newest first. Computed
-/// without reading daily-note bodies so paging can skip empty months cheaply.
-async fn active_activity_months(
-    library: &Library,
-    vfs: &dyn Vfs,
-    options: &ActivityBuildOptions,
-) -> Result<Vec<String>> {
+/// The set of `YYYY-MM` months that have any activity, newest first. Fully
+/// cache-driven, no VFS I/O: taxonomy/episode dates from the resident
+/// summaries/records, and daily-note months from the resident (index-cached)
+/// relation graph — so paging touches the VFS only to read the chosen page's note
+/// bodies, never to discover which months exist.
+fn active_activity_months(library: &Library, options: &ActivityBuildOptions) -> Vec<String> {
     let mut months: HashSet<String> = HashSet::new();
     if options.source != CalendarSource::DailyNote {
         for record in &library.records {
@@ -180,18 +179,25 @@ async fn active_activity_months(
         }
     }
     if options.source != CalendarSource::Taxonomy {
-        // The daily-note candidate walk reads no bodies, and a note can mention any
-        // type, so the `entity_type` filter isn't applied here — the per-entry
-        // builders below do the precise filtering when the month is read.
-        for note in daily_note_candidates(&library.config, vfs, None, None, true).await? {
-            if let Some(month) = note.date.as_deref().and_then(month_key) {
-                months.insert(month);
+        // Daily-note months come from the resident relation graph (a relation per
+        // mention, cached at index time), not a VFS walk — so this also skips
+        // months whose notes mention nothing. A note can mention any type, so the
+        // `entity_type` filter isn't applied here; the per-entry builder filters
+        // precisely when the page's month is read.
+        for relation in &library.relations {
+            if relation.field != DAILY_NOTE_RELATION_FIELD {
+                continue;
+            }
+            if let Some((date, _)) = parse_daily_note_source_id(&relation.source_id) {
+                if let Some(month) = month_key(date) {
+                    months.insert(month);
+                }
             }
         }
     }
     let mut months: Vec<String> = months.into_iter().collect();
     months.sort_by(|a, b| b.cmp(a));
-    Ok(months)
+    months
 }
 
 /// All calendar entries for one month, assembled exactly as [`build_calendar`]
@@ -313,7 +319,7 @@ fn fold_activity_entries(
             .and_then(|field| date_field_role(library, &entity.entity_type, field));
         let keep = match mode {
             ActivityMode::All => true,
-            ActivityMode::RecentlyCompleted => role != Some(DateRole::Planning),
+            ActivityMode::Recent => role != Some(DateRole::Planning),
             ActivityMode::UpNext => {
                 role == Some(DateRole::Planning) && date >= today && !started_or_completed_today
             }
@@ -331,7 +337,7 @@ fn fold_activity_entries(
     for role in [EpisodeDateRole::Completed, EpisodeDateRole::Scheduled] {
         let keep_role = match mode {
             ActivityMode::All => true,
-            ActivityMode::RecentlyCompleted => role == EpisodeDateRole::Completed,
+            ActivityMode::Recent => role == EpisodeDateRole::Completed,
             ActivityMode::UpNext => role == EpisodeDateRole::Scheduled,
         };
         if !keep_role {
@@ -370,10 +376,10 @@ fn fold_activity_entries(
     }
 
     // Daily notes carry no role, so the date decides: future is up-next,
-    // today-or-past is recently-completed.
+    // today-or-past is recent.
     let keep_daily = match mode {
         ActivityMode::All => true,
-        ActivityMode::RecentlyCompleted => date <= today,
+        ActivityMode::Recent => date <= today,
         ActivityMode::UpNext => date > today,
     };
     if keep_daily {

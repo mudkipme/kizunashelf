@@ -11,7 +11,7 @@ export const ActivityQuery = zod.object({
   "months": zod.number().nullish().describe('Number of non-empty months to return in this page (1–12, default 1).'),
   "type": zod.string().nullish(),
   "source": zod.string().nullish(),
-  "mode": zod.string().nullish().describe('`all` (default), `recently-completed`, or `up-next`.')
+  "mode": zod.string().nullish().describe('`all` (default), `recent`, or `up-next`.')
 })
 
 export type ActivityQuery = zod.input<typeof ActivityQuery>;

@@ -586,9 +586,9 @@
           {
             "in": "query",
             "name": "mode",
-            "description": "`all` (default), `recently-completed`, or `up-next`.",
+            "description": "`all` (default), `recent`, or `up-next`.",
             "schema": {
-              "description": "`all` (default), `recently-completed`, or `up-next`.",
+              "description": "`all` (default), `recent`, or `up-next`.",
               "type": "string"
             },
             "style": "form"
@@ -4170,7 +4170,7 @@
             ]
           },
           "mode": {
-            "description": "`all` (default), `recently-completed`, or `up-next`.",
+            "description": "`all` (default), `recent`, or `up-next`.",
             "type": [
               "string",
               "null"
