@@ -164,6 +164,18 @@ import {
   ListsResponse
 } from './listsResponse.zod';
 
+import type {
+  LogActivityParams
+} from './logActivityParams.zod';
+
+import type {
+  LogActivityRequest
+} from './logActivityRequest.zod';
+
+import {
+  LogActivityResponse
+} from './logActivityResponse.zod';
+
 import {
   PathSuggestionsResponse
 } from './pathSuggestionsResponse.zod';
@@ -1070,6 +1082,45 @@ export const importEpisodes = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? EntityDetailResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getLogActivityUrl = (id: string,
+    params?: LogActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/entities/${encodeURIComponent(String(id))}/log?${stringifiedParams}` : `/api/entities/${encodeURIComponent(String(id))}/log`
+}
+
+export const logActivity = async (id: string,
+    logActivityRequest: LogActivityRequest,
+    params?: LogActivityParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<LogActivityResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getLogActivityUrl(id,params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(logActivityRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? LogActivityResponse.parse(parsedBody) : parsedBody
   return data
 }
 

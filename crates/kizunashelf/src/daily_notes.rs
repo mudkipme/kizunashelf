@@ -1,6 +1,6 @@
 use crate::dates::is_in_month;
 use crate::types::KizunaConfig;
-use crate::vfs::{self, Vfs};
+use crate::vfs::{self, Vfs, VfsError};
 use anyhow::Result;
 use std::collections::HashMap;
 
@@ -278,6 +278,193 @@ fn push_literal_char(out: &mut String, ch: char) {
     }
 }
 
+// --- Daily-note log writing ------------------------------------------------
+
+/// The outcome of appending a log line to a daily note (or a dry run of it).
+pub(crate) struct LogWriteOutcome {
+    pub relative_path: String,
+    pub note_created: bool,
+    pub line_already_present: bool,
+}
+
+/// Why a log write could not proceed; the API layer maps these to HTTP status.
+#[derive(Debug)]
+pub(crate) enum LogWriteError {
+    /// `date` isn't a valid `YYYY-MM-DD` or can't be formatted into a path.
+    InvalidDate,
+    /// The note changed on disk between our read and write (concurrent edit).
+    Conflict,
+    Vfs(anyhow::Error),
+}
+
+impl From<anyhow::Error> for LogWriteError {
+    fn from(error: anyhow::Error) -> Self {
+        LogWriteError::Vfs(error)
+    }
+}
+
+/// Renders a log line: substitutes the tokens, then collapses whitespace runs to
+/// single spaces and trims — so empty `{progress}`/`{note}` slots leave no gap
+/// (`- [[PRAGMATA]]  #Game` → `- [[PRAGMATA]] #Game`).
+pub(crate) fn render_log_line(
+    line_format: &str,
+    title: &str,
+    progress: &str,
+    note: &str,
+    date: &str,
+    time: &str,
+) -> String {
+    let raw = line_format
+        .replace("{title}", title)
+        .replace("{progress}", progress)
+        .replace("{note}", note)
+        .replace("{date}", date)
+        .replace("{time}", time);
+    raw.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Appends `line` to the end of `section`'s block (creating an h2 `section` when
+/// absent), or `None` when the **exact** line is already in the section — the
+/// caller skips the write (idempotent). Whole-line match, so distinct lines for
+/// several episodes the same day each get written.
+fn append_log_line(body: &str, section: &str, line: &str) -> Option<String> {
+    match crate::markdown::find_section(body, section) {
+        Some(found) => {
+            let existing = &body[found.content_start..found.end];
+            if existing
+                .lines()
+                .any(|existing_line| existing_line.trim_end() == line.trim_end())
+            {
+                return None;
+            }
+            let trimmed = existing.trim_end();
+            let content = if trimmed.is_empty() {
+                line.to_string()
+            } else {
+                format!("{trimmed}\n{line}")
+            };
+            Some(crate::markdown::splice_section(body, section, &content))
+        }
+        None => Some(crate::markdown::splice_section(body, section, line)),
+    }
+}
+
+/// The vault-relative path of an existing daily note for `date` (matched against
+/// whatever filename format is on disk), else a freshly generated path. The bool
+/// is whether the note already exists.
+async fn resolve_log_note(
+    config: &KizunaConfig,
+    vfs: &dyn Vfs,
+    date: &str,
+) -> Result<Option<(String, bool)>> {
+    for note in daily_note_candidates(config, vfs, None, None, true).await? {
+        if note.date.as_deref() == Some(date) {
+            return Ok(Some((note.relative_path, true)));
+        }
+    }
+    Ok(generate_daily_note_path(config, date).map(|path| (path, false)))
+}
+
+/// Builds the vault-relative path for a new daily note dated `date`, from the
+/// configured date format in the first daily-notes folder. `None` when `date`
+/// isn't a valid `YYYY-MM-DD` or the format can't render it.
+fn generate_daily_note_path(config: &KizunaConfig, date: &str) -> Option<String> {
+    use std::fmt::Write as _;
+    let parsed = chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d").ok()?;
+    let chrono_format = daily_note_date_format(config);
+    let mut relative = String::new();
+    write!(relative, "{}", parsed.format(&chrono_format)).ok()?;
+    let folder = daily_note_paths(config)
+        .into_iter()
+        .next()
+        .unwrap_or_else(|| "Daily Notes".to_string());
+    Some(format!("{folder}/{relative}.md"))
+}
+
+/// Starter content for a brand-new daily note: the configured template with
+/// `{{date}}` / `{{title}}` substituted, or empty when no template is set or it
+/// can't be read.
+async fn new_note_content(config: &KizunaConfig, vfs: &dyn Vfs, date: &str) -> String {
+    let Some(template_path) = config
+        .daily_notes
+        .as_ref()
+        .and_then(|daily| daily.template.as_deref())
+        .map(str::trim)
+        .filter(|path| !path.is_empty())
+    else {
+        return String::new();
+    };
+    let Ok(bytes) = vfs.read(template_path).await else {
+        return String::new();
+    };
+    let Ok(text) = String::from_utf8(bytes) else {
+        return String::new();
+    };
+    text.replace("{{date}}", date).replace("{{title}}", date)
+}
+
+/// Reads a vault file as text, returning `None` when it doesn't exist.
+async fn read_optional_text(vfs: &dyn Vfs, path: &str) -> Result<Option<String>> {
+    match vfs.read(path).await {
+        Ok(bytes) => Ok(Some(String::from_utf8(bytes).map_err(|error| {
+            anyhow::anyhow!("{path} is not valid UTF-8: {error}")
+        })?)),
+        Err(VfsError::NotFound) => Ok(None),
+        Err(error) => Err(anyhow::anyhow!("failed to read {path}: {error}")),
+    }
+}
+
+/// Appends a rendered log `line` to the day's daily note under `section`. Reads
+/// the note (or seeds it from the template when absent), appends idempotently, and
+/// writes atomically — re-reading right before the write to reject a concurrent
+/// edit (409). This is side-effect #1 of logging only; it never touches the entity.
+pub(crate) async fn write_log_line(
+    config: &KizunaConfig,
+    vfs: &dyn Vfs,
+    date: &str,
+    section: &str,
+    line: &str,
+    dry_run: bool,
+) -> Result<LogWriteOutcome, LogWriteError> {
+    // `resolve_log_note`'s existence flag is advisory (it comes from the directory
+    // walk); the authoritative read below decides whether to seed from a template.
+    let (relative_path, _) = resolve_log_note(config, vfs, date)
+        .await?
+        .ok_or(LogWriteError::InvalidDate)?;
+
+    let existing = read_optional_text(vfs, &relative_path).await?;
+    let base = match &existing {
+        Some(content) => content.clone(),
+        None => new_note_content(config, vfs, date).await,
+    };
+
+    let appended = append_log_line(&base, section, line);
+    let line_already_present = appended.is_none();
+
+    if !dry_run {
+        if let Some(new_content) = appended {
+            // Re-read guard: a concurrent edit between read and write → 409.
+            if read_optional_text(vfs, &relative_path).await? != existing {
+                return Err(LogWriteError::Conflict);
+            }
+            if let Some((parent, _)) = relative_path.rsplit_once('/') {
+                vfs.create_dir_all(parent)
+                    .await
+                    .map_err(|error| anyhow::anyhow!("failed to create {parent}: {error}"))?;
+            }
+            vfs.write_atomic(&relative_path, new_content.as_bytes())
+                .await
+                .map_err(|error| anyhow::anyhow!("failed to write {relative_path}: {error}"))?;
+        }
+    }
+
+    Ok(LogWriteOutcome {
+        relative_path,
+        note_created: existing.is_none(),
+        line_already_present,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::{daily_note_date, moment_format_to_chrono, normalize_wikilink_target};
@@ -334,5 +521,143 @@ mod tests {
             normalize_wikilink_target(nfd),
             "NFC and NFD forms of the same name must normalize equal"
         );
+    }
+}
+
+#[cfg(test)]
+mod log_write_tests {
+    use super::*;
+    use crate::types::{DailyNoteLogDefaults, DailyNotesConfig};
+    use crate::vfs::InMemoryVfs;
+
+    fn config(template: Option<&str>) -> KizunaConfig {
+        KizunaConfig {
+            vault_root: String::new(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: Some(DailyNotesConfig {
+                paths: vec!["Journal".to_string()],
+                date_format: None,
+                template: template.map(str::to_string),
+                log: Some(DailyNoteLogDefaults {
+                    section: Some("Log".to_string()),
+                    line_format: None,
+                }),
+            }),
+            tags: None,
+            types: Vec::new(),
+        }
+    }
+
+    async fn read(vfs: &InMemoryVfs, path: &str) -> String {
+        String::from_utf8(vfs.read(path).await.unwrap()).unwrap()
+    }
+
+    #[test]
+    fn render_collapses_empty_slots() {
+        assert_eq!(
+            render_log_line(
+                "- [[{title}]] {progress}{note} #Game",
+                "PRAGMATA",
+                "",
+                "",
+                "2024-08-20",
+                "12:00"
+            ),
+            "- [[PRAGMATA]] #Game"
+        );
+        assert_eq!(
+            render_log_line(
+                "- [[{title}]] {progress}{note} #Anime",
+                "Show",
+                "12",
+                "",
+                "2024-08-20",
+                "12:00"
+            ),
+            "- [[Show]] 12 #Anime"
+        );
+    }
+
+    #[tokio::test]
+    async fn creates_note_from_template_then_appends_under_section() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file("Templates/Daily.md", "# {{date}}\n\n## Log\n");
+        let config = config(Some("Templates/Daily.md"));
+
+        let outcome = write_log_line(
+            &config,
+            &vfs,
+            "2024-08-20",
+            "Log",
+            "- [[PRAGMATA]] #Game",
+            false,
+        )
+        .await
+        .unwrap();
+        assert!(outcome.note_created);
+        assert!(!outcome.line_already_present);
+        assert_eq!(outcome.relative_path, "Journal/2024-08-20.md");
+
+        let written = read(&vfs, "Journal/2024-08-20.md").await;
+        assert!(written.contains("# 2024-08-20")); // template `{{date}}` substituted
+        assert!(written.contains("## Log"));
+        assert!(written.contains("- [[PRAGMATA]] #Game"));
+    }
+
+    #[tokio::test]
+    async fn appends_under_existing_section_and_is_idempotent() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file("Journal/2024-08-20.md", "## Log\n- [[A]] 1 #Anime\n");
+        let config = config(None);
+        let line = "- [[A]] 2 #Anime";
+
+        let first = write_log_line(&config, &vfs, "2024-08-20", "Log", line, false)
+            .await
+            .unwrap();
+        assert!(!first.note_created);
+        assert!(!first.line_already_present);
+        let after_first = read(&vfs, "Journal/2024-08-20.md").await;
+        assert!(after_first.contains("- [[A]] 1 #Anime"));
+        assert!(after_first.contains("- [[A]] 2 #Anime"));
+
+        // The same line again is a no-op (no duplicate).
+        let second = write_log_line(&config, &vfs, "2024-08-20", "Log", line, false)
+            .await
+            .unwrap();
+        assert!(second.line_already_present);
+        let after_second = read(&vfs, "Journal/2024-08-20.md").await;
+        assert_eq!(after_first, after_second);
+        assert_eq!(after_second.matches("- [[A]] 2 #Anime").count(), 1);
+    }
+
+    #[tokio::test]
+    async fn creates_missing_section_when_note_exists() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file("Journal/2024-08-20.md", "# Heading\n\nsome notes\n");
+        let config = config(None);
+
+        write_log_line(&config, &vfs, "2024-08-20", "Log", "- [[X]] #Anime", false)
+            .await
+            .unwrap();
+        let written = read(&vfs, "Journal/2024-08-20.md").await;
+        assert!(written.contains("## Log"));
+        assert!(written.contains("- [[X]] #Anime"));
+        assert!(written.contains("some notes")); // existing content preserved
+    }
+
+    #[tokio::test]
+    async fn dry_run_reports_without_writing() {
+        let vfs = InMemoryVfs::new();
+        let config = config(None);
+
+        let outcome = write_log_line(&config, &vfs, "2024-08-20", "Log", "- [[X]] #Anime", true)
+            .await
+            .unwrap();
+        assert!(outcome.note_created); // would be created
+        assert!(!outcome.line_already_present);
+        assert!(vfs.read("Journal/2024-08-20.md").await.is_err()); // nothing on disk
     }
 }

@@ -613,6 +613,52 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
 }
 
 #[tokio::test]
+async fn log_endpoint_writes_a_daily_note_line() {
+    let server = TestServer::new();
+    let path = format!(
+        "/api/entities/{}/log",
+        urlencoding::encode("anime:Star Voyager")
+    );
+
+    // Dry run: previews the line + the completed-date it would stamp; writes nothing.
+    let (status, preview) = request_json(
+        &server.app,
+        Method::POST,
+        &format!("{path}?dryRun=true"),
+        Some(json!({ "kind": "completed", "note": "rewatch done" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    assert_eq!(preview["dryRun"], true);
+    assert_eq!(preview["section"], "Log");
+    let line = preview["line"].as_str().unwrap();
+    assert!(line.contains("[[Star Voyager]]"), "{line}");
+    assert!(line.contains("rewatch done #Anime"), "{line}");
+    assert_eq!(preview["willStampDate"]["field"], "complete_date");
+
+    // Real write, then the same log again is idempotent.
+    let (status, written) = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({ "kind": "completed", "note": "rewatch done" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{written}");
+    assert_eq!(written["dryRun"], false);
+    assert_eq!(written["lineAlreadyPresent"], false);
+
+    let (_, again) = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({ "kind": "completed", "note": "rewatch done" })),
+    )
+    .await;
+    assert_eq!(again["lineAlreadyPresent"], true, "{again}");
+}
+
+#[tokio::test]
 async fn settings_save_and_read_vault_config() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
@@ -1054,7 +1100,8 @@ impl TestServer {
                         { "field": "bgm_url", "fieldType": "externalRef", "displayName": "BGM", "externalRef": "bangumi" },
                         { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
                         { "field": "studio", "fieldType": "relation", "displayName": "Studio", "relationType": "studio" }
-                    ]
+                    ],
+                    "log": { "lineFormat": "- [[{title}]] {progress}{note} #Anime" }
                 },
                 {
                     "id": "games",

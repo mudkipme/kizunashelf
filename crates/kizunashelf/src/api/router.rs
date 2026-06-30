@@ -13,6 +13,7 @@ use super::handlers::{
 use super::lists::{
     add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
 };
+use super::log::log_activity;
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
@@ -24,8 +25,9 @@ use crate::contract::{
     CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse, DeleteListResponse,
     EntityDetailResponse, EntityListResponse, EntityMutationResponse, EpisodeSyncResponse,
     ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
-    HomeResponse, LanguagesResponse, ListDetail, ListsResponse, PathSuggestionsResponse,
-    RawConfigResponse, SettingsConfigResponse, StatsResponse, TagsResponse, VaultTemplatesResponse,
+    HomeResponse, LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse,
+    PathSuggestionsResponse, RawConfigResponse, SettingsConfigResponse, StatsResponse,
+    TagsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -344,6 +346,18 @@ fn api_router() -> ApiRouter<AppState> {
             post_with(import_episodes, |op| {
                 op.id("importEpisodes")
                     .response::<200, Json<EntityDetailResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/log",
+            post_with(log_activity, |op| {
+                op.id("logActivity")
+                    .response::<200, Json<LogActivityResponse>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()

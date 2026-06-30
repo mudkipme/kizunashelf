@@ -1398,6 +1398,105 @@
         }
       }
     },
+    "/api/entities/{id}/log": {
+      "post": {
+        "operationId": "logActivity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "in": "query",
+            "name": "dryRun",
+            "description": "Preview the write without touching disk. `Option` is already optional to\nserde; no `#[serde(default)]` (it makes schemars emit a `null` default that\nthe zod generator can't apply to a boolean).",
+            "schema": {
+              "description": "Preview the write without touching disk. `Option` is already optional to\nserde; no `#[serde(default)]` (it makes schemars emit a `null` default that\nthe zod generator can't apply to a boolean).",
+              "type": "boolean"
+            },
+            "style": "form"
+          }
+        ],
+        "requestBody": {
+          "description": "Logs an activity to the day's daily note (and, in later phases, the entity).\nIn this phase it writes a single daily-note line (side-effect #1).",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogActivityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/assets/download": {
       "post": {
         "operationId": "downloadEntityAssets",
@@ -5458,6 +5557,188 @@
         "required": [
           "revision",
           "groups"
+        ]
+      },
+      "LogPath": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "LogQuery": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "description": "Preview the write without touching disk. `Option` is already optional to\nserde; no `#[serde(default)]` (it makes schemars emit a `null` default that\nthe zod generator can't apply to a boolean).",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "LogActivityRequest": {
+        "description": "Logs an activity to the day's daily note (and, in later phases, the entity).\nIn this phase it writes a single daily-note line (side-effect #1).",
+        "type": "object",
+        "properties": {
+          "date": {
+            "description": "The log's date (`YYYY-MM-DD`); defaults to today.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "description": "Whether this records progress, a start, or a completion. Drives the\n(future) frontmatter date-stamp; does not affect the daily-note line.",
+            "default": "progress",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LogKind"
+              }
+            ]
+          },
+          "episode": {
+            "description": "The episode this log refers to (its number feeds `{progress}`).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeSelect"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "description": "Freeform text for the `{note}` token.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "LogKind": {
+        "type": "string",
+        "enum": [
+          "progress",
+          "started",
+          "completed"
+        ]
+      },
+      "EpisodeSelect": {
+        "description": "Identifies one episode within an entity's episodes section — a unique `key`\nwithin `group` wins, else the item at `index`. (The same locator the episode\ncheckbox uses; the actual tick lands in a later phase.)",
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "key": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "LogActivityResponse": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "type": "boolean"
+          },
+          "notePath": {
+            "description": "The daily note the line was (or would be) written to.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noteWillBeCreated": {
+            "description": "The note doesn't exist yet and would be created (from the template).",
+            "type": "boolean"
+          },
+          "section": {
+            "description": "The heading the line is written under.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "line": {
+            "description": "The rendered line.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineAlreadyPresent": {
+            "description": "The exact line is already in the section, so nothing was written (idempotent).",
+            "type": "boolean"
+          },
+          "willStampDate": {
+            "description": "The date field this log would stamp on the entity (computed; applied later).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StampedDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "episodesResolved": {
+            "description": "The episodes this log refers to (computed; ticked later).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeRef"
+            }
+          }
+        },
+        "required": [
+          "dryRun",
+          "noteWillBeCreated",
+          "lineAlreadyPresent"
+        ]
+      },
+      "StampedDate": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "value"
+        ]
+      },
+      "EpisodeRef": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
         ]
       },
       "AssetDownloadRequest": {

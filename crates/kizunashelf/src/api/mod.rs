@@ -6,6 +6,7 @@ mod error;
 pub(crate) mod external;
 mod handlers;
 mod lists;
+mod log;
 mod mutations;
 mod path_suggestions;
 mod router;

@@ -989,6 +989,88 @@ pub struct CalendarResponse {
     pub days: Vec<CalendarDay>,
 }
 
+/// Logs an activity to the day's daily note (and, in later phases, the entity).
+/// In this phase it writes a single daily-note line (side-effect #1).
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct LogActivityRequest {
+    /// The log's date (`YYYY-MM-DD`); defaults to today.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date: Option<String>,
+    /// Whether this records progress, a start, or a completion. Drives the
+    /// (future) frontmatter date-stamp; does not affect the daily-note line.
+    #[serde(default)]
+    pub kind: LogKind,
+    /// The episode this log refers to (its number feeds `{progress}`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episode: Option<EpisodeSelect>,
+    /// Freeform text for the `{note}` token.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum LogKind {
+    #[default]
+    Progress,
+    Started,
+    Completed,
+}
+
+/// Identifies one episode within an entity's episodes section — a unique `key`
+/// within `group` wins, else the item at `index`. (The same locator the episode
+/// checkbox uses; the actual tick lands in a later phase.)
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeSelect {
+    #[serde(default)]
+    pub group: String,
+    pub key: String,
+    #[serde(default)]
+    pub index: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct LogActivityResponse {
+    pub dry_run: bool,
+    /// The daily note the line was (or would be) written to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note_path: Option<String>,
+    /// The note doesn't exist yet and would be created (from the template).
+    pub note_will_be_created: bool,
+    /// The heading the line is written under.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub section: Option<String>,
+    /// The rendered line.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub line: Option<String>,
+    /// The exact line is already in the section, so nothing was written (idempotent).
+    pub line_already_present: bool,
+    /// The date field this log would stamp on the entity (computed; applied later).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub will_stamp_date: Option<StampedDate>,
+    /// The episodes this log refers to (computed; ticked later).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub episodes_resolved: Vec<EpisodeRef>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct StampedDate {
+    pub field: String,
+    pub value: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeRef {
+    pub key: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub title: String,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiSchemas {
@@ -1013,6 +1095,7 @@ pub struct ApiSchemas {
     pub calendar: CalendarResponse,
     pub calendar_entry: CalendarEntry,
     pub activity: ActivityResponse,
+    pub log_activity: LogActivityResponse,
     pub asset_download: AssetDownloadResponse,
     pub asset_download_job: AssetDownloadJob,
     pub asset_download_jobs: AssetDownloadJobListResponse,
