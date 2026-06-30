@@ -18,8 +18,10 @@ KizunaShelf is a shelf for what matters to you, and a record book for the life t
 
 - Builds a typed catalog from Markdown files in an Obsidian-style vault.
 - Lets each collection define its own titles, covers, states, ratings, progress, dates, external refs, and relations.
-- Provides library browsing, entity detail pages, calendar views, relation views, analytics, and cleanup queues.
-- Supports external metadata matching for configured providers.
+- Provides library browsing, entity detail pages, calendar views, custom lists, statistics, and review/cleanup queues.
+- Surfaces each entity's relations (outgoing, incoming, resolved, and unresolved) directly on its detail page.
+- Connects daily notes back to entities through wikilinks, tying ordinary days to the things you track.
+- Supports external metadata matching across many providers: TMDB, TheTVDB, MyAnimeList, Bangumi (anime/TV/film); IGDB, Steam, BoardGameGeek (games/board games); Google Books, Open Library, Hardcover, MangaUpdates, Comic Vine (books/manga/comics); MusicBrainz, Spotify, Discogs (music); and Apple Podcasts.
 - Runs as a self-hosted web app, a Tauri desktop app, or a native iOS app.
 
 KizunaShelf treats Markdown files as the source of truth. When content writes are enabled, it can edit entity frontmatter/body and create or delete entity files. In read-only mode, those content write features are disabled.
