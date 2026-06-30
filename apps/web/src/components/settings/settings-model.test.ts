@@ -204,6 +204,46 @@ describe("cleanVaultConfig", () => {
     expect(cleaned.types[0].fields.map((item) => item.field)).toEqual(["title"]);
   });
 
+  it("round-trips the daily-note template + log and per-type log", () => {
+    const cleaned = cleanedVault(
+      normalizeVaultConfig(
+        vault({
+          dailyNotes: {
+            paths: ["Daily Notes"],
+            template: "Templates/Daily.md",
+            log: { section: "Inputs", lineFormat: "- {title} {note}" },
+          },
+          types: [
+            type({ id: "anime", log: { lineFormat: "- {title} {progress}{note} #Anime" } }),
+            type({ id: "franchise" }),
+          ],
+        }),
+      ),
+    );
+    expect(cleaned.dailyNotes).toMatchObject({
+      template: "Templates/Daily.md",
+      log: { section: "Inputs", lineFormat: "- {title} {note}" },
+    });
+    expect(cleaned.types[0].log).toMatchObject({ lineFormat: "- {title} {progress}{note} #Anime" });
+    // A type with no `log` block stays not loggable.
+    expect(cleaned.types[1].log).toBeUndefined();
+  });
+
+  it("drops an empty global log but keeps an enabled-but-empty per-type log", () => {
+    const cleaned = cleanedVault(
+      normalizeVaultConfig(
+        vault({
+          dailyNotes: { paths: ["Daily Notes"], log: { section: "", lineFormat: "" } },
+          types: [type({ id: "anime", log: { section: "", lineFormat: "" } })],
+        }),
+      ),
+    );
+    // An empty global default carries no config → dropped.
+    expect(cleaned.dailyNotes?.log).toBeUndefined();
+    // Presence of a per-type `log` is the opt-in, so it survives even when empty.
+    expect(cleaned.types[0].log).toBeDefined();
+  });
+
   it("emits only the props relevant to each field type", () => {
     const cleaned = cleanedVault(
       vault({

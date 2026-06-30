@@ -31,6 +31,7 @@ import {
   Field,
   IconButton,
   NumberField,
+  OptionalToggle,
   PathField,
   StringListEditor,
   TextField,
@@ -52,6 +53,7 @@ export function DailyNotesEditor({
   vaultRoot: string;
   onChange: (config: DailyNotesConfig) => void;
 }) {
+  const log = config.log ?? { section: "", lineFormat: "" };
   return (
     <div className="flex flex-col gap-3">
       <StringListEditor
@@ -62,12 +64,40 @@ export function DailyNotesEditor({
         pathItems
         onChange={(paths) => onChange({ ...config, paths })}
       />
-      <TextField
-        label="Date format"
-        value={config.dateFormat ?? ""}
-        placeholder="YYYY-MM-DD"
-        onChange={(dateFormat) => onChange({ ...config, dateFormat })}
-      />
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <TextField
+          label="Date format"
+          value={config.dateFormat ?? ""}
+          placeholder="YYYY-MM-DD"
+          onChange={(dateFormat) => onChange({ ...config, dateFormat })}
+        />
+        <TextField
+          label="New-note template"
+          value={config.template ?? ""}
+          placeholder="Templates/Daily Note.md"
+          onChange={(template) => onChange({ ...config, template })}
+        />
+      </div>
+      <div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
+        <div className="text-xs text-muted-foreground">
+          Logging defaults — the heading log lines are written under, and the fallback line format.
+          Each type can override these and adds its own tag.
+        </div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <TextField
+            label="Log section"
+            value={log.section ?? ""}
+            placeholder="Log"
+            onChange={(section) => onChange({ ...config, log: { ...log, section } })}
+          />
+          <TextField
+            label="Default line format"
+            value={log.lineFormat ?? ""}
+            placeholder="- {title} {progress}{note}"
+            onChange={(lineFormat) => onChange({ ...config, log: { ...log, lineFormat } })}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -351,7 +381,59 @@ export function EntityTypeForm({
             </Field>
           </div>
         </ConfigSubsection>
+
+        <ConfigSubsection title="Daily-note logging">
+          <TypeLogEditor config={config} onChange={onChange} />
+        </ConfigSubsection>
       </div>
+  );
+}
+
+/// The per-type daily-note logging block. The toggle is the opt-in: with it off
+/// the type isn't loggable (no `log` block); on, it logs under the daily-notes
+/// section (or a per-type override) using this line format. `{title}` is always
+/// rendered as a wikilink, so the format just carries the tag.
+function TypeLogEditor({
+  config,
+  onChange,
+}: {
+  config: EntityTypeConfig;
+  onChange: (config: EntityTypeConfig) => void;
+}) {
+  const log = config.log ?? null;
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-medium text-muted-foreground">Log to daily note</div>
+          <div className="text-xs text-muted-foreground">
+            When on, checking an episode or the Log button writes a line to the daily note. The title
+            is auto-linked as a wikilink — just add your tag to the line format.
+          </div>
+        </div>
+        <OptionalToggle
+          enabled={Boolean(log)}
+          onEnable={() => onChange({ ...config, log: { section: "", lineFormat: "" } })}
+          onDisable={() => onChange({ ...config, log: null })}
+        />
+      </div>
+      {log ? (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <TextField
+            label="Line format"
+            value={log.lineFormat ?? ""}
+            placeholder="- {title} {progress}{note} #Tag"
+            onChange={(lineFormat) => onChange({ ...config, log: { ...log, lineFormat } })}
+          />
+          <TextField
+            label="Section override"
+            value={log.section ?? ""}
+            placeholder="(daily-notes default)"
+            onChange={(section) => onChange({ ...config, log: { ...log, section } })}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 

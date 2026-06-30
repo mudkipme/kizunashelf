@@ -44,6 +44,10 @@ function normalizeDailyNotes(config: DailyNotesConfig): DailyNotesConfig {
   return {
     paths: config.paths ?? [],
     dateFormat: config.dateFormat ?? "",
+    template: config.template ?? "",
+    // The global log default is always an object in the editor (so its fields
+    // render); it's dropped on save when both parts are blank.
+    log: { section: config.log?.section ?? "", lineFormat: config.log?.lineFormat ?? "" },
   };
 }
 
@@ -68,6 +72,11 @@ function normalizeEntityType(config: EntityTypeConfig): EntityTypeConfig {
         }
       : null,
     bodySections: config.bodySections ?? [],
+    // `log`'s *presence* is the loggability opt-in, so keep `null` (off) distinct
+    // from an empty object (on, inherits the global format).
+    log: config.log
+      ? { section: config.log.section ?? "", lineFormat: config.log.lineFormat ?? "" }
+      : null,
     fields: (config.fields ?? []).map(normalizeField),
   };
 }
@@ -104,6 +113,8 @@ export function cleanVaultConfig(
         ? {
             paths: cleanStrings(config.dailyNotes.paths ?? []),
             dateFormat: emptyToUndefined(config.dailyNotes.dateFormat),
+            template: emptyToUndefined(config.dailyNotes.template),
+            log: cleanLog(config.dailyNotes.log, false),
           }
         : undefined,
       home: config.home
@@ -130,6 +141,7 @@ export function cleanVaultConfig(
         externalPriority: cleanExternalPriority(providerCatalog, typeConfig.externalPriority ?? []),
         filename: cleanFilename(typeConfig.filename),
         bodySections: cleanBodySections(typeConfig.bodySections ?? [], providerCatalog),
+        log: cleanLog(typeConfig.log, true),
         fields: typeConfig.fields
           .map((field) => cleanField(field, providerCatalog))
           .filter((field): field is FieldConfig => Boolean(field)),
@@ -378,6 +390,20 @@ function cleanExternalPriority(providerCatalog: ExternalProviderCatalog | undefi
 function emptyToUndefined(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : undefined;
+}
+
+/// Cleans a daily-note `log` block. The global default (`keepEmpty: false`) is
+/// dropped when blank; a per-type block (`keepEmpty: true`) is kept as `{}` even
+/// when blank, because its *presence* is what opts the type into logging.
+function cleanLog(
+  log: { section?: string | null; lineFormat?: string | null } | null | undefined,
+  keepEmpty: boolean,
+) {
+  if (!log) return undefined;
+  const section = emptyToUndefined(log.section);
+  const lineFormat = emptyToUndefined(log.lineFormat);
+  if (!keepEmpty && !section && !lineFormat) return undefined;
+  return { section, lineFormat };
 }
 
 export function joinPath(base: string, path: string) {
