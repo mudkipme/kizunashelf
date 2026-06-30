@@ -8,7 +8,7 @@ KizunaShelf starts with the familiar shape of a media tracker: TV shows, movies,
 
 The shelf is not flat. A game can belong to a franchise. An anime can be based on a novel. A character can point to a voice actor. A remake can look back at the original. Every relation is written as a link, then read back as a map: outgoing, incoming, resolved, unresolved, and grouped into the quiet shape of the things you care about.
 
-Time matters here. Release dates, seasons, future plans, and past records all become part of the same calendar. You can look ahead to the game you want to buy, the movie you plan to watch, or the event you hope to attend; then look back at what you finished across the last few months. When your daily notes mention an entity through a wikilink, KizunaShelf can connect that ordinary day back to the things you love. That's the *kizuna*: the bond between you and what you keep.
+Time matters here. Release dates, seasons, future plans, and past records all become part of the same calendar. You can look ahead to the game you want to buy, the movie you plan to watch, or the event you hope to attend; then look back at what you finished across the last few months. When your daily notes mention an entity through a wikilink, KizunaShelf can connect that ordinary day back to the things you love. And it runs both ways: check off an episode or jot a quick log, and KizunaShelf writes that day's line into your daily note — in a format you choose — then gathers every dated record into an activity feed you can scroll back through, like a diary of what you watched, played, and read. That's the *kizuna*: the bond between you and what you keep.
 
 And the files remain yours. KizunaShelf follows the idea of files over apps: Markdown is the source of truth, readable by Obsidian, SilverBullet, Zed, VS Code, any text editor, or no app at all. Even if you stop using KizunaShelf someday, the notes, frontmatter, links, memories, and kizuna are still there.
 
@@ -18,9 +18,10 @@ KizunaShelf is a shelf for what matters to you, and a record book for the life t
 
 - Builds a typed catalog from Markdown files in an Obsidian-style vault.
 - Lets each collection define its own titles, covers, states, ratings, progress, dates, external refs, and relations.
-- Provides library browsing, entity detail pages, calendar views, custom lists, statistics, and review/cleanup queues.
+- Provides library browsing, entity detail pages, calendar and activity-feed views, custom lists, statistics, and review/cleanup queues.
 - Surfaces each entity's relations (outgoing, incoming, resolved, and unresolved) directly on its detail page.
 - Connects daily notes back to entities through wikilinks, tying ordinary days to the things you track.
+- Logs what you did and when: checking off an episode or a quick log appends a dated line to your daily note in a per-type format you define, and the activity feed reads those days back as a reverse-chronological diary.
 - Supports external metadata matching across many providers: TMDB, TheTVDB, MyAnimeList, Bangumi (anime/TV/film); IGDB, Steam, BoardGameGeek (games/board games); Google Books, Open Library, Hardcover, MangaUpdates, Comic Vine (books/manga/comics); MusicBrainz, Spotify, Discogs (music); and Apple Podcasts.
 - Runs as a self-hosted web app, a Tauri desktop app, or a native iOS app.
 
