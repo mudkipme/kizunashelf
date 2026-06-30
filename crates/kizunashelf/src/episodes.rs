@@ -42,6 +42,34 @@ fn key_regex() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"^(?:#|[eE][pP]?[ \t]*)?(\d+(?:\.\d+)?)").unwrap())
 }
 
+/// An Obsidian Tasks "due date" suffix (`📅 YYYY-MM-DD`) anywhere in an item's
+/// content. We only emit it at the end, but accept it anywhere on the round-trip.
+fn date_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"📅\s*(\d{4}-\d{2}-\d{2})").unwrap())
+}
+
+/// Splits a `📅`-dated item's content into `(content_without_date, date)`, so the
+/// date survives the round-trip as structured data instead of leaking into the
+/// title. Undated content is returned unchanged.
+fn extract_date(content: &str) -> (String, Option<String>) {
+    let Some(captures) = date_regex().captures(content) else {
+        return (content.to_string(), None);
+    };
+    let date = captures.get(1).map(|m| m.as_str().to_string());
+    let whole = captures.get(0).unwrap();
+    let mut without = String::with_capacity(content.len());
+    without.push_str(content[..whole.start()].trim_end());
+    let tail = content[whole.end()..].trim_start();
+    if !tail.is_empty() {
+        if !without.is_empty() {
+            without.push(' ');
+        }
+        without.push_str(tail);
+    }
+    (without, date)
+}
+
 struct ParsedItem<'a> {
     watched: bool,
     content: &'a str,
@@ -190,11 +218,13 @@ fn parse_section(body: &str, heading: &str) -> ParsedSection {
         if let Some(item) = parse_item(text) {
             first_struct.get_or_insert(line_start);
             last_item_end = Some(offset);
-            let (key, title) = split_key_title(item.content, item.marker_number);
+            let (content, date) = extract_date(item.content);
+            let (key, title) = split_key_title(&content, item.marker_number);
             current.items.push(Episode {
                 key,
                 title,
                 watched: item.watched,
+                date,
             });
         }
     }
@@ -256,7 +286,12 @@ fn render_item(episode: &Episode, tracking: EpisodeTracking) -> String {
         (false, true) => key.to_string(),
         (false, false) => format!("{key} · {title}"),
     };
-    format!("- {checkbox}{label}")
+    // Obsidian Tasks "due date" emoji — only when the provider gave a date.
+    let date = match episode.date.as_deref().map(str::trim) {
+        Some(date) if !date.is_empty() => format!(" 📅 {date}"),
+        _ => String::new(),
+    };
+    format!("- {checkbox}{label}{date}")
 }
 
 /// Renders `groups` back into `body`'s episodes section (replacing only that
@@ -300,11 +335,18 @@ pub fn merge_episodes(
                             {
                                 existing_item.title = item.title.clone();
                             }
+                            // Dates follow the same rule: fill a missing one, and
+                            // refresh it on overwrite when the provider has one.
+                            if is_blank(&existing_item.date) || (overwrite && !is_blank(&item.date))
+                            {
+                                existing_item.date = item.date.clone();
+                            }
                         }
                         None => group.items.push(Episode {
                             key: item.key.clone(),
                             title: item.title.clone(),
                             watched: false,
+                            date: item.date.clone(),
                         }),
                     }
                 }
@@ -318,6 +360,7 @@ pub fn merge_episodes(
                         key: item.key.clone(),
                         title: item.title.clone(),
                         watched: false,
+                        date: item.date.clone(),
                     })
                     .collect(),
             }),
@@ -328,6 +371,10 @@ pub fn merge_episodes(
 
 fn same_label(a: &str, b: &str) -> bool {
     a.trim().eq_ignore_ascii_case(b.trim())
+}
+
+fn is_blank(value: &Option<String>) -> bool {
+    value.as_deref().map(str::trim).unwrap_or("").is_empty()
 }
 
 #[cfg(test)]
@@ -348,11 +395,19 @@ mod tests {
             key: key.to_string(),
             title: title.to_string(),
             watched,
+            date: None,
         }
     }
 
     fn unwatched(key: &str, title: &str) -> Episode {
         episode(key, title, false)
+    }
+
+    fn dated(key: &str, title: &str, date: &str) -> Episode {
+        Episode {
+            date: Some(date.to_string()),
+            ..episode(key, title, false)
+        }
     }
 
     fn entity_episodes(groups: Vec<EpisodeGroup>) -> EntityEpisodes {
@@ -522,6 +577,55 @@ mod tests {
         assert!(next.contains("## Notes\nkeep"));
         // Re-parsing reflects the toggle.
         assert_eq!(parse_episodes(&next, &section()).watched, 1);
+    }
+
+    #[test]
+    fn renders_and_round_trips_the_date_emoji() {
+        let groups = vec![EpisodeGroup {
+            label: String::new(),
+            items: vec![dated("1", "Pilot", "2024-01-15"), unwatched("2", "No date")],
+        }];
+        let body = apply_episodes("## Episodes\n", &section(), &groups);
+        assert!(body.contains("- [ ] 1 · Pilot 📅 2024-01-15"));
+        // The undated item has no emoji appended.
+        assert!(body.contains("- [ ] 2 · No date\n"));
+
+        // Re-parsing recovers the date as structured data, not as part of the title.
+        let parsed = parse_episodes(&body, &section());
+        assert_eq!(parsed.groups[0].items[0].title, "Pilot");
+        assert_eq!(
+            parsed.groups[0].items[0].date.as_deref(),
+            Some("2024-01-15")
+        );
+        assert_eq!(parsed.groups[0].items[1].date, None);
+    }
+
+    #[test]
+    fn merge_fills_missing_dates_and_overwrites_on_request() {
+        let existing = entity_episodes(vec![EpisodeGroup {
+            label: String::new(),
+            items: vec![
+                episode("1", "Pilot", true),      // no date yet, watched
+                dated("2", "Dawn", "2024-01-22"), // already dated
+            ],
+        }]);
+        let incoming = vec![EpisodeGroup {
+            label: String::new(),
+            items: vec![
+                dated("1", "Pilot", "2024-01-15"),
+                dated("2", "Dawn", "2099-12-31"),
+            ],
+        }];
+
+        // Non-overwrite: a missing date is filled, an existing one is left alone.
+        let merged = merge_episodes(&existing, &incoming, false);
+        assert_eq!(merged[0].items[0].date.as_deref(), Some("2024-01-15"));
+        assert!(merged[0].items[0].watched);
+        assert_eq!(merged[0].items[1].date.as_deref(), Some("2024-01-22"));
+
+        // Overwrite: an existing date is refreshed from the provider.
+        let merged = merge_episodes(&existing, &incoming, true);
+        assert_eq!(merged[0].items[1].date.as_deref(), Some("2099-12-31"));
     }
 
     #[test]

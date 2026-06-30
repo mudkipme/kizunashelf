@@ -149,7 +149,12 @@ fn discogs_track_groups(release: &Value) -> Vec<ProviderEpisodeGroup> {
         if key.is_empty() && title.is_empty() {
             continue;
         }
-        current.items.push(ProviderEpisodeItem { key, title });
+        // A release tracklist has no per-track date.
+        current.items.push(ProviderEpisodeItem {
+            key,
+            title,
+            date: None,
+        });
     }
     if !current.label.is_empty() || !current.items.is_empty() {
         groups.push(current);

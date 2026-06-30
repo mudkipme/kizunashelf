@@ -147,7 +147,16 @@ fn comicvine_issue_items(issues: &[Value]) -> Vec<ProviderEpisodeItem> {
                 return None;
             }
             let order = key.parse::<f64>().ok();
-            Some((order, ProviderEpisodeItem { key, title }))
+            // The volume's issue list carries no per-issue date (only the issue
+            // detail does), so leave it unset.
+            Some((
+                order,
+                ProviderEpisodeItem {
+                    key,
+                    title,
+                    date: None,
+                },
+            ))
         })
         .collect();
     ordered.sort_by(|left, right| match (left.0, right.0) {

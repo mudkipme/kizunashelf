@@ -91,7 +91,11 @@ async fn fetch_bangumi_episodes(
             if key.is_empty() && title.is_empty() {
                 continue;
             }
-            items.push(ProviderEpisodeItem { key, title });
+            let date = episode
+                .get("airdate")
+                .and_then(Value::as_str)
+                .and_then(crate::dates::iso_date);
+            items.push(ProviderEpisodeItem { key, title, date });
         }
         offset += 100;
         let total = page.get("total").and_then(Value::as_u64).unwrap_or(0) as usize;

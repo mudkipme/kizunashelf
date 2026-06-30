@@ -150,9 +150,14 @@ fn jikan_episode_items(data: &[Value]) -> Vec<ProviderEpisodeItem> {
                 .unwrap_or_default()
                 .trim()
                 .to_string();
+            let date = episode
+                .get("aired")
+                .and_then(Value::as_str)
+                .and_then(crate::dates::iso_date);
             Some(ProviderEpisodeItem {
                 key: key.to_string(),
                 title,
+                date,
             })
         })
         .collect()

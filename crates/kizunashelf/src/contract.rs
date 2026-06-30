@@ -302,6 +302,11 @@ pub struct Episode {
     pub key: String,
     pub title: String,
     pub watched: bool,
+    /// The air/release date (`YYYY-MM-DD`), rendered as an Obsidian Tasks
+    /// `📅 YYYY-MM-DD` suffix on the list item. Absent when the provider has no
+    /// per-item date (e.g. album tracks).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date: Option<String>,
 }
 
 /// Full rewrite of an entity's episodes section (toggle / add / remove / reorder /
@@ -336,6 +341,10 @@ pub struct ProviderEpisodeGroup {
 pub struct ProviderEpisodeItem {
     pub key: String,
     pub title: String,
+    /// The item's air/release date (`YYYY-MM-DD`) when the provider exposes one;
+    /// absent otherwise (e.g. CD tracks).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date: Option<String>,
 }
 
 /// A provider that can supply episodes for an entity (it supports episode import

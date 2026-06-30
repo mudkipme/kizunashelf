@@ -112,9 +112,10 @@ fn apple_podcast_episode_items(results: &[Value]) -> Vec<ProviderEpisodeItem> {
     episodes
         .into_iter()
         .enumerate()
-        .map(|(index, (_, title))| ProviderEpisodeItem {
+        .map(|(index, (date, title))| ProviderEpisodeItem {
             key: (index + 1).to_string(),
             title,
+            date: crate::dates::iso_date(date),
         })
         .collect()
 }

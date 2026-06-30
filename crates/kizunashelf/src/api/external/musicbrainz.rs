@@ -122,7 +122,12 @@ fn musicbrainz_track_item(track: &Value) -> Option<ProviderEpisodeItem> {
         .unwrap_or_default()
         .trim()
         .to_string();
-    (!key.is_empty() || !title.is_empty()).then_some(ProviderEpisodeItem { key, title })
+    // Tracks on a release carry no per-track date.
+    (!key.is_empty() || !title.is_empty()).then_some(ProviderEpisodeItem {
+        key,
+        title,
+        date: None,
+    })
 }
 
 fn musicbrainz_medium_label(medium: &Value, index: usize) -> String {

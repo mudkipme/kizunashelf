@@ -8,7 +8,8 @@ import { z as zod } from 'zod';
 
 export const ProviderEpisodeItem = zod.object({
   "key": zod.string(),
-  "title": zod.string()
+  "title": zod.string(),
+  "date": zod.string().nullish().describe('The item\'s air\/release date (`YYYY-MM-DD`) when the provider exposes one;\nabsent otherwise (e.g. CD tracks).')
 })
 
 export type ProviderEpisodeItem = zod.input<typeof ProviderEpisodeItem>;

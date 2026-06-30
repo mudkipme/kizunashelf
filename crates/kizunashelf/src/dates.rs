@@ -95,6 +95,18 @@ pub fn parse_exact_date(value: Option<&str>) -> Option<String> {
     normalize_date(year, month, day)
 }
 
+/// Extracts the calendar date (`YYYY-MM-DD`) from the *start* of an ISO-8601 date
+/// or date-time (e.g. `2023-04-16` or `2023-04-16T07:00:00Z`), validating it.
+/// Returns `None` for an empty string or a non-date prefix. Used to normalize
+/// provider air/release dates before they become an episode's `📅` suffix.
+pub fn iso_date(value: &str) -> Option<String> {
+    let captures = iso_date_regex().captures(value.trim())?;
+    let year = captures.get(1)?.as_str().parse().ok()?;
+    let month = captures.get(2)?.as_str().parse().ok()?;
+    let day = captures.get(3)?.as_str().parse().ok()?;
+    normalize_date(year, month, day)
+}
+
 pub fn exact_date_parts(value: Option<&str>) -> Option<(i32, u32, u32)> {
     let value = value?;
     let captures = exact_date_regex().captures(value)?;
@@ -203,6 +215,11 @@ fn normalize_season_name(season: &str) -> Option<String> {
     }
 }
 
+fn iso_date_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^(\d{4})-(\d{2})-(\d{2})").unwrap())
+}
+
 fn exact_date_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
@@ -283,6 +300,22 @@ mod tests {
             Some("2025-03-31".to_string())
         );
         assert!(season_compare_value("Autumn") > season_compare_value("Summer"));
+    }
+
+    #[test]
+    fn iso_date_truncates_datetimes_and_rejects_non_dates() {
+        assert_eq!(iso_date("2024-01-15"), Some("2024-01-15".to_string()));
+        assert_eq!(
+            iso_date("2023-04-16T07:00:00Z"),
+            Some("2023-04-16".to_string())
+        );
+        assert_eq!(
+            iso_date("2009-04-09T00:00:00+00:00"),
+            Some("2009-04-09".to_string())
+        );
+        assert_eq!(iso_date(""), None);
+        assert_eq!(iso_date("2024-13-40"), None); // invalid month/day
+        assert_eq!(iso_date("sometime"), None);
     }
 
     #[test]

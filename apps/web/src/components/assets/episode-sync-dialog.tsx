@@ -169,6 +169,8 @@ export function EpisodeSyncDialog({
       key: item.key,
       title: item.title,
       watched: false,
+      // Carry the provider's air/release date so the core writes the 📅 suffix.
+      date: item.date ?? undefined,
     });
     if (groupBySeason && seasoned) {
       return picked.map((group) => ({ label: group.label, items: group.items.map(toEpisode) }));
@@ -438,6 +440,9 @@ function ItemRow({
           <span className="shrink-0 tabular-nums text-xs text-muted-foreground">{item.key}</span>
         ) : null}
         <span className="min-w-0 flex-1 truncate">{item.title || "—"}</span>
+        {item.date ? (
+          <span className="shrink-0 tabular-nums text-xs text-muted-foreground">📅 {item.date}</span>
+        ) : null}
         {tracked ? (
           <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             in list

@@ -156,10 +156,12 @@ fn spotify_track_groups(tracks: &[Value]) -> Vec<ProviderEpisodeGroup> {
         if key.is_empty() && title.is_empty() {
             continue;
         }
-        by_disc
-            .entry(disc)
-            .or_default()
-            .push(ProviderEpisodeItem { key, title });
+        // Album tracks carry no per-track date.
+        by_disc.entry(disc).or_default().push(ProviderEpisodeItem {
+            key,
+            title,
+            date: None,
+        });
     }
     let multi_disc = by_disc.len() > 1;
     by_disc

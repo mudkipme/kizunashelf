@@ -5128,6 +5128,13 @@
           },
           "watched": {
             "type": "boolean"
+          },
+          "date": {
+            "description": "The air/release date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`📅 YYYY-MM-DD` suffix on the list item. Absent when the provider has no\nper-item date (e.g. album tracks).",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -5311,6 +5318,13 @@
           },
           "title": {
             "type": "string"
+          },
+          "date": {
+            "description": "The item's air/release date (`YYYY-MM-DD`) when the provider exposes one;\nabsent otherwise (e.g. CD tracks).",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [

@@ -166,9 +166,14 @@ fn tmdb_season_items(season: &Value) -> Vec<ProviderEpisodeItem> {
                         .unwrap_or_default()
                         .trim()
                         .to_string();
+                    let date = episode
+                        .get("air_date")
+                        .and_then(Value::as_str)
+                        .and_then(crate::dates::iso_date);
                     Some(ProviderEpisodeItem {
                         key: key.to_string(),
                         title,
+                        date,
                     })
                 })
                 .collect()

@@ -141,7 +141,7 @@ async fn thetvdb_get(client: &reqwest::Client, token: &str, url: &str) -> Result
 }
 
 /// One parsed episode row: `(season, number-key, title)`.
-type EpisodeRow = (i64, String, String);
+type EpisodeRow = (i64, String, String, Option<String>);
 
 /// Paginates an `episodes/{season-type}[/{lang}]` endpoint into ordered rows.
 async fn thetvdb_episode_pages(
@@ -170,7 +170,11 @@ async fn thetvdb_episode_pages(
                     .and_then(Value::as_str)
                     .map(|name| name.trim().to_string())
                     .unwrap_or_default();
-                rows.push((season, key, title));
+                let date = episode
+                    .get("aired")
+                    .and_then(Value::as_str)
+                    .and_then(crate::dates::iso_date);
+                rows.push((season, key, title, date));
             }
         }
         pages += 1;
@@ -228,10 +232,10 @@ async fn fetch_thetvdb_episodes(
         if let Ok(translated) = thetvdb_episode_pages(client, &token, &translated_url).await {
             let by_key: HashMap<(i64, &str), &str> = translated
                 .iter()
-                .filter(|(_, _, title)| !title.is_empty())
-                .map(|(season, key, title)| ((*season, key.as_str()), title.as_str()))
+                .filter(|(_, _, title, _)| !title.is_empty())
+                .map(|(season, key, title, _)| ((*season, key.as_str()), title.as_str()))
                 .collect();
-            for (season, key, title) in rows.iter_mut() {
+            for (season, key, title, _date) in rows.iter_mut() {
                 if let Some(translated_title) = by_key.get(&(*season, key.as_str())) {
                     *title = (*translated_title).to_string();
                 }
@@ -240,11 +244,11 @@ async fn fetch_thetvdb_episodes(
     }
 
     let mut by_season: BTreeMap<i64, Vec<ProviderEpisodeItem>> = BTreeMap::new();
-    for (season, key, title) in rows {
+    for (season, key, title, date) in rows {
         by_season
             .entry(season)
             .or_default()
-            .push(ProviderEpisodeItem { key, title });
+            .push(ProviderEpisodeItem { key, title, date });
     }
     let groups = by_season
         .into_iter()

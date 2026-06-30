@@ -14,7 +14,8 @@ export const ImportEpisodesBody = zod.object({
   "items": zod.array(zod.object({
   "key": zod.string().describe('The episode\/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be\nempty for an item with no parseable number.'),
   "title": zod.string(),
-  "watched": zod.boolean()
+  "watched": zod.boolean(),
+  "date": zod.string().nullish().describe('The air\/release date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`📅 YYYY-MM-DD` suffix on the list item. Absent when the provider has no\nper-item date (e.g. album tracks).')
 }))
 })),
   "overwrite": zod.boolean().default(importEpisodesBodyOverwriteDefault).describe('When true, a matched existing item\'s title is overwritten with the incoming\none (the client ticked it). Defaults false — matched titles are only filled\nwhen empty, never replacing a hand edit — so older clients keep that behavior.')

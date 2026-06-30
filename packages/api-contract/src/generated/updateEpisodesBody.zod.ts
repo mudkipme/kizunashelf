@@ -13,7 +13,8 @@ export const UpdateEpisodesBody = zod.object({
   "items": zod.array(zod.object({
   "key": zod.string().describe('The episode\/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be\nempty for an item with no parseable number.'),
   "title": zod.string(),
-  "watched": zod.boolean()
+  "watched": zod.boolean(),
+  "date": zod.string().nullish().describe('The air\/release date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`📅 YYYY-MM-DD` suffix on the list item. Absent when the provider has no\nper-item date (e.g. album tracks).')
 }))
 }))
 }).describe('Full rewrite of an entity\'s episodes section (toggle \/ add \/ remove \/ reorder \/\nrename \/ regroup). The server renders these groups back into the body, replacing\nonly the episodes section.')

@@ -10,7 +10,8 @@ export const ProviderEpisodeGroup = zod.object({
   "label": zod.string().describe('Season\/disc label (e.g. \"Season 1\"); empty for a flat provider.'),
   "items": zod.array(zod.object({
   "key": zod.string(),
-  "title": zod.string()
+  "title": zod.string(),
+  "date": zod.string().nullish().describe('The item\'s air\/release date (`YYYY-MM-DD`) when the provider exposes one;\nabsent otherwise (e.g. CD tracks).')
 }))
 })
 

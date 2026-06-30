@@ -120,6 +120,9 @@ export function EntityEpisodesPanel({
                 const keyLabel = item.key ? (
                   <span className="shrink-0 tabular-nums text-muted-foreground">{item.key}</span>
                 ) : null;
+                const dateLabel = item.date ? (
+                  <span className="shrink-0 tabular-nums text-xs text-muted-foreground">📅 {item.date}</span>
+                ) : null;
 
                 // Non-checklist rows are plain, selectable text (no interactive
                 // wrapper) so the list can be copied; checklist rows are a
@@ -130,7 +133,8 @@ export function EntityEpisodesPanel({
                     <li key={itemIndex} className="flex items-start gap-2 px-2 py-1.5 text-sm">
                       <span className="mt-0.5 text-xs text-muted-foreground">•</span>
                       {keyLabel}
-                      <span className="min-w-0">{title}</span>
+                      <span className="min-w-0 flex-1">{title}</span>
+                      {dateLabel}
                     </li>
                   );
                 }
@@ -167,9 +171,10 @@ export function EntityEpisodesPanel({
                         {item.watched ? <CheckIcon className="size-3" /> : null}
                       </span>
                       {keyLabel}
-                      <span className={cn("min-w-0 truncate", item.watched && "text-muted-foreground")}>
+                      <span className={cn("min-w-0 flex-1 truncate", item.watched && "text-muted-foreground")}>
                         {title}
                       </span>
+                      {dateLabel}
                     </div>
                   </li>
                 );
