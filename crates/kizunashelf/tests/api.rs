@@ -625,7 +625,7 @@ async fn log_endpoint_writes_a_daily_note_line() {
         &server.app,
         Method::POST,
         &format!("{path}?dryRun=true"),
-        Some(json!({ "kind": "completed", "note": "rewatch done" })),
+        Some(json!({ "kind": "completed", "note": "rewatch done", "date": "2024-08-20" })),
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{preview}");
@@ -636,12 +636,13 @@ async fn log_endpoint_writes_a_daily_note_line() {
     assert!(line.contains("rewatch done #Anime"), "{line}");
     assert_eq!(preview["willStampDate"]["field"], "complete_date");
 
-    // Real write, then the same log again is idempotent.
+    // Real write (kind=progress → daily-note line only, no entity mutation, so no
+    // revision needed), then the same log again is idempotent.
     let (status, written) = request_json(
         &server.app,
         Method::POST,
         &path,
-        Some(json!({ "kind": "completed", "note": "rewatch done" })),
+        Some(json!({ "kind": "progress", "note": "rewatch done", "date": "2024-08-20" })),
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{written}");
@@ -652,10 +653,77 @@ async fn log_endpoint_writes_a_daily_note_line() {
         &server.app,
         Method::POST,
         &path,
-        Some(json!({ "kind": "completed", "note": "rewatch done" })),
+        Some(json!({ "kind": "progress", "note": "rewatch done", "date": "2024-08-20" })),
     )
     .await;
     assert_eq!(again["lineAlreadyPresent"], true, "{again}");
+}
+
+#[tokio::test]
+async fn log_endpoint_applies_and_reverses_episode_and_date_stamp() {
+    let server = TestServer::new();
+    let entity = urlencoding::encode("anime:Star Voyager");
+    let log = format!("/api/entities/{entity}/log");
+
+    async fn revision_of(server: &TestServer, entity: &str) -> String {
+        server.ok_json(&format!("/api/entities/{entity}")).await["entity"]["revision"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+
+    // Complete it on a fixed date: stamps `complete_date`, writes a daily-note line.
+    let revision = revision_of(&server, &entity).await;
+    let (status, added) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "add", "kind": "completed", "date": "2024-08-20",
+            "note": "fin", "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{added}");
+    assert_eq!(added["willStampDate"]["field"], "complete_date");
+    assert_eq!(added["willStampDate"]["value"], "2024-08-20");
+    // The returned entity detail carries the new stamp.
+    assert_eq!(
+        added["entity"]["entity"]["frontmatter"]["complete_date"], "2024-08-20",
+        "{added}"
+    );
+    assert_eq!(added["lineAlreadyPresent"], false);
+    let note_path = added["notePath"].as_str().unwrap().to_string();
+
+    // Missing revision on a mutating log is rejected.
+    let (status, _) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({ "op": "add", "kind": "completed", "date": "2024-08-20" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    // Remove: clears the stamp (it equals the log date) and removes the exact line.
+    let revision = revision_of(&server, &entity).await;
+    let (status, removed) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "remove", "kind": "completed", "date": "2024-08-20",
+            "note": "fin", "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{removed}");
+    assert_eq!(removed["lineMatched"], true); // the exact line was found and removed
+    assert!(
+        removed["entity"]["entity"]["frontmatter"]["complete_date"].is_null(),
+        "{removed}"
+    );
+    let _ = note_path;
 }
 
 #[tokio::test]

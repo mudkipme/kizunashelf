@@ -6,21 +6,142 @@
  */
 import { z as zod } from 'zod';
 
+export const logActivityResponseEntityOneEntityDatesItemParsedOneMonthMin = 0;
+
+export const logActivityResponseEntityOneEntityDatesItemParsedOneDayMin = 0;
+
+export const logActivityResponseEntityOneEntityTagsDefault = [];
+export const logActivityResponseEntityOneEntityEpisodeProgressOneWatchedMin = 0;
+
+export const logActivityResponseEntityOneEntityEpisodeProgressOneTotalMin = 0;
+
+export const logActivityResponseEntityOneEntityRelationCountMin = 0;
+
+export const logActivityResponseEntityOneRelatedEntitiesItemDatesItemParsedOneMonthMin = 0;
+
+export const logActivityResponseEntityOneRelatedEntitiesItemDatesItemParsedOneDayMin = 0;
+
+export const logActivityResponseEntityOneRelatedEntitiesItemTagsDefault = [];
+export const logActivityResponseEntityOneRelatedEntitiesItemEpisodeProgressOneWatchedMin = 0;
+
+export const logActivityResponseEntityOneRelatedEntitiesItemEpisodeProgressOneTotalMin = 0;
+
+export const logActivityResponseEntityOneRelatedEntitiesItemRelationCountMin = 0;
+
+export const logActivityResponseEntityOneEpisodesOneTotalMin = 0;
+
+export const logActivityResponseEntityOneEpisodesOneWatchedMin = 0;
+
+
 export const LogActivityResponse = zod.object({
   "dryRun": zod.boolean(),
   "notePath": zod.string().nullish().describe('The daily note the line was (or would be) written to.'),
   "noteWillBeCreated": zod.boolean().describe('The note doesn\'t exist yet and would be created (from the template).'),
   "section": zod.string().nullish().describe('The heading the line is written under.'),
   "line": zod.string().nullish().describe('The rendered line.'),
-  "lineAlreadyPresent": zod.boolean().describe('The exact line is already in the section, so nothing was written (idempotent).'),
+  "lineAlreadyPresent": zod.boolean().describe('`add`: the exact line is already in the section, so nothing was written.'),
+  "lineMatched": zod.boolean().nullish().describe('`remove`: whether the exact line was found (and removed). `None` on `add`.'),
   "willStampDate": zod.union([zod.object({
   "field": zod.string(),
   "value": zod.string()
-}),zod.null()]).optional().describe('The date field this log would stamp on the entity (computed; applied later).'),
+}),zod.null()]).optional().describe('The date field this log stamped (`add`) or cleared (`remove`) on the entity.'),
   "episodesResolved": zod.array(zod.object({
   "key": zod.string(),
   "title": zod.string().optional()
-})).optional().describe('The episodes this log refers to (computed; ticked later).')
+})).optional().describe('The episodes this log ticked\/cleared (`key` + resolved `title`).'),
+  "entity": zod.union([zod.object({
+  "entity": zod.object({
+  "id": zod.string(),
+  "type": zod.string(),
+  "typeLabel": zod.string(),
+  "title": zod.string(),
+  "titles": zod.record(zod.string(), zod.string()),
+  "dates": zod.array(zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(logActivityResponseEntityOneEntityDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(logActivityResponseEntityOneEntityDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
+})),
+  "image": zod.string().nullish(),
+  "summary": zod.string().nullish(),
+  "path": zod.string(),
+  "basename": zod.string(),
+  "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(logActivityResponseEntityOneEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(logActivityResponseEntityOneEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(logActivityResponseEntityOneEntityEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
+  "relationCount": zod.number().min(logActivityResponseEntityOneEntityRelationCountMin),
+  "revision": zod.string(),
+  "frontmatter": zod.record(zod.string(), zod.unknown()),
+  "body": zod.string(),
+  "raw": zod.string()
+}),
+  "relations": zod.array(zod.object({
+  "sourceId": zod.string(),
+  "targetId": zod.string().nullish(),
+  "targetTitle": zod.string(),
+  "targetType": zod.string().nullish(),
+  "field": zod.string(),
+  "direction": zod.enum(['out', 'in'])
+})),
+  "relatedEntities": zod.array(zod.object({
+  "id": zod.string(),
+  "type": zod.string(),
+  "typeLabel": zod.string(),
+  "title": zod.string(),
+  "titles": zod.record(zod.string(), zod.string()),
+  "dates": zod.array(zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
+})),
+  "image": zod.string().nullish(),
+  "summary": zod.string().nullish(),
+  "path": zod.string(),
+  "basename": zod.string(),
+  "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(logActivityResponseEntityOneRelatedEntitiesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
+  "relationCount": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemRelationCountMin)
+})),
+  "episodes": zod.union([zod.object({
+  "heading": zod.string(),
+  "tracking": zod.enum(['checklist', 'none']),
+  "groups": zod.array(zod.object({
+  "label": zod.string().describe('Sub-heading label (season\/disc); empty for the ungrouped group.'),
+  "items": zod.array(zod.object({
+  "key": zod.string().describe('The episode\/track number or identifier (e.g. `0`, `12.5`, `OVA1`); may be\nempty for an item with no parseable number.'),
+  "title": zod.string(),
+  "watched": zod.boolean(),
+  "date": zod.string().nullish().describe('The air\/release date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`📅 YYYY-MM-DD` suffix on the list item. Absent when the provider has no\nper-item date (e.g. album tracks).'),
+  "done": zod.string().nullish().describe('The completion date (`YYYY-MM-DD`), rendered as an Obsidian Tasks\n`✅ YYYY-MM-DD` suffix. Stamped when the item is checked and cleared when\nunchecked; preserved across external syncs.')
+}))
+})),
+  "total": zod.number().min(logActivityResponseEntityOneEpisodesOneTotalMin),
+  "watched": zod.number().min(logActivityResponseEntityOneEpisodesOneWatchedMin),
+  "description": zod.string().describe('Free-text Markdown the user wrote \*above\* the list (between the heading and\nthe first item\/sub-heading); empty when there is none. Shown by the\ndedicated episodes UI since the body\'s generic render drops this section.'),
+  "trailing": zod.string().describe('Free-text Markdown \*below\* the last list item; empty when there is none.')
+}).describe('The parsed contents of an entity\'s episodes\/tracks body section: groups\n(season\/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched\/total roll-up. Derived from the Markdown body, which stays the source\nof truth.'),zod.null()]).optional().describe('The parsed episodes\/tracks list, when the entity\'s type declares an\n`episodes` body section. `None` otherwise.'),
+  "notesBody": zod.string().describe('The entity body to render in the generic \"Notes\" view: identical to\n`entity.body` except sections that have a dedicated UI (the episodes\nsection) are removed, so they aren\'t shown twice. `entity.body` stays the\nraw source of truth for editing.')
+}),zod.null()]).optional().describe('The refreshed entity detail when the log mutated the entity (`None` on a\ndaily-note-only log or a dry run).')
 })
 
 export type LogActivityResponse = zod.input<typeof LogActivityResponse>;

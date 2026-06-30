@@ -724,7 +724,7 @@ no-episode log renders the bare `- [[Title]] #Tag`):
 | `{title}` | the entity, rendered as a `[[wikilink]]` |
 | `{progress}` | the episode number, when logging an episode |
 | `{note}` | freeform text the user typed |
-| `{date}` / `{time}` | the log's date / time |
+| `{date}` | the log's date (client-supplied — the user's local date) |
 
 Example — anime logs an episode number, games log freeform progress:
 

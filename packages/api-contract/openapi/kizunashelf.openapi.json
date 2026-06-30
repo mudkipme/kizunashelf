@@ -5586,8 +5586,24 @@
         "description": "Logs an activity to the day's daily note (and, in later phases, the entity).\nIn this phase it writes a single daily-note line (side-effect #1).",
         "type": "object",
         "properties": {
+          "op": {
+            "description": "`add` (default) records the activity; `remove` is its exact inverse.",
+            "default": "add",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LogOp"
+              }
+            ]
+          },
+          "revision": {
+            "description": "The entity's current revision — required when the log mutates the entity\n(an episode tick or a date stamp); ignored for a daily-note-only log.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "date": {
-            "description": "The log's date (`YYYY-MM-DD`); defaults to today.",
+            "description": "The log's date (`YYYY-MM-DD`), **required** — the client supplies the user's\nlocal date, so the server never assumes \"today\" in UTC and past actions can\nbe logged. The one exception: on `remove` of an episode it's derived from the\nepisode's stored completion date instead.",
             "type": [
               "string",
               "null"
@@ -5621,6 +5637,13 @@
             ]
           }
         }
+      },
+      "LogOp": {
+        "type": "string",
+        "enum": [
+          "add",
+          "remove"
+        ]
       },
       "LogKind": {
         "type": "string",
@@ -5684,11 +5707,18 @@
             ]
           },
           "lineAlreadyPresent": {
-            "description": "The exact line is already in the section, so nothing was written (idempotent).",
+            "description": "`add`: the exact line is already in the section, so nothing was written.",
             "type": "boolean"
           },
+          "lineMatched": {
+            "description": "`remove`: whether the exact line was found (and removed). `None` on `add`.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
           "willStampDate": {
-            "description": "The date field this log would stamp on the entity (computed; applied later).",
+            "description": "The date field this log stamped (`add`) or cleared (`remove`) on the entity.",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StampedDate"
@@ -5699,11 +5729,22 @@
             ]
           },
           "episodesResolved": {
-            "description": "The episodes this log refers to (computed; ticked later).",
+            "description": "The episodes this log ticked/cleared (`key` + resolved `title`).",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/EpisodeRef"
             }
+          },
+          "entity": {
+            "description": "The refreshed entity detail when the log mutated the entity (`None` on a\ndaily-note-only log or a dry run).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityDetailResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [

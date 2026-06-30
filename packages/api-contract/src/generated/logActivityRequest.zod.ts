@@ -6,6 +6,7 @@
  */
 import { z as zod } from 'zod';
 
+export const logActivityRequestOpDefault = `add`;
 export const logActivityRequestKindDefault = `progress`;
 export const logActivityRequestEpisodeOneGroupDefault = ``;
 export const logActivityRequestEpisodeOneIndexDefault = 0;
@@ -13,7 +14,9 @@ export const logActivityRequestEpisodeOneIndexMin = 0;
 
 
 export const LogActivityRequest = zod.object({
-  "date": zod.string().nullish().describe('The log\'s date (`YYYY-MM-DD`); defaults to today.'),
+  "op": zod.enum(['add', 'remove']).default(logActivityRequestOpDefault).describe('`add` (default) records the activity; `remove` is its exact inverse.'),
+  "revision": zod.string().nullish().describe('The entity\'s current revision — required when the log mutates the entity\n(an episode tick or a date stamp); ignored for a daily-note-only log.'),
+  "date": zod.string().nullish().describe('The log\'s date (`YYYY-MM-DD`), \*\*required\*\* — the client supplies the user\'s\nlocal date, so the server never assumes \"today\" in UTC and past actions can\nbe logged. The one exception: on `remove` of an episode it\'s derived from the\nepisode\'s stored completion date instead.'),
   "kind": zod.enum(['progress', 'started', 'completed']).default(logActivityRequestKindDefault).describe('Whether this records progress, a start, or a completion. Drives the\n(future) frontmatter date-stamp; does not affect the daily-note line.'),
   "episode": zod.union([zod.object({
   "group": zod.string().default(logActivityRequestEpisodeOneGroupDefault),

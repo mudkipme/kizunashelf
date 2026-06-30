@@ -994,7 +994,17 @@ pub struct CalendarResponse {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct LogActivityRequest {
-    /// The log's date (`YYYY-MM-DD`); defaults to today.
+    /// `add` (default) records the activity; `remove` is its exact inverse.
+    #[serde(default)]
+    pub op: LogOp,
+    /// The entity's current revision — required when the log mutates the entity
+    /// (an episode tick or a date stamp); ignored for a daily-note-only log.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
+    /// The log's date (`YYYY-MM-DD`), **required** — the client supplies the user's
+    /// local date, so the server never assumes "today" in UTC and past actions can
+    /// be logged. The one exception: on `remove` of an episode it's derived from the
+    /// episode's stored completion date instead.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub date: Option<String>,
     /// Whether this records progress, a start, or a completion. Drives the
@@ -1016,6 +1026,14 @@ pub enum LogKind {
     Progress,
     Started,
     Completed,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum LogOp {
+    #[default]
+    Add,
+    Remove,
 }
 
 /// Identifies one episode within an entity's episodes section — a unique `key`
@@ -1046,14 +1064,21 @@ pub struct LogActivityResponse {
     /// The rendered line.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub line: Option<String>,
-    /// The exact line is already in the section, so nothing was written (idempotent).
+    /// `add`: the exact line is already in the section, so nothing was written.
     pub line_already_present: bool,
-    /// The date field this log would stamp on the entity (computed; applied later).
+    /// `remove`: whether the exact line was found (and removed). `None` on `add`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub line_matched: Option<bool>,
+    /// The date field this log stamped (`add`) or cleared (`remove`) on the entity.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub will_stamp_date: Option<StampedDate>,
-    /// The episodes this log refers to (computed; ticked later).
+    /// The episodes this log ticked/cleared (`key` + resolved `title`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub episodes_resolved: Vec<EpisodeRef>,
+    /// The refreshed entity detail when the log mutated the entity (`None` on a
+    /// daily-note-only log or a dry run).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entity: Option<EntityDetailResponse>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

@@ -312,14 +312,12 @@ pub(crate) fn render_log_line(
     progress: &str,
     note: &str,
     date: &str,
-    time: &str,
 ) -> String {
     let raw = line_format
         .replace("{title}", title)
         .replace("{progress}", progress)
         .replace("{note}", note)
-        .replace("{date}", date)
-        .replace("{time}", time);
+        .replace("{date}", date);
     raw.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
@@ -401,6 +399,72 @@ async fn new_note_content(config: &KizunaConfig, vfs: &dyn Vfs, date: &str) -> S
         return String::new();
     };
     text.replace("{{date}}", date).replace("{{title}}", date)
+}
+
+/// The outcome of removing a log line (or a dry run of it).
+pub(crate) struct LogRemoveOutcome {
+    pub relative_path: String,
+    pub line_matched: bool,
+}
+
+/// Removes the **first exact** occurrence of `line` from `section` in the day's
+/// note (whole-line match, never fuzzy) — the inverse of [`write_log_line`]'s
+/// append. Leaves the section heading even if it becomes empty and never deletes
+/// the note. No match (or no note) → `line_matched = false`, no write.
+pub(crate) async fn remove_log_line(
+    config: &KizunaConfig,
+    vfs: &dyn Vfs,
+    date: &str,
+    section: &str,
+    line: &str,
+    dry_run: bool,
+) -> Result<LogRemoveOutcome, LogWriteError> {
+    let (relative_path, _) = resolve_log_note(config, vfs, date)
+        .await?
+        .ok_or(LogWriteError::InvalidDate)?;
+
+    let existing = read_optional_text(vfs, &relative_path).await?;
+    let removed = existing
+        .as_deref()
+        .and_then(|content| remove_exact_line_in_section(content, section, line));
+    let line_matched = removed.is_some();
+
+    if !dry_run {
+        if let Some(new_content) = removed {
+            // Re-read guard, as in `write_log_line`.
+            if read_optional_text(vfs, &relative_path).await? != existing {
+                return Err(LogWriteError::Conflict);
+            }
+            vfs.write_atomic(&relative_path, new_content.as_bytes())
+                .await
+                .map_err(|error| anyhow::anyhow!("failed to write {relative_path}: {error}"))?;
+        }
+    }
+
+    Ok(LogRemoveOutcome {
+        relative_path,
+        line_matched,
+    })
+}
+
+/// Removes the first line in `section`'s block whose trimmed text equals `line`
+/// (the rest of the note preserved byte-for-byte). `None` when the section or the
+/// line is absent.
+fn remove_exact_line_in_section(content: &str, section: &str, line: &str) -> Option<String> {
+    let found = crate::markdown::find_section(content, section)?;
+    let target = line.trim_end();
+    let mut offset = found.content_start;
+    for raw_line in content[found.content_start..found.end].split_inclusive('\n') {
+        let text = raw_line.strip_suffix('\n').unwrap_or(raw_line);
+        if text.trim_end() == target {
+            let mut out = String::with_capacity(content.len() - raw_line.len());
+            out.push_str(&content[..offset]);
+            out.push_str(&content[offset + raw_line.len()..]);
+            return Some(out);
+        }
+        offset += raw_line.len();
+    }
+    None
 }
 
 /// Reads a vault file as text, returning `None` when it doesn't exist.
@@ -563,8 +627,7 @@ mod log_write_tests {
                 "PRAGMATA",
                 "",
                 "",
-                "2024-08-20",
-                "12:00"
+                "2024-08-20"
             ),
             "- [[PRAGMATA]] #Game"
         );
@@ -574,8 +637,7 @@ mod log_write_tests {
                 "Show",
                 "12",
                 "",
-                "2024-08-20",
-                "12:00"
+                "2024-08-20"
             ),
             "- [[Show]] 12 #Anime"
         );
@@ -659,5 +721,106 @@ mod log_write_tests {
         assert!(outcome.note_created); // would be created
         assert!(!outcome.line_already_present);
         assert!(vfs.read("Journal/2024-08-20.md").await.is_err()); // nothing on disk
+    }
+
+    #[tokio::test]
+    async fn remove_strips_exact_line_and_keeps_heading() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file(
+            "Journal/2024-08-20.md",
+            "## Log\n- [[A]] 1 #Anime\n- [[A]] 2 #Anime\n",
+        );
+        let config = config(None);
+
+        let outcome = remove_log_line(
+            &config,
+            &vfs,
+            "2024-08-20",
+            "Log",
+            "- [[A]] 1 #Anime",
+            false,
+        )
+        .await
+        .unwrap();
+        assert!(outcome.line_matched);
+        let after = read(&vfs, "Journal/2024-08-20.md").await;
+        assert!(!after.contains("- [[A]] 1 #Anime"));
+        assert!(after.contains("- [[A]] 2 #Anime")); // only the exact line went
+
+        // Remove the last line too → the heading survives an empty section.
+        remove_log_line(
+            &config,
+            &vfs,
+            "2024-08-20",
+            "Log",
+            "- [[A]] 2 #Anime",
+            false,
+        )
+        .await
+        .unwrap();
+        let empty = read(&vfs, "Journal/2024-08-20.md").await;
+        assert!(empty.contains("## Log"));
+        assert!(!empty.contains("[[A]]"));
+    }
+
+    #[tokio::test]
+    async fn remove_is_noop_when_line_absent_or_hand_edited() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file(
+            "Journal/2024-08-20.md",
+            "## Log\n- [[A]] watched twelve #Anime\n",
+        );
+        let config = config(None);
+
+        // A non-exact (hand-edited) line is never fuzzy-matched; file unchanged.
+        let before = read(&vfs, "Journal/2024-08-20.md").await;
+        let outcome = remove_log_line(
+            &config,
+            &vfs,
+            "2024-08-20",
+            "Log",
+            "- [[A]] 12 #Anime",
+            false,
+        )
+        .await
+        .unwrap();
+        assert!(!outcome.line_matched);
+        assert_eq!(read(&vfs, "Journal/2024-08-20.md").await, before);
+
+        // A missing note matches nothing.
+        let outcome = remove_log_line(
+            &config,
+            &vfs,
+            "2024-09-01",
+            "Log",
+            "- [[A]] 1 #Anime",
+            false,
+        )
+        .await
+        .unwrap();
+        assert!(!outcome.line_matched);
+    }
+
+    #[tokio::test]
+    async fn add_then_remove_round_trips() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file("Journal/2024-08-20.md", "## Log\n- [[A]] 1 #Anime\n");
+        let config = config(None);
+        let line = "- [[A]] 2 #Anime";
+
+        write_log_line(&config, &vfs, "2024-08-20", "Log", line, false)
+            .await
+            .unwrap();
+        assert!(read(&vfs, "Journal/2024-08-20.md")
+            .await
+            .contains("- [[A]] 2 #Anime"));
+
+        let outcome = remove_log_line(&config, &vfs, "2024-08-20", "Log", line, false)
+            .await
+            .unwrap();
+        assert!(outcome.line_matched);
+        let after = read(&vfs, "Journal/2024-08-20.md").await;
+        assert!(!after.contains("- [[A]] 2 #Anime"));
+        assert!(after.contains("- [[A]] 1 #Anime")); // the original survives
     }
 }
