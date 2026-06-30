@@ -7,10 +7,11 @@
 import { z as zod } from 'zod';
 
 export const GetActivityParams = zod.object({
-  "before": zod.string().optional().describe('Exclusive `YYYY-MM` cursor — load months strictly older than this.'),
+  "cursor": zod.string().optional().describe('Opaque `YYYY-MM` cursor from the previous page.'),
   "months": zod.number().optional().describe('Number of non-empty months to return in this page (1–12, default 1).'),
   "type": zod.string().optional(),
-  "source": zod.string().optional()
+  "source": zod.string().optional(),
+  "mode": zod.string().optional().describe('`all` (default), `recently-completed`, or `up-next`.')
 })
 
 export type GetActivityParams = zod.input<typeof GetActivityParams>;

@@ -2,7 +2,6 @@ import {
   getActivity,
   getAnalytics,
   getCalendar,
-  getCalendarPlanning,
   getCapabilities,
   getCleanupQueues,
   getConfig,
@@ -14,7 +13,6 @@ import {
   getTags,
   type GetActivityParams,
   type GetCalendarParams,
-  type GetCalendarPlanningParams,
   type GetEntitiesParams,
   type GetStatsParams,
 } from "@kizunashelf/api-contract";
@@ -26,10 +24,9 @@ import { fetchList, fetchLists } from "@/api/lists";
 import { getLanguages, getRawSettingsConfig, getSettingsConfig, getVaultTemplates } from "@/api/settings";
 
 export const queryKeys = {
-  activity: (params: Omit<GetActivityParams, "before">) => ["activity", params] as const,
+  activity: (params: Omit<GetActivityParams, "cursor">) => ["activity", params] as const,
   analytics: ["analytics"] as const,
   calendar: (params: GetCalendarParams) => ["calendar", params] as const,
-  calendarPlanning: (params: GetCalendarPlanningParams) => ["calendarPlanning", params] as const,
   capabilities: ["capabilities"] as const,
   cleanupQueues: ["cleanupQueues"] as const,
   config: ["config"] as const,
@@ -68,11 +65,11 @@ export function analyticsQuery() {
 
 // The reverse-chronological activity feed, paged by month: each page returns the
 // next non-empty month(s), and `cursor` (a `YYYY-MM`) drives the following page.
-export function activityFeedQuery(params: Omit<GetActivityParams, "before">) {
+export function activityFeedQuery(params: Omit<GetActivityParams, "cursor">) {
   return infiniteQueryOptions({
     queryKey: queryKeys.activity(params),
     queryFn: ({ pageParam, signal }) =>
-      getActivity({ ...params, before: pageParam ?? undefined }, { signal }, apiFetch),
+      getActivity({ ...params, cursor: pageParam ?? undefined }, { signal }, apiFetch),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.cursor ?? undefined,
   });
@@ -83,14 +80,6 @@ export function calendarQuery(params: GetCalendarParams) {
     queryKey: queryKeys.calendar(params),
     queryFn: ({ signal }) => getCalendar(params, { signal }, apiFetch),
     // Keep the previous month on screen while the next one loads.
-    placeholderData: keepPreviousData,
-  });
-}
-
-export function calendarPlanningQuery(params: GetCalendarPlanningParams) {
-  return queryOptions({
-    queryKey: queryKeys.calendarPlanning(params),
-    queryFn: ({ signal }) => getCalendarPlanning(params, { signal }, apiFetch),
     placeholderData: keepPreviousData,
   });
 }

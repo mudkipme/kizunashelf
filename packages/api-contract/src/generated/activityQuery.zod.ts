@@ -7,10 +7,11 @@
 import { z as zod } from 'zod';
 
 export const ActivityQuery = zod.object({
-  "before": zod.string().nullish().describe('Exclusive `YYYY-MM` cursor — load months strictly older than this.'),
+  "cursor": zod.string().nullish().describe('Opaque `YYYY-MM` cursor from the previous page.'),
   "months": zod.number().nullish().describe('Number of non-empty months to return in this page (1–12, default 1).'),
   "type": zod.string().nullish(),
-  "source": zod.string().nullish()
+  "source": zod.string().nullish(),
+  "mode": zod.string().nullish().describe('`all` (default), `recently-completed`, or `up-next`.')
 })
 
 export type ActivityQuery = zod.input<typeof ActivityQuery>;

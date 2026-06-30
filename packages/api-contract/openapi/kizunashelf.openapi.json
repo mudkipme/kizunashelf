@@ -542,62 +542,16 @@
         }
       }
     },
-    "/api/calendar/planning": {
-      "get": {
-        "operationId": "getCalendarPlanning",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "year",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "type",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarPlanningResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/activity": {
       "get": {
         "operationId": "getActivity",
         "parameters": [
           {
             "in": "query",
-            "name": "before",
-            "description": "Exclusive `YYYY-MM` cursor — load months strictly older than this.",
+            "name": "cursor",
+            "description": "Opaque `YYYY-MM` cursor from the previous page.",
             "schema": {
-              "description": "Exclusive `YYYY-MM` cursor — load months strictly older than this.",
+              "description": "Opaque `YYYY-MM` cursor from the previous page.",
               "type": "string"
             },
             "style": "form"
@@ -625,6 +579,16 @@
             "in": "query",
             "name": "source",
             "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "description": "`all` (default), `recently-completed`, or `up-next`.",
+            "schema": {
+              "description": "`all` (default), `recently-completed`, or `up-next`.",
               "type": "string"
             },
             "style": "form"
@@ -4175,269 +4139,11 @@
           "episodes"
         ]
       },
-      "CalendarPlanningQuery": {
-        "type": "object",
-        "properties": {
-          "year": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
-          },
-          "type": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "CalendarPlanningResponse": {
-        "type": "object",
-        "properties": {
-          "generatedAt": {
-            "type": "string"
-          },
-          "filters": {
-            "$ref": "#/components/schemas/CalendarPlanningFilters"
-          },
-          "typeOptions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningTypeOption"
-            }
-          },
-          "totals": {
-            "$ref": "#/components/schemas/CalendarPlanningTotals"
-          },
-          "yearMonths": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningMonth"
-            }
-          },
-          "seasons": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningSeason"
-            }
-          },
-          "board": {
-            "$ref": "#/components/schemas/CalendarPlanningBoard"
-          }
-        },
-        "required": [
-          "generatedAt",
-          "filters",
-          "typeOptions",
-          "totals",
-          "yearMonths",
-          "seasons",
-          "board"
-        ]
-      },
-      "CalendarPlanningFilters": {
-        "type": "object",
-        "properties": {
-          "year": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "type": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "year"
-        ]
-      },
-      "CalendarPlanningTypeOption": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "label"
-        ]
-      },
-      "CalendarPlanningTotals": {
-        "type": "object",
-        "properties": {
-          "entities": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "datedEntries": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "upcoming": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "recentlyCompleted": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "justStarted": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "entities",
-          "datedEntries",
-          "upcoming",
-          "recentlyCompleted",
-          "justStarted"
-        ]
-      },
-      "CalendarPlanningMonth": {
-        "type": "object",
-        "properties": {
-          "month": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
-          },
-          "label": {
-            "type": "string"
-          },
-          "entries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningDatePoint"
-            }
-          }
-        },
-        "required": [
-          "month",
-          "label",
-          "entries"
-        ]
-      },
-      "CalendarPlanningDatePoint": {
-        "type": "object",
-        "properties": {
-          "entity": {
-            "$ref": "#/components/schemas/EntitySummary"
-          },
-          "field": {
-            "type": "string"
-          },
-          "fieldLabel": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          },
-          "year": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "month": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
-          },
-          "sortKey": {
-            "type": "string"
-          },
-          "season": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "$ref": "#/components/schemas/DateRole"
-          }
-        },
-        "required": [
-          "entity",
-          "field",
-          "fieldLabel",
-          "value",
-          "year",
-          "month",
-          "sortKey",
-          "role"
-        ]
-      },
-      "CalendarPlanningSeason": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "months": {
-            "type": "string"
-          },
-          "entries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningDatePoint"
-            }
-          }
-        },
-        "required": [
-          "key",
-          "label",
-          "months",
-          "entries"
-        ]
-      },
-      "CalendarPlanningBoard": {
-        "type": "object",
-        "properties": {
-          "upcoming": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningDatePoint"
-            }
-          },
-          "recentlyCompleted": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningDatePoint"
-            }
-          },
-          "justStarted": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CalendarPlanningDatePoint"
-            }
-          }
-        },
-        "required": [
-          "upcoming",
-          "recentlyCompleted",
-          "justStarted"
-        ]
-      },
       "ActivityQuery": {
         "type": "object",
         "properties": {
-          "before": {
-            "description": "Exclusive `YYYY-MM` cursor — load months strictly older than this.",
+          "cursor": {
+            "description": "Opaque `YYYY-MM` cursor from the previous page.",
             "type": [
               "string",
               "null"
@@ -4462,6 +4168,13 @@
               "string",
               "null"
             ]
+          },
+          "mode": {
+            "description": "`all` (default), `recently-completed`, or `up-next`.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -4472,7 +4185,7 @@
             "type": "string"
           },
           "cursor": {
-            "description": "The next `before` cursor (`YYYY-MM`) to load the following page, or `None`\nat the end of history.",
+            "description": "The next cursor (`YYYY-MM`) to load the following page, or `None` at the\nend of the feed.",
             "type": [
               "string",
               "null"

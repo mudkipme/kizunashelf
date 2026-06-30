@@ -10,7 +10,7 @@ const ENTITY_DATA_KEYS = [
   "entityDates",
   "entities",
   "calendar",
-  "calendarPlanning",
+  "activity",
   "analytics",
   "cleanupQueues",
   "stats",

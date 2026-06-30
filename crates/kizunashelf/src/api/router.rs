@@ -7,9 +7,8 @@ use super::entities::{entities, entity_dates, entity_detail};
 use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
 use super::external::{external_provider_catalog, external_search};
 use super::handlers::{
-    activity, calendar, calendar_planning, capabilities, config, health, home, languages,
-    raw_settings_config, refresh, save_raw_settings_config, save_settings_config, settings_config,
-    vault_templates,
+    activity, calendar, capabilities, config, health, home, languages, raw_settings_config,
+    refresh, save_raw_settings_config, save_settings_config, settings_config, vault_templates,
 };
 use super::lists::{
     add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
@@ -18,7 +17,7 @@ use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
 use super::state::{ApiOptions, AppState};
 use super::tags::tags;
-use crate::calendar::{ActivityResponse, CalendarPlanningResponse, EntityDatesResponse};
+use crate::calendar::{ActivityResponse, EntityDatesResponse};
 use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
     AssetDownloadResponse, AssetIngestResponse, CalendarResponse, CapabilitiesResponse,
@@ -239,14 +238,6 @@ fn api_router() -> ApiRouter<AppState> {
             get_with(calendar, |op| {
                 op.id("getCalendar")
                     .response::<200, Json<CalendarResponse>>()
-                    .response::<500, Json<ErrorResponse>>()
-            }),
-        )
-        .api_route(
-            "/api/calendar/planning",
-            get_with(calendar_planning, |op| {
-                op.id("getCalendarPlanning")
-                    .response::<200, Json<CalendarPlanningResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )

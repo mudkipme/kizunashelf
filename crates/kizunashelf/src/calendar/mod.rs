@@ -13,9 +13,7 @@ use crate::library::{
     compare_string, parse_daily_note_source_id, wikilink_regex, DAILY_NOTE_RELATION_FIELD,
 };
 use crate::relations::summary_by_id;
-use crate::types::{
-    DateRole, EntitySummary, EntityTypeConfig, EpisodeDateRole, FieldConfig, FieldType, Library,
-};
+use crate::types::{DateRole, EntitySummary, EpisodeDateRole, FieldType, Library};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use chrono::Datelike;
@@ -86,13 +84,31 @@ pub async fn build_activity(
     vfs: &dyn Vfs,
     options: ActivityBuildOptions,
 ) -> Result<ActivityResponse> {
+    let ascending = options.mode == ActivityMode::UpNext;
+    let current_month = month_key(&options.today);
     let mut months = active_activity_months(library, vfs, &options).await?;
     months.retain(|month| {
-        options
-            .before
-            .as_ref()
-            .is_none_or(|before| month.as_str() < before.as_str())
+        if ascending {
+            // Up next only looks forward, from the current month on.
+            current_month
+                .as_deref()
+                .is_some_and(|current| month.as_str() >= current)
+                && options
+                    .cursor
+                    .as_deref()
+                    .is_none_or(|cursor| month.as_str() > cursor)
+        } else {
+            options
+                .cursor
+                .as_deref()
+                .is_none_or(|cursor| month.as_str() < cursor)
+        }
     });
+    if ascending {
+        months.sort();
+    } else {
+        months.sort_by(|a, b| b.cmp(a));
+    }
 
     let target = options.months.max(1) as usize;
     let mut items = Vec::new();
@@ -106,6 +122,7 @@ pub async fn build_activity(
         let month_items = group_activity_items(
             library,
             month_activity_entries(library, vfs, year, month_number, &options).await?,
+            &options,
         );
         if month_items.is_empty() {
             continue;
@@ -116,10 +133,11 @@ pub async fn build_activity(
             break;
         }
     }
-    items.sort_by(compare_activity_items);
+    items.sort_by(|a, b| compare_activity_items(a, b, ascending));
 
-    // The cursor is the last month we advanced past; the next page filters
-    // strictly older than it (exclusive), so already-shown months never repeat.
+    // The cursor is the last month we advanced past; the next page continues
+    // strictly beyond it (older when descending, newer when ascending), so
+    // already-shown months never repeat.
     let cursor = (consumed < months.len())
         .then(|| months.get(consumed - 1).cloned())
         .flatten();
@@ -203,8 +221,13 @@ async fn month_activity_entries(
 }
 
 /// Groups a month's calendar entries by `(date, entity)` into activity items,
-/// preserving first-seen order (the caller re-sorts the merged page).
-fn group_activity_items(library: &Library, entries: Vec<CalendarEntry>) -> Vec<ActivityItem> {
+/// preserving first-seen order (the caller re-sorts the merged page). Items whose
+/// entries are all filtered out by the mode are dropped.
+fn group_activity_items(
+    library: &Library,
+    entries: Vec<CalendarEntry>,
+    options: &ActivityBuildOptions,
+) -> Vec<ActivityItem> {
     let mut order: Vec<(String, String)> = Vec::new();
     let mut groups: HashMap<(String, String), (EntitySummary, Vec<CalendarEntry>)> = HashMap::new();
     for entry in entries {
@@ -222,7 +245,10 @@ fn group_activity_items(library: &Library, entries: Vec<CalendarEntry>) -> Vec<A
         .into_iter()
         .filter_map(|key| {
             let (entity, grouped) = groups.remove(&key)?;
-            let entries = fold_activity_entries(library, &entity, grouped);
+            let entries = fold_activity_entries(library, &entity, &key.0, grouped, options);
+            if entries.is_empty() {
+                return None;
+            }
             Some(ActivityItem {
                 date: key.0,
                 entity,
@@ -232,15 +258,42 @@ fn group_activity_items(library: &Library, entries: Vec<CalendarEntry>) -> Vec<A
         .collect()
 }
 
-/// Folds the calendar entries for one `(date, entity)` into activity entries:
-/// date-field stamps (role resolved from the schema), episode dates aggregated
-/// per air/completion role, and the daily-note mention. Ordered taxonomy →
-/// episode → daily-note, matching the calendar's per-source ranking.
+/// Folds the calendar entries for one `(date, entity)` into activity entries,
+/// applying the mode filter: date-field stamps (role resolved from the schema),
+/// episode dates aggregated per air/completion role, and the daily-note mention.
+/// Ordered taxonomy → episode → daily-note, matching the calendar's per-source
+/// ranking.
 fn fold_activity_entries(
     library: &Library,
     entity: &EntitySummary,
+    date: &str,
     entries: Vec<CalendarEntry>,
+    options: &ActivityBuildOptions,
 ) -> Vec<ActivityEntry> {
+    let mode = options.mode;
+    let today = options.today.as_str();
+
+    // Up-next reconciliation, read off the full group: if the entity is already
+    // started/completed today, its planning-today stamp is hidden; if an episode
+    // is completed today, its scheduled-today date is hidden.
+    let started_or_completed_today = date == today
+        && entries.iter().any(|entry| {
+            entry.source == CalendarEntrySource::Taxonomy
+                && matches!(
+                    entry
+                        .date_field
+                        .as_deref()
+                        .and_then(|field| date_field_role(library, &entity.entity_type, field)),
+                    Some(DateRole::Started | DateRole::Completed)
+                )
+        });
+    let completed_episode_keys: HashSet<&str> = entries
+        .iter()
+        .filter_map(|entry| entry.episode.as_ref())
+        .filter(|episode| episode.role == EpisodeDateRole::Completed)
+        .map(|episode| episode.key.as_str())
+        .collect();
+
     let mut out = Vec::new();
 
     let mut date_fields: Vec<&CalendarEntry> = entries
@@ -254,21 +307,47 @@ fn fold_activity_entries(
         )
     });
     for entry in date_fields {
-        let mut activity = activity_entry(CalendarEntrySource::Taxonomy);
-        activity.role = entry
+        let role = entry
             .date_field
             .as_deref()
             .and_then(|field| date_field_role(library, &entity.entity_type, field));
+        let keep = match mode {
+            ActivityMode::All => true,
+            ActivityMode::RecentlyCompleted => role != Some(DateRole::Planning),
+            ActivityMode::UpNext => {
+                role == Some(DateRole::Planning) && date >= today && !started_or_completed_today
+            }
+        };
+        if !keep {
+            continue;
+        }
+        let mut activity = activity_entry(CalendarEntrySource::Taxonomy);
+        activity.role = role;
         activity.date_field = entry.date_field.clone();
         activity.raw_date = entry.raw_date.clone();
         out.push(activity);
     }
 
     for role in [EpisodeDateRole::Completed, EpisodeDateRole::Scheduled] {
+        let keep_role = match mode {
+            ActivityMode::All => true,
+            ActivityMode::RecentlyCompleted => role == EpisodeDateRole::Completed,
+            ActivityMode::UpNext => role == EpisodeDateRole::Scheduled,
+        };
+        if !keep_role {
+            continue;
+        }
         let episodes: Vec<ActivityEpisodeRef> = entries
             .iter()
             .filter_map(|entry| entry.episode.as_ref())
             .filter(|episode| episode.role == role)
+            .filter(|episode| {
+                // Up next: only today-or-later, and not already completed today.
+                mode != ActivityMode::UpNext
+                    || (date >= today
+                        && !(date == today
+                            && completed_episode_keys.contains(episode.key.as_str())))
+            })
             .map(|episode| ActivityEpisodeRef {
                 key: episode.key.clone(),
                 title: episode.title.clone(),
@@ -290,29 +369,45 @@ fn fold_activity_entries(
         out.push(activity);
     }
 
-    let snippets: Vec<CalendarSnippet> = entries
-        .iter()
-        .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
-        .filter_map(|entry| entry.snippets.clone())
-        .flatten()
-        .collect();
-    if let Some(note) = entries
-        .iter()
-        .find(|entry| entry.source == CalendarEntrySource::DailyNote)
-    {
-        let mut activity = activity_entry(CalendarEntrySource::DailyNote);
-        activity.note_path = note.note_path.clone();
-        activity.snippets = Some(snippets);
-        out.push(activity);
+    // Daily notes carry no role, so the date decides: future is up-next,
+    // today-or-past is recently-completed.
+    let keep_daily = match mode {
+        ActivityMode::All => true,
+        ActivityMode::RecentlyCompleted => date <= today,
+        ActivityMode::UpNext => date > today,
+    };
+    if keep_daily {
+        let snippets: Vec<CalendarSnippet> = entries
+            .iter()
+            .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
+            .filter_map(|entry| entry.snippets.clone())
+            .flatten()
+            .collect();
+        if let Some(note) = entries
+            .iter()
+            .find(|entry| entry.source == CalendarEntrySource::DailyNote)
+        {
+            let mut activity = activity_entry(CalendarEntrySource::DailyNote);
+            activity.note_path = note.note_path.clone();
+            activity.snippets = Some(snippets);
+            out.push(activity);
+        }
     }
 
     out
 }
 
-fn compare_activity_items(a: &ActivityItem, b: &ActivityItem) -> std::cmp::Ordering {
-    // Newest first, then a stable per-day ordering by type then title.
-    compare_string(&b.date, &a.date)
-        .then_with(|| compare_string(&a.entity.type_label, &b.entity.type_label))
+fn compare_activity_items(
+    a: &ActivityItem,
+    b: &ActivityItem,
+    ascending: bool,
+) -> std::cmp::Ordering {
+    let date = if ascending {
+        compare_string(&a.date, &b.date)
+    } else {
+        compare_string(&b.date, &a.date)
+    };
+    date.then_with(|| compare_string(&a.entity.type_label, &b.entity.type_label))
         .then_with(|| compare_string(&a.entity.title, &b.entity.title))
 }
 
@@ -354,78 +449,6 @@ fn month_key(date: &str) -> Option<String> {
 fn parse_month_key(month: &str) -> Option<(i32, u32)> {
     let (year, month) = month.split_once('-')?;
     Some((year.parse().ok()?, month.parse().ok()?))
-}
-
-pub fn build_calendar_planning(
-    library: &Library,
-    options: CalendarPlanningOptions,
-) -> CalendarPlanningResponse {
-    let type_options = planning_type_options(library);
-    let entity_type = options
-        .entity_type
-        .filter(|entity_type| type_options.iter().any(|option| option.id == *entity_type));
-    let entities = selected_planning_entities(library, entity_type.as_deref());
-    let mut points = planning_date_points(library, &entities);
-    points.sort_by(compare_planning_points_asc);
-
-    let year_months = planning_months(options.year, &points);
-    let seasons = planning_seasons(options.year, &points);
-    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    let upcoming = unique_planning_points_by_entity(
-        points
-            .iter()
-            .filter(|point| point.sort_key >= today && point.role == DateRole::Planning)
-            .cloned()
-            .collect(),
-    )
-    .into_iter()
-    .take(12)
-    .collect::<Vec<_>>();
-
-    let mut completed = points
-        .iter()
-        .filter(|point| point.sort_key <= today && point.role == DateRole::Completed)
-        .cloned()
-        .collect::<Vec<_>>();
-    completed.sort_by(compare_planning_points_desc);
-    let recently_completed = unique_planning_points_by_entity(completed)
-        .into_iter()
-        .take(12)
-        .collect::<Vec<_>>();
-
-    let mut started = points
-        .iter()
-        .filter(|point| point.sort_key <= today && point.role == DateRole::Started)
-        .cloned()
-        .collect::<Vec<_>>();
-    started.sort_by(compare_planning_points_desc);
-    let just_started = unique_planning_points_by_entity(started)
-        .into_iter()
-        .take(12)
-        .collect::<Vec<_>>();
-
-    CalendarPlanningResponse {
-        generated_at: library.generated_at.clone(),
-        filters: CalendarPlanningFilters {
-            year: options.year,
-            entity_type,
-        },
-        type_options,
-        totals: CalendarPlanningTotals {
-            entities: entities.len(),
-            dated_entries: points.len(),
-            upcoming: upcoming.len(),
-            recently_completed: recently_completed.len(),
-            just_started: just_started.len(),
-        },
-        year_months,
-        seasons,
-        board: CalendarPlanningBoard {
-            upcoming,
-            recently_completed,
-            just_started,
-        },
-    }
 }
 
 pub async fn build_entity_dates(
@@ -613,210 +636,6 @@ fn metadata_date_entries(
         }
     });
     entries
-}
-
-fn planning_type_options(library: &Library) -> Vec<CalendarPlanningTypeOption> {
-    library
-        .config
-        .types
-        .iter()
-        .filter(|entity_type| has_planning_surface(entity_type))
-        .map(|entity_type| CalendarPlanningTypeOption {
-            id: entity_type.id.clone(),
-            label: if entity_type.label.trim().is_empty() {
-                entity_type.id.clone()
-            } else {
-                entity_type.label.clone()
-            },
-        })
-        .collect()
-}
-
-fn has_planning_surface(entity_type: &EntityTypeConfig) -> bool {
-    entity_type.fields.iter().any(|field| {
-        matches!(field.field_type, FieldType::Enum)
-            || matches!(
-                field.date_role,
-                Some(DateRole::Planning | DateRole::Started | DateRole::Completed)
-            )
-    })
-}
-
-fn selected_planning_entities(library: &Library, entity_type: Option<&str>) -> Vec<EntitySummary> {
-    library
-        .summaries()
-        .filter(|entity| {
-            entity_type.is_none_or(|expected| entity.entity_type == expected)
-                && library
-                    .config
-                    .types
-                    .iter()
-                    .find(|item| item.id == entity.entity_type)
-                    .is_some_and(has_planning_surface)
-        })
-        .cloned()
-        .collect()
-}
-
-fn planning_date_points(
-    library: &Library,
-    entities: &[EntitySummary],
-) -> Vec<CalendarPlanningDatePoint> {
-    let fields_by_type = library
-        .config
-        .types
-        .iter()
-        .map(|entity_type| {
-            (
-                entity_type.id.as_str(),
-                entity_type
-                    .fields
-                    .iter()
-                    .filter_map(|field| {
-                        field
-                            .date_role
-                            .map(|role| (field.field.as_str(), (role, field_display_label(field))))
-                    })
-                    .collect::<HashMap<_, _>>(),
-            )
-        })
-        .collect::<HashMap<_, HashMap<_, _>>>();
-
-    entities
-        .iter()
-        .flat_map(|entity| {
-            let fields = fields_by_type.get(entity.entity_type.as_str());
-            entity.dates.iter().filter_map(move |date| {
-                let (role, field_label) = fields?.get(date.field.as_str())?.clone();
-                let parsed = date.parsed.as_ref()?;
-                let sort_key = date.sort_key.clone()?;
-                Some(CalendarPlanningDatePoint {
-                    entity: entity.clone(),
-                    field: date.field.clone(),
-                    field_label,
-                    value: date.value.clone(),
-                    year: parsed.year,
-                    month: parsed.month.unwrap_or(1),
-                    sort_key,
-                    season: parsed.season_key.clone().or_else(|| {
-                        Some(season_key_for_month(parsed.month.unwrap_or(1)).to_string())
-                    }),
-                    role,
-                })
-            })
-        })
-        .collect()
-}
-
-fn planning_months(year: i32, points: &[CalendarPlanningDatePoint]) -> Vec<CalendarPlanningMonth> {
-    month_labels()
-        .iter()
-        .enumerate()
-        .map(|(index, label)| {
-            let month = index as u32 + 1;
-            CalendarPlanningMonth {
-                month,
-                label: (*label).to_string(),
-                entries: unique_planning_points_by_entity(
-                    points
-                        .iter()
-                        .filter(|point| point.year == year && point.month == month)
-                        .cloned()
-                        .collect(),
-                ),
-            }
-        })
-        .collect()
-}
-
-fn planning_seasons(
-    year: i32,
-    points: &[CalendarPlanningDatePoint],
-) -> Vec<CalendarPlanningSeason> {
-    season_options()
-        .iter()
-        .map(|season| CalendarPlanningSeason {
-            key: season.0.to_string(),
-            label: season.1.to_string(),
-            months: season.2.to_string(),
-            entries: unique_planning_points_by_entity(
-                points
-                    .iter()
-                    .filter(|point| {
-                        point.year == year
-                            && point
-                                .season
-                                .as_deref()
-                                .unwrap_or_else(|| season_key_for_month(point.month))
-                                == season.0
-                    })
-                    .cloned()
-                    .collect(),
-            ),
-        })
-        .collect()
-}
-
-fn field_display_label(field: &FieldConfig) -> String {
-    field
-        .display_name
-        .as_ref()
-        .filter(|label| !label.trim().is_empty())
-        .cloned()
-        .unwrap_or_else(|| field.field.clone())
-}
-
-fn unique_planning_points_by_entity(
-    points: Vec<CalendarPlanningDatePoint>,
-) -> Vec<CalendarPlanningDatePoint> {
-    let mut seen = std::collections::HashSet::<String>::new();
-    points
-        .into_iter()
-        .filter(|point| seen.insert(point.entity.id.clone()))
-        .collect()
-}
-
-fn compare_planning_points_asc(
-    a: &CalendarPlanningDatePoint,
-    b: &CalendarPlanningDatePoint,
-) -> std::cmp::Ordering {
-    compare_string(&a.sort_key, &b.sort_key)
-        .then_with(|| compare_string(&a.entity.title, &b.entity.title))
-}
-
-fn compare_planning_points_desc(
-    a: &CalendarPlanningDatePoint,
-    b: &CalendarPlanningDatePoint,
-) -> std::cmp::Ordering {
-    compare_string(&b.sort_key, &a.sort_key)
-        .then_with(|| compare_string(&a.entity.title, &b.entity.title))
-}
-
-fn month_labels() -> [&'static str; 12] {
-    [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ]
-}
-
-fn season_options() -> [(&'static str, &'static str, &'static str); 4] {
-    [
-        ("winter", "Winter", "Jan-Mar"),
-        ("spring", "Spring", "Apr-Jun"),
-        ("summer", "Summer", "Jul-Sep"),
-        ("autumn", "Autumn", "Oct-Dec"),
-    ]
-}
-
-fn season_key_for_month(month: u32) -> &'static str {
-    if (4..=6).contains(&month) {
-        "spring"
-    } else if (7..=9).contains(&month) {
-        "summer"
-    } else if (10..=12).contains(&month) {
-        "autumn"
-    } else {
-        "winter"
-    }
 }
 
 async fn entity_daily_note_entries(

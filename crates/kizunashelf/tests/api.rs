@@ -576,33 +576,26 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
         "Daily Notes/2025-04-21.md"
     );
 
-    let planning = server.ok_json("/api/calendar/planning?year=2025").await;
-    assert_eq!(planning["filters"]["year"], 2025);
-    assert!(planning["totals"]["entities"].as_u64().unwrap() > 0);
-    assert!(planning["totals"]["datedEntries"].as_u64().unwrap() > 0);
-    assert!(planning["typeOptions"]
-        .as_array()
-        .unwrap()
+    // The activity feed surfaces the same dated entities, grouped by (date, entity).
+    let activity = server.ok_json("/api/activity?months=12").await;
+    let items = activity["items"].as_array().unwrap();
+    assert!(!items.is_empty());
+    // Star Voyager's completed date stamp shows up among its activity items (it
+    // appears in several — a daily-note mention and date stamps on other dates).
+    assert!(items
         .iter()
-        .any(|item| item["id"] == "anime"));
-    assert!(planning["yearMonths"][3]["entries"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|item| item["entity"]["id"] == "anime:Star Voyager"
-            && item["field"] == "complete_date"
-            && item["fieldLabel"] == "Completed date"
-            && item["role"] == "completed"));
+        .filter(|item| item["entity"]["id"] == "anime:Star Voyager")
+        .flat_map(|item| item["entries"].as_array().unwrap())
+        .any(|entry| entry["source"] == "taxonomy"
+            && entry["dateField"] == "complete_date"
+            && entry["role"] == "completed"));
 
-    let game_planning = server
-        .ok_json("/api/calendar/planning?year=2025&type=games")
-        .await;
-    assert_eq!(game_planning["filters"]["type"], "games");
-    assert!(game_planning["board"]["justStarted"]
+    let game_activity = server.ok_json("/api/activity?months=12&type=games").await;
+    assert!(game_activity["items"]
         .as_array()
         .unwrap()
         .iter()
-        .all(|item| item["entity"]["type"] == "games" && item["role"] == "started"));
+        .all(|item| item["entity"]["type"] == "games"));
 
     let dates = server
         .ok_json(&format!(

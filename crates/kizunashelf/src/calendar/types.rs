@@ -18,21 +18,31 @@ pub struct CalendarBuildOptions {
     pub source: CalendarSource,
 }
 
-#[derive(Clone, Debug)]
-pub struct CalendarPlanningOptions {
-    pub year: i32,
-    pub entity_type: Option<String>,
+/// Which slice of activity to show. `All` is the full reverse-chronological feed;
+/// `RecentlyCompleted` hides forward-looking dates (planning fields, scheduled
+/// episodes, future daily notes); `UpNext` shows only what's still ahead
+/// (planning fields + scheduled episodes from today on, and future daily notes),
+/// in ascending order.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum ActivityMode {
+    #[default]
+    All,
+    RecentlyCompleted,
+    UpNext,
 }
 
 #[derive(Clone, Debug)]
 pub struct ActivityBuildOptions {
-    /// Exclusive upper bound as a `YYYY-MM` month key — the feed returns months
-    /// strictly older than this. `None` starts at the most recent activity.
-    pub before: Option<String>,
+    /// Opaque `YYYY-MM` cursor from the previous page; the next page continues
+    /// strictly past it — older for `All`/`RecentlyCompleted`, newer for `UpNext`.
+    pub cursor: Option<String>,
     /// How many *non-empty* months to include in this page.
     pub months: u32,
     pub entity_type: Option<String>,
     pub source: CalendarSource,
+    pub mode: ActivityMode,
+    /// Today's date (`YYYY-MM-DD`) — the reference point for the mode filters.
+    pub today: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -141,84 +151,6 @@ pub struct EntityDatesTotals {
     pub snippets: usize,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningTypeOption {
-    pub id: String,
-    pub label: String,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningFilters {
-    pub year: i32,
-    #[serde(rename = "type")]
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub entity_type: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningTotals {
-    pub entities: usize,
-    pub dated_entries: usize,
-    pub upcoming: usize,
-    pub recently_completed: usize,
-    pub just_started: usize,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningDatePoint {
-    pub entity: EntitySummary,
-    pub field: String,
-    pub field_label: String,
-    pub value: String,
-    pub year: i32,
-    pub month: u32,
-    pub sort_key: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub season: Option<String>,
-    pub role: DateRole,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningMonth {
-    pub month: u32,
-    pub label: String,
-    pub entries: Vec<CalendarPlanningDatePoint>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningSeason {
-    pub key: String,
-    pub label: String,
-    pub months: String,
-    pub entries: Vec<CalendarPlanningDatePoint>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningBoard {
-    pub upcoming: Vec<CalendarPlanningDatePoint>,
-    pub recently_completed: Vec<CalendarPlanningDatePoint>,
-    pub just_started: Vec<CalendarPlanningDatePoint>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarPlanningResponse {
-    pub generated_at: String,
-    pub filters: CalendarPlanningFilters,
-    pub type_options: Vec<CalendarPlanningTypeOption>,
-    pub totals: CalendarPlanningTotals,
-    pub year_months: Vec<CalendarPlanningMonth>,
-    pub seasons: Vec<CalendarPlanningSeason>,
-    pub board: CalendarPlanningBoard,
-}
-
 /// One reverse-chronological activity item: everything that happened to a single
 /// entity on a single date, collapsed together. A daily-note mention, a
 /// started/completed date stamp, and episode air/completion dates that share a
@@ -271,8 +203,8 @@ pub struct ActivityEpisodeRef {
 #[serde(rename_all = "camelCase")]
 pub struct ActivityResponse {
     pub generated_at: String,
-    /// The next `before` cursor (`YYYY-MM`) to load the following page, or `None`
-    /// at the end of history.
+    /// The next cursor (`YYYY-MM`) to load the following page, or `None` at the
+    /// end of the feed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cursor: Option<String>,
     pub items: Vec<ActivityItem>,

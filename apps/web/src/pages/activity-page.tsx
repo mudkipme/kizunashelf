@@ -21,6 +21,12 @@ const sources = [
   { value: "daily-note", label: "Daily notes" },
 ] as const;
 
+const modes = [
+  { value: "all", label: "All" },
+  { value: "recently-completed", label: "Recently completed" },
+  { value: "up-next", label: "Up next" },
+] as const;
+
 const dateRoleLabels: Record<string, string> = {
   started: "Started",
   completed: "Completed",
@@ -31,6 +37,7 @@ export function ActivityPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const type = searchParams.get("type") ?? "all";
   const source = readSource(searchParams.get("source"));
+  const mode = readMode(searchParams.get("mode"));
 
   const config = useQuery(configQuery());
   const feed = useInfiniteQuery(
@@ -38,6 +45,7 @@ export function ActivityPage() {
       months: 1,
       ...(type !== "all" ? { type } : {}),
       ...(source !== "all" ? { source } : {}),
+      ...(mode !== "all" ? { mode } : {}),
     }),
   );
 
@@ -73,6 +81,19 @@ export function ActivityPage() {
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 sm:p-6">
         <header className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold">Activity</h1>
+          <div className="flex flex-wrap gap-1">
+            {modes.map((item) => (
+              <Button
+                key={item.value}
+                type="button"
+                variant={mode === item.value ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setParam("mode", item.value)}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Select
               value={type}
@@ -133,7 +154,7 @@ export function ActivityPage() {
             onClick={() => void feed.fetchNextPage()}
             disabled={feed.isFetchingNextPage}
           >
-            {feed.isFetchingNextPage ? "Loading…" : "Load earlier"}
+            {feed.isFetchingNextPage ? "Loading…" : "Load more"}
           </Button>
         ) : null}
       </div>
@@ -235,6 +256,10 @@ function groupByDay(items: ActivityItem[]): { date: string; items: ActivityItem[
 
 function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
   return value === "taxonomy" || value === "daily-note" ? value : "all";
+}
+
+function readMode(value: string | null): "all" | "recently-completed" | "up-next" {
+  return value === "recently-completed" || value === "up-next" ? value : "all";
 }
 
 function formatDay(date: string): string {

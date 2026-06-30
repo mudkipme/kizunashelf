@@ -1,7 +1,6 @@
 import {
   AnalyticsResponse as AnalyticsResponseSchema,
 } from "./generated/analyticsResponse.zod.js";
-import { CalendarPlanningResponse as CalendarPlanningResponseSchema } from "./generated/calendarPlanningResponse.zod.js";
 import { CalendarResponse as CalendarResponseSchema } from "./generated/calendarResponse.zod.js";
 import { CapabilitiesResponse as CapabilitiesResponseSchema } from "./generated/capabilitiesResponse.zod.js";
 import { CleanupQueuesResponse as CleanupQueuesResponseSchema } from "./generated/cleanupQueuesResponse.zod.js";
@@ -17,7 +16,6 @@ import { HomeResponse as HomeResponseSchema } from "./generated/homeResponse.zod
 import { StatsResponse as StatsResponseSchema } from "./generated/statsResponse.zod.js";
 import type { ActivityResponse } from "./generated/activityResponse.zod.js";
 import type { AnalyticsResponse } from "./generated/analyticsResponse.zod.js";
-import type { CalendarPlanningResponse } from "./generated/calendarPlanningResponse.zod.js";
 import type { CalendarResponse } from "./generated/calendarResponse.zod.js";
 import type { CapabilitiesResponse } from "./generated/capabilitiesResponse.zod.js";
 import type { CleanupQueuesResponse } from "./generated/cleanupQueuesResponse.zod.js";
@@ -43,14 +41,6 @@ export * from "./generated/assetDownloadJobStatus.zod.js";
 export * from "./generated/assetDownloadRequest.zod.js";
 export * from "./generated/assetDownloadResponse.zod.js";
 export * from "./generated/assetDownloadStatus.zod.js";
-export * from "./generated/calendarPlanningBoard.zod.js";
-export * from "./generated/calendarPlanningDatePoint.zod.js";
-export * from "./generated/calendarPlanningFilters.zod.js";
-export * from "./generated/calendarPlanningMonth.zod.js";
-export * from "./generated/calendarPlanningResponse.zod.js";
-export * from "./generated/calendarPlanningSeason.zod.js";
-export * from "./generated/calendarPlanningTotals.zod.js";
-export * from "./generated/calendarPlanningTypeOption.zod.js";
 export * from "./generated/calendarResponse.zod.js";
 export * from "./generated/capabilitiesResponse.zod.js";
 export * from "./generated/cleanupQueueSummary.zod.js";
@@ -78,7 +68,6 @@ export * from "./generated/externalProviderFieldOption.zod.js";
 export * from "./generated/externalProviderSummary.zod.js";
 export * from "./generated/externalProviderTypeOption.zod.js";
 export * from "./generated/externalSearchResponse.zod.js";
-export * from "./generated/getCalendarPlanningParams.zod.js";
 export * from "./generated/getCalendarParams.zod.js";
 export * from "./generated/getEntitiesParams.zod.js";
 export * from "./generated/getListsParams.zod.js";
@@ -134,7 +123,6 @@ export const ApiResponseSchemas = {
   externalProviderCatalog: ExternalProviderCatalogResponseSchema,
   externalSearch: ExternalSearchResponseSchema,
   calendar: CalendarResponseSchema,
-  calendarPlanning: CalendarPlanningResponseSchema,
 } as const;
 
 export type Entity = EntityDetailResponse["entity"];
@@ -153,9 +141,6 @@ export type Relation = EntityDetailResponse["relations"][number];
 export type CalendarDay = CalendarResponse["days"][number];
 export type CalendarEntry = CalendarDay["entries"][number];
 export type CalendarSnippet = NonNullable<CalendarEntry["snippets"]>[number];
-export type CalendarPlanningDatePoint = CalendarPlanningResponse["board"]["upcoming"][number];
-export type CalendarPlanningMonth = CalendarPlanningResponse["yearMonths"][number];
-export type CalendarPlanningSeason = CalendarPlanningResponse["seasons"][number];
 export type CleanupQueueSummary = CleanupQueuesResponse["queues"][number];
 export type CleanupUnresolvedRelation = CleanupQueuesResponse["unresolvedRelations"][number];
 export type HomeSectionResponse = HomeResponse["sections"][number];

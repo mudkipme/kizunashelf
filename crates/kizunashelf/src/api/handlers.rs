@@ -1,9 +1,8 @@
 use super::error::{ApiError, ApiResult};
 use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{
-    build_activity, build_calendar, build_calendar_planning, ActivityBuildOptions,
-    ActivityResponse, CalendarBuildOptions, CalendarPlanningOptions, CalendarPlanningResponse,
-    CalendarSource,
+    build_activity, build_calendar, ActivityBuildOptions, ActivityMode, ActivityResponse,
+    CalendarBuildOptions, CalendarSource,
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
@@ -265,43 +264,16 @@ pub(crate) async fn calendar(
 }
 
 #[derive(Deserialize, JsonSchema)]
-pub(crate) struct CalendarPlanningQuery {
-    year: Option<f64>,
-    #[serde(rename = "type")]
-    entity_type: Option<String>,
-}
-
-pub(crate) async fn calendar_planning(
-    State(state): State<AppState>,
-    Query(query): Query<CalendarPlanningQuery>,
-) -> ApiResult<CalendarPlanningResponse> {
-    let library = get_library(&state).await?;
-    let now = chrono::Utc::now();
-    let year = clamp_number(
-        query
-            .year
-            .unwrap_or(now.format("%Y").to_string().parse().unwrap_or(1970.0)),
-        1970,
-        2100,
-    ) as i32;
-    Ok(Json(build_calendar_planning(
-        &library,
-        CalendarPlanningOptions {
-            year,
-            entity_type: query.entity_type.filter(|item| item != "all"),
-        },
-    )))
-}
-
-#[derive(Deserialize, JsonSchema)]
 pub(crate) struct ActivityQuery {
-    /// Exclusive `YYYY-MM` cursor — load months strictly older than this.
-    before: Option<String>,
+    /// Opaque `YYYY-MM` cursor from the previous page.
+    cursor: Option<String>,
     /// Number of non-empty months to return in this page (1–12, default 1).
     months: Option<f64>,
     #[serde(rename = "type")]
     entity_type: Option<String>,
     source: Option<String>,
+    /// `all` (default), `recently-completed`, or `up-next`.
+    mode: Option<String>,
 }
 
 pub(crate) async fn activity(
@@ -315,16 +287,24 @@ pub(crate) async fn activity(
         Some("daily-note") => CalendarSource::DailyNote,
         _ => CalendarSource::All,
     };
+    let mode = match query.mode.as_deref() {
+        Some("recently-completed") => ActivityMode::RecentlyCompleted,
+        Some("up-next") => ActivityMode::UpNext,
+        _ => ActivityMode::All,
+    };
+    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
     let vfs = state.vault_vfs(&library.config.vault_root);
     Ok(Json(
         build_activity(
             &library,
             vfs.as_ref(),
             ActivityBuildOptions {
-                before: query.before.filter(|item| !item.is_empty()),
+                cursor: query.cursor.filter(|item| !item.is_empty()),
                 months,
                 entity_type: query.entity_type.filter(|item| item != "all"),
                 source,
+                mode,
+                today,
             },
         )
         .await?,

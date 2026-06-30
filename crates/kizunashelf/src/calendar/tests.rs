@@ -4,7 +4,7 @@ use crate::types::{
     EpisodeDateRole, FieldConfig, FieldType, KizunaConfig, Library,
 };
 use crate::vfs::InMemoryVfs;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 #[test]
 fn ambiguous_daily_note_wikilinks_do_not_prefer_franchise_type() {
@@ -95,45 +95,6 @@ fn entry(id: &str, date: &str, source: CalendarEntrySource, title: &str) -> Cale
     }
 }
 
-fn point(
-    entity_id: &str,
-    title: &str,
-    year: i32,
-    month: u32,
-    sort_key: &str,
-    season: Option<&str>,
-    role: DateRole,
-) -> CalendarPlanningDatePoint {
-    let mut entity = summary("anime", "Anime", title);
-    entity.id = entity_id.to_string();
-    CalendarPlanningDatePoint {
-        entity,
-        field: "aired".to_string(),
-        field_label: "Aired".to_string(),
-        value: sort_key.to_string(),
-        year,
-        month,
-        sort_key: sort_key.to_string(),
-        season: season.map(str::to_string),
-        role,
-    }
-}
-
-#[test]
-fn season_key_for_month_maps_to_quarters_with_winter_as_catch_all() {
-    assert_eq!(season_key_for_month(1), "winter");
-    assert_eq!(season_key_for_month(3), "winter");
-    assert_eq!(season_key_for_month(4), "spring");
-    assert_eq!(season_key_for_month(6), "spring");
-    assert_eq!(season_key_for_month(7), "summer");
-    assert_eq!(season_key_for_month(9), "summer");
-    assert_eq!(season_key_for_month(10), "autumn");
-    assert_eq!(season_key_for_month(12), "autumn");
-    // Out-of-range months fall through to winter (the catch-all `else`).
-    assert_eq!(season_key_for_month(0), "winter");
-    assert_eq!(season_key_for_month(13), "winter");
-}
-
 #[test]
 fn calendar_days_length_matches_the_month() {
     assert_eq!(calendar_days(2023, 2, &[]).len(), 28); // non-leap February
@@ -186,105 +147,6 @@ fn compare_calendar_entries_orders_by_date_then_source_then_title() {
     // Same date + source: by title.
     assert_eq!(
         compare_calendar_entries(&tax("2024-01-01", "A"), &tax("2024-01-01", "B")),
-        Ordering::Less
-    );
-}
-
-#[test]
-fn planning_months_buckets_by_year_and_month_deduping_by_entity() {
-    let points = vec![
-        point("e1", "A", 2024, 2, "2024-02-10", None, DateRole::Planning),
-        point("e1", "A", 2024, 2, "2024-02-20", None, DateRole::Planning), // same entity+month → deduped
-        point("e2", "B", 2024, 2, "2024-02-15", None, DateRole::Planning),
-        point("e3", "C", 2024, 5, "2024-05-01", None, DateRole::Planning),
-        point("e4", "D", 2023, 2, "2023-02-01", None, DateRole::Planning), // other year → ignored
-    ];
-    let months = planning_months(2024, &points);
-
-    assert_eq!(months.len(), 12);
-    let february = &months[1];
-    assert_eq!(february.month, 2);
-    assert_eq!(february.label, "Feb");
-    assert_eq!(february.entries.len(), 2); // e1 (deduped) + e2
-    assert_eq!(months[4].entries.len(), 1); // May: e3
-                                            // The 2023 point is excluded entirely.
-    assert_eq!(
-        months
-            .iter()
-            .map(|month| month.entries.len())
-            .sum::<usize>(),
-        3
-    );
-}
-
-#[test]
-fn planning_seasons_use_explicit_then_month_derived_season() {
-    let points = vec![
-        point("e1", "A", 2024, 2, "k", None, DateRole::Planning), // month 2 → winter
-        point("e2", "B", 2024, 5, "k", None, DateRole::Planning), // month 5 → spring
-        point("e3", "C", 2024, 5, "k", Some("summer"), DateRole::Planning), // explicit overrides month
-    ];
-    let by_key: HashMap<_, _> = planning_seasons(2024, &points)
-        .into_iter()
-        .map(|season| (season.key, season.entries.len()))
-        .collect();
-    assert_eq!(by_key["winter"], 1);
-    assert_eq!(by_key["spring"], 1);
-    assert_eq!(by_key["summer"], 1);
-    assert_eq!(by_key["autumn"], 0);
-}
-
-#[test]
-fn unique_planning_points_by_entity_keeps_the_first_per_entity() {
-    let points = vec![
-        point("e1", "A", 2024, 2, "k1", None, DateRole::Planning),
-        point("e1", "A", 2024, 3, "k2", None, DateRole::Planning),
-        point("e2", "B", 2024, 2, "k3", None, DateRole::Planning),
-    ];
-    let unique = unique_planning_points_by_entity(points);
-    assert_eq!(unique.len(), 2);
-    assert_eq!(unique[0].sort_key, "k1"); // the first e1 is kept
-    assert_eq!(unique[1].entity.id, "e2");
-}
-
-#[test]
-fn compare_planning_points_orders_by_sort_key_then_title() {
-    use std::cmp::Ordering;
-    let early = point(
-        "e1",
-        "Alpha",
-        2024,
-        1,
-        "2024-01-01",
-        None,
-        DateRole::Planning,
-    );
-    let late = point(
-        "e2",
-        "Beta",
-        2024,
-        2,
-        "2024-02-01",
-        None,
-        DateRole::Planning,
-    );
-    assert_eq!(compare_planning_points_asc(&early, &late), Ordering::Less);
-    assert_eq!(
-        compare_planning_points_desc(&early, &late),
-        Ordering::Greater
-    );
-    // Tie on sort_key falls back to title.
-    let same_day = point(
-        "e3",
-        "Zeta",
-        2024,
-        1,
-        "2024-01-01",
-        None,
-        DateRole::Planning,
-    );
-    assert_eq!(
-        compare_planning_points_asc(&early, &same_day),
         Ordering::Less
     );
 }
@@ -439,7 +301,10 @@ fn episode_calendar_entries_place_cached_dates_in_the_month() {
 
 fn activity_config(daily_paths: Option<Vec<String>>) -> KizunaConfig {
     let mut anime = entity_type("anime", "Anime");
-    anime.fields = vec![date_field("aired", Some(DateRole::Completed))];
+    anime.fields = vec![
+        date_field("aired", Some(DateRole::Completed)),
+        date_field("planned", Some(DateRole::Planning)),
+    ];
     anime.body_sections = vec![crate::types::BodySection {
         heading: "Episodes".to_string(),
         kind: crate::types::BodySectionKind::Episodes,
@@ -461,13 +326,51 @@ fn activity_config(daily_paths: Option<Vec<String>>) -> KizunaConfig {
     }
 }
 
-fn activity_options(before: Option<&str>, months: u32) -> ActivityBuildOptions {
+fn activity_options(cursor: Option<&str>, months: u32) -> ActivityBuildOptions {
+    activity_options_mode(cursor, months, ActivityMode::All, "2024-06-15")
+}
+
+fn activity_options_mode(
+    cursor: Option<&str>,
+    months: u32,
+    mode: ActivityMode,
+    today: &str,
+) -> ActivityBuildOptions {
     ActivityBuildOptions {
-        before: before.map(str::to_string),
+        cursor: cursor.map(str::to_string),
         months,
         entity_type: None,
         source: CalendarSource::All,
+        mode,
+        today: today.to_string(),
     }
+}
+
+/// An entity completed in the past (2024-05-10) and planned for the future
+/// (2024-07-01), with one completed and one scheduled episode on those dates.
+fn forward_and_back_record() -> EntityRecord {
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![
+        date_value("aired", "2024-05-10"),
+        date_value("planned", "2024-07-01"),
+    ];
+    let mut rec = record(entity);
+    rec.episode_dates = vec![
+        EpisodeDate {
+            key: "1".to_string(),
+            title: "Pilot".to_string(),
+            date: "2024-05-10".to_string(),
+            role: EpisodeDateRole::Completed,
+        },
+        EpisodeDate {
+            key: "2".to_string(),
+            title: "Dawn".to_string(),
+            date: "2024-07-01".to_string(),
+            role: EpisodeDateRole::Scheduled,
+        },
+    ];
+    rec
 }
 
 #[tokio::test]
@@ -615,4 +518,128 @@ async fn build_activity_pages_by_month_and_terminates() {
         .unwrap();
     assert_eq!(page3.items[0].date, "2024-01-15");
     assert_eq!(page3.cursor, None);
+}
+
+#[tokio::test]
+async fn build_activity_recently_completed_hides_forward_looking() {
+    let library = Library::new(
+        activity_config(None),
+        vec![forward_and_back_record()],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    let response = build_activity(
+        &library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::RecentlyCompleted, "2024-06-15"),
+    )
+    .await
+    .unwrap();
+
+    // Only the completed date + completed episode on 2024-05-10 survive; the
+    // planning date and scheduled episode (both 2024-07-01) are hidden.
+    assert_eq!(response.items.len(), 1);
+    let item = &response.items[0];
+    assert_eq!(item.date, "2024-05-10");
+    assert!(item
+        .entries
+        .iter()
+        .any(|entry| entry.role == Some(DateRole::Completed)));
+    assert!(item
+        .entries
+        .iter()
+        .any(|entry| entry.episode_role == Some(EpisodeDateRole::Completed)));
+    assert!(response
+        .items
+        .iter()
+        .flat_map(|item| &item.entries)
+        .all(|entry| entry.role != Some(DateRole::Planning)
+            && entry.episode_role != Some(EpisodeDateRole::Scheduled)));
+}
+
+#[tokio::test]
+async fn build_activity_up_next_shows_only_future_ascending() {
+    let library = Library::new(
+        activity_config(None),
+        vec![forward_and_back_record()],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    let response = build_activity(
+        &library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::UpNext, "2024-06-15"),
+    )
+    .await
+    .unwrap();
+
+    // Only the future month: the planning date + scheduled episode on 2024-07-01.
+    assert_eq!(response.items.len(), 1);
+    let item = &response.items[0];
+    assert_eq!(item.date, "2024-07-01");
+    assert!(item
+        .entries
+        .iter()
+        .any(|entry| entry.role == Some(DateRole::Planning)));
+    assert!(item
+        .entries
+        .iter()
+        .any(|entry| entry.episode_role == Some(EpisodeDateRole::Scheduled)));
+    assert!(response
+        .items
+        .iter()
+        .flat_map(|item| &item.entries)
+        .all(|entry| entry.role != Some(DateRole::Completed)
+            && entry.episode_role != Some(EpisodeDateRole::Completed)));
+}
+
+#[tokio::test]
+async fn build_activity_up_next_hides_today_items_already_done() {
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![
+        date_value("planned", "2024-06-15"),
+        date_value("aired", "2024-06-15"),
+    ];
+    let mut rec = record(entity);
+    rec.episode_dates = vec![
+        EpisodeDate {
+            key: "5".to_string(),
+            title: "Five".to_string(),
+            date: "2024-06-15".to_string(),
+            role: EpisodeDateRole::Scheduled,
+        },
+        EpisodeDate {
+            key: "5".to_string(),
+            title: "Five".to_string(),
+            date: "2024-06-15".to_string(),
+            role: EpisodeDateRole::Completed,
+        },
+    ];
+    let library = Library::new(
+        activity_config(None),
+        vec![rec],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    let response = build_activity(
+        &library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::UpNext, "2024-06-15"),
+    )
+    .await
+    .unwrap();
+
+    // Planning-today is hidden (the entity is completed today) and scheduled
+    // episode 5 is hidden (episode 5 is completed today) → nothing remains.
+    assert!(response.items.is_empty());
 }

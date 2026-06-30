@@ -22,7 +22,7 @@ export const activityResponseItemsItemEntriesItemSnippetsItemLineMin = 0;
 
 export const ActivityResponse = zod.object({
   "generatedAt": zod.string(),
-  "cursor": zod.string().nullish().describe('The next `before` cursor (`YYYY-MM`) to load the following page, or `None`\nat the end of history.'),
+  "cursor": zod.string().nullish().describe('The next cursor (`YYYY-MM`) to load the following page, or `None` at the\nend of the feed.'),
   "items": zod.array(zod.object({
   "date": zod.string(),
   "entity": zod.object({
