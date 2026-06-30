@@ -257,18 +257,20 @@ pub struct DailyNoteLogDefaults {
     /// consistent with `bodySections[].heading`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub section: Option<String>,
-    /// Line template. Tokens: `{title}` (the entity, rendered as a wikilink),
-    /// `{progress}` (episode number), `{note}` (freeform), `{date}`, `{time}`.
-    /// Empty tokens collapse with surrounding whitespace.
+    /// Line template. Tokens: `{title}` (the entity — **always rendered as a
+    /// `[[wikilink]]`**, since that link is what ties the line back to the entity;
+    /// write `{title}`, not `[[{title}]]`, though the latter isn't doubled),
+    /// `{progress}` (episode number), `{note}` (freeform), `{date}`. Empty tokens
+    /// collapse with surrounding whitespace.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub line_format: Option<String>,
 }
 
 /// Per-type daily-note logging config, under `types[].log`. **Presence opts the
 /// type into logging.** The type's hashtag is written as a literal inside
-/// `lineFormat` (e.g. `- [[{title}]] {progress}{note} #Anime`), not a separate
-/// field — so it's explicit, never inferred from the type name. Unset fields fall
-/// back to `dailyNotes.log`, then the built-ins.
+/// `lineFormat` (e.g. `- {title} {progress}{note} #Anime`), not a separate field —
+/// so it's explicit, never inferred from the type name. Unset fields fall back to
+/// `dailyNotes.log`, then the built-ins.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeLogConfig {
@@ -343,10 +345,10 @@ pub const DEFAULT_TAGS_FIELD: &str = "tags";
 /// one — raw heading text (default h2), matching `bodySections`.
 pub const DEFAULT_LOG_SECTION: &str = "Log";
 
-/// Built-in daily-note log line template. `{progress}`/`{note}` collapse when
-/// empty, so a no-episode log of a type with no per-type format renders the bare
-/// `- [[Title]]`.
-pub const DEFAULT_LOG_LINE_FORMAT: &str = "- [[{title}]] {progress}{note}";
+/// Built-in daily-note log line template. `{title}` renders as a `[[wikilink]]`
+/// and `{progress}`/`{note}` collapse when empty, so a no-episode log of a type
+/// with no per-type format renders the bare `- [[Title]]`.
+pub const DEFAULT_LOG_LINE_FORMAT: &str = "- {title} {progress}{note}";
 
 /// The resolved daily-note logging config for one entity type (see
 /// [`KizunaConfig::resolve_log_config`]).
