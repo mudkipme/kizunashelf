@@ -10,9 +10,14 @@ import type { EntitySummary } from "@/types/api";
 export function EntityGridItem({
   entity,
   labelsByType,
+  showCover = true,
 }: {
   entity: EntitySummary;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  /// Whether to render the cover slot. Off for types with no image/imageList
+  /// field; a placeholder still shows when the type has a cover but this entity
+  /// has no value.
+  showCover?: boolean;
 }) {
   const title = entityTitle(entity, useTitleLanguage());
 
@@ -21,15 +26,17 @@ export function EntityGridItem({
       to={`/entities/${encodeURIComponent(entity.id)}`}
       className="flex min-h-64 flex-col overflow-hidden rounded-md border bg-background transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
     >
-      <div className="flex aspect-[4/3] items-center justify-center bg-muted">
-        <AssetImage
-          src={entity.image}
-          className="size-full object-cover"
-          fallback={
-            <span className="text-sm font-medium text-muted-foreground">{entity.typeLabel}</span>
-          }
-        />
-      </div>
+      {showCover ? (
+        <div className="flex aspect-[4/3] items-center justify-center bg-muted">
+          <AssetImage
+            src={entity.image}
+            className="size-full object-cover"
+            fallback={
+              <span className="text-sm font-medium text-muted-foreground">{entity.typeLabel}</span>
+            }
+          />
+        </div>
+      ) : null}
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
         <div className="flex min-w-0 items-center gap-2">
           <Badge variant="outline">{entity.typeLabel}</Badge>

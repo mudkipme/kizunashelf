@@ -61,6 +61,20 @@ export function typeLabelsById(typeConfigs: TypeConfig[] | undefined) {
   return new Map((typeConfigs ?? []).map((typeConfig) => [typeConfig.id, typeConfig.label]));
 }
 
+/// Whether a type declares a cover — an `image`/`imageList` field. Covers are
+/// shown for types that have one (with a placeholder when the entity has no
+/// value); types without one show no cover slot at all.
+export function typeHasCoverField(typeConfig: TypeConfig | undefined): boolean {
+  return configFields(typeConfig).some(
+    (field) => field.fieldType === "image" || field.fieldType === "imageList",
+  );
+}
+
+/// The set of type ids that declare a cover field.
+export function coverTypeIds(typeConfigs: TypeConfig[] | undefined): Set<string> {
+  return new Set((typeConfigs ?? []).filter(typeHasCoverField).map((typeConfig) => typeConfig.id));
+}
+
 export function entityFieldLabel(
   labelsByType: ReadonlyMap<string, ReadonlyMap<string, string>> | undefined,
   type: string,

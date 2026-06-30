@@ -10,18 +10,25 @@ import type { EntitySummary } from "@/types/api";
 export function EntityListItem({
   entity,
   labelsByType,
+  showCover = true,
 }: {
   entity: EntitySummary;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  /// Whether to render the cover slot. Off for types with no image/imageList
+  /// field; a placeholder still shows when the type has a cover but this entity
+  /// has no value.
+  showCover?: boolean;
 }) {
   const title = entityTitle(entity, useTitleLanguage());
 
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
-      className="grid w-full grid-cols-[44px_1fr] gap-3 border-b px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+      className={`grid w-full gap-3 border-b px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none ${
+        showCover ? "grid-cols-[44px_1fr]" : "grid-cols-1"
+      }`}
     >
-      <EntityCover entity={entity} />
+      {showCover ? <EntityCover entity={entity} /> : null}
       <span className="min-w-0">
         <span className="flex items-center gap-2">
           <span className="truncate text-sm font-medium">{title}</span>

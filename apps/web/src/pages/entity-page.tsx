@@ -69,7 +69,7 @@ import { saveEpisodes } from "@/api/episodes";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
-import { fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
+import { coverTypeIds, fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
 import { entityTitle } from "@/lib/title-language";
 import type {
   Entity,
@@ -122,19 +122,7 @@ export function EntityPage() {
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const typeLabels = useMemo(() => typeLabelsById(config.data?.types), [config.data]);
   // Type ids that declare a cover field — their connections render as a cover grid.
-  const coverTypes = useMemo(
-    () =>
-      new Set(
-        (config.data?.types ?? [])
-          .filter((type) =>
-            (type.fields ?? []).some(
-              (field) => field.fieldType === "image" || field.fieldType === "imageList",
-            ),
-          )
-          .map((type) => type.id),
-      ),
-    [config.data],
-  );
+  const coverTypes = useMemo(() => coverTypeIds(config.data?.types), [config.data]);
 
   // A 409 means the entity changed on disk and the action's revision is stale:
   // refetch so a retry uses the latest revision (see `useEntityMutation`).

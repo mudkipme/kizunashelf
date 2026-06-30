@@ -22,7 +22,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTitleLanguage } from "@/lib/language";
 import { relationKey } from "@/lib/relations";
-import { entityFieldLabel, fieldLabelForKey, titleLabelForKey } from "@/lib/type-config";
+import {
+  entityFieldLabel,
+  fieldLabelForKey,
+  titleLabelForKey,
+  typeHasCoverField,
+} from "@/lib/type-config";
 import { entityTitle, titleLanguageLabel } from "@/lib/title-language";
 import type {
   Entity,
@@ -86,6 +91,9 @@ export function EntityDetail({
   const outgoingGroups = buildOutgoingGroups(relationGroups, relatedById, typeConfig, typeLabels);
   const incomingGroups = buildIncomingGroups(relations, relatedById, labelsByType, typeLabels);
   const hasConnections = outgoingGroups.length > 0 || incomingGroups.length > 0;
+  // The cover slot shows only for types that declare an image/imageList field
+  // (with a placeholder when this entity has no value); other types show none.
+  const showCover = typeHasCoverField(typeConfig);
 
   return (
     <LightboxProvider>
@@ -94,7 +102,7 @@ export function EntityDetail({
           <section className="min-w-0 rounded-md border">
             <div className="border-b p-4">
               <div className="flex gap-3">
-                <EntityCover entity={entity} size="lg" lightbox />
+                {showCover ? <EntityCover entity={entity} size="lg" lightbox /> : null}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">{entity.typeLabel}</Badge>

@@ -27,6 +27,7 @@ import {
   fieldDisplayLabel,
   fieldLabelAcrossTypes,
   fieldLabelsByType,
+  typeHasCoverField,
 } from "@/lib/type-config";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
@@ -63,6 +64,9 @@ export function LibraryPage() {
   const selectedTypeStats = globalStats.data?.byType.find((type) => type.id === selectedType);
   const scopeStats = isGlobalType ? globalStats.data : categoryStats.data;
   const selectedTypeConfig = config.data?.types.find((type) => type.id === selectedType);
+  // Covers show for "all types" and for any concrete type that declares an
+  // image/imageList field; a type without one shows no cover slot at all.
+  const showCovers = isGlobalType || typeHasCoverField(selectedTypeConfig);
   const scopeTypeConfigs = useMemo(
     () =>
       isGlobalType
@@ -396,12 +400,22 @@ export function LibraryPage() {
               {view === "grid" ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 p-3">
                   {entities.map((entity) => (
-                    <EntityGridItem key={entity.id} entity={entity} labelsByType={fieldLabels} />
+                    <EntityGridItem
+                      key={entity.id}
+                      entity={entity}
+                      labelsByType={fieldLabels}
+                      showCover={showCovers}
+                    />
                   ))}
                 </div>
               ) : (
                 entities.map((entity) => (
-                  <EntityListItem key={entity.id} entity={entity} labelsByType={fieldLabels} />
+                  <EntityListItem
+                    key={entity.id}
+                    entity={entity}
+                    labelsByType={fieldLabels}
+                    showCover={showCovers}
+                  />
                 ))
               )}
               {!list.isFetching && entities.length === 0 ? (
