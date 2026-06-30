@@ -108,15 +108,22 @@ export function EntityPage() {
   const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
   // The log modal is offered when there's something to log: a loggable type, an
   // episodes list, or a started/completed dated field.
+  // The activities offered in the log dialog: always "progress", plus
+  // "started"/"completed" only when the schema actually has those date roles to
+  // stamp.
+  const logKinds: ("progress" | "started" | "completed")[] = [
+    "progress",
+    ...(typeConfig?.fields.some((field) => field.dateRole === "started") ? (["started"] as const) : []),
+    ...(typeConfig?.fields.some((field) => field.dateRole === "completed")
+      ? (["completed"] as const)
+      : []),
+  ];
   const canLog =
     contentWritable &&
     Boolean(entity) &&
     (Boolean(typeConfig?.log) ||
       (detail.data?.episodes?.total ?? 0) > 0 ||
-      (typeConfig?.fields.some(
-        (field) => field.dateRole === "started" || field.dateRole === "completed",
-      ) ??
-        false));
+      logKinds.length > 1);
   const external = useExternalMatch({
     typeConfig,
     providerCatalog: providerCatalog.data,
@@ -309,7 +316,7 @@ export function EntityPage() {
               coverTypes={coverTypes}
               onToggleEpisode={toggleEpisodeWatched}
               actions={
-                <>
+                <div className="flex items-center gap-2">
                   {canLog ? (
                     <Button type="button" variant="outline" size="sm" onClick={() => setLogOpen(true)}>
                       <NotebookPenIcon data-icon="inline-start" />
@@ -328,7 +335,7 @@ export function EntityPage() {
                     onDownloadCover={downloadCover}
                     onDelete={deleteCurrentEntity}
                   />
-                </>
+                </div>
               }
             />
             {canLog ? (
@@ -338,6 +345,7 @@ export function EntityPage() {
                 entityId={entity.id}
                 revision={entity.revision}
                 episodes={detail.data?.episodes ?? undefined}
+                kinds={logKinds}
               />
             ) : null}
             <ManageListsDialog
