@@ -2496,29 +2496,28 @@ async fn episodes_detail_progress_update_and_revision_guard() {
     assert_eq!(episodes["groups"][0]["items"][1]["title"], "Recap");
     let revision = detail.1["entity"]["revision"].as_str().unwrap().to_string();
 
-    // Check the recap (the second item in Season 1) via the granular toggle.
+    // Check the recap (the second item in Season 1) by logging it (`op: add`) —
+    // the episode tick rides on `/log`, the single write path now.
     let body = json!({
-        "revision": revision,
-        "group": "Season 1",
-        "key": "12.5",
-        "index": 1,
-        "watched": true
+        "op": "add", "kind": "progress", "revision": revision,
+        "episode": { "group": "Season 1", "key": "12.5", "index": 1 },
+        "date": "2024-08-20",
     });
     let updated = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/episodes/watch",
+        "/api/entities/anime%3AShow/log",
         Some(body.clone()),
     )
     .await;
     assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
-    assert_eq!(updated.1["episodes"]["watched"], 2);
+    assert_eq!(updated.1["entity"]["episodes"]["watched"], 2);
 
     // The stale revision is now rejected.
     let stale = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/episodes/watch",
+        "/api/entities/anime%3AShow/log",
         Some(body),
     )
     .await;

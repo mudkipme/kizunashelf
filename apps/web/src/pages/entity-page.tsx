@@ -8,6 +8,7 @@ import {
   FilePenLineIcon,
   ListChecksIcon,
   MoreHorizontalIcon,
+  NotebookPenIcon,
   PencilIcon,
   PlusIcon,
   SearchIcon,
@@ -29,6 +30,7 @@ import {
   queryKeys,
 } from "@/api/queries";
 import { EntityDetail } from "@/components/assets/entity-detail";
+import { QuickLogDialog } from "@/components/assets/quick-log-dialog";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
@@ -65,7 +67,7 @@ import { reportEntityError, useEntityMutation } from "@/hooks/use-entity-mutatio
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
-import { setEpisodeWatched } from "@/api/episodes";
+import { logEpisodeWatched } from "@/api/episodes";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
@@ -88,6 +90,7 @@ export function EntityPage() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
   const [manageListsOpen, setManageListsOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
   const [episodesSaving, setEpisodesSaving] = useState(false);
 
   const loading =
@@ -103,6 +106,17 @@ export function EntityPage() {
   const canDownloadCover =
     contentWritable && capabilities.assetDownloadEnabled && isRemoteAsset(entity?.image);
   const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
+  // The log modal is offered when there's something to log: a loggable type, an
+  // episodes list, or a started/completed dated field.
+  const canLog =
+    contentWritable &&
+    Boolean(entity) &&
+    (Boolean(typeConfig?.log) ||
+      (detail.data?.episodes?.total ?? 0) > 0 ||
+      (typeConfig?.fields.some(
+        (field) => field.dateRole === "started" || field.dateRole === "completed",
+      ) ??
+        false));
   const external = useExternalMatch({
     typeConfig,
     providerCatalog: providerCatalog.data,
@@ -201,19 +215,23 @@ export function EntityPage() {
     if (!entity) return;
     setEpisodesSaving(true);
     try {
-      // Sends only the changed episode (group + key, with index as the fallback
-      // locator); the core stamps/clears the ✅ completion date and returns the
-      // refreshed detail (with the new revision).
-      const updated = await setEpisodeWatched(entity.id, {
+      // Logs the changed episode through `/log` (group + key, index as the fallback
+      // locator): the core stamps/clears the ✅ date, writes/removes the daily-note
+      // line for loggable types, and returns the refreshed detail in `.entity`.
+      const response = await logEpisodeWatched(entity.id, {
         revision: entity.revision,
         group,
         key,
         index,
         watched,
       });
-      queryClient.setQueryData(queryKeys.entity(entity.id), updated);
-      // Refresh the resident watched/total badge in list views.
+      if (response.entity) {
+        queryClient.setQueryData(queryKeys.entity(entity.id), response.entity);
+      }
+      // Refresh the resident watched/total badge + the activity/calendar views.
       void queryClient.invalidateQueries({ queryKey: ["entities"] });
+      void queryClient.invalidateQueries({ queryKey: ["activity"] });
+      void queryClient.invalidateQueries({ queryKey: ["calendar"] });
       setError(undefined);
     } catch (error) {
       reportEntityError(error, setError, refetchOnConflict);
@@ -291,20 +309,37 @@ export function EntityPage() {
               coverTypes={coverTypes}
               onToggleEpisode={toggleEpisodeWatched}
               actions={
-                <EntityActions
-                  entity={entity}
-                  contentWritable={contentWritable}
-                  saving={saving}
-                  showDownloadCover={canDownloadCover}
-                  onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
-                  onRename={() => setRenameOpen(true)}
-                  onManageLists={() => setManageListsOpen(true)}
-                  onMatch={() => external.setOpen(true)}
-                  onDownloadCover={downloadCover}
-                  onDelete={deleteCurrentEntity}
-                />
+                <>
+                  {canLog ? (
+                    <Button type="button" variant="outline" size="sm" onClick={() => setLogOpen(true)}>
+                      <NotebookPenIcon data-icon="inline-start" />
+                      Log
+                    </Button>
+                  ) : null}
+                  <EntityActions
+                    entity={entity}
+                    contentWritable={contentWritable}
+                    saving={saving}
+                    showDownloadCover={canDownloadCover}
+                    onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
+                    onRename={() => setRenameOpen(true)}
+                    onManageLists={() => setManageListsOpen(true)}
+                    onMatch={() => external.setOpen(true)}
+                    onDownloadCover={downloadCover}
+                    onDelete={deleteCurrentEntity}
+                  />
+                </>
               }
             />
+            {canLog ? (
+              <QuickLogDialog
+                open={logOpen}
+                onOpenChange={setLogOpen}
+                entityId={entity.id}
+                revision={entity.revision}
+                episodes={detail.data?.episodes ?? undefined}
+              />
+            ) : null}
             <ManageListsDialog
               open={manageListsOpen}
               onOpenChange={setManageListsOpen}

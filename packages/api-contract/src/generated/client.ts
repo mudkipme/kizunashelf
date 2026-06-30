@@ -213,10 +213,6 @@ import {
 } from './tagsResponse.zod';
 
 import type {
-  ToggleEpisodeRequest
-} from './toggleEpisodeRequest.zod';
-
-import type {
   UpdateEntityRequest
 } from './updateEntityRequest.zod';
 
@@ -992,36 +988,6 @@ export const deleteEntity = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? DeleteEntityResponse.parse(parsedBody) : parsedBody
-  return data
-}
-
-
-
-export const getToggleEpisodeUrl = (id: string,) => {
-
-
-
-
-  return `/api/entities/${encodeURIComponent(String(id))}/episodes/watch`
-}
-
-export const toggleEpisode = async (id: string,
-    toggleEpisodeRequest: ToggleEpisodeRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityDetailResponse> => {
-
-  const res = await (fetchFn ?? fetch)(getToggleEpisodeUrl(id),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(toggleEpisodeRequest)
-  }
-)
-
-  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
-  const data = contentType.includes('json') ? EntityDetailResponse.parse(parsedBody) : parsedBody
   return data
 }
 

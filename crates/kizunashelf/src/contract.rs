@@ -374,26 +374,6 @@ pub struct FetchEpisodesRequest {
     pub language: Option<String>,
 }
 
-/// Checks or unchecks a single episode/track, identified by its group label and
-/// key — so toggling watched state sends just the changed item, not the whole
-/// list. Checking stamps today's completion date (`✅`); unchecking clears it.
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct ToggleEpisodeRequest {
-    pub revision: String,
-    /// The season/disc group label of the episode (empty for the ungrouped list).
-    #[serde(default)]
-    pub group: String,
-    /// The episode/track key within the group (its number/identifier). Used to
-    /// locate the item when it uniquely identifies one; otherwise `index` wins.
-    pub key: String,
-    /// The item's 0-based position within its group — the fallback locator when
-    /// `key` is empty or duplicated (titles can repeat too, so position is the
-    /// stable tiebreaker; the revision guard keeps it valid).
-    pub index: u32,
-    pub watched: bool,
-}
-
 /// Imports provider episodes (the chosen subset, already grouped/flattened by the
 /// client) by merging them into the entity's existing episodes.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

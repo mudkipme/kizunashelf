@@ -91,7 +91,6 @@ export * from "./generated/providerEpisodeGroup.zod.js";
 export * from "./generated/providerEpisodeItem.zod.js";
 export * from "./generated/fetchEpisodesRequest.zod.js";
 export * from "./generated/importEpisodesRequest.zod.js";
-export * from "./generated/toggleEpisodeRequest.zod.js";
 export * from "./generated/listsResponse.zod.js";
 export * from "./generated/listSummary.zod.js";
 export * from "./generated/listDetail.zod.js";

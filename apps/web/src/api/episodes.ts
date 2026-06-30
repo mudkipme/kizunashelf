@@ -1,17 +1,31 @@
 import {
   fetchEpisodes,
   importEpisodes,
-  toggleEpisode,
   type FetchEpisodesRequest,
   type ImportEpisodesRequest,
-  type ToggleEpisodeRequest,
 } from "@kizunashelf/api-contract";
 
 import { apiFetch } from "@/api/client";
+import { postLogActivity } from "@/api/log";
+import { todayLocal } from "@/lib/date";
 
-/** Checks/unchecks a single episode (located by group + key, else index); returns the refreshed detail. */
-export function setEpisodeWatched(id: string, request: ToggleEpisodeRequest) {
-  return toggleEpisode(id, request, undefined, apiFetch);
+/// Checks/unchecks one episode by logging it through `/log` (the single write
+/// path): checking is `op: add` (stamps `✅`, writes a daily-note line for loggable
+/// types), unchecking is `op: remove` (the exact inverse). Returns the log result —
+/// `.entity` is the refreshed detail. Located by group + key, index as fallback.
+export function logEpisodeWatched(
+  id: string,
+  args: { revision: string; group: string; key: string; index: number; watched: boolean },
+) {
+  return postLogActivity(id, {
+    op: args.watched ? "add" : "remove",
+    kind: "progress",
+    revision: args.revision,
+    episode: { group: args.group, key: args.key, index: args.index },
+    // The user's local date (the server never assumes UTC "today"); on uncheck the
+    // server derives the date from the episode's stored `✅` instead.
+    date: todayLocal(),
+  });
 }
 
 /** Lists episode sources + fetches one provider's structured episodes. */
