@@ -306,6 +306,12 @@ impl From<anyhow::Error> for LogWriteError {
 /// Renders a log line: substitutes the tokens, then collapses whitespace runs to
 /// single spaces and trims — so empty `{progress}`/`{note}` slots leave no gap
 /// (`- [[PRAGMATA]]  #Game` → `- [[PRAGMATA]] #Game`).
+///
+/// `{title}` always becomes a `[[wikilink]]` — that link is what ties the logged
+/// line back to the entity (the daily-note relation parser keys off it), so it
+/// must be present and is never the caller's responsibility to bracket. A config
+/// that writes `[[{title}]]` by hand is handled first so the brackets aren't
+/// doubled.
 pub(crate) fn render_log_line(
     line_format: &str,
     title: &str,
@@ -313,8 +319,10 @@ pub(crate) fn render_log_line(
     note: &str,
     date: &str,
 ) -> String {
+    let wikilink = format!("[[{title}]]");
     let raw = line_format
-        .replace("{title}", title)
+        .replace("[[{title}]]", &wikilink)
+        .replace("{title}", &wikilink)
         .replace("{progress}", progress)
         .replace("{note}", note)
         .replace("{date}", date);
@@ -640,6 +648,22 @@ mod log_write_tests {
                 "2024-08-20"
             ),
             "- [[Show]] 12 #Anime"
+        );
+        // Bare `{title}` is wrapped into a wikilink (no `[[ ]]` needed in config)…
+        assert_eq!(
+            render_log_line(
+                "- {title} {progress}{note} #Anime",
+                "Show",
+                "12",
+                "",
+                "2024-08-20"
+            ),
+            "- [[Show]] 12 #Anime"
+        );
+        // …and a hand-written `[[{title}]]` is not double-bracketed.
+        assert_eq!(
+            render_log_line("- [[{title}]] #Movie", "Inception", "", "", "2024-08-20"),
+            "- [[Inception]] #Movie"
         );
     }
 
