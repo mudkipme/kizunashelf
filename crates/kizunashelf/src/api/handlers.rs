@@ -1,8 +1,9 @@
 use super::error::{ApiError, ApiResult};
 use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{
-    build_calendar, build_calendar_planning, CalendarBuildOptions, CalendarPlanningOptions,
-    CalendarPlanningResponse, CalendarSource,
+    build_activity, build_calendar, build_calendar_planning, ActivityBuildOptions,
+    ActivityResponse, CalendarBuildOptions, CalendarPlanningOptions, CalendarPlanningResponse,
+    CalendarSource,
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
@@ -290,6 +291,44 @@ pub(crate) async fn calendar_planning(
             entity_type: query.entity_type.filter(|item| item != "all"),
         },
     )))
+}
+
+#[derive(Deserialize, JsonSchema)]
+pub(crate) struct ActivityQuery {
+    /// Exclusive `YYYY-MM` cursor — load months strictly older than this.
+    before: Option<String>,
+    /// Number of non-empty months to return in this page (1–12, default 1).
+    months: Option<f64>,
+    #[serde(rename = "type")]
+    entity_type: Option<String>,
+    source: Option<String>,
+}
+
+pub(crate) async fn activity(
+    State(state): State<AppState>,
+    Query(query): Query<ActivityQuery>,
+) -> ApiResult<ActivityResponse> {
+    let library = get_library(&state).await?;
+    let months = clamp_number(query.months.unwrap_or(1.0), 1, 12) as u32;
+    let source = match query.source.as_deref() {
+        Some("taxonomy") => CalendarSource::Taxonomy,
+        Some("daily-note") => CalendarSource::DailyNote,
+        _ => CalendarSource::All,
+    };
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    Ok(Json(
+        build_activity(
+            &library,
+            vfs.as_ref(),
+            ActivityBuildOptions {
+                before: query.before.filter(|item| !item.is_empty()),
+                months,
+                entity_type: query.entity_type.filter(|item| item != "all"),
+                source,
+            },
+        )
+        .await?,
+    ))
 }
 
 fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSectionResponse {

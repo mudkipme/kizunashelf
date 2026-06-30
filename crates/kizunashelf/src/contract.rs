@@ -1,4 +1,6 @@
-use crate::calendar::{CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse};
+use crate::calendar::{
+    ActivityResponse, CalendarDay, CalendarEntry, CalendarPlanningResponse, EntityDatesResponse,
+};
 use crate::relations::Count;
 use crate::types::{
     AppConfig, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking, HomeConfig,
@@ -1013,6 +1015,7 @@ pub struct ApiSchemas {
     pub entity_dates: EntityDatesResponse,
     pub calendar: CalendarResponse,
     pub calendar_entry: CalendarEntry,
+    pub activity: ActivityResponse,
     pub asset_download: AssetDownloadResponse,
     pub asset_download_job: AssetDownloadJob,
     pub asset_download_jobs: AssetDownloadJobListResponse,

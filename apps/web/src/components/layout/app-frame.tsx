@@ -2,6 +2,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ActivityIcon,
   ArrowLeftIcon,
   BarChart3Icon,
   CalendarDaysIcon,
@@ -330,6 +331,9 @@ function SidebarContent({
         </SidebarNavLink>
         <SidebarNavLink to="/calendar" icon={CalendarDaysIcon} onNavigate={onNavigate}>
           Calendar
+        </SidebarNavLink>
+        <SidebarNavLink to="/activity" icon={ActivityIcon} onNavigate={onNavigate}>
+          Activity
         </SidebarNavLink>
         <SidebarNavLink to="/lists" icon={ListIcon} onNavigate={onNavigate}>
           Lists

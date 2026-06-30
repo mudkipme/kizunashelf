@@ -588,6 +588,72 @@
         }
       }
     },
+    "/api/activity": {
+      "get": {
+        "operationId": "getActivity",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "before",
+            "description": "Exclusive `YYYY-MM` cursor — load months strictly older than this.",
+            "schema": {
+              "description": "Exclusive `YYYY-MM` cursor — load months strictly older than this.",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "months",
+            "description": "Number of non-empty months to return in this page (1–12, default 1).",
+            "schema": {
+              "description": "Number of non-empty months to return in this page (1–12, default 1).",
+              "type": "number",
+              "format": "double"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/external/providers": {
       "get": {
         "operationId": "getExternalProviderCatalog",
@@ -4365,6 +4431,178 @@
           "upcoming",
           "recentlyCompleted",
           "justStarted"
+        ]
+      },
+      "ActivityQuery": {
+        "type": "object",
+        "properties": {
+          "before": {
+            "description": "Exclusive `YYYY-MM` cursor — load months strictly older than this.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "months": {
+            "description": "Number of non-empty months to return in this page (1–12, default 1).",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ActivityResponse": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "cursor": {
+            "description": "The next `before` cursor (`YYYY-MM`) to load the following page, or `None`\nat the end of history.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            }
+          }
+        },
+        "required": [
+          "generatedAt",
+          "items"
+        ]
+      },
+      "ActivityItem": {
+        "description": "One reverse-chronological activity item: everything that happened to a single\nentity on a single date, collapsed together. A daily-note mention, a\nstarted/completed date stamp, and episode air/completion dates that share a\n`(date, entity)` all land in one item's `entries`.",
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/EntitySummary"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityEntry"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "entity",
+          "entries"
+        ]
+      },
+      "ActivityEntry": {
+        "description": "A constituent of an [`ActivityItem`], discriminated by `source` — the same\nflat-struct-plus-discriminator shape as [`CalendarEntry`] (the contract has no\ntagged enums). Only the fields for that source are populated.",
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/CalendarEntrySource"
+          },
+          "dateField": {
+            "description": "`taxonomy`: the date field's name, its raw value, and its resolved role.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rawDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DateRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notePath": {
+            "description": "`daily-note`: the note path and the mention snippets for this entity/date.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snippets": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CalendarSnippet"
+            }
+          },
+          "episodeRole": {
+            "description": "`episode`: the air-vs-completion role, the schema section heading, and the\nepisodes sharing this date (a binge collapses into one entry).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeDateRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "heading": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "episodes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ActivityEpisodeRef"
+            }
+          }
+        },
+        "required": [
+          "source"
+        ]
+      },
+      "ActivityEpisodeRef": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title"
         ]
       },
       "ExternalProviderCatalogResponse": {

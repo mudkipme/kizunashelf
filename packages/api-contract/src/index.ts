@@ -15,6 +15,7 @@ import { ExternalProviderCatalogResponse as ExternalProviderCatalogResponseSchem
 import { HealthResponse as HealthResponseSchema } from "./generated/healthResponse.zod.js";
 import { HomeResponse as HomeResponseSchema } from "./generated/homeResponse.zod.js";
 import { StatsResponse as StatsResponseSchema } from "./generated/statsResponse.zod.js";
+import type { ActivityResponse } from "./generated/activityResponse.zod.js";
 import type { AnalyticsResponse } from "./generated/analyticsResponse.zod.js";
 import type { CalendarPlanningResponse } from "./generated/calendarPlanningResponse.zod.js";
 import type { CalendarResponse } from "./generated/calendarResponse.zod.js";
@@ -30,6 +31,8 @@ import type { ExternalProviderCatalogResponse } from "./generated/externalProvid
 import type { HomeResponse } from "./generated/homeResponse.zod.js";
 
 export * from "./generated/client.js";
+export * from "./generated/activityResponse.zod.js";
+export * from "./generated/getActivityParams.zod.js";
 export * from "./generated/analyticsResponse.zod.js";
 export * from "./generated/assetDownloadItemResult.zod.js";
 export * from "./generated/assetDownloadJob.zod.js";
@@ -162,3 +165,6 @@ export type AnalyticsActivityType = AnalyticsResponse["activity"]["types"][numbe
 export type AnalyticsActivityYear = AnalyticsResponse["activity"]["years"][number];
 export type EntityDateMetadataEntry = EntityDatesResponse["metadata"][number];
 export type EntityDateDailyNoteEntry = EntityDatesResponse["dailyNotes"][number];
+export type ActivityItem = ActivityResponse["items"][number];
+export type ActivityEntry = ActivityItem["entries"][number];
+export type ActivityEpisodeRef = NonNullable<ActivityEntry["episodes"]>[number];

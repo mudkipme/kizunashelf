@@ -24,6 +24,17 @@ pub struct CalendarPlanningOptions {
     pub entity_type: Option<String>,
 }
 
+#[derive(Clone, Debug)]
+pub struct ActivityBuildOptions {
+    /// Exclusive upper bound as a `YYYY-MM` month key — the feed returns months
+    /// strictly older than this. `None` starts at the most recent activity.
+    pub before: Option<String>,
+    /// How many *non-empty* months to include in this page.
+    pub months: u32,
+    pub entity_type: Option<String>,
+    pub source: CalendarSource,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CalendarSnippet {
@@ -206,4 +217,63 @@ pub struct CalendarPlanningResponse {
     pub year_months: Vec<CalendarPlanningMonth>,
     pub seasons: Vec<CalendarPlanningSeason>,
     pub board: CalendarPlanningBoard,
+}
+
+/// One reverse-chronological activity item: everything that happened to a single
+/// entity on a single date, collapsed together. A daily-note mention, a
+/// started/completed date stamp, and episode air/completion dates that share a
+/// `(date, entity)` all land in one item's `entries`.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityItem {
+    pub date: String,
+    pub entity: EntitySummary,
+    pub entries: Vec<ActivityEntry>,
+}
+
+/// A constituent of an [`ActivityItem`], discriminated by `source` — the same
+/// flat-struct-plus-discriminator shape as [`CalendarEntry`] (the contract has no
+/// tagged enums). Only the fields for that source are populated.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityEntry {
+    pub source: CalendarEntrySource,
+    /// `taxonomy`: the date field's name, its raw value, and its resolved role.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date_field: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw_date: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role: Option<DateRole>,
+    /// `daily-note`: the note path and the mention snippets for this entity/date.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub snippets: Option<Vec<CalendarSnippet>>,
+    /// `episode`: the air-vs-completion role, the schema section heading, and the
+    /// episodes sharing this date (a binge collapses into one entry).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episode_role: Option<EpisodeDateRole>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub heading: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episodes: Option<Vec<ActivityEpisodeRef>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityEpisodeRef {
+    pub key: String,
+    pub title: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityResponse {
+    pub generated_at: String,
+    /// The next `before` cursor (`YYYY-MM`) to load the following page, or `None`
+    /// at the end of history.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
+    pub items: Vec<ActivityItem>,
 }

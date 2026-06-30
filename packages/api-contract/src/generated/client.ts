@@ -4,6 +4,10 @@
  * KizunaShelf API
  * OpenAPI spec version: 0.5.0
  */
+import {
+  ActivityResponse
+} from './activityResponse.zod';
+
 import type {
   AddListItemRequest
 } from './addListItemRequest.zod';
@@ -115,6 +119,10 @@ import {
 import type {
   FetchEpisodesRequest
 } from './fetchEpisodesRequest.zod';
+
+import type {
+  GetActivityParams
+} from './getActivityParams.zod';
 
 import type {
   GetCalendarParams
@@ -732,6 +740,42 @@ export const getCalendarPlanning = async (params?: GetCalendarPlanningParams, op
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? CalendarPlanningResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetActivityUrl = (params?: GetActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/activity?${stringifiedParams}` : `/api/activity`
+}
+
+export const getActivity = async (params?: GetActivityParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ActivityResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetActivityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ActivityResponse.parse(parsedBody) : parsedBody
   return data
 }
 

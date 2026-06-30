@@ -1,4 +1,8 @@
 export type {
+  ActivityEntry,
+  ActivityEpisodeRef,
+  ActivityItem,
+  ActivityResponse,
   AnalyticsActivity,
   AnalyticsActivityType,
   AnalyticsActivityYear,

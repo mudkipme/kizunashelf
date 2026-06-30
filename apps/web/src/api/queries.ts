@@ -1,4 +1,5 @@
 import {
+  getActivity,
   getAnalytics,
   getCalendar,
   getCalendarPlanning,
@@ -11,12 +12,13 @@ import {
   getHome,
   getStats,
   getTags,
+  type GetActivityParams,
   type GetCalendarParams,
   type GetCalendarPlanningParams,
   type GetEntitiesParams,
   type GetStatsParams,
 } from "@kizunashelf/api-contract";
-import { keepPreviousData, queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import { getProviderCatalog } from "@/api/external";
@@ -24,6 +26,7 @@ import { fetchList, fetchLists } from "@/api/lists";
 import { getLanguages, getRawSettingsConfig, getSettingsConfig, getVaultTemplates } from "@/api/settings";
 
 export const queryKeys = {
+  activity: (params: Omit<GetActivityParams, "before">) => ["activity", params] as const,
   analytics: ["analytics"] as const,
   calendar: (params: GetCalendarParams) => ["calendar", params] as const,
   calendarPlanning: (params: GetCalendarPlanningParams) => ["calendarPlanning", params] as const,
@@ -60,6 +63,18 @@ export function analyticsQuery() {
   return queryOptions({
     queryKey: queryKeys.analytics,
     queryFn: ({ signal }) => getAnalytics({ signal }, apiFetch),
+  });
+}
+
+// The reverse-chronological activity feed, paged by month: each page returns the
+// next non-empty month(s), and `cursor` (a `YYYY-MM`) drives the following page.
+export function activityFeedQuery(params: Omit<GetActivityParams, "before">) {
+  return infiniteQueryOptions({
+    queryKey: queryKeys.activity(params),
+    queryFn: ({ pageParam, signal }) =>
+      getActivity({ ...params, before: pageParam ?? undefined }, { signal }, apiFetch),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.cursor ?? undefined,
   });
 }
 

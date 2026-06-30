@@ -76,6 +76,286 @@ pub async fn build_calendar(
     })
 }
 
+/// Builds one page of the reverse-chronological activity feed. Reuses the three
+/// month-scoped calendar builders, but pages by month: cheap discovery finds the
+/// months that have any activity (taxonomy/episodes from memory, daily notes from
+/// the body-free candidate walk), then only the page's months read bodies. Each
+/// `(date, entity)` is collapsed into one [`ActivityItem`].
+pub async fn build_activity(
+    library: &Library,
+    vfs: &dyn Vfs,
+    options: ActivityBuildOptions,
+) -> Result<ActivityResponse> {
+    let mut months = active_activity_months(library, vfs, &options).await?;
+    months.retain(|month| {
+        options
+            .before
+            .as_ref()
+            .is_none_or(|before| month.as_str() < before.as_str())
+    });
+
+    let target = options.months.max(1) as usize;
+    let mut items = Vec::new();
+    let mut filled = 0usize;
+    let mut consumed = 0usize;
+    for month in &months {
+        consumed += 1;
+        let Some((year, month_number)) = parse_month_key(month) else {
+            continue;
+        };
+        let month_items = group_activity_items(
+            library,
+            month_activity_entries(library, vfs, year, month_number, &options).await?,
+        );
+        if month_items.is_empty() {
+            continue;
+        }
+        items.extend(month_items);
+        filled += 1;
+        if filled >= target {
+            break;
+        }
+    }
+    items.sort_by(compare_activity_items);
+
+    // The cursor is the last month we advanced past; the next page filters
+    // strictly older than it (exclusive), so already-shown months never repeat.
+    let cursor = (consumed < months.len())
+        .then(|| months.get(consumed - 1).cloned())
+        .flatten();
+
+    Ok(ActivityResponse {
+        generated_at: library.generated_at.clone(),
+        cursor,
+        items,
+    })
+}
+
+/// The set of `YYYY-MM` months that have any activity, newest first. Computed
+/// without reading daily-note bodies so paging can skip empty months cheaply.
+async fn active_activity_months(
+    library: &Library,
+    vfs: &dyn Vfs,
+    options: &ActivityBuildOptions,
+) -> Result<Vec<String>> {
+    let mut months: HashSet<String> = HashSet::new();
+    if options.source != CalendarSource::DailyNote {
+        for record in &library.records {
+            let entity = &record.summary;
+            if options
+                .entity_type
+                .as_ref()
+                .is_some_and(|entity_type| entity.entity_type != *entity_type)
+            {
+                continue;
+            }
+            for item in metadata_date_entries(library, entity) {
+                if let Some(month) = item.date.as_deref().and_then(month_key) {
+                    months.insert(month);
+                }
+            }
+            for item in &record.episode_dates {
+                if let Some(month) = month_key(&item.date) {
+                    months.insert(month);
+                }
+            }
+        }
+    }
+    if options.source != CalendarSource::Taxonomy {
+        // The daily-note candidate walk reads no bodies, and a note can mention any
+        // type, so the `entity_type` filter isn't applied here — the per-entry
+        // builders below do the precise filtering when the month is read.
+        for note in daily_note_candidates(&library.config, vfs, None, None, true).await? {
+            if let Some(month) = note.date.as_deref().and_then(month_key) {
+                months.insert(month);
+            }
+        }
+    }
+    let mut months: Vec<String> = months.into_iter().collect();
+    months.sort_by(|a, b| b.cmp(a));
+    Ok(months)
+}
+
+/// All calendar entries for one month, assembled exactly as [`build_calendar`]
+/// does minus the day bucketing.
+async fn month_activity_entries(
+    library: &Library,
+    vfs: &dyn Vfs,
+    year: i32,
+    month: u32,
+    options: &ActivityBuildOptions,
+) -> Result<Vec<CalendarEntry>> {
+    let build = CalendarBuildOptions {
+        year,
+        month,
+        entity_type: options.entity_type.clone(),
+        source: options.source,
+    };
+    let mut entries = Vec::new();
+    if options.source != CalendarSource::DailyNote {
+        entries.extend(taxonomy_calendar_entries(library, &build));
+        entries.extend(episode_calendar_entries(library, &build));
+    }
+    if options.source != CalendarSource::Taxonomy {
+        entries.extend(daily_note_calendar_entries(library, vfs, &build).await?);
+    }
+    Ok(entries)
+}
+
+/// Groups a month's calendar entries by `(date, entity)` into activity items,
+/// preserving first-seen order (the caller re-sorts the merged page).
+fn group_activity_items(library: &Library, entries: Vec<CalendarEntry>) -> Vec<ActivityItem> {
+    let mut order: Vec<(String, String)> = Vec::new();
+    let mut groups: HashMap<(String, String), (EntitySummary, Vec<CalendarEntry>)> = HashMap::new();
+    for entry in entries {
+        let key = (entry.date.clone(), entry.entity.id.clone());
+        groups
+            .entry(key.clone())
+            .or_insert_with(|| {
+                order.push(key.clone());
+                (entry.entity.clone(), Vec::new())
+            })
+            .1
+            .push(entry);
+    }
+    order
+        .into_iter()
+        .filter_map(|key| {
+            let (entity, grouped) = groups.remove(&key)?;
+            let entries = fold_activity_entries(library, &entity, grouped);
+            Some(ActivityItem {
+                date: key.0,
+                entity,
+                entries,
+            })
+        })
+        .collect()
+}
+
+/// Folds the calendar entries for one `(date, entity)` into activity entries:
+/// date-field stamps (role resolved from the schema), episode dates aggregated
+/// per air/completion role, and the daily-note mention. Ordered taxonomy →
+/// episode → daily-note, matching the calendar's per-source ranking.
+fn fold_activity_entries(
+    library: &Library,
+    entity: &EntitySummary,
+    entries: Vec<CalendarEntry>,
+) -> Vec<ActivityEntry> {
+    let mut out = Vec::new();
+
+    let mut date_fields: Vec<&CalendarEntry> = entries
+        .iter()
+        .filter(|entry| entry.source == CalendarEntrySource::Taxonomy)
+        .collect();
+    date_fields.sort_by(|a, b| {
+        compare_string(
+            a.date_field.as_deref().unwrap_or_default(),
+            b.date_field.as_deref().unwrap_or_default(),
+        )
+    });
+    for entry in date_fields {
+        let mut activity = activity_entry(CalendarEntrySource::Taxonomy);
+        activity.role = entry
+            .date_field
+            .as_deref()
+            .and_then(|field| date_field_role(library, &entity.entity_type, field));
+        activity.date_field = entry.date_field.clone();
+        activity.raw_date = entry.raw_date.clone();
+        out.push(activity);
+    }
+
+    for role in [EpisodeDateRole::Completed, EpisodeDateRole::Scheduled] {
+        let episodes: Vec<ActivityEpisodeRef> = entries
+            .iter()
+            .filter_map(|entry| entry.episode.as_ref())
+            .filter(|episode| episode.role == role)
+            .map(|episode| ActivityEpisodeRef {
+                key: episode.key.clone(),
+                title: episode.title.clone(),
+            })
+            .collect();
+        if episodes.is_empty() {
+            continue;
+        }
+        let heading = entries
+            .iter()
+            .filter_map(|entry| entry.episode.as_ref())
+            .find(|episode| episode.role == role)
+            .map(|episode| episode.heading.clone())
+            .unwrap_or_default();
+        let mut activity = activity_entry(CalendarEntrySource::Episode);
+        activity.episode_role = Some(role);
+        activity.heading = Some(heading);
+        activity.episodes = Some(episodes);
+        out.push(activity);
+    }
+
+    let snippets: Vec<CalendarSnippet> = entries
+        .iter()
+        .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
+        .filter_map(|entry| entry.snippets.clone())
+        .flatten()
+        .collect();
+    if let Some(note) = entries
+        .iter()
+        .find(|entry| entry.source == CalendarEntrySource::DailyNote)
+    {
+        let mut activity = activity_entry(CalendarEntrySource::DailyNote);
+        activity.note_path = note.note_path.clone();
+        activity.snippets = Some(snippets);
+        out.push(activity);
+    }
+
+    out
+}
+
+fn compare_activity_items(a: &ActivityItem, b: &ActivityItem) -> std::cmp::Ordering {
+    // Newest first, then a stable per-day ordering by type then title.
+    compare_string(&b.date, &a.date)
+        .then_with(|| compare_string(&a.entity.type_label, &b.entity.type_label))
+        .then_with(|| compare_string(&a.entity.title, &b.entity.title))
+}
+
+fn date_field_role(library: &Library, entity_type: &str, field: &str) -> Option<DateRole> {
+    library
+        .config
+        .types
+        .iter()
+        .find(|item| item.id == entity_type)
+        .and_then(|item| item.fields.iter().find(|item| item.field == field))
+        .and_then(|item| item.date_role)
+}
+
+fn activity_entry(source: CalendarEntrySource) -> ActivityEntry {
+    ActivityEntry {
+        source,
+        date_field: None,
+        raw_date: None,
+        role: None,
+        note_path: None,
+        snippets: None,
+        episode_role: None,
+        heading: None,
+        episodes: None,
+    }
+}
+
+/// The `YYYY-MM` prefix of a normalized `YYYY-MM-DD` date, validated.
+fn month_key(date: &str) -> Option<String> {
+    let prefix = date.get(..7)?;
+    let bytes = prefix.as_bytes();
+    let valid = bytes[..4].iter().all(u8::is_ascii_digit)
+        && bytes[4] == b'-'
+        && bytes[5].is_ascii_digit()
+        && bytes[6].is_ascii_digit();
+    valid.then(|| prefix.to_string())
+}
+
+fn parse_month_key(month: &str) -> Option<(i32, u32)> {
+    let (year, month) = month.split_once('-')?;
+    Some((year.parse().ok()?, month.parse().ok()?))
+}
+
 pub fn build_calendar_planning(
     library: &Library,
     options: CalendarPlanningOptions,

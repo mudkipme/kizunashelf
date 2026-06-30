@@ -11,6 +11,7 @@ import {
 import { settingsConfigQuery } from "@/api/queries";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { isDesktopRuntime } from "@/lib/desktop";
+import { ActivityPage } from "@/pages/activity-page";
 import { CalendarPage } from "@/pages/calendar-page";
 import { EntityCreatePage } from "@/pages/entity-create-page";
 import { EntityEditPage } from "@/pages/entity-edit-page";
@@ -101,6 +102,7 @@ function AppRoutes() {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/library" element={<LibraryPage />} />
       <Route path="/calendar" element={<CalendarPage />} />
+      <Route path="/activity" element={<ActivityPage />} />
       <Route path="/review" element={<ReviewPage />} />
       <Route path="/review/:queueId" element={<ReviewPage />} />
       <Route path="/statistics" element={<StatisticsPage />} />

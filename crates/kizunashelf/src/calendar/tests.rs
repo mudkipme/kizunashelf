@@ -3,6 +3,7 @@ use crate::types::{
     DateRole, EntityDateValue, EntityRecord, EntitySummary, EntityTypeConfig, EpisodeDate,
     EpisodeDateRole, FieldConfig, FieldType, KizunaConfig, Library,
 };
+use crate::vfs::InMemoryVfs;
 use std::collections::{BTreeMap, HashMap};
 
 #[test]
@@ -432,4 +433,186 @@ fn episode_calendar_entries_place_cached_dates_in_the_month() {
     assert_eq!(episode.title, "Pilot");
     // The heading comes from the type's episodes section (schema-driven).
     assert_eq!(episode.heading, "Tracks");
+}
+
+// --- activity feed --------------------------------------------------------
+
+fn activity_config(daily_paths: Option<Vec<String>>) -> KizunaConfig {
+    let mut anime = entity_type("anime", "Anime");
+    anime.fields = vec![date_field("aired", Some(DateRole::Completed))];
+    anime.body_sections = vec![crate::types::BodySection {
+        heading: "Episodes".to_string(),
+        kind: crate::types::BodySectionKind::Episodes,
+        external_fields: Vec::new(),
+        tracking: None,
+    }];
+    KizunaConfig {
+        vault_root: String::new(),
+        taxonomy_root: "Taxonomy".to_string(),
+        asset_root: None,
+        content_writable: None,
+        home: None,
+        daily_notes: daily_paths.map(|paths| crate::types::DailyNotesConfig {
+            paths,
+            date_format: None,
+        }),
+        tags: None,
+        types: vec![anime],
+    }
+}
+
+fn activity_options(before: Option<&str>, months: u32) -> ActivityBuildOptions {
+    ActivityBuildOptions {
+        before: before.map(str::to_string),
+        months,
+        entity_type: None,
+        source: CalendarSource::All,
+    }
+}
+
+#[tokio::test]
+async fn build_activity_collapses_all_sources_for_one_date_and_entity() {
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![date_value("aired", "2024-02-12")];
+    let mut rec = record(entity);
+    rec.episode_dates = vec![EpisodeDate {
+        key: "1".to_string(),
+        title: "Pilot".to_string(),
+        date: "2024-02-12".to_string(),
+        role: EpisodeDateRole::Completed,
+    }];
+    let library = Library::new(
+        activity_config(Some(vec!["Journal".to_string()])),
+        vec![rec],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+
+    let vfs = InMemoryVfs::new();
+    vfs.insert_file(
+        "Journal/2024-02-12.md",
+        "- watched [[Star Voyager]] 12 #Anime\n",
+    );
+
+    let response = build_activity(&library, &vfs, activity_options(None, 12))
+        .await
+        .unwrap();
+
+    // The daily-note line, the completed date stamp, and the episode completion
+    // all share (2024-02-12, anime:sv) and collapse into one item.
+    assert_eq!(response.items.len(), 1);
+    let item = &response.items[0];
+    assert_eq!(item.date, "2024-02-12");
+    assert_eq!(item.entity.id, "anime:sv");
+    assert_eq!(item.entries.len(), 3);
+    let sources: Vec<_> = item.entries.iter().map(|entry| entry.source).collect();
+    assert!(sources.contains(&CalendarEntrySource::Taxonomy));
+    assert!(sources.contains(&CalendarEntrySource::Episode));
+    assert!(sources.contains(&CalendarEntrySource::DailyNote));
+
+    let date_field = item
+        .entries
+        .iter()
+        .find(|entry| entry.source == CalendarEntrySource::Taxonomy)
+        .unwrap();
+    // The role is resolved from the schema, not guessed from the field name.
+    assert_eq!(date_field.role, Some(DateRole::Completed));
+    assert_eq!(date_field.date_field.as_deref(), Some("aired"));
+
+    let note = item
+        .entries
+        .iter()
+        .find(|entry| entry.source == CalendarEntrySource::DailyNote)
+        .unwrap();
+    assert!(note
+        .snippets
+        .as_ref()
+        .unwrap()
+        .iter()
+        .any(|snippet| snippet.text.contains("12")));
+}
+
+#[tokio::test]
+async fn build_activity_aggregates_an_episode_binge_into_one_entry() {
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    let mut rec = record(entity);
+    rec.episode_dates = (3..=6)
+        .map(|number| EpisodeDate {
+            key: number.to_string(),
+            title: format!("Episode {number}"),
+            date: "2024-05-01".to_string(),
+            role: EpisodeDateRole::Completed,
+        })
+        .collect();
+    let library = Library::new(
+        activity_config(None),
+        vec![rec],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    let response = build_activity(&library, &vfs, activity_options(None, 12))
+        .await
+        .unwrap();
+
+    assert_eq!(response.items.len(), 1);
+    let entries = &response.items[0].entries;
+    assert_eq!(entries.len(), 1);
+    let episode = &entries[0];
+    assert_eq!(episode.source, CalendarEntrySource::Episode);
+    assert_eq!(episode.episode_role, Some(EpisodeDateRole::Completed));
+    let keys: Vec<_> = episode
+        .episodes
+        .as_ref()
+        .unwrap()
+        .iter()
+        .map(|item| item.key.as_str())
+        .collect();
+    assert_eq!(keys, ["3", "4", "5", "6"]);
+}
+
+#[tokio::test]
+async fn build_activity_pages_by_month_and_terminates() {
+    let mut records = Vec::new();
+    for (index, date) in ["2024-01-15", "2024-03-15", "2024-05-15"]
+        .iter()
+        .enumerate()
+    {
+        let mut entity = summary("anime", "Anime", &format!("Show {index}"));
+        entity.id = format!("anime:{index}");
+        entity.dates = vec![date_value("aired", date)];
+        records.push(record(entity));
+    }
+    let library = Library::new(
+        activity_config(None),
+        records,
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    let page1 = build_activity(&library, &vfs, activity_options(None, 1))
+        .await
+        .unwrap();
+    assert_eq!(page1.items.len(), 1);
+    assert_eq!(page1.items[0].date, "2024-05-15");
+    assert_eq!(page1.cursor.as_deref(), Some("2024-05"));
+
+    let page2 = build_activity(&library, &vfs, activity_options(page1.cursor.as_deref(), 1))
+        .await
+        .unwrap();
+    assert_eq!(page2.items[0].date, "2024-03-15");
+    assert_eq!(page2.cursor.as_deref(), Some("2024-03"));
+
+    let page3 = build_activity(&library, &vfs, activity_options(page2.cursor.as_deref(), 1))
+        .await
+        .unwrap();
+    assert_eq!(page3.items[0].date, "2024-01-15");
+    assert_eq!(page3.cursor, None);
 }
