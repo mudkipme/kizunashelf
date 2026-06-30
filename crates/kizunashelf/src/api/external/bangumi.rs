@@ -51,10 +51,11 @@ impl ExternalProvider for BangumiProvider {
     }
 }
 
-/// Fetches a Bangumi subject's episodes as a single flat group. A subject is one
-/// season, so there are no sub-groups (matching the per-season-entity convention).
-/// Bangumi carries a Chinese (`name_cn`) and an original (`name`) title; the
-/// viewer's `language` picks which to prefer (Chinese for `zh`, else the original).
+/// Fetches a Bangumi subject's episodes and groups them by `disc` and `type` (see
+/// `bangumi_episode_groups`): music releases split across discs, anime separate the
+/// main run from OP/ED/SP. Bangumi carries a Chinese (`name_cn`) and an original
+/// (`name`) title; the viewer's `language` picks which to prefer (Chinese for `zh`,
+/// else the original).
 async fn fetch_bangumi_episodes(
     ref_value: &str,
     language: Option<&str>,
@@ -62,7 +63,7 @@ async fn fetch_bangumi_episodes(
     let subject_id = bangumi_subject_id(ref_value)
         .ok_or_else(|| ApiError::bad_request("Not a Bangumi subject link or id"))?;
     let client = external_client();
-    let mut items: Vec<ProviderEpisodeItem> = Vec::new();
+    let mut episodes: Vec<Value> = Vec::new();
     let mut offset = 0usize;
     // Page through `/v0/episodes` (limit 100) until we've collected `total`, with a
     // hard cap so a malformed response can't loop forever.
@@ -76,27 +77,7 @@ async fn fetch_bangumi_episodes(
         if data.is_empty() {
             break;
         }
-        for episode in data {
-            let key = episode
-                .get("sort")
-                .or_else(|| episode.get("ep"))
-                .and_then(format_episode_number)
-                .unwrap_or_default();
-            let title_keys: &[&str] = if language.unwrap_or("zh").starts_with("zh") {
-                &["name_cn", "name"]
-            } else {
-                &["name", "name_cn"]
-            };
-            let title = first_non_empty(episode, title_keys);
-            if key.is_empty() && title.is_empty() {
-                continue;
-            }
-            let date = episode
-                .get("airdate")
-                .and_then(Value::as_str)
-                .and_then(crate::dates::iso_date);
-            items.push(ProviderEpisodeItem { key, title, date });
-        }
+        episodes.extend(data.iter().cloned());
         offset += 100;
         let total = page.get("total").and_then(Value::as_u64).unwrap_or(0) as usize;
         if offset >= total || offset >= 2000 {
@@ -104,11 +85,93 @@ async fn fetch_bangumi_episodes(
         }
     }
     Ok(ProviderEpisodes {
-        groups: vec![ProviderEpisodeGroup {
-            label: String::new(),
-            items,
-        }],
+        groups: bangumi_episode_groups(&episodes, language),
     })
+}
+
+/// Groups Bangumi episodes the way bgm.tv's own subject page does: by `disc` (music
+/// releases split tracks across discs) and by `type` (anime separate the main run
+/// from OP/ED/SP/PV/specials). A subject that varies on neither axis — the common
+/// single-disc, main-episodes-only case — collapses to one unlabelled group, so no
+/// spurious sub-heading is rendered. When it varies on one axis, labels carry that
+/// axis ("Disc 2", or "ED"); when it varies on both (rare), they carry both
+/// ("Disc 1 · OP"). Crucially, `sort` collides across types (the main run and the
+/// ED list both number from 1), so type grouping is what keeps episode keys unique.
+///
+/// The viewer's `language` picks the Chinese (`name_cn`) or original (`name`)
+/// title; the key is the per-group `sort` (falling back to `ep`).
+fn bangumi_episode_groups(episodes: &[Value], language: Option<&str>) -> Vec<ProviderEpisodeGroup> {
+    let title_keys: &[&str] = if language.unwrap_or("zh").starts_with("zh") {
+        &["name_cn", "name"]
+    } else {
+        &["name", "name_cn"]
+    };
+    // Keyed by (disc, type) and ordered by it: disc asc, then type asc puts the main
+    // run (type 0) ahead of SP/OP/ED (1/2/3) and PV/Other (4/6).
+    let mut groups: BTreeMap<(i64, i64), Vec<ProviderEpisodeItem>> = BTreeMap::new();
+    for episode in episodes {
+        let key = episode
+            .get("sort")
+            .or_else(|| episode.get("ep"))
+            .and_then(format_episode_number)
+            .unwrap_or_default();
+        let title = first_non_empty(episode, title_keys);
+        if key.is_empty() && title.is_empty() {
+            continue;
+        }
+        let date = episode
+            .get("airdate")
+            .and_then(Value::as_str)
+            .and_then(crate::dates::iso_date);
+        let disc = episode.get("disc").and_then(Value::as_i64).unwrap_or(0);
+        let episode_type = episode.get("type").and_then(Value::as_i64).unwrap_or(0);
+        groups
+            .entry((disc, episode_type))
+            .or_default()
+            .push(ProviderEpisodeItem { key, title, date });
+    }
+    let multi_disc = groups
+        .keys()
+        .map(|(disc, _)| disc)
+        .collect::<BTreeSet<_>>()
+        .len()
+        > 1;
+    let multi_type = groups
+        .keys()
+        .map(|(_, episode_type)| episode_type)
+        .collect::<BTreeSet<_>>()
+        .len()
+        > 1;
+    groups
+        .into_iter()
+        .map(|((disc, episode_type), items)| {
+            let mut parts: Vec<String> = Vec::new();
+            if multi_disc {
+                parts.push(format!("Disc {disc}"));
+            }
+            if multi_type {
+                parts.push(bangumi_episode_type_label(episode_type));
+            }
+            ProviderEpisodeGroup {
+                label: parts.join(" · "),
+                items,
+            }
+        })
+        .collect()
+}
+
+/// Human label for a Bangumi episode `type`. Unknown types fall back to `Type {n}`
+/// so hand-maintained or future categories aren't silently merged into the main run.
+fn bangumi_episode_type_label(episode_type: i64) -> String {
+    match episode_type {
+        0 => "Main".to_string(),
+        1 => "SP".to_string(),
+        2 => "OP".to_string(),
+        3 => "ED".to_string(),
+        4 => "PV".to_string(),
+        6 => "Other".to_string(),
+        other => format!("Type {other}"),
+    }
 }
 
 /// Formats a JSON number as an episode key: integers as `12`, decimals as `12.5`.
@@ -709,8 +772,80 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
 
 #[cfg(test)]
 mod tests {
-    use super::{bangumi_candidate, format_episode_number};
+    use super::{bangumi_candidate, bangumi_episode_groups, format_episode_number};
     use serde_json::json;
+
+    #[test]
+    fn multi_disc_subject_becomes_labelled_groups() {
+        // A music release (e.g. bgm.tv/subject/126760) splits tracks across discs;
+        // each disc must become its own "Disc N" group rather than one flat list.
+        let episodes = vec![
+            json!({ "disc": 1, "sort": 1, "name": "朝焼けのスターマイン" }),
+            json!({ "disc": 1, "sort": 2, "name": "Sunny Place" }),
+            json!({ "disc": 2, "sort": 1, "name": "Music Video" }),
+        ];
+        let groups = bangumi_episode_groups(&episodes, Some("ja"));
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].label, "Disc 1");
+        assert_eq!(groups[0].items.len(), 2);
+        assert_eq!(groups[1].label, "Disc 2");
+        assert_eq!(groups[1].items.len(), 1);
+        // Keys are the per-disc sort, so disc 2 restarts at 1.
+        assert_eq!(groups[1].items[0].key, "1");
+        assert_eq!(groups[1].items[0].title, "Music Video");
+    }
+
+    #[test]
+    fn single_disc_main_only_subject_stays_flat() {
+        // The common case (a normal single-season anime, a one-disc album) varies on
+        // neither axis and collapses to one unlabelled group — no sub-heading.
+        let episodes = vec![
+            json!({ "disc": 0, "type": 0, "sort": 1, "name_cn": "第一集" }),
+            json!({ "disc": 0, "type": 0, "sort": 2, "name_cn": "第二集" }),
+        ];
+        let groups = bangumi_episode_groups(&episodes, Some("zh"));
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].label, "");
+        assert_eq!(groups[0].items.len(), 2);
+        // `zh` viewer prefers `name_cn`.
+        assert_eq!(groups[0].items[0].title, "第一集");
+    }
+
+    #[test]
+    fn anime_with_op_ed_groups_by_type() {
+        // An anime that tracks OP/ED separately (e.g. bgm.tv/subject/543360): the
+        // main run and the OP/ED lists reuse `sort` 1.., so type grouping is what
+        // keeps keys unique and mirrors bgm.tv's sections.
+        let episodes = vec![
+            json!({ "disc": 0, "type": 0, "sort": 1, "name": "第1話" }),
+            json!({ "disc": 0, "type": 0, "sort": 2, "name": "第2話" }),
+            json!({ "disc": 0, "type": 2, "sort": 1, "name": "芽吹くとき" }),
+            json!({ "disc": 0, "type": 3, "sort": 1, "name": "感情グラス" }),
+        ];
+        let groups = bangumi_episode_groups(&episodes, Some("ja"));
+        // Ordered by type: Main (0) → OP (2) → ED (3).
+        let labels: Vec<_> = groups.iter().map(|group| group.label.as_str()).collect();
+        assert_eq!(labels, ["Main", "OP", "ED"]);
+        assert_eq!(groups[0].items.len(), 2);
+        // The OP and main run both have a `sort` 1 episode, now in distinct groups.
+        assert_eq!(groups[1].items[0].key, "1");
+        assert_eq!(groups[1].items[0].title, "芽吹くとき");
+    }
+
+    #[test]
+    fn multi_disc_and_type_combine_labels() {
+        // Varies on both axes (rare): labels carry disc and type together.
+        let episodes = vec![
+            json!({ "disc": 1, "type": 0, "sort": 1, "name": "A" }),
+            json!({ "disc": 2, "type": 0, "sort": 1, "name": "B" }),
+            json!({ "disc": 2, "type": 3, "sort": 1, "name": "C" }),
+        ];
+        let labels: Vec<_> = bangumi_episode_groups(&episodes, Some("ja"))
+            .into_iter()
+            .map(|group| group.label)
+            .collect();
+        assert_eq!(labels, ["Disc 1 · Main", "Disc 2 · Main", "Disc 2 · ED"]);
+    }
 
     #[test]
     fn episode_number_keeps_specials_and_drops_trailing_zero() {
