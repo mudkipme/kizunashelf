@@ -25,6 +25,10 @@ export const EntityTypeConfig = zod.object({
 })).optional().describe('`kind = external`: the provider field(s) that fill this heading. The matched\ncandidate\'s source is chosen, exactly like [`FieldConfig::external_fields`],\nso one heading can be filled from multiple providers.'),
   "tracking": zod.union([zod.enum(['checklist', 'none']),zod.null()]).optional().describe('`kind = episodes`: how watched\/read state is tracked. Defaults to `checklist`.')
 }).describe('A declared section of an entity\'s Markdown body, addressed by its heading.\nGeneralizes the old `bodyMappings`: a flat struct discriminated by `kind`\n(mirroring `FieldConfig`), so the same per-type mechanism covers\nexternal-metadata sections \*and\* the built-in episodes\/tracks list.')).optional(),
+  "log": zod.union([zod.object({
+  "section": zod.string().nullish(),
+  "lineFormat": zod.string().nullish()
+}).describe('Per-type daily-note logging config, under `types[].log`. \*\*Presence opts the\ntype into logging.\*\* The type\'s hashtag is written as a literal inside\n`lineFormat` (e.g. `- [[{title}]] {progress}{note} #Anime`), not a separate\nfield — so it\'s explicit, never inferred from the type name. Unset fields fall\nback to `dailyNotes.log`, then the built-ins.'),zod.null()]).optional().describe('Daily-note logging config. \*\*Its presence opts the type into logging\*\* — the\nquick-log \/ \"check episode\" flows write a line to the daily note only for\ntypes that declare a `log` block. The type\'s hashtag lives as a literal in\n`lineFormat`; unset fields fall back to `dailyNotes.log`. Resolve via\n[`KizunaConfig::resolve_log_config`].'),
   "fields": zod.array(zod.object({
   "field": zod.string(),
   "fieldType": zod.enum(['id', 'title', 'image', 'imageList', 'enum', 'enumList', 'progress', 'totalProgress', 'rating', 'bool', 'season', 'date', 'externalRef', 'relation', 'text', 'textList']),

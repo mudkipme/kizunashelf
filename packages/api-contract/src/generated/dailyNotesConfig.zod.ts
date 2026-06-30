@@ -8,7 +8,12 @@ import { z as zod } from 'zod';
 
 export const DailyNotesConfig = zod.object({
   "paths": zod.array(zod.string()).optional(),
-  "dateFormat": zod.string().nullish().describe('Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY\/MM\/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.')
+  "dateFormat": zod.string().nullish().describe('Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY\/MM\/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.'),
+  "template": zod.string().nullish().describe('Vault-relative path to a template used to seed a daily note that does not\nexist yet (date tokens substituted). Absent → a new note starts empty.'),
+  "log": zod.union([zod.object({
+  "section": zod.string().nullish().describe('Heading to write log lines under, as raw heading text (no `#`, default h2) —\nconsistent with `bodySections[].heading`.'),
+  "lineFormat": zod.string().nullish().describe('Line template. Tokens: `{title}` (the entity, rendered as a wikilink),\n`{progress}` (episode number), `{note}` (freeform), `{date}`, `{time}`.\nEmpty tokens collapse with surrounding whitespace.')
+}).describe('Global defaults for daily-note logging, under `dailyNotes.log`. Both fields are\noptional; a per-type [`TypeLogConfig`] overrides them, and the built-ins\n([`DEFAULT_LOG_SECTION`] \/ [`DEFAULT_LOG_LINE_FORMAT`]) fill any remaining gap.'),zod.null()]).optional().describe('Global defaults for daily-note logging — the heading written under and the\nline format. Per-type `log` blocks override these; see\n[`KizunaConfig::resolve_log_config`].')
 })
 
 export type DailyNotesConfig = zod.input<typeof DailyNotesConfig>;

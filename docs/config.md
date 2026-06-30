@@ -204,6 +204,8 @@ types:
     kind: external
     externalFields:
     - { source: bangumi, field: summary }
+  log:
+    lineFormat: "- [[{title}]] {progress}{note} #Anime"
   fields:
   - field: title
     fieldType: title
@@ -220,6 +222,7 @@ types:
 | `externalPriority` | no | string[] | Preferred external metadata providers for match/search workflows. |
 | `filename` | no | object | How the Markdown filename participates in titles. |
 | `bodySections` | no | array | Declared body sections by heading: external-metadata mappings and the built-in episodes list. See [bodySections](#bodysections). |
+| `log` | no | object | Daily-note logging config for this type (`section`, `lineFormat`). **Its presence opts the type into logging.** See [Daily-note logging](#daily-note-logging). |
 | `fields` | no | array | Frontmatter field definitions. |
 
 ### Filename Config
@@ -669,12 +672,18 @@ dailyNotes:
   paths:
   - Daily Notes
   dateFormat: YYYY-MM-DD
+  template: Templates/Daily Note.md
+  log:
+    section: Log
+    lineFormat: "- [[{title}]] {progress}{note}"
 ```
 
 | Key | Required | Type | Description |
 | --- | --- | --- | --- |
 | `paths` | no | string[] | Folders under `vaultRoot` to scan for daily note Markdown files. Defaults to `Daily Notes` when daily note features need paths. |
 | `dateFormat` | no | moment format string | [Moment.js-style](https://momentjs.com/docs/#/parsing/string-format/) date format (the same syntax Obsidian's Daily Notes uses) describing the file path relative to the daily-notes folder, without the `.md` extension. Supports subfolders, e.g. `YYYY/MM/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`. |
+| `template` | no | string | Vault-relative path to a template used to seed a daily note that doesn't exist yet (date tokens substituted). Absent → a new note starts empty. |
+| `log` | no | object | Global defaults for daily-note logging: `section` (heading to write log lines under) and `lineFormat` (the line template). Per-type `log` blocks override these. See [Daily-note logging](#daily-note-logging). |
 
 Daily note scanning:
 
@@ -687,6 +696,52 @@ The default date format matches filenames like:
 
 ```text
 2025-04-20.md
+```
+
+### Daily-note logging
+
+The quick-log / "check episode" flows append a line to the day's daily note. The
+*shape* of that line is schema-driven, configured in two places:
+
+- **`dailyNotes.log`** — global defaults: `section` (the heading to write under, as
+  raw heading text — no `#`, default h2, the same convention as `bodySections`) and
+  `lineFormat` (the line template).
+- **`types[].log`** — per-type override, and the **opt-in**: a type is loggable
+  *only if* it declares a `log` block. Same `section` / `lineFormat` keys. The
+  type's hashtag is written as a **literal inside `lineFormat`** (e.g.
+  `- [[{title}]] {progress}{note} #Anime`), never a separate field — so it's
+  explicit, never inferred from the type name.
+
+Resolution for a type: `type.log.<x>` → `dailyNotes.log.<x>` → built-in (`Log` for
+the section, `- [[{title}]] {progress}{note}` for the line). A blank or
+whitespace-only value is treated as unset.
+
+`lineFormat` tokens (empty tokens collapse with surrounding whitespace, so a
+no-episode log renders the bare `- [[Title]] #Tag`):
+
+| Token | Meaning |
+| --- | --- |
+| `{title}` | the entity, rendered as a `[[wikilink]]` |
+| `{progress}` | the episode number, when logging an episode |
+| `{note}` | freeform text the user typed |
+| `{date}` / `{time}` | the log's date / time |
+
+Example — anime logs an episode number, games log freeform progress:
+
+```yaml
+dailyNotes:
+  log:
+    section: Log
+    lineFormat: "- [[{title}]] {progress}{note}"
+
+types:
+- id: anime
+  log:
+    lineFormat: "- [[{title}]] {progress}{note} #Anime"   # → "- [[上伊那牡丹…]] 12 #Anime"
+- id: games
+  log:
+    section: Played
+    lineFormat: "- [[{title}]] {note} #Game"              # → "- [[PRAGMATA]] #Game"
 ```
 
 ## Complete Example

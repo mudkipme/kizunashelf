@@ -17,6 +17,13 @@ pub struct EntityTypeConfig {
     pub filename: Option<FilenameConfig>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub body_sections: Vec<BodySection>,
+    /// Daily-note logging config. **Its presence opts the type into logging** — the
+    /// quick-log / "check episode" flows write a line to the daily note only for
+    /// types that declare a `log` block. The type's hashtag lives as a literal in
+    /// `lineFormat`; unset fields fall back to `dailyNotes.log`. Resolve via
+    /// [`KizunaConfig::resolve_log_config`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub log: Option<TypeLogConfig>,
     // Required (and so non-optional in generated clients): a type always carries
     // a `fields` array, even if empty. The editor and templates always write it.
     pub fields: Vec<FieldConfig>,
@@ -229,6 +236,46 @@ pub struct DailyNotesConfig {
     /// e.g. `YYYY-MM-DD` or `YYYY/MM/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub date_format: Option<String>,
+    /// Vault-relative path to a template used to seed a daily note that does not
+    /// exist yet (date tokens substituted). Absent → a new note starts empty.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub template: Option<String>,
+    /// Global defaults for daily-note logging — the heading written under and the
+    /// line format. Per-type `log` blocks override these; see
+    /// [`KizunaConfig::resolve_log_config`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub log: Option<DailyNoteLogDefaults>,
+}
+
+/// Global defaults for daily-note logging, under `dailyNotes.log`. Both fields are
+/// optional; a per-type [`TypeLogConfig`] overrides them, and the built-ins
+/// ([`DEFAULT_LOG_SECTION`] / [`DEFAULT_LOG_LINE_FORMAT`]) fill any remaining gap.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct DailyNoteLogDefaults {
+    /// Heading to write log lines under, as raw heading text (no `#`, default h2) —
+    /// consistent with `bodySections[].heading`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub section: Option<String>,
+    /// Line template. Tokens: `{title}` (the entity, rendered as a wikilink),
+    /// `{progress}` (episode number), `{note}` (freeform), `{date}`, `{time}`.
+    /// Empty tokens collapse with surrounding whitespace.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub line_format: Option<String>,
+}
+
+/// Per-type daily-note logging config, under `types[].log`. **Presence opts the
+/// type into logging.** The type's hashtag is written as a literal inside
+/// `lineFormat` (e.g. `- [[{title}]] {progress}{note} #Anime`), not a separate
+/// field — so it's explicit, never inferred from the type name. Unset fields fall
+/// back to `dailyNotes.log`, then the built-ins.
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TypeLogConfig {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub section: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub line_format: Option<String>,
 }
 
 /// App-level configuration. Describes how *this machine* runs KizunaShelf and
@@ -292,12 +339,63 @@ pub const DEFAULT_ASSET_ROOT: &str = "Assets";
 /// a fallback.
 pub const DEFAULT_TAGS_FIELD: &str = "tags";
 
+/// Built-in daily-note log heading when neither the type nor `dailyNotes.log` sets
+/// one — raw heading text (default h2), matching `bodySections`.
+pub const DEFAULT_LOG_SECTION: &str = "Log";
+
+/// Built-in daily-note log line template. `{progress}`/`{note}` collapse when
+/// empty, so a no-episode log of a type with no per-type format renders the bare
+/// `- [[Title]]`.
+pub const DEFAULT_LOG_LINE_FORMAT: &str = "- [[{title}]] {progress}{note}";
+
+/// The resolved daily-note logging config for one entity type (see
+/// [`KizunaConfig::resolve_log_config`]).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ResolvedLog {
+    pub section: String,
+    pub line_format: String,
+}
+
+/// The first non-empty (trimmed) value, in priority order.
+fn first_nonempty(values: [Option<&str>; 2]) -> Option<&str> {
+    values
+        .into_iter()
+        .flatten()
+        .map(str::trim)
+        .find(|value| !value.is_empty())
+}
+
 impl KizunaConfig {
     /// The type config whose `id` matches `type_id`, or `None` for an unknown
     /// type. Field meaning is schema-driven, so callers resolve a type's config
     /// here rather than reasoning about entity types directly.
     pub fn type_config(&self, type_id: &str) -> Option<&EntityTypeConfig> {
         self.types.iter().find(|item| item.id == type_id)
+    }
+
+    /// The resolved daily-note logging config for `type_id`, or `None` when the
+    /// type isn't loggable (it has no `log` block). Section and line format fall
+    /// back: the type's overrides → the `dailyNotes.log` defaults → the built-ins.
+    pub fn resolve_log_config(&self, type_id: &str) -> Option<ResolvedLog> {
+        let type_log = self.type_config(type_id)?.log.as_ref()?;
+        let defaults = self
+            .daily_notes
+            .as_ref()
+            .and_then(|daily| daily.log.as_ref());
+        Some(ResolvedLog {
+            section: first_nonempty([
+                type_log.section.as_deref(),
+                defaults.and_then(|item| item.section.as_deref()),
+            ])
+            .unwrap_or(DEFAULT_LOG_SECTION)
+            .to_string(),
+            line_format: first_nonempty([
+                type_log.line_format.as_deref(),
+                defaults.and_then(|item| item.line_format.as_deref()),
+            ])
+            .unwrap_or(DEFAULT_LOG_LINE_FORMAT)
+            .to_string(),
+        })
     }
 
     /// Vault-relative directory where downloaded assets are stored.
@@ -679,5 +777,98 @@ pub struct LibraryDiagnostic {
 impl Entity {
     pub fn id(&self) -> &str {
         &self.summary.id
+    }
+}
+
+#[cfg(test)]
+mod log_config_tests {
+    use super::*;
+
+    fn config(
+        daily_log: Option<DailyNoteLogDefaults>,
+        type_log: Option<TypeLogConfig>,
+    ) -> KizunaConfig {
+        KizunaConfig {
+            vault_root: String::new(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: Some(DailyNotesConfig {
+                paths: Vec::new(),
+                date_format: None,
+                template: None,
+                log: daily_log,
+            }),
+            tags: None,
+            types: vec![EntityTypeConfig {
+                id: "anime".to_string(),
+                label: "Anime".to_string(),
+                icon: None,
+                path: "Anime".to_string(),
+                external_priority: Vec::new(),
+                filename: None,
+                body_sections: Vec::new(),
+                log: type_log,
+                fields: Vec::new(),
+            }],
+        }
+    }
+
+    fn type_log(section: Option<&str>, line_format: Option<&str>) -> TypeLogConfig {
+        TypeLogConfig {
+            section: section.map(str::to_string),
+            line_format: line_format.map(str::to_string),
+        }
+    }
+
+    fn defaults(section: Option<&str>, line_format: Option<&str>) -> DailyNoteLogDefaults {
+        DailyNoteLogDefaults {
+            section: section.map(str::to_string),
+            line_format: line_format.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn type_without_log_block_is_not_loggable() {
+        // A `dailyNotes.log` default alone doesn't make a type loggable.
+        let config = config(Some(defaults(Some("Log"), None)), None);
+        assert!(config.resolve_log_config("anime").is_none());
+        assert!(config.resolve_log_config("missing").is_none());
+    }
+
+    #[test]
+    fn resolution_prefers_type_then_defaults_then_builtins() {
+        // Line format from the type; section falls back to `dailyNotes.log`.
+        let mixed = config(
+            Some(defaults(Some("Journal"), None)),
+            Some(type_log(None, Some("- [[{title}]] #Anime"))),
+        );
+        let resolved = mixed.resolve_log_config("anime").unwrap();
+        assert_eq!(resolved.section, "Journal");
+        assert_eq!(resolved.line_format, "- [[{title}]] #Anime");
+
+        // The type override wins over the `dailyNotes.log` default.
+        let both = config(
+            Some(defaults(Some("Journal"), None)),
+            Some(type_log(Some("Watched"), None)),
+        );
+        assert_eq!(both.resolve_log_config("anime").unwrap().section, "Watched");
+
+        // Nothing set anywhere → the built-ins.
+        let bare = config(None, Some(type_log(None, None)));
+        let resolved = bare.resolve_log_config("anime").unwrap();
+        assert_eq!(resolved.section, DEFAULT_LOG_SECTION);
+        assert_eq!(resolved.line_format, DEFAULT_LOG_LINE_FORMAT);
+
+        // Blank / whitespace-only overrides are treated as unset.
+        let blank = config(
+            Some(defaults(Some("  "), None)),
+            Some(type_log(Some(""), None)),
+        );
+        assert_eq!(
+            blank.resolve_log_config("anime").unwrap().section,
+            DEFAULT_LOG_SECTION
+        );
     }
 }
