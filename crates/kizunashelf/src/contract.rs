@@ -772,11 +772,57 @@ pub struct ExternalCandidate {
     pub metadata: Map<String, Value>,
 }
 
+/// One field's value resolved from a candidate against the entity-type schema.
+/// The core does the schema-driven mapping (field-type normalization, list vs
+/// scalar, `externalRef`→url, date→season) so every runtime applies identical
+/// values; clients add only the human-facing label.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct MappedFieldValue {
+    pub field: String,
+    /// The resolved value: a scalar for scalar fields, an array for list fields.
+    pub value: Value,
+    /// The external source (provider id) the value came from.
+    pub source: String,
+    /// The provider field the value was read from. Absent for an `externalRef`
+    /// field (its value is the candidate URL, not a metadata field).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub external_field: Option<String>,
+    /// Whether the resolved value carries content (drives default selection).
+    pub has_value: bool,
+}
+
+/// A body-section heading filled from a candidate's metadata, pre-rendered to
+/// Markdown. Clients merge it into the entity body (replace/append by heading).
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct MappedBodySection {
+    /// Stable selection key (`heading:source:field`).
+    pub key: String,
+    pub heading: String,
+    pub source: String,
+    pub external_field: String,
+    pub markdown: String,
+    pub has_value: bool,
+}
+
+/// A search result: the raw candidate plus its schema-resolved field and body
+/// previews for the searched entity type.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalMatch {
+    pub candidate: ExternalCandidate,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fields: Vec<MappedFieldValue>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub body_sections: Vec<MappedBodySection>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalSearchResponse {
     pub providers: Vec<ExternalProviderSummary>,
-    pub items: Vec<ExternalCandidate>,
+    pub items: Vec<ExternalMatch>,
 }
 
 /// Year-over-year activity: a year × month matrix of dated entities, filterable

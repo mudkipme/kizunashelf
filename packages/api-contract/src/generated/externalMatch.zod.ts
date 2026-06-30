@@ -6,17 +6,9 @@
  */
 import { z as zod } from 'zod';
 
-export const externalSearchResponseItemsItemCandidateTitlesDefault = {};
-export const externalSearchResponseItemsItemCandidateMetadataDefault = {};
-export const ExternalSearchResponse = zod.object({
-  "providers": zod.array(zod.object({
-  "id": zod.string(),
-  "label": zod.string(),
-  "enabled": zod.boolean(),
-  "searchSupported": zod.boolean().describe('Whether the provider supports free-text search (vs. URL\/ID resolution only).'),
-  "reason": zod.string().nullish()
-})),
-  "items": zod.array(zod.object({
+export const externalMatchCandidateTitlesDefault = {};
+export const externalMatchCandidateMetadataDefault = {};
+export const ExternalMatch = zod.object({
   "candidate": zod.object({
   "provider": zod.string(),
   "sourceId": zod.string(),
@@ -25,8 +17,8 @@ export const ExternalSearchResponse = zod.object({
   "originalTitle": zod.string().nullish(),
   "brief": zod.string().nullish(),
   "coverUrl": zod.string().nullish(),
-  "titles": zod.record(zod.string(), zod.string()).default(externalSearchResponseItemsItemCandidateTitlesDefault),
-  "metadata": zod.record(zod.string(), zod.unknown()).default(externalSearchResponseItemsItemCandidateMetadataDefault)
+  "titles": zod.record(zod.string(), zod.string()).default(externalMatchCandidateTitlesDefault),
+  "metadata": zod.record(zod.string(), zod.unknown()).default(externalMatchCandidateMetadataDefault)
 }),
   "fields": zod.array(zod.object({
   "field": zod.string(),
@@ -43,8 +35,7 @@ export const ExternalSearchResponse = zod.object({
   "markdown": zod.string(),
   "hasValue": zod.boolean()
 }).describe('A body-section heading filled from a candidate\'s metadata, pre-rendered to\nMarkdown. Clients merge it into the entity body (replace\/append by heading).')).optional()
-}).describe('A search result: the raw candidate plus its schema-resolved field and body\npreviews for the searched entity type.'))
-})
+}).describe('A search result: the raw candidate plus its schema-resolved field and body\npreviews for the searched entity type.')
 
-export type ExternalSearchResponse = zod.input<typeof ExternalSearchResponse>;
-export type ExternalSearchResponseOutput = zod.output<typeof ExternalSearchResponse>;
+export type ExternalMatch = zod.input<typeof ExternalMatch>;
+export type ExternalMatchOutput = zod.output<typeof ExternalMatch>;

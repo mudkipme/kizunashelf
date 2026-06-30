@@ -4470,7 +4470,7 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ExternalCandidate"
+              "$ref": "#/components/schemas/ExternalMatch"
             }
           }
         },
@@ -4507,6 +4507,30 @@
           "label",
           "enabled",
           "searchSupported"
+        ]
+      },
+      "ExternalMatch": {
+        "description": "A search result: the raw candidate plus its schema-resolved field and body\npreviews for the searched entity type.",
+        "type": "object",
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/ExternalCandidate"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MappedFieldValue"
+            }
+          },
+          "bodySections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MappedBodySection"
+            }
+          }
+        },
+        "required": [
+          "candidate"
         ]
       },
       "ExternalCandidate": {
@@ -4560,6 +4584,72 @@
           "sourceId",
           "url",
           "title"
+        ]
+      },
+      "MappedFieldValue": {
+        "description": "One field's value resolved from a candidate against the entity-type schema.\nThe core does the schema-driven mapping (field-type normalization, list vs\nscalar, `externalRef`→url, date→season) so every runtime applies identical\nvalues; clients add only the human-facing label.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "value": {
+            "description": "The resolved value: a scalar for scalar fields, an array for list fields."
+          },
+          "source": {
+            "description": "The external source (provider id) the value came from.",
+            "type": "string"
+          },
+          "externalField": {
+            "description": "The provider field the value was read from. Absent for an `externalRef`\nfield (its value is the candidate URL, not a metadata field).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasValue": {
+            "description": "Whether the resolved value carries content (drives default selection).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "value",
+          "source",
+          "hasValue"
+        ]
+      },
+      "MappedBodySection": {
+        "description": "A body-section heading filled from a candidate's metadata, pre-rendered to\nMarkdown. Clients merge it into the entity body (replace/append by heading).",
+        "type": "object",
+        "properties": {
+          "key": {
+            "description": "Stable selection key (`heading:source:field`).",
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "externalField": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          },
+          "hasValue": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "heading",
+          "source",
+          "externalField",
+          "markdown",
+          "hasValue"
         ]
       },
       "EntitiesQuery": {

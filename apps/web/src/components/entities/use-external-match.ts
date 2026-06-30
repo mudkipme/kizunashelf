@@ -4,14 +4,15 @@ import { errorMessage } from "@/api/client";
 import { downloadAssets, searchSources } from "@/api/entities";
 import { isRemoteAsset } from "@/lib/asset-src";
 import {
-  candidateBodyPatch,
-  candidateBodyPreviewEntries,
-  candidateMetadataEntries,
-  candidateMetadataPatch,
-  candidateMetadataPreviewEntries,
   externalProviderPriority,
+  matchBodyPatch,
+  matchBodyPreviewEntries,
+  matchFieldPatch,
+  matchFieldPreviewEntries,
+  matchSelectableBodySections,
+  matchSelectableFields,
 } from "@/lib/external-metadata";
-import type { ExternalCandidate, ExternalProviderCatalog, TypeConfig } from "@/types/api";
+import type { ExternalMatch, ExternalProviderCatalog, TypeConfig } from "@/types/api";
 
 type ExternalRefs = Record<string, string | undefined>;
 
@@ -43,9 +44,9 @@ export function useExternalMatch({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [provider, setProvider] = useState("all");
-  const [candidates, setCandidates] = useState<ExternalCandidate[]>([]);
+  const [candidates, setCandidates] = useState<ExternalMatch[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<ExternalCandidate>();
+  const [selectedCandidate, setSelectedCandidate] = useState<ExternalMatch>();
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [selectedBodySections, setSelectedBodySections] = useState<Set<string>>(new Set());
   const [emptyMessage, setEmptyMessage] = useState("No candidates loaded");
@@ -68,12 +69,12 @@ export function useExternalMatch({
   // the match feature is offered (independent of credentials).
   const externalSearchEnabled = schemaProviderOptions.length > 0;
   const metadataEntries = useMemo(
-    () => (selectedCandidate ? candidateMetadataPreviewEntries(selectedCandidate, typeConfig) : []),
+    () => (selectedCandidate ? matchFieldPreviewEntries(selectedCandidate, typeConfig) : []),
     [selectedCandidate, typeConfig],
   );
   const bodyEntries = useMemo(
-    () => (selectedCandidate ? candidateBodyPreviewEntries(selectedCandidate, typeConfig) : []),
-    [selectedCandidate, typeConfig],
+    () => (selectedCandidate ? matchBodyPreviewEntries(selectedCandidate) : []),
+    [selectedCandidate],
   );
   const existingExternalRefs = useMemo(
     () =>
@@ -129,10 +130,7 @@ export function useExternalMatch({
 
   const coverDownloadAvailable = useMemo(() => {
     if (!assetDownloadEnabled || !selectedCandidate || !typeConfig) return false;
-    const patch = candidateMetadataPatch(selectedCandidate, typeConfig, selectedFields) as Record<
-      string,
-      unknown
-    >;
+    const patch = matchFieldPatch(selectedCandidate, selectedFields);
     return (typeConfig.fields ?? []).some(
       (field) =>
         (field.fieldType === "image" || field.fieldType === "imageList") &&
@@ -201,30 +199,21 @@ export function useExternalMatch({
     [search],
   );
 
-  const chooseCandidate = useCallback(
-    (candidate: ExternalCandidate) => {
-      setSelectedCandidate(candidate);
-      setSelectedFields(new Set(candidateMetadataEntries(candidate, typeConfig).map((entry) => entry.field)));
-      setSelectedBodySections(
-        new Set(
-          candidateBodyPreviewEntries(candidate, typeConfig)
-            .filter((entry) => entry.hasValue)
-            .map((entry) => entry.key),
-        ),
-      );
-    },
-    [typeConfig],
-  );
+  const chooseCandidate = useCallback((match: ExternalMatch) => {
+    setSelectedCandidate(match);
+    setSelectedFields(new Set(matchSelectableFields(match)));
+    setSelectedBodySections(new Set(matchSelectableBodySections(match)));
+  }, []);
 
   const selectedPatch = useCallback(() => {
     if (!selectedCandidate) return {};
-    return candidateMetadataPatch(selectedCandidate, typeConfig, selectedFields);
-  }, [selectedCandidate, typeConfig, selectedFields]);
+    return matchFieldPatch(selectedCandidate, selectedFields);
+  }, [selectedCandidate, selectedFields]);
 
   const selectedBodyPatch = useCallback(() => {
     if (!selectedCandidate) return [];
-    return candidateBodyPatch(selectedCandidate, typeConfig, selectedBodySections);
-  }, [selectedCandidate, typeConfig, selectedBodySections]);
+    return matchBodyPatch(selectedCandidate, selectedBodySections);
+  }, [selectedCandidate, selectedBodySections]);
 
   return {
     open,

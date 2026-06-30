@@ -9,6 +9,7 @@ mod hardcover;
 mod igdb;
 mod mal;
 mod mangaupdates;
+mod mapping;
 mod musicbrainz;
 mod open_library;
 mod spotify;
@@ -326,14 +327,9 @@ pub(crate) async fn external_search(
             "External search requires a concrete entity type",
         ));
     };
-    if !library
-        .config
-        .types
-        .iter()
-        .any(|type_config| type_config.id == entity_type)
-    {
+    let Some(type_config) = library.config.type_config(entity_type) else {
         return Err(ApiError::bad_request("Unknown entity type"));
-    }
+    };
     let configured_providers = configured_external_providers(&library.config, entity_type);
     let providers = provider_summaries(&state, &configured_providers);
 
@@ -377,12 +373,18 @@ pub(crate) async fn external_search(
     }
 
     // Reassemble in priority order so concurrency does not change result order.
-    let mut items = Vec::new();
+    let mut raw_items = Vec::new();
     for provider in &order {
         if let Some(found) = by_provider.remove(provider) {
-            items.extend(found);
+            raw_items.extend(found);
         }
     }
+    // Resolve each candidate against the schema once, server-side, so every
+    // runtime applies identical field/body values (the core's `mapping`).
+    let items = raw_items
+        .into_iter()
+        .map(|candidate| mapping::match_candidate(candidate, type_config))
+        .collect();
     Ok(Json(ExternalSearchResponse { providers, items }))
 }
 

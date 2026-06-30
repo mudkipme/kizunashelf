@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import type { FieldType } from "@/lib/type-config";
-import type { ExternalCandidate, FieldConfig, TypeConfig } from "@/types/api";
+import type { ExternalMatch, FieldConfig, MappedFieldValue, TypeConfig } from "@/types/api";
 
 import {
   applyExternalBodySections,
-  candidateMetadataEntries,
-  candidateMetadataPatch,
-  candidateMetadataPreviewEntries,
   externalBodySectionState,
+  matchBodyPatch,
+  matchFieldPatch,
+  matchFieldPreviewEntries,
+  matchSelectableFields,
   type ExternalBodyPatch,
 } from "./external-metadata";
 
@@ -70,128 +70,111 @@ describe("externalBodySectionState", () => {
   });
 });
 
-// Only `field`/`fieldType` are required; the rest are filled per-case.
-function field(extra: Partial<FieldConfig> & { fieldType: FieldType }): FieldConfig {
-  return { field: "x", ...extra } as FieldConfig;
+// The core resolves each field's value; the client only re-labels and selects.
+function fieldValue(extra: Partial<MappedFieldValue> & { field: string }): MappedFieldValue {
+  return { value: null, source: "bangumi", hasValue: true, ...extra };
+}
+
+function match(
+  fields: MappedFieldValue[],
+  bodySections: ExternalMatch["bodySections"] = [],
+): ExternalMatch {
+  return {
+    candidate: {
+      provider: "bangumi",
+      sourceId: "123",
+      url: "https://bgm.tv/subject/123",
+      title: "Star Voyager",
+      titles: {},
+      metadata: {},
+    },
+    fields,
+    bodySections,
+  };
+}
+
+function field(extra: Partial<FieldConfig> & { field: string }): FieldConfig {
+  return { fieldType: "text", ...extra } as FieldConfig;
 }
 
 function typeConfig(fields: FieldConfig[]): TypeConfig {
   return { id: "anime", label: "Anime", path: "Anime", fields };
 }
 
-function candidate(extra: Partial<ExternalCandidate>): ExternalCandidate {
-  return {
-    provider: "bangumi",
-    sourceId: "123",
-    url: "https://bgm.tv/subject/123",
-    title: "Star Voyager",
-    metadata: {},
-    ...extra,
-  };
-}
-
-describe("candidateMetadataPreviewEntries", () => {
-  it("maps an externalRef field to the candidate URL when the provider matches", () => {
-    const tc = typeConfig([
-      field({ field: "bangumi_id", fieldType: "externalRef", externalRef: "bangumi" }),
-    ]);
-    const entries = candidateMetadataPreviewEntries(
-      candidate({ provider: "bangumi", url: "https://bgm.tv/subject/123" }),
+describe("matchFieldPreviewEntries", () => {
+  it("decorates each core-mapped field with its schema label", () => {
+    const tc = typeConfig([field({ field: "name_jp", fieldType: "title", displayName: "Japanese title" })]);
+    const entries = matchFieldPreviewEntries(
+      match([fieldValue({ field: "name_jp", value: "スターボイジャー", externalField: "name" })]),
       tc,
     );
     expect(entries).toHaveLength(1);
-    expect(entries[0]).toMatchObject({
-      field: "bangumi_id",
-      value: "https://bgm.tv/subject/123",
-      source: "bangumi",
-      hasValue: true,
-    });
-  });
-
-  it("does not map an externalRef field when the provider differs", () => {
-    const tc = typeConfig([
-      field({ field: "bangumi_id", fieldType: "externalRef", externalRef: "bangumi" }),
-    ]);
-    expect(candidateMetadataPreviewEntries(candidate({ provider: "igdb" }), tc)).toEqual([]);
-  });
-
-  it("maps a scalar field from its external field, keyed off the schema not the field name", () => {
-    const tc = typeConfig([
-      field({ field: "name_jp", fieldType: "title", externalFields: [{ source: "bangumi", field: "name" }] }),
-    ]);
-    const entries = candidateMetadataPreviewEntries(
-      candidate({ metadata: { name: "スターボイジャー" } }),
-      tc,
-    );
     expect(entries[0]).toMatchObject({
       field: "name_jp",
-      externalField: "name",
+      label: "Japanese title",
       value: "スターボイジャー",
+      externalField: "name",
       hasValue: true,
     });
   });
 
-  it("matches the mapping source case-insensitively", () => {
-    const tc = typeConfig([
-      field({ field: "name", fieldType: "title", externalFields: [{ source: "BANGUMI", field: "name" }] }),
-    ]);
-    const entries = candidateMetadataPreviewEntries(
-      candidate({ provider: "bangumi", metadata: { name: "SV" } }),
-      tc,
-    );
-    expect(entries[0]?.value).toBe("SV");
-  });
-
-  it("flags a missing value as hasValue=false rather than omitting the entry", () => {
-    const tc = typeConfig([
-      field({ field: "name", fieldType: "title", externalFields: [{ source: "bangumi", field: "name" }] }),
-    ]);
-    const entries = candidateMetadataPreviewEntries(candidate({ metadata: {} }), tc);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].hasValue).toBe(false);
+  it("falls back to the field name when the schema has no matching field", () => {
+    const entries = matchFieldPreviewEntries(match([fieldValue({ field: "mystery", value: "x" })]), typeConfig([]));
+    expect(entries[0].label).toBe("mystery");
   });
 });
 
-describe("normalizeValueForField (via candidateMetadataEntries)", () => {
-  it("keeps an array for a list field and wraps a scalar into a single-item list", () => {
-    const tc = typeConfig([
-      field({ field: "genres", fieldType: "enumList", externalFields: [{ source: "bangumi", field: "tags" }] }),
-    ]);
-    expect(candidateMetadataEntries(candidate({ metadata: { tags: ["SF", "Space"] } }), tc)[0].value).toEqual([
-      "SF",
-      "Space",
-    ]);
-    expect(candidateMetadataEntries(candidate({ metadata: { tags: "SF" } }), tc)[0].value).toEqual(["SF"]);
-  });
-
-  it("flattens a list onto a scalar field as comma-joined text, dropping empties", () => {
-    const tc = typeConfig([
-      field({ field: "studio", fieldType: "text", externalFields: [{ source: "bangumi", field: "studios" }] }),
-    ]);
-    expect(candidateMetadataEntries(candidate({ metadata: { studios: ["A", "", "B"] } }), tc)[0].value).toBe(
-      "A, B",
+describe("matchSelectableFields", () => {
+  it("returns only the fields the core resolved to a value", () => {
+    const result = matchSelectableFields(
+      match([
+        fieldValue({ field: "name", value: "SV" }),
+        fieldValue({ field: "empty", value: [], hasValue: false }),
+      ]),
     );
-  });
-
-  it("drops entries with no value from candidateMetadataEntries", () => {
-    const tc = typeConfig([
-      field({ field: "name", fieldType: "title", externalFields: [{ source: "bangumi", field: "name" }] }),
-    ]);
-    expect(candidateMetadataEntries(candidate({ metadata: {} }), tc)).toHaveLength(0);
+    expect(result).toEqual(["name"]);
   });
 });
 
-describe("candidateMetadataPatch", () => {
-  it("includes only the selected fields", () => {
-    const tc = typeConfig([
-      field({ field: "name", fieldType: "title", externalFields: [{ source: "bangumi", field: "name" }] }),
-      field({ field: "genres", fieldType: "enumList", externalFields: [{ source: "bangumi", field: "tags" }] }),
+describe("matchFieldPatch", () => {
+  it("includes only selected fields that carry a value", () => {
+    const candidate = match([
+      fieldValue({ field: "name", value: "SV" }),
+      fieldValue({ field: "season", value: ["2026年春季"] }),
+      fieldValue({ field: "empty", value: [], hasValue: false }),
     ]);
-    const cand = candidate({ metadata: { name: "SV", tags: ["A"] } });
-    expect(candidateMetadataPatch(cand, tc, new Set(["name"]))).toEqual({ name: "SV" });
-    expect(candidateMetadataPatch(cand, tc, new Set(["name", "genres"]))).toEqual({
+    expect(matchFieldPatch(candidate, new Set(["name"]))).toEqual({ name: "SV" });
+    expect(matchFieldPatch(candidate, new Set(["name", "season", "empty"]))).toEqual({
       name: "SV",
-      genres: ["A"],
+      season: ["2026年春季"],
     });
+  });
+});
+
+describe("matchBodyPatch", () => {
+  it("maps selected body sections to heading/markdown patches", () => {
+    const candidate = match(
+      [],
+      [
+        {
+          key: "Summary:bangumi:summary",
+          heading: "Summary",
+          source: "bangumi",
+          externalField: "summary",
+          markdown: "A long voyage.",
+          hasValue: true,
+        },
+      ],
+    );
+    expect(matchBodyPatch(candidate, new Set(["Summary:bangumi:summary"]))).toEqual([
+      {
+        key: "Summary:bangumi:summary",
+        source: "bangumi",
+        field: "summary",
+        heading: "Summary",
+        markdown: "A long voyage.",
+      },
+    ]);
+    expect(matchBodyPatch(candidate, new Set())).toEqual([]);
   });
 });

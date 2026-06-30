@@ -97,9 +97,9 @@ export function EntityCreatePage() {
     };
     setFrontmatter(normalizeFrontmatter(next));
     setBody((currentBody) => applyExternalBodySections(currentBody, external.selectedBodyPatch()));
-    setBasename((currentBasename) => currentBasename || external.selectedCandidate?.title || "");
-    external.setQuery(external.selectedCandidate.title);
-    setMessage(`Using ${external.selectedCandidate.provider}: ${external.selectedCandidate.title}`);
+    setBasename((currentBasename) => currentBasename || external.selectedCandidate?.candidate.title || "");
+    external.setQuery(external.selectedCandidate.candidate.title);
+    setMessage(`Using ${external.selectedCandidate.candidate.provider}: ${external.selectedCandidate.candidate.title}`);
     external.setOpen(false);
   }
 

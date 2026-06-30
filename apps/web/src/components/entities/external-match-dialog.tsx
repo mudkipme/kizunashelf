@@ -20,7 +20,7 @@ import {
   type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { cn } from "@/lib/utils";
-import type { ExternalCandidate, ExternalProviderCatalog } from "@/types/api";
+import type { ExternalMatch, ExternalProviderCatalog } from "@/types/api";
 
 type ExternalRefAction = {
   field: string;
@@ -32,8 +32,8 @@ type ExternalMatchDialogProps = {
   open: boolean;
   query: string;
   provider: string;
-  candidates: ExternalCandidate[];
-  selectedCandidate?: ExternalCandidate;
+  candidates: ExternalMatch[];
+  selectedCandidate?: ExternalMatch;
   metadataEntries: ExternalMetadataPreviewEntry[];
   bodyEntries: ExternalBodyPreviewEntry[];
   selectedFields: Set<string>;
@@ -57,7 +57,7 @@ type ExternalMatchDialogProps = {
   onProviderChange: (value: string) => void;
   onSearch: () => void;
   onRefreshRef?: (provider: string, value: string) => void;
-  onChooseCandidate: (candidate: ExternalCandidate) => void;
+  onChooseCandidate: (match: ExternalMatch) => void;
   onSelectedFieldsChange: (fields: Set<string>) => void;
   onSelectedBodySectionsChange: (sections: Set<string>) => void;
   onApply: () => void;
@@ -222,18 +222,19 @@ const CandidateList = memo(function CandidateList({
   emptyMessage,
   onChooseCandidate,
 }: {
-  candidates: ExternalCandidate[];
-  selectedCandidate?: ExternalCandidate;
+  candidates: ExternalMatch[];
+  selectedCandidate?: ExternalMatch;
   providerCatalog?: ExternalProviderCatalog;
   emptyMessage: string;
-  onChooseCandidate: (candidate: ExternalCandidate) => void;
+  onChooseCandidate: (match: ExternalMatch) => void;
 }) {
   return (
     <div className="grid content-start gap-2">
-      {candidates.map((candidate) => {
+      {candidates.map((match) => {
+        const candidate = match.candidate;
         const selected =
-          selectedCandidate?.provider === candidate.provider &&
-          selectedCandidate.sourceId === candidate.sourceId;
+          selectedCandidate?.candidate.provider === candidate.provider &&
+          selectedCandidate.candidate.sourceId === candidate.sourceId;
         return (
           <button
             key={`${candidate.provider}:${candidate.sourceId}`}
@@ -242,7 +243,7 @@ const CandidateList = memo(function CandidateList({
               "min-w-0 rounded-md border p-3 text-left transition-colors hover:bg-accent",
               selected && "border-primary bg-accent",
             )}
-            onClick={() => onChooseCandidate(candidate)}
+            onClick={() => onChooseCandidate(match)}
           >
             <div className="flex min-w-0 items-center gap-2">
               <Badge variant="secondary">{externalSourceLabel(providerCatalog, candidate.provider)}</Badge>
@@ -273,7 +274,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
   onSelectedFieldsChange,
   onSelectedBodySectionsChange,
 }: {
-  selectedCandidate?: ExternalCandidate;
+  selectedCandidate?: ExternalMatch;
   metadataEntries: ExternalMetadataPreviewEntry[];
   bodyEntries: ExternalBodyPreviewEntry[];
   selectedFields: Set<string>;
@@ -356,7 +357,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                           : ""}
                       </span>
                       <span className="block break-words text-xs text-muted-foreground">
-                        {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
+                        {entry.hasValue ? entry.markdown : "No value returned"}
                       </span>
                     </span>
                   </label>

@@ -136,7 +136,7 @@ export function EntityEditPage() {
     setBody((currentBody) =>
       applyExternalBodySections(currentBody, external.selectedBodyPatch()),
     );
-    external.setQuery(external.selectedCandidate.title);
+    external.setQuery(external.selectedCandidate.candidate.title);
     external.setOpen(false);
   }
 

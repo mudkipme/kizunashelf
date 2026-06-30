@@ -1,32 +1,21 @@
-import {
-  configFields,
-  configuredFieldLabel,
-  isListFieldType,
-  type FieldConfig,
-} from "@/lib/type-config";
-import type { ExternalCandidate, ExternalProviderCatalog, ExternalProviderCatalogItem, TypeConfig } from "@/types/api";
+import { configFields, configuredFieldLabel } from "@/lib/type-config";
+import type {
+  ExternalMatch,
+  ExternalProviderCatalog,
+  ExternalProviderCatalogItem,
+  MappedBodySection,
+  MappedFieldValue,
+  TypeConfig,
+} from "@/types/api";
 
-export type ExternalMetadataEntry = {
-  field: string;
-  label: string;
-  value: unknown;
-};
+// The schema-driven mapping (which provider field fills which entity field, list
+// vs scalar, externalRef→url, date→season) lives in the Rust core and arrives on
+// each match as `fields`/`bodySections`. This module only adds the human-facing
+// label (presentation) and merges a chosen body section into live editor text.
 
-export type ExternalMetadataPreviewEntry = ExternalMetadataEntry & {
-  source: string;
-  externalField?: string;
-  hasValue: boolean;
-};
+export type ExternalMetadataPreviewEntry = MappedFieldValue & { label: string };
 
-export type ExternalBodyPreviewEntry = {
-  key: string;
-  source: string;
-  externalField: string;
-  heading: string;
-  value: unknown;
-  markdown: string;
-  hasValue: boolean;
-};
+export type ExternalBodyPreviewEntry = MappedBodySection;
 
 export type ExternalBodyPatch = {
   key: string;
@@ -107,87 +96,45 @@ export function externalTypesForSource(
   return [...(externalProvider(catalog, source)?.defaultExternalTypes ?? [])];
 }
 
-export function candidateMetadataEntries(
-  candidate: ExternalCandidate,
-  typeConfig: TypeConfig | undefined,
-): ExternalMetadataEntry[] {
-  return candidateMetadataPreviewEntries(candidate, typeConfig)
-    .filter((entry) => entry.hasValue)
-    .map(({ field, label, value }) => ({ field, label, value }));
-}
-
-export function candidateMetadataPreviewEntries(
-  candidate: ExternalCandidate,
+/// The core-mapped field values, decorated with the schema's display label so
+/// the preview can show "Original title", "Completed date", etc.
+export function matchFieldPreviewEntries(
+  match: ExternalMatch,
   typeConfig: TypeConfig | undefined,
 ): ExternalMetadataPreviewEntry[] {
-  const metadata = (candidate.metadata ?? {}) as Record<string, unknown>;
-  const entries: ExternalMetadataPreviewEntry[] = [];
-  const used = new Set<string>();
-  const fields = configFields(typeConfig);
-
-  for (const field of fields) {
-    const mapped = candidateMappedValueForField(candidate, metadata, field);
-    if (!mapped) continue;
-    addPreviewEntry(entries, used, field, mapped);
-  }
-
-  return entries;
+  const labels = fieldLabels(typeConfig);
+  return (match.fields ?? []).map((entry) => ({
+    ...entry,
+    label: labels.get(entry.field) ?? entry.field,
+  }));
 }
 
-export function candidateMetadataPatch(
-  candidate: ExternalCandidate,
-  typeConfig: TypeConfig | undefined,
-  fields: Set<string>,
-) {
-  const entries = candidateMetadataEntries(candidate, typeConfig);
+/// Fields the user can apply (those the core resolved to a non-empty value).
+export function matchSelectableFields(match: ExternalMatch): string[] {
+  return (match.fields ?? []).filter((entry) => entry.hasValue).map((entry) => entry.field);
+}
+
+export function matchFieldPatch(match: ExternalMatch, fields: Set<string>): Record<string, unknown> {
   return Object.fromEntries(
-    entries.filter((entry) => fields.has(entry.field)).map((entry) => [entry.field, entry.value]),
+    (match.fields ?? [])
+      .filter((entry) => entry.hasValue && fields.has(entry.field))
+      .map((entry) => [entry.field, entry.value]),
   );
 }
 
-export function candidateBodyPreviewEntries(
-  candidate: ExternalCandidate,
-  typeConfig: TypeConfig | undefined,
-): ExternalBodyPreviewEntry[] {
-  const metadata = (candidate.metadata ?? {}) as Record<string, unknown>;
-  const entries: ExternalBodyPreviewEntry[] = [];
-  // One heading can be filled from multiple sources; emit a preview per external
-  // field whose source matches the candidate's provider.
-  for (const section of typeConfig?.bodySections ?? []) {
-    if (section.kind !== "external") continue;
-    for (const externalField of section.externalFields ?? []) {
-      if (!externalSourceMatches(candidate.provider, externalField.source)) continue;
-      const markdown = formatExternalBodyValue(metadata[externalField.field]);
-      entries.push({
-        key: `${section.heading}:${externalField.source}:${externalField.field}`,
-        source: externalField.source,
-        externalField: externalField.field,
-        heading: section.heading,
-        value: metadata[externalField.field],
-        markdown,
-        hasValue: hasValue(markdown),
-      });
-    }
-  }
-  return entries;
+export function matchBodyPreviewEntries(match: ExternalMatch): ExternalBodyPreviewEntry[] {
+  return match.bodySections ?? [];
 }
 
-/// Every external-source id referenced by a type's external body sections.
-function externalSectionSources(typeConfig: TypeConfig | undefined): string[] {
-  const sources: string[] = [];
-  for (const section of typeConfig?.bodySections ?? []) {
-    if (section.kind !== "external") continue;
-    for (const externalField of section.externalFields ?? []) sources.push(externalField.source);
-  }
-  return sources;
+export function matchSelectableBodySections(match: ExternalMatch): string[] {
+  return (match.bodySections ?? []).filter((entry) => entry.hasValue).map((entry) => entry.key);
 }
 
-export function candidateBodyPatch(
-  candidate: ExternalCandidate,
-  typeConfig: TypeConfig | undefined,
+export function matchBodyPatch(
+  match: ExternalMatch,
   selectedBodySections: Set<string>,
 ): ExternalBodyPatch[] {
-  return candidateBodyPreviewEntries(candidate, typeConfig)
+  return (match.bodySections ?? [])
     .filter((entry) => entry.hasValue && selectedBodySections.has(entry.key))
     .map((entry) => ({
       key: entry.key,
@@ -206,70 +153,18 @@ export function externalBodySectionState(body: string, heading: string): Externa
   return findMarkdownHeadingSection(body, heading) ? "replace" : "append";
 }
 
-function addPreviewEntry(
-  entries: ExternalMetadataPreviewEntry[],
-  used: Set<string>,
-  field: FieldConfig,
-  mapped: { source: string; externalField?: string; value: unknown },
-) {
-  if (used.has(field.field)) return;
-  used.add(field.field);
-  const normalized = normalizeValueForField(field, mapped.value);
-  entries.push({
-    field: field.field,
-    label: configuredFieldLabel(field),
-    value: normalized,
-    source: mapped.source,
-    externalField: mapped.externalField,
-    hasValue: hasValue(normalized),
-  });
+function fieldLabels(typeConfig: TypeConfig | undefined): Map<string, string> {
+  return new Map(configFields(typeConfig).map((field) => [field.field, configuredFieldLabel(field)]));
 }
 
-function candidateMappedValueForField(
-  candidate: ExternalCandidate,
-  metadata: Record<string, unknown>,
-  field: FieldConfig,
-) {
-  if (field.fieldType === "externalRef" && externalRefMatches(candidate, field.externalRef ?? "")) {
-    return { source: candidate.provider, value: candidate.url };
+/// Every external-source id referenced by a type's external body sections.
+function externalSectionSources(typeConfig: TypeConfig | undefined): string[] {
+  const sources: string[] = [];
+  for (const section of typeConfig?.bodySections ?? []) {
+    if (section.kind !== "external") continue;
+    for (const externalField of section.externalFields ?? []) sources.push(externalField.source);
   }
-
-  const mapping = field.externalFields?.find((item) => externalSourceMatches(candidate.provider, item.source));
-  if (!mapping) return undefined;
-
-  return {
-    source: mapping.source,
-    externalField: mapping.field,
-    value: metadata[mapping.field],
-  };
-}
-
-function normalizeValueForField(field: FieldConfig, value: unknown) {
-  if (isListFieldType(field.fieldType)) {
-    // List-typed fields (enum list / text list / season / relation / image list)
-    // keep the external list as-is; a scalar is wrapped into a single-item list.
-    return Array.isArray(value) ? value : [value];
-  }
-  // A scalar field can't hold a list-shaped external value (e.g. genres), so
-  // flatten it to comma-separated text rather than writing a YAML array.
-  if (Array.isArray(value)) {
-    return value
-      .filter((item) => item !== null && item !== undefined && item !== "")
-      .join(", ");
-  }
-  return value;
-}
-
-function externalRefMatches(candidate: ExternalCandidate, externalRef: string) {
-  const expected = externalRef.trim().toLowerCase();
-  if (!expected) return false;
-  return externalSourceMatches(candidate.provider, expected);
-}
-
-function externalSourceMatches(provider: string, source: string) {
-  const expected = source.trim().toLowerCase();
-  if (!expected) return false;
-  return provider === expected;
+  return sources;
 }
 
 function addKnownSource(
@@ -286,24 +181,6 @@ function addKnownSource(
 function addKnownSupportedSource(target: Set<string>, supported: Set<string>, source: string) {
   const expected = source.trim().toLowerCase();
   if (supported.has(expected)) target.add(expected);
-}
-
-function hasValue(value: unknown): value is NonNullable<unknown> {
-  if (value === null || value === undefined) return false;
-  if (typeof value === "string") return value.trim().length > 0;
-  if (Array.isArray(value)) return value.length > 0;
-  return true;
-}
-
-
-function formatExternalBodyValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value.trim();
-  if (Array.isArray(value)) {
-    return value.map(formatExternalBodyValue).filter(Boolean).join("\n\n");
-  }
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return `\`\`\`json\n${JSON.stringify(value, null, 2)}\n\`\`\``;
 }
 
 function applyExternalBodySection(body: string, patch: ExternalBodyPatch) {
@@ -391,4 +268,3 @@ function externalProvider(
   const expected = source.trim().toLowerCase();
   return catalog?.providers.find((provider) => provider.id === expected);
 }
-
