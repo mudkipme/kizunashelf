@@ -56,7 +56,7 @@ export const ActivityResponse = zod.object({
   "relationCount": zod.number().min(activityResponseItemsItemEntityRelationCountMin)
 }),
   "entries": zod.array(zod.object({
-  "source": zod.union([zod.enum(['taxonomy', 'daily-note']),zod.literal("episode").describe('A dated episode\/track from an entity\'s episodes section.')]),
+  "source": zod.enum(['taxonomy', 'daily-note', 'episode']).describe('Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode\/track in the entity body.'),
   "dateField": zod.string().nullish().describe('`taxonomy`: the date field\'s name, its raw value, and its resolved role.'),
   "rawDate": zod.string().nullish(),
   "role": zod.union([zod.enum(['planning', 'started', 'completed']),zod.null()]).optional(),

@@ -975,8 +975,8 @@ pub struct CalendarResponse {
 #[serde(rename_all = "camelCase")]
 pub struct LogActivityRequest {
     /// `add` (default) records the activity; `remove` is its exact inverse.
-    #[serde(default)]
-    pub op: LogOp,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub op: Option<LogOp>,
     /// The entity's current revision — required when the log mutates the entity
     /// (an episode tick or a date stamp); ignored for a daily-note-only log.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -989,8 +989,8 @@ pub struct LogActivityRequest {
     pub date: Option<String>,
     /// Whether this records progress, a start, or a completion. Drives the
     /// (future) frontmatter date-stamp; does not affect the daily-note line.
-    #[serde(default)]
-    pub kind: LogKind,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<LogKind>,
     /// The episode this log refers to (its number feeds `{progress}`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub episode: Option<EpisodeSelect>,

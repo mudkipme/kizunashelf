@@ -4114,19 +4114,12 @@
         ]
       },
       "CalendarEntrySource": {
-        "oneOf": [
-          {
-            "type": "string",
-            "enum": [
-              "taxonomy",
-              "daily-note"
-            ]
-          },
-          {
-            "description": "A dated episode/track from an entity's episodes section.",
-            "type": "string",
-            "const": "episode"
-          }
+        "description": "Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode/track in the entity body.",
+        "type": "string",
+        "enum": [
+          "taxonomy",
+          "daily-note",
+          "episode"
         ]
       },
       "CalendarSnippet": {
@@ -5466,10 +5459,12 @@
         "properties": {
           "op": {
             "description": "`add` (default) records the activity; `remove` is its exact inverse.",
-            "default": "add",
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/LogOp"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -5489,10 +5484,12 @@
           },
           "kind": {
             "description": "Whether this records progress, a start, or a completion. Drives the\n(future) frontmatter date-stamp; does not affect the daily-note line.",
-            "default": "progress",
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/LogKind"
+              },
+              {
+                "type": "null"
               }
             ]
           },

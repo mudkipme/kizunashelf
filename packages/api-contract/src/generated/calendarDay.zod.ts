@@ -33,7 +33,7 @@ export const CalendarDay = zod.object({
   "entries": zod.array(zod.object({
   "id": zod.string(),
   "date": zod.string(),
-  "source": zod.union([zod.enum(['taxonomy', 'daily-note']),zod.literal("episode").describe('A dated episode\/track from an entity\'s episodes section.')]),
+  "source": zod.enum(['taxonomy', 'daily-note', 'episode']).describe('Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode\/track in the entity body.'),
   "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),

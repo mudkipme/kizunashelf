@@ -41,7 +41,8 @@ pub(crate) async fn log_activity(
     Json(request): Json<LogActivityRequest>,
 ) -> ApiResult<LogActivityResponse> {
     let dry_run = query.dry_run.unwrap_or(false);
-    let op = request.op;
+    let op = request.op.unwrap_or_default();
+    let kind = request.kind.unwrap_or_default();
     let library = if dry_run {
         get_library(&state).await?
     } else {
@@ -56,7 +57,7 @@ pub(crate) async fn log_activity(
 
     let type_config = library.config.type_config(&entity_type);
     let episode_section = type_config.and_then(episode_section).cloned();
-    let stamp_field = stamp_target_field(type_config, request.kind).map(str::to_string);
+    let stamp_field = stamp_target_field(type_config, kind).map(str::to_string);
     let (log_section, log_line_format) = match library.config.resolve_log_config(&entity_type) {
         Some(resolved) => (Some(resolved.section), Some(resolved.line_format)),
         None => (None, None),

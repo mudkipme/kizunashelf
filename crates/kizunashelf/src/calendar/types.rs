@@ -75,12 +75,13 @@ pub struct CalendarEntry {
     pub episode: Option<CalendarEpisode>,
 }
 
+/// Identifies whether a calendar entry came from taxonomy metadata, a daily
+/// note, or a dated episode/track in the entity body.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarEntrySource {
     Taxonomy,
     DailyNote,
-    /// A dated episode/track from an entity's episodes section.
     Episode,
 }
 
