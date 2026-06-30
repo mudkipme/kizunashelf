@@ -471,6 +471,7 @@ mod tests {
                 external_priority: Vec::new(),
                 filename: None,
                 body_sections: Vec::new(),
+                log: None,
                 fields: vec![
                     field("status", FieldType::Enum),
                     field("genres", FieldType::EnumList),

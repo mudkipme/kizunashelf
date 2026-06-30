@@ -45,6 +45,7 @@ fn entity_type(id: &str, label: &str) -> EntityTypeConfig {
         external_priority: Vec::new(),
         filename: None,
         body_sections: Vec::new(),
+        log: None,
         fields: Vec::new(),
     }
 }
@@ -205,6 +206,7 @@ fn metadata_date_entries_only_includes_schema_date_fields_with_a_role() {
             external_priority: Vec::new(),
             filename: None,
             body_sections: Vec::new(),
+            log: None,
             fields: vec![
                 date_field("aired", Some(DateRole::Completed)),
                 date_field("planned", Some(DateRole::Planning)),
@@ -320,6 +322,8 @@ fn activity_config(daily_paths: Option<Vec<String>>) -> KizunaConfig {
         daily_notes: daily_paths.map(|paths| crate::types::DailyNotesConfig {
             paths,
             date_format: None,
+            template: None,
+            log: None,
         }),
         tags: None,
         types: vec![anime],

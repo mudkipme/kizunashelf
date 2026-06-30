@@ -613,6 +613,120 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
 }
 
 #[tokio::test]
+async fn log_endpoint_writes_a_daily_note_line() {
+    let server = TestServer::new();
+    let path = format!(
+        "/api/entities/{}/log",
+        urlencoding::encode("anime:Star Voyager")
+    );
+
+    // Dry run: previews the line + the completed-date it would stamp; writes nothing.
+    let (status, preview) = request_json(
+        &server.app,
+        Method::POST,
+        &format!("{path}?dryRun=true"),
+        Some(json!({ "kind": "completed", "note": "rewatch done", "date": "2024-08-20" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    assert_eq!(preview["dryRun"], true);
+    assert_eq!(preview["section"], "Log");
+    let line = preview["line"].as_str().unwrap();
+    assert!(line.contains("[[Star Voyager]]"), "{line}");
+    assert!(line.contains("rewatch done #Anime"), "{line}");
+    assert_eq!(preview["willStampDate"]["field"], "complete_date");
+
+    // Real write (kind=progress → daily-note line only, no entity mutation, so no
+    // revision needed), then the same log again is idempotent.
+    let (status, written) = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({ "kind": "progress", "note": "rewatch done", "date": "2024-08-20" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{written}");
+    assert_eq!(written["dryRun"], false);
+    assert_eq!(written["lineAlreadyPresent"], false);
+
+    let (_, again) = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({ "kind": "progress", "note": "rewatch done", "date": "2024-08-20" })),
+    )
+    .await;
+    assert_eq!(again["lineAlreadyPresent"], true, "{again}");
+}
+
+#[tokio::test]
+async fn log_endpoint_applies_and_reverses_episode_and_date_stamp() {
+    let server = TestServer::new();
+    let entity = urlencoding::encode("anime:Star Voyager");
+    let log = format!("/api/entities/{entity}/log");
+
+    async fn revision_of(server: &TestServer, entity: &str) -> String {
+        server.ok_json(&format!("/api/entities/{entity}")).await["entity"]["revision"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+
+    // Complete it on a fixed date: stamps `complete_date`, writes a daily-note line.
+    let revision = revision_of(&server, &entity).await;
+    let (status, added) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "add", "kind": "completed", "date": "2024-08-20",
+            "note": "fin", "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{added}");
+    assert_eq!(added["willStampDate"]["field"], "complete_date");
+    assert_eq!(added["willStampDate"]["value"], "2024-08-20");
+    // The returned entity detail carries the new stamp.
+    assert_eq!(
+        added["entity"]["entity"]["frontmatter"]["complete_date"], "2024-08-20",
+        "{added}"
+    );
+    assert_eq!(added["lineAlreadyPresent"], false);
+    let note_path = added["notePath"].as_str().unwrap().to_string();
+
+    // Missing revision on a mutating log is rejected.
+    let (status, _) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({ "op": "add", "kind": "completed", "date": "2024-08-20" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    // Remove: clears the stamp (it equals the log date) and removes the exact line.
+    let revision = revision_of(&server, &entity).await;
+    let (status, removed) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "remove", "kind": "completed", "date": "2024-08-20",
+            "note": "fin", "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{removed}");
+    assert_eq!(removed["lineMatched"], true); // the exact line was found and removed
+    assert!(
+        removed["entity"]["entity"]["frontmatter"]["complete_date"].is_null(),
+        "{removed}"
+    );
+    let _ = note_path;
+}
+
+#[tokio::test]
 async fn settings_save_and_read_vault_config() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
@@ -1054,7 +1168,8 @@ impl TestServer {
                         { "field": "bgm_url", "fieldType": "externalRef", "displayName": "BGM", "externalRef": "bangumi" },
                         { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
                         { "field": "studio", "fieldType": "relation", "displayName": "Studio", "relationType": "studio" }
-                    ]
+                    ],
+                    "log": { "lineFormat": "- [[{title}]] {progress}{note} #Anime" }
                 },
                 {
                     "id": "games",
@@ -2381,29 +2496,28 @@ async fn episodes_detail_progress_update_and_revision_guard() {
     assert_eq!(episodes["groups"][0]["items"][1]["title"], "Recap");
     let revision = detail.1["entity"]["revision"].as_str().unwrap().to_string();
 
-    // Check the recap (the second item in Season 1) via the granular toggle.
+    // Check the recap (the second item in Season 1) by logging it (`op: add`) —
+    // the episode tick rides on `/log`, the single write path now.
     let body = json!({
-        "revision": revision,
-        "group": "Season 1",
-        "key": "12.5",
-        "index": 1,
-        "watched": true
+        "op": "add", "kind": "progress", "revision": revision,
+        "episode": { "group": "Season 1", "key": "12.5", "index": 1 },
+        "date": "2024-08-20",
     });
     let updated = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/episodes/watch",
+        "/api/entities/anime%3AShow/log",
         Some(body.clone()),
     )
     .await;
     assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
-    assert_eq!(updated.1["episodes"]["watched"], 2);
+    assert_eq!(updated.1["entity"]["episodes"]["watched"], 2);
 
     // The stale revision is now rejected.
     let stale = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/episodes/watch",
+        "/api/entities/anime%3AShow/log",
         Some(body),
     )
     .await;

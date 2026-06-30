@@ -339,6 +339,7 @@ fn test_config(vault_root: &str) -> KizunaConfig {
                 title_role: None,
             }),
             body_sections: Vec::new(),
+            log: None,
             fields: vec![FieldConfig {
                 field: "title".to_string(),
                 field_type: FieldType::Title,
@@ -598,6 +599,8 @@ fn daily_notes_config() -> KizunaConfig {
     config.daily_notes = Some(crate::types::DailyNotesConfig {
         paths: vec!["Journal".to_string()],
         date_format: None,
+        template: None,
+        log: None,
     });
     config
 }

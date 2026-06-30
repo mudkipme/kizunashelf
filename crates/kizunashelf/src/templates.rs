@@ -214,6 +214,8 @@ fn default_daily_notes() -> DailyNotesConfig {
     DailyNotesConfig {
         paths: vec!["Daily Notes".to_string()],
         date_format: Some("YYYY-MM-DD".to_string()),
+        template: None,
+        log: None,
     }
 }
 
@@ -351,6 +353,7 @@ fn media_type(
             title_role: None,
         }),
         body_sections: default_external_body_mappings(primary_source, "summary", "Summary"),
+        log: None,
         fields,
     }
 }
@@ -397,6 +400,7 @@ fn blank_type() -> EntityTypeConfig {
             title_role: Some(crate::types::TitleRole::Original),
         }),
         body_sections: Vec::new(),
+        log: None,
         fields: vec![
             field("id", FieldType::Id, "ID"),
             state,

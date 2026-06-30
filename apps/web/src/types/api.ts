@@ -53,6 +53,8 @@ export type {
   ListSection,
   ListsResponse,
   ListSummary,
+  LogActivityRequest,
+  LogActivityResponse,
   PathSuggestionsResponse,
   Relation,
   SaveSettingsRequest,
