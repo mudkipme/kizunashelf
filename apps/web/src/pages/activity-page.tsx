@@ -23,11 +23,15 @@ const sources = [
   { value: "daily-note", label: "Daily notes" },
 ] as const;
 
+// Recent leads — it's the everyday "what happened" view; Up next is already
+// surfaced on Home; All is the full ledger. Recent is also the default (below).
 const modes = [
-  { value: "all", label: "All" },
   { value: "recent", label: "Recent" },
   { value: "up-next", label: "Up next" },
+  { value: "all", label: "All" },
 ] as const;
+
+const DEFAULT_MODE = "recent";
 
 const dateRoleLabels: Record<string, string> = {
   started: "Started",
@@ -47,7 +51,8 @@ export function ActivityPage() {
       months: 1,
       ...(type !== "all" ? { type } : {}),
       ...(source !== "all" ? { source } : {}),
-      ...(mode !== "all" ? { mode } : {}),
+      // Always sent: the API defaults to "all", but the page defaults to "recent".
+      mode,
     }),
   );
 
@@ -73,9 +78,9 @@ export function ActivityPage() {
     return () => observer.disconnect();
   }, [feed.hasNextPage, feed.isFetchingNextPage, feed]);
 
-  function setParam(key: string, value: string) {
+  function setParam(key: string, value: string, defaultValue = "all") {
     const next = new URLSearchParams(searchParams);
-    if (value === "all") next.delete(key);
+    if (value === defaultValue) next.delete(key);
     else next.set(key, value);
     setSearchParams(next, { replace: true });
   }
@@ -92,7 +97,7 @@ export function ActivityPage() {
                 type="button"
                 variant={mode === item.value ? "secondary" : "outline"}
                 size="sm"
-                onClick={() => setParam("mode", item.value)}
+                onClick={() => setParam("mode", item.value, DEFAULT_MODE)}
               >
                 {item.label}
               </Button>
@@ -289,7 +294,7 @@ function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
 }
 
 function readMode(value: string | null): "all" | "recent" | "up-next" {
-  return value === "recent" || value === "up-next" ? value : "all";
+  return value === "all" || value === "up-next" ? value : DEFAULT_MODE;
 }
 
 function formatDay(date: string): string {
