@@ -72,7 +72,7 @@ import { todayLocal } from "@/lib/date";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
-import { coverTypeIds, fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
+import { coverTypeIds, entityFieldLabel, fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
 import { entityTitle } from "@/lib/title-language";
 import type { Entity } from "@/types/api";
 
@@ -351,6 +351,7 @@ export function EntityPage() {
                 entityId={entity.id}
                 revision={entity.revision}
                 kinds={logKinds}
+                fieldLabel={(field) => entityFieldLabel(labelsByType, entity.type, field)}
               />
             ) : null}
             <ManageListsDialog

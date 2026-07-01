@@ -40,12 +40,16 @@ export function QuickLogDialog({
   entityId,
   revision,
   kinds = ["progress"],
+  fieldLabel,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityId: string;
   revision: string;
   kinds?: Kind[];
+  /// Resolves a frontmatter field name to its schema display label (for the
+  /// "Stamps …" preview line). Falls back to the raw name when absent.
+  fieldLabel?: (field: string) => string;
 }) {
   const invalidateEntityData = useInvalidateEntityData();
   const [date, setDate] = useState(todayLocal());
@@ -136,7 +140,12 @@ export function QuickLogDialog({
             />
           </label>
 
-          <LogPreview reason={preventReason} data={preview.data} pending={preview.isFetching} />
+          <LogPreview
+            reason={preventReason}
+            data={preview.data}
+            pending={preview.isFetching}
+            fieldLabel={fieldLabel}
+          />
           {error ? <p className="text-xs text-destructive">{error}</p> : null}
         </div>
 
@@ -159,10 +168,12 @@ function LogPreview({
   reason,
   data,
   pending,
+  fieldLabel,
 }: {
   reason?: string;
   data?: Awaited<ReturnType<typeof postLogActivity>>;
   pending: boolean;
+  fieldLabel?: (field: string) => string;
 }) {
   if (reason) {
     return <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">{reason}</p>;
@@ -189,7 +200,8 @@ function LogPreview({
       ) : null}
       {data.willStampDate ? (
         <span className="text-muted-foreground">
-          Stamps {data.willStampDate.field} = {data.willStampDate.value}
+          Stamps {fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field} ={" "}
+          {data.willStampDate.value}
         </span>
       ) : null}
     </div>
