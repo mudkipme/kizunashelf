@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { ImageIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { activityFeedQuery, configQuery } from "@/api/queries";
+import { AssetImage } from "@/components/assets/asset-image";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
-import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
+import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityEntry, ActivityItem } from "@/types/api";
 
 type FieldLabels = ReadonlyMap<string, ReadonlyMap<string, string>>;
@@ -50,6 +52,8 @@ export function ActivityPage() {
   );
 
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
+  // Type ids that declare an image/imageList field — only those get a cover slot.
+  const coverTypes = useMemo(() => coverTypeIds(config.data?.types), [config.data]);
   const days = useMemo(
     () => groupByDay(feed.data?.pages.flatMap((page) => page.items) ?? []),
     [feed.data],
@@ -137,7 +141,12 @@ export function ActivityPage() {
                 </h2>
                 <div className="flex flex-col gap-2">
                   {day.items.map((item) => (
-                    <ActivityCard key={`${item.date}-${item.entity.id}`} item={item} labels={fieldLabels} />
+                    <ActivityCard
+                      key={`${item.date}-${item.entity.id}`}
+                      item={item}
+                      labels={fieldLabels}
+                      hasCover={coverTypes.has(item.entity.type)}
+                    />
                   ))}
                 </div>
               </section>
@@ -162,28 +171,49 @@ export function ActivityPage() {
   );
 }
 
-function ActivityCard({ item, labels }: { item: ActivityItem; labels: FieldLabels }) {
+function ActivityCard({
+  item,
+  labels,
+  hasCover,
+}: {
+  item: ActivityItem;
+  labels: FieldLabels;
+  hasCover: boolean;
+}) {
   const language = useTitleLanguage();
+  const href = `/entities/${encodeURIComponent(item.entity.id)}`;
   return (
-    <article className="rounded-md border p-3">
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <Badge variant="outline">{item.entity.typeLabel}</Badge>
-        <Link
-          to={`/entities/${encodeURIComponent(item.entity.id)}`}
-          className="min-w-0 break-words text-sm font-medium hover:underline"
-        >
-          {entityTitle(item.entity, language)}
+    <article className="flex items-start gap-3 rounded-md border p-3">
+      {/* Cover only for types with an image field; a placeholder fills the slot
+          when this entity has no cover value. */}
+      {hasCover ? (
+        <Link to={href} className="shrink-0">
+          <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded bg-muted">
+            <AssetImage
+              src={item.entity.image}
+              className="size-full object-cover"
+              fallback={<ImageIcon className="size-4 text-muted-foreground" />}
+            />
+          </div>
         </Link>
-      </div>
-      <div className="mt-2 flex flex-col gap-2">
-        {item.entries.map((entry, index) => (
-          <ActivityEntryRow
-            key={`${entry.source}-${index}`}
-            entry={entry}
-            entityType={item.entity.type}
-            labels={labels}
-          />
-        ))}
+      ) : null}
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Badge variant="outline">{item.entity.typeLabel}</Badge>
+          <Link to={href} className="min-w-0 break-words text-sm font-medium hover:underline">
+            {entityTitle(item.entity, language)}
+          </Link>
+        </div>
+        <div className="mt-2 flex flex-col gap-2">
+          {item.entries.map((entry, index) => (
+            <ActivityEntryRow
+              key={`${entry.source}-${index}`}
+              entry={entry}
+              entityType={item.entity.type}
+              labels={labels}
+            />
+          ))}
+        </div>
       </div>
     </article>
   );
