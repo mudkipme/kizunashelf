@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { configQuery, homeQuery } from "@/api/queries";
+import { ComingUpSection } from "@/components/home/coming-up-section";
 import { HomeSection } from "@/components/home/home-section";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Button } from "@/components/ui/button";
@@ -51,21 +52,20 @@ export function HomePage() {
 
         {loading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Loading</div>
-        ) : null}
-
-        {!loading && home.data?.sections.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            No home sections configured
-          </div>
-        ) : null}
-
-        {home.data?.sections.length ? (
+        ) : (
           <div className="flex flex-1 flex-col gap-6 p-4">
-            {home.data.sections.map((section) => (
-              <HomeSection key={section.id} section={section} labelsByType={labelsByType} />
-            ))}
+            <ComingUpSection />
+            {home.data?.sections.length ? (
+              home.data.sections.map((section) => (
+                <HomeSection key={section.id} section={section} labelsByType={labelsByType} />
+              ))
+            ) : (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No home sections configured
+              </div>
+            )}
           </div>
-        ) : null}
+        )}
       </div>
     </AppFrame>
   );

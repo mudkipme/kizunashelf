@@ -618,6 +618,64 @@
         }
       }
     },
+    "/api/upcoming": {
+      "get": {
+        "operationId": "getUpcoming",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "today",
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so \"upcoming\" is\njudged against the user's day rather than a UTC server clock (matters for a\nreminder that fires at a local morning). Falls back to the server's UTC date.",
+            "schema": {
+              "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so \"upcoming\" is\njudged against the user's day rather than a UTC server clock (matters for a\nreminder that fires at a local morning). Falls back to the server's UTC date.",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "months",
+            "description": "Horizon: how many non-empty months of upcoming items to include (1–12,\ndefault 3). Items are ascending, so the soonest come first.",
+            "schema": {
+              "description": "Horizon: how many non-empty months of upcoming items to include (1–12,\ndefault 3). Items are ascending, so the soonest come first.",
+              "type": "number",
+              "format": "double"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The upcoming-window feed: future release/planning dates and scheduled episode\nair dates within a horizon, ascending and flattened (no cursor). Daily-note\nmentions are excluded — this is the \"what's coming\" source for the Home \"Coming\nup\" section and the iOS reminder scheduler. Reuses [`ActivityItem`], so each\nitem already carries the entity (its `title` + `titles` map for localization +\ncover `image`) and the date's source (a date field with its role, or the\nepisodes airing that day).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpcomingResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/external/providers": {
       "get": {
         "operationId": "getExternalProviderCatalog",
@@ -4475,6 +4533,51 @@
         "required": [
           "key",
           "title"
+        ]
+      },
+      "UpcomingQuery": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so \"upcoming\" is\njudged against the user's day rather than a UTC server clock (matters for a\nreminder that fires at a local morning). Falls back to the server's UTC date.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "months": {
+            "description": "Horizon: how many non-empty months of upcoming items to include (1–12,\ndefault 3). Items are ascending, so the soonest come first.",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpcomingResponse": {
+        "description": "The upcoming-window feed: future release/planning dates and scheduled episode\nair dates within a horizon, ascending and flattened (no cursor). Daily-note\nmentions are excluded — this is the \"what's coming\" source for the Home \"Coming\nup\" section and the iOS reminder scheduler. Reuses [`ActivityItem`], so each\nitem already carries the entity (its `title` + `titles` map for localization +\ncover `image`) and the date's source (a date field with its role, or the\nepisodes airing that day).",
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            }
+          }
+        },
+        "required": [
+          "generatedAt",
+          "items"
         ]
       },
       "ExternalProviderCatalogResponse": {

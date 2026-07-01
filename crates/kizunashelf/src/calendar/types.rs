@@ -210,3 +210,17 @@ pub struct ActivityResponse {
     pub cursor: Option<String>,
     pub items: Vec<ActivityItem>,
 }
+
+/// The upcoming-window feed: future release/planning dates and scheduled episode
+/// air dates within a horizon, ascending and flattened (no cursor). Daily-note
+/// mentions are excluded — this is the "what's coming" source for the Home "Coming
+/// up" section and the iOS reminder scheduler. Reuses [`ActivityItem`], so each
+/// item already carries the entity (its `title` + `titles` map for localization +
+/// cover `image`) and the date's source (a date field with its role, or the
+/// episodes airing that day).
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpcomingResponse {
+    pub generated_at: String,
+    pub items: Vec<ActivityItem>,
+}

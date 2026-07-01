@@ -31,6 +31,8 @@ import type { HomeResponse } from "./generated/homeResponse.zod.js";
 export * from "./generated/client.js";
 export * from "./generated/activityResponse.zod.js";
 export * from "./generated/getActivityParams.zod.js";
+export * from "./generated/upcomingResponse.zod.js";
+export * from "./generated/getUpcomingParams.zod.js";
 export * from "./generated/logActivityRequest.zod.js";
 export * from "./generated/logActivityResponse.zod.js";
 export * from "./generated/analyticsResponse.zod.js";

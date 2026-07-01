@@ -613,6 +613,62 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
 }
 
 #[tokio::test]
+async fn upcoming_lists_future_dates_and_honors_client_today() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "games", "label": "Games", "path": "Games",
+                "filename": { "titleLanguage": "zh" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh" },
+                    { "field": "cover_url", "fieldType": "image" },
+                    { "field": "release_date", "fieldType": "date", "dateRole": "planning" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Games/PRAGMATA.md"),
+        "---\ntitle: PRAGMATA\ncover_url: https://example.com/p.jpg\nrelease_date: 2030-06-01\n---\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // Before the release: it's upcoming, carrying the entity title, cover, and the
+    // planning date field it came from. `today` is the client's local date.
+    let ahead = request_json(
+        &app,
+        Method::GET,
+        "/api/upcoming?today=2030-01-01&months=12",
+        None,
+    )
+    .await;
+    assert_eq!(ahead.0, StatusCode::OK, "{}", ahead.1);
+    let items = ahead.1["items"].as_array().unwrap();
+    assert_eq!(items.len(), 1, "{}", ahead.1);
+    assert_eq!(items[0]["date"], "2030-06-01");
+    assert_eq!(items[0]["entity"]["title"], "PRAGMATA");
+    assert_eq!(items[0]["entity"]["image"], "https://example.com/p.jpg");
+    let entry = &items[0]["entries"][0];
+    assert_eq!(entry["source"], "taxonomy");
+    assert_eq!(entry["dateField"], "release_date");
+    assert_eq!(entry["role"], "planning");
+
+    // After that date, it's no longer upcoming — the client's `today` drives it.
+    let after = request_json(
+        &app,
+        Method::GET,
+        "/api/upcoming?today=2030-08-01&months=12",
+        None,
+    )
+    .await;
+    assert_eq!(after.1["items"].as_array().unwrap().len(), 0, "{}", after.1);
+}
+
+#[tokio::test]
 async fn log_endpoint_writes_a_daily_note_line() {
     let server = TestServer::new();
     let path = format!(

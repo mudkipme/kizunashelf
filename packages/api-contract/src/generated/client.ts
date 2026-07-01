@@ -140,6 +140,10 @@ import type {
   GetStatsParams
 } from './getStatsParams.zod';
 
+import type {
+  GetUpcomingParams
+} from './getUpcomingParams.zod';
+
 import {
   HealthResponse
 } from './healthResponse.zod';
@@ -215,6 +219,10 @@ import {
 import type {
   ToggleEpisodeRequest
 } from './toggleEpisodeRequest.zod';
+
+import {
+  UpcomingResponse
+} from './upcomingResponse.zod';
 
 import type {
   UpdateEntityRequest
@@ -744,6 +752,42 @@ export const getActivity = async (params?: GetActivityParams, options?: RequestI
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? ActivityResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetUpcomingUrl = (params?: GetUpcomingParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/upcoming?${stringifiedParams}` : `/api/upcoming`
+}
+
+export const getUpcoming = async (params?: GetUpcomingParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<UpcomingResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetUpcomingUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? UpcomingResponse.parse(parsedBody) : parsedBody
   return data
 }
 

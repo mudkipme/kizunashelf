@@ -11,10 +11,12 @@ import {
   getHome,
   getStats,
   getTags,
+  getUpcoming,
   type GetActivityParams,
   type GetCalendarParams,
   type GetEntitiesParams,
   type GetStatsParams,
+  type GetUpcomingParams,
 } from "@kizunashelf/api-contract";
 import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
 
@@ -25,6 +27,7 @@ import { getLanguages, getRawSettingsConfig, getSettingsConfig, getVaultTemplate
 
 export const queryKeys = {
   activity: (params: Omit<GetActivityParams, "cursor">) => ["activity", params] as const,
+  upcoming: (params: GetUpcomingParams) => ["upcoming", params] as const,
   analytics: ["analytics"] as const,
   calendar: (params: GetCalendarParams) => ["calendar", params] as const,
   capabilities: ["capabilities"] as const,
@@ -72,6 +75,13 @@ export function activityFeedQuery(params: Omit<GetActivityParams, "cursor">) {
       getActivity({ ...params, cursor: pageParam ?? undefined }, { signal }, apiFetch),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.cursor ?? undefined,
+  });
+}
+
+export function upcomingQuery(params: GetUpcomingParams) {
+  return queryOptions({
+    queryKey: queryKeys.upcoming(params),
+    queryFn: ({ signal }) => getUpcoming(params, { signal }, apiFetch),
   });
 }
 

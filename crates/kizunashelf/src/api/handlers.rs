@@ -2,7 +2,7 @@ use super::error::{ApiError, ApiResult};
 use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{
     build_activity, build_calendar, ActivityBuildOptions, ActivityMode, ActivityResponse,
-    CalendarBuildOptions, CalendarSource,
+    CalendarBuildOptions, CalendarSource, UpcomingResponse,
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
@@ -309,6 +309,59 @@ pub(crate) async fn activity(
         )
         .await?,
     ))
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct UpcomingQuery {
+    /// Today's date (`YYYY-MM-DD`), the client's **local** date — so "upcoming" is
+    /// judged against the user's day rather than a UTC server clock (matters for a
+    /// reminder that fires at a local morning). Falls back to the server's UTC date.
+    today: Option<String>,
+    /// Horizon: how many non-empty months of upcoming items to include (1–12,
+    /// default 3). Items are ascending, so the soonest come first.
+    months: Option<f64>,
+    #[serde(rename = "type")]
+    entity_type: Option<String>,
+}
+
+/// The upcoming window: future planning/release dates + scheduled episode air
+/// dates, ascending, within a horizon. Excludes daily-note mentions. Reuses the
+/// up-next activity derivation (cache-driven discovery + today-reconciliation), so
+/// something already released/aired today doesn't resurface. Backs the Home
+/// "Coming up" section and the iOS reminder scheduler.
+pub(crate) async fn upcoming(
+    State(state): State<AppState>,
+    Query(query): Query<UpcomingQuery>,
+) -> ApiResult<UpcomingResponse> {
+    let library = get_library(&state).await?;
+    let months = clamp_number(query.months.unwrap_or(3.0), 1, 12) as u32;
+    let today = query
+        .today
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let activity = build_activity(
+        &library,
+        vfs.as_ref(),
+        ActivityBuildOptions {
+            cursor: None,
+            months,
+            entity_type: query.entity_type.filter(|item| item != "all"),
+            // Date fields + scheduled episodes, never daily-note mentions.
+            source: CalendarSource::Taxonomy,
+            mode: ActivityMode::UpNext,
+            today,
+        },
+    )
+    .await?;
+    Ok(Json(UpcomingResponse {
+        generated_at: activity.generated_at,
+        items: activity.items,
+    }))
 }
 
 fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSectionResponse {
