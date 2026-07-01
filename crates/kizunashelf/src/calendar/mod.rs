@@ -293,12 +293,25 @@ fn fold_activity_entries(
                     Some(DateRole::Started | DateRole::Completed)
                 )
         });
-    let completed_episode_keys: HashSet<&str> = entries
-        .iter()
-        .filter_map(|entry| entry.episode.as_ref())
-        .filter(|episode| episode.role == EpisodeDateRole::Completed)
-        .map(|episode| episode.key.as_str())
-        .collect();
+    // Global reconciliation (up next only): an episode completed on *any* date must
+    // not resurface as "up next" on its (possibly later) recorded air date — you've
+    // already watched it. Read the entity's full episode-date set, not just this
+    // (date, entity) group, so a watch on a different day still hides the schedule.
+    let completed_episode_keys: HashSet<&str> = if mode == ActivityMode::UpNext {
+        library
+            .record_by_id(&entity.id)
+            .map(|record| {
+                record
+                    .episode_dates
+                    .iter()
+                    .filter(|episode| episode.role == EpisodeDateRole::Completed)
+                    .map(|episode| episode.key.as_str())
+                    .collect()
+            })
+            .unwrap_or_default()
+    } else {
+        HashSet::new()
+    };
 
     let mut out = Vec::new();
 
@@ -348,11 +361,9 @@ fn fold_activity_entries(
             .filter_map(|entry| entry.episode.as_ref())
             .filter(|episode| episode.role == role)
             .filter(|episode| {
-                // Up next: only today-or-later, and not already completed today.
+                // Up next: today-or-later, and not already completed (on any date).
                 mode != ActivityMode::UpNext
-                    || (date >= today
-                        && !(date == today
-                            && completed_episode_keys.contains(episode.key.as_str())))
+                    || (date >= today && !completed_episode_keys.contains(episode.key.as_str()))
             })
             .map(|episode| ActivityEpisodeRef {
                 key: episode.key.clone(),

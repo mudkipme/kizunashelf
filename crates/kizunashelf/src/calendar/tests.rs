@@ -649,6 +649,51 @@ async fn build_activity_up_next_hides_today_items_already_done() {
 }
 
 #[tokio::test]
+async fn build_activity_up_next_hides_episode_completed_on_a_different_day() {
+    // Episode 5 airs 2024-07-01 (future) but was watched early on 2024-06-10. The
+    // completion lives in a *different* (date, entity) group, so only a global
+    // reconciliation — reading the entity's full episode-date set — hides the future
+    // air date from "up next".
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    let mut rec = record(entity);
+    rec.episode_dates = vec![
+        EpisodeDate {
+            key: "5".to_string(),
+            title: "Five".to_string(),
+            date: "2024-07-01".to_string(),
+            role: EpisodeDateRole::Scheduled,
+        },
+        EpisodeDate {
+            key: "5".to_string(),
+            title: "Five".to_string(),
+            date: "2024-06-10".to_string(),
+            role: EpisodeDateRole::Completed,
+        },
+    ];
+    let library = Library::new(
+        activity_config(None),
+        vec![rec],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    let response = build_activity(
+        &library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::UpNext, "2024-06-15"),
+    )
+    .await
+    .unwrap();
+
+    // The early watch (2024-06-10) is past, and the future air date (2024-07-01) is
+    // suppressed because episode 5 is already completed — so nothing is up next.
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
 async fn build_activity_discovers_daily_note_only_months_from_relations() {
     // No dates and no episodes — August's only signal is a daily-note mention, so
     // the month must be discovered from the resident (index-cached) relation graph
