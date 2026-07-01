@@ -214,7 +214,7 @@ describe("cleanVaultConfig", () => {
             log: { section: "Inputs", lineFormat: "- {title} {note}" },
           },
           types: [
-            type({ id: "anime", log: { lineFormat: "- {title} {progress}{note} #Anime" } }),
+            type({ id: "anime", log: { lineFormat: "- {title} {note} #Anime" } }),
             type({ id: "franchise" }),
           ],
         }),
@@ -224,7 +224,7 @@ describe("cleanVaultConfig", () => {
       template: "Templates/Daily.md",
       log: { section: "Inputs", lineFormat: "- {title} {note}" },
     });
-    expect(cleaned.types[0].log).toMatchObject({ lineFormat: "- {title} {progress}{note} #Anime" });
+    expect(cleaned.types[0].log).toMatchObject({ lineFormat: "- {title} {note} #Anime" });
     // A type with no `log` block stays not loggable.
     expect(cleaned.types[1].log).toBeUndefined();
   });

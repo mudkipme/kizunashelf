@@ -6,23 +6,13 @@
  */
 import { z as zod } from 'zod';
 
-export const logActivityBodyEpisodeOneGroupDefault = ``;
-export const logActivityBodyEpisodeOneIndexDefault = 0;
-export const logActivityBodyEpisodeOneIndexMin = 0;
-
-
 export const LogActivityBody = zod.object({
   "op": zod.union([zod.enum(['add', 'remove']),zod.null()]).optional().describe('`add` (default) records the activity; `remove` is its exact inverse.'),
-  "revision": zod.string().nullish().describe('The entity\'s current revision — required when the log mutates the entity\n(an episode tick or a date stamp); ignored for a daily-note-only log.'),
-  "date": zod.string().nullish().describe('The log\'s date (`YYYY-MM-DD`), \*\*required\*\* — the client supplies the user\'s\nlocal date, so the server never assumes \"today\" in UTC and past actions can\nbe logged. The one exception: on `remove` of an episode it\'s derived from the\nepisode\'s stored completion date instead.'),
-  "kind": zod.union([zod.enum(['progress', 'started', 'completed']),zod.null()]).optional().describe('Whether this records progress, a start, or a completion. Drives the\n(future) frontmatter date-stamp; does not affect the daily-note line.'),
-  "episode": zod.union([zod.object({
-  "group": zod.string().default(logActivityBodyEpisodeOneGroupDefault),
-  "key": zod.string(),
-  "index": zod.number().min(logActivityBodyEpisodeOneIndexMin).default(logActivityBodyEpisodeOneIndexDefault)
-}).describe('Identifies one episode within an entity\'s episodes section — a unique `key`\nwithin `group` wins, else the item at `index`. (The same locator the episode\ncheckbox uses; the actual tick lands in a later phase.)'),zod.null()]).optional().describe('The episode this log refers to (its number feeds `{progress}`).'),
+  "revision": zod.string().nullish().describe('The entity\'s current revision — required only when the log stamps a\nfrontmatter date (`kind` = `started`\/`completed` on a type that has that\n`dateRole` field); ignored for a daily-note-only log.'),
+  "date": zod.string().nullish().describe('The log\'s date (`YYYY-MM-DD`), \*\*required\*\* — the client supplies the user\'s\nlocal date, so the server never assumes \"today\" in UTC and past actions can\nbe logged.'),
+  "kind": zod.union([zod.enum(['progress', 'started', 'completed']),zod.null()]).optional().describe('Whether this records progress, a start, or a completion. Drives the\nfrontmatter date-stamp; does not affect the daily-note line.'),
   "note": zod.string().nullish().describe('Freeform text for the `{note}` token.')
-}).describe('Logs an activity to the day\'s daily note (and, in later phases, the entity).\nIn this phase it writes a single daily-note line (side-effect #1).')
+}).describe('Logs an activity to the day\'s daily note, and — for a `started`\/`completed`\nlog — stamps the matching frontmatter date field. Episode watching is a\nseparate concern (`\/episodes\/watch`); logging never reads or writes the\nepisode list.')
 
 export type LogActivityBody = zod.input<typeof LogActivityBody>;
 export type LogActivityBodyOutput = zod.output<typeof LogActivityBody>;

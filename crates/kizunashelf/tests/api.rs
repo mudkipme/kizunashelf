@@ -660,7 +660,7 @@ async fn log_endpoint_writes_a_daily_note_line() {
 }
 
 #[tokio::test]
-async fn log_endpoint_applies_and_reverses_episode_and_date_stamp() {
+async fn log_endpoint_applies_and_reverses_date_stamp() {
     let server = TestServer::new();
     let entity = urlencoding::encode("anime:Star Voyager");
     let log = format!("/api/entities/{entity}/log");
@@ -1169,7 +1169,7 @@ impl TestServer {
                         { "field": "franchise", "fieldType": "relation", "displayName": "Franchise", "relationType": "franchise" },
                         { "field": "studio", "fieldType": "relation", "displayName": "Studio", "relationType": "studio" }
                     ],
-                    "log": { "lineFormat": "- [[{title}]] {progress}{note} #Anime" }
+                    "log": { "lineFormat": "- [[{title}]] {note} #Anime" }
                 },
                 {
                     "id": "games",
@@ -2496,28 +2496,33 @@ async fn episodes_detail_progress_update_and_revision_guard() {
     assert_eq!(episodes["groups"][0]["items"][1]["title"], "Recap");
     let revision = detail.1["entity"]["revision"].as_str().unwrap().to_string();
 
-    // Check the recap (the second item in Season 1) by logging it (`op: add`) —
-    // the episode tick rides on `/log`, the single write path now.
+    // Check the recap (the second item in Season 1) through `/episodes/watch` —
+    // the dedicated episode write path, independent of daily-note logging. The
+    // completion date is the client's local date.
     let body = json!({
-        "op": "add", "kind": "progress", "revision": revision,
-        "episode": { "group": "Season 1", "key": "12.5", "index": 1 },
-        "date": "2024-08-20",
+        "revision": revision, "group": "Season 1", "key": "12.5", "index": 1,
+        "watched": true, "date": "2024-08-20",
     });
     let updated = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/log",
+        "/api/entities/anime%3AShow/episodes/watch",
         Some(body.clone()),
     )
     .await;
     assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
-    assert_eq!(updated.1["entity"]["episodes"]["watched"], 2);
+    assert_eq!(updated.1["episodes"]["watched"], 2);
+    // The `✅` carries the client-supplied date.
+    assert_eq!(
+        updated.1["episodes"]["groups"][0]["items"][1]["done"],
+        "2024-08-20"
+    );
 
     // The stale revision is now rejected.
     let stale = request_json(
         &app,
         Method::POST,
-        "/api/entities/anime%3AShow/log",
+        "/api/entities/anime%3AShow/episodes/watch",
         Some(body),
     )
     .await;

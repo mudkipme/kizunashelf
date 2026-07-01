@@ -2,11 +2,8 @@ use super::entities::build_entity_detail;
 use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, write_entity_raw};
 use super::state::{get_library, require_content_writes, AppState};
-use crate::contract::{
-    EpisodeRef, LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate,
-};
+use crate::contract::{LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate};
 use crate::daily_notes::{remove_log_line, render_log_line, write_log_line, LogWriteError};
-use crate::episodes::{episode_section, locate_episode_info, set_episode_watched};
 use crate::library::{file_revision, serialize_markdown_document, split_markdown_document};
 use crate::types::{DateRole, EntityTypeConfig};
 use axum::extract::{Path as AxumPath, Query, State};
@@ -29,11 +26,12 @@ pub(crate) struct LogQuery {
     dry_run: Option<bool>,
 }
 
-/// Logs an activity for one entity, applying up to three side effects, each gated
-/// by the schema: a daily-note line (when the type is loggable), an episode `✅`
-/// tick (when episodic + an episode is given), and a `started`/`completed`
-/// frontmatter date stamp (when the type has that `dateRole` field). `op: remove`
-/// is the exact inverse. `?dryRun=true` previews everything without writing.
+/// Logs an activity for one entity, applying up to two side effects, each gated by
+/// the schema: a daily-note line (when the type is loggable) and a
+/// `started`/`completed` frontmatter date stamp (when the type has that `dateRole`
+/// field). `op: remove` is the exact inverse. `?dryRun=true` previews everything
+/// without writing. Episode watching is a separate endpoint (`/episodes/watch`);
+/// logging never reads or writes the episode list.
 pub(crate) async fn log_activity(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<LogPath>,
@@ -56,24 +54,24 @@ pub(crate) async fn log_activity(
     let source_rel = record.summary.path.clone();
 
     let type_config = library.config.type_config(&entity_type);
-    let episode_section = type_config.and_then(episode_section).cloned();
     let stamp_field = stamp_target_field(type_config, kind).map(str::to_string);
     let (log_section, log_line_format) = match library.config.resolve_log_config(&entity_type) {
         Some(resolved) => (Some(resolved.section), Some(resolved.line_format)),
         None => (None, None),
     };
 
-    let wants_episode = request.episode.is_some() && episode_section.is_some();
-    let mutates_entity = wants_episode || stamp_field.is_some();
+    // Only a started/completed date stamp mutates the entity now (episode ticks
+    // moved back to `/episodes/watch`).
+    let mutates_entity = stamp_field.is_some();
     if log_section.is_none() && !mutates_entity {
         return Err(ApiError::bad_request(
-            "Nothing to log: this type isn't configured for logging and has no episode or dated field to record",
+            "Nothing to log: this type isn't configured for logging and has no started/completed date field to stamp",
         ));
     }
 
     let vfs = state.vault_vfs(&library.config.vault_root);
 
-    // Read the body once (it backs the episode locate and the guarded mutation).
+    // Read the body once — it backs the guarded date-stamp mutation.
     let raw = if mutates_entity {
         Some(
             vfs.read_to_string(&source_rel)
@@ -84,77 +82,35 @@ pub(crate) async fn log_activity(
         None
     };
 
-    // Locate the requested episode (read-only) for the `{progress}` token, the
-    // response, and — on un-log — the date its line lives under.
-    let located = match (&request.episode, &episode_section, &raw) {
-        (Some(select), Some(section), Some(raw)) => {
-            let body = split_markdown_document(raw).body;
-            let Some(info) = locate_episode_info(
-                &body,
-                section,
-                &select.group,
-                &select.key,
-                select.index as usize,
-            ) else {
-                return Err(ApiError::not_found("Episode not found"));
-            };
-            Some(info)
-        }
-        _ => None,
+    // The log's date is always client-supplied — the user's local date, so the
+    // server never assumes "today" in UTC and past actions can be logged.
+    let Some(date) = request
+        .date
+        .as_deref()
+        .map(str::trim)
+        .filter(|date| !date.is_empty())
+    else {
+        return Err(ApiError::bad_request("A date is required"));
     };
+    let date = date.to_string();
 
-    // The log's date is always client-supplied (the user's local date — the server
-    // never assumes "today" in UTC, and the client can log past actions). The one
-    // exception: un-logging an episode targets the episode's stored `✅` date so the
-    // line is removed from the right day's note.
-    let date = match (op, located.as_ref().and_then(|info| info.done.clone())) {
-        (LogOp::Remove, Some(done)) if !done.trim().is_empty() => done,
-        _ => {
-            let Some(date) = request
-                .date
-                .as_deref()
-                .map(str::trim)
-                .filter(|date| !date.is_empty())
-            else {
-                return Err(ApiError::bad_request("A date is required"));
-            };
-            date.to_string()
-        }
-    };
-
-    // The rendered line (only when the type is loggable). `{progress}` is the
-    // located episode's number.
-    let progress = located.as_ref().map(|info| info.key.as_str()).unwrap_or("");
+    // The rendered line (only when the type is loggable).
     let note = request.note.as_deref().unwrap_or("");
     let line = log_line_format
         .as_deref()
-        .map(|format| render_log_line(format, &basename, progress, note, &date));
+        .map(|format| render_log_line(format, &basename, note, &date));
 
-    // --- Entity side effects (episode tick + date stamp): one guarded write.
+    // --- Frontmatter date stamp (started/completed): one guarded write.
     let mut entity = None;
     if mutates_entity && !dry_run {
         let raw = raw.as_deref().unwrap();
         let Some(revision) = request.revision.as_deref() else {
             return Err(ApiError::bad_request(
-                "A revision is required to tick an episode or stamp a date",
+                "A revision is required to stamp a date",
             ));
         };
         check_revision(revision, &file_revision(raw))?;
         let mut document = split_markdown_document(raw);
-        if let (Some(select), Some(section)) = (&request.episode, &episode_section) {
-            let Some(body) = set_episode_watched(
-                &document.body,
-                section,
-                &select.group,
-                &select.key,
-                select.index as usize,
-                op == LogOp::Add,
-                &date,
-            ) else {
-                return Err(ApiError::not_found("Episode not found"));
-            };
-            document.body = body;
-        }
         if let Some(field) = &stamp_field {
             apply_date_stamp(&mut document.frontmatter, field, &date, op);
         }
@@ -205,14 +161,6 @@ pub(crate) async fn log_activity(
         field,
         value: date.clone(),
     });
-    let episodes_resolved = located
-        .map(|info| {
-            vec![EpisodeRef {
-                key: info.key,
-                title: info.title,
-            }]
-        })
-        .unwrap_or_default();
 
     Ok(Json(LogActivityResponse {
         dry_run,
@@ -223,7 +171,6 @@ pub(crate) async fn log_activity(
         line_already_present,
         line_matched,
         will_stamp_date,
-        episodes_resolved,
         entity,
     }))
 }

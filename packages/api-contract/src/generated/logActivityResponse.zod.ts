@@ -45,10 +45,6 @@ export const LogActivityResponse = zod.object({
   "field": zod.string(),
   "value": zod.string()
 }),zod.null()]).optional().describe('The date field this log stamped (`add`) or cleared (`remove`) on the entity.'),
-  "episodesResolved": zod.array(zod.object({
-  "key": zod.string(),
-  "title": zod.string().optional()
-})).optional().describe('The episodes this log ticked\/cleared (`key` + resolved `title`).'),
   "entity": zod.union([zod.object({
   "entity": zod.object({
   "id": zod.string(),
@@ -141,7 +137,7 @@ export const LogActivityResponse = zod.object({
   "trailing": zod.string().describe('Free-text Markdown \*below\* the last list item; empty when there is none.')
 }).describe('The parsed contents of an entity\'s episodes\/tracks body section: groups\n(season\/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched\/total roll-up. Derived from the Markdown body, which stays the source\nof truth.'),zod.null()]).optional().describe('The parsed episodes\/tracks list, when the entity\'s type declares an\n`episodes` body section. `None` otherwise.'),
   "notesBody": zod.string().describe('The entity body to render in the generic \"Notes\" view: identical to\n`entity.body` except sections that have a dedicated UI (the episodes\nsection) are removed, so they aren\'t shown twice. `entity.body` stays the\nraw source of truth for editing.')
-}),zod.null()]).optional().describe('The refreshed entity detail when the log mutated the entity (`None` on a\ndaily-note-only log or a dry run).')
+}),zod.null()]).optional().describe('The refreshed entity detail when the log stamped a date (`None` on a\ndaily-note-only log or a dry run).')
 })
 
 export type LogActivityResponse = zod.input<typeof LogActivityResponse>;

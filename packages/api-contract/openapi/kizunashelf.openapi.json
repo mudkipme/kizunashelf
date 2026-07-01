@@ -1152,6 +1152,95 @@
         }
       }
     },
+    "/api/entities/{id}/episodes/watch": {
+      "post": {
+        "operationId": "toggleEpisode",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Checks or unchecks a single episode/track, identified by its group label and\nkey — so toggling watched state sends just the changed item, not the whole\nlist. Checking stamps `date` as the completion date (`✅`); unchecking clears it.\nIndependent of daily-note logging (`/log`), which never touches episodes.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleEpisodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/episodes/fetch": {
       "post": {
         "operationId": "fetchEpisodes",
@@ -1334,7 +1423,7 @@
           }
         ],
         "requestBody": {
-          "description": "Logs an activity to the day's daily note (and, in later phases, the entity).\nIn this phase it writes a single daily-note line (side-effect #1).",
+          "description": "Logs an activity to the day's daily note, and — for a `started`/`completed`\nlog — stamps the matching frontmatter date field. Episode watching is a\nseparate concern (`/episodes/watch`); logging never reads or writes the\nepisode list.",
           "content": {
             "application/json": {
               "schema": {
@@ -2701,7 +2790,7 @@
         ]
       },
       "TypeLogConfig": {
-        "description": "Per-type daily-note logging config, under `types[].log`. **Presence opts the\ntype into logging.** The type's hashtag is written as a literal inside\n`lineFormat` (e.g. `- {title} {progress}{note} #Anime`), not a separate field —\nso it's explicit, never inferred from the type name. Unset fields fall back to\n`dailyNotes.log`, then the built-ins.",
+        "description": "Per-type daily-note logging config, under `types[].log`. **Presence opts the\ntype into logging.** The type's hashtag is written as a literal inside\n`lineFormat` (e.g. `- {title} {note} #Anime`), not a separate field —\nso it's explicit, never inferred from the type name. Unset fields fall back to\n`dailyNotes.log`, then the built-ins.",
         "type": "object",
         "properties": {
           "section": {
@@ -3015,7 +3104,7 @@
             ]
           },
           "lineFormat": {
-            "description": "Line template. Tokens: `{title}` (the entity — **always rendered as a\n`[[wikilink]]`**, since that link is what ties the line back to the entity;\nwrite `{title}`, not `[[{title}]]`, though the latter isn't doubled),\n`{progress}` (episode number), `{note}` (freeform), `{date}`. Empty tokens\ncollapse with surrounding whitespace.",
+            "description": "Line template. Tokens: `{title}` (the entity — **always rendered as a\n`[[wikilink]]`**, since that link is what ties the line back to the entity;\nwrite `{title}`, not `[[{title}]]`, though the latter isn't doubled),\n`{note}` (freeform), `{date}`. Empty tokens collapse with surrounding\nwhitespace. There is no episode token — logging is independent of the\nepisode list, so put an episode number in `{note}` if you want one.",
             "type": [
               "string",
               "null"
@@ -5303,6 +5392,44 @@
           "backupPath"
         ]
       },
+      "ToggleEpisodeRequest": {
+        "description": "Checks or unchecks a single episode/track, identified by its group label and\nkey — so toggling watched state sends just the changed item, not the whole\nlist. Checking stamps `date` as the completion date (`✅`); unchecking clears it.\nIndependent of daily-note logging (`/log`), which never touches episodes.",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "group": {
+            "description": "The season/disc group label of the episode (empty for the ungrouped list).",
+            "type": "string",
+            "default": ""
+          },
+          "key": {
+            "description": "The episode/track key within the group (its number/identifier). Used to\nlocate the item when it uniquely identifies one; otherwise `index` wins.",
+            "type": "string"
+          },
+          "index": {
+            "description": "The item's 0-based position within its group — the fallback locator when\n`key` is empty or duplicated (titles can repeat too, so position is the\nstable tiebreaker; the revision guard keeps it valid).",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "watched": {
+            "type": "boolean"
+          },
+          "date": {
+            "description": "The completion date (`YYYY-MM-DD`) to stamp when checking — **required**, the\nclient's local date, so the `✅` matches the user's day rather than a UTC\nserver clock. Ignored when unchecking. Re-checking a watched episode with a\ndifferent `date` is how the completion date is edited.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "key",
+          "index",
+          "watched",
+          "date"
+        ]
+      },
       "FetchEpisodesRequest": {
         "type": "object",
         "properties": {
@@ -5454,7 +5581,7 @@
         }
       },
       "LogActivityRequest": {
-        "description": "Logs an activity to the day's daily note (and, in later phases, the entity).\nIn this phase it writes a single daily-note line (side-effect #1).",
+        "description": "Logs an activity to the day's daily note, and — for a `started`/`completed`\nlog — stamps the matching frontmatter date field. Episode watching is a\nseparate concern (`/episodes/watch`); logging never reads or writes the\nepisode list.",
         "type": "object",
         "properties": {
           "op": {
@@ -5469,35 +5596,24 @@
             ]
           },
           "revision": {
-            "description": "The entity's current revision — required when the log mutates the entity\n(an episode tick or a date stamp); ignored for a daily-note-only log.",
+            "description": "The entity's current revision — required only when the log stamps a\nfrontmatter date (`kind` = `started`/`completed` on a type that has that\n`dateRole` field); ignored for a daily-note-only log.",
             "type": [
               "string",
               "null"
             ]
           },
           "date": {
-            "description": "The log's date (`YYYY-MM-DD`), **required** — the client supplies the user's\nlocal date, so the server never assumes \"today\" in UTC and past actions can\nbe logged. The one exception: on `remove` of an episode it's derived from the\nepisode's stored completion date instead.",
+            "description": "The log's date (`YYYY-MM-DD`), **required** — the client supplies the user's\nlocal date, so the server never assumes \"today\" in UTC and past actions can\nbe logged.",
             "type": [
               "string",
               "null"
             ]
           },
           "kind": {
-            "description": "Whether this records progress, a start, or a completion. Drives the\n(future) frontmatter date-stamp; does not affect the daily-note line.",
+            "description": "Whether this records progress, a start, or a completion. Drives the\nfrontmatter date-stamp; does not affect the daily-note line.",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/LogKind"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "episode": {
-            "description": "The episode this log refers to (its number feeds `{progress}`).",
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/EpisodeSelect"
               },
               {
                 "type": "null"
@@ -5526,28 +5642,6 @@
           "progress",
           "started",
           "completed"
-        ]
-      },
-      "EpisodeSelect": {
-        "description": "Identifies one episode within an entity's episodes section — a unique `key`\nwithin `group` wins, else the item at `index`. (The same locator the episode\ncheckbox uses; the actual tick lands in a later phase.)",
-        "type": "object",
-        "properties": {
-          "group": {
-            "type": "string",
-            "default": ""
-          },
-          "key": {
-            "type": "string"
-          },
-          "index": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0,
-            "default": 0
-          }
-        },
-        "required": [
-          "key"
         ]
       },
       "LogActivityResponse": {
@@ -5603,15 +5697,8 @@
               }
             ]
           },
-          "episodesResolved": {
-            "description": "The episodes this log ticked/cleared (`key` + resolved `title`).",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EpisodeRef"
-            }
-          },
           "entity": {
-            "description": "The refreshed entity detail when the log mutated the entity (`None` on a\ndaily-note-only log or a dry run).",
+            "description": "The refreshed entity detail when the log stamped a date (`None` on a\ndaily-note-only log or a dry run).",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/EntityDetailResponse"
@@ -5641,20 +5728,6 @@
         "required": [
           "field",
           "value"
-        ]
-      },
-      "EpisodeRef": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "key"
         ]
       },
       "AssetDownloadRequest": {

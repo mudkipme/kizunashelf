@@ -67,7 +67,8 @@ import { reportEntityError, useEntityMutation } from "@/hooks/use-entity-mutatio
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
-import { logEpisodeWatched } from "@/api/episodes";
+import { setEpisodeWatched } from "@/api/episodes";
+import { todayLocal } from "@/lib/date";
 import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
@@ -214,23 +215,21 @@ export function EntityPage() {
     }, { onConflict: refetchOnConflict });
   }
 
-  async function toggleEpisodeWatched(group: string, key: string, index: number, watched: boolean) {
+  // Writes one episode through `/episodes/watch` (group + key, index as the fallback
+  // locator): the core stamps/clears the ✅ date and returns the refreshed detail.
+  // Independent of daily-note logging.
+  async function persistEpisode(args: {
+    group: string;
+    key: string;
+    index: number;
+    watched: boolean;
+    date: string;
+  }) {
     if (!entity) return;
     setEpisodesSaving(true);
     try {
-      // Logs the changed episode through `/log` (group + key, index as the fallback
-      // locator): the core stamps/clears the ✅ date, writes/removes the daily-note
-      // line for loggable types, and returns the refreshed detail in `.entity`.
-      const response = await logEpisodeWatched(entity.id, {
-        revision: entity.revision,
-        group,
-        key,
-        index,
-        watched,
-      });
-      if (response.entity) {
-        queryClient.setQueryData(queryKeys.entity(entity.id), response.entity);
-      }
+      const response = await setEpisodeWatched(entity.id, { revision: entity.revision, ...args });
+      queryClient.setQueryData(queryKeys.entity(entity.id), response);
       // Refresh the resident watched/total badge + the activity/calendar views.
       void queryClient.invalidateQueries({ queryKey: ["entities"] });
       void queryClient.invalidateQueries({ queryKey: ["activity"] });
@@ -241,6 +240,16 @@ export function EntityPage() {
     } finally {
       setEpisodesSaving(false);
     }
+  }
+
+  // Checkbox toggle: stamp/clear the ✅ using the user's local date.
+  function toggleEpisodeWatched(group: string, key: string, index: number, watched: boolean) {
+    void persistEpisode({ group, key, index, watched, date: todayLocal() });
+  }
+
+  // Edit a checked episode's completion date (re-check with the chosen date).
+  function setEpisodeDate(group: string, key: string, index: number, date: string) {
+    void persistEpisode({ group, key, index, watched: true, date });
   }
 
   return (
@@ -311,6 +320,7 @@ export function EntityPage() {
               typeLabels={typeLabels}
               coverTypes={coverTypes}
               onToggleEpisode={toggleEpisodeWatched}
+              onSetEpisodeDate={setEpisodeDate}
               actions={
                 <div className="flex items-center gap-2">
                   {canLog ? (
@@ -340,7 +350,6 @@ export function EntityPage() {
                 onOpenChange={setLogOpen}
                 entityId={entity.id}
                 revision={entity.revision}
-                episodes={detail.data?.episodes ?? undefined}
                 kinds={logKinds}
               />
             ) : null}

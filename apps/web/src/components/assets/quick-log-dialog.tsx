@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PencilLineIcon, XIcon } from "lucide-react";
 
@@ -15,12 +15,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { todayLocal } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import type { EntityEpisodes, LogActivityRequest } from "@/types/api";
+import type { LogActivityRequest } from "@/types/api";
 
-const SEP = " ";
 type Kind = "progress" | "started" | "completed";
 
 const KIND_LABELS: Record<Kind, string> = {
@@ -29,32 +27,30 @@ const KIND_LABELS: Record<Kind, string> = {
   completed: "Completed",
 };
 
-/// Records an activity for an entity through `/log`: progress, a start/finish date,
-/// and/or an episode tick — all gated by the schema. A live preview shows what it
+/// Records an activity for an entity through `/log`: a daily-note line, and — for a
+/// started/completed log — a frontmatter date stamp. A live preview shows what it
 /// will record before you commit, and the date is editable so you can record
 /// something you did on an earlier day. `kinds` is the set of activities this type
 /// supports (always Progress; Started/Completed only when the schema has those date
-/// roles) — when there's only one, the picker is hidden.
+/// roles) — when there's only one, the picker is hidden. Episode check-offs are a
+/// separate flow (the episode list) and never part of logging.
 export function QuickLogDialog({
   open,
   onOpenChange,
   entityId,
   revision,
-  episodes,
   kinds = ["progress"],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityId: string;
   revision: string;
-  episodes?: EntityEpisodes;
   kinds?: Kind[];
 }) {
   const invalidateEntityData = useInvalidateEntityData();
   const [date, setDate] = useState(todayLocal());
   const [kind, setKind] = useState<Kind>("progress");
   const [note, setNote] = useState("");
-  const [episodeId, setEpisodeId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -62,36 +58,15 @@ export function QuickLogDialog({
   // while this dialog instance is reused.
   const activeKind = kinds.includes(kind) ? kind : "progress";
 
-  // Flatten the episodes list into selectable options (carrying the in-group index
-  // the core uses as the fallback locator).
-  const episodeOptions = useMemo(() => {
-    const options: { id: string; label: string; group: string; key: string; index: number }[] = [];
-    for (const group of episodes?.groups ?? []) {
-      group.items.forEach((item, index) => {
-        const display = [item.key, item.title].filter(Boolean).join(" · ") || `Item ${index + 1}`;
-        options.push({
-          id: `${group.label}${SEP}${item.key}${SEP}${index}`,
-          label: group.label ? `${group.label}: ${display}` : display,
-          group: group.label,
-          key: item.key,
-          index,
-        });
-      });
-    }
-    return options;
-  }, [episodes]);
-  const selected = episodeOptions.find((option) => option.id === episodeId);
-
   const request: LogActivityRequest = {
     date,
     kind: activeKind,
     revision,
     ...(note.trim() ? { note: note.trim() } : {}),
-    ...(selected ? { episode: { group: selected.group, key: selected.key, index: selected.index } } : {}),
   };
 
   const preview = useQuery({
-    queryKey: ["logPreview", entityId, date, activeKind, note, episodeId],
+    queryKey: ["logPreview", entityId, date, activeKind, note],
     queryFn: () => postLogActivity(entityId, request, true),
     enabled: open && Boolean(date.trim()),
     retry: false,
@@ -152,25 +127,11 @@ export function QuickLogDialog({
             <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
           </label>
 
-          {episodeOptions.length > 0 ? (
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Episode <span className="font-normal text-muted-foreground">(optional)</span>
-              <Select value={episodeId} onChange={(event) => setEpisodeId(event.target.value)}>
-                <option value="">— none —</option>
-                {episodeOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-          ) : null}
-
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Note <span className="font-normal text-muted-foreground">(optional)</span>
             <Input
               value={note}
-              placeholder="Anything worth remembering"
+              placeholder="Anything worth remembering — e.g. an episode number"
               onChange={(event) => setNote(event.target.value)}
             />
           </label>
@@ -229,11 +190,6 @@ function LogPreview({
       {data.willStampDate ? (
         <span className="text-muted-foreground">
           Stamps {data.willStampDate.field} = {data.willStampDate.value}
-        </span>
-      ) : null}
-      {(data.episodesResolved ?? []).length > 0 ? (
-        <span className="text-muted-foreground">
-          Ticks episode {(data.episodesResolved ?? []).map((episode) => episode.key).join(", ")}
         </span>
       ) : null}
     </div>

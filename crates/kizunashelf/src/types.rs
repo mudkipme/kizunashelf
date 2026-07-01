@@ -260,15 +260,16 @@ pub struct DailyNoteLogDefaults {
     /// Line template. Tokens: `{title}` (the entity — **always rendered as a
     /// `[[wikilink]]`**, since that link is what ties the line back to the entity;
     /// write `{title}`, not `[[{title}]]`, though the latter isn't doubled),
-    /// `{progress}` (episode number), `{note}` (freeform), `{date}`. Empty tokens
-    /// collapse with surrounding whitespace.
+    /// `{note}` (freeform), `{date}`. Empty tokens collapse with surrounding
+    /// whitespace. There is no episode token — logging is independent of the
+    /// episode list, so put an episode number in `{note}` if you want one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub line_format: Option<String>,
 }
 
 /// Per-type daily-note logging config, under `types[].log`. **Presence opts the
 /// type into logging.** The type's hashtag is written as a literal inside
-/// `lineFormat` (e.g. `- {title} {progress}{note} #Anime`), not a separate field —
+/// `lineFormat` (e.g. `- {title} {note} #Anime`), not a separate field —
 /// so it's explicit, never inferred from the type name. Unset fields fall back to
 /// `dailyNotes.log`, then the built-ins.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -346,9 +347,9 @@ pub const DEFAULT_TAGS_FIELD: &str = "tags";
 pub const DEFAULT_LOG_SECTION: &str = "Log";
 
 /// Built-in daily-note log line template. `{title}` renders as a `[[wikilink]]`
-/// and `{progress}`/`{note}` collapse when empty, so a no-episode log of a type
-/// with no per-type format renders the bare `- [[Title]]`.
-pub const DEFAULT_LOG_LINE_FORMAT: &str = "- {title} {progress}{note}";
+/// and `{note}` collapses when empty, so a note-less log of a type with no
+/// per-type format renders the bare `- [[Title]]`.
+pub const DEFAULT_LOG_LINE_FORMAT: &str = "- {title} {note}";
 
 /// The resolved daily-note logging config for one entity type (see
 /// [`KizunaConfig::resolve_log_config`]).

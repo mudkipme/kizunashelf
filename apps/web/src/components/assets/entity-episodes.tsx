@@ -52,6 +52,7 @@ export function EntityEpisodesPanel({
   disabled,
   saving,
   onToggle,
+  onSetDate,
   relations,
 }: {
   episodes: EntityEpisodes;
@@ -61,6 +62,8 @@ export function EntityEpisodesPanel({
   // in-group index as the fallback locator), not the whole list; the core
   // stamps/clears the ✅ completion date.
   onToggle: (group: string, key: string, index: number, watched: boolean) => void;
+  // Sets a checked episode's ✅ completion date (clicking the date on its row).
+  onSetDate?: (group: string, key: string, index: number, date: string) => void;
   relations: Relation[];
 }) {
   const checklist = episodes.tracking === "checklist";
@@ -115,11 +118,40 @@ export function EntityEpisodesPanel({
                 const keyLabel = item.key ? (
                   <span className="shrink-0 tabular-nums text-muted-foreground">{item.key}</span>
                 ) : null;
+                // A checked episode's ✅ date is editable: the overlaid transparent
+                // date input opens the native picker on click; `stopPropagation`
+                // keeps that click from toggling the row.
+                const editableDone = checklist && interactive && item.watched && Boolean(item.done);
+                const doneLabel = item.done ? (
+                  editableDone ? (
+                    <span
+                      className="relative inline-flex cursor-pointer rounded px-0.5 hover:bg-accent hover:text-accent-foreground"
+                      title="Change completion date"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      ✅ {item.done}
+                      <input
+                        type="date"
+                        value={item.done}
+                        aria-label="Change completion date"
+                        onClick={(event) => event.stopPropagation()}
+                        onChange={(event) => {
+                          if (event.target.value) {
+                            onSetDate?.(group.label, item.key, itemIndex, event.target.value);
+                          }
+                        }}
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                      />
+                    </span>
+                  ) : (
+                    <span>✅ {item.done}</span>
+                  )
+                ) : null;
                 const dateLabel =
                   item.date || item.done ? (
                     <span className="shrink-0 space-x-2 tabular-nums text-xs text-muted-foreground">
                       {item.date ? <span>📅 {item.date}</span> : null}
-                      {item.done ? <span>✅ {item.done}</span> : null}
+                      {doneLabel}
                     </span>
                   ) : null;
 

@@ -205,7 +205,7 @@ types:
     externalFields:
     - { source: bangumi, field: summary }
   log:
-    lineFormat: "- {title} {progress}{note} #Anime"
+    lineFormat: "- {title} {note} #Anime"
   fields:
   - field: title
     fieldType: title
@@ -675,7 +675,7 @@ dailyNotes:
   template: Templates/Daily Note.md
   log:
     section: Log
-    lineFormat: "- {title} {progress}{note}"
+    lineFormat: "- {title} {note}"
 ```
 
 | Key | Required | Type | Description |
@@ -700,8 +700,8 @@ The default date format matches filenames like:
 
 ### Daily-note logging
 
-The quick-log / "check episode" flows append a line to the day's daily note. The
-*shape* of that line is schema-driven, configured in two places:
+The quick-log flow appends a line to the day's daily note. The *shape* of that line
+is schema-driven, configured in two places:
 
 - **`dailyNotes.log`** — global defaults: `section` (the heading to write under, as
   raw heading text — no `#`, default h2, the same convention as `bodySections`) and
@@ -709,39 +709,43 @@ The quick-log / "check episode" flows append a line to the day's daily note. The
 - **`types[].log`** — per-type override, and the **opt-in**: a type is loggable
   *only if* it declares a `log` block. Same `section` / `lineFormat` keys. The
   type's hashtag is written as a **literal inside `lineFormat`** (e.g.
-  `- {title} {progress}{note} #Anime`), never a separate field — so it's explicit,
-  never inferred from the type name.
+  `- {title} {note} #Anime`), never a separate field — so it's explicit, never
+  inferred from the type name.
+
+> Logging is **independent of the episode checklist.** Checking an episode
+> (`/episodes/watch`) only stamps that episode's `✅` completion date; it never
+> writes a daily-note line, and logging never reads or ticks episodes. The two show
+> up together only in the read-only activity feed, which aggregates both.
 
 Resolution for a type: `type.log.<x>` → `dailyNotes.log.<x>` → built-in (`Log` for
-the section, `- {title} {progress}{note}` for the line). A blank or whitespace-only
-value is treated as unset.
+the section, `- {title} {note}` for the line). A blank or whitespace-only value is
+treated as unset.
 
 `lineFormat` tokens (empty tokens collapse with surrounding whitespace, so a
-no-episode log renders the bare `- [[Title]] #Tag`):
+note-less log renders the bare `- [[Title]] #Tag`):
 
 | Token | Meaning |
 | --- | --- |
 | `{title}` | the entity — **always rendered as a `[[wikilink]]`** (that link is what makes the line appear in the activity feed and as a backlink). Write `{title}`; `[[{title}]]` also works and isn't double-bracketed. |
-| `{progress}` | the episode number, when logging an episode |
-| `{note}` | freeform text the user typed |
+| `{note}` | freeform text the user typed (put an episode number here if you want one) |
 | `{date}` | the log's date (client-supplied — the user's local date) |
 
-Example — anime logs an episode number, games log freeform progress:
+Example — anime tags its logs, games log under a different heading:
 
 ```yaml
 dailyNotes:
   log:
     section: Log
-    lineFormat: "- {title} {progress}{note}"
+    lineFormat: "- {title} {note}"
 
 types:
 - id: anime
   log:
-    lineFormat: "- {title} {progress}{note} #Anime"   # → "- [[上伊那牡丹…]] 12 #Anime"
+    lineFormat: "- {title} {note} #Anime"   # note "12" → "- [[上伊那牡丹…]] 12 #Anime"
 - id: games
   log:
     section: Played
-    lineFormat: "- {title} {note} #Game"              # → "- [[PRAGMATA]] #Game"
+    lineFormat: "- {title} {note} #Game"     # → "- [[PRAGMATA]] #Game"
 ```
 
 ## Complete Example

@@ -374,6 +374,32 @@ pub struct FetchEpisodesRequest {
     pub language: Option<String>,
 }
 
+/// Checks or unchecks a single episode/track, identified by its group label and
+/// key — so toggling watched state sends just the changed item, not the whole
+/// list. Checking stamps `date` as the completion date (`✅`); unchecking clears it.
+/// Independent of daily-note logging (`/log`), which never touches episodes.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ToggleEpisodeRequest {
+    pub revision: String,
+    /// The season/disc group label of the episode (empty for the ungrouped list).
+    #[serde(default)]
+    pub group: String,
+    /// The episode/track key within the group (its number/identifier). Used to
+    /// locate the item when it uniquely identifies one; otherwise `index` wins.
+    pub key: String,
+    /// The item's 0-based position within its group — the fallback locator when
+    /// `key` is empty or duplicated (titles can repeat too, so position is the
+    /// stable tiebreaker; the revision guard keeps it valid).
+    pub index: u32,
+    pub watched: bool,
+    /// The completion date (`YYYY-MM-DD`) to stamp when checking — **required**, the
+    /// client's local date, so the `✅` matches the user's day rather than a UTC
+    /// server clock. Ignored when unchecking. Re-checking a watched episode with a
+    /// different `date` is how the completion date is edited.
+    pub date: String,
+}
+
 /// Imports provider episodes (the chosen subset, already grouped/flattened by the
 /// client) by merging them into the entity's existing episodes.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -969,31 +995,30 @@ pub struct CalendarResponse {
     pub days: Vec<CalendarDay>,
 }
 
-/// Logs an activity to the day's daily note (and, in later phases, the entity).
-/// In this phase it writes a single daily-note line (side-effect #1).
+/// Logs an activity to the day's daily note, and — for a `started`/`completed`
+/// log — stamps the matching frontmatter date field. Episode watching is a
+/// separate concern (`/episodes/watch`); logging never reads or writes the
+/// episode list.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct LogActivityRequest {
     /// `add` (default) records the activity; `remove` is its exact inverse.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub op: Option<LogOp>,
-    /// The entity's current revision — required when the log mutates the entity
-    /// (an episode tick or a date stamp); ignored for a daily-note-only log.
+    /// The entity's current revision — required only when the log stamps a
+    /// frontmatter date (`kind` = `started`/`completed` on a type that has that
+    /// `dateRole` field); ignored for a daily-note-only log.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub revision: Option<String>,
     /// The log's date (`YYYY-MM-DD`), **required** — the client supplies the user's
     /// local date, so the server never assumes "today" in UTC and past actions can
-    /// be logged. The one exception: on `remove` of an episode it's derived from the
-    /// episode's stored completion date instead.
+    /// be logged.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub date: Option<String>,
     /// Whether this records progress, a start, or a completion. Drives the
-    /// (future) frontmatter date-stamp; does not affect the daily-note line.
+    /// frontmatter date-stamp; does not affect the daily-note line.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<LogKind>,
-    /// The episode this log refers to (its number feeds `{progress}`).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub episode: Option<EpisodeSelect>,
     /// Freeform text for the `{note}` token.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
@@ -1014,19 +1039,6 @@ pub enum LogOp {
     #[default]
     Add,
     Remove,
-}
-
-/// Identifies one episode within an entity's episodes section — a unique `key`
-/// within `group` wins, else the item at `index`. (The same locator the episode
-/// checkbox uses; the actual tick lands in a later phase.)
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct EpisodeSelect {
-    #[serde(default)]
-    pub group: String,
-    pub key: String,
-    #[serde(default)]
-    pub index: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -1052,10 +1064,7 @@ pub struct LogActivityResponse {
     /// The date field this log stamped (`add`) or cleared (`remove`) on the entity.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub will_stamp_date: Option<StampedDate>,
-    /// The episodes this log ticked/cleared (`key` + resolved `title`).
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub episodes_resolved: Vec<EpisodeRef>,
-    /// The refreshed entity detail when the log mutated the entity (`None` on a
+    /// The refreshed entity detail when the log stamped a date (`None` on a
     /// daily-note-only log or a dry run).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entity: Option<EntityDetailResponse>,
@@ -1066,14 +1075,6 @@ pub struct LogActivityResponse {
 pub struct StampedDate {
     pub field: String,
     pub value: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct EpisodeRef {
-    pub key: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub title: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

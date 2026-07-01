@@ -53,6 +53,7 @@ export function EntityDetail({
   typeLabels,
   coverTypes,
   onToggleEpisode,
+  onSetEpisodeDate,
   actions,
 }: {
   entity: Entity;
@@ -78,6 +79,8 @@ export function EntityDetail({
   /// render as a cover grid; others fall back to text chips (no cover to show).
   coverTypes?: ReadonlySet<string>;
   onToggleEpisode?: (group: string, key: string, index: number, watched: boolean) => void;
+  /// Sets a checked episode's `✅` completion date (clicking the date on its row).
+  onSetEpisodeDate?: (group: string, key: string, index: number, date: string) => void;
   actions?: ReactNode;
 }) {
   const language = useTitleLanguage();
@@ -160,6 +163,7 @@ export function EntityDetail({
                     disabled={!contentWritable || !onToggleEpisode}
                     saving={episodesSaving}
                     onToggle={(group, key, index, watched) => onToggleEpisode?.(group, key, index, watched)}
+                    onSetDate={(group, key, index, date) => onSetEpisodeDate?.(group, key, index, date)}
                     relations={relations}
                   />
                   {episodes.trailing.trim() ? (

@@ -1,31 +1,43 @@
 import {
   fetchEpisodes,
   importEpisodes,
+  toggleEpisode,
   type FetchEpisodesRequest,
   type ImportEpisodesRequest,
 } from "@kizunashelf/api-contract";
 
 import { apiFetch } from "@/api/client";
-import { postLogActivity } from "@/api/log";
-import { todayLocal } from "@/lib/date";
 
-/// Checks/unchecks one episode by logging it through `/log` (the single write
-/// path): checking is `op: add` (stamps `✅`, writes a daily-note line for loggable
-/// types), unchecking is `op: remove` (the exact inverse). Returns the log result —
-/// `.entity` is the refreshed detail. Located by group + key, index as fallback.
-export function logEpisodeWatched(
+/// Checks/unchecks one episode through `/episodes/watch` (its dedicated write
+/// path). Checking stamps `date` as the episode's `✅` completion date; unchecking
+/// clears it. `date` is the client's local date, so re-checking a watched episode
+/// with a different date is how the completion date is edited. Returns the refreshed
+/// entity detail. Located by group + key, index as fallback. Independent of
+/// daily-note logging (`/log`) — the two never share state.
+export function setEpisodeWatched(
   id: string,
-  args: { revision: string; group: string; key: string; index: number; watched: boolean },
+  args: {
+    revision: string;
+    group: string;
+    key: string;
+    index: number;
+    watched: boolean;
+    date: string;
+  },
 ) {
-  return postLogActivity(id, {
-    op: args.watched ? "add" : "remove",
-    kind: "progress",
-    revision: args.revision,
-    episode: { group: args.group, key: args.key, index: args.index },
-    // The user's local date (the server never assumes UTC "today"); on uncheck the
-    // server derives the date from the episode's stored `✅` instead.
-    date: todayLocal(),
-  });
+  return toggleEpisode(
+    id,
+    {
+      revision: args.revision,
+      group: args.group,
+      key: args.key,
+      index: args.index,
+      watched: args.watched,
+      date: args.date,
+    },
+    undefined,
+    apiFetch,
+  );
 }
 
 /** Lists episode sources + fetches one provider's structured episodes. */

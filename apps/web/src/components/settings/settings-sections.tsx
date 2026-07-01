@@ -93,7 +93,7 @@ export function DailyNotesEditor({
           <TextField
             label="Default line format"
             value={log.lineFormat ?? ""}
-            placeholder="- {title} {progress}{note}"
+            placeholder="- {title} {note}"
             onChange={(lineFormat) => onChange({ ...config, log: { ...log, lineFormat } })}
           />
         </div>
@@ -422,7 +422,7 @@ function TypeLogEditor({
           <TextField
             label="Line format"
             value={log.lineFormat ?? ""}
-            placeholder="- {title} {progress}{note} #Tag"
+            placeholder="- {title} {note} #Tag"
             onChange={(lineFormat) => onChange({ ...config, log: { ...log, lineFormat } })}
           />
           <TextField

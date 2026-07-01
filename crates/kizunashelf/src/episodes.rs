@@ -381,34 +381,6 @@ pub fn set_episode_watched(
     Some(apply_episodes(body, section, &episodes.groups))
 }
 
-/// The resolved key, title, and stored completion (`✅`) date of one episode,
-/// located the same way [`set_episode_watched`] does — read-only. Used by the log
-/// flow for the `{progress}` token, the response, and (on un-log) to find which
-/// day's note the line lives in.
-pub struct LocatedEpisode {
-    pub key: String,
-    pub title: String,
-    pub done: Option<String>,
-}
-
-/// Looks up one episode without mutating the body, via the same group+key/index
-/// locator as [`set_episode_watched`].
-pub fn locate_episode_info(
-    body: &str,
-    section: &BodySection,
-    group: &str,
-    key: &str,
-    index: usize,
-) -> Option<LocatedEpisode> {
-    let mut episodes = parse_episodes(body, section);
-    let target = locate_episode(&mut episodes.groups, group, key, index)?;
-    Some(LocatedEpisode {
-        key: target.key.clone(),
-        title: target.title.clone(),
-        done: target.done.clone(),
-    })
-}
-
 /// Resolves the episode to toggle: a unique `key` match within the group wins;
 /// otherwise the item at `index`. `None` if the group or index doesn't exist.
 fn locate_episode<'a>(

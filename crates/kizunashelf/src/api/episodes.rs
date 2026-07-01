@@ -13,14 +13,78 @@ use super::mutations::{check_revision, type_config_or_err, write_entity_raw, Ent
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityDetailResponse, EpisodeSource, EpisodeSyncResponse, FetchEpisodesRequest,
-    ImportEpisodesRequest,
+    ImportEpisodesRequest, ToggleEpisodeRequest,
 };
-use crate::episodes::{apply_episodes, episode_section, merge_episodes, parse_episodes};
+use crate::episodes::{
+    apply_episodes, episode_section, merge_episodes, parse_episodes, set_episode_watched,
+};
 use crate::library::{file_revision, serialize_markdown_document, split_markdown_document};
 use crate::types::{EntityTypeConfig, FieldType};
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
 use serde_json::{Map, Value};
+
+/// Checks/unchecks one episode, stamping/clearing its `✅` completion date. Only
+/// the changed item is sent (group + key); the section is otherwise re-rendered
+/// verbatim. Revision-guarded like the other episode writes. This is the sole
+/// path for the episode checkbox — daily-note logging (`/log`) is separate and
+/// never touches the episode list, so the two features share no state.
+pub(crate) async fn toggle_episode(
+    State(state): State<AppState>,
+    AxumPath(path): AxumPath<EntityPath>,
+    Json(request): Json<ToggleEpisodeRequest>,
+) -> ApiResult<EntityDetailResponse> {
+    let library = require_content_writes(&state).await?;
+    let entity_id = path.id;
+    let Some(record) = library.record_by_id(&entity_id) else {
+        return Err(ApiError::not_found("Entity not found"));
+    };
+    let type_config = type_config_or_err(&library.config, &record.summary.entity_type)?;
+    let Some(section) = episode_section(type_config) else {
+        return Err(ApiError::bad_request("This type has no episodes section"));
+    };
+    let section = section.clone();
+    let source_rel = record.summary.path.clone();
+
+    // The completion date is always the client's local date (never a UTC server
+    // clock) — so the `✅` matches the user's day and can be back-dated/edited.
+    let date = request.date.trim();
+    if date.is_empty() {
+        return Err(ApiError::bad_request("A date is required"));
+    }
+
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let raw = vfs
+        .read_to_string(&source_rel)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
+    check_revision(&request.revision, &file_revision(&raw))?;
+
+    let mut document = split_markdown_document(&raw);
+    let Some(body) = set_episode_watched(
+        &document.body,
+        &section,
+        &request.group,
+        &request.key,
+        request.index as usize,
+        request.watched,
+        date,
+    ) else {
+        return Err(ApiError::not_found("Episode not found"));
+    };
+    document.body = body;
+    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
+    write_entity_raw(vfs.as_ref(), &source_rel, &new_raw).await?;
+
+    state.invalidate_cache().await;
+    let reloaded = get_library(&state).await?;
+    let Some(record) = reloaded.record_by_id(&entity_id) else {
+        return Err(ApiError::not_found("Entity not found"));
+    };
+    Ok(Json(
+        build_entity_detail(&state, &reloaded, &record.summary).await?,
+    ))
+}
 
 /// One episode source resolved for an entity: provider id, label, and the entity's
 /// stored ref value to fetch from.
