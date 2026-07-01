@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { LayoutGridIcon, PlusIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -60,8 +60,23 @@ export function HomePage() {
                 <HomeSection key={section.id} section={section} labelsByType={labelsByType} />
               ))
             ) : (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                No home sections configured
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
+                <LayoutGridIcon className="size-8 text-muted-foreground" aria-hidden />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">No Home sections yet</p>
+                  <p className="mx-auto max-w-sm px-4 text-xs text-muted-foreground">
+                    Sections are configurable shelves of your library. Add one in Settings, or jump
+                    straight into your Library.
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/library">Browse library</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/settings">Configure Home</Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>

@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRightIcon, ImageIcon } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { configQuery, upcomingQuery } from "@/api/queries";
 import { AssetImage } from "@/components/assets/asset-image";
-import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/home/section-header";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
@@ -19,10 +19,10 @@ type FieldLabels = ReadonlyMap<string, ReadonlyMap<string, string>>;
 const MAX_ITEMS = 18;
 
 /// The Home "Coming up" widget: future release/planning dates + scheduled episodes
-/// (from `/api/upcoming`), grouped by urgency with a countdown. Self-hides when
-/// there's nothing ahead, so it adds no clutter to an empty vault. Localizes titles
-/// per the content-language setting and resolves the date's source label from the
-/// schema.
+/// (from `/api/upcoming`), grouped by urgency with a countdown. It's set apart from
+/// the configured sections as a bordered panel — a glanceable dashboard widget
+/// rather than a content shelf — but shares their header. Self-hides when there's
+/// nothing ahead, so an empty vault stays clean.
 export function ComingUpSection() {
   const today = todayLocal();
   const upcoming = useQuery(upcomingQuery({ today, months: 6 }));
@@ -37,26 +37,24 @@ export function ComingUpSection() {
 
   if (upcoming.isPending || groups.every((group) => group.items.length === 0)) return null;
 
-  return (
-    <section className="min-w-0">
-      <header className="flex min-h-12 items-center gap-3">
-        <h2 className="text-sm font-semibold">Coming up</h2>
-        <Button asChild variant="ghost" size="sm" className="ml-auto">
-          <Link to="/activity?mode=up-next">
-            View all
-            <ArrowRightIcon />
-          </Link>
-        </Button>
-      </header>
+  const total = groups.reduce((sum, group) => sum + group.items.length, 0);
 
+  return (
+    <section className="rounded-xl border bg-muted/30 p-4">
+      <SectionHeader
+        title="Coming up"
+        count={total}
+        viewHref="/activity?mode=up-next"
+        viewLabel="View all"
+      />
       <div className="flex flex-col gap-4">
         {groups.map((group) =>
           group.items.length ? (
-            <div key={group.label} className="flex flex-col gap-2">
+            <div key={group.label} className="flex flex-col gap-1.5">
               <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {group.label}
               </h3>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
                 {group.items.map((item) => (
                   <ComingUpCard
                     key={`${item.date}-${item.entity.id}`}
@@ -91,12 +89,13 @@ function ComingUpCard({
   return (
     <Link
       to={`/entities/${encodeURIComponent(item.entity.id)}`}
-      className="flex min-w-0 items-center gap-3 rounded-md border p-2 transition-colors hover:bg-accent"
+      className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-accent"
     >
-      {/* Cover slot only for types that declare an image field; a placeholder
-          fills it when this entity has no cover value. */}
+      {/* Cover slot only for types that declare an image field; a placeholder fills
+          it when this entity has no cover value. `bg-background` so the tile reads
+          against the panel. */}
       {hasCover ? (
-        <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
+        <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-background">
           <AssetImage
             src={item.entity.image}
             className="size-full object-cover"
@@ -106,9 +105,7 @@ function ComingUpCard({
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-medium">{entityTitle(item.entity, language)}</span>
-        <span className="truncate text-xs text-muted-foreground">
-          {sourceLabel(item, labels)}
-        </span>
+        <span className="truncate text-xs text-muted-foreground">{sourceLabel(item, labels)}</span>
       </div>
       <div className="shrink-0 text-right">
         <div className="text-xs font-medium">{countdown(days)}</div>
