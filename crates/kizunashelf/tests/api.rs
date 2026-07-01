@@ -783,6 +783,43 @@ async fn log_endpoint_applies_and_reverses_date_stamp() {
 }
 
 #[tokio::test]
+async fn log_conflict_leaves_no_partial_write() {
+    let server = TestServer::new();
+    let entity = urlencoding::encode("anime:Star Voyager");
+    let log = format!("/api/entities/{entity}/log");
+
+    // A `completed` log stamps a frontmatter date *and* writes a daily-note line —
+    // two files that can't be committed atomically. A stale revision must fail with
+    // neither applied: the preflight rejects it before the note is touched, so the
+    // request is all-or-nothing rather than leaving a half-written state.
+    let (status, _) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "add", "kind": "completed", "date": "2029-03-14",
+            "note": "fin", "revision": "stale-revision",
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+
+    // The daily note was never written: a dry-run still reports the note as new and
+    // the line as not-yet-present — both would be false had the failed attempt
+    // written anything.
+    let (status, preview) = request_json(
+        &server.app,
+        Method::POST,
+        &format!("{log}?dryRun=true"),
+        Some(json!({ "op": "add", "kind": "completed", "date": "2029-03-14", "note": "fin" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    assert_eq!(preview["noteWillBeCreated"], true, "{preview}");
+    assert_eq!(preview["lineAlreadyPresent"], false, "{preview}");
+}
+
+#[tokio::test]
 async fn settings_save_and_read_vault_config() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");

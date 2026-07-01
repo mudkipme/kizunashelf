@@ -118,8 +118,8 @@ export function EntityPage() {
       : []),
   ];
   // The Log button is shown only when the type is configured for daily-note
-  // logging. Episode checkboxes tick independently of this (and write a
-  // daily-note line themselves when the type is loggable).
+  // logging. Episode check-offs are independent — they only stamp the ✅
+  // completion date via `/episodes/watch` and never write a daily-note line.
   const canLog = contentWritable && Boolean(entity) && Boolean(typeConfig?.log);
   const external = useExternalMatch({
     typeConfig,

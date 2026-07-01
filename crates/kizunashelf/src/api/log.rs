@@ -71,17 +71,6 @@ pub(crate) async fn log_activity(
 
     let vfs = state.vault_vfs(&library.config.vault_root);
 
-    // Read the body once — it backs the guarded date-stamp mutation.
-    let raw = if mutates_entity {
-        Some(
-            vfs.read_to_string(&source_rel)
-                .await
-                .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?,
-        )
-    } else {
-        None
-    };
-
     // The log's date is always client-supplied — the user's local date, so the
     // server never assumes "today" in UTC and past actions can be logged.
     let Some(date) = request
@@ -100,35 +89,37 @@ pub(crate) async fn log_activity(
         .as_deref()
         .map(|format| render_log_line(format, &basename, note, &date));
 
-    // --- Frontmatter date stamp (started/completed): one guarded write.
-    let mut entity = None;
-    if mutates_entity && !dry_run {
-        let raw = raw.as_deref().unwrap();
+    // The two side effects (a daily-note line and an entity date stamp) touch two
+    // files that can't be renamed atomically together. To keep the request
+    // all-or-nothing we: (1) preflight the entity revision here, before the note is
+    // touched, so the common "stale entity" conflict fails with nothing written;
+    // (2) write the daily note first (it's the contended file, edited live in
+    // Obsidian); (3) stamp the entity, and if that fails after the line landed, undo
+    // the line.
+    let revision = if mutates_entity && !dry_run {
         let Some(revision) = request.revision.as_deref() else {
             return Err(ApiError::bad_request(
                 "A revision is required to stamp a date",
             ));
         };
-        check_revision(revision, &file_revision(raw))?;
-        let mut document = split_markdown_document(raw);
-        if let Some(field) = &stamp_field {
-            apply_date_stamp(&mut document.frontmatter, field, &date, op);
-        }
-        let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-        write_entity_raw(vfs.as_ref(), &source_rel, &new_raw).await?;
+        let raw = vfs
+            .read_to_string(&source_rel)
+            .await
+            .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
+        check_revision(revision, &file_revision(&raw))?;
+        Some(revision.to_string())
+    } else {
+        None
+    };
 
-        state.invalidate_cache().await;
-        let reloaded = get_library(&state).await?;
-        if let Some(record) = reloaded.record_by_id(&path.id) {
-            entity = Some(build_entity_detail(&state, &reloaded, &record.summary).await?);
-        }
-    }
-
-    // --- Daily-note line: appended on `add`, removed on `remove`.
+    // --- Daily-note line first. `add` appends the exact line (idempotent); `remove`
+    //     strips the exact match. `line_applied` records whether the file actually
+    //     changed, so the date-stamp step below can undo it on failure.
     let mut note_path = None;
     let mut note_will_be_created = false;
     let mut line_already_present = false;
     let mut line_matched = None;
+    let mut line_applied = false;
     if let (Some(line), Some(heading)) = (&line, &log_section) {
         match op {
             LogOp::Add => {
@@ -139,9 +130,7 @@ pub(crate) async fn log_activity(
                 note_path = Some(outcome.relative_path);
                 note_will_be_created = outcome.note_created;
                 line_already_present = outcome.line_already_present;
-                if !dry_run && !outcome.line_already_present {
-                    state.invalidate_cache().await;
-                }
+                line_applied = !dry_run && !outcome.line_already_present;
             }
             LogOp::Remove => {
                 let outcome =
@@ -150,10 +139,69 @@ pub(crate) async fn log_activity(
                         .map_err(map_log_error)?;
                 note_path = Some(outcome.relative_path);
                 line_matched = Some(outcome.line_matched);
-                if !dry_run && outcome.line_matched {
+                line_applied = !dry_run && outcome.line_matched;
+            }
+        }
+        if line_applied {
+            state.invalidate_cache().await;
+        }
+    }
+
+    // --- Frontmatter date stamp second, revision-guarded against a fresh read (the
+    //     note write widened the window since the preflight). On failure, undo the
+    //     daily-note line so nothing is left half-applied.
+    let mut entity = None;
+    if let Some(revision) = &revision {
+        if let Err(error) = stamp_entity_date(
+            vfs.as_ref(),
+            &source_rel,
+            revision,
+            stamp_field.as_deref(),
+            &date,
+            op,
+        )
+        .await
+        {
+            if line_applied {
+                if let (Some(line), Some(heading)) = (&line, &log_section) {
+                    let undone = match op {
+                        LogOp::Add => remove_log_line(
+                            &library.config,
+                            vfs.as_ref(),
+                            &date,
+                            heading,
+                            line,
+                            false,
+                        )
+                        .await
+                        .map(drop),
+                        LogOp::Remove => write_log_line(
+                            &library.config,
+                            vfs.as_ref(),
+                            &date,
+                            heading,
+                            line,
+                            false,
+                        )
+                        .await
+                        .map(drop),
+                    };
                     state.invalidate_cache().await;
+                    if undone.is_err() {
+                        return Err(anyhow::anyhow!(
+                            "The date stamp failed and the daily-note line couldn't be undone — the log is partially applied; re-check the entity and the daily note."
+                        )
+                        .into());
+                    }
                 }
             }
+            return Err(error);
+        }
+
+        state.invalidate_cache().await;
+        let reloaded = get_library(&state).await?;
+        if let Some(record) = reloaded.record_by_id(&path.id) {
+            entity = Some(build_entity_detail(&state, &reloaded, &record.summary).await?);
         }
     }
 
@@ -173,6 +221,32 @@ pub(crate) async fn log_activity(
         will_stamp_date,
         entity,
     }))
+}
+
+/// Applies the `started`/`completed` date stamp to the entity, revision-guarded
+/// against a **fresh** read of the file — so a concurrent edit since the caller's
+/// preflight is caught (409) instead of clobbered. `field` is `None` for a kind
+/// that doesn't stamp; the guarded write still round-trips.
+async fn stamp_entity_date(
+    vfs: &dyn crate::vfs::Vfs,
+    source_rel: &str,
+    revision: &str,
+    field: Option<&str>,
+    date: &str,
+    op: LogOp,
+) -> Result<(), ApiError> {
+    let raw = vfs
+        .read_to_string(source_rel)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
+    check_revision(revision, &file_revision(&raw))?;
+    let mut document = split_markdown_document(&raw);
+    if let Some(field) = field {
+        apply_date_stamp(&mut document.frontmatter, field, date, op);
+    }
+    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
+    write_entity_raw(vfs, source_rel, &new_raw).await?;
+    Ok(())
 }
 
 /// The first dated field a `started`/`completed` log would stamp, by `DateRole`.
