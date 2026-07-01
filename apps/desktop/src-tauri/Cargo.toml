@@ -11,7 +11,9 @@ tauri-build = { version = "2.6.2", features = [] }
 [dependencies]
 anyhow = "1.0.99"
 axum = "0.8.7"
-kizunashelf = { path = "../../../crates/kizunashelf" }
+# `system-proxy` makes reqwest read the OS system proxy on macOS/Windows (env-var
+# proxies work regardless). Desktop-only so the Docker/web build stays lean.
+kizunashelf = { path = "../../../crates/kizunashelf", features = ["system-proxy"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 tauri = { version = "2.11.2", features = [] }

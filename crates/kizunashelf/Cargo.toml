@@ -15,6 +15,13 @@ path = "src/bin/api.rs"
 name = "kizunashelf-schema"
 path = "src/bin/schema.rs"
 
+[features]
+# Off by default: env-var proxies (HTTP_PROXY/HTTPS_PROXY/…) are always honored
+# regardless. This adds reading the OS-level system proxy on macOS/Windows (a
+# no-op on Linux, so the Docker/web build is unaffected). Enabled by the desktop
+# app; env vars still take precedence over the system config when both are set.
+system-proxy = ["reqwest/system-proxy"]
+
 [dependencies]
 anyhow = "1.0.100"
 aide = { version = "0.16.0-alpha.4", features = ["axum", "axum-json", "axum-query"] }

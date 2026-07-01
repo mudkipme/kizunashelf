@@ -732,6 +732,10 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
             ("director", &["导演", "演出"][..]),
             ("author", &["作者", "作画", "原作"][..]),
             ("genre", &["类型", "游戏类型"][..]),
+            // Games list their hardware platforms under `平台`; when present this
+            // overrides the top-level `platform` (which is only the subject subtype
+            // label — `游戏` for every game). Non-games lack this key and keep it.
+            ("platform", &["平台"][..]),
         ] {
             let values = infobox_collect(infobox, keys);
             if !values.is_empty() {
@@ -1004,5 +1008,31 @@ mod tests {
         );
         // Prefer the 13-digit `ISBN` over the separate `ISBN-10`.
         assert_eq!(metadata.get("isbn"), Some(&json!("9784040000000")));
+    }
+
+    #[test]
+    fn game_platform_uses_infobox_hardware_over_subtype_label() {
+        // A game's top-level `platform` is only the subject subtype label (`游戏`);
+        // the real hardware platforms live in the `平台` infobox key and override it.
+        let candidate = bangumi_candidate(&json!({
+            "id": 584744,
+            "name": "スーパーダンガンロンパ2×2",
+            "name_cn": "超级枪弹辩驳２×２",
+            "platform": "游戏",
+            "infobox": [
+                { "key": "平台", "value": [
+                    { "v": "Nintendo Switch 2" },
+                    { "v": "Nintendo Switch" },
+                    { "v": "PS5" },
+                    { "v": "PC" }
+                ] }
+            ]
+        }))
+        .unwrap();
+
+        assert_eq!(
+            candidate.metadata.get("platform"),
+            Some(&json!(["Nintendo Switch 2", "Nintendo Switch", "PS5", "PC"]))
+        );
     }
 }
