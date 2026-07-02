@@ -165,14 +165,18 @@ pub enum EpisodeTracking {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum DateRole {
+    // Plain `//` (not `///`): a doc comment on a variant makes schemars emit the
+    // enum as a `oneOf` of single-value consts, which swift-openapi-generator can't
+    // render as a flat Swift enum (it becomes `case1(…)`/`case2(…)`). Keep this a
+    // flat string enum, like `FieldType`/`BodySectionKind`/`CanonicalStatus`.
+    //
+    // `Event` — a date the user *attends* (a concert, exhibition, release event)
+    // rather than a release they passively consume. Whether it reads as an intention
+    // (up next) or a record (recent) is derived from the entity's status, not encoded
+    // as separate roles — see `docs/status-role-plan.md`.
     Planning,
     Started,
     Completed,
-    /// A date the user *attends* (a concert, exhibition, release event) rather than
-    /// a release they passively consume. Whether it reads as an intention (up next)
-    /// or a record (recent) is **derived from the entity's status**, not encoded as
-    /// separate roles — see `docs/status-role-plan.md`. Wired into the feed in a
-    /// later phase; harmless everywhere that matches only the other three roles.
     Event,
 }
 

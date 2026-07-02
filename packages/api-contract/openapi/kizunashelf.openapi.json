@@ -3057,20 +3057,12 @@
         }
       },
       "DateRole": {
-        "oneOf": [
-          {
-            "type": "string",
-            "enum": [
-              "planning",
-              "started",
-              "completed"
-            ]
-          },
-          {
-            "description": "A date the user *attends* (a concert, exhibition, release event) rather than\na release they passively consume. Whether it reads as an intention (up next)\nor a record (recent) is **derived from the entity's status**, not encoded as\nseparate roles — see `docs/status-role-plan.md`. Wired into the feed in a\nlater phase; harmless everywhere that matches only the other three roles.",
-            "type": "string",
-            "const": "event"
-          }
+        "type": "string",
+        "enum": [
+          "planning",
+          "started",
+          "completed",
+          "event"
         ]
       },
       "SeasonLanguage": {

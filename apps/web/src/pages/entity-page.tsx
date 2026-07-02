@@ -108,12 +108,18 @@ export function EntityPage() {
     contentWritable && capabilities.assetDownloadEnabled && isRemoteAsset(entity?.image);
   const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
   // The activities offered in the log dialog: always "progress", plus
-  // "started"/"completed" only when the schema actually has those date roles to
-  // stamp.
+  // "started"/"completed" when the log would *do* something for that kind —
+  // either stamp a matching `dateRole` field, or flip a mapped `enumRole: status`
+  // field (started → ongoing, completed → completed).
+  const statusField = typeConfig?.fields.find((field) => field.enumRole === "status");
   const logKinds: ("progress" | "started" | "completed")[] = [
     "progress",
-    ...(typeConfig?.fields.some((field) => field.dateRole === "started") ? (["started"] as const) : []),
-    ...(typeConfig?.fields.some((field) => field.dateRole === "completed")
+    ...(typeConfig?.fields.some((field) => field.dateRole === "started") ||
+    (statusField?.statusValues?.ongoing?.length ?? 0) > 0
+      ? (["started"] as const)
+      : []),
+    ...(typeConfig?.fields.some((field) => field.dateRole === "completed") ||
+    (statusField?.statusValues?.completed?.length ?? 0) > 0
       ? (["completed"] as const)
       : []),
   ];

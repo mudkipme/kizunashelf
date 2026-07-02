@@ -204,6 +204,9 @@ function LogPreview({
           {data.willStampDate.value}
         </span>
       ) : null}
+      {data.willFlipStatus ? (
+        <span className="text-muted-foreground">Marks as {data.willFlipStatus.value}</span>
+      ) : null}
     </div>
   );
 }

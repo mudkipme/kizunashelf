@@ -62,6 +62,10 @@ function visibleFrontmatterEntries(
     // Tags have their own display next to the type chip; never in "Details".
     tagsFieldName,
     ...fieldsByType(typeConfig, "title").map((field) => field.field),
+    // The status field shows as a badge in the header — not repeated in "Details".
+    ...configFields(typeConfig)
+      .filter((field) => field.enumRole === "status")
+      .map((field) => field.field),
     ...entity.dates.map((date) => date.field),
     ...Object.keys(entity.externalRefs),
     ...relationGroups.map((group) => group.field),

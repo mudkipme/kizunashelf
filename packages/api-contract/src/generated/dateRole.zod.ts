@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const DateRole = zod.union([zod.enum(['planning', 'started', 'completed']),zod.literal("event").describe('A date the user \*attends\* (a concert, exhibition, release event) rather than\na release they passively consume. Whether it reads as an intention (up next)\nor a record (recent) is \*\*derived from the entity\'s status\*\*, not encoded as\nseparate roles — see `docs\/status-role-plan.md`. Wired into the feed in a\nlater phase; harmless everywhere that matches only the other three roles.')])
+export const DateRole = zod.enum(['planning', 'started', 'completed', 'event'])
 
 export type DateRole = zod.input<typeof DateRole>;
 export type DateRoleOutput = zod.output<typeof DateRole>;
