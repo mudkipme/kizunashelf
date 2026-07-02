@@ -781,10 +781,31 @@ async fn recent(library: &Library, today: &str) -> ActivityResponse {
     .unwrap()
 }
 
+async fn catch_up(library: &Library, today: &str) -> ActivityResponse {
+    let vfs = InMemoryVfs::new();
+    build_activity(
+        library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::CatchUp, today),
+    )
+    .await
+    .unwrap()
+}
+
 fn library_of(record: EntityRecord) -> Library {
     Library::new(
         activity_config(None),
         vec![record],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    )
+}
+
+fn library_of_records(records: Vec<EntityRecord>) -> Library {
+    Library::new(
+        activity_config(None),
+        records,
         Vec::new(),
         Vec::new(),
         String::new(),
@@ -810,10 +831,133 @@ async fn up_next_hides_a_dropped_entitys_future_episodes() {
 }
 
 #[tokio::test]
-async fn up_next_surfaces_an_overdue_planning_nag_while_still_planning() {
-    // A planning date in the past (2024-05-01) with the entity still `planning` is
-    // a due task — it must appear in up next even though its month is behind us.
+async fn up_next_hides_a_paused_entitys_future_plans_and_episodes() {
+    // A paused entity is deliberately deferred — its future planning date and
+    // scheduled episode must not nag in up next.
+    let mut rec = forward_and_back_record();
+    rec.summary = with_status(rec.summary, CanonicalStatus::Paused);
+    let response = up_next(&library_of(rec), "2024-06-15").await;
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn recent_keeps_daily_note_mentions_of_a_dropped_entity() {
+    // A daily-note mention is a factual diary record — dropping the entity must not
+    // remove it from the "recent" feed.
+    let mut entity = with_status(
+        summary("anime", "Anime", "Star Voyager"),
+        CanonicalStatus::Dropped,
+    );
+    entity.id = "anime:sv".to_string();
+    let relation = Relation {
+        source_id: "daily-note:2024-05-20:Journal/2024-05-20.md".to_string(),
+        target_id: Some(entity.id.clone()),
+        target_title: "Star Voyager".to_string(),
+        target_type: Some("anime".to_string()),
+        field: "daily-note".to_string(),
+        direction: RelationDirection::Out,
+    };
+    let library = Library::new(
+        activity_config(Some(vec!["Journal".to_string()])),
+        vec![record(entity)],
+        vec![relation],
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+    vfs.insert_file("Journal/2024-05-20.md", "- rewatched [[Star Voyager]] 3\n");
+
+    let response = build_activity(
+        &library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::Recent, "2024-06-15"),
+    )
+    .await
+    .unwrap();
+    assert_eq!(response.items.len(), 1);
+    assert!(response.items[0]
+        .entries
+        .iter()
+        .any(|entry| entry.source == CalendarEntrySource::DailyNote));
+}
+
+#[tokio::test]
+async fn recent_keeps_completed_episodes_of_dropped_and_paused_entities() {
+    // Dropping or pausing an entity removes it from "up next" but must NOT erase
+    // its history: a completed episode still belongs in the diary.
+    for status in [CanonicalStatus::Dropped, CanonicalStatus::Paused] {
+        let mut entity = with_status(summary("anime", "Anime", "Star Voyager"), status);
+        entity.id = "anime:sv".to_string();
+        let mut rec = record(entity);
+        rec.episode_dates = vec![EpisodeDate {
+            key: "3".to_string(),
+            title: "Three".to_string(),
+            date: "2024-05-10".to_string(),
+            role: EpisodeDateRole::Completed,
+        }];
+        let response = recent(&library_of(rec), "2024-06-15").await;
+        assert_eq!(response.items.len(), 1, "status {status:?}");
+        assert!(response.items[0]
+            .entries
+            .iter()
+            .any(|entry| entry.episode_role == Some(EpisodeDateRole::Completed)));
+    }
+}
+
+#[tokio::test]
+async fn up_next_excludes_a_past_planning_date_even_while_planning() {
+    // Forward-only: a planning date in the past (2024-05-01) is never "up next",
+    // even when the entity is still `planning`. A released/aired thing you haven't
+    // gotten to is not something to act on *now* — it belongs to "recent", and
+    // surfacing every past release date would flood the feed.
     let response = up_next(
+        &library_of(planning_record("2024-05-01", CanonicalStatus::Planning)),
+        "2024-06-15",
+    )
+    .await;
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn up_next_includes_a_today_planning_date() {
+    // Forward-only still includes *today* — a plan dated today is up next.
+    let response = up_next(
+        &library_of(planning_record("2024-06-15", CanonicalStatus::Planning)),
+        "2024-06-15",
+    )
+    .await;
+    assert_eq!(response.items.len(), 1);
+    assert_eq!(response.items[0].date, "2024-06-15");
+    assert!(response.items[0]
+        .entries
+        .iter()
+        .any(|entry| entry.role == Some(DateRole::Planning)));
+}
+
+#[tokio::test]
+async fn up_next_hides_a_spent_future_intention_once_ongoing() {
+    // A future planning date on an entity that's already ongoing is spent.
+    let response = up_next(
+        &library_of(planning_record("2024-07-01", CanonicalStatus::Ongoing)),
+        "2024-06-15",
+    )
+    .await;
+    assert!(response.items.is_empty());
+}
+
+// --- catch up (past planning, still planning) ------------------------------
+
+/// A planning record with a specific id, so several can coexist in one library.
+fn planning_record_id(id: &str, date: &str, status: CanonicalStatus) -> EntityRecord {
+    let mut entity = with_status(summary("anime", "Anime", id), status);
+    entity.id = format!("anime:{id}");
+    entity.dates = vec![date_value("planned", date)];
+    record(entity)
+}
+
+#[tokio::test]
+async fn catch_up_lists_a_past_planning_date_while_still_planning() {
+    let response = catch_up(
         &library_of(planning_record("2024-05-01", CanonicalStatus::Planning)),
         "2024-06-15",
     )
@@ -827,24 +971,82 @@ async fn up_next_surfaces_an_overdue_planning_nag_while_still_planning() {
 }
 
 #[tokio::test]
-async fn up_next_does_not_nag_an_overdue_plan_without_planning_status() {
-    // Same past planning date, but no canonical status → no nag (only an explicit
-    // `planning` status nags; `none` deliberately stays quiet).
-    let mut rec = planning_record("2024-05-01", CanonicalStatus::Planning);
-    rec.summary.status = None;
-    let response = up_next(&library_of(rec), "2024-06-15").await;
-    assert!(response.items.is_empty());
+async fn catch_up_excludes_today_and_future_planning() {
+    // Today and later belong to "up next", not "catch up".
+    for date in ["2024-06-15", "2024-07-01"] {
+        let response = catch_up(
+            &library_of(planning_record(date, CanonicalStatus::Planning)),
+            "2024-06-15",
+        )
+        .await;
+        assert!(response.items.is_empty(), "date {date}");
+    }
 }
 
 #[tokio::test]
-async fn up_next_hides_a_spent_future_intention_once_ongoing() {
-    // A future planning date on an entity that's already ongoing is spent.
-    let response = up_next(
-        &library_of(planning_record("2024-07-01", CanonicalStatus::Ongoing)),
-        "2024-06-15",
-    )
-    .await;
-    assert!(response.items.is_empty());
+async fn catch_up_excludes_past_planning_that_is_no_longer_planning() {
+    // Once you've started/finished/paused/dropped it, it's not something to catch
+    // up on — only a *still-planning* past date qualifies.
+    for status in [
+        CanonicalStatus::Ongoing,
+        CanonicalStatus::Paused,
+        CanonicalStatus::Completed,
+        CanonicalStatus::Dropped,
+    ] {
+        let response = catch_up(
+            &library_of(planning_record("2024-05-01", status)),
+            "2024-06-15",
+        )
+        .await;
+        assert!(response.items.is_empty(), "status {status:?}");
+    }
+}
+
+#[tokio::test]
+async fn catch_up_is_reverse_chronological() {
+    let records = vec![
+        planning_record_id("a", "2024-01-15", CanonicalStatus::Planning),
+        planning_record_id("b", "2024-05-01", CanonicalStatus::Planning),
+        planning_record_id("c", "2024-03-10", CanonicalStatus::Planning),
+    ];
+    let response = catch_up(&library_of_records(records), "2024-06-15").await;
+    let dates: Vec<_> = response
+        .items
+        .iter()
+        .map(|item| item.date.as_str())
+        .collect();
+    assert_eq!(dates, ["2024-05-01", "2024-03-10", "2024-01-15"]);
+}
+
+#[tokio::test]
+async fn catch_up_excludes_episodes_and_daily_notes() {
+    // A still-planning entity with a past planning date AND a past completed episode:
+    // catch up surfaces the entity once via its planning date, never per-episode.
+    let mut entity = with_status(
+        summary("anime", "Anime", "Star Voyager"),
+        CanonicalStatus::Planning,
+    );
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![date_value("planned", "2024-05-01")];
+    let mut rec = record(entity);
+    rec.episode_dates = vec![EpisodeDate {
+        key: "1".to_string(),
+        title: "Pilot".to_string(),
+        date: "2024-05-02".to_string(),
+        role: EpisodeDateRole::Completed,
+    }];
+    let response = catch_up(&library_of(rec), "2024-06-15").await;
+    let entries: Vec<_> = response
+        .items
+        .iter()
+        .flat_map(|item| &item.entries)
+        .collect();
+    assert!(entries
+        .iter()
+        .all(|entry| entry.source == CalendarEntrySource::Taxonomy));
+    assert!(entries
+        .iter()
+        .any(|entry| entry.role == Some(DateRole::Planning)));
 }
 
 #[tokio::test]

@@ -26,10 +26,12 @@ const sources = [
 ] as const;
 
 // Recent leads — it's the everyday "what happened" view; Up next is already
-// surfaced on Home; All is the full ledger. Recent is also the default (below).
+// surfaced on Home; Catch up is the reverse-chron "released, still on my list"
+// backlog; All is the full ledger. Recent is also the default (below).
 const modes = [
   { value: "recent", label: "Recent" },
   { value: "up-next", label: "Up next" },
+  { value: "catch-up", label: "Catch up" },
   { value: "all", label: "All" },
 ] as const;
 
@@ -317,8 +319,8 @@ function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
   return value === "taxonomy" || value === "daily-note" ? value : "all";
 }
 
-function readMode(value: string | null): "all" | "recent" | "up-next" {
-  return value === "all" || value === "up-next" ? value : DEFAULT_MODE;
+function readMode(value: string | null): "all" | "recent" | "up-next" | "catch-up" {
+  return value === "all" || value === "up-next" || value === "catch-up" ? value : DEFAULT_MODE;
 }
 
 function formatDay(date: string): string {

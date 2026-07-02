@@ -79,6 +79,7 @@ mod tests {
             status_values: Some(StatusValues {
                 planning: vec!["想看".to_string()],
                 ongoing: vec!["在看".to_string()],
+                paused: vec!["搁置".to_string()],
                 completed: vec!["看完".to_string(), "刷过".to_string()],
                 dropped: vec!["抛弃".to_string()],
             }),
@@ -176,12 +177,26 @@ mod tests {
         let values = status_field_config().status_values.unwrap();
         assert_eq!(values.write_value(CanonicalStatus::Completed), Some("看完"));
         assert_eq!(values.write_value(CanonicalStatus::Ongoing), Some("在看"));
+        assert_eq!(values.write_value(CanonicalStatus::Paused), Some("搁置"));
     }
 
     #[test]
-    fn rank_orders_progression_and_excludes_dropped() {
+    fn resolves_a_paused_value() {
+        let type_config = type_config_with(vec![status_field_config()]);
+        let resolved = resolve_status(&type_config, &frontmatter(&[("状态", "搁置")])).unwrap();
+        assert_eq!(resolved.canonical, Some(CanonicalStatus::Paused));
+    }
+
+    #[test]
+    fn rank_orders_progression_paused_resumes_and_dropped_is_excluded() {
         assert!(CanonicalStatus::Planning.rank() < CanonicalStatus::Ongoing.rank());
         assert!(CanonicalStatus::Ongoing.rank() < CanonicalStatus::Completed.rank());
+        // Paused shares the bottom of the chain so a log resumes it forward.
+        assert_eq!(
+            CanonicalStatus::Paused.rank(),
+            CanonicalStatus::Planning.rank()
+        );
+        assert!(CanonicalStatus::Paused.rank() < CanonicalStatus::Ongoing.rank());
         assert_eq!(CanonicalStatus::Dropped.rank(), None);
     }
 }

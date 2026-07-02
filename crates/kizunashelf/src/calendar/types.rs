@@ -22,13 +22,17 @@ pub struct CalendarBuildOptions {
 /// `Recent` hides forward-looking dates (planning fields, scheduled episodes,
 /// future daily notes) — so it's the recent past, not just completions; `UpNext`
 /// shows only what's still ahead (planning fields + scheduled episodes from today
-/// on, and future daily notes), in ascending order.
+/// on, and future daily notes), in ascending order; `CatchUp` is the mirror of
+/// `UpNext` — planning dates that have *passed* while the entity is still
+/// `planning` (released/aired, still on your list), reverse-chronological so the
+/// most recently-available sits on top and the old tail pages away.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum ActivityMode {
     #[default]
     All,
     Recent,
     UpNext,
+    CatchUp,
 }
 
 #[derive(Clone, Debug)]

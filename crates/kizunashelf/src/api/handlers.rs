@@ -272,7 +272,8 @@ pub(crate) struct ActivityQuery {
     #[serde(rename = "type")]
     entity_type: Option<String>,
     source: Option<String>,
-    /// `all` (default), `recent`, or `up-next`.
+    /// `all` (default), `recent`, `up-next`, or `catch-up` (past planning dates
+    /// still in `planning` status — released/aired, still on your list).
     mode: Option<String>,
 }
 
@@ -290,6 +291,7 @@ pub(crate) async fn activity(
     let mode = match query.mode.as_deref() {
         Some("recent") => ActivityMode::Recent,
         Some("up-next") => ActivityMode::UpNext,
+        Some("catch-up") => ActivityMode::CatchUp,
         _ => ActivityMode::All,
     };
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();

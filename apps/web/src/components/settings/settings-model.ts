@@ -258,10 +258,11 @@ function cleanStatusValues(values: StatusValues | null | undefined): StatusValue
   const clean: StatusValues = {
     planning: cleanStrings(values.planning ?? []),
     ongoing: cleanStrings(values.ongoing ?? []),
+    paused: cleanStrings(values.paused ?? []),
     completed: cleanStrings(values.completed ?? []),
     dropped: cleanStrings(values.dropped ?? []),
   };
-  const hasAny = [clean.planning, clean.ongoing, clean.completed, clean.dropped].some(
+  const hasAny = [clean.planning, clean.ongoing, clean.paused, clean.completed, clean.dropped].some(
     (options) => (options?.length ?? 0) > 0,
   );
   return hasAny ? clean : undefined;
@@ -361,6 +362,7 @@ export function defaultEntityType(): EntityTypeConfig {
         statusValues: {
           planning: ["Backlog"],
           ongoing: ["Active"],
+          paused: ["Paused"],
           completed: ["Completed"],
           dropped: ["Dropped"],
         },

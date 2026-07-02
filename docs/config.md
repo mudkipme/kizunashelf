@@ -262,7 +262,7 @@ fields:
 | `externalFields` | no | array | most fields | Maps external provider metadata fields into this frontmatter field. |
 | `enumOptions` | no | string[] | `enum`, `enumList` | Allowed or suggested values in editors and filters. |
 | `enumRole` | no | enum | `enum` | Semantic role of the enum field. Currently only `status` — marks the one field that represents the entity's lifecycle status. See [Status](#status). |
-| `statusValues` | no | object | `enum` (with `enumRole: status`) | Maps each canonical status (`planning`, `ongoing`, `completed`, `dropped`) to the user option strings that mean it. See [Status](#status). |
+| `statusValues` | no | object | `enum` (with `enumRole: status`) | Maps each canonical status (`planning`, `ongoing`, `paused`, `completed`, `dropped`) to the user option strings that mean it. See [Status](#status). |
 | `totalProgressField` | no | string | `progress` | Field that stores the total count for progress. |
 | `dateRole` | no | enum | `date`, `season` | Whether the date is for planning, started, or completion. |
 | `seasonLanguage` | no | enum | `season` | Season display/parser language: `zh`, `ja`, or `en`. |
@@ -407,10 +407,11 @@ On its own, `enumRole: status` just tells KizunaShelf "this is the status field"
 - field: 状态
   fieldType: enum
   enumRole: status
-  enumOptions: [想看, 在看, 看完, 抛弃]
+  enumOptions: [想看, 在看, 搁置, 看完, 抛弃]
   statusValues:
     planning:  [想看]
     ongoing:   [在看]
+    paused:    [搁置]
     completed: [看完, 刷过]   # both mean completed; 看完 is written when a log sets "completed"
     dropped:   [抛弃]
 ```
@@ -419,8 +420,9 @@ On its own, `enumRole: status` just tells KizunaShelf "this is the status field"
 | --- | --- |
 | `planning` | Intend to watch/read/play (or attend, for an `event` date). |
 | `ongoing` | In progress. |
+| `paused` | On hold — deliberately deferred but not abandoned. Kept off "up next" (no nags), but a `started`/`completed` log **resumes** it (unlike `dropped`). Good for a backlog you mean to get back to. |
 | `completed` | Finished. |
-| `dropped` | Abandoned — kept off "up next" and excluded from progress nags. |
+| `dropped` | Abandoned — kept off "up next"; a log never auto-resumes it. Its past records (completed episodes, daily-note mentions, completion dates) still appear in the activity feed. |
 
 Notes:
 

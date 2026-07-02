@@ -771,6 +771,7 @@ mod tests {
         status.status_values = Some(crate::types::StatusValues {
             planning: vec!["Plan".to_string()],
             ongoing: Vec::new(),
+            paused: Vec::new(),
             completed: vec!["Done".to_string()],
             dropped: Vec::new(),
         });

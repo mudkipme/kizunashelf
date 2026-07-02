@@ -188,24 +188,29 @@ pub enum EnumRole {
 
 /// The small fixed set of lifecycle statuses the engine can reason about. User
 /// option strings map onto these via [`StatusValues`]; an entity's own value may
-/// resolve to `None` (unmapped) and is still preserved. `Dropped` sits *outside*
-/// the planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).
+/// resolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit
+/// *outside* the planning→ongoing→completed progression (see
+/// [`CanonicalStatus::rank`]); both are suppressed from "up next" (a paused/dropped
+/// thing isn't something to act on now), but `Paused` still auto-resumes on a log
+/// while `Dropped` never does.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum CanonicalStatus {
     Planning,
     Ongoing,
+    Paused,
     Completed,
     Dropped,
 }
 
 impl CanonicalStatus {
     /// Position on the planning→ongoing→completed chain, used for the monotonic
-    /// log flip (never demote). `Dropped` is off the chain and returns `None` —
-    /// callers never auto-flip *from* or *to* it via the rank.
+    /// log flip (never demote). `Paused` shares the bottom of the chain (`0`) so a
+    /// log *resumes* it forward to `ongoing`/`completed`. `Dropped` is fully off the
+    /// chain and returns `None` — a log never auto-flips *from* (or *to*) it.
     pub fn rank(self) -> Option<u8> {
         match self {
-            CanonicalStatus::Planning => Some(0),
+            CanonicalStatus::Planning | CanonicalStatus::Paused => Some(0),
             CanonicalStatus::Ongoing => Some(1),
             CanonicalStatus::Completed => Some(2),
             CanonicalStatus::Dropped => None,
@@ -226,6 +231,8 @@ pub struct StatusValues {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub ongoing: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub paused: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub completed: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub dropped: Vec<String>,
@@ -238,6 +245,7 @@ impl StatusValues {
         match canonical {
             CanonicalStatus::Planning => &self.planning,
             CanonicalStatus::Ongoing => &self.ongoing,
+            CanonicalStatus::Paused => &self.paused,
             CanonicalStatus::Completed => &self.completed,
             CanonicalStatus::Dropped => &self.dropped,
         }
@@ -255,6 +263,7 @@ impl StatusValues {
         [
             CanonicalStatus::Planning,
             CanonicalStatus::Ongoing,
+            CanonicalStatus::Paused,
             CanonicalStatus::Completed,
             CanonicalStatus::Dropped,
         ]

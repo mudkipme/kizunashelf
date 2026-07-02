@@ -598,9 +598,9 @@
           {
             "in": "query",
             "name": "mode",
-            "description": "`all` (default), `recent`, or `up-next`.",
+            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
             "schema": {
-              "description": "`all` (default), `recent`, or `up-next`.",
+              "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
               "type": "string"
             },
             "style": "form"
@@ -3036,6 +3036,12 @@
               "type": "string"
             }
           },
+          "paused": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "completed": {
             "type": "array",
             "items": {
@@ -3707,11 +3713,12 @@
         ]
       },
       "CanonicalStatus": {
-        "description": "The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity's own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits *outside*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).",
+        "description": "The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity's own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n*outside* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused/dropped\nthing isn't something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.",
         "type": "string",
         "enum": [
           "planning",
           "ongoing",
+          "paused",
           "completed",
           "dropped"
         ]
@@ -4534,7 +4541,7 @@
             ]
           },
           "mode": {
-            "description": "`all` (default), `recent`, or `up-next`.",
+            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
             "type": [
               "string",
               "null"

@@ -6,7 +6,7 @@
  */
 import { z as zod } from 'zod';
 
-export const CanonicalStatus = zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).')
+export const CanonicalStatus = zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.')
 
 export type CanonicalStatus = zod.input<typeof CanonicalStatus>;
 export type CanonicalStatusOutput = zod.output<typeof CanonicalStatus>;

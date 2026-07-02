@@ -77,6 +77,7 @@ export const VaultConfig = zod.object({
   "statusValues": zod.union([zod.object({
   "planning": zod.array(zod.string()).optional(),
   "ongoing": zod.array(zod.string()).optional(),
+  "paused": zod.array(zod.string()).optional(),
   "completed": zod.array(zod.string()).optional(),
   "dropped": zod.array(zod.string()).optional()
 }).describe('Maps each canonical status to the user-defined option strings that mean it. The\n\*\*first\*\* option listed for a canonical is the \*write target\* — what a log flip\nwrites when it sets that status. An empty vec means that canonical is unmapped\n(no behavior fires for it). Fixed optional keys (not an open map) for\ncodegen-friendliness and clean \"unmapped\" semantics.'),zod.null()]).optional().describe('For an `enumRole: status` field: maps each canonical status to the user\noption strings that mean it. Absent (or a canonical absent from it) leaves\nthat canonical unmapped — the field is still the status field, but no\ncanonical behavior fires. See [`StatusValues`].'),

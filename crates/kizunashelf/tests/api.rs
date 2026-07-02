@@ -143,7 +143,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
             "displayName": "Status",
             "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"],
             "enumRole": "status",
-            "statusValues": { "ongoing": ["Watching"], "completed": ["Completed"], "dropped": ["Dropped"] }
+            "statusValues": { "ongoing": ["Watching"], "paused": ["Paused"], "completed": ["Completed"], "dropped": ["Dropped"] }
         })
     );
     assert_eq!(config["types"][0]["fields"][3]["field"], "title_original");
@@ -861,6 +861,50 @@ async fn log_endpoint_flips_status_monotonically_and_never_reverts_on_remove() {
 }
 
 #[tokio::test]
+async fn log_started_resumes_a_paused_entity() {
+    let server = TestServer::new();
+    let id = urlencoding::encode("anime:Star Voyager");
+    let entity_path = format!("/api/entities/{id}");
+    let log = format!("{entity_path}/log");
+
+    async fn revision_of(server: &TestServer, path: &str) -> String {
+        server.ok_json(path).await["entity"]["revision"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+
+    // Pause it first (Paused is off the progression chain).
+    let revision = revision_of(&server, &entity_path).await;
+    let (status, _) = request_json(
+        &server.app,
+        Method::POST,
+        &entity_path,
+        Some(json!({ "revision": revision, "frontmatter": { "status": "Paused" }, "body": "" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+
+    // A `started` log resumes it: paused promotes forward to the `ongoing` value.
+    let revision = revision_of(&server, &entity_path).await;
+    let (status, done) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "add", "kind": "started", "date": "2024-08-20", "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{done}");
+    assert_eq!(done["willFlipStatus"]["canonical"], "ongoing", "{done}");
+    assert_eq!(
+        done["entity"]["entity"]["frontmatter"]["status"], "Watching",
+        "{done}"
+    );
+}
+
+#[tokio::test]
 async fn log_conflict_leaves_no_partial_write() {
     let server = TestServer::new();
     let entity = urlencoding::encode("anime:Star Voyager");
@@ -1332,7 +1376,7 @@ impl TestServer {
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
                         { "field": "title_original", "fieldType": "title", "displayName": "Title (Original)", "titleRole": "original" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
-                        { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"], "enumRole": "status", "statusValues": { "ongoing": ["Watching"], "completed": ["Completed"], "dropped": ["Dropped"] } },
+                        { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"], "enumRole": "status", "statusValues": { "ongoing": ["Watching"], "paused": ["Paused"], "completed": ["Completed"], "dropped": ["Dropped"] } },
                         { "field": "season", "fieldType": "season", "displayName": "Season", "dateRole": "planning", "seasonLanguage": "zh" },
                         { "field": "complete_date", "fieldType": "date", "displayName": "Completed date", "dateRole": "completed" },
                         { "field": "favorite", "fieldType": "bool", "displayName": "Favorite" },

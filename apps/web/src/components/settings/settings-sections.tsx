@@ -853,6 +853,7 @@ function FieldOptionEditor({
 const STATUS_CANONICALS: { value: CanonicalStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
   { value: "ongoing", label: "Ongoing" },
+  { value: "paused", label: "Paused" },
   { value: "completed", label: "Completed" },
   { value: "dropped", label: "Dropped" },
 ];
@@ -885,6 +886,7 @@ function StatusRoleEditor({
     const values: Record<CanonicalStatus, string[]> = {
       planning: [],
       ongoing: [],
+      paused: [],
       completed: [],
       dropped: [],
     };

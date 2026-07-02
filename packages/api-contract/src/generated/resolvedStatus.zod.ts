@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const ResolvedStatus = zod.object({
   "field": zod.string(),
   "value": zod.string(),
-  "canonical": zod.union([zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).'),zod.null()]).optional()
+  "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
 }).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.')
 
 export type ResolvedStatus = zod.input<typeof ResolvedStatus>;

@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const FlippedStatus = zod.object({
   "field": zod.string(),
   "value": zod.string(),
-  "canonical": zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).')
+  "canonical": zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.')
 }).describe('The status field, the value written, and the canonical it represents, for a\nlog that flips the entity\'s status.')
 
 export type FlippedStatus = zod.input<typeof FlippedStatus>;

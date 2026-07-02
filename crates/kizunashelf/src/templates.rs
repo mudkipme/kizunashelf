@@ -390,12 +390,12 @@ fn blank_type() -> EntityTypeConfig {
         .map(|value| value.to_string())
         .collect();
     // Mark it as the status field with a sensible default mapping, so a fresh vault
-    // gets status-driven behavior (feed accuracy, log flips) out of the box. Paused
-    // stays intentionally unmapped — a deliberate pause, not a progression step.
+    // gets status-driven behavior (feed accuracy, log flips) out of the box.
     state.enum_role = Some(crate::types::EnumRole::Status);
     state.status_values = Some(crate::types::StatusValues {
         planning: vec!["Backlog".to_string()],
         ongoing: vec!["Active".to_string()],
+        paused: vec!["Paused".to_string()],
         completed: vec!["Completed".to_string()],
         dropped: vec!["Dropped".to_string()],
     });
