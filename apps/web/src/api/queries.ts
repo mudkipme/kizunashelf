@@ -21,6 +21,7 @@ import {
 import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
+import { todayLocal } from "@/lib/date";
 import { getProviderCatalog } from "@/api/external";
 import { fetchList, fetchLists } from "@/api/lists";
 import { getLanguages, getRawSettingsConfig, getSettingsConfig, getVaultTemplates } from "@/api/settings";
@@ -31,7 +32,7 @@ export const queryKeys = {
   analytics: ["analytics"] as const,
   calendar: (params: GetCalendarParams) => ["calendar", params] as const,
   capabilities: ["capabilities"] as const,
-  cleanupQueues: ["cleanupQueues"] as const,
+  cleanupQueues: (today: string) => ["cleanupQueues", today] as const,
   config: ["config"] as const,
   entities: (params: GetEntitiesParams) => ["entities", params] as const,
   entity: (id: string) => ["entity", id] as const,
@@ -102,9 +103,12 @@ export function capabilitiesQuery() {
 }
 
 export function cleanupQueuesQuery() {
+  // The status-mismatch queue is date-relative, so scope it to the client's local
+  // date (and key the cache by it, so it refetches when the day rolls over).
+  const today = todayLocal();
   return queryOptions({
-    queryKey: queryKeys.cleanupQueues,
-    queryFn: ({ signal }) => getCleanupQueues({ signal }, apiFetch),
+    queryKey: queryKeys.cleanupQueues(today),
+    queryFn: ({ signal }) => getCleanupQueues({ today }, { signal }, apiFetch),
   });
 }
 

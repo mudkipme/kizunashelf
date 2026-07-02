@@ -13,7 +13,7 @@ export const ActivityEntry = zod.object({
   "source": zod.enum(['taxonomy', 'daily-note', 'episode']).describe('Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode\/track in the entity body.'),
   "dateField": zod.string().nullish().describe('`taxonomy`: the date field\'s name, its raw value, and its resolved role.'),
   "rawDate": zod.string().nullish(),
-  "role": zod.union([zod.enum(['planning', 'started', 'completed']),zod.null()]).optional(),
+  "role": zod.union([zod.union([zod.enum(['planning', 'started', 'completed']),zod.literal("event").describe('A date the user \*attends\* (a concert, exhibition, release event) rather than\na release they passively consume. Whether it reads as an intention (up next)\nor a record (recent) is \*\*derived from the entity\'s status\*\*, not encoded as\nseparate roles — see `docs\/status-role-plan.md`. Wired into the feed in a\nlater phase; harmless everywhere that matches only the other three roles.')]),zod.null()]).optional(),
   "notePath": zod.string().nullish().describe('`daily-note`: the note path and the mention snippets for this entity\/date.'),
   "snippets": zod.array(zod.object({
   "text": zod.string(),

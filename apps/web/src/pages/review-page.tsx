@@ -47,6 +47,7 @@ const queueDefinitions: QueueDefinition[] = [
   { id: "missing-refs", label: "Missing Links", kind: "entity" },
   { id: "isolated", label: "Unlinked Items", kind: "entity" },
   { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
+  { id: "status-mismatch", label: "Status Mismatch", kind: "entity" },
 ];
 
 const assetQueueIds = new Set(["missing-cover", "broken-asset"]);
@@ -348,6 +349,9 @@ function queueItems(data: CleanupQueuesResponse, queue: QueueDefinition): Filter
   }
   if (queue.id === "broken-asset") {
     return data.brokenAssets.map((entity) => ({ kind: "entity", entity }));
+  }
+  if (queue.id === "status-mismatch") {
+    return data.statusMismatch.map((entity) => ({ kind: "entity", entity }));
   }
   return data.unresolvedRelations.map((item) => ({ kind: "relation", item, entity: item.source }));
 }

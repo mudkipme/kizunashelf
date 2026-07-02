@@ -8,7 +8,7 @@ import { z as zod } from 'zod';
 
 export const LogActivityRequest = zod.object({
   "op": zod.union([zod.enum(['add', 'remove']),zod.null()]).optional().describe('`add` (default) records the activity; `remove` is its exact inverse.'),
-  "revision": zod.string().nullish().describe('The entity\'s current revision — required only when the log stamps a\nfrontmatter date (`kind` = `started`\/`completed` on a type that has that\n`dateRole` field); ignored for a daily-note-only log.'),
+  "revision": zod.string().nullish().describe('The entity\'s current revision — required whenever the log mutates the\nentity: a `started`\/`completed` log that stamps a `dateRole` field or flips\na mapped `enumRole: status` field. Ignored for a daily-note-only log.'),
   "date": zod.string().nullish().describe('The log\'s date (`YYYY-MM-DD`), \*\*required\*\* — the client supplies the user\'s\nlocal date, so the server never assumes \"today\" in UTC and past actions can\nbe logged.'),
   "kind": zod.union([zod.enum(['progress', 'started', 'completed']),zod.null()]).optional().describe('Whether this records progress, a start, or a completion. Drives the\nfrontmatter date-stamp; does not affect the daily-note line.'),
   "note": zod.string().nullish().describe('Freeform text for the `{note}` token.')

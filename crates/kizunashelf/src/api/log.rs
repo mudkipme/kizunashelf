@@ -2,10 +2,12 @@ use super::entities::build_entity_detail;
 use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, write_entity_raw};
 use super::state::{get_library, require_content_writes, AppState};
-use crate::contract::{LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate};
+use crate::contract::{
+    FlippedStatus, LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate,
+};
 use crate::daily_notes::{remove_log_line, render_log_line, write_log_line, LogWriteError};
 use crate::library::{file_revision, serialize_markdown_document, split_markdown_document};
-use crate::types::{DateRole, EntityTypeConfig};
+use crate::types::{CanonicalStatus, DateRole, EntityTypeConfig, ResolvedStatus};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -26,12 +28,14 @@ pub(crate) struct LogQuery {
     dry_run: Option<bool>,
 }
 
-/// Logs an activity for one entity, applying up to two side effects, each gated by
-/// the schema: a daily-note line (when the type is loggable) and a
+/// Logs an activity for one entity, applying up to three side effects, each gated
+/// by the schema: a daily-note line (when the type is loggable), a
 /// `started`/`completed` frontmatter date stamp (when the type has that `dateRole`
-/// field). `op: remove` is the exact inverse. `?dryRun=true` previews everything
-/// without writing. Episode watching is a separate endpoint (`/episodes/watch`);
-/// logging never reads or writes the episode list.
+/// field), and a monotonic status flip (when the type has a mapped `enumRole:
+/// status` field). `op: remove` is the inverse of the first two; the status flip
+/// has no safe inverse, so `remove` never touches status. `?dryRun=true` previews
+/// everything without writing. Episode watching is a separate endpoint
+/// (`/episodes/watch`); logging never reads or writes the episode list.
 pub(crate) async fn log_activity(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<LogPath>,
@@ -55,17 +59,26 @@ pub(crate) async fn log_activity(
 
     let type_config = library.config.type_config(&entity_type);
     let stamp_field = stamp_target_field(type_config, kind).map(str::to_string);
+    // A `started`/`completed` log also promotes the entity's status (schema-gated,
+    // monotonic). Only `add` flips — `remove` has no safe inverse and leaves status
+    // alone. Computed from the resident status; the entity write is revision-guarded,
+    // so the fresh frontmatter matches what we planned against.
+    let status_flip = if op == LogOp::Add {
+        plan_status_flip(type_config, record.summary.status.as_ref(), kind)
+    } else {
+        None
+    };
     let (log_section, log_line_format) = match library.config.resolve_log_config(&entity_type) {
         Some(resolved) => (Some(resolved.section), Some(resolved.line_format)),
         None => (None, None),
     };
 
-    // Only a started/completed date stamp mutates the entity now (episode ticks
-    // moved back to `/episodes/watch`).
-    let mutates_entity = stamp_field.is_some();
+    // A started/completed date stamp and/or a status flip mutate the entity
+    // frontmatter (episode ticks moved back to `/episodes/watch`).
+    let mutates_entity = stamp_field.is_some() || status_flip.is_some();
     if log_section.is_none() && !mutates_entity {
         return Err(ApiError::bad_request(
-            "Nothing to log: this type isn't configured for logging and has no started/completed date field to stamp",
+            "Nothing to log: this type isn't configured for logging and has no started/completed date field or status field to update",
         ));
     }
 
@@ -99,7 +112,7 @@ pub(crate) async fn log_activity(
     let revision = if mutates_entity && !dry_run {
         let Some(revision) = request.revision.as_deref() else {
             return Err(ApiError::bad_request(
-                "A revision is required to stamp a date",
+                "A revision is required to update the entity",
             ));
         };
         let raw = vfs
@@ -159,6 +172,7 @@ pub(crate) async fn log_activity(
             stamp_field.as_deref(),
             &date,
             op,
+            status_flip.as_ref(),
         )
         .await
         {
@@ -219,6 +233,7 @@ pub(crate) async fn log_activity(
         line_already_present,
         line_matched,
         will_stamp_date,
+        will_flip_status: status_flip,
         entity,
     }))
 }
@@ -234,6 +249,7 @@ async fn stamp_entity_date(
     field: Option<&str>,
     date: &str,
     op: LogOp,
+    status_flip: Option<&FlippedStatus>,
 ) -> Result<(), ApiError> {
     let raw = vfs
         .read_to_string(source_rel)
@@ -244,9 +260,67 @@ async fn stamp_entity_date(
     if let Some(field) = field {
         apply_date_stamp(&mut document.frontmatter, field, date, op);
     }
+    // The status flip (`add` only, precomputed as a promotion) writes the mapped
+    // value directly into the status field, alongside any date stamp — one atomic
+    // entity write.
+    if let Some(flip) = status_flip {
+        document
+            .frontmatter
+            .insert(flip.field.clone(), Value::String(flip.value.clone()));
+    }
     let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
     write_entity_raw(vfs, source_rel, &new_raw).await?;
     Ok(())
+}
+
+/// Plans the monotonic status flip for a `started`/`completed` log, or `None` when
+/// nothing should change. The engine promotes along `planning → ongoing →
+/// completed`, never demotes, and never flips away from `dropped` or over a value
+/// it doesn't recognize (an unmapped/hand-set status is preserved). `None` current
+/// status (empty field) promotes straight to the target.
+fn plan_status_flip(
+    type_config: Option<&EntityTypeConfig>,
+    current: Option<&ResolvedStatus>,
+    kind: LogKind,
+) -> Option<FlippedStatus> {
+    let target = match kind {
+        LogKind::Started => CanonicalStatus::Ongoing,
+        LogKind::Completed => CanonicalStatus::Completed,
+        LogKind::Progress => return None,
+    };
+    let target_rank = target.rank()?;
+    let field = crate::status::status_field(type_config?)?;
+    let write_value = field.status_values.as_ref()?.write_value(target)?;
+
+    match current.and_then(|status| status.canonical) {
+        // Never auto-un-drop; dropping is an explicit user decision.
+        Some(CanonicalStatus::Dropped) => return None,
+        // Known status: promote only when strictly below the target.
+        Some(canonical) => {
+            if canonical.rank().is_none_or(|rank| rank >= target_rank) {
+                return None;
+            }
+        }
+        // A present-but-unmapped value is a deliberate custom status — preserve it
+        // (never overwrite an unknown value). Only an *empty* status field (no
+        // resolved status at all) is promoted.
+        None => {
+            if current.is_some() {
+                return None;
+            }
+        }
+    }
+
+    // Defensive: nothing to do if the field already holds the target value.
+    if current.map(|status| status.value.as_str()) == Some(write_value) {
+        return None;
+    }
+
+    Some(FlippedStatus {
+        field: field.field.clone(),
+        value: write_value.to_string(),
+        canonical: target,
+    })
 }
 
 /// The first dated field a `started`/`completed` log would stamp, by `DateRole`.

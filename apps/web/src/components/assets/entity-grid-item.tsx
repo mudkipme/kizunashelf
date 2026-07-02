@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
 import { EntityDateList } from "@/components/assets/entity-date-list";
+import { StatusBadge } from "@/components/entities/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
@@ -38,8 +39,9 @@ export function EntityGridItem({
         </div>
       ) : null}
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Badge variant="outline">{entity.typeLabel}</Badge>
+          <StatusBadge status={entity.status} />
         </div>
         <div className="line-clamp-2 text-sm font-medium leading-5">{title}</div>
         {entity.summary ? (

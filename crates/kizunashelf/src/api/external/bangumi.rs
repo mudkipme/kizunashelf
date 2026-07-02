@@ -1032,7 +1032,12 @@ mod tests {
 
         assert_eq!(
             candidate.metadata.get("platform"),
-            Some(&json!(["Nintendo Switch 2", "Nintendo Switch", "PS5", "PC"]))
+            Some(&json!([
+                "Nintendo Switch 2",
+                "Nintendo Switch",
+                "PS5",
+                "PC"
+            ]))
         );
     }
 }

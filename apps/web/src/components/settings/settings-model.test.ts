@@ -244,6 +244,64 @@ describe("cleanVaultConfig", () => {
     expect(cleaned.types[0].log).toBeDefined();
   });
 
+  it("round-trips an enum status field's role and value mapping", () => {
+    const cleaned = cleanedVault(
+      normalizeVaultConfig(
+        vault({
+          types: [
+            type({
+              fields: [
+                field({
+                  field: "state",
+                  fieldType: "enum",
+                  enumOptions: ["Backlog", "Active", "Completed"],
+                  enumRole: "status",
+                  statusValues: {
+                    planning: ["Backlog"],
+                    ongoing: ["Active"],
+                    completed: ["Completed"],
+                    dropped: [],
+                  },
+                }),
+              ],
+            }),
+          ],
+        }),
+      ),
+    );
+    // The role and mapping survive both the load-normalize and save-clean passes
+    // (a regression here silently wipes status config on any settings save).
+    expect(cleaned.types[0].fields[0]).toMatchObject({
+      enumRole: "status",
+      statusValues: {
+        planning: ["Backlog"],
+        ongoing: ["Active"],
+        completed: ["Completed"],
+      },
+    });
+  });
+
+  it("drops the status role and mapping from a non-enum field", () => {
+    const cleaned = cleanedVault(
+      vault({
+        types: [
+          type({
+            fields: [
+              field({
+                field: "note",
+                fieldType: "text",
+                enumRole: "status",
+                statusValues: { ongoing: ["x"] },
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+    expect(cleaned.types[0].fields[0].enumRole).toBeUndefined();
+    expect(cleaned.types[0].fields[0].statusValues).toBeUndefined();
+  });
+
   it("emits only the props relevant to each field type", () => {
     const cleaned = cleanedVault(
       vault({

@@ -47,6 +47,11 @@ export const CleanupUnresolvedRelation = zod.object({
   "watched": zod.number().min(cleanupUnresolvedRelationSourceEpisodeProgressOneWatchedMin),
   "total": zod.number().min(cleanupUnresolvedRelationSourceEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
+  "status": zod.union([zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "canonical": zod.union([zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).'),zod.null()]).optional()
+}).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
   "relationCount": zod.number().min(cleanupUnresolvedRelationSourceRelationCountMin)
 }),
   "relation": zod.object({

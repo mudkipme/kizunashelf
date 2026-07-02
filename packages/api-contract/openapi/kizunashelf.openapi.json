@@ -455,6 +455,18 @@
     "/api/cleanup-queues": {
       "get": {
         "operationId": "getCleanupQueues",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "today",
+            "description": "The client's **local** date (`YYYY-MM-DD`), so the date-relative\nstatus-mismatch queue (\"completed in the future\", \"missed event\") is scoped\nto the user's today rather than UTC. Defaults to the server's UTC date.",
+            "schema": {
+              "description": "The client's **local** date (`YYYY-MM-DD`), so the date-relative\nstatus-mismatch queue (\"completed in the future\", \"missed event\") is scoped\nto the user's today rather than UTC. Defaults to the server's UTC date.",
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -2908,6 +2920,28 @@
               "type": "string"
             }
           },
+          "enumRole": {
+            "description": "Semantic role of an `enum` field. `status` marks the one field the engine\ntreats as the entity's lifecycle status; behavior keys off this role, never\nthe field name. See [`EnumRole`] and `docs/status-role-plan.md`.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnumRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "statusValues": {
+            "description": "For an `enumRole: status` field: maps each canonical status to the user\noption strings that mean it. Absent (or a canonical absent from it) leaves\nthat canonical unmapped — the field is still the status field, but no\ncanonical behavior fires. See [`StatusValues`].",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StatusValues"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "totalProgressField": {
             "type": [
               "string",
@@ -2979,12 +3013,58 @@
           "textList"
         ]
       },
-      "DateRole": {
+      "EnumRole": {
+        "description": "A field's semantic *role* beyond its raw `FieldType`. Currently only `status`:\nit marks the one enum field the engine treats as the entity's lifecycle status.\nLike `DateRole`/`TitleRole`, meaning flows from this role, never from the field\nname. Kept a flat string enum so swift-openapi-generator renders proper cases.",
         "type": "string",
         "enum": [
-          "planning",
-          "started",
-          "completed"
+          "status"
+        ]
+      },
+      "StatusValues": {
+        "description": "Maps each canonical status to the user-defined option strings that mean it. The\n**first** option listed for a canonical is the *write target* — what a log flip\nwrites when it sets that status. An empty vec means that canonical is unmapped\n(no behavior fires for it). Fixed optional keys (not an open map) for\ncodegen-friendliness and clean \"unmapped\" semantics.",
+        "type": "object",
+        "properties": {
+          "planning": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ongoing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "completed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dropped": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DateRole": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "planning",
+              "started",
+              "completed"
+            ]
+          },
+          {
+            "description": "A date the user *attends* (a concert, exhibition, release event) rather than\na release they passively consume. Whether it reads as an intention (up next)\nor a record (recent) is **derived from the entity's status**, not encoded as\nseparate roles — see `docs/status-role-plan.md`. Wired into the feed in a\nlater phase; harmless everywhere that matches only the other three roles.",
+            "type": "string",
+            "const": "event"
+          }
         ]
       },
       "SeasonLanguage": {
@@ -3479,6 +3559,17 @@
               }
             ]
           },
+          "status": {
+            "description": "The entity's resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed/filters/badges\nread it without re-deriving. `None` for types without a status field.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResolvedStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "relationCount": {
             "type": "integer",
             "format": "uint32",
@@ -3587,6 +3678,42 @@
         "required": [
           "watched",
           "total"
+        ]
+      },
+      "ResolvedStatus": {
+        "description": "An entity's resolved status: the status field's name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "canonical": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanonicalStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "value"
+        ]
+      },
+      "CanonicalStatus": {
+        "description": "The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity's own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits *outside*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).",
+        "type": "string",
+        "enum": [
+          "planning",
+          "ongoing",
+          "completed",
+          "dropped"
         ]
       },
       "StatsQuery": {
@@ -3917,6 +4044,18 @@
           "isolated"
         ]
       },
+      "CleanupQuery": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "description": "The client's **local** date (`YYYY-MM-DD`), so the date-relative\nstatus-mismatch queue (\"completed in the future\", \"missed event\") is scoped\nto the user's today rather than UTC. Defaults to the server's UTC date.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CleanupQueuesResponse": {
         "type": "object",
         "properties": {
@@ -3959,6 +4098,13 @@
             "items": {
               "$ref": "#/components/schemas/CleanupUnresolvedRelation"
             }
+          },
+          "statusMismatch": {
+            "description": "Entities whose canonical status contradicts a dated field: a `completed`\nentity with a completion/event date in the *future* (impossible), or a still\n-`planning` entity whose *event* date has already passed (a missed event you\nprobably forgot to update). Date-relative, so computed against the client's\nlocal `today`.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
           }
         },
         "required": [
@@ -3968,7 +4114,8 @@
           "missingExternalRefs",
           "isolated",
           "brokenAssets",
-          "unresolvedRelations"
+          "unresolvedRelations",
+          "statusMismatch"
         ]
       },
       "CleanupQueueSummary": {
@@ -5133,6 +5280,17 @@
               }
             ]
           },
+          "status": {
+            "description": "The entity's resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed/filters/badges\nread it without re-deriving. `None` for types without a status field.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResolvedStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "relationCount": {
             "type": "integer",
             "format": "uint32",
@@ -5699,7 +5857,7 @@
             ]
           },
           "revision": {
-            "description": "The entity's current revision — required only when the log stamps a\nfrontmatter date (`kind` = `started`/`completed` on a type that has that\n`dateRole` field); ignored for a daily-note-only log.",
+            "description": "The entity's current revision — required whenever the log mutates the\nentity: a `started`/`completed` log that stamps a `dateRole` field or flips\na mapped `enumRole: status` field. Ignored for a daily-note-only log.",
             "type": [
               "string",
               "null"
@@ -5800,8 +5958,19 @@
               }
             ]
           },
+          "willFlipStatus": {
+            "description": "The status this log flips the entity to. Present only for an `add` of a\n`started`/`completed` log when the type has a mapped `enumRole: status`\nfield and the flip is a promotion (never a demotion, never from `dropped`).\nAlways `None` on `remove` — a status flip has no safe inverse, so removing a\nlog deliberately leaves status untouched (see `docs/status-role-plan.md`).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlippedStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "entity": {
-            "description": "The refreshed entity detail when the log stamped a date (`None` on a\ndaily-note-only log or a dry run).",
+            "description": "The refreshed entity detail when the log mutated the entity (a date stamp or\na status flip). `None` on a daily-note-only log or a dry run.",
             "anyOf": [
               {
                 "$ref": "#/components/schemas/EntityDetailResponse"
@@ -5831,6 +6000,26 @@
         "required": [
           "field",
           "value"
+        ]
+      },
+      "FlippedStatus": {
+        "description": "The status field, the value written, and the canonical it represents, for a\nlog that flips the entity's status.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "canonical": {
+            "$ref": "#/components/schemas/CanonicalStatus"
+          }
+        },
+        "required": [
+          "field",
+          "value",
+          "canonical"
         ]
       },
       "AssetDownloadRequest": {

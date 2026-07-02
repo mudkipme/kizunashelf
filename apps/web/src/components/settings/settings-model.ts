@@ -16,6 +16,7 @@ import type {
   HomeSectionConfig,
   HomeSectionFilterConfig,
   SaveSettingsRequest,
+  StatusValues,
   VaultConfig,
 } from "@/types/api";
 
@@ -90,6 +91,8 @@ function normalizeField(field: FieldConfig): FieldConfig {
     titleRole: field.titleRole ?? null,
     externalFields: field.externalFields ?? [],
     enumOptions: field.enumOptions ?? [],
+    enumRole: field.enumRole ?? undefined,
+    statusValues: field.statusValues ?? undefined,
     totalProgressField: field.totalProgressField ?? "",
     dateRole: field.dateRole ?? null,
     seasonLanguage: field.seasonLanguage ?? "zh",
@@ -248,6 +251,22 @@ function cleanExternalTypes(providerCatalog: ExternalProviderCatalog | undefined
   return filtered.length > 0 ? filtered : undefined;
 }
 
+// Trims each canonical's option list; drops the whole mapping when nothing is
+// mapped (so an empty `statusValues` isn't persisted).
+function cleanStatusValues(values: StatusValues | null | undefined): StatusValues | undefined {
+  if (!values) return undefined;
+  const clean: StatusValues = {
+    planning: cleanStrings(values.planning ?? []),
+    ongoing: cleanStrings(values.ongoing ?? []),
+    completed: cleanStrings(values.completed ?? []),
+    dropped: cleanStrings(values.dropped ?? []),
+  };
+  const hasAny = [clean.planning, clean.ongoing, clean.completed, clean.dropped].some(
+    (options) => (options?.length ?? 0) > 0,
+  );
+  return hasAny ? clean : undefined;
+}
+
 function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalog): FieldConfig | undefined {
   const key = field.field.trim();
   if (!key) return undefined;
@@ -267,6 +286,12 @@ function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalo
     enumOptions:
       field.fieldType === "enum" || field.fieldType === "enumList"
         ? cleanStrings(field.enumOptions ?? [])
+        : undefined,
+    // Only a single-value `enum` field can be the status field.
+    enumRole: field.fieldType === "enum" ? field.enumRole || undefined : undefined,
+    statusValues:
+      field.fieldType === "enum" && field.enumRole === "status"
+        ? cleanStatusValues(field.statusValues)
         : undefined,
     totalProgressField:
       field.fieldType === "progress" ? emptyToUndefined(field.totalProgressField) : undefined,
@@ -332,6 +357,13 @@ export function defaultEntityType(): EntityTypeConfig {
         fieldType: "enum",
         displayName: "State",
         enumOptions: ["Backlog", "Active", "Completed", "Paused", "Dropped"],
+        enumRole: "status",
+        statusValues: {
+          planning: ["Backlog"],
+          ongoing: ["Active"],
+          completed: ["Completed"],
+          dropped: ["Dropped"],
+        },
       },
       { field: "progress", fieldType: "progress", displayName: "Progress" },
     ],

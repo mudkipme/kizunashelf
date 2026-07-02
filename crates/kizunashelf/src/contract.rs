@@ -3,8 +3,8 @@ use crate::calendar::{
 };
 use crate::relations::Count;
 use crate::types::{
-    AppConfig, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking, HomeConfig,
-    HomeSectionFilterConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
+    AppConfig, CanonicalStatus, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking,
+    HomeConfig, HomeSectionFilterConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -937,6 +937,12 @@ pub struct CleanupQueuesResponse {
     /// Entities whose local cover path points to a file that no longer exists.
     pub broken_assets: Vec<EntitySummary>,
     pub unresolved_relations: Vec<CleanupUnresolvedRelation>,
+    /// Entities whose canonical status contradicts a dated field: a `completed`
+    /// entity with a completion/event date in the *future* (impossible), or a still
+    /// -`planning` entity whose *event* date has already passed (a missed event you
+    /// probably forgot to update). Date-relative, so computed against the client's
+    /// local `today`.
+    pub status_mismatch: Vec<EntitySummary>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -1007,9 +1013,9 @@ pub struct LogActivityRequest {
     /// `add` (default) records the activity; `remove` is its exact inverse.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub op: Option<LogOp>,
-    /// The entity's current revision — required only when the log stamps a
-    /// frontmatter date (`kind` = `started`/`completed` on a type that has that
-    /// `dateRole` field); ignored for a daily-note-only log.
+    /// The entity's current revision — required whenever the log mutates the
+    /// entity: a `started`/`completed` log that stamps a `dateRole` field or flips
+    /// a mapped `enumRole: status` field. Ignored for a daily-note-only log.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub revision: Option<String>,
     /// The log's date (`YYYY-MM-DD`), **required** — the client supplies the user's
@@ -1066,8 +1072,15 @@ pub struct LogActivityResponse {
     /// The date field this log stamped (`add`) or cleared (`remove`) on the entity.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub will_stamp_date: Option<StampedDate>,
-    /// The refreshed entity detail when the log stamped a date (`None` on a
-    /// daily-note-only log or a dry run).
+    /// The status this log flips the entity to. Present only for an `add` of a
+    /// `started`/`completed` log when the type has a mapped `enumRole: status`
+    /// field and the flip is a promotion (never a demotion, never from `dropped`).
+    /// Always `None` on `remove` — a status flip has no safe inverse, so removing a
+    /// log deliberately leaves status untouched (see `docs/status-role-plan.md`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub will_flip_status: Option<FlippedStatus>,
+    /// The refreshed entity detail when the log mutated the entity (a date stamp or
+    /// a status flip). `None` on a daily-note-only log or a dry run.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entity: Option<EntityDetailResponse>,
 }
@@ -1077,6 +1090,16 @@ pub struct LogActivityResponse {
 pub struct StampedDate {
     pub field: String,
     pub value: String,
+}
+
+/// The status field, the value written, and the canonical it represents, for a
+/// log that flips the entity's status.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct FlippedStatus {
+    pub field: String,
+    pub value: String,
+    pub canonical: CanonicalStatus,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

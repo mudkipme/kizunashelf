@@ -13,7 +13,7 @@ use crate::library::{
     compare_string, parse_daily_note_source_id, wikilink_regex, DAILY_NOTE_RELATION_FIELD,
 };
 use crate::relations::summary_by_id;
-use crate::types::{DateRole, EntitySummary, EpisodeDateRole, FieldType, Library};
+use crate::types::{CanonicalStatus, DateRole, EntitySummary, EpisodeDateRole, FieldType, Library};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use chrono::Datelike;
@@ -86,13 +86,23 @@ pub async fn build_activity(
 ) -> Result<ActivityResponse> {
     let ascending = options.mode == ActivityMode::UpNext;
     let current_month = month_key(&options.today);
+    // Up next normally looks forward from the current month, but a past planning
+    // date whose entity is still `planning` is an *overdue* intention (a due task)
+    // that must surface too — so its (past) month is admitted into the ascending
+    // window. Cache-driven: status is resident on the summary, so no VFS I/O.
+    let overdue_months = if ascending {
+        overdue_planning_months(library, &options)
+    } else {
+        HashSet::new()
+    };
     let mut months = active_activity_months(library, &options);
     months.retain(|month| {
         if ascending {
-            // Up next only looks forward, from the current month on.
-            current_month
+            let in_window = current_month
                 .as_deref()
                 .is_some_and(|current| month.as_str() >= current)
+                || overdue_months.contains(month);
+            in_window
                 && options
                     .cursor
                     .as_deref()
@@ -197,6 +207,45 @@ fn active_activity_months(library: &Library, options: &ActivityBuildOptions) -> 
     }
     let mut months: Vec<String> = months.into_iter().collect();
     months.sort_by(|a, b| b.cmp(a));
+    months
+}
+
+/// The `YYYY-MM` months (before the current one) that hold an **overdue planning
+/// nag**: an entity still in `planning` status with a `planning`-role date in the
+/// past. These are admitted into the ascending up-next window so a due-but-not-yet
+/// -done intention doesn't silently drop off "up next" once its date passes. Fully
+/// cache-driven — status and dates are resident on the summary.
+fn overdue_planning_months(library: &Library, options: &ActivityBuildOptions) -> HashSet<String> {
+    let today = options.today.as_str();
+    let mut months = HashSet::new();
+    for record in &library.records {
+        let entity = &record.summary;
+        if options
+            .entity_type
+            .as_ref()
+            .is_some_and(|entity_type| entity.entity_type != *entity_type)
+        {
+            continue;
+        }
+        if entity.status.as_ref().and_then(|status| status.canonical)
+            != Some(CanonicalStatus::Planning)
+        {
+            continue;
+        }
+        for item in metadata_date_entries(library, entity) {
+            let Some(date) = item.date.as_deref() else {
+                continue;
+            };
+            if date < today
+                && date_field_role(library, &entity.entity_type, &item.field)
+                    == Some(DateRole::Planning)
+            {
+                if let Some(month) = month_key(date) {
+                    months.insert(month);
+                }
+            }
+        }
+    }
     months
 }
 
@@ -313,6 +362,23 @@ fn fold_activity_entries(
         HashSet::new()
     };
 
+    // Canonical status drives the intention/record axis. A `completed`/`dropped`
+    // entity never appears "up next" (the intention is fulfilled or abandoned);
+    // an `ongoing` entity's *future* planning date is a spent intention; an
+    // overdue planning date nags only while the entity is still `planning`.
+    let status = entity.status.as_ref().and_then(|status| status.canonical);
+    let up_next_blocked = matches!(
+        status,
+        Some(CanonicalStatus::Completed | CanonicalStatus::Dropped)
+    );
+    // Recent proxy record: a `completed` entity with no explicit completed-role
+    // stamp lets its planning date stand in as the completion record on that date.
+    let planning_is_proxy_record = mode == ActivityMode::Recent
+        && status == Some(CanonicalStatus::Completed)
+        && !entity.dates.iter().any(|value| {
+            date_field_role(library, &entity.entity_type, &value.field) == Some(DateRole::Completed)
+        });
+
     let mut out = Vec::new();
 
     let mut date_fields: Vec<&CalendarEntry> = entries
@@ -332,10 +398,34 @@ fn fold_activity_entries(
             .and_then(|field| date_field_role(library, &entity.entity_type, field));
         let keep = match mode {
             ActivityMode::All => true,
-            ActivityMode::Recent => role != Some(DateRole::Planning),
-            ActivityMode::UpNext => {
-                role == Some(DateRole::Planning) && date >= today && !started_or_completed_today
-            }
+            ActivityMode::Recent => match role {
+                // Planning is an intention, not a record — except as a proxy when
+                // the entity is completed with no explicit completed-role stamp.
+                Some(DateRole::Planning) => planning_is_proxy_record && date <= today,
+                // Started/completed are records: shown once past-or-today. A
+                // *future* record is contradictory (time travel) — kept out of
+                // "recent" (a cleanup queue surfaces it instead).
+                _ => date <= today,
+            },
+            ActivityMode::UpNext => match role {
+                Some(DateRole::Planning) => {
+                    !up_next_blocked
+                        && !started_or_completed_today
+                        && if date >= today {
+                            // Future/today intention — spent once the entity is
+                            // ongoing (completed/dropped already excluded above).
+                            status != Some(CanonicalStatus::Ongoing)
+                        } else {
+                            // Overdue intention: nag only while still planning.
+                            status == Some(CanonicalStatus::Planning)
+                        }
+                }
+                // An event is "up next" until it's attended: today-or-future and
+                // not yet completed/dropped. A past event is missed, not upcoming.
+                Some(DateRole::Event) => date >= today && !up_next_blocked,
+                // Started/completed stamps are records, never "up next".
+                _ => false,
+            },
         };
         if !keep {
             continue;
@@ -351,7 +441,8 @@ fn fold_activity_entries(
         let keep_role = match mode {
             ActivityMode::All => true,
             ActivityMode::Recent => role == EpisodeDateRole::Completed,
-            ActivityMode::UpNext => role == EpisodeDateRole::Scheduled,
+            // A dropped/completed entity's remaining air dates aren't "up next".
+            ActivityMode::UpNext => role == EpisodeDateRole::Scheduled && !up_next_blocked,
         };
         if !keep_role {
             continue;
@@ -616,7 +707,12 @@ fn metadata_date_entries(
                     matches!(field.field_type, FieldType::Date | FieldType::Season)
                         && matches!(
                             field.date_role,
-                            Some(DateRole::Planning | DateRole::Started | DateRole::Completed)
+                            Some(
+                                DateRole::Planning
+                                    | DateRole::Started
+                                    | DateRole::Completed
+                                    | DateRole::Event
+                            )
                         )
                 })
                 .map(|field| field.field.clone())

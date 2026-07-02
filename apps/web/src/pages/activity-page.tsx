@@ -6,10 +6,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { activityFeedQuery, configQuery } from "@/api/queries";
 import { AssetImage } from "@/components/assets/asset-image";
+import { StatusBadge } from "@/components/entities/status-badge";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
@@ -37,6 +39,7 @@ const dateRoleLabels: Record<string, string> = {
   started: "Started",
   completed: "Completed",
   planning: "Planned",
+  event: "Event",
 };
 
 export function ActivityPage() {
@@ -205,6 +208,7 @@ function ActivityCard({
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Badge variant="outline">{item.entity.typeLabel}</Badge>
+          <StatusBadge status={item.entity.status} />
           <Link to={href} className="min-w-0 break-words text-sm font-medium hover:underline">
             {entityTitle(item.entity, language)}
           </Link>
@@ -216,6 +220,14 @@ function ActivityCard({
               entry={entry}
               entityType={item.entity.type}
               labels={labels}
+              // A past event still marked "planning" was likely attended but never
+              // checked off — flag it so the diary nudges a status update.
+              missed={
+                entry.source === "taxonomy" &&
+                entry.role === "event" &&
+                item.date < todayLocal() &&
+                item.entity.status?.canonical === "planning"
+              }
             />
           ))}
         </div>
@@ -228,20 +240,32 @@ function ActivityEntryRow({
   entry,
   entityType,
   labels,
+  missed = false,
 }: {
   entry: ActivityEntry;
   entityType: string;
   labels: FieldLabels;
+  missed?: boolean;
 }) {
   if (entry.source === "taxonomy") {
     const role = entry.role ? dateRoleLabels[entry.role] ?? entry.role : "Date";
     const field = entry.dateField ? entityFieldLabel(labels, entityType, entry.dateField) : "date";
     return (
-      <div className="text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">{role}</span>
-        {" · "}
-        {field}
-        {entry.rawDate ? `: ${entry.rawDate}` : ""}
+      <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+        <span>
+          <span className="font-medium text-foreground">{role}</span>
+          {" · "}
+          {field}
+          {entry.rawDate ? `: ${entry.rawDate}` : ""}
+        </span>
+        {missed ? (
+          <Badge
+            variant="outline"
+            className="border-transparent bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+          >
+            Missed?
+          </Badge>
+        ) : null}
       </div>
     );
   }

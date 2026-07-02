@@ -4,6 +4,7 @@ import type { FieldConfig, FieldType } from "@/types/api";
 export type FieldOptionKey =
   | "titleOptions"
   | "enumOptions"
+  | "statusRole"
   | "externalMappings"
   | "progressTotal"
   | "dateRole"
@@ -23,7 +24,7 @@ const fieldTypeDescriptors: FieldTypeDescriptor[] = [
   { type: "title", options: ["titleOptions", ...commonMappedFieldOptions] },
   { type: "image", options: commonMappedFieldOptions },
   { type: "imageList", options: commonMappedFieldOptions },
-  { type: "enum", options: ["enumOptions", ...commonMappedFieldOptions] },
+  { type: "enum", options: ["enumOptions", "statusRole", ...commonMappedFieldOptions] },
   { type: "enumList", options: ["enumOptions", ...commonMappedFieldOptions] },
   { type: "progress", options: ["progressTotal", ...commonMappedFieldOptions] },
   { type: "totalProgress", options: commonMappedFieldOptions },
@@ -54,6 +55,7 @@ export function fieldConfigSummary(field: FieldConfig): string[] {
   if (options.has("titleOptions") && field.titleLanguage) summary.push(`lang ${field.titleLanguage}`);
   if (options.has("titleOptions") && field.titleRole) summary.push(field.titleRole);
   if (options.has("enumOptions") && field.enumOptions?.length) summary.push(`${field.enumOptions.length} values`);
+  if (options.has("statusRole") && field.enumRole === "status") summary.push("status");
   if (options.has("externalMappings") && field.externalFields?.length) {
     summary.push(`${field.externalFields.length} mappings`);
   }

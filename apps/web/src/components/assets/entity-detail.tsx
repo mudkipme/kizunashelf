@@ -18,6 +18,7 @@ import { EntityEpisodesPanel, EpisodeSyncButton } from "@/components/assets/enti
 import { FrontmatterPanel } from "@/components/assets/frontmatter-panel";
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
+import { StatusBadge } from "@/components/entities/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTitleLanguage } from "@/lib/language";
@@ -108,6 +109,7 @@ export function EntityDetail({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">{entity.typeLabel}</Badge>
+                    <StatusBadge status={entity.status} />
                     {(entity.tags ?? []).map((tag) => (
                       <span
                         key={tag}

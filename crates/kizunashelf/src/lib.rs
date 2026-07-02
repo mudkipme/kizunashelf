@@ -12,6 +12,7 @@ pub mod lists;
 pub mod markdown;
 pub mod relations;
 pub mod secrets;
+pub mod status;
 pub mod templates;
 pub mod types;
 pub mod vfs;

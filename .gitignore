@@ -16,3 +16,4 @@ target/
 AGENTS.md
 CLAUDE.md
 .pnpm-store
+docs/*-plan.md

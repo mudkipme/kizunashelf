@@ -1,7 +1,8 @@
 use super::*;
 use crate::types::{
-    DateRole, EntityDateValue, EntityRecord, EntitySummary, EntityTypeConfig, EpisodeDate,
-    EpisodeDateRole, FieldConfig, FieldType, KizunaConfig, Library, Relation, RelationDirection,
+    CanonicalStatus, DateRole, EntityDateValue, EntityRecord, EntitySummary, EntityTypeConfig,
+    EpisodeDate, EpisodeDateRole, FieldConfig, FieldType, KizunaConfig, Library, Relation,
+    RelationDirection, ResolvedStatus,
 };
 use crate::vfs::InMemoryVfs;
 use std::collections::BTreeMap;
@@ -76,6 +77,7 @@ fn summary(entity_type: &str, type_label: &str, basename: &str) -> EntitySummary
         external_refs: BTreeMap::new(),
         tags: Vec::new(),
         episode_progress: None,
+        status: None,
         relation_count: 0,
     }
 }
@@ -163,6 +165,8 @@ fn date_field(name: &str, role: Option<DateRole>) -> FieldConfig {
         title_role: None,
         external_fields: Vec::new(),
         enum_options: Vec::new(),
+        enum_role: None,
+        status_values: None,
         total_progress_field: None,
         date_role: role,
         season_language: None,
@@ -734,4 +738,268 @@ async fn build_activity_discovers_daily_note_only_months_from_relations() {
         .entries
         .iter()
         .any(|entry| entry.source == CalendarEntrySource::DailyNote));
+}
+
+// --- status-driven feed accuracy (Phase 2) --------------------------------
+
+fn with_status(mut summary: EntitySummary, canonical: CanonicalStatus) -> EntitySummary {
+    summary.status = Some(ResolvedStatus {
+        field: "status".to_string(),
+        value: format!("{canonical:?}"),
+        canonical: Some(canonical),
+    });
+    summary
+}
+
+/// An entity with a single planning date, at `date`, plus a canonical status.
+fn planning_record(date: &str, status: CanonicalStatus) -> EntityRecord {
+    let mut entity = with_status(summary("anime", "Anime", "Star Voyager"), status);
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![date_value("planned", date)];
+    record(entity)
+}
+
+async fn up_next(library: &Library, today: &str) -> ActivityResponse {
+    let vfs = InMemoryVfs::new();
+    build_activity(
+        library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::UpNext, today),
+    )
+    .await
+    .unwrap()
+}
+
+async fn recent(library: &Library, today: &str) -> ActivityResponse {
+    let vfs = InMemoryVfs::new();
+    build_activity(
+        library,
+        &vfs,
+        activity_options_mode(None, 12, ActivityMode::Recent, today),
+    )
+    .await
+    .unwrap()
+}
+
+fn library_of(record: EntityRecord) -> Library {
+    Library::new(
+        activity_config(None),
+        vec![record],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    )
+}
+
+#[tokio::test]
+async fn up_next_hides_a_completed_entitys_future_plans_and_episodes() {
+    // forward_and_back has a future planning date + scheduled episode; once the
+    // entity is completed, neither is "up next" (the intention is fulfilled).
+    let mut rec = forward_and_back_record();
+    rec.summary = with_status(rec.summary, CanonicalStatus::Completed);
+    let response = up_next(&library_of(rec), "2024-06-15").await;
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn up_next_hides_a_dropped_entitys_future_episodes() {
+    let mut rec = forward_and_back_record();
+    rec.summary = with_status(rec.summary, CanonicalStatus::Dropped);
+    let response = up_next(&library_of(rec), "2024-06-15").await;
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn up_next_surfaces_an_overdue_planning_nag_while_still_planning() {
+    // A planning date in the past (2024-05-01) with the entity still `planning` is
+    // a due task — it must appear in up next even though its month is behind us.
+    let response = up_next(
+        &library_of(planning_record("2024-05-01", CanonicalStatus::Planning)),
+        "2024-06-15",
+    )
+    .await;
+    assert_eq!(response.items.len(), 1);
+    assert_eq!(response.items[0].date, "2024-05-01");
+    assert!(response.items[0]
+        .entries
+        .iter()
+        .any(|entry| entry.role == Some(DateRole::Planning)));
+}
+
+#[tokio::test]
+async fn up_next_does_not_nag_an_overdue_plan_without_planning_status() {
+    // Same past planning date, but no canonical status → no nag (only an explicit
+    // `planning` status nags; `none` deliberately stays quiet).
+    let mut rec = planning_record("2024-05-01", CanonicalStatus::Planning);
+    rec.summary.status = None;
+    let response = up_next(&library_of(rec), "2024-06-15").await;
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn up_next_hides_a_spent_future_intention_once_ongoing() {
+    // A future planning date on an entity that's already ongoing is spent.
+    let response = up_next(
+        &library_of(planning_record("2024-07-01", CanonicalStatus::Ongoing)),
+        "2024-06-15",
+    )
+    .await;
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn recent_shows_a_completed_plans_date_as_a_proxy_record() {
+    // A completed entity whose only date is its (past) planning date: the planning
+    // date stands in as the completion record, so it appears in "recent".
+    let response = recent(
+        &library_of(planning_record("2024-05-01", CanonicalStatus::Completed)),
+        "2024-06-15",
+    )
+    .await;
+    assert_eq!(response.items.len(), 1);
+    assert_eq!(response.items[0].date, "2024-05-01");
+    assert!(response.items[0]
+        .entries
+        .iter()
+        .any(|entry| entry.role == Some(DateRole::Planning)));
+}
+
+#[tokio::test]
+async fn recent_does_not_proxy_when_a_completed_stamp_exists() {
+    // With an explicit completed stamp, the completed date is the record; the
+    // planning date is not also surfaced as a proxy.
+    let mut entity = with_status(
+        summary("anime", "Anime", "Star Voyager"),
+        CanonicalStatus::Completed,
+    );
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![
+        date_value("planned", "2024-05-01"),
+        date_value("aired", "2024-05-10"),
+    ];
+    let response = recent(&library_of(record(entity)), "2024-06-15").await;
+    let planning_dates: Vec<_> = response
+        .items
+        .iter()
+        .flat_map(|item| &item.entries)
+        .filter(|entry| entry.role == Some(DateRole::Planning))
+        .collect();
+    assert!(planning_dates.is_empty(), "planning date should not proxy");
+    assert!(response.items.iter().any(|item| item.date == "2024-05-10"));
+}
+
+// --- event date role (Phase 4) --------------------------------------------
+
+fn event_config() -> KizunaConfig {
+    let mut concert = entity_type("concert", "Concert");
+    concert.fields = vec![date_field("happens_on", Some(DateRole::Event))];
+    KizunaConfig {
+        vault_root: String::new(),
+        taxonomy_root: "Taxonomy".to_string(),
+        asset_root: None,
+        content_writable: None,
+        home: None,
+        daily_notes: None,
+        tags: None,
+        types: vec![concert],
+    }
+}
+
+fn event_record(date: &str, status: CanonicalStatus) -> EntityRecord {
+    let mut entity = with_status(summary("concert", "Concert", "Aurora Live"), status);
+    entity.id = "concert:aurora".to_string();
+    entity.dates = vec![date_value("happens_on", date)];
+    record(entity)
+}
+
+fn event_library(record: EntityRecord) -> Library {
+    Library::new(
+        event_config(),
+        vec![record],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    )
+}
+
+async fn event_modes(date: &str, status: CanonicalStatus) -> (bool, bool) {
+    let today = "2024-06-15";
+    let up = up_next(&event_library(event_record(date, status)), today).await;
+    let rec = recent(&event_library(event_record(date, status)), today).await;
+    let has = |response: &ActivityResponse| {
+        response
+            .items
+            .iter()
+            .flat_map(|item| &item.entries)
+            .any(|entry| entry.role == Some(DateRole::Event))
+    };
+    (has(&up), has(&rec))
+}
+
+#[tokio::test]
+async fn event_future_planning_is_upcoming_only() {
+    // future + planning → up next yes, recent no.
+    assert_eq!(
+        event_modes("2024-07-01", CanonicalStatus::Planning).await,
+        (true, false)
+    );
+}
+
+#[tokio::test]
+async fn event_past_planning_is_missed_recent_only() {
+    // past + planning → up next no (not upcoming), recent yes (missed nudge).
+    assert_eq!(
+        event_modes("2024-05-01", CanonicalStatus::Planning).await,
+        (false, true)
+    );
+}
+
+#[tokio::test]
+async fn event_today_planning_shows_in_both() {
+    // today + planning → both (maybe hours away, maybe already attended).
+    assert_eq!(
+        event_modes("2024-06-15", CanonicalStatus::Planning).await,
+        (true, true)
+    );
+}
+
+#[tokio::test]
+async fn event_past_completed_is_attended_recent_only() {
+    // past + completed → recent yes (attended), never up next.
+    assert_eq!(
+        event_modes("2024-05-01", CanonicalStatus::Completed).await,
+        (false, true)
+    );
+}
+
+#[tokio::test]
+async fn event_today_completed_is_recent_only() {
+    // today + completed → recent only (already attended).
+    assert_eq!(
+        event_modes("2024-06-15", CanonicalStatus::Completed).await,
+        (false, true)
+    );
+}
+
+#[tokio::test]
+async fn event_future_completed_is_time_travel_and_hidden() {
+    // future + completed → contradictory: shown in neither feed.
+    assert_eq!(
+        event_modes("2024-07-01", CanonicalStatus::Completed).await,
+        (false, false)
+    );
+}
+
+#[tokio::test]
+async fn recent_excludes_a_future_completed_stamp_time_travel() {
+    // A completed date in the future is contradictory — it must not show as a
+    // "recent" record (a cleanup queue surfaces it instead; Phase 4).
+    let mut entity = with_status(
+        summary("anime", "Anime", "Star Voyager"),
+        CanonicalStatus::Completed,
+    );
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![date_value("aired", "2024-07-01")];
+    let response = recent(&library_of(record(entity)), "2024-06-15").await;
+    assert!(response.items.is_empty());
 }

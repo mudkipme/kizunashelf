@@ -141,7 +141,9 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
             "field": "status",
             "fieldType": "enum",
             "displayName": "Status",
-            "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"]
+            "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"],
+            "enumRole": "status",
+            "statusValues": { "ongoing": ["Watching"], "completed": ["Completed"], "dropped": ["Dropped"] }
         })
     );
     assert_eq!(config["types"][0]["fields"][3]["field"], "title_original");
@@ -783,6 +785,82 @@ async fn log_endpoint_applies_and_reverses_date_stamp() {
 }
 
 #[tokio::test]
+async fn log_endpoint_flips_status_monotonically_and_never_reverts_on_remove() {
+    let server = TestServer::new();
+    let entity = urlencoding::encode("anime:Star Voyager");
+    let log = format!("/api/entities/{entity}/log");
+
+    async fn revision_of(server: &TestServer, entity: &str) -> String {
+        server.ok_json(&format!("/api/entities/{entity}")).await["entity"]["revision"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+
+    // Star Voyager starts as `Watching` (ongoing). A dry-run `completed` log
+    // previews the flip to the mapped write value `Completed` without writing.
+    let (status, preview) = request_json(
+        &server.app,
+        Method::POST,
+        &format!("{log}?dryRun=true"),
+        Some(json!({ "op": "add", "kind": "completed", "date": "2024-08-20" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    assert_eq!(preview["willFlipStatus"]["field"], "status");
+    assert_eq!(preview["willFlipStatus"]["value"], "Completed");
+    assert_eq!(preview["willFlipStatus"]["canonical"], "completed");
+
+    // Real completion flips the status field and returns the refreshed entity.
+    let revision = revision_of(&server, &entity).await;
+    let (status, done) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "add", "kind": "completed", "date": "2024-08-20", "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{done}");
+    assert_eq!(
+        done["entity"]["entity"]["frontmatter"]["status"], "Completed",
+        "{done}"
+    );
+
+    // A `started` log now would demote completed→ongoing — it must not. No flip is
+    // planned, and status stays `Completed`.
+    let (status, started) = request_json(
+        &server.app,
+        Method::POST,
+        &format!("{log}?dryRun=true"),
+        Some(json!({ "op": "add", "kind": "started", "date": "2024-08-21" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{started}");
+    assert!(started["willFlipStatus"].is_null(), "{started}");
+
+    // Removing the completion log clears the date stamp but leaves status alone —
+    // a status flip has no safe inverse.
+    let revision = revision_of(&server, &entity).await;
+    let (status, removed) = request_json(
+        &server.app,
+        Method::POST,
+        &log,
+        Some(json!({
+            "op": "remove", "kind": "completed", "date": "2024-08-20", "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{removed}");
+    assert!(removed["willFlipStatus"].is_null(), "{removed}");
+    assert_eq!(
+        removed["entity"]["entity"]["frontmatter"]["status"], "Completed",
+        "status is not reverted by remove: {removed}"
+    );
+}
+
+#[tokio::test]
 async fn log_conflict_leaves_no_partial_write() {
     let server = TestServer::new();
     let entity = urlencoding::encode("anime:Star Voyager");
@@ -1254,7 +1332,7 @@ impl TestServer {
                         { "field": "title_en", "fieldType": "title", "displayName": "Title (English)", "titleLanguage": "en" },
                         { "field": "title_original", "fieldType": "title", "displayName": "Title (Original)", "titleRole": "original" },
                         { "field": "cover_url", "fieldType": "image", "displayName": "Cover" },
-                        { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"] },
+                        { "field": "status", "fieldType": "enum", "displayName": "Status", "enumOptions": ["Backlog", "Watching", "Completed", "Paused", "Dropped"], "enumRole": "status", "statusValues": { "ongoing": ["Watching"], "completed": ["Completed"], "dropped": ["Dropped"] } },
                         { "field": "season", "fieldType": "season", "displayName": "Season", "dateRole": "planning", "seasonLanguage": "zh" },
                         { "field": "complete_date", "fieldType": "date", "displayName": "Completed date", "dateRole": "completed" },
                         { "field": "favorite", "fieldType": "bool", "displayName": "Favorite" },

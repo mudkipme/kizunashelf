@@ -261,6 +261,8 @@ fields:
 | `titleRole` | no | enum | `title` | Special title role. Currently only `original` — the title used as the language-agnostic fallback for `entity.title`. |
 | `externalFields` | no | array | most fields | Maps external provider metadata fields into this frontmatter field. |
 | `enumOptions` | no | string[] | `enum`, `enumList` | Allowed or suggested values in editors and filters. |
+| `enumRole` | no | enum | `enum` | Semantic role of the enum field. Currently only `status` — marks the one field that represents the entity's lifecycle status. See [Status](#status). |
+| `statusValues` | no | object | `enum` (with `enumRole: status`) | Maps each canonical status (`planning`, `ongoing`, `completed`, `dropped`) to the user option strings that mean it. See [Status](#status). |
 | `totalProgressField` | no | string | `progress` | Field that stores the total count for progress. |
 | `dateRole` | no | enum | `date`, `season` | Whether the date is for planning, started, or completion. |
 | `seasonLanguage` | no | enum | `season` | Season display/parser language: `zh`, `ja`, or `en`. |
@@ -373,6 +375,7 @@ Supported roles:
 | `planning` | Future, release, airing, publish, or schedule date. |
 | `started` | The date you started the entity (began watching, reading, or playing). Drives the "Just Started" planning list. |
 | `completed` | Finished, watched, read, played, or completed date. |
+| `event` | A date the entity *happens on* and you attend (a concert, exhibition, or release event), rather than a release you consume. Whether it reads as *upcoming* or *attended* is derived from the entity's [status](#status), not a separate role. |
 
 `fieldType: season` can also use `dateRole`. It is useful when a collection uses seasons instead of exact dates.
 
@@ -393,6 +396,37 @@ Supported roles:
 | `en` | English season labels. |
 
 Exact dates such as `2025-04-20` are normalized for calendar links. Broader values such as seasons and years are still useful for planning/timeline views.
+
+## Status
+
+An `enum` field can be marked as the type's **lifecycle status** with `enumRole: status`. Like `dateRole`, this is a *role* — the meaning comes from the role, never the field name, so the field and its options can be named anything (`状态`, `state`, `進捗`…). A type may declare at most one status field.
+
+On its own, `enumRole: status` just tells KizunaShelf "this is the status field" (used for a badge and a filter facet); every option you define stays selectable and nothing else changes. To let the engine *reason* about status — flip it when you log, keep planned items from nagging after you finish, hide a dropped show's remaining episodes — add a `statusValues` mapping from each **canonical** status to the option strings that mean it:
+
+```yaml
+- field: 状态
+  fieldType: enum
+  enumRole: status
+  enumOptions: [想看, 在看, 看完, 抛弃]
+  statusValues:
+    planning:  [想看]
+    ongoing:   [在看]
+    completed: [看完, 刷过]   # both mean completed; 看完 is written when a log sets "completed"
+    dropped:   [抛弃]
+```
+
+| Canonical | Meaning |
+| --- | --- |
+| `planning` | Intend to watch/read/play (or attend, for an `event` date). |
+| `ongoing` | In progress. |
+| `completed` | Finished. |
+| `dropped` | Abandoned — kept off "up next" and excluded from progress nags. |
+
+Notes:
+
+- **The first option listed for a canonical is the write target** — what a quick-log flip writes when it sets that status (e.g. logging a "completed" event writes `看完`, the first `completed` option).
+- A canonical you don't map (or omitting `statusValues` entirely) simply leaves that canonical unmapped — no behavior fires for it.
+- A frontmatter value that isn't in any list is preserved and still shown; it just has no canonical meaning. Hand-edited and legacy values are never dropped.
 
 ## Relations
 

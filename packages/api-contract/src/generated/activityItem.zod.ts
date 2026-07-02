@@ -50,13 +50,18 @@ export const ActivityItem = zod.object({
   "watched": zod.number().min(activityItemEntityEpisodeProgressOneWatchedMin),
   "total": zod.number().min(activityItemEntityEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
+  "status": zod.union([zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "canonical": zod.union([zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).'),zod.null()]).optional()
+}).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
   "relationCount": zod.number().min(activityItemEntityRelationCountMin)
 }),
   "entries": zod.array(zod.object({
   "source": zod.enum(['taxonomy', 'daily-note', 'episode']).describe('Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode\/track in the entity body.'),
   "dateField": zod.string().nullish().describe('`taxonomy`: the date field\'s name, its raw value, and its resolved role.'),
   "rawDate": zod.string().nullish(),
-  "role": zod.union([zod.enum(['planning', 'started', 'completed']),zod.null()]).optional(),
+  "role": zod.union([zod.union([zod.enum(['planning', 'started', 'completed']),zod.literal("event").describe('A date the user \*attends\* (a concert, exhibition, release event) rather than\na release they passively consume. Whether it reads as an intention (up next)\nor a record (recent) is \*\*derived from the entity\'s status\*\*, not encoded as\nseparate roles — see `docs\/status-role-plan.md`. Wired into the feed in a\nlater phase; harmless everywhere that matches only the other three roles.')]),zod.null()]).optional(),
   "notePath": zod.string().nullish().describe('`daily-note`: the note path and the mention snippets for this entity\/date.'),
   "snippets": zod.array(zod.object({
   "text": zod.string(),

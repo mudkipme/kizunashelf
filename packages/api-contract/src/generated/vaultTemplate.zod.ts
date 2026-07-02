@@ -76,8 +76,15 @@ export const VaultTemplate = zod.object({
   "field": zod.string()
 })).optional(),
   "enumOptions": zod.array(zod.string()).optional(),
+  "enumRole": zod.union([zod.enum(['status']).describe('A field\'s semantic \*role\* beyond its raw `FieldType`. Currently only `status`:\nit marks the one enum field the engine treats as the entity\'s lifecycle status.\nLike `DateRole`\/`TitleRole`, meaning flows from this role, never from the field\nname. Kept a flat string enum so swift-openapi-generator renders proper cases.'),zod.null()]).optional().describe('Semantic role of an `enum` field. `status` marks the one field the engine\ntreats as the entity\'s lifecycle status; behavior keys off this role, never\nthe field name. See [`EnumRole`] and `docs\/status-role-plan.md`.'),
+  "statusValues": zod.union([zod.object({
+  "planning": zod.array(zod.string()).optional(),
+  "ongoing": zod.array(zod.string()).optional(),
+  "completed": zod.array(zod.string()).optional(),
+  "dropped": zod.array(zod.string()).optional()
+}).describe('Maps each canonical status to the user-defined option strings that mean it. The\n\*\*first\*\* option listed for a canonical is the \*write target\* — what a log flip\nwrites when it sets that status. An empty vec means that canonical is unmapped\n(no behavior fires for it). Fixed optional keys (not an open map) for\ncodegen-friendliness and clean \"unmapped\" semantics.'),zod.null()]).optional().describe('For an `enumRole: status` field: maps each canonical status to the user\noption strings that mean it. Absent (or a canonical absent from it) leaves\nthat canonical unmapped — the field is still the status field, but no\ncanonical behavior fires. See [`StatusValues`].'),
   "totalProgressField": zod.string().nullish(),
-  "dateRole": zod.union([zod.enum(['planning', 'started', 'completed']),zod.null()]).optional(),
+  "dateRole": zod.union([zod.union([zod.enum(['planning', 'started', 'completed']),zod.literal("event").describe('A date the user \*attends\* (a concert, exhibition, release event) rather than\na release they passively consume. Whether it reads as an intention (up next)\nor a record (recent) is \*\*derived from the entity\'s status\*\*, not encoded as\nseparate roles — see `docs\/status-role-plan.md`. Wired into the feed in a\nlater phase; harmless everywhere that matches only the other three roles.')]),zod.null()]).optional(),
   "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),

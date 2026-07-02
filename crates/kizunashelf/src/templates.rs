@@ -389,6 +389,16 @@ fn blank_type() -> EntityTypeConfig {
         .iter()
         .map(|value| value.to_string())
         .collect();
+    // Mark it as the status field with a sensible default mapping, so a fresh vault
+    // gets status-driven behavior (feed accuracy, log flips) out of the box. Paused
+    // stays intentionally unmapped — a deliberate pause, not a progression step.
+    state.enum_role = Some(crate::types::EnumRole::Status);
+    state.status_values = Some(crate::types::StatusValues {
+        planning: vec!["Backlog".to_string()],
+        ongoing: vec!["Active".to_string()],
+        completed: vec!["Completed".to_string()],
+        dropped: vec!["Dropped".to_string()],
+    });
     EntityTypeConfig {
         id: "type".to_string(),
         label: "Type".to_string(),
@@ -418,6 +428,8 @@ fn field(field: &str, field_type: FieldType, display_name: &str) -> FieldConfig 
         title_role: None,
         external_fields: Vec::new(),
         enum_options: Vec::new(),
+        enum_role: None,
+        status_values: None,
         total_progress_field: None,
         date_role: None,
         season_language: None,

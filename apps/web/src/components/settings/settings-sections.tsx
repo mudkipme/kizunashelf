@@ -14,6 +14,7 @@ import { fieldDisplayLabel, fieldTypeLabel, isDateFieldType, supportsEnumOptions
 import type {
   BodySection,
   BodySectionKind,
+  CanonicalStatus,
   DailyNotesConfig,
   EntityTypeConfig,
   ExternalFieldMapping,
@@ -775,9 +776,14 @@ function FieldOptionEditor({
           <option value="planning">Planning</option>
           <option value="started">Started</option>
           <option value="completed">Completed</option>
+          <option value="event">Event</option>
         </Select>
       </Field>
     );
+  }
+
+  if (optionKey === "statusRole") {
+    return <StatusRoleEditor field={field} onChange={onChange} />;
   }
 
   if (optionKey === "seasonLanguage") {
@@ -842,6 +848,108 @@ function FieldOptionEditor({
   }
 
   return null;
+}
+
+const STATUS_CANONICALS: { value: CanonicalStatus; label: string }[] = [
+  { value: "planning", label: "Planning" },
+  { value: "ongoing", label: "Ongoing" },
+  { value: "completed", label: "Completed" },
+  { value: "dropped", label: "Dropped" },
+];
+
+/// Marks an enum field as the type's status field and maps each option to a
+/// canonical status. The mapping is edited per-option ("what does this option
+/// mean?"), and rebuilt in `enumOptions` order — so the first option mapped to a
+/// canonical is its write target when a log flips status.
+function StatusRoleEditor({
+  field,
+  onChange,
+}: {
+  field: FieldConfig;
+  onChange: (field: FieldConfig) => void;
+}) {
+  const isStatus = field.enumRole === "status";
+  const options = field.enumOptions ?? [];
+
+  const canonicalOf = new Map<string, CanonicalStatus>();
+  for (const { value } of STATUS_CANONICALS) {
+    for (const option of field.statusValues?.[value] ?? []) {
+      canonicalOf.set(option, value);
+    }
+  }
+
+  const setOptionCanonical = (option: string, canonical: CanonicalStatus | undefined) => {
+    const next = new Map(canonicalOf);
+    if (canonical) next.set(option, canonical);
+    else next.delete(option);
+    const values: Record<CanonicalStatus, string[]> = {
+      planning: [],
+      ongoing: [],
+      completed: [],
+      dropped: [],
+    };
+    // Rebuild in enumOptions order so the first mapped option is the write target.
+    for (const candidate of options) {
+      const mapped = next.get(candidate);
+      if (mapped) values[mapped].push(candidate);
+    }
+    const hasAny = STATUS_CANONICALS.some(({ value }) => values[value].length > 0);
+    onChange({ ...field, statusValues: hasAny ? values : undefined });
+  };
+
+  return (
+    <div className="lg:col-span-3 flex flex-col gap-2">
+      <Field label="Used as">
+        <Select
+          value={field.enumRole ?? ""}
+          onChange={(event) =>
+            onChange({
+              ...field,
+              enumRole: event.target.value === "status" ? "status" : undefined,
+              // Drop the mapping when the field is no longer a status field.
+              statusValues: event.target.value === "status" ? field.statusValues : undefined,
+            })
+          }
+          className="h-9 w-full text-base md:text-sm"
+        >
+          <option value="">Regular enum</option>
+          <option value="status">Status field</option>
+        </Select>
+      </Field>
+      {isStatus ? (
+        options.length > 0 ? (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              Map each option to a status
+            </span>
+            {options.map((option) => (
+              <div key={option} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-sm">{option}</span>
+                <Select
+                  value={canonicalOf.get(option) ?? ""}
+                  onChange={(event) =>
+                    setOptionCanonical(option, (event.target.value || undefined) as CanonicalStatus | undefined)
+                  }
+                  className="h-9 w-40 text-base md:text-sm"
+                >
+                  <option value="">Unmapped</option>
+                  {STATUS_CANONICALS.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Add enum options above to map them to statuses.
+          </p>
+        )
+      ) : null}
+    </div>
+  );
 }
 
 function ExternalFieldMappingsEditor({

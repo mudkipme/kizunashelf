@@ -56,6 +56,17 @@ pub struct FieldConfig {
     pub external_fields: Vec<ExternalFieldMapping>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub enum_options: Vec<String>,
+    /// Semantic role of an `enum` field. `status` marks the one field the engine
+    /// treats as the entity's lifecycle status; behavior keys off this role, never
+    /// the field name. See [`EnumRole`] and `docs/status-role-plan.md`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enum_role: Option<EnumRole>,
+    /// For an `enumRole: status` field: maps each canonical status to the user
+    /// option strings that mean it. Absent (or a canonical absent from it) leaves
+    /// that canonical unmapped — the field is still the status field, but no
+    /// canonical behavior fires. See [`StatusValues`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status_values: Option<StatusValues>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub total_progress_field: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -157,6 +168,112 @@ pub enum DateRole {
     Planning,
     Started,
     Completed,
+    /// A date the user *attends* (a concert, exhibition, release event) rather than
+    /// a release they passively consume. Whether it reads as an intention (up next)
+    /// or a record (recent) is **derived from the entity's status**, not encoded as
+    /// separate roles — see `docs/status-role-plan.md`. Wired into the feed in a
+    /// later phase; harmless everywhere that matches only the other three roles.
+    Event,
+}
+
+/// A field's semantic *role* beyond its raw `FieldType`. Currently only `status`:
+/// it marks the one enum field the engine treats as the entity's lifecycle status.
+/// Like `DateRole`/`TitleRole`, meaning flows from this role, never from the field
+/// name. Kept a flat string enum so swift-openapi-generator renders proper cases.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum EnumRole {
+    Status,
+}
+
+/// The small fixed set of lifecycle statuses the engine can reason about. User
+/// option strings map onto these via [`StatusValues`]; an entity's own value may
+/// resolve to `None` (unmapped) and is still preserved. `Dropped` sits *outside*
+/// the planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum CanonicalStatus {
+    Planning,
+    Ongoing,
+    Completed,
+    Dropped,
+}
+
+impl CanonicalStatus {
+    /// Position on the planning→ongoing→completed chain, used for the monotonic
+    /// log flip (never demote). `Dropped` is off the chain and returns `None` —
+    /// callers never auto-flip *from* or *to* it via the rank.
+    pub fn rank(self) -> Option<u8> {
+        match self {
+            CanonicalStatus::Planning => Some(0),
+            CanonicalStatus::Ongoing => Some(1),
+            CanonicalStatus::Completed => Some(2),
+            CanonicalStatus::Dropped => None,
+        }
+    }
+}
+
+/// Maps each canonical status to the user-defined option strings that mean it. The
+/// **first** option listed for a canonical is the *write target* — what a log flip
+/// writes when it sets that status. An empty vec means that canonical is unmapped
+/// (no behavior fires for it). Fixed optional keys (not an open map) for
+/// codegen-friendliness and clean "unmapped" semantics.
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct StatusValues {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub planning: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ongoing: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub completed: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dropped: Vec<String>,
+}
+
+impl StatusValues {
+    /// The user option strings mapped to `canonical`, in declared order (the first
+    /// is the write target).
+    pub fn options(&self, canonical: CanonicalStatus) -> &[String] {
+        match canonical {
+            CanonicalStatus::Planning => &self.planning,
+            CanonicalStatus::Ongoing => &self.ongoing,
+            CanonicalStatus::Completed => &self.completed,
+            CanonicalStatus::Dropped => &self.dropped,
+        }
+    }
+
+    /// The value written to set `canonical` (the first mapped option), or `None`
+    /// when that canonical is unmapped.
+    pub fn write_value(&self, canonical: CanonicalStatus) -> Option<&str> {
+        self.options(canonical).first().map(String::as_str)
+    }
+
+    /// The canonical a raw user value maps to (case-sensitive, exact match), or
+    /// `None` when the value is unmapped. First canonical that lists the value wins.
+    pub fn canonical_of(&self, value: &str) -> Option<CanonicalStatus> {
+        [
+            CanonicalStatus::Planning,
+            CanonicalStatus::Ongoing,
+            CanonicalStatus::Completed,
+            CanonicalStatus::Dropped,
+        ]
+        .into_iter()
+        .find(|&canonical| self.options(canonical).iter().any(|option| option == value))
+    }
+}
+
+/// An entity's resolved status: the status field's name, the raw user value, and
+/// the canonical it maps to (`None` when the value is unmapped or no mapping is
+/// configured). Present on [`EntitySummary`] only when the type declares a status
+/// field and the entity carries a value for it.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolvedStatus {
+    pub field: String,
+    pub value: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub canonical: Option<CanonicalStatus>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
@@ -492,6 +609,12 @@ pub struct EntitySummary {
     /// progress without reading bodies. `None` for types without episodes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub episode_progress: Option<EpisodeProgress>,
+    /// The entity's resolved lifecycle status — present only when the type declares
+    /// an `enumRole: status` field and the entity carries a value for it. Resolved
+    /// at parse time (see [`crate::status::resolve_status`]) so feed/filters/badges
+    /// read it without re-deriving. `None` for types without a status field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<ResolvedStatus>,
     pub relation_count: u32,
 }
 

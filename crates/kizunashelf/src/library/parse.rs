@@ -110,6 +110,7 @@ pub(super) fn parse_entity(
         tags: extract_tags(&parsed.frontmatter, tags_field),
         episode_progress: crate::episodes::episode_section(type_config)
             .map(|section| crate::episodes::episode_progress(&parsed.body, section)),
+        status: crate::status::resolve_status(type_config, &parsed.frontmatter),
         relation_count: 0,
     };
 
@@ -183,7 +184,12 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
             matches!(field.field_type, FieldType::Date | FieldType::Season)
                 && matches!(
                     field.date_role,
-                    Some(DateRole::Planning | DateRole::Started | DateRole::Completed)
+                    Some(
+                        DateRole::Planning
+                            | DateRole::Started
+                            | DateRole::Completed
+                            | DateRole::Event
+                    )
                 )
         })
         .map(|field| field.field.clone())
@@ -208,6 +214,8 @@ mod tests {
             title_role: None,
             external_fields: Vec::new(),
             enum_options: Vec::new(),
+            enum_role: None,
+            status_values: None,
             total_progress_field: None,
             date_role: None,
             season_language: None,

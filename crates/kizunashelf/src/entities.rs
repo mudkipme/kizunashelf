@@ -445,6 +445,8 @@ mod tests {
             title_role: None,
             external_fields: Vec::new(),
             enum_options: Vec::new(),
+            enum_role: None,
+            status_values: None,
             total_progress_field: None,
             date_role: None,
             season_language: None,
@@ -498,6 +500,7 @@ mod tests {
             external_refs: BTreeMap::new(),
             tags: Vec::new(),
             episode_progress: None,
+            status: None,
             relation_count: 0,
         }
     }

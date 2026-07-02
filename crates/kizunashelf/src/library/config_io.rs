@@ -7,7 +7,7 @@
 //! official Obsidian Sync — which additionally needs its per-device "Sync all
 //! other types" toggle enabled, since `.yaml` is a non-Markdown extension).
 
-use crate::types::{KizunaConfig, VaultConfig};
+use crate::types::{EnumRole, FieldType, KizunaConfig, VaultConfig};
 use crate::vfs::{Vfs, VfsError};
 use anyhow::{Context, Result};
 use std::path::{Component, Path};
@@ -128,6 +128,7 @@ pub(super) fn validate_config_paths(config: &KizunaConfig) -> Result<()> {
     if config.vault_root.trim().is_empty() {
         anyhow::bail!("vaultRoot cannot be empty");
     }
+    validate_config_schema(config)?;
     validate_relative_config_path("taxonomyRoot", &config.taxonomy_root)?;
     for type_config in &config.types {
         validate_relative_config_path(
@@ -138,6 +139,37 @@ pub(super) fn validate_config_paths(config: &KizunaConfig) -> Result<()> {
     if let Some(daily_notes) = &config.daily_notes {
         for path in &daily_notes.paths {
             validate_relative_config_path("daily notes path", path)?;
+        }
+    }
+    Ok(())
+}
+
+/// Schema-level (non-path) validation: the structural rules for field roles.
+/// Kept intentionally narrow — it rejects only contradictions the engine cannot
+/// act on (an `enumRole: status` on a non-enum field, or more than one status
+/// field per type). It does **not** reject a `statusValues` option that isn't in
+/// `enumOptions`: hand-edited/legacy values must be preserved (a stale mapping is
+/// harmless — it just never matches), per the preserve-unknown-values invariant.
+fn validate_config_schema(config: &KizunaConfig) -> Result<()> {
+    for type_config in &config.types {
+        let mut status_fields = 0usize;
+        for field in &type_config.fields {
+            if field.enum_role == Some(EnumRole::Status) {
+                status_fields += 1;
+                if field.field_type != FieldType::Enum {
+                    anyhow::bail!(
+                        "field '{}' on type '{}' has enumRole: status but is not an enum field",
+                        field.field,
+                        type_config.id
+                    );
+                }
+            }
+        }
+        if status_fields > 1 {
+            anyhow::bail!(
+                "type '{}' declares {status_fields} status fields; only one enumRole: status field is allowed",
+                type_config.id
+            );
         }
     }
     Ok(())
@@ -161,4 +193,76 @@ fn validate_relative_config_path(label: &str, value: &str) -> Result<()> {
         anyhow::bail!("{label} cannot contain parent directory components");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod schema_tests {
+    use super::*;
+    use crate::types::{EntityTypeConfig, FieldConfig};
+
+    fn field(name: &str, field_type: FieldType, enum_role: Option<EnumRole>) -> FieldConfig {
+        FieldConfig {
+            field: name.to_string(),
+            field_type,
+            display_name: None,
+            title_language: None,
+            title_role: None,
+            external_fields: Vec::new(),
+            enum_options: Vec::new(),
+            enum_role,
+            status_values: None,
+            total_progress_field: None,
+            date_role: None,
+            season_language: None,
+            external_ref: None,
+            external_types: Vec::new(),
+            relation_type: None,
+        }
+    }
+
+    fn config_with(fields: Vec<FieldConfig>) -> KizunaConfig {
+        KizunaConfig {
+            vault_root: "/vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: None,
+            tags: None,
+            types: vec![EntityTypeConfig {
+                id: "anime".to_string(),
+                label: "Anime".to_string(),
+                icon: None,
+                path: "Anime".to_string(),
+                external_priority: Vec::new(),
+                filename: None,
+                body_sections: Vec::new(),
+                log: None,
+                fields,
+            }],
+        }
+    }
+
+    #[test]
+    fn accepts_a_single_enum_status_field() {
+        let config = config_with(vec![field("状态", FieldType::Enum, Some(EnumRole::Status))]);
+        assert!(validate_config_schema(&config).is_ok());
+    }
+
+    #[test]
+    fn rejects_status_role_on_a_non_enum_field() {
+        let config = config_with(vec![field("状态", FieldType::Text, Some(EnumRole::Status))]);
+        let error = validate_config_schema(&config).unwrap_err().to_string();
+        assert!(error.contains("not an enum field"), "{error}");
+    }
+
+    #[test]
+    fn rejects_more_than_one_status_field_per_type() {
+        let config = config_with(vec![
+            field("a", FieldType::Enum, Some(EnumRole::Status)),
+            field("b", FieldType::Enum, Some(EnumRole::Status)),
+        ]);
+        let error = validate_config_schema(&config).unwrap_err().to_string();
+        assert!(error.contains("only one enumRole: status field"), "{error}");
+    }
 }

@@ -45,6 +45,11 @@ export const LogActivityResponse = zod.object({
   "field": zod.string(),
   "value": zod.string()
 }),zod.null()]).optional().describe('The date field this log stamped (`add`) or cleared (`remove`) on the entity.'),
+  "willFlipStatus": zod.union([zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "canonical": zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).')
+}).describe('The status field, the value written, and the canonical it represents, for a\nlog that flips the entity\'s status.'),zod.null()]).optional().describe('The status this log flips the entity to. Present only for an `add` of a\n`started`\/`completed` log when the type has a mapped `enumRole: status`\nfield and the flip is a promotion (never a demotion, never from `dropped`).\nAlways `None` on `remove` — a status flip has no safe inverse, so removing a\nlog deliberately leaves status untouched (see `docs\/status-role-plan.md`).'),
   "entity": zod.union([zod.object({
   "entity": zod.object({
   "id": zod.string(),
@@ -74,6 +79,11 @@ export const LogActivityResponse = zod.object({
   "watched": zod.number().min(logActivityResponseEntityOneEntityEpisodeProgressOneWatchedMin),
   "total": zod.number().min(logActivityResponseEntityOneEntityEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
+  "status": zod.union([zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "canonical": zod.union([zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).'),zod.null()]).optional()
+}).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
   "relationCount": zod.number().min(logActivityResponseEntityOneEntityRelationCountMin),
   "revision": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()),
@@ -116,6 +126,11 @@ export const LogActivityResponse = zod.object({
   "watched": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemEpisodeProgressOneWatchedMin),
   "total": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
+  "status": zod.union([zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "canonical": zod.union([zod.enum(['planning', 'ongoing', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Dropped` sits \*outside\*\nthe planning→ongoing→completed progression (see [`CanonicalStatus::rank`]).'),zod.null()]).optional()
+}).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
   "relationCount": zod.number().min(logActivityResponseEntityOneRelatedEntitiesItemRelationCountMin)
 })),
   "episodes": zod.union([zod.object({
@@ -137,7 +152,7 @@ export const LogActivityResponse = zod.object({
   "trailing": zod.string().describe('Free-text Markdown \*below\* the last list item; empty when there is none.')
 }).describe('The parsed contents of an entity\'s episodes\/tracks body section: groups\n(season\/disc sub-headings; ungrouped items land in one unlabeled group) and a\nwatched\/total roll-up. Derived from the Markdown body, which stays the source\nof truth.'),zod.null()]).optional().describe('The parsed episodes\/tracks list, when the entity\'s type declares an\n`episodes` body section. `None` otherwise.'),
   "notesBody": zod.string().describe('The entity body to render in the generic \"Notes\" view: identical to\n`entity.body` except sections that have a dedicated UI (the episodes\nsection) are removed, so they aren\'t shown twice. `entity.body` stays the\nraw source of truth for editing.')
-}),zod.null()]).optional().describe('The refreshed entity detail when the log stamped a date (`None` on a\ndaily-note-only log or a dry run).')
+}),zod.null()]).optional().describe('The refreshed entity detail when the log mutated the entity (a date stamp or\na status flip). `None` on a daily-note-only log or a dry run.')
 })
 
 export type LogActivityResponse = zod.input<typeof LogActivityResponse>;

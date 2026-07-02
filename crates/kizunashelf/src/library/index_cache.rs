@@ -42,7 +42,7 @@ const CACHE_FORMAT: u32 = 1;
 /// Bump when the *meaning* of a cached parse result changes without the crate
 /// version changing (e.g. a derivation tweak shipped in the same version during
 /// development). Folded into the engine version below.
-const CACHE_LOGIC_VERSION: u32 = 4;
+const CACHE_LOGIC_VERSION: u32 = 5;
 
 /// One cached per-file parse result: the slim resident [`EntityRecord`] (which
 /// itself carries the body wikilinks) plus the diagnostics the load pass

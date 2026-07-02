@@ -10,10 +10,10 @@ use crate::contract::{
     CleanupQueueSummary, CleanupQueuesResponse, CleanupUnresolvedRelation, StatsResponse,
     TypeCount,
 };
-use crate::dates::{parse_entity_date, ParsedEntityDate};
+use crate::dates::{parse_entity_date, parse_exact_date, ParsedEntityDate};
 use crate::library::compare_string;
 use crate::relations::{count_by, outgoing_relations, relation_type_pairs, summary_by_id, Count};
-use crate::types::{DateRole, EntitySummary, FieldType, Library};
+use crate::types::{CanonicalStatus, DateRole, EntitySummary, FieldType, Library};
 use crate::vfs::Vfs;
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
@@ -173,6 +173,7 @@ pub fn build_cleanup_queues(
     library: &Library,
     broken_assets: Vec<EntitySummary>,
     broken_total: usize,
+    today: &str,
 ) -> CleanupQueuesResponse {
     let summaries: Vec<EntitySummary> = library.summaries().cloned().collect();
     let summaries = &summaries;
@@ -221,6 +222,23 @@ pub fn build_cleanup_queues(
         .iter()
         .filter(|entity| quality.requires_relations(entity))
         .count();
+    let status_mismatch: Vec<_> = summaries
+        .iter()
+        .filter(|entity| status_date_mismatch(library, entity, today))
+        .cloned()
+        .collect();
+    // Denominator: the entities the check even applies to (those with a resolved
+    // canonical status), so the ratio reads "N of the status-tracked entities".
+    let status_total = summaries
+        .iter()
+        .filter(|entity| {
+            entity
+                .status
+                .as_ref()
+                .and_then(|status| status.canonical)
+                .is_some()
+        })
+        .count();
     let queues = cleanup_queue_summaries(&[
         (
             "missing-cover",
@@ -252,6 +270,12 @@ pub fn build_cleanup_queues(
             unresolved_relations.len(),
             outgoing.len(),
         ),
+        (
+            "status-mismatch",
+            "Status Mismatch",
+            status_mismatch.len(),
+            status_total,
+        ),
     ]);
 
     CleanupQueuesResponse {
@@ -262,7 +286,38 @@ pub fn build_cleanup_queues(
         isolated,
         broken_assets,
         unresolved_relations,
+        status_mismatch,
     }
+}
+
+/// Whether an entity's canonical status contradicts one of its dated fields:
+/// `completed` with a completion/event date in the future (time travel), or still
+/// `planning` with an event date already in the past (a missed event). Both are
+/// date-relative, compared against `today` (`YYYY-MM-DD`).
+fn status_date_mismatch(library: &Library, entity: &EntitySummary, today: &str) -> bool {
+    let Some(canonical) = entity.status.as_ref().and_then(|status| status.canonical) else {
+        return false;
+    };
+    let Some(type_config) = library.config.type_config(&entity.entity_type) else {
+        return false;
+    };
+    entity.dates.iter().any(|value| {
+        let Some(date) = parse_exact_date(Some(&value.value)) else {
+            return false;
+        };
+        let role = type_config
+            .fields
+            .iter()
+            .find(|field| field.field == value.field)
+            .and_then(|field| field.date_role);
+        match (canonical, role) {
+            (CanonicalStatus::Completed, Some(DateRole::Completed | DateRole::Event)) => {
+                date.as_str() > today
+            }
+            (CanonicalStatus::Planning, Some(DateRole::Event)) => date.as_str() < today,
+            _ => false,
+        }
+    })
 }
 
 /// Entities whose local cover path points at a file that no longer exists, plus
@@ -495,6 +550,8 @@ mod tests {
             title_role: None,
             external_fields: Vec::new(),
             enum_options: Vec::new(),
+            enum_role: None,
+            status_values: None,
             total_progress_field: None,
             date_role,
             season_language: None,
@@ -664,7 +721,7 @@ mod tests {
     #[tokio::test]
     async fn build_cleanup_queues_summaries_and_lists() {
         let (library, _vfs) = fixture().await;
-        let response = build_cleanup_queues(&library, Vec::new(), 0);
+        let response = build_cleanup_queues(&library, Vec::new(), 0, "2024-06-15");
 
         let queue_ids: Vec<_> = response
             .queues
@@ -687,6 +744,67 @@ mod tests {
         assert_eq!(titles(&response.missing_cover), ["B", "C"]);
         assert_eq!(titles(&response.isolated), ["C"]);
         assert!(response.unresolved_relations.is_empty());
+    }
+
+    #[tokio::test]
+    async fn build_cleanup_queues_flags_status_date_mismatches() {
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_dir("Taxonomy/Show");
+        // Completed, but the completion date is in the future — impossible.
+        vfs.insert_file(
+            "Taxonomy/Show/TimeTravel.md",
+            "---\ntitle: TimeTravel\nstatus: Done\nfinished_on: 2099-01-01\n---\n",
+        );
+        // Still planning, but its event date has already passed — a missed event.
+        vfs.insert_file(
+            "Taxonomy/Show/Missed.md",
+            "---\ntitle: Missed\nstatus: Plan\nevent_on: 2000-01-01\n---\n",
+        );
+        // Completed with a past completion date — consistent, no mismatch.
+        vfs.insert_file(
+            "Taxonomy/Show/Fine.md",
+            "---\ntitle: Fine\nstatus: Done\nfinished_on: 2000-01-01\n---\n",
+        );
+
+        let mut status = field("status", FieldType::Enum, None);
+        status.enum_role = Some(crate::types::EnumRole::Status);
+        status.status_values = Some(crate::types::StatusValues {
+            planning: vec!["Plan".to_string()],
+            ongoing: Vec::new(),
+            completed: vec!["Done".to_string()],
+            dropped: Vec::new(),
+        });
+        let config = KizunaConfig {
+            vault_root: "/virtual-vault".to_string(),
+            taxonomy_root: "Taxonomy".to_string(),
+            asset_root: None,
+            content_writable: None,
+            home: None,
+            daily_notes: None,
+            tags: None,
+            types: vec![entity_type(
+                "show",
+                "Show",
+                "Show",
+                vec![
+                    field("title", FieldType::Title, None),
+                    status,
+                    field("event_on", FieldType::Date, Some(DateRole::Event)),
+                    field("finished_on", FieldType::Date, Some(DateRole::Completed)),
+                ],
+            )],
+        };
+        let library = read_library(config, vfs.clone()).await.unwrap();
+
+        let response = build_cleanup_queues(&library, Vec::new(), 0, "2024-06-15");
+        assert_eq!(titles(&response.status_mismatch), ["Missed", "TimeTravel"]);
+        let queue = response
+            .queues
+            .iter()
+            .find(|item| item.id == "status-mismatch")
+            .expect("status-mismatch queue present");
+        assert_eq!(queue.remaining, 2);
+        assert_eq!(queue.total, 3); // all three entities carry a canonical status
     }
 
     #[tokio::test]

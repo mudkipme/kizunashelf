@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityCover } from "@/components/assets/entity-cover";
+import { StatusBadge } from "@/components/entities/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
@@ -30,9 +31,10 @@ export function EntityListItem({
     >
       {showCover ? <EntityCover entity={entity} /> : null}
       <span className="min-w-0">
-        <span className="flex items-center gap-2">
+        <span className="flex flex-wrap items-center gap-2">
           <span className="truncate text-sm font-medium">{title}</span>
           <Badge variant="outline">{entity.typeLabel}</Badge>
+          <StatusBadge status={entity.status} />
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <EntityDateList entity={entity} compact labelsByType={labelsByType} />

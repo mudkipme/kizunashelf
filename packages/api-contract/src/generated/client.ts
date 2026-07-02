@@ -125,6 +125,10 @@ import type {
 } from './getCalendarParams.zod';
 
 import type {
+  GetCleanupQueuesParams
+} from './getCleanupQueuesParams.zod';
+
+import type {
   GetEntitiesParams
 } from './getEntitiesParams.zod';
 
@@ -656,17 +660,24 @@ export const getAnalytics = async ( options?: RequestInit, fetchFn?: typeof glob
 
 
 
-export const getGetCleanupQueuesUrl = () => {
+export const getGetCleanupQueuesUrl = (params?: GetCleanupQueuesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/cleanup-queues`
+  return stringifiedParams.length > 0 ? `/api/cleanup-queues?${stringifiedParams}` : `/api/cleanup-queues`
 }
 
-export const getCleanupQueues = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<CleanupQueuesResponse> => {
+export const getCleanupQueues = async (params?: GetCleanupQueuesParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<CleanupQueuesResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getGetCleanupQueuesUrl(),
+  const res = await (fetchFn ?? fetch)(getGetCleanupQueuesUrl(params),
   {
     ...options,
     method: 'GET'
