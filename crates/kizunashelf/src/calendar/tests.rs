@@ -347,10 +347,25 @@ fn activity_options_mode(
     ActivityBuildOptions {
         cursor: cursor.map(str::to_string),
         months,
+        min_items: None,
         entity_type: None,
         source: CalendarSource::All,
         mode,
         today: today.to_string(),
+    }
+}
+
+/// Item-count paging (the feed): a page gathers whole months until it holds at
+/// least `limit` items. `All` mode, so the fixture dates aren't date-filtered.
+fn activity_options_items(cursor: Option<&str>, limit: u32) -> ActivityBuildOptions {
+    ActivityBuildOptions {
+        cursor: cursor.map(str::to_string),
+        months: 1,
+        min_items: Some(limit),
+        entity_type: None,
+        source: CalendarSource::All,
+        mode: ActivityMode::All,
+        today: "2024-06-15".to_string(),
     }
 }
 
@@ -526,6 +541,89 @@ async fn build_activity_pages_by_month_and_terminates() {
         .unwrap();
     assert_eq!(page3.items[0].date, "2024-01-15");
     assert_eq!(page3.cursor, None);
+}
+
+/// The feed pages by item count: sparse months collapse into one page instead of
+/// one request each (the reported UX problem — one item in Dec/Sep/Jun/Mar should
+/// arrive together).
+#[tokio::test]
+async fn build_activity_item_paging_collapses_sparse_months_into_one_page() {
+    let mut records = Vec::new();
+    for (index, date) in ["2024-12-10", "2024-09-10", "2024-06-10", "2024-03-10"]
+        .iter()
+        .enumerate()
+    {
+        let mut entity = summary("anime", "Anime", &format!("Show {index}"));
+        entity.id = format!("anime:{index}");
+        entity.dates = vec![date_value("aired", date)];
+        records.push(record(entity));
+    }
+    let library = Library::new(
+        activity_config(None),
+        records,
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    // A single page (limit 20) gathers all four scattered months at once.
+    let page = build_activity(&library, &vfs, activity_options_items(None, 20))
+        .await
+        .unwrap();
+    let dates: Vec<_> = page.items.iter().map(|item| item.date.as_str()).collect();
+    assert_eq!(
+        dates,
+        ["2024-12-10", "2024-09-10", "2024-06-10", "2024-03-10"]
+    );
+    assert_eq!(page.cursor, None); // nothing left to page
+}
+
+#[tokio::test]
+async fn build_activity_item_paging_fills_target_then_pages_the_rest() {
+    // One item per month across six months; a limit of 3 fills the first page with
+    // the three most recent (whole months), and the cursor continues to the rest.
+    let months = [
+        "2024-12-10",
+        "2024-11-10",
+        "2024-10-10",
+        "2024-09-10",
+        "2024-08-10",
+        "2024-07-10",
+    ];
+    let mut records = Vec::new();
+    for (index, date) in months.iter().enumerate() {
+        let mut entity = summary("anime", "Anime", &format!("Show {index}"));
+        entity.id = format!("anime:{index}");
+        entity.dates = vec![date_value("aired", date)];
+        records.push(record(entity));
+    }
+    let library = Library::new(
+        activity_config(None),
+        records,
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+    let vfs = InMemoryVfs::new();
+
+    let page1 = build_activity(&library, &vfs, activity_options_items(None, 3))
+        .await
+        .unwrap();
+    let dates1: Vec<_> = page1.items.iter().map(|item| item.date.as_str()).collect();
+    assert_eq!(dates1, ["2024-12-10", "2024-11-10", "2024-10-10"]);
+    assert_eq!(page1.cursor.as_deref(), Some("2024-10"));
+
+    let page2 = build_activity(
+        &library,
+        &vfs,
+        activity_options_items(page1.cursor.as_deref(), 3),
+    )
+    .await
+    .unwrap();
+    let dates2: Vec<_> = page2.items.iter().map(|item| item.date.as_str()).collect();
+    assert_eq!(dates2, ["2024-09-10", "2024-08-10", "2024-07-10"]);
+    assert_eq!(page2.cursor, None);
 }
 
 #[tokio::test]

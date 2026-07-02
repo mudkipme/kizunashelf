@@ -40,8 +40,16 @@ pub struct ActivityBuildOptions {
     /// Opaque `YYYY-MM` cursor from the previous page; the next page continues
     /// strictly past it — older for `All`/`Recent`, newer for `UpNext`.
     pub cursor: Option<String>,
-    /// How many *non-empty* months to include in this page.
+    /// How many *non-empty* months to include in this page. Used only when
+    /// [`Self::min_items`] is `None` (the `/upcoming` month-horizon path).
     pub months: u32,
+    /// Target number of *items* per page. When set, the page accumulates whole
+    /// months (in feed order) until it holds at least this many items — so a sparse
+    /// feed with one item each in Dec/Sep/Jun fills a single page instead of paging
+    /// month-by-month. Months stay atomic (never split across pages), so the cursor
+    /// remains `YYYY-MM` and a page may slightly exceed the target. `None` falls
+    /// back to the month count in [`Self::months`].
+    pub min_items: Option<u32>,
     pub entity_type: Option<String>,
     pub source: CalendarSource,
     pub mode: ActivityMode,

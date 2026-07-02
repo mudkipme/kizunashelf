@@ -579,7 +579,7 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
     );
 
     // The activity feed surfaces the same dated entities, grouped by (date, entity).
-    let activity = server.ok_json("/api/activity?months=12").await;
+    let activity = server.ok_json("/api/activity").await;
     let items = activity["items"].as_array().unwrap();
     assert!(!items.is_empty());
     // Star Voyager's completed date stamp shows up among its activity items (it
@@ -592,7 +592,7 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
             && entry["dateField"] == "complete_date"
             && entry["role"] == "completed"));
 
-    let game_activity = server.ok_json("/api/activity?months=12&type=games").await;
+    let game_activity = server.ok_json("/api/activity?type=games").await;
     assert!(game_activity["items"]
         .as_array()
         .unwrap()

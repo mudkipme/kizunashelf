@@ -53,7 +53,7 @@ export function ActivityPage() {
   const config = useQuery(configQuery());
   const feed = useInfiniteQuery(
     activityFeedQuery({
-      months: 1,
+      limit: 20,
       ...(type !== "all" ? { type } : {}),
       ...(source !== "all" ? { source } : {}),
       // Always sent: the API defaults to "all", but the page defaults to "recent".

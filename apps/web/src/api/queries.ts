@@ -67,8 +67,9 @@ export function analyticsQuery() {
   });
 }
 
-// The reverse-chronological activity feed, paged by month: each page returns the
-// next non-empty month(s), and `cursor` (a `YYYY-MM`) drives the following page.
+// The reverse-chronological activity feed, paged by item count: each page gathers
+// whole months until it holds ~`limit` items (so sparse months don't each cost a
+// request), and `cursor` (a `YYYY-MM`) drives the following page.
 export function activityFeedQuery(params: Omit<GetActivityParams, "cursor">) {
   return infiniteQueryOptions({
     queryKey: queryKeys.activity(params),

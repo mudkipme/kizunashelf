@@ -8,7 +8,7 @@ import { z as zod } from 'zod';
 
 export const ActivityQuery = zod.object({
   "cursor": zod.string().nullish().describe('Opaque `YYYY-MM` cursor from the previous page.'),
-  "months": zod.number().nullish().describe('Number of non-empty months to return in this page (1–12, default 1).'),
+  "limit": zod.number().nullish().describe('Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.'),
   "type": zod.string().nullish(),
   "source": zod.string().nullish(),
   "mode": zod.string().nullish().describe('`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released\/aired, still on your list).')

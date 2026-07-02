@@ -267,8 +267,10 @@ pub(crate) async fn calendar(
 pub(crate) struct ActivityQuery {
     /// Opaque `YYYY-MM` cursor from the previous page.
     cursor: Option<String>,
-    /// Number of non-empty months to return in this page (1–12, default 1).
-    months: Option<f64>,
+    /// Target number of items per page (1–100, default 20). A page gathers whole
+    /// months until it holds at least this many, so a sparse feed (one item each in
+    /// scattered months) fills a single page instead of one request per month.
+    limit: Option<f64>,
     #[serde(rename = "type")]
     entity_type: Option<String>,
     source: Option<String>,
@@ -282,7 +284,7 @@ pub(crate) async fn activity(
     Query(query): Query<ActivityQuery>,
 ) -> ApiResult<ActivityResponse> {
     let library = get_library(&state).await?;
-    let months = clamp_number(query.months.unwrap_or(1.0), 1, 12) as u32;
+    let limit = clamp_number(query.limit.unwrap_or(20.0), 1, 100) as u32;
     let source = match query.source.as_deref() {
         Some("taxonomy") => CalendarSource::Taxonomy,
         Some("daily-note") => CalendarSource::DailyNote,
@@ -302,7 +304,8 @@ pub(crate) async fn activity(
             vfs.as_ref(),
             ActivityBuildOptions {
                 cursor: query.cursor.filter(|item| !item.is_empty()),
-                months,
+                months: 1,
+                min_items: Some(limit),
                 entity_type: query.entity_type.filter(|item| item != "all"),
                 source,
                 mode,
@@ -352,6 +355,8 @@ pub(crate) async fn upcoming(
         ActivityBuildOptions {
             cursor: None,
             months,
+            // The homepage widget keeps its month horizon, not an item target.
+            min_items: None,
             entity_type: query.entity_type.filter(|item| item != "all"),
             // Date fields + scheduled episodes, never daily-note mentions.
             source: CalendarSource::Taxonomy,

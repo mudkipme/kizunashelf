@@ -570,10 +570,10 @@
           },
           {
             "in": "query",
-            "name": "months",
-            "description": "Number of non-empty months to return in this page (1–12, default 1).",
+            "name": "limit",
+            "description": "Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.",
             "schema": {
-              "description": "Number of non-empty months to return in this page (1–12, default 1).",
+              "description": "Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.",
               "type": "number",
               "format": "double"
             },
@@ -4512,8 +4512,8 @@
               "null"
             ]
           },
-          "months": {
-            "description": "Number of non-empty months to return in this page (1–12, default 1).",
+          "limit": {
+            "description": "Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.",
             "type": [
               "number",
               "null"

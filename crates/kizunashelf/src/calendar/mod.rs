@@ -120,7 +120,13 @@ pub async fn build_activity(
         months.sort_by(|a, b| b.cmp(a));
     }
 
-    let target = options.months.max(1) as usize;
+    // Two page-fill strategies: by item count (the feed — accumulate whole months
+    // until the page holds enough items, so sparse months don't each cost a
+    // request) or by non-empty-month count (the `/upcoming` horizon). Either way a
+    // month is atomic: it's fully included or not started, keeping the cursor a
+    // plain `YYYY-MM`.
+    let item_target = options.min_items.map(|value| value.max(1) as usize);
+    let month_target = options.months.max(1) as usize;
     let mut items = Vec::new();
     let mut filled = 0usize;
     let mut consumed = 0usize;
@@ -139,7 +145,11 @@ pub async fn build_activity(
         }
         items.extend(month_items);
         filled += 1;
-        if filled >= target {
+        let page_full = match item_target {
+            Some(target) => items.len() >= target,
+            None => filled >= month_target,
+        };
+        if page_full {
             break;
         }
     }
