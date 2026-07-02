@@ -23,7 +23,12 @@ export function fieldDisplayLabel(field: FieldConfig) {
 
 export function fieldLabelForKey(typeConfig: TypeConfig | undefined, key: string) {
   const field = configFields(typeConfig).find((item) => item.field === key);
-  return field ? fieldDisplayLabel(field) : key;
+  if (field) return fieldDisplayLabel(field);
+  // The untyped body-wikilink pseudo-field ("body") reads as "Notes" — matching
+  // the detail page's Notes section — unless the schema defines a real field named
+  // "body" (handled above). The technical term stays only in the schema editor.
+  if (key === "body") return "Notes";
+  return key;
 }
 
 export function fieldLabelAcrossTypes(typeConfigs: TypeConfig[] | undefined, key: string) {
