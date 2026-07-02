@@ -6,7 +6,7 @@ pub use types::*;
 use crate::contract::{CalendarFilters, CalendarResponse, CalendarTotals};
 use crate::daily_notes::{
     daily_note_candidates, daily_note_files, normalize_wikilink_target, read_daily_note_contents,
-    strip_frontmatter,
+    strip_frontmatter, DailyNoteFile, PendingDailyNote,
 };
 use crate::dates::{is_in_month, normalize_date, parse_exact_date};
 use crate::library::{
@@ -36,7 +36,9 @@ pub async fn build_calendar(
         entries.extend(episode_calendar_entries(library, &options));
     }
     if options.source != CalendarSource::Taxonomy {
-        entries.extend(daily_note_calendar_entries(library, vfs, &options).await?);
+        // The single-month calendar view walks/indexes for just this month (no
+        // page-level context to reuse).
+        entries.extend(daily_note_calendar_entries(library, vfs, &options, None).await?);
     }
     entries.sort_by(compare_calendar_entries);
     let days = calendar_days(options.year, options.month, &entries);
@@ -120,6 +122,16 @@ pub async fn build_activity(
         months.sort_by(|a, b| b.cmp(a));
     }
 
+    // Walk the daily-note directory ONCE for the whole page and build the wikilink
+    // index once. Both are invariant across months, but the per-month builder used
+    // to re-walk every note and re-index every entity each month — the dominant
+    // cost of a multi-month page. Skipped entirely for a taxonomy-only feed.
+    let daily_ctx = if options.source != CalendarSource::Taxonomy {
+        Some(DailyNoteFeedContext::build(library, vfs).await?)
+    } else {
+        None
+    };
+
     // Two page-fill strategies: by item count (the feed — accumulate whole months
     // until the page holds enough items, so sparse months don't each cost a
     // request) or by non-empty-month count (the `/upcoming` horizon). Either way a
@@ -137,7 +149,15 @@ pub async fn build_activity(
         };
         let month_items = group_activity_items(
             library,
-            month_activity_entries(library, vfs, year, month_number, &options).await?,
+            month_activity_entries(
+                library,
+                vfs,
+                year,
+                month_number,
+                &options,
+                daily_ctx.as_ref(),
+            )
+            .await?,
             &options,
         );
         if month_items.is_empty() {
@@ -228,6 +248,7 @@ async fn month_activity_entries(
     year: i32,
     month: u32,
     options: &ActivityBuildOptions,
+    daily_ctx: Option<&DailyNoteFeedContext>,
 ) -> Result<Vec<CalendarEntry>> {
     let build = CalendarBuildOptions {
         year,
@@ -241,7 +262,7 @@ async fn month_activity_entries(
         entries.extend(episode_calendar_entries(library, &build));
     }
     if options.source != CalendarSource::Taxonomy {
-        entries.extend(daily_note_calendar_entries(library, vfs, &build).await?);
+        entries.extend(daily_note_calendar_entries(library, vfs, &build, daily_ctx).await?);
     }
     Ok(entries)
 }
@@ -830,22 +851,116 @@ async fn entity_daily_note_entries(
     Ok(entries)
 }
 
+/// Daily-note discovery reused across a whole activity page. Walking the daily-note
+/// directory and indexing entities by basename are both invariant across months,
+/// but the per-month builder used to redo them for every month — the dominant cost
+/// of a multi-month feed. Built once in [`build_activity`]; each month reads only
+/// its own note bodies.
+struct DailyNoteFeedContext {
+    /// Every dated daily-note candidate, walked once (no month filter).
+    candidates: Vec<PendingDailyNote>,
+    /// Entities indexed by NFC-normalized basename, for wikilink resolution.
+    basename_index: HashMap<String, Vec<EntitySummary>>,
+}
+
+impl DailyNoteFeedContext {
+    async fn build(library: &Library, vfs: &dyn Vfs) -> Result<Self> {
+        Ok(Self {
+            candidates: daily_note_candidates(&library.config, vfs, None, None, true).await?,
+            basename_index: entity_basename_index(library),
+        })
+    }
+
+    /// The daily-note files for one month: filter the pre-walked candidates, then
+    /// read only those bodies (so an empty month costs no file reads at all).
+    async fn month_files(
+        &self,
+        vfs: &dyn Vfs,
+        year: i32,
+        month: u32,
+    ) -> Result<Vec<DailyNoteFile>> {
+        let month_notes: Vec<&PendingDailyNote> = self
+            .candidates
+            .iter()
+            .filter(|note| {
+                note.date
+                    .as_deref()
+                    .is_some_and(|date| is_in_month(date, year, month))
+            })
+            .collect();
+        let paths: Vec<String> = month_notes
+            .iter()
+            .map(|note| note.relative_path.clone())
+            .collect();
+        let mut contents: HashMap<String, String> = read_daily_note_contents(vfs, &paths)
+            .await?
+            .into_iter()
+            .collect();
+        Ok(month_notes
+            .into_iter()
+            .filter_map(|note| {
+                contents
+                    .remove(&note.relative_path)
+                    .map(|contents| DailyNoteFile {
+                        relative_path: note.relative_path.clone(),
+                        date: note.date.clone(),
+                        source_label: note.source_label.clone(),
+                        contents,
+                    })
+            })
+            .collect())
+    }
+}
+
 async fn daily_note_calendar_entries(
     library: &Library,
     vfs: &dyn Vfs,
     options: &CalendarBuildOptions,
+    daily_ctx: Option<&DailyNoteFeedContext>,
 ) -> Result<Vec<CalendarEntry>> {
-    let daily_files = daily_note_files(
-        &library.config,
-        vfs,
-        Some(options.year),
-        Some(options.month),
-        true,
-    )
-    .await?;
-    let by_basename = entity_basename_index(library);
+    // With a page-level context, reuse the once-walked candidates + prebuilt index
+    // and read only this month's bodies; without it (the single-month calendar
+    // view), walk and index for just this month.
+    match daily_ctx {
+        Some(ctx) => {
+            let files = ctx.month_files(vfs, options.year, options.month).await?;
+            Ok(daily_note_entries_from_files(
+                library,
+                &files,
+                &ctx.basename_index,
+                options,
+            ))
+        }
+        None => {
+            let files = daily_note_files(
+                &library.config,
+                vfs,
+                Some(options.year),
+                Some(options.month),
+                true,
+            )
+            .await?;
+            let by_basename = entity_basename_index(library);
+            Ok(daily_note_entries_from_files(
+                library,
+                &files,
+                &by_basename,
+                options,
+            ))
+        }
+    }
+}
+
+/// Resolves the wikilink mentions in a month's daily-note files into calendar
+/// entries, grouped per `(date, entity)`. Shared by the calendar and the feed.
+fn daily_note_entries_from_files(
+    library: &Library,
+    files: &[DailyNoteFile],
+    by_basename: &HashMap<String, Vec<EntitySummary>>,
+    options: &CalendarBuildOptions,
+) -> Vec<CalendarEntry> {
     let mut grouped: HashMap<String, CalendarEntry> = HashMap::new();
-    for file in daily_files {
+    for file in files {
         let Some(file_date) = file.date.as_ref() else {
             continue;
         };
@@ -855,7 +970,7 @@ async fn daily_note_calendar_entries(
                 let Some(target) = captures.get(1) else {
                     continue;
                 };
-                let Some(entity) = find_entity_for_wikilink(target.as_str(), library, &by_basename)
+                let Some(entity) = find_entity_for_wikilink(target.as_str(), library, by_basename)
                 else {
                     continue;
                 };
@@ -893,7 +1008,7 @@ async fn daily_note_calendar_entries(
         }
     }
 
-    Ok(grouped
+    grouped
         .into_values()
         .map(|mut entry| {
             if let Some(snippets) = &mut entry.snippets {
@@ -901,7 +1016,7 @@ async fn daily_note_calendar_entries(
             }
             entry
         })
-        .collect())
+        .collect()
 }
 
 fn calendar_days(year: i32, month: u32, entries: &[CalendarEntry]) -> Vec<CalendarDay> {
