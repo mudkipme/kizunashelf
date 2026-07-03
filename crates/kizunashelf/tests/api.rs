@@ -58,6 +58,7 @@ fn build_inline_router(
 
 struct TestServer {
     app: Router,
+    vault: PathBuf,
     _temp: TempDir,
 }
 
@@ -494,6 +495,95 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
 
     let entities = server.ok_json("/api/entities").await;
     assert_eq!(entities["total"], 4);
+}
+
+#[tokio::test]
+async fn rename_repoints_inbound_wikilinks_in_managed_files() {
+    let server = TestServer::new();
+
+    // A user-curated list under `KizunaShelf/Lists/` links Star Voyager. Lists are
+    // never indexed into the relation graph (read live from the VFS), so a rename
+    // must sweep the directory directly. The aliased Moon Quest link must survive.
+    write_file(
+        &server.vault.join("KizunaShelf/Lists/Favorites.md"),
+        "Personal favorites.\n\n- [[Star Voyager]]\n- [[Moon Quest|the quest]]\n",
+    );
+
+    // Star Voyager is linked from Moon Quest's body and from the daily note.
+    let detail = server
+        .ok_json(&format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ))
+        .await;
+    let revision = detail["entity"]["revision"].as_str().unwrap();
+
+    let renamed = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        Some(json!({
+            "revision": revision,
+            "renameTo": "Star Voyager Redux"
+        })),
+    )
+    .await;
+    assert_eq!(renamed.0, StatusCode::OK, "{}", renamed.1);
+    assert_eq!(renamed.1["entity"]["id"], "anime:Star Voyager Redux");
+    // Three inbound links across three files: Moon Quest's body, the daily note,
+    // and the Favorites list page.
+    assert_eq!(renamed.1["updatedLinks"]["files"], 3);
+    assert_eq!(renamed.1["updatedLinks"]["links"], 3);
+
+    // The raw files were rewritten in place (no YAML round-trip): the inbound
+    // links now point at the new basename while the unrelated `[[Star Saga]]`
+    // franchise link and the `[[Moon Quest|the quest]]` alias survive verbatim.
+    let moon = fs::read_to_string(server.vault.join("Taxonomy/Games/Moon Quest.md")).unwrap();
+    assert!(moon.contains("[[Star Voyager Redux]]"), "{moon}");
+    assert!(!moon.contains("[[Star Voyager]]"), "{moon}");
+    assert!(moon.contains("franchise: \"[[Star Saga]]\""), "{moon}");
+
+    let daily = fs::read_to_string(server.vault.join("Daily Notes/2025-04-21.md")).unwrap();
+    assert!(daily.contains("[[Star Voyager Redux]]"), "{daily}");
+    assert!(
+        daily.contains("[[Moon Quest|the quest]]"),
+        "alias link preserved: {daily}"
+    );
+
+    // The list page (not in the relation graph — swept directly) was repointed
+    // too, and its unrelated aliased Moon Quest link is untouched.
+    let list = fs::read_to_string(server.vault.join("KizunaShelf/Lists/Favorites.md")).unwrap();
+    assert!(list.contains("[[Star Voyager Redux]]"), "{list}");
+    assert!(!list.contains("[[Star Voyager]]"), "{list}");
+    assert!(list.contains("[[Moon Quest|the quest]]"), "{list}");
+
+    // A plain (non-rename) update reports no link changes.
+    let redux = server
+        .ok_json(&format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager Redux")
+        ))
+        .await;
+    let redux_revision = redux["entity"]["revision"].as_str().unwrap();
+    let touched = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Star Voyager Redux")
+        ),
+        Some(json!({ "revision": redux_revision, "frontmatter": { "favorite": false } })),
+    )
+    .await;
+    assert_eq!(touched.0, StatusCode::OK, "{}", touched.1);
+    assert!(
+        touched.1["updatedLinks"].is_null(),
+        "a non-rename update carries no updatedLinks: {}",
+        touched.1
+    );
 }
 
 #[tokio::test]
@@ -1431,6 +1521,7 @@ impl TestServer {
 
         Self {
             app: inline_router(&vault, true, true),
+            vault,
             _temp: temp,
         }
     }

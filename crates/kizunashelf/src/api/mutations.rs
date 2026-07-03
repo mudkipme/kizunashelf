@@ -1,14 +1,18 @@
 use super::assets::entity_asset_dir;
 use super::error::{ApiError, ApiResult};
+use super::lists::list_file_paths;
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CreateEntityRequest, DeleteEntityRequest, DeleteEntityResponse, EntityMutationResponse,
-    UpdateEntityRequest,
+    RenameLinkUpdate, UpdateEntityRequest,
 };
 use crate::library::{
-    file_revision, load_entity, serialize_markdown_document, split_markdown_document,
+    file_revision, find_target, load_entity, normalize_full_target,
+    normalized_entity_basename_index, parse_daily_note_source_id, rewrite_backlink_wikilinks,
+    rewrite_self_wikilinks, rewrite_wikilinks_matching, serialize_markdown_document,
+    split_markdown_document,
 };
-use crate::types::{EntityTypeConfig, KizunaConfig};
+use crate::types::{EntityTypeConfig, KizunaConfig, Library, RelationDirection};
 use crate::vfs::Vfs;
 use anyhow::Result;
 use axum::extract::{Path as AxumPath, State};
@@ -16,6 +20,7 @@ use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Map, Value};
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 #[derive(Deserialize, JsonSchema)]
@@ -52,6 +57,7 @@ pub(crate) async fn update_entity(
     if let Some(body) = request.body {
         document.body = body;
     }
+    let mut renamed_basename: Option<String> = None;
     let target_rel = if let Some(rename_to) = &request.rename_to {
         let basename = sanitize_basename(rename_to)
             .map_err(|error| ApiError::bad_request(&error.to_string()))?;
@@ -78,6 +84,7 @@ pub(crate) async fn update_entity(
                 &mut document.frontmatter,
             )
             .await;
+            renamed_basename = Some(basename);
         }
         target
     } else {
@@ -91,6 +98,23 @@ pub(crate) async fn update_entity(
             anyhow::anyhow!("failed to remove old entity {source_rel}: {error}")
         })?;
     }
+    // Repoint inbound wikilinks so a rename doesn't dangle them. Uses the loaded
+    // relation graph to touch only the files that actually link this entity, and
+    // must run before the cache is invalidated (it reads the pre-rename graph).
+    let updated_links = if let Some(new_basename) = &renamed_basename {
+        let update = update_rename_backlinks(
+            &library,
+            vfs.as_ref(),
+            &path.id,
+            &entity.summary.basename,
+            new_basename,
+            &target_rel,
+        )
+        .await;
+        (update.links > 0).then_some(update)
+    } else {
+        None
+    };
     // Reflect the write by invalidating the cache and reloading, like every other
     // mutation. The index cache keeps this cheap — only the edited file is a miss
     // and re-read; unchanged entities and daily notes are reused by fingerprint.
@@ -101,7 +125,10 @@ pub(crate) async fn update_entity(
         .or_else(|| reloaded.record_by_id(&path.id))
         .ok_or_else(|| ApiError::not_found("Updated entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
-    Ok(Json(EntityMutationResponse { entity }))
+    Ok(Json(EntityMutationResponse {
+        entity,
+        updated_links,
+    }))
 }
 
 pub(crate) async fn create_entity(
@@ -130,7 +157,10 @@ pub(crate) async fn create_entity(
         .record_by_path(&path)
         .ok_or_else(|| ApiError::not_found("Created entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
-    Ok(Json(EntityMutationResponse { entity }))
+    Ok(Json(EntityMutationResponse {
+        entity,
+        updated_links: None,
+    }))
 }
 
 pub(crate) async fn delete_entity(
@@ -325,6 +355,11 @@ pub(super) fn sanitize_basename(value: &str) -> Result<String> {
     if basename.chars().any(is_forbidden_obsidian_filename_char) {
         anyhow::bail!("Entity filename cannot contain / \\ : * ? \" < > | or control characters");
     }
+    if is_reserved_windows_name(basename) {
+        anyhow::bail!(
+            "Entity filename cannot be a reserved Windows device name (CON, PRN, AUX, NUL, COM0-9, LPT0-9)"
+        );
+    }
     Ok(basename.to_string())
 }
 
@@ -333,6 +368,18 @@ fn is_forbidden_obsidian_filename_char(character: char) -> bool {
         character,
         '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|'
     ) || character.is_control()
+}
+
+/// Windows reserves a handful of device names and treats a file as reserved
+/// regardless of its extension, so `CON.md` (and `CON.anything.md`) is refused
+/// by the OS. We compare the stem before the first dot, case-insensitively.
+fn is_reserved_windows_name(basename: &str) -> bool {
+    let stem = basename.split('.').next().unwrap_or(basename);
+    let upper = stem.to_ascii_uppercase();
+    matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || (upper.len() == 4
+            && (upper.starts_with("COM") || upper.starts_with("LPT"))
+            && upper.as_bytes()[3].is_ascii_digit())
 }
 
 /// Vault-relative path for a new entity file under its type directory.
@@ -368,6 +415,133 @@ pub(super) async fn write_entity_raw(vfs: &dyn Vfs, relative: &str, raw: &str) -
 /// vault root.
 pub(super) fn parent_dir(relative: &str) -> Option<&str> {
     relative.rsplit_once('/').map(|(parent, _)| parent)
+}
+
+/// Repoints inbound `[[wikilinks]]` after an entity is renamed from
+/// `old_basename` to `new_basename`. The loaded relation graph already knows
+/// exactly which managed files link to the renamed entity (configured type
+/// folders and daily notes), so only those are re-read — never the whole vault.
+/// List pages aren't in the graph, so the (small) list directory is swept
+/// directly at the end.
+///
+/// Best-effort and per-file atomic: a file that fails to read or write is
+/// skipped (its link merely stays dangling, as it would have before this
+/// feature) and no file is left half-written. The rename itself has already
+/// committed, so the worst case degrades to today's behavior rather than error.
+async fn update_rename_backlinks(
+    library: &Library,
+    vfs: &dyn Vfs,
+    old_id: &str,
+    old_basename: &str,
+    new_basename: &str,
+    renamed_file_path: &str,
+) -> RenameLinkUpdate {
+    // Group the target texts that resolved to the renamed entity by the file
+    // containing them. Only `Out` edges are true inbound links — an `In` edge
+    // here is the renamed entity's own outbound edge mirrored. Self-references
+    // are handled separately against the freshly written file, so the renamed
+    // entity is skipped as a source here.
+    let mut per_file: HashMap<String, HashSet<String>> = HashMap::new();
+    for relation in library.relations_to(old_id) {
+        if relation.direction != RelationDirection::Out || relation.source_id == old_id {
+            continue;
+        }
+        let Some(path) = rename_source_path(library, &relation.source_id) else {
+            continue;
+        };
+        if path == renamed_file_path {
+            continue;
+        }
+        per_file
+            .entry(path)
+            .or_default()
+            .insert(normalize_full_target(&relation.target_title));
+    }
+
+    let mut files = 0u32;
+    let mut links = 0u32;
+    for (path, old_targets) in per_file {
+        let changed = rewrite_managed_file(vfs, &path, |raw| {
+            rewrite_backlink_wikilinks(raw, &old_targets, new_basename)
+        })
+        .await;
+        if changed > 0 {
+            files += 1;
+            links += changed;
+        }
+    }
+
+    // The renamed file's own self-references (e.g. `[[Old]]` in its body, which
+    // the relation graph drops as a self-edge).
+    let self_changed = rewrite_managed_file(vfs, renamed_file_path, |raw| {
+        rewrite_self_wikilinks(raw, old_basename, new_basename)
+    })
+    .await;
+    if self_changed > 0 {
+        files += 1;
+        links += self_changed;
+    }
+
+    // List pages (`KizunaShelf/Lists/`) are read on demand, never indexed into the
+    // relation graph, so the cache can't point us at them. The directory is small
+    // and user-curated and a rename is rare, so we sweep it directly: rewrite any
+    // `[[wikilink]]` that *resolves* — by the same `find_target` rules used
+    // everywhere else — to the renamed entity. Resolving (rather than matching a
+    // bare basename) is what keeps a list's `[[Manga/Beta]]` untouched when a
+    // different `Anime/Beta` is the one being renamed. The sweep is best-effort,
+    // so a missing/unreadable list directory just yields no updates.
+    let list_paths = list_file_paths(vfs).await.unwrap_or_default();
+    if !list_paths.is_empty() {
+        let by_basename = normalized_entity_basename_index(&library.records);
+        for path in list_paths {
+            let changed = rewrite_managed_file(vfs, &path, |raw| {
+                rewrite_wikilinks_matching(raw, new_basename, |target| {
+                    find_target(target, None, &by_basename)
+                        .is_some_and(|record| record.summary.id == old_id)
+                })
+            })
+            .await;
+            if changed > 0 {
+                files += 1;
+                links += changed;
+            }
+        }
+    }
+
+    RenameLinkUpdate { files, links }
+}
+
+/// Vault-relative path of a relation's source file: a daily note's own path, or
+/// a resident entity's path.
+fn rename_source_path(library: &Library, source_id: &str) -> Option<String> {
+    if let Some((_, relative_path)) = parse_daily_note_source_id(source_id) {
+        Some(relative_path.to_string())
+    } else {
+        library
+            .record_by_id(source_id)
+            .map(|record| record.summary.path.clone())
+    }
+}
+
+/// Reads `path`, applies `rewrite`, and atomically writes it back only if the
+/// rewrite changed anything. Returns the number of links changed (0 on any I/O
+/// error, keeping the caller best-effort).
+async fn rewrite_managed_file(
+    vfs: &dyn Vfs,
+    path: &str,
+    rewrite: impl FnOnce(&str) -> (String, usize),
+) -> u32 {
+    let Ok(raw) = vfs.read_to_string(path).await else {
+        return 0;
+    };
+    let (rewritten, count) = rewrite(&raw);
+    if count == 0 {
+        return 0;
+    }
+    if vfs.write_atomic(path, rewritten.as_bytes()).await.is_err() {
+        return 0;
+    }
+    count as u32
 }
 
 #[cfg(test)]
@@ -421,6 +595,44 @@ mod tests {
                 sanitize_basename(bad).is_err(),
                 "{bad:?} should be rejected"
             );
+        }
+    }
+
+    #[test]
+    fn sanitize_basename_rejects_reserved_windows_names() {
+        for bad in [
+            "CON",
+            "con",
+            "PRN",
+            "aux",
+            "NUL",
+            "COM1",
+            "com9",
+            "COM0",
+            "LPT1",
+            "lpt0",
+            "CON.backup",
+            "NUL.txt",
+        ] {
+            assert!(
+                sanitize_basename(bad).is_err(),
+                "{bad:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn sanitize_basename_allows_names_that_only_resemble_reserved_ones() {
+        for ok in [
+            "CONSTANT",
+            "COMET",
+            "COM",
+            "LPT",
+            "COM10",
+            "Console",
+            "Aux Cable",
+        ] {
+            assert!(sanitize_basename(ok).is_ok(), "{ok:?} should be allowed");
         }
     }
 

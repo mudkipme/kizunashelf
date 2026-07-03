@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { downloadAssets, searchSources } from "@/api/entities";
@@ -31,7 +32,6 @@ export function useExternalMatch({
   defaultQuery,
   externalRefs,
   assetDownloadEnabled = false,
-  onError,
 }: {
   typeConfig?: TypeConfig;
   providerCatalog?: ExternalProviderCatalog;
@@ -39,7 +39,6 @@ export function useExternalMatch({
   defaultQuery?: string;
   externalRefs?: ExternalRefs;
   assetDownloadEnabled?: boolean;
-  onError: (message: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -146,12 +145,12 @@ export function useExternalMatch({
       try {
         await downloadAssets(entity.id, { revision: entity.revision });
       } catch (error) {
-        onError(errorMessage(error));
+        toast.error(errorMessage(error));
       } finally {
         setDownloadAfterApply(false);
       }
     },
-    [downloadAfterApply, onError],
+    [downloadAfterApply],
   );
 
   const resetSelection = useCallback(() => {
@@ -181,12 +180,12 @@ export function useExternalMatch({
         setCandidates(result.items);
         if (result.items.length === 0) setEmptyMessage("No external matches");
       } catch (error) {
-        onError(errorMessage(error));
+        toast.error(errorMessage(error));
       } finally {
         setSearching(false);
       }
     },
-    [provider, query, defaultQuery, entityType, externalSearchEnabled, providerOptions, onError, resetSelection],
+    [provider, query, defaultQuery, entityType, externalSearchEnabled, providerOptions, resetSelection],
   );
 
   const refreshFromExternalRef = useCallback(

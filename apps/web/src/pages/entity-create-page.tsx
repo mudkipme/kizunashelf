@@ -33,7 +33,7 @@ export function EntityCreatePage() {
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
-  const { saving: creating, error, setError, run } = useEntityMutation();
+  const { saving: creating, run } = useEntityMutation();
   const [typeId, setTypeId] = useState("");
   const [basename, setBasename] = useState("");
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
@@ -63,7 +63,6 @@ export function EntityCreatePage() {
     entityType: typeId,
     defaultQuery: normalizedBasename,
     assetDownloadEnabled: capabilities.assetDownloadEnabled,
-    onError: setError,
   });
 
   const searchRelations = useRelationSearch();
@@ -72,7 +71,6 @@ export function EntityCreatePage() {
     if (!contentWritable) return;
     if (basenameError) {
       setBasename(normalizedBasename);
-      setError(basenameError);
       return;
     }
     setMessage(undefined);
@@ -104,7 +102,7 @@ export function EntityCreatePage() {
   }
 
   return (
-    <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
+    <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -186,7 +184,6 @@ export function EntityCreatePage() {
           onProviderChange={external.setProvider}
           onSearch={() => {
             setMessage(undefined);
-            setError(undefined);
             void external.search();
           }}
           onChooseCandidate={external.chooseCandidate}

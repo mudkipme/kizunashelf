@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PencilLineIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
@@ -56,7 +57,6 @@ export function QuickLogDialog({
   const [kind, setKind] = useState<Kind>("progress");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string>();
 
   // Keep the picker in range if the entity (and so its supported kinds) changes
   // while this dialog instance is reused.
@@ -78,13 +78,12 @@ export function QuickLogDialog({
 
   async function submit() {
     setSaving(true);
-    setError(undefined);
     try {
       await postLogActivity(entityId, request);
       await invalidateEntityData();
       onOpenChange(false);
     } catch (logError) {
-      setError(errorMessage(logError));
+      toast.error(errorMessage(logError));
     } finally {
       setSaving(false);
     }
@@ -146,7 +145,6 @@ export function QuickLogDialog({
             pending={preview.isFetching}
             fieldLabel={fieldLabel}
           />
-          {error ? <p className="text-xs text-destructive">{error}</p> : null}
         </div>
 
         <DialogFooter>

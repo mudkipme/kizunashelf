@@ -887,6 +887,18 @@ impl Library {
             .map(move |&index| &self.relations[index])
     }
 
+    /// Relations whose resolved `target_id` is `id` — the inbound edges. Pairing
+    /// each `Out`-direction relation with its `source_id` yields every file that
+    /// links to `id` (an `In` relation here is instead `id`'s own outbound edge
+    /// mirrored, so a link-repointing pass must filter to `Out`).
+    pub fn relations_to(&self, id: &str) -> impl Iterator<Item = &Relation> {
+        self.relations_by_target
+            .get(id)
+            .into_iter()
+            .flatten()
+            .map(move |&index| &self.relations[index])
+    }
+
     /// Relation indices (in stored order, deduplicated) where `id` appears as the
     /// source or as a resolved target. Used to scan only an entity's local
     /// neighbourhood instead of the whole relation graph.

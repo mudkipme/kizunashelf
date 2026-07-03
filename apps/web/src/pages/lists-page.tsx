@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ListIcon, PlusIcon, XIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
+import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addList } from "@/api/lists";
-import { listsQuery, queryKeys } from "@/api/queries";
+import { listsQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,11 +29,10 @@ export function ListsPage() {
   const capabilities = useCapabilities();
   const contentWritable = capabilities.contentWritable;
   const [createOpen, setCreateOpen] = useState(false);
-  const [error, setError] = useState<string>();
   const items = lists.data?.items ?? [];
 
   return (
-    <AppFrame error={error ?? (lists.error ? errorMessage(lists.error) : undefined)}>
+    <AppFrame error={lists.error ? errorMessage(lists.error) : undefined}>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex items-center justify-between gap-2">
           <div>
@@ -83,7 +84,7 @@ export function ListsPage() {
         )}
       </div>
 
-      <CreateListDialog open={createOpen} onOpenChange={setCreateOpen} onError={setError} />
+      <CreateListDialog open={createOpen} onOpenChange={setCreateOpen} />
     </AppFrame>
   );
 }
@@ -91,27 +92,24 @@ export function ListsPage() {
 function CreateListDialog({
   open,
   onOpenChange,
-  onError,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onError: (message?: string) => void;
 }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const invalidateLists = useInvalidateLists();
   const [name, setName] = useState("");
   const validationError = name.trim() ? basenameValidationError(normalizeBasename(name)) : undefined;
 
   const create = useMutation({
     mutationFn: () => addList({ name: normalizeBasename(name) }),
     onSuccess: async (list) => {
-      onError(undefined);
+      toast.success("List created");
       onOpenChange(false);
       setName("");
-      await queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+      await invalidateLists();
       navigate(`/lists/${encodeURIComponent(list.id)}`);
     },
-    onError: (mutationError) => onError(errorMessage(mutationError)),
   });
 
   return (

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SaveIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { rawSettingsConfigQuery } from "@/api/queries";
@@ -29,7 +30,9 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
   // The last saved/loaded text; the editor is "dirty" when `content` differs.
   const [baseline, setBaseline] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string>();
+  // Save failures here are the server's strict YAML validation output — often
+  // multi-line (which field, what was wrong). That needs a persistent, full-width
+  // surface, so it stays inline rather than becoming an ephemeral toast.
   const [error, setError] = useState<string>();
 
   // Seed the editable text from the loaded file exactly once, so a background
@@ -54,13 +57,12 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
   async function save() {
     setSaving(true);
     setError(undefined);
-    setMessage(undefined);
     try {
       const response = await saveRawSettingsConfig({ content });
       // Echo back exactly what the server stored, and reset the dirty baseline.
       setContent(response.content);
       setBaseline(response.content);
-      setMessage("Saved");
+      toast.success("Settings saved");
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
     } catch (saveError) {
       setError(errorMessage(saveError));
@@ -79,7 +81,6 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
           {path ? <p className="mt-1 truncate text-xs text-muted-foreground">{path}</p> : null}
         </div>
         <div className="flex items-center gap-2">
-          {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
           <Button type="button" onClick={save} disabled={saving || !settingsWritable || raw.isPending}>
             <SaveIcon data-icon="inline-start" />
             {saving ? "Saving" : "Save"}
@@ -95,11 +96,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
         </Alert>
       ) : null}
 
-      {error ? (
-        <Alert className="whitespace-pre-wrap">
-          {error}
-        </Alert>
-      ) : null}
+      {error ? <Alert className="whitespace-pre-wrap">{error}</Alert> : null}
 
       {raw.isPending ? (
         <Placeholder>Loading</Placeholder>

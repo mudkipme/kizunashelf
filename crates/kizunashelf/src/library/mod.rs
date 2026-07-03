@@ -14,6 +14,7 @@ mod index_cache;
 mod parse;
 mod read;
 mod relations;
+mod wikilink_rewrite;
 
 pub(crate) use index_cache::{IndexCacheContext, MemoryIndexCache};
 
@@ -32,6 +33,10 @@ pub use relations::{find_target, normalized_entity_basename_index};
 pub(crate) use parse::{file_revision, load_entity};
 pub(crate) use read::{compute_listing_fingerprint, read_library_cached};
 pub(crate) use relations::{parse_daily_note_source_id, DAILY_NOTE_RELATION_FIELD};
+pub(crate) use wikilink_rewrite::{
+    normalize_full_target, rewrite_backlink_wikilinks, rewrite_self_wikilinks,
+    rewrite_wikilinks_matching,
+};
 
 #[cfg(test)]
 mod tests;

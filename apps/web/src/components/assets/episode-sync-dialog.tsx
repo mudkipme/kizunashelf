@@ -8,6 +8,7 @@ import {
   RefreshCwIcon,
   XIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
@@ -64,7 +65,6 @@ export function EpisodeSyncDialog({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [groupBySeason, setGroupBySeason] = useState(true);
   const [importing, setImporting] = useState(false);
-  const [error, setError] = useState<string>();
 
   const sources = useQuery({
     queryKey: ["episodeSources", entityId, provider ?? "", language],
@@ -201,7 +201,6 @@ export function EpisodeSyncDialog({
 
   async function apply() {
     setImporting(true);
-    setError(undefined);
     try {
       // Ticked items are deliberate writes: overwrite matched titles, add new ones.
       const detail = await syncEpisodes(entityId, { revision, groups: payloadGroups, overwrite: true });
@@ -209,7 +208,7 @@ export function EpisodeSyncDialog({
       void queryClient.invalidateQueries({ queryKey: ["entities"] });
       onOpenChange(false);
     } catch (importError) {
-      setError(errorMessage(importError));
+      toast.error(errorMessage(importError));
     } finally {
       setImporting(false);
     }
@@ -316,8 +315,6 @@ export function EpisodeSyncDialog({
             Keep groups
           </button>
         ) : null}
-
-        {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={importing}>

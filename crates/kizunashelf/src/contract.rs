@@ -420,6 +420,22 @@ pub struct ImportEpisodesRequest {
 #[serde(rename_all = "camelCase")]
 pub struct EntityMutationResponse {
     pub entity: Entity,
+    /// Present only for a rename that repointed `[[wikilinks]]` in other managed
+    /// files (configured type folders, daily notes, and list pages): how many
+    /// links changed and across how many files. Absent for non-rename updates and
+    /// for renames that touched nothing, so a client can show "Updated N links"
+    /// only when it happened.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub updated_links: Option<RenameLinkUpdate>,
+}
+
+/// Tally of the wikilink repointing a rename performed. See
+/// [`EntityMutationResponse::updated_links`].
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RenameLinkUpdate {
+    pub files: u32,
+    pub links: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

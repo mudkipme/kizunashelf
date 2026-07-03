@@ -34,7 +34,7 @@ export function EntityEditPage() {
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
-  const { saving, error, setError, run } = useEntityMutation();
+  const { saving, run } = useEntityMutation();
   const [conflict, setConflict] = useState(false);
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
@@ -62,7 +62,6 @@ export function EntityEditPage() {
     defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
     assetDownloadEnabled: capabilities.assetDownloadEnabled,
-    onError: setError,
   });
   const { setQuery: setMatchQuery } = external;
 
@@ -93,7 +92,6 @@ export function EntityEditPage() {
     if (!fresh) return;
     seedDraft(fresh);
     setConflict(false);
-    setError(undefined);
   }
 
   const searchRelations = useRelationSearch();
@@ -114,9 +112,11 @@ export function EntityEditPage() {
       },
       {
         // A 409 means the file changed on disk since it was loaded. Keep the
-        // user's edits and offer a reload so they can reapply them.
+        // user's edits and offer a reload so they can reapply them — via the
+        // inline banner below, so the conflict toast is suppressed here.
         conflictMessage: ENTITY_EDIT_CONFLICT_MESSAGE,
         onConflict: () => setConflict(true),
+        silentConflict: true,
       },
     );
   }
@@ -141,13 +141,7 @@ export function EntityEditPage() {
   }
 
   return (
-    <AppFrame
-      error={
-        conflict
-          ? undefined
-          : (error ?? (queryError ? errorMessage(queryError) : undefined))
-      }
-    >
+    <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -184,7 +178,7 @@ export function EntityEditPage() {
 
         {conflict ? (
           <Alert className="flex flex-wrap items-center justify-between gap-3">
-            <span className="min-w-0">{error}</span>
+            <span className="min-w-0">{ENTITY_EDIT_CONFLICT_MESSAGE}</span>
             <Button
               type="button"
               variant="outline"
@@ -231,7 +225,6 @@ export function EntityEditPage() {
               onQueryChange={external.setQuery}
               onProviderChange={external.setProvider}
               onSearch={() => {
-                setError(undefined);
                 void external.search();
               }}
               onRefreshRef={external.refreshFromExternalRef}

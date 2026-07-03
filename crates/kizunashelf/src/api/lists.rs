@@ -16,7 +16,7 @@ use crate::lists::{
     split_frontmatter, ListMarker as CoreMarker, ParsedItem, ParsedList, ParsedSection, LISTS_DIR,
 };
 use crate::types::{EntityRecord, Library};
-use crate::vfs::Vfs;
+use crate::vfs::{Vfs, VfsResult};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -49,16 +49,11 @@ pub(crate) async fn get_lists(
     let library = get_library(&state).await?;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
-    let entries = match vfs.read_dir(LISTS_DIR).await {
-        Ok(entries) => entries,
+    let paths = match list_file_paths(vfs.as_ref()).await {
+        Ok(paths) => paths,
         Err(err) if err.is_not_found() => Vec::new(),
         Err(err) => return Err(anyhow::anyhow!("failed to list lists: {err}").into()),
     };
-    let paths: Vec<String> = entries
-        .into_iter()
-        .filter(|entry| entry.is_file && entry.name.ends_with(".md"))
-        .map(|entry| format!("{LISTS_DIR}/{}", entry.name))
-        .collect();
 
     let files = vfs
         .read_files(&paths)
@@ -341,6 +336,20 @@ fn list_contains_entity(
             .and_then(|target| find_target(&target, None, index))
             .is_some_and(|found| found.summary.id == entity_id)
     })
+}
+
+/// Vault-relative paths of every list file — the `*.md` files directly under
+/// [`LISTS_DIR`]. The single place that enumerates the list directory, shared by
+/// the list handlers and the rename backlink sweep. The read error is propagated
+/// so callers decide how to treat a missing directory: the handlers map
+/// not-found to an empty list; the best-effort rename sweep swallows it.
+pub(crate) async fn list_file_paths(vfs: &dyn Vfs) -> VfsResult<Vec<String>> {
+    let entries = vfs.read_dir(LISTS_DIR).await?;
+    Ok(entries
+        .into_iter()
+        .filter(|entry| entry.is_file && entry.name.ends_with(".md"))
+        .map(|entry| format!("{LISTS_DIR}/{}", entry.name))
+        .collect())
 }
 
 /// Vault-relative path of a list from its id, validated for containment.

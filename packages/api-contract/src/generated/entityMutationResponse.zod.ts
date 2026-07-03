@@ -17,6 +17,10 @@ export const entityMutationResponseEntityEpisodeProgressOneTotalMin = 0;
 
 export const entityMutationResponseEntityRelationCountMin = 0;
 
+export const entityMutationResponseUpdatedLinksOneFilesMin = 0;
+
+export const entityMutationResponseUpdatedLinksOneLinksMin = 0;
+
 
 export const EntityMutationResponse = zod.object({
   "entity": zod.object({
@@ -57,7 +61,11 @@ export const EntityMutationResponse = zod.object({
   "frontmatter": zod.record(zod.string(), zod.unknown()),
   "body": zod.string(),
   "raw": zod.string()
-})
+}),
+  "updatedLinks": zod.union([zod.object({
+  "files": zod.number().min(entityMutationResponseUpdatedLinksOneFilesMin),
+  "links": zod.number().min(entityMutationResponseUpdatedLinksOneLinksMin)
+}).describe('Tally of the wikilink repointing a rename performed. See\n[`EntityMutationResponse::updated_links`].'),zod.null()]).optional().describe('Present only for a rename that repointed `[[wikilinks]]` in other managed\nfiles (configured type folders, daily notes, and list pages): how many\nlinks changed and across how many files. Absent for non-rename updates and\nfor renames that touched nothing, so a client can show \"Updated N links\"\nonly when it happened.')
 })
 
 export type EntityMutationResponse = zod.input<typeof EntityMutationResponse>;

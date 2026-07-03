@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { SaveIcon } from "lucide-react";
+import { toast } from "sonner";
 
+import { errorMessage } from "@/api/client";
 import { saveSettingsConfig } from "@/api/settings";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -74,8 +76,6 @@ export function SettingsEditor({
   // reference (not dirty).
   const [baselineConfig, setBaselineConfig] = useState(config);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string>();
-  const [error, setError] = useState<string>();
   const taxonomyBase = joinPath(vaultRoot, config.taxonomyRoot);
   // The server only reports vaultConfigPath once a vault root is saved; during
   // onboarding derive it from the vault root for display.
@@ -141,16 +141,14 @@ export function SettingsEditor({
 
   async function save() {
     setSaving(true);
-    setError(undefined);
-    setMessage(undefined);
     try {
       await saveSettingsConfig(cleanVaultConfig(config, providerCatalog));
       setBaselineConfig(config);
-      setMessage("Saved");
+      toast.success("Settings saved");
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onSaved?.();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to save config");
+      toast.error(errorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -168,7 +166,6 @@ export function SettingsEditor({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
           {onboarding && onBack ? (
             <Button type="button" variant="outline" onClick={onBack} disabled={saving}>
               Back
@@ -186,12 +183,6 @@ export function SettingsEditor({
           Schema editing is disabled on this instance (read-only). Set
           <code className="mx-1">KIZUNASHELF_SETTINGS_WRITABLE=true</code>
           to enable it.
-        </Alert>
-      ) : null}
-
-      {error ? (
-        <Alert>
-          {error}
         </Alert>
       ) : null}
 

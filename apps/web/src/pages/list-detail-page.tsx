@@ -37,8 +37,10 @@ import {
   XIcon,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
+import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addItemToList, removeList, saveList } from "@/api/lists";
 import { entitiesQuery, listQuery, queryKeys } from "@/api/queries";
 import { EntityCover } from "@/components/assets/entity-cover";
@@ -119,6 +121,7 @@ export function ListDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const invalidateLists = useInvalidateLists();
   const language = useTitleLanguage();
 
   const list = useQuery({ ...listQuery(id), enabled: Boolean(id) });
@@ -132,7 +135,6 @@ export function ListDetailPage() {
   sectionsRef.current = sections;
   const [description, setDescription] = useState("");
   const [trailing, setTrailing] = useState("");
-  const [error, setError] = useState<string>();
   const [addOpen, setAddOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -173,20 +175,12 @@ export function ListDetailPage() {
         sectionsSignature(sections) !== sectionsSignature(serverSections(data.sections))),
   );
 
-  function invalidate() {
-    return Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.list(id) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
-    ]);
-  }
 
-  function reportError(actionError: unknown) {
-    if (isConflictError(actionError)) {
-      setError("This list changed on disk since it was loaded. Reloaded the latest version — please try again.");
-      void list.refetch();
-    } else {
-      setError(errorMessage(actionError));
-    }
+  // The global mutation-error handler surfaces the message (with a friendly 409
+  // notice); here we only keep the recovery — reload the latest on a conflict so
+  // the stale edit state is replaced and the user can retry.
+  function recoverFromConflict(actionError: unknown) {
+    if (isConflictError(actionError)) void list.refetch();
   }
 
   function listPayload(secs: EditableSection[] = sections) {
@@ -205,10 +199,9 @@ export function ListDetailPage() {
   const save = useMutation({
     mutationFn: () => saveList(id, listPayload()),
     onSuccess: async () => {
-      setError(undefined);
-      await invalidate();
+      await invalidateLists(id);
     },
-    onError: reportError,
+    onError: recoverFromConflict,
   });
 
   // Ticking a todo persists on its own — no trip to the Save button. A short
@@ -219,12 +212,13 @@ export function ListDetailPage() {
   const autoSave = useMutation({
     mutationFn: (payload: ReturnType<typeof listPayload>) => saveList(id, payload),
     onSuccess: (detail) => {
-      setError(undefined);
       loadedRevision.current = detail.revision;
+      // Adopt the saved detail in place (no refetch of this list) so a live
+      // toggle stays put; only the index needs the fresh counts.
       queryClient.setQueryData(queryKeys.list(id), detail);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+      void invalidateLists();
     },
-    onError: reportError,
+    onError: recoverFromConflict,
   });
 
   function scheduleAutoSave() {
@@ -244,14 +238,14 @@ export function ListDetailPage() {
   // disambiguation), so persist any pending edits first — otherwise the append
   // would build on the stale on-disk version and the local edits would be lost.
   async function addEntity(entityId: string) {
-    setError(undefined);
     cancelAutoSave();
     try {
       if (dirty) await saveList(id, listPayload());
       await addItemToList(id, { entityId });
-      await invalidate();
+      await invalidateLists(id);
     } catch (actionError) {
-      reportError(actionError);
+      toast.error(errorMessage(actionError));
+      recoverFromConflict(actionError);
     }
   }
 
@@ -358,21 +352,21 @@ export function ListDetailPage() {
   const rename = useMutation({
     mutationFn: (renameTo: string) => saveList(id, { ...listPayload(), renameTo }),
     onSuccess: async (detail) => {
-      setError(undefined);
       setRenameOpen(false);
-      await invalidate();
+      await invalidateLists(id);
       navigate(`/lists/${encodeURIComponent(detail.id)}`);
     },
-    onError: reportError,
+    onError: recoverFromConflict,
   });
 
   const remove = useMutation({
     mutationFn: () => removeList(id),
     onSuccess: async () => {
-      await invalidate();
+      toast.success("List deleted");
+      await invalidateLists(id);
       navigate("/lists");
     },
-    onError: reportError,
+    onError: recoverFromConflict,
   });
 
   const busy = save.isPending || remove.isPending || rename.isPending;
@@ -382,7 +376,7 @@ export function ListDetailPage() {
   );
 
   return (
-    <AppFrame error={error ?? (list.error ? errorMessage(list.error) : undefined)}>
+    <AppFrame error={list.error ? errorMessage(list.error) : undefined}>
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         {list.isPending ? (
           <Placeholder>Loading</Placeholder>

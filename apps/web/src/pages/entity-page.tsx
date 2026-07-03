@@ -16,11 +16,13 @@ import {
   XIcon,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
 import { addItemToList, addList, removeItemFromList } from "@/api/lists";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
+import { useInvalidateLists } from "@/api/invalidate-lists";
 import {
   configQuery,
   entityDatesQuery,
@@ -87,7 +89,7 @@ export function EntityPage() {
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const language = useTitleLanguage();
-  const { saving, error, setError, run } = useEntityMutation();
+  const { saving, run } = useEntityMutation();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameBasename, setRenameBasename] = useState("");
   const [manageListsOpen, setManageListsOpen] = useState(false);
@@ -134,7 +136,6 @@ export function EntityPage() {
     defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
     assetDownloadEnabled: capabilities.assetDownloadEnabled,
-    onError: setError,
   });
   const relationGroups = useMemo(
     () => groupRelations(detail.data?.relations ?? []),
@@ -161,10 +162,8 @@ export function EntityPage() {
     const nextBasename = normalizeBasename(renameBasename);
     const validationError = basenameValidationError(nextBasename);
     setRenameBasename(nextBasename);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    // The rename dialog already renders this inline and disables its submit.
+    if (validationError) return;
     if (nextBasename === entity.basename) {
       setRenameOpen(false);
       return;
@@ -176,6 +175,12 @@ export function EntityPage() {
       });
       setRenameOpen(false);
       await invalidateEntityData();
+      const updated = result.updatedLinks?.links ?? 0;
+      toast.success(
+        updated > 0
+          ? `Renamed — updated ${updated} ${updated === 1 ? "link" : "links"}`
+          : "Renamed",
+      );
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     }, { onConflict: refetchOnConflict });
   }
@@ -207,7 +212,9 @@ export function EntityPage() {
           .map((item) => item.message)
           .filter(Boolean)
           .join("; ");
-        setError(reasons ? `Some images could not be downloaded: ${reasons}` : "Some images could not be downloaded");
+        toast.error(
+          reasons ? `Some images could not be downloaded: ${reasons}` : "Some images could not be downloaded",
+        );
       }
     }, { onConflict: refetchOnConflict });
   }
@@ -217,6 +224,7 @@ export function EntityPage() {
     await run(async () => {
       await removeEntity(entity.id, { revision: entity.revision });
       await invalidateEntityData();
+      toast.success("Moved to trash");
       navigate("/library");
     }, { onConflict: refetchOnConflict });
   }
@@ -240,9 +248,8 @@ export function EntityPage() {
       void queryClient.invalidateQueries({ queryKey: ["entities"] });
       void queryClient.invalidateQueries({ queryKey: ["activity"] });
       void queryClient.invalidateQueries({ queryKey: ["calendar"] });
-      setError(undefined);
     } catch (error) {
-      reportEntityError(error, setError, refetchOnConflict);
+      reportEntityError(error, { onConflict: refetchOnConflict });
     } finally {
       setEpisodesSaving(false);
     }
@@ -259,7 +266,7 @@ export function EntityPage() {
   }
 
   return (
-    <AppFrame error={error ?? (queryError ? errorMessage(queryError) : undefined)}>
+    <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
         {loading ? (
           <Placeholder>Loading</Placeholder>
@@ -366,7 +373,6 @@ export function EntityPage() {
               entityId={entity.id}
               entityName={entityTitle(entity, language)}
               contentWritable={contentWritable}
-              onError={setError}
             />
           </>
         ) : (
@@ -481,16 +487,14 @@ function ManageListsDialog({
   entityId,
   entityName,
   contentWritable,
-  onError,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityId: string;
   entityName: string;
   contentWritable: boolean;
-  onError: (message?: string) => void;
 }) {
-  const queryClient = useQueryClient();
+  const invalidateLists = useInvalidateLists();
   // Membership-annotated list of every list (each carries `contains`).
   const lists = useQuery({ ...entityListsQuery(entityId), enabled: open });
   const [pendingId, setPendingId] = useState<string>();
@@ -504,24 +508,14 @@ function ManageListsDialog({
   const newNameError = newName.trim() ? basenameValidationError(normalizeBasename(newName)) : undefined;
   const items = lists.data?.items ?? [];
 
-  // Refetch the membership view (and any open detail) after a change. The
-  // `["lists"]` prefix covers both the plain index and this entity-scoped query.
-  function invalidate(listId: string) {
-    return Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) }),
-    ]);
-  }
-
   async function toggle(listId: string, contains: boolean) {
     setPendingId(listId);
-    onError(undefined);
     try {
       if (contains) await removeItemFromList(listId, entityId);
       else await addItemToList(listId, { entityId });
-      await invalidate(listId);
+      await invalidateLists(listId);
     } catch (error) {
-      onError(errorMessage(error));
+      toast.error(errorMessage(error));
     } finally {
       setPendingId(undefined);
     }
@@ -531,14 +525,14 @@ function ManageListsDialog({
     const name = normalizeBasename(newName);
     if (!name.trim() || newNameError) return;
     setCreating(true);
-    onError(undefined);
     try {
       const created = await addList({ name });
       setNewName("");
       await addItemToList(created.id, { entityId });
-      await invalidate(created.id);
+      await invalidateLists(created.id);
+      toast.success("List created");
     } catch (error) {
-      onError(errorMessage(error));
+      toast.error(errorMessage(error));
     } finally {
       setCreating(false);
     }

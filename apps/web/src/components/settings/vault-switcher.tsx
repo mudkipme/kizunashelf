@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, FolderOpenIcon, FolderPlusIcon, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
 
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,20 +34,19 @@ export function VaultSwitcher({
   const [parent, setParent] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
 
   useEffect(() => {
-    listVaults().then(setVaults).catch((reason) => setError(message(reason)));
+    listVaults().then(setVaults).catch((reason) => toast.error(message(reason)));
   }, []);
 
-  async function run(action: () => Promise<VaultInfo[]>) {
+  async function run(action: () => Promise<VaultInfo[]>, success: string) {
     setBusy(true);
-    setError(undefined);
     try {
       setVaults(await action());
       onChanged?.();
+      toast.success(success);
     } catch (reason) {
-      setError(message(reason));
+      toast.error(message(reason));
     } finally {
       setBusy(false);
     }
@@ -55,7 +54,7 @@ export function VaultSwitcher({
 
   async function openExisting() {
     const dir = await selectDirectory().catch(() => undefined);
-    if (dir) await run(() => addVault(dir));
+    if (dir) await run(() => addVault(dir), "Vault added");
   }
 
   async function chooseParent() {
@@ -75,12 +74,6 @@ export function VaultSwitcher({
       }
     >
       <div className="flex flex-col gap-3">
-        {error ? (
-          <Alert>
-            {error}
-          </Alert>
-        ) : null}
-
         <div className="flex flex-col gap-1">
           {vaults.map((vault) => (
             <div key={vault.path} className="flex items-center gap-2 rounded-md border px-3 py-2">
@@ -97,7 +90,7 @@ export function VaultSwitcher({
                   size="sm"
                   variant="outline"
                   disabled={busy}
-                  onClick={() => void run(() => switchVault(vault.path))}
+                  onClick={() => void run(() => switchVault(vault.path), "Switched vault")}
                 >
                   Open
                 </Button>
@@ -108,7 +101,7 @@ export function VaultSwitcher({
                 variant="ghost"
                 aria-label={`Remove ${vault.name}`}
                 disabled={busy}
-                onClick={() => void run(() => removeVault(vault.path))}
+                onClick={() => void run(() => removeVault(vault.path), "Vault removed")}
               >
                 <Trash2Icon />
               </Button>
@@ -158,7 +151,7 @@ export function VaultSwitcher({
               onClick={() => {
                 const vaultName = name.trim();
                 setName("");
-                void run(() => createVault(parent, vaultName));
+                void run(() => createVault(parent, vaultName), "Vault created");
               }}
             >
               Create vault
