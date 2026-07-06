@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { errorMessage } from "@/api/client";
 import { quickAddEntity, searchSources } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
-import { configQuery } from "@/api/queries";
+import { configQuery, providerCatalogQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export function QuickCapturePage() {
   const requestedType = searchParams.get("type") ?? ALL;
   const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
+  const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const contentWritable = capabilities.contentWritable;
 
@@ -53,28 +54,52 @@ export function QuickCapturePage() {
     return labels;
   }, [config.data]);
 
-  // Probe available providers with an empty query (no network to any provider):
-  // it returns the per-provider `enabled` summaries used to populate the provider
-  // filter and to decide whether Quick Capture is usable at all.
-  const probe = useQuery({
-    queryKey: ["externalSearch", "probe"],
+  const providerLabels = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const item of providerCatalog.data?.providers ?? []) labels.set(item.id, item.label);
+    return labels;
+  }, [providerCatalog.data]);
+
+  // Empty-query probes return per-provider `enabled` summaries without hitting any
+  // provider network. The gate probe spans every type (is Quick Capture usable at
+  // all?); the provider-list probe is scoped to the selected type, so the dropdown
+  // lists only the providers that type's `externalRef` fields map to.
+  const gateProbe = useQuery({
+    queryKey: ["externalSearch", "probe", ALL],
     queryFn: ({ signal }) => searchSources({ type: ALL, q: "" }, { signal }),
     staleTime: 60_000,
   });
+  const anyProviderEnabled = (gateProbe.data?.providers ?? []).some((item) => item.enabled);
+
+  // Keyed by the selected type; when it is "all" this matches the gate probe's key
+  // so React Query serves it from the same fetch.
+  const providerProbe = useQuery({
+    queryKey: ["externalSearch", "probe", typeId],
+    queryFn: ({ signal }) => searchSources({ type: typeId, q: "" }, { signal }),
+    staleTime: 60_000,
+  });
   const enabledProviders = useMemo(
-    () => (probe.data?.providers ?? []).filter((item) => item.enabled),
-    [probe.data],
+    () => (providerProbe.data?.providers ?? []).filter((item) => item.enabled),
+    [providerProbe.data],
   );
 
-  // No usable provider → Quick Capture has nothing to search; fall back to the
-  // manual add page (which stays available in read-only mode too).
+  // No usable provider anywhere → Quick Capture has nothing to search; fall back to
+  // the manual add page (which stays available in read-only mode too).
   useEffect(() => {
-    if (probe.isSuccess && enabledProviders.length === 0) {
+    if (gateProbe.isSuccess && !anyProviderEnabled) {
       navigate(`/entities/new/manual${requestedType !== ALL ? `?type=${encodeURIComponent(requestedType)}` : ""}`, {
         replace: true,
       });
     }
-  }, [probe.isSuccess, enabledProviders.length, navigate, requestedType]);
+  }, [gateProbe.isSuccess, anyProviderEnabled, navigate, requestedType]);
+
+  // A provider chosen for one type may not exist under the next; reset to All so
+  // the search doesn't silently return nothing.
+  useEffect(() => {
+    if (provider !== ALL && providerProbe.isSuccess && !enabledProviders.some((item) => item.id === provider)) {
+      setProvider(ALL);
+    }
+  }, [provider, enabledProviders, providerProbe.isSuccess]);
 
   const searchEnabled = query.length >= MIN_QUERY_LENGTH;
   const results = useQuery({
@@ -120,7 +145,7 @@ export function QuickCapturePage() {
     }
   }
 
-  const queryError = config.error ?? capabilities.error ?? probe.error;
+  const queryError = config.error ?? capabilities.error ?? gateProbe.error ?? providerProbe.error;
   const manualHref = `/entities/new/manual${
     typeId !== ALL || query ? `?${new URLSearchParams({ ...(typeId !== ALL ? { type: typeId } : {}), ...(query ? { title: query } : {}) })}` : ""
   }`;
@@ -247,7 +272,9 @@ export function QuickCapturePage() {
                           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{match.candidate.brief}</p>
                         ) : null}
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="rounded border px-1.5 py-0.5">{match.candidate.provider}</span>
+                          <span className="rounded border px-1.5 py-0.5">
+                            {providerLabels.get(match.candidate.provider) ?? match.candidate.provider}
+                          </span>
                           <span className="rounded border px-1.5 py-0.5">
                             {typeLabels.get(match.entityType) ?? match.entityType}
                           </span>
