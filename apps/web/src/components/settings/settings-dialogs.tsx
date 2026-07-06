@@ -21,6 +21,7 @@ import type {
   Language,
 } from "@/types/api";
 
+import { PresetPickerDialog } from "./preset-picker";
 import { EmptyConfigLine, TextField } from "./settings-controls";
 import { fieldConfigSummary } from "./settings-field-descriptors";
 import {
@@ -185,12 +186,26 @@ export function TypesSection({
 }) {
   // `null` = closed; `"new"` = adding; a number = editing that index.
   const [editing, setEditing] = useState<number | "new" | null>(null);
+  const [picking, setPicking] = useState(false);
   const initial = editing === "new" ? defaultEntityType() : editing === null ? null : types[editing];
   const typeList = arrayEditor(types, onChange);
 
   return (
     <div className="flex flex-col gap-3">
-      <ListHeader title="Types" count={types.length} addLabel="Type" onAdd={() => setEditing("new")} />
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-medium">
+          Types <span className="text-muted-foreground">({types.length})</span>
+        </h3>
+        <div className="flex items-center gap-2">
+          <Button type="button" size="sm" onClick={() => setPicking(true)}>
+            <PlusIcon data-icon="inline-start" />
+            Add built-in type
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => setEditing("new")}>
+            Add custom type
+          </Button>
+        </div>
+      </div>
       {types.length === 0 ? (
         <EmptyConfigLine>No entity types configured.</EmptyConfigLine>
       ) : (
@@ -225,6 +240,15 @@ export function TypesSection({
             else typeList.update(editing as number, value);
             setEditing(null);
           }}
+        />
+      ) : null}
+
+      {picking ? (
+        <PresetPickerDialog
+          currentTypes={types}
+          languages={languages}
+          onClose={() => setPicking(false)}
+          onApply={(nextTypes) => onChange(nextTypes)}
         />
       ) : null}
     </div>

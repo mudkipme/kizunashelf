@@ -3,9 +3,11 @@ import {
   getPathSuggestions as requestPathSuggestions,
   getRawSettingsConfig as requestRawSettingsConfig,
   getSettingsConfig as requestSettingsConfig,
-  getVaultTemplates as requestVaultTemplates,
+  getTypePresets as requestTypePresets,
+  resolveTypePresets as requestResolveTypePresets,
   saveRawSettingsConfig as requestSaveRawSettingsConfig,
   saveSettingsConfig as requestSaveSettingsConfig,
+  type ResolveTypePresetsRequest,
   type SaveRawConfigRequest,
   type SaveSettingsRequest,
 } from "@kizunashelf/api-contract";
@@ -16,8 +18,15 @@ export function getSettingsConfig(init?: RequestInit) {
   return requestSettingsConfig(init, apiFetch);
 }
 
-export function getVaultTemplates(init?: RequestInit) {
-  return requestVaultTemplates(init, apiFetch);
+export function getTypePresets(init?: RequestInit) {
+  return requestTypePresets(init, apiFetch);
+}
+
+// Materialize picked presets into concrete types, merged against the editor's
+// current types. Stateless server-side — the same call backs onboarding (empty
+// currentTypes) and the settings "add built-in type" flow.
+export function resolveTypePresets(request: ResolveTypePresetsRequest) {
+  return requestResolveTypePresets(request, undefined, apiFetch);
 }
 
 export function getLanguages(init?: RequestInit) {

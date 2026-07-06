@@ -68,16 +68,29 @@ export type {
   StatsResponse,
   TagsResponse,
   TypeConfig,
-  VaultTemplate,
-  VaultTemplatesResponse,
+  TypePresetsResponse,
+  ResolveTypePresetsRequest,
+  ResolveTypePresetsResponse,
 } from "@kizunashelf/api-contract";
 
 import type {
   EntityDetailResponse,
   EntitySummary,
+  ResolveTypePresetsResponse,
   SaveSettingsRequest,
   SettingsConfigResponse,
+  TypePresetsResponse,
 } from "@kizunashelf/api-contract";
+
+// Preset picker types, derived by indexed access so the resolve response's
+// `types`/`field` unify structurally with the editor's own EntityTypeConfig/
+// FieldConfig (both are orval-inlined anonymous shapes, so no TS2719 clash).
+export type TypePresetSummary = TypePresetsResponse["presets"][number];
+export type TypePresetProvider = NonNullable<TypePresetSummary["providers"]>[number];
+export type TypePresetCategoryInfo = TypePresetsResponse["categories"][number];
+export type TypePresetCategory = TypePresetCategoryInfo["id"];
+export type TypePresetBackfill = NonNullable<ResolveTypePresetsResponse["backfills"]>[number];
+export type TypePresetCollision = NonNullable<ResolveTypePresetsResponse["collisions"]>[number];
 
 // Editor config types, derived by indexed access into the generated request type
 // so they are structurally identical to what the save endpoint accepts (avoids

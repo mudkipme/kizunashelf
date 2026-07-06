@@ -8,8 +8,8 @@ use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
 use super::external::{external_provider_catalog, external_search, quick_add_entity};
 use super::handlers::{
     activity, calendar, capabilities, config, health, home, languages, raw_settings_config,
-    refresh, save_raw_settings_config, save_settings_config, settings_config, upcoming,
-    vault_templates,
+    refresh, resolve_type_presets, save_raw_settings_config, save_settings_config, settings_config,
+    type_presets, upcoming,
 };
 use super::lists::{
     add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
@@ -28,7 +28,8 @@ use crate::contract::{
     EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse,
     HealthResponse, HomeResponse, LanguagesResponse, ListDetail, ListsResponse,
     LogActivityResponse, PathSuggestionsResponse, QuickAddResponse, RawConfigResponse,
-    SettingsConfigResponse, StatsResponse, TagsResponse, VaultTemplatesResponse,
+    ResolveTypePresetsResponse, SettingsConfigResponse, StatsResponse, TagsResponse,
+    TypePresetsResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -191,10 +192,17 @@ fn api_router() -> ApiRouter<AppState> {
             }),
         )
         .api_route(
-            "/api/vault-templates",
-            get_with(vault_templates, |op| {
-                op.id("getVaultTemplates")
-                    .response::<200, Json<VaultTemplatesResponse>>()
+            "/api/type-presets",
+            get_with(type_presets, |op| {
+                op.id("getTypePresets")
+                    .response::<200, Json<TypePresetsResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/type-presets/resolve",
+            post_with(resolve_type_presets, |op| {
+                op.id("resolveTypePresets")
+                    .response::<200, Json<ResolveTypePresetsResponse>>()
             }),
         )
         .api_route(

@@ -213,6 +213,14 @@ import {
 } from './rawConfigResponse.zod';
 
 import type {
+  ResolveTypePresetsRequest
+} from './resolveTypePresetsRequest.zod';
+
+import {
+  ResolveTypePresetsResponse
+} from './resolveTypePresetsResponse.zod';
+
+import type {
   SaveRawConfigRequest
 } from './saveRawConfigRequest.zod';
 
@@ -241,6 +249,10 @@ import type {
 } from './toggleEpisodeRequest.zod';
 
 import {
+  TypePresetsResponse
+} from './typePresetsResponse.zod';
+
+import {
   UpcomingResponse
 } from './upcomingResponse.zod';
 
@@ -251,10 +263,6 @@ import type {
 import type {
   UpdateListRequest
 } from './updateListRequest.zod';
-
-import {
-  VaultTemplatesResponse
-} from './vaultTemplatesResponse.zod';
 
 export const getGetHealthUrl = () => {
 
@@ -524,17 +532,17 @@ export const getPathSuggestions = async (params?: GetPathSuggestionsParams, opti
 
 
 
-export const getGetVaultTemplatesUrl = () => {
+export const getGetTypePresetsUrl = () => {
 
 
 
 
-  return `/api/vault-templates`
+  return `/api/type-presets`
 }
 
-export const getVaultTemplates = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<VaultTemplatesResponse> => {
+export const getTypePresets = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<TypePresetsResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getGetVaultTemplatesUrl(),
+  const res = await (fetchFn ?? fetch)(getGetTypePresetsUrl(),
   {
     ...options,
     method: 'GET'
@@ -547,7 +555,36 @@ export const getVaultTemplates = async ( options?: RequestInit, fetchFn?: typeof
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
-  const data = contentType.includes('json') ? VaultTemplatesResponse.parse(parsedBody) : parsedBody
+  const data = contentType.includes('json') ? TypePresetsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getResolveTypePresetsUrl = () => {
+
+
+
+
+  return `/api/type-presets/resolve`
+}
+
+export const resolveTypePresets = async (resolveTypePresetsRequest: ResolveTypePresetsRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ResolveTypePresetsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getResolveTypePresetsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(resolveTypePresetsRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ResolveTypePresetsResponse.parse(parsedBody) : parsedBody
   return data
 }
 

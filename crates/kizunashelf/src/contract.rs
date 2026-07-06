@@ -164,21 +164,145 @@ pub struct ExternalProviderTypeOption {
     pub label: String,
 }
 
-/// A ready-made starter vault schema offered during onboarding / vault creation.
-/// The single source of truth for every frontend (web onboarding, desktop &
-/// iOS create-vault) — see [`crate::templates`].
+// --- Built-in type presets (onboarding / "add built-in type") ------------------
+//
+// A preset is a fully-wired [`EntityTypeConfig`] plus picker metadata, served by
+// `GET /api/type-presets`. The actual config is materialized (with the chosen
+// title language and relation wiring) only by `POST /api/type-presets/resolve`,
+// so the picker payload stays small and language-agnostic. Single source of truth
+// for every frontend — see [`crate::presets`].
+
+/// One built-in type the picker can offer. Metadata only: the concrete
+/// [`EntityTypeConfig`] comes from the resolve endpoint, since it depends on the
+/// chosen title language and which other presets are being added alongside it.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct VaultTemplate {
+pub struct TypePresetSummary {
+    /// Stable preset id — also the default [`EntityTypeConfig::id`] and the key a
+    /// client uses to match an already-added type (id equality). Never localized.
+    pub id: String,
+    /// Category id (see [`TypePresetCategory`]), for grouping in the picker.
+    pub category: TypePresetCategory,
+    pub icon: String,
+    /// English display label. Kept as data (keyed by `id`) so clients may localize
+    /// by id later without a contract change; English is the fallback.
+    pub label: String,
+    /// One-line, plain-language description for the picker card.
+    pub description: String,
+    /// Providers this preset wires up, in priority order — rendered as chips.
+    pub providers: Vec<TypePresetProvider>,
+    /// Preset ids this type links to via relation fields (e.g. `["franchise"]`).
+    /// Drives the picker's "pairs well with" suggestions entirely client-side.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub relation_targets: Vec<String>,
+}
+
+/// A provider chip on a preset card (id + display label from the catalog).
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TypePresetProvider {
     pub id: String,
     pub label: String,
-    pub config: VaultConfig,
+}
+
+/// A preset category — the "what do you want to track?" grouping. A flat string
+/// enum (not doc-commented variants) so swift-openapi-generator renders proper
+/// Swift cases, matching `FieldType`/`DateRole`.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
+pub enum TypePresetCategory {
+    Watch,
+    Play,
+    Read,
+    Listen,
+    People,
+    Life,
+}
+
+/// A category with its English label, so the picker can render group headers
+/// without hardcoding the set. Order in the response is the display order.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TypePresetCategoryInfo {
+    pub id: TypePresetCategory,
+    pub label: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct VaultTemplatesResponse {
-    pub templates: Vec<VaultTemplate>,
+pub struct TypePresetsResponse {
+    pub presets: Vec<TypePresetSummary>,
+    /// Categories in display order — the picker renders a group per entry.
+    pub categories: Vec<TypePresetCategoryInfo>,
+}
+
+/// Request to materialize one or more presets into concrete types, merged against
+/// the schema the client currently holds (empty during onboarding). Stateless: the
+/// endpoint reads no vault, so onboarding and the settings editor call it the same
+/// way.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolveTypePresetsRequest {
+    /// The types already in the editor/vault. Used to wire relations, detect
+    /// id/path collisions, and propose back-fills. Empty for a fresh vault.
+    #[serde(default)]
+    pub current_types: Vec<EntityTypeConfig>,
+    /// Preset ids the user selected, in the order to add them.
+    pub preset_ids: Vec<String>,
+    /// ISO 639-1 title language to stamp onto title fields, filenames, and season
+    /// language. Absent → the preset's language-neutral default (English).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title_language: Option<String>,
+}
+
+/// The result of resolving presets: ready-to-insert types plus proposed edits to
+/// existing types. The client shows any back-fills/collisions for confirmation and
+/// merges the accepted result into its editor state — no merge logic is duplicated
+/// per runtime.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolveTypePresetsResponse {
+    /// New entity types to append, with relations to absent types stripped and
+    /// relations to co-selected/existing types kept, and any id/path collisions
+    /// already suffixed (see `collisions`).
+    pub types: Vec<EntityTypeConfig>,
+    /// Proposed relation fields to add to *existing* types so they can link to a
+    /// newly added type (the "add one, then another later" case). Proposals only —
+    /// the client applies the ones the user accepts.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub backfills: Vec<TypePresetBackfill>,
+    /// Home sections (one per added type) the client can offer to add to Home.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub home_sections: Vec<crate::types::HomeSectionConfig>,
+    /// Presets whose id/path collided with an existing type and were suffixed, so
+    /// the UI can surface a rename.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub collisions: Vec<TypePresetCollision>,
+}
+
+/// A proposed relation field to add to an existing type.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TypePresetBackfill {
+    /// The existing type to add the field to.
+    pub type_id: String,
+    pub type_label: String,
+    /// The preset (newly added) that this relation targets.
+    pub preset_id: String,
+    pub preset_label: String,
+    /// The relation field to add to `type_id`.
+    pub field: crate::types::FieldConfig,
+}
+
+/// A preset whose default id/path collided with an existing type and was suffixed.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TypePresetCollision {
+    pub preset_id: String,
+    pub requested_id: String,
+    pub assigned_id: String,
+    pub requested_path: String,
+    pub assigned_path: String,
 }
 
 /// A title-language option for the schema editor: an ISO 639-1 code and its

@@ -12,7 +12,6 @@ import type {
   ExternalProviderCatalog,
   Language,
   VaultConfig,
-  VaultTemplatesResponse,
 } from "@/types/api";
 
 import {
@@ -31,16 +30,11 @@ import {
 import { HomeBlock, TypesSection } from "./settings-dialogs";
 import { DailyNotesEditor } from "./settings-sections";
 
-/** A starter schema preset, served by `GET /api/vault-templates`. */
-export type VaultTemplateOption = VaultTemplatesResponse["templates"][number];
-
 type SettingsEditorProps = {
   vaultConfigPath?: string;
   initialApp?: AppConfig | null;
   initialVault?: VaultConfig | null;
   providerCatalog?: ExternalProviderCatalog;
-  /** Onboarding presets from the core; empty outside onboarding. */
-  templates?: VaultTemplateOption[];
   /** Title-language options from the core (`GET /api/languages`). */
   languages?: Language[];
   onboarding?: boolean;
@@ -57,7 +51,6 @@ export function SettingsEditor({
   initialApp,
   initialVault,
   providerCatalog,
-  templates = [],
   languages = [],
   onboarding = false,
   settingsWritable = true,
@@ -92,7 +85,6 @@ export function SettingsEditor({
     ]),
   ).size;
   const overviewItems = [
-    ...(onboarding ? [{ id: "templates", title: "Templates", detail: `${templates.length} presets` }] : []),
     // The machine-level "App" config (vault root + write mode) is no longer
     // edited here: the self-hosted web app sources it from env vars, and the
     // desktop app from its native vault switcher.
@@ -191,28 +183,6 @@ export function SettingsEditor({
 
         {/* A disabled fieldset makes the whole schema form read-only natively. */}
         <fieldset disabled={!settingsWritable} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
-          {onboarding ? (
-            <SettingsSection
-              id="templates"
-              title="Create Vault Templates"
-              summary={<SummaryBadges items={[`${templates.length} presets`]} />}
-            >
-              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                {templates.map((template) => (
-                  <Button
-                    key={template.id}
-                    type="button"
-                    variant="outline"
-                    className="h-auto justify-start whitespace-normal py-3 text-left"
-                    onClick={() => setConfig(template.config)}
-                  >
-                    {template.label}
-                  </Button>
-                ))}
-              </div>
-            </SettingsSection>
-          ) : null}
-
           <SettingsSection
             id="vault"
             title="Vault"

@@ -24,7 +24,7 @@ import { apiFetch } from "@/api/client";
 import { todayLocal } from "@/lib/date";
 import { getProviderCatalog } from "@/api/external";
 import { fetchList, fetchLists } from "@/api/lists";
-import { getLanguages, getRawSettingsConfig, getSettingsConfig, getVaultTemplates } from "@/api/settings";
+import { getLanguages, getRawSettingsConfig, getSettingsConfig, getTypePresets } from "@/api/settings";
 
 export const queryKeys = {
   activity: (params: Omit<GetActivityParams, "cursor">) => ["activity", params] as const,
@@ -46,7 +46,7 @@ export const queryKeys = {
   rawSettingsConfig: ["rawSettingsConfig"] as const,
   stats: (params?: GetStatsParams) => ["stats", params ?? {}] as const,
   tags: ["tags"] as const,
-  vaultTemplates: ["vaultTemplates"] as const,
+  typePresets: ["typePresets"] as const,
 };
 
 // The vault's whole tag vocabulary, cached client-side (it changes rarely and is
@@ -203,10 +203,10 @@ export function statsQuery(params?: GetStatsParams) {
   });
 }
 
-export function vaultTemplatesQuery() {
+export function typePresetsQuery() {
   return queryOptions({
-    queryKey: queryKeys.vaultTemplates,
-    queryFn: ({ signal }) => getVaultTemplates({ signal }),
+    queryKey: queryKeys.typePresets,
+    queryFn: ({ signal }) => getTypePresets({ signal }),
   });
 }
 

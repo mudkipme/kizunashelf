@@ -327,16 +327,44 @@
         }
       }
     },
-    "/api/vault-templates": {
+    "/api/type-presets": {
       "get": {
-        "operationId": "getVaultTemplates",
+        "operationId": "getTypePresets",
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultTemplatesResponse"
+                  "$ref": "#/components/schemas/TypePresetsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/type-presets/resolve": {
+      "post": {
+        "operationId": "resolveTypePresets",
+        "requestBody": {
+          "description": "Request to materialize one or more presets into concrete types, merged against\nthe schema the client currently holds (empty during onboarding). Stateless: the\nendpoint reads no vault, so onboarding and the settings editor call it the same\nway.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveTypePresetsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The result of resolving presets: ready-to-insert types plus proposed edits to\nexisting types. The client shows any back-fills/collisions for confirmation and\nmerges the accepted result into its editor state — no merge logic is duplicated\nper runtime.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolveTypePresetsResponse"
                 }
               }
             }
@@ -3502,22 +3530,93 @@
           "suggestions"
         ]
       },
-      "VaultTemplatesResponse": {
+      "TypePresetsResponse": {
         "type": "object",
         "properties": {
-          "templates": {
+          "presets": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/VaultTemplate"
+              "$ref": "#/components/schemas/TypePresetSummary"
+            }
+          },
+          "categories": {
+            "description": "Categories in display order — the picker renders a group per entry.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TypePresetCategoryInfo"
             }
           }
         },
         "required": [
-          "templates"
+          "presets",
+          "categories"
         ]
       },
-      "VaultTemplate": {
-        "description": "A ready-made starter vault schema offered during onboarding / vault creation.\nThe single source of truth for every frontend (web onboarding, desktop &\niOS create-vault) — see [`crate::templates`].",
+      "TypePresetSummary": {
+        "description": "One built-in type the picker can offer. Metadata only: the concrete\n[`EntityTypeConfig`] comes from the resolve endpoint, since it depends on the\nchosen title language and which other presets are being added alongside it.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Stable preset id — also the default [`EntityTypeConfig::id`] and the key a\nclient uses to match an already-added type (id equality). Never localized.",
+            "type": "string"
+          },
+          "category": {
+            "description": "Category id (see [`TypePresetCategory`]), for grouping in the picker.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TypePresetCategory"
+              }
+            ]
+          },
+          "icon": {
+            "type": "string"
+          },
+          "label": {
+            "description": "English display label. Kept as data (keyed by `id`) so clients may localize\nby id later without a contract change; English is the fallback.",
+            "type": "string"
+          },
+          "description": {
+            "description": "One-line, plain-language description for the picker card.",
+            "type": "string"
+          },
+          "providers": {
+            "description": "Providers this preset wires up, in priority order — rendered as chips.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TypePresetProvider"
+            }
+          },
+          "relationTargets": {
+            "description": "Preset ids this type links to via relation fields (e.g. `[\"franchise\"]`).\nDrives the picker's \"pairs well with\" suggestions entirely client-side.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "icon",
+          "label",
+          "description",
+          "providers"
+        ]
+      },
+      "TypePresetCategory": {
+        "description": "A preset category — the \"what do you want to track?\" grouping. A flat string\nenum (not doc-commented variants) so swift-openapi-generator renders proper\nSwift cases, matching `FieldType`/`DateRole`.",
+        "type": "string",
+        "enum": [
+          "watch",
+          "play",
+          "read",
+          "listen",
+          "people",
+          "life"
+        ]
+      },
+      "TypePresetProvider": {
+        "description": "A provider chip on a preset card (id + display label from the catalog).",
         "type": "object",
         "properties": {
           "id": {
@@ -3525,15 +3624,158 @@
           },
           "label": {
             "type": "string"
-          },
-          "config": {
-            "$ref": "#/components/schemas/VaultConfig"
           }
         },
         "required": [
           "id",
-          "label",
-          "config"
+          "label"
+        ]
+      },
+      "TypePresetCategoryInfo": {
+        "description": "A category with its English label, so the picker can render group headers\nwithout hardcoding the set. Order in the response is the display order.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/TypePresetCategory"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ]
+      },
+      "ResolveTypePresetsRequest": {
+        "description": "Request to materialize one or more presets into concrete types, merged against\nthe schema the client currently holds (empty during onboarding). Stateless: the\nendpoint reads no vault, so onboarding and the settings editor call it the same\nway.",
+        "type": "object",
+        "properties": {
+          "currentTypes": {
+            "description": "The types already in the editor/vault. Used to wire relations, detect\nid/path collisions, and propose back-fills. Empty for a fresh vault.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityTypeConfig"
+            },
+            "default": []
+          },
+          "presetIds": {
+            "description": "Preset ids the user selected, in the order to add them.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "titleLanguage": {
+            "description": "ISO 639-1 title language to stamp onto title fields, filenames, and season\nlanguage. Absent → the preset's language-neutral default (English).",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "presetIds"
+        ]
+      },
+      "ResolveTypePresetsResponse": {
+        "description": "The result of resolving presets: ready-to-insert types plus proposed edits to\nexisting types. The client shows any back-fills/collisions for confirmation and\nmerges the accepted result into its editor state — no merge logic is duplicated\nper runtime.",
+        "type": "object",
+        "properties": {
+          "types": {
+            "description": "New entity types to append, with relations to absent types stripped and\nrelations to co-selected/existing types kept, and any id/path collisions\nalready suffixed (see `collisions`).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityTypeConfig"
+            }
+          },
+          "backfills": {
+            "description": "Proposed relation fields to add to *existing* types so they can link to a\nnewly added type (the \"add one, then another later\" case). Proposals only —\nthe client applies the ones the user accepts.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TypePresetBackfill"
+            }
+          },
+          "homeSections": {
+            "description": "Home sections (one per added type) the client can offer to add to Home.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSectionConfig"
+            }
+          },
+          "collisions": {
+            "description": "Presets whose id/path collided with an existing type and were suffixed, so\nthe UI can surface a rename.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TypePresetCollision"
+            }
+          }
+        },
+        "required": [
+          "types"
+        ]
+      },
+      "TypePresetBackfill": {
+        "description": "A proposed relation field to add to an existing type.",
+        "type": "object",
+        "properties": {
+          "typeId": {
+            "description": "The existing type to add the field to.",
+            "type": "string"
+          },
+          "typeLabel": {
+            "type": "string"
+          },
+          "presetId": {
+            "description": "The preset (newly added) that this relation targets.",
+            "type": "string"
+          },
+          "presetLabel": {
+            "type": "string"
+          },
+          "field": {
+            "description": "The relation field to add to `type_id`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FieldConfig"
+              }
+            ]
+          }
+        },
+        "required": [
+          "typeId",
+          "typeLabel",
+          "presetId",
+          "presetLabel",
+          "field"
+        ]
+      },
+      "TypePresetCollision": {
+        "description": "A preset whose default id/path collided with an existing type and was suffixed.",
+        "type": "object",
+        "properties": {
+          "presetId": {
+            "type": "string"
+          },
+          "requestedId": {
+            "type": "string"
+          },
+          "assignedId": {
+            "type": "string"
+          },
+          "requestedPath": {
+            "type": "string"
+          },
+          "assignedPath": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "presetId",
+          "requestedId",
+          "assignedId",
+          "requestedPath",
+          "assignedPath"
         ]
       },
       "LanguagesResponse": {

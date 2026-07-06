@@ -29,14 +29,11 @@ use tokio::runtime::Runtime;
 
 uniffi::setup_scaffolding!();
 
-/// The default starter vault schema (the "Media Library" preset) serialized to
-/// the YAML written into `<vault>/KizunaShelf/config.yaml`. Defined once in the
-/// core (`kizunashelf::templates`) and shared with web onboarding and the desktop
-/// create-vault flow; iOS writes it directly through its `VaultFileSystem`.
-#[uniffi::export]
-pub fn starter_vault_config_yaml() -> String {
-    kizunashelf::templates::starter_vault_config_yaml()
-}
+// A brand-new vault is created config-less; its schema is written when the user
+// finishes the onboarding wizard (the type-preset picker, driven through the
+// `request` tunnel via `GET /api/type-presets` + `POST /api/type-presets/resolve`,
+// then saved with the settings endpoint). There is no longer a starter-schema FFI
+// export — see `kizunashelf::presets`.
 
 /// Options for an iOS engine backed by a Swift [`VaultFileSystem`]. The vault is
 /// addressed by a security-scoped bookmark Swift owns, so `vault_root_label` is

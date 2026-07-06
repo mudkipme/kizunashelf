@@ -6,43 +6,9 @@
  */
 import { z as zod } from 'zod';
 
-export const vaultTemplateConfigHomeOneSectionsItemLimitMin = 0;
-
-
-export const VaultTemplate = zod.object({
-  "id": zod.string(),
-  "label": zod.string(),
-  "config": zod.object({
-  "taxonomyRoot": zod.string(),
-  "assetRoot": zod.string().nullish(),
-  "home": zod.union([zod.object({
-  "title": zod.string().nullish(),
-  "sections": zod.array(zod.object({
-  "id": zod.string(),
-  "title": zod.string(),
-  "type": zod.string(),
-  "filters": zod.array(zod.object({
-  "field": zod.string(),
-  "values": zod.array(zod.string()).optional()
-})).optional(),
-  "limit": zod.number().min(vaultTemplateConfigHomeOneSectionsItemLimitMin).nullish(),
-  "sort": zod.string().nullish(),
-  "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
-})).optional()
-}),zod.null()]).optional(),
-  "dailyNotes": zod.union([zod.object({
-  "paths": zod.array(zod.string()).optional(),
-  "dateFormat": zod.string().nullish().describe('Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY\/MM\/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.'),
-  "template": zod.string().nullish().describe('Vault-relative path to a template used to seed a daily note that does not\nexist yet (date tokens substituted). Absent → a new note starts empty.'),
-  "log": zod.union([zod.object({
-  "section": zod.string().nullish().describe('Heading to write log lines under, as raw heading text (no `#`, default h2) —\nconsistent with `bodySections[].heading`.'),
-  "lineFormat": zod.string().nullish().describe('Line template. Tokens: `{title}` (the entity — \*\*always rendered as a\n`[[wikilink]]`\*\*, since that link is what ties the line back to the entity;\nwrite `{title}`, not `[[{title}]]`, though the latter isn\'t doubled),\n`{note}` (freeform), `{date}`. Empty tokens collapse with surrounding\nwhitespace. There is no episode token — logging is independent of the\nepisode list, so put an episode number in `{note}` if you want one.')
-}).describe('Global defaults for daily-note logging, under `dailyNotes.log`. Both fields are\noptional; a per-type [`TypeLogConfig`] overrides them, and the built-ins\n([`DEFAULT_LOG_SECTION`] \/ [`DEFAULT_LOG_LINE_FORMAT`]) fill any remaining gap.'),zod.null()]).optional().describe('Global defaults for daily-note logging — the heading written under and the\nline format. Per-type `log` blocks override these; see\n[`KizunaConfig::resolve_log_config`].')
-}),zod.null()]).optional(),
-  "tags": zod.union([zod.object({
-  "field": zod.string().nullish().describe('The frontmatter key holding the entity\'s tag list. Defaults to `tags`.')
-}).describe('Configuration for the built-in \*\*tags\*\* field — a universal, cross-type label\nlist. Tags are a vault-level \"well-known field\": the \*name\* is configured here\n(defaulting to `tags`), so the engine reads the field name from config rather\nthan hardcoding it. A schema field that happens to share this name is ignored\nin favor of the built-in. This is a deliberate, narrow extension of the\nschema-driven model — meaning still flows config → behavior, just at the vault\nscope rather than the per-type scope.'),zod.null()]).optional(),
-  "types": zod.array(zod.object({
+export const resolveTypePresetsRequestCurrentTypesDefault = [];
+export const ResolveTypePresetsRequest = zod.object({
+  "currentTypes": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),
   "icon": zod.string().nullish(),
@@ -91,9 +57,10 @@ export const VaultTemplate = zod.object({
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
 }))
-}))
-}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/KizunaShelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.')
-}).describe('A ready-made starter vault schema offered during onboarding \/ vault creation.\nThe single source of truth for every frontend (web onboarding, desktop &\niOS create-vault) — see [`crate::templates`].')
+})).default(resolveTypePresetsRequestCurrentTypesDefault).describe('The types already in the editor\/vault. Used to wire relations, detect\nid\/path collisions, and propose back-fills. Empty for a fresh vault.'),
+  "presetIds": zod.array(zod.string()).describe('Preset ids the user selected, in the order to add them.'),
+  "titleLanguage": zod.string().nullish().describe('ISO 639-1 title language to stamp onto title fields, filenames, and season\nlanguage. Absent → the preset\'s language-neutral default (English).')
+}).describe('Request to materialize one or more presets into concrete types, merged against\nthe schema the client currently holds (empty during onboarding). Stateless: the\nendpoint reads no vault, so onboarding and the settings editor call it the same\nway.')
 
-export type VaultTemplate = zod.input<typeof VaultTemplate>;
-export type VaultTemplateOutput = zod.output<typeof VaultTemplate>;
+export type ResolveTypePresetsRequest = zod.input<typeof ResolveTypePresetsRequest>;
+export type ResolveTypePresetsRequestOutput = zod.output<typeof ResolveTypePresetsRequest>;

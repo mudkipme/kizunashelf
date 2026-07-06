@@ -6,8 +6,9 @@ use crate::calendar::{
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
-    HomeSectionResponse, LanguagesResponse, RawConfigResponse, SaveRawConfigRequest,
-    SaveSettingsRequest, SettingsConfigResponse, VaultTemplatesResponse,
+    HomeSectionResponse, LanguagesResponse, RawConfigResponse, ResolveTypePresetsRequest,
+    ResolveTypePresetsResponse, SaveRawConfigRequest, SaveSettingsRequest, SettingsConfigResponse,
+    TypePresetsResponse,
 };
 use crate::dates::clamp_number;
 use crate::entities::sort_entities_for_entity_list;
@@ -18,12 +19,20 @@ use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-/// The built-in starter vault schemas offered during onboarding / vault
-/// creation. Static (no library access), so every frontend shares one source.
-pub(crate) async fn vault_templates() -> Json<VaultTemplatesResponse> {
-    Json(VaultTemplatesResponse {
-        templates: crate::templates::vault_templates(),
-    })
+/// The built-in **type presets** for the onboarding / settings type picker.
+/// Static (no library access) — metadata only; concrete configs come from
+/// [`resolve_type_presets`].
+pub(crate) async fn type_presets() -> Json<TypePresetsResponse> {
+    Json(crate::presets::type_presets_response())
+}
+
+/// Materialize the selected presets into concrete types, merged against the
+/// schema the caller currently holds. Pure and stateless (reads no vault), so
+/// onboarding and the settings editor call it identically.
+pub(crate) async fn resolve_type_presets(
+    Json(request): Json<ResolveTypePresetsRequest>,
+) -> Json<ResolveTypePresetsResponse> {
+    Json(crate::presets::resolve_presets(&request))
 }
 
 /// The title-language options for the schema editor (TheTVDB's supported set).

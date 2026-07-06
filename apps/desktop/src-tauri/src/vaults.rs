@@ -1,6 +1,4 @@
 use anyhow::{Context, Result};
-use kizunashelf::library::VAULT_CONFIG_RELATIVE_PATH;
-use kizunashelf::templates::{starter_vault_config, starter_vault_config_yaml};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -70,8 +68,13 @@ impl VaultStoreData {
     }
 }
 
-/// Creates a new vault folder at `parent/name`, seeds the starter schema, and
-/// returns its absolute path. Fails if the folder already exists.
+/// Creates an empty vault folder at `parent/name` and returns its absolute path.
+/// Fails if the folder already exists.
+///
+/// The vault starts **config-less**: the schema (`KizunaShelf/config.yaml`) and its
+/// taxonomy folders are written when the user finishes the onboarding wizard, which
+/// the app shows for any vault lacking a config and where they pick the vault's
+/// built-in types. Saving the schema there creates the config + taxonomy directories.
 pub fn create_vault(parent: &str, name: &str) -> Result<String> {
     let trimmed = name.trim();
     if trimmed.is_empty() {
@@ -84,22 +87,8 @@ pub fn create_vault(parent: &str, name: &str) -> Result<String> {
     if vault_path.exists() {
         anyhow::bail!("A folder named “{trimmed}” already exists here.");
     }
-    // The config lives at the core-defined vault-relative path (a visible folder
-    // so it syncs with the vault); create its parent before writing.
-    let config_path = vault_path.join(VAULT_CONFIG_RELATIVE_PATH);
-    if let Some(config_dir) = config_path.parent() {
-        fs::create_dir_all(config_dir)
-            .with_context(|| format!("failed to create {}", config_dir.display()))?;
-    }
-    // The starter schema is defined once in the core (`kizunashelf::templates`)
-    // and shared by web onboarding and the iOS create-vault flow.
-    fs::write(&config_path, starter_vault_config_yaml())
-        .context("failed to write starter schema")?;
-    // Pre-create the taxonomy root so the library loads cleanly and the vault has
-    // a visible structure before any entity is written.
-    let taxonomy_root = vault_path.join(starter_vault_config().taxonomy_root);
-    fs::create_dir_all(&taxonomy_root)
-        .with_context(|| format!("failed to create {}", taxonomy_root.display()))?;
+    fs::create_dir_all(&vault_path)
+        .with_context(|| format!("failed to create {}", vault_path.display()))?;
     Ok(vault_path.to_string_lossy().into_owned())
 }
 
