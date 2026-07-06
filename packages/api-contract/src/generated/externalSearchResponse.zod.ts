@@ -14,9 +14,11 @@ export const ExternalSearchResponse = zod.object({
   "label": zod.string(),
   "enabled": zod.boolean(),
   "searchSupported": zod.boolean().describe('Whether the provider supports free-text search (vs. URL\/ID resolution only).'),
-  "reason": zod.string().nullish()
+  "reason": zod.string().nullish().describe('Why the provider is disabled (no mapping, missing credentials, …). Absent\nwhen the provider is enabled.'),
+  "error": zod.string().nullish().describe('Set when this provider was queried but its request failed, so the UI can\nsurface \"search failed\" instead of silently implying zero results. One\nfailing provider never fails the whole search.')
 })),
   "items": zod.array(zod.object({
+  "entityType": zod.string().describe('The entity type this candidate was resolved against. Always set — with a\nconcrete `type` it echoes that type; in cross-type (`all`) search it is the\ntype whose schema produced these field\/body previews.'),
   "candidate": zod.object({
   "provider": zod.string(),
   "sourceId": zod.string(),
@@ -42,8 +44,12 @@ export const ExternalSearchResponse = zod.object({
   "externalField": zod.string(),
   "markdown": zod.string(),
   "hasValue": zod.boolean()
-}).describe('A body-section heading filled from a candidate\'s metadata, pre-rendered to\nMarkdown. Clients merge it into the entity body (replace\/append by heading).')).optional()
-}).describe('A search result: the raw candidate plus its schema-resolved field and body\npreviews for the searched entity type.'))
+}).describe('A body-section heading filled from a candidate\'s metadata, pre-rendered to\nMarkdown. Clients merge it into the entity body (replace\/append by heading).')).optional(),
+  "existing": zod.union([zod.object({
+  "id": zod.string(),
+  "title": zod.string()
+}).describe('A library entity a candidate already resolves to, via one of the entity\'s\n`externalRef` fields matching the candidate\'s provider + URL\/id. Lets the UI\nmark a result \"in library\" and link straight to it instead of re-adding.'),zod.null()]).optional().describe('The existing library entity this candidate already maps to, if any.')
+}).describe('A search result: the raw candidate plus its schema-resolved field and body\npreviews for a specific entity type.'))
 })
 
 export type ExternalSearchResponse = zod.input<typeof ExternalSearchResponse>;

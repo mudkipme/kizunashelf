@@ -7,6 +7,7 @@ import {
   getAssetJob,
   getCapabilities,
   listAssetJobs,
+  quickAddExternalEntity,
   searchExternalSources,
   updateEntity,
   uploadEntityAsset,
@@ -15,6 +16,7 @@ import {
   type AssetUploadRequest,
   type CreateEntityRequest,
   type DeleteEntityRequest,
+  type QuickAddRequest,
   type SearchExternalSourcesParams,
   type UpdateEntityRequest,
 } from "@kizunashelf/api-contract";
@@ -39,6 +41,10 @@ export function removeEntity(id: string, request: DeleteEntityRequest) {
 
 export function searchSources(params: SearchExternalSourcesParams, init?: RequestInit) {
   return searchExternalSources(params, init, apiFetch);
+}
+
+export function quickAddEntity(request: QuickAddRequest) {
+  return quickAddExternalEntity(request, undefined, apiFetch);
 }
 
 export function downloadAssets(id: string, request: AssetDownloadRequest) {

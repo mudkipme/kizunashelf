@@ -12,14 +12,14 @@ use super::external::{
 use super::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
-    EntityDetailResponse, EpisodeSource, EpisodeSyncResponse, FetchEpisodesRequest,
-    ImportEpisodesRequest, ToggleEpisodeRequest,
+    EntityDetailResponse, Episode, EpisodeGroup, EpisodeSource, EpisodeSyncResponse,
+    FetchEpisodesRequest, ImportEpisodesRequest, QuickAddEpisodeResult, ToggleEpisodeRequest,
 };
 use crate::episodes::{
     apply_episodes, episode_section, merge_episodes, parse_episodes, set_episode_watched,
 };
 use crate::library::{file_revision, serialize_markdown_document, split_markdown_document};
-use crate::types::{EntityTypeConfig, FieldType};
+use crate::types::{BodySection, EntityTypeConfig, FieldType, Library};
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
 use serde_json::{Map, Value};
@@ -187,6 +187,85 @@ pub(crate) async fn fetch_episodes(
         provider: chosen.provider.to_string(),
         groups: episodes.groups,
     }))
+}
+
+/// Fetches and imports episodes for a freshly-created entity from its
+/// highest-priority episode source, fail-safe: any provider or write error is
+/// captured into the returned result rather than propagated, so a flaky provider
+/// never undoes the entity creation. Returns `None` when the type has no episodes
+/// section or the entity has no episode-capable source. No revision guard (the
+/// entity was just created); the caller reloads afterward.
+pub(crate) async fn import_new_entity_episodes(
+    state: &AppState,
+    library: &Library,
+    entity_id: &str,
+) -> Option<QuickAddEpisodeResult> {
+    let record = library.record_by_id(entity_id)?;
+    let type_config = library.config.type_config(&record.summary.entity_type)?;
+    let section = episode_section(type_config)?.clone();
+    let sources = episode_sources(state, type_config, &record.frontmatter);
+    let chosen = sources.first()?;
+    let provider = chosen.provider.to_string();
+    match fetch_and_write_new_episodes(state, library, &record.summary.path, &section, chosen).await
+    {
+        Ok(imported) => Some(QuickAddEpisodeResult {
+            provider,
+            imported,
+            error: None,
+        }),
+        Err(error) => Some(QuickAddEpisodeResult {
+            provider,
+            imported: 0,
+            error: Some(error.message().to_string()),
+        }),
+    }
+}
+
+/// Fetches a source's episodes and merges them into the entity body (preserving
+/// any existing items; never overwriting), returning how many were imported.
+async fn fetch_and_write_new_episodes(
+    state: &AppState,
+    library: &Library,
+    source_rel: &str,
+    section: &BodySection,
+    chosen: &ResolvedSource,
+) -> Result<usize, ApiError> {
+    let episodes = provider_fetch_episodes(state, chosen.provider, &chosen.ref_value, None).await?;
+    let imported: usize = episodes.groups.iter().map(|group| group.items.len()).sum();
+
+    // A provider group carries no watched/completion state; a fresh entity starts
+    // every item unwatched (the same shape the client posts to `importEpisodes`).
+    let incoming: Vec<EpisodeGroup> = episodes
+        .groups
+        .iter()
+        .map(|group| EpisodeGroup {
+            label: group.label.clone(),
+            items: group
+                .items
+                .iter()
+                .map(|item| Episode {
+                    key: item.key.clone(),
+                    title: item.title.clone(),
+                    watched: false,
+                    date: item.date.clone(),
+                    done: None,
+                })
+                .collect(),
+        })
+        .collect();
+
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let raw = vfs
+        .read_to_string(source_rel)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
+    let mut document = split_markdown_document(&raw);
+    let existing = parse_episodes(&document.body, section);
+    let merged = merge_episodes(&existing, &incoming, false);
+    document.body = apply_episodes(&document.body, section, &merged);
+    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
+    write_entity_raw(vfs.as_ref(), source_rel, &new_raw).await?;
+    Ok(imported)
 }
 
 pub(crate) async fn import_episodes(

@@ -11,7 +11,8 @@ export const ExternalProviderSummary = zod.object({
   "label": zod.string(),
   "enabled": zod.boolean(),
   "searchSupported": zod.boolean().describe('Whether the provider supports free-text search (vs. URL\/ID resolution only).'),
-  "reason": zod.string().nullish()
+  "reason": zod.string().nullish().describe('Why the provider is disabled (no mapping, missing credentials, …). Absent\nwhen the provider is enabled.'),
+  "error": zod.string().nullish().describe('Set when this provider was queried but its request failed, so the UI can\nsurface \"search failed\" instead of silently implying zero results. One\nfailing provider never fails the whole search.')
 })
 
 export type ExternalProviderSummary = zod.input<typeof ExternalProviderSummary>;

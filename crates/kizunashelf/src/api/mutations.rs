@@ -6,6 +6,7 @@ use crate::contract::{
     CreateEntityRequest, DeleteEntityRequest, DeleteEntityResponse, EntityMutationResponse,
     RenameLinkUpdate, UpdateEntityRequest,
 };
+use crate::daily_notes::normalize_wikilink_target;
 use crate::library::{
     file_revision, find_target, load_entity, normalize_full_target,
     normalized_entity_basename_index, parse_daily_note_source_id, rewrite_backlink_wikilinks,
@@ -140,17 +141,15 @@ pub(crate) async fn create_entity(
     let basename = sanitize_basename(&request.basename)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let path = entity_create_path(&library.config.taxonomy_root, type_config, &basename);
-    if vfs
-        .exists(&path)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to check entity path: {error}"))?
-    {
-        return Err(ApiError::conflict("Entity file already exists"));
-    }
-    let raw =
-        serialize_markdown_document(&request.frontmatter, request.body.as_deref().unwrap_or(""));
-    write_entity_raw(vfs.as_ref(), &path, &raw).await?;
+    let path = write_new_entity_file(
+        vfs.as_ref(),
+        &library.config.taxonomy_root,
+        type_config,
+        &basename,
+        &request.frontmatter,
+        request.body.as_deref().unwrap_or(""),
+    )
+    .await?;
     state.invalidate_cache().await;
     let reloaded = get_library(&state).await?;
     let record = reloaded
@@ -363,6 +362,111 @@ pub(super) fn sanitize_basename(value: &str) -> Result<String> {
     Ok(basename.to_string())
 }
 
+/// Maximum byte length of a derived basename (before `.md`). Kept well under the
+/// common 255-*byte* filesystem limit so the `.md` suffix, a disambiguating
+/// ` (2023)`/` (2)` suffix, and multi-byte characters all still fit.
+const MAX_DERIVED_BASENAME_BYTES: usize = 200;
+
+/// The full-width stand-in for a character Obsidian/Windows forbids in a
+/// filename, or `None` when the character is allowed as-is. Used by
+/// [`derive_basename`] so a title keeps its shape (`Fate/stay` → `Fate／stay`,
+/// `Re:ZERO` → `Re：ZERO`) instead of being rejected outright.
+fn fullwidth_forbidden_char(character: char) -> Option<char> {
+    Some(match character {
+        '/' => '／',
+        '\\' => '＼',
+        ':' => '：',
+        '*' => '＊',
+        '?' => '？',
+        '"' => '＂',
+        '<' => '＜',
+        '>' => '＞',
+        '|' => '｜',
+        _ => return None,
+    })
+}
+
+/// Derive a valid entity basename from an arbitrary title (typically an external
+/// provider's title), *replacing* forbidden characters rather than rejecting the
+/// whole title as [`sanitize_basename`] does. It NFC-normalizes (provider titles
+/// can arrive decomposed), collapses whitespace, swaps each forbidden character
+/// for its full-width equivalent, drops control characters, strips trailing dots
+/// and spaces (which Windows disallows), sidesteps reserved device names, and
+/// caps the length on a character boundary. Returns `None` only when nothing
+/// usable remains (or the result still fails the strict validator), so the
+/// caller can fall back to another source such as the provider id.
+pub(super) fn derive_basename(title: &str) -> Option<String> {
+    use unicode_normalization::UnicodeNormalization;
+
+    // NFC + collapse whitespace to single spaces + drop control chars + swap
+    // forbidden chars for full-width equivalents, in one pass.
+    let mut normalized = String::new();
+    let mut pending_space = false;
+    for character in title.trim().nfc() {
+        if character.is_whitespace() {
+            pending_space = !normalized.is_empty();
+            continue;
+        }
+        if character.is_control() {
+            continue;
+        }
+        if pending_space {
+            normalized.push(' ');
+            pending_space = false;
+        }
+        normalized.push(fullwidth_forbidden_char(character).unwrap_or(character));
+    }
+
+    // Cap on a char boundary, then strip trailing dots/spaces (Windows forbids
+    // them, and the cut may have exposed one).
+    let mut basename = String::new();
+    for character in normalized.chars() {
+        if basename.len() + character.len_utf8() > MAX_DERIVED_BASENAME_BYTES {
+            break;
+        }
+        basename.push(character);
+    }
+    let mut basename = basename.trim_end_matches(['.', ' ']).to_string();
+    if basename.is_empty() {
+        return None;
+    }
+
+    // A reserved device name (CON, NUL, …) is refused by the OS regardless of
+    // extension; suffix it so the derived title stays recognizable and valid.
+    if is_reserved_windows_name(&basename) {
+        basename.push('-');
+    }
+
+    // Final assertion: the result must satisfy the strict validator. A title
+    // pathological enough to still fail (e.g. one that *is* `.md`) yields `None`
+    // so the caller falls back.
+    sanitize_basename(&basename).ok()
+}
+
+/// Basenames to try, in order, when placing a derived title that collides with a
+/// *different* existing work (the same work is caught earlier by the external-ref
+/// lookup): the bare title, then ` (year)`, then ` (provider)`, then numeric
+/// suffixes as a guaranteed-terminating fallback. Each is re-validated by the
+/// caller before use; the year/provider inputs are expected to be already clean
+/// (a date fragment, a provider id).
+pub(super) fn basename_disambiguation_candidates(
+    base: &str,
+    year: Option<&str>,
+    provider: Option<&str>,
+) -> Vec<String> {
+    let mut candidates = vec![base.to_string()];
+    if let Some(year) = year.map(str::trim).filter(|value| !value.is_empty()) {
+        candidates.push(format!("{base} ({year})"));
+    }
+    if let Some(provider) = provider.map(str::trim).filter(|value| !value.is_empty()) {
+        candidates.push(format!("{base} ({provider})"));
+    }
+    for suffix in 2..=20 {
+        candidates.push(format!("{base} ({suffix})"));
+    }
+    candidates
+}
+
 fn is_forbidden_obsidian_filename_char(character: char) -> bool {
     matches!(
         character,
@@ -393,6 +497,74 @@ fn entity_create_path(
         taxonomy_root.trim_end_matches('/'),
         type_config.path
     )
+}
+
+/// Writes a brand-new entity file at `{taxonomy_root}/{type.path}/{basename}.md`,
+/// returning its vault-relative path. Errors with 409 if the exact path already
+/// exists. Shared by the manual create handler and quick-add (which resolves a
+/// free basename first). Assumes `basename` is already validated.
+pub(super) async fn write_new_entity_file(
+    vfs: &dyn Vfs,
+    taxonomy_root: &str,
+    type_config: &EntityTypeConfig,
+    basename: &str,
+    frontmatter: &Map<String, Value>,
+    body: &str,
+) -> Result<String, ApiError> {
+    let path = entity_create_path(taxonomy_root, type_config, basename);
+    if vfs
+        .exists(&path)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to check entity path: {error}"))?
+    {
+        return Err(ApiError::conflict("Entity file already exists"));
+    }
+    let raw = serialize_markdown_document(frontmatter, body);
+    write_entity_raw(vfs, &path, &raw).await?;
+    Ok(path)
+}
+
+/// Picks a free basename for a new entity: the derived title if its path is free
+/// and not wikilink-ambiguous with an existing entity of the same type, else the
+/// disambiguation candidates (` (year)`, ` (provider)`, numeric) in order. The
+/// wikilink-normalized check mirrors the duplicate-filename cleanup queue so
+/// quick-add never mints a pair that would immediately land there. Returns the
+/// chosen basename and whether it was disambiguated (i.e. differs from `base`).
+pub(super) async fn resolve_free_basename(
+    vfs: &dyn Vfs,
+    taxonomy_root: &str,
+    type_config: &EntityTypeConfig,
+    library: &Library,
+    base: &str,
+    year: Option<&str>,
+    provider: Option<&str>,
+) -> Result<(String, bool), ApiError> {
+    let existing: HashSet<String> = library
+        .summaries()
+        .filter(|summary| summary.entity_type == type_config.id)
+        .map(|summary| normalize_wikilink_target(&summary.basename))
+        .collect();
+    for (index, candidate) in basename_disambiguation_candidates(base, year, provider)
+        .iter()
+        .enumerate()
+    {
+        if sanitize_basename(candidate).is_err()
+            || existing.contains(&normalize_wikilink_target(candidate))
+        {
+            continue;
+        }
+        let path = entity_create_path(taxonomy_root, type_config, candidate);
+        let taken = vfs
+            .exists(&path)
+            .await
+            .map_err(|error| anyhow::anyhow!("failed to check entity path: {error}"))?;
+        if !taken {
+            return Ok((candidate.clone(), index > 0));
+        }
+    }
+    Err(ApiError::conflict(
+        "Could not find a free filename for this entity",
+    ))
 }
 
 /// Writes an entity's raw Markdown to a vault-relative path, creating parent
@@ -634,6 +806,82 @@ mod tests {
         ] {
             assert!(sanitize_basename(ok).is_ok(), "{ok:?} should be allowed");
         }
+    }
+
+    #[test]
+    fn derive_basename_replaces_forbidden_chars_with_full_width() {
+        assert_eq!(
+            derive_basename("Fate/stay night").unwrap(),
+            "Fate／stay night"
+        );
+        assert_eq!(derive_basename("Re:ZERO").unwrap(), "Re：ZERO");
+        assert_eq!(
+            derive_basename("What? A \"Test\" <of> it|all\\here*").unwrap(),
+            "What？ A ＂Test＂ ＜of＞ it｜all＼here＊"
+        );
+    }
+
+    #[test]
+    fn derive_basename_normalizes_whitespace_and_control_chars() {
+        assert_eq!(
+            derive_basename("  Star   Voyager\t\u{0007}II \n").unwrap(),
+            "Star Voyager II"
+        );
+    }
+
+    #[test]
+    fn derive_basename_nfc_normalizes() {
+        // NFD "ず" (す + combining dakuten) composes to the single NFC codepoint.
+        let nfd = "田所あ\u{3059}\u{3099}さ";
+        let derived = derive_basename(nfd).unwrap();
+        assert_eq!(derived, "田所あずさ");
+        assert!(
+            !derived.contains('\u{3099}'),
+            "combining mark should be composed away"
+        );
+    }
+
+    #[test]
+    fn derive_basename_strips_trailing_dots_and_spaces() {
+        assert_eq!(derive_basename("Title...  ").unwrap(), "Title");
+        assert_eq!(derive_basename("Title. . .").unwrap(), "Title");
+    }
+
+    #[test]
+    fn derive_basename_suffixes_reserved_windows_names() {
+        assert_eq!(derive_basename("CON").unwrap(), "CON-");
+        assert_eq!(derive_basename("nul").unwrap(), "nul-");
+        // A colon that composes to a reserved stem is caught after replacement.
+        assert_eq!(derive_basename("Console").unwrap(), "Console");
+    }
+
+    #[test]
+    fn derive_basename_caps_length_on_char_boundary() {
+        let long = "あ".repeat(200); // 600 bytes
+        let derived = derive_basename(&long).unwrap();
+        assert!(derived.len() <= MAX_DERIVED_BASENAME_BYTES);
+        assert!(derived.chars().all(|character| character == 'あ'));
+    }
+
+    #[test]
+    fn derive_basename_returns_none_when_nothing_usable_remains() {
+        assert_eq!(derive_basename("   "), None);
+        assert_eq!(derive_basename("\u{0007}\u{0008}"), None);
+        // A title that reduces to the literal `.md` fails the strict validator.
+        assert_eq!(derive_basename(".md"), None);
+    }
+
+    #[test]
+    fn basename_disambiguation_candidates_orders_year_then_provider_then_numbers() {
+        let candidates = basename_disambiguation_candidates("Akira", Some("1988"), Some("tmdb"));
+        assert_eq!(candidates[0], "Akira");
+        assert_eq!(candidates[1], "Akira (1988)");
+        assert_eq!(candidates[2], "Akira (tmdb)");
+        assert_eq!(candidates[3], "Akira (2)");
+        // Blank year/provider are skipped.
+        let sparse = basename_disambiguation_candidates("Akira", None, Some("  "));
+        assert_eq!(sparse[0], "Akira");
+        assert_eq!(sparse[1], "Akira (2)");
     }
 
     #[test]

@@ -200,6 +200,14 @@ import type {
   PlanAssetDownloadsParams
 } from './planAssetDownloadsParams.zod';
 
+import type {
+  QuickAddRequest
+} from './quickAddRequest.zod';
+
+import {
+  QuickAddResponse
+} from './quickAddResponse.zod';
+
 import {
   RawConfigResponse
 } from './rawConfigResponse.zod';
@@ -872,6 +880,35 @@ export const searchExternalSources = async (params?: SearchExternalSourcesParams
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? ExternalSearchResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getQuickAddExternalEntityUrl = () => {
+
+
+
+
+  return `/api/external/quick-add`
+}
+
+export const quickAddExternalEntity = async (quickAddRequest: QuickAddRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<QuickAddResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getQuickAddExternalEntityUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(quickAddRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? QuickAddResponse.parse(parsedBody) : parsedBody
   return data
 }
 

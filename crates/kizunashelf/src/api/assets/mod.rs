@@ -19,12 +19,12 @@ use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
 use super::state::{get_library, require_content_writes, require_host_asset_ingest, AppState};
 use crate::contract::{
-    AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest, AssetDownloadResponse,
-    AssetDownloadStatus, AssetIngestRequest, AssetIngestResponse, AssetUploadRequest,
-    AssetUploadResponse,
+    AssetDownloadItemResult, AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest,
+    AssetDownloadResponse, AssetDownloadStatus, AssetIngestRequest, AssetIngestResponse,
+    AssetUploadRequest, AssetUploadResponse,
 };
 use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
-use crate::types::FieldType;
+use crate::types::{FieldType, Library};
 use crate::vfs::normalize_relative;
 use axum::body::Body;
 use axum::extract::{Path as AxumPath, Query, State};
@@ -87,6 +87,35 @@ pub(crate) async fn download_entity_assets(
         .ok_or_else(|| ApiError::not_found("Entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(AssetDownloadResponse { entity, results }))
+}
+
+/// Downloads every remote cover for a freshly-created entity, rewriting each into
+/// a local asset path in frontmatter. A failed download keeps its remote URL (a
+/// `Failed` result item) — fail-safe. Unlike [`download_entity_assets`] there is
+/// no revision guard (the entity was just created in the same request) and no
+/// cache invalidation — the quick-add caller reloads once after the whole
+/// pipeline. Returns an empty list if the entity vanished or has no cover fields.
+pub(crate) async fn download_new_entity_covers(
+    state: &AppState,
+    library: &Library,
+    entity_id: &str,
+) -> Result<Vec<AssetDownloadItemResult>, ApiError> {
+    let Some(entity) = library.record_by_id(entity_id) else {
+        return Ok(Vec::new());
+    };
+    let type_config = type_config_or_err(&library.config, &entity.summary.entity_type)?;
+    let all_local = all_local_asset_paths(library);
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    download_entity_core(
+        state.http_client(),
+        vfs.as_ref(),
+        library.config.resolved_asset_root(),
+        entity,
+        type_config,
+        &all_local,
+        None,
+    )
+    .await
 }
 
 // ----------------------------------------------------------------------------

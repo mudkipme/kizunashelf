@@ -23,9 +23,13 @@ pub(super) fn match_candidate(
     let fields = map_fields(&candidate, type_config);
     let body_sections = map_body_sections(&candidate, type_config);
     ExternalMatch {
+        entity_type: type_config.id.clone(),
         candidate,
         fields,
         body_sections,
+        // The caller resolves this against the whole library (a candidate for one
+        // type can already exist under another), so mapping stays library-free.
+        existing: None,
     }
 }
 

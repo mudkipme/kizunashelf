@@ -80,6 +80,7 @@ function match(
   bodySections: ExternalMatch["bodySections"] = [],
 ): ExternalMatch {
   return {
+    entityType: "anime",
     candidate: {
       provider: "bangumi",
       sourceId: "123",

@@ -786,6 +786,74 @@
         }
       }
     },
+    "/api/external/quick-add": {
+      "post": {
+        "operationId": "quickAddExternalEntity",
+        "requestBody": {
+          "description": "Quick-add: create a library entity directly from an external search candidate\nin one server-side step — schema-map its fields/body, derive a safe filename,\ndownload covers (fail-safe), and import episodes (fail-safe). The client echoes\nthe candidate it picked from search; the core re-runs the schema mapping itself\nand never trusts client-mapped values.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickAddRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickAddResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities": {
       "get": {
         "operationId": "getEntities",
@@ -5017,6 +5085,14 @@
             "type": "boolean"
           },
           "reason": {
+            "description": "Why the provider is disabled (no mapping, missing credentials, …). Absent\nwhen the provider is enabled.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error": {
+            "description": "Set when this provider was queried but its request failed, so the UI can\nsurface \"search failed\" instead of silently implying zero results. One\nfailing provider never fails the whole search.",
             "type": [
               "string",
               "null"
@@ -5031,9 +5107,13 @@
         ]
       },
       "ExternalMatch": {
-        "description": "A search result: the raw candidate plus its schema-resolved field and body\npreviews for the searched entity type.",
+        "description": "A search result: the raw candidate plus its schema-resolved field and body\npreviews for a specific entity type.",
         "type": "object",
         "properties": {
+          "entityType": {
+            "description": "The entity type this candidate was resolved against. Always set — with a\nconcrete `type` it echoes that type; in cross-type (`all`) search it is the\ntype whose schema produced these field/body previews.",
+            "type": "string"
+          },
           "candidate": {
             "$ref": "#/components/schemas/ExternalCandidate"
           },
@@ -5048,9 +5128,21 @@
             "items": {
               "$ref": "#/components/schemas/MappedBodySection"
             }
+          },
+          "existing": {
+            "description": "The existing library entity this candidate already maps to, if any.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExistingEntityRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
+          "entityType",
           "candidate"
         ]
       },
@@ -5171,6 +5263,273 @@
           "externalField",
           "markdown",
           "hasValue"
+        ]
+      },
+      "ExistingEntityRef": {
+        "description": "A library entity a candidate already resolves to, via one of the entity's\n`externalRef` fields matching the candidate's provider + URL/id. Lets the UI\nmark a result \"in library\" and link straight to it instead of re-adding.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
+      "QuickAddRequest": {
+        "description": "Quick-add: create a library entity directly from an external search candidate\nin one server-side step — schema-map its fields/body, derive a safe filename,\ndownload covers (fail-safe), and import episodes (fail-safe). The client echoes\nthe candidate it picked from search; the core re-runs the schema mapping itself\nand never trusts client-mapped values.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/ExternalCandidate"
+          },
+          "basename": {
+            "description": "Override the derived basename. When absent, the core derives it from the\ntype's filename title language (falling back to the candidate title).",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "candidate"
+        ]
+      },
+      "QuickAddResponse": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          },
+          "alreadyExisted": {
+            "description": "True when the candidate already resolved to a library entity (via an\nexternal ref) and nothing new was created — the returned entity is the\nexisting one, so the client just navigates to it.",
+            "type": "boolean"
+          },
+          "basenameAdjusted": {
+            "description": "True when a title collision forced a disambiguated basename (` (2023)`, …).",
+            "type": "boolean"
+          },
+          "cover": {
+            "description": "Per-cover download outcomes. A failed cover keeps its remote URL in\nfrontmatter (fail-safe) and never fails the request.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetDownloadItemResult"
+            }
+          },
+          "episodes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuickAddEpisodeResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "entity",
+          "alreadyExisted",
+          "basenameAdjusted"
+        ]
+      },
+      "Entity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "typeLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityDateValue"
+            }
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "basename": {
+            "type": "string"
+          },
+          "externalRefs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "tags": {
+            "description": "The entity's built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "episodeProgress": {
+            "description": "Watched/total for the type's episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list/grid views can show\nprogress without reading bodies. `None` for types without episodes.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeProgress"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "description": "The entity's resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed/filters/badges\nread it without re-deriving. `None` for types without a status field.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResolvedStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "relationCount": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "revision": {
+            "type": "string"
+          },
+          "frontmatter": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "body": {
+            "type": "string"
+          },
+          "raw": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "typeLabel",
+          "title",
+          "titles",
+          "dates",
+          "path",
+          "basename",
+          "externalRefs",
+          "relationCount",
+          "revision",
+          "frontmatter",
+          "body",
+          "raw"
+        ]
+      },
+      "AssetDownloadItemResult": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AssetDownloadStatus"
+          },
+          "sourceUrl": {
+            "description": "Source URL that was downloaded (or attempted).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "description": "Vault-relative local path written on success.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "description": "Why the item was skipped or failed.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conflictResolved": {
+            "description": "True when an existing file referenced by another entity forced a\ndisambiguated filename.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "status"
+        ]
+      },
+      "AssetDownloadStatus": {
+        "type": "string",
+        "enum": [
+          "downloaded",
+          "skipped",
+          "failed"
+        ]
+      },
+      "QuickAddEpisodeResult": {
+        "description": "The episode-import outcome of a quick-add. Present only when the type declares\nan episodes section and the candidate's provider supports episodes.",
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "imported": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "error": {
+            "description": "A fetch/import failure. The entity is still created; the client can retry\nfrom the detail page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "imported"
         ]
       },
       "EntitiesQuery": {
@@ -5315,123 +5674,6 @@
         },
         "required": [
           "entity"
-        ]
-      },
-      "Entity": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "typeLabel": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "titles": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "dates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityDateValue"
-            }
-          },
-          "image": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "summary": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "path": {
-            "type": "string"
-          },
-          "basename": {
-            "type": "string"
-          },
-          "externalRefs": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "tags": {
-            "description": "The entity's built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": []
-          },
-          "episodeProgress": {
-            "description": "Watched/total for the type's episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list/grid views can show\nprogress without reading bodies. `None` for types without episodes.",
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/EpisodeProgress"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "status": {
-            "description": "The entity's resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed/filters/badges\nread it without re-deriving. `None` for types without a status field.",
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ResolvedStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "relationCount": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
-          },
-          "revision": {
-            "type": "string"
-          },
-          "frontmatter": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "body": {
-            "type": "string"
-          },
-          "raw": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "typeLabel",
-          "title",
-          "titles",
-          "dates",
-          "path",
-          "basename",
-          "externalRefs",
-          "relationCount",
-          "revision",
-          "frontmatter",
-          "body",
-          "raw"
         ]
       },
       "RenameLinkUpdate": {
@@ -6186,54 +6428,6 @@
         "required": [
           "entity",
           "results"
-        ]
-      },
-      "AssetDownloadItemResult": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/AssetDownloadStatus"
-          },
-          "sourceUrl": {
-            "description": "Source URL that was downloaded (or attempted).",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "path": {
-            "description": "Vault-relative local path written on success.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "message": {
-            "description": "Why the item was skipped or failed.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "conflictResolved": {
-            "description": "True when an existing file referenced by another entity forced a\ndisambiguated filename.",
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "field",
-          "status"
-        ]
-      },
-      "AssetDownloadStatus": {
-        "type": "string",
-        "enum": [
-          "downloaded",
-          "skipped",
-          "failed"
         ]
       },
       "AssetDownloadJobListResponse": {

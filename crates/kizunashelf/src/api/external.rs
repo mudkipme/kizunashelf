@@ -18,25 +18,33 @@ mod thetvdb;
 mod tmdb;
 
 use crate::contract::{
-    ExternalCandidate, ExternalProviderCatalogItem, ExternalProviderCatalogResponse,
-    ExternalProviderCredentialField, ExternalProviderFieldOption, ExternalProviderSummary,
-    ExternalProviderTypeOption, ExternalSearchResponse, ProviderEpisodes,
+    ExistingEntityRef, ExternalCandidate, ExternalProviderCatalogItem,
+    ExternalProviderCatalogResponse, ExternalProviderCredentialField, ExternalProviderFieldOption,
+    ExternalProviderSummary, ExternalProviderTypeOption, ExternalSearchResponse, MappedFieldValue,
+    ProviderEpisodes, QuickAddRequest, QuickAddResponse,
 };
 use crate::dates::clamp_number;
-use crate::types::{BodySectionKind, FieldType, KizunaConfig};
+use crate::library::load_entity;
+use crate::types::{BodySectionKind, EntityTypeConfig, FieldType, KizunaConfig, Library};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use super::state::{get_library, AppState, CachedAccessToken};
+use super::assets::download_new_entity_covers;
+use super::episodes::import_new_entity_episodes;
+use super::mutations::{
+    derive_basename, resolve_free_basename, sanitize_basename, type_config_or_err,
+    write_new_entity_file,
+};
+use super::state::{get_library, require_content_writes, AppState, CachedAccessToken};
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
 const EXTERNAL_CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
@@ -317,21 +325,44 @@ pub(crate) async fn external_search(
     }
 
     let library = get_library(&state).await?;
-    let Some(entity_type) = query
+
+    // A concrete `type` searches just that type; omitted or `all` searches every
+    // type that has any external source configured (cross-type "search anything").
+    let requested_type = query
         .entity_type
         .as_deref()
         .map(str::trim)
-        .filter(|value| !value.is_empty() && *value != "all")
-    else {
-        return Err(ApiError::bad_request(
-            "External search requires a concrete entity type",
-        ));
+        .filter(|value| !value.is_empty() && *value != "all");
+    let searched_types: Vec<&EntityTypeConfig> = match requested_type {
+        Some(entity_type) => {
+            let type_config = library
+                .config
+                .type_config(entity_type)
+                .ok_or_else(|| ApiError::bad_request("Unknown entity type"))?;
+            vec![type_config]
+        }
+        None => library
+            .config
+            .types
+            .iter()
+            .filter(|type_config| {
+                !configured_external_providers(&library.config, &type_config.id).is_empty()
+            })
+            .collect(),
     };
-    let Some(type_config) = library.config.type_config(entity_type) else {
-        return Err(ApiError::bad_request("Unknown entity type"));
-    };
-    let configured_providers = configured_external_providers(&library.config, entity_type);
-    let providers = provider_summaries(&state, &configured_providers);
+
+    // The provider summary spans every searched type: a provider is enabled if any
+    // searched type maps it. Per-type configs (not this merge) drive the actual
+    // searches, so unioning the filters here only affects what the UI lists.
+    let mut merged_providers: BTreeMap<&'static str, ProviderSearchConfig> = BTreeMap::new();
+    for type_config in &searched_types {
+        for (provider, config) in configured_external_providers(&library.config, &type_config.id) {
+            let entry = merged_providers.entry(provider).or_default();
+            entry.unconstrained |= config.unconstrained;
+            entry.external_types.extend(config.external_types);
+        }
+    }
+    let mut providers = provider_summaries(&state, &merged_providers);
 
     let q = query.q.as_deref().unwrap_or_default().trim();
     if q.is_empty() {
@@ -343,49 +374,330 @@ pub(crate) async fn external_search(
     let page_size = clamp_number(query.page_size.unwrap_or(10.0), 1, 25) as usize;
     let page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX) as usize;
 
-    let order = provider_order(&library.config, entity_type);
-
-    // Run every selected provider concurrently rather than summing their
-    // latencies sequentially. `join_all` polls them all on this task, so no
-    // spawning or 'static bound is needed; a provider not in `order`/disabled is
-    // simply not given a future.
+    // Gather the per-type provider order/config, and the deduplicated set of
+    // searches to run: a provider queried under identical `externalTypes` for two
+    // types hits its API once and both types reuse the result.
     let entries = registry();
+    let mut per_type: Vec<(
+        &EntityTypeConfig,
+        BTreeMap<&'static str, ProviderSearchConfig>,
+        Vec<&'static str>,
+    )> = Vec::new();
+    let mut specs: BTreeMap<SearchKey, (&ProviderEntry, ProviderSearchConfig)> = BTreeMap::new();
+    for type_config in &searched_types {
+        let configured = configured_external_providers(&library.config, &type_config.id);
+        let order = provider_order(&library.config, &type_config.id);
+        for (provider, config) in &configured {
+            if !should_search_provider(requested_provider, &providers, provider) {
+                continue;
+            }
+            if let Some(entry) = entries.iter().find(|entry| entry.id == *provider) {
+                specs
+                    .entry(search_key(provider, config))
+                    .or_insert_with(|| (entry, config.clone()));
+            }
+        }
+        per_type.push((type_config, configured, order));
+    }
+
+    // Run every unique search concurrently rather than summing their latencies.
     let state_ref = &state;
-    let searches = entries
-        .iter()
-        .filter(|provider_entry| order.contains(&provider_entry.id))
-        .filter(|provider_entry| {
-            should_search_provider(requested_provider, &providers, provider_entry.id)
-        })
-        .filter_map(|provider_entry| {
-            let provider_config = configured_providers.get(provider_entry.id)?;
-            Some(async move {
-                let result =
-                    (provider_entry.search)(state_ref, q, page, page_size, provider_config).await;
-                (provider_entry.id, result)
-            })
-        });
+    let searches = specs.iter().map(|(key, (entry, config))| {
+        let key = key.clone();
+        async move {
+            let result = (entry.search)(state_ref, q, page, page_size, config).await;
+            (key, result)
+        }
+    });
     let results = futures_util::future::join_all(searches).await;
 
-    let mut by_provider: BTreeMap<&'static str, Vec<ExternalCandidate>> = BTreeMap::new();
-    for (provider, result) in results {
-        by_provider.insert(provider, result?);
-    }
-
-    // Reassemble in priority order so concurrency does not change result order.
-    let mut raw_items = Vec::new();
-    for provider in &order {
-        if let Some(found) = by_provider.remove(provider) {
-            raw_items.extend(found);
+    // A single provider failing must not blank the whole search: capture its error
+    // onto the summary and keep every other provider's results.
+    let mut by_key: BTreeMap<SearchKey, Vec<ExternalCandidate>> = BTreeMap::new();
+    let mut errors: BTreeMap<&'static str, String> = BTreeMap::new();
+    for (key, result) in results {
+        match result {
+            Ok(found) => {
+                by_key.insert(key, found);
+            }
+            Err(error) => {
+                errors
+                    .entry(key.0)
+                    .or_insert_with(|| error.message().to_string());
+            }
         }
     }
-    // Resolve each candidate against the schema once, server-side, so every
-    // runtime applies identical field/body values (the core's `mapping`).
-    let items = raw_items
-        .into_iter()
-        .map(|candidate| mapping::match_candidate(candidate, type_config))
-        .collect();
+    for (provider, message) in errors {
+        if let Some(summary) = providers.iter_mut().find(|summary| summary.id == provider) {
+            summary.error = Some(message);
+        }
+    }
+
+    // Resolve each candidate against every type it was searched for (once,
+    // server-side, so every runtime applies identical values), tag any that
+    // already exist in the library, and keep priority order within each type.
+    let existing_index = build_existing_ref_index(&library);
+    let mut items = Vec::new();
+    for (type_config, configured, order) in &per_type {
+        let mut seen: HashSet<(&str, &str)> = HashSet::new();
+        for provider in order {
+            let Some(config) = configured.get(provider) else {
+                continue;
+            };
+            let Some(candidates) = by_key.get(&search_key(provider, config)) else {
+                continue;
+            };
+            for candidate in candidates {
+                if !seen.insert((candidate.provider.as_str(), candidate.source_id.as_str())) {
+                    continue;
+                }
+                let mut item = mapping::match_candidate(candidate.clone(), type_config);
+                item.existing = lookup_existing(&existing_index, candidate);
+                items.push(item);
+            }
+        }
+    }
     Ok(Json(ExternalSearchResponse { providers, items }))
+}
+
+/// A deduplication key for an outbound provider search: the provider plus the
+/// exact `externalTypes` constraint it will be queried under. Two types that map
+/// the same provider identically share one API call.
+type SearchKey = (&'static str, bool, Vec<String>);
+
+fn search_key(provider: &'static str, config: &ProviderSearchConfig) -> SearchKey {
+    (
+        provider,
+        config.unconstrained,
+        config.external_types.iter().cloned().collect(),
+    )
+}
+
+/// Normalizes an external-ref value (a stored URL/id, or a candidate's URL/id)
+/// into a comparison key: scheme- and case-insensitive, no trailing slash, NFC.
+/// Lets a candidate match a hand-edited ref regardless of `http`/`https` or a
+/// bare-id vs full-URL storage style.
+fn normalize_external_ref(value: &str) -> String {
+    use unicode_normalization::UnicodeNormalization;
+    let lowered = value.trim().to_lowercase();
+    let without_scheme = lowered
+        .strip_prefix("https://")
+        .or_else(|| lowered.strip_prefix("http://"))
+        .unwrap_or(&lowered);
+    without_scheme.trim_end_matches('/').nfc().collect()
+}
+
+/// Builds the reverse index `(provider, normalized-ref) → existing entity` from
+/// the resident library, so a search result can be flagged as already-in-library
+/// and a quick-add can short-circuit to it. Spans every type: a candidate for one
+/// type may already exist under another. Pure and library-only (no network), so
+/// it is cheap to rebuild per request.
+fn build_existing_ref_index(
+    library: &Library,
+) -> HashMap<(&'static str, String), ExistingEntityRef> {
+    let mut index = HashMap::new();
+    for summary in library.summaries() {
+        let Some(type_config) = library.config.type_config(&summary.entity_type) else {
+            continue;
+        };
+        for (field_name, stored_value) in &summary.external_refs {
+            let provider = type_config
+                .fields
+                .iter()
+                .find(|field| field.field == *field_name)
+                .and_then(|field| field.external_ref.as_deref())
+                .and_then(provider_for_external_ref);
+            if let Some(provider) = provider {
+                index.insert(
+                    (provider, normalize_external_ref(stored_value)),
+                    ExistingEntityRef {
+                        id: summary.id.clone(),
+                        title: summary.title.clone(),
+                    },
+                );
+            }
+        }
+    }
+    index
+}
+
+/// The existing library entity a candidate already maps to, if any — matched on
+/// the candidate's provider and either its URL or its source id.
+fn lookup_existing(
+    index: &HashMap<(&'static str, String), ExistingEntityRef>,
+    candidate: &ExternalCandidate,
+) -> Option<ExistingEntityRef> {
+    let provider = provider_for_external_ref(&candidate.provider)?;
+    for raw in [candidate.url.as_str(), candidate.source_id.as_str()] {
+        if let Some(existing) = index.get(&(provider, normalize_external_ref(raw))) {
+            return Some(existing.clone());
+        }
+    }
+    None
+}
+
+/// Quick-add: create a library entity straight from an external search candidate.
+/// Re-runs the schema mapping server-side, derives a safe filename (full-width
+/// forbidden chars, collision-disambiguated), writes the entity, then downloads
+/// covers and imports episodes — both fail-safe, so a flaky provider never undoes
+/// the creation. If the candidate already resolves to a library entity, returns
+/// that one untouched (`alreadyExisted`) so a raced double-click just navigates.
+pub(crate) async fn quick_add_entity(
+    State(state): State<AppState>,
+    Json(request): Json<QuickAddRequest>,
+) -> ApiResult<QuickAddResponse> {
+    let library = require_content_writes(&state).await?;
+    let type_config = type_config_or_err(&library.config, &request.entity_type)?;
+    let candidate = &request.candidate;
+    let vfs = state.vault_vfs(&library.config.vault_root);
+
+    // Already in the library (via an external ref)? Return it, create nothing.
+    let existing_index = build_existing_ref_index(&library);
+    if let Some(existing) = lookup_existing(&existing_index, candidate) {
+        if let Some(record) = library.record_by_id(&existing.id) {
+            let entity = load_entity(&library.config, vfs.as_ref(), &record.summary).await?;
+            return Ok(Json(QuickAddResponse {
+                entity,
+                already_existed: true,
+                basename_adjusted: false,
+                cover: Vec::new(),
+                episodes: None,
+            }));
+        }
+    }
+
+    // Re-map the candidate against the schema ourselves — never trust client values.
+    let mapped = mapping::match_candidate(candidate.clone(), type_config);
+    let mut frontmatter = Map::new();
+    for field in &mapped.fields {
+        if field.has_value {
+            frontmatter.insert(field.field.clone(), field.value.clone());
+        }
+    }
+    let mut sections = Vec::new();
+    for section in &mapped.body_sections {
+        if section.has_value {
+            sections.push(format!(
+                "## {}\n\n{}",
+                section.heading.trim(),
+                section.markdown.trim()
+            ));
+        }
+    }
+    let body = if sections.is_empty() {
+        String::new()
+    } else {
+        format!("{}\n", sections.join("\n\n"))
+    };
+
+    // Filename: the type's filename title language, falling back to the candidate
+    // title, then the provider id. Collisions with a *different* work of the same
+    // type are auto-disambiguated (` (year)`, then provider, then numeric).
+    let (basename, basename_adjusted) = match request
+        .basename
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        Some(explicit) => (
+            sanitize_basename(explicit)
+                .map_err(|error| ApiError::bad_request(&error.to_string()))?,
+            false,
+        ),
+        None => {
+            let base = candidate_basename_base(candidate, type_config)?;
+            let year = candidate_year(type_config, &mapped.fields);
+            resolve_free_basename(
+                vfs.as_ref(),
+                &library.config.taxonomy_root,
+                type_config,
+                &library,
+                &base,
+                year.as_deref(),
+                Some(&candidate.provider),
+            )
+            .await?
+        }
+    };
+
+    let path = write_new_entity_file(
+        vfs.as_ref(),
+        &library.config.taxonomy_root,
+        type_config,
+        &basename,
+        &frontmatter,
+        &body,
+    )
+    .await?;
+    state.invalidate_cache().await;
+
+    let reloaded = get_library(&state).await?;
+    let entity_id = reloaded
+        .record_by_path(&path)
+        .ok_or_else(|| ApiError::not_found("Created entity was not indexed"))?
+        .summary
+        .id
+        .clone();
+
+    // Fail-safe enrichment: a cover or episode failure leaves the entity intact
+    // (the remote URL stays in frontmatter, episode errors are reported).
+    let cover = download_new_entity_covers(&state, &reloaded, &entity_id)
+        .await
+        .unwrap_or_default();
+    let episodes = import_new_entity_episodes(&state, &reloaded, &entity_id).await;
+
+    state.invalidate_cache().await;
+    let final_library = get_library(&state).await?;
+    let record = final_library
+        .record_by_id(&entity_id)
+        .ok_or_else(|| ApiError::not_found("Created entity was not indexed"))?;
+    let entity = load_entity(&final_library.config, vfs.as_ref(), &record.summary).await?;
+    Ok(Json(QuickAddResponse {
+        entity,
+        already_existed: false,
+        basename_adjusted,
+        cover,
+        episodes,
+    }))
+}
+
+/// The title a new entity's filename is derived from: the type's filename title
+/// language, else the candidate title, else the provider id. Returns a validated
+/// basename or 400 if nothing usable remains.
+fn candidate_basename_base(
+    candidate: &ExternalCandidate,
+    type_config: &EntityTypeConfig,
+) -> Result<String, ApiError> {
+    let title = type_config
+        .filename
+        .as_ref()
+        .and_then(|filename| filename.title_language.as_deref())
+        .and_then(|language| candidate.titles.get(language))
+        .map(String::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or(candidate.title.as_str());
+    derive_basename(title)
+        .or_else(|| derive_basename(&candidate.source_id))
+        .ok_or_else(|| ApiError::bad_request("Could not derive a filename from the candidate"))
+}
+
+/// The four-digit year from the type's date-role field value, for filename
+/// disambiguation. Best-effort: the first run of four ASCII digits.
+fn candidate_year(type_config: &EntityTypeConfig, fields: &[MappedFieldValue]) -> Option<String> {
+    let date_field = type_config
+        .fields
+        .iter()
+        .find(|field| field.date_role.is_some())?;
+    let value = fields
+        .iter()
+        .find(|mapped| mapped.field == date_field.field)?
+        .value
+        .as_str()?;
+    let digits: Vec<char> = value.chars().collect();
+    digits
+        .windows(4)
+        .find(|window| window.iter().all(char::is_ascii_digit))
+        .map(|window| window.iter().collect())
 }
 
 pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogResponse> {
@@ -449,6 +761,8 @@ fn provider_summary(
         enabled: configured && (provider_entry.available)(state),
         search_supported: provider_entry.searchable,
         reason: provider_reason(provider_entry, state, configured_providers),
+        // Populated per search by the handler when a provider's request fails.
+        error: None,
     }
 }
 
@@ -1016,5 +1330,79 @@ mod tests {
                 relation_type: None,
             }],
         }
+    }
+
+    fn candidate(provider: &str, source_id: &str, url: &str) -> ExternalCandidate {
+        ExternalCandidate {
+            provider: provider.to_string(),
+            source_id: source_id.to_string(),
+            url: url.to_string(),
+            title: "Some Title".to_string(),
+            original_title: None,
+            brief: None,
+            cover_url: None,
+            titles: BTreeMap::new(),
+            metadata: Map::new(),
+        }
+    }
+
+    #[test]
+    fn normalize_external_ref_is_scheme_slash_and_case_insensitive() {
+        assert_eq!(
+            normalize_external_ref("HTTPS://Bgm.tv/subject/123/"),
+            normalize_external_ref("http://bgm.tv/subject/123")
+        );
+        assert_eq!(normalize_external_ref("  12345 "), "12345");
+    }
+
+    #[test]
+    fn lookup_existing_matches_on_url_or_source_id_and_provider() {
+        let mut index = HashMap::new();
+        index.insert(
+            (
+                "bangumi",
+                normalize_external_ref("https://bgm.tv/subject/123"),
+            ),
+            ExistingEntityRef {
+                id: "anime:Foo".to_string(),
+                title: "Foo".to_string(),
+            },
+        );
+        // A hand-edited bare id stored for another entity.
+        index.insert(
+            ("igdb", normalize_external_ref("456")),
+            ExistingEntityRef {
+                id: "game:Bar".to_string(),
+                title: "Bar".to_string(),
+            },
+        );
+
+        // URL match (scheme-insensitive), correct provider.
+        let hit = lookup_existing(
+            &index,
+            &candidate("bangumi", "123", "http://bgm.tv/subject/123"),
+        );
+        assert_eq!(hit.unwrap().id, "anime:Foo");
+
+        // source-id match against a bare-id ref.
+        let hit = lookup_existing(
+            &index,
+            &candidate("igdb", "456", "https://igdb.com/games/bar"),
+        );
+        assert_eq!(hit.unwrap().id, "game:Bar");
+
+        // Right value, wrong provider → no match (cross-provider false positives).
+        assert!(lookup_existing(
+            &index,
+            &candidate("mal", "123", "http://bgm.tv/subject/123")
+        )
+        .is_none());
+
+        // Unknown candidate.
+        assert!(lookup_existing(
+            &index,
+            &candidate("bangumi", "999", "http://bgm.tv/subject/999")
+        )
+        .is_none());
     }
 }

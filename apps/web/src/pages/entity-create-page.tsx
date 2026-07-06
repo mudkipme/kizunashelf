@@ -29,13 +29,14 @@ export function EntityCreatePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedType = searchParams.get("type");
+  const requestedTitle = searchParams.get("title");
   const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const { saving: creating, run } = useEntityMutation();
   const [typeId, setTypeId] = useState("");
-  const [basename, setBasename] = useState("");
+  const [basename, setBasename] = useState(requestedTitle ?? "");
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   const [message, setMessage] = useState<string>();

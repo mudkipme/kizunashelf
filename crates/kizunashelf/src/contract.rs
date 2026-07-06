@@ -462,6 +462,54 @@ pub struct CreateEntityRequest {
     pub body: Option<String>,
 }
 
+/// Quick-add: create a library entity directly from an external search candidate
+/// in one server-side step — schema-map its fields/body, derive a safe filename,
+/// download covers (fail-safe), and import episodes (fail-safe). The client echoes
+/// the candidate it picked from search; the core re-runs the schema mapping itself
+/// and never trusts client-mapped values.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct QuickAddRequest {
+    #[serde(rename = "type")]
+    pub entity_type: String,
+    pub candidate: ExternalCandidate,
+    /// Override the derived basename. When absent, the core derives it from the
+    /// type's filename title language (falling back to the candidate title).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basename: Option<String>,
+}
+
+/// The episode-import outcome of a quick-add. Present only when the type declares
+/// an episodes section and the candidate's provider supports episodes.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct QuickAddEpisodeResult {
+    pub provider: String,
+    pub imported: usize,
+    /// A fetch/import failure. The entity is still created; the client can retry
+    /// from the detail page.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct QuickAddResponse {
+    pub entity: Entity,
+    /// True when the candidate already resolved to a library entity (via an
+    /// external ref) and nothing new was created — the returned entity is the
+    /// existing one, so the client just navigates to it.
+    pub already_existed: bool,
+    /// True when a title collision forced a disambiguated basename (` (2023)`, …).
+    pub basename_adjusted: bool,
+    /// Per-cover download outcomes. A failed cover keeps its remote URL in
+    /// frontmatter (fail-safe) and never fails the request.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cover: Vec<AssetDownloadItemResult>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episodes: Option<QuickAddEpisodeResult>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DeleteEntityRequest {
@@ -829,8 +877,15 @@ pub struct ExternalProviderSummary {
     pub enabled: bool,
     /// Whether the provider supports free-text search (vs. URL/ID resolution only).
     pub search_supported: bool,
+    /// Why the provider is disabled (no mapping, missing credentials, …). Absent
+    /// when the provider is enabled.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
+    /// Set when this provider was queried but its request failed, so the UI can
+    /// surface "search failed" instead of silently implying zero results. One
+    /// failing provider never fails the whole search.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -886,16 +941,33 @@ pub struct MappedBodySection {
     pub has_value: bool,
 }
 
+/// A library entity a candidate already resolves to, via one of the entity's
+/// `externalRef` fields matching the candidate's provider + URL/id. Lets the UI
+/// mark a result "in library" and link straight to it instead of re-adding.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExistingEntityRef {
+    pub id: String,
+    pub title: String,
+}
+
 /// A search result: the raw candidate plus its schema-resolved field and body
-/// previews for the searched entity type.
+/// previews for a specific entity type.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalMatch {
+    /// The entity type this candidate was resolved against. Always set — with a
+    /// concrete `type` it echoes that type; in cross-type (`all`) search it is the
+    /// type whose schema produced these field/body previews.
+    pub entity_type: String,
     pub candidate: ExternalCandidate,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub fields: Vec<MappedFieldValue>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub body_sections: Vec<MappedBodySection>,
+    /// The existing library entity this candidate already maps to, if any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub existing: Option<ExistingEntityRef>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

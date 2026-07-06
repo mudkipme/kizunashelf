@@ -5,7 +5,7 @@ use super::assets::{
 };
 use super::entities::{entities, entity_dates, entity_detail};
 use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
-use super::external::{external_provider_catalog, external_search};
+use super::external::{external_provider_catalog, external_search, quick_add_entity};
 use super::handlers::{
     activity, calendar, capabilities, config, health, home, languages, raw_settings_config,
     refresh, save_raw_settings_config, save_settings_config, settings_config, upcoming,
@@ -27,8 +27,8 @@ use crate::contract::{
     DeleteListResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
     EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse,
     HealthResponse, HomeResponse, LanguagesResponse, ListDetail, ListsResponse,
-    LogActivityResponse, PathSuggestionsResponse, RawConfigResponse, SettingsConfigResponse,
-    StatsResponse, TagsResponse, VaultTemplatesResponse,
+    LogActivityResponse, PathSuggestionsResponse, QuickAddResponse, RawConfigResponse,
+    SettingsConfigResponse, StatsResponse, TagsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -273,6 +273,17 @@ fn api_router() -> ApiRouter<AppState> {
                 op.id("searchExternalSources")
                     .response::<200, Json<ExternalSearchResponse>>()
                     .response::<400, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/external/quick-add",
+            post_with(quick_add_entity, |op| {
+                op.id("quickAddExternalEntity")
+                    .response::<200, Json<QuickAddResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )

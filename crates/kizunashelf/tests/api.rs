@@ -609,25 +609,109 @@ async fn external_search_lists_providers_without_querying_network_for_empty_sear
     assert_eq!(unknown.0, StatusCode::BAD_REQUEST);
     assert_eq!(unknown.1["error"], "Unknown external provider");
 
-    let all_type = server.json("/api/external/search?type=all&q=Star").await;
-    assert_eq!(all_type.0, StatusCode::BAD_REQUEST);
-    assert_eq!(
-        all_type.1["error"],
-        "External search requires a concrete entity type"
-    );
+    // Cross-type search: `type=all` (and an omitted type) is now valid and lists
+    // providers merged across every configured type. Probed with an empty query so
+    // it stays offline.
+    let all_type = server.ok_json("/api/external/search?type=all&q=").await;
+    assert_eq!(all_type["items"].as_array().unwrap().len(), 0);
+    assert!(all_type["providers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|provider| provider["id"] == "bangumi" && provider["enabled"] == true));
 
-    let missing_type = server.json("/api/external/search?q=Star").await;
-    assert_eq!(missing_type.0, StatusCode::BAD_REQUEST);
-    assert_eq!(
-        missing_type.1["error"],
-        "External search requires a concrete entity type"
-    );
+    let missing_type = server.ok_json("/api/external/search?q=").await;
+    assert!(missing_type["providers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|provider| provider["id"] == "bangumi"));
 
     let unknown_type = server
         .json("/api/external/search?type=animation&q=Star")
         .await;
     assert_eq!(unknown_type.0, StatusCode::BAD_REQUEST);
     assert_eq!(unknown_type.1["error"], "Unknown entity type");
+}
+
+#[tokio::test]
+async fn quick_add_creates_entity_from_candidate_and_dedupes_on_second_add() {
+    let server = TestServer::new();
+
+    // A Bangumi candidate for the anime type. No `coverUrl` and the anime type has
+    // no episodes section, so the whole flow stays offline. The zh title carries a
+    // forbidden `/` to exercise full-width filename derivation.
+    let candidate = json!({
+        "provider": "bangumi",
+        "sourceId": "998877",
+        "url": "https://bgm.tv/subject/998877",
+        "title": "Fate/stay night",
+        "titles": { "zh": "命运之夜/UBW", "en": "Fate stay night" },
+        "metadata": {}
+    });
+
+    let (status, created) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/external/quick-add",
+        Some(json!({ "type": "anime", "candidate": candidate.clone() })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{created}");
+    assert_eq!(created["alreadyExisted"], false);
+    assert!(
+        created["episodes"].is_null(),
+        "anime has no episodes section"
+    );
+    assert_eq!(created["cover"].as_array().map(Vec::len).unwrap_or(0), 0);
+
+    // The externalRef field is filled with the candidate URL, the title comes from
+    // the zh title (the filename language), and the basename has the `/` replaced
+    // by its full-width form.
+    let entity = &created["entity"];
+    assert_eq!(
+        entity["frontmatter"]["bgm_url"],
+        "https://bgm.tv/subject/998877"
+    );
+    assert_eq!(entity["frontmatter"]["title"], "命运之夜/UBW");
+    assert_eq!(entity["basename"], "命运之夜／UBW");
+    let entity_id = entity["id"].as_str().unwrap().to_string();
+
+    // Re-adding the same candidate finds it via the stored bgm_url and returns the
+    // existing entity instead of creating a duplicate.
+    let (status, again) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/external/quick-add",
+        Some(json!({ "type": "anime", "candidate": candidate })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{again}");
+    assert_eq!(again["alreadyExisted"], true);
+    assert_eq!(again["entity"]["id"], entity_id);
+}
+
+#[tokio::test]
+async fn quick_add_is_forbidden_in_read_only_mode() {
+    let server = TestServer::read_only();
+    let (status, body) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/external/quick-add",
+        Some(json!({
+            "type": "anime",
+            "candidate": {
+                "provider": "bangumi",
+                "sourceId": "1",
+                "url": "https://bgm.tv/subject/1",
+                "title": "Whatever",
+                "titles": {},
+                "metadata": {}
+            }
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
 }
 
 #[tokio::test]
@@ -1412,6 +1496,14 @@ async fn content_mutation_endpoints_can_be_disabled() {
 
 impl TestServer {
     fn new() -> Self {
+        Self::build(true)
+    }
+
+    fn read_only() -> Self {
+        Self::build(false)
+    }
+
+    fn build(content_writable: bool) -> Self {
         let temp = TempDir::new().unwrap();
         let vault = temp.path().join("vault");
         write_fixture_vault(&vault);
@@ -1520,7 +1612,7 @@ impl TestServer {
         write_vault_config(&vault, &config);
 
         Self {
-            app: inline_router(&vault, true, true),
+            app: inline_router(&vault, true, content_writable),
             vault,
             _temp: temp,
         }
