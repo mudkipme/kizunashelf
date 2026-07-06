@@ -48,6 +48,14 @@ import {
   AssetIngestResponse
 } from './assetIngestResponse.zod';
 
+import type {
+  AssetUploadRequest
+} from './assetUploadRequest.zod';
+
+import {
+  AssetUploadResponse
+} from './assetUploadResponse.zod';
+
 import {
   CalendarResponse
 } from './calendarResponse.zod';
@@ -1388,6 +1396,36 @@ export const ingestEntityAsset = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? AssetIngestResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getUploadEntityAssetUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/assets/upload`
+}
+
+export const uploadEntityAsset = async (id: string,
+    assetUploadRequest: AssetUploadRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<AssetUploadResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getUploadEntityAssetUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(assetUploadRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? AssetUploadResponse.parse(parsedBody) : parsedBody
   return data
 }
 

@@ -9,8 +9,10 @@ import {
   listAssetJobs,
   searchExternalSources,
   updateEntity,
+  uploadEntityAsset,
   type AssetDownloadJobRequest,
   type AssetDownloadRequest,
+  type AssetUploadRequest,
   type CreateEntityRequest,
   type DeleteEntityRequest,
   type SearchExternalSourcesParams,
@@ -41,6 +43,10 @@ export function searchSources(params: SearchExternalSourcesParams, init?: Reques
 
 export function downloadAssets(id: string, request: AssetDownloadRequest) {
   return downloadEntityAssets(id, request, undefined, apiFetch);
+}
+
+export function uploadAsset(id: string, request: AssetUploadRequest) {
+  return uploadEntityAsset(id, request, undefined, apiFetch);
 }
 
 export function startAssetJob(request: AssetDownloadJobRequest) {

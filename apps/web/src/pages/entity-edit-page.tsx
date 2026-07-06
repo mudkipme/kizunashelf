@@ -236,6 +236,7 @@ export function EntityEditPage() {
             <MetadataEditor
               title="Metadata"
               path={entity.path}
+              entityId={entity.id}
               typeConfig={typeConfig}
               frontmatter={frontmatter}
               bodyText={body}

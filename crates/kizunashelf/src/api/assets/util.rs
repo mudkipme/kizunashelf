@@ -100,6 +100,15 @@ pub(super) fn short_hash(value: &str) -> String {
     format!("{:016x}", hasher.finish())[..12].to_string()
 }
 
+/// Content-hash variant used to name uploaded image-list elements (which, unlike
+/// downloads, have no source URL to key on). Re-uploading identical bytes yields
+/// the same filename, so the element dedups.
+pub(super) fn short_hash_bytes(bytes: &[u8]) -> String {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    bytes.hash(&mut hasher);
+    format!("{:016x}", hasher.finish())[..12].to_string()
+}
+
 pub(super) fn extension_for_content_type(content_type: &str) -> Option<&'static str> {
     match content_type {
         "image/jpeg" | "image/jpg" => Some("jpg"),

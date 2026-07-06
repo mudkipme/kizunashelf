@@ -1745,6 +1745,21 @@ const PNG_1X1: &[u8] = &[
     0x42, 0x60, 0x82,
 ];
 
+fn b64(bytes: &[u8]) -> String {
+    use base64::Engine;
+    base64::engine::general_purpose::STANDARD.encode(bytes)
+}
+
+async fn upload_asset(app: &Router, id: &str, body: Value) -> (StatusCode, Value) {
+    request_json(
+        app,
+        Method::POST,
+        &format!("/api/entities/{}/assets/upload", urlencoding::encode(id)),
+        Some(body),
+    )
+    .await
+}
+
 async fn start_mock_image_server() -> std::net::SocketAddr {
     // The mock server binds to loopback, which the SSRF guard blocks by default.
     // Enable the documented escape hatch so the download path can reach it.
@@ -2114,6 +2129,153 @@ async fn ingest_skips_when_source_url_no_longer_matches() {
     assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
     // Even on skip, the stale temp file is cleaned up.
     assert!(!source.exists());
+}
+
+#[tokio::test]
+async fn upload_places_single_image_and_leaves_frontmatter_for_save() {
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\ncover_url: https://img.example/cover.jpg\n---\nBody\n",
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let (status, body) = upload_asset(
+        &app,
+        id,
+        json!({
+            "field": "cover_url",
+            "dataBase64": b64(PNG_1X1),
+            "contentType": "image/png",
+            "filename": "cover.png",
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let path = body["path"].as_str().unwrap();
+    assert_eq!(path, "Assets/Taxonomy/Anime/Star Voyager/cover_url.png");
+    assert_eq!(body["conflictResolved"], false);
+    // The file is placed under the vault.
+    assert_eq!(fs::read(vault.join(path)).unwrap(), PNG_1X1);
+
+    // Upload stages into the editor draft only — frontmatter is untouched until the
+    // normal save mutation runs.
+    let detail = request_json(
+        &app,
+        Method::GET,
+        &format!("/api/entities/{}", urlencoding::encode(id)),
+        None,
+    )
+    .await;
+    assert_eq!(
+        detail.1["entity"]["frontmatter"]["cover_url"],
+        "https://img.example/cover.jpg"
+    );
+}
+
+#[tokio::test]
+async fn upload_places_image_list_element_by_content_hash() {
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\n---\nBody\n",
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let (status, body) = upload_asset(
+        &app,
+        id,
+        json!({
+            "field": "shots",
+            "dataBase64": b64(PNG_1X1),
+            "contentType": "image/png",
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let path = body["path"].as_str().unwrap();
+    assert!(path.starts_with("Assets/Taxonomy/Anime/Star Voyager/shots/"));
+    assert!(path.ends_with(".png"));
+    assert!(vault.join(path).exists());
+}
+
+#[tokio::test]
+async fn upload_rejects_non_image_bytes() {
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\n---\nBody\n",
+        );
+    });
+
+    let (status, _body) = upload_asset(
+        &app,
+        "anime:Star Voyager",
+        json!({
+            "field": "cover_url",
+            "dataBase64": b64(b"<html>nope</html>"),
+            "contentType": "text/html",
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn upload_rejects_non_image_field_and_bad_base64() {
+    let (app, _temp, _vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\n---\nBody\n",
+        );
+    });
+
+    // `title` is not an image field.
+    let (status, _body) = upload_asset(
+        &app,
+        "anime:Star Voyager",
+        json!({ "field": "title", "dataBase64": b64(PNG_1X1) }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    // Malformed base64 payload.
+    let (status, _body) = upload_asset(
+        &app,
+        "anime:Star Voyager",
+        json!({ "field": "cover_url", "dataBase64": "not valid base64!!!" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn upload_is_disabled_in_read_only_mode() {
+    let (app, _temp, vault) = asset_test_app(false, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            "---\ntitle: Star Voyager\n---\nBody\n",
+        );
+    });
+
+    let (status, body) = upload_asset(
+        &app,
+        "anime:Star Voyager",
+        json!({
+            "field": "cover_url",
+            "dataBase64": b64(PNG_1X1),
+            "contentType": "image/png",
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
+    assert_eq!(body["error"], "Content writes are disabled");
+    // Nothing was written under the vault.
+    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
 }
 
 #[tokio::test]

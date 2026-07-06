@@ -789,6 +789,38 @@ pub struct AssetIngestResponse {
     pub result: AssetDownloadItemResult,
 }
 
+/// Places raw image bytes a web/desktop client picked from the device under the
+/// entity's asset directory. Unlike download/ingest, the core only *places* the
+/// file and returns its vault-relative path — it does not rewrite frontmatter.
+/// The editor stages that path into its draft and persists it on the normal save.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetUploadRequest {
+    pub field: String,
+    /// Reserved for callers; the core derives a stable content-hash key for
+    /// image-list elements regardless.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub list_key: Option<String>,
+    /// The image bytes, base64-encoded (standard alphabet).
+    pub data_base64: String,
+    /// Client-observed Content-Type, used as an image-type/extension hint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_type: Option<String>,
+    /// Original filename, used only as an extension fallback.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filename: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetUploadResponse {
+    /// Vault-relative path of the placed asset.
+    pub path: String,
+    /// Whether the destination collided with another entity's asset and was
+    /// disambiguated.
+    pub conflict_resolved: bool,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalProviderSummary {
@@ -1151,6 +1183,7 @@ pub struct ApiSchemas {
     pub upcoming: UpcomingResponse,
     pub log_activity: LogActivityResponse,
     pub asset_download: AssetDownloadResponse,
+    pub asset_upload: AssetUploadResponse,
     pub asset_download_job: AssetDownloadJob,
     pub asset_download_jobs: AssetDownloadJobListResponse,
     pub library: crate::types::Library,

@@ -14,7 +14,9 @@ export type FieldKind =
   | "relation"
   | "season"
   | "date"
-  | "object";
+  | "object"
+  | "image"
+  | "imageList";
 
 export type SeasonLanguage = "zh" | "ja" | "en";
 export type SeasonKey = "winter" | "spring" | "summer" | "autumn";

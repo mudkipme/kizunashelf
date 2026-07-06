@@ -5,7 +5,7 @@
 use super::ssrf::validate_download_url;
 use super::util::{
     entity_asset_dir, entity_local_asset_paths, extension_for_content_type, extension_from_url,
-    is_remote_url, short_hash, skip_reason, sniff_image_ext, value_to_list,
+    is_remote_url, short_hash, short_hash_bytes, skip_reason, sniff_image_ext, value_to_list,
 };
 use crate::api::error::ApiError;
 use crate::api::mutations::{parent_dir, write_entity_raw};
@@ -180,10 +180,10 @@ async fn process_field(
     }
 }
 
-struct AssetOutcome {
+pub(super) struct AssetOutcome {
     /// Vault-relative path written into frontmatter.
-    path: String,
-    conflict_resolved: bool,
+    pub(super) path: String,
+    pub(super) conflict_resolved: bool,
 }
 
 /// Downloads a single URL and writes it under the entity's asset directory,
@@ -232,6 +232,38 @@ async fn place_asset(
         path: relative,
         conflict_resolved,
     })
+}
+
+/// Places raw bytes a client uploaded from the device under the entity's asset
+/// directory: validates they are an image, resolves the extension, and applies
+/// the cross-entity collision rule. Does **not** rewrite frontmatter — the caller
+/// stages the returned path into the editor draft. Image-list elements are named
+/// by a content hash (they have no source URL to key on) so identical re-uploads
+/// dedup; single image fields use the field name as the stem.
+pub(super) async fn place_uploaded_asset(
+    ctx: &DownloadContext<'_>,
+    field_name: &str,
+    is_list: bool,
+    bytes: Vec<u8>,
+    content_type: &str,
+    filename: &str,
+) -> Result<AssetOutcome, DownloadError> {
+    let asset = process_downloaded_bytes(bytes, content_type, filename)?;
+    let list_key = is_list.then(|| short_hash_bytes(&asset.bytes));
+    place_asset(ctx, field_name, list_key.as_deref(), asset).await
+}
+
+/// Maps a placement failure onto an `ApiError` for the upload handler (which,
+/// unlike the batch download flow, surfaces the error to the caller directly
+/// rather than folding it into a per-field result).
+pub(super) fn upload_error(error: DownloadError) -> ApiError {
+    match error {
+        DownloadError::TooLarge | DownloadError::NotAnImage => {
+            ApiError::bad_request(&error.to_string())
+        }
+        DownloadError::Collision => ApiError::conflict(&error.to_string()),
+        other => ApiError::from(anyhow::anyhow!(other.to_string())),
+    }
 }
 
 /// Identifies the single image field an ingest targets.

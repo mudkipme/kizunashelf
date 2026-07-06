@@ -12,6 +12,8 @@ export type {
   AssetDownloadJobListResponse,
   AssetDownloadRequest,
   AssetDownloadResponse,
+  AssetUploadRequest,
+  AssetUploadResponse,
   CalendarDay,
   CalendarEntry,
   CalendarResponse,

@@ -31,6 +31,7 @@ export { NumberStepper } from "./metadata-inputs";
 export function MetadataEditor({
   title,
   path,
+  entityId,
   typeConfig,
   frontmatter,
   bodyText,
@@ -46,6 +47,9 @@ export function MetadataEditor({
 }: {
   title: string;
   path?: string;
+  /** The entity's id, present only when editing an existing entity. Enables the
+   * image-field upload control (uploads place assets under the entity's dir). */
+  entityId?: string;
   typeConfig?: TypeConfig;
   frontmatter: FrontmatterDraft;
   bodyText: string;
@@ -129,6 +133,7 @@ export function MetadataEditor({
             field={field}
             value={frontmatter[field.key]}
             disabled={disabled}
+            entityId={entityId}
             onChange={(value) => updateField(field.key, value)}
             onRemove={field.configured ? undefined : () => updateField(field.key, undefined)}
             onRename={field.configured ? undefined : (key) => renameField(field.key, key)}
@@ -172,6 +177,7 @@ function EditableFieldRow({
   field,
   value,
   disabled,
+  entityId,
   onChange,
   onRemove,
   onRename,
@@ -179,6 +185,7 @@ function EditableFieldRow({
   field: EditableFieldSpec;
   value: FrontmatterValue | undefined;
   disabled: boolean;
+  entityId?: string;
   onChange: (value: FrontmatterValue) => void;
   onRemove?: () => void;
   onRename?: (key: string) => void;
@@ -216,6 +223,7 @@ function EditableFieldRow({
         field={field}
         value={value}
         disabled={disabled}
+        entityId={entityId}
         onChange={onChange}
       />
     </div>

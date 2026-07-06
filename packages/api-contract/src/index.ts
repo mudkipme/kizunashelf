@@ -45,6 +45,8 @@ export * from "./generated/assetDownloadJobStatus.zod.js";
 export * from "./generated/assetDownloadRequest.zod.js";
 export * from "./generated/assetDownloadResponse.zod.js";
 export * from "./generated/assetDownloadStatus.zod.js";
+export * from "./generated/assetUploadRequest.zod.js";
+export * from "./generated/assetUploadResponse.zod.js";
 export * from "./generated/calendarResponse.zod.js";
 export * from "./generated/capabilitiesResponse.zod.js";
 export * from "./generated/cleanupQueueSummary.zod.js";

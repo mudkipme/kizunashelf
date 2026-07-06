@@ -110,6 +110,10 @@ function fieldKind(field: FieldConfig, value: FrontmatterValue | undefined): Fie
   if (field.fieldType === "season") return "season";
   if (field.fieldType === "date") return "date";
   if (field.fieldType === "relation") return "relation";
+  // Image kinds get a dedicated preview/upload editor; check before the generic
+  // list branch, since `imageList` is also a list field type.
+  if (field.fieldType === "image") return "image";
+  if (field.fieldType === "imageList") return "imageList";
   if (isListFieldType(field.fieldType) || Array.isArray(value)) return "list";
   if (field.fieldType === "enum") return "select";
   if (field.fieldType === "bool") return "boolean";

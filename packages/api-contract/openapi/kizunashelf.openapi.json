@@ -1971,6 +1971,95 @@
         }
       }
     },
+    "/api/entities/{id}/assets/upload": {
+      "post": {
+        "operationId": "uploadEntityAsset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Places raw image bytes a web/desktop client picked from the device under the\nentity's asset directory. Unlike download/ingest, the core only *places* the\nfile and returns its vault-relative path — it does not rewrite frontmatter.\nThe editor stages that path into its draft and persists it on the normal save.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/tags": {
       "get": {
         "operationId": "getTags",
@@ -6404,6 +6493,61 @@
         "required": [
           "entity",
           "result"
+        ]
+      },
+      "AssetUploadRequest": {
+        "description": "Places raw image bytes a web/desktop client picked from the device under the\nentity's asset directory. Unlike download/ingest, the core only *places* the\nfile and returns its vault-relative path — it does not rewrite frontmatter.\nThe editor stages that path into its draft and persists it on the normal save.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "listKey": {
+            "description": "Reserved for callers; the core derives a stable content-hash key for\nimage-list elements regardless.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dataBase64": {
+            "description": "The image bytes, base64-encoded (standard alphabet).",
+            "type": "string"
+          },
+          "contentType": {
+            "description": "Client-observed Content-Type, used as an image-type/extension hint.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filename": {
+            "description": "Original filename, used only as an extension fallback.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "dataBase64"
+        ]
+      },
+      "AssetUploadResponse": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "description": "Vault-relative path of the placed asset.",
+            "type": "string"
+          },
+          "conflictResolved": {
+            "description": "Whether the destination collided with another entity's asset and was\ndisambiguated.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "conflictResolved"
         ]
       },
       "TagsResponse": {

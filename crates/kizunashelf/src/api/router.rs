@@ -1,7 +1,7 @@
 use super::analytics::{analytics, cleanup_queues, stats};
 use super::assets::{
     cancel_asset_job, create_asset_job, download_entity_assets, get_asset_job, ingest_entity_asset,
-    list_asset_jobs, plan_asset_downloads, serve_asset,
+    list_asset_jobs, plan_asset_downloads, serve_asset, upload_entity_asset,
 };
 use super::entities::{entities, entity_dates, entity_detail};
 use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
@@ -22,13 +22,13 @@ use super::tags::tags;
 use crate::calendar::{ActivityResponse, EntityDatesResponse, UpcomingResponse};
 use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
-    AssetDownloadResponse, AssetIngestResponse, CalendarResponse, CapabilitiesResponse,
-    CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse, DeleteListResponse,
-    EntityDetailResponse, EntityListResponse, EntityMutationResponse, EpisodeSyncResponse,
-    ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse, HealthResponse,
-    HomeResponse, LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse,
-    PathSuggestionsResponse, RawConfigResponse, SettingsConfigResponse, StatsResponse,
-    TagsResponse, VaultTemplatesResponse,
+    AssetDownloadResponse, AssetIngestResponse, AssetUploadResponse, CalendarResponse,
+    CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse,
+    DeleteListResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
+    EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse,
+    HealthResponse, HomeResponse, LanguagesResponse, ListDetail, ListsResponse,
+    LogActivityResponse, PathSuggestionsResponse, RawConfigResponse, SettingsConfigResponse,
+    StatsResponse, TagsResponse, VaultTemplatesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -438,6 +438,18 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/assets/upload",
+            post_with(upload_entity_asset, |op| {
+                op.id("uploadEntityAsset")
+                    .response::<200, Json<AssetUploadResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
         )

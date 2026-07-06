@@ -20,7 +20,8 @@ use super::mutations::{check_revision, type_config_or_err, write_entity_raw, Ent
 use super::state::{get_library, require_content_writes, require_host_asset_ingest, AppState};
 use crate::contract::{
     AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest, AssetDownloadResponse,
-    AssetDownloadStatus, AssetIngestRequest, AssetIngestResponse,
+    AssetDownloadStatus, AssetIngestRequest, AssetIngestResponse, AssetUploadRequest,
+    AssetUploadResponse,
 };
 use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
 use crate::types::FieldType;
@@ -34,7 +35,11 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use std::path::Path;
 
-use download::{download_entity_core, ingest_field_bytes, DownloadContext, IngestField};
+use base64::Engine;
+use download::{
+    download_entity_core, ingest_field_bytes, place_uploaded_asset, upload_error, DownloadContext,
+    IngestField,
+};
 use util::{
     all_local_asset_paths, content_type_for_extension, entity_local_asset_paths, is_remote_url,
     value_to_list,
@@ -244,6 +249,87 @@ pub(crate) async fn ingest_entity_asset(
         .ok_or_else(|| ApiError::not_found("Entity was not indexed"))?;
     let entity = load_entity(&reloaded.config, vfs.as_ref(), &record.summary).await?;
     Ok(Json(AssetIngestResponse { entity, result }))
+}
+
+// ----------------------------------------------------------------------------
+// Client upload: place device-picked bytes for one image field
+//
+// Unlike download/ingest, this does NOT rewrite frontmatter — it validates and
+// places the file, then returns its vault-relative path. The editor stages that
+// path into its draft and persists it on the normal save mutation, so an upload
+// never races with other unsaved edits.
+// ----------------------------------------------------------------------------
+
+pub(crate) async fn upload_entity_asset(
+    State(state): State<AppState>,
+    AxumPath(path): AxumPath<EntityPath>,
+    Json(request): Json<AssetUploadRequest>,
+) -> ApiResult<AssetUploadResponse> {
+    let library = require_content_writes(&state).await?;
+    let Some(entity) = library.record_by_id(&path.id) else {
+        return Err(ApiError::not_found("Entity not found"));
+    };
+    let type_config = type_config_or_err(&library.config, &entity.summary.entity_type)?;
+    let Some(field_config) = type_config
+        .fields
+        .iter()
+        .find(|field| field.field == request.field)
+    else {
+        return Err(ApiError::bad_request("Unknown field"));
+    };
+    let is_list = match field_config.field_type {
+        FieldType::Image => false,
+        FieldType::ImageList => true,
+        _ => return Err(ApiError::bad_request("Field is not an image field")),
+    };
+
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(request.data_base64.as_bytes())
+        .map_err(|error| ApiError::bad_request(&format!("Invalid base64 payload: {error}")))?;
+    if bytes.is_empty() {
+        return Err(ApiError::bad_request("Upload payload is empty"));
+    }
+
+    let entity_id = entity.summary.id.clone();
+    let entity_path = entity.summary.path.clone();
+    let asset_root = library.config.resolved_asset_root().to_string();
+    let asset_dir = entity_asset_dir(&asset_root, &entity_path);
+    let all_local = all_local_asset_paths(&library);
+
+    // Read the entity's current frontmatter only to learn which assets it already
+    // owns (safe to overwrite); we never write it back.
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let raw = vfs
+        .read_to_string(&entity_path)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {entity_path}: {error}"))?;
+    let document = split_markdown_document(&raw);
+    let owned = entity_local_asset_paths(&document.frontmatter, type_config);
+
+    let ctx = DownloadContext {
+        vfs: vfs.as_ref(),
+        asset_dir: &asset_dir,
+        referenced: &all_local,
+        owned: &owned,
+        entity_id: &entity_id,
+    };
+    let content_type = request.content_type.unwrap_or_default();
+    let filename = request.filename.unwrap_or_default();
+    let outcome = place_uploaded_asset(
+        &ctx,
+        &request.field,
+        is_list,
+        bytes,
+        &content_type,
+        &filename,
+    )
+    .await
+    .map_err(upload_error)?;
+
+    Ok(Json(AssetUploadResponse {
+        path: outcome.path,
+        conflict_resolved: outcome.conflict_resolved,
+    }))
 }
 
 // ----------------------------------------------------------------------------
