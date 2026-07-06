@@ -400,7 +400,10 @@ async fn type_preset_endpoints_list_and_resolve() {
         .find(|f| f["field"] == "title")
         .unwrap();
     assert_eq!(title["titleLanguage"], "en");
-    assert_eq!(resolved["homeSections"].as_array().unwrap().len(), 2);
+    // Only anime has a release/season date → one Home shelf; franchise (no date
+    // field) is left out of the default Home.
+    assert_eq!(resolved["homeSections"].as_array().unwrap().len(), 1);
+    assert_eq!(resolved["homeSections"][0]["type"], "anime");
     assert!(resolved
         .get("backfills")
         .and_then(Value::as_array)

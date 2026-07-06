@@ -140,7 +140,9 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
             }
             false // target absent → drop the relation field
         });
-        home_sections.push(home_section_for(&config));
+        if let Some(section) = home_section_for(&config) {
+            home_sections.push(section);
+        }
         types.push(config);
     }
 
@@ -626,18 +628,22 @@ const EPISODES_LIST: ListSpec = ListSpec {
     total_field: "episodes",
     total_label: "Episodes",
     tracking: EpisodeTracking::Checklist,
+    total_role: Some(Role::TotalEpisodes),
 };
 const CHAPTERS_LIST: ListSpec = ListSpec {
     heading: "Chapters",
     total_field: "chapters",
     total_label: "Chapters",
     tracking: EpisodeTracking::Checklist,
+    total_role: Some(Role::Chapters),
 };
 const TRACKS_LIST: ListSpec = ListSpec {
     heading: "Tracks",
     total_field: "tracks",
     total_label: "Tracks",
     tracking: EpisodeTracking::None,
+    // Providers don't expose a reliable scalar track count.
+    total_role: None,
 };
 
 // --- The builder ---------------------------------------------------------------
@@ -696,6 +702,8 @@ struct ListSpec {
     total_field: &'static str,
     total_label: &'static str,
     tracking: EpisodeTracking,
+    /// External role for the total-count field, when providers expose one.
+    total_role: Option<Role>,
 }
 
 struct TypeSpec {
@@ -761,11 +769,11 @@ fn build_type(ctx: &BuildCtx, spec: TypeSpec) -> EntityTypeConfig {
         let mut progress = field("progress", FieldType::Progress, "Progress");
         progress.total_progress_field = Some(list.total_field.to_string());
         fields.push(progress);
-        fields.push(field(
-            list.total_field,
-            FieldType::TotalProgress,
-            list.total_label,
-        ));
+        let mut total = field(list.total_field, FieldType::TotalProgress, list.total_label);
+        if let Some(role) = list.total_role {
+            total.external_fields = ext_maps(ctx, spec.providers, role);
+        }
+        fields.push(total);
     }
 
     for extra in spec.extras {
@@ -778,6 +786,7 @@ fn build_type(ctx: &BuildCtx, spec: TypeSpec) -> EntityTypeConfig {
             let mut season = field("season", FieldType::Season, "Season");
             season.date_role = Some(crate::types::DateRole::Planning);
             season.season_language = Some(ctx.season_language());
+            season.external_fields = ext_maps(ctx, spec.providers, Role::Season);
             fields.push(season);
         }
         PrimaryDate::ReleaseDate => {
@@ -957,26 +966,31 @@ fn status_field(options: &[(CanonicalStatus, &str)]) -> FieldConfig {
     f
 }
 
-fn home_section_for(config: &EntityTypeConfig) -> HomeSectionConfig {
-    // Prefer a date-role field for the sort; fall back to the title.
-    let sort = config
+/// A default "Recent {label}" home section for a type — but **only** when the type
+/// has a release/completion date to sort by. A chronological shelf is meaningless
+/// for types with no such date (people, franchises) or whose only date is an
+/// attendance date (events), so those are left out of the default Home entirely
+/// rather than getting a title-sorted "recent" shelf that isn't really recent.
+fn home_section_for(config: &EntityTypeConfig) -> Option<HomeSectionConfig> {
+    let date_field = config
         .fields
         .iter()
-        .find(|field| field.date_role.is_some())
-        .map(|field| format!("date:{}", field.field));
-    let (sort, direction) = match sort {
-        Some(key) => (Some(key), Some(SortDirection::Desc)),
-        None => (Some("title".to_string()), Some(SortDirection::Asc)),
-    };
-    HomeSectionConfig {
+        .find(|field| field.date_role == Some(crate::types::DateRole::Planning))
+        .or_else(|| {
+            config
+                .fields
+                .iter()
+                .find(|field| field.date_role == Some(crate::types::DateRole::Completed))
+        })?;
+    Some(HomeSectionConfig {
         id: format!("recent-{}", config.id),
         title: format!("Recent {}", config.label),
         entity_type: config.id.clone(),
         filters: Vec::new(),
         limit: Some(12),
-        sort,
-        direction,
-    }
+        sort: Some(format!("date:{}", date_field.field)),
+        direction: Some(SortDirection::Desc),
+    })
 }
 
 // --- Field construction --------------------------------------------------------
@@ -1037,6 +1051,13 @@ enum Role {
     Platform,
     Genre,
     Birthday,
+    /// The airing season. Mapped to a provider's air date (coerced date→season by
+    /// the core) or an explicit season label (MAL).
+    Season,
+    /// Total episode count (the `TotalProgress` denominator).
+    TotalEpisodes,
+    /// Total chapter count for manga/comics.
+    Chapters,
 }
 
 /// The provider field that fills `role` for `source`, or `None` when the provider
@@ -1048,6 +1069,9 @@ fn role_field(source: &str, role: Role) -> Option<&'static str> {
             (Role::OriginalTitle, "name"),
             (Role::Cover, "cover_url"),
             (Role::ReleaseDate, "date"),
+            (Role::Season, "date"),
+            (Role::TotalEpisodes, "eps"),
+            (Role::Chapters, "eps"),
             (Role::Summary, "summary"),
             (Role::Author, "author"),
             (Role::Isbn, "isbn"),
@@ -1059,6 +1083,9 @@ fn role_field(source: &str, role: Role) -> Option<&'static str> {
             (Role::OriginalTitle, "title"),
             (Role::Cover, "cover_url"),
             (Role::ReleaseDate, "start_date"),
+            (Role::Season, "season"),
+            (Role::TotalEpisodes, "episodes"),
+            (Role::Chapters, "chapters"),
             (Role::Summary, "synopsis"),
             (Role::Genre, "genres"),
         ],
@@ -1067,6 +1094,8 @@ fn role_field(source: &str, role: Role) -> Option<&'static str> {
             (Role::OriginalTitle, "original_title"),
             (Role::Cover, "cover_url"),
             (Role::ReleaseDate, "release_date"),
+            (Role::Season, "release_date"),
+            (Role::TotalEpisodes, "episode_count"),
             (Role::Summary, "overview"),
             (Role::Genre, "genres"),
         ],
@@ -1075,6 +1104,7 @@ fn role_field(source: &str, role: Role) -> Option<&'static str> {
             (Role::OriginalTitle, "name"),
             (Role::Cover, "cover_url"),
             (Role::ReleaseDate, "first_air_time"),
+            (Role::Season, "first_air_time"),
             (Role::Summary, "overview"),
             (Role::Genre, "genres"),
         ],
@@ -1129,6 +1159,7 @@ fn role_field(source: &str, role: Role) -> Option<&'static str> {
             (Role::Title, "title"),
             (Role::OriginalTitle, "title"),
             (Role::Cover, "cover_url"),
+            (Role::Chapters, "latest_chapter"),
             (Role::Summary, "synopsis"),
             (Role::Author, "authors"),
             (Role::Genre, "genres"),
@@ -1374,15 +1405,59 @@ mod tests {
     }
 
     #[test]
-    fn home_section_is_produced_per_type() {
-        let result = resolve(vec![], &["anime", "franchise"], None);
-        assert_eq!(result.home_sections.len(), 2);
-        let anime = result
-            .home_sections
+    fn season_and_total_episodes_are_mapped() {
+        // The season field pulls from providers' air dates (coerced to a season)
+        // and MAL's explicit season; the total-episodes field pulls the count.
+        let anime = resolve(vec![], &["anime"], None).types.remove(0);
+        let season = find_field(&anime, "season").expect("season field");
+        assert!(
+            season
+                .external_fields
+                .iter()
+                .any(|m| m.source == "bangumi" && m.field == "date"),
+            "season should coerce from Bangumi's air date"
+        );
+        assert!(season
+            .external_fields
             .iter()
-            .find(|s| s.entity_type == "anime")
-            .unwrap();
+            .any(|m| m.source == "myanimelist" && m.field == "season"));
+
+        let episodes = find_field(&anime, "episodes").expect("episodes field");
+        assert!(episodes
+            .external_fields
+            .iter()
+            .any(|m| m.source == "bangumi" && m.field == "eps"));
+        assert!(episodes
+            .external_fields
+            .iter()
+            .any(|m| m.source == "tmdb" && m.field == "episode_count"));
+
+        // Manga's chapter count wires from MAL/MangaUpdates.
+        let manga = resolve(vec![], &["manga"], None).types.remove(0);
+        let chapters = find_field(&manga, "chapters").expect("chapters field");
+        assert!(chapters
+            .external_fields
+            .iter()
+            .any(|m| m.source == "myanimelist" && m.field == "chapters"));
+        assert!(chapters
+            .external_fields
+            .iter()
+            .any(|m| m.source == "mangaupdates" && m.field == "latest_chapter"));
+    }
+
+    #[test]
+    fn home_section_only_for_types_with_a_release_date() {
+        // Anime has a planning (season) date → gets a shelf. Franchise has no date
+        // field and Event's only date is an attendance date (role Event), so both
+        // are left out of the default Home rather than getting a bogus "recent" shelf.
+        let result = resolve(vec![], &["anime", "franchise", "event"], None);
+        assert_eq!(result.home_sections.len(), 1);
+        let anime = &result.home_sections[0];
+        assert_eq!(anime.entity_type, "anime");
         assert_eq!(anime.sort.as_deref(), Some("date:season"));
+        // The date-less types are still added — just shelf-less.
+        assert!(result.types.iter().any(|t| t.id == "franchise"));
+        assert!(result.types.iter().any(|t| t.id == "event"));
     }
 
     #[test]
