@@ -76,6 +76,17 @@ export const cleanupQueuesResponseStatusMismatchItemEpisodeProgressOneTotalMin =
 
 export const cleanupQueuesResponseStatusMismatchItemRelationCountMin = 0;
 
+export const cleanupQueuesResponseDuplicateFilenamesItemDatesItemParsedOneMonthMin = 0;
+
+export const cleanupQueuesResponseDuplicateFilenamesItemDatesItemParsedOneDayMin = 0;
+
+export const cleanupQueuesResponseDuplicateFilenamesItemTagsDefault = [];
+export const cleanupQueuesResponseDuplicateFilenamesItemEpisodeProgressOneWatchedMin = 0;
+
+export const cleanupQueuesResponseDuplicateFilenamesItemEpisodeProgressOneTotalMin = 0;
+
+export const cleanupQueuesResponseDuplicateFilenamesItemRelationCountMin = 0;
+
 
 export const CleanupQueuesResponse = zod.object({
   "generatedAt": zod.string(),
@@ -304,7 +315,42 @@ export const CleanupQueuesResponse = zod.object({
   "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
 }).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
   "relationCount": zod.number().min(cleanupQueuesResponseStatusMismatchItemRelationCountMin)
-})).describe('Entities whose canonical status contradicts a dated field: a `completed`\nentity with a completion\/event date in the \*future\* (impossible), or a still\n-`planning` entity whose \*event\* date has already passed (a missed event you\nprobably forgot to update). Date-relative, so computed against the client\'s\nlocal `today`.')
+})).describe('Entities whose canonical status contradicts a dated field: a `completed`\nentity with a completion\/event date in the \*future\* (impossible), or a still\n-`planning` entity whose \*event\* date has already passed (a missed event you\nprobably forgot to update). Date-relative, so computed against the client\'s\nlocal `today`.'),
+  "duplicateFilenames": zod.array(zod.object({
+  "id": zod.string(),
+  "type": zod.string(),
+  "typeLabel": zod.string(),
+  "title": zod.string(),
+  "titles": zod.record(zod.string(), zod.string()),
+  "dates": zod.array(zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "parsed": zod.union([zod.object({
+  "year": zod.number(),
+  "month": zod.number().min(cleanupQueuesResponseDuplicateFilenamesItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(cleanupQueuesResponseDuplicateFilenamesItemDatesItemParsedOneDayMin).nullish(),
+  "season": zod.string().nullish(),
+  "seasonKey": zod.string().nullish()
+}),zod.null()]).optional(),
+  "sortKey": zod.string().nullish()
+})),
+  "image": zod.string().nullish(),
+  "summary": zod.string().nullish(),
+  "path": zod.string(),
+  "basename": zod.string(),
+  "externalRefs": zod.record(zod.string(), zod.string()),
+  "tags": zod.array(zod.string()).default(cleanupQueuesResponseDuplicateFilenamesItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "episodeProgress": zod.union([zod.object({
+  "watched": zod.number().min(cleanupQueuesResponseDuplicateFilenamesItemEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(cleanupQueuesResponseDuplicateFilenamesItemEpisodeProgressOneTotalMin)
+}).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
+  "status": zod.union([zod.object({
+  "field": zod.string(),
+  "value": zod.string(),
+  "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
+}).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
+  "relationCount": zod.number().min(cleanupQueuesResponseDuplicateFilenamesItemRelationCountMin)
+})).describe('Entities whose filename collides with another entity\'s after wikilink\nnormalization (NFC, case-insensitive, last path segment). Such names are\nambiguous targets for `[[wikilinks]]` — a bare `[[Name]]` resolves to only\none of them — so they\'re surfaced for renaming. Grouped so colliding\nentries sit adjacent.')
 })
 
 export type CleanupQueuesResponse = zod.input<typeof CleanupQueuesResponse>;

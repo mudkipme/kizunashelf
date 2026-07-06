@@ -48,6 +48,7 @@ const queueDefinitions: QueueDefinition[] = [
   { id: "isolated", label: "Unlinked Items", kind: "entity" },
   { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
   { id: "status-mismatch", label: "Status Mismatch", kind: "entity" },
+  { id: "duplicate-filename", label: "Duplicate Filenames", kind: "entity" },
 ];
 
 const assetQueueIds = new Set(["missing-cover", "broken-asset"]);
@@ -103,8 +104,8 @@ export function ReviewPage() {
         .filter((item) => matchesQuery(item, query))
         .filter((item) => selectedType === allEntityFilter || item.entity.type === selectedType)
         .filter((item) => entityMatchesDate(item.entity, selectedDate))
-        .sort((a, b) => compareItems(a, b, language)),
-    [items, query, selectedType, selectedDate, language],
+        .sort((a, b) => compareItems(a, b, language, activeQueue?.id)),
+    [items, query, selectedType, selectedDate, language, activeQueue?.id],
   );
 
   return (
@@ -188,6 +189,7 @@ export function ReviewPage() {
                         key={item.entity.id}
                         entity={item.entity}
                         labelsByType={labelsByType}
+                        showBasename={activeQueue.id === "duplicate-filename"}
                       />
                     ) : (
                       <UnresolvedRelationRow
@@ -243,13 +245,15 @@ function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
 function CleanupEntityRow({
   entity,
   labelsByType,
+  showBasename = false,
 }: {
   entity: EntitySummary;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  showBasename?: boolean;
 }) {
   return (
     <div className="min-w-0 border-b px-3 py-2 last:border-b-0">
-      <EntitySummaryCell entity={entity} labelsByType={labelsByType} />
+      <EntitySummaryCell entity={entity} labelsByType={labelsByType} showBasename={showBasename} />
     </div>
   );
 }
@@ -283,10 +287,12 @@ function EntitySummaryCell({
   entity,
   compact = false,
   labelsByType,
+  showBasename = false,
 }: {
   entity: EntitySummary;
   compact?: boolean;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  showBasename?: boolean;
 }) {
   const language = useTitleLanguage();
   return (
@@ -299,6 +305,7 @@ function EntitySummaryCell({
           {entityTitle(entity, language)}
         </Link>
         <Badge variant="outline">{entity.typeLabel}</Badge>
+        {showBasename ? <Badge variant="secondary" className="font-mono">{entity.basename}</Badge> : null}
       </div>
       <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <EntityDateList entity={entity} compact labelsByType={labelsByType} />
@@ -353,6 +360,9 @@ function queueItems(data: CleanupQueuesResponse, queue: QueueDefinition): Filter
   if (queue.id === "status-mismatch") {
     return data.statusMismatch.map((entity) => ({ kind: "entity", entity }));
   }
+  if (queue.id === "duplicate-filename") {
+    return data.duplicateFilenames.map((entity) => ({ kind: "entity", entity }));
+  }
   return data.unresolvedRelations.map((item) => ({ kind: "relation", item, entity: item.source }));
 }
 
@@ -368,6 +378,13 @@ function matchesQuery(item: FilterableItem, query: string) {
   return entityMatchesQuery(item.entity, query, extraValues);
 }
 
-function compareItems(a: FilterableItem, b: FilterableItem, language: string) {
+function compareItems(a: FilterableItem, b: FilterableItem, language: string, queueId?: string) {
+  // The duplicate-filename queue is about the colliding names themselves, so sort
+  // by basename first — this keeps each cluster of collisions adjacent, then
+  // orders within a cluster by type/title.
+  if (queueId === "duplicate-filename") {
+    const byName = a.entity.basename.localeCompare(b.entity.basename, undefined, { sensitivity: "base" });
+    if (byName !== 0) return byName;
+  }
   return compareEntitiesByTypeThenTitle(a.entity, b.entity, language);
 }

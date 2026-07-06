@@ -4104,6 +4104,13 @@
             "items": {
               "$ref": "#/components/schemas/EntitySummary"
             }
+          },
+          "duplicateFilenames": {
+            "description": "Entities whose filename collides with another entity's after wikilink\nnormalization (NFC, case-insensitive, last path segment). Such names are\nambiguous targets for `[[wikilinks]]` — a bare `[[Name]]` resolves to only\none of them — so they're surfaced for renaming. Grouped so colliding\nentries sit adjacent.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitySummary"
+            }
           }
         },
         "required": [
@@ -4114,7 +4121,8 @@
           "isolated",
           "brokenAssets",
           "unresolvedRelations",
-          "statusMismatch"
+          "statusMismatch",
+          "duplicateFilenames"
         ]
       },
       "CleanupQueueSummary": {

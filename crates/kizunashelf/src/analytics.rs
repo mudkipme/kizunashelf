@@ -10,6 +10,7 @@ use crate::contract::{
     CleanupQueueSummary, CleanupQueuesResponse, CleanupUnresolvedRelation, StatsResponse,
     TypeCount,
 };
+use crate::daily_notes::normalize_wikilink_target;
 use crate::dates::{parse_entity_date, parse_exact_date, ParsedEntityDate};
 use crate::library::compare_string;
 use crate::relations::{count_by, outgoing_relations, relation_type_pairs, summary_by_id, Count};
@@ -239,6 +240,28 @@ pub fn build_cleanup_queues(
                 .is_some()
         })
         .count();
+    // Filenames that collide after wikilink normalization: a bare `[[Name]]`
+    // resolves to only one of them (`find_target` picks the first candidate), so
+    // the others are silently unreachable. Group entities by the same key the
+    // wikilink index uses, then flag every member of a group larger than one.
+    let mut filename_counts: HashMap<String, usize> = HashMap::new();
+    for entity in summaries {
+        *filename_counts
+            .entry(normalize_wikilink_target(&entity.basename))
+            .or_default() += 1;
+    }
+    let mut duplicate_filenames: Vec<_> = summaries
+        .iter()
+        .filter(|entity| {
+            filename_counts
+                .get(&normalize_wikilink_target(&entity.basename))
+                .is_some_and(|count| *count > 1)
+        })
+        .cloned()
+        .collect();
+    // Cluster colliding entries so the queue reads as pairs/groups; a stable sort
+    // keeps each group in library order.
+    duplicate_filenames.sort_by_cached_key(|entity| normalize_wikilink_target(&entity.basename));
     let queues = cleanup_queue_summaries(&[
         (
             "missing-cover",
@@ -276,6 +299,12 @@ pub fn build_cleanup_queues(
             status_mismatch.len(),
             status_total,
         ),
+        (
+            "duplicate-filename",
+            "Duplicate Filenames",
+            duplicate_filenames.len(),
+            summaries.len(),
+        ),
     ]);
 
     CleanupQueuesResponse {
@@ -287,6 +316,7 @@ pub fn build_cleanup_queues(
         broken_assets,
         unresolved_relations,
         status_mismatch,
+        duplicate_filenames,
     }
 }
 
@@ -806,6 +836,33 @@ mod tests {
             .expect("status-mismatch queue present");
         assert_eq!(queue.remaining, 2);
         assert_eq!(queue.total, 3); // all three entities carry a canonical status
+    }
+
+    #[tokio::test]
+    async fn build_cleanup_queues_flags_duplicate_filenames() {
+        let vfs = Arc::new(InMemoryVfs::new());
+        // `Star` (anime) and `star` (note) collide after normalization (last path
+        // segment, case-folded, NFC), so both are ambiguous wikilink targets.
+        vfs.insert_dir("Taxonomy/Anime");
+        vfs.insert_file("Taxonomy/Anime/Star.md", "---\ntitle: Star Anime\n---\n");
+        vfs.insert_file("Taxonomy/Anime/Unique.md", "---\ntitle: Unique\n---\n");
+        vfs.insert_dir("Taxonomy/Note");
+        vfs.insert_file("Taxonomy/Note/star.md", "---\ntitle: Star Note\n---\n");
+        let library = read_library(config(), vfs.clone()).await.unwrap();
+
+        let response = build_cleanup_queues(&library, Vec::new(), 0, "2024-06-15");
+        // Only the two colliding entities, clustered together; `Unique` is left out.
+        assert_eq!(
+            titles(&response.duplicate_filenames),
+            ["Star Anime", "Star Note"]
+        );
+        let queue = response
+            .queues
+            .iter()
+            .find(|item| item.id == "duplicate-filename")
+            .expect("duplicate-filename queue present");
+        assert_eq!(queue.remaining, 2);
+        assert_eq!(queue.total, 3); // denominator is every entity (all have a filename)
     }
 
     #[tokio::test]

@@ -959,6 +959,12 @@ pub struct CleanupQueuesResponse {
     /// probably forgot to update). Date-relative, so computed against the client's
     /// local `today`.
     pub status_mismatch: Vec<EntitySummary>,
+    /// Entities whose filename collides with another entity's after wikilink
+    /// normalization (NFC, case-insensitive, last path segment). Such names are
+    /// ambiguous targets for `[[wikilinks]]` — a bare `[[Name]]` resolves to only
+    /// one of them — so they're surfaced for renaming. Grouped so colliding
+    /// entries sit adjacent.
+    pub duplicate_filenames: Vec<EntitySummary>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
