@@ -1,29 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SearchIcon } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { addEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { useRelationSearch } from "@/api/use-relation-search";
-import { configQuery, providerCatalogQuery } from "@/api/queries";
-import {
-  type FrontmatterDraft,
-  MetadataEditor,
-  normalizeFrontmatter,
-} from "@/components/entities/metadata-editor";
-import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
-import { useExternalMatch } from "@/components/entities/use-external-match";
+import { configQuery } from "@/api/queries";
+import { type FrontmatterDraft, MetadataEditor } from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useEntityMutation } from "@/hooks/use-entity-mutation";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
-import { applyExternalBodySections } from "@/lib/external-metadata";
 
 export function EntityCreatePage() {
   const navigate = useNavigate();
@@ -32,16 +23,14 @@ export function EntityCreatePage() {
   const requestedTitle = searchParams.get("title");
   const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
-  const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const { saving: creating, run } = useEntityMutation();
   const [typeId, setTypeId] = useState("");
   const [basename, setBasename] = useState(requestedTitle ?? "");
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
-  const [message, setMessage] = useState<string>();
   const contentWritable = capabilities.contentWritable;
-  const queryError = config.error ?? providerCatalog.error ?? capabilities.error;
+  const queryError = config.error ?? capabilities.error;
   const normalizedBasename = normalizeBasename(basename);
   const basenameError = basenameValidationError(basename);
   const showBasenameError = Boolean(basename) && Boolean(basenameError);
@@ -58,13 +47,6 @@ export function EntityCreatePage() {
     () => config.data?.types.find((type) => type.id === typeId),
     [config.data, typeId],
   );
-  const external = useExternalMatch({
-    typeConfig: selectedType,
-    providerCatalog: providerCatalog.data,
-    entityType: typeId,
-    defaultQuery: normalizedBasename,
-    assetDownloadEnabled: capabilities.assetDownloadEnabled,
-  });
 
   const searchRelations = useRelationSearch();
 
@@ -74,7 +56,6 @@ export function EntityCreatePage() {
       setBasename(normalizedBasename);
       return;
     }
-    setMessage(undefined);
     await run(async () => {
       const result = await addEntity({
         type: typeId,
@@ -82,24 +63,9 @@ export function EntityCreatePage() {
         frontmatter,
         body,
       });
-      await external.maybeDownloadCover(result.entity);
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     });
-  }
-
-  function applyCandidate() {
-    if (!external.selectedCandidate || !contentWritable) return;
-    const next = {
-      ...frontmatter,
-      ...external.selectedPatch(),
-    };
-    setFrontmatter(normalizeFrontmatter(next));
-    setBody((currentBody) => applyExternalBodySections(currentBody, external.selectedBodyPatch()));
-    setBasename((currentBasename) => currentBasename || external.selectedCandidate?.candidate.title || "");
-    external.setQuery(external.selectedCandidate.candidate.title);
-    setMessage(`Using ${external.selectedCandidate.candidate.provider}: ${external.selectedCandidate.candidate.title}`);
-    external.setOpen(false);
   }
 
   return (
@@ -115,7 +81,6 @@ export function EntityCreatePage() {
         </header>
 
         {!contentWritable ? <Alert>{CONTENT_WRITES_DISABLED}</Alert> : null}
-        {message ? <div className="rounded-md border p-3 text-sm text-muted-foreground">{message}</div> : null}
 
         <section className="rounded-md border p-4">
           <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
@@ -142,56 +107,7 @@ export function EntityCreatePage() {
               {showBasenameError ? <span className="text-xs text-destructive">{basenameError}</span> : null}
             </label>
           </div>
-          <div className="mt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (normalizedBasename) external.setQuery(normalizedBasename);
-                external.setOpen(true);
-              }}
-              disabled={!external.externalSearchEnabled}
-            >
-              <SearchIcon data-icon="inline-start" />
-              Match Metadata
-            </Button>
-          </div>
         </section>
-
-        <ExternalMatchDialog
-          open={external.open}
-          query={external.query}
-          provider={external.provider}
-          candidates={external.candidates}
-          selectedCandidate={external.selectedCandidate}
-          metadataEntries={external.metadataEntries}
-          bodyEntries={external.bodyEntries}
-          selectedFields={external.selectedFields}
-          selectedBodySections={external.selectedBodySections}
-          providerCatalog={providerCatalog.data}
-          providerOptions={external.providerOptions}
-          externalSearchEnabled={external.externalSearchEnabled}
-          bodyText={body}
-          searching={external.searching}
-          applying={false}
-          contentWritable={contentWritable}
-          applyLabel="Use Selected"
-          coverDownloadAvailable={external.coverDownloadAvailable}
-          downloadCover={external.downloadAfterApply}
-          onDownloadCoverChange={external.setDownloadAfterApply}
-          emptyMessage={external.emptyMessage}
-          onOpenChange={external.setOpen}
-          onQueryChange={external.setQuery}
-          onProviderChange={external.setProvider}
-          onSearch={() => {
-            setMessage(undefined);
-            void external.search();
-          }}
-          onChooseCandidate={external.chooseCandidate}
-          onSelectedFieldsChange={external.setSelectedFields}
-          onSelectedBodySectionsChange={external.setSelectedBodySections}
-          onApply={applyCandidate}
-        />
 
         <MetadataEditor
           title="Metadata"
