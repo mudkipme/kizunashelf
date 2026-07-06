@@ -436,7 +436,7 @@ pub(crate) async fn external_search(
     // Resolve each candidate against every type it was searched for (once,
     // server-side, so every runtime applies identical values), tag any that
     // already exist in the library, and keep priority order within each type.
-    let existing_index = build_existing_ref_index(&library);
+    let existing_index = build_existing_index(&library);
     let mut items = Vec::new();
     for (type_config, configured, order) in &per_type {
         let mut seen: HashSet<(&str, &str)> = HashSet::new();
@@ -452,7 +452,7 @@ pub(crate) async fn external_search(
                     continue;
                 }
                 let mut item = mapping::match_candidate(candidate.clone(), type_config);
-                item.existing = lookup_existing(&existing_index, candidate);
+                item.existing = lookup_existing(&existing_index, candidate, &type_config.id);
                 items.push(item);
             }
         }
@@ -487,52 +487,152 @@ fn normalize_external_ref(value: &str) -> String {
     without_scheme.trim_end_matches('/').nfc().collect()
 }
 
-/// Builds the reverse index `(provider, normalized-ref) → existing entity` from
-/// the resident library, so a search result can be flagged as already-in-library
-/// and a quick-add can short-circuit to it. Spans every type: a candidate for one
-/// type may already exist under another. Pure and library-only (no network), so
-/// it is cheap to rebuild per request.
-fn build_existing_ref_index(
-    library: &Library,
-) -> HashMap<(&'static str, String), ExistingEntityRef> {
-    let mut index = HashMap::new();
-    for summary in library.summaries() {
-        let Some(type_config) = library.config.type_config(&summary.entity_type) else {
+/// Normalizes a title (or a filename) into a loose comparison key: NFC,
+/// lowercased, with the filename-forbidden punctuation (both the ASCII forms and
+/// the full-width stand-ins [`derive_basename`](super::mutations) writes) folded to
+/// spaces and runs of whitespace collapsed. Folding lets a title compare equal to
+/// the basename derived from it (`Fate/stay night` ⇔ `Fate／stay night`) and keeps
+/// the match forgiving of punctuation differences. Returns an empty string for a
+/// blank title (never a match key).
+fn normalize_title(value: &str) -> String {
+    use unicode_normalization::UnicodeNormalization;
+    const FOLD: &[char] = &[
+        '/', '\\', ':', '*', '?', '"', '<', '>', '|', '／', '＼', '：', '＊', '？', '＂', '＜',
+        '＞', '｜',
+    ];
+    let mut out = String::new();
+    let mut pending_space = false;
+    for character in value.trim().nfc() {
+        if character.is_whitespace() || FOLD.contains(&character) {
+            pending_space = !out.is_empty();
             continue;
+        }
+        if pending_space {
+            out.push(' ');
+            pending_space = false;
+        }
+        out.extend(character.to_lowercase());
+    }
+    out
+}
+
+/// Reverse indices from the resident library, so a search result can be flagged
+/// as already-in-library (and a quick-add can short-circuit to it). Pure and
+/// library-only (no network), cheap to rebuild per request.
+///
+/// The external-ref index spans every type (a ref is precise, and the same work
+/// may already exist under a different type). The title indices are keyed by
+/// entity type so a loose title match only fires within the type being added —
+/// same-titled works of different types aren't conflated.
+#[derive(Default)]
+struct ExistingIndex {
+    /// `(provider, normalized-ref) → entity` — the candidate's URL or source id.
+    by_ref: HashMap<(&'static str, String), ExistingEntityRef>,
+    /// `(type, normalized-title) → entity` for each entity's filename and its
+    /// canonical (original-role) title — matched against *any* candidate title.
+    by_title: HashMap<(String, String), ExistingEntityRef>,
+    /// `(type, language, normalized-title) → entity` for each per-language title —
+    /// matched only against the candidate's title *in the same language*.
+    by_lang_title: HashMap<(String, String, String), ExistingEntityRef>,
+}
+
+fn build_existing_index(library: &Library) -> ExistingIndex {
+    let mut index = ExistingIndex::default();
+    for summary in library.summaries() {
+        let entity = ExistingEntityRef {
+            id: summary.id.clone(),
+            title: summary.title.clone(),
         };
-        for (field_name, stored_value) in &summary.external_refs {
-            let provider = type_config
-                .fields
-                .iter()
-                .find(|field| field.field == *field_name)
-                .and_then(|field| field.external_ref.as_deref())
-                .and_then(provider_for_external_ref);
-            if let Some(provider) = provider {
-                index.insert(
-                    (provider, normalize_external_ref(stored_value)),
-                    ExistingEntityRef {
-                        id: summary.id.clone(),
-                        title: summary.title.clone(),
-                    },
-                );
+        if let Some(type_config) = library.config.type_config(&summary.entity_type) {
+            for (field_name, stored_value) in &summary.external_refs {
+                let provider = type_config
+                    .fields
+                    .iter()
+                    .find(|field| field.field == *field_name)
+                    .and_then(|field| field.external_ref.as_deref())
+                    .and_then(provider_for_external_ref);
+                if let Some(provider) = provider {
+                    index
+                        .by_ref
+                        .entry((provider, normalize_external_ref(stored_value)))
+                        .or_insert_with(|| entity.clone());
+                }
+            }
+        }
+        // Filename and canonical title match against any candidate title.
+        for title in [summary.basename.as_str(), summary.title.as_str()] {
+            let key = normalize_title(title);
+            if !key.is_empty() {
+                index
+                    .by_title
+                    .entry((summary.entity_type.clone(), key))
+                    .or_insert_with(|| entity.clone());
+            }
+        }
+        // Per-language titles match same-language only.
+        for (language, title) in &summary.titles {
+            let key = normalize_title(title);
+            if !key.is_empty() {
+                index
+                    .by_lang_title
+                    .entry((summary.entity_type.clone(), language.clone(), key))
+                    .or_insert_with(|| entity.clone());
             }
         }
     }
     index
 }
 
-/// The existing library entity a candidate already maps to, if any — matched on
-/// the candidate's provider and either its URL or its source id.
+/// The existing library entity a candidate (resolved for `entity_type`) already
+/// maps to, if any — a deliberately loose "already in library" check. Checks 2–3
+/// are scoped to `entity_type`:
+///
+/// 1. an external ref matching the candidate's provider + URL/source id (any type);
+/// 2. the entity's filename or canonical title equal to any candidate title;
+/// 3. a per-language title equal to the candidate's title in that same language.
 fn lookup_existing(
-    index: &HashMap<(&'static str, String), ExistingEntityRef>,
+    index: &ExistingIndex,
     candidate: &ExternalCandidate,
+    entity_type: &str,
 ) -> Option<ExistingEntityRef> {
-    let provider = provider_for_external_ref(&candidate.provider)?;
-    for raw in [candidate.url.as_str(), candidate.source_id.as_str()] {
-        if let Some(existing) = index.get(&(provider, normalize_external_ref(raw))) {
+    // 1. External ref — the precise signal, so it wins.
+    if let Some(provider) = provider_for_external_ref(&candidate.provider) {
+        for raw in [candidate.url.as_str(), candidate.source_id.as_str()] {
+            if let Some(existing) = index.by_ref.get(&(provider, normalize_external_ref(raw))) {
+                return Some(existing.clone());
+            }
+        }
+    }
+
+    // 2. Any candidate title equal to the entity's filename or canonical title.
+    let candidate_titles = std::iter::once(candidate.title.as_str())
+        .chain(candidate.original_title.as_deref())
+        .chain(candidate.titles.values().map(String::as_str));
+    for title in candidate_titles {
+        let key = normalize_title(title);
+        if key.is_empty() {
+            continue;
+        }
+        if let Some(existing) = index.by_title.get(&(entity_type.to_string(), key)) {
             return Some(existing.clone());
         }
     }
+
+    // 3. Same-language title match.
+    for (language, title) in &candidate.titles {
+        let key = normalize_title(title);
+        if key.is_empty() {
+            continue;
+        }
+        if let Some(existing) =
+            index
+                .by_lang_title
+                .get(&(entity_type.to_string(), language.clone(), key))
+        {
+            return Some(existing.clone());
+        }
+    }
+
     None
 }
 
@@ -551,9 +651,10 @@ pub(crate) async fn quick_add_entity(
     let candidate = &request.candidate;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
-    // Already in the library (via an external ref)? Return it, create nothing.
-    let existing_index = build_existing_ref_index(&library);
-    if let Some(existing) = lookup_existing(&existing_index, candidate) {
+    // Already in the library (external ref or a loose title match for this type)?
+    // Return it, create nothing.
+    let existing_index = build_existing_index(&library);
+    if let Some(existing) = lookup_existing(&existing_index, candidate, &request.entity_type) {
         if let Some(record) = library.record_by_id(&existing.id) {
             let entity = load_entity(&library.config, vfs.as_ref(), &record.summary).await?;
             return Ok(Json(QuickAddResponse {
@@ -1346,6 +1447,27 @@ mod tests {
         }
     }
 
+    fn titled_candidate(
+        title: &str,
+        original: Option<&str>,
+        titles: &[(&str, &str)],
+    ) -> ExternalCandidate {
+        ExternalCandidate {
+            provider: "bangumi".to_string(),
+            source_id: "x".to_string(),
+            url: "https://bgm.tv/subject/x".to_string(),
+            title: title.to_string(),
+            original_title: original.map(str::to_string),
+            brief: None,
+            cover_url: None,
+            titles: titles
+                .iter()
+                .map(|(language, value)| (language.to_string(), value.to_string()))
+                .collect(),
+            metadata: Map::new(),
+        }
+    }
+
     #[test]
     fn normalize_external_ref_is_scheme_slash_and_case_insensitive() {
         assert_eq!(
@@ -1356,9 +1478,21 @@ mod tests {
     }
 
     #[test]
+    fn normalize_title_folds_forbidden_punctuation_and_case() {
+        // The full-width basename form folds equal to the ASCII title form.
+        assert_eq!(
+            normalize_title("Fate/stay night"),
+            normalize_title("Fate／stay night")
+        );
+        assert_eq!(normalize_title("  Re:ZERO  "), "re zero");
+        assert_eq!(normalize_title("A   B"), "a b");
+        assert_eq!(normalize_title("   "), "");
+    }
+
+    #[test]
     fn lookup_existing_matches_on_url_or_source_id_and_provider() {
-        let mut index = HashMap::new();
-        index.insert(
+        let mut index = ExistingIndex::default();
+        index.by_ref.insert(
             (
                 "bangumi",
                 normalize_external_ref("https://bgm.tv/subject/123"),
@@ -1369,7 +1503,7 @@ mod tests {
             },
         );
         // A hand-edited bare id stored for another entity.
-        index.insert(
+        index.by_ref.insert(
             ("igdb", normalize_external_ref("456")),
             ExistingEntityRef {
                 id: "game:Bar".to_string(),
@@ -1377,10 +1511,11 @@ mod tests {
             },
         );
 
-        // URL match (scheme-insensitive), correct provider.
+        // URL match (scheme-insensitive), correct provider — refs match cross-type.
         let hit = lookup_existing(
             &index,
             &candidate("bangumi", "123", "http://bgm.tv/subject/123"),
+            "anime",
         );
         assert_eq!(hit.unwrap().id, "anime:Foo");
 
@@ -1388,21 +1523,73 @@ mod tests {
         let hit = lookup_existing(
             &index,
             &candidate("igdb", "456", "https://igdb.com/games/bar"),
+            "game",
         );
         assert_eq!(hit.unwrap().id, "game:Bar");
 
         // Right value, wrong provider → no match (cross-provider false positives).
         assert!(lookup_existing(
             &index,
-            &candidate("mal", "123", "http://bgm.tv/subject/123")
+            &candidate("mal", "123", "http://bgm.tv/subject/123"),
+            "anime",
         )
         .is_none());
 
         // Unknown candidate.
         assert!(lookup_existing(
             &index,
-            &candidate("bangumi", "999", "http://bgm.tv/subject/999")
+            &candidate("bangumi", "999", "http://bgm.tv/subject/999"),
+            "anime",
         )
         .is_none());
+    }
+
+    #[test]
+    fn lookup_existing_matches_filename_against_any_candidate_title_within_type() {
+        let mut index = ExistingIndex::default();
+        // An entity whose filename carries the full-width form of the title.
+        index.by_title.insert(
+            ("anime".to_string(), normalize_title("Fate／stay night")),
+            ExistingEntityRef {
+                id: "anime:Fate".to_string(),
+                title: "Fate".to_string(),
+            },
+        );
+        let cand = titled_candidate("Fate/stay night", None, &[("ja", "フェイト")]);
+        assert_eq!(
+            lookup_existing(&index, &cand, "anime").unwrap().id,
+            "anime:Fate"
+        );
+        // Type-scoped: the same title under a different type is not "in library".
+        assert!(lookup_existing(&index, &cand, "manga").is_none());
+    }
+
+    #[test]
+    fn lookup_existing_matches_same_language_title_only() {
+        let mut index = ExistingIndex::default();
+        index.by_lang_title.insert(
+            (
+                "anime".to_string(),
+                "ja".to_string(),
+                normalize_title("鋼の錬金術師"),
+            ),
+            ExistingEntityRef {
+                id: "anime:FMA".to_string(),
+                title: "FMA".to_string(),
+            },
+        );
+        // Same-language (ja) title matches.
+        let cand = titled_candidate(
+            "Fullmetal Alchemist",
+            None,
+            &[("ja", "鋼の錬金術師"), ("en", "Fullmetal Alchemist")],
+        );
+        assert_eq!(
+            lookup_existing(&index, &cand, "anime").unwrap().id,
+            "anime:FMA"
+        );
+        // The same string under a *different* language must not match.
+        let cross = titled_candidate("x", None, &[("en", "鋼の錬金術師")]);
+        assert!(lookup_existing(&index, &cross, "anime").is_none());
     }
 }
