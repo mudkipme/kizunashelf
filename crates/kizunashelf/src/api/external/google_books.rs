@@ -1,9 +1,11 @@
 use super::{
     external_client, field_option, insert_str, normalize_isbn, provider_error, string_list,
-    strip_html, type_option, ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    strip_html, type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
 };
+use crate::api::state::AppState;
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::secrets::SECRET_GOOGLE_BOOKS_API_KEY;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
@@ -15,6 +17,25 @@ impl ExternalProvider for GoogleBooksProvider {
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         google_books_supported(provider_config)
+    }
+
+    fn credentials() -> &'static [CredentialSpec] {
+        &[CredentialSpec {
+            key: SECRET_GOOGLE_BOOKS_API_KEY,
+            label: "Google Books API Key",
+            secret: true,
+            required: true,
+        }]
+    }
+
+    fn available(state: &AppState) -> bool {
+        google_books_api_key(state).is_some()
+    }
+
+    fn unavailable_reason(state: &AppState) -> Option<String> {
+        google_books_api_key(state)
+            .is_none()
+            .then(|| "Set the Google Books API key".to_string())
     }
 
     fn default_external_types() -> &'static [&'static str] {
@@ -30,14 +51,21 @@ impl ExternalProvider for GoogleBooksProvider {
     }
 
     async fn search(
-        _state: &super::AppState,
+        state: &AppState,
         q: &str,
         page: usize,
         page_size: usize,
         provider_config: &ProviderSearchConfig,
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
-        search_google_books(q, page, page_size, provider_config).await
+        search_google_books(state, q, page, page_size, provider_config).await
     }
+}
+
+fn google_books_api_key(state: &AppState) -> Option<String> {
+    state
+        .secret_store()
+        .get(SECRET_GOOGLE_BOOKS_API_KEY)
+        .filter(|value| !value.is_empty())
 }
 
 /// Google Books only catalogs books; honor an explicit `book` constraint but
@@ -73,6 +101,7 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
 }
 
 async fn search_google_books(
+    state: &AppState,
     q: &str,
     page: usize,
     page_size: usize,
@@ -81,6 +110,10 @@ async fn search_google_books(
     if !google_books_supported(provider_config) {
         return Ok(Vec::new());
     }
+    // Keyless access to the Google Books API shares one exhausted anonymous quota
+    // and returns HTTP 429 for every request, so a key is required.
+    let api_key = google_books_api_key(state)
+        .ok_or_else(|| ApiError::bad_request("Set the Google Books API key"))?;
     let client = external_client();
     // A pasted Google Books URL/volume id resolves to a single volume.
     if let Some(volume_id) = google_books_volume_id(q) {
@@ -89,6 +122,7 @@ async fn search_google_books(
                 "https://www.googleapis.com/books/v1/volumes/{volume_id}"
             ))
             .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[("country", "us"), ("key", api_key.as_str())])
             .send()
             .await
             .map_err(provider_error)?
@@ -109,6 +143,7 @@ async fn search_google_books(
             ("startIndex", &start_index.to_string()),
             ("maxResults", &page_size.to_string()),
             ("maxAllowedMaturityRating", "MATURE"),
+            ("key", api_key.as_str()),
         ])
         .send()
         .await

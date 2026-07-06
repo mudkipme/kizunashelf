@@ -28,6 +28,7 @@ pub const SECRET_DISCOGS_TOKEN: &str = "discogs_token";
 pub const SECRET_MAL_CLIENT_ID: &str = "mal_client_id";
 pub const SECRET_COMICVINE_API_KEY: &str = "comicvine_api_key";
 pub const SECRET_HARDCOVER_API_KEY: &str = "hardcover_api_key";
+pub const SECRET_GOOGLE_BOOKS_API_KEY: &str = "google_books_api_key";
 
 /// Maps a credential key to its `KIZUNASHELF_*` env var, e.g. `igdb_client_id` →
 /// `KIZUNASHELF_IGDB_CLIENT_ID`. The provider catalog ([`crate::api`]) is the

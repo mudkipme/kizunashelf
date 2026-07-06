@@ -140,6 +140,7 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_MAL_CLIENT_ID` | MyAnimeList API client id for anime/manga matching. |
 | `KIZUNASHELF_COMICVINE_API_KEY` | Comic Vine API key for comic matching. |
 | `KIZUNASHELF_HARDCOVER_API_KEY` | Hardcover API token (the full `Bearer …` value) for book matching. |
+| `KIZUNASHELF_GOOGLE_BOOKS_API_KEY` | Google Books API key for book matching (keyless access shares an exhausted quota and returns 429). |
 
 These provider-credential variables apply to the **web** runtime only. Each is derived mechanically from the credential key a provider declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. The desktop and iOS apps read credentials from the OS keychain (entered in Settings → Provider Credentials, rendered from the same catalog), not from the environment. Run multiple instances — each with its own `KIZUNASHELF_VAULT_ROOT` and `PORT` — to serve multiple vaults.
 
@@ -491,7 +492,7 @@ Supported providers (keyless unless noted):
 - **Spotify** — albums, artists (search + resolve). Requires a Spotify client id and secret.
 - **MusicBrainz** — releases, artists, release groups (search + resolve).
 - **Discogs** — releases, masters (search + resolve). Requires a Discogs token.
-- **Google Books** — books (search + resolve).
+- **Google Books** — books (search + resolve). Requires a Google Books API key.
 - **Open Library** — books, works (search + resolve).
 - **Hardcover** — books (search + resolve, via the GraphQL API). Requires a Hardcover API token.
 - **MyAnimeList** — anime, manga (search + resolve). Requires a MyAnimeList API client id.
