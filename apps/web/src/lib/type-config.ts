@@ -85,7 +85,13 @@ export function entityFieldLabel(
   type: string,
   field: string,
 ) {
-  return labelsByType?.get(type)?.get(field) ?? field;
+  const configured = labelsByType?.get(type)?.get(field);
+  if (configured) return configured;
+  // The untyped body-wikilink pseudo-field ("body") reads as "Notes" — matching
+  // the outgoing side (`fieldLabelForKey`) and the detail page's Notes section —
+  // unless the type declares a real field named "body" (a hit above).
+  if (field === "body") return "Notes";
+  return field;
 }
 
 export function dateRoleFields(typeConfig: TypeConfig | undefined, dateRole: DateRole): FieldConfig[] {

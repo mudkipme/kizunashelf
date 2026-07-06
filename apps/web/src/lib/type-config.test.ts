@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   configuredFieldLabel,
+  entityFieldLabel,
   type FieldConfig,
   type FieldType,
   fieldTypeLabel,
@@ -73,5 +74,24 @@ describe("configuredFieldLabel", () => {
     expect(configuredFieldLabel(field({ field: "rating", fieldType: "rating" }))).toBe(
       "Rating: rating",
     );
+  });
+});
+
+describe("entityFieldLabel", () => {
+  it("reads the untyped body pseudo-field as Notes (e.g. inbound 'Linked from')", () => {
+    expect(entityFieldLabel(undefined, "anime", "body")).toBe("Notes");
+    const labels = new Map([["anime", new Map([["studio", "Studio"]])]]);
+    expect(entityFieldLabel(labels, "anime", "body")).toBe("Notes");
+  });
+
+  it("prefers a real configured field named body over the Notes fallback", () => {
+    const labels = new Map([["anime", new Map([["body", "Synopsis"]])]]);
+    expect(entityFieldLabel(labels, "anime", "body")).toBe("Synopsis");
+  });
+
+  it("uses the configured label, else the raw field name", () => {
+    const labels = new Map([["anime", new Map([["studio", "Studio"]])]]);
+    expect(entityFieldLabel(labels, "anime", "studio")).toBe("Studio");
+    expect(entityFieldLabel(labels, "anime", "unknown")).toBe("unknown");
   });
 });
