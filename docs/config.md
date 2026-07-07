@@ -300,9 +300,9 @@ KizunaShelf exposes:
 | `entity.title` | Language-agnostic fallback title, used in search and wherever no viewer language applies. |
 | `entity.titles` | Title map keyed by language, used for language switching, subtitle display, and search. |
 
-There is no `defaultTitle` flag. The **displayed** title is chosen by the viewer's
-language: the web app has a global language selector (defaulting to the browser
-language); iOS uses the system language. Each surface resolves a title as:
+There is no `defaultTitle` flag. The **displayed** title is chosen by the
+viewer's language (see [Language preference](#language-preference) below). Each
+surface resolves a title as:
 
 1. The viewer language's title — `entity.titles[language]`
 2. Otherwise `entity.title` (the language-agnostic fallback below)
@@ -315,6 +315,43 @@ The core computes `entity.title` as the fallback, in this order:
 4. Otherwise the filename basename
 
 So the effective resolution is **selected language → original → other titles**.
+
+### Language preference
+
+Each client holds **one per-device language preference** (not in the vault
+config — it's a viewer choice, so it lives in web `localStorage` / iOS
+`UserDefaults`, sourced per runtime). Everything language-sensitive derives from
+that single value:
+
+- **UI language** — the app chrome is translated into English, Japanese,
+  Simplified Chinese, and Traditional Chinese. A preference outside that set
+  falls back to the **English UI** (titles still follow the preference). Which
+  languages a client's UI ships is a per-client fact, not something the core
+  reports — `GET /api/languages` returns the selectable options
+  (`userLanguages`: `code`, endonym `label`, `titleLanguage`), and each client
+  layers "is my UI translated into this" on top.
+- **Title/content language** — the preference's bare primary subtag
+  (`zh-Hans` → `zh`) keys `entity.titles[language]`. **Title languages and the
+  schema's `titleLanguage` are always bare ISO codes** — script subtags never
+  enter `titles` maps, `titleLanguage` config, or the dedup index.
+- **Provider request language** — the raw preference (which *may* carry a script
+  subtag) is sent to external providers on search / quick-add / episode fetch,
+  so a provider that distinguishes Simplified vs Traditional (TMDB, Steam) can
+  localize; the core normalizes the subtag per provider (TheTVDB collapses to
+  one Chinese bucket, TMDB maps `zh-Hant` → `zh-TW`, etc.).
+
+**Simplified vs Traditional Chinese.** The picker offers `zh-Hans` (简体中文)
+and `zh-Hant` (繁體中文) as distinct UI languages, but both map to the single
+title language `zh`. A vault therefore has **one `zh` title bucket**, not two:
+whichever script a provider returned (or the user typed) is what's stored, and
+every Chinese viewer sees that stored script. This is a deliberate simplicity
+trade-off — keeping two Chinese title fields per type would burden every user to
+avoid an occasional script mismatch. (A future Simplified↔Traditional fold at
+search/dedup time could soften it; it is out of scope today.)
+
+Server responses (`ApiError` messages, etc.) are **not** localized — clients
+surface them in English. Only the schema-derived, data-driven labels (type/field
+names, headings) and the client UI strings are translated.
 
 All configured title fields are title data:
 

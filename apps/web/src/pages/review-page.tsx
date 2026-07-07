@@ -10,6 +10,7 @@ import { errorMessage } from "@/api/client";
 import { cleanupQueuesQuery, configQuery } from "@/api/queries";
 import { AssetDownloadPanel } from "@/components/assets/asset-download-panel";
 import { EntityDateList } from "@/components/assets/entity-date-list";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,6 @@ import {
 } from "@/lib/entity-filters";
 import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
 import { useNumberFormat } from "@/lib/locale";
-import { entityTitle } from "@/lib/title-language";
 import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type {
@@ -320,7 +320,7 @@ function EntitySummaryCell({
           to={`/entities/${encodeURIComponent(entity.id)}`}
           className={cn("min-w-0 truncate font-medium hover:underline", compact ? "text-xs" : "text-sm")}
         >
-          {entityTitle(entity, language)}
+          <EntityTitle entity={entity} language={language} />
         </Link>
         <Badge variant="outline">{entity.typeLabel}</Badge>
         {showBasename ? <Badge variant="secondary" className="font-mono">{entity.basename}</Badge> : null}

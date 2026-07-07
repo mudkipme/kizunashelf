@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
-import { entityTitle } from "@/lib/title-language";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { cn } from "@/lib/utils";
 import type { CalendarDay } from "@/types/api";
 
@@ -39,9 +39,13 @@ export function CalendarDayCell({
 
       <div className="hidden min-w-0 flex-col gap-1 sm:flex">
         {uniqueEntries.slice(0, 3).map((entry) => (
-          <span key={entry.id} className="truncate text-xs text-muted-foreground">
-            {entityTitle(entry.entity, language)}
-          </span>
+          <EntityTitle
+            key={entry.id}
+            as="span"
+            entity={entry.entity}
+            language={language}
+            className="truncate text-xs text-muted-foreground"
+          />
         ))}
         {uniqueEntries.length > 3 ? (
           <span className="text-xs text-muted-foreground">+{uniqueEntries.length - 3}</span>

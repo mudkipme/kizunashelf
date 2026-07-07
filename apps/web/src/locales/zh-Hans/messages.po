@@ -84,9 +84,9 @@ msgstr "{0, plural, other {# 项}}"
 
 #. placeholder {0}: entity.relationCount
 #. placeholder {0}: scopeStats?.relations ?? 0
-#: src/components/assets/entity-grid-item.tsx:63
+#: src/components/assets/entity-grid-item.tsx:68
 #: src/components/assets/entity-list-item.tsx:48
-#: src/components/home/home-entity-card.tsx:46
+#: src/components/home/home-entity-card.tsx:51
 #: src/pages/library-page.tsx:343
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 个关联}}"
@@ -230,7 +230,7 @@ msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 编辑操作不可用。"
 
-#: src/components/home/coming-up-section.tsx:136
+#: src/components/home/coming-up-section.tsx:141
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 天}}"
 
@@ -319,7 +319,7 @@ msgstr "活动"
 #: src/pages/home-page.tsx:53
 #: src/pages/library-page.tsx:406
 #: src/pages/library-page.tsx:411
-#: src/pages/list-detail-page.tsx:919
+#: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "添加"
 
@@ -369,7 +369,7 @@ msgid "Add Filter"
 msgstr "添加筛选条件"
 
 #: src/pages/list-detail-page.tsx:451
-#: src/pages/list-detail-page.tsx:875
+#: src/pages/list-detail-page.tsx:878
 msgid "Add items"
 msgstr "添加项目"
 
@@ -390,7 +390,7 @@ msgid "Add value"
 msgstr "添加值"
 
 #: src/components/settings/preset-picker.tsx:337
-#: src/pages/list-detail-page.tsx:908
+#: src/pages/list-detail-page.tsx:916
 msgid "Added"
 msgstr "已添加"
 
@@ -543,7 +543,7 @@ msgstr "日历"
 #: src/pages/import-wizard-page.tsx:223
 #: src/pages/import-wizard-page.tsx:264
 #: src/pages/list-detail-page.tsx:528
-#: src/pages/list-detail-page.tsx:994
+#: src/pages/list-detail-page.tsx:1002
 #: src/pages/lists-page.tsx:160
 msgid "Cancel"
 msgstr "取消"
@@ -557,7 +557,7 @@ msgstr "补上进度"
 msgid "Change completion date"
 msgstr "更改完成日期"
 
-#: src/pages/list-detail-page.tsx:970
+#: src/pages/list-detail-page.tsx:978
 msgid "Changes the list's name."
 msgstr "更改列表的名称。"
 
@@ -637,7 +637,7 @@ msgstr "已连接"
 msgid "Connection Fields"
 msgstr "连接字段"
 
-#: src/components/assets/entity-detail.tsx:180
+#: src/components/assets/entity-detail.tsx:186
 #: src/pages/statistics-page.tsx:51
 msgid "Connections"
 msgstr "连接"
@@ -776,7 +776,7 @@ msgstr "有日期"
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
 msgstr "按月份和年份统计有日期的条目 — 将今年与往年对比，按类型筛选"
 
-#: src/components/assets/entity-detail.tsx:231
+#: src/components/assets/entity-detail.tsx:237
 msgid "Dates"
 msgstr "日期"
 
@@ -819,7 +819,7 @@ msgstr "描述"
 msgid "Deselect group"
 msgstr "取消选择分组"
 
-#: src/components/assets/entity-detail.tsx:143
+#: src/components/assets/entity-detail.tsx:149
 msgid "Details"
 msgstr "详情"
 
@@ -847,7 +847,7 @@ msgstr "显示名称"
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
 #: src/pages/entity-page.tsx:631
-#: src/pages/list-detail-page.tsx:930
+#: src/pages/list-detail-page.tsx:938
 msgid "Done"
 msgstr "完成"
 
@@ -889,7 +889,7 @@ msgid "Duplicate Filenames"
 msgstr "重复的文件名"
 
 #: src/pages/entity-page.tsx:434
-#: src/pages/list-detail-page.tsx:819
+#: src/pages/list-detail-page.tsx:822
 msgid "Edit"
 msgstr "编辑"
 
@@ -1201,12 +1201,12 @@ msgstr "标签"
 msgid "lang {0}"
 msgstr "语言 {0}"
 
+#: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/layout/language-select.tsx:54
 msgid "Language"
 msgstr "语言"
 
-#: src/components/home/coming-up-section.tsx:166
+#: src/components/home/coming-up-section.tsx:171
 msgid "Later"
 msgstr "稍后"
 
@@ -1244,15 +1244,15 @@ msgstr "行格式"
 msgid "Link your new types"
 msgstr "关联你的新类型"
 
-#: src/components/assets/entity-detail.tsx:190
+#: src/components/assets/entity-detail.tsx:196
 msgid "Linked from"
 msgstr "被以下引用"
 
-#: src/components/assets/entity-detail.tsx:209
+#: src/components/assets/entity-detail.tsx:215
 msgid "Links"
 msgstr "关联"
 
-#: src/components/assets/entity-detail.tsx:183
+#: src/components/assets/entity-detail.tsx:189
 msgid "Links to"
 msgstr "关联到"
 
@@ -1314,7 +1314,7 @@ msgstr "正在加载分类"
 #: src/pages/import-wizard-page.tsx:207
 #: src/pages/library-page.tsx:393
 #: src/pages/list-detail-page.tsx:385
-#: src/pages/list-detail-page.tsx:890
+#: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
 #: src/pages/onboarding-page.tsx:53
 #: src/pages/review-page.tsx:128
@@ -1440,7 +1440,7 @@ msgstr "音乐"
 msgid "My Vault"
 msgstr "我的保管库"
 
-#: src/pages/list-detail-page.tsx:982
+#: src/pages/list-detail-page.tsx:990
 #: src/pages/lists-page.tsx:147
 msgid "Name"
 msgstr "名称"
@@ -1576,7 +1576,7 @@ msgstr "暂无项目 — 从数据源同步，或在 <0>{0}</0> 标题下添加�
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "暂无项目。使用「添加项目」将条目加入此列表，或使用「添加板块」将其分组。"
 
-#: src/components/assets/entity-detail.tsx:226
+#: src/components/assets/entity-detail.tsx:232
 msgid "No links yet"
 msgstr "暂无关联"
 
@@ -1600,7 +1600,7 @@ msgstr "无匹配来源"
 msgid "No matches found."
 msgstr "未找到匹配项。"
 
-#: src/pages/list-detail-page.tsx:894
+#: src/pages/list-detail-page.tsx:897
 msgid "No matching entities."
 msgstr "无匹配的条目。"
 
@@ -1669,7 +1669,7 @@ msgstr "笔记 <0>（可选）</0>"
 msgid "notes"
 msgstr "笔记"
 
-#: src/components/assets/entity-detail.tsx:201
+#: src/components/assets/entity-detail.tsx:207
 #: src/components/entities/metadata-editor.tsx:165
 #: src/pages/list-detail-page.tsx:488
 msgid "Notes"
@@ -1790,7 +1790,7 @@ msgstr "计划中"
 msgid "Prev"
 msgstr "上一步"
 
-#: src/pages/list-detail-page.tsx:819
+#: src/pages/list-detail-page.tsx:822
 msgid "Preview"
 msgstr "预览"
 
@@ -1904,7 +1904,7 @@ msgstr "移除筛选条件"
 msgid "Remove image"
 msgstr "移除图片"
 
-#: src/pages/list-detail-page.tsx:787
+#: src/pages/list-detail-page.tsx:790
 msgid "Remove item"
 msgstr "移除项目"
 
@@ -1925,11 +1925,11 @@ msgstr "移除类型"
 #: src/pages/entity-page.tsx:705
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
-#: src/pages/list-detail-page.tsx:998
+#: src/pages/list-detail-page.tsx:1006
 msgid "Rename"
 msgstr "重命名"
 
-#: src/pages/list-detail-page.tsx:967
+#: src/pages/list-detail-page.tsx:975
 msgid "Rename list"
 msgstr "重命名列表"
 
@@ -1947,7 +1947,7 @@ msgid "renamed to “{0}”"
 msgstr "重命名为「{0}」"
 
 #: src/pages/entity-page.tsx:705
-#: src/pages/list-detail-page.tsx:998
+#: src/pages/list-detail-page.tsx:1006
 msgid "Renaming…"
 msgstr "正在重命名…"
 
@@ -2009,11 +2009,11 @@ msgstr "搜索"
 msgid "Search {activeTypeLabel}"
 msgstr "搜索 {activeTypeLabel}"
 
-#: src/pages/list-detail-page.tsx:878
+#: src/pages/list-detail-page.tsx:881
 msgid "Search entities and add them to this list."
 msgstr "搜索条目并将其添加到此列表。"
 
-#: src/pages/list-detail-page.tsx:884
+#: src/pages/list-detail-page.tsx:887
 msgid "Search entities…"
 msgstr "搜索条目…"
 
@@ -2291,7 +2291,7 @@ msgstr "页面遇到意外错误。你可以重试，或重新加载应用。"
 msgid "These existing types can link to what you're adding."
 msgstr "这些现有类型可以关联到你正在添加的内容。"
 
-#: src/components/home/coming-up-section.tsx:165
+#: src/components/home/coming-up-section.tsx:170
 msgid "This month"
 msgstr "本月"
 
@@ -2305,7 +2305,7 @@ msgstr "这会将 {0} 移到回收站。如需要，之后可以恢复。"
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 msgstr "这会将 <0>{0}</0> 移到回收站。其中包含的项目不受影响。"
 
-#: src/components/home/coming-up-section.tsx:164
+#: src/components/home/coming-up-section.tsx:169
 msgid "This week"
 msgstr "本周"
 
@@ -2381,7 +2381,7 @@ msgstr "类型分布"
 msgid "Types"
 msgstr "类型"
 
-#: src/components/layout/language-select.tsx:67
+#: src/components/layout/language-select.tsx:66
 msgid "UI in English"
 msgstr "英文界面"
 
@@ -2405,7 +2405,7 @@ msgstr "无序"
 msgid "Unresolved"
 msgstr "未解析"
 
-#: src/pages/list-detail-page.tsx:772
+#: src/pages/list-detail-page.tsx:775
 msgid "Unresolved link"
 msgstr "未解析的关联"
 

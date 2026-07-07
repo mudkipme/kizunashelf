@@ -84,9 +84,9 @@ msgstr "{0, plural, other {# 件のアイテム}}"
 
 #. placeholder {0}: entity.relationCount
 #. placeholder {0}: scopeStats?.relations ?? 0
-#: src/components/assets/entity-grid-item.tsx:63
+#: src/components/assets/entity-grid-item.tsx:68
 #: src/components/assets/entity-list-item.tsx:48
-#: src/components/home/home-entity-card.tsx:46
+#: src/components/home/home-entity-card.tsx:51
 #: src/pages/library-page.tsx:343
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 件のリンク}}"
@@ -230,7 +230,7 @@ msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 編集操作は利用できません。"
 
-#: src/components/home/coming-up-section.tsx:136
+#: src/components/home/coming-up-section.tsx:141
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 日}}"
 
@@ -319,7 +319,7 @@ msgstr "アクティビティ"
 #: src/pages/home-page.tsx:53
 #: src/pages/library-page.tsx:406
 #: src/pages/library-page.tsx:411
-#: src/pages/list-detail-page.tsx:919
+#: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "追加"
 
@@ -369,7 +369,7 @@ msgid "Add Filter"
 msgstr "フィルターを追加"
 
 #: src/pages/list-detail-page.tsx:451
-#: src/pages/list-detail-page.tsx:875
+#: src/pages/list-detail-page.tsx:878
 msgid "Add items"
 msgstr "アイテムを追加"
 
@@ -390,7 +390,7 @@ msgid "Add value"
 msgstr "値を追加"
 
 #: src/components/settings/preset-picker.tsx:337
-#: src/pages/list-detail-page.tsx:908
+#: src/pages/list-detail-page.tsx:916
 msgid "Added"
 msgstr "追加済み"
 
@@ -543,7 +543,7 @@ msgstr "カレンダー"
 #: src/pages/import-wizard-page.tsx:223
 #: src/pages/import-wizard-page.tsx:264
 #: src/pages/list-detail-page.tsx:528
-#: src/pages/list-detail-page.tsx:994
+#: src/pages/list-detail-page.tsx:1002
 #: src/pages/lists-page.tsx:160
 msgid "Cancel"
 msgstr "キャンセル"
@@ -557,7 +557,7 @@ msgstr "追いつく"
 msgid "Change completion date"
 msgstr "完了日を変更"
 
-#: src/pages/list-detail-page.tsx:970
+#: src/pages/list-detail-page.tsx:978
 msgid "Changes the list's name."
 msgstr "リストの名前を変更します。"
 
@@ -637,7 +637,7 @@ msgstr "接続済み"
 msgid "Connection Fields"
 msgstr "接続フィールド"
 
-#: src/components/assets/entity-detail.tsx:180
+#: src/components/assets/entity-detail.tsx:186
 #: src/pages/statistics-page.tsx:51
 msgid "Connections"
 msgstr "接続"
@@ -776,7 +776,7 @@ msgstr "日付あり"
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
 msgstr "月・年ごとの日付付きアイテム — 今年と過去の年を比較し、タイプで絞り込みます"
 
-#: src/components/assets/entity-detail.tsx:231
+#: src/components/assets/entity-detail.tsx:237
 msgid "Dates"
 msgstr "日付"
 
@@ -819,7 +819,7 @@ msgstr "説明"
 msgid "Deselect group"
 msgstr "グループの選択を解除"
 
-#: src/components/assets/entity-detail.tsx:143
+#: src/components/assets/entity-detail.tsx:149
 msgid "Details"
 msgstr "詳細"
 
@@ -847,7 +847,7 @@ msgstr "表示名"
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
 #: src/pages/entity-page.tsx:631
-#: src/pages/list-detail-page.tsx:930
+#: src/pages/list-detail-page.tsx:938
 msgid "Done"
 msgstr "完了"
 
@@ -889,7 +889,7 @@ msgid "Duplicate Filenames"
 msgstr "重複したファイル名"
 
 #: src/pages/entity-page.tsx:434
-#: src/pages/list-detail-page.tsx:819
+#: src/pages/list-detail-page.tsx:822
 msgid "Edit"
 msgstr "編集"
 
@@ -1201,12 +1201,12 @@ msgstr "ラベル"
 msgid "lang {0}"
 msgstr "言語 {0}"
 
+#: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/layout/language-select.tsx:54
 msgid "Language"
 msgstr "言語"
 
-#: src/components/home/coming-up-section.tsx:166
+#: src/components/home/coming-up-section.tsx:171
 msgid "Later"
 msgstr "後で"
 
@@ -1244,15 +1244,15 @@ msgstr "行フォーマット"
 msgid "Link your new types"
 msgstr "新しいタイプをリンク"
 
-#: src/components/assets/entity-detail.tsx:190
+#: src/components/assets/entity-detail.tsx:196
 msgid "Linked from"
 msgstr "リンク元"
 
-#: src/components/assets/entity-detail.tsx:209
+#: src/components/assets/entity-detail.tsx:215
 msgid "Links"
 msgstr "リンク"
 
-#: src/components/assets/entity-detail.tsx:183
+#: src/components/assets/entity-detail.tsx:189
 msgid "Links to"
 msgstr "リンク先"
 
@@ -1314,7 +1314,7 @@ msgstr "分類を読み込み中"
 #: src/pages/import-wizard-page.tsx:207
 #: src/pages/library-page.tsx:393
 #: src/pages/list-detail-page.tsx:385
-#: src/pages/list-detail-page.tsx:890
+#: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
 #: src/pages/onboarding-page.tsx:53
 #: src/pages/review-page.tsx:128
@@ -1440,7 +1440,7 @@ msgstr "音楽"
 msgid "My Vault"
 msgstr "マイ保管庫"
 
-#: src/pages/list-detail-page.tsx:982
+#: src/pages/list-detail-page.tsx:990
 #: src/pages/lists-page.tsx:147
 msgid "Name"
 msgstr "名前"
@@ -1576,7 +1576,7 @@ msgstr "まだアイテムがありません — プロバイダーから同期�
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "まだアイテムがありません。「アイテムを追加」でこのリストにアイテムを入れるか、「セクションを追加」でグループ化してください。"
 
-#: src/components/assets/entity-detail.tsx:226
+#: src/components/assets/entity-detail.tsx:232
 msgid "No links yet"
 msgstr "まだリンクがありません"
 
@@ -1600,7 +1600,7 @@ msgstr "一致するソースがありません"
 msgid "No matches found."
 msgstr "一致するものが見つかりませんでした。"
 
-#: src/pages/list-detail-page.tsx:894
+#: src/pages/list-detail-page.tsx:897
 msgid "No matching entities."
 msgstr "一致するアイテムがありません。"
 
@@ -1669,7 +1669,7 @@ msgstr "ノート <0>(任意)</0>"
 msgid "notes"
 msgstr "ノート"
 
-#: src/components/assets/entity-detail.tsx:201
+#: src/components/assets/entity-detail.tsx:207
 #: src/components/entities/metadata-editor.tsx:165
 #: src/pages/list-detail-page.tsx:488
 msgid "Notes"
@@ -1790,7 +1790,7 @@ msgstr "計画中"
 msgid "Prev"
 msgstr "前へ"
 
-#: src/pages/list-detail-page.tsx:819
+#: src/pages/list-detail-page.tsx:822
 msgid "Preview"
 msgstr "プレビュー"
 
@@ -1904,7 +1904,7 @@ msgstr "フィルターを削除"
 msgid "Remove image"
 msgstr "画像を削除"
 
-#: src/pages/list-detail-page.tsx:787
+#: src/pages/list-detail-page.tsx:790
 msgid "Remove item"
 msgstr "アイテムを削除"
 
@@ -1925,11 +1925,11 @@ msgstr "タイプを削除"
 #: src/pages/entity-page.tsx:705
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
-#: src/pages/list-detail-page.tsx:998
+#: src/pages/list-detail-page.tsx:1006
 msgid "Rename"
 msgstr "名前を変更"
 
-#: src/pages/list-detail-page.tsx:967
+#: src/pages/list-detail-page.tsx:975
 msgid "Rename list"
 msgstr "リストの名前を変更"
 
@@ -1947,7 +1947,7 @@ msgid "renamed to “{0}”"
 msgstr "「{0}」に名前を変更しました"
 
 #: src/pages/entity-page.tsx:705
-#: src/pages/list-detail-page.tsx:998
+#: src/pages/list-detail-page.tsx:1006
 msgid "Renaming…"
 msgstr "名前を変更中…"
 
@@ -2009,11 +2009,11 @@ msgstr "検索"
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
 
-#: src/pages/list-detail-page.tsx:878
+#: src/pages/list-detail-page.tsx:881
 msgid "Search entities and add them to this list."
 msgstr "アイテムを検索してこのリストに追加します。"
 
-#: src/pages/list-detail-page.tsx:884
+#: src/pages/list-detail-page.tsx:887
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
@@ -2291,7 +2291,7 @@ msgstr "ページで予期しないエラーが発生しました。もう一度
 msgid "These existing types can link to what you're adding."
 msgstr "これらの既存のタイプは、追加するものにリンクできます。"
 
-#: src/components/home/coming-up-section.tsx:165
+#: src/components/home/coming-up-section.tsx:170
 msgid "This month"
 msgstr "今月"
 
@@ -2305,7 +2305,7 @@ msgstr "{0} をゴミ箱に移動します。必要になったら後で復元�
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 msgstr "<0>{0}</0> をゴミ箱に移動します。含まれるアイテムはそのままです。"
 
-#: src/components/home/coming-up-section.tsx:164
+#: src/components/home/coming-up-section.tsx:169
 msgid "This week"
 msgstr "今週"
 
@@ -2381,7 +2381,7 @@ msgstr "タイプの分布"
 msgid "Types"
 msgstr "タイプ"
 
-#: src/components/layout/language-select.tsx:67
+#: src/components/layout/language-select.tsx:66
 msgid "UI in English"
 msgstr "UI を英語で表示"
 
@@ -2405,7 +2405,7 @@ msgstr "順序なし"
 msgid "Unresolved"
 msgstr "未解決"
 
-#: src/pages/list-detail-page.tsx:772
+#: src/pages/list-detail-page.tsx:775
 msgid "Unresolved link"
 msgstr "未解決のリンク"
 

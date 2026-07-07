@@ -84,9 +84,9 @@ msgstr "{0, plural, one {# item} other {# items}}"
 
 #. placeholder {0}: entity.relationCount
 #. placeholder {0}: scopeStats?.relations ?? 0
-#: src/components/assets/entity-grid-item.tsx:63
+#: src/components/assets/entity-grid-item.tsx:68
 #: src/components/assets/entity-list-item.tsx:48
-#: src/components/home/home-entity-card.tsx:46
+#: src/components/home/home-entity-card.tsx:51
 #: src/pages/library-page.tsx:343
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, one {# link} other {# links}}"
@@ -230,7 +230,7 @@ msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 
-#: src/components/home/coming-up-section.tsx:136
+#: src/components/home/coming-up-section.tsx:141
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, one {# day} other {# days}}"
 
@@ -319,7 +319,7 @@ msgstr "Activity"
 #: src/pages/home-page.tsx:53
 #: src/pages/library-page.tsx:406
 #: src/pages/library-page.tsx:411
-#: src/pages/list-detail-page.tsx:919
+#: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "Add"
 
@@ -369,7 +369,7 @@ msgid "Add Filter"
 msgstr "Add Filter"
 
 #: src/pages/list-detail-page.tsx:451
-#: src/pages/list-detail-page.tsx:875
+#: src/pages/list-detail-page.tsx:878
 msgid "Add items"
 msgstr "Add items"
 
@@ -390,7 +390,7 @@ msgid "Add value"
 msgstr "Add value"
 
 #: src/components/settings/preset-picker.tsx:337
-#: src/pages/list-detail-page.tsx:908
+#: src/pages/list-detail-page.tsx:916
 msgid "Added"
 msgstr "Added"
 
@@ -543,7 +543,7 @@ msgstr "Calendar"
 #: src/pages/import-wizard-page.tsx:223
 #: src/pages/import-wizard-page.tsx:264
 #: src/pages/list-detail-page.tsx:528
-#: src/pages/list-detail-page.tsx:994
+#: src/pages/list-detail-page.tsx:1002
 #: src/pages/lists-page.tsx:160
 msgid "Cancel"
 msgstr "Cancel"
@@ -557,7 +557,7 @@ msgstr "Catch up"
 msgid "Change completion date"
 msgstr "Change completion date"
 
-#: src/pages/list-detail-page.tsx:970
+#: src/pages/list-detail-page.tsx:978
 msgid "Changes the list's name."
 msgstr "Changes the list's name."
 
@@ -637,7 +637,7 @@ msgstr "Connected"
 msgid "Connection Fields"
 msgstr "Connection Fields"
 
-#: src/components/assets/entity-detail.tsx:180
+#: src/components/assets/entity-detail.tsx:186
 #: src/pages/statistics-page.tsx:51
 msgid "Connections"
 msgstr "Connections"
@@ -776,7 +776,7 @@ msgstr "Dated"
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
 msgstr "Dated entities by month and year — compare this year against past years, filter by type"
 
-#: src/components/assets/entity-detail.tsx:231
+#: src/components/assets/entity-detail.tsx:237
 msgid "Dates"
 msgstr "Dates"
 
@@ -819,7 +819,7 @@ msgstr "Description"
 msgid "Deselect group"
 msgstr "Deselect group"
 
-#: src/components/assets/entity-detail.tsx:143
+#: src/components/assets/entity-detail.tsx:149
 msgid "Details"
 msgstr "Details"
 
@@ -847,7 +847,7 @@ msgstr "Display name"
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
 #: src/pages/entity-page.tsx:631
-#: src/pages/list-detail-page.tsx:930
+#: src/pages/list-detail-page.tsx:938
 msgid "Done"
 msgstr "Done"
 
@@ -889,7 +889,7 @@ msgid "Duplicate Filenames"
 msgstr "Duplicate Filenames"
 
 #: src/pages/entity-page.tsx:434
-#: src/pages/list-detail-page.tsx:819
+#: src/pages/list-detail-page.tsx:822
 msgid "Edit"
 msgstr "Edit"
 
@@ -1201,12 +1201,12 @@ msgstr "Label"
 msgid "lang {0}"
 msgstr "lang {0}"
 
+#: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/layout/language-select.tsx:54
 msgid "Language"
 msgstr "Language"
 
-#: src/components/home/coming-up-section.tsx:166
+#: src/components/home/coming-up-section.tsx:171
 msgid "Later"
 msgstr "Later"
 
@@ -1244,15 +1244,15 @@ msgstr "Line format"
 msgid "Link your new types"
 msgstr "Link your new types"
 
-#: src/components/assets/entity-detail.tsx:190
+#: src/components/assets/entity-detail.tsx:196
 msgid "Linked from"
 msgstr "Linked from"
 
-#: src/components/assets/entity-detail.tsx:209
+#: src/components/assets/entity-detail.tsx:215
 msgid "Links"
 msgstr "Links"
 
-#: src/components/assets/entity-detail.tsx:183
+#: src/components/assets/entity-detail.tsx:189
 msgid "Links to"
 msgstr "Links to"
 
@@ -1314,7 +1314,7 @@ msgstr "Loading taxonomy"
 #: src/pages/import-wizard-page.tsx:207
 #: src/pages/library-page.tsx:393
 #: src/pages/list-detail-page.tsx:385
-#: src/pages/list-detail-page.tsx:890
+#: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
 #: src/pages/onboarding-page.tsx:53
 #: src/pages/review-page.tsx:128
@@ -1440,7 +1440,7 @@ msgstr "Music"
 msgid "My Vault"
 msgstr "My Vault"
 
-#: src/pages/list-detail-page.tsx:982
+#: src/pages/list-detail-page.tsx:990
 #: src/pages/lists-page.tsx:147
 msgid "Name"
 msgstr "Name"
@@ -1576,7 +1576,7 @@ msgstr "No items yet — sync from a provider or add a list under the <0>{0}</0>
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 
-#: src/components/assets/entity-detail.tsx:226
+#: src/components/assets/entity-detail.tsx:232
 msgid "No links yet"
 msgstr "No links yet"
 
@@ -1600,7 +1600,7 @@ msgstr "No matched source"
 msgid "No matches found."
 msgstr "No matches found."
 
-#: src/pages/list-detail-page.tsx:894
+#: src/pages/list-detail-page.tsx:897
 msgid "No matching entities."
 msgstr "No matching entities."
 
@@ -1669,7 +1669,7 @@ msgstr "Note <0>(optional)</0>"
 msgid "notes"
 msgstr "notes"
 
-#: src/components/assets/entity-detail.tsx:201
+#: src/components/assets/entity-detail.tsx:207
 #: src/components/entities/metadata-editor.tsx:165
 #: src/pages/list-detail-page.tsx:488
 msgid "Notes"
@@ -1790,7 +1790,7 @@ msgstr "Planning"
 msgid "Prev"
 msgstr "Prev"
 
-#: src/pages/list-detail-page.tsx:819
+#: src/pages/list-detail-page.tsx:822
 msgid "Preview"
 msgstr "Preview"
 
@@ -1904,7 +1904,7 @@ msgstr "Remove filter"
 msgid "Remove image"
 msgstr "Remove image"
 
-#: src/pages/list-detail-page.tsx:787
+#: src/pages/list-detail-page.tsx:790
 msgid "Remove item"
 msgstr "Remove item"
 
@@ -1925,11 +1925,11 @@ msgstr "Remove type"
 #: src/pages/entity-page.tsx:705
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
-#: src/pages/list-detail-page.tsx:998
+#: src/pages/list-detail-page.tsx:1006
 msgid "Rename"
 msgstr "Rename"
 
-#: src/pages/list-detail-page.tsx:967
+#: src/pages/list-detail-page.tsx:975
 msgid "Rename list"
 msgstr "Rename list"
 
@@ -1947,7 +1947,7 @@ msgid "renamed to “{0}”"
 msgstr "renamed to “{0}”"
 
 #: src/pages/entity-page.tsx:705
-#: src/pages/list-detail-page.tsx:998
+#: src/pages/list-detail-page.tsx:1006
 msgid "Renaming…"
 msgstr "Renaming…"
 
@@ -2009,11 +2009,11 @@ msgstr "Search"
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
 
-#: src/pages/list-detail-page.tsx:878
+#: src/pages/list-detail-page.tsx:881
 msgid "Search entities and add them to this list."
 msgstr "Search entities and add them to this list."
 
-#: src/pages/list-detail-page.tsx:884
+#: src/pages/list-detail-page.tsx:887
 msgid "Search entities…"
 msgstr "Search entities…"
 
@@ -2291,7 +2291,7 @@ msgstr "The page hit an unexpected error. You can try again, or reload the app."
 msgid "These existing types can link to what you're adding."
 msgstr "These existing types can link to what you're adding."
 
-#: src/components/home/coming-up-section.tsx:165
+#: src/components/home/coming-up-section.tsx:170
 msgid "This month"
 msgstr "This month"
 
@@ -2305,7 +2305,7 @@ msgstr "This moves {0} to the Trash. You can restore it later if you need it."
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 
-#: src/components/home/coming-up-section.tsx:164
+#: src/components/home/coming-up-section.tsx:169
 msgid "This week"
 msgstr "This week"
 
@@ -2381,7 +2381,7 @@ msgstr "Type Distribution"
 msgid "Types"
 msgstr "Types"
 
-#: src/components/layout/language-select.tsx:67
+#: src/components/layout/language-select.tsx:66
 msgid "UI in English"
 msgstr "UI in English"
 
@@ -2405,7 +2405,7 @@ msgstr "Unordered"
 msgid "Unresolved"
 msgstr "Unresolved"
 
-#: src/pages/list-detail-page.tsx:772
+#: src/pages/list-detail-page.tsx:775
 msgid "Unresolved link"
 msgstr "Unresolved link"
 

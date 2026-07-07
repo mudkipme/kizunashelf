@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
 import { EntityDateList } from "@/components/assets/entity-date-list";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
-import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
 export function EntityGridItem({
@@ -21,7 +21,7 @@ export function EntityGridItem({
   /// has no value.
   showCover?: boolean;
 }) {
-  const title = entityTitle(entity, useTitleLanguage());
+  const language = useTitleLanguage();
 
   return (
     <Link
@@ -44,7 +44,12 @@ export function EntityGridItem({
           <Badge variant="outline">{entity.typeLabel}</Badge>
           <StatusBadge status={entity.status} />
         </div>
-        <div className="line-clamp-2 text-sm font-medium leading-5">{title}</div>
+        <EntityTitle
+          as="div"
+          entity={entity}
+          language={language}
+          className="line-clamp-2 text-sm font-medium leading-5"
+        />
         {entity.summary ? (
           <div className="line-clamp-3 text-xs leading-5 text-muted-foreground">{entity.summary}</div>
         ) : null}

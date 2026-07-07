@@ -17,7 +17,7 @@ import { Select } from "@/components/ui/select";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
 import { useDateFormat } from "@/lib/locale";
-import { entityTitle } from "@/lib/title-language";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityEntry, ActivityItem } from "@/types/api";
 
@@ -225,7 +225,7 @@ function ActivityCard({
           <Badge variant="outline">{item.entity.typeLabel}</Badge>
           <StatusBadge status={item.entity.status} />
           <Link to={href} className="min-w-0 break-words text-sm font-medium hover:underline">
-            {entityTitle(item.entity, language)}
+            <EntityTitle entity={item.entity} language={language} />
           </Link>
         </div>
         <div className="mt-2 flex flex-col gap-2">

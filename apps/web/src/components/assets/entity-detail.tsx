@@ -30,7 +30,7 @@ import {
   titleLabelForKey,
   typeHasCoverField,
 } from "@/lib/type-config";
-import { entityTitle, titleLanguageLabel } from "@/lib/title-language";
+import { entityTitle, entityTitleParts, titleLanguageLabel } from "@/lib/title-language";
 import type {
   Entity,
   EntityDatesResponse,
@@ -87,7 +87,11 @@ export function EntityDetail({
 }) {
   const { t } = useLingui();
   const language = useTitleLanguage();
-  const displayTitle = entityTitle(entity, language);
+  const { text: displayTitle, lang: displayTitleLang } = entityTitleParts(entity, language);
+  // Stamp `lang` on the title only when it differs from the viewer's language,
+  // so a foreign-language title (e.g. a Japanese original in a Chinese UI) gets
+  // the right Han glyphs; a same-language title inherits the document `lang`.
+  const titleLang = displayTitleLang && displayTitleLang !== language ? displayTitleLang : undefined;
   const relatedById = new Map(relatedEntities.map((item) => [item.id, item]));
   const subtitleTitles = entitySubtitleTitles(entity, displayTitle, typeConfig);
   // "Links to" groups by field; the untyped `body` field is further split by
@@ -121,7 +125,9 @@ export function EntityDetail({
                       </span>
                     ))}
                   </div>
-                  <h2 className="mt-2 text-xl font-semibold leading-snug">{displayTitle}</h2>
+                  <h2 className="mt-2 text-xl font-semibold leading-snug" lang={titleLang}>
+                    {displayTitle}
+                  </h2>
                   {subtitleTitles.length > 0 ? (
                     <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
                       {subtitleTitles.map((item) => (

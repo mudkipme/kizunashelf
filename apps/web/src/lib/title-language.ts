@@ -24,6 +24,26 @@ export function entityTitle(
   return entity.titles[language] ?? entity.title;
 }
 
+/**
+ * Like {@link entityTitle}, but also returns the language of the resolved
+ * string so a renderer can stamp `lang` for correct Han glyph selection (CJK
+ * codepoints render differently per language). When the viewer's language has a
+ * tagged title, that's the language; otherwise the fallback `entity.title` is
+ * matched back to a tagged title to recover its language (a Japanese original
+ * shown in a Chinese UI → `lang: "ja"`). `undefined` when it can't be recovered.
+ */
+export function entityTitleParts(
+  entity: { title: string; titles: Record<string, string> },
+  language: string,
+): { text: string; lang: string | undefined } {
+  const tagged = entity.titles[language];
+  if (tagged !== undefined) {
+    return { text: tagged, lang: language };
+  }
+  const match = Object.entries(entity.titles).find(([, value]) => value === entity.title);
+  return { text: entity.title, lang: match?.[0] };
+}
+
 /** A language code's display name in `displayLocale` (the viewer's UI locale). */
 export function titleLanguageLabel(titleLanguage: string, displayLocale = "en") {
   try {

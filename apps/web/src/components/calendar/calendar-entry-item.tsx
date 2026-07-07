@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
-import { entityTitle } from "@/lib/title-language";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { entityFieldLabel } from "@/lib/type-config";
 import type { CalendarEntry } from "@/types/api";
 
@@ -31,7 +31,7 @@ export function CalendarEntryItem({
           to={`/entities/${encodeURIComponent(entry.entity.id)}`}
           className="min-w-0 break-words text-sm font-medium hover:underline"
         >
-          {entityTitle(entry.entity, language)}
+          <EntityTitle entity={entry.entity} language={language} />
         </Link>
       </div>
 

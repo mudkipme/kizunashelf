@@ -46,6 +46,7 @@ import { addItemToList, removeList, saveList } from "@/api/lists";
 import { entitiesQuery, listQuery, queryKeys } from "@/api/queries";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { MarkdownView } from "@/components/assets/markdown-view";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { AppFrame } from "@/components/layout/app-frame";
 import {
   AlertDialog,
@@ -83,7 +84,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
-import { entityTitle } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
 import type { ListItem, ListMarker, ListSection } from "@/types/api";
 
@@ -759,9 +759,12 @@ function SortableRow({
         >
           <EntityCover entity={item.entity} />
           <span className="min-w-0">
-            <span className={cn("block truncate text-sm font-medium", marker === "todo" && checked && "line-through")}>
-              {entityTitle(item.entity, language)}
-            </span>
+            <EntityTitle
+              as="span"
+              entity={item.entity}
+              language={language}
+              className={cn("block truncate text-sm font-medium", marker === "todo" && checked && "line-through")}
+            />
             <span className="block truncate text-xs text-muted-foreground">{item.entity.typeLabel}</span>
           </span>
         </Link>
@@ -900,7 +903,12 @@ function AddItemsDialog({
                 <div key={entity.id} className="flex items-center gap-2 rounded-md p-1">
                   <EntityCover entity={entity} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{entityTitle(entity, language)}</span>
+                    <EntityTitle
+                      as="span"
+                      entity={entity}
+                      language={language}
+                      className="block truncate text-sm font-medium"
+                    />
                     <span className="block truncate text-xs text-muted-foreground">{entity.typeLabel}</span>
                   </span>
                   {added ? (

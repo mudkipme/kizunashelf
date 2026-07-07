@@ -11,7 +11,7 @@ import { AssetImage } from "@/components/assets/asset-image";
 import { SectionHeader } from "@/components/home/section-header";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
-import { entityTitle } from "@/lib/title-language";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityItem } from "@/types/api";
 
@@ -111,7 +111,12 @@ function ComingUpCard({
         </div>
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-sm font-medium">{entityTitle(item.entity, language)}</span>
+        <EntityTitle
+          as="span"
+          entity={item.entity}
+          language={language}
+          className="truncate text-sm font-medium"
+        />
         <span className="truncate text-xs text-muted-foreground">{sourceLabel(item, labels, t)}</span>
       </div>
       <div className="shrink-0 text-right">
