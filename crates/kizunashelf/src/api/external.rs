@@ -850,6 +850,9 @@ pub(super) async fn resolve_candidate(
 /// rich entries and reuse the exact search-path mapping (the `mal` submodule is
 /// private to this module).
 pub(super) use mal::{mal_list_candidate, LIST_FIELDS as MAL_LIST_FIELDS};
+/// Re-exported for the batch-import IMDB adapter, which resolves an IMDb id to a
+/// TMDB ref (the `tmdb` submodule is private to this module).
+pub(super) use tmdb::tmdb_find_imdb;
 
 pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogResponse> {
     Json(ExternalProviderCatalogResponse {

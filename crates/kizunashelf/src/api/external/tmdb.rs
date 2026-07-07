@@ -209,6 +209,44 @@ fn tmdb_api_key(state: &AppState) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
+/// Resolves an IMDb id (`tt…`) to a TMDB id + media type (`movie`/`tv`) via
+/// `/find`, for batch import of an IMDb export. `Ok(None)` when TMDB has no
+/// movie/tv match (e.g. an episode or game). Requires the TMDB API key — the same
+/// credential search uses.
+pub(crate) async fn tmdb_find_imdb(
+    state: &AppState,
+    imdb_id: &str,
+) -> Result<Option<(String, &'static str)>, ApiError> {
+    let Some(api_key) = tmdb_api_key(state) else {
+        return Err(ApiError::bad_request("Set the TMDB API key"));
+    };
+    let value = external_client()
+        .get(format!("https://api.themoviedb.org/3/find/{imdb_id}"))
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .query(&[
+            ("api_key", api_key.as_str()),
+            ("external_source", "imdb_id"),
+        ])
+        .send()
+        .await
+        .map_err(provider_error)?
+        .error_for_status()
+        .map_err(provider_error)?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
+    let first = |key: &str, media_type: &'static str| {
+        value
+            .get(key)
+            .and_then(Value::as_array)
+            .and_then(|results| results.first())
+            .and_then(|result| result.get("id"))
+            .and_then(Value::as_i64)
+            .map(|id| (id.to_string(), media_type))
+    };
+    Ok(first("movie_results", "movie").or_else(|| first("tv_results", "tv")))
+}
+
 /// The TMDB media kinds (`movie`, `tv`, `person`) this field searches.
 /// Unconstrained means all three.
 fn tmdb_media_types(provider_config: &ProviderSearchConfig) -> Vec<&'static str> {

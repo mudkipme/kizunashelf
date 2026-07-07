@@ -5,7 +5,12 @@
 
 mod anilist;
 mod bangumi;
+mod goodreads;
+mod imdb;
+mod kitsu;
 mod mal;
+mod steam;
+mod trakt;
 mod yamtrack;
 
 use super::model::ImportItem;
@@ -95,6 +100,11 @@ pub(super) fn registry() -> Vec<SourceEntry> {
         entry::<bangumi::BangumiSource>(),
         entry::<mal::MyAnimeListSource>(),
         entry::<anilist::AniListSource>(),
+        entry::<kitsu::KitsuSource>(),
+        entry::<trakt::TraktSource>(),
+        entry::<steam::SteamSource>(),
+        entry::<imdb::ImdbSource>(),
+        entry::<goodreads::GoodreadsSource>(),
         entry::<yamtrack::YamtrackSource>(),
     ]
 }
