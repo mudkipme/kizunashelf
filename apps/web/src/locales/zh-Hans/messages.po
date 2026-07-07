@@ -293,8 +293,8 @@ msgid "A file named for this title already existed, so it was saved as “{0}”
 msgstr "已存在以此标题命名的文件，因此保存为「{0}」。"
 
 #: src/components/layout/app-frame.tsx:122
-msgid "A personal memory graph"
-msgstr "个人记忆图谱"
+msgid "A shelf for everything you love"
+msgstr "安放你所爱之物的书架"
 
 #: src/components/settings/preset-picker.tsx:371
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."

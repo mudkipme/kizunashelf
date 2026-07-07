@@ -293,8 +293,8 @@ msgid "A file named for this title already existed, so it was saved as “{0}”
 msgstr "このタイトルと同名のファイルがすでに存在したため、「{0}」として保存しました。"
 
 #: src/components/layout/app-frame.tsx:122
-msgid "A personal memory graph"
-msgstr "パーソナルなメモリーグラフ"
+msgid "A shelf for everything you love"
+msgstr "君が愛するすべてのための本棚"
 
 #: src/components/settings/preset-picker.tsx:371
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."

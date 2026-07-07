@@ -119,7 +119,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">KizunaShelf</span>
             <span className="hidden text-xs leading-4 text-muted-foreground sm:block">
-              <Trans>A personal memory graph</Trans>
+              <Trans>A shelf for everything you love</Trans>
             </span>
           </span>
         </Link>
