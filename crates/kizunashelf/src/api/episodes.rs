@@ -200,13 +200,34 @@ pub(crate) async fn import_new_entity_episodes(
     library: &Library,
     entity_id: &str,
 ) -> Option<QuickAddEpisodeResult> {
+    import_new_entity_episodes_marked(state, library, entity_id, None).await
+}
+
+/// Like [`import_new_entity_episodes`], but marks the first `watched_count`
+/// episodes (across groups, in order) as watched — how batch import stamps a
+/// source's "watched N episodes" progress onto a freshly-created entity. `None`
+/// leaves every item unwatched (the quick-add behavior).
+pub(crate) async fn import_new_entity_episodes_marked(
+    state: &AppState,
+    library: &Library,
+    entity_id: &str,
+    watched_count: Option<u32>,
+) -> Option<QuickAddEpisodeResult> {
     let record = library.record_by_id(entity_id)?;
     let type_config = library.config.type_config(&record.summary.entity_type)?;
     let section = episode_section(type_config)?.clone();
     let sources = episode_sources(state, type_config, &record.frontmatter);
     let chosen = sources.first()?;
     let provider = chosen.provider.to_string();
-    match fetch_and_write_new_episodes(state, library, &record.summary.path, &section, chosen).await
+    match fetch_and_write_new_episodes(
+        state,
+        library,
+        &record.summary.path,
+        &section,
+        chosen,
+        watched_count,
+    )
+    .await
     {
         Ok(imported) => Some(QuickAddEpisodeResult {
             provider,
@@ -223,18 +244,22 @@ pub(crate) async fn import_new_entity_episodes(
 
 /// Fetches a source's episodes and merges them into the entity body (preserving
 /// any existing items; never overwriting), returning how many were imported.
+/// `watched_count` marks the first N items (across groups, in order) watched.
 async fn fetch_and_write_new_episodes(
     state: &AppState,
     library: &Library,
     source_rel: &str,
     section: &BodySection,
     chosen: &ResolvedSource,
+    watched_count: Option<u32>,
 ) -> Result<usize, ApiError> {
     let episodes = provider_fetch_episodes(state, chosen.provider, &chosen.ref_value, None).await?;
     let imported: usize = episodes.groups.iter().map(|group| group.items.len()).sum();
 
     // A provider group carries no watched/completion state; a fresh entity starts
-    // every item unwatched (the same shape the client posts to `importEpisodes`).
+    // every item unwatched (the same shape the client posts to `importEpisodes`),
+    // except the first `watched_count` items which batch import marks watched.
+    let mut remaining = watched_count.unwrap_or(0);
     let incoming: Vec<EpisodeGroup> = episodes
         .groups
         .iter()
@@ -243,12 +268,18 @@ async fn fetch_and_write_new_episodes(
             items: group
                 .items
                 .iter()
-                .map(|item| Episode {
-                    key: item.key.clone(),
-                    title: item.title.clone(),
-                    watched: false,
-                    date: item.date.clone(),
-                    done: None,
+                .map(|item| {
+                    let watched = remaining > 0;
+                    if watched {
+                        remaining -= 1;
+                    }
+                    Episode {
+                        key: item.key.clone(),
+                        title: item.title.clone(),
+                        watched,
+                        date: item.date.clone(),
+                        done: None,
+                    }
                 })
                 .collect(),
         })

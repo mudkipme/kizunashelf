@@ -525,7 +525,7 @@ fn normalize_title(value: &str) -> String {
 /// entity type so a loose title match only fires within the type being added —
 /// same-titled works of different types aren't conflated.
 #[derive(Default)]
-struct ExistingIndex {
+pub(super) struct ExistingIndex {
     /// `(provider, normalized-ref) → entity` — the candidate's URL or source id.
     by_ref: HashMap<(&'static str, String), ExistingEntityRef>,
     /// `(type, normalized-title) → entity` for each entity's filename and its
@@ -536,7 +536,7 @@ struct ExistingIndex {
     by_lang_title: HashMap<(String, String, String), ExistingEntityRef>,
 }
 
-fn build_existing_index(library: &Library) -> ExistingIndex {
+pub(super) fn build_existing_index(library: &Library) -> ExistingIndex {
     let mut index = ExistingIndex::default();
     for summary in library.summaries() {
         let entity = ExistingEntityRef {
@@ -590,7 +590,7 @@ fn build_existing_index(library: &Library) -> ExistingIndex {
 /// 1. an external ref matching the candidate's provider + URL/source id (any type);
 /// 2. the entity's filename or canonical title equal to any candidate title;
 /// 3. a per-language title equal to the candidate's title in that same language.
-fn lookup_existing(
+pub(super) fn lookup_existing(
     index: &ExistingIndex,
     candidate: &ExternalCandidate,
     entity_type: &str,
@@ -668,28 +668,7 @@ pub(crate) async fn quick_add_entity(
     }
 
     // Re-map the candidate against the schema ourselves — never trust client values.
-    let mapped = mapping::match_candidate(candidate.clone(), type_config);
-    let mut frontmatter = Map::new();
-    for field in &mapped.fields {
-        if field.has_value {
-            frontmatter.insert(field.field.clone(), field.value.clone());
-        }
-    }
-    let mut sections = Vec::new();
-    for section in &mapped.body_sections {
-        if section.has_value {
-            sections.push(format!(
-                "## {}\n\n{}",
-                section.heading.trim(),
-                section.markdown.trim()
-            ));
-        }
-    }
-    let body = if sections.is_empty() {
-        String::new()
-    } else {
-        format!("{}\n", sections.join("\n\n"))
-    };
+    let (frontmatter, body, mapped_fields) = build_mapped_document(candidate, type_config);
 
     // Filename: the type's filename title language, falling back to the candidate
     // title, then the provider id. Collisions with a *different* work of the same
@@ -707,7 +686,7 @@ pub(crate) async fn quick_add_entity(
         ),
         None => {
             let base = candidate_basename_base(candidate, type_config)?;
-            let year = candidate_year(type_config, &mapped.fields);
+            let year = candidate_year(type_config, &mapped_fields);
             resolve_free_basename(
                 vfs.as_ref(),
                 &library.config.taxonomy_root,
@@ -765,7 +744,7 @@ pub(crate) async fn quick_add_entity(
 /// The title a new entity's filename is derived from: the type's filename title
 /// language, else the candidate title, else the provider id. Returns a validated
 /// basename or 400 if nothing usable remains.
-fn candidate_basename_base(
+pub(super) fn candidate_basename_base(
     candidate: &ExternalCandidate,
     type_config: &EntityTypeConfig,
 ) -> Result<String, ApiError> {
@@ -784,7 +763,10 @@ fn candidate_basename_base(
 
 /// The four-digit year from the type's date-role field value, for filename
 /// disambiguation. Best-effort: the first run of four ASCII digits.
-fn candidate_year(type_config: &EntityTypeConfig, fields: &[MappedFieldValue]) -> Option<String> {
+pub(super) fn candidate_year(
+    type_config: &EntityTypeConfig,
+    fields: &[MappedFieldValue],
+) -> Option<String> {
     let date_field = type_config
         .fields
         .iter()
@@ -799,6 +781,68 @@ fn candidate_year(type_config: &EntityTypeConfig, fields: &[MappedFieldValue]) -
         .windows(4)
         .find(|window| window.iter().all(char::is_ascii_digit))
         .map(|window| window.iter().collect())
+}
+
+/// Builds the frontmatter map and body Markdown a candidate maps to for a type,
+/// plus the resolved field list (for filename year derivation). The single
+/// source of the quick-add / batch-import "candidate → new entity document"
+/// step, so the two paths can't drift.
+pub(super) fn build_mapped_document(
+    candidate: &ExternalCandidate,
+    type_config: &EntityTypeConfig,
+) -> (Map<String, Value>, String, Vec<MappedFieldValue>) {
+    let mapped = mapping::match_candidate(candidate.clone(), type_config);
+    let mut frontmatter = Map::new();
+    for field in &mapped.fields {
+        if field.has_value {
+            frontmatter.insert(field.field.clone(), field.value.clone());
+        }
+    }
+    let mut sections = Vec::new();
+    for section in &mapped.body_sections {
+        if section.has_value {
+            sections.push(format!(
+                "## {}\n\n{}",
+                section.heading.trim(),
+                section.markdown.trim()
+            ));
+        }
+    }
+    let body = if sections.is_empty() {
+        String::new()
+    } else {
+        format!("{}\n", sections.join("\n\n"))
+    };
+    (frontmatter, body, mapped.fields)
+}
+
+/// Resolves a full candidate for a provider from a `query` (a stored external-ref
+/// URL or a free-text title), constrained to `external_types` (the source
+/// bucket). Batch import uses this to fetch provider *detail* when the item it
+/// carries lacks a metadata key the target type maps — the gap quick-add never
+/// has (it echoes the search candidate). Prefers an exact URL/id match, else the
+/// first result. `None` means the provider returned nothing.
+pub(super) async fn resolve_candidate(
+    state: &AppState,
+    provider_id: &str,
+    query: &str,
+    external_types: &[String],
+) -> Result<Option<ExternalCandidate>, ApiError> {
+    let registry = registry();
+    let Some(provider_entry) = registry.iter().find(|entry| entry.id == provider_id) else {
+        return Err(ApiError::bad_request("Unknown external provider"));
+    };
+    let mut config = ProviderSearchConfig::default();
+    config.add_external_types(external_types);
+    let results = (provider_entry.search)(state, query, 1, 10, &config).await?;
+    let normalized = normalize_external_ref(query);
+    let exact = results.iter().position(|candidate| {
+        normalize_external_ref(&candidate.url) == normalized || candidate.source_id == query
+    });
+    Ok(match exact {
+        Some(index) => results.into_iter().nth(index),
+        None => results.into_iter().next(),
+    })
 }
 
 pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogResponse> {

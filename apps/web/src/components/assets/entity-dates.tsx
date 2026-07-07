@@ -21,7 +21,7 @@ export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse
                 <Badge variant="outline">{fieldLabelForKey(typeConfig, item.field)}</Badge>
                 {item.date ? (
                   <Button variant="ghost" size="sm" className="h-6 px-1.5" asChild>
-                    <Link to={calendarDateHref(item.date, "taxonomy")}>{item.value}</Link>
+                    <Link to={calendarDateHref(item.date)}>{item.value}</Link>
                   </Button>
                 ) : (
                   <span className="break-words text-muted-foreground">{item.value}</span>
@@ -41,7 +41,7 @@ export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse
             <article key={item.id} className="rounded-md border p-2">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <Button variant="ghost" size="sm" className="h-6 px-1.5" asChild>
-                  <Link to={calendarDateHref(item.date, "daily-note")}>{item.date}</Link>
+                  <Link to={calendarDateHref(item.date)}>{item.date}</Link>
                 </Button>
                 <span className="min-w-0 truncate text-xs text-muted-foreground">{item.notePath}</span>
               </div>
@@ -66,7 +66,10 @@ export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse
   );
 }
 
-function calendarDateHref(date: string, source: "taxonomy" | "daily-note") {
+function calendarDateHref(date: string) {
   const [year, month] = date.split("-");
-  return `/calendar?year=${year}&month=${Number(month)}&date=${date}&source=${source}`;
+  // Deep-link to the day itself and leave the source filter at "all": pinning it
+  // to the clicked date's source would hide that day's other entries (a taxonomy
+  // date would drop its daily-note/episode entries, and vice versa).
+  return `/calendar?year=${year}&month=${Number(month)}&date=${date}`;
 }

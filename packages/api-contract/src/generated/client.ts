@@ -68,6 +68,10 @@ import {
   CleanupQueuesResponse
 } from './cleanupQueuesResponse.zod';
 
+import type {
+  CommitImportJobRequest
+} from './commitImportJobRequest.zod';
+
 import {
   ConfigResponse
 } from './configResponse.zod';
@@ -75,6 +79,10 @@ import {
 import type {
   CreateEntityRequest
 } from './createEntityRequest.zod';
+
+import type {
+  CreateImportJobRequest
+} from './createImportJobRequest.zod';
 
 import type {
   CreateListRequest
@@ -167,6 +175,18 @@ import {
 import type {
   ImportEpisodesRequest
 } from './importEpisodesRequest.zod';
+
+import {
+  ImportJob
+} from './importJob.zod';
+
+import {
+  ImportJobListResponse
+} from './importJobListResponse.zod';
+
+import {
+  ImportSourceCatalogResponse
+} from './importSourceCatalogResponse.zod';
 
 import {
   LanguagesResponse
@@ -1404,6 +1424,181 @@ export const cancelAssetJob = async (id: string, options?: RequestInit, fetchFn?
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? AssetDownloadJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getListImportSourcesUrl = () => {
+
+
+
+
+  return `/api/import/sources`
+}
+
+export const listImportSources = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportSourceCatalogResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getListImportSourcesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportSourceCatalogResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getListImportJobsUrl = () => {
+
+
+
+
+  return `/api/import-jobs`
+}
+
+export const listImportJobs = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJobListResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getListImportJobsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJobListResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCreateImportJobUrl = () => {
+
+
+
+
+  return `/api/import-jobs`
+}
+
+export const createImportJob = async (createImportJobRequest: CreateImportJobRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJob> => {
+
+  const res = await (fetchFn ?? fetch)(getCreateImportJobUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createImportJobRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetImportJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/import-jobs/${encodeURIComponent(String(id))}`
+}
+
+export const getImportJob = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJob> => {
+
+  const res = await (fetchFn ?? fetch)(getGetImportJobUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCommitImportJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/import-jobs/${encodeURIComponent(String(id))}/commit`
+}
+
+export const commitImportJob = async (id: string,
+    commitImportJobRequest: CommitImportJobRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJob> => {
+
+  const res = await (fetchFn ?? fetch)(getCommitImportJobUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(commitImportJobRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCancelImportJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/import-jobs/${encodeURIComponent(String(id))}/cancel`
+}
+
+export const cancelImportJob = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJob> => {
+
+  const res = await (fetchFn ?? fetch)(getCancelImportJobUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJob.parse(parsedBody) : parsedBody
   return data
 }
 

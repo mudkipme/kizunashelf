@@ -1929,6 +1929,309 @@
         }
       }
     },
+    "/api/import/sources": {
+      "get": {
+        "operationId": "listImportSources",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSourceCatalogResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs": {
+      "get": {
+        "operationId": "listImportJobs",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createImportJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateImportJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs/{id}": {
+      "get": {
+        "operationId": "getImportJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs/{id}/commit": {
+      "post": {
+        "operationId": "commitImportJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitImportJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs/{id}/cancel": {
+      "post": {
+        "operationId": "cancelImportJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/asset-downloads/plan": {
       "get": {
         "operationId": "planAssetDownloads",
@@ -6801,6 +7104,490 @@
         },
         "required": [
           "id"
+        ]
+      },
+      "ImportSourceCatalogResponse": {
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportSourceCatalogItem"
+            }
+          }
+        },
+        "required": [
+          "sources"
+        ]
+      },
+      "ImportSourceCatalogItem": {
+        "description": "One selectable import source in the catalog.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ImportInputKind"
+          },
+          "inputLabel": {
+            "description": "Human label for the input field (\"Bangumi username\", \"Yamtrack CSV export\").",
+            "type": "string"
+          },
+          "providers": {
+            "description": "Provider ids this source resolves items to.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalProviderCredentialField"
+            }
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "unavailableReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "input",
+          "inputLabel",
+          "providers",
+          "available"
+        ]
+      },
+      "ImportInputKind": {
+        "description": "How an import source receives its input.",
+        "type": "string",
+        "enum": [
+          "profile",
+          "csv"
+        ]
+      },
+      "ImportJobListResponse": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJob"
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ]
+      },
+      "ImportJob": {
+        "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ImportJobStatus"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "processed": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "created": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "needsReview": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImportPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "status",
+          "total",
+          "processed",
+          "created",
+          "skipped",
+          "needsReview",
+          "failed",
+          "startedAt"
+        ]
+      },
+      "ImportJobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "fetching",
+          "planned",
+          "committing",
+          "completed",
+          "cancelled",
+          "failed"
+        ]
+      },
+      "ImportPlan": {
+        "type": "object",
+        "properties": {
+          "buckets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportPlanBucket"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportPlanItem"
+            }
+          }
+        },
+        "required": [
+          "buckets",
+          "items"
+        ]
+      },
+      "ImportPlanBucket": {
+        "description": "A source \"bucket\" (the provider's own media kind, e.g. Bangumi `anime`) and\nthe entity types it can map to. One candidate type is auto-selected; several\nleave `selected_type` empty for the user to pick.",
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "candidateTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "selectedType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "bucket",
+          "provider",
+          "candidateTypes"
+        ]
+      },
+      "ImportPlanItem": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "title": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "refUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ImportPlanItemState"
+          },
+          "existing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExistingEntityRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImportReviewReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "userData": {
+            "$ref": "#/components/schemas/ImportPlanUserData"
+          }
+        },
+        "required": [
+          "index",
+          "title",
+          "provider",
+          "bucket",
+          "state",
+          "userData"
+        ]
+      },
+      "ImportPlanItemState": {
+        "description": "A planned item's disposition against the resident library.",
+        "type": "string",
+        "enum": [
+          "exists",
+          "willCreate",
+          "needsReview"
+        ]
+      },
+      "ImportReviewReason": {
+        "description": "Why a planned item needs manual review.",
+        "type": "string",
+        "enum": [
+          "noSupportedId",
+          "noTypeMatch",
+          "duplicateInBatch",
+          "providerUnavailable"
+        ]
+      },
+      "ImportPlanUserData": {
+        "description": "The user data resolved for a planned item, summarized for the review UI.",
+        "type": "object",
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanonicalStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "score10": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "watchedCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "started": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasNotes": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hasNotes"
+        ]
+      },
+      "CreateImportJobRequest": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ImportInput"
+          }
+        },
+        "required": [
+          "source",
+          "input"
+        ]
+      },
+      "ImportInput": {
+        "description": "Input for a source fetch: a username (profile sources) or the pasted text of\na CSV export (CSV sources). CSV arrives as a string field, not multipart, so\nthe generated clients and the iOS in-process tunnel stay trivial.",
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "csvText": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ImportJobPath": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CommitImportJobRequest": {
+        "type": "object",
+        "properties": {
+          "types": {
+            "description": "Bucket → chosen entity type id, for buckets with multiple candidate types.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportDecision"
+            }
+          },
+          "options": {
+            "$ref": "#/components/schemas/ImportCommitOptions"
+          }
+        },
+        "required": [
+          "options"
+        ]
+      },
+      "ImportDecision": {
+        "description": "A per-item override applied at commit: force a create/skip, choose a target\ntype (for ambiguous buckets), or supply a hand-picked candidate for a\n`needsReview` item.",
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "action": {
+            "$ref": "#/components/schemas/ImportDecisionAction"
+          },
+          "typeOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "candidateOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExternalCandidate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "index",
+          "action"
+        ]
+      },
+      "ImportDecisionAction": {
+        "type": "string",
+        "enum": [
+          "create",
+          "skip"
+        ]
+      },
+      "ImportCommitOptions": {
+        "type": "object",
+        "properties": {
+          "importUserData": {
+            "type": "boolean"
+          },
+          "importEpisodes": {
+            "type": "boolean"
+          },
+          "markProgress": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "importUserData",
+          "importEpisodes",
+          "markProgress"
         ]
       },
       "PlanQuery": {
