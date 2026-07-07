@@ -23,6 +23,8 @@ KizunaShelf is a shelf for what matters to you, and a record book for the life t
 - Connects daily notes back to entities through wikilinks, tying ordinary days to the things you track.
 - Logs what you did and when: checking off an episode or a quick log appends a dated line to your daily note in a per-type format you define, and the activity feed reads those days back as a reverse-chronological diary.
 - Supports external metadata matching across many providers: TMDB, TheTVDB, MyAnimeList, Bangumi (anime/TV/film); IGDB, Steam, BoardGameGeek (games/board games); Google Books, Open Library, Hardcover, MangaUpdates, Comic Vine (books/manga/comics); MusicBrainz, Spotify, Discogs (music); and Apple Podcasts.
+- Adds entities straight from those providers: **Quick Capture** searches them and creates an entity in one click (covers and episodes filled automatically).
+- **Imports** a whole library from another service — MyAnimeList, AniList, Kitsu, Trakt, Steam, Bangumi (public profiles), or IMDb, Goodreads, and Yamtrack (CSV exports) — with a review-before-write plan that maps status, score, dates, notes, and progress onto your own schema and skips anything already in your library.
 - Runs as a self-hosted web app, a Tauri desktop app, or a native iOS app.
 
 KizunaShelf treats Markdown files as the source of truth. When content writes are enabled, it can edit entity frontmatter/body and create or delete entity files. In read-only mode, those content write features are disabled.
