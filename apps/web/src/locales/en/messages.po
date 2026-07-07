@@ -474,8 +474,8 @@ msgid "Apply Selected"
 msgstr "Apply Selected"
 
 #: src/components/entities/external-match-dialog.tsx:210
-msgid "Applying"
-msgstr "Applying"
+msgid "Applying…"
+msgstr "Applying…"
 
 #: src/components/assets/asset-toolbar.tsx:108
 #: src/components/settings/settings-sections.tsx:220
@@ -676,14 +676,11 @@ msgstr "Create & add"
 msgid "Create new vault"
 msgstr "Create new vault"
 
+#: src/components/settings/settings-editor.tsx:177
 #: src/components/settings/vault-switcher.tsx:166
 #: src/pages/onboarding-page.tsx:209
 msgid "Create vault"
 msgstr "Create vault"
-
-#: src/components/settings/settings-editor.tsx:177
-msgid "Create Vault"
-msgstr "Create Vault"
 
 #. placeholder {0}: selected.size
 #: src/pages/onboarding-page.tsx:208
@@ -692,9 +689,6 @@ msgstr "Create vault ({0})"
 
 #: src/pages/entity-page.tsx:623
 #: src/pages/lists-page.tsx:164
-msgid "Creating"
-msgstr "Creating"
-
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
 msgstr "Creating…"
@@ -732,12 +726,9 @@ msgstr "Daily note indexing is disabled."
 msgid "Daily note mentions"
 msgstr "Daily note mentions"
 
-#: src/pages/activity-page.tsx:29
-msgid "Daily notes"
-msgstr "Daily notes"
-
 #: src/components/settings/settings-editor.tsx:101
 #: src/components/settings/settings-editor.tsx:225
+#: src/pages/activity-page.tsx:29
 msgid "Daily Notes"
 msgstr "Daily Notes"
 
@@ -1135,14 +1126,11 @@ msgstr "Import another"
 msgid "Import complete"
 msgstr "Import complete"
 
-#: src/components/assets/episode-sync-dialog.tsx:343
-msgid "Importing"
-msgstr "Importing"
-
 #: src/pages/import-wizard-page.tsx:185
 msgid "Importing creates files, so it is unavailable here."
 msgstr "Importing creates files, so it is unavailable here."
 
+#: src/components/assets/episode-sync-dialog.tsx:343
 #: src/pages/import-wizard-page.tsx:632
 msgid "Importing…"
 msgstr "Importing…"
@@ -1298,27 +1286,6 @@ msgstr "Lists"
 msgid "Load more"
 msgstr "Load more"
 
-#: src/components/assets/episode-sync-dialog.tsx:277
-#: src/components/settings/raw-config-editor.tsx:109
-#: src/pages/calendar-page.tsx:88
-#: src/pages/entity-edit-page.tsx:198
-#: src/pages/entity-page.tsx:276
-#: src/pages/entity-page.tsx:570
-#: src/pages/home-page.tsx:33
-#: src/pages/home-page.tsx:61
-#: src/pages/library-page.tsx:393
-#: src/pages/list-detail-page.tsx:385
-#: src/pages/list-detail-page.tsx:890
-#: src/pages/lists-page.tsx:55
-#: src/pages/onboarding-page.tsx:53
-#: src/pages/review-page.tsx:128
-#: src/pages/review-page.tsx:138
-#: src/pages/settings-page.tsx:95
-#: src/pages/statistics-page.tsx:33
-#: src/pages/statistics-page.tsx:43
-msgid "Loading"
-msgstr "Loading"
-
 #: src/pages/activity-page.tsx:150
 msgid "Loading activity…"
 msgstr "Loading activity…"
@@ -1335,8 +1302,26 @@ msgstr "Loading entity"
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
+#: src/components/assets/episode-sync-dialog.tsx:277
+#: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:189
+#: src/pages/calendar-page.tsx:88
+#: src/pages/entity-edit-page.tsx:198
+#: src/pages/entity-page.tsx:276
+#: src/pages/entity-page.tsx:570
+#: src/pages/home-page.tsx:33
+#: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:207
+#: src/pages/library-page.tsx:393
+#: src/pages/list-detail-page.tsx:385
+#: src/pages/list-detail-page.tsx:890
+#: src/pages/lists-page.tsx:55
+#: src/pages/onboarding-page.tsx:53
+#: src/pages/review-page.tsx:128
+#: src/pages/review-page.tsx:138
+#: src/pages/settings-page.tsx:95
+#: src/pages/statistics-page.tsx:33
+#: src/pages/statistics-page.tsx:43
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -1963,8 +1948,8 @@ msgstr "renamed to “{0}”"
 
 #: src/pages/entity-page.tsx:705
 #: src/pages/list-detail-page.tsx:998
-msgid "Renaming"
-msgstr "Renaming"
+msgid "Renaming…"
+msgstr "Renaming…"
 
 #: src/components/entities/external-match-dialog.tsx:366
 msgid "replaces existing section"
@@ -1979,8 +1964,8 @@ msgid "Robust, ready-to-use types with full metadata matching. Edit or rename ev
 msgstr "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
 
 #: src/components/assets/asset-download-panel.tsx:93
-msgid "Running"
-msgstr "Running"
+msgid "Running…"
+msgstr "Running…"
 
 #: src/components/entities/metadata-editor.tsx:127
 #: src/components/settings/raw-config-editor.tsx:90
@@ -2006,8 +1991,8 @@ msgstr "Saved verbatim. The whole file is validated on save — unknown fields a
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:177
 #: src/pages/list-detail-page.tsx:426
-msgid "Saving"
-msgstr "Saving"
+msgid "Saving…"
+msgstr "Saving…"
 
 #: src/components/settings/raw-config-editor.tsx:97
 #: src/components/settings/settings-editor.tsx:184
@@ -2059,13 +2044,7 @@ msgid "Search queue"
 msgstr "Search queue"
 
 #: src/components/entities/external-match-dialog.tsx:144
-msgid "Searching"
-msgstr "Searching"
-
 #: src/components/ui/multi-value-combobox.tsx:146
-msgid "Searching..."
-msgstr "Searching..."
-
 #: src/pages/quick-capture-page.tsx:255
 msgid "Searching…"
 msgstr "Searching…"

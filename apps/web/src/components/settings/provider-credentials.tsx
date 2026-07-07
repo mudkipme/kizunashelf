@@ -80,7 +80,7 @@ export function ProviderCredentials({ providers }: { providers: ExternalProvider
         {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
         {error ? <span className="text-xs text-destructive">{error}</span> : null}
         <Button type="button" onClick={save} disabled={busy}>
-          {busy ? t`Saving` : t`Save credentials`}
+          {busy ? t`Saving…` : t`Save credentials`}
         </Button>
       </div>
     </SettingsSection>

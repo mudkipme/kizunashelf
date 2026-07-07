@@ -90,7 +90,7 @@ export function AssetDownloadPanel() {
           </Select>
           <Button type="button" onClick={() => start.mutate()} disabled={running || start.isPending}>
             <DownloadIcon data-icon="inline-start" />
-            {running ? <Trans>Running</Trans> : <Trans>Start</Trans>}
+            {running ? <Trans>Running…</Trans> : <Trans>Start</Trans>}
           </Button>
           {running ? (
             <Button

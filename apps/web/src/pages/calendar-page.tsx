@@ -85,7 +85,7 @@ export function CalendarPage() {
             </h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {calendar.isPending
-                ? t`Loading`
+                ? t`Loading…`
                 : calendar.data
                   ? t`${plural(calendar.data.totals.entries, { one: "# entry", other: "# entries" })} across ${plural(calendar.data.totals.daysWithEntries, { one: "# day", other: "# days" })}`
                   : t`No calendar data`}

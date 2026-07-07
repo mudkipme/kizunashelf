@@ -87,7 +87,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
         <div className="flex items-center gap-2">
           <Button type="button" onClick={save} disabled={saving || !settingsWritable || raw.isPending}>
             <SaveIcon data-icon="inline-start" />
-            {saving ? t`Saving` : t`Save`}
+            {saving ? t`Saving…` : t`Save`}
           </Button>
         </div>
       </header>
@@ -106,7 +106,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
 
       {raw.isPending ? (
         <Placeholder>
-          <Trans>Loading</Trans>
+          <Trans>Loading…</Trans>
         </Placeholder>
       ) : (
         <Textarea

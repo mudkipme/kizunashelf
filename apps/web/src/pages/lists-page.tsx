@@ -52,7 +52,7 @@ export function ListsPage() {
 
         {lists.isPending ? (
           <Placeholder>
-            <Trans>Loading</Trans>
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : items.length === 0 ? (
           <Placeholder>
@@ -161,7 +161,7 @@ function CreateListDialog({
             </Button>
             <Button type="submit" disabled={!name.trim() || Boolean(validationError) || create.isPending}>
               <CheckIcon data-icon="inline-start" />
-              {create.isPending ? <Trans>Creating</Trans> : <Trans>Create</Trans>}
+              {create.isPending ? <Trans>Creating…</Trans> : <Trans>Create</Trans>}
             </Button>
           </DialogFooter>
         </form>

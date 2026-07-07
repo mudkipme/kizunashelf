@@ -274,7 +274,7 @@ export function EpisodeSyncDialog({
         <div className="flex max-h-[55vh] flex-col gap-0.5 overflow-auto rounded-md border p-1">
           {sources.isPending ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
-              <Trans>Loading</Trans>
+              <Trans>Loading…</Trans>
             </p>
           ) : sources.error ? (
             <p className="p-3 text-center text-sm text-destructive">{errorMessage(sources.error)}</p>
@@ -340,7 +340,7 @@ export function EpisodeSyncDialog({
           >
             {importing ? <RefreshCwIcon data-icon="inline-start" className="animate-spin" /> : <DownloadIcon data-icon="inline-start" />}
             {importing
-              ? t`Importing`
+              ? t`Importing…`
               : already > 0
                 ? t`Import (${incoming - already} new · ${already} updated)`
                 : t`Import (${incoming})`}

@@ -273,7 +273,7 @@ export function EntityPage() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
         {loading ? (
           <Placeholder>
-            <Trans>Loading</Trans>
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : entity ? (
           <>
@@ -567,7 +567,7 @@ function ManageListsDialog({
         <div className="flex max-h-72 flex-col gap-1 overflow-auto">
           {lists.isPending ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
-              <Trans>Loading</Trans>
+              <Trans>Loading…</Trans>
             </p>
           ) : items.length === 0 ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
@@ -620,7 +620,7 @@ function ManageListsDialog({
             />
             <Button type="submit" disabled={!contentWritable || creating || !newName.trim() || Boolean(newNameError)}>
               <PlusIcon data-icon="inline-start" />
-              {creating ? <Trans>Creating</Trans> : <Trans>Create & add</Trans>}
+              {creating ? <Trans>Creating…</Trans> : <Trans>Create & add</Trans>}
             </Button>
           </div>
           {newNameError ? <p className="text-xs text-destructive">{newNameError}</p> : null}
@@ -702,7 +702,7 @@ function RenameDialog({
               disabled={disabled || saving || Boolean(validationError) || unchanged}
             >
               <CheckIcon data-icon="inline-start" />
-              {saving ? <Trans>Renaming</Trans> : <Trans>Rename</Trans>}
+              {saving ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
             </Button>
           </DialogFooter>
         </form>

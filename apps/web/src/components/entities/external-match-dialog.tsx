@@ -141,7 +141,7 @@ export function ExternalMatchDialog({
               disabled={searching || !externalSearchEnabled}
             >
               <SearchIcon data-icon="inline-start" />
-              {searching ? t`Searching` : t`Search`}
+              {searching ? t`Searching…` : t`Search`}
             </Button>
           </div>
 
@@ -207,7 +207,7 @@ export function ExternalMatchDialog({
             disabled={!contentWritable || applying || !selectedCandidate || selectedCount === 0}
           >
             <WandSparklesIcon data-icon="inline-start" />
-            {applying ? t`Applying` : (applyLabel ?? t`Apply Selected`)}
+            {applying ? t`Applying…` : (applyLabel ?? t`Apply Selected`)}
           </Button>
         </DialogFooter>
       </DialogContent>

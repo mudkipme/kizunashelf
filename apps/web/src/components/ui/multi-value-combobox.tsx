@@ -143,7 +143,7 @@ export function MultiValueCombobox({
         />
       </ComboboxChips>
       <ComboboxContent>
-        <ComboboxEmpty>{loading ? t`Searching...` : error ? error : emptyText}</ComboboxEmpty>
+        <ComboboxEmpty>{loading ? t`Searching…` : error ? error : emptyText}</ComboboxEmpty>
         <ComboboxList>
           {(item) => (
             <ComboboxItem key={item} value={item}>

@@ -382,7 +382,7 @@ export function ListDetailPage() {
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         {list.isPending ? (
           <Placeholder>
-            <Trans>Loading</Trans>
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : !data ? (
           <Placeholder>
@@ -423,7 +423,7 @@ export function ListDetailPage() {
                 }}
               >
                 <SaveIcon data-icon="inline-start" />
-                {save.isPending ? <Trans>Saving</Trans> : <Trans>Save</Trans>}
+                {save.isPending ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
               </Button>
             </header>
 
@@ -887,7 +887,7 @@ function AddItemsDialog({
         <div className="flex max-h-80 flex-col gap-1 overflow-auto">
           {search.isPending ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
-              <Trans>Loading</Trans>
+              <Trans>Loading…</Trans>
             </p>
           ) : results.length === 0 ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
@@ -995,7 +995,7 @@ function RenameListDialog({
             </Button>
             <Button type="submit" disabled={disabled || saving || Boolean(validationError) || unchanged || !name.trim()}>
               <CheckIcon data-icon="inline-start" />
-              {saving ? <Trans>Renaming</Trans> : <Trans>Rename</Trans>}
+              {saving ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
             </Button>
           </DialogFooter>
         </form>

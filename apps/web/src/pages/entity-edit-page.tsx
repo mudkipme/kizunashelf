@@ -195,7 +195,7 @@ export function EntityEditPage() {
 
         {loading ? (
           <Placeholder>
-            <Trans>Loading</Trans>
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : entity ? (
           <>

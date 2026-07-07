@@ -174,7 +174,7 @@ export function SettingsEditor({
           ) : null}
           <Button type="button" onClick={save} disabled={saving || !settingsWritable}>
             <SaveIcon data-icon="inline-start" />
-            {saving ? t`Saving` : onboarding ? t`Create Vault` : t`Save`}
+            {saving ? t`Saving…` : onboarding ? t`Create vault` : t`Save`}
           </Button>
         </div>
       </header>

@@ -124,7 +124,7 @@ export function MetadataEditor({
           ) : null}
           <Button type="button" size="sm" onClick={onSave} disabled={saving || disabled}>
             <CheckIcon data-icon="inline-start" />
-            {saving ? <Trans>Saving</Trans> : (saveLabel ?? <Trans>Save</Trans>)}
+            {saving ? <Trans>Saving…</Trans> : (saveLabel ?? <Trans>Save</Trans>)}
           </Button>
         </div>
       </div>

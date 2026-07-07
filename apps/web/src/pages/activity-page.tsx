@@ -26,7 +26,7 @@ type FieldLabels = ReadonlyMap<string, ReadonlyMap<string, string>>;
 const sources = [
   { value: "all", label: msg`All sources` },
   { value: "taxonomy", label: msg`Dates & episodes` },
-  { value: "daily-note", label: msg`Daily notes` },
+  { value: "daily-note", label: msg`Daily Notes` },
 ] as const;
 
 // Recent leads — it's the everyday "what happened" view; Up next is already

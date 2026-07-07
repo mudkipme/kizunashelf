@@ -30,7 +30,7 @@ export function StatisticsPage() {
             <h1 className="truncate text-base font-semibold"><Trans>Memory Analytics</Trans></h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {loading
-                ? t`Loading`
+                ? t`Loading…`
                 : data
                   ? t`Updated ${data.generatedAt.slice(0, 10)}`
                   : t`No analytics data`}
@@ -40,7 +40,7 @@ export function StatisticsPage() {
 
         {loading ? (
           <Placeholder>
-            <Trans>Loading</Trans>
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : null}
 

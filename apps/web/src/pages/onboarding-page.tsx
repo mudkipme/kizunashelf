@@ -50,7 +50,7 @@ export function OnboardingPage() {
   } else if (settings.isPending || providerCatalog.isPending || presets.isPending || languages.isPending) {
     body = (
       <Placeholder>
-        <Trans>Loading</Trans>
+        <Trans>Loading…</Trans>
       </Placeholder>
     );
   } else if (settings.error || providerCatalog.error || presets.error || languages.error) {

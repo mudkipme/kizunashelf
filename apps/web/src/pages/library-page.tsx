@@ -390,7 +390,7 @@ export function LibraryPage() {
               </span>
               <div className="flex items-center gap-2">
                 <span>
-                  {loading ? t`Loading` : globalStats.data?.generatedAt.slice(0, 10)}
+                  {loading ? t`Loading…` : globalStats.data?.generatedAt.slice(0, 10)}
                 </span>
                 <Button
                   type="button"

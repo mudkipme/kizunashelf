@@ -92,7 +92,7 @@ export function SettingsPage() {
           <RawConfigEditor settingsWritable={settingsWritable} onDirtyChange={setDirty} />
         ) : loading ? (
           <Placeholder>
-            <Trans>Loading</Trans>
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : settings.data ? (
           <SettingsEditor

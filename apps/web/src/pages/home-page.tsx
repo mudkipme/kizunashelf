@@ -30,7 +30,7 @@ export function HomePage() {
             <h1 className="truncate text-base font-semibold">{home.data?.title ?? t`Home`}</h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {loading ? (
-                <Trans>Loading</Trans>
+                <Trans>Loading…</Trans>
               ) : (
                 <Plural value={home.data?.sections.length ?? 0} one="# section" other="# sections" />
               )}
@@ -58,7 +58,7 @@ export function HomePage() {
 
         {loading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
-            <Trans>Loading</Trans>
+            <Trans>Loading…</Trans>
           </div>
         ) : (
           <div className="flex flex-1 flex-col gap-6 p-4">

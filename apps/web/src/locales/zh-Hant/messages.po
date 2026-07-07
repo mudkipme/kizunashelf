@@ -15,72 +15,72 @@ msgstr ""
 
 #: src/components/assets/quick-log-dialog.tsx:201
 msgid " (already logged)"
-msgstr ""
+msgstr "（已記錄）"
 
 #: src/components/assets/quick-log-dialog.tsx:201
 msgid " (new note)"
-msgstr ""
+msgstr "（新筆記）"
 
 #: src/components/settings/settings-sections.tsx:445
 msgid "(daily-notes default)"
-msgstr ""
+msgstr "（每日筆記預設）"
 
 #. placeholder {0}: counts.exists
 #: src/pages/import-wizard-page.tsx:426
 msgid "{0, plural, one {# already in library} other {# already in library}}"
-msgstr ""
+msgstr "{0, plural, other {已在庫中 # 件}}"
 
 #. placeholder {0}: completeCount(summary)
 #: src/pages/review-page.tsx:250
 msgid "{0, plural, one {# complete} other {# complete}}"
-msgstr ""
+msgstr "{0, plural, other {已完成 # 件}}"
 
 #. placeholder {0}: job.created
 #: src/pages/import-wizard-page.tsx:640
 msgid "{0, plural, one {# created} other {# created}}"
-msgstr ""
+msgstr "{0, plural, other {已建立 # 件}}"
 
 #. placeholder {0}: selectedDay.entries.length
 #: src/pages/calendar-page.tsx:172
 msgid "{0, plural, one {# entry} other {# entries}}"
-msgstr ""
+msgstr "{0, plural, other {# 件}}"
 
 #. placeholder {0}: calendar.data.totals.entries
 #. placeholder {1}: calendar.data.totals.daysWithEntries
 #: src/pages/calendar-page.tsx:90
 msgid "{0, plural, one {# entry} other {# entries}} across {1, plural, one {# day} other {# days}}"
-msgstr ""
+msgstr "{0, plural, other {# 件}}，橫跨 {1, plural, other {# 天}}"
 
 #. placeholder {0}: field.externalTypes.length
 #: src/components/settings/settings-field-descriptors.ts:78
 msgid "{0, plural, one {# external type} other {# external types}}"
-msgstr ""
+msgstr "{0, plural, other {# 種外部類型}}"
 
 #. placeholder {0}: job.failed
 #: src/pages/import-wizard-page.tsx:649
 msgid "{0, plural, one {# failed} other {# failed}}"
-msgstr ""
+msgstr "{0, plural, other {失敗 # 件}}"
 
 #. placeholder {0}: type.fields.length
 #: src/components/settings/settings-dialogs.tsx:224
 msgid "{0, plural, one {# field} other {# fields}}"
-msgstr ""
+msgstr "{0, plural, other {# 個欄位}}"
 
 #. placeholder {0}: section.filters.length
 #: src/components/settings/settings-dialogs.tsx:457
 msgid "{0, plural, one {# filter} other {# filters}}"
-msgstr ""
+msgstr "{0, plural, other {# 個篩選條件}}"
 
 #. placeholder {0}: items.length
 #: src/pages/import-wizard-page.tsx:420
 msgid "{0, plural, one {# found} other {# found}}"
-msgstr ""
+msgstr "{0, plural, other {找到 # 件}}"
 
 #. placeholder {0}: list.itemCount
 #: src/pages/entity-page.tsx:590
 #: src/pages/lists-page.tsx:78
 msgid "{0, plural, one {# item} other {# items}}"
-msgstr ""
+msgstr "{0, plural, other {# 個項目}}"
 
 #. placeholder {0}: entity.relationCount
 #. placeholder {0}: scopeStats?.relations ?? 0
@@ -89,33 +89,33 @@ msgstr ""
 #: src/components/home/home-entity-card.tsx:46
 #: src/pages/library-page.tsx:343
 msgid "{0, plural, one {# link} other {# links}}"
-msgstr ""
+msgstr "{0, plural, other {# 個連結}}"
 
 #. placeholder {0}: field.externalFields.length
 #: src/components/settings/settings-field-descriptors.ts:67
 msgid "{0, plural, one {# mapping} other {# mappings}}"
-msgstr ""
+msgstr "{0, plural, other {# 組對應}}"
 
 #. placeholder {0}: counts.needsReview
 #: src/pages/import-wizard-page.tsx:430
 msgid "{0, plural, one {# needs review} other {# need review}}"
-msgstr ""
+msgstr "{0, plural, other {# 件待檢查}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
 #: src/components/settings/settings-editor.tsx:103
 #: src/components/settings/settings-editor.tsx:230
 msgid "{0, plural, one {# path} other {# paths}}"
-msgstr ""
+msgstr "{0, plural, other {# 條路徑}}"
 
 #. placeholder {0}: typeProviderCount(type)
 #: src/components/settings/settings-dialogs.tsx:225
 msgid "{0, plural, one {# provider} other {# providers}}"
-msgstr ""
+msgstr "{0, plural, other {# 個資料來源}}"
 
 #. placeholder {0}: summary.remaining
 #: src/pages/review-page.tsx:242
 msgid "{0, plural, one {# remaining} other {# remaining}}"
-msgstr ""
+msgstr "{0, plural, other {剩餘 # 件}}"
 
 #. placeholder {0}: (config.home.sections ?? []).length
 #. placeholder {0}: home.data?.sections.length ?? 0
@@ -125,32 +125,32 @@ msgstr ""
 #: src/pages/home-page.tsx:35
 #: src/pages/lists-page.tsx:82
 msgid "{0, plural, one {# section} other {# sections}}"
-msgstr ""
+msgstr "{0, plural, other {# 個版塊}}"
 
 #. placeholder {0}: filteredItems.length
 #: src/pages/review-page.tsx:180
 msgid "{0, plural, one {# shown} other {# shown}}"
-msgstr ""
+msgstr "{0, plural, other {顯示 # 件}}"
 
 #. placeholder {0}: job.skipped
 #: src/pages/import-wizard-page.tsx:644
 msgid "{0, plural, one {# skipped} other {# skipped}}"
-msgstr ""
+msgstr "{0, plural, other {略過 # 件}}"
 
 #. placeholder {0}: counts.willCreate
 #: src/pages/import-wizard-page.tsx:423
 msgid "{0, plural, one {# to create} other {# to create}}"
-msgstr ""
+msgstr "{0, plural, other {將建立 # 件}}"
 
 #. placeholder {0}: items.length
 #: src/pages/review-page.tsx:183
 msgid "{0, plural, one {# total queue item} other {# total queue items}}"
-msgstr ""
+msgstr "{0, plural, other {佇列共 # 個項目}}"
 
 #. placeholder {0}: summary.total
 #: src/pages/review-page.tsx:253
 msgid "{0, plural, one {# total} other {# total}}"
-msgstr ""
+msgstr "{0, plural, other {共 # 件}}"
 
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
@@ -158,159 +158,159 @@ msgstr ""
 #: src/components/settings/settings-editor.tsx:116
 #: src/components/settings/settings-editor.tsx:302
 msgid "{0, plural, one {# type} other {# types}}"
-msgstr ""
+msgstr "{0, plural, other {# 種類型}}"
 
 #. placeholder {0}: field.enumOptions.length
 #: src/components/settings/settings-field-descriptors.ts:63
 msgid "{0, plural, one {# value} other {# values}}"
-msgstr ""
+msgstr "{0, plural, other {# 個值}}"
 
 #. placeholder {0}: data.watchedCount
 #: src/pages/import-wizard-page.tsx:585
 msgid "{0, plural, one {# watched} other {# watched}}"
-msgstr ""
+msgstr "{0, plural, other {已觀看 # 件}}"
 
 #. placeholder {0}: pending.types.length
 #: src/components/settings/preset-picker.tsx:176
 msgid "{0, plural, one {Add # type} other {Add # types}}"
-msgstr ""
+msgstr "{0, plural, other {新增 # 種類型}}"
 
 #. placeholder {0}: dates.totals.snippets
 #: src/components/assets/entity-dates.tsx:45
 msgid "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)}}"
-msgstr ""
+msgstr "{0, plural, other {每日筆記（# 則片段）}}"
 
 #. placeholder {0}: result.episodes.imported
 #: src/pages/quick-capture-page.tsx:148
 msgid "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
-msgstr ""
+msgstr "{0, plural, other {已匯入 # 集。}}"
 
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
 #: src/components/assets/asset-download-panel.tsx:122
 #: src/pages/import-wizard-page.tsx:635
 msgid "{0} / {1} processed"
-msgstr ""
+msgstr "已處理 {0} / {1}"
 
 #. placeholder {0}: job.downloaded
 #: src/components/assets/asset-download-panel.tsx:127
 msgid "{0} downloaded"
-msgstr ""
+msgstr "已下載 {0}"
 
 #. placeholder {0}: job.failed
 #: src/components/assets/asset-download-panel.tsx:131
 msgid "{0} failed"
-msgstr ""
+msgstr "失敗 {0}"
 
 #. placeholder {0}: selected.size
 #. placeholder {1}: allIds.length
 #: src/components/assets/episode-sync-dialog.tsx:260
 msgid "{0} of {1} selected"
-msgstr ""
+msgstr "已選取 {1} 項中的 {0} 項"
 
 #. placeholder {0}: item.label
 #: src/pages/quick-capture-page.tsx:244
 msgid "{0} search failed"
-msgstr ""
+msgstr "{0} 搜尋失敗"
 
 #. placeholder {0}: job.skipped
 #: src/components/assets/asset-download-panel.tsx:136
 msgid "{0} skipped"
-msgstr ""
+msgstr "略過 {0}"
 
 #: src/components/entities/metadata-inputs.tsx:637
 msgid "{ariaLabel} new property"
-msgstr ""
+msgstr "{ariaLabel} 新屬性"
 
 #: src/components/settings/settings-editor.tsx:304
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
-msgstr ""
+msgstr "{configuredProviderCount, plural, other {# 個資料來源}}"
 
 #: src/pages/entity-page.tsx:467
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
-msgstr ""
+msgstr "{CONTENT_WRITES_DISABLED} 無法使用編輯操作。"
 
 #: src/components/home/coming-up-section.tsx:136
 msgid "{days, plural, one {# day} other {# days}}"
-msgstr ""
+msgstr "{days, plural, other {# 天}}"
 
 #: src/pages/library-page.tsx:340
 msgid "{entryCount, plural, one {# entry} other {# entries}}"
-msgstr ""
+msgstr "{entryCount, plural, other {# 件}}"
 
 #: src/pages/quick-capture-page.tsx:138
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
-msgstr ""
+msgstr "{failedCovers, plural, other {已新增，但有 # 張封面無法下載（已保留 URL）。}}"
 
 #. placeholder {0}: formatNumber(count)
 #: src/components/analytics/activity-heatmap.tsx:129
 msgid "{monthLabel}: {0}"
-msgstr ""
+msgstr "{monthLabel}：{0}"
 
 #. placeholder {0}: formatNumber(count)
 #: src/components/analytics/activity-heatmap.tsx:130
 msgid "{monthLabel}: {0} — open in calendar"
-msgstr ""
+msgstr "{monthLabel}：{0} — 在日曆中開啟"
 
 #: src/components/analytics/activity-heatmap.tsx:99
 msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
-msgstr ""
+msgstr "{selectedTotal, plural, other {# 件有日期}}"
 
 #: src/pages/import-wizard-page.tsx:253
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
-msgstr ""
+msgstr "{toCreate, plural, other {匯入 # 個項目}}"
 
 #: src/pages/library-page.tsx:388
 msgid "{total, plural, one {# entry} other {# entries}}"
-msgstr ""
+msgstr "{total, plural, other {# 件}}"
 
 #. placeholder {0}: list.data?.page ?? page
 #: src/pages/library-page.tsx:383
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
-msgstr ""
+msgstr "{total, plural, other {# 件}} · 第 {0}/{totalPages} 頁"
 
 #: src/components/settings/settings-editor.tsx:303
 msgid "{totalFields, plural, one {# field} other {# fields}}"
-msgstr ""
+msgstr "{totalFields, plural, other {# 個欄位}}"
 
 #: src/components/calendar/calendar-entry-item.tsx:40
 #: src/pages/activity-page.tsx:291
 msgid "✅ Completed"
-msgstr ""
+msgstr "✅ 已完成"
 
 #: src/components/settings/preset-picker.tsx:281
 msgid "✨ Pairs well with your picks"
-msgstr ""
+msgstr "✨ 與你的選擇很搭"
 
 #: src/components/calendar/calendar-entry-item.tsx:40
 #: src/pages/activity-page.tsx:291
 msgid "📅 Scheduled"
-msgstr ""
+msgstr "📅 已排程"
 
 #. placeholder {0}: result.entity.basename
 #: src/pages/quick-capture-page.tsx:155
 msgid "A file named for this title already existed, so it was saved as “{0}”."
-msgstr ""
+msgstr "已存在以此標題命名的檔案，因此改儲存為「{0}」。"
 
 #: src/components/layout/app-frame.tsx:122
 msgid "A personal memory graph"
-msgstr ""
+msgstr "個人記憶圖譜"
 
 #: src/components/settings/preset-picker.tsx:371
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
-msgstr ""
+msgstr "已存在同名類型，因此改用 {assignedIds}。新增後可再重新命名。"
 
 #: src/pages/entity-page.tsx:424
 #: src/pages/entity-page.tsx:427
 msgid "Actions"
-msgstr ""
+msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:111
 #: src/components/layout/app-frame.tsx:347
 #: src/pages/activity-page.tsx:108
 #: src/pages/statistics-page.tsx:80
 msgid "Activity"
-msgstr ""
+msgstr "活動"
 
 #: src/components/entities/metadata-inputs.tsx:641
 #: src/components/settings/settings-controls.tsx:70
@@ -321,118 +321,118 @@ msgstr ""
 #: src/pages/library-page.tsx:411
 #: src/pages/list-detail-page.tsx:919
 msgid "Add"
-msgstr ""
+msgstr "新增"
 
 #: src/components/ui/multi-value-combobox.tsx:151
 msgid "Add \"{item}\""
-msgstr ""
+msgstr "新增「{item}」"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
 #: src/components/settings/preset-picker.tsx:399
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
-msgstr ""
+msgstr "為 <1>{1}</1> 新增一個 <0>{0}</0> 連結"
 
 #: src/components/settings/settings-dialogs.tsx:206
 msgid "Add built-in type"
-msgstr ""
+msgstr "新增內建類型"
 
 #: src/components/settings/preset-picker.tsx:126
 msgid "Add built-in types"
-msgstr ""
+msgstr "新增內建類型"
 
 #: src/components/settings/settings-dialogs.tsx:209
 msgid "Add custom type"
-msgstr ""
+msgstr "新增自訂類型"
 
 #: src/pages/home-page.tsx:42
 #: src/pages/library-page.tsx:323
 #: src/pages/library-page.tsx:324
 #: src/pages/library-page.tsx:400
 msgid "Add entity"
-msgstr ""
+msgstr "新增項目"
 
 #: src/pages/entity-create-page.tsx:79
 msgid "Add Entity"
-msgstr ""
+msgstr "新增項目"
 
 #: src/components/settings/settings-sections.tsx:968
 msgid "Add enum options above to map them to statuses."
-msgstr ""
+msgstr "請在上方新增列舉選項，以便將其對應到狀態。"
 
 #: src/components/entities/metadata-editor.tsx:159
 msgid "Add Field"
-msgstr ""
+msgstr "新增欄位"
 
 #: src/components/settings/settings-sections.tsx:176
 msgid "Add Filter"
-msgstr ""
+msgstr "新增篩選條件"
 
 #: src/pages/list-detail-page.tsx:451
 #: src/pages/list-detail-page.tsx:875
 msgid "Add items"
-msgstr ""
+msgstr "新增項目"
 
 #: src/pages/quick-capture-page.tsx:185
 msgid "Add manually"
-msgstr ""
+msgstr "手動新增"
 
 #: src/components/entities/metadata-inputs.tsx:313
 msgid "Add path or URL"
-msgstr ""
+msgstr "新增路徑或 URL"
 
 #: src/pages/list-detail-page.tsx:447
 msgid "Add section"
-msgstr ""
+msgstr "新增版塊"
 
 #: src/components/entities/metadata-inputs.tsx:155
 msgid "Add value"
-msgstr ""
+msgstr "新增值"
 
 #: src/components/settings/preset-picker.tsx:337
 #: src/pages/list-detail-page.tsx:908
 msgid "Added"
-msgstr ""
+msgstr "已新增"
 
 #: src/components/settings/preset-picker.tsx:121
 msgid "Added {added} — {renamed}"
-msgstr ""
+msgstr "已新增 {added} — {renamed}"
 
 #. placeholder {0}: result.episodes.error
 #: src/pages/quick-capture-page.tsx:145
 msgid "Added, but episode import failed: {0}"
-msgstr ""
+msgstr "已新增，但劇集匯入失敗：{0}"
 
 #: src/components/settings/preset-picker.tsx:203
 #: src/pages/quick-capture-page.tsx:308
 msgid "Adding…"
-msgstr ""
+msgstr "新增中…"
 
 #: src/components/entities/external-match-dialog.tsx:367
 msgid "adds new section"
-msgstr ""
+msgstr "新增版塊"
 
 #: src/pages/onboarding-page.tsx:201
 msgid "Advanced: edit full schema"
-msgstr ""
+msgstr "進階：編輯完整結構描述"
 
 #: src/pages/activity-page.tsx:39
 msgid "All"
-msgstr ""
+msgstr "全部"
 
 #: src/pages/review-page.tsx:168
 msgid "All dates"
-msgstr ""
+msgstr "所有日期"
 
 #: src/pages/quick-capture-page.tsx:231
 msgid "All providers"
-msgstr ""
+msgstr "所有資料來源"
 
 #: src/components/entities/external-match-dialog.tsx:130
 #: src/pages/activity-page.tsx:27
 #: src/pages/calendar-page.tsx:127
 msgid "All sources"
-msgstr ""
+msgstr "所有來源"
 
 #: src/components/analytics/activity-heatmap.tsx:91
 #: src/components/assets/asset-download-panel.tsx:84
@@ -442,54 +442,54 @@ msgstr ""
 #: src/pages/quick-capture-page.tsx:220
 #: src/pages/review-page.tsx:160
 msgid "All types"
-msgstr ""
+msgstr "所有類型"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
 #: src/pages/library-page.tsx:298
 msgid "All types ({0})"
-msgstr ""
+msgstr "所有類型（{0}）"
 
 #: src/pages/import-wizard-page.tsx:38
 msgid "Anime"
-msgstr ""
+msgstr "動畫"
 
 #. placeholder {0}: filter.label
 #: src/components/assets/asset-toolbar.tsx:154
 #: src/components/assets/asset-toolbar.tsx:172
 #: src/components/assets/asset-toolbar.tsx:236
 msgid "Any {0}"
-msgstr ""
+msgstr "任何 {0}"
 
 #: src/components/assets/quick-log-dialog.tsx:141
 msgid "Anything worth remembering — e.g. an episode number"
-msgstr ""
+msgstr "任何值得記下的內容 — 例如某一集的編號"
 
 #: src/components/settings/settings-dialogs.tsx:381
 #: src/components/settings/settings-dialogs.tsx:509
 msgid "Apply"
-msgstr ""
+msgstr "套用"
 
 #: src/components/entities/external-match-dialog.tsx:210
 msgid "Apply Selected"
-msgstr ""
+msgstr "套用所選"
 
 #: src/components/entities/external-match-dialog.tsx:210
-msgid "Applying"
-msgstr ""
+msgid "Applying…"
+msgstr "套用中…"
 
 #: src/components/assets/asset-toolbar.tsx:108
 #: src/components/settings/settings-sections.tsx:220
 msgid "Ascending"
-msgstr ""
+msgstr "遞增"
 
 #: src/components/settings/settings-editor.tsx:215
 msgid "Asset root"
-msgstr ""
+msgstr "資產根目錄"
 
 #. placeholder {0}: config.assetRoot || "Assets"
 #: src/components/settings/settings-editor.tsx:205
 msgid "assets: {0}"
-msgstr ""
+msgstr "資產：{0}"
 
 #: src/components/layout/app-frame.tsx:112
 #: src/components/settings/preset-picker.tsx:173
@@ -497,40 +497,40 @@ msgstr ""
 #: src/components/settings/settings-editor.tsx:172
 #: src/pages/entity-edit-page.tsx:174
 msgid "Back"
-msgstr ""
+msgstr "返回"
 
 #: src/pages/entity-page.tsx:680
 msgid "Basename"
-msgstr ""
+msgstr "基底名稱"
 
 #: src/components/settings/settings-sections.tsx:330
 msgid "Basics"
-msgstr ""
+msgstr "基本資訊"
 
 #: src/components/entities/external-match-dialog.tsx:347
 msgid "Body Sections"
-msgstr ""
+msgstr "內文版塊"
 
 #: src/pages/import-wizard-page.tsx:37
 msgid "Book"
-msgstr ""
+msgstr "書籍"
 
 #: src/pages/import-wizard-page.tsx:173
 msgid "Bring a library in from another service, then review before anything is written"
-msgstr ""
+msgstr "從其他服務匯入一個庫，並在任何內容寫入前先檢查。"
 
 #: src/pages/review-page.tsx:50
 msgid "Broken Assets"
-msgstr ""
+msgstr "毀損的資產"
 
 #: src/pages/home-page.tsx:87
 msgid "Browse library"
-msgstr ""
+msgstr "瀏覽庫"
 
 #: src/components/layout/app-frame.tsx:344
 #: src/pages/calendar-page.tsx:84
 msgid "Calendar"
-msgstr ""
+msgstr "日曆"
 
 #: src/components/assets/asset-download-panel.tsx:103
 #: src/components/assets/episode-sync-dialog.tsx:334
@@ -546,59 +546,59 @@ msgstr ""
 #: src/pages/list-detail-page.tsx:994
 #: src/pages/lists-page.tsx:160
 msgid "Cancel"
-msgstr ""
+msgstr "取消"
 
 #: src/pages/activity-page.tsx:38
 msgid "Catch up"
-msgstr ""
+msgstr "補進度"
 
 #: src/components/assets/entity-episodes.tsx:133
 #: src/components/assets/entity-episodes.tsx:140
 msgid "Change completion date"
-msgstr ""
+msgstr "變更完成日期"
 
 #: src/pages/list-detail-page.tsx:970
 msgid "Changes the list's name."
-msgstr ""
+msgstr "變更清單的名稱。"
 
 #: src/components/settings/settings-sections.tsx:526
 msgid "Checklist (per-item checkboxes)"
-msgstr ""
+msgstr "檢查清單（每個項目附核取方塊）"
 
 #: src/components/settings/settings-sections.tsx:815
 msgid "Chinese"
-msgstr ""
+msgstr "中文"
 
 #: src/components/entities/external-match-dialog.tsx:382
 msgid "Choose a candidate to compare fields."
-msgstr ""
+msgstr "選一個候選項目以比較欄位。"
 
 #: src/pages/entity-create-page.tsx:82
 #: src/pages/import-wizard-page.tsx:438
 msgid "Choose a type"
-msgstr ""
+msgstr "選擇一種類型"
 
 #: src/pages/entity-page.tsx:564
 msgid "Choose which lists {entityName} belongs to."
-msgstr ""
+msgstr "選擇 {entityName} 所屬的清單。"
 
 #: src/components/assets/episode-sync-dialog.tsx:269
 msgid "Clear all"
-msgstr ""
+msgstr "全部清除"
 
 #: src/components/ui/dialog.tsx:76
 #: src/components/ui/dialog.tsx:116
 msgid "Close"
-msgstr ""
+msgstr "關閉"
 
 #: src/components/layout/app-frame.tsx:282
 #: src/components/layout/app-frame.tsx:298
 msgid "Close navigation"
-msgstr ""
+msgstr "關閉導覽"
 
 #: src/components/home/coming-up-section.tsx:51
 msgid "Coming up"
-msgstr ""
+msgstr "即將登場"
 
 #: src/components/assets/quick-log-dialog.tsx:31
 #: src/components/settings/settings-sections.tsx:754
@@ -607,317 +607,308 @@ msgstr ""
 #: src/pages/activity-page.tsx:46
 #: src/pages/import-wizard-page.tsx:52
 msgid "Completed"
-msgstr ""
+msgstr "已完成"
 
 #: src/components/settings/settings-dialogs.tsx:502
 msgid "Configure a section shown on the home page: its source type, filters, and ordering."
-msgstr ""
+msgstr "設定首頁上顯示的版塊：其來源類型、篩選條件與排序。"
 
 #: src/pages/home-page.tsx:92
 msgid "Configure Home"
-msgstr ""
+msgstr "設定首頁"
 
 #: src/components/settings/settings-dialogs.tsx:337
 msgid "Configure how this field is read, derived, and displayed."
-msgstr ""
+msgstr "設定此欄位的讀取、衍生與顯示方式。"
 
 #: src/components/settings/settings-dialogs.tsx:307
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
-msgstr ""
+msgstr "設定新欄位，然後選擇「完成」以新增。返回將捨棄它。"
 
 #: src/components/settings/settings-editor.tsx:161
 msgid "Configure Vault"
-msgstr ""
+msgstr "設定保管庫"
 
 #: src/pages/statistics-page.tsx:53
 msgid "Connected"
-msgstr ""
+msgstr "已連線"
 
 #: src/pages/statistics-page.tsx:69
 msgid "Connection Fields"
-msgstr ""
+msgstr "連線欄位"
 
 #: src/components/assets/entity-detail.tsx:180
 #: src/pages/statistics-page.tsx:51
 msgid "Connections"
-msgstr ""
+msgstr "連線"
 
 #: src/components/settings/preset-picker.tsx:206
 msgid "Continue"
-msgstr ""
+msgstr "繼續"
 
 #. placeholder {0}: selected.size
 #: src/components/settings/preset-picker.tsx:205
 msgid "Continue ({0})"
-msgstr ""
+msgstr "繼續（{0}）"
 
 #: src/components/layout/app-frame.tsx:330
 msgid "Core Views"
-msgstr ""
+msgstr "核心檢視"
 
 #: src/components/assets/asset-toolbar.tsx:220
 msgid "Could not load options."
-msgstr ""
+msgstr "無法載入選項。"
 
 #: src/pages/entity-create-page.tsx:126
 #: src/pages/lists-page.tsx:164
 msgid "Create"
-msgstr ""
+msgstr "建立"
 
 #: src/pages/quick-capture-page.tsx:325
 msgid "Create “{query}” manually →"
-msgstr ""
+msgstr "手動建立「{query}」 →"
 
 #: src/pages/entity-page.tsx:623
 msgid "Create & add"
-msgstr ""
+msgstr "建立並新增"
 
 #: src/components/settings/vault-switcher.tsx:134
 msgid "Create new vault"
-msgstr ""
+msgstr "建立新保管庫"
 
+#: src/components/settings/settings-editor.tsx:177
 #: src/components/settings/vault-switcher.tsx:166
 #: src/pages/onboarding-page.tsx:209
 msgid "Create vault"
-msgstr ""
-
-#: src/components/settings/settings-editor.tsx:177
-msgid "Create Vault"
-msgstr ""
+msgstr "建立保管庫"
 
 #. placeholder {0}: selected.size
 #: src/pages/onboarding-page.tsx:208
 msgid "Create vault ({0})"
-msgstr ""
+msgstr "建立保管庫（{0}）"
 
 #: src/pages/entity-page.tsx:623
 #: src/pages/lists-page.tsx:164
-msgid "Creating"
-msgstr ""
-
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
-msgstr ""
+msgstr "建立中…"
 
 #: src/pages/import-wizard-page.tsx:333
 msgid "CSV export"
-msgstr ""
+msgstr "CSV 匯出"
 
 #: src/pages/lists-page.tsx:44
 msgid "Curated collections of your items, saved as plain files you own."
-msgstr ""
+msgstr "精選你的項目集合，以你擁有的純檔案形式儲存。"
 
 #. placeholder {0}: formatMetadataValue(currentValues[entry.field])
 #: src/components/entities/external-match-dialog.tsx:330
 msgid "Current: {0}"
-msgstr ""
+msgstr "目前：{0}"
 
 #: src/components/entities/metadata-editor.tsx:149
 msgid "Custom field"
-msgstr ""
+msgstr "自訂欄位"
 
 #: src/components/entities/metadata-editor.tsx:212
 msgid "Custom field name"
-msgstr ""
+msgstr "自訂欄位名稱"
 
 #: src/components/calendar/calendar-entry-item.tsx:27
 msgid "Daily Note"
-msgstr ""
+msgstr "每日筆記"
 
 #: src/components/settings/settings-editor.tsx:256
 msgid "Daily note indexing is disabled."
-msgstr ""
+msgstr "每日筆記索引已停用。"
 
 #: src/pages/calendar-page.tsx:129
 msgid "Daily note mentions"
-msgstr ""
-
-#: src/pages/activity-page.tsx:29
-msgid "Daily notes"
-msgstr ""
+msgstr "每日筆記提及"
 
 #: src/components/settings/settings-editor.tsx:101
 #: src/components/settings/settings-editor.tsx:225
+#: src/pages/activity-page.tsx:29
 msgid "Daily Notes"
-msgstr ""
+msgstr "每日筆記"
 
 #. placeholder {0}: calendar.data.totals.dailyNotes
 #: src/pages/calendar-page.tsx:121
 msgid "Daily Notes {0}"
-msgstr ""
+msgstr "每日筆記 {0}"
 
 #: src/components/settings/settings-sections.tsx:396
 msgid "Daily-note logging"
-msgstr ""
+msgstr "每日筆記記錄"
 
 #: src/components/layout/theme-mode-select.tsx:13
 msgid "Dark theme"
-msgstr ""
+msgstr "深色主題"
 
 #: src/components/layout/theme-mode-select.tsx:21
 msgid "Dark theme. Switch to system theme."
-msgstr ""
+msgstr "深色主題。切換為系統主題。"
 
 #: src/components/calendar/calendar-entry-item.tsx:48
 #: src/pages/activity-page.tsx:269
 msgid "date"
-msgstr ""
+msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:133
 #: src/pages/activity-page.tsx:268
 msgid "Date"
-msgstr ""
+msgstr "日期"
 
 #: src/components/settings/settings-sections.tsx:74
 msgid "Date format"
-msgstr ""
+msgstr "日期格式"
 
 #. placeholder {0}: fieldDisplayLabel(field)
 #: src/components/settings/settings-sections.tsx:131
 msgid "Date: {0}"
-msgstr ""
+msgstr "日期：{0}"
 
 #: src/pages/statistics-page.tsx:52
 msgid "Dated"
-msgstr ""
+msgstr "有日期"
 
 #: src/pages/statistics-page.tsx:81
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
-msgstr ""
+msgstr "依月份與年份排列的有日期項目 — 比較今年與往年，並可依類型篩選"
 
 #: src/components/assets/entity-detail.tsx:231
 msgid "Dates"
-msgstr ""
+msgstr "日期"
 
 #: src/pages/activity-page.tsx:28
 msgid "Dates & episodes"
-msgstr ""
+msgstr "日期與劇集"
 
 #: src/components/settings/settings-sections.tsx:219
 msgid "Default"
-msgstr ""
+msgstr "預設"
 
 #: src/components/settings/settings-sections.tsx:101
 msgid "Default line format"
-msgstr ""
+msgstr "預設行格式"
 
 #: src/components/settings/settings-sections.tsx:517
 msgid "Default provider order is used."
-msgstr ""
+msgstr "使用預設的資料來源順序。"
 
 #: src/pages/entity-page.tsx:461
 #: src/pages/list-detail-page.tsx:414
 #: src/pages/list-detail-page.tsx:628
 msgid "Delete"
-msgstr ""
+msgstr "刪除"
 
 #: src/components/assets/asset-toolbar.tsx:109
 #: src/components/settings/settings-sections.tsx:221
 msgid "Descending"
-msgstr ""
+msgstr "遞減"
 
 #: src/pages/list-detail-page.tsx:433
 msgid "Describe this list (appears above the items)…"
-msgstr ""
+msgstr "描述此清單（顯示於項目上方）…"
 
 #: src/pages/list-detail-page.tsx:431
 msgid "Description"
-msgstr ""
+msgstr "描述"
 
 #: src/components/assets/episode-sync-dialog.tsx:381
 msgid "Deselect group"
-msgstr ""
+msgstr "取消選取群組"
 
 #: src/components/assets/entity-detail.tsx:143
 msgid "Details"
-msgstr ""
+msgstr "詳細資訊"
 
 #: src/components/assets/asset-toolbar.tsx:106
 #: src/components/settings/settings-sections.tsx:208
 msgid "Direction"
-msgstr ""
+msgstr "方向"
 
 #: src/components/settings/settings-controls.tsx:271
 msgid "Disable"
-msgstr ""
+msgstr "停用"
 
 #: src/pages/settings-page.tsx:143
 msgid "Discard"
-msgstr ""
+msgstr "捨棄"
 
 #: src/pages/settings-page.tsx:119
 msgid "Discard unsaved changes?"
-msgstr ""
+msgstr "捨棄未儲存的變更？"
 
 #: src/components/settings/settings-sections.tsx:676
 msgid "Display name"
-msgstr ""
+msgstr "顯示名稱"
 
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
 #: src/pages/entity-page.tsx:631
 #: src/pages/list-detail-page.tsx:930
 msgid "Done"
-msgstr ""
+msgstr "完成"
 
 #: src/pages/entity-page.tsx:451
 msgid "Download cover"
-msgstr ""
+msgstr "下載封面"
 
 #: src/components/assets/asset-download-panel.tsx:74
 msgid "Download cover images so you keep your own copy."
-msgstr ""
+msgstr "下載封面圖片，讓你保有自己的副本。"
 
 #: src/components/entities/external-match-dialog.tsx:199
 msgid "Download cover locally"
-msgstr ""
+msgstr "在本機下載封面"
 
 #: src/components/assets/asset-download-panel.tsx:71
 msgid "Download remote covers"
-msgstr ""
+msgstr "下載遠端封面"
 
 #: src/components/assets/asset-download-panel.tsx:82
 msgid "Download scope"
-msgstr ""
+msgstr "下載範圍"
 
 #: src/pages/list-detail-page.tsx:668
 msgid "Drag items here"
-msgstr ""
+msgstr "將項目拖曳到這裡"
 
 #: src/pages/list-detail-page.tsx:731
 msgid "Drag to reorder"
-msgstr ""
+msgstr "拖曳以重新排序"
 
 #: src/components/settings/settings-sections.tsx:876
 #: src/pages/import-wizard-page.tsx:53
 msgid "Dropped"
-msgstr ""
+msgstr "已棄坑"
 
 #: src/pages/review-page.tsx:55
 msgid "Duplicate Filenames"
-msgstr ""
+msgstr "重複的檔名"
 
 #: src/pages/entity-page.tsx:434
 #: src/pages/list-detail-page.tsx:819
 msgid "Edit"
-msgstr ""
+msgstr "編輯"
 
 #. placeholder {0}: entityTitle(entity, language)
 #: src/pages/entity-edit-page.tsx:151
 msgid "Edit {0}"
-msgstr ""
+msgstr "編輯 {0}"
 
 #: src/components/settings/raw-config-editor.tsx:83
 msgid "Edit config.yaml"
-msgstr ""
+msgstr "編輯 config.yaml"
 
 #: src/pages/entity-edit-page.tsx:151
 msgid "Edit Entity"
-msgstr ""
+msgstr "編輯項目"
 
 #: src/components/settings/settings-dialogs.tsx:374
 msgid "Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema."
-msgstr ""
+msgstr "編輯此類型的基本資訊、資料來源、檔名與欄位。變更會套用至草稿，並隨其餘結構描述一併儲存。"
 
 #: src/components/assets/frontmatter-panel.tsx:121
 #: src/components/assets/frontmatter-panel.tsx:211
@@ -925,94 +916,94 @@ msgstr ""
 #: src/components/entities/metadata-inputs.tsx:82
 #: src/components/entities/metadata-inputs.tsx:135
 msgid "Empty"
-msgstr ""
+msgstr "空白"
 
 #: src/components/assets/frontmatter-panel.tsx:148
 msgid "Empty list"
-msgstr ""
+msgstr "空清單"
 
 #: src/components/assets/frontmatter-panel.tsx:183
 msgid "Empty object"
-msgstr ""
+msgstr "空物件"
 
 #: src/components/settings/settings-controls.tsx:271
 msgid "Enable"
-msgstr ""
+msgstr "啟用"
 
 #: src/components/settings/settings-sections.tsx:817
 msgid "English"
-msgstr ""
+msgstr "英文"
 
 #: src/pages/statistics-page.tsx:50
 msgid "Entities"
-msgstr ""
+msgstr "項目"
 
 #: src/pages/entity-edit-page.tsx:257
 #: src/pages/entity-page.tsx:385
 msgid "Entity not found"
-msgstr ""
+msgstr "找不到項目"
 
 #: src/components/settings/settings-dialogs.tsx:222
 #: src/components/settings/settings-dialogs.tsx:373
 msgid "Entity type"
-msgstr ""
+msgstr "項目類型"
 
 #: src/components/settings/settings-sections.tsx:172
 msgid "Enum and enum list fields from this type."
-msgstr ""
+msgstr "此類型的列舉與列舉清單欄位。"
 
 #: src/components/settings/settings-sections.tsx:752
 msgid "Enum options"
-msgstr ""
+msgstr "列舉選項"
 
 #: src/pages/activity-page.tsx:297
 #: src/pages/import-wizard-page.tsx:609
 msgid "Episodes"
-msgstr ""
+msgstr "劇集"
 
 #: src/components/settings/settings-sections.tsx:797
 #: src/pages/activity-page.tsx:48
 msgid "Event"
-msgstr ""
+msgstr "事件"
 
 #: src/components/settings/settings-sections.tsx:1026
 msgid "External field"
-msgstr ""
+msgstr "外部欄位"
 
 #: src/components/settings/settings-sections.tsx:991
 msgid "External field mappings"
-msgstr ""
+msgstr "外部欄位對應"
 
 #: src/components/entities/external-match-dialog.tsx:110
 msgid "External Match"
-msgstr ""
+msgstr "外部比對"
 
 #: src/components/settings/settings-sections.tsx:608
 msgid "External metadata"
-msgstr ""
+msgstr "外部中繼資料"
 
 #: src/components/entities/external-match-dialog.tsx:326
 msgid "external ref"
-msgstr ""
+msgstr "外部參照"
 
 #: src/components/settings/settings-sections.tsx:826
 #: src/components/settings/settings-sections.tsx:1015
 msgid "External source"
-msgstr ""
+msgstr "外部來源"
 
 #: src/components/settings/settings-sections.tsx:1063
 #: src/components/settings/settings-sections.tsx:1069
 msgid "External types"
-msgstr ""
+msgstr "外部類型"
 
 #: src/pages/import-wizard-page.tsx:376
 msgid "Fetch & plan"
-msgstr ""
+msgstr "擷取並規劃"
 
 #. placeholder {0}: source?.label ?? sourceId
 #: src/pages/import-wizard-page.tsx:220
 msgid "Fetching your library from {0}…"
-msgstr ""
+msgstr "正在從 {0} 擷取你的庫…"
 
 #: src/components/settings/settings-dialogs.tsx:336
 #: src/components/settings/settings-dialogs.tsx:396
@@ -1020,292 +1011,307 @@ msgstr ""
 #: src/components/settings/settings-sections.tsx:245
 #: src/components/settings/settings-sections.tsx:661
 msgid "Field"
-msgstr ""
+msgstr "欄位"
 
 #: src/components/settings/settings-dialogs.tsx:396
 msgid "Fields"
-msgstr ""
+msgstr "欄位"
 
 #: src/pages/entity-create-page.tsx:102
 msgid "File name"
-msgstr ""
+msgstr "檔名"
 
 #: src/components/settings/settings-sections.tsx:358
 msgid "Filename"
-msgstr ""
+msgstr "檔名"
 
 #: src/components/settings/settings-sections.tsx:375
 msgid "Filename title — used as"
-msgstr ""
+msgstr "檔名標題 — 用作"
 
 #: src/components/settings/settings-sections.tsx:360
 msgid "Filename title language"
-msgstr ""
+msgstr "檔名標題語言"
 
 #: src/pages/activity-page.tsx:138
 msgid "Filter by source"
-msgstr ""
+msgstr "依來源篩選"
 
 #: src/components/analytics/activity-heatmap.tsx:89
 #: src/pages/activity-page.tsx:126
 msgid "Filter by type"
-msgstr ""
+msgstr "依類型篩選"
 
 #: src/components/assets/asset-toolbar.tsx:73
 #: src/components/settings/settings-sections.tsx:171
 msgid "Filters"
-msgstr ""
+msgstr "篩選條件"
 
 #: src/pages/settings-page.tsx:79
 msgid "Form"
-msgstr ""
+msgstr "表單"
 
 #: src/pages/import-wizard-page.tsx:40
 msgid "Game"
-msgstr ""
+msgstr "遊戲"
 
 #: src/pages/lists-page.tsx:135
 msgid "Give your list a name."
-msgstr ""
+msgstr "為你的清單命名。"
 
 #: src/components/layout/app-frame.tsx:111
 msgid "Go back"
-msgstr ""
+msgstr "返回"
 
 #: src/pages/import-wizard-page.tsx:269
 msgid "Go to library"
-msgstr ""
+msgstr "前往庫"
 
 #: src/components/assets/asset-toolbar.tsx:128
 msgid "Grid"
-msgstr ""
+msgstr "格狀"
 
 #: src/pages/review-page.tsx:169
 msgid "Has date"
-msgstr ""
+msgstr "有日期"
 
 #: src/components/settings/settings-sections.tsx:598
 msgid "Heading"
-msgstr ""
+msgstr "標題"
 
 #: src/components/layout/app-frame.tsx:333
 #: src/components/settings/settings-editor.tsx:108
 #: src/components/settings/settings-editor.tsx:263
 #: src/pages/home-page.tsx:30
 msgid "Home"
-msgstr ""
+msgstr "首頁"
 
 #: src/components/settings/settings-dialogs.tsx:453
 #: src/components/settings/settings-dialogs.tsx:501
 msgid "Home section"
-msgstr ""
+msgstr "首頁版塊"
 
 #: src/components/settings/settings-editor.tsx:291
 msgid "Home sections are disabled."
-msgstr ""
+msgstr "首頁版塊已停用。"
 
 #: src/components/settings/settings-sections.tsx:334
 msgid "Icon"
-msgstr ""
+msgstr "圖示"
 
 #: src/components/settings/settings-sections.tsx:151
 #: src/components/settings/settings-sections.tsx:332
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: src/components/layout/app-frame.tsx:381
 #: src/pages/import-wizard-page.tsx:170
 msgid "Import"
-msgstr ""
+msgstr "匯入"
 
 #. placeholder {0}: incoming - already
 #: src/components/assets/episode-sync-dialog.tsx:345
 msgid "Import ({0} new · {already} updated)"
-msgstr ""
+msgstr "匯入（{0} 新增 · {already} 更新）"
 
 #: src/components/assets/episode-sync-dialog.tsx:346
 msgid "Import ({incoming})"
-msgstr ""
+msgstr "匯入（{incoming}）"
 
 #: src/pages/import-wizard-page.tsx:272
 msgid "Import another"
-msgstr ""
+msgstr "再匯入一個"
 
 #: src/pages/import-wizard-page.tsx:632
 msgid "Import complete"
-msgstr ""
-
-#: src/components/assets/episode-sync-dialog.tsx:343
-msgid "Importing"
-msgstr ""
+msgstr "匯入完成"
 
 #: src/pages/import-wizard-page.tsx:185
 msgid "Importing creates files, so it is unavailable here."
-msgstr ""
+msgstr "匯入會建立檔案，因此在此無法使用。"
 
+#: src/components/assets/episode-sync-dialog.tsx:343
 #: src/pages/import-wizard-page.tsx:632
 msgid "Importing…"
-msgstr ""
+msgstr "匯入中…"
 
 #: src/pages/import-wizard-page.tsx:547
 #: src/pages/import-wizard-page.tsx:551
 #: src/pages/quick-capture-page.tsx:289
 msgid "In library ✓"
-msgstr ""
+msgstr "已在庫中 ✓"
 
 #: src/components/assets/episode-sync-dialog.tsx:464
 msgid "in list"
-msgstr ""
+msgstr "在清單中"
 
 #. placeholder {0}: item.title
 #: src/pages/import-wizard-page.tsx:515
 msgid "Include {0}"
-msgstr ""
+msgstr "包含 {0}"
 
 #: src/components/calendar/calendar-entry-item.tsx:26
 msgid "Item"
-msgstr ""
+msgstr "項目"
 
 #. placeholder {0}: index + 1
 #: src/components/assets/frontmatter-panel.tsx:170
 msgid "Item {0}"
-msgstr ""
+msgstr "項目 {0}"
 
 #: src/components/settings/settings-sections.tsx:609
 msgid "Item list"
-msgstr ""
+msgstr "項目清單"
 
 #: src/components/assets/episode-sync-dialog.tsx:404
 msgid "Items"
-msgstr ""
+msgstr "項目"
 
 #. placeholder {0}: calendar.data.totals.episodes
 #: src/pages/calendar-page.tsx:118
 msgid "Items {0}"
-msgstr ""
+msgstr "項目 {0}"
 
 #: src/pages/list-detail-page.tsx:441
 msgid "Items <0>({totalItems})</0>"
-msgstr ""
+msgstr "項目 <0>({totalItems})</0>"
 
 #: src/components/settings/settings-sections.tsx:816
 msgid "Japanese"
-msgstr ""
+msgstr "日文"
 
 #: src/pages/settings-page.tsx:135
 msgid "Keep editing"
-msgstr ""
+msgstr "繼續編輯"
 
 #: src/components/assets/episode-sync-dialog.tsx:327
 msgid "Keep groups"
-msgstr ""
+msgstr "保留群組"
 
 #: src/components/settings/settings-sections.tsx:602
 msgid "Kind"
-msgstr ""
+msgstr "種類"
 
 #: src/components/settings/settings-sections.tsx:333
 msgid "Label"
-msgstr ""
+msgstr "標籤"
 
 #. placeholder {0}: field.titleLanguage
 #: src/components/settings/settings-field-descriptors.ts:59
 msgid "lang {0}"
-msgstr ""
+msgstr "語言 {0}"
 
 #: src/components/layout/language-select.tsx:53
 #: src/components/layout/language-select.tsx:54
 msgid "Language"
-msgstr ""
+msgstr "語言"
 
 #: src/components/home/coming-up-section.tsx:166
 msgid "Later"
-msgstr ""
+msgstr "稍後"
 
 #: src/components/analytics/activity-heatmap.tsx:153
 msgid "less"
-msgstr ""
+msgstr "收合"
 
 #: src/components/layout/app-frame.tsx:341
 msgid "Library"
-msgstr ""
+msgstr "庫"
 
 #: src/components/layout/theme-mode-select.tsx:12
 msgid "Light theme"
-msgstr ""
+msgstr "淺色主題"
 
 #: src/components/layout/theme-mode-select.tsx:20
 msgid "Light theme. Switch to dark theme."
-msgstr ""
+msgstr "淺色主題。切換為深色主題。"
 
 #: src/components/settings/settings-sections.tsx:193
 msgid "Limit"
-msgstr ""
+msgstr "上限"
 
 #. placeholder {0}: snippet.line
 #: src/components/assets/entity-dates.tsx:69
 #: src/components/calendar/calendar-entry-item.tsx:67
 msgid "line {0}"
-msgstr ""
+msgstr "第 {0} 行"
 
 #: src/components/settings/settings-sections.tsx:437
 msgid "Line format"
-msgstr ""
+msgstr "行格式"
 
 #: src/components/settings/preset-picker.tsx:126
 msgid "Link your new types"
-msgstr ""
+msgstr "連結你的新類型"
 
 #: src/components/assets/entity-detail.tsx:190
 msgid "Linked from"
-msgstr ""
+msgstr "連結自"
 
 #: src/components/assets/entity-detail.tsx:209
 msgid "Links"
-msgstr ""
+msgstr "連結"
 
 #: src/components/assets/entity-detail.tsx:183
 msgid "Links to"
-msgstr ""
+msgstr "連結至"
 
 #: src/components/assets/asset-toolbar.tsx:119
 msgid "List"
-msgstr ""
+msgstr "清單"
 
 #: src/pages/entity-page.tsx:548
 #: src/pages/lists-page.tsx:113
 msgid "List created"
-msgstr ""
+msgstr "已建立清單"
 
 #: src/pages/list-detail-page.tsx:367
 msgid "List deleted"
-msgstr ""
+msgstr "已刪除清單"
 
 #: src/pages/list-detail-page.tsx:389
 msgid "List not found"
-msgstr ""
+msgstr "找不到清單"
 
 #: src/pages/list-detail-page.tsx:634
 msgid "List style"
-msgstr ""
+msgstr "清單樣式"
 
 #: src/components/layout/app-frame.tsx:350
 #: src/pages/lists-page.tsx:41
 msgid "Lists"
-msgstr ""
+msgstr "清單"
 
 #: src/pages/activity-page.tsx:189
 msgid "Load more"
-msgstr ""
+msgstr "載入更多"
+
+#: src/pages/activity-page.tsx:150
+msgid "Loading activity…"
+msgstr "正在載入活動…"
+
+#: src/components/settings/preset-picker.tsx:155
+msgid "Loading built-in types…"
+msgstr "正在載入內建類型…"
+
+#: src/pages/entity-edit-page.tsx:154
+msgid "Loading entity"
+msgstr "正在載入項目"
+
+#: src/components/layout/app-frame.tsx:374
+msgid "Loading taxonomy"
+msgstr "正在載入分類"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/settings/raw-config-editor.tsx:109
+#: src/pages/activity-page.tsx:189
 #: src/pages/calendar-page.tsx:88
 #: src/pages/entity-edit-page.tsx:198
 #: src/pages/entity-page.tsx:276
 #: src/pages/entity-page.tsx:570
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
+#: src/pages/import-wizard-page.tsx:207
 #: src/pages/library-page.tsx:393
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:890
@@ -1316,353 +1322,332 @@ msgstr ""
 #: src/pages/settings-page.tsx:95
 #: src/pages/statistics-page.tsx:33
 #: src/pages/statistics-page.tsx:43
-msgid "Loading"
-msgstr ""
-
-#: src/pages/activity-page.tsx:150
-msgid "Loading activity…"
-msgstr ""
-
-#: src/components/settings/preset-picker.tsx:155
-msgid "Loading built-in types…"
-msgstr ""
-
-#: src/pages/entity-edit-page.tsx:154
-msgid "Loading entity"
-msgstr ""
-
-#: src/components/layout/app-frame.tsx:374
-msgid "Loading taxonomy"
-msgstr ""
-
-#: src/pages/activity-page.tsx:189
-#: src/pages/import-wizard-page.tsx:207
 msgid "Loading…"
-msgstr ""
+msgstr "載入中…"
 
 #: src/components/assets/quick-log-dialog.tsx:161
 #: src/pages/entity-page.tsx:347
 msgid "Log"
-msgstr ""
+msgstr "記錄"
 
 #: src/components/assets/quick-log-dialog.tsx:102
 msgid "Log activity"
-msgstr ""
+msgstr "記錄活動"
 
 #: src/components/settings/settings-sections.tsx:95
 msgid "Log section"
-msgstr ""
+msgstr "記錄版塊"
 
 #: src/components/settings/settings-sections.tsx:420
 msgid "Log to daily note"
-msgstr ""
+msgstr "記錄到每日筆記"
 
 #: src/components/settings/settings-sections.tsx:88
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
-msgstr ""
+msgstr "記錄預設值 — 記錄行寫入所在的標題，以及備用的行格式。每種類型都可覆寫這些設定，並加上自己的標籤。"
 
 #: src/components/assets/quick-log-dialog.tsx:161
 msgid "Logging…"
-msgstr ""
+msgstr "記錄中…"
 
 #: src/pages/entity-page.tsx:442
 #: src/pages/entity-page.tsx:561
 msgid "Manage lists"
-msgstr ""
+msgstr "管理清單"
 
 #: src/components/settings/settings-sections.tsx:944
 msgid "Map each option to a status"
-msgstr ""
+msgstr "將每個選項對應到一個狀態"
 
 #: src/pages/list-detail-page.tsx:746
 msgid "Mark as done"
-msgstr ""
+msgstr "標記為完成"
 
 #: src/pages/list-detail-page.tsx:746
 msgid "Mark as not done"
-msgstr ""
+msgstr "標記為未完成"
 
 #: src/pages/import-wizard-page.tsx:618
 msgid "Mark watched progress"
-msgstr ""
+msgstr "標記觀看進度"
 
 #: src/components/settings/settings-sections.tsx:553
 msgid "Markdown body sections"
-msgstr ""
+msgstr "Markdown 內文版塊"
 
 #. placeholder {0}: data.willFlipStatus.value
 #: src/components/assets/quick-log-dialog.tsx:212
 msgid "Marks as {0}"
-msgstr ""
+msgstr "標記為 {0}"
 
 #: src/pages/entity-edit-page.tsx:165
 #: src/pages/entity-page.tsx:446
 msgid "Match"
-msgstr ""
+msgstr "比對"
 
 #: src/pages/statistics-page.tsx:30
 msgid "Memory Analytics"
-msgstr ""
+msgstr "記憶分析"
 
 #: src/components/assets/entity-dates.tsx:23
 #: src/pages/entity-create-page.tsx:117
 #: src/pages/entity-edit-page.tsx:239
 msgid "Metadata"
-msgstr ""
+msgstr "中繼資料"
 
 #: src/pages/review-page.tsx:124
 msgid "Metadata Review"
-msgstr ""
+msgstr "中繼資料檢查"
 
 #: src/pages/activity-page.tsx:283
 msgid "Missed?"
-msgstr ""
+msgstr "錯過了？"
 
 #: src/pages/review-page.tsx:49
 msgid "Missing Cover"
-msgstr ""
+msgstr "缺少封面"
 
 #: src/pages/review-page.tsx:51
 msgid "Missing Links"
-msgstr ""
+msgstr "缺少連結"
 
 #: src/components/analytics/activity-heatmap.tsx:157
 msgid "more"
-msgstr ""
+msgstr "展開"
 
 #: src/pages/list-detail-page.tsx:517
 msgid "Move list to trash?"
-msgstr ""
+msgstr "將清單移到垃圾桶？"
 
 #: src/pages/entity-page.tsx:489
 #: src/pages/list-detail-page.tsx:537
 msgid "Move to Trash"
-msgstr ""
+msgstr "移到垃圾桶"
 
 #: src/pages/entity-page.tsx:476
 msgid "Move to trash?"
-msgstr ""
+msgstr "移到垃圾桶？"
 
 #: src/pages/entity-page.tsx:230
 msgid "Moved to trash"
-msgstr ""
+msgstr "已移到垃圾桶"
 
 #: src/pages/import-wizard-page.tsx:39
 msgid "Music"
-msgstr ""
+msgstr "音樂"
 
 #: src/components/settings/vault-switcher.tsx:153
 msgid "My Vault"
-msgstr ""
+msgstr "我的保管庫"
 
 #: src/pages/list-detail-page.tsx:982
 #: src/pages/lists-page.tsx:147
 msgid "Name"
-msgstr ""
+msgstr "名稱"
 
 #: src/components/layout/app-frame.tsx:287
 #: src/components/layout/app-frame.tsx:295
 msgid "Navigation"
-msgstr ""
+msgstr "導覽"
 
 #: src/pages/import-wizard-page.tsx:574
 msgid "Needs review"
-msgstr ""
+msgstr "待檢查"
 
 #: src/components/settings/settings-dialogs.tsx:306
 msgid "New field"
-msgstr ""
+msgstr "新欄位"
 
 #: src/pages/entity-page.tsx:611
 #: src/pages/lists-page.tsx:49
 #: src/pages/lists-page.tsx:132
 msgid "New list"
-msgstr ""
+msgstr "新清單"
 
 #: src/pages/list-detail-page.tsx:310
 msgid "New section"
-msgstr ""
+msgstr "新版塊"
 
 #: src/components/settings/settings-sections.tsx:80
 msgid "New-note template"
-msgstr ""
+msgstr "新筆記範本"
 
 #: src/components/entities/external-match-dialog.tsx:334
 msgid "New: {newValue}"
-msgstr ""
+msgstr "新：{newValue}"
 
 #: src/pages/calendar-page.tsx:104
 msgid "Next"
-msgstr ""
+msgstr "下一步"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
 #: src/pages/library-page.tsx:495
 msgid "No"
-msgstr ""
+msgstr "否"
 
 #: src/pages/activity-page.tsx:153
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
-msgstr ""
+msgstr "尚無活動。有日期的項目、劇集播出／完成日期，以及每日筆記提及都會顯示在這裡。"
 
 #: src/pages/statistics-page.tsx:36
 msgid "No analytics data"
-msgstr ""
+msgstr "無分析資料"
 
 #: src/pages/calendar-page.tsx:91
 msgid "No calendar data"
-msgstr ""
+msgstr "無日曆資料"
 
 #: src/components/entities/external-match-dialog.tsx:342
 msgid "No candidate fields or body sections match this type schema."
-msgstr ""
+msgstr "沒有候選欄位或內文版塊符合此類型結構描述。"
 
 #: src/components/entities/external-match-dialog.tsx:171
 #: src/components/entities/use-external-match.ts:57
 #: src/components/entities/use-external-match.ts:176
 msgid "No candidates loaded"
-msgstr ""
+msgstr "未載入候選項目"
 
 #: src/pages/review-page.tsx:170
 msgid "No date"
-msgstr ""
+msgstr "無日期"
 
 #: src/pages/calendar-page.tsx:169
 msgid "No date selected"
-msgstr ""
+msgstr "未選取日期"
 
 #: src/components/analytics/activity-heatmap.tsx:73
 msgid "No dated entities yet."
-msgstr ""
+msgstr "尚無有日期的項目。"
 
 #: src/components/assets/entity-dates.tsx:13
 msgid "No dates"
-msgstr ""
+msgstr "無日期"
 
 #: src/pages/import-wizard-page.tsx:467
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
-msgstr ""
+msgstr "沒有項目類型對應 {unmatchedLabels}。請在設定中為其新增外部參照欄位以匯入這些內容。"
 
 #: src/components/settings/settings-dialogs.tsx:215
 msgid "No entity types configured."
-msgstr ""
+msgstr "未設定任何項目類型。"
 
 #: src/pages/calendar-page.tsx:173
 #: src/pages/calendar-page.tsx:183
 #: src/pages/library-page.tsx:441
 msgid "No entries"
-msgstr ""
+msgstr "無項目"
 
 #: src/components/settings/settings-sections.tsx:190
 msgid "No enum fields available for this type."
-msgstr ""
+msgstr "此類型沒有可用的列舉欄位。"
 
 #: src/components/settings/settings-sections.tsx:1042
 msgid "No external mappings."
-msgstr ""
+msgstr "無外部對應。"
 
 #: src/components/entities/use-external-match.ts:188
 msgid "No external matches"
-msgstr ""
+msgstr "無外部比對"
 
 #: src/components/settings/settings-dialogs.tsx:399
 msgid "No fields configured."
-msgstr ""
+msgstr "未設定任何欄位。"
 
 #: src/components/settings/vault-switcher.tsx:138
 msgid "No folder selected"
-msgstr ""
+msgstr "未選取資料夾"
 
 #: src/components/settings/settings-dialogs.tsx:446
 msgid "No home sections configured."
-msgstr ""
+msgstr "未設定任何首頁版塊。"
 
 #: src/pages/home-page.tsx:75
 msgid "No Home sections yet"
-msgstr ""
+msgstr "尚無首頁版塊"
 
 #. placeholder {0}: episodes.heading
 #: src/components/assets/entity-episodes.tsx:85
 msgid "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
-msgstr ""
+msgstr "尚無項目 — 從資料來源同步，或在 <0>{0}</0> 標題下新增一份清單。"
 
 #: src/pages/list-detail-page.tsx:457
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
-msgstr ""
+msgstr "尚無項目。使用「新增項目」將項目加入此清單，或使用「新增版塊」將它們分組。"
 
 #: src/components/assets/entity-detail.tsx:226
 msgid "No links yet"
-msgstr ""
+msgstr "尚無連結"
 
 #: src/pages/entity-page.tsx:574
 msgid "No lists yet. Create one below."
-msgstr ""
+msgstr "尚無清單。在下方建立一份。"
 
 #: src/pages/lists-page.tsx:59
 msgid "No lists yet. Create one to start collecting entities."
-msgstr ""
+msgstr "尚無清單。建立一份以開始收集項目。"
 
 #: src/components/settings/settings-sections.tsx:576
 msgid "No markdown body sections."
-msgstr ""
+msgstr "無 Markdown 內文版塊。"
 
 #: src/pages/import-wizard-page.tsx:568
 msgid "No matched source"
-msgstr ""
+msgstr "無比對到的來源"
 
 #: src/pages/quick-capture-page.tsx:259
 msgid "No matches found."
-msgstr ""
+msgstr "找不到比對結果。"
 
 #: src/pages/list-detail-page.tsx:894
 msgid "No matching entities."
-msgstr ""
+msgstr "無符合的項目。"
 
 #: src/pages/import-wizard-page.tsx:570
 msgid "No matching type"
-msgstr ""
+msgstr "無符合的類型"
 
 #: src/components/assets/frontmatter-panel.tsx:34
 msgid "No other details"
-msgstr ""
+msgstr "無其他詳細資訊"
 
 #: src/components/assets/episode-sync-dialog.tsx:283
 msgid "No provider with a list is linked on this entity."
-msgstr ""
+msgstr "此項目上未連結任何具有清單的資料來源。"
 
 #: src/pages/review-page.tsx:190
 msgid "No queue items match the current filters"
-msgstr ""
+msgstr "沒有佇列項目符合目前的篩選條件"
 
 #: src/pages/review-page.tsx:131
 msgid "No review data"
-msgstr ""
+msgstr "無檢查資料"
 
 #: src/pages/import-wizard-page.tsx:527
 msgid "no source"
-msgstr ""
+msgstr "無來源"
 
 #: src/components/entities/external-match-dialog.tsx:129
 msgid "No supported sources"
-msgstr ""
+msgstr "無支援的來源"
 
 #: src/components/settings/settings-sections.tsx:1073
 msgid "No type options."
-msgstr ""
+msgstr "無類型選項。"
 
 #: src/components/entities/external-match-dialog.tsx:313
 #: src/components/entities/external-match-dialog.tsx:372
 msgid "No value returned"
-msgstr ""
+msgstr "未回傳任何值"
 
 #: src/components/settings/settings-controls.tsx:97
 msgid "No values."
-msgstr ""
+msgstr "無值。"
 
 #: src/components/settings/vault-switcher.tsx:117
 msgid "No vaults yet."
-msgstr ""
+msgstr "尚無保管庫。"
 
 #: src/components/settings/settings-sections.tsx:297
 #: src/components/settings/settings-sections.tsx:389
@@ -1670,270 +1655,270 @@ msgstr ""
 #: src/components/settings/settings-sections.tsx:793
 #: src/components/settings/settings-sections.tsx:838
 msgid "None"
-msgstr ""
+msgstr "無"
 
 #: src/components/settings/settings-sections.tsx:527
 msgid "None (plain list)"
-msgstr ""
+msgstr "無（純清單）"
 
 #: src/components/assets/quick-log-dialog.tsx:138
 msgid "Note <0>(optional)</0>"
-msgstr ""
+msgstr "筆記 <0>（選填）</0>"
 
 #: src/pages/import-wizard-page.tsx:588
 msgid "notes"
-msgstr ""
+msgstr "筆記"
 
 #: src/components/assets/entity-detail.tsx:201
 #: src/components/entities/metadata-editor.tsx:165
 #: src/pages/list-detail-page.tsx:488
 msgid "Notes"
-msgstr ""
+msgstr "筆記"
 
 #: src/pages/list-detail-page.tsx:490
 msgid "Notes shown below the items…"
-msgstr ""
+msgstr "顯示於項目下方的筆記…"
 
 #: src/components/home/home-section.tsx:31
 msgid "Nothing here yet"
-msgstr ""
+msgstr "這裡尚無內容"
 
 #: src/components/assets/quick-log-dialog.tsx:196
 msgid "Nothing to log for this type."
-msgstr ""
+msgstr "此類型沒有可記錄的內容。"
 
 #: src/components/settings/settings-editor.tsx:231
 #: src/components/settings/settings-editor.tsx:269
 msgid "off"
-msgstr ""
+msgstr "關閉"
 
 #: src/components/settings/settings-editor.tsx:104
 #: src/components/settings/settings-editor.tsx:111
 msgid "Off"
-msgstr ""
+msgstr "關閉"
 
 #: src/components/settings/settings-sections.tsx:873
 #: src/pages/import-wizard-page.tsx:50
 msgid "Ongoing"
-msgstr ""
+msgstr "進行中"
 
 #: src/components/entities/metadata-inputs.tsx:251
 msgid "Only image files can be uploaded."
-msgstr ""
+msgstr "只能上傳圖片檔案。"
 
 #: src/pages/import-wizard-page.tsx:372
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
-msgstr ""
+msgstr "僅支援公開個人檔案。在你檢查規劃前不會寫入任何內容。"
 
 #: src/pages/entity-page.tsx:669
 msgid "Only the name changes — everything else stays the same."
-msgstr ""
+msgstr "只有名稱會變更 — 其餘一切保持不變。"
 
 #: src/components/settings/vault-switcher.tsx:100
 msgid "Open"
-msgstr ""
+msgstr "開啟"
 
 #: src/components/settings/vault-switcher.tsx:125
 msgid "Open existing vault"
-msgstr ""
+msgstr "開啟現有保管庫"
 
 #: src/components/settings/vault-switcher.tsx:129
 msgid "Open folder"
-msgstr ""
+msgstr "開啟資料夾"
 
 #: src/components/layout/app-frame.tsx:132
 msgid "Open navigation"
-msgstr ""
+msgstr "開啟導覽"
 
 #: src/components/settings/vault-switcher.tsx:77
 msgid "Open or create a vault to get started."
-msgstr ""
+msgstr "開啟或建立一個保管庫以開始。"
 
 #: src/pages/list-detail-page.tsx:646
 msgid "Ordered"
-msgstr ""
+msgstr "已排序"
 
 #: src/components/settings/settings-sections.tsx:741
 msgid "Original"
-msgstr ""
+msgstr "原始"
 
 #: src/components/settings/settings-sections.tsx:390
 msgid "Original (filename is the title)"
-msgstr ""
+msgstr "原始（檔名即為標題）"
 
 #: src/components/settings/settings-editor.tsx:332
 msgid "Overview"
-msgstr ""
+msgstr "總覽"
 
 #: src/components/settings/vault-switcher.tsx:136
 msgid "Parent folder"
-msgstr ""
+msgstr "上層資料夾"
 
 #: src/pages/import-wizard-page.tsx:355
 msgid "Paste the contents of the exported .csv file"
-msgstr ""
+msgstr "貼上匯出的 .csv 檔案內容"
 
 #: src/components/settings/settings-controls.tsx:174
 #: src/components/settings/settings-sections.tsx:336
 msgid "Path"
-msgstr ""
+msgstr "路徑"
 
 #: src/components/settings/settings-sections.tsx:65
 msgid "Paths"
-msgstr ""
+msgstr "路徑"
 
 #: src/components/settings/settings-sections.tsx:874
 #: src/pages/import-wizard-page.tsx:51
 msgid "Paused"
-msgstr ""
+msgstr "已暫停"
 
 #: src/pages/onboarding-page.tsx:173
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
-msgstr ""
+msgstr "先選幾個 — 你隨時可以再新增。你的庫是一個由你擁有的資料夾中的純 Markdown 檔案，即使沒有這個 app 也能閱讀。"
 
 #: src/pages/activity-page.tsx:47
 msgid "Planned"
-msgstr ""
+msgstr "計劃中"
 
 #: src/components/settings/settings-sections.tsx:794
 #: src/components/settings/settings-sections.tsx:872
 #: src/pages/import-wizard-page.tsx:49
 msgid "Planning"
-msgstr ""
+msgstr "計劃中"
 
 #: src/pages/calendar-page.tsx:98
 msgid "Prev"
-msgstr ""
+msgstr "上一步"
 
 #: src/pages/list-detail-page.tsx:819
 msgid "Preview"
-msgstr ""
+msgstr "預覽"
 
 #: src/components/assets/quick-log-dialog.tsx:187
 msgid "Previewing…"
-msgstr ""
+msgstr "預覽中…"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 #: src/pages/review-page.tsx:343
 msgid "Progress"
-msgstr ""
+msgstr "進度"
 
 #: src/components/entities/metadata-inputs.tsx:634
 msgid "property"
-msgstr ""
+msgstr "屬性"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:126
 #: src/components/settings/settings-sections.tsx:488
 #: src/pages/quick-capture-page.tsx:229
 msgid "Provider"
-msgstr ""
+msgstr "資料來源"
 
 #: src/components/settings/provider-credentials.tsx:57
 msgid "Provider Credentials"
-msgstr ""
+msgstr "資料來源憑證"
 
 #: src/components/settings/settings-sections.tsx:479
 #: src/components/settings/settings-sections.tsx:502
 msgid "Provider priority"
-msgstr ""
+msgstr "資料來源優先順序"
 
 #: src/components/settings/settings-sections.tsx:345
 msgid "Providers"
-msgstr ""
+msgstr "資料來源"
 
 #: src/pages/import-wizard-page.tsx:333
 msgid "Public profile"
-msgstr ""
+msgstr "公開個人檔案"
 
 #: src/pages/quick-capture-page.tsx:176
 msgid "Quick Capture"
-msgstr ""
+msgstr "快速擷取"
 
 #: src/pages/import-wizard-page.tsx:41
 msgid "Real"
-msgstr ""
+msgstr "實際"
 
 #: src/pages/activity-page.tsx:36
 msgid "Recent"
-msgstr ""
+msgstr "最近"
 
 #: src/components/assets/quick-log-dialog.tsx:104
 msgid "Record what you did and when. Pick an earlier date to log something from a past day."
-msgstr ""
+msgstr "記錄你做了什麼以及何時做的。選擇較早的日期以記錄過去某天的事。"
 
 #. placeholder {0}: externalSourceLabel(providerCatalog, ref.provider)
 #: src/components/entities/external-match-dialog.tsx:160
 msgid "Refresh {0}"
-msgstr ""
+msgstr "重新整理 {0}"
 
 #: src/components/settings/settings-sections.tsx:936
 msgid "Regular enum"
-msgstr ""
+msgstr "一般列舉"
 
 #: src/components/settings/settings-sections.tsx:128
 msgid "Relation count"
-msgstr ""
+msgstr "關聯數量"
 
 #: src/components/settings/settings-sections.tsx:861
 msgid "Relation type"
-msgstr ""
+msgstr "關聯類型"
 
 #: src/components/error-boundary.tsx:67
 msgid "Reload"
-msgstr ""
+msgstr "重新載入"
 
 #: src/pages/entity-edit-page.tsx:191
 msgid "Reload latest version"
-msgstr ""
+msgstr "重新載入最新版本"
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
 #: src/components/entities/metadata-editor.tsx:221
 #: src/components/settings/vault-switcher.tsx:107
 msgid "Remove {0}"
-msgstr ""
+msgstr "移除 {0}"
 
 #: src/components/settings/settings-controls.tsx:92
 msgid "Remove {label}"
-msgstr ""
+msgstr "移除 {label}"
 
 #: src/components/settings/settings-sections.tsx:614
 msgid "Remove body section"
-msgstr ""
+msgstr "移除內文版塊"
 
 #: src/components/settings/settings-sections.tsx:1036
 msgid "Remove external field mapping"
-msgstr ""
+msgstr "移除外部欄位對應"
 
 #: src/components/settings/settings-dialogs.tsx:350
 #: src/components/settings/settings-dialogs.tsx:410
 msgid "Remove field"
-msgstr ""
+msgstr "移除欄位"
 
 #: src/components/settings/settings-sections.tsx:267
 msgid "Remove filter"
-msgstr ""
+msgstr "移除篩選條件"
 
 #: src/components/entities/metadata-inputs.tsx:293
 msgid "Remove image"
-msgstr ""
+msgstr "移除圖片"
 
 #: src/pages/list-detail-page.tsx:787
 msgid "Remove item"
-msgstr ""
+msgstr "移除項目"
 
 #: src/components/settings/settings-sections.tsx:511
 msgid "Remove provider priority"
-msgstr ""
+msgstr "移除資料來源優先順序"
 
 #: src/components/settings/settings-dialogs.tsx:462
 msgid "Remove section"
-msgstr ""
+msgstr "移除版塊"
 
 #: src/components/settings/settings-dialogs.tsx:230
 msgid "Remove type"
-msgstr ""
+msgstr "移除類型"
 
 #: src/pages/entity-page.tsx:438
 #: src/pages/entity-page.tsx:666
@@ -1942,443 +1927,437 @@ msgstr ""
 #: src/pages/list-detail-page.tsx:624
 #: src/pages/list-detail-page.tsx:998
 msgid "Rename"
-msgstr ""
+msgstr "重新命名"
 
 #: src/pages/list-detail-page.tsx:967
 msgid "Rename list"
-msgstr ""
+msgstr "重新命名清單"
 
 #: src/pages/entity-page.tsx:185
 msgid "Renamed"
-msgstr ""
+msgstr "已重新命名"
 
 #: src/pages/entity-page.tsx:184
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
-msgstr ""
+msgstr "已重新命名 — 更新了 {updated, plural, other {# 個連結}}"
 
 #. placeholder {0}: collision.assignedId
 #: src/components/settings/preset-picker.tsx:119
 msgid "renamed to “{0}”"
-msgstr ""
+msgstr "重新命名為「{0}」"
 
 #: src/pages/entity-page.tsx:705
 #: src/pages/list-detail-page.tsx:998
-msgid "Renaming"
-msgstr ""
+msgid "Renaming…"
+msgstr "重新命名中…"
 
 #: src/components/entities/external-match-dialog.tsx:366
 msgid "replaces existing section"
-msgstr ""
+msgstr "取代現有版塊"
 
 #: src/components/layout/app-frame.tsx:387
 msgid "Review"
-msgstr ""
+msgstr "檢查"
 
 #: src/components/settings/preset-picker.tsx:129
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
-msgstr ""
+msgstr "穩健、可直接使用的類型，具備完整的中繼資料比對。新增後可隨意編輯或重新命名。"
 
 #: src/components/assets/asset-download-panel.tsx:93
-msgid "Running"
-msgstr ""
+msgid "Running…"
+msgstr "執行中…"
 
 #: src/components/entities/metadata-editor.tsx:127
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:177
 #: src/pages/list-detail-page.tsx:426
 msgid "Save"
-msgstr ""
+msgstr "儲存"
 
 #: src/components/settings/provider-credentials.tsx:83
 msgid "Save credentials"
-msgstr ""
+msgstr "儲存憑證"
 
 #: src/components/settings/provider-credentials.tsx:45
 msgid "Saved"
-msgstr ""
+msgstr "已儲存"
 
 #: src/components/settings/raw-config-editor.tsx:124
 msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
-msgstr ""
+msgstr "原樣儲存。整個檔案會在儲存時驗證 — 未知欄位與格式錯誤的值會被拒絕。"
 
 #: src/components/entities/metadata-editor.tsx:127
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:177
 #: src/pages/list-detail-page.tsx:426
-msgid "Saving"
-msgstr ""
+msgid "Saving…"
+msgstr "儲存中…"
 
 #: src/components/settings/raw-config-editor.tsx:97
 #: src/components/settings/settings-editor.tsx:184
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
-msgstr ""
+msgstr "此執行個體已停用結構描述編輯（唯讀）。請設定 <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> 以啟用。"
 
 #: src/components/entities/external-match-dialog.tsx:119
 #: src/components/entities/external-match-dialog.tsx:144
 #: src/pages/quick-capture-page.tsx:199
 msgid "Search"
-msgstr ""
+msgstr "搜尋"
 
 #: src/components/layout/app-frame.tsx:56
 msgid "Search {activeTypeLabel}"
-msgstr ""
+msgstr "搜尋 {activeTypeLabel}"
 
 #: src/pages/list-detail-page.tsx:878
 msgid "Search entities and add them to this list."
-msgstr ""
+msgstr "搜尋項目並將其加入此清單。"
 
 #: src/pages/list-detail-page.tsx:884
 msgid "Search entities…"
-msgstr ""
+msgstr "搜尋項目…"
 
 #: src/pages/quick-capture-page.tsx:179
 msgid "Search external sources, or add manually"
-msgstr ""
+msgstr "搜尋外部來源，或手動新增"
 
 #: src/components/layout/app-frame.tsx:57
 #: src/components/layout/app-frame.tsx:150
 #: src/components/layout/app-frame.tsx:222
 msgid "Search library"
-msgstr ""
+msgstr "搜尋庫"
 
 #: src/components/entities/external-match-dialog.tsx:112
 msgid "Search online sources and choose which details to apply."
-msgstr ""
+msgstr "搜尋線上來源並選擇要套用的詳細資訊。"
 
 #: src/components/entities/metadata-inputs.tsx:153
 msgid "Search or add {relationType}"
-msgstr ""
+msgstr "搜尋或新增 {relationType}"
 
 #: src/components/entities/metadata-inputs.tsx:154
 msgid "Search or add relation"
-msgstr ""
+msgstr "搜尋或新增關聯"
 
 #: src/pages/review-page.tsx:156
 msgid "Search queue"
-msgstr ""
+msgstr "搜尋佇列"
 
 #: src/components/entities/external-match-dialog.tsx:144
-msgid "Searching"
-msgstr ""
-
 #: src/components/ui/multi-value-combobox.tsx:146
-msgid "Searching..."
-msgstr ""
-
 #: src/pages/quick-capture-page.tsx:255
 msgid "Searching…"
-msgstr ""
+msgstr "搜尋中…"
 
 #. placeholder {0}: field.seasonLanguage
 #: src/components/settings/settings-field-descriptors.ts:74
 msgid "season {0}"
-msgstr ""
+msgstr "季度 {0}"
 
 #: src/components/settings/settings-sections.tsx:809
 msgid "Season language"
-msgstr ""
+msgstr "季度語言"
 
 #: src/components/settings/settings-dialogs.tsx:443
 #: src/components/settings/settings-sections.tsx:561
 msgid "Section"
-msgstr ""
+msgstr "版塊"
 
 #: src/pages/list-detail-page.tsx:614
 msgid "Section actions"
-msgstr ""
+msgstr "版塊操作"
 
 #: src/pages/list-detail-page.tsx:587
 #: src/pages/list-detail-page.tsx:589
 msgid "Section heading"
-msgstr ""
+msgstr "版塊標題"
 
 #: src/components/settings/settings-sections.tsx:443
 msgid "Section override"
-msgstr ""
+msgstr "版塊覆寫"
 
 #: src/components/settings/settings-dialogs.tsx:443
 msgid "Sections"
-msgstr ""
+msgstr "版塊"
 
 #: src/pages/home-page.tsx:78
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
-msgstr ""
+msgstr "版塊是你庫中可設定的書架。在設定中新增一個，或直接進入你的庫。"
 
 #: src/components/assets/episode-sync-dialog.tsx:269
 msgid "Select all"
-msgstr ""
+msgstr "全選"
 
 #: src/components/settings/settings-sections.tsx:1028
 msgid "Select field"
-msgstr ""
+msgstr "選擇欄位"
 
 #: src/components/settings/settings-controls.tsx:166
 msgid "Select folder"
-msgstr ""
+msgstr "選擇資料夾"
 
 #: src/components/assets/episode-sync-dialog.tsx:381
 msgid "Select group"
-msgstr ""
+msgstr "選取群組"
 
 #: src/components/settings/vault-switcher.tsx:143
 msgid "Select parent folder"
-msgstr ""
+msgstr "選擇上層資料夾"
 
 #: src/components/settings/settings-sections.tsx:1068
 msgid "Select type"
-msgstr ""
+msgstr "選擇類型"
 
 #: src/components/entities/external-match-dialog.tsx:307
 msgid "Selected Metadata"
-msgstr ""
+msgstr "已選取的中繼資料"
 
 #: src/components/layout/app-frame.tsx:390
 #: src/components/settings/settings-editor.tsx:161
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: src/components/settings/raw-config-editor.tsx:67
 #: src/components/settings/settings-editor.tsx:146
 msgid "Settings saved"
-msgstr ""
+msgstr "已儲存設定"
 
 #: src/pages/entity-page.tsx:219
 msgid "Some images could not be downloaded"
-msgstr ""
+msgstr "部分圖片無法下載"
 
 #: src/pages/entity-page.tsx:219
 msgid "Some images could not be downloaded: {reasons}"
-msgstr ""
+msgstr "部分圖片無法下載：{reasons}"
 
 #: src/components/error-boundary.tsx:55
 #: src/components/settings/vault-switcher.tsx:41
 #: src/components/settings/vault-switcher.tsx:54
 msgid "Something went wrong"
-msgstr ""
+msgstr "發生錯誤"
 
 #: src/components/assets/asset-toolbar.tsx:91
 #: src/components/settings/settings-sections.tsx:194
 msgid "Sort"
-msgstr ""
+msgstr "排序"
 
 #. placeholder {0}: dateFieldLabel(field)
 #: src/components/assets/asset-toolbar.tsx:97
 msgid "Sort by {0}"
-msgstr ""
+msgstr "依 {0} 排序"
 
 #: src/components/assets/asset-toolbar.tsx:100
 msgid "Sort by connections"
-msgstr ""
+msgstr "依關聯排序"
 
 #: src/components/assets/asset-toolbar.tsx:93
 msgid "Sort by title"
-msgstr ""
+msgstr "依標題排序"
 
 #: src/components/assets/asset-toolbar.tsx:94
 msgid "Sort by update time"
-msgstr ""
+msgstr "依更新時間排序"
 
 #: src/pages/import-wizard-page.tsx:313
 msgid "Source"
-msgstr ""
+msgstr "來源"
 
 #: src/pages/import-wizard-page.tsx:572
 msgid "Source unavailable"
-msgstr ""
+msgstr "來源無法使用"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
 #: src/components/assets/quick-log-dialog.tsx:206
 msgid "Stamps {0} = {1}"
-msgstr ""
+msgstr "戳記 {0} = {1}"
 
 #: src/components/assets/asset-download-panel.tsx:93
 msgid "Start"
-msgstr ""
+msgstr "開始"
 
 #: src/pages/import-wizard-page.tsx:178
 #: src/pages/import-wizard-page.tsx:215
 msgid "Start over"
-msgstr ""
+msgstr "重新開始"
 
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/settings/settings-sections.tsx:795
 #: src/pages/activity-page.tsx:45
 msgid "Started"
-msgstr ""
+msgstr "已開始"
 
 #: src/pages/import-wizard-page.tsx:376
 msgid "Starting…"
-msgstr ""
+msgstr "開始中…"
 
 #: src/components/layout/app-frame.tsx:384
 msgid "Statistics"
-msgstr ""
+msgstr "統計"
 
 #: src/components/settings/settings-field-descriptors.ts:65
 msgid "status"
-msgstr ""
+msgstr "狀態"
 
 #: src/components/settings/settings-sections.tsx:937
 msgid "Status field"
-msgstr ""
+msgstr "狀態欄位"
 
 #: src/pages/review-page.tsx:54
 msgid "Status Mismatch"
-msgstr ""
+msgstr "狀態不符"
 
 #: src/pages/import-wizard-page.tsx:605
 msgid "Status, score & dates"
-msgstr ""
+msgstr "狀態、評分與日期"
 
 #: src/components/settings/settings-editor.tsx:202
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault."
-msgstr ""
+msgstr "儲存在保管庫的 {vaultPath}。分類、資產、每日筆記、首頁與類型 — 皆與保管庫同步。"
 
 #: src/components/settings/settings-editor.tsx:203
 msgid "Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault."
-msgstr ""
+msgstr "儲存在保管庫中。分類、資產、每日筆記、首頁與類型 — 皆與保管庫同步。"
 
 #: src/components/settings/provider-credentials.tsx:58
 msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
-msgstr ""
+msgstr "儲存在你的系統鑰匙圈中。此處列出的資料來源需要憑證；其他（例如 Bangumi、Google Books）則不需要。"
 
 #: src/components/settings/settings-sections.tsx:558
 msgid "Summary"
-msgstr ""
+msgstr "摘要"
 
 #: src/components/settings/vault-switcher.tsx:78
 msgid "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
-msgstr ""
+msgstr "在多個保管庫之間切換或管理你的清單。移除保管庫只會在此處遺忘它 — 其資料夾仍保留在磁碟上。"
 
 #: src/components/settings/vault-switcher.tsx:98
 msgid "Switched vault"
-msgstr ""
+msgstr "已切換保管庫"
 
 #: src/components/assets/entity-episodes.tsx:38
 msgid "Sync"
-msgstr ""
+msgstr "同步"
 
 #: src/components/assets/episode-sync-dialog.tsx:229
 msgid "Sync from a provider"
-msgstr ""
+msgstr "從資料來源同步"
 
 #: src/components/layout/theme-mode-select.tsx:11
 msgid "System theme"
-msgstr ""
+msgstr "系統主題"
 
 #: src/components/layout/theme-mode-select.tsx:19
 msgid "System theme. Switch to light theme."
-msgstr ""
+msgstr "系統主題。切換為淺色主題。"
 
 #: src/components/entities/metadata-editor.tsx:83
 #: src/pages/library-page.tsx:96
 msgid "Tags"
-msgstr ""
+msgstr "標籤"
 
 #: src/components/calendar/calendar-entry-item.tsx:24
 #: src/components/layout/app-frame.tsx:356
 msgid "Taxonomy"
-msgstr ""
+msgstr "分類"
 
 #. placeholder {0}: calendar.data.totals.taxonomy
 #: src/pages/calendar-page.tsx:115
 msgid "Taxonomy {0}"
-msgstr ""
+msgstr "分類 {0}"
 
 #: src/pages/calendar-page.tsx:128
 msgid "Taxonomy dates"
-msgstr ""
+msgstr "分類日期"
 
 #: src/components/settings/settings-editor.tsx:209
 msgid "Taxonomy root"
-msgstr ""
+msgstr "分類根目錄"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
 #: src/components/settings/settings-editor.tsx:97
 msgid "taxonomy: {0}"
-msgstr ""
+msgstr "分類：{0}"
 
 #: src/pages/import-wizard-page.tsx:212
 msgid "The import failed."
-msgstr ""
+msgstr "匯入失敗。"
 
 #: src/components/error-boundary.tsx:58
 msgid "The page hit an unexpected error. You can try again, or reload the app."
-msgstr ""
+msgstr "頁面發生非預期的錯誤。你可以再試一次，或重新載入 app。"
 
 #: src/components/settings/preset-picker.tsx:128
 msgid "These existing types can link to what you're adding."
-msgstr ""
+msgstr "這些現有類型可以連結到你正在新增的內容。"
 
 #: src/components/home/coming-up-section.tsx:165
 msgid "This month"
-msgstr ""
+msgstr "本月"
 
 #. placeholder {0}: entityTitle(entity, language)
 #: src/pages/entity-page.tsx:479
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
-msgstr ""
+msgstr "這會將 {0} 移到垃圾桶。之後需要時你可以還原它。"
 
 #. placeholder {0}: data.name
 #: src/pages/list-detail-page.tsx:520
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
-msgstr ""
+msgstr "這會將 <0>{0}</0> 移到垃圾桶。其中包含的項目不會受影響。"
 
 #: src/components/home/coming-up-section.tsx:164
 msgid "This week"
-msgstr ""
+msgstr "本週"
 
 #: src/components/assets/episode-sync-dialog.tsx:232
 msgid "Tick the items to write from the provider — new ones are added, ticked existing ones have their title updated. Items already in your list start unticked, and your progress is always kept."
-msgstr ""
+msgstr "勾選要從資料來源寫入的項目 — 新項目會被新增，已勾選的既有項目會更新其標題。已在你清單中的項目一開始未勾選，且你的進度一律保留。"
 
 #: src/components/settings/settings-dialogs.tsx:442
 #: src/components/settings/settings-sections.tsx:126
 #: src/components/settings/settings-sections.tsx:152
 #: src/pages/entity-create-page.tsx:107
 msgid "Title"
-msgstr ""
+msgstr "標題"
 
 #: src/components/settings/preset-picker.tsx:183
 #: src/components/settings/settings-sections.tsx:725
 #: src/pages/onboarding-page.tsx:186
 msgid "Title language"
-msgstr ""
+msgstr "標題語言"
 
 #: src/pages/quick-capture-page.tsx:211
 msgid "Title, or paste a provider URL"
-msgstr ""
+msgstr "標題，或貼上資料來源 URL"
 
 #: src/pages/calendar-page.tsx:101
 msgid "Today"
-msgstr ""
+msgstr "今天"
 
 #: src/pages/list-detail-page.tsx:650
 msgid "Todo"
-msgstr ""
+msgstr "待辦"
 
 #: src/pages/library-page.tsx:312
 msgid "Toggle filters"
-msgstr ""
+msgstr "切換篩選條件"
 
 #. placeholder {0}: field.totalProgressField
 #: src/components/settings/settings-field-descriptors.ts:70
 msgid "total {0}"
-msgstr ""
+msgstr "總計 {0}"
 
 #: src/components/settings/settings-sections.tsx:776
 msgid "Total progress field"
-msgstr ""
+msgstr "總進度欄位"
 
 #: src/components/settings/settings-sections.tsx:618
 msgid "Tracking"
-msgstr ""
+msgstr "追蹤中"
 
 #: src/components/error-boundary.tsx:64
 msgid "Try again"
-msgstr ""
+msgstr "再試一次"
 
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
@@ -2386,169 +2365,169 @@ msgstr ""
 #: src/pages/library-page.tsx:295
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
-msgstr ""
+msgstr "類型"
 
 #: src/pages/quick-capture-page.tsx:251
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
-msgstr ""
+msgstr "至少輸入 {MIN_QUERY_LENGTH} 個字元以搜尋。"
 
 #: src/pages/statistics-page.tsx:58
 msgid "Type Distribution"
-msgstr ""
+msgstr "類型分布"
 
 #: src/components/settings/settings-dialogs.tsx:201
 #: src/components/settings/settings-editor.tsx:115
 #: src/components/settings/settings-editor.tsx:298
 msgid "Types"
-msgstr ""
+msgstr "類型"
 
 #: src/components/layout/language-select.tsx:67
 msgid "UI in English"
-msgstr ""
+msgstr "介面使用英文"
 
 #: src/pages/list-detail-page.tsx:581
 msgid "Ungrouped"
-msgstr ""
+msgstr "未分組"
 
 #: src/pages/review-page.tsx:52
 msgid "Unlinked Items"
-msgstr ""
+msgstr "未連結的項目"
 
 #: src/components/settings/settings-sections.tsx:956
 msgid "Unmapped"
-msgstr ""
+msgstr "未對應"
 
 #: src/pages/list-detail-page.tsx:642
 msgid "Unordered"
-msgstr ""
+msgstr "未排序"
 
 #: src/pages/statistics-page.tsx:54
 msgid "Unresolved"
-msgstr ""
+msgstr "未解析"
 
 #: src/pages/list-detail-page.tsx:772
 msgid "Unresolved link"
-msgstr ""
+msgstr "未解析的連結"
 
 #: src/pages/review-page.tsx:53
 msgid "Unresolved Relations"
-msgstr ""
+msgstr "未解析的關聯"
 
 #: src/pages/list-detail-page.tsx:602
 msgid "Untitled section"
-msgstr ""
+msgstr "未命名版塊"
 
 #: src/pages/activity-page.tsx:37
 msgid "Up next"
-msgstr ""
+msgstr "接下來"
 
 #: src/components/settings/settings-sections.tsx:127
 msgid "Update time"
-msgstr ""
+msgstr "更新時間"
 
 #. placeholder {0}: cleanup.data.generatedAt.slice(0, 10)
 #. placeholder {0}: data.generatedAt.slice(0, 10)
 #: src/pages/review-page.tsx:130
 #: src/pages/statistics-page.tsx:35
 msgid "Updated {0}"
-msgstr ""
+msgstr "已更新 {0}"
 
 #: src/components/entities/metadata-inputs.tsx:269
 msgid "Upload failed."
-msgstr ""
+msgstr "上傳失敗。"
 
 #: src/pages/entity-edit-page.tsx:221
 msgid "Use Selected"
-msgstr ""
+msgstr "使用所選"
 
 #: src/components/settings/settings-sections.tsx:732
 #: src/components/settings/settings-sections.tsx:785
 #: src/components/settings/settings-sections.tsx:923
 msgid "Used as"
-msgstr ""
+msgstr "用作"
 
 #: src/components/settings/settings-sections.tsx:263
 msgid "value"
-msgstr ""
+msgstr "值"
 
 #: src/components/settings/settings-sections.tsx:260
 msgid "Values"
-msgstr ""
+msgstr "值"
 
 #: src/components/settings/settings-editor.tsx:96
 #: src/components/settings/settings-editor.tsx:199
 msgid "Vault"
-msgstr ""
+msgstr "保管庫"
 
 #: src/components/settings/vault-switcher.tsx:62
 msgid "Vault added"
-msgstr ""
+msgstr "已新增保管庫"
 
 #: src/components/settings/vault-switcher.tsx:163
 #: src/pages/onboarding-page.tsx:148
 msgid "Vault created"
-msgstr ""
+msgstr "已建立保管庫"
 
 #: src/components/settings/vault-switcher.tsx:150
 msgid "Vault name"
-msgstr ""
+msgstr "保管庫名稱"
 
 #: src/components/entities/metadata-inputs.tsx:323
 msgid "Vault path or URL"
-msgstr ""
+msgstr "保管庫路徑或 URL"
 
 #: src/components/settings/vault-switcher.tsx:109
 msgid "Vault removed"
-msgstr ""
+msgstr "已移除保管庫"
 
 #: src/components/settings/settings-editor.tsx:165
 msgid "Vault: {vaultPath}"
-msgstr ""
+msgstr "保管庫：{vaultPath}"
 
 #: src/components/settings/vault-switcher.tsx:74
 msgid "Vaults"
-msgstr ""
+msgstr "保管庫"
 
 #: src/components/home/section-header.tsx:39
 msgid "View"
-msgstr ""
+msgstr "檢視"
 
 #: src/components/home/coming-up-section.tsx:54
 msgid "View all"
-msgstr ""
+msgstr "檢視全部"
 
 #: src/pages/entity-page.tsx:617
 #: src/pages/lists-page.tsx:151
 msgid "Watchlist"
-msgstr ""
+msgstr "想看清單"
 
 #: src/pages/onboarding-page.tsx:170
 msgid "What do you want to track?"
-msgstr ""
+msgstr "你想追蹤什麼？"
 
 #: src/components/settings/settings-sections.tsx:422
 msgid "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
-msgstr ""
+msgstr "開啟後，勾選某一集或按下「記錄」按鈕會在每日筆記中寫入一行。標題會自動連結為 wikilink — 只需在行格式中加上你的標籤即可。"
 
 #: src/pages/settings-page.tsx:87
 msgid "YAML"
-msgstr ""
+msgstr "YAML"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
 #: src/pages/library-page.tsx:494
 msgid "Yes"
-msgstr ""
+msgstr "是"
 
 #: src/pages/quick-capture-page.tsx:192
 msgid "You can still open items already in your library."
-msgstr ""
+msgstr "你仍可開啟已在庫中的項目。"
 
 #: src/pages/settings-page.tsx:123
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
-msgstr ""
+msgstr "你在表單編輯器中有未儲存的變更。切換編輯器將捨棄這些變更。"
 
 #: src/pages/settings-page.tsx:127
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
-msgstr ""
+msgstr "你在 YAML 編輯器中有未儲存的變更。切換編輯器將捨棄這些變更。"
