@@ -37,7 +37,7 @@ export function ComingUpSection() {
   // Type ids that declare an image/imageList field — only those get a cover slot.
   const coverTypes = useMemo(() => coverTypeIds(config.data?.types), [config.data]);
   const groups = useMemo(
-    () => groupByUrgency(upcoming.data?.items ?? [], today),
+    () => groupByUrgency(keepNearestPerEntity(upcoming.data?.items ?? []), today),
     [upcoming.data, today],
   );
 
@@ -162,6 +162,20 @@ function sourceLabel(item: ActivityItem, labels: FieldLabels, t: Translate): str
     return entityFieldLabel(labels, item.entity.type, entry.dateField);
   }
   return "";
+}
+
+/// Collapse repeated entities to their soonest occurrence. An entity with several
+/// scheduled episodes (each airing on its own date) would otherwise fill the widget
+/// with near-duplicate rows. The endpoint returns items ascending by date, so the
+/// first time we see an entity is its nearest one; later occurrences are dropped
+/// here — the Activity "Up next" page shows a separate query and still lists them all.
+function keepNearestPerEntity(items: ActivityItem[]): ActivityItem[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.entity.id)) return false;
+    seen.add(item.entity.id);
+    return true;
+  });
 }
 
 function groupByUrgency(items: ActivityItem[], today: string) {
