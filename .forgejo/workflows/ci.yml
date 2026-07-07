@@ -59,6 +59,11 @@ jobs:
           pnpm contract:generate
           git diff --exit-code -- packages/api-contract openapi
 
+      - name: Verify committed i18n catalogs are in sync
+        run: |
+          pnpm i18n:extract
+          git diff --exit-code -- apps/web/src/locales
+
       - run: pnpm build
 
   desktop-check:

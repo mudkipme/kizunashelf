@@ -1,25 +1,13 @@
 import { useMemo, useState } from "react";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { Select } from "@/components/ui/select";
+import { useDateFormat, useNumberFormat } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 import type { AnalyticsActivity } from "@/types/api";
 
-const MONTH_INITIALS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const MONTH_INDEXES = Array.from({ length: 12 }, (_, index) => index);
 
 // Discrete intensity levels (index 0 = empty). Listed as literals so Tailwind's
 // JIT keeps these classes in the build.
@@ -43,6 +31,16 @@ type Row = { year: number; total: number; months: number[] };
  * view, not a browse-by-period view.
  */
 export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
+  const { t } = useLingui();
+  const formatNumber = useNumberFormat();
+  // Locale-derived month labels: single letters for the column header, a
+  // month+year label for cell tooltips.
+  const formatMonthNarrow = useDateFormat({ month: "narrow" });
+  const formatMonthYear = useDateFormat({ month: "short", year: "numeric" });
+  const monthInitials = useMemo(
+    () => MONTH_INDEXES.map((index) => formatMonthNarrow(new Date(2000, index, 1))),
+    [formatMonthNarrow],
+  );
   const [selectedType, setSelectedType] = useState("all");
 
   const rows: Row[] = useMemo(() => {
@@ -72,7 +70,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
       : (activity.types.find((item) => item.id === selectedType)?.total ?? 0);
 
   if (activity.years.length === 0) {
-    return <p className="text-xs text-muted-foreground">No dated entities yet.</p>;
+    return <p className="text-xs text-muted-foreground"><Trans>No dated entities yet.</Trans></p>;
   }
 
   // A cell opens that month in the calendar, carrying the active type filter.
@@ -88,17 +86,17 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
         <Select
           value={selectedType}
           onChange={(event) => setSelectedType(event.target.value)}
-          aria-label="Filter by type"
+          aria-label={t`Filter by type`}
         >
-          <option value="all">All types</option>
+          <option value="all">{t`All types`}</option>
           {activity.types.map((type) => (
             <option key={type.id} value={type.id}>
-              {type.label} ({type.total.toLocaleString()})
+              {type.label} ({formatNumber(type.total)})
             </option>
           ))}
         </Select>
         <span className="text-xs tabular-nums text-muted-foreground">
-          {selectedTotal.toLocaleString()} dated
+          <Plural value={selectedTotal} one="# dated" other="# dated" />
         </span>
       </div>
 
@@ -106,7 +104,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           <span className="w-10 shrink-0" />
           <div className="grid flex-1 grid-cols-12 gap-1 sm:w-[360px] sm:flex-none">
-            {MONTH_INITIALS.map((month, index) => (
+            {monthInitials.map((month, index) => (
               <span key={index} className="text-center">
                 {month}
               </span>
@@ -121,14 +119,15 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
             <div key={row.year} className="flex items-center gap-2">
               <span className="w-10 shrink-0 text-xs font-medium tabular-nums">{row.year}</span>
               <div className="grid flex-1 grid-cols-12 gap-1 sm:w-[360px] sm:flex-none">
-                {MONTH_INITIALS.map((_, index) => {
+                {MONTH_INDEXES.map((index) => {
                   const count = row.months[index] ?? 0;
+                  const monthLabel = formatMonthYear(new Date(row.year, index, 1));
                   return (
                     <Link
                       key={index}
                       to={calendarHref(row.year, index)}
-                      title={`${MONTH_NAMES[index]} ${row.year}: ${count}`}
-                      aria-label={`${MONTH_NAMES[index]} ${row.year}: ${count} — open in calendar`}
+                      title={t`${monthLabel}: ${formatNumber(count)}`}
+                      aria-label={t`${monthLabel}: ${formatNumber(count)} — open in calendar`}
                       className={cn(
                         "block aspect-square rounded-sm transition-[outline] hover:outline hover:outline-1 hover:outline-offset-1 hover:outline-ring focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring",
                         CELL_LEVELS[cellLevel(count, maxMonth)],
@@ -142,7 +141,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
                   <div className="h-2 rounded-sm bg-primary" style={{ width: barWidth }} />
                 </div>
                 <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                  {row.total.toLocaleString()}
+                  {formatNumber(row.total)}
                 </span>
               </div>
             </div>
@@ -151,11 +150,11 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
       </div>
 
       <div className="flex items-center justify-end gap-1 text-[10px] text-muted-foreground">
-        <span>less</span>
+        <span><Trans>less</Trans></span>
         {CELL_LEVELS.map((level, index) => (
           <span key={index} className={cn("size-3 rounded-sm", level)} />
         ))}
-        <span>more</span>
+        <span><Trans>more</Trans></span>
       </div>
     </div>
   );

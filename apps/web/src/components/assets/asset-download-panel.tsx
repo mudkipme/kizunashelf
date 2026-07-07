@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
 
@@ -18,6 +19,7 @@ function isRunning(job?: AssetDownloadJob) {
 }
 
 export function AssetDownloadPanel() {
+  const { t } = useLingui();
   const capabilities = useCapabilities();
   const config = useQuery(configQuery());
   const queryClient = useQueryClient();
@@ -65,9 +67,11 @@ export function AssetDownloadPanel() {
     <section className="rounded-md border p-3">
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold">Download remote covers</h2>
+          <h2 className="text-sm font-semibold">
+            <Trans>Download remote covers</Trans>
+          </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Download cover images so you keep your own copy.
+            <Trans>Download cover images so you keep your own copy.</Trans>
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -75,9 +79,9 @@ export function AssetDownloadPanel() {
             value={selectedType}
             onChange={(event) => setSelectedType(event.target.value)}
             disabled={running}
-            aria-label="Download scope"
+            aria-label={t`Download scope`}
           >
-            <option value={ALL_TYPES}>All types</option>
+            <option value={ALL_TYPES}>{t`All types`}</option>
             {(config.data?.types ?? []).map((type) => (
               <option key={type.id} value={type.id}>
                 {type.label}
@@ -86,7 +90,7 @@ export function AssetDownloadPanel() {
           </Select>
           <Button type="button" onClick={() => start.mutate()} disabled={running || start.isPending}>
             <DownloadIcon data-icon="inline-start" />
-            {running ? "Running" : "Start"}
+            {running ? <Trans>Running…</Trans> : <Trans>Start</Trans>}
           </Button>
           {running ? (
             <Button
@@ -96,7 +100,7 @@ export function AssetDownloadPanel() {
               disabled={cancel.isPending}
             >
               <XIcon data-icon="inline-start" />
-              Cancel
+              <Trans>Cancel</Trans>
             </Button>
           ) : null}
         </div>
@@ -115,11 +119,23 @@ function JobProgress({ job }: { job: AssetDownloadJob }) {
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <Badge variant="secondary">{job.scope}</Badge>
         <span className="tabular-nums">
-          {job.processed} / {job.total} processed
+          <Trans>
+            {job.processed} / {job.total} processed
+          </Trans>
         </span>
-        <Badge variant="outline">{job.downloaded} downloaded</Badge>
-        {job.failed > 0 ? <span className="text-destructive">{job.failed} failed</span> : null}
-        {job.skipped > 0 ? <span>{job.skipped} skipped</span> : null}
+        <Badge variant="outline">
+          <Trans>{job.downloaded} downloaded</Trans>
+        </Badge>
+        {job.failed > 0 ? (
+          <span className="text-destructive">
+            <Trans>{job.failed} failed</Trans>
+          </span>
+        ) : null}
+        {job.skipped > 0 ? (
+          <span>
+            <Trans>{job.skipped} skipped</Trans>
+          </span>
+        ) : null}
         <span className="capitalize">{job.status}</span>
       </div>
       <div className="mt-2 h-2 rounded-sm bg-muted">

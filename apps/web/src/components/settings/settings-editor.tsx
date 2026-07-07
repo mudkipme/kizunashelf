@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { SaveIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,6 +60,7 @@ export function SettingsEditor({
   onBack,
   onSaved,
 }: SettingsEditorProps) {
+  const { t } = useLingui();
   // The editor edits the vault config (the schema) only. The vault root is owned
   // by the runtime (env / native switcher / @AppStorage) and is read-only here —
   // used for path display and the desktop "Browse" base, never edited or saved.
@@ -90,23 +93,27 @@ export function SettingsEditor({
     // desktop app from its native vault switcher.
     {
       id: "vault",
-      title: "Vault",
-      detail: `taxonomy: ${config.taxonomyRoot || "Taxonomy"}`,
+      title: t`Vault`,
+      detail: t`taxonomy: ${config.taxonomyRoot || "Taxonomy"}`,
     },
     {
       id: "daily-notes",
-      title: "Daily Notes",
-      detail: config.dailyNotes ? `${(config.dailyNotes.paths ?? []).length} paths` : "Off",
+      title: t`Daily Notes`,
+      detail: config.dailyNotes
+        ? plural((config.dailyNotes.paths ?? []).length, { one: "# path", other: "# paths" })
+        : t`Off`,
     },
     {
       id: "home",
-      title: "Home",
-      detail: config.home ? `${(config.home.sections ?? []).length} sections` : "Off",
+      title: t`Home`,
+      detail: config.home
+        ? plural((config.home.sections ?? []).length, { one: "# section", other: "# sections" })
+        : t`Off`,
     },
     {
       id: "types",
-      title: "Types",
-      detail: `${config.types.length} types`,
+      title: t`Types`,
+      detail: plural(config.types.length, { one: "# type", other: "# types" }),
     },
   ];
 
@@ -136,7 +143,7 @@ export function SettingsEditor({
     try {
       await saveSettingsConfig(cleanVaultConfig(config, providerCatalog));
       setBaselineConfig(config);
-      toast.success("Settings saved");
+      toast.success(t`Settings saved`);
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onSaved?.();
     } catch (error) {
@@ -151,30 +158,34 @@ export function SettingsEditor({
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-base font-semibold">
-            {onboarding ? "Configure Vault" : "Settings"}
+            {onboarding ? <Trans>Configure Vault</Trans> : <Trans>Settings</Trans>}
           </h1>
           {vaultPath ? (
-            <p className="mt-1 truncate text-xs text-muted-foreground">Vault: {vaultPath}</p>
+            <p className="mt-1 truncate text-xs text-muted-foreground">
+              <Trans>Vault: {vaultPath}</Trans>
+            </p>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
           {onboarding && onBack ? (
             <Button type="button" variant="outline" onClick={onBack} disabled={saving}>
-              Back
+              <Trans>Back</Trans>
             </Button>
           ) : null}
           <Button type="button" onClick={save} disabled={saving || !settingsWritable}>
             <SaveIcon data-icon="inline-start" />
-            {saving ? "Saving" : onboarding ? "Create Vault" : "Save"}
+            {saving ? t`Saving…` : onboarding ? t`Create vault` : t`Save`}
           </Button>
         </div>
       </header>
 
       {!settingsWritable ? (
         <Alert>
-          Schema editing is disabled on this instance (read-only). Set
-          <code className="mx-1">KIZUNASHELF_SETTINGS_WRITABLE=true</code>
-          to enable it.
+          <Trans>
+            Schema editing is disabled on this instance (read-only). Set
+            <code className="mx-1">KIZUNASHELF_SETTINGS_WRITABLE=true</code>
+            to enable it.
+          </Trans>
         </Alert>
       ) : null}
 
@@ -185,19 +196,23 @@ export function SettingsEditor({
         <fieldset disabled={!settingsWritable} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
           <SettingsSection
             id="vault"
-            title="Vault"
-            description={`Stored in the vault${vaultPath ? ` at ${vaultPath}` : ""}. Taxonomy, assets, daily notes, home, and types — synced with the vault.`}
-            summary={<SummaryBadges items={[`assets: ${config.assetRoot || "Assets"}`]} />}
+            title={t`Vault`}
+            description={
+              vaultPath
+                ? t`Stored in the vault at ${vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault.`
+                : t`Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault.`
+            }
+            summary={<SummaryBadges items={[t`assets: ${config.assetRoot || "Assets"}`]} />}
           >
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               <PathField
-                label="Taxonomy root"
+                label={t`Taxonomy root`}
                 value={config.taxonomyRoot}
                 base={vaultRoot}
                 onChange={(value) => setConfig((current) => ({ ...current, taxonomyRoot: value }))}
               />
               <PathField
-                label="Asset root"
+                label={t`Asset root`}
                 value={config.assetRoot ?? ""}
                 base={vaultRoot}
                 onChange={(value) => setConfig((current) => ({ ...current, assetRoot: value }))}
@@ -207,8 +222,16 @@ export function SettingsEditor({
 
           <SettingsSection
             id="daily-notes"
-            title="Daily Notes"
-            summary={<SummaryBadges items={config.dailyNotes ? [`${(config.dailyNotes.paths ?? []).length} paths`] : ["off"]} />}
+            title={t`Daily Notes`}
+            summary={
+              <SummaryBadges
+                items={
+                  config.dailyNotes
+                    ? [plural((config.dailyNotes.paths ?? []).length, { one: "# path", other: "# paths" })]
+                    : [t`off`]
+                }
+              />
+            }
             action={
               <OptionalToggle
                 enabled={Boolean(config.dailyNotes)}
@@ -229,14 +252,24 @@ export function SettingsEditor({
                 onChange={(dailyNotes) => setConfig((current) => ({ ...current, dailyNotes }))}
               />
             ) : (
-              <EmptyConfigLine>Daily note indexing is disabled.</EmptyConfigLine>
+              <EmptyConfigLine>
+                <Trans>Daily note indexing is disabled.</Trans>
+              </EmptyConfigLine>
             )}
           </SettingsSection>
 
           <SettingsSection
             id="home"
-            title="Home"
-            summary={<SummaryBadges items={config.home ? [`${(config.home.sections ?? []).length} sections`] : ["off"]} />}
+            title={t`Home`}
+            summary={
+              <SummaryBadges
+                items={
+                  config.home
+                    ? [plural((config.home.sections ?? []).length, { one: "# section", other: "# sections" })]
+                    : [t`off`]
+                }
+              />
+            }
             action={
               <OptionalToggle
                 enabled={Boolean(config.home)}
@@ -254,19 +287,21 @@ export function SettingsEditor({
                 onChange={(home) => setConfig((current) => ({ ...current, home }))}
               />
             ) : (
-              <EmptyConfigLine>Home sections are disabled.</EmptyConfigLine>
+              <EmptyConfigLine>
+                <Trans>Home sections are disabled.</Trans>
+              </EmptyConfigLine>
             )}
           </SettingsSection>
 
           <SettingsSection
             id="types"
-            title="Types"
+            title={t`Types`}
             summary={
               <SummaryBadges
                 items={[
-                  `${config.types.length} types`,
-                  `${totalFields} fields`,
-                  `${configuredProviderCount} providers`,
+                  plural(config.types.length, { one: "# type", other: "# types" }),
+                  plural(totalFields, { one: "# field", other: "# fields" }),
+                  plural(configuredProviderCount, { one: "# provider", other: "# providers" }),
                 ]}
               />
             }
@@ -293,7 +328,9 @@ function SettingsOverview({
 }) {
   return (
     <aside className="h-fit rounded-md border p-2 lg:sticky lg:top-3">
-      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Overview</div>
+      <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+        <Trans>Overview</Trans>
+      </div>
       <div className="mt-1 flex flex-col gap-1">
         {items.map((item) => (
           <Button key={item.id} asChild variant="ghost" className="h-auto justify-between px-2 py-2">

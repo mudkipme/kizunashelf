@@ -1,5 +1,6 @@
 import type { DragEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { CalendarIcon, ImageIcon, Loader2Icon, MinusIcon, PlusIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,6 +55,8 @@ export function FieldValueInput({
   entityId?: string;
   onChange: (value: FrontmatterValue) => void;
 }) {
+  const { t } = useLingui();
+
   if (field.kind === "image" || field.kind === "imageList") {
     return (
       <ImageFieldInput
@@ -76,7 +79,7 @@ export function FieldValueInput({
         aria-label={field.label}
         disabled={disabled}
       >
-        <option value="">Empty</option>
+        <option value="">{t`Empty`}</option>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -129,21 +132,28 @@ export function FieldValueInput({
         aria-label={field.label}
         disabled={disabled}
       >
-        <option value="">Empty</option>
-        <option value="true">Yes</option>
-        <option value="false">No</option>
+        <option value="">{t`Empty`}</option>
+        <option value="true">{t`Yes`}</option>
+        <option value="false">{t`No`}</option>
       </Select>
     );
   }
 
   if (field.kind === "list" || field.kind === "relation") {
     const relation = field.kind === "relation";
+    const relationType = (field.relationType ?? "").trim();
     return (
       <MultiValueInput
         values={listDisplayValues(value, relation)}
         options={relation ? field.relationOptions : field.options.map((option) => ({ value: option }))}
         loadOptions={relation ? field.loadRelationOptions : undefined}
-        placeholder={relation ? relationPlaceholder(field.relationType) : "Add value"}
+        placeholder={
+          relation
+            ? relationType
+              ? t`Search or add ${relationType}`
+              : t`Search or add relation`
+            : t`Add value`
+        }
         ariaLabel={field.label}
         wikilinks={relation}
         disabled={disabled}
@@ -225,6 +235,7 @@ function ImageFieldInput({
   entityId?: string;
   onChange: (value: FrontmatterValue) => void;
 }) {
+  const { t } = useLingui();
   const multiple = field.kind === "imageList";
   const values = listDisplayValues(value, false);
   const single = multiple ? "" : valueToText(value);
@@ -237,7 +248,7 @@ function ImageFieldInput({
     if (!entityId || uploading) return;
     const images = files.filter(isImageFile);
     if (images.length === 0) {
-      if (files.length > 0) toast.error("Only image files can be uploaded.");
+      if (files.length > 0) toast.error(t`Only image files can be uploaded.`);
       return;
     }
     setUploading(true);
@@ -255,7 +266,7 @@ function ImageFieldInput({
       if (multiple) onChange(uniqueStrings([...values, ...added]));
       else if (added[0]) onChange(added[0]);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Upload failed.");
+      toast.error(error instanceof Error ? error.message : t`Upload failed.`);
     } finally {
       setUploading(false);
     }
@@ -279,7 +290,7 @@ function ImageFieldInput({
                     <button
                       type="button"
                       onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
-                      aria-label="Remove image"
+                      aria-label={t`Remove image`}
                       className="bg-background text-muted-foreground absolute right-0.5 top-0.5 rounded-full border p-0.5 opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
                     >
                       <XIcon className="size-3" />
@@ -299,7 +310,7 @@ function ImageFieldInput({
         <MultiValueInput
           values={values}
           options={[]}
-          placeholder="Add path or URL"
+          placeholder={t`Add path or URL`}
           ariaLabel={field.label}
           wikilinks={false}
           disabled={disabled}
@@ -309,7 +320,7 @@ function ImageFieldInput({
         <Input
           value={single}
           onChange={(event) => onChange(event.target.value || null)}
-          placeholder="Vault path or URL"
+          placeholder={t`Vault path or URL`}
           aria-label={field.label}
           disabled={disabled}
         />
@@ -547,6 +558,7 @@ function ObjectValueInput({
   onChange: (value: FrontmatterValue) => void;
   ariaLabel: string;
 }) {
+  const { t } = useLingui();
   const [newKey, setNewKey] = useState("");
   const object = isFrontmatterObject(value) ? value : {};
   const entries = Object.entries(object);
@@ -619,14 +631,14 @@ function ObjectValueInput({
         <Input
           value={newKey}
           onChange={(event) => setNewKey(event.target.value)}
-          placeholder="property"
+          placeholder={t`property`}
           className="font-mono text-xs"
           disabled={disabled}
-          aria-label={`${ariaLabel} new property`}
+          aria-label={t`${ariaLabel} new property`}
         />
         <Button type="button" variant="outline" onClick={addKey} disabled={disabled || !newKey.trim()}>
           <PlusIcon data-icon="inline-start" />
-          Add
+          <Trans>Add</Trans>
         </Button>
       </div>
     </div>
@@ -790,7 +802,3 @@ function uniqueOptions(options: MultiValueOption[], wikilinks: boolean) {
   return normalized;
 }
 
-function relationPlaceholder(relationType: string | null | undefined) {
-  const normalized = (relationType ?? "").trim();
-  return normalized ? `Search or add ${normalized}` : "Search or add relation";
-}

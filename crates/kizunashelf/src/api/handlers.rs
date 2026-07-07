@@ -35,11 +35,13 @@ pub(crate) async fn resolve_type_presets(
     Json(crate::presets::resolve_presets(&request))
 }
 
-/// The title-language options for the schema editor (TheTVDB's supported set).
-/// Static, so every frontend shares one source.
+/// The title-language options for the schema editor (TheTVDB's supported set)
+/// and the user-language options for the clients' language picker. Static, so
+/// every frontend shares one source.
 pub(crate) async fn languages() -> Json<LanguagesResponse> {
     Json(LanguagesResponse {
         languages: crate::languages::supported_languages(),
+        user_languages: crate::languages::user_languages(),
     })
 }
 

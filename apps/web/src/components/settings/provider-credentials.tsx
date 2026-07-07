@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLingui } from "@lingui/react/macro";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import { Field, SettingsSection } from "./settings-controls";
  * reads these from env vars instead, so this screen is not shown there).
  */
 export function ProviderCredentials({ providers }: { providers: ExternalProviderCatalogItem[] }) {
+  const { t } = useLingui();
   const [credentials, setCredentialsState] = useState<Credentials>({});
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -40,7 +42,7 @@ export function ProviderCredentials({ providers }: { providers: ExternalProvider
     setMessage(undefined);
     try {
       await setCredentials(credentials);
-      setMessage("Saved");
+      setMessage(t`Saved`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
@@ -52,8 +54,8 @@ export function ProviderCredentials({ providers }: { providers: ExternalProvider
 
   return (
     <SettingsSection
-      title="Provider Credentials"
-      description="Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
+      title={t`Provider Credentials`}
+      description={t`Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none.`}
     >
       <div className="flex flex-col gap-4">
         {credentialed.map((provider) => (
@@ -78,7 +80,7 @@ export function ProviderCredentials({ providers }: { providers: ExternalProvider
         {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
         {error ? <span className="text-xs text-destructive">{error}</span> : null}
         <Button type="button" onClick={save} disabled={busy}>
-          {busy ? "Saving" : "Save credentials"}
+          {busy ? t`Saving…` : t`Save credentials`}
         </Button>
       </div>
     </SettingsSection>

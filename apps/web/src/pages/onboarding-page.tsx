@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -47,7 +48,11 @@ export function OnboardingPage() {
     // Desktop replies 503 (query error) until a vault is open.
     body = <VaultSwitcher onboarding onChanged={refresh} />;
   } else if (settings.isPending || providerCatalog.isPending || presets.isPending || languages.isPending) {
-    body = <Placeholder>Loading</Placeholder>;
+    body = (
+      <Placeholder>
+        <Trans>Loading…</Trans>
+      </Placeholder>
+    );
   } else if (settings.error || providerCatalog.error || presets.error || languages.error) {
     body = (
       <Alert>
@@ -99,6 +104,7 @@ function OnboardingWizard({
   onAdvanced: (seed: VaultConfig) => void;
   onCreated: () => void;
 }) {
+  const { t } = useLingui();
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [titleLanguage, setTitleLanguage] = useState(() => defaultLanguage(languages));
   const [creating, setCreating] = useState(false);
@@ -139,7 +145,7 @@ function OnboardingWizard({
     try {
       const vault = await buildConfig();
       await saveSettingsConfig(cleanVaultConfig(vault, providerCatalog));
-      toast.success("Vault created");
+      toast.success(t`Vault created`);
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onCreated();
     } catch (error) {
@@ -160,10 +166,14 @@ function OnboardingWizard({
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">What do you want to track?</h1>
+        <h1 className="text-xl font-semibold">
+          <Trans>What do you want to track?</Trans>
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you
-          own, readable even without this app.
+          <Trans>
+            Pick a few — you can add more anytime. Your library is plain Markdown files in a folder
+            you own, readable even without this app.
+          </Trans>
         </p>
       </header>
 
@@ -172,7 +182,9 @@ function OnboardingWizard({
       <div className="sticky bottom-0 flex flex-col gap-3 border-t bg-background/95 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Title language</span>
+            <span className="text-muted-foreground">
+              <Trans>Title language</Trans>
+            </span>
             <Select
               value={titleLanguage}
               onChange={(event) => setTitleLanguage(event.target.value)}
@@ -186,11 +198,15 @@ function OnboardingWizard({
             </Select>
           </label>
           <Button type="button" variant="ghost" size="sm" onClick={openAdvanced}>
-            Advanced: edit full schema
+            <Trans>Advanced: edit full schema</Trans>
           </Button>
         </div>
         <Button type="button" onClick={create} disabled={creating || selected.size === 0}>
-          {creating ? "Creating…" : `Create vault${selected.size > 0 ? ` (${selected.size})` : ""}`}
+          {creating
+            ? t`Creating…`
+            : selected.size > 0
+              ? t`Create vault (${selected.size})`
+              : t`Create vault`}
         </Button>
       </div>
     </div>

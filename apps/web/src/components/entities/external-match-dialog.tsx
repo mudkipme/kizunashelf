@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { SearchIcon, WandSparklesIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -82,8 +83,8 @@ export function ExternalMatchDialog({
   searching,
   applying,
   contentWritable,
-  applyLabel = "Apply Selected",
-  emptyMessage = "No candidates loaded",
+  applyLabel,
+  emptyMessage,
   coverDownloadAvailable = false,
   downloadCover = false,
   onDownloadCoverChange,
@@ -97,6 +98,7 @@ export function ExternalMatchDialog({
   onSelectedBodySectionsChange,
   onApply,
 }: ExternalMatchDialogProps) {
+  const { t } = useLingui();
   const selectedCount = selectedFields.size + selectedBodySections.size;
 
   return (
@@ -105,27 +107,27 @@ export function ExternalMatchDialog({
         className="top-0 left-0 flex h-dvh max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 sm:top-[50%] sm:left-[50%] sm:h-[min(760px,calc(100dvh-2rem))] sm:w-[min(1100px,calc(100vw-2rem))] sm:max-w-none sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-md sm:border"
       >
         <DialogHeader className="border-b px-4 py-4 pr-12 sm:px-6">
-          <DialogTitle>External Match</DialogTitle>
+          <DialogTitle><Trans>External Match</Trans></DialogTitle>
           <DialogDescription>
-            Search online sources and choose which details to apply.
+            <Trans>Search online sources and choose which details to apply.</Trans>
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end">
             <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium">
-              Search
+              <Trans>Search</Trans>
               <Input value={query} onChange={(event) => onQueryChange(event.target.value)} />
             </label>
             <Select
               className="h-9 md:w-44"
               value={provider}
               onChange={(event) => onProviderChange(event.target.value)}
-              aria-label="Provider"
+              aria-label={t`Provider`}
               disabled={!externalSearchEnabled}
             >
-              {providerOptions.length === 0 ? <option value="all">No supported sources</option> : null}
-              {providerOptions.length > 1 ? <option value="all">All sources</option> : null}
+              {providerOptions.length === 0 ? <option value="all">{t`No supported sources`}</option> : null}
+              {providerOptions.length > 1 ? <option value="all">{t`All sources`}</option> : null}
               {providerOptions.map((providerOption) => (
                 <option key={providerOption} value={providerOption}>
                   {externalSourceLabel(providerCatalog, providerOption)}
@@ -139,7 +141,7 @@ export function ExternalMatchDialog({
               disabled={searching || !externalSearchEnabled}
             >
               <SearchIcon data-icon="inline-start" />
-              {searching ? "Searching" : "Search"}
+              {searching ? t`Searching…` : t`Search`}
             </Button>
           </div>
 
@@ -155,7 +157,7 @@ export function ExternalMatchDialog({
                   disabled={searching || !onRefreshRef}
                 >
                   <WandSparklesIcon data-icon="inline-start" />
-                  Refresh {externalSourceLabel(providerCatalog, ref.provider)}
+                  <Trans>Refresh {externalSourceLabel(providerCatalog, ref.provider)}</Trans>
                 </Button>
               ))}
             </div>
@@ -166,7 +168,7 @@ export function ExternalMatchDialog({
               candidates={candidates}
               selectedCandidate={selectedCandidate}
               providerCatalog={providerCatalog}
-              emptyMessage={emptyMessage}
+              emptyMessage={emptyMessage ?? t`No candidates loaded`}
               onChooseCandidate={onChooseCandidate}
             />
 
@@ -194,7 +196,7 @@ export function ExternalMatchDialog({
                 onChange={(event) => onDownloadCoverChange?.(event.target.checked)}
                 disabled={!contentWritable}
               />
-              Download cover locally
+              <Trans>Download cover locally</Trans>
             </label>
           ) : (
             <span className="hidden sm:block" />
@@ -205,7 +207,7 @@ export function ExternalMatchDialog({
             disabled={!contentWritable || applying || !selectedCandidate || selectedCount === 0}
           >
             <WandSparklesIcon data-icon="inline-start" />
-            {applying ? "Applying" : applyLabel}
+            {applying ? t`Applying…` : (applyLabel ?? t`Apply Selected`)}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -285,6 +287,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
   onSelectedFieldsChange: (fields: Set<string>) => void;
   onSelectedBodySectionsChange: (sections: Set<string>) => void;
 }) {
+  const { t } = useLingui();
   function toggleField(field: string) {
     const next = new Set(selectedFields);
     if (next.has(field)) next.delete(field);
@@ -301,43 +304,47 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
 
   return (
     <div className="rounded-md border p-3">
-      <h3 className="text-sm font-semibold">Selected Metadata</h3>
+      <h3 className="text-sm font-semibold"><Trans>Selected Metadata</Trans></h3>
       {selectedCandidate ? (
         <div className="mt-3 flex flex-col gap-2">
-          {metadataEntries.map((entry) => (
-            <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedFields.has(entry.field)}
-                onChange={() => toggleField(entry.field)}
-                className="mt-1"
-                disabled={!contentWritable || !entry.hasValue}
-              />
-              <span className="min-w-0">
-                <span className="block font-medium">{entry.label}</span>
-                <span className="block text-xs text-muted-foreground">
-                  {entry.externalField ?? "external ref"}
-                </span>
-                {currentValues ? (
-                  <span className="block break-words text-xs text-muted-foreground">
-                    Current: {formatMetadataValue(currentValues[entry.field])}
+          {metadataEntries.map((entry) => {
+            const newValue = entry.hasValue
+              ? formatMetadataValue(entry.value)
+              : t`No value returned`;
+            return (
+              <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedFields.has(entry.field)}
+                  onChange={() => toggleField(entry.field)}
+                  className="mt-1"
+                  disabled={!contentWritable || !entry.hasValue}
+                />
+                <span className="min-w-0">
+                  <span className="block font-medium">{entry.label}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {entry.externalField ?? t`external ref`}
                   </span>
-                ) : null}
-                <span className="block break-words text-xs text-muted-foreground">
-                  {currentValues ? "New: " : ""}
-                  {entry.hasValue ? formatMetadataValue(entry.value) : "No value returned"}
+                  {currentValues ? (
+                    <span className="block break-words text-xs text-muted-foreground">
+                      <Trans>Current: {formatMetadataValue(currentValues[entry.field])}</Trans>
+                    </span>
+                  ) : null}
+                  <span className="block break-words text-xs text-muted-foreground">
+                    {currentValues ? <Trans>New: {newValue}</Trans> : newValue}
+                  </span>
                 </span>
-              </span>
-            </label>
-          ))}
+              </label>
+            );
+          })}
           {metadataEntries.length === 0 && bodyEntries.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No candidate fields or body sections match this type schema.
+              <Trans>No candidate fields or body sections match this type schema.</Trans>
             </p>
           ) : null}
           {bodyEntries.length > 0 ? (
             <div className="mt-3 border-t pt-3">
-              <h4 className="text-xs font-semibold uppercase text-muted-foreground">Body Sections</h4>
+              <h4 className="text-xs font-semibold uppercase text-muted-foreground"><Trans>Body Sections</Trans></h4>
               <div className="mt-2 flex flex-col gap-2">
                 {bodyEntries.map((entry) => (
                   <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
@@ -352,12 +359,17 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                       <span className="block font-medium">{entry.heading}</span>
                       <span className="block text-xs text-muted-foreground">
                         {entry.externalField}
-                        {bodyText !== undefined
-                          ? ` · ${externalBodySectionState(bodyText, entry.heading) === "replace" ? "replaces existing section" : "adds new section"}`
-                          : ""}
+                        {bodyText !== undefined ? (
+                          <>
+                            {" · "}
+                            {externalBodySectionState(bodyText, entry.heading) === "replace"
+                              ? t`replaces existing section`
+                              : t`adds new section`}
+                          </>
+                        ) : null}
                       </span>
                       <span className="block break-words text-xs text-muted-foreground">
-                        {entry.hasValue ? entry.markdown : "No value returned"}
+                        {entry.hasValue ? entry.markdown : t`No value returned`}
                       </span>
                     </span>
                   </label>
@@ -367,7 +379,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
           ) : null}
         </div>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground">Choose a candidate to compare fields.</p>
+        <p className="mt-2 text-sm text-muted-foreground"><Trans>Choose a candidate to compare fields.</Trans></p>
       )}
     </div>
   );

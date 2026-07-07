@@ -1,4 +1,7 @@
 import { useMemo } from "react";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, plural } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,6 +17,8 @@ import type { ActivityItem } from "@/types/api";
 
 type FieldLabels = ReadonlyMap<string, ReadonlyMap<string, string>>;
 
+type Translate = ReturnType<typeof useLingui>["t"];
+
 /// The number of upcoming items to surface on Home — the soonest first, since the
 /// endpoint returns them ascending. Deeper browsing is the Activity "Up next" mode.
 const MAX_ITEMS = 18;
@@ -24,6 +29,7 @@ const MAX_ITEMS = 18;
 /// rather than a content shelf — but shares their header. Self-hides when there's
 /// nothing ahead, so an empty vault stays clean.
 export function ComingUpSection() {
+  const { t, i18n } = useLingui();
   const today = todayLocal();
   const upcoming = useQuery(upcomingQuery({ today, months: 6 }));
   const config = useQuery(configQuery());
@@ -42,17 +48,17 @@ export function ComingUpSection() {
   return (
     <section className="rounded-xl border bg-muted/30 p-4">
       <SectionHeader
-        title="Coming up"
+        title={t`Coming up`}
         count={total}
         viewHref="/activity?mode=up-next"
-        viewLabel="View all"
+        viewLabel={t`View all`}
       />
       <div className="flex flex-col gap-4">
         {groups.map((group) =>
           group.items.length ? (
-            <div key={group.label} className="flex flex-col gap-1.5">
+            <div key={group.id} className="flex flex-col gap-1.5">
               <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {group.label}
+                {i18n._(group.label)}
               </h3>
               <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
                 {group.items.map((item) => (
@@ -84,6 +90,7 @@ function ComingUpCard({
   labels: FieldLabels;
   hasCover: boolean;
 }) {
+  const { t } = useLingui();
   const language = useTitleLanguage();
   const days = daysUntil(item.date, today);
   return (
@@ -105,10 +112,10 @@ function ComingUpCard({
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-medium">{entityTitle(item.entity, language)}</span>
-        <span className="truncate text-xs text-muted-foreground">{sourceLabel(item, labels)}</span>
+        <span className="truncate text-xs text-muted-foreground">{sourceLabel(item, labels, t)}</span>
       </div>
       <div className="shrink-0 text-right">
-        <div className="text-xs font-medium">{countdown(days)}</div>
+        <div className="text-xs font-medium">{countdown(days, t)}</div>
         <div className="text-[11px] tabular-nums text-muted-foreground">{item.date}</div>
       </div>
     </Link>
@@ -123,23 +130,28 @@ function daysUntil(date: string, today: string): number {
   return Math.round((target - now) / 86_400_000);
 }
 
-function countdown(days: number): string {
-  if (days <= 0) return "Today";
-  if (days === 1) return "Tomorrow";
-  if (days <= 7) return `in ${days} days`;
-  if (days <= 30) return `in ${Math.round(days / 7)} wk`;
-  return `in ${Math.round(days / 30)} mo`;
+function countdown(days: number, t: Translate): string {
+  if (days <= 0) return t`Today`;
+  if (days === 1) return t`Tomorrow`;
+  if (days <= 7) return t`in ${plural(days, { one: "# day", other: "# days" })}`;
+  if (days <= 30) {
+    const weeks = Math.round(days / 7);
+    return t`in ${weeks} wk`;
+  }
+  const months = Math.round(days / 30);
+  return t`in ${months} mo`;
 }
 
 /// The human label for what's happening on this date — the date field's schema
 /// label ("Release date") or the episodes airing ("Episodes 12").
-function sourceLabel(item: ActivityItem, labels: FieldLabels): string {
+function sourceLabel(item: ActivityItem, labels: FieldLabels, t: Translate): string {
   const entry = item.entries[0];
   if (!entry) return "";
   if (entry.source === "episode") {
     const keys = (entry.episodes ?? []).map((episode) => episode.key || episode.title).filter(Boolean);
-    const heading = entry.heading || "Episode";
-    return keys.length ? `${heading} ${keys.join(", ")}` : heading;
+    const heading = entry.heading || t`Episode`;
+    const keyList = keys.join(", ");
+    return keys.length ? t`${heading} ${keyList}` : heading;
   }
   if (entry.source === "taxonomy" && entry.dateField) {
     return entityFieldLabel(labels, item.entity.type, entry.dateField);
@@ -148,10 +160,10 @@ function sourceLabel(item: ActivityItem, labels: FieldLabels): string {
 }
 
 function groupByUrgency(items: ActivityItem[], today: string) {
-  const groups = [
-    { label: "This week", items: [] as ActivityItem[] },
-    { label: "This month", items: [] as ActivityItem[] },
-    { label: "Later", items: [] as ActivityItem[] },
+  const groups: { id: string; label: MessageDescriptor; items: ActivityItem[] }[] = [
+    { id: "week", label: msg`This week`, items: [] },
+    { id: "month", label: msg`This month`, items: [] },
+    { id: "later", label: msg`Later`, items: [] },
   ];
   for (const item of items.slice(0, MAX_ITEMS)) {
     const days = daysUntil(item.date, today);

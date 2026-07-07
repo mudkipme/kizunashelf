@@ -1,3 +1,4 @@
+import { Plural } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
@@ -41,7 +42,9 @@ export function HomeEntityCard({
               entity.basename
             )}
           </span>
-          <span className="ml-auto shrink-0 tabular-nums">{entity.relationCount} links</span>
+          <span className="ml-auto shrink-0 tabular-nums">
+            <Plural value={entity.relationCount} one="# link" other="# links" />
+          </span>
         </div>
       </div>
     </Link>

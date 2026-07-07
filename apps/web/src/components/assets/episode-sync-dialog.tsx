@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
@@ -13,7 +14,7 @@ import { toast } from "sonner";
 import { errorMessage } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
 import { queryKeys } from "@/api/queries";
-import { useTitleLanguage } from "@/lib/language";
+import { useLanguagePreference } from "@/lib/language";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -58,8 +59,11 @@ export function EpisodeSyncDialog({
   revision: string;
   episodes: EntityEpisodes;
 }) {
+  const { t } = useLingui();
   const queryClient = useQueryClient();
-  const language = useTitleLanguage();
+  // The full preference (possibly zh-Hans/zh-Hant) — providers that distinguish
+  // the scripts localize episode titles with it.
+  const language = useLanguagePreference();
   const [provider, setProvider] = useState<string>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -221,17 +225,21 @@ export function EpisodeSyncDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Sync from a provider</DialogTitle>
+          <DialogTitle>
+            <Trans>Sync from a provider</Trans>
+          </DialogTitle>
           <DialogDescription>
-            Tick the items to write from the provider — new ones are added, ticked existing ones have
-            their title updated. Items already in your list start unticked, and your progress is always
-            kept.
+            <Trans>
+              Tick the items to write from the provider — new ones are added, ticked existing ones
+              have their title updated. Items already in your list start unticked, and your progress
+              is always kept.
+            </Trans>
           </DialogDescription>
         </DialogHeader>
 
         {data && data.sources.length > 1 ? (
           <label className="text-sm font-medium">
-            Provider
+            <Trans>Provider</Trans>
             <Select
               value={data.provider}
               onChange={(event) => setProvider(event.target.value)}
@@ -249,26 +257,30 @@ export function EpisodeSyncDialog({
         {ready ? (
           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <span className="tabular-nums">
-              {selected.size} of {allIds.length} selected
+              <Trans>
+                {selected.size} of {allIds.length} selected
+              </Trans>
             </span>
             <button
               type="button"
               onClick={() => setSelected(allSelected ? new Set() : new Set(allIds))}
               className="font-medium text-foreground hover:underline"
             >
-              {allSelected ? "Clear all" : "Select all"}
+              {allSelected ? <Trans>Clear all</Trans> : <Trans>Select all</Trans>}
             </button>
           </div>
         ) : null}
 
         <div className="flex max-h-[55vh] flex-col gap-0.5 overflow-auto rounded-md border p-1">
           {sources.isPending ? (
-            <p className="p-3 text-center text-sm text-muted-foreground">Loading</p>
+            <p className="p-3 text-center text-sm text-muted-foreground">
+              <Trans>Loading…</Trans>
+            </p>
           ) : sources.error ? (
             <p className="p-3 text-center text-sm text-destructive">{errorMessage(sources.error)}</p>
           ) : noSources ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
-              No provider with a list is linked on this entity.
+              <Trans>No provider with a list is linked on this entity.</Trans>
             </p>
           ) : seasoned ? (
             groups.map((group) => (
@@ -312,14 +324,14 @@ export function EpisodeSyncDialog({
             >
               {groupBySeason ? <CheckIcon className="size-3" /> : null}
             </span>
-            Keep groups
+            <Trans>Keep groups</Trans>
           </button>
         ) : null}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={importing}>
             <XIcon data-icon="inline-start" />
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
           <Button
             type="button"
@@ -327,7 +339,11 @@ export function EpisodeSyncDialog({
             disabled={importing || noSources || incoming === 0}
           >
             {importing ? <RefreshCwIcon data-icon="inline-start" className="animate-spin" /> : <DownloadIcon data-icon="inline-start" />}
-            {importing ? "Importing" : `Import (${already > 0 ? `${incoming - already} new · ${already} updated` : `${incoming}`})`}
+            {importing
+              ? t`Importing…`
+              : already > 0
+                ? t`Import (${incoming - already} new · ${already} updated)`
+                : t`Import (${incoming})`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -352,6 +368,7 @@ function ProviderGroup({
   onToggleExpand: () => void;
   onToggleItem: (label: string, key: string) => void;
 }) {
+  const { t } = useLingui();
   const chosen = group.items.filter((item) => selected.has(itemId(group.label, item.key))).length;
   const state = chosen === 0 ? "none" : chosen === group.items.length ? "all" : "some";
 
@@ -361,7 +378,7 @@ function ProviderGroup({
         <button
           type="button"
           onClick={onToggleGroup}
-          aria-label={state === "all" ? "Deselect group" : "Select group"}
+          aria-label={state === "all" ? t`Deselect group` : t`Select group`}
           className="flex items-center py-2 pl-2"
         >
           <span
@@ -383,7 +400,9 @@ function ProviderGroup({
           <ChevronRightIcon
             className={cn("size-4 shrink-0 text-muted-foreground transition-transform", expanded && "rotate-90")}
           />
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">{group.label || "Items"}</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+            {group.label || t`Items`}
+          </span>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {chosen}/{group.items.length}
           </span>
@@ -442,7 +461,7 @@ function ItemRow({
         ) : null}
         {tracked ? (
           <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            in list
+            <Trans>in list</Trans>
           </span>
         ) : null}
       </button>

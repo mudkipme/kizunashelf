@@ -403,7 +403,7 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("year", "Year"),
         field_option("status", "Status"),
         field_option("primary_language", "Primary language"),
-        field_option("country", "Country"),
+        field_option("country", "Region"),
         field_option("network", "Network"),
         field_option("director", "Director"),
         field_option("slug", "Slug"),

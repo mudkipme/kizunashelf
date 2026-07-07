@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -13,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
+import { useDateFormat } from "@/lib/locale";
 import { entityTitle } from "@/lib/title-language";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityEntry, ActivityItem } from "@/types/api";
@@ -20,31 +24,38 @@ import type { ActivityEntry, ActivityItem } from "@/types/api";
 type FieldLabels = ReadonlyMap<string, ReadonlyMap<string, string>>;
 
 const sources = [
-  { value: "all", label: "All sources" },
-  { value: "taxonomy", label: "Dates & episodes" },
-  { value: "daily-note", label: "Daily notes" },
+  { value: "all", label: msg`All sources` },
+  { value: "taxonomy", label: msg`Dates & episodes` },
+  { value: "daily-note", label: msg`Daily Notes` },
 ] as const;
 
 // Recent leads — it's the everyday "what happened" view; Up next is already
 // surfaced on Home; Catch up is the reverse-chron "released, still on my list"
 // backlog; All is the full ledger. Recent is also the default (below).
 const modes = [
-  { value: "recent", label: "Recent" },
-  { value: "up-next", label: "Up next" },
-  { value: "catch-up", label: "Catch up" },
-  { value: "all", label: "All" },
+  { value: "recent", label: msg`Recent` },
+  { value: "up-next", label: msg`Up next` },
+  { value: "catch-up", label: msg`Catch up` },
+  { value: "all", label: msg`All` },
 ] as const;
 
 const DEFAULT_MODE = "recent";
 
-const dateRoleLabels: Record<string, string> = {
-  started: "Started",
-  completed: "Completed",
-  planning: "Planned",
-  event: "Event",
+const dateRoleLabels: Record<string, MessageDescriptor> = {
+  started: msg`Started`,
+  completed: msg`Completed`,
+  planning: msg`Planned`,
+  event: msg`Event`,
 };
 
 export function ActivityPage() {
+  const { t, i18n } = useLingui();
+  const formatDay = useDateFormat({
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const type = searchParams.get("type") ?? "all";
   const source = readSource(searchParams.get("source"));
@@ -94,7 +105,7 @@ export function ActivityPage() {
     <AppFrame error={feed.error ? errorMessage(feed.error) : undefined}>
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 sm:p-6">
         <header className="flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-semibold">Activity</h1>
+          <h1 className="text-lg font-semibold"><Trans>Activity</Trans></h1>
           <div className="flex flex-wrap gap-1">
             {modes.map((item) => (
               <Button
@@ -104,7 +115,7 @@ export function ActivityPage() {
                 size="sm"
                 onClick={() => setParam("mode", item.value, DEFAULT_MODE)}
               >
-                {item.label}
+                {i18n._(item.label)}
               </Button>
             ))}
           </div>
@@ -112,9 +123,9 @@ export function ActivityPage() {
             <Select
               value={type}
               onChange={(event) => setParam("type", event.target.value)}
-              aria-label="Filter by type"
+              aria-label={t`Filter by type`}
             >
-              <option value="all">All types</option>
+              <option value="all">{t`All types`}</option>
               {config.data?.types.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.label}
@@ -124,11 +135,11 @@ export function ActivityPage() {
             <Select
               value={source}
               onChange={(event) => setParam("source", event.target.value)}
-              aria-label="Filter by source"
+              aria-label={t`Filter by source`}
             >
               {sources.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {i18n._(item.label)}
                 </option>
               ))}
             </Select>
@@ -136,18 +147,20 @@ export function ActivityPage() {
         </header>
 
         {feed.isPending ? (
-          <p className="text-sm text-muted-foreground">Loading activity…</p>
+          <p className="text-sm text-muted-foreground"><Trans>Loading activity…</Trans></p>
         ) : days.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No activity yet. Dated entities, episode air/completion dates, and daily-note mentions
-            show up here.
+            <Trans>
+              No activity yet. Dated entities, episode air/completion dates, and daily-note mentions
+              show up here.
+            </Trans>
           </p>
         ) : (
           <div className="flex flex-col gap-6">
             {days.map((day) => (
               <section key={day.date} className="flex flex-col gap-2">
                 <h2 className="sticky top-0 z-10 bg-background/90 py-1 text-sm font-medium text-muted-foreground backdrop-blur">
-                  {formatDay(day.date)}
+                  {formatDayHeading(day.date, formatDay)}
                 </h2>
                 <div className="flex flex-col gap-2">
                   {day.items.map((item) => (
@@ -173,7 +186,7 @@ export function ActivityPage() {
             onClick={() => void feed.fetchNextPage()}
             disabled={feed.isFetchingNextPage}
           >
-            {feed.isFetchingNextPage ? "Loading…" : "Load more"}
+            {feed.isFetchingNextPage ? <Trans>Loading…</Trans> : <Trans>Load more</Trans>}
           </Button>
         ) : null}
       </div>
@@ -249,9 +262,11 @@ function ActivityEntryRow({
   labels: FieldLabels;
   missed?: boolean;
 }) {
+  const { t, i18n } = useLingui();
   if (entry.source === "taxonomy") {
-    const role = entry.role ? dateRoleLabels[entry.role] ?? entry.role : "Date";
-    const field = entry.dateField ? entityFieldLabel(labels, entityType, entry.dateField) : "date";
+    const roleLabel = entry.role ? dateRoleLabels[entry.role] : undefined;
+    const role = entry.role ? (roleLabel ? i18n._(roleLabel) : entry.role) : t`Date`;
+    const field = entry.dateField ? entityFieldLabel(labels, entityType, entry.dateField) : t`date`;
     return (
       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
         <span>
@@ -265,7 +280,7 @@ function ActivityEntryRow({
             variant="outline"
             className="border-transparent bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
           >
-            Missed?
+            <Trans>Missed?</Trans>
           </Badge>
         ) : null}
       </div>
@@ -273,13 +288,13 @@ function ActivityEntryRow({
   }
 
   if (entry.source === "episode") {
-    const verb = entry.episodeRole === "completed" ? "✅ Completed" : "📅 Scheduled";
+    const verb = entry.episodeRole === "completed" ? t`✅ Completed` : t`📅 Scheduled`;
     const items = (entry.episodes ?? []).map((episode) => episode.key || episode.title).join(", ");
     return (
       <div className="text-xs text-muted-foreground">
         <span className="font-medium text-foreground">{verb}</span>
         {" · "}
-        {entry.heading || "Episodes"}
+        {entry.heading || t`Episodes`}
         {items ? `: ${items}` : ""}
       </div>
     );
@@ -323,13 +338,8 @@ function readMode(value: string | null): "all" | "recent" | "up-next" | "catch-u
   return value === "all" || value === "up-next" || value === "catch-up" ? value : DEFAULT_MODE;
 }
 
-function formatDay(date: string): string {
+function formatDayHeading(date: string, format: (date: Date) => string): string {
   const [year, month, day] = date.split("-").map(Number);
   if (!year || !month || !day) return date;
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return format(new Date(year, month - 1, day));
 }

@@ -21,7 +21,8 @@ export const QuickAddRequest = zod.object({
   "titles": zod.record(zod.string(), zod.string()).default(quickAddRequestCandidateTitlesDefault),
   "metadata": zod.record(zod.string(), zod.unknown()).default(quickAddRequestCandidateMetadataDefault)
 }),
-  "basename": zod.string().nullish().describe('Override the derived basename. When absent, the core derives it from the\ntype\'s filename title language (falling back to the candidate title).')
+  "basename": zod.string().nullish().describe('Override the derived basename. When absent, the core derives it from the\ntype\'s filename title language (falling back to the candidate title).'),
+  "language": zod.string().nullish().describe('The viewer\'s language preference (may carry a script subtag), used for the\nfail-safe episode import so episode titles arrive localized.')
 }).describe('Quick-add: create a library entity directly from an external search candidate\nin one server-side step — schema-map its fields\/body, derive a safe filename,\ndownload covers (fail-safe), and import episodes (fail-safe). The client echoes\nthe candidate it picked from search; the core re-runs the schema mapping itself\nand never trusts client-mapped values.')
 
 export type QuickAddRequest = zod.input<typeof QuickAddRequest>;

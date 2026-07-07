@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
@@ -118,6 +119,7 @@ function serverSections(sections: ListSection[]) {
 }
 
 export function ListDetailPage() {
+  const { t } = useLingui();
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -305,7 +307,7 @@ export function ListDetailPage() {
   function addSection() {
     setSections((current) => [
       ...current,
-      { key: nextKey("sec"), heading: "New section", marker: "unordered", items: [] },
+      { key: nextKey("sec"), heading: t`New section`, marker: "unordered", items: [] },
     ]);
   }
 
@@ -362,7 +364,7 @@ export function ListDetailPage() {
   const remove = useMutation({
     mutationFn: () => removeList(id),
     onSuccess: async () => {
-      toast.success("List deleted");
+      toast.success(t`List deleted`);
       await invalidateLists(id);
       navigate("/lists");
     },
@@ -379,9 +381,13 @@ export function ListDetailPage() {
     <AppFrame error={list.error ? errorMessage(list.error) : undefined}>
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
         {list.isPending ? (
-          <Placeholder>Loading</Placeholder>
+          <Placeholder>
+            <Trans>Loading…</Trans>
+          </Placeholder>
         ) : !data ? (
-          <Placeholder>List not found</Placeholder>
+          <Placeholder>
+            <Trans>List not found</Trans>
+          </Placeholder>
         ) : (
           <>
             <header className="flex flex-wrap items-center gap-2">
@@ -395,7 +401,7 @@ export function ListDetailPage() {
                 onClick={() => setRenameOpen(true)}
               >
                 <FilePenLineIcon data-icon="inline-start" />
-                Rename
+                <Trans>Rename</Trans>
               </Button>
               <Button
                 type="button"
@@ -405,7 +411,7 @@ export function ListDetailPage() {
                 onClick={() => setDeleteOpen(true)}
               >
                 <Trash2Icon data-icon="inline-start" />
-                Delete
+                <Trans>Delete</Trans>
               </Button>
               <Button
                 type="button"
@@ -417,14 +423,14 @@ export function ListDetailPage() {
                 }}
               >
                 <SaveIcon data-icon="inline-start" />
-                {save.isPending ? "Saving" : "Save"}
+                {save.isPending ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
               </Button>
             </header>
 
             <MarkdownField
-              label="Description"
+              label={t`Description`}
               value={description}
-              placeholder="Describe this list (appears above the items)…"
+              placeholder={t`Describe this list (appears above the items)…`}
               disabled={!contentWritable}
               onChange={setDescription}
             />
@@ -432,21 +438,25 @@ export function ListDetailPage() {
             <section className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <h2 className="mr-auto text-sm font-medium">
-                  Items <span className="text-muted-foreground">({totalItems})</span>
+                  <Trans>
+                    Items <span className="text-muted-foreground">({totalItems})</span>
+                  </Trans>
                 </h2>
                 <Button type="button" variant="outline" size="sm" disabled={!contentWritable} onClick={addSection}>
                   <FolderPlusIcon data-icon="inline-start" />
-                  Add section
+                  <Trans>Add section</Trans>
                 </Button>
                 <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setAddOpen(true)}>
                   <PlusIcon data-icon="inline-start" />
-                  Add items
+                  <Trans>Add items</Trans>
                 </Button>
               </div>
 
               {sections.length === 0 ? (
                 <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  No items yet. Use “Add items” to put entities on this list, or “Add section” to group them.
+                  <Trans>
+                    No items yet. Use “Add items” to put entities on this list, or “Add section” to group them.
+                  </Trans>
                 </div>
               ) : (
                 <DndContext
@@ -475,9 +485,9 @@ export function ListDetailPage() {
             </section>
 
             <MarkdownField
-              label="Notes"
+              label={t`Notes`}
               value={trailing}
-              placeholder="Notes shown below the items…"
+              placeholder={t`Notes shown below the items…`}
               disabled={!contentWritable}
               onChange={setTrailing}
             />
@@ -503,14 +513,20 @@ export function ListDetailPage() {
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Move list to trash?</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    <Trans>Move list to trash?</Trans>
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    This moves <strong>{data.name}</strong> to the Trash. The items it contains are
-                    untouched.
+                    <Trans>
+                      This moves <strong>{data.name}</strong> to the Trash. The items it contains are
+                      untouched.
+                    </Trans>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={remove.isPending}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={remove.isPending}>
+                    <Trans>Cancel</Trans>
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       cancelAutoSave();
@@ -518,7 +534,7 @@ export function ListDetailPage() {
                     }}
                     disabled={remove.isPending}
                   >
-                    Move to Trash
+                    <Trans>Move to Trash</Trans>
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -549,6 +565,7 @@ function SectionBlock({
   onRemoveItem: (itemKey: string) => void;
   onToggleItem: (itemKey: string) => void;
 }) {
+  const { t } = useLingui();
   // Each section is a drop target in its own right, so items can be dragged into
   // an empty one (where there are no item rows to drop onto).
   const { setNodeRef, isOver } = useDroppable({ id: section.key });
@@ -561,15 +578,15 @@ function SectionBlock({
       <div className="mb-2 flex items-center gap-2">
         {ungrouped ? (
           <span className="mr-auto px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Ungrouped
+            <Trans>Ungrouped</Trans>
           </span>
         ) : renaming ? (
           <Input
             autoFocus
             value={section.heading ?? ""}
-            placeholder="Section heading"
+            placeholder={t`Section heading`}
             disabled={disabled}
-            aria-label="Section heading"
+            aria-label={t`Section heading`}
             className="mr-auto h-7 max-w-xs text-sm font-medium"
             onChange={(event) => onHeadingChange(event.target.value)}
             onBlur={() => setRenaming(false)}
@@ -582,7 +599,7 @@ function SectionBlock({
           />
         ) : (
           <h3 className="mr-auto truncate px-1 text-sm font-semibold">
-            {section.heading || "Untitled section"}
+            {section.heading || t`Untitled section`}
           </h3>
         )}
         <span className="text-xs tabular-nums text-muted-foreground">{section.items.length}</span>
@@ -594,7 +611,7 @@ function SectionBlock({
               size="icon"
               className="size-7"
               disabled={disabled}
-              aria-label="Section actions"
+              aria-label={t`Section actions`}
             >
               <MoreHorizontalIcon />
             </Button>
@@ -604,31 +621,33 @@ function SectionBlock({
               <>
                 <DropdownMenuItem onSelect={() => setRenaming(true)}>
                   <FilePenLineIcon />
-                  Rename
+                  <Trans>Rename</Trans>
                 </DropdownMenuItem>
                 <DropdownMenuItem variant="destructive" onSelect={onRemoveSection}>
                   <Trash2Icon />
-                  Delete
+                  <Trans>Delete</Trans>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuLabel>List style</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <Trans>List style</Trans>
+            </DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={section.marker}
               onValueChange={(value) => onMarkerChange(value as ListMarker)}
             >
               <DropdownMenuRadioItem value="unordered">
                 <ListIcon />
-                Unordered
+                <Trans>Unordered</Trans>
               </DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="ordered">
                 <ListOrderedIcon />
-                Ordered
+                <Trans>Ordered</Trans>
               </DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="todo">
                 <SquareCheckIcon />
-                Todo
+                <Trans>Todo</Trans>
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
@@ -645,7 +664,9 @@ function SectionBlock({
           )}
         >
           {section.items.length === 0 ? (
-            <span className="pointer-events-none">Drag items here</span>
+            <span className="pointer-events-none">
+              <Trans>Drag items here</Trans>
+            </span>
           ) : (
             section.items.map((item, index) => (
               <SortableRow
@@ -683,6 +704,7 @@ function SortableRow({
   onRemove: () => void;
   onToggle: () => void;
 }) {
+  const { t } = useLingui();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.key });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const checked = item.checked ?? false;
@@ -706,7 +728,7 @@ function SortableRow({
           "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
           disabled && "hidden",
         )}
-        aria-label="Drag to reorder"
+        aria-label={t`Drag to reorder`}
         disabled={disabled}
         {...attributes}
         {...listeners}
@@ -721,7 +743,7 @@ function SortableRow({
           className="flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           role="checkbox"
           aria-checked={checked}
-          aria-label={checked ? "Mark as not done" : "Mark as done"}
+          aria-label={checked ? t`Mark as not done` : t`Mark as done`}
           disabled={disabled}
           onClick={onToggle}
         >
@@ -746,7 +768,9 @@ function SortableRow({
       ) : (
         <span className="flex min-w-0 flex-1 flex-col">
           <span className={cn("truncate text-sm", marker === "todo" && checked && "line-through")}>{item.text}</span>
-          <span className="text-xs text-muted-foreground">Unresolved link</span>
+          <span className="text-xs text-muted-foreground">
+            <Trans>Unresolved link</Trans>
+          </span>
         </span>
       )}
       <Button
@@ -760,7 +784,7 @@ function SortableRow({
         )}
         onClick={onRemove}
         disabled={disabled}
-        aria-label="Remove item"
+        aria-label={t`Remove item`}
       >
         <Trash2Icon />
       </Button>
@@ -792,7 +816,7 @@ function MarkdownField({
         <h2 className="mr-auto text-sm font-medium">{label}</h2>
         <Button type="button" variant="ghost" size="sm" onClick={() => setPreview((current) => !current)}>
           {preview ? <PencilIcon data-icon="inline-start" /> : <EyeIcon data-icon="inline-start" />}
-          {preview ? "Edit" : "Preview"}
+          {preview ? <Trans>Edit</Trans> : <Trans>Preview</Trans>}
         </Button>
       </div>
       {preview ? (
@@ -824,6 +848,7 @@ function AddItemsDialog({
   disabled: boolean;
   onAdd: (entityId: string) => Promise<void>;
 }) {
+  const { t } = useLingui();
   const language = useTitleLanguage();
   const [query, setQuery] = useState("");
   const [pendingId, setPendingId] = useState<string>();
@@ -846,20 +871,28 @@ function AddItemsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add items</DialogTitle>
-          <DialogDescription>Search entities and add them to this list.</DialogDescription>
+          <DialogTitle>
+            <Trans>Add items</Trans>
+          </DialogTitle>
+          <DialogDescription>
+            <Trans>Search entities and add them to this list.</Trans>
+          </DialogDescription>
         </DialogHeader>
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search entities…"
+          placeholder={t`Search entities…`}
           autoFocus
         />
         <div className="flex max-h-80 flex-col gap-1 overflow-auto">
           {search.isPending ? (
-            <p className="p-3 text-center text-sm text-muted-foreground">Loading</p>
+            <p className="p-3 text-center text-sm text-muted-foreground">
+              <Trans>Loading…</Trans>
+            </p>
           ) : results.length === 0 ? (
-            <p className="p-3 text-center text-sm text-muted-foreground">No matching entities.</p>
+            <p className="p-3 text-center text-sm text-muted-foreground">
+              <Trans>No matching entities.</Trans>
+            </p>
           ) : (
             results.map((entity) => {
               const added = existingIds.has(entity.id);
@@ -871,7 +904,9 @@ function AddItemsDialog({
                     <span className="block truncate text-xs text-muted-foreground">{entity.typeLabel}</span>
                   </span>
                   {added ? (
-                    <Badge variant="outline">Added</Badge>
+                    <Badge variant="outline">
+                      <Trans>Added</Trans>
+                    </Badge>
                   ) : (
                     <Button
                       type="button"
@@ -881,7 +916,7 @@ function AddItemsDialog({
                       onClick={() => void add(entity.id)}
                     >
                       <PlusIcon data-icon="inline-start" />
-                      Add
+                      <Trans>Add</Trans>
                     </Button>
                   )}
                 </div>
@@ -892,7 +927,7 @@ function AddItemsDialog({
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             <CheckIcon data-icon="inline-start" />
-            Done
+            <Trans>Done</Trans>
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -928,8 +963,12 @@ function RenameListDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename list</DialogTitle>
-          <DialogDescription>Changes the list's name.</DialogDescription>
+          <DialogTitle>
+            <Trans>Rename list</Trans>
+          </DialogTitle>
+          <DialogDescription>
+            <Trans>Changes the list's name.</Trans>
+          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(event) => {
@@ -940,7 +979,7 @@ function RenameListDialog({
           className="flex flex-col gap-2"
         >
           <label className="text-sm font-medium">
-            Name
+            <Trans>Name</Trans>
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -952,11 +991,11 @@ function RenameListDialog({
           <DialogFooter className="mt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
               <XIcon data-icon="inline-start" />
-              Cancel
+              <Trans>Cancel</Trans>
             </Button>
             <Button type="submit" disabled={disabled || saving || Boolean(validationError) || unchanged || !name.trim()}>
               <CheckIcon data-icon="inline-start" />
-              {saving ? "Renaming" : "Rename"}
+              {saving ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
             </Button>
           </DialogFooter>
         </form>

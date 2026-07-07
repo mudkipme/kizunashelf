@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +62,7 @@ function DialogShell({
   footer: ReactNode;
   children: ReactNode;
 }) {
+  const { t } = useLingui();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/*
@@ -72,7 +75,7 @@ function DialogShell({
         <DialogHeader className="space-y-0 border-b px-4 py-3 pr-12 text-left">
           <div className="flex min-w-0 items-center gap-2">
             {onBack ? (
-              <Button type="button" variant="ghost" size="icon" className="-ml-2 shrink-0" onClick={onBack} aria-label="Back">
+              <Button type="button" variant="ghost" size="icon" className="-ml-2 shrink-0" onClick={onBack} aria-label={t`Back`}>
                 <ChevronLeftIcon />
               </Button>
             ) : null}
@@ -184,6 +187,7 @@ export function TypesSection({
   taxonomyRoot: string;
   onChange: (types: EntityTypeConfig[]) => void;
 }) {
+  const { t } = useLingui();
   // `null` = closed; `"new"` = adding; a number = editing that index.
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [picking, setPicking] = useState(false);
@@ -194,34 +198,36 @@ export function TypesSection({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-medium">
-          Types <span className="text-muted-foreground">({types.length})</span>
+          <Trans>Types</Trans> <span className="text-muted-foreground">({types.length})</span>
         </h3>
         <div className="flex items-center gap-2">
           <Button type="button" size="sm" onClick={() => setPicking(true)}>
             <PlusIcon data-icon="inline-start" />
-            Add built-in type
+            <Trans>Add built-in type</Trans>
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setEditing("new")}>
-            Add custom type
+            <Trans>Add custom type</Trans>
           </Button>
         </div>
       </div>
       {types.length === 0 ? (
-        <EmptyConfigLine>No entity types configured.</EmptyConfigLine>
+        <EmptyConfigLine>
+          <Trans>No entity types configured.</Trans>
+        </EmptyConfigLine>
       ) : (
         <div className="flex flex-col gap-2">
           {types.map((type, index) => (
             <EditableRow
               key={index}
-              title={type.label || type.id || "Entity type"}
+              title={type.label || type.id || t`Entity type`}
               badges={[
-                `${type.fields.length} fields`,
-                `${typeProviderCount(type)} providers`,
+                plural(type.fields.length, { one: "# field", other: "# fields" }),
+                plural(typeProviderCount(type), { one: "# provider", other: "# providers" }),
                 ...(type.path ? [type.path] : []),
               ]}
               onEdit={() => setEditing(index)}
               onRemove={() => typeList.remove(index)}
-              removeLabel="Remove type"
+              removeLabel={t`Remove type`}
             />
           ))}
         </div>
@@ -275,6 +281,7 @@ function TypeEditorDialog({
   onClose: () => void;
   onApply: (value: EntityTypeConfig) => void;
 }) {
+  const { t } = useLingui();
   const [draft, setDraft] = useState(initial);
   const [fieldIndex, setFieldIndex] = useState<number | null>(null);
   // A field being *added* is held aside as a working copy, not appended to the
@@ -296,8 +303,8 @@ function TypeEditorDialog({
         open
         onOpenChange={(next) => !next && onClose()}
         onBack={() => setNewField(null)}
-        title={newField.displayName || newField.field || "New field"}
-        description="Configure the new field, then choose Done to add it. Going back discards it."
+        title={newField.displayName || newField.field || t`New field`}
+        description={t`Configure the new field, then choose Done to add it. Going back discards it.`}
         footer={
           <Button
             type="button"
@@ -306,7 +313,7 @@ function TypeEditorDialog({
               setNewField(null);
             }}
           >
-            Done
+            <Trans>Done</Trans>
           </Button>
         }
       >
@@ -326,8 +333,8 @@ function TypeEditorDialog({
         open
         onOpenChange={(next) => !next && onClose()}
         onBack={() => setFieldIndex(null)}
-        title={field.displayName || field.field || "Field"}
-        description="Configure how this field is read, derived, and displayed."
+        title={field.displayName || field.field || t`Field`}
+        description={t`Configure how this field is read, derived, and displayed.`}
         footer={
           <>
             <Button
@@ -340,10 +347,10 @@ function TypeEditorDialog({
               }}
             >
               <Trash2Icon data-icon="inline-start" />
-              Remove field
+              <Trans>Remove field</Trans>
             </Button>
             <Button type="button" onClick={() => setFieldIndex(null)}>
-              Done
+              <Trans>Done</Trans>
             </Button>
           </>
         }
@@ -363,15 +370,15 @@ function TypeEditorDialog({
     <DialogShell
       open
       onOpenChange={(next) => !next && onClose()}
-      title={draft.label || draft.id || "Entity type"}
-      description="Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema."
+      title={draft.label || draft.id || t`Entity type`}
+      description={t`Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema.`}
       footer={
         <>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
           <Button type="button" onClick={() => onApply(draft)}>
-            Apply
+            <Trans>Apply</Trans>
           </Button>
         </>
       }
@@ -386,19 +393,21 @@ function TypeEditorDialog({
       />
       <Separator className="my-4" />
       <div className="flex flex-col gap-2">
-        <ListHeader title="Fields" count={fields.length} addLabel="Field" onAdd={() => setNewField(defaultField())} />
+        <ListHeader title={t`Fields`} count={fields.length} addLabel={t`Field`} onAdd={() => setNewField(defaultField())} />
         {fields.length === 0 ? (
-          <EmptyConfigLine>No fields configured.</EmptyConfigLine>
+          <EmptyConfigLine>
+            <Trans>No fields configured.</Trans>
+          </EmptyConfigLine>
         ) : (
           <div className="flex flex-col gap-2">
             {fields.map((field, index) => (
               <EditableRow
                 key={index}
-                title={field.displayName || field.field || "Field"}
+                title={field.displayName || field.field || t`Field`}
                 badges={fieldConfigSummary(field)}
                 onEdit={() => setFieldIndex(index)}
                 onRemove={() => fieldList.remove(index)}
-                removeLabel="Remove field"
+                removeLabel={t`Remove field`}
               />
             ))}
           </div>
@@ -421,6 +430,7 @@ export function HomeBlock({
   types: EntityTypeConfig[];
   onChange: (config: HomeConfig) => void;
 }) {
+  const { t } = useLingui();
   const sections = config.sections ?? [];
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const initial =
@@ -429,23 +439,27 @@ export function HomeBlock({
 
   return (
     <div className="flex flex-col gap-3">
-      <TextField label="Title" value={config.title ?? ""} onChange={(title) => onChange({ ...config, title })} />
-      <ListHeader title="Sections" count={sections.length} addLabel="Section" onAdd={() => setEditing("new")} />
+      <TextField label={t`Title`} value={config.title ?? ""} onChange={(title) => onChange({ ...config, title })} />
+      <ListHeader title={t`Sections`} count={sections.length} addLabel={t`Section`} onAdd={() => setEditing("new")} />
       {sections.length === 0 ? (
-        <EmptyConfigLine>No home sections configured.</EmptyConfigLine>
+        <EmptyConfigLine>
+          <Trans>No home sections configured.</Trans>
+        </EmptyConfigLine>
       ) : (
         <div className="flex flex-col gap-2">
           {sections.map((section, index) => (
             <EditableRow
               key={index}
-              title={section.title || section.id || "Home section"}
+              title={section.title || section.id || t`Home section`}
               badges={[
                 ...(section.type ? [types.find((type) => type.id === section.type)?.label || section.type] : []),
-                ...(section.filters?.length ? [`${section.filters.length} filters`] : []),
+                ...(section.filters?.length
+                  ? [plural(section.filters.length, { one: "# filter", other: "# filters" })]
+                  : []),
               ]}
               onEdit={() => setEditing(index)}
               onRemove={() => sectionList.remove(index)}
-              removeLabel="Remove section"
+              removeLabel={t`Remove section`}
             />
           ))}
         </div>
@@ -478,20 +492,21 @@ function HomeSectionDialog({
   onClose: () => void;
   onApply: (value: HomeSectionConfig) => void;
 }) {
+  const { t } = useLingui();
   const [draft, setDraft] = useState(initial);
   return (
     <DialogShell
       open
       onOpenChange={(next) => !next && onClose()}
-      title={draft.title || draft.id || "Home section"}
-      description="Configure a section shown on the home page: its source type, filters, and ordering."
+      title={draft.title || draft.id || t`Home section`}
+      description={t`Configure a section shown on the home page: its source type, filters, and ordering.`}
       footer={
         <>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
           <Button type="button" onClick={() => onApply(draft)}>
-            Apply
+            <Trans>Apply</Trans>
           </Button>
         </>
       }

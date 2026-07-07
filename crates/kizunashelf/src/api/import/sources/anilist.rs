@@ -30,7 +30,7 @@ fragment entry on MediaList {
   notes
   startedAt { year month day }
   completedAt { year month day }
-  media { idMal title { romaji english native } coverImage { large } }
+  media { idMal title { romaji english native } countryOfOrigin coverImage { large } }
 }";
 
 pub(in crate::api::import) struct AniListSource;
@@ -131,6 +131,16 @@ fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
     if let Some(english) = english {
         titles.insert("en".to_string(), english.to_string());
     }
+    // The native title's language comes from the media's origin country —
+    // AniList also lists Korean/Chinese works, so `native` must not be assumed
+    // Japanese. Romaji stays untagged (it is no language's display title).
+    let native_language = media
+        .and_then(|media| media.get("countryOfOrigin"))
+        .and_then(Value::as_str)
+        .and_then(origin_language);
+    if let (Some(native), Some(language)) = (native, native_language) {
+        titles.insert(language.to_string(), native.to_string());
+    }
 
     let user = ImportUserData {
         status: entry
@@ -190,6 +200,18 @@ fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
         titles,
         candidate,
         user,
+    }
+}
+
+/// The title language an AniList `countryOfOrigin` implies for `native`.
+/// Chinese works are tagged bare `zh` regardless of origin script — script
+/// subtags never enter title maps.
+fn origin_language(region: &str) -> Option<&'static str> {
+    match region {
+        "JP" => Some("ja"),
+        "KR" => Some("ko"),
+        "CN" | "TW" => Some("zh"),
+        _ => None,
     }
 }
 

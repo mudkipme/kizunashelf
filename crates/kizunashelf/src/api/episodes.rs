@@ -199,8 +199,9 @@ pub(crate) async fn import_new_entity_episodes(
     state: &AppState,
     library: &Library,
     entity_id: &str,
+    language: Option<&str>,
 ) -> Option<QuickAddEpisodeResult> {
-    import_new_entity_episodes_marked(state, library, entity_id, None).await
+    import_new_entity_episodes_marked(state, library, entity_id, None, language).await
 }
 
 /// Like [`import_new_entity_episodes`], but marks the first `watched_count`
@@ -212,6 +213,7 @@ pub(crate) async fn import_new_entity_episodes_marked(
     library: &Library,
     entity_id: &str,
     watched_count: Option<u32>,
+    language: Option<&str>,
 ) -> Option<QuickAddEpisodeResult> {
     let record = library.record_by_id(entity_id)?;
     let type_config = library.config.type_config(&record.summary.entity_type)?;
@@ -226,6 +228,7 @@ pub(crate) async fn import_new_entity_episodes_marked(
         &section,
         chosen,
         watched_count,
+        language,
     )
     .await
     {
@@ -252,8 +255,10 @@ async fn fetch_and_write_new_episodes(
     section: &BodySection,
     chosen: &ResolvedSource,
     watched_count: Option<u32>,
+    language: Option<&str>,
 ) -> Result<usize, ApiError> {
-    let episodes = provider_fetch_episodes(state, chosen.provider, &chosen.ref_value, None).await?;
+    let episodes =
+        provider_fetch_episodes(state, chosen.provider, &chosen.ref_value, language).await?;
     let imported: usize = episodes.groups.iter().map(|group| group.items.len()).sum();
 
     // A provider group carries no watched/completion state; a fresh entity starts

@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -11,12 +13,12 @@ import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { useDateFormat } from "@/lib/locale";
 import { fieldLabelsByType } from "@/lib/type-config";
 import type { CalendarDay } from "@/types/api";
 
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 export function CalendarPage() {
+  const { t } = useLingui();
   const [searchParams, setSearchParams] = useSearchParams();
   const now = new Date();
   const year = readYear(searchParams.get("year"), now.getFullYear());
@@ -33,6 +35,12 @@ export function CalendarPage() {
   const config = useQuery(configQuery());
   const calendar = useQuery(calendarQuery(calendarParams));
 
+  // Locale-aware weekday header, Monday-first (2024-01-01 is a Monday).
+  const formatWeekday = useDateFormat({ weekday: "short" });
+  const weekdays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => formatWeekday(new Date(2024, 0, 1 + index))),
+    [formatWeekday],
+  );
   const gridDays = useMemo(
     () => monthGridDays(calendar.data?.days ?? [], year, month),
     [calendar.data, year, month],
@@ -73,27 +81,27 @@ export function CalendarPage() {
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-base font-semibold">
               <CalendarDaysIcon />
-              Calendar
+              <Trans>Calendar</Trans>
             </h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {calendar.isPending
-                ? "Loading"
+                ? t`Loading…`
                 : calendar.data
-                  ? `${calendar.data.totals.entries} entries across ${calendar.data.totals.daysWithEntries} days`
-                  : "No calendar data"}
+                  ? t`${plural(calendar.data.totals.entries, { one: "# entry", other: "# entries" })} across ${plural(calendar.data.totals.daysWithEntries, { one: "# day", other: "# days" })}`
+                  : t`No calendar data`}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => moveMonth(-1)}>
               <ChevronLeftIcon data-icon="inline-start" />
-              Prev
+              <Trans>Prev</Trans>
             </Button>
             <Button variant="outline" size="sm" onClick={goToday}>
-              Today
+              <Trans>Today</Trans>
             </Button>
             <Button variant="outline" size="sm" onClick={() => moveMonth(1)}>
-              Next
+              <Trans>Next</Trans>
               <ChevronRightIcon data-icon="inline-end" />
             </Button>
           </div>
@@ -103,19 +111,25 @@ export function CalendarPage() {
           <div className="text-sm font-medium">{monthTitle(year, month)}</div>
           {calendar.data ? (
             <div className="flex flex-wrap gap-1">
-              <Badge variant="outline">Taxonomy {calendar.data.totals.taxonomy}</Badge>
-              <Badge variant="outline">Items {calendar.data.totals.episodes}</Badge>
-              <Badge variant="outline">Daily Notes {calendar.data.totals.dailyNotes}</Badge>
+              <Badge variant="outline">
+                <Trans>Taxonomy {calendar.data.totals.taxonomy}</Trans>
+              </Badge>
+              <Badge variant="outline">
+                <Trans>Items {calendar.data.totals.episodes}</Trans>
+              </Badge>
+              <Badge variant="outline">
+                <Trans>Daily Notes {calendar.data.totals.dailyNotes}</Trans>
+              </Badge>
             </div>
           ) : null}
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Select value={source} onChange={(event) => setParam("source", event.target.value, "all")}>
-              <option value="all">All sources</option>
-              <option value="taxonomy">Taxonomy dates</option>
-              <option value="daily-note">Daily note mentions</option>
+              <option value="all">{t`All sources`}</option>
+              <option value="taxonomy">{t`Taxonomy dates`}</option>
+              <option value="daily-note">{t`Daily note mentions`}</option>
             </Select>
             <Select value={type} onChange={(event) => setParam("type", event.target.value, "all")}>
-              <option value="all">All types</option>
+              <option value="all">{t`All types`}</option>
               {(config.data?.types ?? []).map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.label}
@@ -152,9 +166,11 @@ export function CalendarPage() {
 
           <aside className="min-w-0 rounded-md border">
             <header className="border-b px-3 py-2">
-              <h2 className="text-sm font-semibold">{selectedDay?.date ?? "No date selected"}</h2>
+              <h2 className="text-sm font-semibold">{selectedDay?.date ?? t`No date selected`}</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                {selectedDay ? `${selectedDay.entries.length} entries` : "No entries"}
+                {selectedDay
+                  ? plural(selectedDay.entries.length, { one: "# entry", other: "# entries" })
+                  : t`No entries`}
               </p>
             </header>
             <div className="flex max-h-[720px] flex-col gap-2 overflow-auto p-3">
@@ -163,7 +179,9 @@ export function CalendarPage() {
                   <CalendarEntryItem key={entry.id} entry={entry} labelsByType={fieldLabels} />
                 ))
               ) : (
-                <div className="py-8 text-center text-sm text-muted-foreground">No entries</div>
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  <Trans>No entries</Trans>
+                </div>
               )}
             </div>
           </aside>

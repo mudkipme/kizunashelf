@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLingui } from "@lingui/react/macro";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
@@ -13,6 +14,7 @@ import {
   matchSelectableBodySections,
   matchSelectableFields,
 } from "@/lib/external-metadata";
+import { useLanguagePreference } from "@/lib/language";
 import type { ExternalMatch, ExternalProviderCatalog, TypeConfig } from "@/types/api";
 
 type ExternalRefs = Record<string, string | undefined>;
@@ -40,15 +42,19 @@ export function useExternalMatch({
   externalRefs?: ExternalRefs;
   assetDownloadEnabled?: boolean;
 }) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [provider, setProvider] = useState("all");
+  // The full preference (possibly zh-Hans/zh-Hant): providers that distinguish
+  // the scripts localize candidate metadata with it.
+  const language = useLanguagePreference();
   const [candidates, setCandidates] = useState<ExternalMatch[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<ExternalMatch>();
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [selectedBodySections, setSelectedBodySections] = useState<Set<string>>(new Set());
-  const [emptyMessage, setEmptyMessage] = useState("No candidates loaded");
+  const [emptyMessage, setEmptyMessage] = useState(t`No candidates loaded`);
   const [downloadAfterApply, setDownloadAfterApply] = useState(false);
 
   // Providers configured for this type by the schema (credential-independent).
@@ -167,7 +173,7 @@ export function useExternalMatch({
       if (selectedProvider !== "all" && !providerOptions.includes(selectedProvider)) return;
 
       setSearching(true);
-      setEmptyMessage("No candidates loaded");
+      setEmptyMessage(t`No candidates loaded`);
       resetSelection();
       try {
         const result = await searchSources({
@@ -175,17 +181,18 @@ export function useExternalMatch({
           q: selectedQuery,
           type: entityType,
           pageSize: 8,
+          language,
         });
         setProviderEnabled(Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])));
         setCandidates(result.items);
-        if (result.items.length === 0) setEmptyMessage("No external matches");
+        if (result.items.length === 0) setEmptyMessage(t`No external matches`);
       } catch (error) {
         toast.error(errorMessage(error));
       } finally {
         setSearching(false);
       }
     },
-    [provider, query, defaultQuery, entityType, externalSearchEnabled, providerOptions, resetSelection],
+    [provider, query, defaultQuery, entityType, externalSearchEnabled, providerOptions, resetSelection, language, t],
   );
 
   const refreshFromExternalRef = useCallback(

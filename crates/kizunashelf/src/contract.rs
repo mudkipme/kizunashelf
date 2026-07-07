@@ -314,10 +314,28 @@ pub struct Language {
     pub label: String,
 }
 
+/// A user-language preference option for the clients' single language picker:
+/// the preference code (which, unlike a title language, may carry a script
+/// subtag — `zh-Hans`/`zh-Hant`), its endonym label, the bare title/content
+/// language it maps to, and whether the UI is translated into it (clients fall
+/// back to English UI when not). See [`crate::languages`].
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UserLanguage {
+    pub code: String,
+    pub label: String,
+    pub title_language: String,
+    pub ui_supported: bool,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct LanguagesResponse {
     pub languages: Vec<Language>,
+    /// The language-picker options the preference is chosen from; every
+    /// language-sensitive behavior (UI locale, title language, provider request
+    /// language) derives from the picked entry.
+    pub user_languages: Vec<UserLanguage>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -494,8 +512,9 @@ pub struct FetchEpisodesRequest {
     /// Provider id to fetch from; defaults to the entity's first episode source.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub provider: Option<String>,
-    /// Preferred episode-title language (ISO 639-1, the viewer's content language);
-    /// providers that support translations use it.
+    /// Preferred episode-title language: the viewer's language preference, which
+    /// may carry a script subtag (`zh-Hans`/`zh-Hant`). Providers that support
+    /// translations honor it, normalizing to whatever their API distinguishes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
 }
@@ -601,6 +620,10 @@ pub struct QuickAddRequest {
     /// type's filename title language (falling back to the candidate title).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub basename: Option<String>,
+    /// The viewer's language preference (may carry a script subtag), used for the
+    /// fail-safe episode import so episode titles arrive localized.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
 }
 
 /// The episode-import outcome of a quick-add. Present only when the type declares

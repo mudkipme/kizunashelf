@@ -116,8 +116,9 @@ fn game_item(game: &Value) -> Option<ImportItem> {
         .and_then(Value::as_i64)
         .is_some();
 
-    let mut titles = BTreeMap::new();
-    titles.insert("en".to_string(), title.clone());
+    // Steam app names aren't language-tagged — leave the title untagged rather
+    // than mislabeled `en` (wrong tags pollute language-keyed matching).
+    let titles = BTreeMap::new();
 
     let candidate = ExternalCandidate {
         provider: "steam".to_string(),

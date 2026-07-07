@@ -107,8 +107,9 @@ fn build_item(parsed: ParsedRow, resolved: Option<(String, &'static str)>) -> Im
         ..Default::default()
     };
 
-    let mut titles = BTreeMap::new();
-    titles.insert("en".to_string(), parsed.title.clone());
+    // The export doesn't say what language the title is in — leave it untagged
+    // rather than mislabeled `en` (wrong tags pollute language-keyed matching).
+    let titles = BTreeMap::new();
 
     let (refs, candidate, bucket) = match resolved {
         Some((tmdb_id, media_type)) => {

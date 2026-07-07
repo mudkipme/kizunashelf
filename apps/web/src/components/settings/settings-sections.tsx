@@ -1,4 +1,7 @@
 import { createContext, useContext, type ReactNode } from "react";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -54,11 +57,12 @@ export function DailyNotesEditor({
   vaultRoot: string;
   onChange: (config: DailyNotesConfig) => void;
 }) {
+  const { t } = useLingui();
   const log = config.log ?? { section: "", lineFormat: "" };
   return (
     <div className="flex flex-col gap-3">
       <StringListEditor
-        label="Paths"
+        label={t`Paths`}
         values={config.paths ?? []}
         placeholder="Daily Notes"
         base={vaultRoot}
@@ -67,13 +71,13 @@ export function DailyNotesEditor({
       />
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <TextField
-          label="Date format"
+          label={t`Date format`}
           value={config.dateFormat ?? ""}
           placeholder="YYYY-MM-DD"
           onChange={(dateFormat) => onChange({ ...config, dateFormat })}
         />
         <TextField
-          label="New-note template"
+          label={t`New-note template`}
           value={config.template ?? ""}
           placeholder="Templates/Daily Note.md"
           onChange={(template) => onChange({ ...config, template })}
@@ -81,18 +85,20 @@ export function DailyNotesEditor({
       </div>
       <div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
         <div className="text-xs text-muted-foreground">
-          Logging defaults — the heading log lines are written under, and the fallback line format.
-          Each type can override these and adds its own tag.
+          <Trans>
+            Logging defaults — the heading log lines are written under, and the fallback line format.
+            Each type can override these and adds its own tag.
+          </Trans>
         </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <TextField
-            label="Log section"
+            label={t`Log section`}
             value={log.section ?? ""}
             placeholder="Log"
             onChange={(section) => onChange({ ...config, log: { ...log, section } })}
           />
           <TextField
-            label="Default line format"
+            label={t`Default line format`}
             value={log.lineFormat ?? ""}
             placeholder="- {title} {note}"
             onChange={(lineFormat) => onChange({ ...config, log: { ...log, lineFormat } })}
@@ -112,16 +118,17 @@ export function HomeSectionForm({
   types: EntityTypeConfig[];
   onChange: (section: HomeSectionConfig) => void;
 }) {
+  const { t } = useLingui();
   const selectedType = types.find((type) => type.id === section.type);
   const filterFields = selectedType?.fields.filter((field) => supportsEnumOptions(field.fieldType)) ?? [];
   const filters = section.filters ?? [];
   const sortOptions = [
-    { value: "title", label: "Title" },
-    { value: "recentlyUpdated", label: "Update time" },
-    { value: "relationCount", label: "Relation count" },
+    { value: "title", label: t`Title` },
+    { value: "recentlyUpdated", label: t`Update time` },
+    { value: "relationCount", label: t`Relation count` },
     ...(selectedType?.fields ?? [])
       .filter((field) => isDateFieldType(field.fieldType))
-      .map((field) => ({ value: `date:${field.field}`, label: `Date: ${fieldDisplayLabel(field)}` })),
+      .map((field) => ({ value: `date:${field.field}`, label: t`Date: ${fieldDisplayLabel(field)}` })),
   ];
   const currentSort = section.sort ?? "title";
   const filterList = arrayEditor(filters, (next) => onChange({ ...section, filters: next }));
@@ -141,9 +148,9 @@ export function HomeSectionForm({
 
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-      <TextField label="ID" value={section.id} onChange={(id) => onChange({ ...section, id })} />
-        <TextField label="Title" value={section.title} onChange={(title) => onChange({ ...section, title })} />
-        <Field label="Type">
+      <TextField label={t`ID`} value={section.id} onChange={(id) => onChange({ ...section, id })} />
+        <TextField label={t`Title`} value={section.title} onChange={(title) => onChange({ ...section, title })} />
+        <Field label={t`Type`}>
           <Select
             value={section.type}
             onChange={(event) => onChange({ ...section, type: event.target.value, filters: [] })}
@@ -161,12 +168,12 @@ export function HomeSectionForm({
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <div className="text-sm font-medium">Filters</div>
-                <div className="text-xs text-muted-foreground">Enum and enum list fields from this type.</div>
+                <div className="text-sm font-medium"><Trans>Filters</Trans></div>
+                <div className="text-xs text-muted-foreground"><Trans>Enum and enum list fields from this type.</Trans></div>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={addFilter} disabled={filterFields.length === 0}>
                 <PlusIcon data-icon="inline-start" />
-                Add Filter
+                <Trans>Add Filter</Trans>
               </Button>
             </div>
             {filters.map((filter, index) => (
@@ -180,11 +187,11 @@ export function HomeSectionForm({
                 onRemove={() => removeFilter(index)}
               />
             ))}
-            {filterFields.length === 0 ? <EmptyConfigLine>No enum fields available for this type.</EmptyConfigLine> : null}
+            {filterFields.length === 0 ? <EmptyConfigLine><Trans>No enum fields available for this type.</Trans></EmptyConfigLine> : null}
           </div>
         </div>
-        <NumberField label="Limit" value={section.limit} onChange={(limit) => onChange({ ...section, limit })} />
-        <Field label="Sort">
+        <NumberField label={t`Limit`} value={section.limit} onChange={(limit) => onChange({ ...section, limit })} />
+        <Field label={t`Sort`}>
           <Select
             value={currentSort}
             onChange={(event) => onChange({ ...section, sort: event.target.value })}
@@ -198,7 +205,7 @@ export function HomeSectionForm({
             <UnknownValueOption value={currentSort} known={sortOptions.map((option) => option.value)} />
           </Select>
         </Field>
-        <Field label="Direction">
+        <Field label={t`Direction`}>
           <Select
             value={section.direction ?? ""}
             onChange={(event) =>
@@ -209,9 +216,9 @@ export function HomeSectionForm({
             }
             className="h-9 w-full text-base md:text-sm"
           >
-            <option value="">Default</option>
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
+            <option value="">{t`Default`}</option>
+            <option value="asc">{t`Ascending`}</option>
+            <option value="desc">{t`Descending`}</option>
           </Select>
         </Field>
     </div>
@@ -229,12 +236,13 @@ function HomeSectionFilterEditor({
   onChange: (filter: HomeSectionFilterConfig) => void;
   onRemove: () => void;
 }) {
+  const { t } = useLingui();
   const selectedField = fields.find((field) => field.field === filter.field);
   const suggestions = selectedField?.enumOptions ?? [];
   return (
     <div className="rounded-md border border-dashed p-3">
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
-        <Field label="Field">
+        <Field label={t`Field`}>
           <Select
             value={filter.field}
             onChange={(event) => onChange({ ...filter, field: event.target.value, values: [] })}
@@ -249,14 +257,14 @@ function HomeSectionFilterEditor({
           </Select>
         </Field>
         <StringListEditor
-          label="Values"
+          label={t`Values`}
           values={filter.values ?? []}
           suggestions={suggestions}
-          placeholder={suggestions[0] ?? "value"}
+          placeholder={suggestions[0] ?? t`value`}
           onChange={(values) => onChange({ ...filter, values })}
         />
         <div className="flex items-end">
-          <IconButton label="Remove filter" onClick={onRemove} />
+          <IconButton label={t`Remove filter`} onClick={onRemove} />
         </div>
       </div>
     </div>
@@ -279,13 +287,14 @@ function LanguageSelect({
   languages: Language[];
   onChange: (value: string) => void;
 }) {
+  const { t } = useLingui();
   return (
     <Select
       value={value}
       onChange={(event) => onChange(event.target.value)}
       className="h-9 w-full text-base md:text-sm"
     >
-      <option value="">None</option>
+      <option value="">{t`None`}</option>
       {languages.map((language) => (
         <option key={language.code} value={language.code}>
           {language.label} ({language.code})
@@ -315,15 +324,16 @@ export function EntityTypeForm({
   taxonomyRoot: string;
   onChange: (config: EntityTypeConfig) => void;
 }) {
+  const { t } = useLingui();
   return (
       <div className="flex flex-col gap-4">
-        <ConfigSubsection title="Basics">
+        <ConfigSubsection title={t`Basics`}>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-            <TextField label="ID" value={config.id} onChange={(id) => onChange({ ...config, id })} />
-            <TextField label="Label" value={config.label} onChange={(label) => onChange({ ...config, label })} />
-            <TextField label="Icon" value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
+            <TextField label={t`ID`} value={config.id} onChange={(id) => onChange({ ...config, id })} />
+            <TextField label={t`Label`} value={config.label} onChange={(label) => onChange({ ...config, label })} />
+            <TextField label={t`Icon`} value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
             <PathField
-              label="Path"
+              label={t`Path`}
               value={config.path}
               base={taxonomyBase}
               suggestionBase={taxonomyRoot}
@@ -332,7 +342,7 @@ export function EntityTypeForm({
           </div>
         </ConfigSubsection>
 
-        <ConfigSubsection title="Providers">
+        <ConfigSubsection title={t`Providers`}>
           <ExternalPriorityEditor
             providerCatalog={providerCatalog}
             values={config.externalPriority ?? []}
@@ -345,9 +355,9 @@ export function EntityTypeForm({
           />
         </ConfigSubsection>
 
-        <ConfigSubsection title="Filename">
+        <ConfigSubsection title={t`Filename`}>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <Field label="Filename title language">
+            <Field label={t`Filename title language`}>
               <LanguageSelect
                 value={config.filename?.titleLanguage ?? ""}
                 languages={languages}
@@ -362,7 +372,7 @@ export function EntityTypeForm({
                 }
               />
             </Field>
-            <Field label="Filename title — used as">
+            <Field label={t`Filename title — used as`}>
               <Select
                 value={config.filename?.titleRole ?? ""}
                 onChange={(event) =>
@@ -376,14 +386,14 @@ export function EntityTypeForm({
                 }
                 className="h-9 w-full text-base md:text-sm"
               >
-                <option value="">None</option>
-                <option value="original">Original (filename is the title)</option>
+                <option value="">{t`None`}</option>
+                <option value="original">{t`Original (filename is the title)`}</option>
               </Select>
             </Field>
           </div>
         </ConfigSubsection>
 
-        <ConfigSubsection title="Daily-note logging">
+        <ConfigSubsection title={t`Daily-note logging`}>
           <TypeLogEditor config={config} onChange={onChange} />
         </ConfigSubsection>
       </div>
@@ -401,15 +411,18 @@ function TypeLogEditor({
   config: EntityTypeConfig;
   onChange: (config: EntityTypeConfig) => void;
 }) {
+  const { t } = useLingui();
   const log = config.log ?? null;
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-xs font-medium text-muted-foreground">Log to daily note</div>
+          <div className="text-xs font-medium text-muted-foreground"><Trans>Log to daily note</Trans></div>
           <div className="text-xs text-muted-foreground">
-            When on, checking an episode or the Log button writes a line to the daily note. The title
-            is auto-linked as a wikilink — just add your tag to the line format.
+            <Trans>
+              When on, checking an episode or the Log button writes a line to the daily note. The title
+              is auto-linked as a wikilink — just add your tag to the line format.
+            </Trans>
           </div>
         </div>
         <OptionalToggle
@@ -421,15 +434,15 @@ function TypeLogEditor({
       {log ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <TextField
-            label="Line format"
+            label={t`Line format`}
             value={log.lineFormat ?? ""}
             placeholder="- {title} {note} #Tag"
             onChange={(lineFormat) => onChange({ ...config, log: { ...log, lineFormat } })}
           />
           <TextField
-            label="Section override"
+            label={t`Section override`}
             value={log.section ?? ""}
-            placeholder="(daily-notes default)"
+            placeholder={t`(daily-notes default)`}
             onChange={(section) => onChange({ ...config, log: { ...log, section } })}
           />
         </div>
@@ -456,13 +469,14 @@ function ExternalPriorityEditor({
   values: string[];
   onChange: (values: string[]) => void;
 }) {
+  const { t } = useLingui();
   const sourceOptions = externalSourceOptions(providerCatalog);
   const available = sourceOptions.filter((option) => !values.includes(option.source));
   const list = arrayEditor(values, onChange);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Provider priority</span>
+        <span className="text-xs font-medium text-muted-foreground"><Trans>Provider priority</Trans></span>
         <Button
           type="button"
           variant="outline"
@@ -471,7 +485,7 @@ function ExternalPriorityEditor({
           onClick={() => list.append(available[0]?.source ?? "")}
         >
           <PlusIcon data-icon="inline-start" />
-          Provider
+          <Trans>Provider</Trans>
         </Button>
       </div>
       <div className="flex flex-col gap-2">
@@ -485,7 +499,7 @@ function ExternalPriorityEditor({
               <Select
                 value={value}
                 onChange={(event) => list.update(index, event.target.value)}
-                aria-label="Provider priority"
+                aria-label={t`Provider priority`}
               >
                 {options.map((option) => (
                   <option key={option.source} value={option.source}>
@@ -494,13 +508,13 @@ function ExternalPriorityEditor({
                 ))}
               </Select>
               <IconButton
-                label="Remove provider priority"
+                label={t`Remove provider priority`}
                 onClick={() => list.remove(index)}
               />
             </div>
           );
         })}
-        {values.length === 0 ? <EmptyConfigLine>Default provider order is used.</EmptyConfigLine> : null}
+        {values.length === 0 ? <EmptyConfigLine><Trans>Default provider order is used.</Trans></EmptyConfigLine> : null}
       </div>
     </div>
   );
@@ -508,9 +522,9 @@ function ExternalPriorityEditor({
 
 type BodySectionTracking = NonNullable<BodySection["tracking"]>;
 
-const EPISODE_TRACKING_OPTIONS: { value: BodySectionTracking; label: string }[] = [
-  { value: "checklist", label: "Checklist (per-item checkboxes)" },
-  { value: "none", label: "None (plain list)" },
+const EPISODE_TRACKING_OPTIONS: { value: BodySectionTracking; label: MessageDescriptor }[] = [
+  { value: "checklist", label: msg`Checklist (per-item checkboxes)` },
+  { value: "none", label: msg`None (plain list)` },
 ];
 
 /// Reshapes a section when its `kind` changes, dropping the now-irrelevant
@@ -531,19 +545,20 @@ function BodySectionsEditor({
   values: BodySection[];
   onChange: (values: BodySection[]) => void;
 }) {
+  const { t } = useLingui();
   const list = arrayEditor(values, onChange);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Markdown body sections</span>
+        <span className="text-xs font-medium text-muted-foreground"><Trans>Markdown body sections</Trans></span>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => list.append({ heading: "Summary", kind: "external", externalFields: [] })}
+          onClick={() => list.append({ heading: t`Summary`, kind: "external", externalFields: [] })}
         >
           <PlusIcon data-icon="inline-start" />
-          Section
+          <Trans>Section</Trans>
         </Button>
       </div>
       <div className="flex flex-col gap-2">
@@ -558,7 +573,7 @@ function BodySectionsEditor({
             onRemove={() => list.remove(index)}
           />
         ))}
-        {values.length === 0 ? <EmptyConfigLine>No markdown body sections.</EmptyConfigLine> : null}
+        {values.length === 0 ? <EmptyConfigLine><Trans>No markdown body sections.</Trans></EmptyConfigLine> : null}
       </div>
     </div>
   );
@@ -575,31 +590,32 @@ function BodySectionEditor({
   onChange: (section: BodySection) => void;
   onRemove: () => void;
 }) {
+  const { t, i18n } = useLingui();
   return (
     <div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <TextField
-          label="Heading"
+          label={t`Heading`}
           value={section.heading}
           onChange={(heading) => onChange({ ...section, heading })}
         />
-        <Field label="Kind">
+        <Field label={t`Kind`}>
           <Select
             value={section.kind}
             onChange={(event) => onChange(changeBodySectionKind(section, event.target.value as BodySectionKind))}
             className="h-9 w-full text-base md:text-sm"
           >
-            <option value="external">External metadata</option>
-            <option value="episodes">Item list</option>
+            <option value="external">{t`External metadata`}</option>
+            <option value="episodes">{t`Item list`}</option>
             <UnknownValueOption value={section.kind} known={["external", "episodes"]} />
           </Select>
         </Field>
         <div className="flex items-end">
-          <IconButton label="Remove body section" onClick={onRemove} />
+          <IconButton label={t`Remove body section`} onClick={onRemove} />
         </div>
       </div>
       {section.kind === "episodes" ? (
-        <Field label="Tracking">
+        <Field label={t`Tracking`}>
           <Select
             value={section.tracking ?? "checklist"}
             onChange={(event) => onChange({ ...section, tracking: event.target.value as BodySectionTracking })}
@@ -607,7 +623,7 @@ function BodySectionEditor({
           >
             {EPISODE_TRACKING_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {i18n._(option.label)}
               </option>
             ))}
             <UnknownValueOption
@@ -639,10 +655,11 @@ export function FieldForm({
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
 }) {
+  const { t } = useLingui();
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-      <TextField label="Field" value={field.field} onChange={(value) => onChange({ ...field, field: value })} />
-      <Field label="Type">
+      <TextField label={t`Field`} value={field.field} onChange={(value) => onChange({ ...field, field: value })} />
+      <Field label={t`Type`}>
         <Select
           value={field.fieldType}
           onChange={(event) => onChange({ ...field, fieldType: event.target.value as FieldType })}
@@ -656,7 +673,7 @@ export function FieldForm({
         </Select>
       </Field>
       <TextField
-        label="Display name"
+        label={t`Display name`}
         value={field.displayName ?? ""}
         onChange={(displayName) => onChange({ ...field, displayName })}
       />
@@ -700,18 +717,19 @@ function FieldOptionEditor({
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
 }) {
+  const { t } = useLingui();
   const titleLanguages = useContext(TitleLanguagesContext);
   if (optionKey === "titleOptions") {
     return (
       <>
-        <Field label="Title language">
+        <Field label={t`Title language`}>
           <LanguageSelect
             value={field.titleLanguage ?? ""}
             languages={titleLanguages}
             onChange={(titleLanguage) => onChange({ ...field, titleLanguage: titleLanguage || undefined })}
           />
         </Field>
-        <Field label="Used as">
+        <Field label={t`Used as`}>
           <Select
             value={field.titleRole ?? ""}
             onChange={(event) =>
@@ -719,8 +737,8 @@ function FieldOptionEditor({
             }
             className="h-9 w-full text-base md:text-sm"
           >
-            <option value="">None</option>
-            <option value="original">Original</option>
+            <option value="">{t`None`}</option>
+            <option value="original">{t`Original`}</option>
           </Select>
         </Field>
       </>
@@ -731,9 +749,9 @@ function FieldOptionEditor({
     return (
       <div className="lg:col-span-3">
         <StringListEditor
-          label="Enum options"
+          label={t`Enum options`}
           values={field.enumOptions ?? []}
-          placeholder="Completed"
+          placeholder={t`Completed`}
           onChange={(enumOptions) => onChange({ ...field, enumOptions })}
         />
       </div>
@@ -755,7 +773,7 @@ function FieldOptionEditor({
   if (optionKey === "progressTotal") {
     return (
       <TextField
-        label="Total progress field"
+        label={t`Total progress field`}
         value={field.totalProgressField ?? ""}
         onChange={(totalProgressField) => onChange({ ...field, totalProgressField })}
       />
@@ -764,7 +782,7 @@ function FieldOptionEditor({
 
   if (optionKey === "dateRole") {
     return (
-      <Field label="Used as">
+      <Field label={t`Used as`}>
         <Select
           value={field.dateRole ?? ""}
           onChange={(event) =>
@@ -772,11 +790,11 @@ function FieldOptionEditor({
           }
           className="h-9 w-full text-base md:text-sm"
         >
-          <option value="">None</option>
-          <option value="planning">Planning</option>
-          <option value="started">Started</option>
-          <option value="completed">Completed</option>
-          <option value="event">Event</option>
+          <option value="">{t`None`}</option>
+          <option value="planning">{t`Planning`}</option>
+          <option value="started">{t`Started`}</option>
+          <option value="completed">{t`Completed`}</option>
+          <option value="event">{t`Event`}</option>
         </Select>
       </Field>
     );
@@ -788,15 +806,15 @@ function FieldOptionEditor({
 
   if (optionKey === "seasonLanguage") {
     return (
-      <Field label="Season language">
+      <Field label={t`Season language`}>
         <Select
           value={field.seasonLanguage ?? "zh"}
           onChange={(event) => onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })}
           className="h-9 w-full text-base md:text-sm"
         >
-          <option value="zh">Chinese</option>
-          <option value="ja">Japanese</option>
-          <option value="en">English</option>
+          <option value="zh">{t`Chinese`}</option>
+          <option value="ja">{t`Japanese`}</option>
+          <option value="en">{t`English`}</option>
         </Select>
       </Field>
     );
@@ -805,7 +823,7 @@ function FieldOptionEditor({
   if (optionKey === "externalRef") {
     return (
       <>
-        <Field label="External source">
+        <Field label={t`External source`}>
           <Select
             value={field.externalRef ?? ""}
             onChange={(event) =>
@@ -817,7 +835,7 @@ function FieldOptionEditor({
             }
             className="h-9 w-full text-base md:text-sm"
           >
-            <option value="">None</option>
+            <option value="">{t`None`}</option>
             {externalSourceOptions(providerCatalog).map((option) => (
               <option key={option.source} value={option.source}>
                 {option.label}
@@ -840,7 +858,7 @@ function FieldOptionEditor({
   if (optionKey === "relationType") {
     return (
       <TextField
-        label="Relation type"
+        label={t`Relation type`}
         value={field.relationType ?? ""}
         onChange={(relationType) => onChange({ ...field, relationType })}
       />
@@ -850,12 +868,12 @@ function FieldOptionEditor({
   return null;
 }
 
-const STATUS_CANONICALS: { value: CanonicalStatus; label: string }[] = [
-  { value: "planning", label: "Planning" },
-  { value: "ongoing", label: "Ongoing" },
-  { value: "paused", label: "Paused" },
-  { value: "completed", label: "Completed" },
-  { value: "dropped", label: "Dropped" },
+const STATUS_CANONICALS: { value: CanonicalStatus; label: MessageDescriptor }[] = [
+  { value: "planning", label: msg`Planning` },
+  { value: "ongoing", label: msg`Ongoing` },
+  { value: "paused", label: msg`Paused` },
+  { value: "completed", label: msg`Completed` },
+  { value: "dropped", label: msg`Dropped` },
 ];
 
 /// Marks an enum field as the type's status field and maps each option to a
@@ -869,6 +887,7 @@ function StatusRoleEditor({
   field: FieldConfig;
   onChange: (field: FieldConfig) => void;
 }) {
+  const { t, i18n } = useLingui();
   const isStatus = field.enumRole === "status";
   const options = field.enumOptions ?? [];
 
@@ -901,7 +920,7 @@ function StatusRoleEditor({
 
   return (
     <div className="lg:col-span-3 flex flex-col gap-2">
-      <Field label="Used as">
+      <Field label={t`Used as`}>
         <Select
           value={field.enumRole ?? ""}
           onChange={(event) =>
@@ -914,15 +933,15 @@ function StatusRoleEditor({
           }
           className="h-9 w-full text-base md:text-sm"
         >
-          <option value="">Regular enum</option>
-          <option value="status">Status field</option>
+          <option value="">{t`Regular enum`}</option>
+          <option value="status">{t`Status field`}</option>
         </Select>
       </Field>
       {isStatus ? (
         options.length > 0 ? (
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
-              Map each option to a status
+              <Trans>Map each option to a status</Trans>
             </span>
             {options.map((option) => (
               <div key={option} className="flex items-center gap-2">
@@ -934,10 +953,10 @@ function StatusRoleEditor({
                   }
                   className="h-9 w-40 text-base md:text-sm"
                 >
-                  <option value="">Unmapped</option>
+                  <option value="">{t`Unmapped`}</option>
                   {STATUS_CANONICALS.map(({ value, label }) => (
                     <option key={value} value={value}>
-                      {label}
+                      {i18n._(label)}
                     </option>
                   ))}
                 </Select>
@@ -946,7 +965,7 @@ function StatusRoleEditor({
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Add enum options above to map them to statuses.
+            <Trans>Add enum options above to map them to statuses.</Trans>
           </p>
         )
       ) : null}
@@ -963,12 +982,13 @@ function ExternalFieldMappingsEditor({
   values: ExternalFieldMapping[];
   onChange: (values: ExternalFieldMapping[]) => void;
 }) {
+  const { t } = useLingui();
   const sourceOptions = externalSourceOptions(providerCatalog);
   const list = arrayEditor(values, onChange);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">External field mappings</span>
+        <span className="text-xs font-medium text-muted-foreground"><Trans>External field mappings</Trans></span>
         <Button
           type="button"
           variant="outline"
@@ -977,7 +997,7 @@ function ExternalFieldMappingsEditor({
           disabled={sourceOptions.length === 0}
         >
           <PlusIcon data-icon="inline-start" />
-          Add
+          <Trans>Add</Trans>
         </Button>
       </div>
       <div className="flex flex-col gap-2">
@@ -992,7 +1012,7 @@ function ExternalFieldMappingsEditor({
                   const firstField = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
                   list.update(index, { source, field: firstField });
                 }}
-                aria-label="External source"
+                aria-label={t`External source`}
               >
                 {sourceOptions.map((option) => (
                   <option key={option.source} value={option.source}>
@@ -1003,9 +1023,9 @@ function ExternalFieldMappingsEditor({
               <Select
                 value={value.field}
                 onChange={(event) => list.update(index, { ...value, field: event.target.value })}
-                aria-label="External field"
+                aria-label={t`External field`}
               >
-                <option value="">Select field</option>
+                <option value="">{t`Select field`}</option>
                 {fieldOptions.map((option) => (
                   <option key={option.field} value={option.field}>
                     {option.label}
@@ -1013,13 +1033,13 @@ function ExternalFieldMappingsEditor({
                 ))}
               </Select>
               <IconButton
-                label="Remove external field mapping"
+                label={t`Remove external field mapping`}
                 onClick={() => list.remove(index)}
               />
             </div>
           );
         })}
-        {values.length === 0 ? <EmptyConfigLine>No external mappings.</EmptyConfigLine> : null}
+        {values.length === 0 ? <EmptyConfigLine><Trans>No external mappings.</Trans></EmptyConfigLine> : null}
       </div>
     </div>
   );
@@ -1036,20 +1056,21 @@ function ExternalTypesEditor({
   values: string[];
   onChange: (values: string[]) => void;
 }) {
+  const { t } = useLingui();
   const options = externalTypeOptionsForSource(providerCatalog, source);
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-muted-foreground">External types</span>
+      <span className="text-xs font-medium text-muted-foreground"><Trans>External types</Trans></span>
       {options.length > 0 ? (
         <MultiValueCombobox
           values={values}
           options={options.map((option) => ({ value: option.value, label: option.label }))}
-          placeholder="Select type"
-          ariaLabel="External types"
+          placeholder={t`Select type`}
+          ariaLabel={t`External types`}
           onChange={onChange}
         />
       ) : (
-        <EmptyConfigLine>No type options.</EmptyConfigLine>
+        <EmptyConfigLine><Trans>No type options.</Trans></EmptyConfigLine>
       )}
     </div>
   );

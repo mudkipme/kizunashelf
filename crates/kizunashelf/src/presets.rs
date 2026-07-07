@@ -656,11 +656,12 @@ struct BuildCtx {
 
 impl BuildCtx {
     fn new(lang: Option<&str>) -> Self {
+        // Primary subtag only: a `zh-Hans`/`zh-Hant` preference must stamp bare
+        // `zh` into the generated schema — script subtags never enter config.
         let lang = lang
-            .map(str::trim)
+            .map(crate::languages::primary_language)
             .filter(|value| !value.is_empty())
-            .unwrap_or("en")
-            .to_ascii_lowercase();
+            .unwrap_or_else(|| "en".to_string());
         Self {
             catalog: provider_catalog_items(),
             lang,

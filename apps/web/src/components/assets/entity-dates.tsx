@@ -1,3 +1,4 @@
+import { Plural, Trans } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -7,14 +8,20 @@ import type { EntityDatesResponse, TypeConfig } from "@/types/api";
 
 export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse; typeConfig?: TypeConfig }) {
   if (!dates || dates.totals.metadata + dates.totals.dailyNotes === 0) {
-    return <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">No dates</div>;
+    return (
+      <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
+        <Trans>No dates</Trans>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-3">
       {dates.metadata.length > 0 ? (
         <div className="flex flex-col gap-1">
-          <div className="text-xs font-medium text-muted-foreground">Metadata</div>
+          <div className="text-xs font-medium text-muted-foreground">
+            <Trans>Metadata</Trans>
+          </div>
           {dates.metadata.map((item) => (
             <div key={item.id} className="rounded-md border px-2 py-1.5 text-xs">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -35,7 +42,11 @@ export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse
       {dates.dailyNotes.length > 0 ? (
         <div className="flex flex-col gap-1">
           <div className="text-xs font-medium text-muted-foreground">
-            Daily Notes ({dates.totals.snippets} snippets)
+            <Plural
+              value={dates.totals.snippets}
+              one="Daily Notes (# snippet)"
+              other="Daily Notes (# snippets)"
+            />
           </div>
           {dates.dailyNotes.map((item) => (
             <article key={item.id} className="rounded-md border p-2">
@@ -54,7 +65,9 @@ export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse
                       </figcaption>
                     ) : null}
                     <blockquote className="break-words text-xs leading-5">{snippet.text}</blockquote>
-                    <div className="mt-1 text-xs text-muted-foreground">line {snippet.line}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      <Trans>line {snippet.line}</Trans>
+                    </div>
                   </figure>
                 ))}
               </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -17,6 +18,7 @@ import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 
 export function EntityCreatePage() {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedType = searchParams.get("type");
@@ -73,9 +75,11 @@ export function EntityCreatePage() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">Add Entity</h1>
+            <h1 className="truncate text-base font-semibold">
+              <Trans>Add Entity</Trans>
+            </h1>
             <p className="mt-1 truncate text-xs text-muted-foreground">
-              {selectedType ? `${selectedType.label} · ${selectedType.path}` : "Choose a type"}
+              {selectedType ? `${selectedType.label} · ${selectedType.path}` : t`Choose a type`}
             </p>
           </div>
         </header>
@@ -85,7 +89,7 @@ export function EntityCreatePage() {
         <section className="rounded-md border p-4">
           <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Type
+              <Trans>Type</Trans>
               <Select value={typeId} onChange={(event) => setTypeId(event.target.value)} disabled={!contentWritable}>
                 {config.data?.types.map((type) => (
                   <option key={type.id} value={type.id}>
@@ -95,12 +99,12 @@ export function EntityCreatePage() {
               </Select>
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium">
-              File name
+              <Trans>File name</Trans>
               <Input
                 value={basename}
                 onChange={(event) => setBasename(event.target.value)}
                 onBlur={() => setBasename(normalizeBasename(basename))}
-                placeholder="Title"
+                placeholder={t`Title`}
                 disabled={!contentWritable}
                 aria-invalid={showBasenameError}
               />
@@ -110,7 +114,7 @@ export function EntityCreatePage() {
         </section>
 
         <MetadataEditor
-          title="Metadata"
+          title={t`Metadata`}
           path={selectedType?.path}
           typeConfig={selectedType}
           frontmatter={frontmatter}
@@ -119,7 +123,7 @@ export function EntityCreatePage() {
           disabled={!contentWritable}
           relationSuggestions={[]}
           onRelationSearch={searchRelations}
-          saveLabel="Create"
+          saveLabel={t`Create`}
           onFrontmatterChange={setFrontmatter}
           onBodyChange={setBody}
           onSave={create}

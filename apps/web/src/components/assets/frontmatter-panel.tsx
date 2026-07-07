@@ -1,3 +1,4 @@
+import { Trans } from "@lingui/react/macro";
 import { ExternalLinkIcon } from "lucide-react";
 
 import { EmptyLine } from "@/components/assets/detail-section";
@@ -28,7 +29,11 @@ export function FrontmatterPanel({
   const fieldTypes = new Map(configFields(typeConfig).map((field) => [field.field, field.fieldType]));
 
   if (entries.length === 0) {
-    return <EmptyLine>No other details</EmptyLine>;
+    return (
+      <EmptyLine>
+        <Trans>No other details</Trans>
+      </EmptyLine>
+    );
   }
 
   return (
@@ -111,11 +116,19 @@ function FrontmatterValueView({
   fieldType?: FieldType;
 }) {
   if (value === undefined || value === null) {
-    return <span className="text-muted-foreground">Empty</span>;
+    return (
+      <span className="text-muted-foreground">
+        <Trans>Empty</Trans>
+      </span>
+    );
   }
 
   if (typeof value === "boolean") {
-    return <Badge variant={value ? "secondary" : "outline"}>{value ? "Yes" : "No"}</Badge>;
+    return (
+      <Badge variant={value ? "secondary" : "outline"}>
+        {value ? <Trans>Yes</Trans> : <Trans>No</Trans>}
+      </Badge>
+    );
   }
 
   if (typeof value === "number") {
@@ -129,7 +142,12 @@ function FrontmatterValueView({
   }
 
   if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="text-muted-foreground">Empty list</span>;
+    if (value.length === 0)
+      return (
+        <span className="text-muted-foreground">
+          <Trans>Empty list</Trans>
+        </span>
+      );
 
     const primitiveItems = value.every(isPrimitiveMetadataValue);
     if (primitiveItems) {
@@ -149,7 +167,7 @@ function FrontmatterValueView({
         {value.map((item, index) => (
           <div key={index} className="min-w-0 rounded-md border bg-muted/35 px-2 py-2">
             <div className="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
-              Item {index + 1}
+              <Trans>Item {index + 1}</Trans>
             </div>
             <FrontmatterValueView value={item} depth={depth + 1} />
           </div>
@@ -159,7 +177,12 @@ function FrontmatterValueView({
   }
 
   const entries = Object.entries(value).filter(([, item]) => item !== undefined);
-  if (entries.length === 0) return <span className="text-muted-foreground">Empty object</span>;
+  if (entries.length === 0)
+    return (
+      <span className="text-muted-foreground">
+        <Trans>Empty object</Trans>
+      </span>
+    );
 
   return (
     <div className={cn("min-w-0 overflow-hidden rounded-md border", depth > 0 && "bg-background")}>
@@ -182,7 +205,12 @@ function FrontmatterValueView({
 
 function StringValue({ value }: { value: string }) {
   const normalized = value.trim();
-  if (!normalized) return <span className="text-muted-foreground">Empty</span>;
+  if (!normalized)
+    return (
+      <span className="text-muted-foreground">
+        <Trans>Empty</Trans>
+      </span>
+    );
 
   if (isUrl(normalized)) {
     return (
@@ -202,8 +230,8 @@ function StringValue({ value }: { value: string }) {
 }
 
 function PrimitiveInlineValue({ value }: { value: FrontmatterValue | undefined }) {
-  if (value === null || value === undefined) return <>Empty</>;
-  if (typeof value === "boolean") return <>{value ? "Yes" : "No"}</>;
+  if (value === null || value === undefined) return <Trans>Empty</Trans>;
+  if (typeof value === "boolean") return value ? <Trans>Yes</Trans> : <Trans>No</Trans>;
   return <>{String(value)}</>;
 }
 

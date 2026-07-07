@@ -11,6 +11,8 @@ import {
 import { settingsConfigQuery } from "@/api/queries";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { isDesktopRuntime } from "@/lib/desktop";
+import { activateUiLocale } from "@/lib/i18n";
+import { useUiLocale } from "@/lib/language";
 import { ActivityPage } from "@/pages/activity-page";
 import { CalendarPage } from "@/pages/calendar-page";
 import { EntityCreatePage } from "@/pages/entity-create-page";
@@ -30,9 +32,22 @@ import { StatisticsPage } from "@/pages/statistics-page";
 export default function App() {
   return (
     <BrowserRouter>
+      <LocaleSync />
       <RoutedErrorBoundary />
     </BrowserRouter>
   );
+}
+
+// Applies the language preference outside React state: loads/activates the UI
+// message catalog and stamps `<html lang>` (browsers pick Han glyph variants by
+// the declared language, so a zh-Hant UI must not render under `lang="en"`).
+function LocaleSync() {
+  const uiLocale = useUiLocale();
+  useEffect(() => {
+    document.documentElement.lang = uiLocale;
+    void activateUiLocale(uiLocale);
+  }, [uiLocale]);
+  return null;
 }
 
 // Wraps the app in an error boundary keyed on the route, so a render-time throw

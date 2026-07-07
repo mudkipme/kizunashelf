@@ -1,4 +1,7 @@
 import { useState } from "react";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { PencilLineIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -22,10 +25,10 @@ import type { LogActivityRequest } from "@/types/api";
 
 type Kind = "progress" | "started" | "completed";
 
-const KIND_LABELS: Record<Kind, string> = {
-  progress: "Progress",
-  started: "Started",
-  completed: "Completed",
+const KIND_LABELS: Record<Kind, MessageDescriptor> = {
+  progress: msg`Progress`,
+  started: msg`Started`,
+  completed: msg`Completed`,
 };
 
 /// Records an activity for an entity through `/log`: a daily-note line, and — for a
@@ -52,6 +55,7 @@ export function QuickLogDialog({
   /// "Stamps …" preview line). Falls back to the raw name when absent.
   fieldLabel?: (field: string) => string;
 }) {
+  const { t, i18n } = useLingui();
   const invalidateEntityData = useInvalidateEntityData();
   const [date, setDate] = useState(todayLocal());
   const [kind, setKind] = useState<Kind>("progress");
@@ -95,16 +99,16 @@ export function QuickLogDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Log activity</DialogTitle>
+          <DialogTitle><Trans>Log activity</Trans></DialogTitle>
           <DialogDescription>
-            Record what you did and when. Pick an earlier date to log something from a past day.
+            <Trans>Record what you did and when. Pick an earlier date to log something from a past day.</Trans>
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
           {kinds.length > 1 ? (
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">Activity</span>
+              <span className="text-sm font-medium"><Trans>Activity</Trans></span>
               <div className="flex gap-1 rounded-lg bg-muted p-1">
                 {kinds.map((option) => (
                   <button
@@ -118,7 +122,7 @@ export function QuickLogDialog({
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {KIND_LABELS[option]}
+                    {i18n._(KIND_LABELS[option])}
                   </button>
                 ))}
               </div>
@@ -126,15 +130,15 @@ export function QuickLogDialog({
           ) : null}
 
           <label className="flex flex-col gap-1.5 text-sm font-medium">
-            Date
+            <Trans>Date</Trans>
             <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm font-medium">
-            Note <span className="font-normal text-muted-foreground">(optional)</span>
+            <Trans>Note <span className="font-normal text-muted-foreground">(optional)</span></Trans>
             <Input
               value={note}
-              placeholder="Anything worth remembering — e.g. an episode number"
+              placeholder={t`Anything worth remembering — e.g. an episode number`}
               onChange={(event) => setNote(event.target.value)}
             />
           </label>
@@ -150,11 +154,11 @@ export function QuickLogDialog({
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             <XIcon data-icon="inline-start" />
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
           <Button type="button" onClick={() => void submit()} disabled={saving || Boolean(preventReason)}>
             <PencilLineIcon data-icon="inline-start" />
-            {saving ? "Logging…" : "Log"}
+            {saving ? t`Logging…` : t`Log`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -173,13 +177,14 @@ function LogPreview({
   pending: boolean;
   fieldLabel?: (field: string) => string;
 }) {
+  const { t } = useLingui();
   if (reason) {
     return <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">{reason}</p>;
   }
   if (!data) {
     return (
       <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
-        {pending ? "Previewing…" : "—"}
+        {pending ? t`Previewing…` : "—"}
       </p>
     );
   }
@@ -188,22 +193,23 @@ function LogPreview({
       {data.line ? (
         <code className="break-words font-mono text-foreground">{data.line}</code>
       ) : (
-        <span className="text-muted-foreground">Nothing to log for this type.</span>
+        <span className="text-muted-foreground"><Trans>Nothing to log for this type.</Trans></span>
       )}
       {data.notePath ? (
         <span className="text-muted-foreground">
           → {data.notePath}
-          {data.lineAlreadyPresent ? " (already logged)" : data.noteWillBeCreated ? " (new note)" : ""}
+          {data.lineAlreadyPresent ? t` (already logged)` : data.noteWillBeCreated ? t` (new note)` : ""}
         </span>
       ) : null}
       {data.willStampDate ? (
         <span className="text-muted-foreground">
-          Stamps {fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field} ={" "}
-          {data.willStampDate.value}
+          <Trans>
+            Stamps {fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field} = {data.willStampDate.value}
+          </Trans>
         </span>
       ) : null}
       {data.willFlipStatus ? (
-        <span className="text-muted-foreground">Marks as {data.willFlipStatus.value}</span>
+        <span className="text-muted-foreground"><Trans>Marks as {data.willFlipStatus.value}</Trans></span>
       ) : null}
     </div>
   );

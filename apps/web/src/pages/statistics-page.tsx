@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 
 import { errorMessage } from "@/api/client";
@@ -11,6 +12,7 @@ import { Placeholder } from "@/components/ui/placeholder";
 import { fieldLabelAcrossTypes } from "@/lib/type-config";
 
 export function StatisticsPage() {
+  const { t } = useLingui();
   const analytics = useQuery(analyticsQuery());
   const config = useQuery(configQuery());
   // Config only supplies type/field labels here; don't block rendering or fail
@@ -25,35 +27,35 @@ export function StatisticsPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">Memory Analytics</h1>
+            <h1 className="truncate text-base font-semibold"><Trans>Memory Analytics</Trans></h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {loading
-                ? "Loading"
+                ? t`Loading…`
                 : data
-                  ? `Updated ${data.generatedAt.slice(0, 10)}`
-                  : "No analytics data"}
+                  ? t`Updated ${data.generatedAt.slice(0, 10)}`
+                  : t`No analytics data`}
             </p>
           </div>
         </header>
 
         {loading ? (
           <Placeholder>
-            Loading
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : null}
 
         {data ? (
           <>
             <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-              <StatTile label="Entities" value={data.totals.entities} />
-              <StatTile label="Connections" value={data.totals.relations} />
-              <StatTile label="Dated" value={data.totals.datedEntities} />
-              <StatTile label="Connected" value={data.totals.connectedEntities} />
-              <StatTile label="Unresolved" value={data.totals.unresolvedRelations} />
+              <StatTile label={t`Entities`} value={data.totals.entities} />
+              <StatTile label={t`Connections`} value={data.totals.relations} />
+              <StatTile label={t`Dated`} value={data.totals.datedEntities} />
+              <StatTile label={t`Connected`} value={data.totals.connectedEntities} />
+              <StatTile label={t`Unresolved`} value={data.totals.unresolvedRelations} />
             </section>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <AnalyticsSection title="Type Distribution">
+              <AnalyticsSection title={t`Type Distribution`}>
                 <BarList
                   max={maxTypeCount}
                   items={data.distributions.byType.map((item) => ({
@@ -64,7 +66,7 @@ export function StatisticsPage() {
                 />
               </AnalyticsSection>
 
-              <AnalyticsSection title="Connection Fields">
+              <AnalyticsSection title={t`Connection Fields`}>
                 <BarList
                   items={data.distributions.byRelationField.map((item) => ({
                     ...item,
@@ -75,8 +77,8 @@ export function StatisticsPage() {
             </div>
 
             <AnalyticsSection
-              title="Activity"
-              description="Dated entities by month and year — compare this year against past years, filter by type"
+              title={t`Activity`}
+              description={t`Dated entities by month and year — compare this year against past years, filter by type`}
             >
               <ActivityHeatmap activity={data.activity} />
             </AnalyticsSection>

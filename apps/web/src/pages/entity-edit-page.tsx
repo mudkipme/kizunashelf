@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -27,6 +28,7 @@ import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 
 export function EntityEditPage() {
+  const { t } = useLingui();
   const { id } = useParams();
   const navigate = useNavigate();
   const invalidateEntityData = useInvalidateEntityData();
@@ -146,10 +148,10 @@ export function EntityEditPage() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">
-              {entity ? `Edit ${entityTitle(entity, language)}` : "Edit Entity"}
+              {entity ? t`Edit ${entityTitle(entity, language)}` : t`Edit Entity`}
             </h1>
             <p className="mt-1 truncate text-xs text-muted-foreground">
-              {entity?.path ?? "Loading entity"}
+              {entity?.path ?? t`Loading entity`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -160,7 +162,7 @@ export function EntityEditPage() {
               disabled={!external.externalSearchEnabled}
             >
               <SearchIcon data-icon="inline-start" />
-              Match
+              <Trans>Match</Trans>
             </Button>
             <Button
               type="button"
@@ -169,7 +171,7 @@ export function EntityEditPage() {
               disabled={saving}
             >
               <ArrowLeftIcon data-icon="inline-start" />
-              Back
+              <Trans>Back</Trans>
             </Button>
           </div>
         </header>
@@ -186,14 +188,14 @@ export function EntityEditPage() {
               onClick={() => void reloadLatest()}
               disabled={saving}
             >
-              Reload latest version
+              <Trans>Reload latest version</Trans>
             </Button>
           </Alert>
         ) : null}
 
         {loading ? (
           <Placeholder>
-            Loading
+            <Trans>Loading…</Trans>
           </Placeholder>
         ) : entity ? (
           <>
@@ -216,7 +218,7 @@ export function EntityEditPage() {
               searching={external.searching}
               applying={false}
               contentWritable={contentWritable}
-              applyLabel="Use Selected"
+              applyLabel={t`Use Selected`}
               coverDownloadAvailable={external.coverDownloadAvailable}
               downloadCover={external.downloadAfterApply}
               onDownloadCoverChange={external.setDownloadAfterApply}
@@ -234,7 +236,7 @@ export function EntityEditPage() {
               onApply={applyCandidate}
             />
             <MetadataEditor
-              title="Metadata"
+              title={t`Metadata`}
               path={entity.path}
               entityId={entity.id}
               typeConfig={typeConfig}
@@ -252,7 +254,7 @@ export function EntityEditPage() {
           </>
         ) : (
           <Placeholder>
-            Entity not found
+            <Trans>Entity not found</Trans>
           </Placeholder>
         )}
       </div>

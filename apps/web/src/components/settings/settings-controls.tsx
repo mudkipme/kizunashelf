@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useId, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { FolderOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { getPathSuggestions } from "@/api/settings";
@@ -42,6 +43,7 @@ export function StringListEditor({
   pathItems?: boolean;
   onChange: (values: string[]) => void;
 }) {
+  const { t } = useLingui();
   const list = arrayEditor(values, onChange);
   if (!pathItems && suggestions.length > 0) {
     return (
@@ -65,7 +67,7 @@ export function StringListEditor({
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <Button type="button" variant="outline" size="sm" onClick={() => list.append("")}>
           <PlusIcon data-icon="inline-start" />
-          Add
+          <Trans>Add</Trans>
         </Button>
       </div>
       <div className="flex flex-col gap-2">
@@ -87,12 +89,12 @@ export function StringListEditor({
               />
             )}
             <IconButton
-              label={`Remove ${label}`}
+              label={t`Remove ${label}`}
               onClick={() => list.remove(index)}
             />
           </div>
         ))}
-        {values.length === 0 ? <EmptyConfigLine>No values.</EmptyConfigLine> : null}
+        {values.length === 0 ? <EmptyConfigLine><Trans>No values.</Trans></EmptyConfigLine> : null}
       </div>
     </div>
   );
@@ -120,6 +122,7 @@ export function PathField({
   hideLabel?: boolean;
   onChange: (value: string) => void;
 }) {
+  const { t } = useLingui();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const datalistId = useId();
   const desktop = isDesktopRuntime();
@@ -160,7 +163,7 @@ export function PathField({
         ))}
       </datalist>
       {desktop ? (
-        <Button type="button" variant="outline" size="icon" onClick={browse} aria-label="Select folder">
+        <Button type="button" variant="outline" size="icon" onClick={browse} aria-label={t`Select folder`}>
           <FolderOpenIcon />
         </Button>
       ) : null}
@@ -168,7 +171,7 @@ export function PathField({
   );
 
   if (hideLabel) return input;
-  return <Field label={label ?? "Path"}>{input}</Field>;
+  return <Field label={label ?? t`Path`}>{input}</Field>;
 }
 
 export function TextField({
@@ -265,7 +268,7 @@ export function OptionalToggle({
 }) {
   return (
     <Button type="button" variant="outline" size="sm" onClick={enabled ? onDisable : onEnable}>
-      {enabled ? "Disable" : "Enable"}
+      {enabled ? <Trans>Disable</Trans> : <Trans>Enable</Trans>}
     </Button>
   );
 }

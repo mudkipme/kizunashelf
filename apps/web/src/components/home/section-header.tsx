@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import { ArrowRightIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -11,7 +12,7 @@ export function SectionHeader({
   count,
   subtitle,
   viewHref,
-  viewLabel = "View",
+  viewLabel,
 }: {
   title: string;
   count?: number;
@@ -19,6 +20,7 @@ export function SectionHeader({
   viewHref?: string;
   viewLabel?: string;
 }) {
+  const { t } = useLingui();
   return (
     <div className="mb-3 flex min-h-8 items-center gap-x-2">
       <h2 className="truncate text-base font-semibold tracking-tight">{title}</h2>
@@ -34,7 +36,7 @@ export function SectionHeader({
           className="-mr-2 ml-auto shrink-0 text-muted-foreground"
         >
           <Link to={viewHref}>
-            {viewLabel}
+            {viewLabel ?? t`View`}
             <ArrowRightIcon />
           </Link>
         </Button>

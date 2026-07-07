@@ -103,9 +103,10 @@ trait ExternalProvider {
 
     /// Fetches an entity's episodes/tracks given its stored external ref value (a
     /// URL or id — the provider reuses its own URL→id parser). `language` is the
-    /// viewer's content language (ISO 639-1); providers that support translated
-    /// titles honor it. The default rejects; providers that set
-    /// `SUPPORTS_EPISODES = true` override this.
+    /// viewer's language preference, which may carry a script subtag
+    /// (`zh-Hans`/`zh-Hant`); providers that support translated titles normalize
+    /// it to whatever their API distinguishes. The default rejects; providers
+    /// that set `SUPPORTS_EPISODES = true` override this.
     fn fetch_episodes(
         _state: &AppState,
         _ref_value: &str,
@@ -211,7 +212,8 @@ pub(super) fn provider_label(provider_id: &str) -> Option<&'static str> {
 }
 
 /// Fetches episodes from `provider_id` for an entity's stored external `ref_value`,
-/// in `language` (ISO 639-1) where the provider supports translated titles.
+/// in `language` (the viewer's preference, possibly `zh-Hans`/`zh-Hant`) where
+/// the provider supports translated titles.
 pub(super) async fn provider_fetch_episodes(
     state: &AppState,
     provider_id: &str,
@@ -274,6 +276,13 @@ pub fn provider_credential_keys() -> Vec<&'static str> {
 struct ProviderSearchConfig {
     unconstrained: bool,
     external_types: BTreeSet<String>,
+    /// The viewer's language preference for this search (may carry a script
+    /// subtag — `zh-Hans`/`zh-Hant`), stamped per request by the orchestration
+    /// rather than coming from the schema. Providers that localize map it to
+    /// whatever their API distinguishes; everyone else ignores it. Any titles it
+    /// yields are tagged under the bare primary language — script subtags never
+    /// enter candidate title maps.
+    language: Option<String>,
 }
 
 impl ProviderSearchConfig {
@@ -311,6 +320,9 @@ pub(crate) struct ExternalSearchQuery {
     #[serde(rename = "pageSize")]
     page_size: Option<f64>,
     page: Option<f64>,
+    /// The viewer's language preference (may carry a script subtag —
+    /// `zh-Hans`/`zh-Hant`). Providers that localize honor it.
+    language: Option<String>,
 }
 
 pub(crate) async fn external_search(
@@ -373,6 +385,12 @@ pub(crate) async fn external_search(
     }
     let page_size = clamp_number(query.page_size.unwrap_or(10.0), 1, 25) as usize;
     let page = clamp_number(query.page.unwrap_or(1.0), 1, i64::MAX) as usize;
+    let language = query
+        .language
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
 
     // Gather the per-type provider order/config, and the deduplicated set of
     // searches to run: a provider queried under identical `externalTypes` for two
@@ -392,9 +410,15 @@ pub(crate) async fn external_search(
                 continue;
             }
             if let Some(entry) = entries.iter().find(|entry| entry.id == *provider) {
+                // The viewer language is per-request context, not part of the
+                // dedup key (it is identical across every spec of one request).
                 specs
                     .entry(search_key(provider, config))
-                    .or_insert_with(|| (entry, config.clone()));
+                    .or_insert_with(|| {
+                        let mut config = config.clone();
+                        config.language = language.clone();
+                        (entry, config)
+                    });
             }
         }
         per_type.push((type_config, configured, order));
@@ -724,7 +748,9 @@ pub(crate) async fn quick_add_entity(
     let cover = download_new_entity_covers(&state, &reloaded, &entity_id)
         .await
         .unwrap_or_default();
-    let episodes = import_new_entity_episodes(&state, &reloaded, &entity_id).await;
+    let episodes =
+        import_new_entity_episodes(&state, &reloaded, &entity_id, request.language.as_deref())
+            .await;
 
     state.invalidate_cache().await;
     let final_library = get_library(&state).await?;
@@ -827,6 +853,7 @@ pub(super) async fn resolve_candidate(
     provider_id: &str,
     query: &str,
     external_types: &[String],
+    language: Option<&str>,
 ) -> Result<Option<ExternalCandidate>, ApiError> {
     let registry = registry();
     let Some(provider_entry) = registry.iter().find(|entry| entry.id == provider_id) else {
@@ -834,6 +861,10 @@ pub(super) async fn resolve_candidate(
     };
     let mut config = ProviderSearchConfig::default();
     config.add_external_types(external_types);
+    config.language = language
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
     let results = (provider_entry.search)(state, query, 1, 10, &config).await?;
     let normalized = normalize_external_ref(query);
     let exact = results.iter().position(|candidate| {

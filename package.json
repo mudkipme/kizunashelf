@@ -17,6 +17,7 @@
     "test": "cargo test -p kizunashelf",
     "test:web": "pnpm --filter @kizunashelf/web test",
     "contract:generate": "pnpm --filter @kizunashelf/api-contract generate",
+    "i18n:extract": "pnpm --filter @kizunashelf/web i18n:extract",
     "serve": "cargo run -p kizunashelf --bin kizunashelf-api"
   },
   "devDependencies": {

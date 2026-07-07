@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trans } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { errorMessage } from "@/api/client";
@@ -75,7 +76,7 @@ export function SettingsPage() {
             variant={mode === "form" ? "secondary" : "ghost"}
             onClick={() => requestMode("form")}
           >
-            Form
+            <Trans>Form</Trans>
           </Button>
           <Button
             type="button"
@@ -83,14 +84,16 @@ export function SettingsPage() {
             variant={mode === "yaml" ? "secondary" : "ghost"}
             onClick={() => requestMode("yaml")}
           >
-            YAML
+            <Trans>YAML</Trans>
           </Button>
         </div>
 
         {mode === "yaml" ? (
           <RawConfigEditor settingsWritable={settingsWritable} onDirtyChange={setDirty} />
         ) : loading ? (
-          <Placeholder>Loading</Placeholder>
+          <Placeholder>
+            <Trans>Loading…</Trans>
+          </Placeholder>
         ) : settings.data ? (
           <SettingsEditor
             vaultConfigPath={settings.data.vaultConfigPath ?? undefined}
@@ -112,21 +115,32 @@ export function SettingsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogTitle>
+              <Trans>Discard unsaved changes?</Trans>
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes in the {mode === "form" ? "form" : "YAML"} editor. Switching
-              editors will discard them.
+              {mode === "form" ? (
+                <Trans>
+                  You have unsaved changes in the form editor. Switching editors will discard them.
+                </Trans>
+              ) : (
+                <Trans>
+                  You have unsaved changes in the YAML editor. Switching editors will discard them.
+                </Trans>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogCancel>
+              <Trans>Keep editing</Trans>
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (pendingMode) setMode(pendingMode);
                 setPendingMode(null);
               }}
             >
-              Discard
+              <Trans>Discard</Trans>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

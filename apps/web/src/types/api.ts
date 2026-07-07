@@ -87,6 +87,7 @@ import type {
   EntityDetailResponse,
   EntitySummary,
   ImportJob,
+  LanguagesResponse,
   ResolveTypePresetsResponse,
   SaveSettingsRequest,
   SettingsConfigResponse,
@@ -103,6 +104,10 @@ export type ImportPlanUserData = ImportPlanItem["userData"];
 export type ImportPlanItemState = ImportPlanItem["state"];
 export type ImportReviewReason = NonNullable<ImportPlanItem["reviewReason"]>;
 export type ImportCanonicalStatus = NonNullable<ImportPlanUserData["status"]>;
+
+// Derived by indexed access into the generated response so it unifies
+// structurally with it (see the api-contract notes in CLAUDE.md).
+export type UserLanguage = LanguagesResponse["userLanguages"][number];
 
 // Preset picker types, derived by indexed access so the resolve response's
 // `types`/`field` unify structurally with the editor's own EntityTypeConfig/

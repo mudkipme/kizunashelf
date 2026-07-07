@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { plural } from "@lingui/core/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +48,7 @@ export function PresetPickerDialog({
   onClose: () => void;
   onApply: (nextTypes: EntityTypeConfig[]) => void;
 }) {
+  const { t } = useLingui();
   const presets = useQuery(typePresetsQuery());
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [titleLanguage, setTitleLanguage] = useState(() => defaultLanguage(languages));
@@ -111,19 +114,19 @@ export function PresetPickerDialog({
     });
     onApply([...merged, ...plan.types]);
     if (plan.collisions.length > 0) {
-      toast.success(
-        `Added ${plan.types.length} ${plan.types.length === 1 ? "type" : "types"} — ${plan.collisions
-          .map((collision) => `renamed to “${collision.assignedId}”`)
-          .join(", ")}`,
-      );
+      const added = plural(plan.types.length, { one: "# type", other: "# types" });
+      const renamed = plan.collisions
+        .map((collision) => t`renamed to “${collision.assignedId}”`)
+        .join(", ");
+      toast.success(t`Added ${added} — ${renamed}`);
     }
     onClose();
   }
 
-  const title = pending ? "Link your new types" : "Add built-in types";
+  const title = pending ? t`Link your new types` : t`Add built-in types`;
   const description = pending
-    ? "These existing types can link to what you're adding."
-    : "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding.";
+    ? t`These existing types can link to what you're adding.`
+    : t`Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding.`;
 
   return (
     <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
@@ -148,7 +151,9 @@ export function PresetPickerDialog({
               }
             />
           ) : presets.isPending ? (
-            <p className="text-sm text-muted-foreground">Loading built-in types…</p>
+            <p className="text-sm text-muted-foreground">
+              <Trans>Loading built-in types…</Trans>
+            </p>
           ) : presets.error ? (
             <Alert>{errorMessage(presets.error)}</Alert>
           ) : (
@@ -165,16 +170,18 @@ export function PresetPickerDialog({
           {pending ? (
             <>
               <Button type="button" variant="ghost" onClick={() => setPending(null)}>
-                Back
+                <Trans>Back</Trans>
               </Button>
               <Button type="button" onClick={() => applyPlan(pending, acceptedBackfills)}>
-                Add {pending.types.length} {pending.types.length === 1 ? "type" : "types"}
+                <Plural value={pending.types.length} one="Add # type" other="Add # types" />
               </Button>
             </>
           ) : (
             <>
               <label className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Title language</span>
+                <span className="text-muted-foreground">
+                  <Trans>Title language</Trans>
+                </span>
                 <Select
                   value={titleLanguage}
                   onChange={(event) => setTitleLanguage(event.target.value)}
@@ -193,8 +200,10 @@ export function PresetPickerDialog({
                 disabled={selected.size === 0 || resolving}
               >
                 {resolving
-                  ? "Adding…"
-                  : `Continue${selected.size > 0 ? ` (${selected.size})` : ""}`}
+                  ? t`Adding…`
+                  : selected.size > 0
+                    ? t`Continue (${selected.size})`
+                    : t`Continue`}
               </Button>
             </>
           )}
@@ -268,7 +277,9 @@ export function PresetGallery({
 
       {suggestions.length > 0 ? (
         <section className="flex flex-col gap-2 rounded-md border border-dashed p-3">
-          <div className="text-xs font-medium text-muted-foreground">✨ Pairs well with your picks</div>
+          <div className="text-xs font-medium text-muted-foreground">
+            <Trans>✨ Pairs well with your picks</Trans>
+          </div>
           <div className="flex flex-wrap gap-2">
             {suggestions.map((preset) => (
               <Button
@@ -322,7 +333,9 @@ function PresetCard({
         </span>
         <span className="min-w-0 flex-1 truncate font-medium">{preset.label}</span>
         {added ? (
-          <Badge variant="secondary">Added</Badge>
+          <Badge variant="secondary">
+            <Trans>Added</Trans>
+          </Badge>
         ) : selected ? (
           <CheckIcon className="size-4 text-primary" />
         ) : null}
@@ -350,13 +363,15 @@ function BackfillStep({
   accepted: Set<number>;
   onToggle: (index: number) => void;
 }) {
+  const assignedIds = plan.collisions.map((collision) => `“${collision.assignedId}”`).join(", ");
   return (
     <div className="flex flex-col gap-4">
       {plan.collisions.length > 0 ? (
         <Alert>
-          A type with the same name already exists, so{" "}
-          {plan.collisions.map((collision) => `“${collision.assignedId}”`).join(", ")} was used
-          instead. You can rename it after adding.
+          <Trans>
+            A type with the same name already exists, so {assignedIds} was used instead. You can
+            rename it after adding.
+          </Trans>
         </Alert>
       ) : null}
       <div className="flex flex-col gap-2">
@@ -381,8 +396,10 @@ function BackfillStep({
               {accepted.has(index) ? <CheckIcon className="size-3.5" /> : null}
             </span>
             <span className="text-sm">
-              Add a <strong>{backfill.presetLabel}</strong> link to{" "}
-              <strong>{backfill.typeLabel}</strong>
+              <Trans>
+                Add a <strong>{backfill.presetLabel}</strong> link to{" "}
+                <strong>{backfill.typeLabel}</strong>
+              </Trans>
             </span>
           </button>
         ))}

@@ -1,4 +1,4 @@
-import { entityTitle } from "@/lib/title-language";
+import { entityTitle, primaryLanguage } from "@/lib/title-language";
 import type { EntitySummary } from "@/types/api";
 
 export const allEntityFilter = "all";
@@ -62,10 +62,15 @@ export function compareEntitiesByTypeThenTitle(
   b: EntitySummary,
   language?: string,
 ) {
-  if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel);
-  const titleA = language ? entityTitle(a, language) : a.title;
-  const titleB = language ? entityTitle(b, language) : b.title;
-  return titleA.localeCompare(titleB);
+  // `language` may be the full preference (e.g. `zh-Hant`): titles are looked
+  // up by its bare primary subtag, while collation uses the full tag so
+  // Traditional Chinese sorts as Traditional.
+  const locale = language?.trim() ? language : undefined;
+  if (a.typeLabel !== b.typeLabel) return a.typeLabel.localeCompare(b.typeLabel, locale);
+  const titleLanguage = locale ? primaryLanguage(locale) : undefined;
+  const titleA = titleLanguage ? entityTitle(a, titleLanguage) : a.title;
+  const titleB = titleLanguage ? entityTitle(b, titleLanguage) : b.title;
+  return titleA.localeCompare(titleB, locale);
 }
 
 function countBy<T>(items: T[], key: (item: T) => string) {

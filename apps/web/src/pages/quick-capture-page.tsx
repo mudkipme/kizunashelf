@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PlusIcon, SearchIcon } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -14,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { useLanguagePreference } from "@/lib/language";
 import type { ExternalMatch } from "@/types/api";
 
 const ALL = "all";
@@ -26,6 +29,7 @@ function matchKey(match: ExternalMatch): string {
 }
 
 export function QuickCapturePage() {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedType = searchParams.get("type") ?? ALL;
@@ -34,6 +38,9 @@ export function QuickCapturePage() {
   const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const contentWritable = capabilities.contentWritable;
+  // The full preference (possibly zh-Hans/zh-Hant): providers that distinguish
+  // the scripts localize search results and quick-add episode titles with it.
+  const language = useLanguagePreference();
 
   const [rawQuery, setRawQuery] = useState("");
   const [query, setQuery] = useState("");
@@ -103,9 +110,9 @@ export function QuickCapturePage() {
 
   const searchEnabled = query.length >= MIN_QUERY_LENGTH;
   const results = useQuery({
-    queryKey: ["externalSearch", "results", { query, typeId, provider }],
+    queryKey: ["externalSearch", "results", { query, typeId, provider, language }],
     queryFn: ({ signal }) =>
-      searchSources({ type: typeId, provider, q: query, pageSize: 15 }, { signal }),
+      searchSources({ type: typeId, provider, q: query, pageSize: 15, language }, { signal }),
     enabled: searchEnabled,
     placeholderData: keepPreviousData,
   });
@@ -124,18 +131,28 @@ export function QuickCapturePage() {
     const key = matchKey(match);
     setAddingKey(key);
     try {
-      const result = await quickAddEntity({ type: match.entityType, candidate: match.candidate });
+      const result = await quickAddEntity({ type: match.entityType, candidate: match.candidate, language });
       const failedCovers = (result.cover ?? []).filter((item) => item.status === "failed").length;
       if (failedCovers > 0) {
-        toast.warning(`Added, but ${failedCovers} cover${failedCovers > 1 ? "s" : ""} couldn't be downloaded (URL kept).`);
+        toast.warning(
+          plural(failedCovers, {
+            one: "Added, but # cover couldn't be downloaded (URL kept).",
+            other: "Added, but # covers couldn't be downloaded (URL kept).",
+          }),
+        );
       }
       if (result.episodes?.error) {
-        toast.warning(`Added, but episode import failed: ${result.episodes.error}`);
+        toast.warning(t`Added, but episode import failed: ${result.episodes.error}`);
       } else if (result.episodes && result.episodes.imported > 0) {
-        toast.success(`Imported ${result.episodes.imported} episode${result.episodes.imported > 1 ? "s" : ""}.`);
+        toast.success(
+          plural(result.episodes.imported, {
+            one: "Imported # episode.",
+            other: "Imported # episodes.",
+          }),
+        );
       }
       if (result.basenameAdjusted) {
-        toast.info(`A file named for this title already existed, so it was saved as “${result.entity.basename}”.`);
+        toast.info(t`A file named for this title already existed, so it was saved as “${result.entity.basename}”.`);
       }
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
@@ -155,25 +172,31 @@ export function QuickCapturePage() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">Quick Capture</h1>
+            <h1 className="truncate text-base font-semibold">
+              <Trans>Quick Capture</Trans>
+            </h1>
             <p className="mt-1 truncate text-xs text-muted-foreground">
-              Search external sources, or add manually
+              <Trans>Search external sources, or add manually</Trans>
             </p>
           </div>
           <Button asChild variant="outline">
             <Link to={manualHref}>
               <PlusIcon data-icon="inline-start" />
-              Add manually
+              <Trans>Add manually</Trans>
             </Link>
           </Button>
         </header>
 
-        {!contentWritable ? <Alert>{CONTENT_WRITES_DISABLED} You can still open items already in your library.</Alert> : null}
+        {!contentWritable ? (
+          <Alert>
+            {CONTENT_WRITES_DISABLED} <Trans>You can still open items already in your library.</Trans>
+          </Alert>
+        ) : null}
 
         <section className="rounded-md border p-4">
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Search
+              <Trans>Search</Trans>
               <div className="relative">
                 <SearchIcon
                   className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -185,16 +208,16 @@ export function QuickCapturePage() {
                   onKeyDown={(event) => {
                     if (event.key === "Enter") setQuery(rawQuery.trim());
                   }}
-                  placeholder="Title, or paste a provider URL"
+                  placeholder={t`Title, or paste a provider URL`}
                   className="pl-8"
                   autoFocus
                 />
               </div>
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Type
+              <Trans>Type</Trans>
               <Select value={typeId} onChange={(event) => setTypeId(event.target.value)}>
-                <option value={ALL}>All types</option>
+                <option value={ALL}>{t`All types`}</option>
                 {config.data?.types.map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.label}
@@ -203,9 +226,9 @@ export function QuickCapturePage() {
               </Select>
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Provider
+              <Trans>Provider</Trans>
               <Select value={provider} onChange={(event) => setProvider(event.target.value)}>
-                <option value={ALL}>All providers</option>
+                <option value={ALL}>{t`All providers`}</option>
                 {enabledProviders.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
@@ -218,20 +241,22 @@ export function QuickCapturePage() {
 
         {providerErrors.length > 0 ? (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
-            {providerErrors.map((item) => `${item.label} search failed`).join(" · ")}
+            {providerErrors.map((item) => t`${item.label} search failed`).join(" · ")}
           </div>
         ) : null}
 
         <section className="flex flex-col gap-2">
           {!searchEnabled ? (
             <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-              Type at least {MIN_QUERY_LENGTH} characters to search.
+              <Trans>Type at least {MIN_QUERY_LENGTH} characters to search.</Trans>
             </p>
           ) : results.isPending ? (
-            <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">Searching…</p>
+            <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+              <Trans>Searching…</Trans>
+            </p>
           ) : (results.data?.items.length ?? 0) === 0 ? (
             <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-              No matches found.
+              <Trans>No matches found.</Trans>
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
@@ -261,7 +286,7 @@ export function QuickCapturePage() {
                           <span className="truncate font-medium">{match.candidate.title}</span>
                           {inLibrary ? (
                             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                              In library ✓
+                              <Trans>In library ✓</Trans>
                             </span>
                           ) : null}
                         </div>
@@ -278,7 +303,11 @@ export function QuickCapturePage() {
                           <span className="rounded border px-1.5 py-0.5">
                             {typeLabels.get(match.entityType) ?? match.entityType}
                           </span>
-                          {addingKey === key ? <span>Adding…</span> : null}
+                          {addingKey === key ? (
+                            <span>
+                              <Trans>Adding…</Trans>
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </button>
@@ -293,7 +322,7 @@ export function QuickCapturePage() {
               to={manualHref}
               className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground transition-colors hover:bg-accent"
             >
-              Create “{query}” manually →
+              <Trans>Create “{query}” manually →</Trans>
             </Link>
           ) : null}
         </section>

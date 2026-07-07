@@ -47,7 +47,13 @@ pub(super) async fn run_plan_job(
         .await;
 
     let items = match fetch(&state, &input).await {
-        Ok(items) => dedup_items(items),
+        Ok(items) => {
+            let mut items = dedup_items(items);
+            for item in &mut items {
+                item.fill_title_metadata();
+            }
+            items
+        }
         Err(error) => {
             fail_plan(&state, &job_id, error.message()).await;
             return;
@@ -332,6 +338,7 @@ pub(super) async fn run_commit_job(
                 &provider,
                 &ref_url,
                 std::slice::from_ref(&planned_item.item.bucket),
+                None,
             )
             .await
             {
@@ -443,7 +450,8 @@ pub(super) async fn run_commit_job(
                     continue;
                 };
                 if let Some(result) =
-                    import_new_entity_episodes_marked(&state, &reloaded, &entity_id, *watched).await
+                    import_new_entity_episodes_marked(&state, &reloaded, &entity_id, *watched, None)
+                        .await
                 {
                     if let Some(error) = result.error {
                         state
