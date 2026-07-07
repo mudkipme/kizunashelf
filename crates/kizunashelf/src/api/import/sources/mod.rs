@@ -3,7 +3,9 @@
 //! orchestration iterates a `Vec<SourceEntry>` — adding a source is one line in
 //! [`registry`].
 
+mod anilist;
 mod bangumi;
+mod mal;
 mod yamtrack;
 
 use super::model::ImportItem;
@@ -91,6 +93,8 @@ fn entry<S: ImportSource + 'static>() -> SourceEntry {
 pub(super) fn registry() -> Vec<SourceEntry> {
     vec![
         entry::<bangumi::BangumiSource>(),
+        entry::<mal::MyAnimeListSource>(),
+        entry::<anilist::AniListSource>(),
         entry::<yamtrack::YamtrackSource>(),
     ]
 }

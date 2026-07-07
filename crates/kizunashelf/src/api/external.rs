@@ -845,6 +845,12 @@ pub(super) async fn resolve_candidate(
     })
 }
 
+/// The `fields=` selection for a MyAnimeList user list, and the candidate builder
+/// for one list entry — re-exported so the batch-import MAL adapter can request
+/// rich entries and reuse the exact search-path mapping (the `mal` submodule is
+/// private to this module).
+pub(super) use mal::{mal_list_candidate, LIST_FIELDS as MAL_LIST_FIELDS};
+
 pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogResponse> {
     Json(ExternalProviderCatalogResponse {
         providers: provider_catalog_items(),
