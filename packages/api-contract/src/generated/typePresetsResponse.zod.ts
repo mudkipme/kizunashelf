@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const TypePresetsResponse = zod.object({
   "presets": zod.array(zod.object({
   "id": zod.string().describe('Stable preset id — also the default [`EntityTypeConfig::id`] and the key a\nclient uses to match an already-added type (id equality). Never localized.'),
-  "category": zod.enum(['watch', 'play', 'read', 'listen', 'people', 'life']).describe('A preset category — the \"what do you want to track?\" grouping. A flat string\nenum (not doc-commented variants) so swift-openapi-generator renders proper\nSwift cases, matching `FieldType`\/`DateRole`.').describe('Category id (see [`TypePresetCategory`]), for grouping in the picker.'),
+  "category": zod.enum(['watch', 'play', 'read', 'listen', 'people', 'life']).describe('A preset category — the \"what do you want to track?\" grouping. A flat string\nenum (not doc-commented variants) so swift-openapi-generator renders proper\nSwift cases, matching `FieldType`\/`DateRole`.'),
   "icon": zod.string(),
   "label": zod.string().describe('English display label. Kept as data (keyed by `id`) so clients may localize\nby id later without a contract change; English is the fallback.'),
   "description": zod.string().describe('One-line, plain-language description for the picker card.'),

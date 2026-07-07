@@ -181,7 +181,6 @@ pub struct TypePresetSummary {
     /// Stable preset id — also the default [`EntityTypeConfig::id`] and the key a
     /// client uses to match an already-added type (id equality). Never localized.
     pub id: String,
-    /// Category id (see [`TypePresetCategory`]), for grouping in the picker.
     pub category: TypePresetCategory,
     pub icon: String,
     /// English display label. Kept as data (keyed by `id`) so clients may localize

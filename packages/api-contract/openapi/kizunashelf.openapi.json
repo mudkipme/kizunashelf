@@ -3874,12 +3874,7 @@
             "type": "string"
           },
           "category": {
-            "description": "Category id (see [`TypePresetCategory`]), for grouping in the picker.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TypePresetCategory"
-              }
-            ]
+            "$ref": "#/components/schemas/TypePresetCategory"
           },
           "icon": {
             "type": "string"
