@@ -100,9 +100,9 @@ fn build_items(page: &Value, kind: &str) -> Vec<ImportItem> {
     let included = page.get("included").and_then(Value::as_array);
     // mapping id → (externalSite, externalId)
     let mut mappings: HashMap<&str, (&str, &str)> = HashMap::new();
-    // media id → mapping ids, and media id → canonical title
+    // media id → mapping ids, and media id → (canonical title, en title, ja title)
     let mut media_mappings: HashMap<&str, Vec<&str>> = HashMap::new();
-    let mut media_titles: HashMap<&str, &str> = HashMap::new();
+    let mut media_titles: HashMap<&str, (&str, Option<&str>, Option<&str>)> = HashMap::new();
     if let Some(included) = included {
         for resource in included {
             let (Some(res_type), Some(id)) = (
@@ -126,7 +126,18 @@ fn build_items(page: &Value, kind: &str) -> Vec<ImportItem> {
                     .pointer("/attributes/canonicalTitle")
                     .and_then(Value::as_str)
                 {
-                    media_titles.insert(id, title);
+                    // The `titles` object is the only language-tagged source;
+                    // the canonical title's language is unknown (`en_jp` romaji
+                    // is skipped — it is no language's display title).
+                    let english = resource
+                        .pointer("/attributes/titles/en")
+                        .and_then(Value::as_str)
+                        .filter(|value| !value.is_empty());
+                    let japanese = resource
+                        .pointer("/attributes/titles/ja_jp")
+                        .and_then(Value::as_str)
+                        .filter(|value| !value.is_empty());
+                    media_titles.insert(id, (title, english, japanese));
                 }
                 let mapping_ids = resource
                     .pointer("/relationships/mappings/data")
@@ -159,17 +170,23 @@ fn build_items(page: &Value, kind: &str) -> Vec<ImportItem> {
                     let (site, external_id) = mappings.get(mapping_id)?;
                     site.starts_with("myanimelist").then_some(*external_id)
                 });
-            let title = media_id
+            let (title, english, japanese) = media_id
                 .and_then(|media_id| media_titles.get(media_id))
                 .copied()
-                .unwrap_or("Untitled")
-                .to_string();
-            build_item(entry, kind, mal_id, title)
+                .unwrap_or(("Untitled", None, None));
+            build_item(entry, kind, mal_id, title.to_string(), english, japanese)
         })
         .collect()
 }
 
-fn build_item(entry: &Value, kind: &str, mal_id: Option<&str>, title: String) -> ImportItem {
+fn build_item(
+    entry: &Value,
+    kind: &str,
+    mal_id: Option<&str>,
+    title: String,
+    english: Option<&str>,
+    japanese: Option<&str>,
+) -> ImportItem {
     let attributes = entry.get("attributes");
     let user = ImportUserData {
         status: attributes
@@ -204,7 +221,12 @@ fn build_item(entry: &Value, kind: &str, mal_id: Option<&str>, title: String) ->
     };
 
     let mut titles = BTreeMap::new();
-    titles.insert("en".to_string(), title.clone());
+    if let Some(english) = english {
+        titles.insert("en".to_string(), english.to_string());
+    }
+    if let Some(japanese) = japanese {
+        titles.insert("ja".to_string(), japanese.to_string());
+    }
 
     let (refs, candidate) = match mal_id {
         Some(mal_id) => {

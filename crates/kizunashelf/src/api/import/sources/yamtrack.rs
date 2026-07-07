@@ -93,8 +93,9 @@ fn build_items(rows: &[CsvRow]) -> Vec<ImportItem> {
             notes: field(row, "notes").map(str::to_string),
         };
 
-        let mut titles = BTreeMap::new();
-        titles.insert("en".to_string(), title.clone());
+        // The export doesn't say what language the title is in — leave it
+        // untagged rather than mislabeled `en`.
+        let titles = BTreeMap::new();
         let candidate = reference.first().map(|reference| ExternalCandidate {
             provider: reference.provider.clone(),
             source_id: reference.id.clone(),

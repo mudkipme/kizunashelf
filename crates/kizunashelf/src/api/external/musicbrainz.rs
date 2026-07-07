@@ -152,7 +152,7 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("cover_url", "Cover URL"),
         field_option("release_date", "Release / begin date"),
         field_option("end_date", "End date"),
-        field_option("country", "Country"),
+        field_option("country", "Region"),
         field_option("barcode", "Barcode"),
         field_option("type", "Type"),
         field_option("disambiguation", "Disambiguation"),

@@ -778,6 +778,16 @@
               "format": "double"
             },
             "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "description": "The viewer's language preference (may carry a script subtag —\n`zh-Hans`/`zh-Hant`). Providers that localize honor it.",
+            "schema": {
+              "description": "The viewer's language preference (may carry a script subtag —\n`zh-Hans`/`zh-Hant`). Providers that localize honor it.",
+              "type": "string"
+            },
+            "style": "form"
           }
         ],
         "responses": {
@@ -4089,10 +4099,18 @@
             "items": {
               "$ref": "#/components/schemas/Language"
             }
+          },
+          "userLanguages": {
+            "description": "The language-picker options the preference is chosen from; every\nlanguage-sensitive behavior (UI locale, title language, provider request\nlanguage) derives from the picked entry.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserLanguage"
+            }
           }
         },
         "required": [
-          "languages"
+          "languages",
+          "userLanguages"
         ]
       },
       "Language": {
@@ -4109,6 +4127,30 @@
         "required": [
           "code",
           "label"
+        ]
+      },
+      "UserLanguage": {
+        "description": "A user-language preference option for the clients' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`/`zh-Hant`), its endonym label, the bare title/content\nlanguage it maps to, and whether the UI is translated into it (clients fall\nback to English UI when not). See [`crate::languages`].",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "titleLanguage": {
+            "type": "string"
+          },
+          "uiSupported": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "titleLanguage",
+          "uiSupported"
         ]
       },
       "HomeResponse": {
@@ -5589,6 +5631,13 @@
               "null"
             ],
             "format": "double"
+          },
+          "language": {
+            "description": "The viewer's language preference (may carry a script subtag —\n`zh-Hans`/`zh-Hant`). Providers that localize honor it.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -5838,6 +5887,13 @@
           },
           "basename": {
             "description": "Override the derived basename. When absent, the core derives it from the\ntype's filename title language (falling back to the candidate title).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "language": {
+            "description": "The viewer's language preference (may carry a script subtag), used for the\nfail-safe episode import so episode titles arrive localized.",
             "type": [
               "string",
               "null"
@@ -6616,7 +6672,7 @@
             ]
           },
           "language": {
-            "description": "Preferred episode-title language (ISO 639-1, the viewer's content language);\nproviders that support translations use it.",
+            "description": "Preferred episode-title language: the viewer's language preference, which\nmay carry a script subtag (`zh-Hans`/`zh-Hant`). Providers that support\ntranslations honor it, normalizing to whatever their API distinguishes.",
             "type": [
               "string",
               "null"

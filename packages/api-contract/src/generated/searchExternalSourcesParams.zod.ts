@@ -11,7 +11,8 @@ export const SearchExternalSourcesParams = zod.object({
   "q": zod.string().optional(),
   "type": zod.string().optional(),
   "pageSize": zod.number().optional(),
-  "page": zod.number().optional()
+  "page": zod.number().optional(),
+  "language": zod.string().optional().describe('The viewer\'s language preference (may carry a script subtag —\n`zh-Hans`\/`zh-Hant`). Providers that localize honor it.')
 })
 
 export type SearchExternalSourcesParams = zod.input<typeof SearchExternalSourcesParams>;

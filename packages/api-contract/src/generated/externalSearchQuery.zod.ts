@@ -11,7 +11,8 @@ export const ExternalSearchQuery = zod.object({
   "q": zod.string().nullish(),
   "type": zod.string().nullish(),
   "pageSize": zod.number().nullish(),
-  "page": zod.number().nullish()
+  "page": zod.number().nullish(),
+  "language": zod.string().nullish().describe('The viewer\'s language preference (may carry a script subtag —\n`zh-Hans`\/`zh-Hant`). Providers that localize honor it.')
 })
 
 export type ExternalSearchQuery = zod.input<typeof ExternalSearchQuery>;

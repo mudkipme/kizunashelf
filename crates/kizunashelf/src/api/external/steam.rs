@@ -70,6 +70,37 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
     vec![type_option("game", "Game")]
 }
 
+/// Steam's store-API language for a viewer language preference: the
+/// `appdetails` `l` value and the matching `Accept-Language` header. Steam is
+/// one of the sources that genuinely distinguish Simplified/Traditional
+/// Chinese; languages its store doesn't ship fall back to English.
+fn steam_language(language: Option<&str>) -> (&'static str, &'static str) {
+    let language = language.map(str::trim).unwrap_or_default();
+    match language.to_ascii_lowercase().as_str() {
+        "zh" | "zh-hans" => ("schinese", "zh-CN"),
+        "zh-hant" => ("tchinese", "zh-TW"),
+        "ja" => ("japanese", "ja"),
+        "ko" => ("koreana", "ko"),
+        "cs" => ("czech", "cs"),
+        "da" => ("danish", "da"),
+        "nl" => ("dutch", "nl"),
+        "fi" => ("finnish", "fi"),
+        "fr" => ("french", "fr"),
+        "de" => ("german", "de"),
+        "el" => ("greek", "el"),
+        "hu" => ("hungarian", "hu"),
+        "it" => ("italian", "it"),
+        "no" => ("norwegian", "no"),
+        "pl" => ("polish", "pl"),
+        "pt" => ("portuguese", "pt"),
+        "ru" => ("russian", "ru"),
+        "es" => ("spanish", "es"),
+        "sv" => ("swedish", "sv"),
+        "tr" => ("turkish", "tr"),
+        _ => ("english", "en"),
+    }
+}
+
 async fn resolve_steam(
     q: &str,
     provider_config: &ProviderSearchConfig,
@@ -80,12 +111,13 @@ async fn resolve_steam(
     let Some(appid) = steam_appid(q) else {
         return Ok(Vec::new());
     };
+    let (store_language, accept_language) = steam_language(provider_config.language.as_deref());
     let client = external_client();
     let value = client
         .get("https://store.steampowered.com/api/appdetails")
         .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(reqwest::header::ACCEPT_LANGUAGE, "en")
-        .query(&[("appids", appid.as_str()), ("l", "english")])
+        .header(reqwest::header::ACCEPT_LANGUAGE, accept_language)
+        .query(&[("appids", appid.as_str()), ("l", store_language)])
         .send()
         .await
         .map_err(provider_error)?

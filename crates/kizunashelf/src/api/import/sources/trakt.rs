@@ -191,8 +191,9 @@ fn media_item(node: Option<&Value>, media_type: &str, user: ImportUserData) -> O
         .to_string();
     let tmdb = node.pointer("/ids/tmdb").and_then(Value::as_i64);
 
-    let mut titles = BTreeMap::new();
-    titles.insert("en".to_string(), title.clone());
+    // Trakt doesn't say what language the title is in — leave it untagged
+    // rather than mislabeled `en` (wrong tags pollute language-keyed matching).
+    let titles = BTreeMap::new();
 
     let (refs, candidate) = match tmdb {
         Some(tmdb) => {

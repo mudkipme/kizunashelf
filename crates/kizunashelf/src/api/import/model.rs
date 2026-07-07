@@ -98,6 +98,24 @@ impl ImportItem {
         }
     }
 
+    /// Backfills the conventional `title` metadata key on the item's candidate.
+    /// Every provider exposes its display title as `title` metadata; import-source
+    /// candidates are partial, so without this a schema's external-field title
+    /// mapping would trigger a needless detail fetch (or stay empty). The title's
+    /// language is unknown, so it is deliberately NOT tagged into `titles`.
+    pub(super) fn fill_title_metadata(&mut self) {
+        let Some(candidate) = self.candidate.as_mut() else {
+            return;
+        };
+        if candidate.title.trim().is_empty() {
+            return;
+        }
+        candidate
+            .metadata
+            .entry("title".to_string())
+            .or_insert_with(|| Value::String(candidate.title.clone()));
+    }
+
     /// A synthetic candidate for the "in library" lookup — enough of an
     /// [`ExternalCandidate`] for `lookup_existing` to match by ref or title.
     pub(super) fn lookup_candidate(&self) -> ExternalCandidate {

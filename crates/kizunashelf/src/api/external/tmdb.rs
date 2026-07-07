@@ -15,6 +15,51 @@ use std::collections::BTreeMap;
 pub(super) struct TmdbProvider;
 
 const TMDB_LANG: &str = "en-US";
+
+/// TMDB's `language` parameter for a viewer language preference. TMDB is one of
+/// the two sources that genuinely distinguish Simplified/Traditional Chinese,
+/// so the script subtag maps to the corresponding region locale; anything else
+/// passes through (TMDB accepts bare ISO 639-1 codes).
+fn tmdb_request_language(language: Option<&str>) -> String {
+    let Some(language) = language.map(str::trim).filter(|value| !value.is_empty()) else {
+        return TMDB_LANG.to_string();
+    };
+    match language.to_ascii_lowercase().as_str() {
+        "en" => "en-US".to_string(),
+        "zh" | "zh-hans" => "zh-CN".to_string(),
+        "zh-hant" => "zh-TW".to_string(),
+        "ja" => "ja-JP".to_string(),
+        _ => language.to_string(),
+    }
+}
+
+/// Tags the candidate titles whose language is actually known: the original
+/// title under TMDB's `original_language`, and the localized display title
+/// under the requested content language — but only when TMDB really translated
+/// it (an untranslated `title` falls back to the original, and tagging that
+/// with the requested language would mislabel it). Keys are bare primary
+/// languages — script subtags never enter candidate title maps.
+fn tmdb_titles(
+    request_language: &str,
+    title: &str,
+    original_title: Option<&str>,
+    original_language: Option<&str>,
+) -> BTreeMap<String, String> {
+    let mut titles = BTreeMap::new();
+    let original_language = original_language.map(str::trim).filter(|v| !v.is_empty());
+    if let (Some(language), Some(original)) = (original_language, original_title) {
+        titles.insert(language.to_string(), original.to_string());
+    }
+    let request = crate::languages::primary_language(request_language);
+    if !request.is_empty() && !title.is_empty() {
+        let translated = original_title.is_some_and(|original| original != title)
+            || original_language == Some(request.as_str());
+        if translated {
+            titles.entry(request).or_insert_with(|| title.to_string());
+        }
+    }
+    titles
+}
 const IMAGE_BASE: &str = "https://image.tmdb.org/t/p/";
 
 impl ExternalProvider for TmdbProvider {
@@ -101,9 +146,7 @@ async fn fetch_tmdb_episodes(
     let api_key = tmdb_api_key(state)
         .ok_or_else(|| ApiError::bad_request("TMDB API key is not configured"))?;
     let client = external_client();
-    let language = language
-        .map(str::to_string)
-        .unwrap_or_else(|| TMDB_LANG.to_string());
+    let language = tmdb_request_language(language);
 
     let detail = tmdb_get(client, format!("tv/{id}"), &api_key, &language).await?;
     let seasons: Vec<i64> = detail
@@ -278,7 +321,7 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("season_count", "Season count"),
         field_option("episode_count", "Episode count"),
         field_option("last_air_date", "Last air date"),
-        field_option("country", "Country"),
+        field_option("country", "Region"),
         field_option("original_language", "Original language"),
         field_option("score", "Score"),
         field_option("score_count", "Score count"),
@@ -324,9 +367,10 @@ async fn search_tmdb(
         return Ok(Vec::new());
     };
     let client = external_client();
+    let request_language = tmdb_request_language(provider_config.language.as_deref());
     // A pasted TMDB URL resolves a single record (with full credits/genres).
     if let Some((media_type, id)) = tmdb_ref(q) {
-        return resolve_tmdb(client, &api_key, media_type, &id).await;
+        return resolve_tmdb(client, &api_key, media_type, &id, &request_language).await;
     }
     // With a single configured type, query that type's endpoint so pagination is
     // accurate (results aren't diluted by other media). With several, fall back
@@ -352,7 +396,7 @@ async fn search_tmdb(
             ("query", q),
             ("page", &tmdb_page.to_string()),
             ("api_key", &api_key),
-            ("language", TMDB_LANG),
+            ("language", &request_language),
             ("include_adult", "true"),
         ])
         .send()
@@ -370,7 +414,7 @@ async fn search_tmdb(
         .unwrap_or_default();
     Ok(results
         .iter()
-        .filter_map(|item| tmdb_search_result(item, &media, forced_media_type))
+        .filter_map(|item| tmdb_search_result(item, &media, forced_media_type, &request_language))
         .skip(offset)
         .take(page_size)
         .collect())
@@ -381,13 +425,14 @@ async fn resolve_tmdb(
     api_key: &str,
     media_type: &str,
     id: &str,
+    request_language: &str,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
     let value = client
         .get(format!("https://api.themoviedb.org/3/{media_type}/{id}"))
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&[
             ("api_key", api_key),
-            ("language", TMDB_LANG),
+            ("language", request_language),
             ("append_to_response", "external_ids,credits"),
         ])
         .send()
@@ -398,7 +443,9 @@ async fn resolve_tmdb(
         .json::<Value>()
         .await
         .map_err(provider_error)?;
-    Ok(tmdb_detail(media_type, id, &value).into_iter().collect())
+    Ok(tmdb_detail(media_type, id, &value, request_language)
+        .into_iter()
+        .collect())
 }
 
 /// Detects a `themoviedb.org/{movie|tv|person}/{id}` URL.
@@ -425,6 +472,7 @@ fn tmdb_search_result(
     item: &Value,
     media: &[&str],
     forced_media_type: Option<&str>,
+    request_language: &str,
 ) -> Option<ExternalCandidate> {
     // Type-specific endpoints (/search/movie etc.) omit `media_type`; the caller
     // supplies it. /search/multi includes it, so filter to the configured types.
@@ -487,6 +535,12 @@ fn tmdb_search_result(
     if let Some(cover_url) = &cover_url {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
+    let titles = tmdb_titles(
+        request_language,
+        &title,
+        original_title.as_deref(),
+        item.get("original_language").and_then(Value::as_str),
+    );
     Some(ExternalCandidate {
         provider: TmdbProvider::ID.to_string(),
         source_id: id,
@@ -495,12 +549,17 @@ fn tmdb_search_result(
         title,
         brief: overview,
         cover_url,
-        titles: BTreeMap::new(),
+        titles,
         metadata,
     })
 }
 
-fn tmdb_detail(media_type: &str, id: &str, data: &Value) -> Option<ExternalCandidate> {
+fn tmdb_detail(
+    media_type: &str,
+    id: &str,
+    data: &Value,
+    request_language: &str,
+) -> Option<ExternalCandidate> {
     if media_type == "person" {
         return tmdb_person(id, data);
     }
@@ -699,17 +758,12 @@ fn tmdb_detail(media_type: &str, id: &str, data: &Value) -> Option<ExternalCandi
     if let Some(cover_url) = &cover_url {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
-    // Tag the original title with its language so the candidate carries a
-    // localized title entry (cheap: no extra request needed).
-    let titles = match (
+    let titles = tmdb_titles(
+        request_language,
+        &title,
+        original_title.as_deref(),
         data.get("original_language").and_then(Value::as_str),
-        &original_title,
-    ) {
-        (Some(language), Some(original_title)) if !language.is_empty() => {
-            BTreeMap::from([(language.to_string(), original_title.clone())])
-        }
-        _ => BTreeMap::new(),
-    };
+    );
     Some(ExternalCandidate {
         provider: TmdbProvider::ID.to_string(),
         source_id: id.to_string(),
@@ -860,7 +914,10 @@ fn insert_string_list(metadata: &mut Map<String, Value>, key: &str, values: Vec<
 
 #[cfg(test)]
 mod tests {
-    use super::{tmdb_detail, tmdb_ref, tmdb_search_result, tmdb_season_items, tmdb_tv_id};
+    use super::{
+        tmdb_detail, tmdb_ref, tmdb_request_language, tmdb_search_result, tmdb_season_items,
+        tmdb_titles, tmdb_tv_id, TMDB_LANG,
+    };
     use serde_json::json;
 
     #[test]
@@ -875,8 +932,8 @@ mod tests {
             "poster_path": "/poster.jpg"
         });
         // /search/multi path: media_type filters the mixed results.
-        assert!(tmdb_search_result(&movie, &["tv"], None).is_none());
-        let candidate = tmdb_search_result(&movie, &["movie"], None).unwrap();
+        assert!(tmdb_search_result(&movie, &["tv"], None, TMDB_LANG).is_none());
+        let candidate = tmdb_search_result(&movie, &["movie"], None, TMDB_LANG).unwrap();
         assert_eq!(candidate.source_id, "27205");
         assert_eq!(candidate.metadata.get("year"), Some(&json!("2010")));
         assert_eq!(
@@ -890,9 +947,44 @@ mod tests {
             "title": "Inception",
             "release_date": "2010-07-15"
         });
-        let candidate = tmdb_search_result(&no_type, &["movie"], Some("movie")).unwrap();
+        let candidate = tmdb_search_result(&no_type, &["movie"], Some("movie"), TMDB_LANG).unwrap();
         assert_eq!(candidate.source_id, "27205");
         assert_eq!(candidate.url, "https://www.themoviedb.org/movie/27205");
+    }
+
+    #[test]
+    fn request_language_maps_chinese_scripts_and_defaults() {
+        assert_eq!(tmdb_request_language(None), "en-US");
+        assert_eq!(tmdb_request_language(Some("  ")), "en-US");
+        assert_eq!(tmdb_request_language(Some("en")), "en-US");
+        assert_eq!(tmdb_request_language(Some("zh")), "zh-CN");
+        assert_eq!(tmdb_request_language(Some("zh-Hans")), "zh-CN");
+        assert_eq!(tmdb_request_language(Some("zh-Hant")), "zh-TW");
+        assert_eq!(tmdb_request_language(Some("ja")), "ja-JP");
+        assert_eq!(tmdb_request_language(Some("ko")), "ko");
+    }
+
+    #[test]
+    fn titles_tag_only_known_languages() {
+        // A translated display title is tagged under the bare requested language.
+        let titles = tmdb_titles("zh-TW", "你的名字。", Some("君の名は。"), Some("ja"));
+        assert_eq!(titles.get("zh"), Some(&"你的名字。".to_string()));
+        assert_eq!(titles.get("ja"), Some(&"君の名は。".to_string()));
+        assert!(!titles.contains_key("zh-TW"));
+
+        // TMDB falls back to the original when no translation exists — an
+        // untranslated title must not be mislabeled as the requested language.
+        let titles = tmdb_titles("zh-CN", "君の名は。", Some("君の名は。"), Some("ja"));
+        assert_eq!(titles.get("ja"), Some(&"君の名は。".to_string()));
+        assert!(!titles.contains_key("zh"));
+
+        // …unless the original already is the requested language.
+        let titles = tmdb_titles("zh-CN", "流浪地球", Some("流浪地球"), Some("zh"));
+        assert_eq!(titles.get("zh"), Some(&"流浪地球".to_string()));
+
+        // Missing original: nothing to verify a translation against — tag nothing.
+        let titles = tmdb_titles("zh-CN", "Some Title", None, None);
+        assert!(titles.is_empty());
     }
 
     #[test]
@@ -924,6 +1016,7 @@ mod tests {
                     "cast": [{ "name": "Leonardo DiCaprio" }, { "name": "Joseph Gordon-Levitt" }]
                 }
             }),
+            TMDB_LANG,
         )
         .unwrap();
 
@@ -978,6 +1071,7 @@ mod tests {
                 "created_by": [{ "name": "David Benioff" }, { "name": "D. B. Weiss" }],
                 "external_ids": { "imdb_id": "tt0944947", "tvdb_id": 121361 }
             }),
+            TMDB_LANG,
         )
         .unwrap();
 

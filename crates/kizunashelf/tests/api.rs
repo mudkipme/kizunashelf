@@ -3450,7 +3450,11 @@ fn build_import_server(content_writable: bool) -> (Router, PathBuf, TempDir) {
                 "path": "Anime",
                 "filename": { "titleLanguage": "en" },
                 "fields": [
-                    { "field": "title", "fieldType": "title", "titleLanguage": "en" },
+                    // Preset-generated schemas map every provider's `title`
+                    // metadata key onto the title field; import candidates carry
+                    // no language-tagged titles, so this mapping is what fills it.
+                    { "field": "title", "fieldType": "title", "titleLanguage": "en",
+                      "externalFields": [{ "source": "myanimelist", "field": "title" }] },
                     { "field": "cover", "fieldType": "image" },
                     { "field": "status", "fieldType": "enum",
                       "enumOptions": ["Planning", "Watching", "Completed", "Paused", "Dropped"],

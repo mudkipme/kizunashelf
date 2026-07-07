@@ -10,7 +10,13 @@ export const LanguagesResponse = zod.object({
   "languages": zod.array(zod.object({
   "code": zod.string(),
   "label": zod.string()
-}).describe('A title-language option for the schema editor: an ISO 639-1 code and its\nEnglish display name. See [`crate::languages`].'))
+}).describe('A title-language option for the schema editor: an ISO 639-1 code and its\nEnglish display name. See [`crate::languages`].')),
+  "userLanguages": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "titleLanguage": zod.string(),
+  "uiSupported": zod.boolean()
+}).describe('A user-language preference option for the clients\' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`\/`zh-Hant`), its endonym label, the bare title\/content\nlanguage it maps to, and whether the UI is translated into it (clients fall\nback to English UI when not). See [`crate::languages`].')).describe('The language-picker options the preference is chosen from; every\nlanguage-sensitive behavior (UI locale, title language, provider request\nlanguage) derives from the picked entry.')
 })
 
 export type LanguagesResponse = zod.input<typeof LanguagesResponse>;

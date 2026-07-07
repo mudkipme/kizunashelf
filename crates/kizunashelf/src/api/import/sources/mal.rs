@@ -163,8 +163,9 @@ fn list_item(entry: &Value, media_type: &str) -> Option<ImportItem> {
             .map(str::to_string),
     };
 
-    let mut titles = BTreeMap::new();
-    titles.insert("en".to_string(), candidate.title.clone());
+    // MAL's default title is romaji, not English — leave it untagged rather
+    // than mislabeled `en` (wrong tags pollute language-keyed matching).
+    let titles = BTreeMap::new();
 
     Some(ImportItem {
         refs: vec![ProviderRef {
