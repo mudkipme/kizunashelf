@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { plural } from "@lingui/core/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2Icon,
@@ -79,6 +81,7 @@ import { entityTitle } from "@/lib/title-language";
 import type { Entity } from "@/types/api";
 
 export function EntityPage() {
+  const { t } = useLingui();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -178,8 +181,8 @@ export function EntityPage() {
       const updated = result.updatedLinks?.links ?? 0;
       toast.success(
         updated > 0
-          ? `Renamed — updated ${updated} ${updated === 1 ? "link" : "links"}`
-          : "Renamed",
+          ? t`Renamed — updated ${plural(updated, { one: "# link", other: "# links" })}`
+          : t`Renamed`,
       );
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     }, { onConflict: refetchOnConflict });
@@ -213,7 +216,7 @@ export function EntityPage() {
           .filter(Boolean)
           .join("; ");
         toast.error(
-          reasons ? `Some images could not be downloaded: ${reasons}` : "Some images could not be downloaded",
+          reasons ? t`Some images could not be downloaded: ${reasons}` : t`Some images could not be downloaded`,
         );
       }
     }, { onConflict: refetchOnConflict });
@@ -224,7 +227,7 @@ export function EntityPage() {
     await run(async () => {
       await removeEntity(entity.id, { revision: entity.revision });
       await invalidateEntityData();
-      toast.success("Moved to trash");
+      toast.success(t`Moved to trash`);
       navigate("/library");
     }, { onConflict: refetchOnConflict });
   }
@@ -269,7 +272,9 @@ export function EntityPage() {
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
         {loading ? (
-          <Placeholder>Loading</Placeholder>
+          <Placeholder>
+            <Trans>Loading</Trans>
+          </Placeholder>
         ) : entity ? (
           <>
             <RenameDialog
@@ -339,7 +344,7 @@ export function EntityPage() {
                   {canLog ? (
                     <Button type="button" variant="outline" size="sm" onClick={() => setLogOpen(true)}>
                       <NotebookPenIcon data-icon="inline-start" />
-                      Log
+                      <Trans>Log</Trans>
                     </Button>
                   ) : null}
                   <EntityActions
@@ -377,7 +382,7 @@ export function EntityPage() {
           </>
         ) : (
           <Placeholder>
-            Entity not found
+            <Trans>Entity not found</Trans>
           </Placeholder>
         )}
       </div>
@@ -408,6 +413,7 @@ function EntityActions({
   onDownloadCover: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useLingui();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const language = useTitleLanguage();
 
@@ -415,32 +421,34 @@ function EntityActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="outline" size="sm" aria-label="Actions">
+          <Button type="button" variant="outline" size="sm" aria-label={t`Actions`}>
             <MoreHorizontalIcon />
-            <span className="hidden sm:inline">Actions</span>
+            <span className="hidden sm:inline">
+              <Trans>Actions</Trans>
+            </span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuItem onSelect={onEdit} disabled={!contentWritable}>
             <PencilIcon />
-            Edit
+            <Trans>Edit</Trans>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onRename} disabled={!contentWritable || saving}>
             <FilePenLineIcon />
-            Rename
+            <Trans>Rename</Trans>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onManageLists} disabled={!contentWritable}>
             <ListChecksIcon />
-            Manage lists
+            <Trans>Manage lists</Trans>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onMatch}>
             <SearchIcon />
-            Match
+            <Trans>Match</Trans>
           </DropdownMenuItem>
           {showDownloadCover ? (
             <DropdownMenuItem onSelect={onDownloadCover} disabled={saving}>
               <DownloadIcon />
-              Download cover
+              <Trans>Download cover</Trans>
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
@@ -450,13 +458,13 @@ function EntityActions({
             onSelect={() => setDeleteOpen(true)}
           >
             <Trash2Icon />
-            Delete
+            <Trans>Delete</Trans>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="font-normal break-all text-xs text-muted-foreground">
             {contentWritable
               ? entity.path
-              : `${CONTENT_WRITES_DISABLED} Editing actions are unavailable.`}
+              : t`${CONTENT_WRITES_DISABLED} Editing actions are unavailable.`}
           </DropdownMenuLabel>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -464,15 +472,21 @@ function EntityActions({
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Move to trash?</AlertDialogTitle>
+            <AlertDialogTitle>
+              <Trans>Move to trash?</Trans>
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This moves {entityTitle(entity, language)} to the Trash. You can restore it later if you need it.
+              <Trans>
+                This moves {entityTitle(entity, language)} to the Trash. You can restore it later if you need it.
+              </Trans>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={saving}>
+              <Trans>Cancel</Trans>
+            </AlertDialogCancel>
             <AlertDialogAction onClick={onDelete} disabled={saving}>
-              Move to Trash
+              <Trans>Move to Trash</Trans>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -494,6 +508,7 @@ function ManageListsDialog({
   entityName: string;
   contentWritable: boolean;
 }) {
+  const { t } = useLingui();
   const invalidateLists = useInvalidateLists();
   // Membership-annotated list of every list (each carries `contains`).
   const lists = useQuery({ ...entityListsQuery(entityId), enabled: open });
@@ -530,7 +545,7 @@ function ManageListsDialog({
       setNewName("");
       await addItemToList(created.id, { entityId });
       await invalidateLists(created.id);
-      toast.success("List created");
+      toast.success(t`List created`);
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -542,14 +557,22 @@ function ManageListsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Manage lists</DialogTitle>
-          <DialogDescription className="truncate">Choose which lists {entityName} belongs to.</DialogDescription>
+          <DialogTitle>
+            <Trans>Manage lists</Trans>
+          </DialogTitle>
+          <DialogDescription className="truncate">
+            <Trans>Choose which lists {entityName} belongs to.</Trans>
+          </DialogDescription>
         </DialogHeader>
         <div className="flex max-h-72 flex-col gap-1 overflow-auto">
           {lists.isPending ? (
-            <p className="p-3 text-center text-sm text-muted-foreground">Loading</p>
+            <p className="p-3 text-center text-sm text-muted-foreground">
+              <Trans>Loading</Trans>
+            </p>
           ) : items.length === 0 ? (
-            <p className="p-3 text-center text-sm text-muted-foreground">No lists yet. Create one below.</p>
+            <p className="p-3 text-center text-sm text-muted-foreground">
+              <Trans>No lists yet. Create one below.</Trans>
+            </p>
           ) : (
             items.map((list) => {
               const contains = list.contains === true;
@@ -564,7 +587,7 @@ function ManageListsDialog({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{list.name}</span>
                     <span className="block text-xs text-muted-foreground">
-                      {list.itemCount} {list.itemCount === 1 ? "item" : "items"}
+                      <Plural value={list.itemCount} one="# item" other="# items" />
                     </span>
                   </span>
                   {contains ? (
@@ -584,18 +607,20 @@ function ManageListsDialog({
           }}
           className="flex flex-col gap-2 border-t pt-3"
         >
-          <label className="text-sm font-medium">New list</label>
+          <label className="text-sm font-medium">
+            <Trans>New list</Trans>
+          </label>
           <div className="flex gap-2">
             <Input
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
-              placeholder="Watchlist"
+              placeholder={t`Watchlist`}
               disabled={!contentWritable || creating}
               aria-invalid={Boolean(newNameError)}
             />
             <Button type="submit" disabled={!contentWritable || creating || !newName.trim() || Boolean(newNameError)}>
               <PlusIcon data-icon="inline-start" />
-              {creating ? "Creating" : "Create & add"}
+              {creating ? <Trans>Creating</Trans> : <Trans>Create & add</Trans>}
             </Button>
           </div>
           {newNameError ? <p className="text-xs text-destructive">{newNameError}</p> : null}
@@ -603,7 +628,7 @@ function ManageListsDialog({
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             <XIcon data-icon="inline-start" />
-            Done
+            <Trans>Done</Trans>
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -637,9 +662,11 @@ function RenameDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-sm:inset-0 max-sm:flex max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:flex-col max-sm:rounded-none max-sm:border-0">
         <DialogHeader>
-          <DialogTitle>Rename</DialogTitle>
+          <DialogTitle>
+            <Trans>Rename</Trans>
+          </DialogTitle>
           <DialogDescription>
-            Only the name changes — everything else stays the same.
+            <Trans>Only the name changes — everything else stays the same.</Trans>
           </DialogDescription>
         </DialogHeader>
         <form
@@ -650,7 +677,7 @@ function RenameDialog({
           className="flex flex-col gap-2"
         >
           <label className="text-sm font-medium">
-            Basename
+            <Trans>Basename</Trans>
             <Input
               value={basename}
               onChange={(event) => onBasenameChange(event.target.value)}
@@ -668,14 +695,14 @@ function RenameDialog({
               disabled={saving}
             >
               <XIcon data-icon="inline-start" />
-              Cancel
+              <Trans>Cancel</Trans>
             </Button>
             <Button
               type="submit"
               disabled={disabled || saving || Boolean(validationError) || unchanged}
             >
               <CheckIcon data-icon="inline-start" />
-              {saving ? "Renaming" : "Rename"}
+              {saving ? <Trans>Renaming</Trans> : <Trans>Rename</Trans>}
             </Button>
           </DialogFooter>
         </form>

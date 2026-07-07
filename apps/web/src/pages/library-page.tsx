@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { I18n, MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -31,6 +34,7 @@ import {
 } from "@/lib/type-config";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
+import { useNumberFormat } from "@/lib/locale";
 import { entityTitle } from "@/lib/title-language";
 import type { TypeConfig } from "@/types/api";
 import {
@@ -41,6 +45,8 @@ import {
 } from "@/lib/asset-list-preferences";
 
 export function LibraryPage() {
+  const { t, i18n } = useLingui();
+  const formatNumber = useNumberFormat();
   const [searchParams, setSearchParams] = useSearchParams();
   const globalStats = useQuery(statsQuery());
   const config = useQuery(configQuery());
@@ -87,12 +93,12 @@ export function LibraryPage() {
   const tagFilter: FieldFilter = useMemo(
     () => ({
       field: tagsFieldName,
-      label: "Tags",
+      label: t`Tags`,
       kind: "multi",
       options: allTags.map((value) => ({ value })),
       values: uniqueStrings(searchParams.getAll(fieldFilterParamKey(tagsFieldName))),
     }),
-    [allTags, searchParams, tagsFieldName],
+    [allTags, searchParams, tagsFieldName, t],
   );
   // Relation fields (per selected type) become dynamically-loaded multi-selects,
   // like enum lists but with suggestions searched on demand. Hidden for "all
@@ -131,12 +137,12 @@ export function LibraryPage() {
   const fieldFilters = useMemo(() => {
     // Enum/enumList/bool field filters are type-specific, so only "all types"
     // keeps the universal Tags filter; a concrete type adds its schema fields.
-    const schemaFilters = isGlobalType ? [] : fieldFiltersForTypes(scopeTypeConfigs, searchParams);
+    const schemaFilters = isGlobalType ? [] : fieldFiltersForTypes(scopeTypeConfigs, searchParams, i18n);
     // Hide the tags filter only when the vault has no tags and none are selected.
     const showTags = tagFilter.options.length > 0 || tagFilter.values.length > 0;
     const base = showTags ? [tagFilter, ...schemaFilters] : schemaFilters;
     return [...base, ...relationFilters];
-  }, [tagFilter, scopeTypeConfigs, searchParams, isGlobalType, relationFilters]);
+  }, [tagFilter, scopeTypeConfigs, searchParams, isGlobalType, relationFilters, i18n]);
   const activeFieldFilters = fieldFilters.filter((filter) => filter.values.length > 0);
   const effectiveSort =
     scopeStats &&
@@ -286,9 +292,11 @@ export function LibraryPage() {
                   value={selectedType}
                   onChange={(event) => selectType(event.target.value)}
                   className="min-w-0 flex-1"
-                  aria-label="Type"
+                  aria-label={t`Type`}
                 >
-                  <option value={allTypes}>All types ({globalStats.data?.total ?? 0})</option>
+                  <option value={allTypes}>
+                    {t`All types (${formatNumber(globalStats.data?.total ?? 0)})`}
+                  </option>
                   {globalStats.data?.byType.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.label} ({type.count})
@@ -301,7 +309,7 @@ export function LibraryPage() {
                   size="icon"
                   className="shrink-0"
                   onClick={() => setMobileFiltersOpen((open) => !open)}
-                  aria-label="Toggle filters"
+                  aria-label={t`Toggle filters`}
                   aria-expanded={mobileFiltersOpen}
                 >
                   <SlidersHorizontalIcon />
@@ -312,8 +320,8 @@ export function LibraryPage() {
                   size="icon"
                   className="shrink-0"
                   disabled={!contentWritable}
-                  aria-label="Add entity"
-                  title={!contentWritable ? CONTENT_WRITES_DISABLED : "Add entity"}
+                  aria-label={t`Add entity`}
+                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Add entity`}
                   asChild={contentWritable}
                 >
                   {!contentWritable ? (
@@ -328,9 +336,13 @@ export function LibraryPage() {
                 </Button>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span>{entryCount.toLocaleString()} entries</span>
-                <span>{(scopeStats?.relations ?? 0).toLocaleString()} links</span>
-                <span>{isGlobalType ? "All types" : (selectedTypeStats?.label ?? selectedType)}</span>
+                <span>
+                  <Plural value={entryCount} one="# entry" other="# entries" />
+                </span>
+                <span>
+                  <Plural value={scopeStats?.relations ?? 0} one="# link" other="# links" />
+                </span>
+                <span>{isGlobalType ? t`All types` : (selectedTypeStats?.label ?? selectedType)}</span>
               </div>
               {mobileFiltersOpen ? (
                 <AssetToolbar
@@ -367,30 +379,36 @@ export function LibraryPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs text-muted-foreground">
               <span>
-                {total} entries
-                {total > 0 ? ` · page ${list.data?.page ?? page}/${totalPages}` : ""}
+                {total > 0 ? (
+                  <Trans>
+                    <Plural value={total} one="# entry" other="# entries" /> · page{" "}
+                    {list.data?.page ?? page}/{totalPages}
+                  </Trans>
+                ) : (
+                  <Plural value={total} one="# entry" other="# entries" />
+                )}
               </span>
               <div className="flex items-center gap-2">
                 <span>
-                  {loading ? "Loading" : globalStats.data?.generatedAt.slice(0, 10)}
+                  {loading ? t`Loading` : globalStats.data?.generatedAt.slice(0, 10)}
                 </span>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   disabled={!contentWritable}
-                  title={!contentWritable ? CONTENT_WRITES_DISABLED : "Add entity"}
+                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Add entity`}
                   asChild={contentWritable}
                 >
                   {!contentWritable ? (
                     <span>
                       <PlusIcon data-icon="inline-start" />
-                      Add
+                      <Trans>Add</Trans>
                     </span>
                   ) : (
                     <Link to={createHref}>
                       <PlusIcon data-icon="inline-start" />
-                      Add
+                      <Trans>Add</Trans>
                     </Link>
                   )}
                 </Button>
@@ -419,7 +437,9 @@ export function LibraryPage() {
                 ))
               )}
               {!list.isFetching && entities.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted-foreground">No entries</div>
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  <Trans>No entries</Trans>
+                </div>
               ) : null}
             </div>
             <PaginationBar
@@ -440,14 +460,14 @@ function hasPreferenceParams(params: URLSearchParams) {
   return ["sort", "direction", "view"].some((key) => params.has(key));
 }
 
-function fieldFiltersForTypes(typeConfigs: TypeConfig[], params: URLSearchParams) {
+function fieldFiltersForTypes(typeConfigs: TypeConfig[], params: URLSearchParams, i18n: I18n) {
   const byField = new Map<
     string,
     { field: string; label: string; kind: FieldFilter["kind"]; options: FieldFilterOption[] }
   >();
   for (const typeConfig of typeConfigs) {
     for (const field of typeConfig.fields ?? []) {
-      const filter = fieldFilterMetadata(field);
+      const filter = fieldFilterMetadata(field, i18n);
       if (!filter) continue;
       const { kind, options } = filter;
       if (options.length === 0) continue;
@@ -470,8 +490,14 @@ function fieldFiltersForTypes(typeConfigs: TypeConfig[], params: URLSearchParams
   }));
 }
 
+const boolFilterLabels: Record<"true" | "false", MessageDescriptor> = {
+  true: msg`Yes`,
+  false: msg`No`,
+};
+
 function fieldFilterMetadata(
   field: NonNullable<TypeConfig["fields"]>[number],
+  i18n: I18n,
 ): Pick<FieldFilter, "kind" | "options"> | undefined {
   if ((field.fieldType === "enum" || field.fieldType === "enumList") && field.enumOptions?.length) {
     return {
@@ -483,8 +509,8 @@ function fieldFilterMetadata(
     return {
       kind: "bool",
       options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
+        { value: "true", label: i18n._(boolFilterLabels.true) },
+        { value: "false", label: i18n._(boolFilterLabels.false) },
       ],
     };
   }

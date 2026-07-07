@@ -1,3 +1,6 @@
+import { i18n } from "@lingui/core";
+import { msg, plural } from "@lingui/core/macro";
+
 import { fieldTypeLabel } from "@/lib/type-config";
 import type { FieldConfig, FieldType } from "@/types/api";
 
@@ -52,23 +55,27 @@ export function fieldConfigSummary(field: FieldConfig): string[] {
   const options = new Set(fieldOptionKeys(field.fieldType));
   const summary = [fieldTypeLabel(field.fieldType)];
 
-  if (options.has("titleOptions") && field.titleLanguage) summary.push(`lang ${field.titleLanguage}`);
+  if (options.has("titleOptions") && field.titleLanguage) {
+    summary.push(i18n._(msg`lang ${field.titleLanguage}`));
+  }
   if (options.has("titleOptions") && field.titleRole) summary.push(field.titleRole);
-  if (options.has("enumOptions") && field.enumOptions?.length) summary.push(`${field.enumOptions.length} values`);
-  if (options.has("statusRole") && field.enumRole === "status") summary.push("status");
+  if (options.has("enumOptions") && field.enumOptions?.length) {
+    summary.push(plural(field.enumOptions.length, { one: "# value", other: "# values" }));
+  }
+  if (options.has("statusRole") && field.enumRole === "status") summary.push(i18n._(msg`status`));
   if (options.has("externalMappings") && field.externalFields?.length) {
-    summary.push(`${field.externalFields.length} mappings`);
+    summary.push(plural(field.externalFields.length, { one: "# mapping", other: "# mappings" }));
   }
   if (options.has("progressTotal") && field.totalProgressField) {
-    summary.push(`total ${field.totalProgressField}`);
+    summary.push(i18n._(msg`total ${field.totalProgressField}`));
   }
   if (options.has("dateRole") && field.dateRole) summary.push(field.dateRole);
   if (options.has("seasonLanguage") && field.seasonLanguage) {
-    summary.push(`season ${field.seasonLanguage}`);
+    summary.push(i18n._(msg`season ${field.seasonLanguage}`));
   }
   if (options.has("externalRef") && field.externalRef) summary.push(field.externalRef);
   if (options.has("externalRef") && field.externalTypes?.length) {
-    summary.push(`${field.externalTypes.length} external types`);
+    summary.push(plural(field.externalTypes.length, { one: "# external type", other: "# external types" }));
   }
   if (options.has("relationType") && field.relationType) summary.push(field.relationType);
 

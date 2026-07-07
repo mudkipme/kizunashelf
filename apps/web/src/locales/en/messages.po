@@ -1,0 +1,2554 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-07-07 17:08+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/components/assets/quick-log-dialog.tsx:201
+msgid " (already logged)"
+msgstr " (already logged)"
+
+#: src/components/assets/quick-log-dialog.tsx:201
+msgid " (new note)"
+msgstr " (new note)"
+
+#: src/components/settings/settings-sections.tsx:445
+msgid "(daily-notes default)"
+msgstr "(daily-notes default)"
+
+#. placeholder {0}: counts.exists
+#: src/pages/import-wizard-page.tsx:426
+msgid "{0, plural, one {# already in library} other {# already in library}}"
+msgstr "{0, plural, one {# already in library} other {# already in library}}"
+
+#. placeholder {0}: completeCount(summary)
+#: src/pages/review-page.tsx:250
+msgid "{0, plural, one {# complete} other {# complete}}"
+msgstr "{0, plural, one {# complete} other {# complete}}"
+
+#. placeholder {0}: job.created
+#: src/pages/import-wizard-page.tsx:640
+msgid "{0, plural, one {# created} other {# created}}"
+msgstr "{0, plural, one {# created} other {# created}}"
+
+#. placeholder {0}: selectedDay.entries.length
+#: src/pages/calendar-page.tsx:172
+msgid "{0, plural, one {# entry} other {# entries}}"
+msgstr "{0, plural, one {# entry} other {# entries}}"
+
+#. placeholder {0}: calendar.data.totals.entries
+#. placeholder {1}: calendar.data.totals.daysWithEntries
+#: src/pages/calendar-page.tsx:90
+msgid "{0, plural, one {# entry} other {# entries}} across {1, plural, one {# day} other {# days}}"
+msgstr "{0, plural, one {# entry} other {# entries}} across {1, plural, one {# day} other {# days}}"
+
+#. placeholder {0}: field.externalTypes.length
+#: src/components/settings/settings-field-descriptors.ts:78
+msgid "{0, plural, one {# external type} other {# external types}}"
+msgstr "{0, plural, one {# external type} other {# external types}}"
+
+#. placeholder {0}: job.failed
+#: src/pages/import-wizard-page.tsx:649
+msgid "{0, plural, one {# failed} other {# failed}}"
+msgstr "{0, plural, one {# failed} other {# failed}}"
+
+#. placeholder {0}: type.fields.length
+#: src/components/settings/settings-dialogs.tsx:224
+msgid "{0, plural, one {# field} other {# fields}}"
+msgstr "{0, plural, one {# field} other {# fields}}"
+
+#. placeholder {0}: section.filters.length
+#: src/components/settings/settings-dialogs.tsx:457
+msgid "{0, plural, one {# filter} other {# filters}}"
+msgstr "{0, plural, one {# filter} other {# filters}}"
+
+#. placeholder {0}: items.length
+#: src/pages/import-wizard-page.tsx:420
+msgid "{0, plural, one {# found} other {# found}}"
+msgstr "{0, plural, one {# found} other {# found}}"
+
+#. placeholder {0}: list.itemCount
+#: src/pages/entity-page.tsx:590
+#: src/pages/lists-page.tsx:78
+msgid "{0, plural, one {# item} other {# items}}"
+msgstr "{0, plural, one {# item} other {# items}}"
+
+#. placeholder {0}: entity.relationCount
+#. placeholder {0}: scopeStats?.relations ?? 0
+#: src/components/assets/entity-grid-item.tsx:63
+#: src/components/assets/entity-list-item.tsx:48
+#: src/components/home/home-entity-card.tsx:46
+#: src/pages/library-page.tsx:343
+msgid "{0, plural, one {# link} other {# links}}"
+msgstr "{0, plural, one {# link} other {# links}}"
+
+#. placeholder {0}: field.externalFields.length
+#: src/components/settings/settings-field-descriptors.ts:67
+msgid "{0, plural, one {# mapping} other {# mappings}}"
+msgstr "{0, plural, one {# mapping} other {# mappings}}"
+
+#. placeholder {0}: counts.needsReview
+#: src/pages/import-wizard-page.tsx:430
+msgid "{0, plural, one {# needs review} other {# need review}}"
+msgstr "{0, plural, one {# needs review} other {# need review}}"
+
+#. placeholder {0}: (config.dailyNotes.paths ?? []).length
+#: src/components/settings/settings-editor.tsx:103
+#: src/components/settings/settings-editor.tsx:230
+msgid "{0, plural, one {# path} other {# paths}}"
+msgstr "{0, plural, one {# path} other {# paths}}"
+
+#. placeholder {0}: typeProviderCount(type)
+#: src/components/settings/settings-dialogs.tsx:225
+msgid "{0, plural, one {# provider} other {# providers}}"
+msgstr "{0, plural, one {# provider} other {# providers}}"
+
+#. placeholder {0}: summary.remaining
+#: src/pages/review-page.tsx:242
+msgid "{0, plural, one {# remaining} other {# remaining}}"
+msgstr "{0, plural, one {# remaining} other {# remaining}}"
+
+#. placeholder {0}: (config.home.sections ?? []).length
+#. placeholder {0}: home.data?.sections.length ?? 0
+#. placeholder {0}: list.sectionCount
+#: src/components/settings/settings-editor.tsx:110
+#: src/components/settings/settings-editor.tsx:268
+#: src/pages/home-page.tsx:35
+#: src/pages/lists-page.tsx:82
+msgid "{0, plural, one {# section} other {# sections}}"
+msgstr "{0, plural, one {# section} other {# sections}}"
+
+#. placeholder {0}: filteredItems.length
+#: src/pages/review-page.tsx:180
+msgid "{0, plural, one {# shown} other {# shown}}"
+msgstr "{0, plural, one {# shown} other {# shown}}"
+
+#. placeholder {0}: job.skipped
+#: src/pages/import-wizard-page.tsx:644
+msgid "{0, plural, one {# skipped} other {# skipped}}"
+msgstr "{0, plural, one {# skipped} other {# skipped}}"
+
+#. placeholder {0}: counts.willCreate
+#: src/pages/import-wizard-page.tsx:423
+msgid "{0, plural, one {# to create} other {# to create}}"
+msgstr "{0, plural, one {# to create} other {# to create}}"
+
+#. placeholder {0}: items.length
+#: src/pages/review-page.tsx:183
+msgid "{0, plural, one {# total queue item} other {# total queue items}}"
+msgstr "{0, plural, one {# total queue item} other {# total queue items}}"
+
+#. placeholder {0}: summary.total
+#: src/pages/review-page.tsx:253
+msgid "{0, plural, one {# total} other {# total}}"
+msgstr "{0, plural, one {# total} other {# total}}"
+
+#. placeholder {0}: config.types.length
+#. placeholder {0}: plan.types.length
+#: src/components/settings/preset-picker.tsx:117
+#: src/components/settings/settings-editor.tsx:116
+#: src/components/settings/settings-editor.tsx:302
+msgid "{0, plural, one {# type} other {# types}}"
+msgstr "{0, plural, one {# type} other {# types}}"
+
+#. placeholder {0}: field.enumOptions.length
+#: src/components/settings/settings-field-descriptors.ts:63
+msgid "{0, plural, one {# value} other {# values}}"
+msgstr "{0, plural, one {# value} other {# values}}"
+
+#. placeholder {0}: data.watchedCount
+#: src/pages/import-wizard-page.tsx:585
+msgid "{0, plural, one {# watched} other {# watched}}"
+msgstr "{0, plural, one {# watched} other {# watched}}"
+
+#. placeholder {0}: pending.types.length
+#: src/components/settings/preset-picker.tsx:176
+msgid "{0, plural, one {Add # type} other {Add # types}}"
+msgstr "{0, plural, one {Add # type} other {Add # types}}"
+
+#. placeholder {0}: dates.totals.snippets
+#: src/components/assets/entity-dates.tsx:45
+msgid "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)}}"
+msgstr "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)}}"
+
+#. placeholder {0}: result.episodes.imported
+#: src/pages/quick-capture-page.tsx:148
+msgid "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
+msgstr "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
+
+#. placeholder {0}: job.processed
+#. placeholder {1}: job.total
+#: src/components/assets/asset-download-panel.tsx:122
+#: src/pages/import-wizard-page.tsx:635
+msgid "{0} / {1} processed"
+msgstr "{0} / {1} processed"
+
+#. placeholder {0}: job.downloaded
+#: src/components/assets/asset-download-panel.tsx:127
+msgid "{0} downloaded"
+msgstr "{0} downloaded"
+
+#. placeholder {0}: job.failed
+#: src/components/assets/asset-download-panel.tsx:131
+msgid "{0} failed"
+msgstr "{0} failed"
+
+#. placeholder {0}: selected.size
+#. placeholder {1}: allIds.length
+#: src/components/assets/episode-sync-dialog.tsx:260
+msgid "{0} of {1} selected"
+msgstr "{0} of {1} selected"
+
+#. placeholder {0}: item.label
+#: src/pages/quick-capture-page.tsx:244
+msgid "{0} search failed"
+msgstr "{0} search failed"
+
+#. placeholder {0}: job.skipped
+#: src/components/assets/asset-download-panel.tsx:136
+msgid "{0} skipped"
+msgstr "{0} skipped"
+
+#: src/components/entities/metadata-inputs.tsx:637
+msgid "{ariaLabel} new property"
+msgstr "{ariaLabel} new property"
+
+#: src/components/settings/settings-editor.tsx:304
+msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
+msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
+
+#: src/pages/entity-page.tsx:467
+msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
+msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
+
+#: src/components/home/coming-up-section.tsx:136
+msgid "{days, plural, one {# day} other {# days}}"
+msgstr "{days, plural, one {# day} other {# days}}"
+
+#: src/pages/library-page.tsx:340
+msgid "{entryCount, plural, one {# entry} other {# entries}}"
+msgstr "{entryCount, plural, one {# entry} other {# entries}}"
+
+#: src/pages/quick-capture-page.tsx:138
+msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
+msgstr "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
+
+#. placeholder {0}: formatNumber(count)
+#: src/components/analytics/activity-heatmap.tsx:129
+msgid "{monthLabel}: {0}"
+msgstr "{monthLabel}: {0}"
+
+#. placeholder {0}: formatNumber(count)
+#: src/components/analytics/activity-heatmap.tsx:130
+msgid "{monthLabel}: {0} — open in calendar"
+msgstr "{monthLabel}: {0} — open in calendar"
+
+#: src/components/analytics/activity-heatmap.tsx:99
+msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
+msgstr "{selectedTotal, plural, one {# dated} other {# dated}}"
+
+#: src/pages/import-wizard-page.tsx:253
+msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
+msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
+
+#: src/pages/library-page.tsx:388
+msgid "{total, plural, one {# entry} other {# entries}}"
+msgstr "{total, plural, one {# entry} other {# entries}}"
+
+#. placeholder {0}: list.data?.page ?? page
+#: src/pages/library-page.tsx:383
+msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
+msgstr "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
+
+#: src/components/settings/settings-editor.tsx:303
+msgid "{totalFields, plural, one {# field} other {# fields}}"
+msgstr "{totalFields, plural, one {# field} other {# fields}}"
+
+#: src/components/calendar/calendar-entry-item.tsx:40
+#: src/pages/activity-page.tsx:291
+msgid "✅ Completed"
+msgstr "✅ Completed"
+
+#: src/components/settings/preset-picker.tsx:281
+msgid "✨ Pairs well with your picks"
+msgstr "✨ Pairs well with your picks"
+
+#: src/components/calendar/calendar-entry-item.tsx:40
+#: src/pages/activity-page.tsx:291
+msgid "📅 Scheduled"
+msgstr "📅 Scheduled"
+
+#. placeholder {0}: result.entity.basename
+#: src/pages/quick-capture-page.tsx:155
+msgid "A file named for this title already existed, so it was saved as “{0}”."
+msgstr "A file named for this title already existed, so it was saved as “{0}”."
+
+#: src/components/layout/app-frame.tsx:122
+msgid "A personal memory graph"
+msgstr "A personal memory graph"
+
+#: src/components/settings/preset-picker.tsx:371
+msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
+msgstr "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
+
+#: src/pages/entity-page.tsx:424
+#: src/pages/entity-page.tsx:427
+msgid "Actions"
+msgstr "Actions"
+
+#: src/components/assets/quick-log-dialog.tsx:111
+#: src/components/layout/app-frame.tsx:347
+#: src/pages/activity-page.tsx:108
+#: src/pages/statistics-page.tsx:80
+msgid "Activity"
+msgstr "Activity"
+
+#: src/components/entities/metadata-inputs.tsx:641
+#: src/components/settings/settings-controls.tsx:70
+#: src/components/settings/settings-sections.tsx:1000
+#: src/pages/home-page.tsx:48
+#: src/pages/home-page.tsx:53
+#: src/pages/library-page.tsx:406
+#: src/pages/library-page.tsx:411
+#: src/pages/list-detail-page.tsx:919
+msgid "Add"
+msgstr "Add"
+
+#: src/components/ui/multi-value-combobox.tsx:151
+msgid "Add \"{item}\""
+msgstr "Add \"{item}\""
+
+#. placeholder {0}: backfill.presetLabel
+#. placeholder {1}: backfill.typeLabel
+#: src/components/settings/preset-picker.tsx:399
+msgid "Add a <0>{0}</0> link to <1>{1}</1>"
+msgstr "Add a <0>{0}</0> link to <1>{1}</1>"
+
+#: src/components/settings/settings-dialogs.tsx:206
+msgid "Add built-in type"
+msgstr "Add built-in type"
+
+#: src/components/settings/preset-picker.tsx:126
+msgid "Add built-in types"
+msgstr "Add built-in types"
+
+#: src/components/settings/settings-dialogs.tsx:209
+msgid "Add custom type"
+msgstr "Add custom type"
+
+#: src/pages/home-page.tsx:42
+#: src/pages/library-page.tsx:323
+#: src/pages/library-page.tsx:324
+#: src/pages/library-page.tsx:400
+msgid "Add entity"
+msgstr "Add entity"
+
+#: src/pages/entity-create-page.tsx:79
+msgid "Add Entity"
+msgstr "Add Entity"
+
+#: src/components/settings/settings-sections.tsx:968
+msgid "Add enum options above to map them to statuses."
+msgstr "Add enum options above to map them to statuses."
+
+#: src/components/entities/metadata-editor.tsx:159
+msgid "Add Field"
+msgstr "Add Field"
+
+#: src/components/settings/settings-sections.tsx:176
+msgid "Add Filter"
+msgstr "Add Filter"
+
+#: src/pages/list-detail-page.tsx:451
+#: src/pages/list-detail-page.tsx:875
+msgid "Add items"
+msgstr "Add items"
+
+#: src/pages/quick-capture-page.tsx:185
+msgid "Add manually"
+msgstr "Add manually"
+
+#: src/components/entities/metadata-inputs.tsx:313
+msgid "Add path or URL"
+msgstr "Add path or URL"
+
+#: src/pages/list-detail-page.tsx:447
+msgid "Add section"
+msgstr "Add section"
+
+#: src/components/entities/metadata-inputs.tsx:155
+msgid "Add value"
+msgstr "Add value"
+
+#: src/components/settings/preset-picker.tsx:337
+#: src/pages/list-detail-page.tsx:908
+msgid "Added"
+msgstr "Added"
+
+#: src/components/settings/preset-picker.tsx:121
+msgid "Added {added} — {renamed}"
+msgstr "Added {added} — {renamed}"
+
+#. placeholder {0}: result.episodes.error
+#: src/pages/quick-capture-page.tsx:145
+msgid "Added, but episode import failed: {0}"
+msgstr "Added, but episode import failed: {0}"
+
+#: src/components/settings/preset-picker.tsx:203
+#: src/pages/quick-capture-page.tsx:308
+msgid "Adding…"
+msgstr "Adding…"
+
+#: src/components/entities/external-match-dialog.tsx:367
+msgid "adds new section"
+msgstr "adds new section"
+
+#: src/pages/onboarding-page.tsx:201
+msgid "Advanced: edit full schema"
+msgstr "Advanced: edit full schema"
+
+#: src/pages/activity-page.tsx:39
+msgid "All"
+msgstr "All"
+
+#: src/pages/review-page.tsx:168
+msgid "All dates"
+msgstr "All dates"
+
+#: src/pages/quick-capture-page.tsx:231
+msgid "All providers"
+msgstr "All providers"
+
+#: src/components/entities/external-match-dialog.tsx:130
+#: src/pages/activity-page.tsx:27
+#: src/pages/calendar-page.tsx:127
+msgid "All sources"
+msgstr "All sources"
+
+#: src/components/analytics/activity-heatmap.tsx:91
+#: src/components/assets/asset-download-panel.tsx:84
+#: src/pages/activity-page.tsx:128
+#: src/pages/calendar-page.tsx:132
+#: src/pages/library-page.tsx:345
+#: src/pages/quick-capture-page.tsx:220
+#: src/pages/review-page.tsx:160
+msgid "All types"
+msgstr "All types"
+
+#. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
+#: src/pages/library-page.tsx:298
+msgid "All types ({0})"
+msgstr "All types ({0})"
+
+#: src/pages/import-wizard-page.tsx:38
+msgid "Anime"
+msgstr "Anime"
+
+#. placeholder {0}: filter.label
+#: src/components/assets/asset-toolbar.tsx:154
+#: src/components/assets/asset-toolbar.tsx:172
+#: src/components/assets/asset-toolbar.tsx:236
+msgid "Any {0}"
+msgstr "Any {0}"
+
+#: src/components/assets/quick-log-dialog.tsx:141
+msgid "Anything worth remembering — e.g. an episode number"
+msgstr "Anything worth remembering — e.g. an episode number"
+
+#: src/components/settings/settings-dialogs.tsx:381
+#: src/components/settings/settings-dialogs.tsx:509
+msgid "Apply"
+msgstr "Apply"
+
+#: src/components/entities/external-match-dialog.tsx:210
+msgid "Apply Selected"
+msgstr "Apply Selected"
+
+#: src/components/entities/external-match-dialog.tsx:210
+msgid "Applying"
+msgstr "Applying"
+
+#: src/components/assets/asset-toolbar.tsx:108
+#: src/components/settings/settings-sections.tsx:220
+msgid "Ascending"
+msgstr "Ascending"
+
+#: src/components/settings/settings-editor.tsx:215
+msgid "Asset root"
+msgstr "Asset root"
+
+#. placeholder {0}: config.assetRoot || "Assets"
+#: src/components/settings/settings-editor.tsx:205
+msgid "assets: {0}"
+msgstr "assets: {0}"
+
+#: src/components/layout/app-frame.tsx:112
+#: src/components/settings/preset-picker.tsx:173
+#: src/components/settings/settings-dialogs.tsx:78
+#: src/components/settings/settings-editor.tsx:172
+#: src/pages/entity-edit-page.tsx:174
+msgid "Back"
+msgstr "Back"
+
+#: src/pages/entity-page.tsx:680
+msgid "Basename"
+msgstr "Basename"
+
+#: src/components/settings/settings-sections.tsx:330
+msgid "Basics"
+msgstr "Basics"
+
+#: src/components/entities/external-match-dialog.tsx:347
+msgid "Body Sections"
+msgstr "Body Sections"
+
+#: src/pages/import-wizard-page.tsx:37
+msgid "Book"
+msgstr "Book"
+
+#: src/pages/import-wizard-page.tsx:173
+msgid "Bring a library in from another service, then review before anything is written"
+msgstr "Bring a library in from another service, then review before anything is written"
+
+#: src/pages/review-page.tsx:50
+msgid "Broken Assets"
+msgstr "Broken Assets"
+
+#: src/pages/home-page.tsx:87
+msgid "Browse library"
+msgstr "Browse library"
+
+#: src/components/layout/app-frame.tsx:344
+#: src/pages/calendar-page.tsx:84
+msgid "Calendar"
+msgstr "Calendar"
+
+#: src/components/assets/asset-download-panel.tsx:103
+#: src/components/assets/episode-sync-dialog.tsx:334
+#: src/components/assets/quick-log-dialog.tsx:157
+#: src/components/entities/metadata-editor.tsx:122
+#: src/components/settings/settings-dialogs.tsx:378
+#: src/components/settings/settings-dialogs.tsx:506
+#: src/pages/entity-page.tsx:486
+#: src/pages/entity-page.tsx:698
+#: src/pages/import-wizard-page.tsx:223
+#: src/pages/import-wizard-page.tsx:264
+#: src/pages/list-detail-page.tsx:528
+#: src/pages/list-detail-page.tsx:994
+#: src/pages/lists-page.tsx:160
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/pages/activity-page.tsx:38
+msgid "Catch up"
+msgstr "Catch up"
+
+#: src/components/assets/entity-episodes.tsx:133
+#: src/components/assets/entity-episodes.tsx:140
+msgid "Change completion date"
+msgstr "Change completion date"
+
+#: src/pages/list-detail-page.tsx:970
+msgid "Changes the list's name."
+msgstr "Changes the list's name."
+
+#: src/components/settings/settings-sections.tsx:526
+msgid "Checklist (per-item checkboxes)"
+msgstr "Checklist (per-item checkboxes)"
+
+#: src/components/settings/settings-sections.tsx:815
+msgid "Chinese"
+msgstr "Chinese"
+
+#: src/components/entities/external-match-dialog.tsx:382
+msgid "Choose a candidate to compare fields."
+msgstr "Choose a candidate to compare fields."
+
+#: src/pages/entity-create-page.tsx:82
+#: src/pages/import-wizard-page.tsx:438
+msgid "Choose a type"
+msgstr "Choose a type"
+
+#: src/pages/entity-page.tsx:564
+msgid "Choose which lists {entityName} belongs to."
+msgstr "Choose which lists {entityName} belongs to."
+
+#: src/components/assets/episode-sync-dialog.tsx:269
+msgid "Clear all"
+msgstr "Clear all"
+
+#: src/components/ui/dialog.tsx:76
+#: src/components/ui/dialog.tsx:116
+msgid "Close"
+msgstr "Close"
+
+#: src/components/layout/app-frame.tsx:282
+#: src/components/layout/app-frame.tsx:298
+msgid "Close navigation"
+msgstr "Close navigation"
+
+#: src/components/home/coming-up-section.tsx:51
+msgid "Coming up"
+msgstr "Coming up"
+
+#: src/components/assets/quick-log-dialog.tsx:31
+#: src/components/settings/settings-sections.tsx:754
+#: src/components/settings/settings-sections.tsx:796
+#: src/components/settings/settings-sections.tsx:875
+#: src/pages/activity-page.tsx:46
+#: src/pages/import-wizard-page.tsx:52
+msgid "Completed"
+msgstr "Completed"
+
+#: src/components/settings/settings-dialogs.tsx:502
+msgid "Configure a section shown on the home page: its source type, filters, and ordering."
+msgstr "Configure a section shown on the home page: its source type, filters, and ordering."
+
+#: src/pages/home-page.tsx:92
+msgid "Configure Home"
+msgstr "Configure Home"
+
+#: src/components/settings/settings-dialogs.tsx:337
+msgid "Configure how this field is read, derived, and displayed."
+msgstr "Configure how this field is read, derived, and displayed."
+
+#: src/components/settings/settings-dialogs.tsx:307
+msgid "Configure the new field, then choose Done to add it. Going back discards it."
+msgstr "Configure the new field, then choose Done to add it. Going back discards it."
+
+#: src/components/settings/settings-editor.tsx:161
+msgid "Configure Vault"
+msgstr "Configure Vault"
+
+#: src/pages/statistics-page.tsx:53
+msgid "Connected"
+msgstr "Connected"
+
+#: src/pages/statistics-page.tsx:69
+msgid "Connection Fields"
+msgstr "Connection Fields"
+
+#: src/components/assets/entity-detail.tsx:180
+#: src/pages/statistics-page.tsx:51
+msgid "Connections"
+msgstr "Connections"
+
+#: src/components/settings/preset-picker.tsx:206
+msgid "Continue"
+msgstr "Continue"
+
+#. placeholder {0}: selected.size
+#: src/components/settings/preset-picker.tsx:205
+msgid "Continue ({0})"
+msgstr "Continue ({0})"
+
+#: src/components/layout/app-frame.tsx:330
+msgid "Core Views"
+msgstr "Core Views"
+
+#: src/components/assets/asset-toolbar.tsx:220
+msgid "Could not load options."
+msgstr "Could not load options."
+
+#: src/pages/entity-create-page.tsx:126
+#: src/pages/lists-page.tsx:164
+msgid "Create"
+msgstr "Create"
+
+#: src/pages/quick-capture-page.tsx:325
+msgid "Create “{query}” manually →"
+msgstr "Create “{query}” manually →"
+
+#: src/pages/entity-page.tsx:623
+msgid "Create & add"
+msgstr "Create & add"
+
+#: src/components/settings/vault-switcher.tsx:134
+msgid "Create new vault"
+msgstr "Create new vault"
+
+#: src/components/settings/vault-switcher.tsx:166
+#: src/pages/onboarding-page.tsx:209
+msgid "Create vault"
+msgstr "Create vault"
+
+#: src/components/settings/settings-editor.tsx:177
+msgid "Create Vault"
+msgstr "Create Vault"
+
+#. placeholder {0}: selected.size
+#: src/pages/onboarding-page.tsx:208
+msgid "Create vault ({0})"
+msgstr "Create vault ({0})"
+
+#: src/pages/entity-page.tsx:623
+#: src/pages/lists-page.tsx:164
+msgid "Creating"
+msgstr "Creating"
+
+#: src/pages/onboarding-page.tsx:206
+msgid "Creating…"
+msgstr "Creating…"
+
+#: src/pages/import-wizard-page.tsx:333
+msgid "CSV export"
+msgstr "CSV export"
+
+#: src/pages/lists-page.tsx:44
+msgid "Curated collections of your items, saved as plain files you own."
+msgstr "Curated collections of your items, saved as plain files you own."
+
+#. placeholder {0}: formatMetadataValue(currentValues[entry.field])
+#: src/components/entities/external-match-dialog.tsx:330
+msgid "Current: {0}"
+msgstr "Current: {0}"
+
+#: src/components/entities/metadata-editor.tsx:149
+msgid "Custom field"
+msgstr "Custom field"
+
+#: src/components/entities/metadata-editor.tsx:212
+msgid "Custom field name"
+msgstr "Custom field name"
+
+#: src/components/calendar/calendar-entry-item.tsx:27
+msgid "Daily Note"
+msgstr "Daily Note"
+
+#: src/components/settings/settings-editor.tsx:256
+msgid "Daily note indexing is disabled."
+msgstr "Daily note indexing is disabled."
+
+#: src/pages/calendar-page.tsx:129
+msgid "Daily note mentions"
+msgstr "Daily note mentions"
+
+#: src/pages/activity-page.tsx:29
+msgid "Daily notes"
+msgstr "Daily notes"
+
+#: src/components/settings/settings-editor.tsx:101
+#: src/components/settings/settings-editor.tsx:225
+msgid "Daily Notes"
+msgstr "Daily Notes"
+
+#. placeholder {0}: calendar.data.totals.dailyNotes
+#: src/pages/calendar-page.tsx:121
+msgid "Daily Notes {0}"
+msgstr "Daily Notes {0}"
+
+#: src/components/settings/settings-sections.tsx:396
+msgid "Daily-note logging"
+msgstr "Daily-note logging"
+
+#: src/components/layout/theme-mode-select.tsx:13
+msgid "Dark theme"
+msgstr "Dark theme"
+
+#: src/components/layout/theme-mode-select.tsx:21
+msgid "Dark theme. Switch to system theme."
+msgstr "Dark theme. Switch to system theme."
+
+#: src/components/calendar/calendar-entry-item.tsx:48
+#: src/pages/activity-page.tsx:269
+msgid "date"
+msgstr "date"
+
+#: src/components/assets/quick-log-dialog.tsx:133
+#: src/pages/activity-page.tsx:268
+msgid "Date"
+msgstr "Date"
+
+#: src/components/settings/settings-sections.tsx:74
+msgid "Date format"
+msgstr "Date format"
+
+#. placeholder {0}: fieldDisplayLabel(field)
+#: src/components/settings/settings-sections.tsx:131
+msgid "Date: {0}"
+msgstr "Date: {0}"
+
+#: src/pages/statistics-page.tsx:52
+msgid "Dated"
+msgstr "Dated"
+
+#: src/pages/statistics-page.tsx:81
+msgid "Dated entities by month and year — compare this year against past years, filter by type"
+msgstr "Dated entities by month and year — compare this year against past years, filter by type"
+
+#: src/components/assets/entity-detail.tsx:231
+msgid "Dates"
+msgstr "Dates"
+
+#: src/pages/activity-page.tsx:28
+msgid "Dates & episodes"
+msgstr "Dates & episodes"
+
+#: src/components/settings/settings-sections.tsx:219
+msgid "Default"
+msgstr "Default"
+
+#: src/components/settings/settings-sections.tsx:101
+msgid "Default line format"
+msgstr "Default line format"
+
+#: src/components/settings/settings-sections.tsx:517
+msgid "Default provider order is used."
+msgstr "Default provider order is used."
+
+#: src/pages/entity-page.tsx:461
+#: src/pages/list-detail-page.tsx:414
+#: src/pages/list-detail-page.tsx:628
+msgid "Delete"
+msgstr "Delete"
+
+#: src/components/assets/asset-toolbar.tsx:109
+#: src/components/settings/settings-sections.tsx:221
+msgid "Descending"
+msgstr "Descending"
+
+#: src/pages/list-detail-page.tsx:433
+msgid "Describe this list (appears above the items)…"
+msgstr "Describe this list (appears above the items)…"
+
+#: src/pages/list-detail-page.tsx:431
+msgid "Description"
+msgstr "Description"
+
+#: src/components/assets/episode-sync-dialog.tsx:381
+msgid "Deselect group"
+msgstr "Deselect group"
+
+#: src/components/assets/entity-detail.tsx:143
+msgid "Details"
+msgstr "Details"
+
+#: src/components/assets/asset-toolbar.tsx:106
+#: src/components/settings/settings-sections.tsx:208
+msgid "Direction"
+msgstr "Direction"
+
+#: src/components/settings/settings-controls.tsx:271
+msgid "Disable"
+msgstr "Disable"
+
+#: src/pages/settings-page.tsx:143
+msgid "Discard"
+msgstr "Discard"
+
+#: src/pages/settings-page.tsx:119
+msgid "Discard unsaved changes?"
+msgstr "Discard unsaved changes?"
+
+#: src/components/settings/settings-sections.tsx:676
+msgid "Display name"
+msgstr "Display name"
+
+#: src/components/settings/settings-dialogs.tsx:316
+#: src/components/settings/settings-dialogs.tsx:353
+#: src/pages/entity-page.tsx:631
+#: src/pages/list-detail-page.tsx:930
+msgid "Done"
+msgstr "Done"
+
+#: src/pages/entity-page.tsx:451
+msgid "Download cover"
+msgstr "Download cover"
+
+#: src/components/assets/asset-download-panel.tsx:74
+msgid "Download cover images so you keep your own copy."
+msgstr "Download cover images so you keep your own copy."
+
+#: src/components/entities/external-match-dialog.tsx:199
+msgid "Download cover locally"
+msgstr "Download cover locally"
+
+#: src/components/assets/asset-download-panel.tsx:71
+msgid "Download remote covers"
+msgstr "Download remote covers"
+
+#: src/components/assets/asset-download-panel.tsx:82
+msgid "Download scope"
+msgstr "Download scope"
+
+#: src/pages/list-detail-page.tsx:668
+msgid "Drag items here"
+msgstr "Drag items here"
+
+#: src/pages/list-detail-page.tsx:731
+msgid "Drag to reorder"
+msgstr "Drag to reorder"
+
+#: src/components/settings/settings-sections.tsx:876
+#: src/pages/import-wizard-page.tsx:53
+msgid "Dropped"
+msgstr "Dropped"
+
+#: src/pages/review-page.tsx:55
+msgid "Duplicate Filenames"
+msgstr "Duplicate Filenames"
+
+#: src/pages/entity-page.tsx:434
+#: src/pages/list-detail-page.tsx:819
+msgid "Edit"
+msgstr "Edit"
+
+#. placeholder {0}: entityTitle(entity, language)
+#: src/pages/entity-edit-page.tsx:151
+msgid "Edit {0}"
+msgstr "Edit {0}"
+
+#: src/components/settings/raw-config-editor.tsx:83
+msgid "Edit config.yaml"
+msgstr "Edit config.yaml"
+
+#: src/pages/entity-edit-page.tsx:151
+msgid "Edit Entity"
+msgstr "Edit Entity"
+
+#: src/components/settings/settings-dialogs.tsx:374
+msgid "Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema."
+msgstr "Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema."
+
+#: src/components/assets/frontmatter-panel.tsx:121
+#: src/components/assets/frontmatter-panel.tsx:211
+#: src/components/assets/frontmatter-panel.tsx:233
+#: src/components/entities/metadata-inputs.tsx:82
+#: src/components/entities/metadata-inputs.tsx:135
+msgid "Empty"
+msgstr "Empty"
+
+#: src/components/assets/frontmatter-panel.tsx:148
+msgid "Empty list"
+msgstr "Empty list"
+
+#: src/components/assets/frontmatter-panel.tsx:183
+msgid "Empty object"
+msgstr "Empty object"
+
+#: src/components/settings/settings-controls.tsx:271
+msgid "Enable"
+msgstr "Enable"
+
+#: src/components/settings/settings-sections.tsx:817
+msgid "English"
+msgstr "English"
+
+#: src/pages/statistics-page.tsx:50
+msgid "Entities"
+msgstr "Entities"
+
+#: src/pages/entity-edit-page.tsx:257
+#: src/pages/entity-page.tsx:385
+msgid "Entity not found"
+msgstr "Entity not found"
+
+#: src/components/settings/settings-dialogs.tsx:222
+#: src/components/settings/settings-dialogs.tsx:373
+msgid "Entity type"
+msgstr "Entity type"
+
+#: src/components/settings/settings-sections.tsx:172
+msgid "Enum and enum list fields from this type."
+msgstr "Enum and enum list fields from this type."
+
+#: src/components/settings/settings-sections.tsx:752
+msgid "Enum options"
+msgstr "Enum options"
+
+#: src/pages/activity-page.tsx:297
+#: src/pages/import-wizard-page.tsx:609
+msgid "Episodes"
+msgstr "Episodes"
+
+#: src/components/settings/settings-sections.tsx:797
+#: src/pages/activity-page.tsx:48
+msgid "Event"
+msgstr "Event"
+
+#: src/components/settings/settings-sections.tsx:1026
+msgid "External field"
+msgstr "External field"
+
+#: src/components/settings/settings-sections.tsx:991
+msgid "External field mappings"
+msgstr "External field mappings"
+
+#: src/components/entities/external-match-dialog.tsx:110
+msgid "External Match"
+msgstr "External Match"
+
+#: src/components/settings/settings-sections.tsx:608
+msgid "External metadata"
+msgstr "External metadata"
+
+#: src/components/entities/external-match-dialog.tsx:326
+msgid "external ref"
+msgstr "external ref"
+
+#: src/components/settings/settings-sections.tsx:826
+#: src/components/settings/settings-sections.tsx:1015
+msgid "External source"
+msgstr "External source"
+
+#: src/components/settings/settings-sections.tsx:1063
+#: src/components/settings/settings-sections.tsx:1069
+msgid "External types"
+msgstr "External types"
+
+#: src/pages/import-wizard-page.tsx:376
+msgid "Fetch & plan"
+msgstr "Fetch & plan"
+
+#. placeholder {0}: source?.label ?? sourceId
+#: src/pages/import-wizard-page.tsx:220
+msgid "Fetching your library from {0}…"
+msgstr "Fetching your library from {0}…"
+
+#: src/components/settings/settings-dialogs.tsx:336
+#: src/components/settings/settings-dialogs.tsx:396
+#: src/components/settings/settings-dialogs.tsx:406
+#: src/components/settings/settings-sections.tsx:245
+#: src/components/settings/settings-sections.tsx:661
+msgid "Field"
+msgstr "Field"
+
+#: src/components/settings/settings-dialogs.tsx:396
+msgid "Fields"
+msgstr "Fields"
+
+#: src/pages/entity-create-page.tsx:102
+msgid "File name"
+msgstr "File name"
+
+#: src/components/settings/settings-sections.tsx:358
+msgid "Filename"
+msgstr "Filename"
+
+#: src/components/settings/settings-sections.tsx:375
+msgid "Filename title — used as"
+msgstr "Filename title — used as"
+
+#: src/components/settings/settings-sections.tsx:360
+msgid "Filename title language"
+msgstr "Filename title language"
+
+#: src/pages/activity-page.tsx:138
+msgid "Filter by source"
+msgstr "Filter by source"
+
+#: src/components/analytics/activity-heatmap.tsx:89
+#: src/pages/activity-page.tsx:126
+msgid "Filter by type"
+msgstr "Filter by type"
+
+#: src/components/assets/asset-toolbar.tsx:73
+#: src/components/settings/settings-sections.tsx:171
+msgid "Filters"
+msgstr "Filters"
+
+#: src/pages/settings-page.tsx:79
+msgid "Form"
+msgstr "Form"
+
+#: src/pages/import-wizard-page.tsx:40
+msgid "Game"
+msgstr "Game"
+
+#: src/pages/lists-page.tsx:135
+msgid "Give your list a name."
+msgstr "Give your list a name."
+
+#: src/components/layout/app-frame.tsx:111
+msgid "Go back"
+msgstr "Go back"
+
+#: src/pages/import-wizard-page.tsx:269
+msgid "Go to library"
+msgstr "Go to library"
+
+#: src/components/assets/asset-toolbar.tsx:128
+msgid "Grid"
+msgstr "Grid"
+
+#: src/pages/review-page.tsx:169
+msgid "Has date"
+msgstr "Has date"
+
+#: src/components/settings/settings-sections.tsx:598
+msgid "Heading"
+msgstr "Heading"
+
+#: src/components/layout/app-frame.tsx:333
+#: src/components/settings/settings-editor.tsx:108
+#: src/components/settings/settings-editor.tsx:263
+#: src/pages/home-page.tsx:30
+msgid "Home"
+msgstr "Home"
+
+#: src/components/settings/settings-dialogs.tsx:453
+#: src/components/settings/settings-dialogs.tsx:501
+msgid "Home section"
+msgstr "Home section"
+
+#: src/components/settings/settings-editor.tsx:291
+msgid "Home sections are disabled."
+msgstr "Home sections are disabled."
+
+#: src/components/settings/settings-sections.tsx:334
+msgid "Icon"
+msgstr "Icon"
+
+#: src/components/settings/settings-sections.tsx:151
+#: src/components/settings/settings-sections.tsx:332
+msgid "ID"
+msgstr "ID"
+
+#: src/components/layout/app-frame.tsx:381
+#: src/pages/import-wizard-page.tsx:170
+msgid "Import"
+msgstr "Import"
+
+#. placeholder {0}: incoming - already
+#: src/components/assets/episode-sync-dialog.tsx:345
+msgid "Import ({0} new · {already} updated)"
+msgstr "Import ({0} new · {already} updated)"
+
+#: src/components/assets/episode-sync-dialog.tsx:346
+msgid "Import ({incoming})"
+msgstr "Import ({incoming})"
+
+#: src/pages/import-wizard-page.tsx:272
+msgid "Import another"
+msgstr "Import another"
+
+#: src/pages/import-wizard-page.tsx:632
+msgid "Import complete"
+msgstr "Import complete"
+
+#: src/components/assets/episode-sync-dialog.tsx:343
+msgid "Importing"
+msgstr "Importing"
+
+#: src/pages/import-wizard-page.tsx:185
+msgid "Importing creates files, so it is unavailable here."
+msgstr "Importing creates files, so it is unavailable here."
+
+#: src/pages/import-wizard-page.tsx:632
+msgid "Importing…"
+msgstr "Importing…"
+
+#: src/pages/import-wizard-page.tsx:547
+#: src/pages/import-wizard-page.tsx:551
+#: src/pages/quick-capture-page.tsx:289
+msgid "In library ✓"
+msgstr "In library ✓"
+
+#: src/components/assets/episode-sync-dialog.tsx:464
+msgid "in list"
+msgstr "in list"
+
+#. placeholder {0}: item.title
+#: src/pages/import-wizard-page.tsx:515
+msgid "Include {0}"
+msgstr "Include {0}"
+
+#: src/components/calendar/calendar-entry-item.tsx:26
+msgid "Item"
+msgstr "Item"
+
+#. placeholder {0}: index + 1
+#: src/components/assets/frontmatter-panel.tsx:170
+msgid "Item {0}"
+msgstr "Item {0}"
+
+#: src/components/settings/settings-sections.tsx:609
+msgid "Item list"
+msgstr "Item list"
+
+#: src/components/assets/episode-sync-dialog.tsx:404
+msgid "Items"
+msgstr "Items"
+
+#. placeholder {0}: calendar.data.totals.episodes
+#: src/pages/calendar-page.tsx:118
+msgid "Items {0}"
+msgstr "Items {0}"
+
+#: src/pages/list-detail-page.tsx:441
+msgid "Items <0>({totalItems})</0>"
+msgstr "Items <0>({totalItems})</0>"
+
+#: src/components/settings/settings-sections.tsx:816
+msgid "Japanese"
+msgstr "Japanese"
+
+#: src/pages/settings-page.tsx:135
+msgid "Keep editing"
+msgstr "Keep editing"
+
+#: src/components/assets/episode-sync-dialog.tsx:327
+msgid "Keep groups"
+msgstr "Keep groups"
+
+#: src/components/settings/settings-sections.tsx:602
+msgid "Kind"
+msgstr "Kind"
+
+#: src/components/settings/settings-sections.tsx:333
+msgid "Label"
+msgstr "Label"
+
+#. placeholder {0}: field.titleLanguage
+#: src/components/settings/settings-field-descriptors.ts:59
+msgid "lang {0}"
+msgstr "lang {0}"
+
+#: src/components/layout/language-select.tsx:53
+#: src/components/layout/language-select.tsx:54
+msgid "Language"
+msgstr "Language"
+
+#: src/components/home/coming-up-section.tsx:166
+msgid "Later"
+msgstr "Later"
+
+#: src/components/analytics/activity-heatmap.tsx:153
+msgid "less"
+msgstr "less"
+
+#: src/components/layout/app-frame.tsx:341
+msgid "Library"
+msgstr "Library"
+
+#: src/components/layout/theme-mode-select.tsx:12
+msgid "Light theme"
+msgstr "Light theme"
+
+#: src/components/layout/theme-mode-select.tsx:20
+msgid "Light theme. Switch to dark theme."
+msgstr "Light theme. Switch to dark theme."
+
+#: src/components/settings/settings-sections.tsx:193
+msgid "Limit"
+msgstr "Limit"
+
+#. placeholder {0}: snippet.line
+#: src/components/assets/entity-dates.tsx:69
+#: src/components/calendar/calendar-entry-item.tsx:67
+msgid "line {0}"
+msgstr "line {0}"
+
+#: src/components/settings/settings-sections.tsx:437
+msgid "Line format"
+msgstr "Line format"
+
+#: src/components/settings/preset-picker.tsx:126
+msgid "Link your new types"
+msgstr "Link your new types"
+
+#: src/components/assets/entity-detail.tsx:190
+msgid "Linked from"
+msgstr "Linked from"
+
+#: src/components/assets/entity-detail.tsx:209
+msgid "Links"
+msgstr "Links"
+
+#: src/components/assets/entity-detail.tsx:183
+msgid "Links to"
+msgstr "Links to"
+
+#: src/components/assets/asset-toolbar.tsx:119
+msgid "List"
+msgstr "List"
+
+#: src/pages/entity-page.tsx:548
+#: src/pages/lists-page.tsx:113
+msgid "List created"
+msgstr "List created"
+
+#: src/pages/list-detail-page.tsx:367
+msgid "List deleted"
+msgstr "List deleted"
+
+#: src/pages/list-detail-page.tsx:389
+msgid "List not found"
+msgstr "List not found"
+
+#: src/pages/list-detail-page.tsx:634
+msgid "List style"
+msgstr "List style"
+
+#: src/components/layout/app-frame.tsx:350
+#: src/pages/lists-page.tsx:41
+msgid "Lists"
+msgstr "Lists"
+
+#: src/pages/activity-page.tsx:189
+msgid "Load more"
+msgstr "Load more"
+
+#: src/components/assets/episode-sync-dialog.tsx:277
+#: src/components/settings/raw-config-editor.tsx:109
+#: src/pages/calendar-page.tsx:88
+#: src/pages/entity-edit-page.tsx:198
+#: src/pages/entity-page.tsx:276
+#: src/pages/entity-page.tsx:570
+#: src/pages/home-page.tsx:33
+#: src/pages/home-page.tsx:61
+#: src/pages/library-page.tsx:393
+#: src/pages/list-detail-page.tsx:385
+#: src/pages/list-detail-page.tsx:890
+#: src/pages/lists-page.tsx:55
+#: src/pages/onboarding-page.tsx:53
+#: src/pages/review-page.tsx:128
+#: src/pages/review-page.tsx:138
+#: src/pages/settings-page.tsx:95
+#: src/pages/statistics-page.tsx:33
+#: src/pages/statistics-page.tsx:43
+msgid "Loading"
+msgstr "Loading"
+
+#: src/pages/activity-page.tsx:150
+msgid "Loading activity…"
+msgstr "Loading activity…"
+
+#: src/components/settings/preset-picker.tsx:155
+msgid "Loading built-in types…"
+msgstr "Loading built-in types…"
+
+#: src/pages/entity-edit-page.tsx:154
+msgid "Loading entity"
+msgstr "Loading entity"
+
+#: src/components/layout/app-frame.tsx:374
+msgid "Loading taxonomy"
+msgstr "Loading taxonomy"
+
+#: src/pages/activity-page.tsx:189
+#: src/pages/import-wizard-page.tsx:207
+msgid "Loading…"
+msgstr "Loading…"
+
+#: src/components/assets/quick-log-dialog.tsx:161
+#: src/pages/entity-page.tsx:347
+msgid "Log"
+msgstr "Log"
+
+#: src/components/assets/quick-log-dialog.tsx:102
+msgid "Log activity"
+msgstr "Log activity"
+
+#: src/components/settings/settings-sections.tsx:95
+msgid "Log section"
+msgstr "Log section"
+
+#: src/components/settings/settings-sections.tsx:420
+msgid "Log to daily note"
+msgstr "Log to daily note"
+
+#: src/components/settings/settings-sections.tsx:88
+msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
+msgstr "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
+
+#: src/components/assets/quick-log-dialog.tsx:161
+msgid "Logging…"
+msgstr "Logging…"
+
+#: src/pages/entity-page.tsx:442
+#: src/pages/entity-page.tsx:561
+msgid "Manage lists"
+msgstr "Manage lists"
+
+#: src/components/settings/settings-sections.tsx:944
+msgid "Map each option to a status"
+msgstr "Map each option to a status"
+
+#: src/pages/list-detail-page.tsx:746
+msgid "Mark as done"
+msgstr "Mark as done"
+
+#: src/pages/list-detail-page.tsx:746
+msgid "Mark as not done"
+msgstr "Mark as not done"
+
+#: src/pages/import-wizard-page.tsx:618
+msgid "Mark watched progress"
+msgstr "Mark watched progress"
+
+#: src/components/settings/settings-sections.tsx:553
+msgid "Markdown body sections"
+msgstr "Markdown body sections"
+
+#. placeholder {0}: data.willFlipStatus.value
+#: src/components/assets/quick-log-dialog.tsx:212
+msgid "Marks as {0}"
+msgstr "Marks as {0}"
+
+#: src/pages/entity-edit-page.tsx:165
+#: src/pages/entity-page.tsx:446
+msgid "Match"
+msgstr "Match"
+
+#: src/pages/statistics-page.tsx:30
+msgid "Memory Analytics"
+msgstr "Memory Analytics"
+
+#: src/components/assets/entity-dates.tsx:23
+#: src/pages/entity-create-page.tsx:117
+#: src/pages/entity-edit-page.tsx:239
+msgid "Metadata"
+msgstr "Metadata"
+
+#: src/pages/review-page.tsx:124
+msgid "Metadata Review"
+msgstr "Metadata Review"
+
+#: src/pages/activity-page.tsx:283
+msgid "Missed?"
+msgstr "Missed?"
+
+#: src/pages/review-page.tsx:49
+msgid "Missing Cover"
+msgstr "Missing Cover"
+
+#: src/pages/review-page.tsx:51
+msgid "Missing Links"
+msgstr "Missing Links"
+
+#: src/components/analytics/activity-heatmap.tsx:157
+msgid "more"
+msgstr "more"
+
+#: src/pages/list-detail-page.tsx:517
+msgid "Move list to trash?"
+msgstr "Move list to trash?"
+
+#: src/pages/entity-page.tsx:489
+#: src/pages/list-detail-page.tsx:537
+msgid "Move to Trash"
+msgstr "Move to Trash"
+
+#: src/pages/entity-page.tsx:476
+msgid "Move to trash?"
+msgstr "Move to trash?"
+
+#: src/pages/entity-page.tsx:230
+msgid "Moved to trash"
+msgstr "Moved to trash"
+
+#: src/pages/import-wizard-page.tsx:39
+msgid "Music"
+msgstr "Music"
+
+#: src/components/settings/vault-switcher.tsx:153
+msgid "My Vault"
+msgstr "My Vault"
+
+#: src/pages/list-detail-page.tsx:982
+#: src/pages/lists-page.tsx:147
+msgid "Name"
+msgstr "Name"
+
+#: src/components/layout/app-frame.tsx:287
+#: src/components/layout/app-frame.tsx:295
+msgid "Navigation"
+msgstr "Navigation"
+
+#: src/pages/import-wizard-page.tsx:574
+msgid "Needs review"
+msgstr "Needs review"
+
+#: src/components/settings/settings-dialogs.tsx:306
+msgid "New field"
+msgstr "New field"
+
+#: src/pages/entity-page.tsx:611
+#: src/pages/lists-page.tsx:49
+#: src/pages/lists-page.tsx:132
+msgid "New list"
+msgstr "New list"
+
+#: src/pages/list-detail-page.tsx:310
+msgid "New section"
+msgstr "New section"
+
+#: src/components/settings/settings-sections.tsx:80
+msgid "New-note template"
+msgstr "New-note template"
+
+#: src/components/entities/external-match-dialog.tsx:334
+msgid "New: {newValue}"
+msgstr "New: {newValue}"
+
+#: src/pages/calendar-page.tsx:104
+msgid "Next"
+msgstr "Next"
+
+#: src/components/assets/frontmatter-panel.tsx:129
+#: src/components/assets/frontmatter-panel.tsx:234
+#: src/components/entities/metadata-inputs.tsx:137
+#: src/pages/library-page.tsx:495
+msgid "No"
+msgstr "No"
+
+#: src/pages/activity-page.tsx:153
+msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
+msgstr "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
+
+#: src/pages/statistics-page.tsx:36
+msgid "No analytics data"
+msgstr "No analytics data"
+
+#: src/pages/calendar-page.tsx:91
+msgid "No calendar data"
+msgstr "No calendar data"
+
+#: src/components/entities/external-match-dialog.tsx:342
+msgid "No candidate fields or body sections match this type schema."
+msgstr "No candidate fields or body sections match this type schema."
+
+#: src/components/entities/external-match-dialog.tsx:171
+#: src/components/entities/use-external-match.ts:57
+#: src/components/entities/use-external-match.ts:176
+msgid "No candidates loaded"
+msgstr "No candidates loaded"
+
+#: src/pages/review-page.tsx:170
+msgid "No date"
+msgstr "No date"
+
+#: src/pages/calendar-page.tsx:169
+msgid "No date selected"
+msgstr "No date selected"
+
+#: src/components/analytics/activity-heatmap.tsx:73
+msgid "No dated entities yet."
+msgstr "No dated entities yet."
+
+#: src/components/assets/entity-dates.tsx:13
+msgid "No dates"
+msgstr "No dates"
+
+#: src/pages/import-wizard-page.tsx:467
+msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
+msgstr "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
+
+#: src/components/settings/settings-dialogs.tsx:215
+msgid "No entity types configured."
+msgstr "No entity types configured."
+
+#: src/pages/calendar-page.tsx:173
+#: src/pages/calendar-page.tsx:183
+#: src/pages/library-page.tsx:441
+msgid "No entries"
+msgstr "No entries"
+
+#: src/components/settings/settings-sections.tsx:190
+msgid "No enum fields available for this type."
+msgstr "No enum fields available for this type."
+
+#: src/components/settings/settings-sections.tsx:1042
+msgid "No external mappings."
+msgstr "No external mappings."
+
+#: src/components/entities/use-external-match.ts:188
+msgid "No external matches"
+msgstr "No external matches"
+
+#: src/components/settings/settings-dialogs.tsx:399
+msgid "No fields configured."
+msgstr "No fields configured."
+
+#: src/components/settings/vault-switcher.tsx:138
+msgid "No folder selected"
+msgstr "No folder selected"
+
+#: src/components/settings/settings-dialogs.tsx:446
+msgid "No home sections configured."
+msgstr "No home sections configured."
+
+#: src/pages/home-page.tsx:75
+msgid "No Home sections yet"
+msgstr "No Home sections yet"
+
+#. placeholder {0}: episodes.heading
+#: src/components/assets/entity-episodes.tsx:85
+msgid "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
+msgstr "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
+
+#: src/pages/list-detail-page.tsx:457
+msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
+msgstr "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
+
+#: src/components/assets/entity-detail.tsx:226
+msgid "No links yet"
+msgstr "No links yet"
+
+#: src/pages/entity-page.tsx:574
+msgid "No lists yet. Create one below."
+msgstr "No lists yet. Create one below."
+
+#: src/pages/lists-page.tsx:59
+msgid "No lists yet. Create one to start collecting entities."
+msgstr "No lists yet. Create one to start collecting entities."
+
+#: src/components/settings/settings-sections.tsx:576
+msgid "No markdown body sections."
+msgstr "No markdown body sections."
+
+#: src/pages/import-wizard-page.tsx:568
+msgid "No matched source"
+msgstr "No matched source"
+
+#: src/pages/quick-capture-page.tsx:259
+msgid "No matches found."
+msgstr "No matches found."
+
+#: src/pages/list-detail-page.tsx:894
+msgid "No matching entities."
+msgstr "No matching entities."
+
+#: src/pages/import-wizard-page.tsx:570
+msgid "No matching type"
+msgstr "No matching type"
+
+#: src/components/assets/frontmatter-panel.tsx:34
+msgid "No other details"
+msgstr "No other details"
+
+#: src/components/assets/episode-sync-dialog.tsx:283
+msgid "No provider with a list is linked on this entity."
+msgstr "No provider with a list is linked on this entity."
+
+#: src/pages/review-page.tsx:190
+msgid "No queue items match the current filters"
+msgstr "No queue items match the current filters"
+
+#: src/pages/review-page.tsx:131
+msgid "No review data"
+msgstr "No review data"
+
+#: src/pages/import-wizard-page.tsx:527
+msgid "no source"
+msgstr "no source"
+
+#: src/components/entities/external-match-dialog.tsx:129
+msgid "No supported sources"
+msgstr "No supported sources"
+
+#: src/components/settings/settings-sections.tsx:1073
+msgid "No type options."
+msgstr "No type options."
+
+#: src/components/entities/external-match-dialog.tsx:313
+#: src/components/entities/external-match-dialog.tsx:372
+msgid "No value returned"
+msgstr "No value returned"
+
+#: src/components/settings/settings-controls.tsx:97
+msgid "No values."
+msgstr "No values."
+
+#: src/components/settings/vault-switcher.tsx:117
+msgid "No vaults yet."
+msgstr "No vaults yet."
+
+#: src/components/settings/settings-sections.tsx:297
+#: src/components/settings/settings-sections.tsx:389
+#: src/components/settings/settings-sections.tsx:740
+#: src/components/settings/settings-sections.tsx:793
+#: src/components/settings/settings-sections.tsx:838
+msgid "None"
+msgstr "None"
+
+#: src/components/settings/settings-sections.tsx:527
+msgid "None (plain list)"
+msgstr "None (plain list)"
+
+#: src/components/assets/quick-log-dialog.tsx:138
+msgid "Note <0>(optional)</0>"
+msgstr "Note <0>(optional)</0>"
+
+#: src/pages/import-wizard-page.tsx:588
+msgid "notes"
+msgstr "notes"
+
+#: src/components/assets/entity-detail.tsx:201
+#: src/components/entities/metadata-editor.tsx:165
+#: src/pages/list-detail-page.tsx:488
+msgid "Notes"
+msgstr "Notes"
+
+#: src/pages/list-detail-page.tsx:490
+msgid "Notes shown below the items…"
+msgstr "Notes shown below the items…"
+
+#: src/components/home/home-section.tsx:31
+msgid "Nothing here yet"
+msgstr "Nothing here yet"
+
+#: src/components/assets/quick-log-dialog.tsx:196
+msgid "Nothing to log for this type."
+msgstr "Nothing to log for this type."
+
+#: src/components/settings/settings-editor.tsx:231
+#: src/components/settings/settings-editor.tsx:269
+msgid "off"
+msgstr "off"
+
+#: src/components/settings/settings-editor.tsx:104
+#: src/components/settings/settings-editor.tsx:111
+msgid "Off"
+msgstr "Off"
+
+#: src/components/settings/settings-sections.tsx:873
+#: src/pages/import-wizard-page.tsx:50
+msgid "Ongoing"
+msgstr "Ongoing"
+
+#: src/components/entities/metadata-inputs.tsx:251
+msgid "Only image files can be uploaded."
+msgstr "Only image files can be uploaded."
+
+#: src/pages/import-wizard-page.tsx:372
+msgid "Only public profiles are supported. Nothing is written until you review the plan."
+msgstr "Only public profiles are supported. Nothing is written until you review the plan."
+
+#: src/pages/entity-page.tsx:669
+msgid "Only the name changes — everything else stays the same."
+msgstr "Only the name changes — everything else stays the same."
+
+#: src/components/settings/vault-switcher.tsx:100
+msgid "Open"
+msgstr "Open"
+
+#: src/components/settings/vault-switcher.tsx:125
+msgid "Open existing vault"
+msgstr "Open existing vault"
+
+#: src/components/settings/vault-switcher.tsx:129
+msgid "Open folder"
+msgstr "Open folder"
+
+#: src/components/layout/app-frame.tsx:132
+msgid "Open navigation"
+msgstr "Open navigation"
+
+#: src/components/settings/vault-switcher.tsx:77
+msgid "Open or create a vault to get started."
+msgstr "Open or create a vault to get started."
+
+#: src/pages/list-detail-page.tsx:646
+msgid "Ordered"
+msgstr "Ordered"
+
+#: src/components/settings/settings-sections.tsx:741
+msgid "Original"
+msgstr "Original"
+
+#: src/components/settings/settings-sections.tsx:390
+msgid "Original (filename is the title)"
+msgstr "Original (filename is the title)"
+
+#: src/components/settings/settings-editor.tsx:332
+msgid "Overview"
+msgstr "Overview"
+
+#: src/components/settings/vault-switcher.tsx:136
+msgid "Parent folder"
+msgstr "Parent folder"
+
+#: src/pages/import-wizard-page.tsx:355
+msgid "Paste the contents of the exported .csv file"
+msgstr "Paste the contents of the exported .csv file"
+
+#: src/components/settings/settings-controls.tsx:174
+#: src/components/settings/settings-sections.tsx:336
+msgid "Path"
+msgstr "Path"
+
+#: src/components/settings/settings-sections.tsx:65
+msgid "Paths"
+msgstr "Paths"
+
+#: src/components/settings/settings-sections.tsx:874
+#: src/pages/import-wizard-page.tsx:51
+msgid "Paused"
+msgstr "Paused"
+
+#: src/pages/onboarding-page.tsx:173
+msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
+msgstr "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
+
+#: src/pages/activity-page.tsx:47
+msgid "Planned"
+msgstr "Planned"
+
+#: src/components/settings/settings-sections.tsx:794
+#: src/components/settings/settings-sections.tsx:872
+#: src/pages/import-wizard-page.tsx:49
+msgid "Planning"
+msgstr "Planning"
+
+#: src/pages/calendar-page.tsx:98
+msgid "Prev"
+msgstr "Prev"
+
+#: src/pages/list-detail-page.tsx:819
+msgid "Preview"
+msgstr "Preview"
+
+#: src/components/assets/quick-log-dialog.tsx:187
+msgid "Previewing…"
+msgstr "Previewing…"
+
+#: src/components/assets/quick-log-dialog.tsx:29
+#: src/pages/review-page.tsx:343
+msgid "Progress"
+msgstr "Progress"
+
+#: src/components/entities/metadata-inputs.tsx:634
+msgid "property"
+msgstr "property"
+
+#: src/components/assets/episode-sync-dialog.tsx:242
+#: src/components/entities/external-match-dialog.tsx:126
+#: src/components/settings/settings-sections.tsx:488
+#: src/pages/quick-capture-page.tsx:229
+msgid "Provider"
+msgstr "Provider"
+
+#: src/components/settings/provider-credentials.tsx:57
+msgid "Provider Credentials"
+msgstr "Provider Credentials"
+
+#: src/components/settings/settings-sections.tsx:479
+#: src/components/settings/settings-sections.tsx:502
+msgid "Provider priority"
+msgstr "Provider priority"
+
+#: src/components/settings/settings-sections.tsx:345
+msgid "Providers"
+msgstr "Providers"
+
+#: src/pages/import-wizard-page.tsx:333
+msgid "Public profile"
+msgstr "Public profile"
+
+#: src/pages/quick-capture-page.tsx:176
+msgid "Quick Capture"
+msgstr "Quick Capture"
+
+#: src/pages/import-wizard-page.tsx:41
+msgid "Real"
+msgstr "Real"
+
+#: src/pages/activity-page.tsx:36
+msgid "Recent"
+msgstr "Recent"
+
+#: src/components/assets/quick-log-dialog.tsx:104
+msgid "Record what you did and when. Pick an earlier date to log something from a past day."
+msgstr "Record what you did and when. Pick an earlier date to log something from a past day."
+
+#. placeholder {0}: externalSourceLabel(providerCatalog, ref.provider)
+#: src/components/entities/external-match-dialog.tsx:160
+msgid "Refresh {0}"
+msgstr "Refresh {0}"
+
+#: src/components/settings/settings-sections.tsx:936
+msgid "Regular enum"
+msgstr "Regular enum"
+
+#: src/components/settings/settings-sections.tsx:128
+msgid "Relation count"
+msgstr "Relation count"
+
+#: src/components/settings/settings-sections.tsx:861
+msgid "Relation type"
+msgstr "Relation type"
+
+#: src/components/error-boundary.tsx:67
+msgid "Reload"
+msgstr "Reload"
+
+#: src/pages/entity-edit-page.tsx:191
+msgid "Reload latest version"
+msgstr "Reload latest version"
+
+#. placeholder {0}: field.key
+#. placeholder {0}: vault.name
+#: src/components/entities/metadata-editor.tsx:221
+#: src/components/settings/vault-switcher.tsx:107
+msgid "Remove {0}"
+msgstr "Remove {0}"
+
+#: src/components/settings/settings-controls.tsx:92
+msgid "Remove {label}"
+msgstr "Remove {label}"
+
+#: src/components/settings/settings-sections.tsx:614
+msgid "Remove body section"
+msgstr "Remove body section"
+
+#: src/components/settings/settings-sections.tsx:1036
+msgid "Remove external field mapping"
+msgstr "Remove external field mapping"
+
+#: src/components/settings/settings-dialogs.tsx:350
+#: src/components/settings/settings-dialogs.tsx:410
+msgid "Remove field"
+msgstr "Remove field"
+
+#: src/components/settings/settings-sections.tsx:267
+msgid "Remove filter"
+msgstr "Remove filter"
+
+#: src/components/entities/metadata-inputs.tsx:293
+msgid "Remove image"
+msgstr "Remove image"
+
+#: src/pages/list-detail-page.tsx:787
+msgid "Remove item"
+msgstr "Remove item"
+
+#: src/components/settings/settings-sections.tsx:511
+msgid "Remove provider priority"
+msgstr "Remove provider priority"
+
+#: src/components/settings/settings-dialogs.tsx:462
+msgid "Remove section"
+msgstr "Remove section"
+
+#: src/components/settings/settings-dialogs.tsx:230
+msgid "Remove type"
+msgstr "Remove type"
+
+#: src/pages/entity-page.tsx:438
+#: src/pages/entity-page.tsx:666
+#: src/pages/entity-page.tsx:705
+#: src/pages/list-detail-page.tsx:404
+#: src/pages/list-detail-page.tsx:624
+#: src/pages/list-detail-page.tsx:998
+msgid "Rename"
+msgstr "Rename"
+
+#: src/pages/list-detail-page.tsx:967
+msgid "Rename list"
+msgstr "Rename list"
+
+#: src/pages/entity-page.tsx:185
+msgid "Renamed"
+msgstr "Renamed"
+
+#: src/pages/entity-page.tsx:184
+msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
+msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
+
+#. placeholder {0}: collision.assignedId
+#: src/components/settings/preset-picker.tsx:119
+msgid "renamed to “{0}”"
+msgstr "renamed to “{0}”"
+
+#: src/pages/entity-page.tsx:705
+#: src/pages/list-detail-page.tsx:998
+msgid "Renaming"
+msgstr "Renaming"
+
+#: src/components/entities/external-match-dialog.tsx:366
+msgid "replaces existing section"
+msgstr "replaces existing section"
+
+#: src/components/layout/app-frame.tsx:387
+msgid "Review"
+msgstr "Review"
+
+#: src/components/settings/preset-picker.tsx:129
+msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
+msgstr "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
+
+#: src/components/assets/asset-download-panel.tsx:93
+msgid "Running"
+msgstr "Running"
+
+#: src/components/entities/metadata-editor.tsx:127
+#: src/components/settings/raw-config-editor.tsx:90
+#: src/components/settings/settings-editor.tsx:177
+#: src/pages/list-detail-page.tsx:426
+msgid "Save"
+msgstr "Save"
+
+#: src/components/settings/provider-credentials.tsx:83
+msgid "Save credentials"
+msgstr "Save credentials"
+
+#: src/components/settings/provider-credentials.tsx:45
+msgid "Saved"
+msgstr "Saved"
+
+#: src/components/settings/raw-config-editor.tsx:124
+msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
+msgstr "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
+
+#: src/components/entities/metadata-editor.tsx:127
+#: src/components/settings/provider-credentials.tsx:83
+#: src/components/settings/raw-config-editor.tsx:90
+#: src/components/settings/settings-editor.tsx:177
+#: src/pages/list-detail-page.tsx:426
+msgid "Saving"
+msgstr "Saving"
+
+#: src/components/settings/raw-config-editor.tsx:97
+#: src/components/settings/settings-editor.tsx:184
+msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
+msgstr "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
+
+#: src/components/entities/external-match-dialog.tsx:119
+#: src/components/entities/external-match-dialog.tsx:144
+#: src/pages/quick-capture-page.tsx:199
+msgid "Search"
+msgstr "Search"
+
+#: src/components/layout/app-frame.tsx:56
+msgid "Search {activeTypeLabel}"
+msgstr "Search {activeTypeLabel}"
+
+#: src/pages/list-detail-page.tsx:878
+msgid "Search entities and add them to this list."
+msgstr "Search entities and add them to this list."
+
+#: src/pages/list-detail-page.tsx:884
+msgid "Search entities…"
+msgstr "Search entities…"
+
+#: src/pages/quick-capture-page.tsx:179
+msgid "Search external sources, or add manually"
+msgstr "Search external sources, or add manually"
+
+#: src/components/layout/app-frame.tsx:57
+#: src/components/layout/app-frame.tsx:150
+#: src/components/layout/app-frame.tsx:222
+msgid "Search library"
+msgstr "Search library"
+
+#: src/components/entities/external-match-dialog.tsx:112
+msgid "Search online sources and choose which details to apply."
+msgstr "Search online sources and choose which details to apply."
+
+#: src/components/entities/metadata-inputs.tsx:153
+msgid "Search or add {relationType}"
+msgstr "Search or add {relationType}"
+
+#: src/components/entities/metadata-inputs.tsx:154
+msgid "Search or add relation"
+msgstr "Search or add relation"
+
+#: src/pages/review-page.tsx:156
+msgid "Search queue"
+msgstr "Search queue"
+
+#: src/components/entities/external-match-dialog.tsx:144
+msgid "Searching"
+msgstr "Searching"
+
+#: src/components/ui/multi-value-combobox.tsx:146
+msgid "Searching..."
+msgstr "Searching..."
+
+#: src/pages/quick-capture-page.tsx:255
+msgid "Searching…"
+msgstr "Searching…"
+
+#. placeholder {0}: field.seasonLanguage
+#: src/components/settings/settings-field-descriptors.ts:74
+msgid "season {0}"
+msgstr "season {0}"
+
+#: src/components/settings/settings-sections.tsx:809
+msgid "Season language"
+msgstr "Season language"
+
+#: src/components/settings/settings-dialogs.tsx:443
+#: src/components/settings/settings-sections.tsx:561
+msgid "Section"
+msgstr "Section"
+
+#: src/pages/list-detail-page.tsx:614
+msgid "Section actions"
+msgstr "Section actions"
+
+#: src/pages/list-detail-page.tsx:587
+#: src/pages/list-detail-page.tsx:589
+msgid "Section heading"
+msgstr "Section heading"
+
+#: src/components/settings/settings-sections.tsx:443
+msgid "Section override"
+msgstr "Section override"
+
+#: src/components/settings/settings-dialogs.tsx:443
+msgid "Sections"
+msgstr "Sections"
+
+#: src/pages/home-page.tsx:78
+msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
+msgstr "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
+
+#: src/components/assets/episode-sync-dialog.tsx:269
+msgid "Select all"
+msgstr "Select all"
+
+#: src/components/settings/settings-sections.tsx:1028
+msgid "Select field"
+msgstr "Select field"
+
+#: src/components/settings/settings-controls.tsx:166
+msgid "Select folder"
+msgstr "Select folder"
+
+#: src/components/assets/episode-sync-dialog.tsx:381
+msgid "Select group"
+msgstr "Select group"
+
+#: src/components/settings/vault-switcher.tsx:143
+msgid "Select parent folder"
+msgstr "Select parent folder"
+
+#: src/components/settings/settings-sections.tsx:1068
+msgid "Select type"
+msgstr "Select type"
+
+#: src/components/entities/external-match-dialog.tsx:307
+msgid "Selected Metadata"
+msgstr "Selected Metadata"
+
+#: src/components/layout/app-frame.tsx:390
+#: src/components/settings/settings-editor.tsx:161
+msgid "Settings"
+msgstr "Settings"
+
+#: src/components/settings/raw-config-editor.tsx:67
+#: src/components/settings/settings-editor.tsx:146
+msgid "Settings saved"
+msgstr "Settings saved"
+
+#: src/pages/entity-page.tsx:219
+msgid "Some images could not be downloaded"
+msgstr "Some images could not be downloaded"
+
+#: src/pages/entity-page.tsx:219
+msgid "Some images could not be downloaded: {reasons}"
+msgstr "Some images could not be downloaded: {reasons}"
+
+#: src/components/error-boundary.tsx:55
+#: src/components/settings/vault-switcher.tsx:41
+#: src/components/settings/vault-switcher.tsx:54
+msgid "Something went wrong"
+msgstr "Something went wrong"
+
+#: src/components/assets/asset-toolbar.tsx:91
+#: src/components/settings/settings-sections.tsx:194
+msgid "Sort"
+msgstr "Sort"
+
+#. placeholder {0}: dateFieldLabel(field)
+#: src/components/assets/asset-toolbar.tsx:97
+msgid "Sort by {0}"
+msgstr "Sort by {0}"
+
+#: src/components/assets/asset-toolbar.tsx:100
+msgid "Sort by connections"
+msgstr "Sort by connections"
+
+#: src/components/assets/asset-toolbar.tsx:93
+msgid "Sort by title"
+msgstr "Sort by title"
+
+#: src/components/assets/asset-toolbar.tsx:94
+msgid "Sort by update time"
+msgstr "Sort by update time"
+
+#: src/pages/import-wizard-page.tsx:313
+msgid "Source"
+msgstr "Source"
+
+#: src/pages/import-wizard-page.tsx:572
+msgid "Source unavailable"
+msgstr "Source unavailable"
+
+#. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
+#. placeholder {1}: data.willStampDate.value
+#: src/components/assets/quick-log-dialog.tsx:206
+msgid "Stamps {0} = {1}"
+msgstr "Stamps {0} = {1}"
+
+#: src/components/assets/asset-download-panel.tsx:93
+msgid "Start"
+msgstr "Start"
+
+#: src/pages/import-wizard-page.tsx:178
+#: src/pages/import-wizard-page.tsx:215
+msgid "Start over"
+msgstr "Start over"
+
+#: src/components/assets/quick-log-dialog.tsx:30
+#: src/components/settings/settings-sections.tsx:795
+#: src/pages/activity-page.tsx:45
+msgid "Started"
+msgstr "Started"
+
+#: src/pages/import-wizard-page.tsx:376
+msgid "Starting…"
+msgstr "Starting…"
+
+#: src/components/layout/app-frame.tsx:384
+msgid "Statistics"
+msgstr "Statistics"
+
+#: src/components/settings/settings-field-descriptors.ts:65
+msgid "status"
+msgstr "status"
+
+#: src/components/settings/settings-sections.tsx:937
+msgid "Status field"
+msgstr "Status field"
+
+#: src/pages/review-page.tsx:54
+msgid "Status Mismatch"
+msgstr "Status Mismatch"
+
+#: src/pages/import-wizard-page.tsx:605
+msgid "Status, score & dates"
+msgstr "Status, score & dates"
+
+#: src/components/settings/settings-editor.tsx:202
+msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault."
+msgstr "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault."
+
+#: src/components/settings/settings-editor.tsx:203
+msgid "Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault."
+msgstr "Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault."
+
+#: src/components/settings/provider-credentials.tsx:58
+msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
+msgstr "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
+
+#: src/components/settings/settings-sections.tsx:558
+msgid "Summary"
+msgstr "Summary"
+
+#: src/components/settings/vault-switcher.tsx:78
+msgid "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
+msgstr "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
+
+#: src/components/settings/vault-switcher.tsx:98
+msgid "Switched vault"
+msgstr "Switched vault"
+
+#: src/components/assets/entity-episodes.tsx:38
+msgid "Sync"
+msgstr "Sync"
+
+#: src/components/assets/episode-sync-dialog.tsx:229
+msgid "Sync from a provider"
+msgstr "Sync from a provider"
+
+#: src/components/layout/theme-mode-select.tsx:11
+msgid "System theme"
+msgstr "System theme"
+
+#: src/components/layout/theme-mode-select.tsx:19
+msgid "System theme. Switch to light theme."
+msgstr "System theme. Switch to light theme."
+
+#: src/components/entities/metadata-editor.tsx:83
+#: src/pages/library-page.tsx:96
+msgid "Tags"
+msgstr "Tags"
+
+#: src/components/calendar/calendar-entry-item.tsx:24
+#: src/components/layout/app-frame.tsx:356
+msgid "Taxonomy"
+msgstr "Taxonomy"
+
+#. placeholder {0}: calendar.data.totals.taxonomy
+#: src/pages/calendar-page.tsx:115
+msgid "Taxonomy {0}"
+msgstr "Taxonomy {0}"
+
+#: src/pages/calendar-page.tsx:128
+msgid "Taxonomy dates"
+msgstr "Taxonomy dates"
+
+#: src/components/settings/settings-editor.tsx:209
+msgid "Taxonomy root"
+msgstr "Taxonomy root"
+
+#. placeholder {0}: config.taxonomyRoot || "Taxonomy"
+#: src/components/settings/settings-editor.tsx:97
+msgid "taxonomy: {0}"
+msgstr "taxonomy: {0}"
+
+#: src/pages/import-wizard-page.tsx:212
+msgid "The import failed."
+msgstr "The import failed."
+
+#: src/components/error-boundary.tsx:58
+msgid "The page hit an unexpected error. You can try again, or reload the app."
+msgstr "The page hit an unexpected error. You can try again, or reload the app."
+
+#: src/components/settings/preset-picker.tsx:128
+msgid "These existing types can link to what you're adding."
+msgstr "These existing types can link to what you're adding."
+
+#: src/components/home/coming-up-section.tsx:165
+msgid "This month"
+msgstr "This month"
+
+#. placeholder {0}: entityTitle(entity, language)
+#: src/pages/entity-page.tsx:479
+msgid "This moves {0} to the Trash. You can restore it later if you need it."
+msgstr "This moves {0} to the Trash. You can restore it later if you need it."
+
+#. placeholder {0}: data.name
+#: src/pages/list-detail-page.tsx:520
+msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
+msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
+
+#: src/components/home/coming-up-section.tsx:164
+msgid "This week"
+msgstr "This week"
+
+#: src/components/assets/episode-sync-dialog.tsx:232
+msgid "Tick the items to write from the provider — new ones are added, ticked existing ones have their title updated. Items already in your list start unticked, and your progress is always kept."
+msgstr "Tick the items to write from the provider — new ones are added, ticked existing ones have their title updated. Items already in your list start unticked, and your progress is always kept."
+
+#: src/components/settings/settings-dialogs.tsx:442
+#: src/components/settings/settings-sections.tsx:126
+#: src/components/settings/settings-sections.tsx:152
+#: src/pages/entity-create-page.tsx:107
+msgid "Title"
+msgstr "Title"
+
+#: src/components/settings/preset-picker.tsx:183
+#: src/components/settings/settings-sections.tsx:725
+#: src/pages/onboarding-page.tsx:186
+msgid "Title language"
+msgstr "Title language"
+
+#: src/pages/quick-capture-page.tsx:211
+msgid "Title, or paste a provider URL"
+msgstr "Title, or paste a provider URL"
+
+#: src/pages/calendar-page.tsx:101
+msgid "Today"
+msgstr "Today"
+
+#: src/pages/list-detail-page.tsx:650
+msgid "Todo"
+msgstr "Todo"
+
+#: src/pages/library-page.tsx:312
+msgid "Toggle filters"
+msgstr "Toggle filters"
+
+#. placeholder {0}: field.totalProgressField
+#: src/components/settings/settings-field-descriptors.ts:70
+msgid "total {0}"
+msgstr "total {0}"
+
+#: src/components/settings/settings-sections.tsx:776
+msgid "Total progress field"
+msgstr "Total progress field"
+
+#: src/components/settings/settings-sections.tsx:618
+msgid "Tracking"
+msgstr "Tracking"
+
+#: src/components/error-boundary.tsx:64
+msgid "Try again"
+msgstr "Try again"
+
+#: src/components/settings/settings-sections.tsx:153
+#: src/components/settings/settings-sections.tsx:662
+#: src/pages/entity-create-page.tsx:92
+#: src/pages/library-page.tsx:295
+#: src/pages/quick-capture-page.tsx:218
+msgid "Type"
+msgstr "Type"
+
+#: src/pages/quick-capture-page.tsx:251
+msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
+msgstr "Type at least {MIN_QUERY_LENGTH} characters to search."
+
+#: src/pages/statistics-page.tsx:58
+msgid "Type Distribution"
+msgstr "Type Distribution"
+
+#: src/components/settings/settings-dialogs.tsx:201
+#: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:298
+msgid "Types"
+msgstr "Types"
+
+#: src/components/layout/language-select.tsx:67
+msgid "UI in English"
+msgstr "UI in English"
+
+#: src/pages/list-detail-page.tsx:581
+msgid "Ungrouped"
+msgstr "Ungrouped"
+
+#: src/pages/review-page.tsx:52
+msgid "Unlinked Items"
+msgstr "Unlinked Items"
+
+#: src/components/settings/settings-sections.tsx:956
+msgid "Unmapped"
+msgstr "Unmapped"
+
+#: src/pages/list-detail-page.tsx:642
+msgid "Unordered"
+msgstr "Unordered"
+
+#: src/pages/statistics-page.tsx:54
+msgid "Unresolved"
+msgstr "Unresolved"
+
+#: src/pages/list-detail-page.tsx:772
+msgid "Unresolved link"
+msgstr "Unresolved link"
+
+#: src/pages/review-page.tsx:53
+msgid "Unresolved Relations"
+msgstr "Unresolved Relations"
+
+#: src/pages/list-detail-page.tsx:602
+msgid "Untitled section"
+msgstr "Untitled section"
+
+#: src/pages/activity-page.tsx:37
+msgid "Up next"
+msgstr "Up next"
+
+#: src/components/settings/settings-sections.tsx:127
+msgid "Update time"
+msgstr "Update time"
+
+#. placeholder {0}: cleanup.data.generatedAt.slice(0, 10)
+#. placeholder {0}: data.generatedAt.slice(0, 10)
+#: src/pages/review-page.tsx:130
+#: src/pages/statistics-page.tsx:35
+msgid "Updated {0}"
+msgstr "Updated {0}"
+
+#: src/components/entities/metadata-inputs.tsx:269
+msgid "Upload failed."
+msgstr "Upload failed."
+
+#: src/pages/entity-edit-page.tsx:221
+msgid "Use Selected"
+msgstr "Use Selected"
+
+#: src/components/settings/settings-sections.tsx:732
+#: src/components/settings/settings-sections.tsx:785
+#: src/components/settings/settings-sections.tsx:923
+msgid "Used as"
+msgstr "Used as"
+
+#: src/components/settings/settings-sections.tsx:263
+msgid "value"
+msgstr "value"
+
+#: src/components/settings/settings-sections.tsx:260
+msgid "Values"
+msgstr "Values"
+
+#: src/components/settings/settings-editor.tsx:96
+#: src/components/settings/settings-editor.tsx:199
+msgid "Vault"
+msgstr "Vault"
+
+#: src/components/settings/vault-switcher.tsx:62
+msgid "Vault added"
+msgstr "Vault added"
+
+#: src/components/settings/vault-switcher.tsx:163
+#: src/pages/onboarding-page.tsx:148
+msgid "Vault created"
+msgstr "Vault created"
+
+#: src/components/settings/vault-switcher.tsx:150
+msgid "Vault name"
+msgstr "Vault name"
+
+#: src/components/entities/metadata-inputs.tsx:323
+msgid "Vault path or URL"
+msgstr "Vault path or URL"
+
+#: src/components/settings/vault-switcher.tsx:109
+msgid "Vault removed"
+msgstr "Vault removed"
+
+#: src/components/settings/settings-editor.tsx:165
+msgid "Vault: {vaultPath}"
+msgstr "Vault: {vaultPath}"
+
+#: src/components/settings/vault-switcher.tsx:74
+msgid "Vaults"
+msgstr "Vaults"
+
+#: src/components/home/section-header.tsx:39
+msgid "View"
+msgstr "View"
+
+#: src/components/home/coming-up-section.tsx:54
+msgid "View all"
+msgstr "View all"
+
+#: src/pages/entity-page.tsx:617
+#: src/pages/lists-page.tsx:151
+msgid "Watchlist"
+msgstr "Watchlist"
+
+#: src/pages/onboarding-page.tsx:170
+msgid "What do you want to track?"
+msgstr "What do you want to track?"
+
+#: src/components/settings/settings-sections.tsx:422
+msgid "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
+msgstr "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
+
+#: src/pages/settings-page.tsx:87
+msgid "YAML"
+msgstr "YAML"
+
+#: src/components/assets/frontmatter-panel.tsx:129
+#: src/components/assets/frontmatter-panel.tsx:234
+#: src/components/entities/metadata-inputs.tsx:136
+#: src/pages/library-page.tsx:494
+msgid "Yes"
+msgstr "Yes"
+
+#: src/pages/quick-capture-page.tsx:192
+msgid "You can still open items already in your library."
+msgstr "You can still open items already in your library."
+
+#: src/pages/settings-page.tsx:123
+msgid "You have unsaved changes in the form editor. Switching editors will discard them."
+msgstr "You have unsaved changes in the form editor. Switching editors will discard them."
+
+#: src/pages/settings-page.tsx:127
+msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
+msgstr "You have unsaved changes in the YAML editor. Switching editors will discard them."

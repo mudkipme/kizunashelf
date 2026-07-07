@@ -19,6 +19,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Trans, useLingui } from "@lingui/react/macro";
 
 import { LanguageSelect } from "@/components/layout/language-select";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
@@ -31,6 +32,7 @@ import { allTypes } from "@/lib/constants";
 import type { StatsResponse } from "@/types/api";
 
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const location = useLocation();
   // Drive the sidebar counts from the shared React Query cache so they stay in
@@ -46,13 +48,13 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     return new URLSearchParams(location.search).get("type") ?? allTypes;
   }, [location.pathname, location.search]);
   const activeTypeLabel = useMemo(() => {
-    if (activeType === allTypes) return "library";
+    if (activeType === allTypes) return null;
     return stats?.byType.find((type) => type.id === activeType)?.label ?? activeType;
   }, [activeType, stats?.byType]);
   const searchPlaceholder =
-    location.pathname === "/library"
-      ? `Search ${activeTypeLabel}`
-      : "Search library";
+    location.pathname === "/library" && activeTypeLabel
+      ? t`Search ${activeTypeLabel}`
+      : t`Search library`;
 
   useEffect(() => {
     if (location.pathname !== "/library") {
@@ -106,8 +108,8 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
             variant="ghost"
             size="icon"
             onClick={goBack}
-            aria-label="Go back"
-            title="Back"
+            aria-label={t`Go back`}
+            title={t`Back`}
           >
             <ArrowLeftIcon />
           </Button>
@@ -116,7 +118,9 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <AppLogo />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">KizunaShelf</span>
-            <span className="hidden text-xs leading-4 text-muted-foreground sm:block">A personal memory graph</span>
+            <span className="hidden text-xs leading-4 text-muted-foreground sm:block">
+              <Trans>A personal memory graph</Trans>
+            </span>
           </span>
         </Link>
         <Button
@@ -125,7 +129,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           size="icon"
           className="md:hidden"
           onClick={() => setMobileSidebarOpen(true)}
-          aria-label="Open navigation"
+          aria-label={t`Open navigation`}
           aria-expanded={mobileSidebarOpen}
         >
           <MenuIcon />
@@ -143,7 +147,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           size="icon"
           className="sm:hidden"
           onClick={() => setMobileSearchOpen((open) => !open)}
-          aria-label="Search library"
+          aria-label={t`Search library`}
           aria-expanded={mobileSearchOpen}
         >
           <SearchIcon />
@@ -206,6 +210,7 @@ function SearchForm({
   placeholder: string;
   autoFocus?: boolean;
 }) {
+  const { t } = useLingui();
   return (
     <form onSubmit={onSubmit} className={className}>
       <SearchIcon className="text-muted-foreground" />
@@ -214,7 +219,7 @@ function SearchForm({
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder={placeholder}
         className="min-w-0"
-        aria-label="Search library"
+        aria-label={t`Search library`}
         autoFocus={autoFocus}
       />
     </form>
@@ -265,6 +270,7 @@ function MobileSidebar({
   pathname: string;
   onClose: () => void;
 }) {
+  const { t } = useLingui();
   if (!open) return null;
 
   return (
@@ -273,21 +279,23 @@ function MobileSidebar({
         type="button"
         className="absolute inset-0 bg-background/70"
         onClick={onClose}
-        aria-label="Close navigation"
+        aria-label={t`Close navigation`}
       />
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label="Navigation"
+        aria-label={t`Navigation`}
         className="relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-card shadow-lg"
       >
         <header className="flex min-h-14 items-center gap-3 border-b px-3">
           <AppLogo />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">KizunaShelf</div>
-            <div className="truncate text-xs text-muted-foreground">Navigation</div>
+            <div className="truncate text-xs text-muted-foreground">
+              <Trans>Navigation</Trans>
+            </div>
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Close navigation">
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label={t`Close navigation`}>
             <XIcon />
           </Button>
         </header>
@@ -318,9 +326,11 @@ function SidebarContent({
   return (
     <>
       <section className="flex flex-col gap-1">
-        <SidebarSectionLabel>Core Views</SidebarSectionLabel>
+        <SidebarSectionLabel>
+          <Trans>Core Views</Trans>
+        </SidebarSectionLabel>
         <SidebarNavLink to="/" icon={HomeIcon} end onNavigate={onNavigate}>
-          Home
+          <Trans>Home</Trans>
         </SidebarNavLink>
         <SidebarNavLink
           to="/library"
@@ -328,21 +338,23 @@ function SidebarContent({
           active={pathname === "/library" && activeType === allTypes}
           onNavigate={onNavigate}
         >
-          Library
+          <Trans>Library</Trans>
         </SidebarNavLink>
         <SidebarNavLink to="/calendar" icon={CalendarDaysIcon} onNavigate={onNavigate}>
-          Calendar
+          <Trans>Calendar</Trans>
         </SidebarNavLink>
         <SidebarNavLink to="/activity" icon={ActivityIcon} onNavigate={onNavigate}>
-          Activity
+          <Trans>Activity</Trans>
         </SidebarNavLink>
         <SidebarNavLink to="/lists" icon={ListIcon} onNavigate={onNavigate}>
-          Lists
+          <Trans>Lists</Trans>
         </SidebarNavLink>
       </section>
 
       <section className="flex flex-col gap-1">
-        <SidebarSectionLabel>Taxonomy</SidebarSectionLabel>
+        <SidebarSectionLabel>
+          <Trans>Taxonomy</Trans>
+        </SidebarSectionLabel>
 
         {stats?.byType.map((type) => (
           <SidebarNavLink
@@ -358,22 +370,24 @@ function SidebarContent({
           </SidebarNavLink>
         ))}
         {!stats ? (
-          <div className="px-2 py-1 text-xs text-muted-foreground">Loading taxonomy</div>
+          <div className="px-2 py-1 text-xs text-muted-foreground">
+            <Trans>Loading taxonomy</Trans>
+          </div>
         ) : null}
       </section>
 
       <section className="mt-auto flex flex-col gap-1">
         <SidebarNavLink to="/entities/import" icon={DownloadIcon} onNavigate={onNavigate}>
-          Import
+          <Trans>Import</Trans>
         </SidebarNavLink>
         <SidebarNavLink to="/statistics" icon={BarChart3Icon} onNavigate={onNavigate}>
-          Statistics
+          <Trans>Statistics</Trans>
         </SidebarNavLink>
         <SidebarNavLink to="/review" icon={ClipboardCheckIcon} onNavigate={onNavigate}>
-          Review
+          <Trans>Review</Trans>
         </SidebarNavLink>
         <SidebarNavLink to="/settings" icon={SettingsIcon} onNavigate={onNavigate}>
-          Settings
+          <Trans>Settings</Trans>
         </SidebarNavLink>
       </section>
     </>

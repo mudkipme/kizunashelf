@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { LanguagesIcon } from "lucide-react";
 
@@ -10,25 +11,37 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLanguageStore } from "@/lib/language";
+import { useLanguageStore, useUiLocale } from "@/lib/language";
 import { titleLanguageLabel } from "@/lib/title-language";
+import type { UserLanguage } from "@/types/api";
 
 /**
- * Global display-language selector (app header). Drives entity-title resolution
- * everywhere and is the seam for future UI i18n. Defaults to the browser
- * language; the choice persists in the language store. Rendered as a compact
+ * Global language selector (app header): the single preference everything
+ * derives from — UI locale (with English fallback), title resolution, and the
+ * language sent to providers. Options come from the core's user-language list
+ * (endonym labels; `zh` split into 简体/繁體). Rendered as a compact
  * icon-button dropdown so it stays consistent across viewports.
  */
 export function LanguageSelect() {
+  const { t } = useLingui();
   const language = useLanguageStore((state) => state.language);
   const setLanguage = useLanguageStore((state) => state.setLanguage);
-  const languages = useQuery(languagesQuery()).data?.languages ?? [];
+  const uiLocale = useUiLocale();
+  const userLanguages = useQuery(languagesQuery()).data?.userLanguages ?? [];
   // Keep the current value selectable even if it isn't in the supported set
   // (e.g. an unusual browser language), so the control never shows blank.
-  const hasCurrent = languages.some((item) => item.code === language);
-  const options = hasCurrent
-    ? languages
-    : [{ code: language, label: titleLanguageLabel(language) }, ...languages];
+  const hasCurrent = userLanguages.some((item) => item.code === language);
+  const options: UserLanguage[] = hasCurrent
+    ? userLanguages
+    : [
+        {
+          code: language,
+          label: titleLanguageLabel(language, uiLocale),
+          titleLanguage: language,
+          uiSupported: false,
+        },
+        ...userLanguages,
+      ];
 
   return (
     <DropdownMenu>
@@ -37,8 +50,8 @@ export function LanguageSelect() {
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Display language"
-          title="Display language"
+          aria-label={t`Language`}
+          title={t`Language`}
         >
           <LanguagesIcon />
         </Button>
@@ -47,7 +60,14 @@ export function LanguageSelect() {
         <DropdownMenuRadioGroup value={language} onValueChange={setLanguage}>
           {options.map((item) => (
             <DropdownMenuRadioItem key={item.code} value={item.code}>
-              {item.label}
+              <span className="flex items-baseline gap-2">
+                {item.label}
+                {!item.uiSupported && (
+                  <span className="text-muted-foreground text-xs">
+                    <Trans>UI in English</Trans>
+                  </span>
+                )}
+              </span>
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

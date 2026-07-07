@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { CheckIcon, FolderOpenIcon, FolderPlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,13 +31,17 @@ export function VaultSwitcher({
   onboarding?: boolean;
   onChanged?: () => void;
 }) {
+  const { t } = useLingui();
   const [vaults, setVaults] = useState<VaultInfo[]>([]);
   const [parent, setParent] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    listVaults().then(setVaults).catch((reason) => toast.error(message(reason)));
+    listVaults().then(setVaults).catch((reason) => toast.error(message(reason, t`Something went wrong`)));
+    // Mount-only vault load; `t` is only read in the error path, so re-running on
+    // a locale change (which would refetch) is not wanted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function run(action: () => Promise<VaultInfo[]>, success: string) {
@@ -46,7 +51,7 @@ export function VaultSwitcher({
       onChanged?.();
       toast.success(success);
     } catch (reason) {
-      toast.error(message(reason));
+      toast.error(message(reason, t`Something went wrong`));
     } finally {
       setBusy(false);
     }
@@ -54,7 +59,7 @@ export function VaultSwitcher({
 
   async function openExisting() {
     const dir = await selectDirectory().catch(() => undefined);
-    if (dir) await run(() => addVault(dir), "Vault added");
+    if (dir) await run(() => addVault(dir), t`Vault added`);
   }
 
   async function chooseParent() {
@@ -66,11 +71,11 @@ export function VaultSwitcher({
 
   return (
     <SettingsSection
-      title="Vaults"
+      title={t`Vaults`}
       description={
         onboarding
-          ? "Open or create a vault to get started."
-          : "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
+          ? t`Open or create a vault to get started.`
+          : t`Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk.`
       }
     >
       <div className="flex flex-col gap-3">
@@ -90,18 +95,18 @@ export function VaultSwitcher({
                   size="sm"
                   variant="outline"
                   disabled={busy}
-                  onClick={() => void run(() => switchVault(vault.path), "Switched vault")}
+                  onClick={() => void run(() => switchVault(vault.path), t`Switched vault`)}
                 >
-                  Open
+                  <Trans>Open</Trans>
                 </Button>
               ) : null}
               <Button
                 type="button"
                 size="icon-sm"
                 variant="ghost"
-                aria-label={`Remove ${vault.name}`}
+                aria-label={t`Remove ${vault.name}`}
                 disabled={busy}
-                onClick={() => void run(() => removeVault(vault.path), "Vault removed")}
+                onClick={() => void run(() => removeVault(vault.path), t`Vault removed`)}
               >
                 <Trash2Icon />
               </Button>
@@ -109,39 +114,43 @@ export function VaultSwitcher({
           ))}
           {vaults.length === 0 ? (
             <div className="rounded-md border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">
-              No vaults yet.
+              <Trans>No vaults yet.</Trans>
             </div>
           ) : null}
         </div>
 
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="flex flex-col gap-2 rounded-md border p-3">
-            <div className="text-sm font-medium">Open existing vault</div>
+            <div className="text-sm font-medium">
+              <Trans>Open existing vault</Trans>
+            </div>
             <Button type="button" variant="outline" disabled={busy} onClick={openExisting}>
               <FolderOpenIcon data-icon="inline-start" />
-              Open folder
+              <Trans>Open folder</Trans>
             </Button>
           </div>
           <div className="flex flex-col gap-2 rounded-md border p-3">
-            <div className="text-sm font-medium">Create new vault</div>
-            <Field label="Parent folder">
+            <div className="text-sm font-medium">
+              <Trans>Create new vault</Trans>
+            </div>
+            <Field label={t`Parent folder`}>
               <div className="flex items-center gap-2">
-                <Input value={parent} readOnly placeholder="No folder selected" />
+                <Input value={parent} readOnly placeholder={t`No folder selected`} />
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
-                  aria-label="Select parent folder"
+                  aria-label={t`Select parent folder`}
                   onClick={chooseParent}
                 >
                   <FolderPlusIcon />
                 </Button>
               </div>
             </Field>
-            <Field label="Vault name">
+            <Field label={t`Vault name`}>
               <Input
                 value={name}
-                placeholder="My Vault"
+                placeholder={t`My Vault`}
                 onChange={(event) => setName(event.target.value)}
               />
             </Field>
@@ -151,10 +160,10 @@ export function VaultSwitcher({
               onClick={() => {
                 const vaultName = name.trim();
                 setName("");
-                void run(() => createVault(parent, vaultName), "Vault created");
+                void run(() => createVault(parent, vaultName), t`Vault created`);
               }}
             >
-              Create vault
+              <Trans>Create vault</Trans>
             </Button>
           </div>
         </div>
@@ -163,8 +172,8 @@ export function VaultSwitcher({
   );
 }
 
-function message(reason: unknown) {
+function message(reason: unknown, fallback: string) {
   if (reason instanceof Error) return reason.message;
   if (typeof reason === "string") return reason;
-  return "Something went wrong";
+  return fallback;
 }

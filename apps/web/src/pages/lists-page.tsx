@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ListIcon, PlusIcon, XIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -36,22 +37,26 @@ export function ListsPage() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg font-semibold">Lists</h1>
+            <h1 className="text-lg font-semibold">
+              <Trans>Lists</Trans>
+            </h1>
             <p className="text-xs text-muted-foreground">
-              Curated collections of your items, saved as plain files you own.
+              <Trans>Curated collections of your items, saved as plain files you own.</Trans>
             </p>
           </div>
           <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setCreateOpen(true)}>
             <PlusIcon data-icon="inline-start" />
-            New list
+            <Trans>New list</Trans>
           </Button>
         </header>
 
         {lists.isPending ? (
-          <Placeholder>Loading</Placeholder>
+          <Placeholder>
+            <Trans>Loading</Trans>
+          </Placeholder>
         ) : items.length === 0 ? (
           <Placeholder>
-            No lists yet. Create one to start collecting entities.
+            <Trans>No lists yet. Create one to start collecting entities.</Trans>
           </Placeholder>
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
@@ -70,11 +75,11 @@ export function ListsPage() {
                 ) : null}
                 <div className="mt-auto flex items-center gap-2 text-xs text-muted-foreground">
                   <Badge variant="outline">
-                    {list.itemCount} {list.itemCount === 1 ? "item" : "items"}
+                    <Plural value={list.itemCount} one="# item" other="# items" />
                   </Badge>
                   {list.sectionCount > 0 ? (
                     <Badge variant="outline">
-                      {list.sectionCount} {list.sectionCount === 1 ? "section" : "sections"}
+                      <Plural value={list.sectionCount} one="# section" other="# sections" />
                     </Badge>
                   ) : null}
                 </div>
@@ -96,6 +101,7 @@ function CreateListDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const invalidateLists = useInvalidateLists();
   const [name, setName] = useState("");
@@ -104,7 +110,7 @@ function CreateListDialog({
   const create = useMutation({
     mutationFn: () => addList({ name: normalizeBasename(name) }),
     onSuccess: async (list) => {
-      toast.success("List created");
+      toast.success(t`List created`);
       onOpenChange(false);
       setName("");
       await invalidateLists();
@@ -122,8 +128,12 @@ function CreateListDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New list</DialogTitle>
-          <DialogDescription>Give your list a name.</DialogDescription>
+          <DialogTitle>
+            <Trans>New list</Trans>
+          </DialogTitle>
+          <DialogDescription>
+            <Trans>Give your list a name.</Trans>
+          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(event) => {
@@ -134,11 +144,11 @@ function CreateListDialog({
           className="flex flex-col gap-2"
         >
           <label className="text-sm font-medium">
-            Name
+            <Trans>Name</Trans>
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Watchlist"
+              placeholder={t`Watchlist`}
               autoFocus
               aria-invalid={Boolean(validationError)}
             />
@@ -147,11 +157,11 @@ function CreateListDialog({
           <DialogFooter className="mt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={create.isPending}>
               <XIcon data-icon="inline-start" />
-              Cancel
+              <Trans>Cancel</Trans>
             </Button>
             <Button type="submit" disabled={!name.trim() || Boolean(validationError) || create.isPending}>
               <CheckIcon data-icon="inline-start" />
-              {create.isPending ? "Creating" : "Create"}
+              {create.isPending ? <Trans>Creating</Trans> : <Trans>Create</Trans>}
             </Button>
           </DialogFooter>
         </form>

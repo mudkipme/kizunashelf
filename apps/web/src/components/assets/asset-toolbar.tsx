@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Grid2X2Icon, ListIcon, SlidersHorizontalIcon } from "lucide-react";
 
 import { isAbortError } from "@/api/client";
@@ -56,6 +57,7 @@ export function AssetToolbar({
   onViewChange,
   onFieldFilterChange,
 }: AssetToolbarProps) {
+  const { t } = useLingui();
   const hasFieldFilters = fieldFilters.length > 0;
 
   return (
@@ -68,7 +70,7 @@ export function AssetToolbar({
       {showLabel ? (
         <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
           <SlidersHorizontalIcon />
-          Filters
+          <Trans>Filters</Trans>
         </div>
       ) : null}
       {fieldFilters.map((filter) => (
@@ -86,25 +88,25 @@ export function AssetToolbar({
         value={sort}
         onChange={(event) => onSortChange(event.target.value)}
         className={compact ? "min-w-0" : undefined}
-        aria-label="Sort"
+        aria-label={t`Sort`}
       >
-        <option value={defaultSort}>Sort by title</option>
-        <option value="recentlyUpdated">Sort by update time</option>
+        <option value={defaultSort}>{t`Sort by title`}</option>
+        <option value="recentlyUpdated">{t`Sort by update time`}</option>
         {stats?.dateFields.map((field) => (
           <option key={field} value={`date:${field}`}>
-            Sort by {dateFieldLabel(field)}
+            {t`Sort by ${dateFieldLabel(field)}`}
           </option>
         ))}
-        <option value="relationCount">Sort by connections</option>
+        <option value="relationCount">{t`Sort by connections`}</option>
       </Select>
       <Select
         value={direction}
         onChange={(event) => onDirectionChange(event.target.value)}
         className={compact ? "min-w-0" : undefined}
-        aria-label="Direction"
+        aria-label={t`Direction`}
       >
-        <option value={defaultDirection}>Ascending</option>
-        <option value="desc">Descending</option>
+        <option value={defaultDirection}>{t`Ascending`}</option>
+        <option value="desc">{t`Descending`}</option>
       </Select>
       <div className={cn(compact ? "col-span-2 grid grid-cols-2 gap-2" : "ml-auto flex items-center gap-1")}>
         <Button
@@ -114,7 +116,7 @@ export function AssetToolbar({
           onClick={() => onViewChange("list")}
         >
           <ListIcon data-icon="inline-start" />
-          List
+          <Trans>List</Trans>
         </Button>
         <Button
           variant={view === "grid" ? "secondary" : "ghost"}
@@ -123,7 +125,7 @@ export function AssetToolbar({
           onClick={() => onViewChange("grid")}
         >
           <Grid2X2Icon data-icon="inline-start" />
-          Grid
+          <Trans>Grid</Trans>
         </Button>
       </div>
     </div>
@@ -139,6 +141,7 @@ function FieldFilterControl({
   compact: boolean;
   onChange: (values: string[]) => void;
 }) {
+  const { t } = useLingui();
   if (filter.kind === "bool") {
     const value = filter.values[0] ?? allOptions;
     return (
@@ -148,7 +151,7 @@ function FieldFilterControl({
         className={compact ? "col-span-2 w-full min-w-0" : "w-40 shrink-0"}
         aria-label={filter.label}
       >
-        <option value={allOptions}>Any {filter.label}</option>
+        <option value={allOptions}>{t`Any ${filter.label}`}</option>
         {filter.options.map((option) => (
           <option key={option.value} value={option.value}>
             {filter.label} {option.label ?? option.value}
@@ -166,7 +169,7 @@ function FieldFilterControl({
     <MultiValueCombobox
       values={filter.values}
       options={filter.options}
-      placeholder={`Any ${filter.label}`}
+      placeholder={t`Any ${filter.label}`}
       ariaLabel={filter.label}
       className={cn("min-h-8 px-2 py-1 text-xs", compact ? "col-span-2 w-full min-w-0" : "w-56 shrink-0")}
       onChange={onChange}
@@ -189,6 +192,7 @@ function RelationFilterControl({
   compact: boolean;
   onChange: (values: string[]) => void;
 }) {
+  const { t } = useLingui();
   const [inputValue, setInputValue] = useState("");
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<FieldFilterOption[]>([]);
@@ -213,7 +217,7 @@ function RelationFilterControl({
         .catch((caught) => {
           if (isAbortError(caught) || controller.signal.aborted) return;
           setOptions([]);
-          setError(caught instanceof Error ? caught.message : "Could not load options.");
+          setError(caught instanceof Error ? caught.message : t`Could not load options.`);
         })
         .finally(() => {
           if (!controller.signal.aborted) setLoading(false);
@@ -223,13 +227,13 @@ function RelationFilterControl({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [open, inputValue, loadOptions]);
+  }, [open, inputValue, loadOptions, t]);
 
   return (
     <MultiValueCombobox
       values={filter.values}
       options={options}
-      placeholder={`Any ${filter.label}`}
+      placeholder={t`Any ${filter.label}`}
       ariaLabel={filter.label}
       className={cn("min-h-8 px-2 py-1 text-xs", compact ? "col-span-2 w-full min-w-0" : "w-56 shrink-0")}
       inputValue={inputValue}

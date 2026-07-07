@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 
@@ -39,7 +40,7 @@ export function MetadataEditor({
   disabled = false,
   relationSuggestions = [],
   onRelationSearch,
-  saveLabel = "Save",
+  saveLabel,
   onFrontmatterChange,
   onBodyChange,
   onSave,
@@ -63,6 +64,7 @@ export function MetadataEditor({
   onSave: () => void;
   onCancel?: () => void;
 }) {
+  const { t } = useLingui();
   const [newFieldName, setNewFieldName] = useState("");
   const language = useTitleLanguage();
   const allTagsData = useQuery(allTagsQuery()).data?.tags;
@@ -78,8 +80,9 @@ export function MetadataEditor({
         language,
         allTags,
         tagsFieldName,
+        t`Tags`,
       ),
-    [typeConfig, frontmatter, relationSuggestions, onRelationSearch, language, allTags, tagsFieldName],
+    [typeConfig, frontmatter, relationSuggestions, onRelationSearch, language, allTags, tagsFieldName, t],
   );
 
   function updateField(key: string, value: FrontmatterValue | undefined) {
@@ -116,12 +119,12 @@ export function MetadataEditor({
           {onCancel ? (
             <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
               <XIcon data-icon="inline-start" />
-              Cancel
+              <Trans>Cancel</Trans>
             </Button>
           ) : null}
           <Button type="button" size="sm" onClick={onSave} disabled={saving || disabled}>
             <CheckIcon data-icon="inline-start" />
-            {saving ? "Saving" : saveLabel}
+            {saving ? <Trans>Saving</Trans> : (saveLabel ?? <Trans>Save</Trans>)}
           </Button>
         </div>
       </div>
@@ -143,7 +146,7 @@ export function MetadataEditor({
 
       <div className="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-dashed p-3">
         <label className="min-w-48 flex-1 text-sm font-medium">
-          Custom field
+          <Trans>Custom field</Trans>
           <Input
             value={newFieldName}
             onChange={(event) => setNewFieldName(event.target.value)}
@@ -153,13 +156,13 @@ export function MetadataEditor({
         </label>
         <Button type="button" variant="outline" onClick={addCustomField} disabled={disabled || !newFieldName.trim()}>
           <PlusIcon data-icon="inline-start" />
-          Add Field
+          <Trans>Add Field</Trans>
         </Button>
       </div>
 
       <div className="mt-4">
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Notes
+          <Trans>Notes</Trans>
           <Textarea
             className="min-h-72 font-mono text-xs"
             value={bodyText}
@@ -190,6 +193,7 @@ function EditableFieldRow({
   onRemove?: () => void;
   onRename?: (key: string) => void;
 }) {
+  const { t } = useLingui();
   const [keyDraft, setKeyDraft] = useState(field.key);
 
   useEffect(() => {
@@ -205,7 +209,7 @@ function EditableFieldRow({
             onChange={(event) => setKeyDraft(event.target.value)}
             onBlur={() => onRename(keyDraft)}
             className="h-8 min-w-0 font-mono text-xs"
-            aria-label="Custom field name"
+            aria-label={t`Custom field name`}
             disabled={disabled}
           />
         ) : (
@@ -214,7 +218,7 @@ function EditableFieldRow({
           </div>
         )}
         {onRemove ? (
-          <Button type="button" variant="ghost" size="icon" onClick={onRemove} aria-label={`Remove ${field.key}`} disabled={disabled}>
+          <Button type="button" variant="ghost" size="icon" onClick={onRemove} aria-label={t`Remove ${field.key}`} disabled={disabled}>
             <Trash2Icon />
           </Button>
         ) : null}

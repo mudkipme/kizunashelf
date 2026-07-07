@@ -1,3 +1,4 @@
+import { Plural } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
@@ -56,9 +57,11 @@ export function EntityGridItem({
             )}
           </span>
           <span className="shrink-0">
-            {entity.episodeProgress
-              ? `${entity.episodeProgress.watched}/${entity.episodeProgress.total}`
-              : `${entity.relationCount} links`}
+            {entity.episodeProgress ? (
+              `${entity.episodeProgress.watched}/${entity.episodeProgress.total}`
+            ) : (
+              <Plural value={entity.relationCount} one="# link" other="# links" />
+            )}
           </span>
         </div>
       </div>

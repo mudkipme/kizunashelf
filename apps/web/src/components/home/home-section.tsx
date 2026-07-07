@@ -1,3 +1,5 @@
+import { Trans } from "@lingui/react/macro";
+
 import { HomeEntityCard } from "@/components/home/home-entity-card";
 import { SectionHeader } from "@/components/home/section-header";
 import type { HomeSectionResponse } from "@/types/api";
@@ -26,7 +28,7 @@ export function HomeSection({
         </div>
       ) : (
         <div className="rounded-lg border border-dashed px-3 py-10 text-center text-sm text-muted-foreground">
-          Nothing here yet
+          <Trans>Nothing here yet</Trans>
         </div>
       )}
     </section>

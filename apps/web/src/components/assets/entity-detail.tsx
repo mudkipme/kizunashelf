@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   BookOpenIcon,
   CalendarDaysIcon,
@@ -84,6 +85,7 @@ export function EntityDetail({
   onSetEpisodeDate?: (group: string, key: string, index: number, date: string) => void;
   actions?: ReactNode;
 }) {
+  const { t } = useLingui();
   const language = useTitleLanguage();
   const displayTitle = entityTitle(entity, language);
   const relatedById = new Map(relatedEntities.map((item) => [item.id, item]));
@@ -138,7 +140,7 @@ export function EntityDetail({
               </div>
             </div>
             <div className="p-4">
-              <DetailSection title="Details" icon={<BookOpenIcon />}>
+              <DetailSection title={t`Details`} icon={<BookOpenIcon />}>
                 <FrontmatterPanel entity={entity} relationGroups={relationGroups} typeConfig={typeConfig} />
               </DetailSection>
 
@@ -175,17 +177,17 @@ export function EntityDetail({
               ) : null}
 
               {hasConnections ? (
-                <DetailSection title="Connections" icon={<CircleDotIcon />}>
+                <DetailSection title={t`Connections`} icon={<CircleDotIcon />}>
                   <div className="flex flex-col gap-4">
                     <RelationDirectionSection
-                      title="Links to"
+                      title={t`Links to`}
                       groups={outgoingGroups}
                       entityId={entity.id}
                       relatedById={relatedById}
                       coverTypes={coverTypes}
                     />
                     <RelationDirectionSection
-                      title="Linked from"
+                      title={t`Linked from`}
                       groups={incomingGroups}
                       entityId={entity.id}
                       relatedById={relatedById}
@@ -196,7 +198,7 @@ export function EntityDetail({
               ) : null}
 
               {(notesBody ?? entity.body).trim() ? (
-                <DetailSection title="Notes" icon={<FileTextIcon />}>
+                <DetailSection title={t`Notes`} icon={<FileTextIcon />}>
                   <MarkdownView markdown={notesBody ?? entity.body} relations={relations} />
                 </DetailSection>
               ) : null}
@@ -204,7 +206,7 @@ export function EntityDetail({
           </section>
 
           <aside className="min-w-0 rounded-md border p-4">
-            <DetailSection title="Links" icon={<LinkIcon />}>
+            <DetailSection title={t`Links`} icon={<LinkIcon />}>
               {Object.entries(entity.externalRefs).length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {Object.entries(entity.externalRefs).map(([key, value]) => (
@@ -220,11 +222,13 @@ export function EntityDetail({
                   ))}
                 </div>
               ) : (
-                <EmptyLine>No links yet</EmptyLine>
+                <EmptyLine>
+                  <Trans>No links yet</Trans>
+                </EmptyLine>
               )}
             </DetailSection>
 
-            <DetailSection title="Dates" icon={<CalendarDaysIcon />}>
+            <DetailSection title={t`Dates`} icon={<CalendarDaysIcon />}>
               <EntityDates dates={dates} typeConfig={typeConfig} />
             </DetailSection>
           </aside>

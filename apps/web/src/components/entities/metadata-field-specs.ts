@@ -26,6 +26,9 @@ export function editableFieldSpecs(
   language: string,
   allTags: string[] = [],
   tagsFieldName: string = defaultTagsField,
+  // Display label for the built-in tags field; callers pass a localized string
+  // (this module is not a component, so it cannot resolve translations itself).
+  tagsLabel: string = "Tags",
 ) {
   const specs: EditableFieldSpec[] = [];
   const seen = new Set<string>();
@@ -36,7 +39,7 @@ export function editableFieldSpecs(
   seen.add(tagsFieldName);
   specs.push({
     key: tagsFieldName,
-    label: "Tags",
+    label: tagsLabel,
     kind: "list",
     options: allTags,
     relationOptions: [],

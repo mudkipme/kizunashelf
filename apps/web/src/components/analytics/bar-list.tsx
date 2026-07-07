@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { useNumberFormat } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 export type BarListItem = {
@@ -10,6 +11,7 @@ export type BarListItem = {
 };
 
 export function BarList({ items, max }: { items: BarListItem[]; max?: number }) {
+  const formatNumber = useNumberFormat();
   const maxCount = max ?? Math.max(1, ...items.map((item) => item.count));
 
   return (
@@ -21,7 +23,7 @@ export function BarList({ items, max }: { items: BarListItem[]; max?: number }) 
             <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
               <span className="min-w-0 truncate font-medium">{item.name}</span>
               <span className="shrink-0 tabular-nums text-muted-foreground">
-                {item.count.toLocaleString()}
+                {formatNumber(item.count)}
               </span>
             </div>
             <div className="mt-1 h-2 rounded-sm bg-muted">

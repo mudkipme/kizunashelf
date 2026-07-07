@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -13,16 +14,17 @@ export function CalendarEntryItem({
   entry: CalendarEntry;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
 }) {
+  const { t } = useLingui();
   const language = useTitleLanguage();
   return (
     <article className="rounded-md border p-3">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Badge variant={entry.source === "taxonomy" ? "secondary" : "outline"}>
           {entry.source === "taxonomy"
-            ? "Taxonomy"
+            ? t`Taxonomy`
             : entry.source === "episode"
-              ? entry.episode?.heading || "Item"
-              : "Daily Note"}
+              ? entry.episode?.heading || t`Item`
+              : t`Daily Note`}
         </Badge>
         <Badge variant="outline">{entry.entity.typeLabel}</Badge>
         <Link
@@ -35,7 +37,7 @@ export function CalendarEntryItem({
 
       {entry.episode ? (
         <div className="mt-2 break-words text-xs text-muted-foreground">
-          {entry.episode.role === "completed" ? "✅ Completed" : "📅 Scheduled"}:{" "}
+          {entry.episode.role === "completed" ? t`✅ Completed` : t`📅 Scheduled`}:{" "}
           {entry.episode.key ? `${entry.episode.key} · ` : ""}
           {entry.episode.title || "—"}
         </div>
@@ -43,7 +45,7 @@ export function CalendarEntryItem({
 
       {entry.rawDate ? (
         <div className="mt-2 text-xs text-muted-foreground">
-          {entry.dateField ? entityFieldLabel(labelsByType, entry.entity.type, entry.dateField) : "date"}: {entry.rawDate}
+          {entry.dateField ? entityFieldLabel(labelsByType, entry.entity.type, entry.dateField) : t`date`}: {entry.rawDate}
         </div>
       ) : null}
 
@@ -61,7 +63,9 @@ export function CalendarEntryItem({
                 </figcaption>
               ) : null}
               <blockquote className="break-words text-sm leading-6">{snippet.text}</blockquote>
-              <div className="mt-1 text-xs text-muted-foreground">line {snippet.line}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                <Trans>line {snippet.line}</Trans>
+              </div>
             </figure>
           ))}
         </div>

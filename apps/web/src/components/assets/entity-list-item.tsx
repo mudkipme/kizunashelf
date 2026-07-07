@@ -1,3 +1,4 @@
+import { Plural } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { EntityDateList } from "@/components/assets/entity-date-list";
@@ -44,7 +45,7 @@ export function EntityListItem({
             </span>
           ) : null}
           <span className={entity.episodeProgress ? "shrink-0" : "ml-auto shrink-0"}>
-            {entity.relationCount} links
+            <Plural value={entity.relationCount} one="# link" other="# links" />
           </span>
         </span>
         {entity.summary ? (

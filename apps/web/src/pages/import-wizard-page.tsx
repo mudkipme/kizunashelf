@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import type { I18n, MessageDescriptor } from "@lingui/core";
+import { msg, plural } from "@lingui/core/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -30,23 +33,31 @@ function isActive(status?: ImportJobStatus) {
 
 // Bangumi buckets are numeric `subject_type` codes; give them readable labels.
 // Every other provider's bucket is already a word (anime, movie, book…).
-const BANGUMI_BUCKETS: Record<string, string> = {
-  "1": "Book",
-  "2": "Anime",
-  "3": "Music",
-  "4": "Game",
-  "6": "Real",
+const BANGUMI_BUCKETS: Record<string, MessageDescriptor> = {
+  "1": msg`Book`,
+  "2": msg`Anime`,
+  "3": msg`Music`,
+  "4": msg`Game`,
+  "6": msg`Real`,
 };
-function bucketLabel(provider: string, bucket: string): string {
-  if (provider === "bangumi" && BANGUMI_BUCKETS[bucket]) return BANGUMI_BUCKETS[bucket];
+function bucketLabel(i18n: I18n, provider: string, bucket: string): string {
+  if (provider === "bangumi" && BANGUMI_BUCKETS[bucket]) return i18n._(BANGUMI_BUCKETS[bucket]);
   return bucket || "—";
 }
 
-function statusLabel(status: ImportCanonicalStatus): string {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+const STATUS_LABELS: Record<ImportCanonicalStatus, MessageDescriptor> = {
+  planning: msg`Planning`,
+  ongoing: msg`Ongoing`,
+  paused: msg`Paused`,
+  completed: msg`Completed`,
+  dropped: msg`Dropped`,
+};
+function statusLabel(i18n: I18n, status: ImportCanonicalStatus): string {
+  return STATUS_LABELS[status] ? i18n._(STATUS_LABELS[status]) : status;
 }
 
 export function ImportWizardPage() {
+  const { t } = useLingui();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const capabilities = useCapabilities();
@@ -155,20 +166,24 @@ export function ImportWizardPage() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">Import</h1>
+            <h1 className="truncate text-base font-semibold">
+              <Trans>Import</Trans>
+            </h1>
             <p className="mt-1 truncate text-xs text-muted-foreground">
-              Bring a library in from another service, then review before anything is written
+              <Trans>Bring a library in from another service, then review before anything is written</Trans>
             </p>
           </div>
           {jobId ? (
             <Button variant="outline" onClick={resetToConfigure}>
-              Start over
+              <Trans>Start over</Trans>
             </Button>
           ) : null}
         </header>
 
         {!contentWritable ? (
-          <Alert>{CONTENT_WRITES_DISABLED} Importing creates files, so it is unavailable here.</Alert>
+          <Alert>
+            {CONTENT_WRITES_DISABLED} <Trans>Importing creates files, so it is unavailable here.</Trans>
+          </Alert>
         ) : !jobId ? (
           <ConfigureStep
             sources={sources.data?.sources ?? []}
@@ -189,23 +204,23 @@ export function ImportWizardPage() {
           />
         ) : !job.data ? (
           <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            Loading…
+            <Trans>Loading…</Trans>
           </p>
         ) : status === "failed" ? (
           <section className="rounded-md border p-4">
             <p className="text-sm text-destructive">
-              {job.data.errors?.[0] ?? "The import failed."}
+              {job.data.errors?.[0] ?? t`The import failed.`}
             </p>
             <Button className="mt-3" variant="outline" onClick={resetToConfigure}>
-              Start over
+              <Trans>Start over</Trans>
             </Button>
           </section>
         ) : isActive(status) && status !== "committing" ? (
           <section className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            Fetching your library from {source?.label ?? sourceId}…
+            <Trans>Fetching your library from {source?.label ?? sourceId}…</Trans>
             <div className="mt-3">
               <Button variant="outline" size="sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
-                Cancel
+                <Trans>Cancel</Trans>
               </Button>
             </div>
           </section>
@@ -235,7 +250,7 @@ export function ImportWizardPage() {
                   disabled={toCreate === 0 || commit.isPending}
                 >
                   <DownloadIcon data-icon="inline-start" />
-                  Import {toCreate} item{toCreate === 1 ? "" : "s"}
+                  <Plural value={toCreate} one="Import # item" other="Import # items" />
                 </Button>
               </div>
             </section>
@@ -246,13 +261,15 @@ export function ImportWizardPage() {
             {status === "committing" ? (
               <Button variant="outline" size="sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
                 <XIcon data-icon="inline-start" />
-                Cancel
+                <Trans>Cancel</Trans>
               </Button>
             ) : (
               <div className="flex flex-wrap gap-2">
-                <Button onClick={() => navigate("/library")}>Go to library</Button>
+                <Button onClick={() => navigate("/library")}>
+                  <Trans>Go to library</Trans>
+                </Button>
                 <Button variant="outline" onClick={resetToConfigure}>
-                  Import another
+                  <Trans>Import another</Trans>
                 </Button>
               </div>
             )}
@@ -288,10 +305,13 @@ function ConfigureStep({
   starting: boolean;
   onStart: () => void;
 }) {
+  const { t } = useLingui();
   return (
     <section className="flex flex-col gap-4 rounded-md border p-4">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Source</span>
+        <span className="text-sm font-medium">
+          <Trans>Source</Trans>
+        </span>
         <ul className="grid gap-2 sm:grid-cols-2">
           {sources.map((item) => {
             const selected = item.id === sourceId;
@@ -310,7 +330,7 @@ function ConfigureStep({
                 >
                   <span className="font-medium">{item.label}</span>
                   <span className="text-xs text-muted-foreground">
-                    {item.input === "csv" ? "CSV export" : "Public profile"}
+                    {item.input === "csv" ? <Trans>CSV export</Trans> : <Trans>Public profile</Trans>}
                   </span>
                   {disabled && item.unavailableReason ? (
                     <span className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
@@ -332,7 +352,7 @@ function ConfigureStep({
               <Textarea
                 value={csvText}
                 onChange={(event) => onCsvText(event.target.value)}
-                placeholder="Paste the contents of the exported .csv file"
+                placeholder={t`Paste the contents of the exported .csv file`}
                 rows={8}
                 className="font-mono text-xs"
               />
@@ -349,11 +369,11 @@ function ConfigureStep({
             </label>
           )}
           <p className="text-xs text-muted-foreground">
-            Only public profiles are supported. Nothing is written until you review the plan.
+            <Trans>Only public profiles are supported. Nothing is written until you review the plan.</Trans>
           </p>
           <div>
             <Button onClick={onStart} disabled={!canStart || starting}>
-              {starting ? "Starting…" : "Fetch & plan"}
+              {starting ? <Trans>Starting…</Trans> : <Trans>Fetch & plan</Trans>}
             </Button>
           </div>
         </div>
@@ -379,6 +399,7 @@ function PlanReview({
   typeLabels: Map<string, string>;
   providerLabels: Map<string, string>;
 }) {
+  const { i18n } = useLingui();
   if (!plan) return null;
   const items = plan.items;
   const counts = {
@@ -388,21 +409,34 @@ function PlanReview({
   };
   const ambiguous = plan.buckets.filter((bucket) => bucket.candidateTypes.length > 1);
   const unmatched = plan.buckets.filter((bucket) => bucket.candidateTypes.length === 0);
+  const unmatchedLabels = unmatched
+    .map((bucket) => `${providerLabels.get(bucket.provider) ?? bucket.provider} ${bucketLabel(i18n, bucket.provider, bucket.bucket)}`)
+    .join(", ");
 
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <Badge variant="secondary">{items.length} found</Badge>
-        <span className="tabular-nums">{counts.willCreate} to create</span>
-        {counts.exists > 0 ? <span>· {counts.exists} already in library</span> : null}
+        <Badge variant="secondary">
+          <Plural value={items.length} one="# found" other="# found" />
+        </Badge>
+        <span className="tabular-nums">
+          <Plural value={counts.willCreate} one="# to create" other="# to create" />
+        </span>
+        {counts.exists > 0 ? (
+          <span>· <Plural value={counts.exists} one="# already in library" other="# already in library" /></span>
+        ) : null}
         {counts.needsReview > 0 ? (
-          <span className="text-amber-700 dark:text-amber-400">· {counts.needsReview} need review</span>
+          <span className="text-amber-700 dark:text-amber-400">
+            · <Plural value={counts.needsReview} one="# needs review" other="# need review" />
+          </span>
         ) : null}
       </div>
 
       {ambiguous.length > 0 ? (
         <div className="flex flex-col gap-2 rounded-md border p-3">
-          <span className="text-sm font-medium">Choose a type</span>
+          <span className="text-sm font-medium">
+            <Trans>Choose a type</Trans>
+          </span>
           {ambiguous.map((bucket) => (
             <label
               key={`${bucket.provider}:${bucket.bucket}`}
@@ -410,7 +444,7 @@ function PlanReview({
             >
               <span className="text-muted-foreground">
                 {providerLabels.get(bucket.provider) ?? bucket.provider} ·{" "}
-                {bucketLabel(bucket.provider, bucket.bucket)}
+                {bucketLabel(i18n, bucket.provider, bucket.bucket)}
               </span>
               <Select
                 value={effectiveType(bucket) ?? ""}
@@ -430,11 +464,10 @@ function PlanReview({
 
       {unmatched.length > 0 ? (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
-          No entity type maps{" "}
-          {unmatched
-            .map((bucket) => `${providerLabels.get(bucket.provider) ?? bucket.provider} ${bucketLabel(bucket.provider, bucket.bucket)}`)
-            .join(", ")}
-          . Add an external-reference field for it in Settings to import these.
+          <Trans>
+            No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to
+            import these.
+          </Trans>
         </div>
       ) : null}
 
@@ -464,6 +497,7 @@ function PlanItemRow({
   onToggleSkip: () => void;
   providerLabels: Map<string, string>;
 }) {
+  const { t, i18n } = useLingui();
   const creatable = item.state === "willCreate";
   return (
     <li
@@ -478,7 +512,7 @@ function PlanItemRow({
           checked={!skipped}
           onChange={onToggleSkip}
           className="mt-1"
-          aria-label={`Include ${item.title}`}
+          aria-label={t`Include ${item.title}`}
         />
       ) : (
         <span className="mt-1 w-4" />
@@ -490,10 +524,10 @@ function PlanItemRow({
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           <span className="rounded border px-1.5 py-0.5">
-            {providerLabels.get(item.provider) ?? item.provider ?? "no source"}
+            {providerLabels.get(item.provider) ?? item.provider ?? t`no source`}
           </span>
           <span className="rounded border px-1.5 py-0.5">
-            {bucketLabel(item.provider, item.bucket)}
+            {bucketLabel(i18n, item.provider, item.bucket)}
           </span>
           <UserDataSummary item={item} />
         </div>
@@ -503,51 +537,55 @@ function PlanItemRow({
 }
 
 function StatePill({ item }: { item: ImportPlanItem }) {
+  const { i18n } = useLingui();
   if (item.state === "exists") {
     return item.existing ? (
       <Link
         to={`/entities/${encodeURIComponent(item.existing.id)}`}
         className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
       >
-        In library ✓
+        <Trans>In library ✓</Trans>
       </Link>
     ) : (
       <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-        In library ✓
+        <Trans>In library ✓</Trans>
       </span>
     );
   }
   if (item.state === "needsReview") {
     return (
       <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-        {reviewReasonLabel(item.reviewReason)}
+        {i18n._(reviewReasonLabel(item.reviewReason))}
       </span>
     );
   }
   return null;
 }
 
-function reviewReasonLabel(reason: ImportPlanItem["reviewReason"]): string {
+function reviewReasonLabel(reason: ImportPlanItem["reviewReason"]): MessageDescriptor {
   switch (reason) {
     case "noSupportedId":
-      return "No matched source";
+      return msg`No matched source`;
     case "noTypeMatch":
-      return "No matching type";
+      return msg`No matching type`;
     case "providerUnavailable":
-      return "Source unavailable";
+      return msg`Source unavailable`;
     default:
-      return "Needs review";
+      return msg`Needs review`;
   }
 }
 
 function UserDataSummary({ item }: { item: ImportPlanItem }) {
+  const { t, i18n } = useLingui();
   const parts: string[] = [];
   const data = item.userData;
-  if (data.status) parts.push(statusLabel(data.status));
+  if (data.status) parts.push(statusLabel(i18n, data.status));
   if (typeof data.score10 === "number") parts.push(`★ ${data.score10}`);
-  if (typeof data.watchedCount === "number") parts.push(`${data.watchedCount} watched`);
+  if (typeof data.watchedCount === "number") {
+    parts.push(plural(data.watchedCount, { one: "# watched", other: "# watched" }));
+  }
   if (data.completed) parts.push(data.completed);
-  if (data.hasNotes) parts.push("notes");
+  if (data.hasNotes) parts.push(t`notes`);
   if (parts.length === 0) return null;
   return <span>{parts.join(" · ")}</span>;
 }
@@ -564,11 +602,11 @@ function OptionToggles({
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
       <label className="flex items-center gap-1.5">
         <input type="checkbox" checked={options.importUserData} onChange={() => toggle("importUserData")} />
-        Status, score & dates
+        <Trans>Status, score & dates</Trans>
       </label>
       <label className="flex items-center gap-1.5">
         <input type="checkbox" checked={options.importEpisodes} onChange={() => toggle("importEpisodes")} />
-        Episodes
+        <Trans>Episodes</Trans>
       </label>
       <label className="flex items-center gap-1.5">
         <input
@@ -577,7 +615,7 @@ function OptionToggles({
           disabled={!options.importEpisodes}
           onChange={() => toggle("markProgress")}
         />
-        Mark watched progress
+        <Trans>Mark watched progress</Trans>
       </label>
     </div>
   );
@@ -590,13 +628,27 @@ function JobProgress({ job }: { job: ImportJob }) {
   return (
     <section className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span className="capitalize text-foreground">{done ? "Import complete" : "Importing…"}</span>
-        <span className="tabular-nums">
-          {job.processed} / {job.total} processed
+        <span className="capitalize text-foreground">
+          {done ? <Trans>Import complete</Trans> : <Trans>Importing…</Trans>}
         </span>
-        <Badge variant="outline">{job.created} created</Badge>
-        {job.skipped > 0 ? <span>{job.skipped} skipped</span> : null}
-        {job.failed > 0 ? <span className="text-destructive">{job.failed} failed</span> : null}
+        <span className="tabular-nums">
+          <Trans>
+            {job.processed} / {job.total} processed
+          </Trans>
+        </span>
+        <Badge variant="outline">
+          <Plural value={job.created} one="# created" other="# created" />
+        </Badge>
+        {job.skipped > 0 ? (
+          <span>
+            <Plural value={job.skipped} one="# skipped" other="# skipped" />
+          </span>
+        ) : null}
+        {job.failed > 0 ? (
+          <span className="text-destructive">
+            <Plural value={job.failed} one="# failed" other="# failed" />
+          </span>
+        ) : null}
       </div>
       <div className="mt-2 h-2 rounded-sm bg-muted">
         <div className="h-2 rounded-sm bg-primary" style={{ width: `${percent}%` }} />

@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon, SearchIcon } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -20,7 +23,8 @@ import {
   entityMatchesQuery,
   entityTypeOptions,
 } from "@/lib/entity-filters";
-import { useTitleLanguage } from "@/lib/language";
+import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
+import { useNumberFormat } from "@/lib/locale";
 import { entityTitle } from "@/lib/title-language";
 import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
@@ -33,7 +37,7 @@ import type {
 
 type QueueDefinition = {
   id: string;
-  label: string;
+  label: MessageDescriptor;
   kind: "entity" | "relation";
 };
 
@@ -42,18 +46,19 @@ type FilterableItem =
   | { kind: "relation"; item: CleanupUnresolvedRelation; entity: EntitySummary };
 
 const queueDefinitions: QueueDefinition[] = [
-  { id: "missing-cover", label: "Missing Cover", kind: "entity" },
-  { id: "broken-asset", label: "Broken Assets", kind: "entity" },
-  { id: "missing-refs", label: "Missing Links", kind: "entity" },
-  { id: "isolated", label: "Unlinked Items", kind: "entity" },
-  { id: "unresolved-relations", label: "Unresolved Relations", kind: "relation" },
-  { id: "status-mismatch", label: "Status Mismatch", kind: "entity" },
-  { id: "duplicate-filename", label: "Duplicate Filenames", kind: "entity" },
+  { id: "missing-cover", label: msg`Missing Cover`, kind: "entity" },
+  { id: "broken-asset", label: msg`Broken Assets`, kind: "entity" },
+  { id: "missing-refs", label: msg`Missing Links`, kind: "entity" },
+  { id: "isolated", label: msg`Unlinked Items`, kind: "entity" },
+  { id: "unresolved-relations", label: msg`Unresolved Relations`, kind: "relation" },
+  { id: "status-mismatch", label: msg`Status Mismatch`, kind: "entity" },
+  { id: "duplicate-filename", label: msg`Duplicate Filenames`, kind: "entity" },
 ];
 
 const assetQueueIds = new Set(["missing-cover", "broken-asset"]);
 
 export function ReviewPage() {
+  const { t, i18n } = useLingui();
   const { queueId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const cleanup = useQuery(cleanupQueuesQuery());
@@ -90,7 +95,9 @@ export function ReviewPage() {
   const summaries = cleanup.data?.queues ?? [];
   const activeSummary = summaries.find((queue) => queue.id === activeQueue?.id);
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
-  const language = useTitleLanguage();
+  // The full preference: the comparator derives the title language itself and
+  // collates with the full tag (zh-Hant sorts as Traditional).
+  const language = useLanguagePreference();
   const items = useMemo(
     () => (cleanup.data && activeQueue ? queueItems(cleanup.data, activeQueue) : []),
     [cleanup.data, activeQueue],
@@ -113,20 +120,22 @@ export function ReviewPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold">{activeQueue?.label ?? "Metadata Review"}</h1>
+            <h1 className="text-xl font-semibold">
+              {activeQueue ? i18n._(activeQueue.label) : t`Metadata Review`}
+            </h1>
             <p className="mt-1 text-xs text-muted-foreground">
               {cleanup.isPending
-                ? "Loading"
+                ? t`Loading`
                 : cleanup.data
-                  ? `Updated ${cleanup.data.generatedAt.slice(0, 10)}`
-                  : "No review data"}
+                  ? t`Updated ${cleanup.data.generatedAt.slice(0, 10)}`
+                  : t`No review data`}
             </p>
           </div>
           {activeSummary ? <ProgressPill summary={activeSummary} /> : null}
         </header>
 
         {cleanup.isPending ? (
-          <Placeholder>Loading</Placeholder>
+          <Placeholder><Trans>Loading</Trans></Placeholder>
         ) : null}
 
         {cleanup.data && (!activeQueue || assetQueueIds.has(activeQueue.id)) ? (
@@ -144,11 +153,11 @@ export function ReviewPage() {
                   <Input
                     value={queryInput}
                     onChange={(event) => setQueryInput(event.target.value)}
-                    placeholder="Search queue"
+                    placeholder={t`Search queue`}
                   />
                 </div>
                 <Select value={selectedType} onChange={(event) => setFilter("type", event.target.value)}>
-                  <option value={allEntityFilter}>All types</option>
+                  <option value={allEntityFilter}>{t`All types`}</option>
                   {typeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label} ({option.count})
@@ -156,9 +165,9 @@ export function ReviewPage() {
                   ))}
                 </Select>
                 <Select value={selectedDate} onChange={(event) => setFilter("date", event.target.value)}>
-                  <option value={allEntityFilter}>All dates</option>
-                  <option value="dated">Has date</option>
-                  <option value="undated">No date</option>
+                  <option value={allEntityFilter}>{t`All dates`}</option>
+                  <option value="dated">{t`Has date`}</option>
+                  <option value="undated">{t`No date`}</option>
                   {dateOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label} ({option.count})
@@ -167,19 +176,23 @@ export function ReviewPage() {
                 </Select>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary">{filteredItems.length} shown</Badge>
-                <span>{items.length} total queue items</span>
+                <Badge variant="secondary">
+                  <Plural value={filteredItems.length} one="# shown" other="# shown" />
+                </Badge>
+                <span>
+                  <Plural value={items.length} one="# total queue item" other="# total queue items" />
+                </span>
               </div>
             </section>
 
             {filteredItems.length === 0 ? (
               <Placeholder>
-                No queue items match the current filters
+                <Trans>No queue items match the current filters</Trans>
               </Placeholder>
             ) : (
               <section className="rounded-md border">
                 <header className="flex items-center gap-2 border-b px-3 py-2">
-                  <h2 className="text-sm font-semibold">{activeQueue.label}</h2>
+                  <h2 className="text-sm font-semibold">{i18n._(activeQueue.label)}</h2>
                   <Badge variant="secondary">{filteredItems.length}</Badge>
                 </header>
                 <div>
@@ -210,6 +223,7 @@ export function ReviewPage() {
 }
 
 function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
+  const { i18n } = useLingui();
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
       {queueDefinitions.map((definition) => {
@@ -223,17 +237,21 @@ function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="truncate text-sm font-semibold">{definition.label}</h2>
+                <h2 className="truncate text-sm font-semibold">{i18n._(definition.label)}</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {summary.remaining.toLocaleString()} remaining
+                  <Plural value={summary.remaining} one="# remaining" other="# remaining" />
                 </p>
               </div>
               <ArrowRightIcon className="text-muted-foreground" />
             </div>
             <ProgressBar summary={summary} />
             <div className="mt-auto flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary">{completeCount(summary).toLocaleString()} complete</Badge>
-              <Badge variant="outline">{summary.total.toLocaleString()} total</Badge>
+              <Badge variant="secondary">
+                <Plural value={completeCount(summary)} one="# complete" other="# complete" />
+              </Badge>
+              <Badge variant="outline">
+                <Plural value={summary.total} one="# total" other="# total" />
+              </Badge>
             </div>
           </Link>
         );
@@ -318,12 +336,13 @@ function EntitySummaryCell({
 }
 
 function ProgressPill({ summary }: { summary: CleanupQueueSummary }) {
+  const formatNumber = useNumberFormat();
   return (
     <div className="min-w-48 rounded-md border px-3 py-2">
       <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-muted-foreground">Progress</span>
+        <span className="text-muted-foreground"><Trans>Progress</Trans></span>
         <span className="tabular-nums">
-          {completeCount(summary).toLocaleString()} / {summary.total.toLocaleString()}
+          {formatNumber(completeCount(summary))} / {formatNumber(summary.total)}
         </span>
       </div>
       <ProgressBar summary={summary} />

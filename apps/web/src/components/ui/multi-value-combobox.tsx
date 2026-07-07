@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react";
 import { useMemo, useState } from "react";
+import { useLingui } from "@lingui/react/macro";
 
 import {
   Combobox,
@@ -55,6 +56,7 @@ export function MultiValueCombobox({
   onOpenChange?: (open: boolean) => void;
   onChange: (values: string[]) => void;
 }) {
+  const { t } = useLingui();
   const [uncontrolledInputValue, setUncontrolledInputValue] = useState("");
   const currentInputValue = inputValue ?? uncontrolledInputValue;
   const selectedValues = useMemo(
@@ -141,12 +143,12 @@ export function MultiValueCombobox({
         />
       </ComboboxChips>
       <ComboboxContent>
-        <ComboboxEmpty>{loading ? "Searching..." : error ? error : emptyText}</ComboboxEmpty>
+        <ComboboxEmpty>{loading ? t`Searching...` : error ? error : emptyText}</ComboboxEmpty>
         <ComboboxList>
           {(item) => (
             <ComboboxItem key={item} value={item}>
               <span className="min-w-0 flex-1 truncate">
-                {customItem && item === customItem ? `Add "${item}"` : (labels.get(item) ?? item)}
+                {customItem && item === customItem ? t`Add "${item}"` : (labels.get(item) ?? item)}
               </span>
               {details.get(item) ? <span className="truncate text-xs text-muted-foreground">{details.get(item)}</span> : null}
             </ComboboxItem>

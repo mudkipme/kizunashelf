@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { CheckIcon, RefreshCwIcon } from "lucide-react";
 
 import { EpisodeSyncDialog } from "@/components/assets/episode-sync-dialog";
@@ -34,7 +35,7 @@ export function EpisodeSyncButton({
     <>
       <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
         <RefreshCwIcon data-icon="inline-start" />
-        Sync
+        <Trans>Sync</Trans>
       </Button>
       <EpisodeSyncDialog
         open={open}
@@ -66,6 +67,7 @@ export function EntityEpisodesPanel({
   onSetDate?: (group: string, key: string, index: number, date: string) => void;
   relations: Relation[];
 }) {
+  const { t } = useLingui();
   const checklist = episodes.tracking === "checklist";
   const percent = episodes.total > 0 ? Math.round((episodes.watched / episodes.total) * 100) : 0;
   const interactive = checklist && !disabled && !saving;
@@ -80,8 +82,10 @@ export function EntityEpisodesPanel({
   if (episodes.total === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No items yet — sync from a provider or add a list under the{" "}
-        <code>{episodes.heading}</code> heading.
+        <Trans>
+          No items yet — sync from a provider or add a list under the{" "}
+          <code>{episodes.heading}</code> heading.
+        </Trans>
       </p>
     );
   }
@@ -126,14 +130,14 @@ export function EntityEpisodesPanel({
                   editableDone ? (
                     <span
                       className="relative inline-flex cursor-pointer rounded px-0.5 hover:bg-accent hover:text-accent-foreground"
-                      title="Change completion date"
+                      title={t`Change completion date`}
                       onClick={(event) => event.stopPropagation()}
                     >
                       ✅ {item.done}
                       <input
                         type="date"
                         value={item.done}
-                        aria-label="Change completion date"
+                        aria-label={t`Change completion date`}
                         onClick={(event) => event.stopPropagation()}
                         onChange={(event) => {
                           if (event.target.value) {
