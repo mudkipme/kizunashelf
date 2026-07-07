@@ -208,9 +208,8 @@ fn relation_field_matches(
     library: &Library,
     filter: &EntityFieldFilter,
 ) -> bool {
-    library.relations.iter().any(|relation| {
+    library.relations_from(&entity.summary.id).any(|relation| {
         relation.direction == RelationDirection::Out
-            && relation.source_id == entity.summary.id
             && relation.field == filter.field
             && filter
                 .values
