@@ -1,5 +1,8 @@
 use super::error::ApiError;
-use crate::contract::{AnalyticsResponse, AssetDownloadJob, CleanupQueuesResponse};
+use super::import::ImportJobRecord;
+use crate::contract::{
+    AnalyticsResponse, AssetDownloadJob, CleanupQueuesResponse, ImportJob, ImportJobStatus,
+};
 use crate::library::{
     compute_listing_fingerprint, load_vault_config_via_vfs, read_library, read_library_cached,
     read_raw_vault_config_via_vfs, IndexCacheContext, MemoryIndexCache,
@@ -154,6 +157,8 @@ pub(crate) struct AppState {
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
+    import_jobs: Arc<Mutex<HashMap<String, ImportJobRecord>>>,
+    import_job_counter: Arc<AtomicU64>,
 }
 
 #[derive(Clone)]
@@ -222,6 +227,8 @@ impl AppState {
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
+            import_jobs: Arc::new(Mutex::new(HashMap::new())),
+            import_job_counter: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -294,6 +301,66 @@ impl AppState {
         update: impl FnOnce(&mut AssetDownloadJob),
     ) {
         let mut jobs = self.asset_jobs.lock().await;
+        if let Some(record) = jobs.get_mut(job_id) {
+            update(&mut record.job);
+        }
+    }
+
+    pub(crate) fn import_jobs(&self) -> &Arc<Mutex<HashMap<String, ImportJobRecord>>> {
+        &self.import_jobs
+    }
+
+    pub(crate) fn next_import_job_id(&self) -> String {
+        let counter = self.import_job_counter.fetch_add(1, Ordering::Relaxed);
+        format!("import-{}-{}", unix_seconds_now(), counter)
+    }
+
+    /// Inserts a new import job unless one is already actively fetching or
+    /// committing, pruning the oldest finished jobs beyond the retention limit.
+    /// A `Planned` job (waiting for commit) does not block a new plan — committing
+    /// a stale plan is safe because the dedup gate skips already-created entities.
+    /// The check-and-insert is atomic (one lock). Returns `false` (and inserts
+    /// nothing) when a job is already in flight.
+    pub(crate) async fn insert_import_job_if_idle(&self, record: ImportJobRecord) -> bool {
+        let mut jobs = self.import_jobs.lock().await;
+        if jobs.values().any(|existing| {
+            matches!(
+                existing.job.status,
+                ImportJobStatus::Queued | ImportJobStatus::Fetching | ImportJobStatus::Committing
+            )
+        }) {
+            return false;
+        }
+        jobs.insert(record.job.id.clone(), record);
+        if jobs.len() > MAX_RETAINED_JOBS {
+            let mut finished: Vec<(String, String)> = jobs
+                .values()
+                .filter(|record| {
+                    matches!(
+                        record.job.status,
+                        ImportJobStatus::Completed
+                            | ImportJobStatus::Cancelled
+                            | ImportJobStatus::Failed
+                    )
+                })
+                .map(|record| (record.job.id.clone(), record.job.started_at.clone()))
+                .collect();
+            finished.sort_by(|a, b| a.1.cmp(&b.1));
+            let remove = jobs.len().saturating_sub(MAX_RETAINED_JOBS);
+            for (id, _) in finished.into_iter().take(remove) {
+                jobs.remove(&id);
+            }
+        }
+        true
+    }
+
+    /// Applies `update` to the stored import job, if it still exists.
+    pub(crate) async fn update_import_job(
+        &self,
+        job_id: &str,
+        update: impl FnOnce(&mut ImportJob),
+    ) {
+        let mut jobs = self.import_jobs.lock().await;
         if let Some(record) = jobs.get_mut(job_id) {
             update(&mut record.job);
         }

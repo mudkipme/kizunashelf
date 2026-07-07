@@ -14,6 +14,7 @@ import { isDesktopRuntime } from "@/lib/desktop";
 import { ActivityPage } from "@/pages/activity-page";
 import { CalendarPage } from "@/pages/calendar-page";
 import { EntityCreatePage } from "@/pages/entity-create-page";
+import { ImportWizardPage } from "@/pages/import-wizard-page";
 import { QuickCapturePage } from "@/pages/quick-capture-page";
 import { EntityEditPage } from "@/pages/entity-edit-page";
 import { EntityPage } from "@/pages/entity-page";
@@ -111,6 +112,7 @@ function AppRoutes() {
       <Route path="/lists/:id" element={<ListDetailPage />} />
       <Route path="/entities/new" element={<QuickCapturePage />} />
       <Route path="/entities/new/manual" element={<EntityCreatePage />} />
+      <Route path="/entities/import" element={<ImportWizardPage />} />
       <Route path="/entities/:id/edit" element={<EntityEditPage />} />
       <Route path="/entities/:id" element={<EntityPage />} />
     </Routes>

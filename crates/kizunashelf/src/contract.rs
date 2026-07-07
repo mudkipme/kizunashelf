@@ -1101,6 +1101,232 @@ pub struct ExternalSearchResponse {
     pub items: Vec<ExternalMatch>,
 }
 
+// ---- Batch import ----------------------------------------------------------
+//
+// Import a user's library from an external service (public profile) or a file
+// export (CSV) into vault entities. A `plan` job fetches and resolves items
+// against the same "in library" dedup quick capture uses; a `commit` job then
+// creates the approved entities through the quick-add primitives (schema
+// mapping, atomic write, episode import). See `docs/batch-import-plan.md`.
+
+/// How an import source receives its input.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportInputKind {
+    // Plain `//` comments (see `FieldType`): keep this a flat string enum so
+    // swift-openapi-generator renders proper cases.
+    //
+    // A public profile fetched by username/id.
+    Profile,
+    // A file export pasted as text (CSV).
+    Csv,
+}
+
+/// One selectable import source in the catalog.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportSourceCatalogItem {
+    pub id: String,
+    pub label: String,
+    pub input: ImportInputKind,
+    /// Human label for the input field ("Bangumi username", "Yamtrack CSV export").
+    pub input_label: String,
+    /// Provider ids this source resolves items to.
+    pub providers: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub credentials: Vec<ExternalProviderCredentialField>,
+    pub available: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unavailable_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportSourceCatalogResponse {
+    pub sources: Vec<ImportSourceCatalogItem>,
+}
+
+/// Input for a source fetch: a username (profile sources) or the pasted text of
+/// a CSV export (CSV sources). CSV arrives as a string field, not multipart, so
+/// the generated clients and the iOS in-process tunnel stay trivial.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub username: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub csv_text: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateImportJobRequest {
+    pub source: String,
+    pub input: ImportInput,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportJobStatus {
+    Queued,
+    Fetching,
+    Planned,
+    Committing,
+    Completed,
+    Cancelled,
+    Failed,
+}
+
+/// A planned item's disposition against the resident library.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportPlanItemState {
+    // Already in the library (loose "in library" match) — skipped, linked.
+    Exists,
+    // Resolvable to a target type — will be created on commit.
+    WillCreate,
+    // Needs manual resolution (`review_reason` says why) — not created by default.
+    NeedsReview,
+}
+
+/// Why a planned item needs manual review.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportReviewReason {
+    // The source exposed no supported provider id for this item.
+    NoSupportedId,
+    // No entity type maps the item's provider + bucket.
+    NoTypeMatch,
+    // A duplicate of another item in the same import (merged away).
+    DuplicateInBatch,
+    // The resolving provider is unavailable (missing credentials).
+    ProviderUnavailable,
+}
+
+/// A source "bucket" (the provider's own media kind, e.g. Bangumi `anime`) and
+/// the entity types it can map to. One candidate type is auto-selected; several
+/// leave `selected_type` empty for the user to pick.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportPlanBucket {
+    pub bucket: String,
+    pub provider: String,
+    pub candidate_types: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selected_type: Option<String>,
+}
+
+/// The user data resolved for a planned item, summarized for the review UI.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportPlanUserData {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<CanonicalStatus>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub score10: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub watched_count: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub started: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub completed: Option<String>,
+    pub has_notes: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportPlanItem {
+    pub index: u32,
+    pub title: String,
+    pub provider: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ref_url: Option<String>,
+    pub bucket: String,
+    pub state: ImportPlanItemState,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub existing: Option<ExistingEntityRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review_reason: Option<ImportReviewReason>,
+    pub user_data: ImportPlanUserData,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportPlan {
+    pub buckets: Vec<ImportPlanBucket>,
+    pub items: Vec<ImportPlanItem>,
+}
+
+/// An in-memory batch import job. Like the asset-download job it does not survive
+/// a restart; re-running is safe because the dedup gate skips already-created
+/// entities. `plan` is populated once `status` reaches `planned`.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportJob {
+    pub id: String,
+    pub source: String,
+    pub status: ImportJobStatus,
+    pub total: u32,
+    pub processed: u32,
+    pub created: u32,
+    pub skipped: u32,
+    pub needs_review: u32,
+    pub failed: u32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub errors: Vec<String>,
+    pub started_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub finished_at: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plan: Option<ImportPlan>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportJobListResponse {
+    pub jobs: Vec<ImportJob>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportDecisionAction {
+    Create,
+    Skip,
+}
+
+/// A per-item override applied at commit: force a create/skip, choose a target
+/// type (for ambiguous buckets), or supply a hand-picked candidate for a
+/// `needsReview` item.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportDecision {
+    pub index: u32,
+    pub action: ImportDecisionAction,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub type_override: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub candidate_override: Option<ExternalCandidate>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportCommitOptions {
+    pub import_user_data: bool,
+    pub import_episodes: bool,
+    pub mark_progress: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CommitImportJobRequest {
+    /// Bucket → chosen entity type id, for buckets with multiple candidate types.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub types: std::collections::BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub decisions: Vec<ImportDecision>,
+    pub options: ImportCommitOptions,
+}
+
 /// Year-over-year activity: a year × month matrix of dated entities, filterable
 /// by type. Backs the statistics heatmap + per-year totals. (Browsing dated
 /// entities by period lives in the calendar's year/season views; this is the

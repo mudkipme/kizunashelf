@@ -39,6 +39,16 @@ export type {
   ExternalProviderCatalogItem,
   ExternalProviderSummary,
   ExternalSearchResponse,
+  ImportSourceCatalogItem,
+  ImportSourceCatalogResponse,
+  ImportJob,
+  ImportJobListResponse,
+  ImportJobStatus,
+  ImportInputKind,
+  CreateImportJobRequest,
+  CommitImportJobRequest,
+  ImportDecision,
+  ImportCommitOptions,
   MappedBodySection,
   MappedFieldValue,
   QuickAddEpisodeResult,
@@ -76,11 +86,23 @@ export type {
 import type {
   EntityDetailResponse,
   EntitySummary,
+  ImportJob,
   ResolveTypePresetsResponse,
   SaveSettingsRequest,
   SettingsConfigResponse,
   TypePresetsResponse,
 } from "@kizunashelf/api-contract";
+
+// Import plan sub-types, derived by indexed access into ImportJob so they unify
+// with the poll response's inlined `plan` shape (orval inlines nested objects, so
+// importing the standalone named ImportPlanItem/… would risk a TS2719 clash).
+export type ImportPlan = NonNullable<ImportJob["plan"]>;
+export type ImportPlanBucket = ImportPlan["buckets"][number];
+export type ImportPlanItem = ImportPlan["items"][number];
+export type ImportPlanUserData = ImportPlanItem["userData"];
+export type ImportPlanItemState = ImportPlanItem["state"];
+export type ImportReviewReason = NonNullable<ImportPlanItem["reviewReason"]>;
+export type ImportCanonicalStatus = NonNullable<ImportPlanUserData["status"]>;
 
 // Preset picker types, derived by indexed access so the resolve response's
 // `types`/`field` unify structurally with the editor's own EntityTypeConfig/

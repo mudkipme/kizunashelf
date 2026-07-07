@@ -430,6 +430,22 @@ fn mal_detail(media_type: &str, id: &str, response: &Value) -> Option<ExternalCa
     })
 }
 
+/// The candidate for one entry of a user's MAL list. A list `node` (requested
+/// with [`DETAIL_FIELDS`]) has the same shape a detail fetch returns, so batch
+/// import reuses [`mal_detail`] to build a full candidate — no per-item detail
+/// fetch, and no drift from the search path. `media_type` is `anime`/`manga`.
+pub(crate) fn mal_list_candidate(media_type: &str, node: &Value) -> Option<ExternalCandidate> {
+    let id = node.get("id").and_then(Value::as_i64)?.to_string();
+    mal_detail(media_type, &id, node)
+}
+
+/// The `fields=` selection for a user's list: the per-entry `list_status` plus the
+/// same node fields [`DETAIL_FIELDS`] carries, so each entry maps without a fetch.
+pub(crate) const LIST_FIELDS: &str = "list_status{status,score,num_episodes_watched,\
+num_chapters_read,num_times_rewatched,num_times_reread,is_rewatching,is_rereading,start_date,\
+finish_date,comments,updated_at},title,main_picture,media_type,start_date,end_date,synopsis,\
+status,genres,mean,num_episodes,num_chapters,average_episode_duration,studios,start_season,source";
+
 fn mal_image(value: &Value) -> Option<String> {
     value
         .get("main_picture")

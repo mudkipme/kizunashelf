@@ -8,6 +8,7 @@ import {
   CalendarDaysIcon,
   ClipboardCheckIcon,
   DatabaseIcon,
+  DownloadIcon,
   HomeIcon,
   ListIcon,
   type LucideIcon,
@@ -362,6 +363,9 @@ function SidebarContent({
       </section>
 
       <section className="mt-auto flex flex-col gap-1">
+        <SidebarNavLink to="/entities/import" icon={DownloadIcon} onNavigate={onNavigate}>
+          Import
+        </SidebarNavLink>
         <SidebarNavLink to="/statistics" icon={BarChart3Icon} onNavigate={onNavigate}>
           Statistics
         </SidebarNavLink>

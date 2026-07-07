@@ -8,7 +8,7 @@ KizunaShelf is schema-driven. There are two kinds of configuration:
   - **Desktop**: a vault list managed in-app (Obsidian-style switching), stored in the app's data directory.
   - **iOS**: vaults opened from Files via security-scoped bookmarks.
 
-The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and the starter vault templates (used by web onboarding, desktop, and iOS vault creation) live in `crates/kizunashelf/src/templates.rs`. `config/vault-config.example.yaml` is generated from the "Media Library" starter template (`cargo run -p kizunashelf --example starter_yaml`) — don't edit it by hand.
+The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and the built-in **type presets** — the ready-made types the picker seeds during web onboarding, desktop, and iOS vault creation — live in `crates/kizunashelf/src/presets.rs`. A sample vault config is at `config/vault-config.example.yaml`.
 
 ## First Run
 
@@ -21,16 +21,11 @@ KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 
 Open `http://localhost:5173/`. If that vault has no `KizunaShelf/config.yaml`, KizunaShelf redirects to `/onboarding` to create the schema (the web app never asks for a vault root — that comes from the environment).
 
-On **desktop**, onboarding instead opens a native vault chooser: open an existing folder or create a new vault (a new vault is seeded with a starter media-tracker schema). On **iOS**, you pick the vault folder from Files.
+On **desktop**, onboarding instead opens a native vault chooser: open an existing folder or create a new (empty) vault. On **iOS**, you pick the vault folder from Files.
 
-The onboarding schema editor is the same structured editor used by Settings. Fill in:
+Onboarding is a **type-preset picker**. Choose a title language, then pick the built-in types you want — movies, TV, anime, manga, games, books, music, and more. Each preset is one fully-wired type: its title/cover/date/status/progress fields and external-provider mappings are already set (the presets reuse the same provider catalog as external matching, so they never drift). You can add or drop types and refine any field in the structured editor — the same editor Settings uses — before saving.
 
-- `Taxonomy root`: the collection root folder inside the vault; the default convention is `Taxonomy`, but any folder name works.
-- `Types`: each collection folder you want KizunaShelf to index.
-- `Fields`: frontmatter names for stable IDs, titles, images, enums, dates, external refs, and relations.
-- Optional `Home` and `Daily Notes` sections.
-
-Click `Create Vault`. KizunaShelf writes `KizunaShelf/config.yaml` into the vault, reloads the in-memory library, and opens the normal app.
+Click `Create Vault`. KizunaShelf resolves the chosen presets (stamping your language onto title fields and keeping only the relations whose target type you also picked), writes `KizunaShelf/config.yaml` into the vault, reloads the in-memory library, and opens the normal app. Everything a preset sets is ordinary schema you can edit later; nothing is special-cased.
 
 ## Design Model
 
@@ -79,7 +74,7 @@ The vault config always lives at a fixed location relative to the vault root:
 
 It lives in a **visible** folder (`KizunaShelf/`, not a hidden dot-folder) on purpose, so that it syncs with every method — see [Syncing KizunaShelf](syncing.md) for why, and for how to sync a vault across devices. The folder also holds other app-owned, sync-worthy artifacts (e.g. saved lists under `KizunaShelf/Lists/`). It is excluded from directory autocomplete so you don't nest entity collections inside it.
 
-An example vault config (generated from the "Media Library" starter template) is available at `config/vault-config.example.yaml`. Onboarding is shown only when the vault has no `KizunaShelf/config.yaml` yet; when the vault already contains a synced one, any machine pointing at the vault picks up the schema automatically. Onboarding's template picker is served from the core by `GET /api/vault-templates`.
+An example vault config is available at `config/vault-config.example.yaml`. Onboarding is shown only when the vault has no `KizunaShelf/config.yaml` yet; when the vault already contains a synced one, any machine pointing at the vault picks up the schema automatically. The type presets that back onboarding (and the "add a built-in type" picker in Settings) are served from the core by `GET /api/type-presets` and `POST /api/type-presets/resolve`.
 
 ### App-level settings (per runtime)
 
@@ -141,8 +136,10 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_COMICVINE_API_KEY` | Comic Vine API key for comic matching. |
 | `KIZUNASHELF_HARDCOVER_API_KEY` | Hardcover API token (the full `Bearer …` value) for book matching. |
 | `KIZUNASHELF_GOOGLE_BOOKS_API_KEY` | Google Books API key for book matching (keyless access shares an exhausted quota and returns 429). |
+| `KIZUNASHELF_TRAKT_CLIENT_ID` | Trakt client id (its `trakt-api-key`) for [importing](#quick-capture-and-import) a Trakt profile. |
+| `KIZUNASHELF_STEAM_API_KEY` | Steam Web API key for importing a Steam library (`GetOwnedGames`). Distinct from the keyless store API the Steam search provider uses. |
 
-These provider-credential variables apply to the **web** runtime only. Each is derived mechanically from the credential key a provider declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. The desktop and iOS apps read credentials from the OS keychain (entered in Settings → Provider Credentials, rendered from the same catalog), not from the environment. Run multiple instances — each with its own `KIZUNASHELF_VAULT_ROOT` and `PORT` — to serve multiple vaults.
+These provider-credential variables apply to the **web** runtime only. Each is derived mechanically from the credential key a provider (or [import source](#quick-capture-and-import)) declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. The desktop and iOS apps read credentials from the OS keychain (search-provider credentials are entered in Settings → Provider Credentials, rendered from the provider catalog), not from the environment. Run multiple instances — each with its own `KIZUNASHELF_VAULT_ROOT` and `PORT` — to serve multiple vaults.
 
 The server does not enable wildcard CORS by default. Use the Vite dev proxy during development, or serve the built web app from the Rust process for production.
 
@@ -613,6 +610,38 @@ TheTVDB, and Apple Podcasts → episodes; MusicBrainz, Spotify, and Discogs → 
 disc); Comic Vine → a volume's issues. The provider must be configured (credentials set, if it
 needs any) and linked on the entity; when more than one such source is linked, the dialog lets you
 choose which to sync from.
+
+## Quick Capture and Import
+
+The external-metadata wiring above powers two ways to create entities from provider data. Both create real Markdown files and are gated by content-write mode; both reuse the same **"in library" detection** so they never make a duplicate.
+
+### Quick Capture
+
+Quick Capture (`/entities/new`) is the single-add flow: search the providers a type maps (or paste a provider URL), pick a match, and one click creates the entity. The server re-runs the schema mapping (it never trusts client-sent values), fills every mapped field and body section, downloads covers, and imports the episode list — covers and episodes are fail-safe, so a flaky provider never blocks the creation. If the candidate already resolves to a library entity (by external ref or a loose title match), Quick Capture opens that entity instead of adding a copy.
+
+### Import
+
+Import (`/entities/import`) brings in a whole library from another service. It is a three-step, **review-before-write** job: *fetch & plan* (pull the source and resolve every item against your schema), *review* (see what will be created, skipped as already-in-library, or needs manual attention — and pick a target type where a bucket maps to more than one), then *commit* (create the approved entities). Nothing is written until you commit, and re-running the same import is safe — anything already created is skipped.
+
+Only **public profiles** are supported. Each source resolves its items to one of the built-in providers, so **a type must declare an `externalRef` field for that provider** to receive them (e.g. an `externalRef: myanimelist` field to import MyAnimeList/AniList/Kitsu, `externalRef: tmdb` for Trakt/IMDb, `externalRef: steam` for Steam, `externalRef: openlibrary` for Goodreads, `externalRef: bangumi` for Bangumi). The item's provider *type* (anime, movie, game, …) is matched against that field's `externalTypes`.
+
+| Source | Input | Resolves to | Credential |
+| --- | --- | --- | --- |
+| Bangumi | username | `bangumi` | — |
+| MyAnimeList | username | `myanimelist` | MyAnimeList client id (same as search) |
+| AniList | username | `myanimelist` (via each entry's MAL id) | — |
+| Kitsu | username | `myanimelist` (via each entry's MAL mapping) | — |
+| Trakt | username (slug) | `tmdb` | Trakt client id |
+| Steam | SteamID64 | `steam` | Steam Web API key |
+| IMDb | CSV export | `tmdb` (via `/find`) | TMDB API key |
+| Goodreads | CSV export | `openlibrary` (via ISBN) | — |
+| Yamtrack | CSV export | `myanimelist`, `tmdb` | — |
+
+Import credentials are supplied like provider credentials — `KIZUNASHELF_*` env vars on web, the OS keychain on desktop/iOS (keys `trakt_client_id`, `steam_api_key`). A source with a missing required credential is shown but disabled, with the reason.
+
+**Your data maps through schema roles, not field names.** For each imported item, the source's status is translated to a canonical (`planning`/`ongoing`/`paused`/`completed`/`dropped`) and written to the type's [`enumRole: status`](#status) field via its `statusValues`; the score goes to the first [`rating`](#field-types) field (normalized to 0–10); started/finished dates go to the [`dateRole`](#dates-and-calendar-design) `started`/`completed` fields; notes become an unmanaged `## Notes` body section; and watched progress ticks the first *N* items of the [episodes](#episodes--tracks--chapters) section. A role you haven't wired is simply skipped. Which of these run is controlled by per-import toggles (import user data, import episodes, mark progress).
+
+Import does **not** download covers — imported image fields keep their remote URLs. Fetch the local copies afterward with the batch cover downloader (the *Download remote covers* panel on the Review page), which runs one job over a type or the whole library.
 
 ## Home Page
 

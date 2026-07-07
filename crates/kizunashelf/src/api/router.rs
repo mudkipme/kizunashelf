@@ -11,6 +11,10 @@ use super::handlers::{
     refresh, resolve_type_presets, save_raw_settings_config, save_settings_config, settings_config,
     type_presets, upcoming,
 };
+use super::import::{
+    cancel_import_job, commit_import_job, create_import_job, get_import_job, list_import_jobs,
+    list_import_sources,
+};
 use super::lists::{
     add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
 };
@@ -26,10 +30,10 @@ use crate::contract::{
     CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse,
     DeleteListResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
     EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse,
-    HealthResponse, HomeResponse, LanguagesResponse, ListDetail, ListsResponse,
-    LogActivityResponse, PathSuggestionsResponse, QuickAddResponse, RawConfigResponse,
-    ResolveTypePresetsResponse, SettingsConfigResponse, StatsResponse, TagsResponse,
-    TypePresetsResponse,
+    HealthResponse, HomeResponse, ImportJob, ImportJobListResponse, ImportSourceCatalogResponse,
+    LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse, PathSuggestionsResponse,
+    QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse, SettingsConfigResponse,
+    StatsResponse, TagsResponse, TypePresetsResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -435,6 +439,60 @@ fn api_router() -> ApiRouter<AppState> {
             post_with(cancel_asset_job, |op| {
                 op.id("cancelAssetJob")
                     .response::<200, Json<AssetDownloadJob>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import/sources",
+            get_with(list_import_sources, |op| {
+                op.id("listImportSources")
+                    .response::<200, Json<ImportSourceCatalogResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import-jobs",
+            get_with(list_import_jobs, |op| {
+                op.id("listImportJobs")
+                    .response::<200, Json<ImportJobListResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .post_with(create_import_job, |op| {
+                op.id("createImportJob")
+                    .response::<200, Json<ImportJob>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import-jobs/{id}",
+            get_with(get_import_job, |op| {
+                op.id("getImportJob")
+                    .response::<200, Json<ImportJob>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import-jobs/{id}/commit",
+            post_with(commit_import_job, |op| {
+                op.id("commitImportJob")
+                    .response::<200, Json<ImportJob>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import-jobs/{id}/cancel",
+            post_with(cancel_import_job, |op| {
+                op.id("cancelImportJob")
+                    .response::<200, Json<ImportJob>>()
                     .response::<404, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),

@@ -123,6 +123,24 @@ export * from "./generated/settingsConfigResponse.zod.js";
 export * from "./generated/rawConfigResponse.zod.js";
 export * from "./generated/saveRawConfigRequest.zod.js";
 export * from "./generated/pathSuggestionsResponse.zod.js";
+export * from "./generated/importSourceCatalogItem.zod.js";
+export * from "./generated/importSourceCatalogResponse.zod.js";
+export * from "./generated/importInput.zod.js";
+export * from "./generated/importInputKind.zod.js";
+export * from "./generated/createImportJobRequest.zod.js";
+export * from "./generated/importJob.zod.js";
+export * from "./generated/importJobListResponse.zod.js";
+export * from "./generated/importJobStatus.zod.js";
+export * from "./generated/importPlan.zod.js";
+export * from "./generated/importPlanBucket.zod.js";
+export * from "./generated/importPlanItem.zod.js";
+export * from "./generated/importPlanItemState.zod.js";
+export * from "./generated/importPlanUserData.zod.js";
+export * from "./generated/importReviewReason.zod.js";
+export * from "./generated/importDecision.zod.js";
+export * from "./generated/importDecisionAction.zod.js";
+export * from "./generated/importCommitOptions.zod.js";
+export * from "./generated/commitImportJobRequest.zod.js";
 
 export const ApiResponseSchemas = {
   health: HealthResponseSchema,
