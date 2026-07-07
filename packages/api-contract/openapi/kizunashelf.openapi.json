@@ -4130,7 +4130,7 @@
         ]
       },
       "UserLanguage": {
-        "description": "A user-language preference option for the clients' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`/`zh-Hant`), its endonym label, the bare title/content\nlanguage it maps to, and whether the UI is translated into it (clients fall\nback to English UI when not). See [`crate::languages`].",
+        "description": "A user-language preference option for the clients' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`/`zh-Hant`), its endonym label, and the bare title/content\nlanguage it maps to. Whether the UI is *translated* into a code is a\nper-client build fact, not core data, so each client derives it from its own\nshipped-locale set. See [`crate::languages`].",
         "type": "object",
         "properties": {
           "code": {
@@ -4141,16 +4141,12 @@
           },
           "titleLanguage": {
             "type": "string"
-          },
-          "uiSupported": {
-            "type": "boolean"
           }
         },
         "required": [
           "code",
           "label",
-          "titleLanguage",
-          "uiSupported"
+          "titleLanguage"
         ]
       },
       "HomeResponse": {

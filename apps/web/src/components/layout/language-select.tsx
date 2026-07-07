@@ -11,7 +11,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLanguageStore, useUiLocale } from "@/lib/language";
+import { isUiSupported, useLanguageStore, useUiLocale } from "@/lib/language";
 import { titleLanguageLabel } from "@/lib/title-language";
 import type { UserLanguage } from "@/types/api";
 
@@ -38,7 +38,6 @@ export function LanguageSelect() {
           code: language,
           label: titleLanguageLabel(language, uiLocale),
           titleLanguage: language,
-          uiSupported: false,
         },
         ...userLanguages,
       ];
@@ -62,7 +61,7 @@ export function LanguageSelect() {
             <DropdownMenuRadioItem key={item.code} value={item.code}>
               <span className="flex items-baseline gap-2">
                 {item.label}
-                {!item.uiSupported && (
+                {!isUiSupported(item.code) && (
                   <span className="text-muted-foreground text-xs">
                     <Trans>UI in English</Trans>
                   </span>

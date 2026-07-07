@@ -9,9 +9,8 @@ import { z as zod } from 'zod';
 export const UserLanguage = zod.object({
   "code": zod.string(),
   "label": zod.string(),
-  "titleLanguage": zod.string(),
-  "uiSupported": zod.boolean()
-}).describe('A user-language preference option for the clients\' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`\/`zh-Hant`), its endonym label, the bare title\/content\nlanguage it maps to, and whether the UI is translated into it (clients fall\nback to English UI when not). See [`crate::languages`].')
+  "titleLanguage": zod.string()
+}).describe('A user-language preference option for the clients\' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`\/`zh-Hant`), its endonym label, and the bare title\/content\nlanguage it maps to. Whether the UI is \*translated\* into a code is a\nper-client build fact, not core data, so each client derives it from its own\nshipped-locale set. See [`crate::languages`].')
 
 export type UserLanguage = zod.input<typeof UserLanguage>;
 export type UserLanguageOutput = zod.output<typeof UserLanguage>;

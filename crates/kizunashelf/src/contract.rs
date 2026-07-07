@@ -316,16 +316,16 @@ pub struct Language {
 
 /// A user-language preference option for the clients' single language picker:
 /// the preference code (which, unlike a title language, may carry a script
-/// subtag — `zh-Hans`/`zh-Hant`), its endonym label, the bare title/content
-/// language it maps to, and whether the UI is translated into it (clients fall
-/// back to English UI when not). See [`crate::languages`].
+/// subtag — `zh-Hans`/`zh-Hant`), its endonym label, and the bare title/content
+/// language it maps to. Whether the UI is *translated* into a code is a
+/// per-client build fact, not core data, so each client derives it from its own
+/// shipped-locale set. See [`crate::languages`].
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserLanguage {
     pub code: String,
     pub label: String,
     pub title_language: String,
-    pub ui_supported: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

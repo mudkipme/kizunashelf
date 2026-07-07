@@ -14,9 +14,8 @@ export const LanguagesResponse = zod.object({
   "userLanguages": zod.array(zod.object({
   "code": zod.string(),
   "label": zod.string(),
-  "titleLanguage": zod.string(),
-  "uiSupported": zod.boolean()
-}).describe('A user-language preference option for the clients\' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`\/`zh-Hant`), its endonym label, the bare title\/content\nlanguage it maps to, and whether the UI is translated into it (clients fall\nback to English UI when not). See [`crate::languages`].')).describe('The language-picker options the preference is chosen from; every\nlanguage-sensitive behavior (UI locale, title language, provider request\nlanguage) derives from the picked entry.')
+  "titleLanguage": zod.string()
+}).describe('A user-language preference option for the clients\' single language picker:\nthe preference code (which, unlike a title language, may carry a script\nsubtag — `zh-Hans`\/`zh-Hant`), its endonym label, and the bare title\/content\nlanguage it maps to. Whether the UI is \*translated\* into a code is a\nper-client build fact, not core data, so each client derives it from its own\nshipped-locale set. See [`crate::languages`].')).describe('The language-picker options the preference is chosen from; every\nlanguage-sensitive behavior (UI locale, title language, provider request\nlanguage) derives from the picked entry.')
 })
 
 export type LanguagesResponse = zod.input<typeof LanguagesResponse>;

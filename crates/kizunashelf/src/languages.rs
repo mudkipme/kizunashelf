@@ -57,47 +57,49 @@ pub fn supported_languages() -> Vec<Language> {
         .collect()
 }
 
-/// `(preference code, endonym label, title language, UI translated)` — the
-/// options for the clients' single language picker, one per entry in
-/// [`SUPPORTED_LANGUAGES`] except Chinese, which splits into `zh-Hans`/`zh-Hant`
-/// (both mapping to the bare `zh` title language). Labels are endonyms because
-/// a language picker must be readable to someone stuck in the wrong language.
-const USER_LANGUAGES: &[(&str, &str, &str, bool)] = &[
-    ("en", "English", "en", true),
-    ("zh-Hans", "简体中文", "zh", true),
-    ("zh-Hant", "繁體中文", "zh", true),
-    ("ja", "日本語", "ja", true),
-    ("ko", "한국어", "ko", false),
-    ("hr", "Hrvatski", "hr", false),
-    ("cs", "Čeština", "cs", false),
-    ("da", "Dansk", "da", false),
-    ("nl", "Nederlands", "nl", false),
-    ("fi", "Suomi", "fi", false),
-    ("fr", "Français", "fr", false),
-    ("de", "Deutsch", "de", false),
-    ("el", "Ελληνικά", "el", false),
-    ("he", "עברית", "he", false),
-    ("hu", "Magyar", "hu", false),
-    ("it", "Italiano", "it", false),
-    ("no", "Norsk", "no", false),
-    ("pl", "Polski", "pl", false),
-    ("pt", "Português", "pt", false),
-    ("ru", "Русский", "ru", false),
-    ("sl", "Slovenščina", "sl", false),
-    ("es", "Español", "es", false),
-    ("sv", "Svenska", "sv", false),
-    ("tr", "Türkçe", "tr", false),
+/// `(preference code, endonym label, title language)` — the options for the
+/// clients' single language picker, one per entry in [`SUPPORTED_LANGUAGES`]
+/// except Chinese, which splits into `zh-Hans`/`zh-Hant` (both mapping to the
+/// bare `zh` title language). Labels are endonyms because a language picker must
+/// be readable to someone stuck in the wrong language. Whether the UI is
+/// *translated* into a given code is deliberately not here: that's a per-client
+/// build fact (web and iOS ship different catalogs, and the set changes over
+/// time), so each client layers it on from its own shipped-locale set.
+const USER_LANGUAGES: &[(&str, &str, &str)] = &[
+    ("en", "English", "en"),
+    ("zh-Hans", "简体中文", "zh"),
+    ("zh-Hant", "繁體中文", "zh"),
+    ("ja", "日本語", "ja"),
+    ("ko", "한국어", "ko"),
+    ("hr", "Hrvatski", "hr"),
+    ("cs", "Čeština", "cs"),
+    ("da", "Dansk", "da"),
+    ("nl", "Nederlands", "nl"),
+    ("fi", "Suomi", "fi"),
+    ("fr", "Français", "fr"),
+    ("de", "Deutsch", "de"),
+    ("el", "Ελληνικά", "el"),
+    ("he", "עברית", "he"),
+    ("hu", "Magyar", "hu"),
+    ("it", "Italiano", "it"),
+    ("no", "Norsk", "no"),
+    ("pl", "Polski", "pl"),
+    ("pt", "Português", "pt"),
+    ("ru", "Русский", "ru"),
+    ("sl", "Slovenščina", "sl"),
+    ("es", "Español", "es"),
+    ("sv", "Svenska", "sv"),
+    ("tr", "Türkçe", "tr"),
 ];
 
 /// The user-language preference options as contract records.
 pub fn user_languages() -> Vec<UserLanguage> {
     USER_LANGUAGES
         .iter()
-        .map(|(code, label, title_language, ui_supported)| UserLanguage {
+        .map(|(code, label, title_language)| UserLanguage {
             code: (*code).to_string(),
             label: (*label).to_string(),
             title_language: (*title_language).to_string(),
-            ui_supported: *ui_supported,
         })
         .collect()
 }
@@ -156,7 +158,6 @@ mod tests {
         for code in ["zh-Hans", "zh-Hant"] {
             let entry = user.iter().find(|entry| entry.code == code).unwrap();
             assert_eq!(entry.title_language, "zh");
-            assert!(entry.ui_supported);
         }
         // The two tables must not drift: every schema title language is reachable
         // from some preference, and every preference maps to a schema language.
@@ -166,11 +167,11 @@ mod tests {
             .collect();
         let mapped: BTreeSet<&str> = USER_LANGUAGES
             .iter()
-            .map(|(_, _, title_language, _)| *title_language)
+            .map(|(_, _, title_language)| *title_language)
             .collect();
         assert_eq!(title_codes, mapped);
         // A preference's title language is always its own primary subtag.
-        for (code, _, title_language, _) in USER_LANGUAGES {
+        for (code, _, title_language) in USER_LANGUAGES {
             assert_eq!(primary_language(code), *title_language);
         }
     }

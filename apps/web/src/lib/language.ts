@@ -112,6 +112,12 @@ export function useLanguagePreference(): string {
   return useLanguageStore((state) => state.language);
 }
 
+/** Whether the app ships a UI translation for this preference code (a client build fact, not core data). */
+export function isUiSupported(code: string): boolean {
+  const wanted = code.trim().toLowerCase();
+  return UI_LOCALES.some((locale) => locale.toLowerCase() === wanted);
+}
+
 /** The UI locale a preference maps to: one of the shipped translations, else English. */
 export function uiLocaleFor(preference: string): UiLocale {
   const wanted = preference.trim().toLowerCase();
