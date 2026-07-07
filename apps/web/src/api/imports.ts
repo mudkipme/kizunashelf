@@ -3,6 +3,7 @@ import {
   commitImportJob,
   createImportJob,
   getImportJob,
+  listImportJobs,
   listImportSources,
   type CommitImportJobRequest,
   type CreateImportJobRequest,
@@ -17,6 +18,13 @@ export function fetchImportSources(init?: RequestInit) {
 
 export function fetchImportJob(id: string, init?: RequestInit) {
   return getImportJob(id, init, apiFetch);
+}
+
+// The (in-memory, server-side) job registry. Used to recover an in-progress job
+// after a page reload, since the wizard otherwise holds the active job id only
+// in local state.
+export function fetchImportJobs(init?: RequestInit) {
+  return listImportJobs(init, apiFetch);
 }
 
 export function startImportJob(request: CreateImportJobRequest) {

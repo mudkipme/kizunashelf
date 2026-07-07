@@ -1,6 +1,6 @@
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ActivityIcon,
   ArrowLeftIcon,
@@ -13,6 +13,7 @@ import {
   ListIcon,
   type LucideIcon,
   MenuIcon,
+  RefreshCwIcon,
   SearchIcon,
   SettingsIcon,
   TablePropertiesIcon,
@@ -20,12 +21,14 @@ import {
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { toast } from "sonner";
 
 import { LanguageSelect } from "@/components/layout/language-select";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { refreshLibrary } from "@/api/settings";
 import { statsQuery } from "@/api/queries";
 import { cn } from "@/lib/utils";
 import { allTypes } from "@/lib/constants";
@@ -153,6 +156,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <SearchIcon />
         </Button>
         <div className="ml-auto flex items-center gap-2 sm:ml-0">
+          <RescanButton />
           <LanguageSelect />
           <ThemeModeSelect />
           <Badge variant="secondary" className="hidden sm:inline-flex">
@@ -192,6 +196,35 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         onClose={() => setMobileSidebarOpen(false)}
       />
     </main>
+  );
+}
+
+// Manual "I edited the vault outside the app" reindex. The library reloads on a
+// TTL poll on its own, so this exists to skip the wait after editing frontmatter
+// in Obsidian. On success we invalidate the whole cache so every view repulls
+// the fresh index; failures surface through the global mutation-error toast.
+function RescanButton() {
+  const { t } = useLingui();
+  const queryClient = useQueryClient();
+  const rescan = useMutation({
+    mutationFn: () => refreshLibrary(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success(t`Vault rescanned`);
+    },
+  });
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={() => rescan.mutate()}
+      disabled={rescan.isPending}
+      aria-label={t`Rescan vault`}
+      title={t`Rescan vault`}
+    >
+      <RefreshCwIcon className={cn(rescan.isPending && "animate-spin")} />
+    </Button>
   );
 }
 

@@ -26,7 +26,7 @@ msgid "(daily-notes default)"
 msgstr "(daily-notes default)"
 
 #. placeholder {0}: counts.exists
-#: src/pages/import-wizard-page.tsx:426
+#: src/pages/import-wizard-page.tsx:456
 msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, one {# already in library} other {# already in library}}"
 
@@ -36,7 +36,7 @@ msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, one {# complete} other {# complete}}"
 
 #. placeholder {0}: job.created
-#: src/pages/import-wizard-page.tsx:640
+#: src/pages/import-wizard-page.tsx:670
 msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, one {# created} other {# created}}"
 
@@ -57,7 +57,7 @@ msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, one {# external type} other {# external types}}"
 
 #. placeholder {0}: job.failed
-#: src/pages/import-wizard-page.tsx:649
+#: src/pages/import-wizard-page.tsx:679
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# failed} other {# failed}}"
 
@@ -72,7 +72,7 @@ msgid "{0, plural, one {# filter} other {# filters}}"
 msgstr "{0, plural, one {# filter} other {# filters}}"
 
 #. placeholder {0}: items.length
-#: src/pages/import-wizard-page.tsx:420
+#: src/pages/import-wizard-page.tsx:450
 msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, one {# found} other {# found}}"
 
@@ -97,7 +97,7 @@ msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, one {# mapping} other {# mappings}}"
 
 #. placeholder {0}: counts.needsReview
-#: src/pages/import-wizard-page.tsx:430
+#: src/pages/import-wizard-page.tsx:460
 msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, one {# needs review} other {# need review}}"
 
@@ -133,12 +133,12 @@ msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, one {# shown} other {# shown}}"
 
 #. placeholder {0}: job.skipped
-#: src/pages/import-wizard-page.tsx:644
+#: src/pages/import-wizard-page.tsx:674
 msgid "{0, plural, one {# skipped} other {# skipped}}"
 msgstr "{0, plural, one {# skipped} other {# skipped}}"
 
 #. placeholder {0}: counts.willCreate
-#: src/pages/import-wizard-page.tsx:423
+#: src/pages/import-wizard-page.tsx:453
 msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, one {# to create} other {# to create}}"
 
@@ -166,7 +166,7 @@ msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, one {# value} other {# values}}"
 
 #. placeholder {0}: data.watchedCount
-#: src/pages/import-wizard-page.tsx:585
+#: src/pages/import-wizard-page.tsx:615
 msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, one {# watched} other {# watched}}"
 
@@ -188,7 +188,7 @@ msgstr "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
 #: src/components/assets/asset-download-panel.tsx:122
-#: src/pages/import-wizard-page.tsx:635
+#: src/pages/import-wizard-page.tsx:665
 msgid "{0} / {1} processed"
 msgstr "{0} / {1} processed"
 
@@ -256,7 +256,7 @@ msgstr "{monthLabel}: {0} — open in calendar"
 msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgstr "{selectedTotal, plural, one {# dated} other {# dated}}"
 
-#: src/pages/import-wizard-page.tsx:253
+#: src/pages/import-wizard-page.tsx:283
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
@@ -292,7 +292,7 @@ msgstr "📅 Scheduled"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "A file named for this title already existed, so it was saved as “{0}”."
 
-#: src/components/layout/app-frame.tsx:122
+#: src/components/layout/app-frame.tsx:125
 msgid "A shelf for everything you love"
 msgstr "A shelf for everything you love"
 
@@ -306,7 +306,7 @@ msgid "Actions"
 msgstr "Actions"
 
 #: src/components/assets/quick-log-dialog.tsx:111
-#: src/components/layout/app-frame.tsx:347
+#: src/components/layout/app-frame.tsx:380
 #: src/pages/activity-page.tsx:108
 #: src/pages/statistics-page.tsx:80
 msgid "Activity"
@@ -449,7 +449,7 @@ msgstr "All types"
 msgid "All types ({0})"
 msgstr "All types ({0})"
 
-#: src/pages/import-wizard-page.tsx:38
+#: src/pages/import-wizard-page.tsx:45
 msgid "Anime"
 msgstr "Anime"
 
@@ -491,13 +491,17 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:112
+#: src/components/layout/app-frame.tsx:115
 #: src/components/settings/preset-picker.tsx:173
 #: src/components/settings/settings-dialogs.tsx:78
 #: src/components/settings/settings-editor.tsx:172
 #: src/pages/entity-edit-page.tsx:174
 msgid "Back"
 msgstr "Back"
+
+#: src/pages/not-found-page.tsx:23
+msgid "Back to home"
+msgstr "Back to home"
 
 #: src/pages/entity-page.tsx:680
 msgid "Basename"
@@ -511,11 +515,11 @@ msgstr "Basics"
 msgid "Body Sections"
 msgstr "Body Sections"
 
-#: src/pages/import-wizard-page.tsx:37
+#: src/pages/import-wizard-page.tsx:44
 msgid "Book"
 msgstr "Book"
 
-#: src/pages/import-wizard-page.tsx:173
+#: src/pages/import-wizard-page.tsx:203
 msgid "Bring a library in from another service, then review before anything is written"
 msgstr "Bring a library in from another service, then review before anything is written"
 
@@ -527,7 +531,7 @@ msgstr "Broken Assets"
 msgid "Browse library"
 msgstr "Browse library"
 
-#: src/components/layout/app-frame.tsx:344
+#: src/components/layout/app-frame.tsx:377
 #: src/pages/calendar-page.tsx:84
 msgid "Calendar"
 msgstr "Calendar"
@@ -540,8 +544,8 @@ msgstr "Calendar"
 #: src/components/settings/settings-dialogs.tsx:506
 #: src/pages/entity-page.tsx:486
 #: src/pages/entity-page.tsx:698
-#: src/pages/import-wizard-page.tsx:223
-#: src/pages/import-wizard-page.tsx:264
+#: src/pages/import-wizard-page.tsx:253
+#: src/pages/import-wizard-page.tsx:294
 #: src/pages/list-detail-page.tsx:528
 #: src/pages/list-detail-page.tsx:1002
 #: src/pages/lists-page.tsx:160
@@ -574,7 +578,7 @@ msgid "Choose a candidate to compare fields."
 msgstr "Choose a candidate to compare fields."
 
 #: src/pages/entity-create-page.tsx:82
-#: src/pages/import-wizard-page.tsx:438
+#: src/pages/import-wizard-page.tsx:468
 msgid "Choose a type"
 msgstr "Choose a type"
 
@@ -591,8 +595,8 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:282
-#: src/components/layout/app-frame.tsx:298
+#: src/components/layout/app-frame.tsx:315
+#: src/components/layout/app-frame.tsx:331
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -605,7 +609,7 @@ msgstr "Coming up"
 #: src/components/settings/settings-sections.tsx:796
 #: src/components/settings/settings-sections.tsx:875
 #: src/pages/activity-page.tsx:46
-#: src/pages/import-wizard-page.tsx:52
+#: src/pages/import-wizard-page.tsx:59
 msgid "Completed"
 msgstr "Completed"
 
@@ -651,7 +655,7 @@ msgstr "Continue"
 msgid "Continue ({0})"
 msgstr "Continue ({0})"
 
-#: src/components/layout/app-frame.tsx:330
+#: src/components/layout/app-frame.tsx:363
 msgid "Core Views"
 msgstr "Core Views"
 
@@ -693,7 +697,7 @@ msgstr "Create vault ({0})"
 msgid "Creating…"
 msgstr "Creating…"
 
-#: src/pages/import-wizard-page.tsx:333
+#: src/pages/import-wizard-page.tsx:363
 msgid "CSV export"
 msgstr "CSV export"
 
@@ -880,7 +884,7 @@ msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
 #: src/components/settings/settings-sections.tsx:876
-#: src/pages/import-wizard-page.tsx:53
+#: src/pages/import-wizard-page.tsx:60
 msgid "Dropped"
 msgstr "Dropped"
 
@@ -957,7 +961,7 @@ msgid "Enum options"
 msgstr "Enum options"
 
 #: src/pages/activity-page.tsx:297
-#: src/pages/import-wizard-page.tsx:609
+#: src/pages/import-wizard-page.tsx:639
 msgid "Episodes"
 msgstr "Episodes"
 
@@ -996,12 +1000,12 @@ msgstr "External source"
 msgid "External types"
 msgstr "External types"
 
-#: src/pages/import-wizard-page.tsx:376
+#: src/pages/import-wizard-page.tsx:406
 msgid "Fetch & plan"
 msgstr "Fetch & plan"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:220
+#: src/pages/import-wizard-page.tsx:250
 msgid "Fetching your library from {0}…"
 msgstr "Fetching your library from {0}…"
 
@@ -1051,7 +1055,7 @@ msgstr "Filters"
 msgid "Form"
 msgstr "Form"
 
-#: src/pages/import-wizard-page.tsx:40
+#: src/pages/import-wizard-page.tsx:47
 msgid "Game"
 msgstr "Game"
 
@@ -1059,11 +1063,11 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:111
+#: src/components/layout/app-frame.tsx:114
 msgid "Go back"
 msgstr "Go back"
 
-#: src/pages/import-wizard-page.tsx:269
+#: src/pages/import-wizard-page.tsx:299
 msgid "Go to library"
 msgstr "Go to library"
 
@@ -1079,7 +1083,7 @@ msgstr "Has date"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:333
+#: src/components/layout/app-frame.tsx:366
 #: src/components/settings/settings-editor.tsx:108
 #: src/components/settings/settings-editor.tsx:263
 #: src/pages/home-page.tsx:30
@@ -1104,8 +1108,8 @@ msgstr "Icon"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:381
-#: src/pages/import-wizard-page.tsx:170
+#: src/components/layout/app-frame.tsx:414
+#: src/pages/import-wizard-page.tsx:200
 msgid "Import"
 msgstr "Import"
 
@@ -1118,25 +1122,25 @@ msgstr "Import ({0} new · {already} updated)"
 msgid "Import ({incoming})"
 msgstr "Import ({incoming})"
 
-#: src/pages/import-wizard-page.tsx:272
+#: src/pages/import-wizard-page.tsx:302
 msgid "Import another"
 msgstr "Import another"
 
-#: src/pages/import-wizard-page.tsx:632
+#: src/pages/import-wizard-page.tsx:662
 msgid "Import complete"
 msgstr "Import complete"
 
-#: src/pages/import-wizard-page.tsx:185
+#: src/pages/import-wizard-page.tsx:215
 msgid "Importing creates files, so it is unavailable here."
 msgstr "Importing creates files, so it is unavailable here."
 
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/pages/import-wizard-page.tsx:632
+#: src/pages/import-wizard-page.tsx:662
 msgid "Importing…"
 msgstr "Importing…"
 
-#: src/pages/import-wizard-page.tsx:547
-#: src/pages/import-wizard-page.tsx:551
+#: src/pages/import-wizard-page.tsx:577
+#: src/pages/import-wizard-page.tsx:581
 #: src/pages/quick-capture-page.tsx:289
 msgid "In library ✓"
 msgstr "In library ✓"
@@ -1146,7 +1150,7 @@ msgid "in list"
 msgstr "in list"
 
 #. placeholder {0}: item.title
-#: src/pages/import-wizard-page.tsx:515
+#: src/pages/import-wizard-page.tsx:545
 msgid "Include {0}"
 msgstr "Include {0}"
 
@@ -1206,7 +1210,7 @@ msgstr "lang {0}"
 msgid "Language"
 msgstr "Language"
 
-#: src/components/home/coming-up-section.tsx:171
+#: src/components/home/coming-up-section.tsx:185
 msgid "Later"
 msgstr "Later"
 
@@ -1214,7 +1218,7 @@ msgstr "Later"
 msgid "less"
 msgstr "less"
 
-#: src/components/layout/app-frame.tsx:341
+#: src/components/layout/app-frame.tsx:374
 msgid "Library"
 msgstr "Library"
 
@@ -1277,7 +1281,7 @@ msgstr "List not found"
 msgid "List style"
 msgstr "List style"
 
-#: src/components/layout/app-frame.tsx:350
+#: src/components/layout/app-frame.tsx:383
 #: src/pages/lists-page.tsx:41
 msgid "Lists"
 msgstr "Lists"
@@ -1298,7 +1302,7 @@ msgstr "Loading built-in types…"
 msgid "Loading entity"
 msgstr "Loading entity"
 
-#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:407
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1311,7 +1315,7 @@ msgstr "Loading taxonomy"
 #: src/pages/entity-page.tsx:570
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
-#: src/pages/import-wizard-page.tsx:207
+#: src/pages/import-wizard-page.tsx:237
 #: src/pages/library-page.tsx:393
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
@@ -1367,7 +1371,7 @@ msgstr "Mark as done"
 msgid "Mark as not done"
 msgstr "Mark as not done"
 
-#: src/pages/import-wizard-page.tsx:618
+#: src/pages/import-wizard-page.tsx:648
 msgid "Mark watched progress"
 msgstr "Mark watched progress"
 
@@ -1432,7 +1436,7 @@ msgstr "Move to trash?"
 msgid "Moved to trash"
 msgstr "Moved to trash"
 
-#: src/pages/import-wizard-page.tsx:39
+#: src/pages/import-wizard-page.tsx:46
 msgid "Music"
 msgstr "Music"
 
@@ -1445,12 +1449,12 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:287
-#: src/components/layout/app-frame.tsx:295
+#: src/components/layout/app-frame.tsx:320
+#: src/components/layout/app-frame.tsx:328
 msgid "Navigation"
 msgstr "Navigation"
 
-#: src/pages/import-wizard-page.tsx:574
+#: src/pages/import-wizard-page.tsx:604
 msgid "Needs review"
 msgstr "Needs review"
 
@@ -1525,7 +1529,7 @@ msgstr "No dated entities yet."
 msgid "No dates"
 msgstr "No dates"
 
-#: src/pages/import-wizard-page.tsx:467
+#: src/pages/import-wizard-page.tsx:497
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 
@@ -1592,7 +1596,7 @@ msgstr "No lists yet. Create one to start collecting entities."
 msgid "No markdown body sections."
 msgstr "No markdown body sections."
 
-#: src/pages/import-wizard-page.tsx:568
+#: src/pages/import-wizard-page.tsx:598
 msgid "No matched source"
 msgstr "No matched source"
 
@@ -1604,7 +1608,7 @@ msgstr "No matches found."
 msgid "No matching entities."
 msgstr "No matching entities."
 
-#: src/pages/import-wizard-page.tsx:570
+#: src/pages/import-wizard-page.tsx:600
 msgid "No matching type"
 msgstr "No matching type"
 
@@ -1624,7 +1628,7 @@ msgstr "No queue items match the current filters"
 msgid "No review data"
 msgstr "No review data"
 
-#: src/pages/import-wizard-page.tsx:527
+#: src/pages/import-wizard-page.tsx:557
 msgid "no source"
 msgstr "no source"
 
@@ -1665,7 +1669,7 @@ msgstr "None (plain list)"
 msgid "Note <0>(optional)</0>"
 msgstr "Note <0>(optional)</0>"
 
-#: src/pages/import-wizard-page.tsx:588
+#: src/pages/import-wizard-page.tsx:618
 msgid "notes"
 msgstr "notes"
 
@@ -1698,7 +1702,7 @@ msgid "Off"
 msgstr "Off"
 
 #: src/components/settings/settings-sections.tsx:873
-#: src/pages/import-wizard-page.tsx:50
+#: src/pages/import-wizard-page.tsx:57
 msgid "Ongoing"
 msgstr "Ongoing"
 
@@ -1706,7 +1710,7 @@ msgstr "Ongoing"
 msgid "Only image files can be uploaded."
 msgstr "Only image files can be uploaded."
 
-#: src/pages/import-wizard-page.tsx:372
+#: src/pages/import-wizard-page.tsx:402
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "Only public profiles are supported. Nothing is written until you review the plan."
 
@@ -1726,7 +1730,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:132
+#: src/components/layout/app-frame.tsx:135
 msgid "Open navigation"
 msgstr "Open navigation"
 
@@ -1750,11 +1754,15 @@ msgstr "Original (filename is the title)"
 msgid "Overview"
 msgstr "Overview"
 
+#: src/pages/not-found-page.tsx:16
+msgid "Page not found"
+msgstr "Page not found"
+
 #: src/components/settings/vault-switcher.tsx:136
 msgid "Parent folder"
 msgstr "Parent folder"
 
-#: src/pages/import-wizard-page.tsx:355
+#: src/pages/import-wizard-page.tsx:385
 msgid "Paste the contents of the exported .csv file"
 msgstr "Paste the contents of the exported .csv file"
 
@@ -1768,7 +1776,7 @@ msgid "Paths"
 msgstr "Paths"
 
 #: src/components/settings/settings-sections.tsx:874
-#: src/pages/import-wizard-page.tsx:51
+#: src/pages/import-wizard-page.tsx:58
 msgid "Paused"
 msgstr "Paused"
 
@@ -1782,7 +1790,7 @@ msgstr "Planned"
 
 #: src/components/settings/settings-sections.tsx:794
 #: src/components/settings/settings-sections.tsx:872
-#: src/pages/import-wizard-page.tsx:49
+#: src/pages/import-wizard-page.tsx:56
 msgid "Planning"
 msgstr "Planning"
 
@@ -1827,7 +1835,7 @@ msgstr "Provider priority"
 msgid "Providers"
 msgstr "Providers"
 
-#: src/pages/import-wizard-page.tsx:333
+#: src/pages/import-wizard-page.tsx:363
 msgid "Public profile"
 msgstr "Public profile"
 
@@ -1835,7 +1843,7 @@ msgstr "Public profile"
 msgid "Quick Capture"
 msgstr "Quick Capture"
 
-#: src/pages/import-wizard-page.tsx:41
+#: src/pages/import-wizard-page.tsx:48
 msgid "Real"
 msgstr "Real"
 
@@ -1955,7 +1963,12 @@ msgstr "Renaming…"
 msgid "replaces existing section"
 msgstr "replaces existing section"
 
-#: src/components/layout/app-frame.tsx:387
+#: src/components/layout/app-frame.tsx:223
+#: src/components/layout/app-frame.tsx:224
+msgid "Rescan vault"
+msgstr "Rescan vault"
+
+#: src/components/layout/app-frame.tsx:420
 msgid "Review"
 msgstr "Review"
 
@@ -2005,7 +2018,7 @@ msgstr "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHE
 msgid "Search"
 msgstr "Search"
 
-#: src/components/layout/app-frame.tsx:56
+#: src/components/layout/app-frame.tsx:59
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
 
@@ -2021,9 +2034,9 @@ msgstr "Search entities…"
 msgid "Search external sources, or add manually"
 msgstr "Search external sources, or add manually"
 
-#: src/components/layout/app-frame.tsx:57
-#: src/components/layout/app-frame.tsx:150
-#: src/components/layout/app-frame.tsx:222
+#: src/components/layout/app-frame.tsx:60
+#: src/components/layout/app-frame.tsx:153
+#: src/components/layout/app-frame.tsx:255
 msgid "Search library"
 msgstr "Search library"
 
@@ -2112,7 +2125,7 @@ msgstr "Select type"
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
-#: src/components/layout/app-frame.tsx:390
+#: src/components/layout/app-frame.tsx:423
 #: src/components/settings/settings-editor.tsx:161
 msgid "Settings"
 msgstr "Settings"
@@ -2158,11 +2171,11 @@ msgstr "Sort by title"
 msgid "Sort by update time"
 msgstr "Sort by update time"
 
-#: src/pages/import-wizard-page.tsx:313
+#: src/pages/import-wizard-page.tsx:343
 msgid "Source"
 msgstr "Source"
 
-#: src/pages/import-wizard-page.tsx:572
+#: src/pages/import-wizard-page.tsx:602
 msgid "Source unavailable"
 msgstr "Source unavailable"
 
@@ -2176,8 +2189,8 @@ msgstr "Stamps {0} = {1}"
 msgid "Start"
 msgstr "Start"
 
-#: src/pages/import-wizard-page.tsx:178
-#: src/pages/import-wizard-page.tsx:215
+#: src/pages/import-wizard-page.tsx:208
+#: src/pages/import-wizard-page.tsx:245
 msgid "Start over"
 msgstr "Start over"
 
@@ -2187,11 +2200,11 @@ msgstr "Start over"
 msgid "Started"
 msgstr "Started"
 
-#: src/pages/import-wizard-page.tsx:376
+#: src/pages/import-wizard-page.tsx:406
 msgid "Starting…"
 msgstr "Starting…"
 
-#: src/components/layout/app-frame.tsx:384
+#: src/components/layout/app-frame.tsx:417
 msgid "Statistics"
 msgstr "Statistics"
 
@@ -2207,7 +2220,7 @@ msgstr "Status field"
 msgid "Status Mismatch"
 msgstr "Status Mismatch"
 
-#: src/pages/import-wizard-page.tsx:605
+#: src/pages/import-wizard-page.tsx:635
 msgid "Status, score & dates"
 msgstr "Status, score & dates"
 
@@ -2257,7 +2270,7 @@ msgid "Tags"
 msgstr "Tags"
 
 #: src/components/calendar/calendar-entry-item.tsx:24
-#: src/components/layout/app-frame.tsx:356
+#: src/components/layout/app-frame.tsx:389
 msgid "Taxonomy"
 msgstr "Taxonomy"
 
@@ -2279,7 +2292,7 @@ msgstr "Taxonomy root"
 msgid "taxonomy: {0}"
 msgstr "taxonomy: {0}"
 
-#: src/pages/import-wizard-page.tsx:212
+#: src/pages/import-wizard-page.tsx:242
 msgid "The import failed."
 msgstr "The import failed."
 
@@ -2291,7 +2304,7 @@ msgstr "The page hit an unexpected error. You can try again, or reload the app."
 msgid "These existing types can link to what you're adding."
 msgstr "These existing types can link to what you're adding."
 
-#: src/components/home/coming-up-section.tsx:170
+#: src/components/home/coming-up-section.tsx:184
 msgid "This month"
 msgstr "This month"
 
@@ -2305,7 +2318,11 @@ msgstr "This moves {0} to the Trash. You can restore it later if you need it."
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 
-#: src/components/home/coming-up-section.tsx:169
+#: src/pages/not-found-page.tsx:19
+msgid "This page doesn’t exist or may have moved."
+msgstr "This page doesn’t exist or may have moved."
+
+#: src/components/home/coming-up-section.tsx:183
 msgid "This week"
 msgstr "This week"
 
@@ -2479,6 +2496,10 @@ msgstr "Vault path or URL"
 #: src/components/settings/vault-switcher.tsx:109
 msgid "Vault removed"
 msgstr "Vault removed"
+
+#: src/components/layout/app-frame.tsx:213
+msgid "Vault rescanned"
+msgstr "Vault rescanned"
 
 #: src/components/settings/settings-editor.tsx:165
 msgid "Vault: {vaultPath}"

@@ -4,6 +4,7 @@ import {
   getRawSettingsConfig as requestRawSettingsConfig,
   getSettingsConfig as requestSettingsConfig,
   getTypePresets as requestTypePresets,
+  refreshLibrary as requestRefreshLibrary,
   resolveTypePresets as requestResolveTypePresets,
   saveRawSettingsConfig as requestSaveRawSettingsConfig,
   saveSettingsConfig as requestSaveSettingsConfig,
@@ -13,6 +14,14 @@ import {
 } from "@kizunashelf/api-contract";
 
 import { apiFetch } from "@/api/client";
+
+// Force a full vault re-index server-side. The library otherwise only reloads
+// on a TTL poll, so this is the manual "I just edited frontmatter in Obsidian"
+// escape hatch. Callers invalidate the query cache afterward to pull the fresh
+// index into the UI.
+export function refreshLibrary(init?: RequestInit) {
+  return requestRefreshLibrary(init, apiFetch);
+}
 
 export function getSettingsConfig(init?: RequestInit) {
   return requestSettingsConfig(init, apiFetch);

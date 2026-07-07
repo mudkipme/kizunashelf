@@ -24,6 +24,7 @@ import { HomePage } from "@/pages/home-page";
 import { LibraryPage } from "@/pages/library-page";
 import { ListDetailPage } from "@/pages/list-detail-page";
 import { ListsPage } from "@/pages/lists-page";
+import { NotFoundPage } from "@/pages/not-found-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
 import { ReviewPage } from "@/pages/review-page";
 import { SettingsPage } from "@/pages/settings-page";
@@ -130,6 +131,7 @@ function AppRoutes() {
       <Route path="/entities/import" element={<ImportWizardPage />} />
       <Route path="/entities/:id/edit" element={<EntityEditPage />} />
       <Route path="/entities/:id" element={<EntityPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { I18n, MessageDescriptor } from "@lingui/core";
 import { msg, plural } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
@@ -7,7 +7,14 @@ import { DownloadIcon, XIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { commitImport, fetchImportJob, importSourcesQuery, startImportJob, stopImportJob } from "@/api/imports";
+import {
+  commitImport,
+  fetchImportJob,
+  fetchImportJobs,
+  importSourcesQuery,
+  startImportJob,
+  stopImportJob,
+} from "@/api/imports";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { configQuery, providerCatalogQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
@@ -94,6 +101,29 @@ export function ImportWizardPage() {
   useEffect(() => {
     if (status === "completed") void invalidateEntityData();
   }, [status, invalidateEntityData]);
+
+  // A reload drops the in-memory `jobId`, so on first mount we ask the server
+  // whether a job is still running (or awaiting review) and re-adopt it. The ref
+  // guards against re-adopting after the user explicitly hit "Start over" (which
+  // clears `jobId` and would otherwise re-enable this query mid-session).
+  const recoveredRef = useRef(false);
+  const runningJobs = useQuery({
+    queryKey: ["importJobs"],
+    queryFn: () => fetchImportJobs(),
+    enabled: !jobId,
+    refetchOnWindowFocus: false,
+  });
+  useEffect(() => {
+    if (recoveredRef.current || jobId || !runningJobs.data) return;
+    recoveredRef.current = true;
+    const resumable = runningJobs.data.jobs.find(
+      (item) => isActive(item.status) || item.status === "planned",
+    );
+    if (resumable) {
+      queryClient.setQueryData(["importJob", resumable.id], resumable);
+      setJobId(resumable.id);
+    }
+  }, [jobId, runningJobs.data, queryClient]);
 
   const typeLabels = useMemo(() => {
     const labels = new Map<string, string>();
