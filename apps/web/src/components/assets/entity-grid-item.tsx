@@ -23,6 +23,14 @@ export function EntityGridItem({
 }) {
   const language = useTitleLanguage();
 
+  // Episode progress is meaningful only when a total is known — a `0/0` chip is
+  // noise. Same for `0 links`; drop both zero cases rather than show them.
+  const progressLabel =
+    entity.episodeProgress && entity.episodeProgress.total > 0
+      ? `${entity.episodeProgress.watched}/${entity.episodeProgress.total}`
+      : null;
+  const showLinks = entity.relationCount > 0;
+
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
@@ -57,16 +65,13 @@ export function EntityGridItem({
           <span className="min-w-0">
             {entity.dates.length > 0 ? (
               <EntityDateList entity={entity} compact labelsByType={labelsByType} />
-            ) : (
-              entity.basename
-            )}
+            ) : null}
           </span>
           <span className="shrink-0">
-            {entity.episodeProgress ? (
-              `${entity.episodeProgress.watched}/${entity.episodeProgress.total}`
-            ) : (
-              <Plural value={entity.relationCount} one="# link" other="# links" />
-            )}
+            {progressLabel ??
+              (showLinks ? (
+                <Plural value={entity.relationCount} one="# link" other="# links" />
+              ) : null)}
           </span>
         </div>
       </div>

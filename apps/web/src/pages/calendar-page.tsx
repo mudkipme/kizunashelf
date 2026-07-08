@@ -158,7 +158,13 @@ export function CalendarPage() {
                     onSelect={(date) => setParam("date", date, undefined, { replace: true })}
                   />
                 ) : (
-                  <div key={`blank-${index}`} className="min-h-28 border-b border-r bg-muted/30" />
+                  // Match the day cell's responsive height, or the leading blanks
+                  // (min-h-28) would inflate the first week's row on mobile, where
+                  // day cells are only aspect-square tall.
+                  <div
+                    key={`blank-${index}`}
+                    className="aspect-square border-b border-r bg-muted/30 sm:aspect-auto sm:min-h-28"
+                  />
                 ),
               )}
             </div>

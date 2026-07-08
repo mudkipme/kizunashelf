@@ -41,7 +41,7 @@ msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {# 件作成}}"
 
 #. placeholder {0}: selectedDay.entries.length
-#: src/pages/calendar-page.tsx:172
+#: src/pages/calendar-page.tsx:178
 msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, other {# 件}}"
 
@@ -83,11 +83,9 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 件のアイテム}}"
 
 #. placeholder {0}: entity.relationCount
-#. placeholder {0}: scopeStats?.relations ?? 0
-#: src/components/assets/entity-grid-item.tsx:68
-#: src/components/assets/entity-list-item.tsx:48
+#: src/components/assets/entity-grid-item.tsx:73
+#: src/components/assets/entity-list-item.tsx:55
 #: src/components/home/home-entity-card.tsx:51
-#: src/pages/library-page.tsx:343
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 件のリンク}}"
 
@@ -230,13 +228,9 @@ msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 編集操作は利用できません。"
 
-#: src/components/home/coming-up-section.tsx:141
+#: src/components/home/coming-up-section.tsx:149
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 日}}"
-
-#: src/pages/library-page.tsx:340
-msgid "{entryCount, plural, one {# entry} other {# entries}}"
-msgstr "{entryCount, plural, other {# 件}}"
 
 #: src/pages/quick-capture-page.tsx:138
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
@@ -260,12 +254,12 @@ msgstr "{selectedTotal, plural, other {# 件に日付あり}}"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {# 件のアイテムをインポート}}"
 
-#: src/pages/library-page.tsx:388
+#: src/pages/library-page.tsx:357
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 件}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:383
+#: src/pages/library-page.tsx:352
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
 
@@ -317,8 +311,8 @@ msgstr "アクティビティ"
 #: src/components/settings/settings-sections.tsx:1000
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
-#: src/pages/library-page.tsx:406
-#: src/pages/library-page.tsx:411
+#: src/pages/library-page.tsx:375
+#: src/pages/library-page.tsx:380
 #: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "追加"
@@ -346,9 +340,7 @@ msgid "Add custom type"
 msgstr "カスタムタイプを追加"
 
 #: src/pages/home-page.tsx:42
-#: src/pages/library-page.tsx:323
-#: src/pages/library-page.tsx:324
-#: src/pages/library-page.tsx:400
+#: src/pages/library-page.tsx:369
 msgid "Add entity"
 msgstr "アイテムを追加"
 
@@ -438,14 +430,13 @@ msgstr "すべてのソース"
 #: src/components/assets/asset-download-panel.tsx:84
 #: src/pages/activity-page.tsx:128
 #: src/pages/calendar-page.tsx:132
-#: src/pages/library-page.tsx:345
 #: src/pages/quick-capture-page.tsx:220
 #: src/pages/review-page.tsx:160
 msgid "All types"
 msgstr "すべてのタイプ"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:298
+#: src/pages/library-page.tsx:294
 msgid "All types ({0})"
 msgstr "すべてのタイプ（{0}）"
 
@@ -600,7 +591,7 @@ msgstr "閉じる"
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
-#: src/components/home/coming-up-section.tsx:51
+#: src/components/home/coming-up-section.tsx:59
 msgid "Coming up"
 msgstr "近日公開"
 
@@ -641,7 +632,7 @@ msgstr "接続済み"
 msgid "Connection Fields"
 msgstr "接続フィールド"
 
-#: src/components/assets/entity-detail.tsx:186
+#: src/components/assets/entity-detail.tsx:195
 #: src/pages/statistics-page.tsx:51
 msgid "Connections"
 msgstr "接続"
@@ -780,7 +771,7 @@ msgstr "日付あり"
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
 msgstr "月・年ごとの日付付きアイテム — 今年と過去の年を比較し、タイプで絞り込みます"
 
-#: src/components/assets/entity-detail.tsx:237
+#: src/components/assets/entity-detail.tsx:246
 msgid "Dates"
 msgstr "日付"
 
@@ -823,7 +814,7 @@ msgstr "説明"
 msgid "Deselect group"
 msgstr "グループの選択を解除"
 
-#: src/components/assets/entity-detail.tsx:149
+#: src/components/assets/entity-detail.tsx:158
 msgid "Details"
 msgstr "詳細"
 
@@ -1210,7 +1201,7 @@ msgstr "言語 {0}"
 msgid "Language"
 msgstr "言語"
 
-#: src/components/home/coming-up-section.tsx:185
+#: src/components/home/coming-up-section.tsx:193
 msgid "Later"
 msgstr "後で"
 
@@ -1248,15 +1239,15 @@ msgstr "行フォーマット"
 msgid "Link your new types"
 msgstr "新しいタイプをリンク"
 
-#: src/components/assets/entity-detail.tsx:196
+#: src/components/assets/entity-detail.tsx:205
 msgid "Linked from"
 msgstr "リンク元"
 
-#: src/components/assets/entity-detail.tsx:215
+#: src/components/assets/entity-detail.tsx:224
 msgid "Links"
 msgstr "リンク"
 
-#: src/components/assets/entity-detail.tsx:189
+#: src/components/assets/entity-detail.tsx:198
 msgid "Links to"
 msgstr "リンク先"
 
@@ -1316,7 +1307,7 @@ msgstr "分類を読み込み中"
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:237
-#: src/pages/library-page.tsx:393
+#: src/pages/library-page.tsx:362
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
@@ -1487,7 +1478,7 @@ msgstr "次へ"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:495
+#: src/pages/library-page.tsx:464
 msgid "No"
 msgstr "いいえ"
 
@@ -1517,7 +1508,7 @@ msgstr "候補が読み込まれていません"
 msgid "No date"
 msgstr "日付なし"
 
-#: src/pages/calendar-page.tsx:169
+#: src/pages/calendar-page.tsx:175
 msgid "No date selected"
 msgstr "日付が選択されていません"
 
@@ -1537,9 +1528,9 @@ msgstr "{unmatchedLabels} に対応するアイテムのタイプがありませ
 msgid "No entity types configured."
 msgstr "アイテムのタイプが設定されていません。"
 
-#: src/pages/calendar-page.tsx:173
-#: src/pages/calendar-page.tsx:183
-#: src/pages/library-page.tsx:441
+#: src/pages/calendar-page.tsx:179
+#: src/pages/calendar-page.tsx:189
+#: src/pages/library-page.tsx:410
 msgid "No entries"
 msgstr "エントリなし"
 
@@ -1580,7 +1571,7 @@ msgstr "まだアイテムがありません — プロバイダーから同期�
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "まだアイテムがありません。「アイテムを追加」でこのリストにアイテムを入れるか、「セクションを追加」でグループ化してください。"
 
-#: src/components/assets/entity-detail.tsx:232
+#: src/components/assets/entity-detail.tsx:241
 msgid "No links yet"
 msgstr "まだリンクがありません"
 
@@ -1673,7 +1664,7 @@ msgstr "ノート <0>(任意)</0>"
 msgid "notes"
 msgstr "ノート"
 
-#: src/components/assets/entity-detail.tsx:207
+#: src/components/assets/entity-detail.tsx:216
 #: src/components/entities/metadata-editor.tsx:165
 #: src/pages/list-detail-page.tsx:488
 msgid "Notes"
@@ -2265,7 +2256,7 @@ msgid "System theme. Switch to light theme."
 msgstr "システムテーマ。ライトテーマに切り替えます。"
 
 #: src/components/entities/metadata-editor.tsx:83
-#: src/pages/library-page.tsx:96
+#: src/pages/library-page.tsx:95
 msgid "Tags"
 msgstr "タグ"
 
@@ -2304,7 +2295,7 @@ msgstr "ページで予期しないエラーが発生しました。もう一度
 msgid "These existing types can link to what you're adding."
 msgstr "これらの既存のタイプは、追加するものにリンクできます。"
 
-#: src/components/home/coming-up-section.tsx:184
+#: src/components/home/coming-up-section.tsx:192
 msgid "This month"
 msgstr "今月"
 
@@ -2322,7 +2313,7 @@ msgstr "<0>{0}</0> をゴミ箱に移動します。含まれるアイテムは�
 msgid "This page doesn’t exist or may have moved."
 msgstr "このページは存在しないか、移動された可能性があります。"
 
-#: src/components/home/coming-up-section.tsx:183
+#: src/components/home/coming-up-section.tsx:191
 msgid "This week"
 msgstr "今週"
 
@@ -2355,7 +2346,7 @@ msgstr "今日"
 msgid "Todo"
 msgstr "未対応"
 
-#: src/pages/library-page.tsx:312
+#: src/pages/library-page.tsx:308
 msgid "Toggle filters"
 msgstr "フィルターを切り替え"
 
@@ -2379,7 +2370,7 @@ msgstr "もう一度試す"
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
 #: src/pages/entity-create-page.tsx:92
-#: src/pages/library-page.tsx:295
+#: src/pages/library-page.tsx:291
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
 msgstr "タイプ"
@@ -2513,7 +2504,7 @@ msgstr "保管庫"
 msgid "View"
 msgstr "表示"
 
-#: src/components/home/coming-up-section.tsx:54
+#: src/components/home/coming-up-section.tsx:62
 msgid "View all"
 msgstr "すべて表示"
 
@@ -2537,7 +2528,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:494
+#: src/pages/library-page.tsx:463
 msgid "Yes"
 msgstr "はい"
 

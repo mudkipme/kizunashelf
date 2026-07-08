@@ -30,8 +30,11 @@ export function CalendarDayCell({
         selected && "bg-accent",
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium">{dayNumber}</span>
+      {/* Top-align so the day number sits at the same height whether or not a
+          (taller) count badge is present — `items-center` dropped badged numbers
+          a couple px below their badge-less neighbors. */}
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-xs font-medium leading-5">{dayNumber}</span>
         {uniqueEntries.length > 0 ? (
           <Badge variant="secondary">{uniqueEntries.length}</Badge>
         ) : null}

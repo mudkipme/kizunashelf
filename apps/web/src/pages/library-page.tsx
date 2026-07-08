@@ -67,7 +67,6 @@ export function LibraryPage() {
   const query = searchParams.get("q") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const selectedTypeStats = globalStats.data?.byType.find((type) => type.id === selectedType);
   const scopeStats = isGlobalType ? globalStats.data : categoryStats.data;
   const selectedTypeConfig = config.data?.types.find((type) => type.id === selectedType);
   // Covers show for "all types" and for any concrete type that declares an
@@ -150,9 +149,6 @@ export function LibraryPage() {
     !scopeStats.dateFields.includes(sort.slice("date:".length))
       ? defaultSort
       : sort;
-  const entryCount = isGlobalType
-    ? (globalStats.data?.total ?? 0)
-    : (selectedTypeStats?.count ?? 0);
   const createHref = isGlobalType
     ? "/entities/new"
     : `/entities/new?type=${encodeURIComponent(selectedType)}`;
@@ -314,36 +310,9 @@ export function LibraryPage() {
                 >
                   <SlidersHorizontalIcon />
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  disabled={!contentWritable}
-                  aria-label={t`Add entity`}
-                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Add entity`}
-                  asChild={contentWritable}
-                >
-                  {!contentWritable ? (
-                    <span>
-                      <PlusIcon />
-                    </span>
-                  ) : (
-                    <Link to={createHref}>
-                      <PlusIcon />
-                    </Link>
-                  )}
-                </Button>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span>
-                  <Plural value={entryCount} one="# entry" other="# entries" />
-                </span>
-                <span>
-                  <Plural value={scopeStats?.relations ?? 0} one="# link" other="# links" />
-                </span>
-                <span>{isGlobalType ? t`All types` : (selectedTypeStats?.label ?? selectedType)}</span>
-              </div>
+              {/* The entry count, page, and Add all live in the shared row below —
+                  a mobile-only summary here just repeated the type and count. */}
               {mobileFiltersOpen ? (
                 <AssetToolbar
                   compact

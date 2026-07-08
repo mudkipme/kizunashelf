@@ -44,6 +44,14 @@ export function ComingUpSection() {
   if (upcoming.isPending || groups.every((group) => group.items.length === 0)) return null;
 
   const total = groups.reduce((sum, group) => sum + group.items.length, 0);
+  // The widget mixes types, some with cover fields and some without. Decide the
+  // cover slot once for the whole widget so every row's title starts at the same
+  // x — a per-item slot leaves cover-less rows flush-left and misaligned. When
+  // any shown type has a cover, cover-less rows get the same slot with its
+  // placeholder icon.
+  const showCoverSlot = groups.some((group) =>
+    group.items.some((item) => coverTypes.has(item.entity.type)),
+  );
 
   return (
     <section className="rounded-xl border bg-muted/30 p-4">
@@ -67,7 +75,7 @@ export function ComingUpSection() {
                     item={item}
                     today={today}
                     labels={labels}
-                    hasCover={coverTypes.has(item.entity.type)}
+                    hasCover={showCoverSlot}
                   />
                 ))}
               </div>
@@ -98,9 +106,9 @@ function ComingUpCard({
       to={`/entities/${encodeURIComponent(item.entity.id)}`}
       className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-accent"
     >
-      {/* Cover slot only for types that declare an image field; a placeholder fills
-          it when this entity has no cover value. `bg-background` so the tile reads
-          against the panel. */}
+      {/* Cover slot presence is decided for the whole widget (see `showCoverSlot`)
+          so rows align; a placeholder fills it when this entity has no cover value
+          or its type has none. `bg-background` so the tile reads against the panel. */}
       {hasCover ? (
         <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-background">
           <AssetImage

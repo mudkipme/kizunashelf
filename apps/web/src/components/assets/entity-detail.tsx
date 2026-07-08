@@ -110,37 +110,46 @@ export function EntityDetail({
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section className="min-w-0 rounded-md border">
             <div className="border-b p-4">
-              <div className="flex gap-3">
-                {showCover ? <EntityCover entity={entity} size="lg" lightbox /> : null}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{entity.typeLabel}</Badge>
-                    <StatusBadge status={entity.status} />
-                    {(entity.tags ?? []).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  <h2 className="mt-2 text-xl font-semibold leading-snug" lang={titleLang}>
-                    {displayTitle}
-                  </h2>
-                  {subtitleTitles.length > 0 ? (
-                    <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
-                      {subtitleTitles.map((item) => (
-                        <div key={item.key} className="contents">
-                          <dt className="flex items-center gap-1 text-muted-foreground">
-                            <LanguagesIcon />
-                            {item.label}
-                          </dt>
-                          <dd className="min-w-0 truncate font-medium">{item.title}</dd>
-                        </div>
+              {/* On narrow screens the actions drop to their own row below, so the
+                  cover and title don't have to share the width with them — the
+                  title was wrapping to three thin lines otherwise. */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                <div className="flex min-w-0 flex-1 gap-3">
+                  {showCover ? <EntityCover entity={entity} size="lg" lightbox /> : null}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{entity.typeLabel}</Badge>
+                      <StatusBadge status={entity.status} />
+                      {(entity.tags ?? []).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                        >
+                          #{tag}
+                        </span>
                       ))}
-                    </dl>
-                  ) : null}
+                    </div>
+                    <h2 className="mt-2 text-xl font-semibold leading-snug" lang={titleLang}>
+                      {displayTitle}
+                    </h2>
+                    {subtitleTitles.length > 0 ? (
+                      <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
+                        {subtitleTitles.map((item) => (
+                          <div key={item.key} className="contents">
+                            <dt className="flex items-center gap-1 text-muted-foreground">
+                              <LanguagesIcon />
+                              {item.label}
+                            </dt>
+                            {/* Wrap the full alternate title on mobile; truncate to
+                                one line only once there's room beside the cover. */}
+                            <dd className="min-w-0 break-words font-medium sm:truncate">
+                              {item.title}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : null}
+                  </div>
                 </div>
                 {actions ? <div className="shrink-0">{actions}</div> : null}
               </div>

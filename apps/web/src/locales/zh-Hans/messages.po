@@ -41,7 +41,7 @@ msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {已创建 # 项}}"
 
 #. placeholder {0}: selectedDay.entries.length
-#: src/pages/calendar-page.tsx:172
+#: src/pages/calendar-page.tsx:178
 msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, other {# 条}}"
 
@@ -83,11 +83,9 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 项}}"
 
 #. placeholder {0}: entity.relationCount
-#. placeholder {0}: scopeStats?.relations ?? 0
-#: src/components/assets/entity-grid-item.tsx:68
-#: src/components/assets/entity-list-item.tsx:48
+#: src/components/assets/entity-grid-item.tsx:73
+#: src/components/assets/entity-list-item.tsx:55
 #: src/components/home/home-entity-card.tsx:51
-#: src/pages/library-page.tsx:343
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 个关联}}"
 
@@ -230,13 +228,9 @@ msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 编辑操作不可用。"
 
-#: src/components/home/coming-up-section.tsx:141
+#: src/components/home/coming-up-section.tsx:149
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 天}}"
-
-#: src/pages/library-page.tsx:340
-msgid "{entryCount, plural, one {# entry} other {# entries}}"
-msgstr "{entryCount, plural, other {# 条}}"
 
 #: src/pages/quick-capture-page.tsx:138
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
@@ -260,12 +254,12 @@ msgstr "{selectedTotal, plural, other {# 项有日期}}"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {导入 # 项}}"
 
-#: src/pages/library-page.tsx:388
+#: src/pages/library-page.tsx:357
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 条}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:383
+#: src/pages/library-page.tsx:352
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 条}} · 第 {0}/{totalPages} 页"
 
@@ -317,8 +311,8 @@ msgstr "活动"
 #: src/components/settings/settings-sections.tsx:1000
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
-#: src/pages/library-page.tsx:406
-#: src/pages/library-page.tsx:411
+#: src/pages/library-page.tsx:375
+#: src/pages/library-page.tsx:380
 #: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "添加"
@@ -346,9 +340,7 @@ msgid "Add custom type"
 msgstr "添加自定义类型"
 
 #: src/pages/home-page.tsx:42
-#: src/pages/library-page.tsx:323
-#: src/pages/library-page.tsx:324
-#: src/pages/library-page.tsx:400
+#: src/pages/library-page.tsx:369
 msgid "Add entity"
 msgstr "添加条目"
 
@@ -438,14 +430,13 @@ msgstr "所有来源"
 #: src/components/assets/asset-download-panel.tsx:84
 #: src/pages/activity-page.tsx:128
 #: src/pages/calendar-page.tsx:132
-#: src/pages/library-page.tsx:345
 #: src/pages/quick-capture-page.tsx:220
 #: src/pages/review-page.tsx:160
 msgid "All types"
 msgstr "所有类型"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:298
+#: src/pages/library-page.tsx:294
 msgid "All types ({0})"
 msgstr "所有类型（{0}）"
 
@@ -600,7 +591,7 @@ msgstr "关闭"
 msgid "Close navigation"
 msgstr "关闭导航"
 
-#: src/components/home/coming-up-section.tsx:51
+#: src/components/home/coming-up-section.tsx:59
 msgid "Coming up"
 msgstr "即将到来"
 
@@ -641,7 +632,7 @@ msgstr "已连接"
 msgid "Connection Fields"
 msgstr "连接字段"
 
-#: src/components/assets/entity-detail.tsx:186
+#: src/components/assets/entity-detail.tsx:195
 #: src/pages/statistics-page.tsx:51
 msgid "Connections"
 msgstr "连接"
@@ -780,7 +771,7 @@ msgstr "有日期"
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
 msgstr "按月份和年份统计有日期的条目 — 将今年与往年对比，按类型筛选"
 
-#: src/components/assets/entity-detail.tsx:237
+#: src/components/assets/entity-detail.tsx:246
 msgid "Dates"
 msgstr "日期"
 
@@ -823,7 +814,7 @@ msgstr "描述"
 msgid "Deselect group"
 msgstr "取消选择分组"
 
-#: src/components/assets/entity-detail.tsx:149
+#: src/components/assets/entity-detail.tsx:158
 msgid "Details"
 msgstr "详情"
 
@@ -1210,7 +1201,7 @@ msgstr "语言 {0}"
 msgid "Language"
 msgstr "语言"
 
-#: src/components/home/coming-up-section.tsx:185
+#: src/components/home/coming-up-section.tsx:193
 msgid "Later"
 msgstr "稍后"
 
@@ -1248,15 +1239,15 @@ msgstr "行格式"
 msgid "Link your new types"
 msgstr "关联你的新类型"
 
-#: src/components/assets/entity-detail.tsx:196
+#: src/components/assets/entity-detail.tsx:205
 msgid "Linked from"
 msgstr "被以下引用"
 
-#: src/components/assets/entity-detail.tsx:215
+#: src/components/assets/entity-detail.tsx:224
 msgid "Links"
 msgstr "关联"
 
-#: src/components/assets/entity-detail.tsx:189
+#: src/components/assets/entity-detail.tsx:198
 msgid "Links to"
 msgstr "关联到"
 
@@ -1316,7 +1307,7 @@ msgstr "正在加载分类"
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:237
-#: src/pages/library-page.tsx:393
+#: src/pages/library-page.tsx:362
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
@@ -1487,7 +1478,7 @@ msgstr "下一步"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:495
+#: src/pages/library-page.tsx:464
 msgid "No"
 msgstr "否"
 
@@ -1517,7 +1508,7 @@ msgstr "未加载候选项"
 msgid "No date"
 msgstr "无日期"
 
-#: src/pages/calendar-page.tsx:169
+#: src/pages/calendar-page.tsx:175
 msgid "No date selected"
 msgstr "未选择日期"
 
@@ -1537,9 +1528,9 @@ msgstr "没有条目类型映射 {unmatchedLabels}。请在设置中为其添加
 msgid "No entity types configured."
 msgstr "未配置条目类型。"
 
-#: src/pages/calendar-page.tsx:173
-#: src/pages/calendar-page.tsx:183
-#: src/pages/library-page.tsx:441
+#: src/pages/calendar-page.tsx:179
+#: src/pages/calendar-page.tsx:189
+#: src/pages/library-page.tsx:410
 msgid "No entries"
 msgstr "无条目"
 
@@ -1580,7 +1571,7 @@ msgstr "暂无项目 — 从数据源同步，或在 <0>{0}</0> 标题下添加�
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "暂无项目。使用「添加项目」将条目加入此列表，或使用「添加板块」将其分组。"
 
-#: src/components/assets/entity-detail.tsx:232
+#: src/components/assets/entity-detail.tsx:241
 msgid "No links yet"
 msgstr "暂无关联"
 
@@ -1673,7 +1664,7 @@ msgstr "笔记 <0>（可选）</0>"
 msgid "notes"
 msgstr "笔记"
 
-#: src/components/assets/entity-detail.tsx:207
+#: src/components/assets/entity-detail.tsx:216
 #: src/components/entities/metadata-editor.tsx:165
 #: src/pages/list-detail-page.tsx:488
 msgid "Notes"
@@ -2265,7 +2256,7 @@ msgid "System theme. Switch to light theme."
 msgstr "跟随系统主题。切换到浅色主题。"
 
 #: src/components/entities/metadata-editor.tsx:83
-#: src/pages/library-page.tsx:96
+#: src/pages/library-page.tsx:95
 msgid "Tags"
 msgstr "标签"
 
@@ -2304,7 +2295,7 @@ msgstr "页面遇到意外错误。你可以重试，或重新加载应用。"
 msgid "These existing types can link to what you're adding."
 msgstr "这些现有类型可以关联到你正在添加的内容。"
 
-#: src/components/home/coming-up-section.tsx:184
+#: src/components/home/coming-up-section.tsx:192
 msgid "This month"
 msgstr "本月"
 
@@ -2322,7 +2313,7 @@ msgstr "这会将 <0>{0}</0> 移到回收站。其中包含的项目不受影响
 msgid "This page doesn’t exist or may have moved."
 msgstr "此页面不存在或可能已被移动。"
 
-#: src/components/home/coming-up-section.tsx:183
+#: src/components/home/coming-up-section.tsx:191
 msgid "This week"
 msgstr "本周"
 
@@ -2355,7 +2346,7 @@ msgstr "今天"
 msgid "Todo"
 msgstr "待办"
 
-#: src/pages/library-page.tsx:312
+#: src/pages/library-page.tsx:308
 msgid "Toggle filters"
 msgstr "切换筛选条件"
 
@@ -2379,7 +2370,7 @@ msgstr "重试"
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
 #: src/pages/entity-create-page.tsx:92
-#: src/pages/library-page.tsx:295
+#: src/pages/library-page.tsx:291
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
 msgstr "类型"
@@ -2513,7 +2504,7 @@ msgstr "保管库"
 msgid "View"
 msgstr "视图"
 
-#: src/components/home/coming-up-section.tsx:54
+#: src/components/home/coming-up-section.tsx:62
 msgid "View all"
 msgstr "查看全部"
 
@@ -2537,7 +2528,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:494
+#: src/pages/library-page.tsx:463
 msgid "Yes"
 msgstr "是"
 

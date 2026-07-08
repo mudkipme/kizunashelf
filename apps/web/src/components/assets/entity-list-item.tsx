@@ -23,6 +23,14 @@ export function EntityListItem({
 }) {
   const language = useTitleLanguage();
 
+  // Drop the `0/0` progress chip (no total known) and the `0 links` chip — both
+  // are noise. Whichever chip renders first gets pushed to the right edge.
+  const progressLabel =
+    entity.episodeProgress && entity.episodeProgress.total > 0
+      ? `${entity.episodeProgress.watched}/${entity.episodeProgress.total}`
+      : null;
+  const showLinks = entity.relationCount > 0;
+
   return (
     <Link
       to={`/entities/${encodeURIComponent(entity.id)}`}
@@ -39,14 +47,14 @@ export function EntityListItem({
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <EntityDateList entity={entity} compact labelsByType={labelsByType} />
-          {entity.episodeProgress ? (
-            <span className="ml-auto shrink-0 tabular-nums">
-              {entity.episodeProgress.watched}/{entity.episodeProgress.total}
+          {progressLabel ? (
+            <span className="ml-auto shrink-0 tabular-nums">{progressLabel}</span>
+          ) : null}
+          {showLinks ? (
+            <span className={progressLabel ? "shrink-0" : "ml-auto shrink-0"}>
+              <Plural value={entity.relationCount} one="# link" other="# links" />
             </span>
           ) : null}
-          <span className={entity.episodeProgress ? "shrink-0" : "ml-auto shrink-0"}>
-            <Plural value={entity.relationCount} one="# link" other="# links" />
-          </span>
         </span>
         {entity.summary ? (
           <span className="mt-1 line-clamp-2 text-xs text-muted-foreground">{entity.summary}</span>

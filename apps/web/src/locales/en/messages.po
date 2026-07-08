@@ -41,7 +41,7 @@ msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, one {# created} other {# created}}"
 
 #. placeholder {0}: selectedDay.entries.length
-#: src/pages/calendar-page.tsx:172
+#: src/pages/calendar-page.tsx:178
 msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, one {# entry} other {# entries}}"
 
@@ -83,11 +83,9 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
 
 #. placeholder {0}: entity.relationCount
-#. placeholder {0}: scopeStats?.relations ?? 0
-#: src/components/assets/entity-grid-item.tsx:68
-#: src/components/assets/entity-list-item.tsx:48
+#: src/components/assets/entity-grid-item.tsx:73
+#: src/components/assets/entity-list-item.tsx:55
 #: src/components/home/home-entity-card.tsx:51
-#: src/pages/library-page.tsx:343
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, one {# link} other {# links}}"
 
@@ -230,13 +228,9 @@ msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 
-#: src/components/home/coming-up-section.tsx:141
+#: src/components/home/coming-up-section.tsx:149
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, one {# day} other {# days}}"
-
-#: src/pages/library-page.tsx:340
-msgid "{entryCount, plural, one {# entry} other {# entries}}"
-msgstr "{entryCount, plural, one {# entry} other {# entries}}"
 
 #: src/pages/quick-capture-page.tsx:138
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
@@ -260,12 +254,12 @@ msgstr "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
-#: src/pages/library-page.tsx:388
+#: src/pages/library-page.tsx:357
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, one {# entry} other {# entries}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:383
+#: src/pages/library-page.tsx:352
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 
@@ -317,8 +311,8 @@ msgstr "Activity"
 #: src/components/settings/settings-sections.tsx:1000
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
-#: src/pages/library-page.tsx:406
-#: src/pages/library-page.tsx:411
+#: src/pages/library-page.tsx:375
+#: src/pages/library-page.tsx:380
 #: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "Add"
@@ -346,9 +340,7 @@ msgid "Add custom type"
 msgstr "Add custom type"
 
 #: src/pages/home-page.tsx:42
-#: src/pages/library-page.tsx:323
-#: src/pages/library-page.tsx:324
-#: src/pages/library-page.tsx:400
+#: src/pages/library-page.tsx:369
 msgid "Add entity"
 msgstr "Add entity"
 
@@ -438,14 +430,13 @@ msgstr "All sources"
 #: src/components/assets/asset-download-panel.tsx:84
 #: src/pages/activity-page.tsx:128
 #: src/pages/calendar-page.tsx:132
-#: src/pages/library-page.tsx:345
 #: src/pages/quick-capture-page.tsx:220
 #: src/pages/review-page.tsx:160
 msgid "All types"
 msgstr "All types"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:298
+#: src/pages/library-page.tsx:294
 msgid "All types ({0})"
 msgstr "All types ({0})"
 
@@ -600,7 +591,7 @@ msgstr "Close"
 msgid "Close navigation"
 msgstr "Close navigation"
 
-#: src/components/home/coming-up-section.tsx:51
+#: src/components/home/coming-up-section.tsx:59
 msgid "Coming up"
 msgstr "Coming up"
 
@@ -641,7 +632,7 @@ msgstr "Connected"
 msgid "Connection Fields"
 msgstr "Connection Fields"
 
-#: src/components/assets/entity-detail.tsx:186
+#: src/components/assets/entity-detail.tsx:195
 #: src/pages/statistics-page.tsx:51
 msgid "Connections"
 msgstr "Connections"
@@ -780,7 +771,7 @@ msgstr "Dated"
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
 msgstr "Dated entities by month and year — compare this year against past years, filter by type"
 
-#: src/components/assets/entity-detail.tsx:237
+#: src/components/assets/entity-detail.tsx:246
 msgid "Dates"
 msgstr "Dates"
 
@@ -823,7 +814,7 @@ msgstr "Description"
 msgid "Deselect group"
 msgstr "Deselect group"
 
-#: src/components/assets/entity-detail.tsx:149
+#: src/components/assets/entity-detail.tsx:158
 msgid "Details"
 msgstr "Details"
 
@@ -1210,7 +1201,7 @@ msgstr "lang {0}"
 msgid "Language"
 msgstr "Language"
 
-#: src/components/home/coming-up-section.tsx:185
+#: src/components/home/coming-up-section.tsx:193
 msgid "Later"
 msgstr "Later"
 
@@ -1248,15 +1239,15 @@ msgstr "Line format"
 msgid "Link your new types"
 msgstr "Link your new types"
 
-#: src/components/assets/entity-detail.tsx:196
+#: src/components/assets/entity-detail.tsx:205
 msgid "Linked from"
 msgstr "Linked from"
 
-#: src/components/assets/entity-detail.tsx:215
+#: src/components/assets/entity-detail.tsx:224
 msgid "Links"
 msgstr "Links"
 
-#: src/components/assets/entity-detail.tsx:189
+#: src/components/assets/entity-detail.tsx:198
 msgid "Links to"
 msgstr "Links to"
 
@@ -1316,7 +1307,7 @@ msgstr "Loading taxonomy"
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:237
-#: src/pages/library-page.tsx:393
+#: src/pages/library-page.tsx:362
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
@@ -1487,7 +1478,7 @@ msgstr "Next"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:495
+#: src/pages/library-page.tsx:464
 msgid "No"
 msgstr "No"
 
@@ -1517,7 +1508,7 @@ msgstr "No candidates loaded"
 msgid "No date"
 msgstr "No date"
 
-#: src/pages/calendar-page.tsx:169
+#: src/pages/calendar-page.tsx:175
 msgid "No date selected"
 msgstr "No date selected"
 
@@ -1537,9 +1528,9 @@ msgstr "No entity type maps {unmatchedLabels}. Add an external-reference field f
 msgid "No entity types configured."
 msgstr "No entity types configured."
 
-#: src/pages/calendar-page.tsx:173
-#: src/pages/calendar-page.tsx:183
-#: src/pages/library-page.tsx:441
+#: src/pages/calendar-page.tsx:179
+#: src/pages/calendar-page.tsx:189
+#: src/pages/library-page.tsx:410
 msgid "No entries"
 msgstr "No entries"
 
@@ -1580,7 +1571,7 @@ msgstr "No items yet — sync from a provider or add a list under the <0>{0}</0>
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 
-#: src/components/assets/entity-detail.tsx:232
+#: src/components/assets/entity-detail.tsx:241
 msgid "No links yet"
 msgstr "No links yet"
 
@@ -1673,7 +1664,7 @@ msgstr "Note <0>(optional)</0>"
 msgid "notes"
 msgstr "notes"
 
-#: src/components/assets/entity-detail.tsx:207
+#: src/components/assets/entity-detail.tsx:216
 #: src/components/entities/metadata-editor.tsx:165
 #: src/pages/list-detail-page.tsx:488
 msgid "Notes"
@@ -2265,7 +2256,7 @@ msgid "System theme. Switch to light theme."
 msgstr "System theme. Switch to light theme."
 
 #: src/components/entities/metadata-editor.tsx:83
-#: src/pages/library-page.tsx:96
+#: src/pages/library-page.tsx:95
 msgid "Tags"
 msgstr "Tags"
 
@@ -2304,7 +2295,7 @@ msgstr "The page hit an unexpected error. You can try again, or reload the app."
 msgid "These existing types can link to what you're adding."
 msgstr "These existing types can link to what you're adding."
 
-#: src/components/home/coming-up-section.tsx:184
+#: src/components/home/coming-up-section.tsx:192
 msgid "This month"
 msgstr "This month"
 
@@ -2322,7 +2313,7 @@ msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched.
 msgid "This page doesn’t exist or may have moved."
 msgstr "This page doesn’t exist or may have moved."
 
-#: src/components/home/coming-up-section.tsx:183
+#: src/components/home/coming-up-section.tsx:191
 msgid "This week"
 msgstr "This week"
 
@@ -2355,7 +2346,7 @@ msgstr "Today"
 msgid "Todo"
 msgstr "Todo"
 
-#: src/pages/library-page.tsx:312
+#: src/pages/library-page.tsx:308
 msgid "Toggle filters"
 msgstr "Toggle filters"
 
@@ -2379,7 +2370,7 @@ msgstr "Try again"
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
 #: src/pages/entity-create-page.tsx:92
-#: src/pages/library-page.tsx:295
+#: src/pages/library-page.tsx:291
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
 msgstr "Type"
@@ -2513,7 +2504,7 @@ msgstr "Vaults"
 msgid "View"
 msgstr "View"
 
-#: src/components/home/coming-up-section.tsx:54
+#: src/components/home/coming-up-section.tsx:62
 msgid "View all"
 msgstr "View all"
 
@@ -2537,7 +2528,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:494
+#: src/pages/library-page.tsx:463
 msgid "Yes"
 msgstr "Yes"
 
