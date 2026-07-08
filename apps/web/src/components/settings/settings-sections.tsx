@@ -1,9 +1,12 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 
+import { allTagsQuery } from "@/api/queries";
+import { RuleBuilder, ruleFieldMetas } from "@/components/smart-lists/rule-builder";
 import { Button } from "@/components/ui/button";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
@@ -13,7 +16,7 @@ import {
   externalTypeOptionsForSource,
   externalTypesForSource,
 } from "@/lib/external-metadata";
-import { fieldDisplayLabel, fieldTypeLabel, isDateFieldType, supportsEnumOptions } from "@/lib/type-config";
+import { fieldDisplayLabel, fieldTypeLabel, isDateFieldType } from "@/lib/type-config";
 import type {
   BodySection,
   BodySectionKind,
@@ -25,7 +28,6 @@ import type {
   FieldConfig,
   FieldType,
   HomeSectionConfig,
-  HomeSectionFilterConfig,
   Language,
   SeasonLanguage,
 } from "@/types/api";
@@ -112,16 +114,26 @@ export function DailyNotesEditor({
 export function HomeSectionForm({
   section,
   types,
+  tagsField,
   onChange,
 }: {
   section: HomeSectionConfig;
   types: EntityTypeConfig[];
+  tagsField: string;
   onChange: (section: HomeSectionConfig) => void;
 }) {
   const { t } = useLingui();
   const selectedType = types.find((type) => type.id === section.type);
-  const filterFields = selectedType?.fields.filter((field) => supportsEnumOptions(field.fieldType)) ?? [];
-  const filters = section.filters ?? [];
+  const allTagsData = useQuery(allTagsQuery()).data?.tags;
+  const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
+  const fieldMetas = useMemo(
+    () => ruleFieldMetas(selectedType ? [selectedType] : [], tagsField, allTags, t),
+    [selectedType, tagsField, allTags, t],
+  );
+  const criteria = useMemo(
+    () => section.criteria ?? { conjunction: "all" as const, rules: [] },
+    [section.criteria],
+  );
   const sortOptions = [
     { value: "title", label: t`Title` },
     { value: "recentlyUpdated", label: t`Update time` },
@@ -131,20 +143,6 @@ export function HomeSectionForm({
       .map((field) => ({ value: `date:${field.field}`, label: t`Date: ${fieldDisplayLabel(field)}` })),
   ];
   const currentSort = section.sort ?? "title";
-  const filterList = arrayEditor(filters, (next) => onChange({ ...section, filters: next }));
-
-  function updateFilter(index: number, filter: HomeSectionFilterConfig) {
-    filterList.update(index, filter);
-  }
-
-  function removeFilter(index: number) {
-    filterList.remove(index);
-  }
-
-  function addFilter() {
-    const field = filterFields[0]?.field ?? "";
-    filterList.append({ field, values: [] });
-  }
 
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -153,7 +151,10 @@ export function HomeSectionForm({
         <Field label={t`Type`}>
           <Select
             value={section.type}
-            onChange={(event) => onChange({ ...section, type: event.target.value, filters: [] })}
+            onChange={(event) =>
+              // Criteria reference the type's fields, so a type switch resets them.
+              onChange({ ...section, type: event.target.value, criteria: null })
+            }
             className="h-9 w-full text-base md:text-sm"
           >
             {types.map((type) => (
@@ -166,28 +167,17 @@ export function HomeSectionForm({
         </Field>
         <div className="lg:col-span-3">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <div className="text-sm font-medium"><Trans>Filters</Trans></div>
-                <div className="text-xs text-muted-foreground"><Trans>Enum and enum list fields from this type.</Trans></div>
+            <div>
+              <div className="text-sm font-medium"><Trans>Criteria</Trans></div>
+              <div className="text-xs text-muted-foreground">
+                <Trans>The same rules as smart lists; the section shows entries that match.</Trans>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={addFilter} disabled={filterFields.length === 0}>
-                <PlusIcon data-icon="inline-start" />
-                <Trans>Add Filter</Trans>
-              </Button>
             </div>
-            {filters.map((filter, index) => (
-              <HomeSectionFilterEditor
-                // Index, not filter.field: the field is editable; keying on it
-                // would remount and drop focus on each change.
-                key={index}
-                filter={filter}
-                fields={filterFields}
-                onChange={(nextFilter) => updateFilter(index, nextFilter)}
-                onRemove={() => removeFilter(index)}
-              />
-            ))}
-            {filterFields.length === 0 ? <EmptyConfigLine><Trans>No enum fields available for this type.</Trans></EmptyConfigLine> : null}
+            <RuleBuilder
+              fieldMetas={fieldMetas}
+              value={criteria}
+              onChange={(next) => onChange({ ...section, criteria: next })}
+            />
           </div>
         </div>
         <NumberField label={t`Limit`} value={section.limit} onChange={(limit) => onChange({ ...section, limit })} />
@@ -221,52 +211,6 @@ export function HomeSectionForm({
             <option value="desc">{t`Descending`}</option>
           </Select>
         </Field>
-    </div>
-  );
-}
-
-function HomeSectionFilterEditor({
-  filter,
-  fields,
-  onChange,
-  onRemove,
-}: {
-  filter: HomeSectionFilterConfig;
-  fields: FieldConfig[];
-  onChange: (filter: HomeSectionFilterConfig) => void;
-  onRemove: () => void;
-}) {
-  const { t } = useLingui();
-  const selectedField = fields.find((field) => field.field === filter.field);
-  const suggestions = selectedField?.enumOptions ?? [];
-  return (
-    <div className="rounded-md border border-dashed p-3">
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
-        <Field label={t`Field`}>
-          <Select
-            value={filter.field}
-            onChange={(event) => onChange({ ...filter, field: event.target.value, values: [] })}
-            className="h-9 w-full text-base md:text-sm"
-          >
-            {fields.map((field) => (
-              <option key={field.field} value={field.field}>
-                {field.displayName || field.field}
-              </option>
-            ))}
-            <UnknownValueOption value={filter.field} known={fields.map((field) => field.field)} />
-          </Select>
-        </Field>
-        <StringListEditor
-          label={t`Values`}
-          values={filter.values ?? []}
-          suggestions={suggestions}
-          placeholder={suggestions[0] ?? t`value`}
-          onChange={(values) => onChange({ ...filter, values })}
-        />
-        <div className="flex items-end">
-          <IconButton label={t`Remove filter`} onClick={onRemove} />
-        </div>
-      </div>
     </div>
   );
 }

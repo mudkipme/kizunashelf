@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { saveSettingsConfig } from "@/api/settings";
+import { defaultTagsField } from "@/lib/constants";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -284,6 +285,7 @@ export function SettingsEditor({
               <HomeBlock
                 config={config.home}
                 types={config.types}
+                tagsField={config.tags?.field?.trim() || defaultTagsField}
                 onChange={(home) => setConfig((current) => ({ ...current, home }))}
               />
             ) : (

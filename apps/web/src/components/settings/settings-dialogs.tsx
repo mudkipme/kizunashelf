@@ -4,6 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { criteriaRuleCount } from "@/components/smart-lists/home-criteria";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -424,10 +425,12 @@ function TypeEditorDialog({
 export function HomeBlock({
   config,
   types,
+  tagsField,
   onChange,
 }: {
   config: HomeConfig;
   types: EntityTypeConfig[];
+  tagsField: string;
   onChange: (config: HomeConfig) => void;
 }) {
   const { t } = useLingui();
@@ -453,8 +456,8 @@ export function HomeBlock({
               title={section.title || section.id || t`Home section`}
               badges={[
                 ...(section.type ? [types.find((type) => type.id === section.type)?.label || section.type] : []),
-                ...(section.filters?.length
-                  ? [plural(section.filters.length, { one: "# filter", other: "# filters" })]
+                ...(section.criteria && criteriaRuleCount(section.criteria) > 0
+                  ? [plural(criteriaRuleCount(section.criteria), { one: "# rule", other: "# rules" })]
                   : []),
               ]}
               onEdit={() => setEditing(index)}
@@ -469,6 +472,7 @@ export function HomeBlock({
         <HomeSectionDialog
           initial={initial}
           types={types}
+          tagsField={tagsField}
           onClose={() => setEditing(null)}
           onApply={(value) => {
             if (editing === "new") sectionList.append(value);
@@ -484,11 +488,13 @@ export function HomeBlock({
 function HomeSectionDialog({
   initial,
   types,
+  tagsField,
   onClose,
   onApply,
 }: {
   initial: HomeSectionConfig;
   types: EntityTypeConfig[];
+  tagsField: string;
   onClose: () => void;
   onApply: (value: HomeSectionConfig) => void;
 }) {
@@ -511,7 +517,7 @@ function HomeSectionDialog({
         </>
       }
     >
-      <HomeSectionForm section={draft} types={types} onChange={setDraft} />
+      <HomeSectionForm section={draft} types={types} tagsField={tagsField} onChange={setDraft} />
     </DialogShell>
   );
 }

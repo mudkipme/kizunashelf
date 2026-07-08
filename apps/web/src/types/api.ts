@@ -67,6 +67,7 @@ export type {
   ListItemInput,
   ListMarker,
   ListSection,
+  ListKind,
   ListsResponse,
   ListSummary,
   LogActivityRequest,
@@ -75,6 +76,22 @@ export type {
   Relation,
   SaveSettingsRequest,
   SettingsConfigResponse,
+  SmartCompareOp,
+  SmartContainsMode,
+  SmartDurationUnit,
+  SmartFilterConjunction,
+  SmartFilterGroup,
+  SmartFilterRule,
+  SmartFilterRuleKind,
+  SmartFilterSubgroup,
+  SmartListDetail,
+  SmartListPreviewRequest,
+  SmartListView,
+  SmartRelativeDate,
+  SmartSortSpec,
+  SmartViewLayout,
+  CreateSmartListRequest,
+  UpdateSmartListRequest,
   StatsResponse,
   TagsResponse,
   TypeConfig,
@@ -145,5 +162,4 @@ export type SeasonLanguage = NonNullable<FieldConfig["seasonLanguage"]>;
 export type TitleRole = NonNullable<FieldConfig["titleRole"]>;
 export type HomeConfig = NonNullable<VaultConfig["home"]>;
 export type HomeSectionConfig = NonNullable<HomeConfig["sections"]>[number];
-export type HomeSectionFilterConfig = NonNullable<HomeSectionConfig["filters"]>[number];
 export type DailyNotesConfig = NonNullable<VaultConfig["dailyNotes"]>;

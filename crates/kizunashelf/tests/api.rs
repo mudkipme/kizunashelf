@@ -1240,6 +1240,97 @@ async fn settings_save_and_read_vault_config() {
 }
 
 #[tokio::test]
+async fn home_sections_evaluate_smart_list_criteria() {
+    let server = TestServer::new();
+    let app = &server.app;
+
+    // Add a criteria-driven section next to the fixture sections: the
+    // smart-list rule model, stored structurally in the vault config.
+    let settings = request_json(app, Method::GET, "/api/settings/config", None).await;
+    assert_eq!(settings.0, StatusCode::OK, "{}", settings.1);
+    let mut vault_config = settings.1["vault"].clone();
+    vault_config["home"]["sections"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({
+            "id": "watching-favorites",
+            "title": "Watching Favorites",
+            "type": "anime",
+            "criteria": {
+                "conjunction": "all",
+                "rules": [
+                    { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" },
+                    { "kind": "compare", "field": "favorite", "op": "eq", "boolean": true }
+                ]
+            },
+            "limit": 4
+        }));
+    let saved = request_json(
+        app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(vault_settings_body(&vault_config)),
+    )
+    .await;
+    assert_eq!(saved.0, StatusCode::OK, "{}", saved.1);
+
+    // The criteria survive the strict config round-trip…
+    let read_back = request_json(app, Method::GET, "/api/settings/config", None).await;
+    let section = &read_back.1["vault"]["home"]["sections"][3];
+    assert_eq!(section["criteria"]["rules"].as_array().unwrap().len(), 2);
+
+    // …and the section evaluates through the smart-list engine: Star Voyager
+    // is Watching + favorite. The fixture sections keep working beside it.
+    let home = request_json(app, Method::GET, "/api/home", None).await;
+    assert_eq!(home.0, StatusCode::OK, "{}", home.1);
+    let sections = home.1["sections"].as_array().unwrap();
+    let section = sections
+        .iter()
+        .find(|section| section["id"] == "watching-favorites")
+        .expect("criteria section present");
+    assert_eq!(section["total"], 1);
+    assert_eq!(section["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(
+        section["criteria"]["rules"][0]["value"], "Watching",
+        "criteria echoed on the response"
+    );
+    assert_eq!(
+        sections
+            .iter()
+            .find(|section| section["id"] == "recent-anime")
+            .map(|section| &section["total"]),
+        Some(&json!(1)),
+        "existing criteria section unchanged"
+    );
+
+    // A none-conjunction excludes: no anime that is Watching → only non-watching.
+    let mut vault_config = read_back.1["vault"].clone();
+    vault_config["home"]["sections"][3]["criteria"] = json!({
+        "conjunction": "none",
+        "rules": [
+            { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" }
+        ]
+    });
+    let saved = request_json(
+        app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(vault_settings_body(&vault_config)),
+    )
+    .await;
+    assert_eq!(saved.0, StatusCode::OK, "{}", saved.1);
+    let home = request_json(app, Method::GET, "/api/home", None).await;
+    let section = home.1["sections"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|section| section["id"] == "watching-favorites")
+        .expect("criteria section present");
+    // The fixture vault's only anime is Watching, so none-of matches nothing.
+    assert_eq!(section["total"], 0);
+}
+
+#[tokio::test]
 async fn raw_settings_config_round_trips_yaml_verbatim() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
@@ -1583,7 +1674,10 @@ impl TestServer {
                         "id": "recent-anime",
                         "title": "Recent Anime",
                         "type": "anime",
-                        "filters": [{ "field": "status", "values": ["Watching"] }],
+                        "criteria": {
+                            "conjunction": "all",
+                            "rules": [{ "kind": "compare", "field": "status", "op": "eq", "value": "Watching" }]
+                        },
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -1592,7 +1686,10 @@ impl TestServer {
                         "id": "games",
                         "title": "Games",
                         "type": "games",
-                        "filters": [{ "field": "status", "values": ["Playing"] }],
+                        "criteria": {
+                            "conjunction": "all",
+                            "rules": [{ "kind": "compare", "field": "status", "op": "eq", "value": "Playing" }]
+                        },
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -1601,7 +1698,10 @@ impl TestServer {
                         "id": "completed-anime",
                         "title": "Completed Anime",
                         "type": "anime",
-                        "filters": [{ "field": "status", "values": ["Completed"] }],
+                        "criteria": {
+                            "conjunction": "all",
+                            "rules": [{ "kind": "compare", "field": "status", "op": "eq", "value": "Completed" }]
+                        },
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -2912,6 +3012,243 @@ async fn lists_crud_add_reorder_and_delete() {
         .starts_with(".trash/"));
     let missing = request_json(app, Method::GET, "/api/lists/Watchlist", None).await;
     assert_eq!(missing.0, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn smart_lists_create_update_evaluate_and_delete() {
+    let server = TestServer::new();
+    let app = &server.app;
+
+    // Create a smart list scoped to the anime type. The default document gets
+    // a table ("List") and a cards ("Grid") view, the grid inheriting the
+    // type's first image field as its cover property.
+    let created = request_json(
+        app,
+        Method::POST,
+        "/api/smart-lists",
+        Some(json!({ "name": "Watching Now", "scope": "anime" })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+    assert_eq!(created.1["id"], "Watching Now");
+    assert_eq!(created.1["path"], "KizunaShelf/Lists/Watching Now.base");
+    assert_eq!(created.1["scope"], "anime");
+    assert_eq!(created.1["filters"]["conjunction"], "all");
+    assert_eq!(created.1["filters"]["rules"].as_array().unwrap().len(), 0);
+    let views = created.1["views"].as_array().unwrap();
+    assert_eq!(views.len(), 2);
+    assert_eq!(views[0]["layout"], "list");
+    assert_eq!(views[1]["layout"], "grid");
+    assert_eq!(views[1]["image"], "note.cover_url");
+
+    // The written file is plain Bases YAML with the scope idiom.
+    let raw = fs::read_to_string(server.vault.join("KizunaShelf/Lists/Watching Now.base")).unwrap();
+    assert!(raw.contains(r#"file.inFolder("Taxonomy/Anime")"#), "{raw}");
+    assert!(raw.contains("type: table"), "{raw}");
+    assert!(raw.contains("type: cards"), "{raw}");
+
+    // With no criteria beyond the scope, results = every anime entity.
+    let results = request_json(
+        app,
+        Method::GET,
+        "/api/smart-lists/Watching%20Now/results",
+        None,
+    )
+    .await;
+    assert_eq!(results.0, StatusCode::OK, "{}", results.1);
+    assert_eq!(results.1["total"], 1);
+    assert_eq!(results.1["items"][0]["id"], "anime:Star Voyager");
+
+    // Update: add criteria (status is Watching AND favorite) plus a sorted,
+    // limited table view.
+    let update = json!({
+        "revision": created.1["revision"],
+        "scope": "anime",
+        "filters": {
+            "conjunction": "all",
+            "rules": [
+                { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" },
+                { "kind": "compare", "field": "favorite", "op": "eq", "boolean": true }
+            ]
+        },
+        "views": [
+            {
+                "name": "List",
+                "layout": "list",
+                "sort": [ { "property": "note.complete_date", "direction": "desc" } ],
+                "limit": 25
+            },
+            { "name": "Grid", "layout": "grid" }
+        ]
+    });
+    let updated = request_json(
+        app,
+        Method::POST,
+        "/api/smart-lists/Watching%20Now",
+        Some(update.clone()),
+    )
+    .await;
+    assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
+    assert_eq!(updated.1["scope"], "anime");
+    assert_eq!(updated.1["filters"]["rules"].as_array().unwrap().len(), 2);
+    assert_eq!(updated.1["views"][0]["limit"], 25);
+    // The grid view kept its derived image property across the rewrite.
+    assert_eq!(updated.1["views"][1]["image"], "note.cover_url");
+
+    // A stale revision is rejected.
+    let stale = request_json(
+        app,
+        Method::POST,
+        "/api/smart-lists/Watching%20Now",
+        Some(update),
+    )
+    .await;
+    assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
+
+    // The criteria evaluate: Star Voyager is Watching + favorite.
+    let results = request_json(
+        app,
+        Method::GET,
+        "/api/smart-lists/Watching%20Now/results?view=List",
+        None,
+    )
+    .await;
+    assert_eq!(results.0, StatusCode::OK, "{}", results.1);
+    assert_eq!(results.1["total"], 1);
+
+    // An unknown view 404s.
+    let missing_view = request_json(
+        app,
+        Method::GET,
+        "/api/smart-lists/Watching%20Now/results?view=Nope",
+        None,
+    )
+    .await;
+    assert_eq!(missing_view.0, StatusCode::NOT_FOUND);
+
+    // The lists index interleaves the smart list, with evaluated membership.
+    let index = request_json(
+        app,
+        Method::GET,
+        "/api/lists?entity=anime%3AStar%20Voyager",
+        None,
+    )
+    .await;
+    assert_eq!(index.0, StatusCode::OK, "{}", index.1);
+    let items = index.1["items"].as_array().unwrap();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0]["kind"], "smart");
+    assert_eq!(items[0]["itemCount"], 1);
+    assert_eq!(items[0]["contains"], true);
+
+    // Preview evaluates unsaved criteria without a file.
+    let preview = request_json(
+        app,
+        Method::POST,
+        "/api/smart-lists/preview",
+        Some(json!({
+            "scope": "anime",
+            "filters": {
+                "conjunction": "all",
+                "rules": [
+                    { "kind": "compare", "field": "status", "op": "eq", "value": "Completed" }
+                ]
+            }
+        })),
+    )
+    .await;
+    assert_eq!(preview.0, StatusCode::OK, "{}", preview.1);
+    assert_eq!(preview.1["total"], 0);
+
+    // Delete moves the file to the trash.
+    let deleted = request_json(app, Method::DELETE, "/api/smart-lists/Watching%20Now", None).await;
+    assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);
+    assert!(!server
+        .vault
+        .join("KizunaShelf/Lists/Watching Now.base")
+        .exists());
+    assert!(server.vault.join(".trash/Watching Now.base").exists());
+}
+
+#[tokio::test]
+async fn smart_lists_preserve_hand_authored_syntax_across_edits() {
+    let server = TestServer::new();
+    let app = &server.app;
+
+    // A hand-edited file: an unsupported formula filter, a formulas block, and
+    // a map view — all beyond the supported profile.
+    write_file(
+        &server.vault.join("KizunaShelf/Lists/Backlog.base"),
+        r#"filters:
+  and:
+    - file.inFolder("Taxonomy/Anime")
+    - status == "Watching"
+    - formula.score > 5
+formulas:
+  score: "rating * 2"
+views:
+  - type: table
+    name: List
+    order:
+      - file.name
+      - status
+  - type: map
+    name: Places
+"#,
+    );
+
+    let detail = request_json(app, Method::GET, "/api/smart-lists/Backlog", None).await;
+    assert_eq!(detail.0, StatusCode::OK, "{}", detail.1);
+    // The unsupported filter surfaces as a raw rule + a warning; the map view
+    // is skipped with a warning.
+    let rules = detail.1["filters"]["rules"].as_array().unwrap();
+    assert_eq!(rules.len(), 2);
+    assert_eq!(rules[1]["kind"], "unsupported");
+    let warnings = detail.1["warnings"].as_array().unwrap();
+    assert!(warnings
+        .iter()
+        .any(|w| w.as_str().unwrap().contains("formula.score")));
+    assert!(warnings
+        .iter()
+        .any(|w| w.as_str().unwrap().contains("Places")));
+    // Unsupported criteria are ignored, not disqualifying: results still match.
+    let results = request_json(app, Method::GET, "/api/smart-lists/Backlog/results", None).await;
+    assert_eq!(results.0, StatusCode::OK, "{}", results.1);
+    assert_eq!(results.1["total"], 1);
+
+    // Save the detail straight back (the editor round-trip): everything we
+    // don't model must survive in the file.
+    let update = json!({
+        "revision": detail.1["revision"],
+        "scope": detail.1["scope"],
+        "filters": detail.1["filters"],
+        "views": detail.1["views"],
+    });
+    let updated = request_json(app, Method::POST, "/api/smart-lists/Backlog", Some(update)).await;
+    assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
+
+    let raw = fs::read_to_string(server.vault.join("KizunaShelf/Lists/Backlog.base")).unwrap();
+    assert!(raw.contains("formula.score > 5"), "{raw}");
+    assert!(
+        raw.contains("score: rating * 2") || raw.contains("score: \"rating * 2\""),
+        "{raw}"
+    );
+    assert!(raw.contains("type: map"), "{raw}");
+    // The table view kept its hand-written column order.
+    assert!(raw.contains("- status"), "{raw}");
+}
+
+#[tokio::test]
+async fn smart_list_writes_blocked_in_read_only_mode() {
+    let server = TestServer::read_only();
+    let created = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-lists",
+        Some(json!({ "name": "Nope" })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::FORBIDDEN, "{}", created.1);
 }
 
 #[tokio::test]

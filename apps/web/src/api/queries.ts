@@ -15,6 +15,7 @@ import {
   type GetActivityParams,
   type GetCalendarParams,
   type GetEntitiesParams,
+  type GetSmartListResultsParams,
   type GetStatsParams,
   type GetUpcomingParams,
 } from "@kizunashelf/api-contract";
@@ -24,6 +25,7 @@ import { apiFetch } from "@/api/client";
 import { todayLocal } from "@/lib/date";
 import { getProviderCatalog } from "@/api/external";
 import { fetchList, fetchLists } from "@/api/lists";
+import { fetchSmartList, fetchSmartListResults } from "@/api/smart-lists";
 import { getLanguages, getRawSettingsConfig, getSettingsConfig, getTypePresets } from "@/api/settings";
 
 export const queryKeys = {
@@ -41,6 +43,9 @@ export const queryKeys = {
   languages: ["languages"] as const,
   lists: ["lists"] as const,
   list: (id: string) => ["list", id] as const,
+  smartList: (id: string) => ["smartList", id] as const,
+  smartListResults: (id: string, params: GetSmartListResultsParams) =>
+    ["smartListResults", id, params] as const,
   providerCatalog: ["providerCatalog"] as const,
   settingsConfig: ["settingsConfig"] as const,
   rawSettingsConfig: ["rawSettingsConfig"] as const,
@@ -165,6 +170,23 @@ export function listQuery(id: string) {
   return queryOptions({
     queryKey: queryKeys.list(id),
     queryFn: ({ signal }) => fetchList(id, { signal }),
+  });
+}
+
+export function smartListQuery(id: string) {
+  return queryOptions({
+    queryKey: queryKeys.smartList(id),
+    queryFn: ({ signal }) => fetchSmartList(id, { signal }),
+  });
+}
+
+export function smartListResultsQuery(id: string, params: GetSmartListResultsParams) {
+  return queryOptions({
+    queryKey: queryKeys.smartListResults(id, params),
+    queryFn: ({ signal }) => fetchSmartListResults(id, params, { signal }),
+    // Hold the current results visible while a view/page change loads, like
+    // the library page.
+    placeholderData: keepPreviousData,
   });
 }
 

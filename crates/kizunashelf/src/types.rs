@@ -307,22 +307,18 @@ pub struct HomeSectionConfig {
     pub title: String,
     #[serde(rename = "type")]
     pub entity_type: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub filters: Vec<HomeSectionFilterConfig>,
+    /// Smart-list-grade criteria (see [`crate::contract::SmartFilterGroup`]) —
+    /// the same rule model and evaluator as `.base` smart lists, stored
+    /// structurally here because the vault config is strict-parsed YAML, not a
+    /// Bases file. Absent means every entry of the type matches.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub criteria: Option<crate::contract::SmartFilterGroup>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sort: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub direction: Option<SortDirection>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct HomeSectionFilterConfig {
-    pub field: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub values: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]

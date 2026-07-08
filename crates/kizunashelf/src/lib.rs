@@ -13,6 +13,7 @@ pub mod markdown;
 pub mod presets;
 pub mod relations;
 pub mod secrets;
+pub mod smart_lists;
 pub mod status;
 pub mod types;
 pub mod vfs;

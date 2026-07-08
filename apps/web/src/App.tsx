@@ -28,6 +28,7 @@ import { NotFoundPage } from "@/pages/not-found-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
 import { ReviewPage } from "@/pages/review-page";
 import { SettingsPage } from "@/pages/settings-page";
+import { SmartListPage } from "@/pages/smart-list-page";
 import { StatisticsPage } from "@/pages/statistics-page";
 
 export default function App() {
@@ -125,6 +126,7 @@ function AppRoutes() {
       <Route path="/review/:queueId" element={<ReviewPage />} />
       <Route path="/statistics" element={<StatisticsPage />} />
       <Route path="/lists" element={<ListsPage />} />
+      <Route path="/lists/smart/:id" element={<SmartListPage />} />
       <Route path="/lists/:id" element={<ListDetailPage />} />
       <Route path="/entities/new" element={<QuickCapturePage />} />
       <Route path="/entities/new/manual" element={<EntityCreatePage />} />

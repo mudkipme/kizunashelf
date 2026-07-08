@@ -4,7 +4,7 @@ use crate::calendar::{
 use crate::relations::Count;
 use crate::types::{
     AppConfig, CanonicalStatus, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking,
-    HomeConfig, HomeSectionFilterConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
+    HomeConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -345,8 +345,9 @@ pub struct HomeSectionResponse {
     #[serde(rename = "type")]
     pub entity_type: String,
     pub type_label: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub filters: Vec<HomeSectionFilterConfig>,
+    /// The section's criteria, echoed from the config when defined.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub criteria: Option<SmartFilterGroup>,
     pub limit: u32,
     pub sort: String,
     pub direction: String,
@@ -669,13 +670,27 @@ pub struct DeleteEntityResponse {
     pub backup_path: String,
 }
 
+/// Which kind of list a summary row is: a hand-curated Markdown list or a
+/// criteria-driven smart list (`.base` file). The two live in the same index
+/// but are served by different detail endpoints.
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum ListKind {
+    #[default]
+    Static,
+    Smart,
+}
+
 /// One row in the lists index. `description` is the prose above the first list;
 /// `itemCount` and `ordered` summarize the list without its full contents.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ListSummary {
-    /// Stable identifier: the list file's basename (without `.md`).
+    /// Stable identifier: the list file's basename (without its extension).
+    /// Static and smart lists are separate id namespaces (different detail
+    /// endpoints), so the same basename may appear once per kind.
     pub id: String,
+    pub kind: ListKind,
     /// Display name (the basename).
     pub name: String,
     /// Vault-relative path of the Markdown file.
@@ -827,6 +842,262 @@ pub struct AddListItemRequest {
 pub struct DeleteListResponse {
     pub deleted_id: String,
     pub backup_path: String,
+}
+
+// --- Smart lists -------------------------------------------------------------
+//
+// A smart list is an Obsidian Bases `.base` file; see `crate::smart_lists`.
+// The criteria model here is deliberately depth-limited (a group of rules plus
+// one level of subgroups — the iTunes shape) so the generated clients never
+// see a recursive schema. Deeper nesting in hand-edited files still evaluates
+// in the core; it surfaces here as an `unsupported` rule carrying the raw YAML,
+// which round-trips verbatim on save.
+
+/// How a smart-list filter group combines its members: every rule must match,
+/// any rule may match, or no rule may match (Bases `and`/`or`/`not`).
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum SmartFilterConjunction {
+    #[default]
+    All,
+    Any,
+    #[serde(rename = "none")]
+    NoneOf,
+}
+
+/// The editable smart-list rule shapes. `unsupported` is the read-mostly
+/// escape hatch: a construct the editor can't model, carried as raw YAML.
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum SmartFilterRuleKind {
+    Compare,
+    Contains,
+    StartsWith,
+    EndsWith,
+    IsEmpty,
+    HasTag,
+    LinksTo,
+    InFolder,
+    #[default]
+    Unsupported,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum SmartCompareOp {
+    Eq,
+    Ne,
+    Gt,
+    Gte,
+    Lt,
+    Lte,
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum SmartContainsMode {
+    #[default]
+    Any,
+    All,
+}
+
+/// The calendar unit of a relative-date rule ("in the last N …").
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum SmartDurationUnit {
+    Days,
+    Weeks,
+    Months,
+    Years,
+}
+
+/// A date relative to today: `amount`×`unit` into the past (default) or the
+/// future (`future: true`) — "started in the last 90 days", "airing in the
+/// next 2 weeks". On `file.mtime` rules it is relative to `now()` instead.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartRelativeDate {
+    pub amount: u32,
+    pub unit: SmartDurationUnit,
+    #[serde(default)]
+    pub future: bool,
+}
+
+/// One smart-list criterion. Which of the optional members apply depends on
+/// `kind`:
+///
+/// - `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/
+///   `date` (ISO `YYYY-MM-DD`)/`relative`.
+/// - `contains` — `field`, `values` (with `mode`, default any-of).
+/// - `startsWith` / `endsWith` — `field`, `values[0]`.
+/// - `isEmpty` — `field` (`negated: true` reads as "has a value").
+/// - `hasTag` — `values` (any listed tag).
+/// - `linksTo` — `values[0]`: an entity basename/path the note must link to.
+/// - `inFolder` — `values[0]`: a vault-relative folder.
+/// - `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.
+///
+/// `field` is a frontmatter key, or the special `file.name` / `file.mtime`.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartFilterRule {
+    pub kind: SmartFilterRuleKind,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub field: Option<String>,
+    /// Logical negation of the rule (supported on every kind but `compare`,
+    /// where the operator itself expresses it).
+    #[serde(default)]
+    pub negated: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub op: Option<SmartCompareOp>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub values: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<SmartContainsMode>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub number: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub boolean: Option<bool>,
+    /// An absolute date literal, ISO `YYYY-MM-DD`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub relative: Option<SmartRelativeDate>,
+    /// `kind = unsupported`: the construct's raw YAML, round-tripped verbatim.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw: Option<String>,
+}
+
+/// A nested rule group — one level deep only (see the module note above).
+#[derive(Clone, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartFilterSubgroup {
+    #[serde(default)]
+    #[schemars(!default)]
+    pub conjunction: SmartFilterConjunction,
+    #[serde(default)]
+    pub rules: Vec<SmartFilterRule>,
+}
+
+/// A smart list's criteria: a conjunction over rules and (one level of)
+/// subgroups. The type scope is *not* in here — it rides separately as
+/// `scope` on the detail/requests and the server maintains its
+/// `file.inFolder(...)` atom.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartFilterGroup {
+    #[serde(default)]
+    #[schemars(!default)]
+    pub conjunction: SmartFilterConjunction,
+    #[serde(default)]
+    pub rules: Vec<SmartFilterRule>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<SmartFilterSubgroup>,
+}
+
+/// The app layout of one smart-list view: `list` ⇔ a Bases `table` view,
+/// `grid` ⇔ a Bases `cards` view.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum SmartViewLayout {
+    List,
+    Grid,
+}
+
+/// One sort key of a smart-list view. `property` is a Bases property
+/// reference: `note.<field>`, `file.name`, or `file.mtime`.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartSortSpec {
+    pub property: String,
+    pub direction: crate::types::SortDirection,
+}
+
+/// One view of a smart list — a named tab with its own layout, extra filters
+/// (AND-ed with the global criteria), sort, and result limit.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartListView {
+    pub name: String,
+    pub layout: SmartViewLayout,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filters: Option<SmartFilterGroup>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sort: Vec<SmartSortSpec>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u32>,
+    /// Cards image property reference (grid views), e.g. `note.cover`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
+}
+
+/// A smart list's full editable state. `warnings` lists every construct in
+/// the underlying `.base` file that the app ignores (unsupported filters,
+/// views, sorts) — all of it preserved on save.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartListDetail {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    /// The entity type this list is scoped to, when the file carries the
+    /// recognized `file.inFolder(<type folder>)` idiom; `null` = all types.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+    pub filters: SmartFilterGroup,
+    pub views: Vec<SmartListView>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+    pub revision: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSmartListRequest {
+    pub name: String,
+    /// Entity type id to scope the new list to (writes the `file.inFolder`
+    /// atom and derives the grid view's cover image from the type's schema).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+}
+
+/// Full rewrite of a smart list's criteria and views. Constructs the editor
+/// doesn't model (`unsupported` rules, non-table/cards views, unknown YAML
+/// keys) are preserved server-side.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateSmartListRequest {
+    pub revision: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+    #[serde(default)]
+    pub filters: SmartFilterGroup,
+    #[serde(default)]
+    pub views: Vec<SmartListView>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rename_to: Option<String>,
+}
+
+/// Evaluates an unsaved smart-list definition — the live preview while the
+/// rule builder is open. Returns the standard entity page shape.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartListPreviewRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+    #[serde(default)]
+    pub filters: SmartFilterGroup,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sort: Vec<SmartSortSpec>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page_size: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub title_language: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

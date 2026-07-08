@@ -3,6 +3,7 @@ import {
   externalTypeOptionsForSource,
   externalSourceOptions,
 } from "@/lib/external-metadata";
+import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
 import { isIso639TitleLanguage } from "@/lib/title-language";
 import type {
   BodySection,
@@ -14,7 +15,6 @@ import type {
   FilenameConfig,
   HomeConfig,
   HomeSectionConfig,
-  HomeSectionFilterConfig,
   SaveSettingsRequest,
   StatusValues,
   VaultConfig,
@@ -127,7 +127,7 @@ export function cleanVaultConfig(
               id: section.id,
               title: section.title,
               type: section.type,
-              filters: cleanHomeSectionFilters(section.filters ?? []),
+              criteria: cleanHomeSectionCriteria(section.criteria),
               limit: section.limit ?? undefined,
               sort: emptyToUndefined(section.sort),
               direction: section.direction ?? undefined,
@@ -153,14 +153,14 @@ export function cleanVaultConfig(
   };
 }
 
-function cleanHomeSectionFilters(filters: HomeSectionFilterConfig[]) {
-  const cleaned = filters
-    .map((filter) => ({
-      field: filter.field.trim(),
-      values: cleanStrings(filter.values ?? []),
-    }))
-    .filter((filter) => filter.field);
-  return cleaned.length > 0 ? cleaned : undefined;
+/// Smart-list criteria on a home section: still-being-filled rules are
+/// dropped (mirroring the smart-list save path), and a criteria group left
+/// with nothing in it isn't written at all.
+function cleanHomeSectionCriteria(criteria: HomeSectionConfig["criteria"]) {
+  if (!criteria) return undefined;
+  const pruned = pruneIncompleteRules(criteria);
+  const empty = (pruned.rules?.length ?? 0) === 0 && (pruned.groups?.length ?? 0) === 0;
+  return empty ? undefined : pruned;
 }
 
 function cleanFilename(filename: FilenameConfig | null | undefined): FilenameConfig | undefined {
@@ -395,7 +395,7 @@ export function replaceArray<T>(items: T[], index: number, value: T) {
 /// operations the settings editors all need (append / replace-at / remove-at),
 /// so each editor stops re-inlining the same spread/`replaceArray`/`filter`
 /// closures. `onChange` receives the new array; adapt it (e.g.
-/// `(next) => onChange({ ...section, filters: next })`) for nested arrays.
+/// `(next) => onChange({ ...config, sections: next })`) for nested arrays.
 export function arrayEditor<T>(values: T[], onChange: (next: T[]) => void) {
   return {
     append: (item: T) => onChange([...values, item]),

@@ -2966,6 +2966,426 @@
           }
         }
       }
+    },
+    "/api/smart-lists": {
+      "post": {
+        "operationId": "createSmartList",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSmartListRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A smart list's full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartListDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/smart-lists/preview": {
+      "post": {
+        "operationId": "previewSmartList",
+        "requestBody": {
+          "description": "Evaluates an unsaved smart-list definition — the live preview while the\nrule builder is open. Returns the standard entity page shape.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmartListPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/smart-lists/{id}": {
+      "get": {
+        "operationId": "getSmartList",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A smart list's full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartListDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "updateSmartList",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Full rewrite of a smart list's criteria and views. Constructs the editor\ndoesn't model (`unsupported` rules, non-table/cards views, unknown YAML\nkeys) are preserved server-side.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSmartListRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A smart list's full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartListDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSmartList",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/smart-lists/{id}/results": {
+      "get": {
+        "operationId": "getSmartListResults",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "in": "query",
+            "name": "view",
+            "description": "View (tab) name to evaluate; defaults to the file's first supported view.",
+            "schema": {
+              "description": "View (tab) name to evaluate; defaults to the file's first supported view.",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "titleLanguage",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3139,11 +3559,16 @@
           "type": {
             "type": "string"
           },
-          "filters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionFilterConfig"
-            }
+          "criteria": {
+            "description": "Smart-list-grade criteria (see [`crate::contract::SmartFilterGroup`]) —\nthe same rule model and evaluator as `.base` smart lists, stored\nstructurally here because the vault config is strict-parsed YAML, not a\nBases file. Absent means every entry of the type matches.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartFilterGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "limit": {
             "type": [
@@ -3176,21 +3601,214 @@
           "type"
         ]
       },
-      "HomeSectionFilterConfig": {
+      "SmartFilterGroup": {
+        "description": "A smart list's criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is *not* in here — it rides separately as\n`scope` on the detail/requests and the server maintains its\n`file.inFolder(...)` atom.",
         "type": "object",
         "properties": {
+          "conjunction": {
+            "$ref": "#/components/schemas/SmartFilterConjunction"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterRule"
+            },
+            "default": []
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterSubgroup"
+            }
+          }
+        },
+        "required": [
+          "conjunction"
+        ]
+      },
+      "SmartFilterConjunction": {
+        "description": "How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`/`or`/`not`).",
+        "type": "string",
+        "enum": [
+          "all",
+          "any",
+          "none"
+        ]
+      },
+      "SmartFilterRule": {
+        "description": "One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/\n  `date` (ISO `YYYY-MM-DD`)/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` / `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename/path the note must link to.\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` / `file.mtime`.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/SmartFilterRuleKind"
+          },
           "field": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "negated": {
+            "description": "Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).",
+            "type": "boolean",
+            "default": false
+          },
+          "op": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartCompareOp"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "values": {
             "type": "array",
             "items": {
               "type": "string"
             }
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartContainsMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "boolean": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "date": {
+            "description": "An absolute date literal, ISO `YYYY-MM-DD`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "relative": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartRelativeDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw": {
+            "description": "`kind = unsupported`: the construct's raw YAML, round-tripped verbatim.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
-          "field"
+          "kind"
+        ]
+      },
+      "SmartFilterRuleKind": {
+        "description": "The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can't model, carried as raw YAML.",
+        "type": "string",
+        "enum": [
+          "compare",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "isEmpty",
+          "hasTag",
+          "linksTo",
+          "inFolder",
+          "unsupported"
+        ]
+      },
+      "SmartCompareOp": {
+        "type": "string",
+        "enum": [
+          "eq",
+          "ne",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      "SmartContainsMode": {
+        "type": "string",
+        "enum": [
+          "any",
+          "all"
+        ]
+      },
+      "SmartRelativeDate": {
+        "description": "A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.",
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "unit": {
+            "$ref": "#/components/schemas/SmartDurationUnit"
+          },
+          "future": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "amount",
+          "unit"
+        ]
+      },
+      "SmartDurationUnit": {
+        "description": "The calendar unit of a relative-date rule (\"in the last N …\").",
+        "type": "string",
+        "enum": [
+          "days",
+          "weeks",
+          "months",
+          "years"
+        ]
+      },
+      "SmartFilterSubgroup": {
+        "description": "A nested rule group — one level deep only (see the module note above).",
+        "type": "object",
+        "properties": {
+          "conjunction": {
+            "$ref": "#/components/schemas/SmartFilterConjunction"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterRule"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "conjunction"
         ]
       },
       "SortDirection": {
@@ -4181,11 +4799,16 @@
           "typeLabel": {
             "type": "string"
           },
-          "filters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionFilterConfig"
-            }
+          "criteria": {
+            "description": "The section's criteria, echoed from the config when defined.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartFilterGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "limit": {
             "type": "integer",
@@ -7873,8 +8496,11 @@
         "type": "object",
         "properties": {
           "id": {
-            "description": "Stable identifier: the list file's basename (without `.md`).",
+            "description": "Stable identifier: the list file's basename (without its extension).\nStatic and smart lists are separate id namespaces (different detail\nendpoints), so the same basename may appear once per kind.",
             "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ListKind"
           },
           "name": {
             "description": "Display name (the basename).",
@@ -7909,11 +8535,20 @@
         },
         "required": [
           "id",
+          "kind",
           "name",
           "path",
           "description",
           "itemCount",
           "sectionCount"
+        ]
+      },
+      "ListKind": {
+        "description": "Which kind of list a summary row is: a hand-curated Markdown list or a\ncriteria-driven smart list (`.base` file). The two live in the same index\nbut are served by different detail endpoints.",
+        "type": "string",
+        "enum": [
+          "static",
+          "smart"
         ]
       },
       "CreateListRequest": {
@@ -8163,6 +8798,285 @@
           "id",
           "entityId"
         ]
+      },
+      "CreateSmartListRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "description": "Entity type id to scope the new list to (writes the `file.inFolder`\natom and derives the grid view's cover image from the type's schema).",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "SmartListDetail": {
+        "description": "A smart list's full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "scope": {
+            "description": "The entity type this list is scoped to, when the file carries the\nrecognized `file.inFolder(<type folder>)` idiom; `null` = all types.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filters": {
+            "$ref": "#/components/schemas/SmartFilterGroup"
+          },
+          "views": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartListView"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "revision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "path",
+          "filters",
+          "views",
+          "revision"
+        ]
+      },
+      "SmartListView": {
+        "description": "One view of a smart list — a named tab with its own layout, extra filters\n(AND-ed with the global criteria), sort, and result limit.",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/SmartViewLayout"
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartFilterGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartSortSpec"
+            }
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "image": {
+            "description": "Cards image property reference (grid views), e.g. `note.cover`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "layout"
+        ]
+      },
+      "SmartViewLayout": {
+        "description": "The app layout of one smart-list view: `list` ⇔ a Bases `table` view,\n`grid` ⇔ a Bases `cards` view.",
+        "type": "string",
+        "enum": [
+          "list",
+          "grid"
+        ]
+      },
+      "SmartSortSpec": {
+        "description": "One sort key of a smart-list view. `property` is a Bases property\nreference: `note.<field>`, `file.name`, or `file.mtime`.",
+        "type": "object",
+        "properties": {
+          "property": {
+            "type": "string"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/SortDirection"
+          }
+        },
+        "required": [
+          "property",
+          "direction"
+        ]
+      },
+      "SmartListPreviewRequest": {
+        "description": "Evaluates an unsaved smart-list definition — the live preview while the\nrule builder is open. Returns the standard entity page shape.",
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filters": {
+            "default": {
+              "conjunction": "all",
+              "rules": []
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SmartFilterGroup"
+              }
+            ]
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartSortSpec"
+            }
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "page": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "pageSize": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "titleLanguage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SmartListPath": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "UpdateSmartListRequest": {
+        "description": "Full rewrite of a smart list's criteria and views. Constructs the editor\ndoesn't model (`unsupported` rules, non-table/cards views, unknown YAML\nkeys) are preserved server-side.",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filters": {
+            "default": {
+              "conjunction": "all",
+              "rules": []
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SmartFilterGroup"
+              }
+            ]
+          },
+          "views": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartListView"
+            },
+            "default": []
+          },
+          "renameTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "SmartListResultsQuery": {
+        "type": "object",
+        "properties": {
+          "view": {
+            "description": "View (tab) name to evaluate; defaults to the file's first supported view.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "pageSize": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "titleLanguage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
       }
     }
   }

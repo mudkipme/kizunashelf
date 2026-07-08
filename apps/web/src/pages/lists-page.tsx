@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckIcon, ListIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, ListIcon, PlusIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addList } from "@/api/lists";
-import { listsQuery } from "@/api/queries";
+import { addSmartList } from "@/api/smart-lists";
+import { configQuery, listsQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
+import { Select } from "@/components/ui/select";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useCapabilities } from "@/lib/capabilities";
 
@@ -62,12 +64,22 @@ export function ListsPage() {
           <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
             {items.map((list) => (
               <Link
-                key={list.id}
-                to={`/lists/${encodeURIComponent(list.id)}`}
+                // Static and smart lists are separate id namespaces, so the
+                // key needs the kind too.
+                key={`${list.kind}:${list.id}`}
+                to={
+                  list.kind === "smart"
+                    ? `/lists/smart/${encodeURIComponent(list.id)}`
+                    : `/lists/${encodeURIComponent(list.id)}`
+                }
                 className="flex min-h-32 flex-col gap-2 rounded-md border p-4 transition-colors hover:bg-accent"
               >
                 <div className="flex items-center gap-2">
-                  <ListIcon className="size-4 shrink-0 text-muted-foreground" />
+                  {list.kind === "smart" ? (
+                    <SparklesIcon className="size-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ListIcon className="size-4 shrink-0 text-muted-foreground" />
+                  )}
                   <span className="truncate font-medium">{list.name}</span>
                 </div>
                 {list.description ? (
@@ -80,6 +92,13 @@ export function ListsPage() {
                   {list.sectionCount > 0 ? (
                     <Badge variant="outline">
                       <Plural value={list.sectionCount} one="# section" other="# sections" />
+                    </Badge>
+                  ) : null}
+                  {list.kind === "smart" ? (
+                    <Badge variant="outline">
+                      <Trans comment="Badge on a list card marking a smart list (criteria-driven, updates automatically)">
+                        Smart
+                      </Trans>
                     </Badge>
                   ) : null}
                 </div>
@@ -104,18 +123,36 @@ function CreateListDialog({
   const { t } = useLingui();
   const navigate = useNavigate();
   const invalidateLists = useInvalidateLists();
+  const config = useQuery(configQuery());
   const [name, setName] = useState("");
+  const [kind, setKind] = useState<"static" | "smart">("static");
+  const [scope, setScope] = useState("");
   const validationError = name.trim() ? basenameValidationError(normalizeBasename(name)) : undefined;
 
+  const reset = () => {
+    setName("");
+    setKind("static");
+    setScope("");
+  };
+
   const create = useMutation({
-    mutationFn: () => addList({ name: normalizeBasename(name) }),
-    onSuccess: async (list) => {
-      toast.success(t`List created`);
-      onOpenChange(false);
-      setName("");
-      await invalidateLists();
-      navigate(`/lists/${encodeURIComponent(list.id)}`);
+    mutationFn: async () => {
+      const normalized = normalizeBasename(name);
+      if (kind === "smart") {
+        const list = await addSmartList({ name: normalized, scope: scope || undefined });
+        return { id: list.id, href: `/lists/smart/${encodeURIComponent(list.id)}` };
+      }
+      const list = await addList({ name: normalized });
+      return { id: list.id, href: `/lists/${encodeURIComponent(list.id)}` };
     },
+    onSuccess: async (created) => {
+      toast.success(kind === "smart" ? t`Smart list created` : t`List created`);
+      onOpenChange(false);
+      reset();
+      await invalidateLists();
+      navigate(created.href);
+    },
+    onError: (error) => toast.error(errorMessage(error)),
   });
 
   return (
@@ -123,7 +160,7 @@ function CreateListDialog({
       open={open}
       onOpenChange={(next) => {
         onOpenChange(next);
-        if (!next) setName("");
+        if (!next) reset();
       }}
     >
       <DialogContent>
@@ -143,6 +180,32 @@ function CreateListDialog({
           }}
           className="flex flex-col gap-2"
         >
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant={kind === "static" ? "secondary" : "outline"}
+              onClick={() => setKind("static")}
+            >
+              <ListIcon data-icon="inline-start" />
+              <Trans>List</Trans>
+            </Button>
+            <Button
+              type="button"
+              variant={kind === "smart" ? "secondary" : "outline"}
+              onClick={() => setKind("smart")}
+            >
+              <SparklesIcon data-icon="inline-start" />
+              <Trans>Smart list</Trans>
+            </Button>
+          </div>
+          {kind === "smart" ? (
+            <p className="text-xs text-muted-foreground">
+              <Trans>
+                A smart list fills itself from criteria you define, and is saved as an Obsidian
+                Bases (.base) file.
+              </Trans>
+            </p>
+          ) : null}
           <label className="text-sm font-medium">
             <Trans>Name</Trans>
             <Input
@@ -153,6 +216,23 @@ function CreateListDialog({
               aria-invalid={Boolean(validationError)}
             />
           </label>
+          {kind === "smart" ? (
+            <label className="text-sm font-medium">
+              <Trans>Scope</Trans>
+              <Select
+                value={scope}
+                className="mt-1 w-full"
+                onChange={(event) => setScope(event.target.value)}
+              >
+                <option value="">{t`All types`}</option>
+                {(config.data?.types ?? []).map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.label}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          ) : null}
           {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
           <DialogFooter className="mt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={create.isPending}>
