@@ -202,6 +202,13 @@ pub(crate) async fn save_raw_settings_config(
 
 pub(crate) async fn home(State(state): State<AppState>) -> ApiResult<HomeResponse> {
     let library = get_library(&state).await?;
+    // One evaluation context for every criteria-driven section — the same
+    // engine smart lists run on, so home sections can't drift from them.
+    let ctx = crate::smart_lists::EvalContext::new(
+        &library,
+        chrono::Utc::now(),
+        chrono::Local::now().date_naive(),
+    );
     let sections = library
         .config
         .home
@@ -209,7 +216,7 @@ pub(crate) async fn home(State(state): State<AppState>) -> ApiResult<HomeRespons
         .map(|home| home.sections.as_slice())
         .unwrap_or_default()
         .iter()
-        .map(|section| build_home_section(&library, section))
+        .map(|section| build_home_section(&library, section, &ctx))
         .collect::<Vec<_>>();
 
     Ok(Json(HomeResponse {
@@ -382,7 +389,11 @@ pub(crate) async fn upcoming(
     }))
 }
 
-fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSectionResponse {
+fn build_home_section(
+    library: &Library,
+    section: &HomeSectionConfig,
+    ctx: &crate::smart_lists::EvalContext,
+) -> HomeSectionResponse {
     let entity_type = library
         .config
         .types
@@ -395,11 +406,21 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         SortDirection::Asc
     };
     let sort = section.sort.as_deref().unwrap_or("title");
+    // The section's criteria — the smart-list rule model. Absent criteria (or
+    // structurally invalid rules, possible only in hand-edited config) degrade
+    // to "no constraint" rather than failing the whole home page.
+    let criteria_node = section.criteria.as_ref().map(|criteria| {
+        super::smart_lists::group_to_node(criteria, None)
+            .unwrap_or_else(|_| crate::smart_lists::FilterNode::empty())
+    });
     let matched: Vec<&EntityRecord> = library
         .records
         .iter()
         .filter(|entity| entity.summary.entity_type == section.entity_type)
-        .filter(|entity| home_section_filters_match(entity, section))
+        .filter(|entity| match &criteria_node {
+            Some(node) => crate::smart_lists::record_matches(node, entity, ctx),
+            None => true,
+        })
         .collect();
     // "recentlyUpdated" sorts on the file mtime, resident only on the record, so
     // it sorts records before mapping to summaries (mirrors `build_entity_list`).
@@ -428,7 +449,7 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         type_label: entity_type
             .map(|entity_type| entity_type.label.clone())
             .unwrap_or_else(|| section.entity_type.clone()),
-        filters: section.filters.clone(),
+        criteria: section.criteria.clone(),
         limit,
         sort: sort.to_string(),
         direction: if direction == SortDirection::Desc {
@@ -439,39 +460,5 @@ fn build_home_section(library: &Library, section: &HomeSectionConfig) -> HomeSec
         .to_string(),
         total,
         items,
-    }
-}
-
-fn home_section_filters_match(entity: &EntityRecord, section: &HomeSectionConfig) -> bool {
-    section.filters.iter().all(|filter| {
-        let field = filter.field.trim();
-        if field.is_empty() {
-            return true;
-        }
-        let Some(value) = entity.frontmatter.get(field) else {
-            return false;
-        };
-        if filter.values.is_empty() {
-            return !value.is_null();
-        }
-        frontmatter_value_matches_any(value, &filter.values)
-    })
-}
-
-fn frontmatter_value_matches_any(value: &serde_json::Value, expected: &[String]) -> bool {
-    match value {
-        serde_json::Value::Array(items) => items
-            .iter()
-            .any(|item| frontmatter_value_matches_any(item, expected)),
-        serde_json::Value::String(value) => expected.iter().any(|item| item == value),
-        serde_json::Value::Bool(value) => {
-            let value = if *value { "true" } else { "false" };
-            expected.iter().any(|item| item == value)
-        }
-        serde_json::Value::Number(value) => {
-            let value = value.to_string();
-            expected.iter().any(|item| item == &value)
-        }
-        _ => false,
     }
 }

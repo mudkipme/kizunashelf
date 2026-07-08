@@ -6,6 +6,16 @@
  */
 import { z as zod } from 'zod';
 
+export const homeSectionResponseCriteriaOneRulesItemNegatedDefault = false;
+export const homeSectionResponseCriteriaOneRulesItemRelativeOneAmountMin = 0;
+
+export const homeSectionResponseCriteriaOneRulesItemRelativeOneFutureDefault = false;
+export const homeSectionResponseCriteriaOneRulesDefault = [];
+export const homeSectionResponseCriteriaOneGroupsItemRulesItemNegatedDefault = false;
+export const homeSectionResponseCriteriaOneGroupsItemRulesItemRelativeOneAmountMin = 0;
+
+export const homeSectionResponseCriteriaOneGroupsItemRulesItemRelativeOneFutureDefault = false;
+export const homeSectionResponseCriteriaOneGroupsItemRulesDefault = [];
 export const homeSectionResponseLimitMin = 0;
 
 export const homeSectionResponseTotalMin = 0;
@@ -27,10 +37,48 @@ export const HomeSectionResponse = zod.object({
   "title": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
-  "filters": zod.array(zod.object({
-  "field": zod.string(),
-  "values": zod.array(zod.string()).optional()
-})).optional(),
+  "criteria": zod.union([zod.object({
+  "conjunction": zod.enum(['all', 'any', 'none']).describe('How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`\/`or`\/`not`).'),
+  "rules": zod.array(zod.object({
+  "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
+  "field": zod.string().nullish(),
+  "negated": zod.boolean().default(homeSectionResponseCriteriaOneRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
+  "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
+  "values": zod.array(zod.string()).optional(),
+  "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
+  "value": zod.string().nullish(),
+  "number": zod.number().nullish(),
+  "boolean": zod.boolean().nullish(),
+  "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
+  "relative": zod.union([zod.object({
+  "amount": zod.number().min(homeSectionResponseCriteriaOneRulesItemRelativeOneAmountMin),
+  "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
+  "future": zod.boolean().default(homeSectionResponseCriteriaOneRulesItemRelativeOneFutureDefault)
+}).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
+  "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
+}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(homeSectionResponseCriteriaOneRulesDefault),
+  "groups": zod.array(zod.object({
+  "conjunction": zod.enum(['all', 'any', 'none']).describe('How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`\/`or`\/`not`).'),
+  "rules": zod.array(zod.object({
+  "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
+  "field": zod.string().nullish(),
+  "negated": zod.boolean().default(homeSectionResponseCriteriaOneGroupsItemRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
+  "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
+  "values": zod.array(zod.string()).optional(),
+  "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
+  "value": zod.string().nullish(),
+  "number": zod.number().nullish(),
+  "boolean": zod.boolean().nullish(),
+  "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
+  "relative": zod.union([zod.object({
+  "amount": zod.number().min(homeSectionResponseCriteriaOneGroupsItemRulesItemRelativeOneAmountMin),
+  "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
+  "future": zod.boolean().default(homeSectionResponseCriteriaOneGroupsItemRulesItemRelativeOneFutureDefault)
+}).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
+  "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
+}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(homeSectionResponseCriteriaOneGroupsItemRulesDefault)
+}).describe('A nested rule group — one level deep only (see the module note above).')).optional()
+}).describe('A smart list\'s criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is \*not\* in here — it rides separately as\n`scope` on the detail\/requests and the server maintains its\n`file.inFolder(...)` atom.'),zod.null()]).optional().describe('The section\'s criteria, echoed from the config when defined.'),
   "limit": zod.number().min(homeSectionResponseLimitMin),
   "sort": zod.string(),
   "direction": zod.string(),

@@ -1240,6 +1240,97 @@ async fn settings_save_and_read_vault_config() {
 }
 
 #[tokio::test]
+async fn home_sections_evaluate_smart_list_criteria() {
+    let server = TestServer::new();
+    let app = &server.app;
+
+    // Add a criteria-driven section next to the fixture sections: the
+    // smart-list rule model, stored structurally in the vault config.
+    let settings = request_json(app, Method::GET, "/api/settings/config", None).await;
+    assert_eq!(settings.0, StatusCode::OK, "{}", settings.1);
+    let mut vault_config = settings.1["vault"].clone();
+    vault_config["home"]["sections"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({
+            "id": "watching-favorites",
+            "title": "Watching Favorites",
+            "type": "anime",
+            "criteria": {
+                "conjunction": "all",
+                "rules": [
+                    { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" },
+                    { "kind": "compare", "field": "favorite", "op": "eq", "boolean": true }
+                ]
+            },
+            "limit": 4
+        }));
+    let saved = request_json(
+        app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(vault_settings_body(&vault_config)),
+    )
+    .await;
+    assert_eq!(saved.0, StatusCode::OK, "{}", saved.1);
+
+    // The criteria survive the strict config round-trip…
+    let read_back = request_json(app, Method::GET, "/api/settings/config", None).await;
+    let section = &read_back.1["vault"]["home"]["sections"][3];
+    assert_eq!(section["criteria"]["rules"].as_array().unwrap().len(), 2);
+
+    // …and the section evaluates through the smart-list engine: Star Voyager
+    // is Watching + favorite. The fixture sections keep working beside it.
+    let home = request_json(app, Method::GET, "/api/home", None).await;
+    assert_eq!(home.0, StatusCode::OK, "{}", home.1);
+    let sections = home.1["sections"].as_array().unwrap();
+    let section = sections
+        .iter()
+        .find(|section| section["id"] == "watching-favorites")
+        .expect("criteria section present");
+    assert_eq!(section["total"], 1);
+    assert_eq!(section["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(
+        section["criteria"]["rules"][0]["value"], "Watching",
+        "criteria echoed on the response"
+    );
+    assert_eq!(
+        sections
+            .iter()
+            .find(|section| section["id"] == "recent-anime")
+            .map(|section| &section["total"]),
+        Some(&json!(1)),
+        "existing criteria section unchanged"
+    );
+
+    // A none-conjunction excludes: no anime that is Watching → only non-watching.
+    let mut vault_config = read_back.1["vault"].clone();
+    vault_config["home"]["sections"][3]["criteria"] = json!({
+        "conjunction": "none",
+        "rules": [
+            { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" }
+        ]
+    });
+    let saved = request_json(
+        app,
+        Method::PUT,
+        "/api/settings/config",
+        Some(vault_settings_body(&vault_config)),
+    )
+    .await;
+    assert_eq!(saved.0, StatusCode::OK, "{}", saved.1);
+    let home = request_json(app, Method::GET, "/api/home", None).await;
+    let section = home.1["sections"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|section| section["id"] == "watching-favorites")
+        .expect("criteria section present");
+    // The fixture vault's only anime is Watching, so none-of matches nothing.
+    assert_eq!(section["total"], 0);
+}
+
+#[tokio::test]
 async fn raw_settings_config_round_trips_yaml_verbatim() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
@@ -1583,7 +1674,10 @@ impl TestServer {
                         "id": "recent-anime",
                         "title": "Recent Anime",
                         "type": "anime",
-                        "filters": [{ "field": "status", "values": ["Watching"] }],
+                        "criteria": {
+                            "conjunction": "all",
+                            "rules": [{ "kind": "compare", "field": "status", "op": "eq", "value": "Watching" }]
+                        },
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -1592,7 +1686,10 @@ impl TestServer {
                         "id": "games",
                         "title": "Games",
                         "type": "games",
-                        "filters": [{ "field": "status", "values": ["Playing"] }],
+                        "criteria": {
+                            "conjunction": "all",
+                            "rules": [{ "kind": "compare", "field": "status", "op": "eq", "value": "Playing" }]
+                        },
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"
@@ -1601,7 +1698,10 @@ impl TestServer {
                         "id": "completed-anime",
                         "title": "Completed Anime",
                         "type": "anime",
-                        "filters": [{ "field": "status", "values": ["Completed"] }],
+                        "criteria": {
+                            "conjunction": "all",
+                            "rules": [{ "kind": "compare", "field": "status", "op": "eq", "value": "Completed" }]
+                        },
                         "limit": 4,
                         "sort": "title",
                         "direction": "asc"

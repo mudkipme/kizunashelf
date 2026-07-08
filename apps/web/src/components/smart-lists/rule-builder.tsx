@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import type { MultiValueComboboxOption } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
-import { fieldDisplayLabel } from "@/lib/type-config";
 import { entityTitle } from "@/lib/title-language";
 import { useTitleLanguage } from "@/lib/language";
 import type {
@@ -20,8 +19,23 @@ import type {
   SmartFilterGroup,
   SmartFilterRule,
   SmartFilterSubgroup,
-  TypeConfig,
 } from "@/types/api";
+
+/// The minimal structural shape of a type's schema the builder reads. Both
+/// the library page's `TypeConfig` (response-side) and the settings editor's
+/// `EntityTypeConfig` (request-side, more optional) satisfy it — orval
+/// generates those as distinct types, so the builder stays nominal-free.
+export type RuleFieldSource = {
+  fields?:
+    | {
+        field: string;
+        fieldType: string;
+        displayName?: string | null;
+        enumOptions?: string[] | null;
+        relationType?: string | null;
+      }[]
+    | null;
+};
 
 /// What the builder knows about one pickable field: how to edit it, never
 /// inferred from its name — the kind flows from the schema `fieldType` (plus
@@ -41,7 +55,7 @@ export type RuleFieldMeta = {
 /// an unscoped list): schema fields that map onto rule shapes, plus the
 /// built-in tags field and the two supported `file.*` properties.
 export function ruleFieldMetas(
-  typeConfigs: TypeConfig[],
+  typeConfigs: RuleFieldSource[],
   tagsField: string,
   allTags: string[],
   t: (descriptor: MessageDescriptor) => string,
@@ -50,7 +64,7 @@ export function ruleFieldMetas(
   for (const typeConfig of typeConfigs) {
     for (const field of typeConfig.fields ?? []) {
       if (metas.has(field.field) || field.field === tagsField) continue;
-      const base = { key: field.field, label: fieldDisplayLabel(field) };
+      const base = { key: field.field, label: field.displayName?.trim() || field.field };
       switch (field.fieldType) {
         case "enum":
           metas.set(field.field, { ...base, kind: "enum", options: field.enumOptions ?? [] });

@@ -3559,11 +3559,16 @@
           "type": {
             "type": "string"
           },
-          "filters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionFilterConfig"
-            }
+          "criteria": {
+            "description": "Smart-list-grade criteria (see [`crate::contract::SmartFilterGroup`]) —\nthe same rule model and evaluator as `.base` smart lists, stored\nstructurally here because the vault config is strict-parsed YAML, not a\nBases file. Absent means every entry of the type matches.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartFilterGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "limit": {
             "type": [
@@ -3596,21 +3601,214 @@
           "type"
         ]
       },
-      "HomeSectionFilterConfig": {
+      "SmartFilterGroup": {
+        "description": "A smart list's criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is *not* in here — it rides separately as\n`scope` on the detail/requests and the server maintains its\n`file.inFolder(...)` atom.",
         "type": "object",
         "properties": {
+          "conjunction": {
+            "$ref": "#/components/schemas/SmartFilterConjunction"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterRule"
+            },
+            "default": []
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterSubgroup"
+            }
+          }
+        },
+        "required": [
+          "conjunction"
+        ]
+      },
+      "SmartFilterConjunction": {
+        "description": "How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`/`or`/`not`).",
+        "type": "string",
+        "enum": [
+          "all",
+          "any",
+          "none"
+        ]
+      },
+      "SmartFilterRule": {
+        "description": "One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/\n  `date` (ISO `YYYY-MM-DD`)/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` / `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename/path the note must link to.\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` / `file.mtime`.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/SmartFilterRuleKind"
+          },
           "field": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "negated": {
+            "description": "Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).",
+            "type": "boolean",
+            "default": false
+          },
+          "op": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartCompareOp"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "values": {
             "type": "array",
             "items": {
               "type": "string"
             }
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartContainsMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "boolean": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "date": {
+            "description": "An absolute date literal, ISO `YYYY-MM-DD`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "relative": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartRelativeDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw": {
+            "description": "`kind = unsupported`: the construct's raw YAML, round-tripped verbatim.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
-          "field"
+          "kind"
+        ]
+      },
+      "SmartFilterRuleKind": {
+        "description": "The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can't model, carried as raw YAML.",
+        "type": "string",
+        "enum": [
+          "compare",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "isEmpty",
+          "hasTag",
+          "linksTo",
+          "inFolder",
+          "unsupported"
+        ]
+      },
+      "SmartCompareOp": {
+        "type": "string",
+        "enum": [
+          "eq",
+          "ne",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      "SmartContainsMode": {
+        "type": "string",
+        "enum": [
+          "any",
+          "all"
+        ]
+      },
+      "SmartRelativeDate": {
+        "description": "A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.",
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "unit": {
+            "$ref": "#/components/schemas/SmartDurationUnit"
+          },
+          "future": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "amount",
+          "unit"
+        ]
+      },
+      "SmartDurationUnit": {
+        "description": "The calendar unit of a relative-date rule (\"in the last N …\").",
+        "type": "string",
+        "enum": [
+          "days",
+          "weeks",
+          "months",
+          "years"
+        ]
+      },
+      "SmartFilterSubgroup": {
+        "description": "A nested rule group — one level deep only (see the module note above).",
+        "type": "object",
+        "properties": {
+          "conjunction": {
+            "$ref": "#/components/schemas/SmartFilterConjunction"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterRule"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "conjunction"
         ]
       },
       "SortDirection": {
@@ -4601,11 +4799,16 @@
           "typeLabel": {
             "type": "string"
           },
-          "filters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionFilterConfig"
-            }
+          "criteria": {
+            "description": "The section's criteria, echoed from the config when defined.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartFilterGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "limit": {
             "type": "integer",
@@ -8660,216 +8863,6 @@
           "filters",
           "views",
           "revision"
-        ]
-      },
-      "SmartFilterGroup": {
-        "description": "A smart list's criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is *not* in here — it rides separately as\n`scope` on the detail/requests and the server maintains its\n`file.inFolder(...)` atom.",
-        "type": "object",
-        "properties": {
-          "conjunction": {
-            "$ref": "#/components/schemas/SmartFilterConjunction"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SmartFilterRule"
-            },
-            "default": []
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SmartFilterSubgroup"
-            }
-          }
-        },
-        "required": [
-          "conjunction"
-        ]
-      },
-      "SmartFilterConjunction": {
-        "description": "How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`/`or`/`not`).",
-        "type": "string",
-        "enum": [
-          "all",
-          "any",
-          "none"
-        ]
-      },
-      "SmartFilterRule": {
-        "description": "One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/\n  `date` (ISO `YYYY-MM-DD`)/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` / `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename/path the note must link to.\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` / `file.mtime`.",
-        "type": "object",
-        "properties": {
-          "kind": {
-            "$ref": "#/components/schemas/SmartFilterRuleKind"
-          },
-          "field": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "negated": {
-            "description": "Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).",
-            "type": "boolean",
-            "default": false
-          },
-          "op": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartCompareOp"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "mode": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartContainsMode"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "value": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "number": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
-          },
-          "boolean": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "date": {
-            "description": "An absolute date literal, ISO `YYYY-MM-DD`.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "relative": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartRelativeDate"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raw": {
-            "description": "`kind = unsupported`: the construct's raw YAML, round-tripped verbatim.",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "kind"
-        ]
-      },
-      "SmartFilterRuleKind": {
-        "description": "The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can't model, carried as raw YAML.",
-        "type": "string",
-        "enum": [
-          "compare",
-          "contains",
-          "startsWith",
-          "endsWith",
-          "isEmpty",
-          "hasTag",
-          "linksTo",
-          "inFolder",
-          "unsupported"
-        ]
-      },
-      "SmartCompareOp": {
-        "type": "string",
-        "enum": [
-          "eq",
-          "ne",
-          "gt",
-          "gte",
-          "lt",
-          "lte"
-        ]
-      },
-      "SmartContainsMode": {
-        "type": "string",
-        "enum": [
-          "any",
-          "all"
-        ]
-      },
-      "SmartRelativeDate": {
-        "description": "A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.",
-        "type": "object",
-        "properties": {
-          "amount": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
-          },
-          "unit": {
-            "$ref": "#/components/schemas/SmartDurationUnit"
-          },
-          "future": {
-            "type": "boolean",
-            "default": false
-          }
-        },
-        "required": [
-          "amount",
-          "unit"
-        ]
-      },
-      "SmartDurationUnit": {
-        "description": "The calendar unit of a relative-date rule (\"in the last N …\").",
-        "type": "string",
-        "enum": [
-          "days",
-          "weeks",
-          "months",
-          "years"
-        ]
-      },
-      "SmartFilterSubgroup": {
-        "description": "A nested rule group — one level deep only (see the module note above).",
-        "type": "object",
-        "properties": {
-          "conjunction": {
-            "$ref": "#/components/schemas/SmartFilterConjunction"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SmartFilterRule"
-            },
-            "default": []
-          }
-        },
-        "required": [
-          "conjunction"
         ]
       },
       "SmartListView": {

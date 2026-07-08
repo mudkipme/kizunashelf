@@ -24,9 +24,10 @@
 
 use crate::api::external::provider_catalog_items;
 use crate::contract::{
-    ResolveTypePresetsRequest, ResolveTypePresetsResponse, TypePresetBackfill, TypePresetCategory,
-    TypePresetCategoryInfo, TypePresetCollision, TypePresetProvider, TypePresetSummary,
-    TypePresetsResponse,
+    ResolveTypePresetsRequest, ResolveTypePresetsResponse, SmartCompareOp, SmartFilterConjunction,
+    SmartFilterGroup, SmartFilterRule, SmartFilterRuleKind, SmartFilterSubgroup,
+    TypePresetBackfill, TypePresetCategory, TypePresetCategoryInfo, TypePresetCollision,
+    TypePresetProvider, TypePresetSummary, TypePresetsResponse,
 };
 use crate::types::{
     BodySection, BodySectionKind, CanonicalStatus, EntityTypeConfig, EnumRole, EpisodeTracking,
@@ -140,7 +141,12 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
             }
             false // target absent → drop the relation field
         });
-        if let Some(section) = home_section_for(&config) {
+        // One default shelf per type, so a multi-type vault's home doesn't
+        // start out bloated: the "in progress" shelf when the type's status
+        // role maps an ongoing value, else the chronological "recent" shelf.
+        if let Some(section) =
+            ongoing_home_section_for(&config).or_else(|| home_section_for(&config))
+        {
             home_sections.push(section);
         }
         types.push(config);
@@ -967,6 +973,68 @@ fn status_field(options: &[(CanonicalStatus, &str)]) -> FieldConfig {
     f
 }
 
+/// A default "{Ongoing} {label}" home section ("Watching Anime", "Playing
+/// Games") for a type whose status **role** maps at least one ongoing value —
+/// the shelf of things currently in progress. Everything is derived from the
+/// role and its `statusValues` mapping, never from field or option names: the
+/// title verbs and the criteria values are the mapped ongoing labels
+/// themselves. Types with no ongoing status (events: planned/attended) get no
+/// such shelf.
+fn ongoing_home_section_for(config: &EntityTypeConfig) -> Option<HomeSectionConfig> {
+    let status = config
+        .fields
+        .iter()
+        .find(|field| field.enum_role == Some(EnumRole::Status))?;
+    let ongoing = status
+        .status_values
+        .as_ref()
+        .map(|values| values.ongoing.as_slice())
+        .unwrap_or_default();
+    let first = ongoing.first()?;
+    let rule = |value: &String| SmartFilterRule {
+        kind: SmartFilterRuleKind::Compare,
+        field: Some(status.field.clone()),
+        op: Some(SmartCompareOp::Eq),
+        value: Some(value.clone()),
+        ..Default::default()
+    };
+    // The canonical shapes the settings editor produces: one equality, or an
+    // "any of" subgroup when several values mean ongoing.
+    let criteria = if ongoing.len() == 1 {
+        SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules: vec![rule(first)],
+            groups: Vec::new(),
+        }
+    } else {
+        SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules: Vec::new(),
+            groups: vec![SmartFilterSubgroup {
+                conjunction: SmartFilterConjunction::Any,
+                rules: ongoing.iter().map(rule).collect(),
+            }],
+        }
+    };
+    // Newest release first when the type has a planning date (season, release
+    // date); otherwise the most recently touched file leads.
+    let sort = config
+        .fields
+        .iter()
+        .find(|field| field.date_role == Some(crate::types::DateRole::Planning))
+        .map(|field| format!("date:{}", field.field))
+        .unwrap_or_else(|| "recentlyUpdated".to_string());
+    Some(HomeSectionConfig {
+        id: format!("ongoing-{}", config.id),
+        title: format!("{} {}", first, config.label),
+        entity_type: config.id.clone(),
+        criteria: Some(criteria),
+        limit: Some(12),
+        sort: Some(sort),
+        direction: Some(SortDirection::Desc),
+    })
+}
+
 /// A default "Recent {label}" home section for a type — but **only** when the type
 /// has a release/completion date to sort by. A chronological shelf is meaningless
 /// for types with no such date (people, franchises) or whose only date is an
@@ -987,7 +1055,7 @@ fn home_section_for(config: &EntityTypeConfig) -> Option<HomeSectionConfig> {
         id: format!("recent-{}", config.id),
         title: format!("Recent {}", config.label),
         entity_type: config.id.clone(),
-        filters: Vec::new(),
+        criteria: None,
         limit: Some(12),
         sort: Some(format!("date:{}", date_field.field)),
         direction: Some(SortDirection::Desc),
@@ -1447,18 +1515,53 @@ mod tests {
     }
 
     #[test]
-    fn home_section_only_for_types_with_a_release_date() {
-        // Anime has a planning (season) date → gets a shelf. Franchise has no date
-        // field and Event's only date is an attendance date (role Event), so both
-        // are left out of the default Home rather than getting a bogus "recent" shelf.
+    fn one_default_home_shelf_per_type_preferring_ongoing() {
+        // Anime has an ongoing status ("Watching"), so its single default shelf
+        // is the in-progress one — not a second "Recent" shelf on top. Franchise
+        // has no date field or status; Event's only date is an attendance date
+        // (role Event) and its statuses map no ongoing value — so neither gets
+        // a shelf at all.
         let result = resolve(vec![], &["anime", "franchise", "event"], None);
         assert_eq!(result.home_sections.len(), 1);
-        let anime = &result.home_sections[0];
-        assert_eq!(anime.entity_type, "anime");
-        assert_eq!(anime.sort.as_deref(), Some("date:season"));
+        let ongoing = &result.home_sections[0];
+        assert_eq!(ongoing.id, "ongoing-anime");
+        assert_eq!(ongoing.entity_type, "anime");
+        assert_eq!(ongoing.title, "Watching Anime");
+        assert_eq!(ongoing.sort.as_deref(), Some("date:season"));
         // The date-less types are still added — just shelf-less.
         assert!(result.types.iter().any(|t| t.id == "franchise"));
         assert!(result.types.iter().any(|t| t.id == "event"));
+    }
+
+    #[test]
+    fn multi_type_resolve_yields_at_most_one_shelf_per_type() {
+        // Every media preset maps an ongoing status, so a three-type onboarding
+        // yields exactly three shelves — all in-progress ones, no "Recent"
+        // duplicates bloating the default home.
+        let result = resolve(vec![], &["anime", "games", "movie"], None);
+        assert_eq!(result.home_sections.len(), 3);
+        assert!(result
+            .home_sections
+            .iter()
+            .all(|section| section.id.starts_with("ongoing-")));
+    }
+
+    #[test]
+    fn ongoing_home_section_criteria_derive_from_the_status_role() {
+        // The criteria come from the status role's ongoing mapping: field name,
+        // value, and title verb are all the mapped data, nothing hardcoded.
+        let result = resolve(vec![], &["games"], None);
+        let ongoing = result
+            .home_sections
+            .iter()
+            .find(|section| section.id == "ongoing-games")
+            .expect("ongoing shelf");
+        assert_eq!(ongoing.title, "Playing Games");
+        let criteria = ongoing.criteria.as_ref().expect("criteria");
+        assert_eq!(criteria.rules.len(), 1);
+        let rule = &criteria.rules[0];
+        assert_eq!(rule.field.as_deref(), Some("status"));
+        assert_eq!(rule.value.as_deref(), Some("Playing"));
     }
 
     #[test]

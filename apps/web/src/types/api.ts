@@ -162,5 +162,4 @@ export type SeasonLanguage = NonNullable<FieldConfig["seasonLanguage"]>;
 export type TitleRole = NonNullable<FieldConfig["titleRole"]>;
 export type HomeConfig = NonNullable<VaultConfig["home"]>;
 export type HomeSectionConfig = NonNullable<HomeConfig["sections"]>[number];
-export type HomeSectionFilterConfig = NonNullable<HomeSectionConfig["filters"]>[number];
 export type DailyNotesConfig = NonNullable<VaultConfig["dailyNotes"]>;

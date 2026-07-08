@@ -4,7 +4,7 @@ use crate::calendar::{
 use crate::relations::Count;
 use crate::types::{
     AppConfig, CanonicalStatus, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking,
-    HomeConfig, HomeSectionFilterConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
+    HomeConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -345,8 +345,9 @@ pub struct HomeSectionResponse {
     #[serde(rename = "type")]
     pub entity_type: String,
     pub type_label: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub filters: Vec<HomeSectionFilterConfig>,
+    /// The section's criteria, echoed from the config when defined.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub criteria: Option<SmartFilterGroup>,
     pub limit: u32,
     pub sort: String,
     pub direction: String,

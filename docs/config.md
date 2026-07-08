@@ -97,7 +97,7 @@ The Settings page at `/settings` edits the vault schema (every field below lives
 
 - Vault: `taxonomyRoot`, `assetRoot`
 - Daily notes: `paths`, `dateFormat`
-- Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`, and filters
+- Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`, and criteria
 - Types: `id`, `label`, `icon`, `path`, `filename`, `externalPriority`, `fields`
 - Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
 - Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
@@ -694,10 +694,13 @@ home:
     limit: 12
     sort: date:season
     direction: desc
-    filters:
-    - field: status
-      values:
-      - Watching
+    criteria:
+      conjunction: all
+      rules:
+      - kind: compare
+        field: status
+        op: eq
+        value: Watching
 ```
 
 | Key | Required | Type | Description |
@@ -712,22 +715,40 @@ Each section:
 | `id` | yes | string | Stable section id. |
 | `title` | yes | string | Section heading. |
 | `type` | yes | string | Entity type id to show. |
-| `filters` | no | array | Frontmatter filters. |
+| `criteria` | no | object | Smart-list-grade criteria (see below). Absent means every entry of the type matches. |
 | `limit` | no | number | Maximum items. Defaults to 12 and is clamped by the server. |
 | `sort` | no | string | Sort key. Defaults to `title`. |
 | `direction` | no | `asc` or `desc` | Sort direction. Defaults to `asc`. |
 
-Filter semantics:
+Criteria semantics — the same rule model and evaluation engine as smart lists
+(`.base` files), stored structurally because the vault config is strict-parsed
+YAML rather than a Bases file:
 
 ```yaml
-filters:
-- field: status
-  values: [Watching, Playing]
+criteria:
+  conjunction: all        # all | any | none
+  rules:
+  - kind: compare         # compare | contains | startsWith | endsWith |
+    field: status         #   isEmpty | hasTag | linksTo | inFolder
+    op: eq                # eq | ne | gt | gte | lt | lte
+    value: Watching       # or: number, boolean, date (YYYY-MM-DD), relative
+  - kind: compare
+    field: complete_date
+    op: gte
+    relative: { amount: 30, unit: days }   # "in the last 30 days"
+  groups:                 # one nesting level of subgroups
+  - conjunction: any
+    rules:
+    - { kind: compare, field: rating, op: gte, number: 8 }
+    - { kind: hasTag, values: [favorites] }
 ```
 
-- If `values` is empty, the field only needs to be present and non-null.
-- If `values` is non-empty, scalar fields must equal one of the values.
-- Array fields match when any item matches.
+Rule kinds mirror the smart-list rule builder: `contains` matches list fields
+by membership and string fields by substring; `isEmpty` with `negated: true`
+reads as "has a value"; `hasTag` matches the built-in tags field; `linksTo`
+matches an outgoing wikilink/relation to the named entity. Field meaning is
+value-driven, exactly like Bases — a comparison is a date comparison because
+the right-hand side is a date, never because of the field's name.
 
 Common sort keys:
 
@@ -881,10 +902,13 @@ home:
     limit: 12
     sort: date:season
     direction: desc
-    filters:
-    - field: status
-      values:
-      - Watching
+    criteria:
+      conjunction: all
+      rules:
+      - kind: compare
+        field: status
+        op: eq
+        value: Watching
 
 types:
 - id: anime

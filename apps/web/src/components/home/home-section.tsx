@@ -41,11 +41,38 @@ function libraryHref(section: HomeSectionResponse) {
     sort: section.sort,
     direction: section.direction,
   });
-  for (const filter of section.filters ?? []) {
-    const field = filter.field.trim();
-    if (!field) continue;
-    for (const value of filter.values ?? []) {
-      if (value.trim()) params.append(`filter:${field}`, value);
+  // Best-effort projection of the section's criteria onto the library page's
+  // URL filters: equality and membership rules carry over (including an
+  // "any of" subgroup of equalities on one field, which the library ORs);
+  // richer rules (dates, numbers, negations) have no URL form and are left
+  // off — the link then shows a superset of the section.
+  const criteria = section.criteria;
+  const append = (field: string | null | undefined, values: (string | undefined)[]) => {
+    const key = field?.trim();
+    if (!key) return;
+    for (const value of values) {
+      if (value?.trim()) params.append(`filter:${key}`, value);
+    }
+  };
+  if (criteria?.conjunction === "all" || !criteria) {
+    for (const rule of criteria?.rules ?? []) {
+      if (rule.negated) continue;
+      if (rule.kind === "compare" && rule.op === "eq" && rule.value) {
+        append(rule.field, [rule.value]);
+      } else if (rule.kind === "contains" && rule.mode !== "all") {
+        append(rule.field, rule.values ?? []);
+      }
+    }
+    for (const group of criteria?.groups ?? []) {
+      if (group.conjunction !== "any") continue;
+      const rules = group.rules ?? [];
+      const fields = new Set(rules.map((rule) => rule.field));
+      const allEq = rules.every(
+        (rule) => rule.kind === "compare" && rule.op === "eq" && rule.value && !rule.negated,
+      );
+      if (fields.size === 1 && allEq) {
+        append(rules[0]?.field, rules.map((rule) => rule.value ?? undefined));
+      }
     }
   }
   return `/library?${params}`;

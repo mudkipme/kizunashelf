@@ -843,7 +843,10 @@ fn compare_value_to_core(
 /// Builds the core filter tree from the contract group plus the maintained
 /// scope atom. With a scope and a non-`all` root conjunction, the scope wraps
 /// the group in an outer `and` so it always constrains the result.
-fn group_to_node(
+///
+/// Also the bridge for home-section `criteria` (`api/handlers.rs`), which
+/// share the contract group model and this evaluator.
+pub(super) fn group_to_node(
     group: &SmartFilterGroup,
     scope_folder: Option<&str>,
 ) -> Result<FilterNode, ApiError> {
