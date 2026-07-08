@@ -78,7 +78,7 @@ msgstr "{0, plural, other {# 件見つかりました}}"
 
 #. placeholder {0}: list.itemCount
 #: src/pages/entity-page.tsx:590
-#: src/pages/lists-page.tsx:78
+#: src/pages/lists-page.tsx:88
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 件のアイテム}}"
 
@@ -121,7 +121,7 @@ msgstr "{0, plural, other {残り # 件}}"
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:268
 #: src/pages/home-page.tsx:35
-#: src/pages/lists-page.tsx:82
+#: src/pages/lists-page.tsx:92
 msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, other {# 件のセクション}}"
 
@@ -262,6 +262,10 @@ msgstr "{total, plural, other {# 件}}"
 #: src/pages/library-page.tsx:360
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
+
+#: src/pages/smart-list-page.tsx:100
+msgid "{total, plural, one {# match} other {# matches}}"
+msgstr "{total, plural, other {# 件が一致}}"
 
 #: src/components/settings/settings-editor.tsx:303
 msgid "{totalFields, plural, one {# field} other {# fields}}"
@@ -416,6 +420,11 @@ msgstr "すべて"
 msgid "All dates"
 msgstr "すべての日付"
 
+#. Prefix before a group of filter-criteria chips: all must match
+#: src/pages/smart-list-page.tsx:253
+msgid "all of"
+msgstr "すべてが一致"
+
 #: src/pages/quick-capture-page.tsx:231
 msgid "All providers"
 msgstr "すべてのプロバイダー"
@@ -450,6 +459,11 @@ msgstr "アニメ"
 #: src/components/assets/asset-toolbar.tsx:242
 msgid "Any {0}"
 msgstr "すべての {0}"
+
+#. Prefix before a group of filter-criteria chips: at least one must match
+#: src/pages/smart-list-page.tsx:245
+msgid "any of"
+msgstr "いずれかが一致"
 
 #: src/components/assets/quick-log-dialog.tsx:141
 msgid "Anything worth remembering"
@@ -539,7 +553,7 @@ msgstr "カレンダー"
 #: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
 #: src/pages/list-detail-page.tsx:1002
-#: src/pages/lists-page.tsx:160
+#: src/pages/lists-page.tsx:177
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -637,6 +651,16 @@ msgstr "接続フィールド"
 msgid "Connections"
 msgstr "接続"
 
+#. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)
+#: src/pages/smart-list-page.tsx:306
+msgid "contains"
+msgstr "が次を含む:"
+
+#. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains all comedy, drama' (every value required)
+#: src/pages/smart-list-page.tsx:311
+msgid "contains all"
+msgstr "が次をすべて含む:"
+
 #: src/components/settings/preset-picker.tsx:206
 msgid "Continue"
 msgstr "続行"
@@ -655,7 +679,7 @@ msgid "Could not load options."
 msgstr "オプションを読み込めませんでした。"
 
 #: src/pages/entity-create-page.tsx:126
-#: src/pages/lists-page.tsx:164
+#: src/pages/lists-page.tsx:181
 msgid "Create"
 msgstr "作成"
 
@@ -683,7 +707,7 @@ msgid "Create vault ({0})"
 msgstr "保管庫を作成（{0}）"
 
 #: src/pages/entity-page.tsx:623
-#: src/pages/lists-page.tsx:164
+#: src/pages/lists-page.tsx:181
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
 msgstr "作成中…"
@@ -925,6 +949,11 @@ msgstr "空のオブジェクト"
 msgid "Enable"
 msgstr "有効にする"
 
+#. Verb in a filter-criteria chip, e.g. 'title ends with !'
+#: src/pages/smart-list-page.tsx:320
+msgid "ends with"
+msgstr "が次で終わる:"
+
 #: src/components/settings/settings-sections.tsx:817
 msgid "English"
 msgstr "英語"
@@ -1054,7 +1083,7 @@ msgstr "フォーム"
 msgid "Game"
 msgstr "ゲーム"
 
-#: src/pages/lists-page.tsx:135
+#: src/pages/lists-page.tsx:152
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
@@ -1069,6 +1098,11 @@ msgstr "ライブラリへ移動"
 #: src/components/assets/asset-toolbar.tsx:134
 msgid "Grid"
 msgstr "グリッド"
+
+#. Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'
+#: src/pages/smart-list-page.tsx:324
+msgid "has a value"
+msgstr "に値がある"
 
 #: src/pages/review-page.tsx:169
 msgid "Has date"
@@ -1134,6 +1168,11 @@ msgstr "インポートはファイルを作成するため、ここでは利用
 msgid "Importing…"
 msgstr "インポート中…"
 
+#. Preposition before a folder path in a filter-criteria chip, e.g. 'in Media/Anime'
+#: src/pages/smart-list-page.tsx:337
+msgid "in"
+msgstr "フォルダ:"
+
 #: src/pages/import-wizard-page.tsx:587
 #: src/pages/import-wizard-page.tsx:591
 #: src/pages/quick-capture-page.tsx:289
@@ -1148,6 +1187,11 @@ msgstr "リスト内"
 #: src/pages/import-wizard-page.tsx:555
 msgid "Include {0}"
 msgstr "{0} を含める"
+
+#. Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'
+#: src/pages/smart-list-page.tsx:328
+msgid "is empty"
+msgstr "が空"
 
 #: src/components/calendar/calendar-entry-item.tsx:26
 msgid "Item"
@@ -1251,6 +1295,11 @@ msgstr "リンク元"
 msgid "Links"
 msgstr "リンク"
 
+#. Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'
+#: src/pages/smart-list-page.tsx:332
+msgid "links to"
+msgstr "リンク先:"
+
 #: src/components/assets/entity-detail.tsx:198
 msgid "Links to"
 msgstr "リンク先"
@@ -1260,7 +1309,7 @@ msgid "List"
 msgstr "リスト"
 
 #: src/pages/entity-page.tsx:548
-#: src/pages/lists-page.tsx:113
+#: src/pages/lists-page.tsx:130
 msgid "List created"
 msgstr "リストを作成しました"
 
@@ -1319,6 +1368,7 @@ msgstr "分類を読み込み中"
 #: src/pages/review-page.tsx:128
 #: src/pages/review-page.tsx:138
 #: src/pages/settings-page.tsx:95
+#: src/pages/smart-list-page.tsx:87
 #: src/pages/statistics-page.tsx:33
 #: src/pages/statistics-page.tsx:43
 msgid "Loading…"
@@ -1440,7 +1490,7 @@ msgid "My Vault"
 msgstr "マイ保管庫"
 
 #: src/pages/list-detail-page.tsx:990
-#: src/pages/lists-page.tsx:147
+#: src/pages/lists-page.tsx:164
 msgid "Name"
 msgstr "名前"
 
@@ -1459,7 +1509,7 @@ msgstr "新しいフィールド"
 
 #: src/pages/entity-page.tsx:611
 #: src/pages/lists-page.tsx:49
-#: src/pages/lists-page.tsx:132
+#: src/pages/lists-page.tsx:149
 msgid "New list"
 msgstr "新しいリスト"
 
@@ -1478,6 +1528,11 @@ msgstr "新規: {newValue}"
 #: src/pages/calendar-page.tsx:104
 msgid "Next"
 msgstr "次へ"
+
+#. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = no'
+#: src/pages/smart-list-page.tsx:302
+msgid "no"
+msgstr "いいえ"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
@@ -1507,6 +1562,10 @@ msgstr "このタイプのスキーマに一致する候補フィールドまた
 #: src/components/entities/use-external-match.ts:176
 msgid "No candidates loaded"
 msgstr "候補が読み込まれていません"
+
+#: src/pages/smart-list-page.tsx:215
+msgid "No criteria — everything in the library matches."
+msgstr "条件がありません — ライブラリのすべてが一致します。"
 
 #: src/pages/review-page.tsx:170
 msgid "No date"
@@ -1538,6 +1597,10 @@ msgstr "アイテムのタイプが設定されていません。"
 msgid "No entries"
 msgstr "エントリなし"
 
+#: src/pages/smart-list-page.tsx:160
+msgid "No entries match the criteria"
+msgstr "条件に一致する項目がありません"
+
 #: src/components/settings/settings-sections.tsx:190
 msgid "No enum fields available for this type."
 msgstr "このタイプで利用できる列挙フィールドがありません。"
@@ -1557,6 +1620,10 @@ msgstr "フィールドが設定されていません。"
 #: src/components/settings/vault-switcher.tsx:138
 msgid "No folder selected"
 msgstr "フォルダーが選択されていません"
+
+#: src/pages/smart-list-page.tsx:213
+msgid "No further criteria — every entry of this type matches."
+msgstr "追加の条件はありません — このタイプのすべての項目が一致します。"
 
 #: src/components/settings/settings-dialogs.tsx:446
 msgid "No home sections configured."
@@ -1663,6 +1730,16 @@ msgstr "なし"
 #: src/components/settings/settings-sections.tsx:527
 msgid "None (plain list)"
 msgstr "なし（プレーンリスト）"
+
+#. Prefix before a group of filter-criteria chips: none may match
+#: src/pages/smart-list-page.tsx:249
+msgid "none of"
+msgstr "いずれも不一致"
+
+#. Negation prefix in a filter-criteria chip, e.g. 'not genres contains comedy'
+#: src/pages/smart-list-page.tsx:293
+msgid "not"
+msgstr "除外:"
 
 #: src/components/assets/quick-log-dialog.tsx:138
 msgid "Note <0>(optional)</0>"
@@ -2142,6 +2219,15 @@ msgstr "設定"
 msgid "Settings saved"
 msgstr "設定を保存しました"
 
+#. Badge on a list card marking a smart list (criteria-driven, updates automatically)
+#: src/pages/lists-page.tsx:97
+msgid "Smart"
+msgstr "スマート"
+
+#: src/pages/smart-list-page.tsx:91
+msgid "Smart list not found"
+msgstr "スマートリストが見つかりません"
+
 #: src/pages/entity-page.tsx:219
 msgid "Some images could not be downloaded"
 msgstr "一部の画像をダウンロードできませんでした"
@@ -2149,6 +2235,10 @@ msgstr "一部の画像をダウンロードできませんでした"
 #: src/pages/entity-page.tsx:219
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "一部の画像をダウンロードできませんでした: {reasons}"
+
+#: src/pages/smart-list-page.tsx:188
+msgid "Some of this file's syntax isn't supported here and is ignored:"
+msgstr "このファイルの一部の構文はサポートされていないため無視されます:"
 
 #: src/components/error-boundary.tsx:55
 #: src/components/settings/vault-switcher.tsx:41
@@ -2214,6 +2304,11 @@ msgstr "開始済み"
 #: src/pages/import-wizard-page.tsx:416
 msgid "Starting…"
 msgstr "開始中…"
+
+#. Verb in a filter-criteria chip, e.g. 'title starts with My'
+#: src/pages/smart-list-page.tsx:316
+msgid "starts with"
+msgstr "が次で始まる:"
 
 #: src/components/layout/app-frame.tsx:397
 msgid "Statistics"
@@ -2529,7 +2624,7 @@ msgid "View all"
 msgstr "すべて表示"
 
 #: src/pages/entity-page.tsx:617
-#: src/pages/lists-page.tsx:151
+#: src/pages/lists-page.tsx:168
 msgid "Watchlist"
 msgstr "ウォッチリスト"
 
@@ -2544,6 +2639,11 @@ msgstr "オンにすると、エピソードにチェックを入れるか「記
 #: src/pages/settings-page.tsx:87
 msgid "YAML"
 msgstr "YAML"
+
+#. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = yes'
+#: src/pages/smart-list-page.tsx:298
+msgid "yes"
+msgstr "はい"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234

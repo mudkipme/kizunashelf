@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckIcon, ListIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, ListIcon, PlusIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -62,12 +62,22 @@ export function ListsPage() {
           <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
             {items.map((list) => (
               <Link
-                key={list.id}
-                to={`/lists/${encodeURIComponent(list.id)}`}
+                // Static and smart lists are separate id namespaces, so the
+                // key needs the kind too.
+                key={`${list.kind}:${list.id}`}
+                to={
+                  list.kind === "smart"
+                    ? `/lists/smart/${encodeURIComponent(list.id)}`
+                    : `/lists/${encodeURIComponent(list.id)}`
+                }
                 className="flex min-h-32 flex-col gap-2 rounded-md border p-4 transition-colors hover:bg-accent"
               >
                 <div className="flex items-center gap-2">
-                  <ListIcon className="size-4 shrink-0 text-muted-foreground" />
+                  {list.kind === "smart" ? (
+                    <SparklesIcon className="size-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ListIcon className="size-4 shrink-0 text-muted-foreground" />
+                  )}
                   <span className="truncate font-medium">{list.name}</span>
                 </div>
                 {list.description ? (
@@ -80,6 +90,13 @@ export function ListsPage() {
                   {list.sectionCount > 0 ? (
                     <Badge variant="outline">
                       <Plural value={list.sectionCount} one="# section" other="# sections" />
+                    </Badge>
+                  ) : null}
+                  {list.kind === "smart" ? (
+                    <Badge variant="outline">
+                      <Trans comment="Badge on a list card marking a smart list (criteria-driven, updates automatically)">
+                        Smart
+                      </Trans>
                     </Badge>
                   ) : null}
                 </div>

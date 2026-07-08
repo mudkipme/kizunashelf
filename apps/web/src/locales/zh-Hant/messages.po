@@ -78,7 +78,7 @@ msgstr "{0, plural, other {找到 # 件}}"
 
 #. placeholder {0}: list.itemCount
 #: src/pages/entity-page.tsx:590
-#: src/pages/lists-page.tsx:78
+#: src/pages/lists-page.tsx:88
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 個項目}}"
 
@@ -121,7 +121,7 @@ msgstr "{0, plural, other {剩餘 # 件}}"
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:268
 #: src/pages/home-page.tsx:35
-#: src/pages/lists-page.tsx:82
+#: src/pages/lists-page.tsx:92
 msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, other {# 個版塊}}"
 
@@ -262,6 +262,10 @@ msgstr "{total, plural, other {# 件}}"
 #: src/pages/library-page.tsx:360
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · 第 {0}/{totalPages} 頁"
+
+#: src/pages/smart-list-page.tsx:100
+msgid "{total, plural, one {# match} other {# matches}}"
+msgstr "{total, plural, other {# 項符合}}"
 
 #: src/components/settings/settings-editor.tsx:303
 msgid "{totalFields, plural, one {# field} other {# fields}}"
@@ -416,6 +420,11 @@ msgstr "全部"
 msgid "All dates"
 msgstr "所有日期"
 
+#. Prefix before a group of filter-criteria chips: all must match
+#: src/pages/smart-list-page.tsx:253
+msgid "all of"
+msgstr "全部符合"
+
 #: src/pages/quick-capture-page.tsx:231
 msgid "All providers"
 msgstr "所有資料來源"
@@ -450,6 +459,11 @@ msgstr "動畫"
 #: src/components/assets/asset-toolbar.tsx:242
 msgid "Any {0}"
 msgstr "任何 {0}"
+
+#. Prefix before a group of filter-criteria chips: at least one must match
+#: src/pages/smart-list-page.tsx:245
+msgid "any of"
+msgstr "任一符合"
 
 #: src/components/assets/quick-log-dialog.tsx:141
 msgid "Anything worth remembering"
@@ -539,7 +553,7 @@ msgstr "日曆"
 #: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
 #: src/pages/list-detail-page.tsx:1002
-#: src/pages/lists-page.tsx:160
+#: src/pages/lists-page.tsx:177
 msgid "Cancel"
 msgstr "取消"
 
@@ -637,6 +651,16 @@ msgstr "連線欄位"
 msgid "Connections"
 msgstr "連線"
 
+#. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)
+#: src/pages/smart-list-page.tsx:306
+msgid "contains"
+msgstr "包含:"
+
+#. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains all comedy, drama' (every value required)
+#: src/pages/smart-list-page.tsx:311
+msgid "contains all"
+msgstr "包含全部:"
+
 #: src/components/settings/preset-picker.tsx:206
 msgid "Continue"
 msgstr "繼續"
@@ -655,7 +679,7 @@ msgid "Could not load options."
 msgstr "無法載入選項。"
 
 #: src/pages/entity-create-page.tsx:126
-#: src/pages/lists-page.tsx:164
+#: src/pages/lists-page.tsx:181
 msgid "Create"
 msgstr "建立"
 
@@ -683,7 +707,7 @@ msgid "Create vault ({0})"
 msgstr "建立保管庫（{0}）"
 
 #: src/pages/entity-page.tsx:623
-#: src/pages/lists-page.tsx:164
+#: src/pages/lists-page.tsx:181
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
 msgstr "建立中…"
@@ -925,6 +949,11 @@ msgstr "空物件"
 msgid "Enable"
 msgstr "啟用"
 
+#. Verb in a filter-criteria chip, e.g. 'title ends with !'
+#: src/pages/smart-list-page.tsx:320
+msgid "ends with"
+msgstr "結尾為:"
+
 #: src/components/settings/settings-sections.tsx:817
 msgid "English"
 msgstr "英文"
@@ -1054,7 +1083,7 @@ msgstr "表單"
 msgid "Game"
 msgstr "遊戲"
 
-#: src/pages/lists-page.tsx:135
+#: src/pages/lists-page.tsx:152
 msgid "Give your list a name."
 msgstr "為你的清單命名。"
 
@@ -1069,6 +1098,11 @@ msgstr "前往庫"
 #: src/components/assets/asset-toolbar.tsx:134
 msgid "Grid"
 msgstr "格狀"
+
+#. Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'
+#: src/pages/smart-list-page.tsx:324
+msgid "has a value"
+msgstr "有值"
 
 #: src/pages/review-page.tsx:169
 msgid "Has date"
@@ -1134,6 +1168,11 @@ msgstr "匯入會建立檔案，因此在此無法使用。"
 msgid "Importing…"
 msgstr "匯入中…"
 
+#. Preposition before a folder path in a filter-criteria chip, e.g. 'in Media/Anime'
+#: src/pages/smart-list-page.tsx:337
+msgid "in"
+msgstr "位於:"
+
 #: src/pages/import-wizard-page.tsx:587
 #: src/pages/import-wizard-page.tsx:591
 #: src/pages/quick-capture-page.tsx:289
@@ -1148,6 +1187,11 @@ msgstr "在清單中"
 #: src/pages/import-wizard-page.tsx:555
 msgid "Include {0}"
 msgstr "包含 {0}"
+
+#. Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'
+#: src/pages/smart-list-page.tsx:328
+msgid "is empty"
+msgstr "為空"
 
 #: src/components/calendar/calendar-entry-item.tsx:26
 msgid "Item"
@@ -1251,6 +1295,11 @@ msgstr "連結自"
 msgid "Links"
 msgstr "連結"
 
+#. Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'
+#: src/pages/smart-list-page.tsx:332
+msgid "links to"
+msgstr "連結到:"
+
 #: src/components/assets/entity-detail.tsx:198
 msgid "Links to"
 msgstr "連結至"
@@ -1260,7 +1309,7 @@ msgid "List"
 msgstr "清單"
 
 #: src/pages/entity-page.tsx:548
-#: src/pages/lists-page.tsx:113
+#: src/pages/lists-page.tsx:130
 msgid "List created"
 msgstr "已建立清單"
 
@@ -1319,6 +1368,7 @@ msgstr "正在載入分類"
 #: src/pages/review-page.tsx:128
 #: src/pages/review-page.tsx:138
 #: src/pages/settings-page.tsx:95
+#: src/pages/smart-list-page.tsx:87
 #: src/pages/statistics-page.tsx:33
 #: src/pages/statistics-page.tsx:43
 msgid "Loading…"
@@ -1440,7 +1490,7 @@ msgid "My Vault"
 msgstr "我的保管庫"
 
 #: src/pages/list-detail-page.tsx:990
-#: src/pages/lists-page.tsx:147
+#: src/pages/lists-page.tsx:164
 msgid "Name"
 msgstr "名稱"
 
@@ -1459,7 +1509,7 @@ msgstr "新欄位"
 
 #: src/pages/entity-page.tsx:611
 #: src/pages/lists-page.tsx:49
-#: src/pages/lists-page.tsx:132
+#: src/pages/lists-page.tsx:149
 msgid "New list"
 msgstr "新清單"
 
@@ -1478,6 +1528,11 @@ msgstr "新：{newValue}"
 #: src/pages/calendar-page.tsx:104
 msgid "Next"
 msgstr "下一步"
+
+#. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = no'
+#: src/pages/smart-list-page.tsx:302
+msgid "no"
+msgstr "否"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
@@ -1507,6 +1562,10 @@ msgstr "沒有候選欄位或內文版塊符合此類型結構描述。"
 #: src/components/entities/use-external-match.ts:176
 msgid "No candidates loaded"
 msgstr "未載入候選項目"
+
+#: src/pages/smart-list-page.tsx:215
+msgid "No criteria — everything in the library matches."
+msgstr "沒有條件 — 符合庫中的所有內容。"
 
 #: src/pages/review-page.tsx:170
 msgid "No date"
@@ -1538,6 +1597,10 @@ msgstr "未設定任何項目類型。"
 msgid "No entries"
 msgstr "無項目"
 
+#: src/pages/smart-list-page.tsx:160
+msgid "No entries match the criteria"
+msgstr "沒有符合條件的條目"
+
 #: src/components/settings/settings-sections.tsx:190
 msgid "No enum fields available for this type."
 msgstr "此類型沒有可用的列舉欄位。"
@@ -1557,6 +1620,10 @@ msgstr "未設定任何欄位。"
 #: src/components/settings/vault-switcher.tsx:138
 msgid "No folder selected"
 msgstr "未選取資料夾"
+
+#: src/pages/smart-list-page.tsx:213
+msgid "No further criteria — every entry of this type matches."
+msgstr "沒有其他條件 — 符合此類型的所有條目。"
 
 #: src/components/settings/settings-dialogs.tsx:446
 msgid "No home sections configured."
@@ -1663,6 +1730,16 @@ msgstr "無"
 #: src/components/settings/settings-sections.tsx:527
 msgid "None (plain list)"
 msgstr "無（純清單）"
+
+#. Prefix before a group of filter-criteria chips: none may match
+#: src/pages/smart-list-page.tsx:249
+msgid "none of"
+msgstr "全部不符合"
+
+#. Negation prefix in a filter-criteria chip, e.g. 'not genres contains comedy'
+#: src/pages/smart-list-page.tsx:293
+msgid "not"
+msgstr "非:"
 
 #: src/components/assets/quick-log-dialog.tsx:138
 msgid "Note <0>(optional)</0>"
@@ -2142,6 +2219,15 @@ msgstr "設定"
 msgid "Settings saved"
 msgstr "已儲存設定"
 
+#. Badge on a list card marking a smart list (criteria-driven, updates automatically)
+#: src/pages/lists-page.tsx:97
+msgid "Smart"
+msgstr "智慧"
+
+#: src/pages/smart-list-page.tsx:91
+msgid "Smart list not found"
+msgstr "找不到智慧清單"
+
 #: src/pages/entity-page.tsx:219
 msgid "Some images could not be downloaded"
 msgstr "部分圖片無法下載"
@@ -2149,6 +2235,10 @@ msgstr "部分圖片無法下載"
 #: src/pages/entity-page.tsx:219
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "部分圖片無法下載：{reasons}"
+
+#: src/pages/smart-list-page.tsx:188
+msgid "Some of this file's syntax isn't supported here and is ignored:"
+msgstr "此檔案的部分語法不受支援，將被忽略:"
 
 #: src/components/error-boundary.tsx:55
 #: src/components/settings/vault-switcher.tsx:41
@@ -2214,6 +2304,11 @@ msgstr "已開始"
 #: src/pages/import-wizard-page.tsx:416
 msgid "Starting…"
 msgstr "開始中…"
+
+#. Verb in a filter-criteria chip, e.g. 'title starts with My'
+#: src/pages/smart-list-page.tsx:316
+msgid "starts with"
+msgstr "開頭為:"
 
 #: src/components/layout/app-frame.tsx:397
 msgid "Statistics"
@@ -2529,7 +2624,7 @@ msgid "View all"
 msgstr "檢視全部"
 
 #: src/pages/entity-page.tsx:617
-#: src/pages/lists-page.tsx:151
+#: src/pages/lists-page.tsx:168
 msgid "Watchlist"
 msgstr "想看清單"
 
@@ -2544,6 +2639,11 @@ msgstr "開啟後，勾選某一集或按下「記錄」按鈕會在每日筆記
 #: src/pages/settings-page.tsx:87
 msgid "YAML"
 msgstr "YAML"
+
+#. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = yes'
+#: src/pages/smart-list-page.tsx:298
+msgid "yes"
+msgstr "是"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
