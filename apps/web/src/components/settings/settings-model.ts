@@ -3,7 +3,7 @@ import {
   externalTypeOptionsForSource,
   externalSourceOptions,
 } from "@/lib/external-metadata";
-import { pruneIncompleteRules } from "@/components/smart-lists/rule-builder";
+import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
 import { isIso639TitleLanguage } from "@/lib/title-language";
 import type {
   BodySection,
