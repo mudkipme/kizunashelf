@@ -1071,8 +1071,8 @@ pub struct UpdateSmartListRequest {
     pub revision: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
-    #[serde(default)]
-    pub filters: SmartFilterGroup,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filters: Option<SmartFilterGroup>,
     #[serde(default)]
     pub views: Vec<SmartListView>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1086,8 +1086,8 @@ pub struct UpdateSmartListRequest {
 pub struct SmartListPreviewRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
-    #[serde(default)]
-    pub filters: SmartFilterGroup,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filters: Option<SmartFilterGroup>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sort: Vec<SmartSortSpec>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

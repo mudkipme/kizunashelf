@@ -109,7 +109,8 @@ pub(crate) async fn update_smart_list(
     let mut doc = parse_list_raw(&source_path, &raw)?.doc;
 
     let scope_folder = resolve_scope(&library.config, request.scope.as_deref())?;
-    let filters = group_to_node(&request.filters, scope_folder.as_deref())?;
+    let filters_group = request.filters.unwrap_or_default();
+    let filters = group_to_node(&filters_group, scope_folder.as_deref())?;
     set_global_filters(&mut doc, &filters);
 
     let default_image = request
@@ -215,7 +216,8 @@ pub(crate) async fn preview_smart_list(
 ) -> ApiResult<EntityListResponse> {
     let library = get_library(&state).await?;
     let scope_folder = resolve_scope(&library.config, request.scope.as_deref())?;
-    let filters = group_to_node(&request.filters, scope_folder.as_deref())?;
+    let filters_group = request.filters.unwrap_or_default();
+    let filters = group_to_node(&filters_group, scope_folder.as_deref())?;
     let list = SmartList {
         doc: serde_yaml::Mapping::new(),
         filters,

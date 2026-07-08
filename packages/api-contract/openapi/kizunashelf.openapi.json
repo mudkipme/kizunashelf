@@ -8947,13 +8947,12 @@
             ]
           },
           "filters": {
-            "default": {
-              "conjunction": "all",
-              "rules": []
-            },
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/SmartFilterGroup"
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -9018,13 +9017,12 @@
             ]
           },
           "filters": {
-            "default": {
-              "conjunction": "all",
-              "rules": []
-            },
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/SmartFilterGroup"
+              },
+              {
+                "type": "null"
               }
             ]
           },

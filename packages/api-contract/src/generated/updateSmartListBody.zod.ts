@@ -16,7 +16,6 @@ export const updateSmartListBodyFiltersOneGroupsItemRulesItemRelativeOneAmountMi
 
 export const updateSmartListBodyFiltersOneGroupsItemRulesItemRelativeOneFutureDefault = false;
 export const updateSmartListBodyFiltersOneGroupsItemRulesDefault = [];
-export const updateSmartListBodyFiltersDefault = { conjunction: "all" as const, rules: [] };
 export const updateSmartListBodyViewsItemFiltersOneRulesItemNegatedDefault = false;
 export const updateSmartListBodyViewsItemFiltersOneRulesItemRelativeOneAmountMin = 0;
 
@@ -33,7 +32,7 @@ export const updateSmartListBodyViewsDefault = [];
 export const UpdateSmartListBody = zod.object({
   "revision": zod.string(),
   "scope": zod.string().nullish(),
-  "filters": zod.object({
+  "filters": zod.union([zod.object({
   "conjunction": zod.enum(['all', 'any', 'none']).describe('How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`\/`or`\/`not`).'),
   "rules": zod.array(zod.object({
   "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
@@ -74,7 +73,7 @@ export const UpdateSmartListBody = zod.object({
   "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
 }).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(updateSmartListBodyFiltersOneGroupsItemRulesDefault)
 }).describe('A nested rule group — one level deep only (see the module note above).')).optional()
-}).describe('A smart list\'s criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is \*not\* in here — it rides separately as\n`scope` on the detail\/requests and the server maintains its\n`file.inFolder(...)` atom.').default(updateSmartListBodyFiltersDefault),
+}).describe('A smart list\'s criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is \*not\* in here — it rides separately as\n`scope` on the detail\/requests and the server maintains its\n`file.inFolder(...)` atom.'),zod.null()]).optional(),
   "views": zod.array(zod.object({
   "name": zod.string(),
   "layout": zod.enum(['list', 'grid']).describe('The app layout of one smart-list view: `list` ⇔ a Bases `table` view,\n`grid` ⇔ a Bases `cards` view.'),
