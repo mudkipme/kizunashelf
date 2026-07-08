@@ -1,59 +1,154 @@
-import { useMemo } from "react";
-import { msg } from "@lingui/core/macro";
+import { useEffect, useMemo, useState } from "react";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { MessageDescriptor } from "@lingui/core";
-import { useQuery } from "@tanstack/react-query";
-import { LayoutGridIcon, ListIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CheckIcon,
+  FilePenLineIcon,
+  LayoutGridIcon,
+  ListIcon,
+  PencilIcon,
+  SparklesIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+  XIcon,
+} from "lucide-react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
-import { errorMessage } from "@/api/client";
-import { configQuery, smartListQuery, smartListResultsQuery } from "@/api/queries";
+import { errorMessage, isConflictError } from "@/api/client";
+import { allTagsQuery, configQuery, queryKeys, smartListQuery, smartListResultsQuery } from "@/api/queries";
+import { fetchSmartListPreview, removeSmartList, saveSmartList } from "@/api/smart-lists";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
 import { PaginationBar } from "@/components/assets/pagination-bar";
 import { AppFrame } from "@/components/layout/app-frame";
+import {
+  RuleBuilder,
+  pruneIncompleteRules,
+  ruleFieldMetas,
+} from "@/components/smart-lists/rule-builder";
+import { formatRule } from "@/components/smart-lists/rule-format";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
-import { pageSize } from "@/lib/constants";
+import { Select } from "@/components/ui/select";
+import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { useCapabilities } from "@/lib/capabilities";
+import { defaultTagsField, pageSize } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
-import { fieldLabelsByType, typeHasCoverField } from "@/lib/type-config";
-import type { SmartFilterGroup, SmartFilterRule, SmartListDetail } from "@/types/api";
+import { fieldDisplayLabel, fieldLabelsByType, typeHasCoverField } from "@/lib/type-config";
+import type {
+  SmartFilterGroup,
+  SmartFilterRule,
+  SmartListDetail,
+  SmartListView,
+  TypeConfig,
+} from "@/types/api";
+
+type Draft = {
+  scope?: string;
+  filters: SmartFilterGroup;
+  views: SmartListView[];
+};
 
 export function SmartListPage() {
   const { id = "" } = useParams();
+  const { t } = useLingui();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const language = useTitleLanguage();
   const config = useQuery(configQuery());
+  const allTagsData = useQuery(allTagsQuery()).data?.tags;
+  const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
+  const capabilities = useCapabilities();
+  const contentWritable = capabilities.contentWritable;
 
   const detail = useQuery(smartListQuery(id));
   const data = detail.data;
 
-  // The active view (tab) rides on `?view=`; the file's first supported view
-  // is the default — same as what the server evaluates when `view` is omitted.
+  // Editing works on a draft copy; `null` = read mode. The draft feeds the
+  // preview endpoint so results track the rules live, before anything is saved.
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const editing = draft !== null;
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const views = draft?.views ?? data?.views ?? [];
   const viewParam = searchParams.get("view") ?? undefined;
-  const activeView =
-    (viewParam ? data?.views.find((view) => view.name === viewParam) : undefined) ??
-    data?.views[0];
+  const activeViewIndex = Math.max(
+    0,
+    views.findIndex((view) => view.name === viewParam),
+  );
+  const activeView = views[activeViewIndex] as SmartListView | undefined;
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
 
-  const results = useQuery(
-    smartListResultsQuery(id, {
-      view: activeView?.name,
+  const savedResults = useQuery({
+    ...smartListResultsQuery(id, {
+      view: activeView && !editing ? activeView.name : undefined,
       page,
       pageSize,
       titleLanguage: language,
     }),
+    enabled: !editing,
+  });
+  const debouncedDraft = useDebounced(draft, 350);
+  const previewResults = useQuery({
+    queryKey: ["smartListPreview", id, debouncedDraft, activeViewIndex, page, language] as const,
+    queryFn: ({ signal }) =>
+      fetchSmartListPreview(
+        {
+          scope: debouncedDraft?.scope,
+          filters: pruneIncompleteRules(debouncedDraft?.filters ?? { conjunction: "all", rules: [] }),
+          sort: debouncedDraft?.views[activeViewIndex]?.sort ?? [],
+          limit: debouncedDraft?.views[activeViewIndex]?.limit ?? undefined,
+          page,
+          pageSize,
+          titleLanguage: language,
+        },
+        { signal },
+      ),
+    enabled: editing && debouncedDraft !== null,
+    placeholderData: (previous) => previous,
+  });
+  const results = editing ? previewResults : savedResults;
+
+  const configTypes = config.data?.types;
+  const typeConfigs = useMemo(() => configTypes ?? [], [configTypes]);
+  const scope = editing ? draft.scope : data?.scope;
+  const scopeConfig = scope ? typeConfigs.find((type) => type.id === scope) : undefined;
+  const scopeTypeConfigs = useMemo(
+    () => (scopeConfig ? [scopeConfig] : typeConfigs),
+    [scopeConfig, typeConfigs],
+  );
+  const tagsField = config.data?.tagsField ?? defaultTagsField;
+  const fieldMetas = useMemo(
+    () => ruleFieldMetas(scopeTypeConfigs, tagsField, allTags, t),
+    [scopeTypeConfigs, tagsField, allTags, t],
   );
 
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
-  const scopeConfig = data?.scope
-    ? config.data?.types.find((type) => type.id === data.scope)
-    : undefined;
-  // Without a type scope the results span all types, so keep covers and type
-  // badges on; scoped lists follow the type's own schema, like the library.
-  const showCover = !data?.scope || typeHasCoverField(scopeConfig);
-  const showType = !data?.scope;
+  const showCover = !scope || typeHasCoverField(scopeConfig);
+  const showType = !scope;
 
   const entities = results.data?.items ?? [];
   const total = results.data?.total ?? 0;
@@ -69,6 +164,55 @@ export function SmartListPage() {
       },
       { replace: true },
     );
+  };
+
+  const invalidate = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.smartList(id) }),
+      queryClient.invalidateQueries({ queryKey: ["smartListResults", id] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
+    ]);
+  };
+
+  const save = useMutation({
+    mutationFn: (draftToSave: Draft) =>
+      saveSmartList(id, {
+        revision: data?.revision ?? "",
+        scope: draftToSave.scope,
+        filters: pruneIncompleteRules(draftToSave.filters),
+        views: draftToSave.views,
+      }),
+    onSuccess: async () => {
+      setDraft(null);
+      await invalidate();
+      toast.success(t`Smart list saved`);
+    },
+    onError: (error) => {
+      toast.error(
+        isConflictError(error)
+          ? t`This smart list changed on disk. Reload the page and redo your edits.`
+          : errorMessage(error),
+      );
+    },
+  });
+
+  const destroy = useMutation({
+    mutationFn: () => removeSmartList(id),
+    onSuccess: async () => {
+      toast.success(t`Smart list deleted`);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+      navigate("/lists");
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+  });
+
+  const startEditing = () => {
+    if (!data) return;
+    setDraft({
+      scope: data.scope ?? undefined,
+      filters: structuredClone(data.filters),
+      views: structuredClone(data.views),
+    });
   };
 
   return (
@@ -99,9 +243,65 @@ export function SmartListPage() {
               <span className="mr-auto text-xs text-muted-foreground">
                 <Plural value={total} one="# match" other="# matches" />
               </span>
-              {data.views.length > 0 ? (
+              {editing ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={save.isPending}
+                    onClick={() => setDraft(null)}
+                  >
+                    <XIcon data-icon="inline-start" />
+                    <Trans>Cancel</Trans>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={save.isPending}
+                    onClick={() => draft && save.mutate(draft)}
+                  >
+                    <CheckIcon data-icon="inline-start" />
+                    {save.isPending ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!contentWritable}
+                    onClick={startEditing}
+                  >
+                    <PencilIcon data-icon="inline-start" />
+                    <Trans>Edit criteria</Trans>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!contentWritable}
+                    onClick={() => setRenameOpen(true)}
+                  >
+                    <FilePenLineIcon data-icon="inline-start" />
+                    <Trans>Rename</Trans>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!contentWritable || destroy.isPending}
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2Icon data-icon="inline-start" />
+                    <Trans>Delete</Trans>
+                  </Button>
+                </>
+              )}
+              {views.length > 0 ? (
                 <div className="flex items-center gap-1 rounded-md border p-0.5">
-                  {data.views.map((view) => (
+                  {views.map((view) => (
                     <Button
                       key={view.name}
                       type="button"
@@ -124,7 +324,19 @@ export function SmartListPage() {
               ) : null}
             </header>
 
-            <CriteriaSummary detail={data} />
+            {editing && draft ? (
+              <EditPanel
+                draft={draft}
+                typeConfigs={typeConfigs}
+                fieldMetas={fieldMetas}
+                scopeTypeConfigs={scopeTypeConfigs}
+                activeViewIndex={activeViewIndex}
+                disabled={save.isPending}
+                onChange={setDraft}
+              />
+            ) : (
+              <CriteriaSummary detail={data} />
+            )}
 
             {(data.warnings?.length ?? 0) > 0 ? (
               <WarningsBanner warnings={data.warnings ?? []} />
@@ -172,7 +384,294 @@ export function SmartListPage() {
           </>
         )}
       </div>
+
+      <RenameSmartListDialog
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        detail={data}
+        listId={id}
+      />
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              <Trans>Delete this smart list?</Trans>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <Trans>
+                The .base file moves to the vault's trash folder. Entities it matches are not
+                touched.
+              </Trans>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              <Trans>Cancel</Trans>
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => destroy.mutate()}>
+              <Trans>Delete</Trans>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppFrame>
+  );
+}
+
+function useDebounced<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
+}
+
+/// The edit surface: type scope, the rule builder, and the active view's sort
+/// and limit. Everything edits the draft; the preview endpoint renders it live.
+function EditPanel({
+  draft,
+  typeConfigs,
+  fieldMetas,
+  scopeTypeConfigs,
+  activeViewIndex,
+  disabled,
+  onChange,
+}: {
+  draft: Draft;
+  typeConfigs: TypeConfig[];
+  fieldMetas: ReturnType<typeof ruleFieldMetas>;
+  scopeTypeConfigs: TypeConfig[];
+  activeViewIndex: number;
+  disabled: boolean;
+  onChange: (draft: Draft) => void;
+}) {
+  const { t } = useLingui();
+  const activeView = draft.views[activeViewIndex] as SmartListView | undefined;
+  const sortSpec = activeView?.sort?.[0];
+  const sortOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [
+      { value: "file.name", label: t`Title` },
+      { value: "file.mtime", label: t`Update time` },
+    ];
+    const seen = new Set<string>();
+    for (const typeConfig of scopeTypeConfigs) {
+      for (const field of typeConfig.fields ?? []) {
+        if (seen.has(field.field)) continue;
+        if (["date", "rating", "progress", "totalProgress"].includes(field.fieldType)) {
+          seen.add(field.field);
+          options.push({ value: `note.${field.field}`, label: fieldDisplayLabel(field) });
+        }
+      }
+    }
+    return options;
+  }, [scopeTypeConfigs, t]);
+
+  const updateActiveView = (patch: Partial<SmartListView>) => {
+    if (!activeView) return;
+    onChange({
+      ...draft,
+      views: draft.views.map((view, index) =>
+        index === activeViewIndex ? { ...view, ...patch } : view,
+      ),
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-3 rounded-md border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-xs font-medium text-muted-foreground">
+          <Trans>Scope</Trans>
+        </label>
+        <Select
+          value={draft.scope ?? ""}
+          disabled={disabled}
+          aria-label={t`Scope`}
+          className="w-fit min-w-0"
+          onChange={(event) =>
+            onChange({ ...draft, scope: event.target.value || undefined })
+          }
+        >
+          <option value="">{t`All types`}</option>
+          {typeConfigs.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.label}
+            </option>
+          ))}
+        </Select>
+        {activeView ? (
+          <>
+            <label className="ml-auto text-xs font-medium text-muted-foreground">
+              <Trans comment="Label before the sort-key picker of the active smart-list view">
+                Sort {activeView.name} by
+              </Trans>
+            </label>
+            <Select
+              value={sortSpec?.property ?? "file.name"}
+              disabled={disabled}
+              aria-label={t`Sort`}
+              className="w-fit min-w-0"
+              onChange={(event) =>
+                updateActiveView({
+                  sort: [
+                    { property: event.target.value, direction: sortSpec?.direction ?? "asc" },
+                  ],
+                })
+              }
+            >
+              {sortOptions.some((option) => option.value === (sortSpec?.property ?? "file.name"))
+                ? null
+                : sortSpec
+                  ? <option value={sortSpec.property}>{sortSpec.property}</option>
+                  : null}
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={sortSpec?.direction ?? "asc"}
+              disabled={disabled}
+              aria-label={t`Direction`}
+              className="w-fit min-w-0"
+              onChange={(event) =>
+                updateActiveView({
+                  sort: [
+                    {
+                      property: sortSpec?.property ?? "file.name",
+                      direction: event.target.value === "desc" ? "desc" : "asc",
+                    },
+                  ],
+                })
+              }
+            >
+              <option value="asc">{t`Ascending`}</option>
+              <option value="desc">{t`Descending`}</option>
+            </Select>
+            <Input
+              type="number"
+              min={1}
+              value={activeView.limit ?? ""}
+              placeholder={t`No limit`}
+              disabled={disabled}
+              aria-label={t`Limit`}
+              className="w-24"
+              onChange={(event) =>
+                updateActiveView({
+                  limit: event.target.value ? Math.max(1, Number(event.target.value)) : undefined,
+                })
+              }
+            />
+          </>
+        ) : null}
+      </div>
+      <RuleBuilder
+        fieldMetas={fieldMetas}
+        value={draft.filters}
+        disabled={disabled}
+        onChange={(filters) => onChange({ ...draft, filters })}
+      />
+    </div>
+  );
+}
+
+function RenameSmartListDialog({
+  open,
+  onOpenChange,
+  detail,
+  listId,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  detail: SmartListDetail | undefined;
+  listId: string;
+}) {
+  const { t } = useLingui();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  useEffect(() => {
+    if (open) setName(detail?.name ?? "");
+  }, [open, detail?.name]);
+  const validationError = name.trim() ? basenameValidationError(normalizeBasename(name)) : undefined;
+
+  const rename = useMutation({
+    // A rename is a save that carries `renameTo` and echoes the current
+    // criteria back unchanged (unsupported rules round-trip via `raw`).
+    mutationFn: () =>
+      saveSmartList(listId, {
+        revision: detail?.revision ?? "",
+        scope: detail?.scope ?? undefined,
+        filters: detail?.filters ?? { conjunction: "all", rules: [] },
+        views: detail?.views ?? [],
+        renameTo: normalizeBasename(name),
+      }),
+    onSuccess: async (updated) => {
+      toast.success(t`Smart list renamed`);
+      onOpenChange(false);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+      navigate(`/lists/smart/${encodeURIComponent(updated.id)}`, { replace: true });
+    },
+    onError: (error) => {
+      toast.error(
+        isConflictError(error)
+          ? t`A list with this name already exists, or the file changed on disk.`
+          : errorMessage(error),
+      );
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            <Trans>Rename smart list</Trans>
+          </DialogTitle>
+          <DialogDescription>
+            <Trans>Renames the .base file in your vault.</Trans>
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!name.trim() || validationError) return;
+            rename.mutate();
+          }}
+          className="flex flex-col gap-2"
+        >
+          <label className="text-sm font-medium">
+            <Trans>Name</Trans>
+            <Input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoFocus
+              aria-invalid={Boolean(validationError)}
+            />
+          </label>
+          {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
+          <DialogFooter className="mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={rename.isPending}
+            >
+              <XIcon data-icon="inline-start" />
+              <Trans>Cancel</Trans>
+            </Button>
+            <Button
+              type="submit"
+              disabled={!name.trim() || Boolean(validationError) || rename.isPending}
+            >
+              <CheckIcon data-icon="inline-start" />
+              {rename.isPending ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -199,9 +698,8 @@ function WarningsBanner({ warnings }: { warnings: string[] }) {
   );
 }
 
-/// Read-only rendering of the list's criteria (the rule builder arrives with
-/// the write path). Rules render as compact chips; nested groups as bordered
-/// clusters with their own conjunction.
+/// Read-only rendering of the list's criteria. Rules render as compact chips;
+/// nested groups as bordered clusters with their own conjunction.
 function CriteriaSummary({ detail }: { detail: SmartListDetail }) {
   const group = detail.filters;
   const rules = group.rules ?? [];
@@ -267,129 +765,4 @@ function RuleChip({ rule }: { rule: SmartFilterRule }) {
       {label}
     </Badge>
   );
-}
-
-const opSymbols: Record<string, string> = {
-  eq: "=",
-  ne: "≠",
-  gt: ">",
-  gte: "≥",
-  lt: "<",
-  lte: "≤",
-};
-
-const unitSymbols: Record<string, string> = {
-  days: "d",
-  weeks: "w",
-  months: "M",
-  years: "y",
-};
-
-// The connective words of the criteria chips, as lazy descriptors: macros
-// don't transform inside plain helper functions, so `formatRule` resolves
-// these through the component-scoped `t` instead. All of them join a field
-// name and a value into a compact phrase like `genres contains comedy`.
-const ruleWords = {
-  not: msg({
-    comment:
-      "Negation prefix in a filter-criteria chip, e.g. 'not genres contains comedy'",
-    message: "not",
-  }),
-  yes: msg({
-    comment: "Value of a boolean field in a filter-criteria chip, e.g. 'favorite = yes'",
-    message: "yes",
-  }),
-  no: msg({
-    comment: "Value of a boolean field in a filter-criteria chip, e.g. 'favorite = no'",
-    message: "no",
-  }),
-  contains: msg({
-    comment:
-      "Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)",
-    message: "contains",
-  }),
-  containsAll: msg({
-    comment:
-      "Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains all comedy, drama' (every value required)",
-    message: "contains all",
-  }),
-  startsWith: msg({
-    comment: "Verb in a filter-criteria chip, e.g. 'title starts with My'",
-    message: "starts with",
-  }),
-  endsWith: msg({
-    comment: "Verb in a filter-criteria chip, e.g. 'title ends with !'",
-    message: "ends with",
-  }),
-  hasValue: msg({
-    comment: "Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'",
-    message: "has a value",
-  }),
-  isEmpty: msg({
-    comment: "Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'",
-    message: "is empty",
-  }),
-  linksTo: msg({
-    comment:
-      "Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'",
-    message: "links to",
-  }),
-  inFolder: msg({
-    comment: "Preposition before a folder path in a filter-criteria chip, e.g. 'in Media/Anime'",
-    message: "in",
-  }),
-};
-
-/// One rule as a compact human-readable chip. Field names are user data (never
-/// localized); the connective words are. Relative dates use the same compact
-/// notation as the file (`today − 90d`), which is language-neutral.
-function formatRule(rule: SmartFilterRule, t: (descriptor: MessageDescriptor) => string): string {
-  const field = rule.field ?? "";
-  const values = rule.values?.join(", ") ?? "";
-  const not = rule.negated ? `${t(ruleWords.not)} ` : "";
-  switch (rule.kind) {
-    case "compare": {
-      const op = opSymbols[rule.op ?? "eq"] ?? "=";
-      let value: string;
-      if (rule.relative) {
-        const base = field === "file.mtime" ? "now" : "today";
-        const offset = `${rule.relative.amount}${unitSymbols[rule.relative.unit] ?? rule.relative.unit}`;
-        value =
-          rule.relative.amount === 0
-            ? base
-            : `${base} ${rule.relative.future ? "+" : "−"} ${offset}`;
-      } else if (rule.date) {
-        value = rule.date;
-      } else if (rule.number !== undefined && rule.number !== null) {
-        value = String(rule.number);
-      } else if (rule.boolean !== undefined && rule.boolean !== null) {
-        value = rule.boolean ? t(ruleWords.yes) : t(ruleWords.no);
-      } else {
-        value = rule.value ?? "";
-      }
-      return `${field} ${op} ${value}`;
-    }
-    case "contains":
-      return rule.mode === "all"
-        ? `${not}${field} ${t(ruleWords.containsAll)} ${values}`
-        : `${not}${field} ${t(ruleWords.contains)} ${values}`;
-    case "startsWith":
-      return `${not}${field} ${t(ruleWords.startsWith)} ${values}`;
-    case "endsWith":
-      return `${not}${field} ${t(ruleWords.endsWith)} ${values}`;
-    case "isEmpty":
-      return rule.negated
-        ? `${field} ${t(ruleWords.hasValue)}`
-        : `${field} ${t(ruleWords.isEmpty)}`;
-    case "hasTag":
-      return `${not}${(rule.values ?? []).map((tag) => `#${tag}`).join(" ")}`;
-    case "linksTo":
-      return `${not}${t(ruleWords.linksTo)} ${values}`;
-    case "inFolder":
-      return `${not}${t(ruleWords.inFolder)} ${values}`;
-    case "unsupported":
-      return (rule.raw ?? "").trim().replace(/\s+/g, " ");
-    default:
-      return values;
-  }
 }

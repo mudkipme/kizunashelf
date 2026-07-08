@@ -3,7 +3,7 @@ import type { I18n, MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { PlusIcon, SlidersHorizontalIcon } from "lucide-react";
+import { PlusIcon, SlidersHorizontalIcon, SparklesIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -15,6 +15,8 @@ import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
 import { PaginationBar } from "@/components/assets/pagination-bar";
 import { AppFrame } from "@/components/layout/app-frame";
+import { smartListFromLibraryState } from "@/components/smart-lists/from-library";
+import { SaveSmartListDialog } from "@/components/smart-lists/save-smart-list-dialog";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import {
@@ -73,6 +75,7 @@ export function LibraryPage() {
   const sort = searchParams.get("sort") ?? contextDefaultSort;
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [saveSmartOpen, setSaveSmartOpen] = useState(false);
   const scopeStats = isGlobalType ? globalStats.data : categoryStats.data;
   const selectedTypeConfig = config.data?.types.find((type) => type.id === selectedType);
   // Covers show for "all types" and for any concrete type that declares an
@@ -374,6 +377,17 @@ export function LibraryPage() {
                   variant="outline"
                   size="sm"
                   disabled={!contentWritable}
+                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Save as smart list`}
+                  onClick={() => setSaveSmartOpen(true)}
+                >
+                  <SparklesIcon data-icon="inline-start" />
+                  <Trans>Save as smart list</Trans>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!contentWritable}
                   title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Add entity`}
                   asChild={contentWritable}
                 >
@@ -431,6 +445,19 @@ export function LibraryPage() {
           </div>
         </section>
       </div>
+
+      <SaveSmartListDialog
+        open={saveSmartOpen}
+        onOpenChange={setSaveSmartOpen}
+        definition={smartListFromLibraryState({
+          selectedType,
+          typeConfig: selectedTypeConfig,
+          tagsField: tagsFieldName,
+          activeFilters: activeFieldFilters,
+          sort: effectiveSort,
+          direction,
+        })}
+      />
     </AppFrame>
   );
 }

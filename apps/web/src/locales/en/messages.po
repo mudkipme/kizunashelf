@@ -78,7 +78,7 @@ msgstr "{0, plural, one {# found} other {# found}}"
 
 #. placeholder {0}: list.itemCount
 #: src/pages/entity-page.tsx:590
-#: src/pages/lists-page.tsx:88
+#: src/pages/lists-page.tsx:90
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
 
@@ -121,7 +121,7 @@ msgstr "{0, plural, one {# remaining} other {# remaining}}"
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:268
 #: src/pages/home-page.tsx:35
-#: src/pages/lists-page.tsx:92
+#: src/pages/lists-page.tsx:94
 msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, one {# section} other {# sections}}"
 
@@ -254,22 +254,52 @@ msgstr "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
-#: src/pages/library-page.tsx:365
+#: src/pages/library-page.tsx:368
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, one {# entry} other {# entries}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:360
+#: src/pages/library-page.tsx:363
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 
-#: src/pages/smart-list-page.tsx:100
+#: src/pages/smart-list-page.tsx:240
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, one {# match} other {# matches}}"
 
 #: src/components/settings/settings-editor.tsx:303
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, one {# field} other {# fields}}"
+
+#. Numeric rule operator
+#: src/components/smart-lists/rule-builder.tsx:155
+msgid "<"
+msgstr "<"
+
+#. Numeric rule operator
+#: src/components/smart-lists/rule-builder.tsx:151
+msgid "="
+msgstr "="
+
+#. Numeric rule operator
+#: src/components/smart-lists/rule-builder.tsx:152
+msgid "≠"
+msgstr "≠"
+
+#. Numeric rule operator
+#: src/components/smart-lists/rule-builder.tsx:153
+msgid ">"
+msgstr ">"
+
+#. Numeric rule operator
+#: src/components/smart-lists/rule-builder.tsx:156
+msgid "≤"
+msgstr "≤"
+
+#. Numeric rule operator
+#: src/components/smart-lists/rule-builder.tsx:154
+msgid "≥"
+msgstr "≥"
 
 #: src/components/calendar/calendar-entry-item.tsx:40
 #: src/pages/activity-page.tsx:291
@@ -290,9 +320,17 @@ msgstr "📅 Scheduled"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "A file named for this title already existed, so it was saved as “{0}”."
 
+#: src/pages/smart-list-page.tsx:615
+msgid "A list with this name already exists, or the file changed on disk."
+msgstr "A list with this name already exists, or the file changed on disk."
+
 #: src/components/layout/app-frame.tsx:132
 msgid "A shelf for everything you love"
 msgstr "A shelf for everything you love"
+
+#: src/pages/lists-page.tsx:203
+msgid "A smart list fills itself from criteria you define, and is saved as an Obsidian Bases (.base) file."
+msgstr "A smart list fills itself from criteria you define, and is saved as an Obsidian Bases (.base) file."
 
 #: src/components/settings/preset-picker.tsx:371
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
@@ -315,8 +353,8 @@ msgstr "Activity"
 #: src/components/settings/settings-sections.tsx:1000
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
-#: src/pages/library-page.tsx:383
-#: src/pages/library-page.tsx:388
+#: src/pages/library-page.tsx:397
+#: src/pages/library-page.tsx:402
 #: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "Add"
@@ -344,7 +382,7 @@ msgid "Add custom type"
 msgstr "Add custom type"
 
 #: src/pages/home-page.tsx:42
-#: src/pages/library-page.tsx:377
+#: src/pages/library-page.tsx:391
 msgid "Add entity"
 msgstr "Add entity"
 
@@ -364,6 +402,10 @@ msgstr "Add Field"
 msgid "Add Filter"
 msgstr "Add Filter"
 
+#: src/components/smart-lists/rule-builder.tsx:539
+msgid "Add group"
+msgstr "Add group"
+
 #: src/pages/list-detail-page.tsx:451
 #: src/pages/list-detail-page.tsx:878
 msgid "Add items"
@@ -377,11 +419,17 @@ msgstr "Add manually"
 msgid "Add path or URL"
 msgstr "Add path or URL"
 
+#: src/components/smart-lists/rule-builder.tsx:524
+#: src/components/smart-lists/rule-builder.tsx:605
+msgid "Add rule"
+msgstr "Add rule"
+
 #: src/pages/list-detail-page.tsx:447
 msgid "Add section"
 msgstr "Add section"
 
 #: src/components/entities/metadata-inputs.tsx:155
+#: src/components/smart-lists/rule-builder.tsx:828
 msgid "Add value"
 msgstr "Add value"
 
@@ -412,6 +460,7 @@ msgstr "adds new section"
 msgid "Advanced: edit full schema"
 msgstr "Advanced: edit full schema"
 
+#: src/components/smart-lists/rule-builder.tsx:629
 #: src/pages/activity-page.tsx:39
 msgid "All"
 msgstr "All"
@@ -421,7 +470,7 @@ msgid "All dates"
 msgstr "All dates"
 
 #. Prefix before a group of filter-criteria chips: all must match
-#: src/pages/smart-list-page.tsx:253
+#: src/pages/smart-list-page.tsx:747
 msgid "all of"
 msgstr "all of"
 
@@ -439,19 +488,29 @@ msgstr "All sources"
 #: src/components/assets/asset-download-panel.tsx:84
 #: src/pages/activity-page.tsx:128
 #: src/pages/calendar-page.tsx:132
+#: src/pages/lists-page.tsx:227
 #: src/pages/quick-capture-page.tsx:220
 #: src/pages/review-page.tsx:160
+#: src/pages/smart-list-page.tsx:491
 msgid "All types"
 msgstr "All types"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:300
+#: src/pages/library-page.tsx:303
 msgid "All types ({0})"
 msgstr "All types ({0})"
+
+#: src/components/smart-lists/rule-builder.tsx:756
+msgid "Amount"
+msgstr "Amount"
 
 #: src/pages/import-wizard-page.tsx:46
 msgid "Anime"
 msgstr "Anime"
+
+#: src/components/smart-lists/rule-builder.tsx:630
+msgid "Any"
+msgstr "Any"
 
 #. placeholder {0}: filter.label
 #: src/components/assets/asset-toolbar.tsx:160
@@ -461,7 +520,7 @@ msgid "Any {0}"
 msgstr "Any {0}"
 
 #. Prefix before a group of filter-criteria chips: at least one must match
-#: src/pages/smart-list-page.tsx:245
+#: src/pages/smart-list-page.tsx:739
 msgid "any of"
 msgstr "any of"
 
@@ -484,6 +543,7 @@ msgstr "Applying…"
 
 #: src/components/assets/asset-toolbar.tsx:114
 #: src/components/settings/settings-sections.tsx:220
+#: src/pages/smart-list-page.tsx:545
 msgid "Ascending"
 msgstr "Ascending"
 
@@ -547,13 +607,17 @@ msgstr "Calendar"
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
 #: src/components/settings/settings-dialogs.tsx:506
+#: src/components/smart-lists/save-smart-list-dialog.tsx:113
 #: src/pages/entity-page.tsx:486
 #: src/pages/entity-page.tsx:698
 #: src/pages/import-wizard-page.tsx:263
 #: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
 #: src/pages/list-detail-page.tsx:1002
-#: src/pages/lists-page.tsx:177
+#: src/pages/lists-page.tsx:240
+#: src/pages/smart-list-page.tsx:252
+#: src/pages/smart-list-page.tsx:405
+#: src/pages/smart-list-page.tsx:658
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -651,15 +715,27 @@ msgstr "Connection Fields"
 msgid "Connections"
 msgstr "Connections"
 
+#. Text rule operator: substring match
 #. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)
-#: src/pages/smart-list-page.tsx:306
+#: src/components/smart-lists/rule-builder.tsx:174
+#: src/components/smart-lists/rule-format.ts:40
 msgid "contains"
 msgstr "contains"
 
 #. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains all comedy, drama' (every value required)
-#: src/pages/smart-list-page.tsx:311
+#: src/components/smart-lists/rule-format.ts:45
 msgid "contains all"
 msgstr "contains all"
+
+#. Rule operator: list field contains all of the chosen values
+#: src/components/smart-lists/rule-builder.tsx:141
+msgid "contains all of"
+msgstr "contains all of"
+
+#. Rule operator: list field contains any of the chosen values
+#: src/components/smart-lists/rule-builder.tsx:137
+msgid "contains any of"
+msgstr "contains any of"
 
 #: src/components/settings/preset-picker.tsx:206
 msgid "Continue"
@@ -678,8 +754,9 @@ msgstr "Core Views"
 msgid "Could not load options."
 msgstr "Could not load options."
 
+#: src/components/smart-lists/save-smart-list-dialog.tsx:120
 #: src/pages/entity-create-page.tsx:126
-#: src/pages/lists-page.tsx:181
+#: src/pages/lists-page.tsx:244
 msgid "Create"
 msgstr "Create"
 
@@ -706,8 +783,9 @@ msgstr "Create vault"
 msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
+#: src/components/smart-lists/save-smart-list-dialog.tsx:120
 #: src/pages/entity-page.tsx:623
-#: src/pages/lists-page.tsx:181
+#: src/pages/lists-page.tsx:244
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
 msgstr "Creating…"
@@ -716,7 +794,7 @@ msgstr "Creating…"
 msgid "CSV export"
 msgstr "CSV export"
 
-#: src/pages/lists-page.tsx:44
+#: src/pages/lists-page.tsx:46
 msgid "Curated collections of your items, saved as plain files you own."
 msgstr "Curated collections of your items, saved as plain files you own."
 
@@ -774,6 +852,7 @@ msgid "date"
 msgstr "date"
 
 #: src/components/assets/quick-log-dialog.tsx:133
+#: src/components/smart-lists/rule-builder.tsx:782
 #: src/pages/activity-page.tsx:268
 msgid "Date"
 msgstr "Date"
@@ -803,6 +882,11 @@ msgstr "Dates"
 msgid "Dates & episodes"
 msgstr "Dates & episodes"
 
+#. Duration unit in a date rule
+#: src/components/smart-lists/rule-builder.tsx:187
+msgid "days"
+msgstr "days"
+
 #: src/components/settings/settings-sections.tsx:219
 msgid "Default"
 msgstr "Default"
@@ -818,11 +902,18 @@ msgstr "Default provider order is used."
 #: src/pages/entity-page.tsx:461
 #: src/pages/list-detail-page.tsx:414
 #: src/pages/list-detail-page.tsx:628
+#: src/pages/smart-list-page.tsx:294
+#: src/pages/smart-list-page.tsx:408
 msgid "Delete"
 msgstr "Delete"
 
+#: src/pages/smart-list-page.tsx:394
+msgid "Delete this smart list?"
+msgstr "Delete this smart list?"
+
 #: src/components/assets/asset-toolbar.tsx:115
 #: src/components/settings/settings-sections.tsx:221
+#: src/pages/smart-list-page.tsx:546
 msgid "Descending"
 msgstr "Descending"
 
@@ -844,6 +935,7 @@ msgstr "Details"
 
 #: src/components/assets/asset-toolbar.tsx:112
 #: src/components/settings/settings-sections.tsx:208
+#: src/pages/smart-list-page.tsx:532
 msgid "Direction"
 msgstr "Direction"
 
@@ -862,6 +954,16 @@ msgstr "Discard unsaved changes?"
 #: src/components/settings/settings-sections.tsx:676
 msgid "Display name"
 msgstr "Display name"
+
+#. Rule operator: field does not contain the value(s)
+#: src/components/smart-lists/rule-builder.tsx:145
+msgid "does not contain"
+msgstr "does not contain"
+
+#. Relation rule operator: note does not link to the entity
+#: src/components/smart-lists/rule-builder.tsx:178
+msgid "does not link to"
+msgstr "does not link to"
 
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
@@ -921,6 +1023,10 @@ msgstr "Edit {0}"
 msgid "Edit config.yaml"
 msgstr "Edit config.yaml"
 
+#: src/pages/smart-list-page.tsx:274
+msgid "Edit criteria"
+msgstr "Edit criteria"
+
 #: src/pages/entity-edit-page.tsx:151
 msgid "Edit Entity"
 msgstr "Edit Entity"
@@ -949,8 +1055,10 @@ msgstr "Empty object"
 msgid "Enable"
 msgstr "Enable"
 
+#. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title ends with !'
-#: src/pages/smart-list-page.tsx:320
+#: src/components/smart-lists/rule-builder.tsx:176
+#: src/components/smart-lists/rule-format.ts:54
 msgid "ends with"
 msgstr "ends with"
 
@@ -961,6 +1069,10 @@ msgstr "English"
 #: src/pages/statistics-page.tsx:50
 msgid "Entities"
 msgstr "Entities"
+
+#: src/components/smart-lists/rule-builder.tsx:918
+msgid "Entity name"
+msgstr "Entity name"
 
 #: src/pages/entity-edit-page.tsx:257
 #: src/pages/entity-page.tsx:385
@@ -1034,6 +1146,7 @@ msgstr "Fetching your library from {0}…"
 #: src/components/settings/settings-dialogs.tsx:406
 #: src/components/settings/settings-sections.tsx:245
 #: src/components/settings/settings-sections.tsx:661
+#: src/components/smart-lists/rule-builder.tsx:681
 msgid "Field"
 msgstr "Field"
 
@@ -1041,6 +1154,8 @@ msgstr "Field"
 msgid "Fields"
 msgstr "Fields"
 
+#. Rule-builder field for the note's file name (its title)
+#: src/components/smart-lists/rule-builder.tsx:125
 #: src/pages/entity-create-page.tsx:102
 msgid "File name"
 msgstr "File name"
@@ -1083,7 +1198,7 @@ msgstr "Form"
 msgid "Game"
 msgstr "Game"
 
-#: src/pages/lists-page.tsx:152
+#: src/pages/lists-page.tsx:172
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
@@ -1100,13 +1215,25 @@ msgid "Grid"
 msgstr "Grid"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'
-#: src/pages/smart-list-page.tsx:324
+#. Rule operator: field has any value
+#: src/components/smart-lists/rule-builder.tsx:136
+#: src/components/smart-lists/rule-format.ts:58
 msgid "has a value"
 msgstr "has a value"
+
+#. Tags rule operator: has any of the chosen tags
+#: src/components/smart-lists/rule-builder.tsx:182
+msgid "has any of"
+msgstr "has any of"
 
 #: src/pages/review-page.tsx:169
 msgid "Has date"
 msgstr "Has date"
+
+#. Tags rule operator: has none of the chosen tags
+#: src/components/smart-lists/rule-builder.tsx:183
+msgid "has none of"
+msgstr "has none of"
 
 #: src/components/settings/settings-sections.tsx:598
 msgid "Heading"
@@ -1169,7 +1296,7 @@ msgid "Importing…"
 msgstr "Importing…"
 
 #. Preposition before a folder path in a filter-criteria chip, e.g. 'in Media/Anime'
-#: src/pages/smart-list-page.tsx:337
+#: src/components/smart-lists/rule-format.ts:71
 msgid "in"
 msgstr "in"
 
@@ -1183,15 +1310,67 @@ msgstr "In library ✓"
 msgid "in list"
 msgstr "in list"
 
+#. Date rule operator: within the last N days/weeks/months/years
+#: src/components/smart-lists/rule-builder.tsx:162
+msgid "in the last"
+msgstr "in the last"
+
 #. placeholder {0}: item.title
 #: src/pages/import-wizard-page.tsx:555
 msgid "Include {0}"
 msgstr "Include {0}"
 
+#. Rule operator: field equals the value
+#: src/components/smart-lists/rule-builder.tsx:133
+msgid "is"
+msgstr "is"
+
+#. Date rule operator
+#: src/components/smart-lists/rule-builder.tsx:160
+msgid "is after"
+msgstr "is after"
+
+#. Date rule operator
+#: src/components/smart-lists/rule-builder.tsx:158
+msgid "is before"
+msgstr "is before"
+
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'
-#: src/pages/smart-list-page.tsx:328
+#. Rule operator: field has no value
+#: src/components/smart-lists/rule-builder.tsx:135
+#: src/components/smart-lists/rule-format.ts:62
 msgid "is empty"
 msgstr "is empty"
+
+#. Rule operator on a yes/no field
+#: src/components/smart-lists/rule-builder.tsx:150
+msgid "is no"
+msgstr "is no"
+
+#. Rule operator: field does not equal the value
+#: src/components/smart-lists/rule-builder.tsx:134
+msgid "is not"
+msgstr "is not"
+
+#. Date rule operator: on this exact day/period
+#: src/components/smart-lists/rule-builder.tsx:157
+msgid "is on"
+msgstr "is on"
+
+#. Date rule operator
+#: src/components/smart-lists/rule-builder.tsx:161
+msgid "is on or after"
+msgstr "is on or after"
+
+#. Date rule operator
+#: src/components/smart-lists/rule-builder.tsx:159
+msgid "is on or before"
+msgstr "is on or before"
+
+#. Rule operator on a yes/no field
+#: src/components/smart-lists/rule-builder.tsx:149
+msgid "is yes"
+msgstr "is yes"
 
 #: src/components/calendar/calendar-entry-item.tsx:26
 msgid "Item"
@@ -1270,6 +1449,7 @@ msgid "Light theme. Switch to dark theme."
 msgstr "Light theme. Switch to dark theme."
 
 #: src/components/settings/settings-sections.tsx:193
+#: src/pages/smart-list-page.tsx:554
 msgid "Limit"
 msgstr "Limit"
 
@@ -1283,6 +1463,10 @@ msgstr "line {0}"
 msgid "Line format"
 msgstr "Line format"
 
+#: src/components/smart-lists/rule-builder.tsx:919
+msgid "Link target"
+msgstr "Link target"
+
 #: src/components/settings/preset-picker.tsx:126
 msgid "Link your new types"
 msgstr "Link your new types"
@@ -1295,8 +1479,10 @@ msgstr "Linked from"
 msgid "Links"
 msgstr "Links"
 
+#. Relation rule operator: note links to the entity
 #. Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'
-#: src/pages/smart-list-page.tsx:332
+#: src/components/smart-lists/rule-builder.tsx:177
+#: src/components/smart-lists/rule-format.ts:66
 msgid "links to"
 msgstr "links to"
 
@@ -1305,11 +1491,12 @@ msgid "Links to"
 msgstr "Links to"
 
 #: src/components/assets/asset-toolbar.tsx:125
+#: src/pages/lists-page.tsx:190
 msgid "List"
 msgstr "List"
 
 #: src/pages/entity-page.tsx:548
-#: src/pages/lists-page.tsx:130
+#: src/pages/lists-page.tsx:149
 msgid "List created"
 msgstr "List created"
 
@@ -1326,7 +1513,7 @@ msgid "List style"
 msgstr "List style"
 
 #: src/components/layout/app-frame.tsx:363
-#: src/pages/lists-page.tsx:41
+#: src/pages/lists-page.tsx:43
 msgid "Lists"
 msgstr "Lists"
 
@@ -1360,15 +1547,15 @@ msgstr "Loading taxonomy"
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:247
-#: src/pages/library-page.tsx:370
+#: src/pages/library-page.tsx:373
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
-#: src/pages/lists-page.tsx:55
+#: src/pages/lists-page.tsx:57
 #: src/pages/onboarding-page.tsx:53
 #: src/pages/review-page.tsx:128
 #: src/pages/review-page.tsx:138
 #: src/pages/settings-page.tsx:95
-#: src/pages/smart-list-page.tsx:87
+#: src/pages/smart-list-page.tsx:227
 #: src/pages/statistics-page.tsx:33
 #: src/pages/statistics-page.tsx:43
 msgid "Loading…"
@@ -1434,6 +1621,10 @@ msgstr "Marks as {0}"
 msgid "Match"
 msgstr "Match"
 
+#: src/components/smart-lists/rule-builder.tsx:625
+msgid "Match mode"
+msgstr "Match mode"
+
 #: src/pages/statistics-page.tsx:30
 msgid "Memory Analytics"
 msgstr "Memory Analytics"
@@ -1459,6 +1650,11 @@ msgstr "Missing Cover"
 #: src/pages/review-page.tsx:51
 msgid "Missing Links"
 msgstr "Missing Links"
+
+#. Duration unit in a date rule
+#: src/components/smart-lists/rule-builder.tsx:189
+msgid "months"
+msgstr "months"
 
 #: src/components/analytics/activity-heatmap.tsx:157
 msgid "more"
@@ -1489,8 +1685,10 @@ msgstr "Music"
 msgid "My Vault"
 msgstr "My Vault"
 
+#: src/components/smart-lists/save-smart-list-dialog.tsx:95
 #: src/pages/list-detail-page.tsx:990
-#: src/pages/lists-page.tsx:164
+#: src/pages/lists-page.tsx:210
+#: src/pages/smart-list-page.tsx:641
 msgid "Name"
 msgstr "Name"
 
@@ -1508,8 +1706,8 @@ msgid "New field"
 msgstr "New field"
 
 #: src/pages/entity-page.tsx:611
-#: src/pages/lists-page.tsx:49
-#: src/pages/lists-page.tsx:149
+#: src/pages/lists-page.tsx:51
+#: src/pages/lists-page.tsx:169
 msgid "New list"
 msgstr "New list"
 
@@ -1530,14 +1728,14 @@ msgid "Next"
 msgstr "Next"
 
 #. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = no'
-#: src/pages/smart-list-page.tsx:302
+#: src/components/smart-lists/rule-format.ts:36
 msgid "no"
 msgstr "no"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:474
+#: src/pages/library-page.tsx:501
 msgid "No"
 msgstr "No"
 
@@ -1563,7 +1761,7 @@ msgstr "No candidate fields or body sections match this type schema."
 msgid "No candidates loaded"
 msgstr "No candidates loaded"
 
-#: src/pages/smart-list-page.tsx:215
+#: src/pages/smart-list-page.tsx:709
 msgid "No criteria — everything in the library matches."
 msgstr "No criteria — everything in the library matches."
 
@@ -1593,11 +1791,11 @@ msgstr "No entity types configured."
 
 #: src/pages/calendar-page.tsx:179
 #: src/pages/calendar-page.tsx:189
-#: src/pages/library-page.tsx:420
+#: src/pages/library-page.tsx:434
 msgid "No entries"
 msgstr "No entries"
 
-#: src/pages/smart-list-page.tsx:160
+#: src/pages/smart-list-page.tsx:368
 msgid "No entries match the criteria"
 msgstr "No entries match the criteria"
 
@@ -1621,7 +1819,7 @@ msgstr "No fields configured."
 msgid "No folder selected"
 msgstr "No folder selected"
 
-#: src/pages/smart-list-page.tsx:213
+#: src/pages/smart-list-page.tsx:707
 msgid "No further criteria — every entry of this type matches."
 msgstr "No further criteria — every entry of this type matches."
 
@@ -1642,6 +1840,10 @@ msgstr "No items yet — sync from a provider or add a list under the <0>{0}</0>
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 
+#: src/pages/smart-list-page.tsx:552
+msgid "No limit"
+msgstr "No limit"
+
 #: src/components/assets/entity-detail.tsx:241
 msgid "No links yet"
 msgstr "No links yet"
@@ -1650,7 +1852,7 @@ msgstr "No links yet"
 msgid "No lists yet. Create one below."
 msgstr "No lists yet. Create one below."
 
-#: src/pages/lists-page.tsx:59
+#: src/pages/lists-page.tsx:61
 msgid "No lists yet. Create one to start collecting entities."
 msgstr "No lists yet. Create one to start collecting entities."
 
@@ -1724,6 +1926,7 @@ msgstr "No vaults yet."
 #: src/components/settings/settings-sections.tsx:740
 #: src/components/settings/settings-sections.tsx:793
 #: src/components/settings/settings-sections.tsx:838
+#: src/components/smart-lists/rule-builder.tsx:631
 msgid "None"
 msgstr "None"
 
@@ -1732,12 +1935,12 @@ msgid "None (plain list)"
 msgstr "None (plain list)"
 
 #. Prefix before a group of filter-criteria chips: none may match
-#: src/pages/smart-list-page.tsx:249
+#: src/pages/smart-list-page.tsx:743
 msgid "none of"
 msgstr "none of"
 
 #. Negation prefix in a filter-criteria chip, e.g. 'not genres contains comedy'
-#: src/pages/smart-list-page.tsx:293
+#: src/components/smart-lists/rule-format.ts:27
 msgid "not"
 msgstr "not"
 
@@ -1767,6 +1970,11 @@ msgstr "Nothing here yet"
 msgid "Nothing to log for this type."
 msgstr "Nothing to log for this type."
 
+#: src/components/smart-lists/rule-builder.tsx:494
+#: src/components/smart-lists/rule-builder.tsx:574
+msgid "of the following match:"
+msgstr "of the following match:"
+
 #: src/components/settings/settings-editor.tsx:231
 #: src/components/settings/settings-editor.tsx:269
 msgid "off"
@@ -1776,6 +1984,11 @@ msgstr "off"
 #: src/components/settings/settings-editor.tsx:111
 msgid "Off"
 msgstr "Off"
+
+#. Date rule operator: earlier than N days/weeks/months/years ago
+#: src/components/smart-lists/rule-builder.tsx:166
+msgid "older than"
+msgstr "older than"
 
 #: src/components/settings/settings-sections.tsx:873
 #: src/pages/import-wizard-page.tsx:58
@@ -1813,6 +2026,10 @@ msgstr "Open navigation"
 #: src/components/settings/vault-switcher.tsx:77
 msgid "Open or create a vault to get started."
 msgstr "Open or create a vault to get started."
+
+#: src/components/smart-lists/rule-builder.tsx:701
+msgid "Operator"
+msgstr "Operator"
 
 #: src/pages/list-detail-page.tsx:646
 msgid "Ordered"
@@ -1984,6 +2201,10 @@ msgstr "Remove field"
 msgid "Remove filter"
 msgstr "Remove filter"
 
+#: src/components/smart-lists/rule-builder.tsx:581
+msgid "Remove group"
+msgstr "Remove group"
+
 #: src/components/entities/metadata-inputs.tsx:293
 msgid "Remove image"
 msgstr "Remove image"
@@ -1995,6 +2216,11 @@ msgstr "Remove item"
 #: src/components/settings/settings-sections.tsx:511
 msgid "Remove provider priority"
 msgstr "Remove provider priority"
+
+#: src/components/smart-lists/rule-builder.tsx:663
+#: src/components/smart-lists/rule-builder.tsx:723
+msgid "Remove rule"
+msgstr "Remove rule"
 
 #: src/components/settings/settings-dialogs.tsx:462
 msgid "Remove section"
@@ -2010,12 +2236,18 @@ msgstr "Remove type"
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
 #: src/pages/list-detail-page.tsx:1006
+#: src/pages/smart-list-page.tsx:284
+#: src/pages/smart-list-page.tsx:665
 msgid "Rename"
 msgstr "Rename"
 
 #: src/pages/list-detail-page.tsx:975
 msgid "Rename list"
 msgstr "Rename list"
+
+#: src/pages/smart-list-page.tsx:626
+msgid "Rename smart list"
+msgstr "Rename smart list"
 
 #: src/pages/entity-page.tsx:185
 msgid "Renamed"
@@ -2030,8 +2262,13 @@ msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgid "renamed to “{0}”"
 msgstr "renamed to “{0}”"
 
+#: src/pages/smart-list-page.tsx:629
+msgid "Renames the .base file in your vault."
+msgstr "Renames the .base file in your vault."
+
 #: src/pages/entity-page.tsx:705
 #: src/pages/list-detail-page.tsx:1006
+#: src/pages/smart-list-page.tsx:665
 msgid "Renaming…"
 msgstr "Renaming…"
 
@@ -2060,8 +2297,15 @@ msgstr "Running…"
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:177
 #: src/pages/list-detail-page.tsx:426
+#: src/pages/smart-list-page.tsx:261
 msgid "Save"
 msgstr "Save"
+
+#: src/components/smart-lists/save-smart-list-dialog.tsx:77
+#: src/pages/library-page.tsx:380
+#: src/pages/library-page.tsx:384
+msgid "Save as smart list"
+msgstr "Save as smart list"
 
 #: src/components/settings/provider-credentials.tsx:83
 msgid "Save credentials"
@@ -2075,11 +2319,16 @@ msgstr "Saved"
 msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
 msgstr "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
 
+#: src/components/smart-lists/save-smart-list-dialog.tsx:80
+msgid "Saves the current type, filters, and sort as a smart list — a criteria-driven list that keeps itself up to date, stored as an Obsidian Bases (.base) file."
+msgstr "Saves the current type, filters, and sort as a smart list — a criteria-driven list that keeps itself up to date, stored as an Obsidian Bases (.base) file."
+
 #: src/components/entities/metadata-editor.tsx:127
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:177
 #: src/pages/list-detail-page.tsx:426
+#: src/pages/smart-list-page.tsx:261
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -2087,6 +2336,12 @@ msgstr "Saving…"
 #: src/components/settings/settings-editor.tsx:184
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
+
+#: src/pages/lists-page.tsx:221
+#: src/pages/smart-list-page.tsx:480
+#: src/pages/smart-list-page.tsx:485
+msgid "Scope"
+msgstr "Scope"
 
 #: src/components/entities/external-match-dialog.tsx:119
 #: src/components/entities/external-match-dialog.tsx:144
@@ -2220,13 +2475,34 @@ msgid "Settings saved"
 msgstr "Settings saved"
 
 #. Badge on a list card marking a smart list (criteria-driven, updates automatically)
-#: src/pages/lists-page.tsx:97
+#: src/pages/lists-page.tsx:99
 msgid "Smart"
 msgstr "Smart"
 
-#: src/pages/smart-list-page.tsx:91
+#: src/pages/lists-page.tsx:198
+msgid "Smart list"
+msgstr "Smart list"
+
+#: src/components/smart-lists/save-smart-list-dialog.tsx:57
+#: src/pages/lists-page.tsx:149
+msgid "Smart list created"
+msgstr "Smart list created"
+
+#: src/pages/smart-list-page.tsx:198
+msgid "Smart list deleted"
+msgstr "Smart list deleted"
+
+#: src/pages/smart-list-page.tsx:231
 msgid "Smart list not found"
 msgstr "Smart list not found"
+
+#: src/pages/smart-list-page.tsx:607
+msgid "Smart list renamed"
+msgstr "Smart list renamed"
+
+#: src/pages/smart-list-page.tsx:184
+msgid "Smart list saved"
+msgstr "Smart list saved"
 
 #: src/pages/entity-page.tsx:219
 msgid "Some images could not be downloaded"
@@ -2236,7 +2512,7 @@ msgstr "Some images could not be downloaded"
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "Some images could not be downloaded: {reasons}"
 
-#: src/pages/smart-list-page.tsx:188
+#: src/pages/smart-list-page.tsx:683
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "Some of this file's syntax isn't supported here and is ignored:"
 
@@ -2248,8 +2524,15 @@ msgstr "Something went wrong"
 
 #: src/components/assets/asset-toolbar.tsx:94
 #: src/components/settings/settings-sections.tsx:194
+#: src/pages/smart-list-page.tsx:508
 msgid "Sort"
 msgstr "Sort"
+
+#. Label before the sort-key picker of the active smart-list view
+#. placeholder {0}: activeView.name
+#: src/pages/smart-list-page.tsx:501
+msgid "Sort {0} by"
+msgstr "Sort {0} by"
 
 #. placeholder {0}: dateFieldLabel(field)
 #: src/components/assets/asset-toolbar.tsx:103
@@ -2305,8 +2588,10 @@ msgstr "Started"
 msgid "Starting…"
 msgstr "Starting…"
 
+#. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title starts with My'
-#: src/pages/smart-list-page.tsx:316
+#: src/components/smart-lists/rule-builder.tsx:175
+#: src/components/smart-lists/rule-format.ts:50
 msgid "starts with"
 msgstr "starts with"
 
@@ -2370,8 +2655,10 @@ msgstr "System theme"
 msgid "System theme. Switch to light theme."
 msgstr "System theme. Switch to light theme."
 
+#. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:83
-#: src/pages/library-page.tsx:101
+#: src/components/smart-lists/rule-builder.tsx:124
+#: src/pages/library-page.tsx:104
 msgid "Tags"
 msgstr "Tags"
 
@@ -2397,6 +2684,10 @@ msgstr "Taxonomy root"
 #: src/components/settings/settings-editor.tsx:97
 msgid "taxonomy: {0}"
 msgstr "taxonomy: {0}"
+
+#: src/pages/smart-list-page.tsx:397
+msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
+msgstr "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 
 #: src/pages/import-wizard-page.tsx:252
 msgid "The import failed."
@@ -2428,6 +2719,10 @@ msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched.
 msgid "This page doesn’t exist or may have moved."
 msgstr "This page doesn’t exist or may have moved."
 
+#: src/pages/smart-list-page.tsx:189
+msgid "This smart list changed on disk. Reload the page and redo your edits."
+msgstr "This smart list changed on disk. Reload the page and redo your edits."
+
 #: src/components/home/coming-up-section.tsx:191
 msgid "This week"
 msgstr "This week"
@@ -2440,6 +2735,7 @@ msgstr "Tick the items to write from the provider — new ones are added, ticked
 #: src/components/settings/settings-sections.tsx:126
 #: src/components/settings/settings-sections.tsx:152
 #: src/pages/entity-create-page.tsx:107
+#: src/pages/smart-list-page.tsx:450
 msgid "Title"
 msgstr "Title"
 
@@ -2461,7 +2757,7 @@ msgstr "Today"
 msgid "Todo"
 msgstr "Todo"
 
-#: src/pages/library-page.tsx:314
+#: src/pages/library-page.tsx:317
 msgid "Toggle filters"
 msgstr "Toggle filters"
 
@@ -2485,7 +2781,7 @@ msgstr "Try again"
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
 #: src/pages/entity-create-page.tsx:92
-#: src/pages/library-page.tsx:297
+#: src/pages/library-page.tsx:300
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
 msgstr "Type"
@@ -2511,6 +2807,10 @@ msgstr "UI in English"
 #: src/pages/list-detail-page.tsx:581
 msgid "Ungrouped"
 msgstr "Ungrouped"
+
+#: src/components/smart-lists/rule-builder.tsx:763
+msgid "Unit"
+msgstr "Unit"
 
 #: src/pages/review-page.tsx:52
 msgid "Unlinked Items"
@@ -2545,8 +2845,14 @@ msgid "Up next"
 msgstr "Up next"
 
 #: src/components/settings/settings-sections.tsx:127
+#: src/pages/smart-list-page.tsx:451
 msgid "Update time"
 msgstr "Update time"
+
+#. Rule-builder field for the note file's last-modified time
+#: src/components/smart-lists/rule-builder.tsx:129
+msgid "Updated"
+msgstr "Updated"
 
 #. placeholder {0}: cleanup.data.generatedAt.slice(0, 10)
 #. placeholder {0}: data.generatedAt.slice(0, 10)
@@ -2573,7 +2879,14 @@ msgstr "Used as"
 msgid "value"
 msgstr "value"
 
+#: src/components/smart-lists/rule-builder.tsx:796
+#: src/components/smart-lists/rule-builder.tsx:809
+#: src/components/smart-lists/rule-builder.tsx:853
+msgid "Value"
+msgstr "Value"
+
 #: src/components/settings/settings-sections.tsx:260
+#: src/components/smart-lists/rule-builder.tsx:829
 msgid "Values"
 msgstr "Values"
 
@@ -2623,10 +2936,19 @@ msgstr "View"
 msgid "View all"
 msgstr "View all"
 
+#: src/components/smart-lists/save-smart-list-dialog.tsx:99
+msgid "Watching now"
+msgstr "Watching now"
+
 #: src/pages/entity-page.tsx:617
-#: src/pages/lists-page.tsx:168
+#: src/pages/lists-page.tsx:214
 msgid "Watchlist"
 msgstr "Watchlist"
+
+#. Duration unit in a date rule
+#: src/components/smart-lists/rule-builder.tsx:188
+msgid "weeks"
+msgstr "weeks"
 
 #: src/pages/onboarding-page.tsx:170
 msgid "What do you want to track?"
@@ -2636,19 +2958,29 @@ msgstr "What do you want to track?"
 msgid "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
 msgstr "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
 
+#. Date rule operator: no later than N days/weeks/months/years from now
+#: src/components/smart-lists/rule-builder.tsx:170
+msgid "within the next"
+msgstr "within the next"
+
 #: src/pages/settings-page.tsx:87
 msgid "YAML"
 msgstr "YAML"
 
+#. Duration unit in a date rule
+#: src/components/smart-lists/rule-builder.tsx:190
+msgid "years"
+msgstr "years"
+
 #. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = yes'
-#: src/pages/smart-list-page.tsx:298
+#: src/components/smart-lists/rule-format.ts:32
 msgid "yes"
 msgstr "yes"
 
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:473
+#: src/pages/library-page.tsx:500
 msgid "Yes"
 msgstr "Yes"
 
