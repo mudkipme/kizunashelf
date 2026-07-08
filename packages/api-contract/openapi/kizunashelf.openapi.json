@@ -7539,6 +7539,13 @@
               "string",
               "null"
             ]
+          },
+          "language": {
+            "description": "The viewer's language preference (request context, not user-entered),\nused to localize review-list display titles where the source distinguishes\nlanguages (e.g. Bangumi's `name`/`name_cn`). Mirrors the external-search\n`language` param. Optional; absent falls back to the source default.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

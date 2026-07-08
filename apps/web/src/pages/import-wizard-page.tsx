@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { useLanguagePreference } from "@/lib/language";
 import type {
   ImportCanonicalStatus,
   ImportJob,
@@ -73,6 +74,9 @@ export function ImportWizardPage() {
   const sources = useQuery(importSourcesQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
   const invalidateEntityData = useInvalidateEntityData();
+  // The viewer's language preference — sent with the job so sources that carry
+  // multiple languages localize the review-list titles (see the `start` mutation).
+  const language = useLanguagePreference();
 
   const [sourceId, setSourceId] = useState("");
   const [username, setUsername] = useState("");
@@ -148,7 +152,13 @@ export function ImportWizardPage() {
 
   const start = useMutation({
     mutationFn: () => {
-      const input = source?.input === "csv" ? { csvText } : { username };
+      // `language` localizes review-list display titles where the source
+      // distinguishes languages (e.g. Bangumi's name/name_cn), mirroring
+      // Quick Capture's external search.
+      const input = {
+        ...(source?.input === "csv" ? { csvText } : { username }),
+        language,
+      };
       return startImportJob({ source: sourceId, input });
     },
     onSuccess: (created) => {

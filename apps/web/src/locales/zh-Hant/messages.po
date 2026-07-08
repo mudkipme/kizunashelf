@@ -26,7 +26,7 @@ msgid "(daily-notes default)"
 msgstr "（每日筆記預設）"
 
 #. placeholder {0}: counts.exists
-#: src/pages/import-wizard-page.tsx:456
+#: src/pages/import-wizard-page.tsx:466
 msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, other {已在庫中 # 件}}"
 
@@ -36,7 +36,7 @@ msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, other {已完成 # 件}}"
 
 #. placeholder {0}: job.created
-#: src/pages/import-wizard-page.tsx:670
+#: src/pages/import-wizard-page.tsx:680
 msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {已建立 # 件}}"
 
@@ -57,7 +57,7 @@ msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, other {# 種外部類型}}"
 
 #. placeholder {0}: job.failed
-#: src/pages/import-wizard-page.tsx:679
+#: src/pages/import-wizard-page.tsx:689
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, other {失敗 # 件}}"
 
@@ -72,7 +72,7 @@ msgid "{0, plural, one {# filter} other {# filters}}"
 msgstr "{0, plural, other {# 個篩選條件}}"
 
 #. placeholder {0}: items.length
-#: src/pages/import-wizard-page.tsx:450
+#: src/pages/import-wizard-page.tsx:460
 msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {找到 # 件}}"
 
@@ -83,8 +83,8 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 個項目}}"
 
 #. placeholder {0}: entity.relationCount
-#: src/components/assets/entity-grid-item.tsx:73
-#: src/components/assets/entity-list-item.tsx:55
+#: src/components/assets/entity-grid-item.tsx:79
+#: src/components/assets/entity-list-item.tsx:59
 #: src/components/home/home-entity-card.tsx:51
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 個連結}}"
@@ -95,7 +95,7 @@ msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, other {# 組對應}}"
 
 #. placeholder {0}: counts.needsReview
-#: src/pages/import-wizard-page.tsx:460
+#: src/pages/import-wizard-page.tsx:470
 msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 件待檢查}}"
 
@@ -131,12 +131,12 @@ msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, other {顯示 # 件}}"
 
 #. placeholder {0}: job.skipped
-#: src/pages/import-wizard-page.tsx:674
+#: src/pages/import-wizard-page.tsx:684
 msgid "{0, plural, one {# skipped} other {# skipped}}"
 msgstr "{0, plural, other {略過 # 件}}"
 
 #. placeholder {0}: counts.willCreate
-#: src/pages/import-wizard-page.tsx:453
+#: src/pages/import-wizard-page.tsx:463
 msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, other {將建立 # 件}}"
 
@@ -164,7 +164,7 @@ msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, other {# 個值}}"
 
 #. placeholder {0}: data.watchedCount
-#: src/pages/import-wizard-page.tsx:615
+#: src/pages/import-wizard-page.tsx:625
 msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {已觀看 # 件}}"
 
@@ -186,7 +186,7 @@ msgstr "{0, plural, other {已匯入 # 集。}}"
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
 #: src/components/assets/asset-download-panel.tsx:122
-#: src/pages/import-wizard-page.tsx:665
+#: src/pages/import-wizard-page.tsx:675
 msgid "{0} / {1} processed"
 msgstr "已處理 {0} / {1}"
 
@@ -250,7 +250,7 @@ msgstr "{monthLabel}：{0} — 在日曆中開啟"
 msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgstr "{selectedTotal, plural, other {# 件有日期}}"
 
-#: src/pages/import-wizard-page.tsx:283
+#: src/pages/import-wizard-page.tsx:293
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {匯入 # 個項目}}"
 
@@ -440,7 +440,7 @@ msgstr "所有類型"
 msgid "All types ({0})"
 msgstr "所有類型（{0}）"
 
-#: src/pages/import-wizard-page.tsx:45
+#: src/pages/import-wizard-page.tsx:46
 msgid "Anime"
 msgstr "動畫"
 
@@ -506,11 +506,11 @@ msgstr "基本資訊"
 msgid "Body Sections"
 msgstr "內文版塊"
 
-#: src/pages/import-wizard-page.tsx:44
+#: src/pages/import-wizard-page.tsx:45
 msgid "Book"
 msgstr "書籍"
 
-#: src/pages/import-wizard-page.tsx:203
+#: src/pages/import-wizard-page.tsx:213
 msgid "Bring a library in from another service, then review before anything is written"
 msgstr "從其他服務匯入一個庫，並在任何內容寫入前先檢查。"
 
@@ -535,8 +535,8 @@ msgstr "日曆"
 #: src/components/settings/settings-dialogs.tsx:506
 #: src/pages/entity-page.tsx:486
 #: src/pages/entity-page.tsx:698
-#: src/pages/import-wizard-page.tsx:253
-#: src/pages/import-wizard-page.tsx:294
+#: src/pages/import-wizard-page.tsx:263
+#: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
 #: src/pages/list-detail-page.tsx:1002
 #: src/pages/lists-page.tsx:160
@@ -569,7 +569,7 @@ msgid "Choose a candidate to compare fields."
 msgstr "選一個候選項目以比較欄位。"
 
 #: src/pages/entity-create-page.tsx:82
-#: src/pages/import-wizard-page.tsx:468
+#: src/pages/import-wizard-page.tsx:478
 msgid "Choose a type"
 msgstr "選擇一種類型"
 
@@ -600,7 +600,7 @@ msgstr "即將登場"
 #: src/components/settings/settings-sections.tsx:796
 #: src/components/settings/settings-sections.tsx:875
 #: src/pages/activity-page.tsx:46
-#: src/pages/import-wizard-page.tsx:59
+#: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
 msgstr "已完成"
 
@@ -688,7 +688,7 @@ msgstr "建立保管庫（{0}）"
 msgid "Creating…"
 msgstr "建立中…"
 
-#: src/pages/import-wizard-page.tsx:363
+#: src/pages/import-wizard-page.tsx:373
 msgid "CSV export"
 msgstr "CSV 匯出"
 
@@ -875,7 +875,7 @@ msgid "Drag to reorder"
 msgstr "拖曳以重新排序"
 
 #: src/components/settings/settings-sections.tsx:876
-#: src/pages/import-wizard-page.tsx:60
+#: src/pages/import-wizard-page.tsx:61
 msgid "Dropped"
 msgstr "已棄坑"
 
@@ -952,7 +952,7 @@ msgid "Enum options"
 msgstr "列舉選項"
 
 #: src/pages/activity-page.tsx:297
-#: src/pages/import-wizard-page.tsx:639
+#: src/pages/import-wizard-page.tsx:649
 msgid "Episodes"
 msgstr "劇集"
 
@@ -991,12 +991,12 @@ msgstr "外部來源"
 msgid "External types"
 msgstr "外部類型"
 
-#: src/pages/import-wizard-page.tsx:406
+#: src/pages/import-wizard-page.tsx:416
 msgid "Fetch & plan"
 msgstr "擷取並規劃"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:250
+#: src/pages/import-wizard-page.tsx:260
 msgid "Fetching your library from {0}…"
 msgstr "正在從 {0} 擷取你的庫…"
 
@@ -1046,7 +1046,7 @@ msgstr "篩選條件"
 msgid "Form"
 msgstr "表單"
 
-#: src/pages/import-wizard-page.tsx:47
+#: src/pages/import-wizard-page.tsx:48
 msgid "Game"
 msgstr "遊戲"
 
@@ -1058,7 +1058,7 @@ msgstr "為你的清單命名。"
 msgid "Go back"
 msgstr "返回"
 
-#: src/pages/import-wizard-page.tsx:299
+#: src/pages/import-wizard-page.tsx:309
 msgid "Go to library"
 msgstr "前往庫"
 
@@ -1100,7 +1100,7 @@ msgid "ID"
 msgstr "ID"
 
 #: src/components/layout/app-frame.tsx:414
-#: src/pages/import-wizard-page.tsx:200
+#: src/pages/import-wizard-page.tsx:210
 msgid "Import"
 msgstr "匯入"
 
@@ -1113,25 +1113,25 @@ msgstr "匯入（{0} 新增 · {already} 更新）"
 msgid "Import ({incoming})"
 msgstr "匯入（{incoming}）"
 
-#: src/pages/import-wizard-page.tsx:302
+#: src/pages/import-wizard-page.tsx:312
 msgid "Import another"
 msgstr "再匯入一個"
 
-#: src/pages/import-wizard-page.tsx:662
+#: src/pages/import-wizard-page.tsx:672
 msgid "Import complete"
 msgstr "匯入完成"
 
-#: src/pages/import-wizard-page.tsx:215
+#: src/pages/import-wizard-page.tsx:225
 msgid "Importing creates files, so it is unavailable here."
 msgstr "匯入會建立檔案，因此在此無法使用。"
 
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/pages/import-wizard-page.tsx:662
+#: src/pages/import-wizard-page.tsx:672
 msgid "Importing…"
 msgstr "匯入中…"
 
-#: src/pages/import-wizard-page.tsx:577
-#: src/pages/import-wizard-page.tsx:581
+#: src/pages/import-wizard-page.tsx:587
+#: src/pages/import-wizard-page.tsx:591
 #: src/pages/quick-capture-page.tsx:289
 msgid "In library ✓"
 msgstr "已在庫中 ✓"
@@ -1141,7 +1141,7 @@ msgid "in list"
 msgstr "在清單中"
 
 #. placeholder {0}: item.title
-#: src/pages/import-wizard-page.tsx:545
+#: src/pages/import-wizard-page.tsx:555
 msgid "Include {0}"
 msgstr "包含 {0}"
 
@@ -1306,7 +1306,7 @@ msgstr "正在載入分類"
 #: src/pages/entity-page.tsx:570
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
-#: src/pages/import-wizard-page.tsx:237
+#: src/pages/import-wizard-page.tsx:247
 #: src/pages/library-page.tsx:362
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
@@ -1362,7 +1362,7 @@ msgstr "標記為完成"
 msgid "Mark as not done"
 msgstr "標記為未完成"
 
-#: src/pages/import-wizard-page.tsx:648
+#: src/pages/import-wizard-page.tsx:658
 msgid "Mark watched progress"
 msgstr "標記觀看進度"
 
@@ -1427,7 +1427,7 @@ msgstr "移到垃圾桶？"
 msgid "Moved to trash"
 msgstr "已移到垃圾桶"
 
-#: src/pages/import-wizard-page.tsx:46
+#: src/pages/import-wizard-page.tsx:47
 msgid "Music"
 msgstr "音樂"
 
@@ -1445,7 +1445,7 @@ msgstr "名稱"
 msgid "Navigation"
 msgstr "導覽"
 
-#: src/pages/import-wizard-page.tsx:604
+#: src/pages/import-wizard-page.tsx:614
 msgid "Needs review"
 msgstr "待檢查"
 
@@ -1478,7 +1478,7 @@ msgstr "下一步"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:464
+#: src/pages/library-page.tsx:466
 msgid "No"
 msgstr "否"
 
@@ -1520,7 +1520,7 @@ msgstr "尚無有日期的項目。"
 msgid "No dates"
 msgstr "無日期"
 
-#: src/pages/import-wizard-page.tsx:497
+#: src/pages/import-wizard-page.tsx:507
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "沒有項目類型對應 {unmatchedLabels}。請在設定中為其新增外部參照欄位以匯入這些內容。"
 
@@ -1530,7 +1530,7 @@ msgstr "未設定任何項目類型。"
 
 #: src/pages/calendar-page.tsx:179
 #: src/pages/calendar-page.tsx:189
-#: src/pages/library-page.tsx:410
+#: src/pages/library-page.tsx:412
 msgid "No entries"
 msgstr "無項目"
 
@@ -1587,7 +1587,7 @@ msgstr "尚無清單。建立一份以開始收集項目。"
 msgid "No markdown body sections."
 msgstr "無 Markdown 內文版塊。"
 
-#: src/pages/import-wizard-page.tsx:598
+#: src/pages/import-wizard-page.tsx:608
 msgid "No matched source"
 msgstr "無比對到的來源"
 
@@ -1599,7 +1599,7 @@ msgstr "找不到比對結果。"
 msgid "No matching entities."
 msgstr "無符合的項目。"
 
-#: src/pages/import-wizard-page.tsx:600
+#: src/pages/import-wizard-page.tsx:610
 msgid "No matching type"
 msgstr "無符合的類型"
 
@@ -1619,7 +1619,7 @@ msgstr "沒有佇列項目符合目前的篩選條件"
 msgid "No review data"
 msgstr "無檢查資料"
 
-#: src/pages/import-wizard-page.tsx:557
+#: src/pages/import-wizard-page.tsx:567
 msgid "no source"
 msgstr "無來源"
 
@@ -1660,7 +1660,7 @@ msgstr "無（純清單）"
 msgid "Note <0>(optional)</0>"
 msgstr "筆記 <0>（選填）</0>"
 
-#: src/pages/import-wizard-page.tsx:618
+#: src/pages/import-wizard-page.tsx:628
 msgid "notes"
 msgstr "筆記"
 
@@ -1693,7 +1693,7 @@ msgid "Off"
 msgstr "關閉"
 
 #: src/components/settings/settings-sections.tsx:873
-#: src/pages/import-wizard-page.tsx:57
+#: src/pages/import-wizard-page.tsx:58
 msgid "Ongoing"
 msgstr "進行中"
 
@@ -1701,7 +1701,7 @@ msgstr "進行中"
 msgid "Only image files can be uploaded."
 msgstr "只能上傳圖片檔案。"
 
-#: src/pages/import-wizard-page.tsx:402
+#: src/pages/import-wizard-page.tsx:412
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "僅支援公開個人檔案。在你檢查規劃前不會寫入任何內容。"
 
@@ -1753,7 +1753,7 @@ msgstr "頁面不存在"
 msgid "Parent folder"
 msgstr "上層資料夾"
 
-#: src/pages/import-wizard-page.tsx:385
+#: src/pages/import-wizard-page.tsx:395
 msgid "Paste the contents of the exported .csv file"
 msgstr "貼上匯出的 .csv 檔案內容"
 
@@ -1767,7 +1767,7 @@ msgid "Paths"
 msgstr "路徑"
 
 #: src/components/settings/settings-sections.tsx:874
-#: src/pages/import-wizard-page.tsx:58
+#: src/pages/import-wizard-page.tsx:59
 msgid "Paused"
 msgstr "已暫停"
 
@@ -1781,7 +1781,7 @@ msgstr "計劃中"
 
 #: src/components/settings/settings-sections.tsx:794
 #: src/components/settings/settings-sections.tsx:872
-#: src/pages/import-wizard-page.tsx:56
+#: src/pages/import-wizard-page.tsx:57
 msgid "Planning"
 msgstr "計劃中"
 
@@ -1826,7 +1826,7 @@ msgstr "資料來源優先順序"
 msgid "Providers"
 msgstr "資料來源"
 
-#: src/pages/import-wizard-page.tsx:363
+#: src/pages/import-wizard-page.tsx:373
 msgid "Public profile"
 msgstr "公開個人檔案"
 
@@ -1834,7 +1834,7 @@ msgstr "公開個人檔案"
 msgid "Quick Capture"
 msgstr "快速擷取"
 
-#: src/pages/import-wizard-page.tsx:48
+#: src/pages/import-wizard-page.tsx:49
 msgid "Real"
 msgstr "實際"
 
@@ -2162,11 +2162,11 @@ msgstr "依標題排序"
 msgid "Sort by update time"
 msgstr "依更新時間排序"
 
-#: src/pages/import-wizard-page.tsx:343
+#: src/pages/import-wizard-page.tsx:353
 msgid "Source"
 msgstr "來源"
 
-#: src/pages/import-wizard-page.tsx:602
+#: src/pages/import-wizard-page.tsx:612
 msgid "Source unavailable"
 msgstr "來源無法使用"
 
@@ -2180,8 +2180,8 @@ msgstr "戳記 {0} = {1}"
 msgid "Start"
 msgstr "開始"
 
-#: src/pages/import-wizard-page.tsx:208
-#: src/pages/import-wizard-page.tsx:245
+#: src/pages/import-wizard-page.tsx:218
+#: src/pages/import-wizard-page.tsx:255
 msgid "Start over"
 msgstr "重新開始"
 
@@ -2191,7 +2191,7 @@ msgstr "重新開始"
 msgid "Started"
 msgstr "已開始"
 
-#: src/pages/import-wizard-page.tsx:406
+#: src/pages/import-wizard-page.tsx:416
 msgid "Starting…"
 msgstr "開始中…"
 
@@ -2211,7 +2211,7 @@ msgstr "狀態欄位"
 msgid "Status Mismatch"
 msgstr "狀態不符"
 
-#: src/pages/import-wizard-page.tsx:635
+#: src/pages/import-wizard-page.tsx:645
 msgid "Status, score & dates"
 msgstr "狀態、評分與日期"
 
@@ -2283,7 +2283,7 @@ msgstr "分類根目錄"
 msgid "taxonomy: {0}"
 msgstr "分類：{0}"
 
-#: src/pages/import-wizard-page.tsx:242
+#: src/pages/import-wizard-page.tsx:252
 msgid "The import failed."
 msgstr "匯入失敗。"
 
@@ -2528,7 +2528,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:463
+#: src/pages/library-page.tsx:465
 msgid "Yes"
 msgstr "是"
 

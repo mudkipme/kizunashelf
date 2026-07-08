@@ -9,7 +9,7 @@ use crate::contract::{
     ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
     ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
 };
-use crate::languages::thetvdb_language;
+use crate::languages::{thetvdb_iso_language, thetvdb_language};
 use crate::secrets::{SECRET_TVDB_API_KEY, SECRET_TVDB_PIN};
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -294,6 +294,9 @@ async fn search_thetvdb(
     let Some(type_filters) = thetvdb_type_filters(provider_config) else {
         return Ok(Vec::new());
     };
+    // The viewer's language picks which entry of a result's `translations` map is
+    // the display title (see `thetvdb_candidate`).
+    let language = provider_config.language.as_deref();
     let mut items = Vec::new();
     let mut seen = BTreeSet::new();
     for type_filter in type_filters {
@@ -306,7 +309,10 @@ async fn search_thetvdb(
             type_filter.as_deref(),
         )
         .await?;
-        for candidate in data.iter().filter_map(thetvdb_candidate) {
+        for candidate in data
+            .iter()
+            .filter_map(|item| thetvdb_candidate(item, language))
+        {
             if seen.insert(format!("{}:{}", candidate.provider, candidate.source_id)) {
                 items.push(candidate);
             }
@@ -467,7 +473,7 @@ async fn thetvdb_access_token(
     .await
 }
 
-fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
+fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandidate> {
     let source_id = item
         .get("tvdb_id")
         .or_else(|| item.get("id"))
@@ -477,11 +483,28 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
                 .map(|id| id.to_string())
                 .or_else(|| value.as_str().map(str::to_string))
         })?;
-    let title = item
+    // The default name is the original title; a search result also carries the
+    // full per-language `translations`/`overviews` maps (3-letter codes), so we
+    // localize the display title and blurb to the viewer where a translation
+    // exists — mirroring TMDB, but with a client-side pick since TheTVDB returns
+    // every language at once rather than translating server-side.
+    let name = item
         .get("name")
         .or_else(|| item.get("title"))
         .and_then(Value::as_str)?
         .to_string();
+    let translations = item.get("translations").and_then(Value::as_object);
+    let overviews = item.get("overviews").and_then(Value::as_object);
+    let viewer_tvdb = language.and_then(thetvdb_language);
+    let localized = |map: Option<&Map<String, Value>>| {
+        viewer_tvdb
+            .and_then(|code| map?.get(code))
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(str::to_string)
+    };
+    let title = localized(translations).unwrap_or_else(|| name.clone());
     let url = item
         .get("url")
         .and_then(Value::as_str)
@@ -503,7 +526,7 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         .and_then(non_empty_string_or_integer)
         .or_else(|| item.get("year").and_then(non_empty_string_or_integer));
     let mut metadata = Map::new();
-    metadata.insert("name".to_string(), Value::String(title.clone()));
+    metadata.insert("name".to_string(), Value::String(name.clone()));
     if let Some(cover_url) = &cover_url {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
@@ -565,19 +588,49 @@ fn thetvdb_candidate(item: &Value) -> Option<ExternalCandidate> {
             }
         }
     }
+    // Tag every translation we can map to a known ISO language so quick-add can
+    // populate per-language title fields and same-language matching works — plus
+    // the default name under the series' primary language when translations don't
+    // already carry it.
+    let mut titles = BTreeMap::new();
+    if let Some(translations) = translations {
+        for (code, value) in translations {
+            if let (Some(iso), Some(value)) = (
+                thetvdb_iso_language(code),
+                value
+                    .as_str()
+                    .map(str::trim)
+                    .filter(|value| !value.is_empty()),
+            ) {
+                titles.insert(iso.to_string(), value.to_string());
+            }
+        }
+    }
+    if !name.is_empty() {
+        if let Some(iso) = item
+            .get("primary_language")
+            .and_then(Value::as_str)
+            .and_then(thetvdb_iso_language)
+        {
+            titles
+                .entry(iso.to_string())
+                .or_insert_with(|| name.clone());
+        }
+    }
+    let default_overview = item
+        .get("overview")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
     Some(ExternalCandidate {
         provider: "thetvdb".to_string(),
         source_id,
         url,
-        original_title: Some(title.clone()),
+        original_title: Some(name.clone()),
         title,
-        brief: item
-            .get("overview")
-            .and_then(Value::as_str)
-            .filter(|value| !value.is_empty())
-            .map(str::to_string),
+        brief: localized(overviews).or(default_overview),
         cover_url,
-        titles: BTreeMap::new(),
+        titles,
         metadata,
     })
 }
@@ -619,11 +672,14 @@ mod tests {
 
     #[test]
     fn candidate_uses_numeric_year_metadata() {
-        let candidate = thetvdb_candidate(&json!({
-            "tvdb_id": 123,
-            "name": "Example Series",
-            "year": 2026
-        }))
+        let candidate = thetvdb_candidate(
+            &json!({
+                "tvdb_id": 123,
+                "name": "Example Series",
+                "year": 2026
+            }),
+            None,
+        )
         .unwrap();
 
         assert_eq!(candidate.source_id, "123");
@@ -633,12 +689,15 @@ mod tests {
 
     #[test]
     fn candidate_prefers_first_air_time_over_year() {
-        let candidate = thetvdb_candidate(&json!({
-            "id": "series-123",
-            "name": "Example Series",
-            "first_air_time": "2026-04-12",
-            "year": 2026
-        }))
+        let candidate = thetvdb_candidate(
+            &json!({
+                "id": "series-123",
+                "name": "Example Series",
+                "first_air_time": "2026-04-12",
+                "year": 2026
+            }),
+            None,
+        )
         .unwrap();
 
         assert_eq!(
@@ -650,20 +709,23 @@ mod tests {
 
     #[test]
     fn candidate_surfaces_extended_metadata() {
-        let candidate = thetvdb_candidate(&json!({
-            "tvdb_id": 123,
-            "name": "Example Series",
-            "primary_language": "jpn",
-            "country": "jpn",
-            "status": "Continuing",
-            "network": "TV Tokyo",
-            "genres": ["Anime", "Action"],
-            "studios": ["Studio X"],
-            "remote_ids": [
-                { "id": "tt1234567", "sourceName": "IMDB" },
-                { "id": "98765", "sourceName": "TheMovieDB" }
-            ]
-        }))
+        let candidate = thetvdb_candidate(
+            &json!({
+                "tvdb_id": 123,
+                "name": "Example Series",
+                "primary_language": "jpn",
+                "country": "jpn",
+                "status": "Continuing",
+                "network": "TV Tokyo",
+                "genres": ["Anime", "Action"],
+                "studios": ["Studio X"],
+                "remote_ids": [
+                    { "id": "tt1234567", "sourceName": "IMDB" },
+                    { "id": "98765", "sourceName": "TheMovieDB" }
+                ]
+            }),
+            None,
+        )
         .unwrap();
 
         let metadata = &candidate.metadata;
@@ -674,5 +736,46 @@ mod tests {
         assert_eq!(metadata.get("studios"), Some(&json!(["Studio X"])));
         assert_eq!(metadata.get("imdb_code"), Some(&json!("tt1234567")));
         assert_eq!(metadata.get("tmdb_id"), Some(&json!("98765")));
+    }
+
+    #[test]
+    fn candidate_localizes_title_from_translations() {
+        let item = json!({
+            "tvdb_id": 456,
+            "name": "Frieren: Beyond Journey's End",
+            "primary_language": "jpn",
+            "overview": "An elf mage's journey.",
+            "translations": {
+                "jpn": "葬送のフリーレン",
+                "zho": "葬送的芙莉莲",
+                "eng": "Frieren: Beyond Journey's End"
+            },
+            "overviews": { "zho": "一位精灵魔法师的旅程。" }
+        });
+        // A zh viewer sees the Chinese title and blurb…
+        let zh = thetvdb_candidate(&item, Some("zh-Hans")).unwrap();
+        assert_eq!(zh.title, "葬送的芙莉莲");
+        assert_eq!(zh.brief.as_deref(), Some("一位精灵魔法师的旅程。"));
+        // …a ja viewer the Japanese one…
+        assert_eq!(
+            thetvdb_candidate(&item, Some("ja")).unwrap().title,
+            "葬送のフリーレン"
+        );
+        // …and a language without a translation falls back to the default name and
+        // the default overview.
+        let de = thetvdb_candidate(&item, Some("de")).unwrap();
+        assert_eq!(de.title, "Frieren: Beyond Journey's End");
+        assert_eq!(de.brief.as_deref(), Some("An elf mage's journey."));
+        // The original title stays the default name; known translations are tagged.
+        assert_eq!(
+            zh.original_title.as_deref(),
+            Some("Frieren: Beyond Journey's End")
+        );
+        assert_eq!(zh.titles.get("zh"), Some(&"葬送的芙莉莲".to_string()));
+        assert_eq!(zh.titles.get("ja"), Some(&"葬送のフリーレン".to_string()));
+        assert_eq!(
+            zh.titles.get("en"),
+            Some(&"Frieren: Beyond Journey's End".to_string())
+        );
     }
 }

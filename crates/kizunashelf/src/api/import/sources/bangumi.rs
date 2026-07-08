@@ -67,7 +67,11 @@ impl ImportSource for BangumiSource {
             let data = page.get("data").and_then(Value::as_array);
             let count = data.map(|data| data.len() as u32).unwrap_or(0);
             if let Some(data) = data {
-                items.extend(data.iter().filter_map(collection_item));
+                let language = input.language.as_deref();
+                items.extend(
+                    data.iter()
+                        .filter_map(|entry| collection_item(entry, language)),
+                );
             }
             let total = page.get("total").and_then(Value::as_u64).unwrap_or(0) as u32;
             offset += count;
@@ -79,9 +83,26 @@ impl ImportSource for BangumiSource {
     }
 }
 
+/// The display title for the viewer's `language`: Chinese (`name_cn`) for a `zh`
+/// viewer, otherwise the original (`name`), each falling back to the other. Mirrors
+/// `bangumi_display_title` in `api/external/bangumi.rs` (kept a local copy per this
+/// module's mirror-the-provider convention rather than a cross-module dependency).
+fn bangumi_display_title<'a>(name: &'a str, name_cn: &'a str, language: Option<&str>) -> &'a str {
+    let (first, second) = if language.unwrap_or("zh").starts_with("zh") {
+        (name_cn, name)
+    } else {
+        (name, name_cn)
+    };
+    if first.is_empty() {
+        second
+    } else {
+        first
+    }
+}
+
 /// Builds an item from one `UserSubjectCollection` entry, or `None` when it has
 /// no subject id.
-fn collection_item(entry: &Value) -> Option<ImportItem> {
+fn collection_item(entry: &Value, language: Option<&str>) -> Option<ImportItem> {
     let subject_id = entry.get("subject_id").and_then(Value::as_i64)?.to_string();
     let bucket = entry
         .get("subject_type")
@@ -99,12 +120,11 @@ fn collection_item(entry: &Value) -> Option<ImportItem> {
         .and_then(|subject| subject.get("name_cn"))
         .and_then(Value::as_str)
         .unwrap_or_default();
-    let title = if !name_cn.is_empty() {
-        name_cn.to_string()
-    } else if !name.is_empty() {
-        name.to_string()
-    } else {
+    let display = bangumi_display_title(name, name_cn, language);
+    let title = if display.is_empty() {
         subject_id.clone()
+    } else {
+        display.to_string()
     };
 
     let mut titles = BTreeMap::new();
@@ -292,7 +312,7 @@ mod tests {
                 "short_summary": "A short blurb."
             }
         });
-        let item = collection_item(&entry).expect("item");
+        let item = collection_item(&entry, Some("zh")).expect("item");
         assert_eq!(item.bucket, "2");
         assert_eq!(item.refs[0].url, "https://bgm.tv/subject/253");
         assert_eq!(item.title, "星际牛仔");
@@ -321,9 +341,32 @@ mod tests {
             "updated_at": "2021-01-01T00:00:00Z",
             "subject": { "name": "Planned" }
         });
-        let item = collection_item(&entry).expect("item");
+        let item = collection_item(&entry, None).expect("item");
         assert_eq!(item.user.status, Some(CanonicalStatus::Planning));
         assert_eq!(item.user.completed, None);
         assert_eq!(item.user.watched_count, None);
+    }
+
+    #[test]
+    fn display_title_follows_viewer_language() {
+        let entry = json!({
+            "subject_id": 253,
+            "subject_type": 2,
+            "type": 2,
+            "subject": { "name": "カウボーイビバップ", "name_cn": "星际牛仔" }
+        });
+        // zh viewer keeps the Chinese title; en/ja viewer sees the original.
+        assert_eq!(
+            collection_item(&entry, Some("zh")).unwrap().title,
+            "星际牛仔"
+        );
+        assert_eq!(
+            collection_item(&entry, Some("ja")).unwrap().title,
+            "カウボーイビバップ"
+        );
+        // The Chinese title is still tagged in the titles map regardless.
+        let item = collection_item(&entry, Some("en")).unwrap();
+        assert_eq!(item.title, "カウボーイビバップ");
+        assert_eq!(item.titles.get("zh").map(String::as_str), Some("星际牛仔"));
     }
 }

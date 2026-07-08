@@ -26,7 +26,7 @@ msgid "(daily-notes default)"
 msgstr "（每日笔记默认值）"
 
 #. placeholder {0}: counts.exists
-#: src/pages/import-wizard-page.tsx:456
+#: src/pages/import-wizard-page.tsx:466
 msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, other {# 项已在库中}}"
 
@@ -36,7 +36,7 @@ msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, other {# 项已完成}}"
 
 #. placeholder {0}: job.created
-#: src/pages/import-wizard-page.tsx:670
+#: src/pages/import-wizard-page.tsx:680
 msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {已创建 # 项}}"
 
@@ -57,7 +57,7 @@ msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, other {# 个外部类型}}"
 
 #. placeholder {0}: job.failed
-#: src/pages/import-wizard-page.tsx:679
+#: src/pages/import-wizard-page.tsx:689
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, other {# 项失败}}"
 
@@ -72,7 +72,7 @@ msgid "{0, plural, one {# filter} other {# filters}}"
 msgstr "{0, plural, other {# 个筛选条件}}"
 
 #. placeholder {0}: items.length
-#: src/pages/import-wizard-page.tsx:450
+#: src/pages/import-wizard-page.tsx:460
 msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {找到 # 项}}"
 
@@ -83,8 +83,8 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 项}}"
 
 #. placeholder {0}: entity.relationCount
-#: src/components/assets/entity-grid-item.tsx:73
-#: src/components/assets/entity-list-item.tsx:55
+#: src/components/assets/entity-grid-item.tsx:79
+#: src/components/assets/entity-list-item.tsx:59
 #: src/components/home/home-entity-card.tsx:51
 msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 个关联}}"
@@ -95,7 +95,7 @@ msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, other {# 个映射}}"
 
 #. placeholder {0}: counts.needsReview
-#: src/pages/import-wizard-page.tsx:460
+#: src/pages/import-wizard-page.tsx:470
 msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 项待检查}}"
 
@@ -131,12 +131,12 @@ msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, other {显示 # 项}}"
 
 #. placeholder {0}: job.skipped
-#: src/pages/import-wizard-page.tsx:674
+#: src/pages/import-wizard-page.tsx:684
 msgid "{0, plural, one {# skipped} other {# skipped}}"
 msgstr "{0, plural, other {跳过 # 项}}"
 
 #. placeholder {0}: counts.willCreate
-#: src/pages/import-wizard-page.tsx:453
+#: src/pages/import-wizard-page.tsx:463
 msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, other {待创建 # 项}}"
 
@@ -164,7 +164,7 @@ msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, other {# 个值}}"
 
 #. placeholder {0}: data.watchedCount
-#: src/pages/import-wizard-page.tsx:615
+#: src/pages/import-wizard-page.tsx:625
 msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {已观看 # 项}}"
 
@@ -186,7 +186,7 @@ msgstr "{0, plural, other {已导入 # 集。}}"
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
 #: src/components/assets/asset-download-panel.tsx:122
-#: src/pages/import-wizard-page.tsx:665
+#: src/pages/import-wizard-page.tsx:675
 msgid "{0} / {1} processed"
 msgstr "已处理 {0} / {1}"
 
@@ -250,7 +250,7 @@ msgstr "{monthLabel}：{0} — 在日历中打开"
 msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgstr "{selectedTotal, plural, other {# 项有日期}}"
 
-#: src/pages/import-wizard-page.tsx:283
+#: src/pages/import-wizard-page.tsx:293
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {导入 # 项}}"
 
@@ -440,7 +440,7 @@ msgstr "所有类型"
 msgid "All types ({0})"
 msgstr "所有类型（{0}）"
 
-#: src/pages/import-wizard-page.tsx:45
+#: src/pages/import-wizard-page.tsx:46
 msgid "Anime"
 msgstr "动画"
 
@@ -506,11 +506,11 @@ msgstr "基础信息"
 msgid "Body Sections"
 msgstr "正文板块"
 
-#: src/pages/import-wizard-page.tsx:44
+#: src/pages/import-wizard-page.tsx:45
 msgid "Book"
 msgstr "书籍"
 
-#: src/pages/import-wizard-page.tsx:203
+#: src/pages/import-wizard-page.tsx:213
 msgid "Bring a library in from another service, then review before anything is written"
 msgstr "从其他服务导入库，写入前先进行检查"
 
@@ -535,8 +535,8 @@ msgstr "日历"
 #: src/components/settings/settings-dialogs.tsx:506
 #: src/pages/entity-page.tsx:486
 #: src/pages/entity-page.tsx:698
-#: src/pages/import-wizard-page.tsx:253
-#: src/pages/import-wizard-page.tsx:294
+#: src/pages/import-wizard-page.tsx:263
+#: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
 #: src/pages/list-detail-page.tsx:1002
 #: src/pages/lists-page.tsx:160
@@ -569,7 +569,7 @@ msgid "Choose a candidate to compare fields."
 msgstr "选择一个候选项以比较字段。"
 
 #: src/pages/entity-create-page.tsx:82
-#: src/pages/import-wizard-page.tsx:468
+#: src/pages/import-wizard-page.tsx:478
 msgid "Choose a type"
 msgstr "选择一个类型"
 
@@ -600,7 +600,7 @@ msgstr "即将到来"
 #: src/components/settings/settings-sections.tsx:796
 #: src/components/settings/settings-sections.tsx:875
 #: src/pages/activity-page.tsx:46
-#: src/pages/import-wizard-page.tsx:59
+#: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
 msgstr "已完成"
 
@@ -688,7 +688,7 @@ msgstr "创建保管库（{0}）"
 msgid "Creating…"
 msgstr "正在创建…"
 
-#: src/pages/import-wizard-page.tsx:363
+#: src/pages/import-wizard-page.tsx:373
 msgid "CSV export"
 msgstr "CSV 导出"
 
@@ -875,7 +875,7 @@ msgid "Drag to reorder"
 msgstr "拖动以重新排序"
 
 #: src/components/settings/settings-sections.tsx:876
-#: src/pages/import-wizard-page.tsx:60
+#: src/pages/import-wizard-page.tsx:61
 msgid "Dropped"
 msgstr "弃坑"
 
@@ -952,7 +952,7 @@ msgid "Enum options"
 msgstr "枚举选项"
 
 #: src/pages/activity-page.tsx:297
-#: src/pages/import-wizard-page.tsx:639
+#: src/pages/import-wizard-page.tsx:649
 msgid "Episodes"
 msgstr "剧集"
 
@@ -991,12 +991,12 @@ msgstr "外部来源"
 msgid "External types"
 msgstr "外部类型"
 
-#: src/pages/import-wizard-page.tsx:406
+#: src/pages/import-wizard-page.tsx:416
 msgid "Fetch & plan"
 msgstr "获取并规划"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:250
+#: src/pages/import-wizard-page.tsx:260
 msgid "Fetching your library from {0}…"
 msgstr "正在从 {0} 获取你的库…"
 
@@ -1046,7 +1046,7 @@ msgstr "筛选条件"
 msgid "Form"
 msgstr "表单"
 
-#: src/pages/import-wizard-page.tsx:47
+#: src/pages/import-wizard-page.tsx:48
 msgid "Game"
 msgstr "游戏"
 
@@ -1058,7 +1058,7 @@ msgstr "为你的列表命名。"
 msgid "Go back"
 msgstr "返回"
 
-#: src/pages/import-wizard-page.tsx:299
+#: src/pages/import-wizard-page.tsx:309
 msgid "Go to library"
 msgstr "前往库"
 
@@ -1100,7 +1100,7 @@ msgid "ID"
 msgstr "ID"
 
 #: src/components/layout/app-frame.tsx:414
-#: src/pages/import-wizard-page.tsx:200
+#: src/pages/import-wizard-page.tsx:210
 msgid "Import"
 msgstr "导入"
 
@@ -1113,25 +1113,25 @@ msgstr "导入（{0} 新增 · {already} 更新）"
 msgid "Import ({incoming})"
 msgstr "导入（{incoming}）"
 
-#: src/pages/import-wizard-page.tsx:302
+#: src/pages/import-wizard-page.tsx:312
 msgid "Import another"
 msgstr "再导入一个"
 
-#: src/pages/import-wizard-page.tsx:662
+#: src/pages/import-wizard-page.tsx:672
 msgid "Import complete"
 msgstr "导入完成"
 
-#: src/pages/import-wizard-page.tsx:215
+#: src/pages/import-wizard-page.tsx:225
 msgid "Importing creates files, so it is unavailable here."
 msgstr "导入会创建文件，因此在此不可用。"
 
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/pages/import-wizard-page.tsx:662
+#: src/pages/import-wizard-page.tsx:672
 msgid "Importing…"
 msgstr "正在导入…"
 
-#: src/pages/import-wizard-page.tsx:577
-#: src/pages/import-wizard-page.tsx:581
+#: src/pages/import-wizard-page.tsx:587
+#: src/pages/import-wizard-page.tsx:591
 #: src/pages/quick-capture-page.tsx:289
 msgid "In library ✓"
 msgstr "已在库中 ✓"
@@ -1141,7 +1141,7 @@ msgid "in list"
 msgstr "在列表中"
 
 #. placeholder {0}: item.title
-#: src/pages/import-wizard-page.tsx:545
+#: src/pages/import-wizard-page.tsx:555
 msgid "Include {0}"
 msgstr "包含 {0}"
 
@@ -1306,7 +1306,7 @@ msgstr "正在加载分类"
 #: src/pages/entity-page.tsx:570
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
-#: src/pages/import-wizard-page.tsx:237
+#: src/pages/import-wizard-page.tsx:247
 #: src/pages/library-page.tsx:362
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
@@ -1362,7 +1362,7 @@ msgstr "标记为完成"
 msgid "Mark as not done"
 msgstr "标记为未完成"
 
-#: src/pages/import-wizard-page.tsx:648
+#: src/pages/import-wizard-page.tsx:658
 msgid "Mark watched progress"
 msgstr "标记观看进度"
 
@@ -1427,7 +1427,7 @@ msgstr "移到回收站？"
 msgid "Moved to trash"
 msgstr "已移到回收站"
 
-#: src/pages/import-wizard-page.tsx:46
+#: src/pages/import-wizard-page.tsx:47
 msgid "Music"
 msgstr "音乐"
 
@@ -1445,7 +1445,7 @@ msgstr "名称"
 msgid "Navigation"
 msgstr "导航"
 
-#: src/pages/import-wizard-page.tsx:604
+#: src/pages/import-wizard-page.tsx:614
 msgid "Needs review"
 msgstr "待检查"
 
@@ -1478,7 +1478,7 @@ msgstr "下一步"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:464
+#: src/pages/library-page.tsx:466
 msgid "No"
 msgstr "否"
 
@@ -1520,7 +1520,7 @@ msgstr "暂无有日期的条目。"
 msgid "No dates"
 msgstr "无日期"
 
-#: src/pages/import-wizard-page.tsx:497
+#: src/pages/import-wizard-page.tsx:507
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "没有条目类型映射 {unmatchedLabels}。请在设置中为其添加外部引用字段以导入这些内容。"
 
@@ -1530,7 +1530,7 @@ msgstr "未配置条目类型。"
 
 #: src/pages/calendar-page.tsx:179
 #: src/pages/calendar-page.tsx:189
-#: src/pages/library-page.tsx:410
+#: src/pages/library-page.tsx:412
 msgid "No entries"
 msgstr "无条目"
 
@@ -1587,7 +1587,7 @@ msgstr "暂无列表。创建一个以开始收集条目。"
 msgid "No markdown body sections."
 msgstr "无 Markdown 正文板块。"
 
-#: src/pages/import-wizard-page.tsx:598
+#: src/pages/import-wizard-page.tsx:608
 msgid "No matched source"
 msgstr "无匹配来源"
 
@@ -1599,7 +1599,7 @@ msgstr "未找到匹配项。"
 msgid "No matching entities."
 msgstr "无匹配的条目。"
 
-#: src/pages/import-wizard-page.tsx:600
+#: src/pages/import-wizard-page.tsx:610
 msgid "No matching type"
 msgstr "无匹配的类型"
 
@@ -1619,7 +1619,7 @@ msgstr "没有队列项目与当前筛选条件匹配"
 msgid "No review data"
 msgstr "无检查数据"
 
-#: src/pages/import-wizard-page.tsx:557
+#: src/pages/import-wizard-page.tsx:567
 msgid "no source"
 msgstr "无来源"
 
@@ -1660,7 +1660,7 @@ msgstr "无（纯列表）"
 msgid "Note <0>(optional)</0>"
 msgstr "笔记 <0>（可选）</0>"
 
-#: src/pages/import-wizard-page.tsx:618
+#: src/pages/import-wizard-page.tsx:628
 msgid "notes"
 msgstr "笔记"
 
@@ -1693,7 +1693,7 @@ msgid "Off"
 msgstr "关"
 
 #: src/components/settings/settings-sections.tsx:873
-#: src/pages/import-wizard-page.tsx:57
+#: src/pages/import-wizard-page.tsx:58
 msgid "Ongoing"
 msgstr "进行中"
 
@@ -1701,7 +1701,7 @@ msgstr "进行中"
 msgid "Only image files can be uploaded."
 msgstr "只能上传图片文件。"
 
-#: src/pages/import-wizard-page.tsx:402
+#: src/pages/import-wizard-page.tsx:412
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "仅支持公开的个人资料。在你检查计划之前不会写入任何内容。"
 
@@ -1753,7 +1753,7 @@ msgstr "页面未找到"
 msgid "Parent folder"
 msgstr "父文件夹"
 
-#: src/pages/import-wizard-page.tsx:385
+#: src/pages/import-wizard-page.tsx:395
 msgid "Paste the contents of the exported .csv file"
 msgstr "粘贴导出的 .csv 文件的内容"
 
@@ -1767,7 +1767,7 @@ msgid "Paths"
 msgstr "路径"
 
 #: src/components/settings/settings-sections.tsx:874
-#: src/pages/import-wizard-page.tsx:58
+#: src/pages/import-wizard-page.tsx:59
 msgid "Paused"
 msgstr "暂停"
 
@@ -1781,7 +1781,7 @@ msgstr "计划中"
 
 #: src/components/settings/settings-sections.tsx:794
 #: src/components/settings/settings-sections.tsx:872
-#: src/pages/import-wizard-page.tsx:56
+#: src/pages/import-wizard-page.tsx:57
 msgid "Planning"
 msgstr "计划中"
 
@@ -1826,7 +1826,7 @@ msgstr "数据源优先级"
 msgid "Providers"
 msgstr "数据源"
 
-#: src/pages/import-wizard-page.tsx:363
+#: src/pages/import-wizard-page.tsx:373
 msgid "Public profile"
 msgstr "公开个人资料"
 
@@ -1834,7 +1834,7 @@ msgstr "公开个人资料"
 msgid "Quick Capture"
 msgstr "快速采集"
 
-#: src/pages/import-wizard-page.tsx:48
+#: src/pages/import-wizard-page.tsx:49
 msgid "Real"
 msgstr "真实"
 
@@ -2162,11 +2162,11 @@ msgstr "按标题排序"
 msgid "Sort by update time"
 msgstr "按更新时间排序"
 
-#: src/pages/import-wizard-page.tsx:343
+#: src/pages/import-wizard-page.tsx:353
 msgid "Source"
 msgstr "来源"
 
-#: src/pages/import-wizard-page.tsx:602
+#: src/pages/import-wizard-page.tsx:612
 msgid "Source unavailable"
 msgstr "来源不可用"
 
@@ -2180,8 +2180,8 @@ msgstr "标记 {0} = {1}"
 msgid "Start"
 msgstr "开始"
 
-#: src/pages/import-wizard-page.tsx:208
-#: src/pages/import-wizard-page.tsx:245
+#: src/pages/import-wizard-page.tsx:218
+#: src/pages/import-wizard-page.tsx:255
 msgid "Start over"
 msgstr "重新开始"
 
@@ -2191,7 +2191,7 @@ msgstr "重新开始"
 msgid "Started"
 msgstr "已开始"
 
-#: src/pages/import-wizard-page.tsx:406
+#: src/pages/import-wizard-page.tsx:416
 msgid "Starting…"
 msgstr "正在启动…"
 
@@ -2211,7 +2211,7 @@ msgstr "状态字段"
 msgid "Status Mismatch"
 msgstr "状态不匹配"
 
-#: src/pages/import-wizard-page.tsx:635
+#: src/pages/import-wizard-page.tsx:645
 msgid "Status, score & dates"
 msgstr "状态、评分和日期"
 
@@ -2283,7 +2283,7 @@ msgstr "分类根目录"
 msgid "taxonomy: {0}"
 msgstr "分类：{0}"
 
-#: src/pages/import-wizard-page.tsx:242
+#: src/pages/import-wizard-page.tsx:252
 msgid "The import failed."
 msgstr "导入失败。"
 
@@ -2528,7 +2528,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:463
+#: src/pages/library-page.tsx:465
 msgid "Yes"
 msgstr "是"
 

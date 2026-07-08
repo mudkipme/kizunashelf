@@ -196,6 +196,24 @@ fn first_non_empty(value: &Value, keys: &[&str]) -> String {
     String::new()
 }
 
+/// The display title for the viewer's `language`: Chinese (`name_cn`) for a `zh`
+/// viewer, otherwise the original (`name`), each falling back to the other when
+/// empty. Mirrors `bangumi_episode_groups` so search results, the subject page, and
+/// episode lists all agree — Bangumi always returns both, so this is a client-side
+/// pick, not an API-localized one.
+fn bangumi_display_title<'a>(name: &'a str, name_cn: &'a str, language: Option<&str>) -> &'a str {
+    let (first, second) = if language.unwrap_or("zh").starts_with("zh") {
+        (name_cn, name)
+    } else {
+        (name, name_cn)
+    };
+    if first.is_empty() {
+        second
+    } else {
+        first
+    }
+}
+
 async fn search_bangumi(
     q: &str,
     page: usize,
@@ -209,6 +227,9 @@ async fn search_bangumi(
         return Ok(Vec::new());
     }
     let client = external_client();
+    // The viewer's language picks which of Bangumi's `name`/`name_cn` is the
+    // display title (see `bangumi_display_title`).
+    let language = provider_config.language.as_deref();
     // Resolve a pasted person URL (or a bare id when the field is persons-only).
     if let Some(person_id) = bangumi_person_id(
         q,
@@ -219,7 +240,9 @@ async fn search_bangumi(
             &format!("https://api.bgm.tv/v0/persons/{person_id}"),
         )
         .await?;
-        return Ok(bangumi_person_candidate(&value).into_iter().collect());
+        return Ok(bangumi_person_candidate(&value, language)
+            .into_iter()
+            .collect());
     }
     // Resolve a pasted character URL (or a bare id when the field is
     // characters-only) via the dedicated characters endpoint.
@@ -232,7 +255,9 @@ async fn search_bangumi(
             &format!("https://api.bgm.tv/v0/characters/{character_id}"),
         )
         .await?;
-        return Ok(bangumi_character_candidate(&value).into_iter().collect());
+        return Ok(bangumi_character_candidate(&value, language)
+            .into_iter()
+            .collect());
     }
     // Resolve a pasted subject URL/id (subjects mode only).
     if subject_types.is_some() {
@@ -242,7 +267,7 @@ async fn search_bangumi(
                 &format!("https://api.bgm.tv/v0/subjects/{subject_id}"),
             )
             .await?;
-            return Ok(bangumi_candidate(&value).into_iter().collect());
+            return Ok(bangumi_candidate(&value, language).into_iter().collect());
         }
     }
 
@@ -264,7 +289,10 @@ async fn search_bangumi(
             .await
             .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
-            items.extend(data.iter().filter_map(bangumi_candidate));
+            items.extend(
+                data.iter()
+                    .filter_map(|item| bangumi_candidate(item, language)),
+            );
         }
     }
     if wants_characters {
@@ -283,7 +311,10 @@ async fn search_bangumi(
             .await
             .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
-            items.extend(data.iter().filter_map(bangumi_character_candidate));
+            items.extend(
+                data.iter()
+                    .filter_map(|item| bangumi_character_candidate(item, language)),
+            );
         }
     }
     if wants_persons {
@@ -302,7 +333,10 @@ async fn search_bangumi(
             .await
             .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
-            items.extend(data.iter().filter_map(bangumi_person_candidate));
+            items.extend(
+                data.iter()
+                    .filter_map(|item| bangumi_person_candidate(item, language)),
+            );
         }
     }
     Ok(items)
@@ -391,18 +425,22 @@ fn bangumi_people_id(q: &str, marker: &str, allow_bare: bool) -> Option<String> 
     .then(|| trimmed.to_string())
 }
 
-fn bangumi_character_candidate(item: &Value) -> Option<ExternalCandidate> {
-    bangumi_people_candidate(item, "character")
+fn bangumi_character_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandidate> {
+    bangumi_people_candidate(item, "character", language)
 }
 
-fn bangumi_person_candidate(item: &Value) -> Option<ExternalCandidate> {
-    bangumi_people_candidate(item, "person")
+fn bangumi_person_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandidate> {
+    bangumi_people_candidate(item, "person", language)
 }
 
 /// Builds a candidate for a Bangumi character or person (the two endpoints share
 /// a shape). `kind` is `character` or `person` and selects the URL path; persons
 /// additionally carry `career` and an official site.
-fn bangumi_people_candidate(item: &Value, kind: &str) -> Option<ExternalCandidate> {
+fn bangumi_people_candidate(
+    item: &Value,
+    kind: &str,
+    language: Option<&str>,
+) -> Option<ExternalCandidate> {
     let id = item.get("id")?.as_i64()?.to_string();
     let url = format!("https://bgm.tv/{kind}/{id}");
     let name = item.get("name").and_then(Value::as_str).unwrap_or_default();
@@ -412,7 +450,7 @@ fn bangumi_people_candidate(item: &Value, kind: &str) -> Option<ExternalCandidat
         .map(|infobox| infobox_collect(infobox, &["简体中文名"]))
         .and_then(|values| values.into_iter().next())
         .unwrap_or_default();
-    let title = if name_cn.is_empty() { name } else { &name_cn };
+    let title = bangumi_display_title(name, &name_cn, language);
     if title.is_empty() {
         return None;
     }
@@ -629,7 +667,7 @@ fn bangumi_type(external_type: &str) -> Option<u32> {
     }
 }
 
-fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
+fn bangumi_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandidate> {
     let id = item.get("id")?.as_i64()?.to_string();
     let url = format!("https://bgm.tv/subject/{id}");
     let name = item.get("name").and_then(Value::as_str).unwrap_or_default();
@@ -637,7 +675,7 @@ fn bangumi_candidate(item: &Value) -> Option<ExternalCandidate> {
         .get("name_cn")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    let title = if name_cn.is_empty() { name } else { name_cn };
+    let title = bangumi_display_title(name, name_cn, language);
     if title.is_empty() {
         return None;
     }
@@ -865,17 +903,20 @@ mod tests {
 
     #[test]
     fn candidate_surfaces_extended_metadata() {
-        let candidate = bangumi_candidate(&json!({
-            "id": 8,
-            "name": "Cowboy Bebop",
-            "name_cn": "星际牛仔",
-            "platform": "TV",
-            "eps": 26,
-            "total_episodes": 26,
-            "rating": { "score": 8.7, "rank": 42 },
-            "tags": [{ "name": "Sci-Fi", "count": 100 }, { "name": "Space", "count": 50 }],
-            "meta_tags": ["TV", "Original"]
-        }))
+        let candidate = bangumi_candidate(
+            &json!({
+                "id": 8,
+                "name": "Cowboy Bebop",
+                "name_cn": "星际牛仔",
+                "platform": "TV",
+                "eps": 26,
+                "total_episodes": 26,
+                "rating": { "score": 8.7, "rank": 42 },
+                "tags": [{ "name": "Sci-Fi", "count": 100 }, { "name": "Space", "count": 50 }],
+                "meta_tags": ["TV", "Original"]
+            }),
+            Some("zh"),
+        )
         .unwrap();
 
         let metadata = &candidate.metadata;
@@ -889,19 +930,22 @@ mod tests {
 
     #[test]
     fn character_candidate_surfaces_metadata() {
-        let candidate = super::bangumi_character_candidate(&json!({
-            "id": 47,
-            "name": "キョン",
-            "gender": "male",
-            "birth_mon": 10,
-            "birth_day": 11,
-            "images": { "large": "https://img/large.jpg", "grid": "https://img/grid.jpg" },
-            "summary": "本作的主角。",
-            "infobox": [
-                { "key": "简体中文名", "value": "阿虚" },
-                { "key": "别名", "value": [{ "k": "罗马字", "v": "Kyon" }] }
-            ]
-        }))
+        let candidate = super::bangumi_character_candidate(
+            &json!({
+                "id": 47,
+                "name": "キョン",
+                "gender": "male",
+                "birth_mon": 10,
+                "birth_day": 11,
+                "images": { "large": "https://img/large.jpg", "grid": "https://img/grid.jpg" },
+                "summary": "本作的主角。",
+                "infobox": [
+                    { "key": "简体中文名", "value": "阿虚" },
+                    { "key": "别名", "value": [{ "k": "罗马字", "v": "Kyon" }] }
+                ]
+            }),
+            Some("zh"),
+        )
         .unwrap();
 
         assert_eq!(candidate.source_id, "47");
@@ -924,19 +968,22 @@ mod tests {
 
     #[test]
     fn person_candidate_surfaces_birthday_and_career() {
-        let candidate = super::bangumi_person_candidate(&json!({
-            "id": 4,
-            "name": "水樹奈々",
-            "career": ["artist", "seiyu"],
-            "birth_year": 1980,
-            "birth_mon": 1,
-            "birth_day": 21,
-            "images": { "large": "https://img/p.jpg" },
-            "infobox": [
-                { "key": "简体中文名", "value": "水树奈奈" },
-                { "key": "官网", "value": "https://www.mizukinana.jp" }
-            ]
-        }))
+        let candidate = super::bangumi_person_candidate(
+            &json!({
+                "id": 4,
+                "name": "水樹奈々",
+                "career": ["artist", "seiyu"],
+                "birth_year": 1980,
+                "birth_mon": 1,
+                "birth_day": 21,
+                "images": { "large": "https://img/p.jpg" },
+                "infobox": [
+                    { "key": "简体中文名", "value": "水树奈奈" },
+                    { "key": "官网", "value": "https://www.mizukinana.jp" }
+                ]
+            }),
+            Some("zh"),
+        )
         .unwrap();
 
         assert_eq!(candidate.url, "https://bgm.tv/person/4");
@@ -983,7 +1030,7 @@ mod tests {
                 { "key": "ISBN", "value": "9784040000000" },
                 { "key": "ISBN-10", "value": "4040000009" }
             ]
-        }))
+        }), Some("zh"))
         .unwrap();
 
         // Cover prefers `large`; the original name is left untagged (only zh known).
@@ -1014,20 +1061,23 @@ mod tests {
     fn game_platform_uses_infobox_hardware_over_subtype_label() {
         // A game's top-level `platform` is only the subject subtype label (`游戏`);
         // the real hardware platforms live in the `平台` infobox key and override it.
-        let candidate = bangumi_candidate(&json!({
-            "id": 584744,
-            "name": "スーパーダンガンロンパ2×2",
-            "name_cn": "超级枪弹辩驳２×２",
-            "platform": "游戏",
-            "infobox": [
-                { "key": "平台", "value": [
-                    { "v": "Nintendo Switch 2" },
-                    { "v": "Nintendo Switch" },
-                    { "v": "PS5" },
-                    { "v": "PC" }
-                ] }
-            ]
-        }))
+        let candidate = bangumi_candidate(
+            &json!({
+                "id": 584744,
+                "name": "スーパーダンガンロンパ2×2",
+                "name_cn": "超级枪弹辩驳２×２",
+                "platform": "游戏",
+                "infobox": [
+                    { "key": "平台", "value": [
+                        { "v": "Nintendo Switch 2" },
+                        { "v": "Nintendo Switch" },
+                        { "v": "PS5" },
+                        { "v": "PC" }
+                    ] }
+                ]
+            }),
+            Some("zh"),
+        )
         .unwrap();
 
         assert_eq!(
@@ -1038,6 +1088,27 @@ mod tests {
                 "PS5",
                 "PC"
             ]))
+        );
+    }
+
+    #[test]
+    fn candidate_display_title_follows_viewer_language() {
+        let subject = json!({ "id": 8, "name": "Cowboy Bebop", "name_cn": "星际牛仔" });
+        // A zh viewer sees the Chinese title, with the original kept as the subtitle.
+        let zh = bangumi_candidate(&subject, Some("zh")).unwrap();
+        assert_eq!(zh.title, "星际牛仔");
+        assert_eq!(zh.original_title.as_deref(), Some("Cowboy Bebop"));
+        // An en/ja viewer sees the original title up front instead of the Chinese one.
+        let en = bangumi_candidate(&subject, Some("en")).unwrap();
+        assert_eq!(en.title, "Cowboy Bebop");
+        assert_eq!(en.original_title.as_deref(), Some("Cowboy Bebop"));
+        // Either way the Chinese title stays tagged in the titles map.
+        assert_eq!(en.titles.get("zh"), Some(&"星际牛仔".to_string()));
+        // A subject with only an original name shows it regardless of language.
+        let original_only = json!({ "id": 9, "name": "Serial Experiments Lain" });
+        assert_eq!(
+            bangumi_candidate(&original_only, Some("zh")).unwrap().title,
+            "Serial Experiments Lain"
         );
     }
 }

@@ -127,6 +127,17 @@ pub fn thetvdb_language(code: &str) -> Option<&'static str> {
         .map(|(_, _, tvdb)| *tvdb)
 }
 
+/// The inverse of [`thetvdb_language`]: the ISO 639-1 title language for a
+/// TheTVDB 3-letter code (e.g. `zho` → `zh`), used to tag the language-keyed
+/// titles in a TheTVDB translations map. `None` for a code outside our set.
+pub fn thetvdb_iso_language(tvdb_code: &str) -> Option<&'static str> {
+    let tvdb_code = tvdb_code.trim().to_ascii_lowercase();
+    SUPPORTED_LANGUAGES
+        .iter()
+        .find(|(_, _, tvdb)| *tvdb == tvdb_code)
+        .map(|(iso, _, _)| *iso)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,6 +160,19 @@ mod tests {
         assert_eq!(thetvdb_language("zh-Hant"), Some("zho"));
         assert_eq!(thetvdb_language("ja"), Some("jpn"));
         assert_eq!(thetvdb_language("xx"), None);
+    }
+
+    #[test]
+    fn thetvdb_iso_language_reverses_the_mapping() {
+        assert_eq!(thetvdb_iso_language("zho"), Some("zh"));
+        assert_eq!(thetvdb_iso_language("jpn"), Some("ja"));
+        assert_eq!(thetvdb_iso_language("ENG"), Some("en"));
+        assert_eq!(thetvdb_iso_language("xxx"), None);
+        // Round-trips for every supported language.
+        for (iso, _, tvdb) in SUPPORTED_LANGUAGES {
+            assert_eq!(thetvdb_language(iso), Some(*tvdb));
+            assert_eq!(thetvdb_iso_language(tvdb), Some(*iso));
+        }
     }
 
     #[test]

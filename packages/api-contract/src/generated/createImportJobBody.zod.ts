@@ -10,7 +10,8 @@ export const CreateImportJobBody = zod.object({
   "source": zod.string(),
   "input": zod.object({
   "username": zod.string().nullish(),
-  "csvText": zod.string().nullish()
+  "csvText": zod.string().nullish(),
+  "language": zod.string().nullish().describe('The viewer\'s language preference (request context, not user-entered),\nused to localize review-list display titles where the source distinguishes\nlanguages (e.g. Bangumi\'s `name`\/`name_cn`). Mirrors the external-search\n`language` param. Optional; absent falls back to the source default.')
 }).describe('Input for a source fetch: a username (profile sources) or the pasted text of\na CSV export (CSV sources). CSV arrives as a string field, not multipart, so\nthe generated clients and the iOS in-process tunnel stay trivial.')
 })
 

@@ -1178,6 +1178,12 @@ pub struct ImportInput {
     pub username: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub csv_text: Option<String>,
+    /// The viewer's language preference (request context, not user-entered),
+    /// used to localize review-list display titles where the source distinguishes
+    /// languages (e.g. Bangumi's `name`/`name_cn`). Mirrors the external-search
+    /// `language` param. Optional; absent falls back to the source default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
