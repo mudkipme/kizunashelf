@@ -11,6 +11,7 @@ mod log;
 mod mutations;
 mod path_suggestions;
 mod router;
+mod smart_lists;
 mod state;
 mod tags;
 pub mod tunnel;

@@ -7,8 +7,8 @@ use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, move_to_trash, sanitize_basename, write_entity_raw};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
-    AddListItemRequest, CreateListRequest, DeleteListResponse, ListDetail, ListItem, ListMarker,
-    ListSection, ListSummary, ListsResponse, UpdateListRequest,
+    AddListItemRequest, CreateListRequest, DeleteListResponse, ListDetail, ListItem, ListKind,
+    ListMarker, ListSection, ListSummary, ListsResponse, UpdateListRequest,
 };
 use crate::library::{file_revision, find_target, normalized_entity_basename_index};
 use crate::lists::{
@@ -66,6 +66,11 @@ pub(crate) async fn get_lists(
         .as_ref()
         .map(|_| normalized_entity_basename_index(&library.records));
 
+    // Smart lists (`.base` files in the same directory) join the same index.
+    let smart_items =
+        super::smart_lists::smart_list_summaries(vfs.as_ref(), &library, query.entity.as_deref())
+            .await;
+
     let mut items: Vec<ListSummary> = files
         .into_iter()
         .filter_map(|(path, bytes)| String::from_utf8(bytes).ok().map(|raw| (path, raw)))
@@ -87,6 +92,7 @@ pub(crate) async fn get_lists(
             };
             ListSummary {
                 name: id.clone(),
+                kind: ListKind::Static,
                 description: parsed.description.trim().to_string(),
                 item_count: all_items.len(),
                 section_count: parsed
@@ -100,6 +106,7 @@ pub(crate) async fn get_lists(
             }
         })
         .collect();
+    items.extend(smart_items);
     items.sort_by_key(|item| item.name.to_lowercase());
 
     Ok(Json(ListsResponse { items }))

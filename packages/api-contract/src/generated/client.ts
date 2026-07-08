@@ -89,6 +89,10 @@ import type {
 } from './createListRequest.zod';
 
 import type {
+  CreateSmartListRequest
+} from './createSmartListRequest.zod';
+
+import type {
   DeleteEntityRequest
 } from './deleteEntityRequest.zod';
 
@@ -155,6 +159,10 @@ import type {
 import type {
   GetPathSuggestionsParams
 } from './getPathSuggestionsParams.zod';
+
+import type {
+  GetSmartListResultsParams
+} from './getSmartListResultsParams.zod';
 
 import type {
   GetStatsParams
@@ -257,6 +265,14 @@ import {
 } from './settingsConfigResponse.zod';
 
 import {
+  SmartListDetail
+} from './smartListDetail.zod';
+
+import type {
+  SmartListPreviewRequest
+} from './smartListPreviewRequest.zod';
+
+import {
   StatsResponse
 } from './statsResponse.zod';
 
@@ -283,6 +299,10 @@ import type {
 import type {
   UpdateListRequest
 } from './updateListRequest.zod';
+
+import type {
+  UpdateSmartListRequest
+} from './updateSmartListRequest.zod';
 
 export const getGetHealthUrl = () => {
 
@@ -1938,5 +1958,189 @@ export const removeListItem = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? ListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCreateSmartListUrl = () => {
+
+
+
+
+  return `/api/smart-lists`
+}
+
+export const createSmartList = async (createSmartListRequest: CreateSmartListRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SmartListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getCreateSmartListUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createSmartListRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SmartListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getPreviewSmartListUrl = () => {
+
+
+
+
+  return `/api/smart-lists/preview`
+}
+
+export const previewSmartList = async (smartListPreviewRequest: SmartListPreviewRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityListResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getPreviewSmartListUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(smartListPreviewRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityListResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetSmartListUrl = (id: string,) => {
+
+
+
+
+  return `/api/smart-lists/${encodeURIComponent(String(id))}`
+}
+
+export const getSmartList = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SmartListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getGetSmartListUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SmartListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getUpdateSmartListUrl = (id: string,) => {
+
+
+
+
+  return `/api/smart-lists/${encodeURIComponent(String(id))}`
+}
+
+export const updateSmartList = async (id: string,
+    updateSmartListRequest: UpdateSmartListRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SmartListDetail> => {
+
+  const res = await (fetchFn ?? fetch)(getUpdateSmartListUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateSmartListRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SmartListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getDeleteSmartListUrl = (id: string,) => {
+
+
+
+
+  return `/api/smart-lists/${encodeURIComponent(String(id))}`
+}
+
+export const deleteSmartList = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<DeleteListResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getDeleteSmartListUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? DeleteListResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetSmartListResultsUrl = (id: string,
+    params?: GetSmartListResultsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/smart-lists/${encodeURIComponent(String(id))}/results?${stringifiedParams}` : `/api/smart-lists/${encodeURIComponent(String(id))}/results`
+}
+
+export const getSmartListResults = async (id: string,
+    params?: GetSmartListResultsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityListResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetSmartListResultsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityListResponse.parse(parsedBody) : parsedBody
   return data
 }

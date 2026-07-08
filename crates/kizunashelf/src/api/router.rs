@@ -21,6 +21,10 @@ use super::lists::{
 use super::log::log_activity;
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
+use super::smart_lists::{
+    create_smart_list, delete_smart_list, get_smart_list, preview_smart_list, smart_list_results,
+    update_smart_list,
+};
 use super::state::{ApiOptions, AppState};
 use super::tags::tags;
 use crate::calendar::{ActivityResponse, EntityDatesResponse, UpcomingResponse};
@@ -33,7 +37,7 @@ use crate::contract::{
     HealthResponse, HomeResponse, ImportJob, ImportJobListResponse, ImportSourceCatalogResponse,
     LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse, PathSuggestionsResponse,
     QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse, SettingsConfigResponse,
-    StatsResponse, TagsResponse, TypePresetsResponse,
+    SmartListDetail, StatsResponse, TagsResponse, TypePresetsResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -599,6 +603,63 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<200, Json<ListDetail>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/smart-lists",
+            post_with(create_smart_list, |op| {
+                op.id("createSmartList")
+                    .response::<200, Json<SmartListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/smart-lists/preview",
+            post_with(preview_smart_list, |op| {
+                op.id("previewSmartList")
+                    .response::<200, Json<EntityListResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/smart-lists/{id}",
+            get_with(get_smart_list, |op| {
+                op.id("getSmartList")
+                    .response::<200, Json<SmartListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .post_with(update_smart_list, |op| {
+                op.id("updateSmartList")
+                    .response::<200, Json<SmartListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .delete_with(delete_smart_list, |op| {
+                op.id("deleteSmartList")
+                    .response::<200, Json<DeleteListResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/smart-lists/{id}/results",
+            get_with(smart_list_results, |op| {
+                op.id("getSmartListResults")
+                    .response::<200, Json<EntityListResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),

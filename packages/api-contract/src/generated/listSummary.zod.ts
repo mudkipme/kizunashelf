@@ -12,7 +12,8 @@ export const listSummarySectionCountMin = 0;
 
 
 export const ListSummary = zod.object({
-  "id": zod.string().describe('Stable identifier: the list file\'s basename (without `.md`).'),
+  "id": zod.string().describe('Stable identifier: the list file\'s basename (without its extension).\nStatic and smart lists are separate id namespaces (different detail\nendpoints), so the same basename may appear once per kind.'),
+  "kind": zod.enum(['static', 'smart']).describe('Which kind of list a summary row is: a hand-curated Markdown list or a\ncriteria-driven smart list (`.base` file). The two live in the same index\nbut are served by different detail endpoints.'),
   "name": zod.string().describe('Display name (the basename).'),
   "path": zod.string().describe('Vault-relative path of the Markdown file.'),
   "description": zod.string(),
