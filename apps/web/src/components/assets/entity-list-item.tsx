@@ -13,6 +13,7 @@ export function EntityListItem({
   entity,
   labelsByType,
   showCover = true,
+  showType = true,
 }: {
   entity: EntitySummary;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
@@ -20,6 +21,9 @@ export function EntityListItem({
   /// field; a placeholder still shows when the type has a cover but this entity
   /// has no value.
   showCover?: boolean;
+  /// Whether to render the type badge. Off when the list is already scoped to a
+  /// single type, where labeling every row with it is redundant.
+  showType?: boolean;
 }) {
   const language = useTitleLanguage();
 
@@ -42,7 +46,7 @@ export function EntityListItem({
       <span className="min-w-0">
         <span className="flex flex-wrap items-center gap-2">
           <EntityTitle entity={entity} language={language} className="truncate text-sm font-medium" />
-          <Badge variant="outline">{entity.typeLabel}</Badge>
+          {showType ? <Badge variant="outline">{entity.typeLabel}</Badge> : null}
           <StatusBadge status={entity.status} />
         </span>
         <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">

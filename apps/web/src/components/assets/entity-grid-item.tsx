@@ -13,6 +13,7 @@ export function EntityGridItem({
   entity,
   labelsByType,
   showCover = true,
+  showType = true,
 }: {
   entity: EntitySummary;
   labelsByType?: ReadonlyMap<string, ReadonlyMap<string, string>>;
@@ -20,6 +21,9 @@ export function EntityGridItem({
   /// field; a placeholder still shows when the type has a cover but this entity
   /// has no value.
   showCover?: boolean;
+  /// Whether to render the type badge. Off when the list is already scoped to a
+  /// single type, where labeling every card with it is redundant.
+  showType?: boolean;
 }) {
   const language = useTitleLanguage();
 
@@ -48,10 +52,12 @@ export function EntityGridItem({
         </div>
       ) : null}
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Badge variant="outline">{entity.typeLabel}</Badge>
-          <StatusBadge status={entity.status} />
-        </div>
+        {showType || entity.status ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {showType ? <Badge variant="outline">{entity.typeLabel}</Badge> : null}
+            <StatusBadge status={entity.status} />
+          </div>
+        ) : null}
         <EntityTitle
           as="div"
           entity={entity}

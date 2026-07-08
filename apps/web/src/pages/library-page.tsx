@@ -392,6 +392,7 @@ export function LibraryPage() {
                       entity={entity}
                       labelsByType={fieldLabels}
                       showCover={showCovers}
+                      showType={isGlobalType}
                     />
                   ))}
                 </div>
@@ -402,6 +403,7 @@ export function LibraryPage() {
                     entity={entity}
                     labelsByType={fieldLabels}
                     showCover={showCovers}
+                    showType={isGlobalType}
                   />
                 ))
               )}
