@@ -13,11 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:201
+#: src/components/assets/quick-log-dialog.tsx:204
 msgid " (already logged)"
 msgstr "（已记录）"
 
-#: src/components/assets/quick-log-dialog.tsx:201
+#: src/components/assets/quick-log-dialog.tsx:204
 msgid " (new note)"
 msgstr "（新建笔记）"
 
@@ -254,12 +254,12 @@ msgstr "{selectedTotal, plural, other {# 项有日期}}"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {导入 # 项}}"
 
-#: src/pages/library-page.tsx:357
+#: src/pages/library-page.tsx:365
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 条}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:352
+#: src/pages/library-page.tsx:360
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 条}} · 第 {0}/{totalPages} 页"
 
@@ -286,7 +286,7 @@ msgstr "📅 已排期"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "已存在以此标题命名的文件，因此保存为「{0}」。"
 
-#: src/components/layout/app-frame.tsx:125
+#: src/components/layout/app-frame.tsx:132
 msgid "A shelf for everything you love"
 msgstr "安放你所爱之物的书架"
 
@@ -300,7 +300,7 @@ msgid "Actions"
 msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:111
-#: src/components/layout/app-frame.tsx:380
+#: src/components/layout/app-frame.tsx:360
 #: src/pages/activity-page.tsx:108
 #: src/pages/statistics-page.tsx:80
 msgid "Activity"
@@ -311,8 +311,8 @@ msgstr "活动"
 #: src/components/settings/settings-sections.tsx:1000
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
-#: src/pages/library-page.tsx:375
-#: src/pages/library-page.tsx:380
+#: src/pages/library-page.tsx:383
+#: src/pages/library-page.tsx:388
 #: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "添加"
@@ -340,7 +340,7 @@ msgid "Add custom type"
 msgstr "添加自定义类型"
 
 #: src/pages/home-page.tsx:42
-#: src/pages/library-page.tsx:369
+#: src/pages/library-page.tsx:377
 msgid "Add entity"
 msgstr "添加条目"
 
@@ -436,7 +436,7 @@ msgid "All types"
 msgstr "所有类型"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:294
+#: src/pages/library-page.tsx:300
 msgid "All types ({0})"
 msgstr "所有类型（{0}）"
 
@@ -445,15 +445,15 @@ msgid "Anime"
 msgstr "动画"
 
 #. placeholder {0}: filter.label
-#: src/components/assets/asset-toolbar.tsx:154
-#: src/components/assets/asset-toolbar.tsx:172
-#: src/components/assets/asset-toolbar.tsx:236
+#: src/components/assets/asset-toolbar.tsx:160
+#: src/components/assets/asset-toolbar.tsx:178
+#: src/components/assets/asset-toolbar.tsx:242
 msgid "Any {0}"
 msgstr "任意 {0}"
 
 #: src/components/assets/quick-log-dialog.tsx:141
-msgid "Anything worth remembering — e.g. an episode number"
-msgstr "任何值得记录的内容 — 例如集数"
+msgid "Anything worth remembering"
+msgstr "任何值得记录的内容"
 
 #: src/components/settings/settings-dialogs.tsx:381
 #: src/components/settings/settings-dialogs.tsx:509
@@ -468,7 +468,7 @@ msgstr "应用所选"
 msgid "Applying…"
 msgstr "正在应用…"
 
-#: src/components/assets/asset-toolbar.tsx:108
+#: src/components/assets/asset-toolbar.tsx:114
 #: src/components/settings/settings-sections.tsx:220
 msgid "Ascending"
 msgstr "升序"
@@ -482,7 +482,7 @@ msgstr "资源根目录"
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
-#: src/components/layout/app-frame.tsx:115
+#: src/components/layout/app-frame.tsx:122
 #: src/components/settings/preset-picker.tsx:173
 #: src/components/settings/settings-dialogs.tsx:78
 #: src/components/settings/settings-editor.tsx:172
@@ -522,14 +522,14 @@ msgstr "损坏的资源"
 msgid "Browse library"
 msgstr "浏览库"
 
-#: src/components/layout/app-frame.tsx:377
+#: src/components/layout/app-frame.tsx:357
 #: src/pages/calendar-page.tsx:84
 msgid "Calendar"
 msgstr "日历"
 
 #: src/components/assets/asset-download-panel.tsx:103
 #: src/components/assets/episode-sync-dialog.tsx:334
-#: src/components/assets/quick-log-dialog.tsx:157
+#: src/components/assets/quick-log-dialog.tsx:160
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
 #: src/components/settings/settings-dialogs.tsx:506
@@ -586,8 +586,8 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/layout/app-frame.tsx:315
-#: src/components/layout/app-frame.tsx:331
+#: src/components/layout/app-frame.tsx:295
+#: src/components/layout/app-frame.tsx:311
 msgid "Close navigation"
 msgstr "关闭导航"
 
@@ -646,11 +646,11 @@ msgstr "继续"
 msgid "Continue ({0})"
 msgstr "继续（{0}）"
 
-#: src/components/layout/app-frame.tsx:363
+#: src/components/layout/app-frame.tsx:343
 msgid "Core Views"
 msgstr "核心视图"
 
-#: src/components/assets/asset-toolbar.tsx:220
+#: src/components/assets/asset-toolbar.tsx:226
 msgid "Could not load options."
 msgstr "无法加载选项。"
 
@@ -797,7 +797,7 @@ msgstr "使用默认数据源顺序。"
 msgid "Delete"
 msgstr "删除"
 
-#: src/components/assets/asset-toolbar.tsx:109
+#: src/components/assets/asset-toolbar.tsx:115
 #: src/components/settings/settings-sections.tsx:221
 msgid "Descending"
 msgstr "降序"
@@ -818,7 +818,7 @@ msgstr "取消选择分组"
 msgid "Details"
 msgstr "详情"
 
-#: src/components/assets/asset-toolbar.tsx:106
+#: src/components/assets/asset-toolbar.tsx:112
 #: src/components/settings/settings-sections.tsx:208
 msgid "Direction"
 msgstr "方向"
@@ -1037,10 +1037,14 @@ msgstr "按来源筛选"
 msgid "Filter by type"
 msgstr "按类型筛选"
 
-#: src/components/assets/asset-toolbar.tsx:73
+#: src/components/assets/asset-toolbar.tsx:76
 #: src/components/settings/settings-sections.tsx:171
 msgid "Filters"
 msgstr "筛选条件"
+
+#: src/components/assets/quick-log-dialog.tsx:145
+msgid "For example, an episode number."
+msgstr "例如：集数。"
 
 #: src/pages/settings-page.tsx:79
 msgid "Form"
@@ -1054,7 +1058,7 @@ msgstr "游戏"
 msgid "Give your list a name."
 msgstr "为你的列表命名。"
 
-#: src/components/layout/app-frame.tsx:114
+#: src/components/layout/app-frame.tsx:121
 msgid "Go back"
 msgstr "返回"
 
@@ -1062,7 +1066,7 @@ msgstr "返回"
 msgid "Go to library"
 msgstr "前往库"
 
-#: src/components/assets/asset-toolbar.tsx:128
+#: src/components/assets/asset-toolbar.tsx:134
 msgid "Grid"
 msgstr "网格"
 
@@ -1074,7 +1078,7 @@ msgstr "有日期"
 msgid "Heading"
 msgstr "标题"
 
-#: src/components/layout/app-frame.tsx:366
+#: src/components/layout/app-frame.tsx:346
 #: src/components/settings/settings-editor.tsx:108
 #: src/components/settings/settings-editor.tsx:263
 #: src/pages/home-page.tsx:30
@@ -1099,7 +1103,7 @@ msgstr "图标"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:414
+#: src/components/layout/app-frame.tsx:394
 #: src/pages/import-wizard-page.tsx:210
 msgid "Import"
 msgstr "导入"
@@ -1209,7 +1213,7 @@ msgstr "稍后"
 msgid "less"
 msgstr "收起"
 
-#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:354
 msgid "Library"
 msgstr "库"
 
@@ -1251,7 +1255,7 @@ msgstr "关联"
 msgid "Links to"
 msgstr "关联到"
 
-#: src/components/assets/asset-toolbar.tsx:119
+#: src/components/assets/asset-toolbar.tsx:125
 msgid "List"
 msgstr "列表"
 
@@ -1272,7 +1276,7 @@ msgstr "未找到列表"
 msgid "List style"
 msgstr "列表样式"
 
-#: src/components/layout/app-frame.tsx:383
+#: src/components/layout/app-frame.tsx:363
 #: src/pages/lists-page.tsx:41
 msgid "Lists"
 msgstr "列表"
@@ -1293,7 +1297,7 @@ msgstr "正在加载内置类型…"
 msgid "Loading entity"
 msgstr "正在加载条目"
 
-#: src/components/layout/app-frame.tsx:407
+#: src/components/layout/app-frame.tsx:387
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
@@ -1307,7 +1311,7 @@ msgstr "正在加载分类"
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:247
-#: src/pages/library-page.tsx:362
+#: src/pages/library-page.tsx:370
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
@@ -1320,7 +1324,7 @@ msgstr "正在加载分类"
 msgid "Loading…"
 msgstr "正在加载…"
 
-#: src/components/assets/quick-log-dialog.tsx:161
+#: src/components/assets/quick-log-dialog.tsx:164
 #: src/pages/entity-page.tsx:347
 msgid "Log"
 msgstr "记录"
@@ -1341,7 +1345,7 @@ msgstr "记录到每日笔记"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "记录默认值 — 记录行写入的标题下方，以及后备的行格式。每个类型都可覆盖这些设置并添加自己的标签。"
 
-#: src/components/assets/quick-log-dialog.tsx:161
+#: src/components/assets/quick-log-dialog.tsx:164
 msgid "Logging…"
 msgstr "正在记录…"
 
@@ -1371,7 +1375,7 @@ msgid "Markdown body sections"
 msgstr "Markdown 正文板块"
 
 #. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:212
+#: src/components/assets/quick-log-dialog.tsx:215
 msgid "Marks as {0}"
 msgstr "标记为 {0}"
 
@@ -1440,8 +1444,8 @@ msgstr "我的保管库"
 msgid "Name"
 msgstr "名称"
 
-#: src/components/layout/app-frame.tsx:320
-#: src/components/layout/app-frame.tsx:328
+#: src/components/layout/app-frame.tsx:300
+#: src/components/layout/app-frame.tsx:308
 msgid "Navigation"
 msgstr "导航"
 
@@ -1478,7 +1482,7 @@ msgstr "下一步"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:466
+#: src/pages/library-page.tsx:474
 msgid "No"
 msgstr "否"
 
@@ -1530,7 +1534,7 @@ msgstr "未配置条目类型。"
 
 #: src/pages/calendar-page.tsx:179
 #: src/pages/calendar-page.tsx:189
-#: src/pages/library-page.tsx:412
+#: src/pages/library-page.tsx:420
 msgid "No entries"
 msgstr "无条目"
 
@@ -1590,6 +1594,10 @@ msgstr "无 Markdown 正文板块。"
 #: src/pages/import-wizard-page.tsx:608
 msgid "No matched source"
 msgstr "无匹配来源"
+
+#: src/components/layout/header-search.tsx:188
+msgid "No matches"
+msgstr "无匹配项"
 
 #: src/pages/quick-capture-page.tsx:259
 msgid "No matches found."
@@ -1678,7 +1686,7 @@ msgstr "显示在条目下方的笔记…"
 msgid "Nothing here yet"
 msgstr "这里还什么都没有"
 
-#: src/components/assets/quick-log-dialog.tsx:196
+#: src/components/assets/quick-log-dialog.tsx:199
 msgid "Nothing to log for this type."
 msgstr "此类型没有可记录的内容。"
 
@@ -1721,7 +1729,7 @@ msgstr "打开现有保管库"
 msgid "Open folder"
 msgstr "打开文件夹"
 
-#: src/components/layout/app-frame.tsx:135
+#: src/components/layout/app-frame.tsx:142
 msgid "Open navigation"
 msgstr "打开导航"
 
@@ -1793,7 +1801,7 @@ msgstr "上一步"
 msgid "Preview"
 msgstr "预览"
 
-#: src/components/assets/quick-log-dialog.tsx:187
+#: src/components/assets/quick-log-dialog.tsx:190
 msgid "Previewing…"
 msgstr "正在预览…"
 
@@ -1954,12 +1962,12 @@ msgstr "正在重命名…"
 msgid "replaces existing section"
 msgstr "替换现有板块"
 
-#: src/components/layout/app-frame.tsx:223
-#: src/components/layout/app-frame.tsx:224
+#: src/components/layout/app-frame.tsx:234
+#: src/components/layout/app-frame.tsx:235
 msgid "Rescan vault"
 msgstr "重新扫描保管库"
 
-#: src/components/layout/app-frame.tsx:420
+#: src/components/layout/app-frame.tsx:400
 msgid "Review"
 msgstr "检查"
 
@@ -2026,8 +2034,8 @@ msgid "Search external sources, or add manually"
 msgstr "搜索外部来源，或手动添加"
 
 #: src/components/layout/app-frame.tsx:60
-#: src/components/layout/app-frame.tsx:153
-#: src/components/layout/app-frame.tsx:255
+#: src/components/layout/app-frame.tsx:162
+#: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "搜索库"
 
@@ -2088,6 +2096,14 @@ msgstr "板块"
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 msgstr "板块是库中可配置的书架。在设置中添加一个，或直接进入你的库。"
 
+#: src/components/layout/header-search.tsx:108
+msgid "See all results"
+msgstr "查看全部结果"
+
+#: src/components/layout/header-search.tsx:165
+msgid "See all results for “{query}”"
+msgstr "查看“{query}”的全部结果"
+
 #: src/components/assets/episode-sync-dialog.tsx:269
 msgid "Select all"
 msgstr "全选"
@@ -2116,7 +2132,7 @@ msgstr "选择类型"
 msgid "Selected Metadata"
 msgstr "所选元数据"
 
-#: src/components/layout/app-frame.tsx:423
+#: src/components/layout/app-frame.tsx:403
 #: src/components/settings/settings-editor.tsx:161
 msgid "Settings"
 msgstr "设置"
@@ -2140,25 +2156,29 @@ msgstr "部分图片无法下载：{reasons}"
 msgid "Something went wrong"
 msgstr "出了点问题"
 
-#: src/components/assets/asset-toolbar.tsx:91
+#: src/components/assets/asset-toolbar.tsx:94
 #: src/components/settings/settings-sections.tsx:194
 msgid "Sort"
 msgstr "排序"
 
 #. placeholder {0}: dateFieldLabel(field)
-#: src/components/assets/asset-toolbar.tsx:97
+#: src/components/assets/asset-toolbar.tsx:103
 msgid "Sort by {0}"
 msgstr "按 {0} 排序"
 
-#: src/components/assets/asset-toolbar.tsx:100
+#: src/components/assets/asset-toolbar.tsx:106
 msgid "Sort by connections"
 msgstr "按关联数排序"
 
-#: src/components/assets/asset-toolbar.tsx:93
+#: src/components/assets/asset-toolbar.tsx:97
+msgid "Sort by relevance"
+msgstr "按相关度排序"
+
+#: src/components/assets/asset-toolbar.tsx:99
 msgid "Sort by title"
 msgstr "按标题排序"
 
-#: src/components/assets/asset-toolbar.tsx:94
+#: src/components/assets/asset-toolbar.tsx:100
 msgid "Sort by update time"
 msgstr "按更新时间排序"
 
@@ -2172,7 +2192,7 @@ msgstr "来源不可用"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:206
+#: src/components/assets/quick-log-dialog.tsx:209
 msgid "Stamps {0} = {1}"
 msgstr "标记 {0} = {1}"
 
@@ -2195,7 +2215,7 @@ msgstr "已开始"
 msgid "Starting…"
 msgstr "正在启动…"
 
-#: src/components/layout/app-frame.tsx:417
+#: src/components/layout/app-frame.tsx:397
 msgid "Statistics"
 msgstr "统计"
 
@@ -2256,12 +2276,12 @@ msgid "System theme. Switch to light theme."
 msgstr "跟随系统主题。切换到浅色主题。"
 
 #: src/components/entities/metadata-editor.tsx:83
-#: src/pages/library-page.tsx:95
+#: src/pages/library-page.tsx:101
 msgid "Tags"
 msgstr "标签"
 
 #: src/components/calendar/calendar-entry-item.tsx:24
-#: src/components/layout/app-frame.tsx:389
+#: src/components/layout/app-frame.tsx:369
 msgid "Taxonomy"
 msgstr "分类"
 
@@ -2346,7 +2366,7 @@ msgstr "今天"
 msgid "Todo"
 msgstr "待办"
 
-#: src/pages/library-page.tsx:308
+#: src/pages/library-page.tsx:314
 msgid "Toggle filters"
 msgstr "切换筛选条件"
 
@@ -2370,7 +2390,7 @@ msgstr "重试"
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
 #: src/pages/entity-create-page.tsx:92
-#: src/pages/library-page.tsx:291
+#: src/pages/library-page.tsx:297
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
 msgstr "类型"
@@ -2488,7 +2508,7 @@ msgstr "保管库路径或 URL"
 msgid "Vault removed"
 msgstr "已移除保管库"
 
-#: src/components/layout/app-frame.tsx:213
+#: src/components/layout/app-frame.tsx:224
 msgid "Vault rescanned"
 msgstr "已重新扫描保管库"
 
@@ -2528,7 +2548,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:465
+#: src/pages/library-page.tsx:473
 msgid "Yes"
 msgstr "是"
 

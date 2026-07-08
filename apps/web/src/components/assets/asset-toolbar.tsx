@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { allOptions, defaultDirection, defaultSort } from "@/lib/constants";
+import { allOptions, defaultDirection, defaultSort, relevanceSort } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
@@ -35,6 +35,8 @@ type AssetToolbarProps = {
   direction: string;
   view: string;
   fieldFilters?: FieldFilter[];
+  /** Show a "Sort by relevance" option — only meaningful while searching. */
+  showRelevanceSort?: boolean;
   dateFieldLabel?: (field: string) => string;
   onSortChange: (value: string) => void;
   onDirectionChange: (value: string) => void;
@@ -51,6 +53,7 @@ export function AssetToolbar({
   direction,
   view,
   fieldFilters = [],
+  showRelevanceSort = false,
   dateFieldLabel = (field) => field,
   onSortChange,
   onDirectionChange,
@@ -90,6 +93,9 @@ export function AssetToolbar({
         className={compact ? "min-w-0" : undefined}
         aria-label={t`Sort`}
       >
+        {showRelevanceSort ? (
+          <option value={relevanceSort}>{t`Sort by relevance`}</option>
+        ) : null}
         <option value={defaultSort}>{t`Sort by title`}</option>
         <option value="recentlyUpdated">{t`Sort by update time`}</option>
         {stats?.dateFields.map((field) => (

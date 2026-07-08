@@ -13,11 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:201
+#: src/components/assets/quick-log-dialog.tsx:204
 msgid " (already logged)"
 msgstr "（記録済み）"
 
-#: src/components/assets/quick-log-dialog.tsx:201
+#: src/components/assets/quick-log-dialog.tsx:204
 msgid " (new note)"
 msgstr "（新規ノート）"
 
@@ -254,12 +254,12 @@ msgstr "{selectedTotal, plural, other {# 件に日付あり}}"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {# 件のアイテムをインポート}}"
 
-#: src/pages/library-page.tsx:357
+#: src/pages/library-page.tsx:365
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 件}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:352
+#: src/pages/library-page.tsx:360
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
 
@@ -286,7 +286,7 @@ msgstr "📅 予定"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "このタイトルと同名のファイルがすでに存在したため、「{0}」として保存しました。"
 
-#: src/components/layout/app-frame.tsx:125
+#: src/components/layout/app-frame.tsx:132
 msgid "A shelf for everything you love"
 msgstr "君が愛するすべてのための本棚"
 
@@ -300,7 +300,7 @@ msgid "Actions"
 msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:111
-#: src/components/layout/app-frame.tsx:380
+#: src/components/layout/app-frame.tsx:360
 #: src/pages/activity-page.tsx:108
 #: src/pages/statistics-page.tsx:80
 msgid "Activity"
@@ -311,8 +311,8 @@ msgstr "アクティビティ"
 #: src/components/settings/settings-sections.tsx:1000
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
-#: src/pages/library-page.tsx:375
-#: src/pages/library-page.tsx:380
+#: src/pages/library-page.tsx:383
+#: src/pages/library-page.tsx:388
 #: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "追加"
@@ -340,7 +340,7 @@ msgid "Add custom type"
 msgstr "カスタムタイプを追加"
 
 #: src/pages/home-page.tsx:42
-#: src/pages/library-page.tsx:369
+#: src/pages/library-page.tsx:377
 msgid "Add entity"
 msgstr "アイテムを追加"
 
@@ -436,7 +436,7 @@ msgid "All types"
 msgstr "すべてのタイプ"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:294
+#: src/pages/library-page.tsx:300
 msgid "All types ({0})"
 msgstr "すべてのタイプ（{0}）"
 
@@ -445,15 +445,15 @@ msgid "Anime"
 msgstr "アニメ"
 
 #. placeholder {0}: filter.label
-#: src/components/assets/asset-toolbar.tsx:154
-#: src/components/assets/asset-toolbar.tsx:172
-#: src/components/assets/asset-toolbar.tsx:236
+#: src/components/assets/asset-toolbar.tsx:160
+#: src/components/assets/asset-toolbar.tsx:178
+#: src/components/assets/asset-toolbar.tsx:242
 msgid "Any {0}"
 msgstr "すべての {0}"
 
 #: src/components/assets/quick-log-dialog.tsx:141
-msgid "Anything worth remembering — e.g. an episode number"
-msgstr "覚えておきたいこと — 例: エピソード番号"
+msgid "Anything worth remembering"
+msgstr "覚えておきたいこと"
 
 #: src/components/settings/settings-dialogs.tsx:381
 #: src/components/settings/settings-dialogs.tsx:509
@@ -468,7 +468,7 @@ msgstr "選択項目を適用"
 msgid "Applying…"
 msgstr "適用中…"
 
-#: src/components/assets/asset-toolbar.tsx:108
+#: src/components/assets/asset-toolbar.tsx:114
 #: src/components/settings/settings-sections.tsx:220
 msgid "Ascending"
 msgstr "昇順"
@@ -482,7 +482,7 @@ msgstr "アセットのルート"
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
-#: src/components/layout/app-frame.tsx:115
+#: src/components/layout/app-frame.tsx:122
 #: src/components/settings/preset-picker.tsx:173
 #: src/components/settings/settings-dialogs.tsx:78
 #: src/components/settings/settings-editor.tsx:172
@@ -522,14 +522,14 @@ msgstr "壊れたアセット"
 msgid "Browse library"
 msgstr "ライブラリを閲覧"
 
-#: src/components/layout/app-frame.tsx:377
+#: src/components/layout/app-frame.tsx:357
 #: src/pages/calendar-page.tsx:84
 msgid "Calendar"
 msgstr "カレンダー"
 
 #: src/components/assets/asset-download-panel.tsx:103
 #: src/components/assets/episode-sync-dialog.tsx:334
-#: src/components/assets/quick-log-dialog.tsx:157
+#: src/components/assets/quick-log-dialog.tsx:160
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
 #: src/components/settings/settings-dialogs.tsx:506
@@ -586,8 +586,8 @@ msgstr "すべてクリア"
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/layout/app-frame.tsx:315
-#: src/components/layout/app-frame.tsx:331
+#: src/components/layout/app-frame.tsx:295
+#: src/components/layout/app-frame.tsx:311
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
@@ -646,11 +646,11 @@ msgstr "続行"
 msgid "Continue ({0})"
 msgstr "続行（{0}）"
 
-#: src/components/layout/app-frame.tsx:363
+#: src/components/layout/app-frame.tsx:343
 msgid "Core Views"
 msgstr "コアビュー"
 
-#: src/components/assets/asset-toolbar.tsx:220
+#: src/components/assets/asset-toolbar.tsx:226
 msgid "Could not load options."
 msgstr "オプションを読み込めませんでした。"
 
@@ -797,7 +797,7 @@ msgstr "デフォルトのプロバイダー順が使用されます。"
 msgid "Delete"
 msgstr "削除"
 
-#: src/components/assets/asset-toolbar.tsx:109
+#: src/components/assets/asset-toolbar.tsx:115
 #: src/components/settings/settings-sections.tsx:221
 msgid "Descending"
 msgstr "降順"
@@ -818,7 +818,7 @@ msgstr "グループの選択を解除"
 msgid "Details"
 msgstr "詳細"
 
-#: src/components/assets/asset-toolbar.tsx:106
+#: src/components/assets/asset-toolbar.tsx:112
 #: src/components/settings/settings-sections.tsx:208
 msgid "Direction"
 msgstr "方向"
@@ -1037,10 +1037,14 @@ msgstr "ソースで絞り込む"
 msgid "Filter by type"
 msgstr "タイプで絞り込む"
 
-#: src/components/assets/asset-toolbar.tsx:73
+#: src/components/assets/asset-toolbar.tsx:76
 #: src/components/settings/settings-sections.tsx:171
 msgid "Filters"
 msgstr "フィルター"
+
+#: src/components/assets/quick-log-dialog.tsx:145
+msgid "For example, an episode number."
+msgstr "例：エピソード番号"
 
 #: src/pages/settings-page.tsx:79
 msgid "Form"
@@ -1054,7 +1058,7 @@ msgstr "ゲーム"
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
-#: src/components/layout/app-frame.tsx:114
+#: src/components/layout/app-frame.tsx:121
 msgid "Go back"
 msgstr "戻る"
 
@@ -1062,7 +1066,7 @@ msgstr "戻る"
 msgid "Go to library"
 msgstr "ライブラリへ移動"
 
-#: src/components/assets/asset-toolbar.tsx:128
+#: src/components/assets/asset-toolbar.tsx:134
 msgid "Grid"
 msgstr "グリッド"
 
@@ -1074,7 +1078,7 @@ msgstr "日付あり"
 msgid "Heading"
 msgstr "見出し"
 
-#: src/components/layout/app-frame.tsx:366
+#: src/components/layout/app-frame.tsx:346
 #: src/components/settings/settings-editor.tsx:108
 #: src/components/settings/settings-editor.tsx:263
 #: src/pages/home-page.tsx:30
@@ -1099,7 +1103,7 @@ msgstr "アイコン"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:414
+#: src/components/layout/app-frame.tsx:394
 #: src/pages/import-wizard-page.tsx:210
 msgid "Import"
 msgstr "インポート"
@@ -1209,7 +1213,7 @@ msgstr "後で"
 msgid "less"
 msgstr "折りたたむ"
 
-#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:354
 msgid "Library"
 msgstr "ライブラリ"
 
@@ -1251,7 +1255,7 @@ msgstr "リンク"
 msgid "Links to"
 msgstr "リンク先"
 
-#: src/components/assets/asset-toolbar.tsx:119
+#: src/components/assets/asset-toolbar.tsx:125
 msgid "List"
 msgstr "リスト"
 
@@ -1272,7 +1276,7 @@ msgstr "リストが見つかりません"
 msgid "List style"
 msgstr "リストのスタイル"
 
-#: src/components/layout/app-frame.tsx:383
+#: src/components/layout/app-frame.tsx:363
 #: src/pages/lists-page.tsx:41
 msgid "Lists"
 msgstr "リスト"
@@ -1293,7 +1297,7 @@ msgstr "組み込みタイプを読み込み中…"
 msgid "Loading entity"
 msgstr "アイテムを読み込み中"
 
-#: src/components/layout/app-frame.tsx:407
+#: src/components/layout/app-frame.tsx:387
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
@@ -1307,7 +1311,7 @@ msgstr "分類を読み込み中"
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:247
-#: src/pages/library-page.tsx:362
+#: src/pages/library-page.tsx:370
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
@@ -1320,7 +1324,7 @@ msgstr "分類を読み込み中"
 msgid "Loading…"
 msgstr "読み込み中…"
 
-#: src/components/assets/quick-log-dialog.tsx:161
+#: src/components/assets/quick-log-dialog.tsx:164
 #: src/pages/entity-page.tsx:347
 msgid "Log"
 msgstr "記録"
@@ -1341,7 +1345,7 @@ msgstr "デイリーノートに記録"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "記録のデフォルト — 記録行を書き込む見出しと、フォールバックの行フォーマット。各タイプはこれらを上書きでき、独自のタグを追加します。"
 
-#: src/components/assets/quick-log-dialog.tsx:161
+#: src/components/assets/quick-log-dialog.tsx:164
 msgid "Logging…"
 msgstr "記録中…"
 
@@ -1371,7 +1375,7 @@ msgid "Markdown body sections"
 msgstr "Markdown 本文セクション"
 
 #. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:212
+#: src/components/assets/quick-log-dialog.tsx:215
 msgid "Marks as {0}"
 msgstr "{0} にする"
 
@@ -1440,8 +1444,8 @@ msgstr "マイ保管庫"
 msgid "Name"
 msgstr "名前"
 
-#: src/components/layout/app-frame.tsx:320
-#: src/components/layout/app-frame.tsx:328
+#: src/components/layout/app-frame.tsx:300
+#: src/components/layout/app-frame.tsx:308
 msgid "Navigation"
 msgstr "ナビゲーション"
 
@@ -1478,7 +1482,7 @@ msgstr "次へ"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:466
+#: src/pages/library-page.tsx:474
 msgid "No"
 msgstr "いいえ"
 
@@ -1530,7 +1534,7 @@ msgstr "アイテムのタイプが設定されていません。"
 
 #: src/pages/calendar-page.tsx:179
 #: src/pages/calendar-page.tsx:189
-#: src/pages/library-page.tsx:412
+#: src/pages/library-page.tsx:420
 msgid "No entries"
 msgstr "エントリなし"
 
@@ -1590,6 +1594,10 @@ msgstr "Markdown 本文セクションがありません。"
 #: src/pages/import-wizard-page.tsx:608
 msgid "No matched source"
 msgstr "一致するソースがありません"
+
+#: src/components/layout/header-search.tsx:188
+msgid "No matches"
+msgstr "一致なし"
 
 #: src/pages/quick-capture-page.tsx:259
 msgid "No matches found."
@@ -1678,7 +1686,7 @@ msgstr "アイテムの下に表示されるノート…"
 msgid "Nothing here yet"
 msgstr "まだ何もありません"
 
-#: src/components/assets/quick-log-dialog.tsx:196
+#: src/components/assets/quick-log-dialog.tsx:199
 msgid "Nothing to log for this type."
 msgstr "このタイプに記録するものがありません。"
 
@@ -1721,7 +1729,7 @@ msgstr "既存の保管庫を開く"
 msgid "Open folder"
 msgstr "フォルダーを開く"
 
-#: src/components/layout/app-frame.tsx:135
+#: src/components/layout/app-frame.tsx:142
 msgid "Open navigation"
 msgstr "ナビゲーションを開く"
 
@@ -1793,7 +1801,7 @@ msgstr "前へ"
 msgid "Preview"
 msgstr "プレビュー"
 
-#: src/components/assets/quick-log-dialog.tsx:187
+#: src/components/assets/quick-log-dialog.tsx:190
 msgid "Previewing…"
 msgstr "プレビュー中…"
 
@@ -1954,12 +1962,12 @@ msgstr "名前を変更中…"
 msgid "replaces existing section"
 msgstr "既存のセクションを置き換え"
 
-#: src/components/layout/app-frame.tsx:223
-#: src/components/layout/app-frame.tsx:224
+#: src/components/layout/app-frame.tsx:234
+#: src/components/layout/app-frame.tsx:235
 msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
 
-#: src/components/layout/app-frame.tsx:420
+#: src/components/layout/app-frame.tsx:400
 msgid "Review"
 msgstr "レビュー"
 
@@ -2026,8 +2034,8 @@ msgid "Search external sources, or add manually"
 msgstr "外部ソースを検索するか、手動で追加"
 
 #: src/components/layout/app-frame.tsx:60
-#: src/components/layout/app-frame.tsx:153
-#: src/components/layout/app-frame.tsx:255
+#: src/components/layout/app-frame.tsx:162
+#: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "ライブラリを検索"
 
@@ -2088,6 +2096,14 @@ msgstr "セクション"
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 msgstr "セクションはライブラリの設定可能な棚です。設定で追加するか、そのままライブラリに移動してください。"
 
+#: src/components/layout/header-search.tsx:108
+msgid "See all results"
+msgstr "すべての結果を表示"
+
+#: src/components/layout/header-search.tsx:165
+msgid "See all results for “{query}”"
+msgstr "「{query}」のすべての結果を表示"
+
 #: src/components/assets/episode-sync-dialog.tsx:269
 msgid "Select all"
 msgstr "すべて選択"
@@ -2116,7 +2132,7 @@ msgstr "タイプを選択"
 msgid "Selected Metadata"
 msgstr "選択したメタデータ"
 
-#: src/components/layout/app-frame.tsx:423
+#: src/components/layout/app-frame.tsx:403
 #: src/components/settings/settings-editor.tsx:161
 msgid "Settings"
 msgstr "設定"
@@ -2140,25 +2156,29 @@ msgstr "一部の画像をダウンロードできませんでした: {reasons}"
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
-#: src/components/assets/asset-toolbar.tsx:91
+#: src/components/assets/asset-toolbar.tsx:94
 #: src/components/settings/settings-sections.tsx:194
 msgid "Sort"
 msgstr "並び替え"
 
 #. placeholder {0}: dateFieldLabel(field)
-#: src/components/assets/asset-toolbar.tsx:97
+#: src/components/assets/asset-toolbar.tsx:103
 msgid "Sort by {0}"
 msgstr "{0} で並び替え"
 
-#: src/components/assets/asset-toolbar.tsx:100
+#: src/components/assets/asset-toolbar.tsx:106
 msgid "Sort by connections"
 msgstr "関連数で並び替え"
 
-#: src/components/assets/asset-toolbar.tsx:93
+#: src/components/assets/asset-toolbar.tsx:97
+msgid "Sort by relevance"
+msgstr "関連度で並び替え"
+
+#: src/components/assets/asset-toolbar.tsx:99
 msgid "Sort by title"
 msgstr "タイトルで並び替え"
 
-#: src/components/assets/asset-toolbar.tsx:94
+#: src/components/assets/asset-toolbar.tsx:100
 msgid "Sort by update time"
 msgstr "更新日時で並び替え"
 
@@ -2172,7 +2192,7 @@ msgstr "ソースが利用できません"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:206
+#: src/components/assets/quick-log-dialog.tsx:209
 msgid "Stamps {0} = {1}"
 msgstr "{0} = {1} を記録"
 
@@ -2195,7 +2215,7 @@ msgstr "開始済み"
 msgid "Starting…"
 msgstr "開始中…"
 
-#: src/components/layout/app-frame.tsx:417
+#: src/components/layout/app-frame.tsx:397
 msgid "Statistics"
 msgstr "統計"
 
@@ -2256,12 +2276,12 @@ msgid "System theme. Switch to light theme."
 msgstr "システムテーマ。ライトテーマに切り替えます。"
 
 #: src/components/entities/metadata-editor.tsx:83
-#: src/pages/library-page.tsx:95
+#: src/pages/library-page.tsx:101
 msgid "Tags"
 msgstr "タグ"
 
 #: src/components/calendar/calendar-entry-item.tsx:24
-#: src/components/layout/app-frame.tsx:389
+#: src/components/layout/app-frame.tsx:369
 msgid "Taxonomy"
 msgstr "分類"
 
@@ -2346,7 +2366,7 @@ msgstr "今日"
 msgid "Todo"
 msgstr "未対応"
 
-#: src/pages/library-page.tsx:308
+#: src/pages/library-page.tsx:314
 msgid "Toggle filters"
 msgstr "フィルターを切り替え"
 
@@ -2370,7 +2390,7 @@ msgstr "もう一度試す"
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
 #: src/pages/entity-create-page.tsx:92
-#: src/pages/library-page.tsx:291
+#: src/pages/library-page.tsx:297
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
 msgstr "タイプ"
@@ -2488,7 +2508,7 @@ msgstr "保管庫のパスまたは URL"
 msgid "Vault removed"
 msgstr "保管庫を削除しました"
 
-#: src/components/layout/app-frame.tsx:213
+#: src/components/layout/app-frame.tsx:224
 msgid "Vault rescanned"
 msgstr "保管庫を再スキャンしました"
 
@@ -2528,7 +2548,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:465
+#: src/pages/library-page.tsx:473
 msgid "Yes"
 msgstr "はい"
 

@@ -67,23 +67,24 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
         entities
             .retain(|entity| entity_matches_field_filters(entity, library, &params.field_filters));
     }
+    // Free-text search both filters and scores: each surviving entity keeps its
+    // best relevance tier (by id) so the `relevance` sort can rank exact/prefix
+    // matches above incidental substring hits.
+    let mut relevance_scores: Option<HashMap<String, u32>> = None;
     if let Some(query) = params
         .query
         .map(|query| query.trim().to_lowercase())
         .filter(|query| !query.is_empty())
     {
-        entities.retain(|entity| {
-            [
-                Some(entity.summary.title.as_str()),
-                entity.summary.summary.as_deref(),
-                Some(entity.summary.basename.as_str()),
-                Some(entity.summary.path.as_str()),
-            ]
-            .into_iter()
-            .flatten()
-            .chain(entity.summary.titles.values().map(|value| value.as_str()))
-            .any(|value| value.to_lowercase().contains(&query))
+        let mut scores = HashMap::new();
+        entities.retain(|entity| match entity_match_score(entity, &query) {
+            Some(score) => {
+                scores.insert(entity.summary.id.clone(), score);
+                true
+            }
+            None => false,
         });
+        relevance_scores = Some(scores);
     }
     if let Some(relation) = params
         .relation
@@ -113,12 +114,26 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
             .into_iter()
             .map(|entity| entity.summary.clone())
             .collect::<Vec<_>>();
-        sort_entities_for_entity_list(
-            summaries,
-            params.sort,
-            params.direction,
-            params.title_language,
-        )
+        match relevance_scores {
+            // "relevance" ranks best-match-first (direction is ignored — it's
+            // always best-first), tie-broken by the collated title. With no
+            // active query it's meaningless, so fall back to the title order.
+            Some(scores) if params.sort == "relevance" => {
+                sort_entities_by_relevance(summaries, &scores, params.title_language)
+            }
+            _ if params.sort == "relevance" => sort_entities_for_entity_list(
+                summaries,
+                "title",
+                params.direction,
+                params.title_language,
+            ),
+            _ => sort_entities_for_entity_list(
+                summaries,
+                params.sort,
+                params.direction,
+                params.title_language,
+            ),
+        }
     };
 
     let page_size = clamp_number(params.page_size, 1, 100);
@@ -291,6 +306,89 @@ fn frontmatter_scalar_matches_any(value: &serde_json::Value, expected: &[String]
         }
         _ => false,
     }
+}
+
+/// Relevance score of an entity against a lowercased, non-empty query, or `None`
+/// when nothing matches (the entity is filtered out). Higher is more relevant.
+/// *Primary* fields — the canonical title, every localized title, and the
+/// basename — always dominate *secondary* fields (summary, path), so a title
+/// match outranks an entity that merely has the query in its file path.
+fn entity_match_score(entity: &EntityRecord, query: &str) -> Option<u32> {
+    let primary = std::iter::once(entity.summary.title.as_str())
+        .chain(entity.summary.titles.values().map(String::as_str))
+        .chain(std::iter::once(entity.summary.basename.as_str()))
+        .map(|value| match_tier(value, query))
+        .max()
+        .unwrap_or(0);
+    let secondary = [
+        entity.summary.summary.as_deref(),
+        Some(entity.summary.path.as_str()),
+    ]
+    .into_iter()
+    .flatten()
+    .map(|value| match_tier(value, query))
+    .max()
+    .unwrap_or(0);
+    if primary == 0 && secondary == 0 {
+        None
+    } else {
+        // Lexicographic (primary, secondary): the primary tier dominates, with
+        // the secondary tier only breaking ties between equal primary matches.
+        Some(primary * 10 + secondary)
+    }
+}
+
+/// How well one field value matches the (already lowercased) query, higher is
+/// better: 4 exact, 3 prefix, 2 word-start substring, 1 substring, 0 none.
+fn match_tier(value: &str, query: &str) -> u32 {
+    let value = value.to_lowercase();
+    if value == query {
+        4
+    } else if value.starts_with(query) {
+        3
+    } else if is_word_start_match(&value, query) {
+        2
+    } else if value.contains(query) {
+        1
+    } else {
+        0
+    }
+}
+
+/// Whether `query` begins a word inside `value` (both already lowercased) — a
+/// match that follows a non-alphanumeric boundary. Lets "titan" rank above a
+/// mid-word hit for a multi-word title like "attack on titan".
+fn is_word_start_match(value: &str, query: &str) -> bool {
+    value.match_indices(query).any(|(index, _)| {
+        index == 0
+            || value[..index]
+                .chars()
+                .next_back()
+                .is_some_and(|character| !character.is_alphanumeric())
+    })
+}
+
+/// Orders entities best-match-first by their precomputed relevance `scores`,
+/// tie-broken by the collated title (in `title_language` when given). Direction
+/// is intentionally not honored — relevance is always highest-score-first.
+fn sort_entities_by_relevance(
+    mut entities: Vec<EntitySummary>,
+    scores: &HashMap<String, u32>,
+    title_language: Option<&str>,
+) -> Vec<EntitySummary> {
+    let explicit_title_language = title_language
+        .map(str::trim)
+        .filter(|language| !language.is_empty() && *language != "default");
+    entities.sort_by(|a, b| {
+        let score_a = scores.get(&a.id).copied().unwrap_or(0);
+        let score_b = scores.get(&b.id).copied().unwrap_or(0);
+        score_b.cmp(&score_a).then_with(|| {
+            let title_a = entity_sort_title(a, explicit_title_language);
+            let title_b = entity_sort_title(b, explicit_title_language);
+            compare_string_for_title_language(title_a, title_b, explicit_title_language)
+        })
+    });
+    entities
 }
 
 pub fn sort_entities_for_entity_list(
@@ -854,6 +952,133 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["Gamma"]
         );
+    }
+
+    #[test]
+    fn match_tier_ranks_exact_over_prefix_over_word_start_over_substring() {
+        assert_eq!(match_tier("titan", "titan"), 4); // exact
+        assert_eq!(match_tier("titan attack", "titan"), 3); // prefix
+        assert_eq!(match_tier("attack on titan", "titan"), 2); // word start
+        assert_eq!(match_tier("subtitание", "titan"), 0); // no substring hit
+        assert_eq!(match_tier("subtitans", "titan"), 1); // mid-word substring
+        assert_eq!(match_tier("TITAN", "titan"), 4); // case-insensitive
+        assert_eq!(match_tier("nothing", "titan"), 0);
+    }
+
+    #[test]
+    fn build_entity_list_relevance_ranks_exact_and_prefix_first() {
+        let library = Library::new(
+            config(),
+            vec![
+                // Only the path contains "hero" — must rank last.
+                {
+                    let mut r = record("anime:p", "Unrelated", json!({}));
+                    r.summary.path = "Taxonomy/Anime/hero-notes.md".to_string();
+                    r
+                },
+                record("anime:sub", "Superhero Squad", json!({})), // substring
+                record("anime:prefix", "Hero Academia", json!({})), // prefix
+                record("anime:exact", "Hero", json!({})),          // exact
+                record("anime:word", "My Hero", json!({})),        // word start
+            ],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+
+        let ranked = build_entity_list(
+            &library,
+            &EntityListParams {
+                query: Some("hero"),
+                sort: "relevance",
+                ..params()
+            },
+        );
+        assert_eq!(
+            ids(&ranked.items),
+            [
+                "anime:exact",
+                "anime:prefix",
+                "anime:word",
+                "anime:sub",
+                "anime:p"
+            ],
+        );
+    }
+
+    #[test]
+    fn build_entity_list_relevance_scores_localized_titles_as_primary() {
+        // A per-language title exact-matches; a path-only hit on another entity
+        // must still rank below it (primary title beats secondary path).
+        let mut hit = record("anime:jp", "Shingeki no Kyojin", json!({}));
+        hit.summary
+            .titles
+            .insert("ja".to_string(), "進撃".to_string());
+        let mut path_only = record("anime:path", "Other", json!({}));
+        path_only.summary.path = "Taxonomy/Anime/進撃-draft.md".to_string();
+
+        let library = Library::new(
+            config(),
+            vec![path_only, hit],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+        let ranked = build_entity_list(
+            &library,
+            &EntityListParams {
+                query: Some("進撃"),
+                sort: "relevance",
+                ..params()
+            },
+        );
+        assert_eq!(ids(&ranked.items), ["anime:jp", "anime:path"]);
+    }
+
+    #[test]
+    fn build_entity_list_relevance_tie_breaks_by_title() {
+        // Two equal-tier prefix matches fall back to collated title order.
+        let library = Library::new(
+            config(),
+            vec![
+                record("anime:b", "Hero Zeta", json!({})),
+                record("anime:a", "Hero Alpha", json!({})),
+            ],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+        let ranked = build_entity_list(
+            &library,
+            &EntityListParams {
+                query: Some("hero"),
+                sort: "relevance",
+                ..params()
+            },
+        );
+        assert_eq!(ids(&ranked.items), ["anime:a", "anime:b"]);
+    }
+
+    #[test]
+    fn build_entity_list_relevance_without_query_falls_back_to_title() {
+        let library = Library::new(
+            config(),
+            vec![
+                record("anime:b", "Beta", json!({})),
+                record("anime:a", "Alpha", json!({})),
+            ],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+        let ranked = build_entity_list(
+            &library,
+            &EntityListParams {
+                sort: "relevance",
+                ..params()
+            },
+        );
+        assert_eq!(ids(&ranked.items), ["anime:a", "anime:b"]);
     }
 
     #[test]

@@ -2,14 +2,16 @@ import { useCallback } from "react";
 import { getEntities } from "@kizunashelf/api-contract";
 
 import { apiFetch } from "@/api/client";
+import { relevanceSort } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
 import type { RelationSuggestionSearch } from "@/components/entities/metadata-types";
 
 /**
  * Shared relation lookup used by the entity create/edit pages to back the
  * relation field autocomplete. Searches entities of the requested relation type,
- * returning nothing when no type is given. Sorts by the viewer's display
- * language so suggestions are ordered the same way the rest of the UI is.
+ * returning nothing when no type is given. A query ranks matches by relevance
+ * (exact/prefix first); browsing with no query falls back to title order (the
+ * core treats `relevance` without a query as a title sort).
  */
 export function useRelationSearch(): RelationSuggestionSearch {
   const titleLanguage = useTitleLanguage();
@@ -17,12 +19,13 @@ export function useRelationSearch(): RelationSuggestionSearch {
     async ({ relationType, query, signal }) => {
       const type = relationType?.trim();
       if (!type) return [];
+      const trimmed = query.trim();
       const result = await getEntities(
         {
           type,
-          q: query.trim() || undefined,
+          q: trimmed || undefined,
           pageSize: 25,
-          sort: "title",
+          sort: trimmed ? relevanceSort : "title",
           direction: "asc",
           titleLanguage,
         },

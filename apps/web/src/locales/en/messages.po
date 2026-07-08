@@ -13,11 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:201
+#: src/components/assets/quick-log-dialog.tsx:204
 msgid " (already logged)"
 msgstr " (already logged)"
 
-#: src/components/assets/quick-log-dialog.tsx:201
+#: src/components/assets/quick-log-dialog.tsx:204
 msgid " (new note)"
 msgstr " (new note)"
 
@@ -254,12 +254,12 @@ msgstr "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
-#: src/pages/library-page.tsx:357
+#: src/pages/library-page.tsx:365
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, one {# entry} other {# entries}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:352
+#: src/pages/library-page.tsx:360
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 
@@ -286,7 +286,7 @@ msgstr "📅 Scheduled"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "A file named for this title already existed, so it was saved as “{0}”."
 
-#: src/components/layout/app-frame.tsx:125
+#: src/components/layout/app-frame.tsx:132
 msgid "A shelf for everything you love"
 msgstr "A shelf for everything you love"
 
@@ -300,7 +300,7 @@ msgid "Actions"
 msgstr "Actions"
 
 #: src/components/assets/quick-log-dialog.tsx:111
-#: src/components/layout/app-frame.tsx:380
+#: src/components/layout/app-frame.tsx:360
 #: src/pages/activity-page.tsx:108
 #: src/pages/statistics-page.tsx:80
 msgid "Activity"
@@ -311,8 +311,8 @@ msgstr "Activity"
 #: src/components/settings/settings-sections.tsx:1000
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
-#: src/pages/library-page.tsx:375
-#: src/pages/library-page.tsx:380
+#: src/pages/library-page.tsx:383
+#: src/pages/library-page.tsx:388
 #: src/pages/list-detail-page.tsx:927
 msgid "Add"
 msgstr "Add"
@@ -340,7 +340,7 @@ msgid "Add custom type"
 msgstr "Add custom type"
 
 #: src/pages/home-page.tsx:42
-#: src/pages/library-page.tsx:369
+#: src/pages/library-page.tsx:377
 msgid "Add entity"
 msgstr "Add entity"
 
@@ -436,7 +436,7 @@ msgid "All types"
 msgstr "All types"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:294
+#: src/pages/library-page.tsx:300
 msgid "All types ({0})"
 msgstr "All types ({0})"
 
@@ -445,15 +445,15 @@ msgid "Anime"
 msgstr "Anime"
 
 #. placeholder {0}: filter.label
-#: src/components/assets/asset-toolbar.tsx:154
-#: src/components/assets/asset-toolbar.tsx:172
-#: src/components/assets/asset-toolbar.tsx:236
+#: src/components/assets/asset-toolbar.tsx:160
+#: src/components/assets/asset-toolbar.tsx:178
+#: src/components/assets/asset-toolbar.tsx:242
 msgid "Any {0}"
 msgstr "Any {0}"
 
 #: src/components/assets/quick-log-dialog.tsx:141
-msgid "Anything worth remembering — e.g. an episode number"
-msgstr "Anything worth remembering — e.g. an episode number"
+msgid "Anything worth remembering"
+msgstr "Anything worth remembering"
 
 #: src/components/settings/settings-dialogs.tsx:381
 #: src/components/settings/settings-dialogs.tsx:509
@@ -468,7 +468,7 @@ msgstr "Apply Selected"
 msgid "Applying…"
 msgstr "Applying…"
 
-#: src/components/assets/asset-toolbar.tsx:108
+#: src/components/assets/asset-toolbar.tsx:114
 #: src/components/settings/settings-sections.tsx:220
 msgid "Ascending"
 msgstr "Ascending"
@@ -482,7 +482,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:115
+#: src/components/layout/app-frame.tsx:122
 #: src/components/settings/preset-picker.tsx:173
 #: src/components/settings/settings-dialogs.tsx:78
 #: src/components/settings/settings-editor.tsx:172
@@ -522,14 +522,14 @@ msgstr "Broken Assets"
 msgid "Browse library"
 msgstr "Browse library"
 
-#: src/components/layout/app-frame.tsx:377
+#: src/components/layout/app-frame.tsx:357
 #: src/pages/calendar-page.tsx:84
 msgid "Calendar"
 msgstr "Calendar"
 
 #: src/components/assets/asset-download-panel.tsx:103
 #: src/components/assets/episode-sync-dialog.tsx:334
-#: src/components/assets/quick-log-dialog.tsx:157
+#: src/components/assets/quick-log-dialog.tsx:160
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
 #: src/components/settings/settings-dialogs.tsx:506
@@ -586,8 +586,8 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:315
-#: src/components/layout/app-frame.tsx:331
+#: src/components/layout/app-frame.tsx:295
+#: src/components/layout/app-frame.tsx:311
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -646,11 +646,11 @@ msgstr "Continue"
 msgid "Continue ({0})"
 msgstr "Continue ({0})"
 
-#: src/components/layout/app-frame.tsx:363
+#: src/components/layout/app-frame.tsx:343
 msgid "Core Views"
 msgstr "Core Views"
 
-#: src/components/assets/asset-toolbar.tsx:220
+#: src/components/assets/asset-toolbar.tsx:226
 msgid "Could not load options."
 msgstr "Could not load options."
 
@@ -797,7 +797,7 @@ msgstr "Default provider order is used."
 msgid "Delete"
 msgstr "Delete"
 
-#: src/components/assets/asset-toolbar.tsx:109
+#: src/components/assets/asset-toolbar.tsx:115
 #: src/components/settings/settings-sections.tsx:221
 msgid "Descending"
 msgstr "Descending"
@@ -818,7 +818,7 @@ msgstr "Deselect group"
 msgid "Details"
 msgstr "Details"
 
-#: src/components/assets/asset-toolbar.tsx:106
+#: src/components/assets/asset-toolbar.tsx:112
 #: src/components/settings/settings-sections.tsx:208
 msgid "Direction"
 msgstr "Direction"
@@ -1037,10 +1037,14 @@ msgstr "Filter by source"
 msgid "Filter by type"
 msgstr "Filter by type"
 
-#: src/components/assets/asset-toolbar.tsx:73
+#: src/components/assets/asset-toolbar.tsx:76
 #: src/components/settings/settings-sections.tsx:171
 msgid "Filters"
 msgstr "Filters"
+
+#: src/components/assets/quick-log-dialog.tsx:145
+msgid "For example, an episode number."
+msgstr "For example, an episode number."
 
 #: src/pages/settings-page.tsx:79
 msgid "Form"
@@ -1054,7 +1058,7 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:114
+#: src/components/layout/app-frame.tsx:121
 msgid "Go back"
 msgstr "Go back"
 
@@ -1062,7 +1066,7 @@ msgstr "Go back"
 msgid "Go to library"
 msgstr "Go to library"
 
-#: src/components/assets/asset-toolbar.tsx:128
+#: src/components/assets/asset-toolbar.tsx:134
 msgid "Grid"
 msgstr "Grid"
 
@@ -1074,7 +1078,7 @@ msgstr "Has date"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:366
+#: src/components/layout/app-frame.tsx:346
 #: src/components/settings/settings-editor.tsx:108
 #: src/components/settings/settings-editor.tsx:263
 #: src/pages/home-page.tsx:30
@@ -1099,7 +1103,7 @@ msgstr "Icon"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:414
+#: src/components/layout/app-frame.tsx:394
 #: src/pages/import-wizard-page.tsx:210
 msgid "Import"
 msgstr "Import"
@@ -1209,7 +1213,7 @@ msgstr "Later"
 msgid "less"
 msgstr "less"
 
-#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:354
 msgid "Library"
 msgstr "Library"
 
@@ -1251,7 +1255,7 @@ msgstr "Links"
 msgid "Links to"
 msgstr "Links to"
 
-#: src/components/assets/asset-toolbar.tsx:119
+#: src/components/assets/asset-toolbar.tsx:125
 msgid "List"
 msgstr "List"
 
@@ -1272,7 +1276,7 @@ msgstr "List not found"
 msgid "List style"
 msgstr "List style"
 
-#: src/components/layout/app-frame.tsx:383
+#: src/components/layout/app-frame.tsx:363
 #: src/pages/lists-page.tsx:41
 msgid "Lists"
 msgstr "Lists"
@@ -1293,7 +1297,7 @@ msgstr "Loading built-in types…"
 msgid "Loading entity"
 msgstr "Loading entity"
 
-#: src/components/layout/app-frame.tsx:407
+#: src/components/layout/app-frame.tsx:387
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1307,7 +1311,7 @@ msgstr "Loading taxonomy"
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:247
-#: src/pages/library-page.tsx:362
+#: src/pages/library-page.tsx:370
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/list-detail-page.tsx:893
 #: src/pages/lists-page.tsx:55
@@ -1320,7 +1324,7 @@ msgstr "Loading taxonomy"
 msgid "Loading…"
 msgstr "Loading…"
 
-#: src/components/assets/quick-log-dialog.tsx:161
+#: src/components/assets/quick-log-dialog.tsx:164
 #: src/pages/entity-page.tsx:347
 msgid "Log"
 msgstr "Log"
@@ -1341,7 +1345,7 @@ msgstr "Log to daily note"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 
-#: src/components/assets/quick-log-dialog.tsx:161
+#: src/components/assets/quick-log-dialog.tsx:164
 msgid "Logging…"
 msgstr "Logging…"
 
@@ -1371,7 +1375,7 @@ msgid "Markdown body sections"
 msgstr "Markdown body sections"
 
 #. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:212
+#: src/components/assets/quick-log-dialog.tsx:215
 msgid "Marks as {0}"
 msgstr "Marks as {0}"
 
@@ -1440,8 +1444,8 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:320
-#: src/components/layout/app-frame.tsx:328
+#: src/components/layout/app-frame.tsx:300
+#: src/components/layout/app-frame.tsx:308
 msgid "Navigation"
 msgstr "Navigation"
 
@@ -1478,7 +1482,7 @@ msgstr "Next"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:137
-#: src/pages/library-page.tsx:466
+#: src/pages/library-page.tsx:474
 msgid "No"
 msgstr "No"
 
@@ -1530,7 +1534,7 @@ msgstr "No entity types configured."
 
 #: src/pages/calendar-page.tsx:179
 #: src/pages/calendar-page.tsx:189
-#: src/pages/library-page.tsx:412
+#: src/pages/library-page.tsx:420
 msgid "No entries"
 msgstr "No entries"
 
@@ -1590,6 +1594,10 @@ msgstr "No markdown body sections."
 #: src/pages/import-wizard-page.tsx:608
 msgid "No matched source"
 msgstr "No matched source"
+
+#: src/components/layout/header-search.tsx:188
+msgid "No matches"
+msgstr "No matches"
 
 #: src/pages/quick-capture-page.tsx:259
 msgid "No matches found."
@@ -1678,7 +1686,7 @@ msgstr "Notes shown below the items…"
 msgid "Nothing here yet"
 msgstr "Nothing here yet"
 
-#: src/components/assets/quick-log-dialog.tsx:196
+#: src/components/assets/quick-log-dialog.tsx:199
 msgid "Nothing to log for this type."
 msgstr "Nothing to log for this type."
 
@@ -1721,7 +1729,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:135
+#: src/components/layout/app-frame.tsx:142
 msgid "Open navigation"
 msgstr "Open navigation"
 
@@ -1793,7 +1801,7 @@ msgstr "Prev"
 msgid "Preview"
 msgstr "Preview"
 
-#: src/components/assets/quick-log-dialog.tsx:187
+#: src/components/assets/quick-log-dialog.tsx:190
 msgid "Previewing…"
 msgstr "Previewing…"
 
@@ -1954,12 +1962,12 @@ msgstr "Renaming…"
 msgid "replaces existing section"
 msgstr "replaces existing section"
 
-#: src/components/layout/app-frame.tsx:223
-#: src/components/layout/app-frame.tsx:224
+#: src/components/layout/app-frame.tsx:234
+#: src/components/layout/app-frame.tsx:235
 msgid "Rescan vault"
 msgstr "Rescan vault"
 
-#: src/components/layout/app-frame.tsx:420
+#: src/components/layout/app-frame.tsx:400
 msgid "Review"
 msgstr "Review"
 
@@ -2026,8 +2034,8 @@ msgid "Search external sources, or add manually"
 msgstr "Search external sources, or add manually"
 
 #: src/components/layout/app-frame.tsx:60
-#: src/components/layout/app-frame.tsx:153
-#: src/components/layout/app-frame.tsx:255
+#: src/components/layout/app-frame.tsx:162
+#: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "Search library"
 
@@ -2088,6 +2096,14 @@ msgstr "Sections"
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 msgstr "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 
+#: src/components/layout/header-search.tsx:108
+msgid "See all results"
+msgstr "See all results"
+
+#: src/components/layout/header-search.tsx:165
+msgid "See all results for “{query}”"
+msgstr "See all results for “{query}”"
+
 #: src/components/assets/episode-sync-dialog.tsx:269
 msgid "Select all"
 msgstr "Select all"
@@ -2116,7 +2132,7 @@ msgstr "Select type"
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
-#: src/components/layout/app-frame.tsx:423
+#: src/components/layout/app-frame.tsx:403
 #: src/components/settings/settings-editor.tsx:161
 msgid "Settings"
 msgstr "Settings"
@@ -2140,25 +2156,29 @@ msgstr "Some images could not be downloaded: {reasons}"
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: src/components/assets/asset-toolbar.tsx:91
+#: src/components/assets/asset-toolbar.tsx:94
 #: src/components/settings/settings-sections.tsx:194
 msgid "Sort"
 msgstr "Sort"
 
 #. placeholder {0}: dateFieldLabel(field)
-#: src/components/assets/asset-toolbar.tsx:97
+#: src/components/assets/asset-toolbar.tsx:103
 msgid "Sort by {0}"
 msgstr "Sort by {0}"
 
-#: src/components/assets/asset-toolbar.tsx:100
+#: src/components/assets/asset-toolbar.tsx:106
 msgid "Sort by connections"
 msgstr "Sort by connections"
 
-#: src/components/assets/asset-toolbar.tsx:93
+#: src/components/assets/asset-toolbar.tsx:97
+msgid "Sort by relevance"
+msgstr "Sort by relevance"
+
+#: src/components/assets/asset-toolbar.tsx:99
 msgid "Sort by title"
 msgstr "Sort by title"
 
-#: src/components/assets/asset-toolbar.tsx:94
+#: src/components/assets/asset-toolbar.tsx:100
 msgid "Sort by update time"
 msgstr "Sort by update time"
 
@@ -2172,7 +2192,7 @@ msgstr "Source unavailable"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:206
+#: src/components/assets/quick-log-dialog.tsx:209
 msgid "Stamps {0} = {1}"
 msgstr "Stamps {0} = {1}"
 
@@ -2195,7 +2215,7 @@ msgstr "Started"
 msgid "Starting…"
 msgstr "Starting…"
 
-#: src/components/layout/app-frame.tsx:417
+#: src/components/layout/app-frame.tsx:397
 msgid "Statistics"
 msgstr "Statistics"
 
@@ -2256,12 +2276,12 @@ msgid "System theme. Switch to light theme."
 msgstr "System theme. Switch to light theme."
 
 #: src/components/entities/metadata-editor.tsx:83
-#: src/pages/library-page.tsx:95
+#: src/pages/library-page.tsx:101
 msgid "Tags"
 msgstr "Tags"
 
 #: src/components/calendar/calendar-entry-item.tsx:24
-#: src/components/layout/app-frame.tsx:389
+#: src/components/layout/app-frame.tsx:369
 msgid "Taxonomy"
 msgstr "Taxonomy"
 
@@ -2346,7 +2366,7 @@ msgstr "Today"
 msgid "Todo"
 msgstr "Todo"
 
-#: src/pages/library-page.tsx:308
+#: src/pages/library-page.tsx:314
 msgid "Toggle filters"
 msgstr "Toggle filters"
 
@@ -2370,7 +2390,7 @@ msgstr "Try again"
 #: src/components/settings/settings-sections.tsx:153
 #: src/components/settings/settings-sections.tsx:662
 #: src/pages/entity-create-page.tsx:92
-#: src/pages/library-page.tsx:291
+#: src/pages/library-page.tsx:297
 #: src/pages/quick-capture-page.tsx:218
 msgid "Type"
 msgstr "Type"
@@ -2488,7 +2508,7 @@ msgstr "Vault path or URL"
 msgid "Vault removed"
 msgstr "Vault removed"
 
-#: src/components/layout/app-frame.tsx:213
+#: src/components/layout/app-frame.tsx:224
 msgid "Vault rescanned"
 msgstr "Vault rescanned"
 
@@ -2528,7 +2548,7 @@ msgstr "YAML"
 #: src/components/assets/frontmatter-panel.tsx:129
 #: src/components/assets/frontmatter-panel.tsx:234
 #: src/components/entities/metadata-inputs.tsx:136
-#: src/pages/library-page.tsx:465
+#: src/pages/library-page.tsx:473
 msgid "Yes"
 msgstr "Yes"
 

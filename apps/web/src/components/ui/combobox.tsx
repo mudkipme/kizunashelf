@@ -77,6 +77,25 @@ function ComboboxInput({
   );
 }
 
+/**
+ * The bare combobox input, styled like the standard `Input`, for callers that
+ * supply their own surrounding chrome (e.g. a leading icon) instead of the
+ * `InputGroup` wrapper. base-ui owns the input's value via the Combobox root's
+ * `inputValue`, and keeps the ref it needs for focus/keyboard management.
+ */
+function ComboboxRawInput({ className, ...props }: ComboboxPrimitive.Input.Props) {
+  return (
+    <ComboboxPrimitive.Input
+      data-slot="combobox-raw-input"
+      className={cn(
+        "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 function ComboboxContent({
   className,
   side = "bottom",
@@ -256,6 +275,7 @@ function useComboboxAnchor() {
 export {
   Combobox,
   ComboboxInput,
+  ComboboxRawInput,
   ComboboxContent,
   ComboboxList,
   ComboboxItem,

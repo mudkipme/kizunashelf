@@ -11,6 +11,7 @@ target/
 /config/kizunashelf.yml
 /config/kizunashelf.yaml
 /config/.kizunashelf.tokens.json
+/vault
 .antigravitycli/
 .claude
 AGENTS.md

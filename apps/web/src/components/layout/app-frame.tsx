@@ -1,5 +1,5 @@
-import type { FormEvent, ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ActivityIcon,
@@ -23,11 +23,11 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { toast } from "sonner";
 
+import { HeaderSearch } from "@/components/layout/header-search";
 import { LanguageSelect } from "@/components/layout/language-select";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { refreshLibrary } from "@/api/settings";
 import { statsQuery } from "@/api/queries";
 import { cn } from "@/lib/utils";
@@ -82,8 +82,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [mobileSidebarOpen]);
 
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const submitSearch = useCallback(() => {
     const params =
       location.pathname === "/library"
         ? new URLSearchParams(location.search)
@@ -95,7 +94,15 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     params.set("page", "1");
     setMobileSearchOpen(false);
     navigate(`/library?${params.toString()}`);
-  }
+  }, [location.pathname, location.search, search, activeType, navigate]);
+
+  const selectSearchEntity = useCallback(
+    (id: string) => {
+      setMobileSearchOpen(false);
+      navigate(`/entities/${encodeURIComponent(id)}`);
+    },
+    [navigate],
+  );
 
   function goBack() {
     if (!canGoBack) return;
@@ -137,10 +144,12 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         >
           <MenuIcon />
         </Button>
-        <SearchForm
+        <HeaderSearch
           search={search}
           onSearchChange={setSearch}
           onSubmit={submitSearch}
+          onSelectEntity={selectSearchEntity}
+          type={activeType || allTypes}
           className="ml-auto hidden min-w-0 items-center gap-2 sm:flex sm:max-w-sm"
           placeholder={searchPlaceholder}
         />
@@ -167,10 +176,12 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
 
       {mobileSearchOpen ? (
         <div className="shrink-0 border-b bg-card/85 px-3 py-2 sm:hidden">
-          <SearchForm
+          <HeaderSearch
             search={search}
             onSearchChange={setSearch}
             onSubmit={submitSearch}
+            onSelectEntity={selectSearchEntity}
+            type={activeType || allTypes}
             className="flex min-w-0 items-center gap-2"
             placeholder={searchPlaceholder}
             autoFocus
@@ -225,37 +236,6 @@ function RescanButton() {
     >
       <RefreshCwIcon className={cn(rescan.isPending && "animate-spin")} />
     </Button>
-  );
-}
-
-function SearchForm({
-  search,
-  onSearchChange,
-  onSubmit,
-  className,
-  placeholder,
-  autoFocus = false,
-}: {
-  search: string;
-  onSearchChange: (value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  className?: string;
-  placeholder: string;
-  autoFocus?: boolean;
-}) {
-  const { t } = useLingui();
-  return (
-    <form onSubmit={onSubmit} className={className}>
-      <SearchIcon className="text-muted-foreground" />
-      <Input
-        value={search}
-        onChange={(event) => onSearchChange(event.target.value)}
-        placeholder={placeholder}
-        className="min-w-0"
-        aria-label={t`Search library`}
-        autoFocus={autoFocus}
-      />
-    </form>
   );
 }
 

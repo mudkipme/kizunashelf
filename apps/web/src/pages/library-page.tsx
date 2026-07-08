@@ -25,6 +25,7 @@ import {
   defaultView,
   pageSize,
   defaultTagsField,
+  relevanceSort,
 } from "@/lib/constants";
 import {
   fieldDisplayLabel,
@@ -59,12 +60,17 @@ export function LibraryPage() {
     ...statsQuery({ type: selectedType }),
     enabled: !isGlobalType,
   });
-  const sort = searchParams.get("sort") ?? defaultSort;
   const direction = searchParams.get("direction") === "desc" ? "desc" : defaultDirection;
   const view = searchParams.get("view") === "grid" ? "grid" : defaultView;
   const language = useTitleLanguage();
   const onRelationSearch = useRelationSearch();
   const query = searchParams.get("q") ?? "";
+  // While a search is active, ranking by match quality is the sensible default;
+  // an explicit `sort` in the URL (the user picking one) always wins. `relevance`
+  // is only ever an implicit default, so it's never written to the URL or saved.
+  const hasQuery = query.trim().length > 0;
+  const contextDefaultSort = hasQuery ? relevanceSort : defaultSort;
+  const sort = searchParams.get("sort") ?? contextDefaultSort;
   const page = Math.max(1, Number(searchParams.get("page") ?? 1) || 1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const scopeStats = isGlobalType ? globalStats.data : categoryStats.data;
@@ -147,14 +153,14 @@ export function LibraryPage() {
     scopeStats &&
     sort.startsWith("date:") &&
     !scopeStats.dateFields.includes(sort.slice("date:".length))
-      ? defaultSort
+      ? contextDefaultSort
       : sort;
   const createHref = isGlobalType
     ? "/entities/new"
     : `/entities/new?type=${encodeURIComponent(selectedType)}`;
   const filtersActive =
     activeFieldFilters.length > 0 ||
-    effectiveSort !== defaultSort ||
+    effectiveSort !== contextDefaultSort ||
     direction !== defaultDirection ||
     view !== defaultView;
 
@@ -323,8 +329,9 @@ export function LibraryPage() {
                   direction={direction}
                   view={view}
                   fieldFilters={fieldFilters}
+                  showRelevanceSort={hasQuery}
                   dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
-                  onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
+                  onSortChange={(value) => setQueryParam("sort", value, contextDefaultSort)}
                   onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
                   onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
                   onFieldFilterChange={setFieldFilterParam}
@@ -339,8 +346,9 @@ export function LibraryPage() {
               direction={direction}
               view={view}
               fieldFilters={fieldFilters}
+              showRelevanceSort={hasQuery}
               dateFieldLabel={(field) => fieldLabelAcrossTypes(scopeTypeConfigs, field)}
-              onSortChange={(value) => setQueryParam("sort", value, defaultSort)}
+              onSortChange={(value) => setQueryParam("sort", value, contextDefaultSort)}
               onDirectionChange={(value) => setQueryParam("direction", value, defaultDirection)}
               onViewChange={(value) => setQueryParam("view", value, defaultView, false)}
               onFieldFilterChange={setFieldFilterParam}

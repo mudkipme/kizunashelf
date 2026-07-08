@@ -138,9 +138,12 @@ export function QuickLogDialog({
             <Trans>Note <span className="font-normal text-muted-foreground">(optional)</span></Trans>
             <Input
               value={note}
-              placeholder={t`Anything worth remembering — e.g. an episode number`}
+              placeholder={t`Anything worth remembering`}
               onChange={(event) => setNote(event.target.value)}
             />
+            <span className="text-xs font-normal text-muted-foreground">
+              <Trans>For example, an episode number.</Trans>
+            </span>
           </label>
 
           <LogPreview
