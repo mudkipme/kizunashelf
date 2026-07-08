@@ -14,6 +14,7 @@ KizunaShelf is small but unusually layered. Two facts shape almost every decisio
 - [Schema-driven: never guess a field's meaning](#schema-driven-never-guess-a-fields-meaning)
 - [One core, three runtimes](#one-core-three-runtimes)
 - [The API contract: one source, two clients](#the-api-contract-one-source-two-clients)
+- [Internationalization](#internationalization)
 - [Building the iOS app](#building-the-ios-app)
 - [Development & commands](#development--commands)
 - [Conventions & gotchas](#conventions--gotchas)
@@ -91,6 +92,21 @@ The web app's API types and request/response shapes come **only** from the gener
 - **Types** are re-exported (or derived) from `@kizunashelf/api-contract` via `apps/web/src/types/api.ts`. Add a missing one to the barrel (`packages/api-contract/src/index.ts`) and to `types/api.ts` rather than declaring a local duplicate.
 - **orval inlines nested objects** (gotcha): `SaveSettingsRequest["vault"]`, `SettingsConfigResponse["vault"]`, and the standalone `VaultConfig` schema are three *nominally distinct* types, so mixing them yields TS2719 "two different types with this name … unrelated." For shapes used on both the request and response side (the settings/schema editor), **derive** the granular types by indexed access into one generated type so they unify structurally — e.g. `type VaultConfig = NonNullable<SaveSettingsRequest["vault"]>; type EntityTypeConfig = VaultConfig["types"][number];` — rather than importing the standalone named generated `VaultConfig`/`EntityTypeConfig`. The generated (`input`) types are more nullable/optional than hand-written ones, so expect to guard with `?? []` / `?? undefined` at the use sites.
 
+## Internationalization
+
+The UI is localized (web + desktop share the web bundle; iOS ships its own catalogs) into English, Japanese, Simplified and Traditional Chinese, driven by the **single existing language preference** — there is no separate UI-language picker. The preference value space is the content-language list (`languages.rs`) with the Chinese entry split into `zh-Hans`/`zh-Hant`; UI locale, title language, and per-provider request language all *derive* from that one value.
+
+> **The i18n invariant**
+>
+> Script subtags (`-Hans`/`-Hant`) live in exactly two places: the **UI locale** and **outbound requests to providers that distinguish them**. Everywhere data is stored, keyed, or matched — frontmatter `titles`, schema `titleLanguage`, candidate/dedup keys, `titles[lang]` lookup — Chinese is always bare **`zh`**. `primary_language()` (core) and the primary-subtag derivation (`useTitleLanguage`, web) are the chokepoints that strip the subtag before anything touches stored data. This mirrors invariant #1: the same reason a `zh-Hant` script tag must never reach frontmatter is why field names must never leak into logic — meaning lives in one place, not scattered.
+
+- **The core owns the derivation policy.** `languages.rs::user_languages()` is the picker's option list (`{ code, label (endonym), titleLanguage }`, Chinese split into two), served on `GET /api/languages` and consumed by both clients instead of hardcoding the mapping. `primary_language(code)` maps a preference to its bare title language (`zh-Hans` → `zh`, `en-US` → `en`); providers normalize the full preference internally (`thetvdb_language` strips the subtag, `tmdb.rs` has an explicit `zh-CN`/`zh-TW`/`ja-JP` locale map, `bangumi.rs` keys off `starts_with("zh")`). The viewer language rides on `ProviderSearchConfig.language` (per-request context), so the provider `search` signatures stay untouched.
+- **Which UI languages a client is *translated* into is NOT in the contract.** It's a per-client build fact — web derives it from its shipped `UI_LOCALES` (`lib/i18n.ts`: `en`, `ja`, `zh-Hans`, `zh-Hant`), iOS from its shipped String Catalog set. `user_languages()` lists *every* preference option; a client shows a "UI in English" hint for the ones it hasn't translated. Don't add a `uiSupported` flag to the contract.
+- **Web i18n is Lingui** (`@lingui/react` + macros). Source strings are inline English prose wrapped in place with `<Trans>` / `` t`…` `` — no invented keys; `pnpm i18n:extract` (`lingui extract --clean`) regenerates the catalogs at `apps/web/src/locales/{en,ja,zh-Hans,zh-Hant}/messages.po` mechanically. **CI guards this exactly like the API contract**: it re-extracts and `git diff --exit-code`s `apps/web/src/locales`, so run `pnpm i18n:extract` and commit after adding or changing any UI string. The macro transform runs as a separate Vite Babel pass (`@rolldown/plugin-babel`, since oxc-based `@vitejs/plugin-react` has no Babel hook); `en` is bundled, the others lazy-load via an explicit loader map in `lib/i18n.ts`.
+- **The preference stays per-device** (web localStorage `kizunashelf.language.v2` / iOS UserDefaults), never in the vault config. A first-run default sniffs `navigator.languages` / system locale for the Chinese script. Formatting and collation route through the derived UI locale (`lib/locale.ts`); entity-title elements carry a `lang` attribute from the title's own map key for correct Han glyph selection.
+
+Intentionally **not** localized: server `ApiError` messages (they surface verbatim in toasts, English in v1) and schema/config-driven labels (type/field/enum/provider names — those are user data, not app copy). Hans↔Hant folding in search/dedup is deferred.
+
 ## Building the iOS app
 
 The Swift app has **no hand-written `unsafe`/C** — two generated layers stack: UniFFI (Rust ⇄ Swift) and swift-openapi-generator (a typed client over the FFI tunnel). `scripts/build-ios.sh` (Mac-only) runs the whole pipeline:
@@ -115,6 +131,7 @@ pnpm test             # cargo test -p kizunashelf  (the test suite; uses InMemor
 pnpm typecheck        # tsc across packages + cargo check -p kizunashelf
 pnpm lint             # oxlint (web)
 pnpm contract:generate  # regenerate the OpenAPI spec + TS client (run after API changes)
+pnpm i18n:extract       # re-extract the web UI-string catalogs (run after UI string changes)
 pnpm build
 ```
 
@@ -126,6 +143,7 @@ cargo clippy -p kizunashelf --all-targets -- -D warnings
 cargo test -p kizunashelf
 pnpm lint && pnpm typecheck
 pnpm contract:generate   # then ensure git diff is clean (CI fails otherwise)
+pnpm i18n:extract        # same deal — CI diffs apps/web/src/locales after extract
 ```
 
 ## Conventions & gotchas

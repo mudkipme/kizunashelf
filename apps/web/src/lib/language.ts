@@ -12,11 +12,9 @@ import { isIso639TitleLanguage, primaryLanguage } from "@/lib/title-language";
  * language (`useTitleLanguage`, the bare primary subtag — `titles` maps and
  * schema config never see a script subtag), and the language sent to
  * provider-bound requests (`useLanguagePreference`, the raw value, so
- * providers that distinguish Simplified/Traditional can). See
- * `docs/i18n-plan.md`.
+ * providers that distinguish Simplified/Traditional can).
  */
 export const languageStorageKey = "kizunashelf.language.v2";
-const legacyStorageKey = "kizunashelf.language.v1";
 
 /** Whether a browser/system tag means Traditional Chinese (script or region). */
 function isTraditionalChineseTag(tag: string): boolean {
@@ -56,32 +54,6 @@ function browserPreference(): string {
   return "en";
 }
 
-/**
- * The initial preference: the persisted v2 value wins (via rehydration); on
- * first run under v2, migrate the v1 value — a bare `zh` becomes the sniffed
- * script — else derive from the browser language.
- */
-function initialLanguage(): string {
-  try {
-    if (localStorage.getItem(languageStorageKey)) {
-      // A v2 value exists; persist rehydration replaces this placeholder.
-      return "en";
-    }
-    const legacy = localStorage.getItem(legacyStorageKey);
-    if (legacy) {
-      localStorage.removeItem(legacyStorageKey);
-      const parsed: unknown = JSON.parse(legacy);
-      const value = (parsed as { state?: { language?: unknown } })?.state?.language;
-      if (typeof value === "string" && value.trim()) {
-        return value === "zh" ? preferredChineseScript() : value;
-      }
-    }
-  } catch {
-    // Storage unavailable/corrupt: fall through to the browser default.
-  }
-  return browserPreference();
-}
-
 type LanguageState = {
   /** The viewer's language preference (may carry a script subtag, e.g. `zh-Hans`). */
   language: string;
@@ -91,7 +63,7 @@ type LanguageState = {
 export const useLanguageStore = create<LanguageState>()(
   persist(
     (set) => ({
-      language: initialLanguage(),
+      language: browserPreference(),
       setLanguage(language) {
         set({ language });
       },
@@ -125,7 +97,7 @@ export function uiLocaleFor(preference: string): UiLocale {
   if (exact) {
     return exact;
   }
-  // A bare/legacy `zh` still deserves a Chinese UI.
+  // A bare `zh` still deserves a Chinese UI.
   if (primaryLanguage(preference) === "zh") {
     return preferredChineseScript();
   }
