@@ -110,7 +110,43 @@ async fn search_igdb(
         .as_array()
         .cloned()
         .unwrap_or_default();
-    Ok(data.iter().filter_map(igdb_candidate).collect())
+    // The viewer's language selects which region's `game_localizations` name
+    // becomes the display title (see `igdb_candidate`).
+    let language = provider_config.language.as_deref();
+    Ok(data
+        .iter()
+        .filter_map(|item| igdb_candidate(item, language))
+        .collect())
+}
+
+/// Maps a viewer language preference to an IGDB region `identifier` slug, used to
+/// pick a localized title out of a game's `game_localizations`. IGDB has no
+/// request-language parameter and keys localizations by *region*, not language,
+/// so this mapping is deliberately coarse (region ≠ language) and best-effort.
+fn igdb_region_identifier(language: Option<&str>) -> Option<&'static str> {
+    let language = language.map(str::trim).filter(|value| !value.is_empty())?;
+    Some(match language.to_ascii_lowercase().as_str() {
+        code if code.starts_with("ja") => "japan",
+        code if code.starts_with("ko") => "korea",
+        "zh-hant" | "zh-tw" | "zh-hk" => "taiwan",
+        code if code.starts_with("zh") => "china",
+        code if code.starts_with("en") => "north_america",
+        _ => return None,
+    })
+}
+
+/// Reverse of `igdb_region_identifier` for building the `titles` map: maps an
+/// IGDB region `identifier` to the bare content language its localized title is
+/// written in. Both China and Taiwan fold to `zh` (the stored-data invariant is
+/// script-agnostic); regions that don't cleanly imply one language are skipped.
+fn igdb_region_language(identifier: &str) -> Option<&'static str> {
+    Some(match identifier {
+        "japan" => "ja",
+        "korea" => "ko",
+        "china" | "taiwan" | "hong_kong" => "zh",
+        "north_america" => "en",
+        _ => return None,
+    })
 }
 
 pub(super) fn igdb_external_types_match(provider_config: &ProviderSearchConfig) -> bool {
@@ -158,6 +194,7 @@ fn igdb_query_body(q: &str, page_size: usize, offset: usize) -> String {
 rating,aggregated_rating,total_rating,total_rating_count,websites.url,websites.category,\
 alternative_names.name,genres.name,platforms.id,platforms.name,themes.name,game_modes.name,\
 player_perspectives.name,game_engines.name,franchises.name,collection.name,\
+game_localizations.name,game_localizations.region.identifier,\
 involved_companies.developer,involved_companies.publisher,involved_companies.company.name;";
     let trimmed = q.trim();
     if trimmed.chars().all(|character| character.is_ascii_digit()) {
@@ -237,8 +274,32 @@ fn igdb_credentials(state: &AppState) -> Option<(String, String)> {
     (!client_id.is_empty() && !client_secret.is_empty()).then_some((client_id, client_secret))
 }
 
-fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
-    let title = item.get("name")?.as_str()?.to_string();
+fn igdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandidate> {
+    // The canonical `name` is IGDB's single title (usually the original/romanized
+    // one). A game may also carry region-keyed `game_localizations`; when the
+    // viewer's language maps to a region that has one, it becomes the display
+    // title while `name` stays the original. Localizations we can tag by language
+    // also seed the `titles` map for per-language title fields and matching.
+    let name = item.get("name")?.as_str()?.to_string();
+    let localizations = item.get("game_localizations").and_then(Value::as_array);
+    let localized_name = |region: &str| -> Option<String> {
+        localizations?.iter().find_map(|localization| {
+            let matches_region = localization
+                .get("region")
+                .and_then(|region| region.get("identifier"))
+                .and_then(Value::as_str)
+                == Some(region);
+            matches_region
+                .then(|| localization.get("name").and_then(Value::as_str))
+                .flatten()
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(str::to_string)
+        })
+    };
+    let title = igdb_region_identifier(language)
+        .and_then(localized_name)
+        .unwrap_or_else(|| name.clone());
     let url = item
         .get("url")
         .and_then(Value::as_str)
@@ -266,7 +327,7 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
         .and_then(Value::as_str)
         .map(|value| format!("https:{}", value.replace("t_thumb", "t_cover_big")));
     let mut metadata = Map::new();
-    metadata.insert("name".to_string(), Value::String(title.clone()));
+    metadata.insert("name".to_string(), Value::String(name.clone()));
     if let Some(cover_url) = &cover_url {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
@@ -410,15 +471,37 @@ fn igdb_candidate(item: &Value) -> Option<ExternalCandidate> {
             metadata.insert("publishers".to_string(), Value::Array(publishers));
         }
     }
+    // Tag every localization we can map to a bare content language so quick-add
+    // can populate per-language title fields and same-language matching works.
+    let mut titles = BTreeMap::new();
+    if let Some(localizations) = localizations {
+        for localization in localizations {
+            let language = localization
+                .get("region")
+                .and_then(|region| region.get("identifier"))
+                .and_then(Value::as_str)
+                .and_then(igdb_region_language);
+            let localized = localization
+                .get("name")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|value| !value.is_empty());
+            if let (Some(language), Some(localized)) = (language, localized) {
+                titles
+                    .entry(language.to_string())
+                    .or_insert_with(|| localized.to_string());
+            }
+        }
+    }
     Some(ExternalCandidate {
         provider: "igdb".to_string(),
         source_id,
         url,
-        original_title: Some(title.clone()),
+        original_title: Some(name.clone()),
         title,
         brief: igdb_brief(item),
         cover_url,
-        titles: BTreeMap::new(),
+        titles,
         metadata,
     })
 }
@@ -482,7 +565,7 @@ mod tests {
                 { "developer": true, "publisher": true, "company": { "name": "Team Cherry" } },
                 { "developer": false, "publisher": true, "company": { "name": "Some Publisher" } }
             ]
-        }))
+        }), None)
         .unwrap();
 
         let metadata = &candidate.metadata;
@@ -504,21 +587,24 @@ mod tests {
 
     #[test]
     fn candidate_combines_brief_and_normalizes_platform_and_site() {
-        let candidate = igdb_candidate(&json!({
-            "id": 2,
-            "name": "Celeste",
-            "url": "https://www.igdb.com/games/celeste",
-            "summary": "Climb the mountain.",
-            "storyline": "Help Madeline.",
-            "platforms": [
-                { "id": 6, "name": "PC (Microsoft Windows)" },
-                { "id": 130, "name": "Nintendo Switch" }
-            ],
-            "websites": [
-                { "category": 13, "url": "https://store.steampowered.com/app/504230" },
-                { "category": 1, "url": "https://www.celestegame.com" }
-            ]
-        }))
+        let candidate = igdb_candidate(
+            &json!({
+                "id": 2,
+                "name": "Celeste",
+                "url": "https://www.igdb.com/games/celeste",
+                "summary": "Climb the mountain.",
+                "storyline": "Help Madeline.",
+                "platforms": [
+                    { "id": 6, "name": "PC (Microsoft Windows)" },
+                    { "id": 130, "name": "Nintendo Switch" }
+                ],
+                "websites": [
+                    { "category": 13, "url": "https://store.steampowered.com/app/504230" },
+                    { "category": 1, "url": "https://www.celestegame.com" }
+                ]
+            }),
+            None,
+        )
         .unwrap();
 
         // summary + storyline are concatenated into the brief.
@@ -536,5 +622,39 @@ mod tests {
             candidate.metadata.get("official_site"),
             Some(&json!("https://www.celestegame.com"))
         );
+    }
+
+    #[test]
+    fn candidate_localizes_title_from_region() {
+        let game = json!({
+            "id": 3,
+            "name": "Final Fantasy VII",
+            "url": "https://www.igdb.com/games/final-fantasy-vii",
+            "game_localizations": [
+                { "name": "ファイナルファンタジーVII", "region": { "identifier": "japan" } },
+                { "name": "最终幻想VII", "region": { "identifier": "china" } },
+                { "name": "最終幻想VII", "region": { "identifier": "taiwan" } }
+            ]
+        });
+
+        // A Japanese viewer sees the Japan localization; the canonical name stays
+        // the original title, and every mappable region seeds the titles map.
+        let ja = igdb_candidate(&game, Some("ja-JP")).unwrap();
+        assert_eq!(ja.title, "ファイナルファンタジーVII");
+        assert_eq!(ja.original_title.as_deref(), Some("Final Fantasy VII"));
+        assert_eq!(
+            ja.titles.get("ja").map(String::as_str),
+            Some("ファイナルファンタジーVII")
+        );
+        // Chinese folds to bare `zh`; the first-seen (China) localization wins.
+        assert_eq!(ja.titles.get("zh").map(String::as_str), Some("最终幻想VII"));
+
+        // A Traditional-Chinese viewer resolves to the Taiwan localization.
+        let hant = igdb_candidate(&game, Some("zh-Hant")).unwrap();
+        assert_eq!(hant.title, "最終幻想VII");
+
+        // No localization for the region → fall back to the canonical name.
+        let en = igdb_candidate(&game, Some("en-US")).unwrap();
+        assert_eq!(en.title, "Final Fantasy VII");
     }
 }
