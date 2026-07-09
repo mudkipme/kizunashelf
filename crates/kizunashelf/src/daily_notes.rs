@@ -151,13 +151,7 @@ pub(crate) async fn read_daily_note_contents(
 }
 
 pub fn strip_frontmatter(raw: &str) -> String {
-    if !raw.starts_with("---\n") {
-        return raw.to_string();
-    }
-    raw[4..]
-        .find("\n---")
-        .map(|end| raw[end + 8..].to_string())
-        .unwrap_or_else(|| raw.to_string())
+    crate::markdown::split_frontmatter(raw).body.to_string()
 }
 
 pub fn normalize_wikilink_target(target: &str) -> String {

@@ -40,7 +40,10 @@ schemars = { version = "1.1.0", features = ["chrono04"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_ignored = "0.1.12"
 serde_json = { version = "1.0.147", features = ["preserve_order"] }
-serde_yaml = "0.9.34"
+# The original serde_yaml (dtolnay) is unmaintained/archived; yaml_serde is the
+# YAML org's maintained, API-compatible fork. Renamed to `serde_yaml` so every
+# `use serde_yaml::` import (and serde derive path) stays unchanged.
+serde_yaml = { package = "yaml_serde", version = "0.10.4" }
 tokio = { version = "1.48.0", features = ["full"] }
 tower = { version = "0.5.2", features = ["util"] }
 tower-http = { version = "0.6.8", features = ["cors", "fs"] }

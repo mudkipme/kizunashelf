@@ -121,17 +121,17 @@ impl ListBlock {
 /// verbatim so re-composing never reorders or reformats hand-authored YAML. Lists
 /// are plain Markdown and usually have no frontmatter, but any present is kept.
 pub fn split_frontmatter(raw: &str) -> (Option<String>, String) {
-    if !raw.starts_with("---\n") {
+    let split = crate::markdown::split_frontmatter(raw);
+    if split.frontmatter.is_none() {
         return (None, raw.to_string());
     }
-    let Some(end) = raw[4..].find("\n---").map(|index| index + 4) else {
-        return (None, raw.to_string());
-    };
-    let prefix = raw[..end + 4].to_string();
-    // `end + 4` lands right after the closing `---`; the body starts after the
-    // newline that follows it (stripped so re-composition controls the separator).
-    let body = raw[end + 4..].strip_prefix('\n').unwrap_or(&raw[end + 4..]);
-    (Some(prefix), body.to_string())
+    // The full raw fence block (`---\n … \n---`, no trailing newline) is the input
+    // up to where the body begins — `split.body` is a suffix of `raw`, so its
+    // length gives that offset. The body starts after the newline that follows the
+    // closing fence (stripped so re-composition controls the separator).
+    let prefix = &raw[..raw.len() - split.body.len()];
+    let body = split.body.strip_prefix('\n').unwrap_or(split.body);
+    (Some(prefix.to_string()), body.to_string())
 }
 
 /// Re-attaches a (possibly absent) frontmatter block to a rendered body.

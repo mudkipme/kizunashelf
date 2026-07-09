@@ -1,4 +1,5 @@
 use crate::library::wikilink_regex;
+use crate::markdown::{parse_heading, FenceState};
 use regex::Regex;
 use std::sync::OnceLock;
 
@@ -12,7 +13,7 @@ pub(super) fn mention_blocks(markdown: &str) -> Vec<MarkdownMentionBlock> {
     let mut blocks = Vec::new();
     let mut heading: Option<String> = None;
     let mut paragraph: Vec<(String, usize)> = Vec::new();
-    let mut in_fence = false;
+    let mut fence = FenceState::default();
 
     fn push_block(
         blocks: &mut Vec<MarkdownMentionBlock>,
@@ -50,20 +51,17 @@ pub(super) fn mention_blocks(markdown: &str) -> Vec<MarkdownMentionBlock> {
 
     for (index, line) in markdown.lines().enumerate() {
         let line_number = index + 1;
+        let inside_fence = fence.in_fence();
+        if fence.observe(line) || inside_fence {
+            // A fence delimiter (opening or closing) ends the current paragraph;
+            // lines inside a fenced block are code, not mentions.
+            flush_paragraph(&mut blocks, &mut paragraph, heading.clone());
+            continue;
+        }
         let trimmed = line.trim();
-        if fence_line_regex().is_match(trimmed) {
+        if let Some((_, text)) = parse_heading(line) {
             flush_paragraph(&mut blocks, &mut paragraph, heading.clone());
-            in_fence = !in_fence;
-            continue;
-        }
-        if in_fence {
-            continue;
-        }
-        if let Some(captures) = heading_regex().captures(trimmed) {
-            flush_paragraph(&mut blocks, &mut paragraph, heading.clone());
-            heading = captures
-                .get(2)
-                .map(|capture| clean_mention_snippet(capture.as_str(), 120));
+            heading = Some(clean_mention_snippet(&text, 120));
             push_block(
                 &mut blocks,
                 trimmed.to_string(),
@@ -128,19 +126,11 @@ pub(super) fn clean_mention_snippet(text: &str, max_length: usize) -> String {
     }
 }
 
-fn fence_line_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^(```|~~~)").unwrap())
-}
-
-fn heading_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^(#{1,6})\s+(.+)$").unwrap())
-}
-
 fn list_or_quote_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([-*+]|\d+\.)\s+|^>\s+").unwrap())
+    // Ordered markers accept both `.` and `)` delimiters (mirrors the list-item
+    // parsing in `lists.rs`/`episodes.rs`).
+    RE.get_or_init(|| Regex::new(r"^([-*+]|\d+[.)])\s+|^>\s+").unwrap())
 }
 
 fn wikilink_with_alias_regex() -> &'static Regex {

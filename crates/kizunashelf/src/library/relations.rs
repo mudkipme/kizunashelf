@@ -8,7 +8,7 @@ use anyhow::Result;
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use super::frontmatter::{fence_regex, strip_wikilink, wikilink_regex};
+use super::frontmatter::{strip_wikilink, wikilink_regex};
 use super::index_cache::{fingerprint_hit, CachedDailyNote};
 use super::read::cache_key;
 
@@ -257,7 +257,7 @@ pub(super) async fn read_daily_note_links(
 }
 
 fn daily_note_wikilinks(raw: &str) -> Vec<String> {
-    body_wikilinks(&fence_regex().replace_all(&strip_frontmatter(raw), ""))
+    body_wikilinks(&crate::markdown::strip_fenced_code(&strip_frontmatter(raw)))
 }
 
 pub fn normalized_entity_basename_index(

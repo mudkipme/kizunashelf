@@ -17,24 +17,20 @@ pub struct MarkdownDocument {
 }
 
 pub(super) fn parse_markdown(raw: &str) -> ParsedMarkdown {
-    if !raw.starts_with("---\n") {
+    let split = crate::markdown::split_frontmatter(raw);
+    let Some(yaml_text) = split.frontmatter else {
+        let mut diagnostics = Vec::new();
+        if split.unclosed {
+            diagnostics
+                .push("frontmatter starts with --- but has no closing delimiter".to_string());
+        }
         return ParsedMarkdown {
             frontmatter: Map::new(),
-            body: raw.trim().to_string(),
-            diagnostics: Vec::new(),
-        };
-    }
-    let Some(end) = raw[4..].find("\n---").map(|index| index + 4) else {
-        return ParsedMarkdown {
-            frontmatter: Map::new(),
-            body: raw.trim().to_string(),
-            diagnostics: vec![
-                "frontmatter starts with --- but has no closing delimiter".to_string()
-            ],
+            body: split.body.trim().to_string(),
+            diagnostics,
         };
     };
-    let yaml_text = &raw[4..end];
-    let body = raw[end + 4..].trim().to_string();
+    let body = split.body.trim().to_string();
     let mut diagnostics = Vec::new();
     let frontmatter = match serde_yaml::from_str::<serde_yaml::Value>(yaml_text) {
         Ok(value) => match yaml_to_json_value(value) {
@@ -62,21 +58,10 @@ pub(super) fn parse_markdown(raw: &str) -> ParsedMarkdown {
 }
 
 pub fn split_markdown_document(raw: &str) -> MarkdownDocument {
-    if !raw.starts_with("---\n") {
-        return MarkdownDocument {
-            frontmatter: Map::new(),
-            body: raw.to_string(),
-        };
-    }
-    let Some(end) = raw[4..].find("\n---").map(|index| index + 4) else {
-        return MarkdownDocument {
-            frontmatter: Map::new(),
-            body: raw.to_string(),
-        };
-    };
-    let yaml_text = &raw[4..end];
-    let frontmatter = serde_yaml::from_str::<serde_yaml::Value>(yaml_text)
-        .ok()
+    let split = crate::markdown::split_frontmatter(raw);
+    let frontmatter = split
+        .frontmatter
+        .and_then(|yaml| serde_yaml::from_str::<serde_yaml::Value>(yaml).ok())
         .and_then(yaml_to_json_value)
         .and_then(|value| match value {
             Value::Object(map) => Some(map),
@@ -85,7 +70,7 @@ pub fn split_markdown_document(raw: &str) -> MarkdownDocument {
         .unwrap_or_default();
     MarkdownDocument {
         frontmatter,
-        body: raw[end + 4..].to_string(),
+        body: split.body.to_string(),
     }
 }
 
@@ -326,8 +311,10 @@ pub(super) fn extract_summary(body: &str) -> Option<String> {
         .split_once("\n## ")
         .map(|(head, _)| head)
         .unwrap_or(source);
-    let mut cleaned = fence_regex().replace_all(source, "").to_string();
-    cleaned = image_markdown_regex().replace_all(&cleaned, "").to_string();
+    let stripped = crate::markdown::strip_fenced_code(source);
+    let mut cleaned = image_markdown_regex()
+        .replace_all(&stripped, "")
+        .to_string();
     cleaned = markdown_link_regex().replace_all(&cleaned, "").to_string();
     cleaned = wikilink_regex().replace_all(&cleaned, "$1").to_string();
     let cleaned = cleaned
@@ -363,11 +350,6 @@ pub fn wikilink_regex() -> &'static Regex {
 fn summary_heading_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| Regex::new(r"(?im)^##\s+(摘要|概览|简介|Summary)\s*$").unwrap())
-}
-
-pub(super) fn fence_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?s)```.*?```").unwrap())
 }
 
 fn image_markdown_regex() -> &'static Regex {
