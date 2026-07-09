@@ -12,6 +12,7 @@ use crate::entities::{
 };
 use crate::library::load_entity;
 use crate::relations::SortDirection;
+use crate::types::CanonicalStatus;
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -21,6 +22,11 @@ use serde::Deserialize;
 pub(crate) struct EntitiesQuery {
     #[serde(rename = "type")]
     entity_type: Option<String>,
+    /// Filter to one canonical lifecycle status (`planning`/`ongoing`/…),
+    /// resolved per type from its `statusValues` — usable with or without `type`
+    /// for cross-type status shelves.
+    #[serde(rename = "canonicalStatus")]
+    canonical_status: Option<CanonicalStatus>,
     sort: Option<String>,
     direction: Option<String>,
     #[serde(rename = "titleLanguage")]
@@ -47,6 +53,7 @@ pub(crate) async fn entities(
     };
     let params = EntityListParams {
         entity_type: query.entity_type.as_deref(),
+        canonical_status: query.canonical_status,
         field_filters,
         query: query.q.as_deref(),
         relation: query.relation.as_deref(),

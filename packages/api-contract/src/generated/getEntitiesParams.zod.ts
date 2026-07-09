@@ -8,6 +8,7 @@ import { z as zod } from 'zod';
 
 export const GetEntitiesParams = zod.object({
   "type": zod.string().optional(),
+  "canonicalStatus": zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).optional().describe('Filter to one canonical lifecycle status (`planning`\/`ongoing`\/…),\nresolved per type from its `statusValues` — usable with or without `type`\nfor cross-type status shelves.'),
   "sort": zod.string().optional(),
   "direction": zod.string().optional(),
   "titleLanguage": zod.string().optional(),

@@ -8,6 +8,7 @@ import { z as zod } from 'zod';
 
 export const EntitiesQuery = zod.object({
   "type": zod.string().nullish(),
+  "canonicalStatus": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional().describe('Filter to one canonical lifecycle status (`planning`\/`ongoing`\/…),\nresolved per type from its `statusValues` — usable with or without `type`\nfor cross-type status shelves.'),
   "sort": zod.string().nullish(),
   "direction": zod.string().nullish(),
   "titleLanguage": zod.string().nullish(),

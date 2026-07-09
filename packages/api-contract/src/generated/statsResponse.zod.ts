@@ -12,6 +12,16 @@ export const statsResponseRelationsMin = 0;
 
 export const statsResponseByTypeItemCountMin = 0;
 
+export const statsResponseByCanonicalStatusPlanningMin = 0;
+
+export const statsResponseByCanonicalStatusOngoingMin = 0;
+
+export const statsResponseByCanonicalStatusPausedMin = 0;
+
+export const statsResponseByCanonicalStatusCompletedMin = 0;
+
+export const statsResponseByCanonicalStatusDroppedMin = 0;
+
 
 export const StatsResponse = zod.object({
   "generatedAt": zod.string(),
@@ -23,6 +33,13 @@ export const StatsResponse = zod.object({
   "icon": zod.string().nullish(),
   "count": zod.number().min(statsResponseByTypeItemCountMin)
 })),
+  "byCanonicalStatus": zod.object({
+  "planning": zod.number().min(statsResponseByCanonicalStatusPlanningMin),
+  "ongoing": zod.number().min(statsResponseByCanonicalStatusOngoingMin),
+  "paused": zod.number().min(statsResponseByCanonicalStatusPausedMin),
+  "completed": zod.number().min(statsResponseByCanonicalStatusCompletedMin),
+  "dropped": zod.number().min(statsResponseByCanonicalStatusDroppedMin)
+}).describe('Entity counts per canonical lifecycle status (schema-driven per type via\n`statusValues`), scoped like the rest of the stats response. Entities with\nno status field, no value, or an unmapped value are counted in none of them.\nFixed fields (not a map) for codegen-friendliness, mirroring [`StatusValues`].'),
   "dateFields": zod.array(zod.string())
 })
 

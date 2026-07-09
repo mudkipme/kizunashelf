@@ -7,8 +7,8 @@
 use crate::contract::{
     AnalyticsActivity, AnalyticsActivityType, AnalyticsActivityYear, AnalyticsActivityYearType,
     AnalyticsDataQuality, AnalyticsDistributions, AnalyticsResponse, AnalyticsTotals,
-    CleanupQueueSummary, CleanupQueuesResponse, CleanupUnresolvedRelation, StatsResponse,
-    TypeCount,
+    CanonicalStatusCounts, CleanupQueueSummary, CleanupQueuesResponse, CleanupUnresolvedRelation,
+    StatsResponse, TypeCount,
 };
 use crate::daily_notes::normalize_wikilink_target;
 use crate::dates::{parse_entity_date, parse_exact_date, ParsedEntityDate};
@@ -40,6 +40,23 @@ fn count_by_type(library: &Library) -> Vec<TypeCount> {
         .collect()
 }
 
+/// Entity counts per canonical status over an already-scoped summary slice —
+/// the resolved status is resident on the summary, so this is a single pass.
+fn count_by_canonical_status(summaries: &[EntitySummary]) -> CanonicalStatusCounts {
+    let mut counts = CanonicalStatusCounts::default();
+    for entity in summaries {
+        match entity.status.as_ref().and_then(|status| status.canonical) {
+            Some(CanonicalStatus::Planning) => counts.planning += 1,
+            Some(CanonicalStatus::Ongoing) => counts.ongoing += 1,
+            Some(CanonicalStatus::Paused) => counts.paused += 1,
+            Some(CanonicalStatus::Completed) => counts.completed += 1,
+            Some(CanonicalStatus::Dropped) => counts.dropped += 1,
+            None => {}
+        }
+    }
+    counts
+}
+
 /// Builds the `/stats` summary for the whole library, or for a single entity type
 /// when `entity_type` is `Some(id)` (`None` or `"all"` covers every type).
 pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsResponse {
@@ -63,6 +80,7 @@ pub fn build_stats(library: &Library, entity_type: Option<&str>) -> StatsRespons
             .filter(|relation| ids.contains(&relation.source_id))
             .count(),
         by_type: count_by_type(library),
+        by_canonical_status: count_by_canonical_status(&summaries),
         date_fields: type_filter
             .and_then(|entity_type| {
                 library
@@ -878,6 +896,50 @@ mod tests {
         assert_eq!(titles(&broken), ["A"]);
     }
 
+    #[test]
+    fn count_by_canonical_status_reads_the_resident_resolution() {
+        use crate::types::{CanonicalStatus, ResolvedStatus};
+        let with_status = |title: &str, canonical: Option<CanonicalStatus>| EntitySummary {
+            id: format!("anime:{title}"),
+            entity_type: "anime".to_string(),
+            type_label: "Anime".to_string(),
+            title: title.to_string(),
+            titles: std::collections::BTreeMap::new(),
+            dates: Vec::new(),
+            image: None,
+            summary: None,
+            path: format!("Taxonomy/Anime/{title}.md"),
+            basename: title.to_string(),
+            external_refs: std::collections::BTreeMap::new(),
+            tags: Vec::new(),
+            episode_progress: None,
+            status: canonical.map(|canonical| ResolvedStatus {
+                field: "status".to_string(),
+                value: "value".to_string(),
+                canonical: Some(canonical),
+            }),
+            relation_count: 0,
+        };
+        let mut unmapped = with_status("U", Some(CanonicalStatus::Ongoing));
+        if let Some(status) = unmapped.status.as_mut() {
+            status.canonical = None; // a value with no canonical mapping
+        }
+        let summaries = vec![
+            with_status("A", Some(CanonicalStatus::Ongoing)),
+            with_status("B", Some(CanonicalStatus::Ongoing)),
+            with_status("C", Some(CanonicalStatus::Planning)),
+            with_status("D", Some(CanonicalStatus::Completed)),
+            with_status("E", None), // no status at all
+            unmapped,
+        ];
+        let counts = count_by_canonical_status(&summaries);
+        assert_eq!(counts.planning, 1);
+        assert_eq!(counts.ongoing, 2);
+        assert_eq!(counts.paused, 0);
+        assert_eq!(counts.completed, 1);
+        assert_eq!(counts.dropped, 0);
+    }
+
     #[tokio::test]
     async fn build_stats_filters_by_type_and_lists_date_fields() {
         let (library, _vfs) = fixture().await;
@@ -886,6 +948,8 @@ mod tests {
         let all = build_stats(&library, None);
         assert_eq!(all.total, 4);
         assert!(all.date_fields.is_empty());
+        // No fixture entity carries a status value, so every canonical count is 0.
+        assert_eq!(all.by_canonical_status, CanonicalStatusCounts::default());
         let all_explicit = build_stats(&library, Some("all"));
         assert_eq!(all_explicit.total, 4);
 

@@ -10,7 +10,9 @@ use crate::relations::{
     sort_entities, sort_entities_with_title_language, sort_records_by_modified, summary_by_id,
     SortDirection,
 };
-use crate::types::{EntityRecord, EntitySummary, FieldType, Library, Relation, RelationDirection};
+use crate::types::{
+    CanonicalStatus, EntityRecord, EntitySummary, FieldType, Library, Relation, RelationDirection,
+};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 
@@ -28,6 +30,11 @@ pub struct EntityFieldFilter {
 pub struct EntityListParams<'a> {
     /// `None` or `"all"` lists every type; otherwise restricts to that type id.
     pub entity_type: Option<&'a str>,
+    /// Restricts to entities whose resolved status maps to this canonical —
+    /// schema-driven (each type's own `statusValues`), so it composes with
+    /// `entity_type: None` into cross-type shelves ("everything ongoing").
+    /// Entities with no status or an unmapped value never match.
+    pub canonical_status: Option<CanonicalStatus>,
     pub field_filters: Vec<EntityFieldFilter>,
     /// Free-text search across titles/summary/basename/path (case-insensitive).
     pub query: Option<&'a str>,
@@ -62,6 +69,16 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
         .filter(|entity_type| *entity_type != "all")
     {
         entities.retain(|entity| entity.summary.entity_type == entity_type);
+    }
+    if let Some(canonical) = params.canonical_status {
+        entities.retain(|entity| {
+            entity
+                .summary
+                .status
+                .as_ref()
+                .and_then(|status| status.canonical)
+                == Some(canonical)
+        });
     }
     if !params.field_filters.is_empty() {
         entities
@@ -529,7 +546,7 @@ pub fn entity_detail_related_entities(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{EntityTypeConfig, FieldConfig, KizunaConfig};
+    use crate::types::{EntityTypeConfig, FieldConfig, KizunaConfig, ResolvedStatus};
     use serde_json::json;
     use std::collections::BTreeMap;
 
@@ -896,6 +913,7 @@ mod tests {
     fn params<'a>() -> EntityListParams<'a> {
         EntityListParams {
             entity_type: None,
+            canonical_status: None,
             field_filters: Vec::new(),
             query: None,
             relation: None,
@@ -952,6 +970,66 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["Gamma"]
         );
+    }
+
+    #[test]
+    fn build_entity_list_filters_by_canonical_status_across_types() {
+        // The user labels differ per record ("Watching" / "在看" could each map
+        // to ongoing in their own types); the filter reads only the resolved
+        // canonical, so it spans types and label languages.
+        let with_status = |id: &str, title: &str, value: &str, canonical| {
+            let mut entity = record(id, title, json!({}));
+            entity.summary.status = Some(ResolvedStatus {
+                field: "status".to_string(),
+                value: value.to_string(),
+                canonical,
+            });
+            entity
+        };
+        let library = Library::new(
+            config(),
+            vec![
+                with_status("anime:a", "Alpha", "在看", Some(CanonicalStatus::Ongoing)),
+                with_status("anime:b", "Beta", "想看", Some(CanonicalStatus::Planning)),
+                // Unmapped value and no status at all: never match a canonical.
+                with_status("anime:c", "Gamma", "重看中", None),
+                record("anime:d", "Delta", json!({})),
+            ],
+            Vec::new(),
+            Vec::new(),
+            "gen".to_string(),
+        );
+
+        let ongoing = build_entity_list(
+            &library,
+            &EntityListParams {
+                canonical_status: Some(CanonicalStatus::Ongoing),
+                ..params()
+            },
+        );
+        assert_eq!(ongoing.total, 1);
+        assert_eq!(ongoing.items[0].title, "Alpha");
+
+        // Composes with the other filters (here: free-text search).
+        let searched = build_entity_list(
+            &library,
+            &EntityListParams {
+                canonical_status: Some(CanonicalStatus::Planning),
+                query: Some("beta"),
+                ..params()
+            },
+        );
+        assert_eq!(searched.total, 1);
+        assert_eq!(searched.items[0].title, "Beta");
+
+        let completed = build_entity_list(
+            &library,
+            &EntityListParams {
+                canonical_status: Some(CanonicalStatus::Completed),
+                ..params()
+            },
+        );
+        assert_eq!(completed.total, 0);
     }
 
     #[test]

@@ -928,6 +928,16 @@
           },
           {
             "in": "query",
+            "name": "canonicalStatus",
+            "description": "Filter to one canonical lifecycle status (`planning`/`ongoing`/…),\nresolved per type from its `statusValues` — usable with or without `type`\nfor cross-type status shelves.",
+            "schema": {
+              "description": "Filter to one canonical lifecycle status (`planning`/`ongoing`/…),\nresolved per type from its `statusValues` — usable with or without `type`\nfor cross-type status shelves.",
+              "$ref": "#/components/schemas/CanonicalStatus"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
             "name": "sort",
             "schema": {
               "type": "string"
@@ -5160,6 +5170,9 @@
               "$ref": "#/components/schemas/TypeCount"
             }
           },
+          "byCanonicalStatus": {
+            "$ref": "#/components/schemas/CanonicalStatusCounts"
+          },
           "dateFields": {
             "type": "array",
             "items": {
@@ -5172,6 +5185,7 @@
           "total",
           "relations",
           "byType",
+          "byCanonicalStatus",
           "dateFields"
         ]
       },
@@ -5200,6 +5214,44 @@
           "id",
           "label",
           "count"
+        ]
+      },
+      "CanonicalStatusCounts": {
+        "description": "Entity counts per canonical lifecycle status (schema-driven per type via\n`statusValues`), scoped like the rest of the stats response. Entities with\nno status field, no value, or an unmapped value are counted in none of them.\nFixed fields (not a map) for codegen-friendliness, mirroring [`StatusValues`].",
+        "type": "object",
+        "properties": {
+          "planning": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "ongoing": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "paused": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "completed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "dropped": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "planning",
+          "ongoing",
+          "paused",
+          "completed",
+          "dropped"
         ]
       },
       "AnalyticsResponse": {
@@ -6815,6 +6867,17 @@
             "type": [
               "string",
               "null"
+            ]
+          },
+          "canonicalStatus": {
+            "description": "Filter to one canonical lifecycle status (`planning`/`ongoing`/…),\nresolved per type from its `statusValues` — usable with or without `type`\nfor cross-type status shelves.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanonicalStatus"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "sort": {

@@ -370,7 +370,22 @@ pub struct StatsResponse {
     pub total: usize,
     pub relations: usize,
     pub by_type: Vec<TypeCount>,
+    pub by_canonical_status: CanonicalStatusCounts,
     pub date_fields: Vec<String>,
+}
+
+/// Entity counts per canonical lifecycle status (schema-driven per type via
+/// `statusValues`), scoped like the rest of the stats response. Entities with
+/// no status field, no value, or an unmapped value are counted in none of them.
+/// Fixed fields (not a map) for codegen-friendliness, mirroring [`StatusValues`].
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CanonicalStatusCounts {
+    pub planning: usize,
+    pub ongoing: usize,
+    pub paused: usize,
+    pub completed: usize,
+    pub dropped: usize,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
