@@ -15,8 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
+  bodySectionSelectionState,
   externalBodySectionState,
   externalSourceLabel,
+  fieldSelectionState,
   type ExternalBodyPreviewEntry,
   type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
@@ -48,7 +50,6 @@ type ExternalMatchDialogProps = {
   searching: boolean;
   applying: boolean;
   contentWritable: boolean;
-  applyLabel?: string;
   emptyMessage?: string;
   coverDownloadAvailable?: boolean;
   downloadCover?: boolean;
@@ -83,7 +84,6 @@ export function ExternalMatchDialog({
   searching,
   applying,
   contentWritable,
-  applyLabel,
   emptyMessage,
   coverDownloadAvailable = false,
   downloadCover = false,
@@ -207,7 +207,7 @@ export function ExternalMatchDialog({
             disabled={!contentWritable || applying || !selectedCandidate || selectedCount === 0}
           >
             <WandSparklesIcon data-icon="inline-start" />
-            {applying ? t`Applying…` : (applyLabel ?? t`Apply Selected`)}
+            {applying ? t`Applying…` : t`Apply Selected`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -311,6 +311,9 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
             const newValue = entry.hasValue
               ? formatMetadataValue(entry.value)
               : t`No value returned`;
+            // The external ref is forced on and no-op values forced off; empty
+            // fields default on, existing ones off (see fieldSelectionState).
+            const { locked } = fieldSelectionState(entry, currentValues?.[entry.field]);
             return (
               <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
                 <input
@@ -318,7 +321,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                   checked={selectedFields.has(entry.field)}
                   onChange={() => toggleField(entry.field)}
                   className="mt-1"
-                  disabled={!contentWritable || !entry.hasValue}
+                  disabled={!contentWritable || locked}
                 />
                 <span className="min-w-0">
                   <span className="block font-medium">{entry.label}</span>
@@ -346,14 +349,16 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
             <div className="mt-3 border-t pt-3">
               <h4 className="text-xs font-semibold uppercase text-muted-foreground"><Trans>Body Sections</Trans></h4>
               <div className="mt-2 flex flex-col gap-2">
-                {bodyEntries.map((entry) => (
+                {bodyEntries.map((entry) => {
+                  const { locked } = bodySectionSelectionState(entry, bodyText);
+                  return (
                   <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
                     <input
                       type="checkbox"
                       checked={selectedBodySections.has(entry.key)}
                       onChange={() => toggleBodySection(entry.key)}
                       className="mt-1"
-                      disabled={!contentWritable || !entry.hasValue}
+                      disabled={!contentWritable || locked}
                     />
                     <span className="min-w-0">
                       <span className="block font-medium">{entry.heading}</span>
@@ -373,7 +378,8 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                       </span>
                     </span>
                   </label>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}

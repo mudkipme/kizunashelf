@@ -4,11 +4,14 @@ import type { ExternalMatch, FieldConfig, MappedFieldValue, TypeConfig } from "@
 
 import {
   applyExternalBodySections,
+  bodySectionSelectionState,
   externalBodySectionState,
+  fieldSelectionState,
   matchBodyPatch,
+  matchDefaultBodySections,
+  matchDefaultFields,
   matchFieldPatch,
   matchFieldPreviewEntries,
-  matchSelectableFields,
   type ExternalBodyPatch,
 } from "./external-metadata";
 
@@ -125,15 +128,106 @@ describe("matchFieldPreviewEntries", () => {
   });
 });
 
-describe("matchSelectableFields", () => {
-  it("returns only the fields the core resolved to a value", () => {
-    const result = matchSelectableFields(
-      match([
-        fieldValue({ field: "name", value: "SV" }),
-        fieldValue({ field: "empty", value: [], hasValue: false }),
-      ]),
+describe("fieldSelectionState", () => {
+  it("locks a valueless field off", () => {
+    expect(fieldSelectionState(fieldValue({ field: "x", value: [], hasValue: false }), undefined)).toEqual({
+      checked: false,
+      locked: true,
+    });
+  });
+
+  it("locks the external ref field on (its externalField is absent)", () => {
+    expect(
+      fieldSelectionState(fieldValue({ field: "ref", value: "https://bgm.tv/subject/123" }), "https://old"),
+    ).toEqual({ checked: true, locked: true });
+  });
+
+  it("locks the external ref off when it already matches (re-matching the same candidate)", () => {
+    expect(
+      fieldSelectionState(
+        fieldValue({ field: "ref", value: "https://bgm.tv/subject/123" }),
+        "https://bgm.tv/subject/123",
+      ),
+    ).toEqual({ checked: false, locked: true });
+  });
+
+  it("locks a field whose value already matches the current one off", () => {
+    expect(fieldSelectionState(fieldValue({ field: "name", value: "SV", externalField: "name" }), "SV")).toEqual({
+      checked: false,
+      locked: true,
+    });
+  });
+
+  it("checks an empty current field by default and leaves it editable", () => {
+    expect(fieldSelectionState(fieldValue({ field: "name", value: "SV", externalField: "name" }), "")).toEqual({
+      checked: true,
+      locked: false,
+    });
+    expect(fieldSelectionState(fieldValue({ field: "tags", value: ["a"], externalField: "tags" }), [])).toEqual({
+      checked: true,
+      locked: false,
+    });
+  });
+
+  it("leaves a differing populated field unchecked but editable", () => {
+    expect(
+      fieldSelectionState(fieldValue({ field: "name", value: "SV", externalField: "name" }), "Other"),
+    ).toEqual({ checked: false, locked: false });
+  });
+});
+
+describe("matchDefaultFields", () => {
+  it("defaults empty and ref fields on, same and existing off", () => {
+    const candidate = match([
+      fieldValue({ field: "ref", value: "https://bgm.tv/subject/123" }), // ref -> on
+      fieldValue({ field: "name", value: "SV", externalField: "name" }), // empty current -> on
+      fieldValue({ field: "year", value: "2026", externalField: "year" }), // same -> off
+      fieldValue({ field: "note", value: "New", externalField: "note" }), // existing differs -> off
+      fieldValue({ field: "empty", value: [], hasValue: false }), // no value -> off
+    ]);
+    const current = { name: "", year: "2026", note: "Old" };
+    expect(matchDefaultFields(candidate, current).sort()).toEqual(["name", "ref"]);
+  });
+});
+
+function bodySection(extra: Partial<NonNullable<ExternalMatch["bodySections"]>[number]> = {}) {
+  return {
+    key: "Summary:bangumi:summary",
+    heading: "Summary",
+    source: "bangumi",
+    externalField: "summary",
+    markdown: "New text",
+    hasValue: true,
+    ...extra,
+  };
+}
+
+describe("bodySectionSelectionState", () => {
+  it("checks an absent section, unchecks a differing one, locks an identical one", () => {
+    expect(bodySectionSelectionState(bodySection(), undefined)).toEqual({ checked: true, locked: false });
+    expect(bodySectionSelectionState(bodySection(), "## Other\n\nx\n")).toEqual({ checked: true, locked: false });
+    expect(bodySectionSelectionState(bodySection(), "## Summary\n\nOld\n")).toEqual({ checked: false, locked: false });
+    expect(bodySectionSelectionState(bodySection(), "## Summary\n\nNew text\n")).toEqual({
+      checked: false,
+      locked: true,
+    });
+    expect(bodySectionSelectionState(bodySection({ hasValue: false }), undefined)).toEqual({
+      checked: false,
+      locked: true,
+    });
+  });
+});
+
+describe("matchDefaultBodySections", () => {
+  it("defaults only new or absent sections on", () => {
+    const candidate = match(
+      [],
+      [
+        bodySection(), // identical existing -> off
+        bodySection({ key: "Notes:bangumi:notes", heading: "Notes", externalField: "notes", markdown: "N" }),
+      ],
     );
-    expect(result).toEqual(["name"]);
+    expect(matchDefaultBodySections(candidate, "## Summary\n\nNew text\n")).toEqual(["Notes:bangumi:notes"]);
   });
 });
 

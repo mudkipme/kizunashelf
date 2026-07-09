@@ -109,9 +109,35 @@ export function matchFieldPreviewEntries(
   }));
 }
 
-/// Fields the user can apply (those the core resolved to a non-empty value).
-export function matchSelectableFields(match: ExternalMatch): string[] {
-  return (match.fields ?? []).filter((entry) => entry.hasValue).map((entry) => entry.field);
+/// The mapped externalRef field carries the candidate URL rather than a provider
+/// metadata field, so its `externalField` is absent (see MappedFieldValue). It's
+/// the anchor future refreshes match against, so matching always applies it.
+export function isExternalRefField(entry: MappedFieldValue): boolean {
+  return entry.externalField == null;
+}
+
+/// How a candidate value should default in the selection UI. `locked` fixes the
+/// checkbox: a value equal to the current one — or an absent one — must not apply
+/// (off); the external ref must apply (on). Equality is checked first so that
+/// re-matching the same candidate leaves the already-set ref locked off, not on.
+export type SelectionState = { checked: boolean; locked: boolean };
+
+export function fieldSelectionState(entry: MappedFieldValue, currentValue: unknown): SelectionState {
+  if (!entry.hasValue) return { checked: false, locked: true };
+  if (valuesEqual(entry.value, currentValue)) return { checked: false, locked: true };
+  if (isExternalRefField(entry)) return { checked: true, locked: true };
+  // Fill blanks by default; leave populated fields for the user to opt into.
+  return { checked: isEmptyValue(currentValue), locked: false };
+}
+
+/// Fields checked by default when a candidate is chosen.
+export function matchDefaultFields(
+  match: ExternalMatch,
+  currentValues?: Record<string, unknown>,
+): string[] {
+  return (match.fields ?? [])
+    .filter((entry) => fieldSelectionState(entry, currentValues?.[entry.field]).checked)
+    .map((entry) => entry.field);
 }
 
 export function matchFieldPatch(match: ExternalMatch, fields: Set<string>): Record<string, unknown> {
@@ -126,8 +152,26 @@ export function matchBodyPreviewEntries(match: ExternalMatch): ExternalBodyPrevi
   return match.bodySections ?? [];
 }
 
-export function matchSelectableBodySections(match: ExternalMatch): string[] {
-  return (match.bodySections ?? []).filter((entry) => entry.hasValue).map((entry) => entry.key);
+/// Body-section counterpart to `fieldSelectionState`. A section absent from the
+/// body defaults on; one whose current content already matches is locked off; a
+/// differing existing section stays off but editable.
+export function bodySectionSelectionState(
+  entry: MappedBodySection,
+  body: string | undefined,
+): SelectionState {
+  if (!entry.hasValue) return { checked: false, locked: true };
+  if (body === undefined) return { checked: true, locked: false };
+  const current = currentBodySectionMarkdown(body, entry.heading);
+  if (current === undefined) return { checked: true, locked: false };
+  if (current === entry.markdown.trim()) return { checked: false, locked: true };
+  return { checked: false, locked: false };
+}
+
+/// Body sections checked by default when a candidate is chosen.
+export function matchDefaultBodySections(match: ExternalMatch, body?: string): string[] {
+  return (match.bodySections ?? [])
+    .filter((entry) => bodySectionSelectionState(entry, body).checked)
+    .map((entry) => entry.key);
 }
 
 export function matchBodyPatch(
@@ -151,6 +195,30 @@ export function applyExternalBodySections(body: string, patches: ExternalBodyPat
 
 export function externalBodySectionState(body: string, heading: string): ExternalBodySectionState {
   return findMarkdownHeadingSection(body, heading) ? "replace" : "append";
+}
+
+/// The trimmed Markdown currently under `heading`, or undefined if the section is
+/// absent. Lets the UI detect when applying a candidate section would rewrite
+/// identical content.
+export function currentBodySectionMarkdown(body: string, heading: string): string | undefined {
+  const section = findMarkdownHeadingSection(body, heading);
+  if (!section) return undefined;
+  return body.slice(section.contentStart, section.end).trim();
+}
+
+function isEmptyValue(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value === "string") return value.trim() === "";
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+}
+
+/// Structural equality of a candidate value against the entity's current value;
+/// both empty counts as equal. Anything not provably equal falls through as
+/// "differs", so at worst a same-valued field stays editable rather than locked.
+function valuesEqual(a: unknown, b: unknown): boolean {
+  if (isEmptyValue(a) && isEmptyValue(b)) return true;
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
 function fieldLabels(typeConfig: TypeConfig | undefined): Map<string, string> {

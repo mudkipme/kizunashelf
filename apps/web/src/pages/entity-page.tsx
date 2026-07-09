@@ -138,6 +138,8 @@ export function EntityPage() {
     entityType: entity?.type,
     defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
+    currentValues: entity?.frontmatter as Record<string, unknown> | undefined,
+    bodyText: entity?.body,
     assetDownloadEnabled: capabilities.assetDownloadEnabled,
   });
   const relationGroups = useMemo(

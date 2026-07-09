@@ -72,7 +72,7 @@ msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {# 件見つかりました}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:591
+#: src/pages/entity-page.tsx:593
 #: src/pages/lists-page.tsx:90
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 件のアイテム}}"
@@ -219,7 +219,7 @@ msgstr "{ariaLabel} の新しいプロパティ"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
 
-#: src/pages/entity-page.tsx:467
+#: src/pages/entity-page.tsx:469
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 編集操作は利用できません。"
 
@@ -331,8 +331,8 @@ msgstr "スマートリストは指定した条件から自動的に項目を集
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "同名のタイプがすでに存在するため、代わりに {assignedIds} を使用しました。追加後に名前を変更できます。"
 
-#: src/pages/entity-page.tsx:424
-#: src/pages/entity-page.tsx:427
+#: src/pages/entity-page.tsx:426
+#: src/pages/entity-page.tsx:429
 msgid "Actions"
 msgstr "操作"
 
@@ -443,7 +443,7 @@ msgstr "追加しましたが、エピソードのインポートに失敗しま
 msgid "Adding…"
 msgstr "追加中…"
 
-#: src/components/entities/external-match-dialog.tsx:367
+#: src/components/entities/external-match-dialog.tsx:372
 msgid "adds new section"
 msgstr "新しいセクションを追加"
 
@@ -551,7 +551,7 @@ msgstr "アセット: {0}"
 #: src/components/settings/preset-picker.tsx:173
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:173
-#: src/pages/entity-edit-page.tsx:174
+#: src/pages/entity-edit-page.tsx:127
 msgid "Back"
 msgstr "戻る"
 
@@ -559,7 +559,7 @@ msgstr "戻る"
 msgid "Back to home"
 msgstr "ホームに戻る"
 
-#: src/pages/entity-page.tsx:681
+#: src/pages/entity-page.tsx:683
 msgid "Basename"
 msgstr "ベース名"
 
@@ -567,7 +567,7 @@ msgstr "ベース名"
 msgid "Basics"
 msgstr "基本"
 
-#: src/components/entities/external-match-dialog.tsx:347
+#: src/components/entities/external-match-dialog.tsx:350
 msgid "Body Sections"
 msgstr "本文セクション"
 
@@ -599,8 +599,8 @@ msgstr "カレンダー"
 #: src/components/settings/settings-dialogs.tsx:379
 #: src/components/settings/settings-dialogs.tsx:512
 #: src/components/smart-lists/save-smart-list-dialog.tsx:113
-#: src/pages/entity-page.tsx:486
-#: src/pages/entity-page.tsx:699
+#: src/pages/entity-page.tsx:488
+#: src/pages/entity-page.tsx:701
 #: src/pages/import-wizard-page.tsx:263
 #: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
@@ -633,7 +633,7 @@ msgstr "チェックリスト（アイテムごとのチェックボックス）
 msgid "Chinese"
 msgstr "中国語"
 
-#: src/components/entities/external-match-dialog.tsx:382
+#: src/components/entities/external-match-dialog.tsx:388
 msgid "Choose a candidate to compare fields."
 msgstr "候補を選択してフィールドを比較します。"
 
@@ -642,7 +642,7 @@ msgstr "候補を選択してフィールドを比較します。"
 msgid "Choose a type"
 msgstr "タイプを選択"
 
-#: src/pages/entity-page.tsx:565
+#: src/pages/entity-page.tsx:567
 msgid "Choose which lists {entityName} belongs to."
 msgstr "{entityName} を含めるリストを選択します。"
 
@@ -755,7 +755,7 @@ msgstr "作成"
 msgid "Create “{query}” manually →"
 msgstr "「{query}」を手動で作成 →"
 
-#: src/pages/entity-page.tsx:624
+#: src/pages/entity-page.tsx:626
 msgid "Create & add"
 msgstr "作成して追加"
 
@@ -775,7 +775,7 @@ msgid "Create vault ({0})"
 msgstr "保管庫を作成（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:120
-#: src/pages/entity-page.tsx:624
+#: src/pages/entity-page.tsx:626
 #: src/pages/lists-page.tsx:244
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
@@ -794,7 +794,7 @@ msgid "Curated collections of your items, saved as plain files you own."
 msgstr "自分が所有するプレーンファイルとして保存された、厳選されたアイテムのコレクション。"
 
 #. placeholder {0}: formatMetadataValue(currentValues[entry.field])
-#: src/components/entities/external-match-dialog.tsx:330
+#: src/components/entities/external-match-dialog.tsx:333
 msgid "Current: {0}"
 msgstr "現在: {0}"
 
@@ -894,7 +894,7 @@ msgstr "デフォルトの行フォーマット"
 msgid "Default provider order is used."
 msgstr "デフォルトのプロバイダー順が使用されます。"
 
-#: src/pages/entity-page.tsx:461
+#: src/pages/entity-page.tsx:463
 #: src/pages/list-detail-page.tsx:414
 #: src/pages/list-detail-page.tsx:628
 #: src/pages/smart-list-page.tsx:301
@@ -962,12 +962,12 @@ msgstr "にリンクしていない"
 
 #: src/components/settings/settings-dialogs.tsx:317
 #: src/components/settings/settings-dialogs.tsx:354
-#: src/pages/entity-page.tsx:632
+#: src/pages/entity-page.tsx:634
 #: src/pages/list-detail-page.tsx:938
 msgid "Done"
 msgstr "完了"
 
-#: src/pages/entity-page.tsx:451
+#: src/pages/entity-page.tsx:453
 msgid "Download cover"
 msgstr "カバー画像をダウンロード"
 
@@ -1004,13 +1004,13 @@ msgstr "中止"
 msgid "Duplicate Filenames"
 msgstr "重複したファイル名"
 
-#: src/pages/entity-page.tsx:434
+#: src/pages/entity-page.tsx:436
 #: src/pages/list-detail-page.tsx:822
 msgid "Edit"
 msgstr "編集"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:151
+#: src/pages/entity-edit-page.tsx:113
 msgid "Edit {0}"
 msgstr "{0} を編集"
 
@@ -1022,7 +1022,7 @@ msgstr "config.yaml を編集"
 msgid "Edit criteria"
 msgstr "条件を編集"
 
-#: src/pages/entity-edit-page.tsx:151
+#: src/pages/entity-edit-page.tsx:113
 msgid "Edit Entity"
 msgstr "アイテムを編集"
 
@@ -1069,8 +1069,8 @@ msgstr "アイテム"
 msgid "Entity name"
 msgstr "アイテム名"
 
-#: src/pages/entity-edit-page.tsx:257
-#: src/pages/entity-page.tsx:385
+#: src/pages/entity-edit-page.tsx:172
+#: src/pages/entity-page.tsx:387
 msgid "Entity not found"
 msgstr "アイテムが見つかりません"
 
@@ -1109,7 +1109,7 @@ msgstr "外部マッチ"
 msgid "External metadata"
 msgstr "外部メタデータ"
 
-#: src/components/entities/external-match-dialog.tsx:326
+#: src/components/entities/external-match-dialog.tsx:329
 msgid "external ref"
 msgstr "外部参照"
 
@@ -1484,7 +1484,7 @@ msgstr "リンク先"
 msgid "List"
 msgstr "リスト"
 
-#: src/pages/entity-page.tsx:549
+#: src/pages/entity-page.tsx:551
 #: src/pages/lists-page.tsx:149
 msgid "List created"
 msgstr "リストを作成しました"
@@ -1518,7 +1518,7 @@ msgstr "アクティビティを読み込み中…"
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
-#: src/pages/entity-edit-page.tsx:154
+#: src/pages/entity-edit-page.tsx:116
 msgid "Loading entity"
 msgstr "アイテムを読み込み中"
 
@@ -1530,9 +1530,9 @@ msgstr "分類を読み込み中"
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:193
 #: src/pages/calendar-page.tsx:88
-#: src/pages/entity-edit-page.tsx:198
-#: src/pages/entity-page.tsx:276
-#: src/pages/entity-page.tsx:571
+#: src/pages/entity-edit-page.tsx:151
+#: src/pages/entity-page.tsx:278
+#: src/pages/entity-page.tsx:573
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:247
@@ -1551,7 +1551,7 @@ msgid "Loading…"
 msgstr "読み込み中…"
 
 #: src/components/assets/quick-log-dialog.tsx:164
-#: src/pages/entity-page.tsx:347
+#: src/pages/entity-page.tsx:349
 msgid "Log"
 msgstr "記録"
 
@@ -1575,8 +1575,8 @@ msgstr "記録のデフォルト — 記録行を書き込む見出しと、フ�
 msgid "Logging…"
 msgstr "記録中…"
 
-#: src/pages/entity-page.tsx:442
-#: src/pages/entity-page.tsx:562
+#: src/pages/entity-page.tsx:444
+#: src/pages/entity-page.tsx:564
 msgid "Manage lists"
 msgstr "リストを管理"
 
@@ -1605,8 +1605,7 @@ msgstr "Markdown 本文セクション"
 msgid "Marks as {0}"
 msgstr "{0} にする"
 
-#: src/pages/entity-edit-page.tsx:165
-#: src/pages/entity-page.tsx:446
+#: src/pages/entity-page.tsx:448
 msgid "Match"
 msgstr "マッチ"
 
@@ -1620,7 +1619,7 @@ msgstr "メモリー分析"
 
 #: src/components/assets/entity-dates.tsx:23
 #: src/pages/entity-create-page.tsx:117
-#: src/pages/entity-edit-page.tsx:239
+#: src/pages/entity-edit-page.tsx:155
 msgid "Metadata"
 msgstr "メタデータ"
 
@@ -1653,16 +1652,16 @@ msgstr "もっと見る"
 msgid "Move list to trash?"
 msgstr "リストをゴミ箱に移動しますか？"
 
-#: src/pages/entity-page.tsx:489
+#: src/pages/entity-page.tsx:491
 #: src/pages/list-detail-page.tsx:537
 msgid "Move to Trash"
 msgstr "ゴミ箱に移動"
 
-#: src/pages/entity-page.tsx:476
+#: src/pages/entity-page.tsx:478
 msgid "Move to trash?"
 msgstr "ゴミ箱に移動しますか？"
 
-#: src/pages/entity-page.tsx:230
+#: src/pages/entity-page.tsx:232
 msgid "Moved to trash"
 msgstr "ゴミ箱に移動しました"
 
@@ -1694,7 +1693,7 @@ msgstr "要レビュー"
 msgid "New field"
 msgstr "新しいフィールド"
 
-#: src/pages/entity-page.tsx:612
+#: src/pages/entity-page.tsx:614
 #: src/pages/lists-page.tsx:51
 #: src/pages/lists-page.tsx:169
 msgid "New list"
@@ -1708,7 +1707,7 @@ msgstr "新しいセクション"
 msgid "New-note template"
 msgstr "新規ノートのテンプレート"
 
-#: src/components/entities/external-match-dialog.tsx:334
+#: src/components/entities/external-match-dialog.tsx:337
 msgid "New: {newValue}"
 msgstr "新規: {newValue}"
 
@@ -1740,13 +1739,13 @@ msgstr "分析データがありません"
 msgid "No calendar data"
 msgstr "カレンダーデータがありません"
 
-#: src/components/entities/external-match-dialog.tsx:342
+#: src/components/entities/external-match-dialog.tsx:345
 msgid "No candidate fields or body sections match this type schema."
 msgstr "このタイプのスキーマに一致する候補フィールドまたは本文セクションがありません。"
 
 #: src/components/entities/external-match-dialog.tsx:171
-#: src/components/entities/use-external-match.ts:57
-#: src/components/entities/use-external-match.ts:176
+#: src/components/entities/use-external-match.ts:64
+#: src/components/entities/use-external-match.ts:183
 msgid "No candidates loaded"
 msgstr "候補が読み込まれていません"
 
@@ -1792,7 +1791,7 @@ msgstr "条件に一致する項目がありません"
 msgid "No external mappings."
 msgstr "外部マッピングがありません。"
 
-#: src/components/entities/use-external-match.ts:188
+#: src/components/entities/use-external-match.ts:195
 msgid "No external matches"
 msgstr "外部マッチがありません"
 
@@ -1833,7 +1832,7 @@ msgstr "制限なし"
 msgid "No links yet"
 msgstr "まだリンクがありません"
 
-#: src/pages/entity-page.tsx:575
+#: src/pages/entity-page.tsx:577
 msgid "No lists yet. Create one below."
 msgstr "まだリストがありません。下で作成してください。"
 
@@ -1894,7 +1893,7 @@ msgid "No type options."
 msgstr "タイプのオプションがありません。"
 
 #: src/components/entities/external-match-dialog.tsx:313
-#: src/components/entities/external-match-dialog.tsx:372
+#: src/components/entities/external-match-dialog.tsx:377
 msgid "No value returned"
 msgstr "値が返されませんでした"
 
@@ -1988,7 +1987,7 @@ msgstr "画像ファイルのみアップロードできます。"
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "公開プロフィールのみ対応しています。計画を確認するまで何も書き込まれません。"
 
-#: src/pages/entity-page.tsx:670
+#: src/pages/entity-page.tsx:672
 msgid "Only the name changes — everything else stays the same."
 msgstr "名前のみが変更されます — 他はすべてそのままです。"
 
@@ -2154,7 +2153,7 @@ msgstr "関連タイプ"
 msgid "Reload"
 msgstr "再読み込み"
 
-#: src/pages/entity-edit-page.tsx:191
+#: src/pages/entity-edit-page.tsx:144
 msgid "Reload latest version"
 msgstr "最新バージョンを再読み込み"
 
@@ -2211,9 +2210,9 @@ msgstr "セクションを削除"
 msgid "Remove type"
 msgstr "タイプを削除"
 
-#: src/pages/entity-page.tsx:438
-#: src/pages/entity-page.tsx:667
-#: src/pages/entity-page.tsx:706
+#: src/pages/entity-page.tsx:440
+#: src/pages/entity-page.tsx:669
+#: src/pages/entity-page.tsx:708
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
 #: src/pages/list-detail-page.tsx:1006
@@ -2230,11 +2229,11 @@ msgstr "リストの名前を変更"
 msgid "Rename smart list"
 msgstr "スマートリストの名前を変更"
 
-#: src/pages/entity-page.tsx:185
+#: src/pages/entity-page.tsx:187
 msgid "Renamed"
 msgstr "名前を変更しました"
 
-#: src/pages/entity-page.tsx:184
+#: src/pages/entity-page.tsx:186
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "名前を変更しました — {updated, plural, other {# 件のリンク}}を更新しました"
 
@@ -2247,13 +2246,13 @@ msgstr "「{0}」に名前を変更しました"
 msgid "Renames the .base file in your vault."
 msgstr "保管庫内の .base ファイルの名前を変更します。"
 
-#: src/pages/entity-page.tsx:706
+#: src/pages/entity-page.tsx:708
 #: src/pages/list-detail-page.tsx:1006
 #: src/pages/smart-list-page.tsx:672
 msgid "Renaming…"
 msgstr "名前を変更中…"
 
-#: src/components/entities/external-match-dialog.tsx:366
+#: src/components/entities/external-match-dialog.tsx:371
 msgid "replaces existing section"
 msgstr "既存のセクションを置き換え"
 
@@ -2485,11 +2484,11 @@ msgstr "スマートリストの名前を変更しました"
 msgid "Smart list saved"
 msgstr "スマートリストを保存しました"
 
-#: src/pages/entity-page.tsx:219
+#: src/pages/entity-page.tsx:221
 msgid "Some images could not be downloaded"
 msgstr "一部の画像をダウンロードできませんでした"
 
-#: src/pages/entity-page.tsx:219
+#: src/pages/entity-page.tsx:221
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "一部の画像をダウンロードできませんでした: {reasons}"
 
@@ -2691,7 +2690,7 @@ msgid "This month"
 msgstr "今月"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:479
+#: src/pages/entity-page.tsx:481
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "{0} をゴミ箱に移動します。必要になったら後で復元できます。"
 
@@ -2850,10 +2849,6 @@ msgstr "更新日 {0}"
 msgid "Upload failed."
 msgstr "アップロードに失敗しました。"
 
-#: src/pages/entity-edit-page.tsx:221
-msgid "Use Selected"
-msgstr "選択項目を使用"
-
 #: src/components/settings/settings-sections.tsx:676
 #: src/components/settings/settings-sections.tsx:729
 #: src/components/settings/settings-sections.tsx:867
@@ -2920,7 +2915,7 @@ msgstr "すべて表示"
 msgid "Watching now"
 msgstr "視聴中"
 
-#: src/pages/entity-page.tsx:618
+#: src/pages/entity-page.tsx:620
 #: src/pages/lists-page.tsx:214
 msgid "Watchlist"
 msgstr "ウォッチリスト"

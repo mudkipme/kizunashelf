@@ -1,29 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon, SearchIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { saveEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { useRelationSearch } from "@/api/use-relation-search";
-import { configQuery, entityQuery, providerCatalogQuery } from "@/api/queries";
-import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
+import { configQuery, entityQuery } from "@/api/queries";
 import {
   type FrontmatterDraft,
   frontmatterPatch,
   MetadataEditor,
   normalizeFrontmatter,
 } from "@/components/entities/metadata-editor";
-import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 import { ENTITY_EDIT_CONFLICT_MESSAGE, useEntityMutation } from "@/hooks/use-entity-mutation";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
-import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
 
@@ -34,7 +31,6 @@ export function EntityEditPage() {
   const invalidateEntityData = useInvalidateEntityData();
   const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
   const config = useQuery(configQuery());
-  const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const { saving, run } = useEntityMutation();
   const [conflict, setConflict] = useState(false);
@@ -43,13 +39,8 @@ export function EntityEditPage() {
   // Tracks which entity the local draft was seeded from, so a background refetch
   // of the same entity doesn't clobber in-progress edits.
   const seededEntityIdRef = useRef<string | undefined>(undefined);
-  const loading =
-    detail.isPending ||
-    config.isPending ||
-    providerCatalog.isPending ||
-    capabilities.isPending;
-  const queryError =
-    detail.error ?? config.error ?? providerCatalog.error ?? capabilities.error;
+  const loading = detail.isPending || config.isPending || capabilities.isPending;
+  const queryError = detail.error ?? config.error ?? capabilities.error;
   const entity = detail.data?.entity;
   const contentWritable = capabilities.contentWritable;
   const language = useTitleLanguage();
@@ -57,25 +48,11 @@ export function EntityEditPage() {
     () => config.data?.types.find((type) => type.id === entity?.type),
     [config.data, entity?.type],
   );
-  const external = useExternalMatch({
-    typeConfig,
-    providerCatalog: providerCatalog.data,
-    entityType: entity?.type,
-    defaultQuery: entity ? entityTitle(entity, language) : undefined,
-    externalRefs: entity?.externalRefs,
-    assetDownloadEnabled: capabilities.assetDownloadEnabled,
-  });
-  const { setQuery: setMatchQuery } = external;
-
-  const seedDraft = useCallback(
-    (source: NonNullable<typeof entity>) => {
-      seededEntityIdRef.current = source.id;
-      setFrontmatter(normalizeFrontmatter(source.frontmatter));
-      setBody(source.body);
-      setMatchQuery(entityTitle(source, language));
-    },
-    [language, setMatchQuery],
-  );
+  const seedDraft = useCallback((source: NonNullable<typeof entity>) => {
+    seededEntityIdRef.current = source.id;
+    setFrontmatter(normalizeFrontmatter(source.frontmatter));
+    setBody(source.body);
+  }, []);
 
   useEffect(() => {
     if (!entity) return;
@@ -108,7 +85,6 @@ export function EntityEditPage() {
           frontmatter: frontmatterPatch(entity.frontmatter, frontmatter),
           body,
         });
-        await external.maybeDownloadCover(result.entity);
         await invalidateEntityData();
         navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
       },
@@ -128,20 +104,6 @@ export function EntityEditPage() {
     else navigate("/library");
   }
 
-  function applyCandidate() {
-    if (!external.selectedCandidate || !contentWritable) return;
-    const next = {
-      ...frontmatter,
-      ...external.selectedPatch(),
-    };
-    setFrontmatter(normalizeFrontmatter(next));
-    setBody((currentBody) =>
-      applyExternalBodySections(currentBody, external.selectedBodyPatch()),
-    );
-    external.setQuery(external.selectedCandidate.candidate.title);
-    external.setOpen(false);
-  }
-
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
@@ -155,15 +117,6 @@ export function EntityEditPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => external.setOpen(true)}
-              disabled={!external.externalSearchEnabled}
-            >
-              <SearchIcon data-icon="inline-start" />
-              <Trans>Match</Trans>
-            </Button>
             <Button
               type="button"
               variant="outline"
@@ -198,60 +151,22 @@ export function EntityEditPage() {
             <Trans>Loading…</Trans>
           </Placeholder>
         ) : entity ? (
-          <>
-            <ExternalMatchDialog
-              open={external.open}
-              query={external.query}
-              provider={external.provider}
-              candidates={external.candidates}
-              selectedCandidate={external.selectedCandidate}
-              metadataEntries={external.metadataEntries}
-              bodyEntries={external.bodyEntries}
-              selectedFields={external.selectedFields}
-              selectedBodySections={external.selectedBodySections}
-              providerCatalog={providerCatalog.data}
-              providerOptions={external.providerOptions}
-              externalSearchEnabled={external.externalSearchEnabled}
-              existingExternalRefs={external.existingExternalRefs}
-              currentValues={frontmatter}
-              bodyText={body}
-              searching={external.searching}
-              applying={false}
-              contentWritable={contentWritable}
-              applyLabel={t`Use Selected`}
-              coverDownloadAvailable={external.coverDownloadAvailable}
-              downloadCover={external.downloadAfterApply}
-              onDownloadCoverChange={external.setDownloadAfterApply}
-              emptyMessage={external.emptyMessage}
-              onOpenChange={external.setOpen}
-              onQueryChange={external.setQuery}
-              onProviderChange={external.setProvider}
-              onSearch={() => {
-                void external.search();
-              }}
-              onRefreshRef={external.refreshFromExternalRef}
-              onChooseCandidate={external.chooseCandidate}
-              onSelectedFieldsChange={external.setSelectedFields}
-              onSelectedBodySectionsChange={external.setSelectedBodySections}
-              onApply={applyCandidate}
-            />
-            <MetadataEditor
-              title={t`Metadata`}
-              path={entity.path}
-              entityId={entity.id}
-              typeConfig={typeConfig}
-              frontmatter={frontmatter}
-              bodyText={body}
-              saving={saving}
-              disabled={!contentWritable}
-              relationSuggestions={[]}
-              onRelationSearch={searchRelations}
-              onFrontmatterChange={setFrontmatter}
-              onBodyChange={setBody}
-              onSave={save}
-              onCancel={cancel}
-            />
-          </>
+          <MetadataEditor
+            title={t`Metadata`}
+            path={entity.path}
+            entityId={entity.id}
+            typeConfig={typeConfig}
+            frontmatter={frontmatter}
+            bodyText={body}
+            saving={saving}
+            disabled={!contentWritable}
+            relationSuggestions={[]}
+            onRelationSearch={searchRelations}
+            onFrontmatterChange={setFrontmatter}
+            onBodyChange={setBody}
+            onSave={save}
+            onCancel={cancel}
+          />
         ) : (
           <Placeholder>
             <Trans>Entity not found</Trans>

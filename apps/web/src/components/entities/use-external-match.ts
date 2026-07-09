@@ -9,10 +9,10 @@ import {
   externalProviderPriority,
   matchBodyPatch,
   matchBodyPreviewEntries,
+  matchDefaultBodySections,
+  matchDefaultFields,
   matchFieldPatch,
   matchFieldPreviewEntries,
-  matchSelectableBodySections,
-  matchSelectableFields,
 } from "@/lib/external-metadata";
 import { useLanguagePreference } from "@/lib/language";
 import type { ExternalMatch, ExternalProviderCatalog, TypeConfig } from "@/types/api";
@@ -33,6 +33,8 @@ export function useExternalMatch({
   entityType,
   defaultQuery,
   externalRefs,
+  currentValues,
+  bodyText,
   assetDownloadEnabled = false,
 }: {
   typeConfig?: TypeConfig;
@@ -40,6 +42,11 @@ export function useExternalMatch({
   entityType?: string;
   defaultQuery?: string;
   externalRefs?: ExternalRefs;
+  // The entity's current frontmatter/body — drive which fields and body sections
+  // are checked by default (empty/ref on, same/existing off) when a candidate is
+  // chosen.
+  currentValues?: Record<string, unknown>;
+  bodyText?: string;
   assetDownloadEnabled?: boolean;
 }) {
   const { t } = useLingui();
@@ -205,11 +212,14 @@ export function useExternalMatch({
     [search],
   );
 
-  const chooseCandidate = useCallback((match: ExternalMatch) => {
-    setSelectedCandidate(match);
-    setSelectedFields(new Set(matchSelectableFields(match)));
-    setSelectedBodySections(new Set(matchSelectableBodySections(match)));
-  }, []);
+  const chooseCandidate = useCallback(
+    (match: ExternalMatch) => {
+      setSelectedCandidate(match);
+      setSelectedFields(new Set(matchDefaultFields(match, currentValues)));
+      setSelectedBodySections(new Set(matchDefaultBodySections(match, bodyText)));
+    },
+    [currentValues, bodyText],
+  );
 
   const selectedPatch = useCallback(() => {
     if (!selectedCandidate) return {};
