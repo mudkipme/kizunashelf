@@ -3171,6 +3171,102 @@ async fn smart_lists_create_update_evaluate_and_delete() {
 }
 
 #[tokio::test]
+async fn smart_lists_today_criteria_honor_client_today() {
+    // A `today()` date criterion must be judged against the client's local date
+    // (the `today` query param), not the host's clock — the same fix as
+    // `/api/upcoming`, threaded through the smart-list evaluation context.
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "games", "label": "Games", "path": "Games",
+                "filename": { "titleLanguage": "zh" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh" },
+                    { "field": "release_date", "fieldType": "date", "dateRole": "planning" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Games/PRAGMATA.md"),
+        "---\ntitle: PRAGMATA\nrelease_date: 2030-06-01\n---\n",
+    );
+    // "Released" = release_date already in the past relative to today().
+    write_file(
+        &vault.join("KizunaShelf/Lists/Released.base"),
+        "filters:\n  and:\n    - file.inFolder(\"Taxonomy/Games\")\n    - note.release_date < today()\nviews:\n  - type: table\n    name: List\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // Before the release date, the client's `today` leaves it out.
+    let before = request_json(
+        &app,
+        Method::GET,
+        "/api/smart-lists/Released/results?today=2030-01-01",
+        None,
+    )
+    .await;
+    assert_eq!(before.0, StatusCode::OK, "{}", before.1);
+    assert_eq!(before.1["total"], 0, "{}", before.1);
+
+    // After it, the same list now includes it — driven purely by the param.
+    let after = request_json(
+        &app,
+        Method::GET,
+        "/api/smart-lists/Released/results?today=2030-08-01",
+        None,
+    )
+    .await;
+    assert_eq!(after.0, StatusCode::OK, "{}", after.1);
+    assert_eq!(after.1["total"], 1, "{}", after.1);
+    assert_eq!(after.1["items"][0]["id"], "games:PRAGMATA");
+
+    // The lists index computes `itemCount` through the same context, so it moves
+    // with `today` too.
+    let index_before = request_json(&app, Method::GET, "/api/lists?today=2030-01-01", None).await;
+    assert_eq!(
+        index_before.1["items"][0]["itemCount"], 0,
+        "{}",
+        index_before.1
+    );
+    let index_after = request_json(&app, Method::GET, "/api/lists?today=2030-08-01", None).await;
+    assert_eq!(
+        index_after.1["items"][0]["itemCount"], 1,
+        "{}",
+        index_after.1
+    );
+
+    // Preview of unsaved `today()` criteria honors the request's `today`. The
+    // rule builder expresses bare `today()` as a zero-amount relative date, so
+    // `release_date > today()` selects the still-unreleased entity.
+    let preview = request_json(
+        &app,
+        Method::POST,
+        "/api/smart-lists/preview",
+        Some(json!({
+            "scope": "games",
+            "filters": {
+                "conjunction": "all",
+                "rules": [{
+                    "kind": "compare",
+                    "field": "release_date",
+                    "op": "gt",
+                    "relative": { "amount": 0, "unit": "days", "future": false }
+                }]
+            },
+            "today": "2030-01-01"
+        })),
+    )
+    .await;
+    assert_eq!(preview.0, StatusCode::OK, "{}", preview.1);
+    assert_eq!(preview.1["total"], 1, "{}", preview.1);
+}
+
+#[tokio::test]
 async fn smart_lists_preserve_hand_authored_syntax_across_edits() {
     let server = TestServer::new();
     let app = &server.app;

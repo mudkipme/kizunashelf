@@ -40,6 +40,10 @@ pub(crate) struct ListsQuery {
     /// When set, each summary reports whether it contains this entity id
     /// (membership for the entity page's "manage lists").
     entity: Option<String>,
+    /// Today's date (`YYYY-MM-DD`), the client's **local** date, so smart-list
+    /// `itemCount`/`contains` with `today()` criteria are judged against the
+    /// user's day. Falls back to the host's local date.
+    today: Option<String>,
 }
 
 pub(crate) async fn get_lists(
@@ -67,9 +71,13 @@ pub(crate) async fn get_lists(
         .map(|_| normalized_entity_basename_index(&library.records));
 
     // Smart lists (`.base` files in the same directory) join the same index.
-    let smart_items =
-        super::smart_lists::smart_list_summaries(vfs.as_ref(), &library, query.entity.as_deref())
-            .await;
+    let smart_items = super::smart_lists::smart_list_summaries(
+        vfs.as_ref(),
+        &library,
+        query.entity.as_deref(),
+        query.today.as_deref(),
+    )
+    .await;
 
     let mut items: Vec<ListSummary> = files
         .into_iter()

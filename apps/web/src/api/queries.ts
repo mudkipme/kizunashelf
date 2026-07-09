@@ -150,9 +150,12 @@ export function entityDatesQuery(id: string) {
 }
 
 export function listsQuery() {
+  // The client's local date drives smart-list `today()` criteria in itemCount/
+  // contains (and keys the cache, so it refetches when the day rolls over).
+  const today = todayLocal();
   return queryOptions({
-    queryKey: queryKeys.lists,
-    queryFn: ({ signal }) => fetchLists(undefined, { signal }),
+    queryKey: [...queryKeys.lists, { today }] as const,
+    queryFn: ({ signal }) => fetchLists({ today }, { signal }),
   });
 }
 
@@ -160,9 +163,10 @@ export function listsQuery() {
 // page's "manage lists". Shares the `["lists"]` key prefix so a single
 // invalidation refreshes both this and the plain index.
 export function entityListsQuery(entityId: string) {
+  const today = todayLocal();
   return queryOptions({
-    queryKey: [...queryKeys.lists, { entity: entityId }] as const,
-    queryFn: ({ signal }) => fetchLists({ entity: entityId }, { signal }),
+    queryKey: [...queryKeys.lists, { entity: entityId, today }] as const,
+    queryFn: ({ signal }) => fetchLists({ entity: entityId, today }, { signal }),
   });
 }
 
@@ -181,9 +185,12 @@ export function smartListQuery(id: string) {
 }
 
 export function smartListResultsQuery(id: string, params: GetSmartListResultsParams) {
+  // `today()` criteria in the list's filters resolve against the client's local
+  // date; folding it into params also keys the cache for day-rollover refetch.
+  const merged = { ...params, today: todayLocal() };
   return queryOptions({
-    queryKey: queryKeys.smartListResults(id, params),
-    queryFn: ({ signal }) => fetchSmartListResults(id, params, { signal }),
+    queryKey: queryKeys.smartListResults(id, merged),
+    queryFn: ({ signal }) => fetchSmartListResults(id, merged, { signal }),
     // Hold the current results visible while a view/page change loads, like
     // the library page.
     placeholderData: keepPreviousData,
@@ -191,9 +198,12 @@ export function smartListResultsQuery(id: string, params: GetSmartListResultsPar
 }
 
 export function homeQuery() {
+  // Date-relative home sections (`today() - "30d"`) resolve against the client's
+  // local date, keyed so the page refetches when the day rolls over.
+  const today = todayLocal();
   return queryOptions({
-    queryKey: queryKeys.home,
-    queryFn: ({ signal }) => getHome({ signal }, apiFetch),
+    queryKey: [...queryKeys.home, today] as const,
+    queryFn: ({ signal }) => getHome({ today }, { signal }, apiFetch),
   });
 }
 

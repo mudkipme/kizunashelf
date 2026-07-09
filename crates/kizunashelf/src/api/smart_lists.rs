@@ -49,6 +49,10 @@ pub(crate) struct SmartListResultsQuery {
     page: Option<f64>,
     page_size: Option<f64>,
     title_language: Option<String>,
+    /// Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`
+    /// date criteria are judged against the user's day rather than the host's
+    /// clock. Falls back to the host's local date.
+    today: Option<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +204,7 @@ pub(crate) async fn smart_list_results(
         ),
         None => list.views.first(),
     };
-    let ctx = eval_context(&library);
+    let ctx = eval_context(&library, query.today.as_deref());
     let records =
         smart_lists::smart_list_records(&list, view, &ctx, query.title_language.as_deref());
     Ok(Json(paginate(
@@ -233,7 +237,7 @@ pub(crate) async fn preview_smart_list(
         image: None,
         source_index: 0,
     };
-    let ctx = eval_context(&library);
+    let ctx = eval_context(&library, request.today.as_deref());
     let records = smart_lists::smart_list_records(
         &list,
         Some(&view),
@@ -271,6 +275,7 @@ pub(crate) async fn smart_list_summaries(
     vfs: &dyn Vfs,
     library: &Library,
     entity: Option<&str>,
+    today: Option<&str>,
 ) -> Vec<ListSummary> {
     let paths = match smart_list_file_paths(vfs).await {
         Ok(paths) => paths,
@@ -279,7 +284,7 @@ pub(crate) async fn smart_list_summaries(
     let Ok(files) = vfs.read_files(&paths).await else {
         return Vec::new();
     };
-    let ctx = eval_context(library);
+    let ctx = eval_context(library, today);
     let wanted = entity.and_then(|id| library.record_by_id(id));
     files
         .into_iter()
@@ -314,12 +319,21 @@ pub(crate) async fn smart_list_summaries(
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-fn eval_context(library: &Library) -> EvalContext<'_> {
-    EvalContext::new(
-        library,
-        chrono::Utc::now(),
-        chrono::Local::now().date_naive(),
-    )
+fn eval_context<'a>(library: &'a Library, today: Option<&str>) -> EvalContext<'a> {
+    // `now()` is a true instant (timezone-independent), so it keeps the real UTC
+    // clock; only `today()` is a calendar day and rides on the client's local date.
+    EvalContext::new(library, chrono::Utc::now(), resolve_today(today))
+}
+
+/// The client's local calendar day for `today()` date criteria, or the host's
+/// local day as a fallback — correct for the in-process desktop/iOS runtimes,
+/// where the core shares the user's clock; the web client always sends its own.
+pub(crate) fn resolve_today(client_today: Option<&str>) -> chrono::NaiveDate {
+    client_today
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .and_then(|value| chrono::NaiveDate::parse_from_str(value, "%Y-%m-%d").ok())
+        .unwrap_or_else(|| chrono::Local::now().date_naive())
 }
 
 /// Vault-relative path of a smart list from its id, validated for containment.

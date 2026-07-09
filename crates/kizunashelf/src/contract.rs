@@ -1098,6 +1098,11 @@ pub struct SmartListPreviewRequest {
     pub page_size: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title_language: Option<String>,
+    /// Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`
+    /// date criteria are judged against the user's day rather than the host's
+    /// clock. Falls back to the host's local date.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub today: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

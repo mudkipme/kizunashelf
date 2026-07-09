@@ -8,6 +8,7 @@ import { z as zod } from 'zod';
 
 export const ActivityQuery = zod.object({
   "cursor": zod.string().nullish().describe('Opaque `YYYY-MM` cursor from the previous page.'),
+  "today": zod.string().nullish().describe('Today\'s date (`YYYY-MM-DD`), the client\'s \*\*local\*\* date — so `recent` \/\n`up-next` \/ `catch-up` are judged against the user\'s day rather than a UTC\nserver clock. Falls back to the server\'s UTC date.'),
   "limit": zod.number().nullish().describe('Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.'),
   "type": zod.string().nullish(),
   "source": zod.string().nullish(),

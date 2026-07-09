@@ -392,6 +392,18 @@
     "/api/home": {
       "get": {
         "operationId": "getHome",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "today",
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nhome-section criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
+            "schema": {
+              "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nhome-section criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -592,6 +604,16 @@
             "description": "Opaque `YYYY-MM` cursor from the previous page.",
             "schema": {
               "description": "Opaque `YYYY-MM` cursor from the previous page.",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so `recent` /\n`up-next` / `catch-up` are judged against the user's day rather than a UTC\nserver clock. Falls back to the server's UTC date.",
+            "schema": {
+              "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so `recent` /\n`up-next` / `catch-up` are judged against the user's day rather than a UTC\nserver clock. Falls back to the server's UTC date.",
               "type": "string"
             },
             "style": "form"
@@ -2509,6 +2531,16 @@
               "type": "string"
             },
             "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so smart-list\n`itemCount`/`contains` with `today()` criteria are judged against the\nuser's day. Falls back to the host's local date.",
+            "schema": {
+              "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so smart-list\n`itemCount`/`contains` with `today()` criteria are judged against the\nuser's day. Falls back to the host's local date.",
+              "type": "string"
+            },
+            "style": "form"
           }
         ],
         "responses": {
@@ -3338,6 +3370,16 @@
             "in": "query",
             "name": "titleLanguage",
             "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`\ndate criteria are judged against the user's day rather than the host's\nclock. Falls back to the host's local date.",
+            "schema": {
+              "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`\ndate criteria are judged against the user's day rather than the host's\nclock. Falls back to the host's local date.",
               "type": "string"
             },
             "style": "form"
@@ -4762,6 +4804,18 @@
           "titleLanguage"
         ]
       },
+      "HomeQuery": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nhome-section criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "HomeResponse": {
         "type": "object",
         "properties": {
@@ -5873,6 +5927,13 @@
         "properties": {
           "cursor": {
             "description": "Opaque `YYYY-MM` cursor from the previous page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "today": {
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so `recent` /\n`up-next` / `catch-up` are judged against the user's day rather than a UTC\nserver clock. Falls back to the server's UTC date.",
             "type": [
               "string",
               "null"
@@ -8474,6 +8535,13 @@
               "string",
               "null"
             ]
+          },
+          "today": {
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so smart-list\n`itemCount`/`contains` with `today()` criteria are judged against the\nuser's day. Falls back to the host's local date.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -8989,6 +9057,13 @@
               "string",
               "null"
             ]
+          },
+          "today": {
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`\ndate criteria are judged against the user's day rather than the host's\nclock. Falls back to the host's local date.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -9069,6 +9144,13 @@
             "format": "double"
           },
           "titleLanguage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "today": {
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`\ndate criteria are judged against the user's day rather than the host's\nclock. Falls back to the host's local date.",
             "type": [
               "string",
               "null"

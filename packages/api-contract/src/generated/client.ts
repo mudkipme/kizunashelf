@@ -153,6 +153,10 @@ import type {
 } from './getEntitiesParams.zod';
 
 import type {
+  GetHomeParams
+} from './getHomeParams.zod';
+
+import type {
   GetListsParams
 } from './getListsParams.zod';
 
@@ -659,17 +663,24 @@ export const getLanguages = async ( options?: RequestInit, fetchFn?: typeof glob
 
 
 
-export const getGetHomeUrl = () => {
+export const getGetHomeUrl = (params?: GetHomeParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/home`
+  return stringifiedParams.length > 0 ? `/api/home?${stringifiedParams}` : `/api/home`
 }
 
-export const getHome = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<HomeResponse> => {
+export const getHome = async (params?: GetHomeParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<HomeResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getGetHomeUrl(),
+  const res = await (fetchFn ?? fetch)(getGetHomeUrl(params),
   {
     ...options,
     method: 'GET'

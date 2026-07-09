@@ -200,14 +200,25 @@ pub(crate) async fn save_raw_settings_config(
     }))
 }
 
-pub(crate) async fn home(State(state): State<AppState>) -> ApiResult<HomeResponse> {
+#[derive(Deserialize, JsonSchema)]
+pub(crate) struct HomeQuery {
+    /// Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative
+    /// home-section criteria (`today() - "30d"`) are judged against the user's day
+    /// rather than the host's clock. Falls back to the host's local date.
+    today: Option<String>,
+}
+
+pub(crate) async fn home(
+    State(state): State<AppState>,
+    Query(query): Query<HomeQuery>,
+) -> ApiResult<HomeResponse> {
     let library = get_library(&state).await?;
     // One evaluation context for every criteria-driven section — the same
     // engine smart lists run on, so home sections can't drift from them.
     let ctx = crate::smart_lists::EvalContext::new(
         &library,
         chrono::Utc::now(),
-        chrono::Local::now().date_naive(),
+        super::smart_lists::resolve_today(query.today.as_deref()),
     );
     let sections = library
         .config
@@ -285,6 +296,10 @@ pub(crate) async fn calendar(
 pub(crate) struct ActivityQuery {
     /// Opaque `YYYY-MM` cursor from the previous page.
     cursor: Option<String>,
+    /// Today's date (`YYYY-MM-DD`), the client's **local** date — so `recent` /
+    /// `up-next` / `catch-up` are judged against the user's day rather than a UTC
+    /// server clock. Falls back to the server's UTC date.
+    today: Option<String>,
     /// Target number of items per page (1–100, default 20). A page gathers whole
     /// months until it holds at least this many, so a sparse feed (one item each in
     /// scattered months) fills a single page instead of one request per month.
@@ -314,7 +329,13 @@ pub(crate) async fn activity(
         Some("catch-up") => ActivityMode::CatchUp,
         _ => ActivityMode::All,
     };
-    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let today = query
+        .today
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
     let vfs = state.vault_vfs(&library.config.vault_root);
     Ok(Json(
         build_activity(

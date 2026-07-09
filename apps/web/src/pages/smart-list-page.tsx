@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { errorMessage, isConflictError } from "@/api/client";
 import { allTagsQuery, configQuery, queryKeys, smartListQuery, smartListResultsQuery } from "@/api/queries";
 import { fetchSmartListPreview, removeSmartList, saveSmartList } from "@/api/smart-lists";
+import { todayLocal } from "@/lib/date";
 import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
 import { PaginationBar } from "@/components/assets/pagination-bar";
@@ -124,6 +125,8 @@ export function SmartListPage() {
           page,
           pageSize,
           titleLanguage: language,
+          // `today()` criteria in the draft resolve against the client's local date.
+          today: todayLocal(),
         },
         { signal },
       ),

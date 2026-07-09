@@ -65,6 +65,10 @@ export function ActivityPage() {
   const feed = useInfiniteQuery(
     activityFeedQuery({
       limit: 20,
+      // The client's local date drives recent/up-next/catch-up bucketing (and keys
+      // the cache, so the feed refetches when the day rolls over) rather than the
+      // server's UTC clock.
+      today: todayLocal(),
       ...(type !== "all" ? { type } : {}),
       ...(source !== "all" ? { source } : {}),
       // Always sent: the API defaults to "all", but the page defaults to "recent".

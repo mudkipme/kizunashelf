@@ -7,7 +7,8 @@
 import { z as zod } from 'zod';
 
 export const ListsQuery = zod.object({
-  "entity": zod.string().nullish().describe('When set, each summary reports whether it contains this entity id\n(membership for the entity page\'s \"manage lists\").')
+  "entity": zod.string().nullish().describe('When set, each summary reports whether it contains this entity id\n(membership for the entity page\'s \"manage lists\").'),
+  "today": zod.string().nullish().describe('Today\'s date (`YYYY-MM-DD`), the client\'s \*\*local\*\* date, so smart-list\n`itemCount`\/`contains` with `today()` criteria are judged against the\nuser\'s day. Falls back to the host\'s local date.')
 })
 
 export type ListsQuery = zod.input<typeof ListsQuery>;

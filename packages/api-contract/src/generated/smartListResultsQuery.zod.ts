@@ -10,7 +10,8 @@ export const SmartListResultsQuery = zod.object({
   "view": zod.string().nullish().describe('View (tab) name to evaluate; defaults to the file\'s first supported view.'),
   "page": zod.number().nullish(),
   "pageSize": zod.number().nullish(),
-  "titleLanguage": zod.string().nullish()
+  "titleLanguage": zod.string().nullish(),
+  "today": zod.string().nullish().describe('Today\'s date (`YYYY-MM-DD`), the client\'s \*\*local\*\* date, so `today()`\ndate criteria are judged against the user\'s day rather than the host\'s\nclock. Falls back to the host\'s local date.')
 })
 
 export type SmartListResultsQuery = zod.input<typeof SmartListResultsQuery>;
