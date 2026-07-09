@@ -1635,10 +1635,6 @@ msgstr "错过了？"
 msgid "Missing Cover"
 msgstr "缺少封面"
 
-#: src/pages/review-page.tsx:51
-msgid "Missing Links"
-msgstr "缺少关联"
-
 #. Duration unit in a date rule
 #: src/components/smart-lists/rule-builder.tsx:208
 msgid "months"
@@ -2803,6 +2799,10 @@ msgstr "未关联的项目"
 #: src/components/settings/settings-sections.tsx:900
 msgid "Unmapped"
 msgstr "未映射"
+
+#: src/pages/review-page.tsx:51
+msgid "Unmatched"
+msgstr "未匹配"
 
 #: src/pages/list-detail-page.tsx:642
 msgid "Unordered"

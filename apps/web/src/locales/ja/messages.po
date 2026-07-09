@@ -1635,10 +1635,6 @@ msgstr "見逃した？"
 msgid "Missing Cover"
 msgstr "カバー画像なし"
 
-#: src/pages/review-page.tsx:51
-msgid "Missing Links"
-msgstr "リンクなし"
-
 #. Duration unit in a date rule
 #: src/components/smart-lists/rule-builder.tsx:208
 msgid "months"
@@ -2803,6 +2799,10 @@ msgstr "リンクされていないアイテム"
 #: src/components/settings/settings-sections.tsx:900
 msgid "Unmapped"
 msgstr "未マッピング"
+
+#: src/pages/review-page.tsx:51
+msgid "Unmatched"
+msgstr "未マッチ"
 
 #: src/pages/list-detail-page.tsx:642
 msgid "Unordered"
