@@ -24,6 +24,10 @@ impl ExternalProvider for ComicVineProvider {
     const ID: &'static str = "comicvine";
     const LABEL: &'static str = "Comic Vine";
 
+    fn recognizes_url(q: &str) -> bool {
+        q.contains("comicvine.gamespot.com/")
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         comic_supported(provider_config)
     }

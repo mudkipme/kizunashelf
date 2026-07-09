@@ -14,6 +14,10 @@ impl ExternalProvider for MangaUpdatesProvider {
     const ID: &'static str = "mangaupdates";
     const LABEL: &'static str = "MangaUpdates";
 
+    fn recognizes_url(q: &str) -> bool {
+        mangaupdates_id(q).is_some()
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         manga_supported(provider_config)
     }

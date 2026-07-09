@@ -15,6 +15,10 @@ impl ExternalProvider for BoardGameGeekProvider {
     const ID: &'static str = "bgg";
     const LABEL: &'static str = "BoardGameGeek";
 
+    fn recognizes_url(q: &str) -> bool {
+        q.contains("boardgamegeek.com/")
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         bgg_supported(provider_config)
     }

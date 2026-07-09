@@ -17,6 +17,10 @@ impl ExternalProvider for IgdbProvider {
     const ID: &'static str = "igdb";
     const LABEL: &'static str = "IGDB";
 
+    fn recognizes_url(q: &str) -> bool {
+        q.contains("igdb.com/")
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         igdb_external_types_match(provider_config)
     }

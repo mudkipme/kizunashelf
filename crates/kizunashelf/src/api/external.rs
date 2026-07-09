@@ -25,7 +25,10 @@ use crate::contract::{
 };
 use crate::dates::clamp_number;
 use crate::library::load_entity;
-use crate::types::{BodySectionKind, EntityTypeConfig, FieldType, KizunaConfig, Library};
+use crate::status::status_field;
+use crate::types::{
+    BodySectionKind, CanonicalStatus, EntityTypeConfig, FieldType, KizunaConfig, Library,
+};
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
@@ -35,8 +38,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::OnceLock;
-use std::time::Duration;
+use std::sync::{Arc, OnceLock};
+use std::time::{Duration, Instant};
 
 use super::assets::download_new_entity_covers;
 use super::episodes::import_new_entity_episodes;
@@ -88,6 +91,16 @@ trait ExternalProvider {
 
     fn unavailable_reason(_state: &AppState) -> Option<String> {
         None
+    }
+
+    /// Whether `query` is a URL this provider owns, decided by a pure host check
+    /// (no network). Quick Capture routes a pasted provider URL to the single
+    /// owning provider and skips everyone else; a URL no provider claims searches
+    /// nothing. Must be host-anchored so at most one provider claims a URL — some
+    /// id parsers accept any digit-tailed URL, so those override this with an
+    /// explicit host check rather than delegating. Default: unclaimed.
+    fn recognizes_url(_query: &str) -> bool {
+        false
     }
 
     fn search(
@@ -154,6 +167,7 @@ struct ProviderEntry {
     configured_and_supported: fn(&ProviderSearchConfig) -> bool,
     available: fn(&AppState) -> bool,
     unavailable_reason: fn(&AppState) -> Option<String>,
+    recognizes_url: fn(&str) -> bool,
     search:
         for<'a> fn(&'a AppState, &'a str, usize, usize, &'a ProviderSearchConfig) -> SearchFut<'a>,
     supports_episodes: bool,
@@ -190,6 +204,7 @@ fn entry<P: ExternalProvider + 'static>() -> ProviderEntry {
         configured_and_supported: P::configured_and_supported,
         available: P::available,
         unavailable_reason: P::unavailable_reason,
+        recognizes_url: P::recognizes_url,
         search: search_boxed::<P>,
         supports_episodes: P::SUPPORTS_EPISODES,
         fetch_episodes: fetch_episodes_boxed::<P>,
@@ -311,6 +326,22 @@ impl ProviderSearchConfig {
     }
 }
 
+/// Whether an item of provider-type `kind` is allowed by a field's
+/// `externalTypes`, for the direct URL/id-lookup path where the type is known
+/// from the pasted URL (`/movie/…`, `/artist/…`). An unconstrained field allows
+/// any kind; an explicitly constrained field allows only its declared kinds — so
+/// a pasted typed URL surfaces under just the matching entity type instead of
+/// once per provider-mapped type, and the non-matching types skip the request
+/// entirely. Case-insensitive.
+fn url_type_allowed(config: &ProviderSearchConfig, kind: &str) -> bool {
+    match config.external_types() {
+        None => true,
+        Some(types) => types
+            .iter()
+            .any(|external_type| external_type.trim().eq_ignore_ascii_case(kind)),
+    }
+}
+
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct ExternalSearchQuery {
     provider: Option<String>,
@@ -323,6 +354,12 @@ pub(crate) struct ExternalSearchQuery {
     /// The viewer's language preference (may carry a script subtag —
     /// `zh-Hans`/`zh-Hant`). Providers that localize honor it.
     language: Option<String>,
+}
+
+/// Whether a (trimmed) query is an `http(s)` URL — the trigger for routing a
+/// Quick Capture paste to the one provider that owns the URL.
+fn query_is_url(q: &str) -> bool {
+    q.starts_with("http://") || q.starts_with("https://")
 }
 
 pub(crate) async fn external_search(
@@ -396,6 +433,25 @@ pub(crate) async fn external_search(
     // searches to run: a provider queried under identical `externalTypes` for two
     // types hits its API once and both types reuse the result.
     let entries = registry();
+
+    // A pasted provider URL is exact-match intent: route it to the single provider
+    // that owns the URL and skip every other provider (still subject to the type
+    // filter — the owning provider must be configured for a searched type below).
+    // A URL no known provider claims searches nothing, saving every request.
+    let url_provider = if query_is_url(q) {
+        match entries.iter().find(|entry| (entry.recognizes_url)(q)) {
+            Some(entry) => Some(entry.id),
+            None => {
+                return Ok(Json(ExternalSearchResponse {
+                    providers,
+                    items: Vec::new(),
+                }))
+            }
+        }
+    } else {
+        None
+    };
+
     let mut per_type: Vec<(
         &EntityTypeConfig,
         BTreeMap<&'static str, ProviderSearchConfig>,
@@ -406,6 +462,9 @@ pub(crate) async fn external_search(
         let configured = configured_external_providers(&library.config, &type_config.id);
         let order = provider_order(&library.config, &type_config.id);
         for (provider, config) in &configured {
+            if url_provider.is_some_and(|only| only != *provider) {
+                continue;
+            }
             if !should_search_provider(requested_provider, &providers, provider) {
                 continue;
             }
@@ -692,7 +751,10 @@ pub(crate) async fn quick_add_entity(
     }
 
     // Re-map the candidate against the schema ourselves — never trust client values.
-    let (frontmatter, body, mapped_fields) = build_mapped_document(candidate, type_config);
+    let (mut frontmatter, body, mapped_fields) = build_mapped_document(candidate, type_config);
+    // Quick Capture files things you intend to get to, so seed a "planning" status
+    // when the schema models one and the candidate didn't already supply a value.
+    apply_default_planning_status(&mut frontmatter, type_config);
 
     // Filename: the type's filename title language, falling back to the candidate
     // title, then the provider id. Collisions with a *different* work of the same
@@ -840,6 +902,31 @@ pub(super) fn build_mapped_document(
         format!("{}\n", sections.join("\n\n"))
     };
     (frontmatter, body, mapped.fields)
+}
+
+/// Seeds the type's status field with its first planning option when the mapped
+/// candidate supplied none. Meaning is schema-driven: this only fires when the type
+/// has an `enumRole: status` field that maps at least one planning option, and it
+/// never overwrites a value the candidate already mapped. Scoped to Quick Capture —
+/// batch import takes the status from the user's per-item choice instead.
+fn apply_default_planning_status(
+    frontmatter: &mut Map<String, Value>,
+    type_config: &EntityTypeConfig,
+) {
+    let Some(field) = status_field(type_config) else {
+        return;
+    };
+    if frontmatter.contains_key(field.field.as_str()) {
+        return;
+    }
+    let Some(value) = field
+        .status_values
+        .as_ref()
+        .and_then(|values| values.write_value(CanonicalStatus::Planning))
+    else {
+        return;
+    };
+    frontmatter.insert(field.field.clone(), Value::String(value.to_string()));
 }
 
 /// Resolves a full candidate for a provider from a `query` (a stored external-ref
@@ -1055,6 +1142,72 @@ pub(super) fn external_client() -> &'static reqwest::Client {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new())
     })
+}
+
+/// How long a cached provider GET-by-id response stays fresh. Deliberately short:
+/// this exists to *coalesce* the identical requests one action fans out, not to be
+/// a real cache — the payloads are effectively static reference data.
+const RESPONSE_CACHE_TTL: Duration = Duration::from_secs(300);
+
+/// Process-wide, single-flighted cache for idempotent provider GET-by-id fetches
+/// (see [`cached_json_get`]).
+#[derive(Default)]
+struct ResponseCache {
+    entries: tokio::sync::Mutex<HashMap<String, (Instant, Arc<Value>)>>,
+    locks: tokio::sync::Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
+}
+
+fn response_cache() -> &'static ResponseCache {
+    static CACHE: OnceLock<ResponseCache> = OnceLock::new();
+    CACHE.get_or_init(ResponseCache::default)
+}
+
+async fn cached_response(cache: &ResponseCache, key: &str) -> Option<Arc<Value>> {
+    let entries = cache.entries.lock().await;
+    entries.get(key).and_then(|(at, value)| {
+        (Instant::now().duration_since(*at) < RESPONSE_CACHE_TTL).then(|| Arc::clone(value))
+    })
+}
+
+/// Returns a fresh cached response for `key`, else runs `fetch` — single-flighted
+/// per key so concurrent identical requests collapse to one call. The motivating
+/// case: a pasted provider URL is searched once per entity type that maps the
+/// provider, and every one resolves the *same* record; without this that's N
+/// identical requests for one paste, an easy way to trip a provider's rate limit.
+/// `key` must uniquely identify the request (its URL). Only successful responses
+/// are cached, so a transient failure is retried rather than remembered.
+pub(super) async fn cached_json_get<F, Fut>(key: &str, fetch: F) -> Result<Arc<Value>, ApiError>
+where
+    F: FnOnce() -> Fut,
+    Fut: Future<Output = Result<Value, ApiError>>,
+{
+    let cache = response_cache();
+    if let Some(value) = cached_response(cache, key).await {
+        return Ok(value);
+    }
+    // Take the per-key lock so concurrent callers for the same URL wait here and
+    // reuse the first fetch's result instead of each hitting the provider.
+    let lock = {
+        let mut locks = cache.locks.lock().await;
+        Arc::clone(locks.entry(key.to_string()).or_default())
+    };
+    let _guard = lock.lock().await;
+    // Another caller may have populated the cache while we waited for the lock.
+    if let Some(value) = cached_response(cache, key).await {
+        return Ok(value);
+    }
+    let value = Arc::new(fetch().await?);
+    {
+        let mut entries = cache.entries.lock().await;
+        let now = Instant::now();
+        entries.retain(|_, (at, _)| now.duration_since(*at) < RESPONSE_CACHE_TTL);
+        entries.insert(key.to_string(), (now, Arc::clone(&value)));
+    }
+    // The result is cached now, so no later caller needs this per-key lock; drop it
+    // to keep the lock map from growing with every distinct URL. Callers already
+    // waiting hold their own clone, so they still re-check the (now-populated) cache.
+    cache.locks.lock().await.remove(key);
+    Ok(value)
 }
 
 /// Single-flighted cached-token acquisition shared by the OAuth/login providers
@@ -1373,6 +1526,153 @@ mod tests {
     use crate::types::{
         BodySection, BodySectionKind, EntityTypeConfig, ExternalFieldMapping, FieldConfig,
     };
+
+    /// The single registry entry whose `recognizes_url` claims `url`, if any.
+    fn url_owner(url: &str) -> Option<&'static str> {
+        let owners: Vec<&'static str> = registry()
+            .iter()
+            .filter(|entry| (entry.recognizes_url)(url))
+            .map(|entry| entry.id)
+            .collect();
+        // A URL must be owned by at most one provider, or Quick Capture routing is
+        // ambiguous. Assert that here so a lenient recognizer is caught early.
+        assert!(
+            owners.len() <= 1,
+            "url claimed by multiple providers: {owners:?}"
+        );
+        owners.first().copied()
+    }
+
+    #[test]
+    fn each_provider_url_is_claimed_only_by_its_owner() {
+        let cases = [
+            ("https://bgm.tv/subject/998877", "bangumi"),
+            ("https://www.igdb.com/games/hollow-knight", "igdb"),
+            ("https://thetvdb.com/series/answer-me-1988", "thetvdb"),
+            (
+                "https://books.google.com/books?id=zyTCAlFPjgYC",
+                "googlebooks",
+            ),
+            ("https://openlibrary.org/works/OL45804W", "openlibrary"),
+            (
+                "https://podcasts.apple.com/us/podcast/x/id1535809341",
+                "applepodcast",
+            ),
+            (
+                "https://store.steampowered.com/app/367520/Hollow_Knight/",
+                "steam",
+            ),
+            (
+                "https://musicbrainz.org/release/12345678-1234-1234-1234-123456789012",
+                "musicbrainz",
+            ),
+            (
+                "https://boardgamegeek.com/boardgame/174430/gloomhaven",
+                "bgg",
+            ),
+            ("https://www.themoviedb.org/movie/27205", "tmdb"),
+            (
+                "https://open.spotify.com/album/4aawyAB9vmqN3uQ7FjRGTy",
+                "spotify",
+            ),
+            (
+                "https://www.discogs.com/release/249504-Rick-Astley",
+                "discogs",
+            ),
+            ("https://myanimelist.net/anime/5114/", "myanimelist"),
+            (
+                "https://www.mangaupdates.com/series/153046/name",
+                "mangaupdates",
+            ),
+            (
+                "https://comicvine.gamespot.com/volume/4050-18166/",
+                "comicvine",
+            ),
+            ("https://hardcover.app/books/the-hobbit", "hardcover"),
+        ];
+        for (url, expected) in cases {
+            assert_eq!(url_owner(url), Some(expected), "for {url}");
+        }
+    }
+
+    #[test]
+    fn foreign_urls_are_claimed_by_no_provider() {
+        // Comic Vine's id parser accepts any digit-tailed path, so a bare-parser
+        // recognizer would misclaim these; the host-anchored recognizer must not.
+        for url in [
+            "https://bgm.tv/subject/998877",  // digit-tailed, but bangumi's
+            "https://example.com/foo/123456", // digit-tailed foreign URL
+            "https://letterboxd.com/film/parasite-2019/",
+            "https://en.wikipedia.org/wiki/Gloomhaven",
+        ] {
+            assert_ne!(url_owner(url), Some("comicvine"), "for {url}");
+        }
+        // Wholly unknown hosts belong to nobody → Quick Capture searches nothing.
+        assert_eq!(url_owner("https://example.com/foo/123456"), None);
+        assert_eq!(url_owner("https://nintendo.com/store/games/x"), None);
+    }
+
+    #[tokio::test]
+    async fn cached_json_get_coalesces_concurrent_identical_fetches() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        // A unique key so the process-wide cache can't collide with another test.
+        let key = "test://coalesce/subject/541285";
+        let futures = (0..5).map(|_| {
+            let calls = Arc::clone(&calls);
+            async move {
+                cached_json_get(key, || {
+                    let calls = Arc::clone(&calls);
+                    async move {
+                        // Yield so the other four callers reach the per-key lock
+                        // before this fetch completes — exercising single-flight,
+                        // not just cache reuse.
+                        tokio::task::yield_now().await;
+                        calls.fetch_add(1, Ordering::SeqCst);
+                        Ok(serde_json::json!({ "id": 541285 }))
+                    }
+                })
+                .await
+            }
+        });
+        let results = futures_util::future::join_all(futures).await;
+        assert!(results.iter().all(|result| result.is_ok()));
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            1,
+            "five concurrent identical GETs must fetch once"
+        );
+        let first = results[0].as_ref().ok().expect("first get ok");
+        assert_eq!(first["id"], 541285);
+    }
+
+    #[test]
+    fn url_type_allowed_filters_only_explicitly_constrained_fields() {
+        // Unconstrained (no externalTypes) accepts any pasted type — a single field
+        // keeps resolving a pasted URL of any kind.
+        let mut unconstrained = ProviderSearchConfig::default();
+        unconstrained.add_unconstrained_source_if_empty();
+        assert!(url_type_allowed(&unconstrained, "movie"));
+        assert!(url_type_allowed(&unconstrained, "artist"));
+
+        // A field constrained to `tv` rejects a pasted `/movie/` URL (so the movie
+        // won't surface under this type too) but accepts `tv`, case-insensitively.
+        let mut tv_only = ProviderSearchConfig::default();
+        tv_only.add_external_types(&["tv".to_string()]);
+        assert!(url_type_allowed(&tv_only, "tv"));
+        assert!(url_type_allowed(&tv_only, "TV"));
+        assert!(!url_type_allowed(&tv_only, "movie"));
+    }
+
+    #[test]
+    fn query_is_url_detects_http_and_https_only() {
+        assert!(query_is_url("https://bgm.tv/subject/1"));
+        assert!(query_is_url("http://bgm.tv/subject/1"));
+        assert!(!query_is_url("bgm.tv/subject/1"));
+        assert!(!query_is_url("Hollow Knight"));
+        assert!(!query_is_url("ftp://example.com/x"));
+    }
 
     #[test]
     fn normalize_isbn_converts_isbn10_to_isbn13() {

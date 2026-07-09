@@ -1,6 +1,7 @@
 use super::{
     external_client, field_option, named_strings, provider_error, string_list, type_option,
-    CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
+    USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -17,6 +18,10 @@ pub(super) struct DiscogsProvider;
 impl ExternalProvider for DiscogsProvider {
     const ID: &'static str = "discogs";
     const LABEL: &'static str = "Discogs";
+
+    fn recognizes_url(q: &str) -> bool {
+        discogs_ref(q).is_some()
+    }
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         !discogs_types(provider_config).is_empty()
@@ -226,8 +231,13 @@ async fn search_discogs(
     };
     let client = external_client();
     let authorization = format!("Discogs token={token}");
-    // A pasted Discogs URL resolves a single release/master.
+    // A pasted Discogs URL resolves a single release/master. Only surface it under
+    // a field that accepts that kind, so it doesn't appear once per discogs-mapped
+    // entity type.
     if let Some((kind, id)) = discogs_ref(q) {
+        if !url_type_allowed(provider_config, kind) {
+            return Ok(Vec::new());
+        }
         let value = client
             .get(format!("https://api.discogs.com/{kind}s/{id}"))
             .header(reqwest::header::USER_AGENT, USER_AGENT)

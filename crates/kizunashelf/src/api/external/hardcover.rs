@@ -39,6 +39,10 @@ impl ExternalProvider for HardcoverProvider {
     const ID: &'static str = "hardcover";
     const LABEL: &'static str = "Hardcover";
 
+    fn recognizes_url(q: &str) -> bool {
+        hardcover_ref(q).is_some()
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         book_supported(provider_config)
     }

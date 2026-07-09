@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
+import { typeExternalRefs } from "@/lib/type-config";
 import type { ExternalMatch } from "@/types/api";
 
 const ALL = "all";
@@ -66,6 +67,26 @@ export function QuickCapturePage() {
     for (const item of providerCatalog.data?.providers ?? []) labels.set(item.id, item.label);
     return labels;
   }, [providerCatalog.data]);
+
+  // Only types with an external provider configured can be searched here, so the
+  // rest are dropped from the Type picker. Until the provider catalog loads we
+  // can't validate the refs, so show every type; once known, keep only those whose
+  // `externalRef` fields / external body sections point at a real provider.
+  const searchableTypes = useMemo(() => {
+    const types = config.data?.types ?? [];
+    const catalog = providerCatalog.data;
+    if (!catalog) return types;
+    const providerIds = new Set(catalog.providers.map((item) => item.id.toLowerCase()));
+    return types.filter((type) => typeExternalRefs(type).some((ref) => providerIds.has(ref)));
+  }, [config.data, providerCatalog.data]);
+
+  // If the selected type isn't searchable (e.g. arrived via `?type=`), fall back to
+  // All so the picker stays valid rather than showing a hidden value.
+  useEffect(() => {
+    if (typeId !== ALL && providerCatalog.data && !searchableTypes.some((type) => type.id === typeId)) {
+      setTypeId(ALL);
+    }
+  }, [typeId, providerCatalog.data, searchableTypes]);
 
   // Empty-query probes return per-provider `enabled` summaries without hitting any
   // provider network. The gate probe spans every type (is Quick Capture usable at
@@ -218,7 +239,7 @@ export function QuickCapturePage() {
               <Trans>Type</Trans>
               <Select value={typeId} onChange={(event) => setTypeId(event.target.value)}>
                 <option value={ALL}>{t`All types`}</option>
-                {config.data?.types.map((type) => (
+                {searchableTypes.map((type) => (
                   <option key={type.id} value={type.id}>
                     {type.label}
                   </option>

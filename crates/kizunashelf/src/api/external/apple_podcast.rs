@@ -16,6 +16,10 @@ impl ExternalProvider for ApplePodcastProvider {
     const ID: &'static str = "applepodcast";
     const LABEL: &'static str = "Apple Podcasts";
 
+    fn recognizes_url(q: &str) -> bool {
+        q.contains("podcasts.apple.com/")
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         apple_podcast_supported(provider_config)
     }

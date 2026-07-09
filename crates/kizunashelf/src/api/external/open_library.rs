@@ -14,6 +14,10 @@ impl ExternalProvider for OpenLibraryProvider {
     const ID: &'static str = "openlibrary";
     const LABEL: &'static str = "Open Library";
 
+    fn recognizes_url(q: &str) -> bool {
+        open_library_olid(q).is_some()
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         open_library_supported(provider_config)
     }

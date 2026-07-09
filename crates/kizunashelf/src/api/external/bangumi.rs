@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, string_list_with, type_option, ExternalProvider,
-    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    cached_json_get, external_client, field_option, provider_error, string_list_with, type_option,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -15,6 +15,10 @@ pub(super) struct BangumiProvider;
 impl ExternalProvider for BangumiProvider {
     const ID: &'static str = "bangumi";
     const LABEL: &'static str = "Bangumi";
+
+    fn recognizes_url(q: &str) -> bool {
+        q.contains("bgm.tv/")
+    }
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         bangumi_types(provider_config).is_some()
@@ -260,13 +264,20 @@ async fn search_bangumi(
             .collect());
     }
     // Resolve a pasted subject URL/id (subjects mode only).
-    if subject_types.is_some() {
+    if let Some(filter_types) = &subject_types {
         if let Some(subject_id) = bangumi_subject_id(q) {
             let value = bangumi_get(
                 client,
                 &format!("https://api.bgm.tv/v0/subjects/{subject_id}"),
             )
             .await?;
+            // A direct id/URL lookup bypasses the search `filter`, so re-apply the
+            // field's type constraint here. Without it the same subject surfaces
+            // once per bangumi-mapped type (e.g. one anime shown under anime, book,
+            // music…) because every type's lookup returns it unfiltered.
+            if !subject_matches_filter(&value, filter_types) {
+                return Ok(Vec::new());
+            }
             return Ok(bangumi_candidate(&value, language).into_iter().collect());
         }
     }
@@ -343,17 +354,26 @@ async fn search_bangumi(
 }
 
 async fn bangumi_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiError> {
-    client
-        .get(url)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)
+    // Cached + single-flighted by URL: one pasted subject URL is searched once per
+    // entity type that maps Bangumi, and each resolves the same `/v0/subjects/{id}`.
+    // Coalescing keeps that from hitting Bangumi's rate limit N times per paste.
+    // All Bangumi by-id GETs (subjects/characters/persons/episodes) route through
+    // here; the keyword search uses a separate POST and is not cached.
+    let value = cached_json_get(url, || async {
+        client
+            .get(url)
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .send()
+            .await
+            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
+            .json::<Value>()
+            .await
+            .map_err(provider_error)
+    })
+    .await?;
+    Ok((*value).clone())
 }
 
 fn bangumi_subject_id(q: &str) -> Option<String> {
@@ -394,6 +414,17 @@ pub(super) fn bangumi_wants_persons(provider_config: &ProviderSearchConfig) -> b
                 .iter()
                 .any(|external_type| external_type.trim().eq_ignore_ascii_case("person"))
         })
+}
+
+/// Whether a fetched subject's `type` is among the field's `externalTypes`
+/// constraint. Used to re-apply the constraint on a direct id/URL lookup, which
+/// (unlike keyword search) doesn't pass Bangumi a type `filter`. A subject with
+/// no `type` never force-matches.
+fn subject_matches_filter(value: &Value, filter_types: &[u32]) -> bool {
+    value
+        .get("type")
+        .and_then(Value::as_i64)
+        .is_some_and(|subject_type| filter_types.contains(&(subject_type as u32)))
 }
 
 /// Extracts a Bangumi character id from a `bgm.tv/character/<id>` URL, or — when
@@ -814,7 +845,9 @@ fn bangumi_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
 
 #[cfg(test)]
 mod tests {
-    use super::{bangumi_candidate, bangumi_episode_groups, format_episode_number};
+    use super::{
+        bangumi_candidate, bangumi_episode_groups, format_episode_number, subject_matches_filter,
+    };
     use serde_json::json;
 
     #[test]
@@ -1110,5 +1143,22 @@ mod tests {
             bangumi_candidate(&original_only, Some("zh")).unwrap().title,
             "Serial Experiments Lain"
         );
+    }
+
+    #[test]
+    fn subject_lookup_is_filtered_by_field_type_constraint() {
+        // An anime subject (`type: 2`), like https://bgm.tv/subject/541285.
+        let anime = json!({ "id": 541285, "type": 2, "name": "..." });
+        // The anime-constrained field (and an unconstrained field) surface it…
+        assert!(subject_matches_filter(&anime, &[2]));
+        assert!(subject_matches_filter(&anime, &[1, 2, 3, 4, 6]));
+        // …but a book/music/etc-constrained field must not — that duplicate is the bug.
+        assert!(!subject_matches_filter(&anime, &[1]));
+        assert!(!subject_matches_filter(&anime, &[3]));
+        // A subject that reports no type is never force-matched.
+        assert!(!subject_matches_filter(
+            &json!({ "id": 1 }),
+            &[1, 2, 3, 4, 6]
+        ));
     }
 }

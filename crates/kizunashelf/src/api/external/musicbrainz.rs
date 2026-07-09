@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, insert_str, provider_error, type_option, ExternalProvider,
-    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, insert_str, provider_error, type_option, url_type_allowed,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -15,6 +15,10 @@ pub(super) struct MusicBrainzProvider;
 impl ExternalProvider for MusicBrainzProvider {
     const ID: &'static str = "musicbrainz";
     const LABEL: &'static str = "MusicBrainz";
+
+    fn recognizes_url(q: &str) -> bool {
+        musicbrainz_ref(q).is_some()
+    }
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         !musicbrainz_entities(provider_config).is_empty()
@@ -205,8 +209,13 @@ async fn search_musicbrainz(
         return Ok(Vec::new());
     }
     let client = external_client();
-    // A pasted MusicBrainz URL resolves a single entity regardless of the filter.
+    // A pasted MusicBrainz URL resolves a single entity. Only surface it under a
+    // field that accepts that entity kind, so it doesn't appear once per
+    // musicbrainz-mapped entity type.
     if let Some((entity, mbid)) = musicbrainz_ref(q) {
+        if !url_type_allowed(provider_config, entity) {
+            return Ok(Vec::new());
+        }
         return resolve_musicbrainz(client, entity, &mbid).await;
     }
     let offset = (page - 1) * page_size;

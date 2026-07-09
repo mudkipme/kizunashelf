@@ -21,6 +21,10 @@ impl ExternalProvider for ThetvdbProvider {
     const ID: &'static str = "thetvdb";
     const LABEL: &'static str = "TheTVDB";
 
+    fn recognizes_url(q: &str) -> bool {
+        q.contains("thetvdb.com/")
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         thetvdb_type_filters(provider_config).is_some()
     }

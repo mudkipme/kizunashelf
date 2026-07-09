@@ -12,6 +12,10 @@ pub(super) struct SteamProvider;
 impl ExternalProvider for SteamProvider {
     const ID: &'static str = "steam";
     const LABEL: &'static str = "Steam";
+
+    fn recognizes_url(q: &str) -> bool {
+        q.contains("store.steampowered.com/app/")
+    }
     // Steam has no public catalog search; it only resolves a pasted store URL or
     // app id.
     const SEARCHABLE: bool = false;

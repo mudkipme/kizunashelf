@@ -1,6 +1,7 @@
 use super::{
     external_client, field_option, insert_str, named_list, provider_error, type_option,
-    CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
+    USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -21,6 +22,10 @@ genres,mean,num_episodes,num_chapters,average_episode_duration,studios,start_sea
 impl ExternalProvider for MyAnimeListProvider {
     const ID: &'static str = "myanimelist";
     const LABEL: &'static str = "MyAnimeList";
+
+    fn recognizes_url(q: &str) -> bool {
+        mal_ref(q).is_some()
+    }
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         !mal_types(provider_config).is_empty()
@@ -229,8 +234,13 @@ async fn search_mal(
         return Ok(Vec::new());
     };
     let client = external_client();
-    // A pasted MyAnimeList URL resolves a single record (with full fields).
+    // A pasted MyAnimeList URL resolves a single record (with full fields). Only
+    // surface it under a field that accepts that media type, so it doesn't appear
+    // once per mal-mapped entity type.
     if let Some((media_type, id)) = mal_ref(q) {
+        if !url_type_allowed(provider_config, media_type) {
+            return Ok(Vec::new());
+        }
         return resolve_mal(client, &client_id, media_type, &id).await;
     }
     let offset = (page - 1) * page_size;

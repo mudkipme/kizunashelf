@@ -16,6 +16,10 @@ impl ExternalProvider for GoogleBooksProvider {
     const ID: &'static str = "googlebooks";
     const LABEL: &'static str = "Google Books";
 
+    fn recognizes_url(q: &str) -> bool {
+        google_books_volume_id(q).is_some()
+    }
+
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         google_books_supported(provider_config)
     }

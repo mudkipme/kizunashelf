@@ -1,7 +1,7 @@
 use super::{
     cached_or_fetch_token, external_client, field_option, provider_error, send_with_token_retry,
-    string_list, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
-    ProviderSearchConfig, USER_AGENT,
+    string_list, type_option, url_type_allowed, CredentialSpec, ExternalProvider,
+    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -19,6 +19,10 @@ pub(super) struct SpotifyProvider;
 impl ExternalProvider for SpotifyProvider {
     const ID: &'static str = "spotify";
     const LABEL: &'static str = "Spotify";
+
+    fn recognizes_url(q: &str) -> bool {
+        spotify_ref(q).is_some()
+    }
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         !spotify_types(provider_config).is_empty()
@@ -240,8 +244,13 @@ async fn search_spotify(
     };
     let client = external_client();
     let token = spotify_access_token(state, client, &client_id, &client_secret, false).await?;
-    // A pasted Spotify URL resolves a single album/artist.
+    // A pasted Spotify URL resolves a single album/artist. Only surface it under a
+    // field that accepts that kind, so it doesn't appear once per spotify-mapped
+    // entity type.
     if let Some((kind, id)) = spotify_ref(q) {
+        if !url_type_allowed(provider_config, kind) {
+            return Ok(Vec::new());
+        }
         let endpoint = format!("https://api.spotify.com/v1/{kind}s/{id}");
         let value = spotify_get(
             state,

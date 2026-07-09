@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { TypeConfig } from "@/types/api";
+
 import {
   configuredFieldLabel,
   entityFieldLabel,
@@ -10,6 +12,7 @@ import {
   isListFieldType,
   supportsDateRole,
   supportsEnumOptions,
+  typeExternalRefs,
 } from "./type-config";
 
 describe("field-type role predicates", () => {
@@ -93,5 +96,41 @@ describe("entityFieldLabel", () => {
     const labels = new Map([["anime", new Map([["studio", "Studio"]])]]);
     expect(entityFieldLabel(labels, "anime", "studio")).toBe("Studio");
     expect(entityFieldLabel(labels, "anime", "unknown")).toBe("unknown");
+  });
+});
+
+describe("typeExternalRefs", () => {
+  const type = (extra: Partial<TypeConfig>): TypeConfig =>
+    ({ id: "t", label: "T", path: "T", fields: [], ...extra }) as TypeConfig;
+
+  it("collects externalRef fields, trimmed and lowercased", () => {
+    const config = type({
+      fields: [
+        { field: "title", fieldType: "title" },
+        { field: "bgm_url", fieldType: "externalRef", externalRef: " Bangumi " },
+      ] as FieldConfig[],
+    });
+    expect(typeExternalRefs(config)).toEqual(["bangumi"]);
+  });
+
+  it("collects sources from external body sections", () => {
+    const config = type({
+      bodySections: [
+        { heading: "Info", kind: "external", externalFields: [{ source: "TMDB", field: "overview" }] },
+        { heading: "Episodes", kind: "episodes" },
+      ],
+    } as Partial<TypeConfig>);
+    expect(typeExternalRefs(config)).toEqual(["tmdb"]);
+  });
+
+  it("is empty for a type with no external source (so it can be hidden)", () => {
+    const config = type({
+      fields: [
+        { field: "title", fieldType: "title" },
+        // An externalRef field left blank contributes nothing.
+        { field: "ref", fieldType: "externalRef", externalRef: "  " },
+      ] as FieldConfig[],
+    });
+    expect(typeExternalRefs(config)).toEqual([]);
   });
 });

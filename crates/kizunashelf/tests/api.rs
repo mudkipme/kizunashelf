@@ -650,6 +650,40 @@ async fn rename_repoints_inbound_wikilinks_in_managed_files() {
 }
 
 #[tokio::test]
+async fn external_search_routes_a_pasted_url_to_the_owning_provider() {
+    // In the fixture, `anime` maps only bangumi and `games` maps only igdb.
+    let server = TestServer::new();
+
+    // An IGDB URL under `type=anime` routes to igdb — which anime doesn't map — so
+    // nothing is searched: no results, and bangumi (configured + keyless) is never
+    // queried, so no provider records an error. Proves the URL overrides the
+    // configured provider set while still honoring the type filter.
+    let igdb_under_anime = server
+        .ok_json("/api/external/search?type=anime&q=https://www.igdb.com/games/celeste")
+        .await;
+    assert_eq!(igdb_under_anime["items"].as_array().unwrap().len(), 0);
+    for provider in igdb_under_anime["providers"].as_array().unwrap() {
+        assert!(
+            provider["error"].is_null(),
+            "no provider should be queried for a routed-away URL: {provider}"
+        );
+    }
+
+    // A URL no known provider claims returns an empty list without any request.
+    let unknown = server
+        .ok_json("/api/external/search?type=anime&q=https://example.com/foo/123456")
+        .await;
+    assert_eq!(unknown["items"].as_array().unwrap().len(), 0);
+
+    // A Bangumi URL under `type=games` routes to bangumi, which games doesn't map:
+    // igdb (the configured provider) is ignored and nothing is searched.
+    let bangumi_under_games = server
+        .ok_json("/api/external/search?type=games&q=https://bgm.tv/subject/998877")
+        .await;
+    assert_eq!(bangumi_under_games["items"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
 async fn external_search_lists_providers_without_querying_network_for_empty_searches() {
     let server = TestServer::new();
 
@@ -752,6 +786,62 @@ async fn quick_add_creates_entity_from_candidate_and_dedupes_on_second_add() {
     assert_eq!(status, StatusCode::OK, "{again}");
     assert_eq!(again["alreadyExisted"], true);
     assert_eq!(again["entity"]["id"], entity_id);
+}
+
+#[tokio::test]
+async fn quick_add_defaults_status_to_first_planning_option() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    fs::create_dir_all(vault.join("Taxonomy/Anime")).unwrap();
+    // Anime maps the bangumi provider (so a candidate maps offline) and models a
+    // status field whose planning canonical lists two options — the *first*
+    // ("Backlog") is the write target the default should pick.
+    let config = json!({
+        "taxonomyRoot": "Taxonomy",
+        "dailyNotes": { "paths": ["Daily Notes"], "dateFormat": "YYYY-MM-DD" },
+        "types": [
+            {
+                "id": "anime",
+                "label": "Anime",
+                "path": "Anime",
+                "filename": { "titleLanguage": "en" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "titleLanguage": "en" },
+                    { "field": "status", "fieldType": "enum",
+                      "enumOptions": ["Backlog", "Planned", "Watching", "Completed"],
+                      "enumRole": "status",
+                      "statusValues": {
+                          "planning": ["Backlog", "Planned"], "ongoing": ["Watching"],
+                          "completed": ["Completed"]
+                      } },
+                    { "field": "bgm_url", "fieldType": "externalRef",
+                      "externalRef": "bangumi", "externalTypes": ["anime"] }
+                ]
+            }
+        ]
+    });
+    write_vault_config(&vault, &config);
+    let app = inline_router(&vault, true, true);
+
+    // No `coverUrl` and no episodes section, so the whole flow stays offline.
+    let candidate = json!({
+        "provider": "bangumi",
+        "sourceId": "112233",
+        "url": "https://bgm.tv/subject/112233",
+        "title": "Some Show",
+        "titles": { "en": "Some Show" },
+        "metadata": {}
+    });
+    let (status, created) = request_json(
+        &app,
+        Method::POST,
+        "/api/external/quick-add",
+        Some(json!({ "type": "anime", "candidate": candidate })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{created}");
+    // The candidate mapped no status, so quick-add seeds the first planning option.
+    assert_eq!(created["entity"]["frontmatter"]["status"], "Backlog");
 }
 
 #[tokio::test]

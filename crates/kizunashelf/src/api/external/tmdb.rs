@@ -1,7 +1,7 @@
 use super::{
     external_client, field_option, insert_str, named_list, named_strings, provider_error,
-    type_option, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
-    USER_AGENT,
+    type_option, url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -66,6 +66,10 @@ const IMAGE_BASE: &str = "https://image.tmdb.org/t/p/";
 impl ExternalProvider for TmdbProvider {
     const ID: &'static str = "tmdb";
     const LABEL: &'static str = "TMDB";
+
+    fn recognizes_url(q: &str) -> bool {
+        tmdb_ref(q).is_some()
+    }
 
     fn configured_and_supported(provider_config: &ProviderSearchConfig) -> bool {
         !tmdb_media_types(provider_config).is_empty()
@@ -369,8 +373,13 @@ async fn search_tmdb(
     };
     let client = external_client();
     let request_language = tmdb_request_language(provider_config.language.as_deref());
-    // A pasted TMDB URL resolves a single record (with full credits/genres).
+    // A pasted TMDB URL resolves a single record (with full credits/genres). Only
+    // surface it under a field that accepts that media type, so it doesn't appear
+    // once per tmdb-mapped entity type.
     if let Some((media_type, id)) = tmdb_ref(q) {
+        if !url_type_allowed(provider_config, media_type) {
+            return Ok(Vec::new());
+        }
         return resolve_tmdb(client, &api_key, media_type, &id, &request_language).await;
     }
     // With a single configured type, query that type's endpoint so pagination is

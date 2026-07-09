@@ -13,6 +13,28 @@ export function fieldsByType(typeConfig: TypeConfig | undefined, fieldType: Fiel
   return configFields(typeConfig).filter((field) => field.fieldType === fieldType);
 }
 
+/** Provider ids (trimmed, lowercased) this type wires an `externalRef` field or an
+ *  external body section to — mirroring the core's `configured_external_providers`
+ *  derivation. Empty means the type has no external source and can't be searched in
+ *  Quick Capture. Not validated against the provider catalog here; callers that need
+ *  to drop refs to unknown providers intersect this with the known-provider set. */
+export function typeExternalRefs(typeConfig: TypeConfig | undefined): string[] {
+  const refs: string[] = [];
+  for (const field of configFields(typeConfig)) {
+    if (field.fieldType !== "externalRef") continue;
+    const ref = field.externalRef?.trim().toLowerCase();
+    if (ref) refs.push(ref);
+  }
+  for (const section of typeConfig?.bodySections ?? []) {
+    if (section.kind !== "external") continue;
+    for (const mapping of section.externalFields ?? []) {
+      const source = mapping.source?.trim().toLowerCase();
+      if (source) refs.push(source);
+    }
+  }
+  return refs;
+}
+
 export function fieldNamesByType(typeConfig: TypeConfig | undefined, fieldType: FieldType): string[] {
   return fieldsByType(typeConfig, fieldType).map((field) => field.field);
 }
