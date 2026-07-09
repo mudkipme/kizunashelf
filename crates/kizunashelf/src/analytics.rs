@@ -15,7 +15,7 @@ use crate::dates::{parse_entity_date, parse_exact_date, ParsedEntityDate};
 use crate::library::compare_string;
 use crate::relations::{count_by, outgoing_relations, relation_type_pairs, summary_by_id, Count};
 use crate::types::{CanonicalStatus, DateRole, EntitySummary, FieldType, Library};
-use crate::vfs::Vfs;
+use crate::vfs::{exists_nfc_tolerant, Vfs};
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
 
@@ -366,7 +366,10 @@ pub async fn broken_local_assets(library: &Library, vfs: &dyn Vfs) -> (Vec<Entit
             continue;
         }
         local_total += 1;
-        if !vfs.exists(image).await.unwrap_or(false) {
+        // NFC/NFD-tolerant: the frontmatter cover path is NFC-composed, but Apple
+        // filesystems store the on-disk name decomposed (NFD), so a byte-exact
+        // existence check would falsely flag a present asset as broken.
+        if !exists_nfc_tolerant(vfs, image).await.unwrap_or(false) {
             broken.push(summary.clone());
         }
     }

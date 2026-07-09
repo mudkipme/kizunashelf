@@ -161,6 +161,109 @@ pub fn normalize_relative(path: &str) -> VfsResult<String> {
     Ok(parts.join("/"))
 }
 
+/// Resolves a vault-relative path to the actual on-disk path when the stored
+/// path and the backing filesystem disagree on Unicode composition (NFC vs NFD).
+///
+/// Apple filesystems return directory entries in decomposed (NFD) form, while
+/// paths written into frontmatter (asset covers, entity folders derived from a
+/// title) are composed (NFC). A byte-exact read of an NFC path against an NFD
+/// directory entry misses even though the file exists. Entity *loading* sidesteps
+/// this by enumerating the directory and reading the real on-disk name; asset
+/// paths are reconstructed from frontmatter, so they need this fallback.
+///
+/// Walks the path segment by segment, matching each component against the
+/// directory listing under NFC normalization (the same chokepoint entity/wikilink
+/// matching uses). Returns the reassembled real path, or `None` if the path can't
+/// be resolved to an existing entry. Case is preserved — only composition is
+/// normalized.
+///
+/// Resolution **backtracks**: an NFC/NFD collision can leave two byte-distinct
+/// directories with the same composed name (e.g. one created NFC by an asset
+/// download, one NFD by the Apple filesystem), only one of which contains the
+/// file. At each segment every NFC-equal candidate is tried — byte-exact matches
+/// first for determinism — and the search descends into each until the *full*
+/// remaining path resolves, so a dead (empty) sibling doesn't shadow the live one.
+pub async fn resolve_nfc_path(vfs: &dyn Vfs, path: &str) -> VfsResult<Option<String>> {
+    let normalized = normalize_relative(path)?;
+    if normalized.is_empty() {
+        return Ok(Some(String::new()));
+    }
+    let segments: Vec<String> = normalized.split('/').map(str::to_string).collect();
+    resolve_nfc_segments(vfs, String::new(), &segments, 0).await
+}
+
+/// Recursive backtracking worker for [`resolve_nfc_path`]. Resolves `segments[idx..]`
+/// under the already-resolved real directory `current`.
+fn resolve_nfc_segments<'a>(
+    vfs: &'a dyn Vfs,
+    current: String,
+    segments: &'a [String],
+    idx: usize,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = VfsResult<Option<String>>> + Send + 'a>> {
+    use unicode_normalization::UnicodeNormalization;
+
+    Box::pin(async move {
+        let entries = match vfs.read_dir(&current).await {
+            Ok(entries) => entries,
+            Err(VfsError::NotFound) => return Ok(None),
+            Err(error) => return Err(error),
+        };
+        let segment = &segments[idx];
+        let target: String = segment.nfc().collect();
+        let last = idx + 1 == segments.len();
+
+        let mut candidates: Vec<DirEntry> = entries
+            .into_iter()
+            .filter(|entry| entry.name.nfc().collect::<String>() == target)
+            .collect();
+        // Try a byte-exact match before composition-only matches, so an
+        // unambiguous path resolves to its own bytes.
+        candidates.sort_by_key(|entry| entry.name != *segment);
+
+        for entry in candidates {
+            let child = if current.is_empty() {
+                entry.name.clone()
+            } else {
+                format!("{current}/{}", entry.name)
+            };
+            if last {
+                return Ok(Some(child));
+            }
+            if entry.is_dir {
+                if let Some(found) = resolve_nfc_segments(vfs, child, segments, idx + 1).await? {
+                    return Ok(Some(found));
+                }
+            }
+        }
+        Ok(None)
+    })
+}
+
+/// Reads a file, tolerating an NFC/NFD composition mismatch between the stored
+/// path and the backing filesystem (see [`resolve_nfc_path`]). Tries a byte-exact
+/// read first (the fast path) and only falls back to segment-by-segment NFC
+/// resolution on `NotFound`, so the common case pays nothing.
+pub async fn read_nfc_tolerant(vfs: &dyn Vfs, path: &str) -> VfsResult<Vec<u8>> {
+    match vfs.read(path).await {
+        Err(VfsError::NotFound) => {}
+        other => return other,
+    }
+    match resolve_nfc_path(vfs, path).await? {
+        Some(resolved) => vfs.read(&resolved).await,
+        None => Err(VfsError::NotFound),
+    }
+}
+
+/// Like [`Vfs::exists`] but tolerant of an NFC/NFD composition mismatch (see
+/// [`resolve_nfc_path`]). Tries a byte-exact `exists` first and only walks the
+/// directory listing on a miss.
+pub async fn exists_nfc_tolerant(vfs: &dyn Vfs, path: &str) -> VfsResult<bool> {
+    if vfs.exists(path).await? {
+        return Ok(true);
+    }
+    Ok(resolve_nfc_path(vfs, path).await?.is_some())
+}
+
 /// Recursively collects vault-relative paths of `.md` files under `root` (a
 /// vault-relative directory). A missing directory yields an empty list. Used for
 /// the daily-notes walk.
@@ -217,5 +320,85 @@ mod tests {
         assert!(normalize_relative("../escape").is_err());
         assert!(normalize_relative("a/../../b").is_err());
         assert!(normalize_relative("C:/Windows").is_err());
+    }
+
+    // Katakana GA: composed (NFC, U+30AC) vs decomposed (NFD, KA + combining
+    // voiced sound mark) — the shape Apple filesystems store on disk.
+    const NFC_GA: &str = "\u{30AC}";
+    const NFD_GA: &str = "\u{30AB}\u{3099}";
+
+    #[tokio::test]
+    async fn resolve_nfc_path_bridges_composition_across_segments() {
+        let vfs = InMemoryVfs::new();
+        // On-disk names are decomposed (NFD) in both a directory and the filename.
+        let on_disk = format!("Assets/{NFD_GA}/cover{NFD_GA}.jpg");
+        vfs.insert_file(&on_disk, "bytes");
+
+        // The stored/requested path is composed (NFC) and byte-differs from disk.
+        let requested = format!("Assets/{NFC_GA}/cover{NFC_GA}.jpg");
+        assert_ne!(requested, on_disk);
+        assert!(vfs.read(&requested).await.is_err());
+
+        let resolved = resolve_nfc_path(&vfs, &requested).await.unwrap();
+        assert_eq!(resolved.as_deref(), Some(on_disk.as_str()));
+    }
+
+    #[tokio::test]
+    async fn resolve_nfc_path_backtracks_past_a_dead_colliding_dir() {
+        // An NFC/NFD collision: two byte-distinct directories share the same
+        // composed name. The NFC one is empty; the real file lives in the NFD one.
+        let vfs = InMemoryVfs::new();
+        let nfc_dir = format!("Assets/{NFC_GA}");
+        let nfd_file = format!("Assets/{NFD_GA}/cover_url.jpg");
+        vfs.insert_dir(&nfc_dir); // the dead, empty sibling
+        vfs.insert_file(&nfd_file, "bytes");
+
+        // The requested path is the composed (NFC) form — byte-exact to the empty
+        // dir, so a greedy walk would dead-end there. Backtracking finds the file.
+        let requested = format!("Assets/{NFC_GA}/cover_url.jpg");
+        let resolved = resolve_nfc_path(&vfs, &requested).await.unwrap();
+        assert_eq!(resolved.as_deref(), Some(nfd_file.as_str()));
+        assert_eq!(
+            read_nfc_tolerant(&vfs, &requested).await.unwrap(),
+            b"bytes".to_vec()
+        );
+        assert!(exists_nfc_tolerant(&vfs, &requested).await.unwrap());
+    }
+
+    #[tokio::test]
+    async fn resolve_nfc_path_none_when_missing() {
+        let vfs = InMemoryVfs::new();
+        vfs.insert_file("Assets/a/cover.jpg", "bytes");
+        assert_eq!(
+            resolve_nfc_path(&vfs, "Assets/a/other.jpg").await.unwrap(),
+            None
+        );
+        // The empty (root) path always resolves to itself.
+        assert_eq!(
+            resolve_nfc_path(&vfs, "").await.unwrap(),
+            Some(String::new())
+        );
+    }
+
+    #[tokio::test]
+    async fn read_and_exists_tolerate_nfc_nfd_mismatch() {
+        let vfs = InMemoryVfs::new();
+        let on_disk = format!("Assets/{NFD_GA}/cover.jpg");
+        vfs.insert_file(&on_disk, "bytes");
+        let requested = format!("Assets/{NFC_GA}/cover.jpg");
+
+        // Byte-exact fails; the tolerant variants succeed.
+        assert!(vfs.read(&requested).await.is_err());
+        assert_eq!(
+            read_nfc_tolerant(&vfs, &requested).await.unwrap(),
+            b"bytes".to_vec()
+        );
+        assert!(!vfs.exists(&requested).await.unwrap());
+        assert!(exists_nfc_tolerant(&vfs, &requested).await.unwrap());
+
+        // A genuinely absent file still reports missing.
+        let missing = format!("Assets/{NFC_GA}/missing.jpg");
+        assert!(read_nfc_tolerant(&vfs, &missing).await.is_err());
+        assert!(!exists_nfc_tolerant(&vfs, &missing).await.unwrap());
     }
 }

@@ -1,6 +1,7 @@
 //! Pure helpers for asset paths, URLs, and image content types — no I/O.
 
 use crate::types::{EntityTypeConfig, FieldType, Library};
+use crate::vfs::{resolve_nfc_path, Vfs};
 use serde_json::{Map, Value};
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
@@ -12,6 +13,26 @@ pub(crate) fn entity_asset_dir(asset_root: &str, entity_relative_path: &str) -> 
         .strip_suffix(".md")
         .unwrap_or(entity_relative_path);
     format!("{}/{stem}", asset_root.trim_end_matches('/'))
+}
+
+/// Like [`entity_asset_dir`], but reuses an existing directory whose name differs
+/// only by Unicode composition (NFC vs NFD) instead of minting a divergent empty
+/// sibling. The entity's on-disk `.md` name is decomposed (NFD) on Apple
+/// filesystems, while an asset path built for a freshly composed (NFC) title would
+/// point at a different byte-sequence directory — so a write would create a second
+/// folder next to the real one. Falls back to the computed path when no equivalent
+/// directory exists yet (the first cover for the entity), leaving normal writes
+/// unchanged.
+pub(crate) async fn resolve_entity_asset_dir(
+    vfs: &dyn Vfs,
+    asset_root: &str,
+    entity_relative_path: &str,
+) -> String {
+    let computed = entity_asset_dir(asset_root, entity_relative_path);
+    match resolve_nfc_path(vfs, &computed).await {
+        Ok(Some(existing)) => existing,
+        _ => computed,
+    }
 }
 
 /// All local (non-remote) asset paths referenced anywhere in the library, used
@@ -178,6 +199,28 @@ mod tests {
             entity_asset_dir("Assets", "Taxonomy/Anime/Foo.md"),
             "Assets/Taxonomy/Anime/Foo"
         );
+    }
+
+    #[tokio::test]
+    async fn resolve_entity_asset_dir_reuses_an_existing_divergent_dir() {
+        use crate::vfs::InMemoryVfs;
+        // The entity folder already exists on disk in NFD (katakana GA decomposed),
+        // holding the real cover; the `.md` path we compute from is NFC.
+        let vfs = InMemoryVfs::new();
+        let nfd_dir = "Assets/CD/\u{30AB}\u{3099}";
+        vfs.insert_file(&format!("{nfd_dir}/cover_url.jpg"), "bytes");
+
+        let resolved = resolve_entity_asset_dir(&vfs, "Assets", "CD/\u{30AC}.md").await;
+        // Reuses the existing NFD directory instead of the computed NFC sibling.
+        assert_eq!(resolved, nfd_dir);
+    }
+
+    #[tokio::test]
+    async fn resolve_entity_asset_dir_falls_back_to_computed_when_absent() {
+        use crate::vfs::InMemoryVfs;
+        let vfs = InMemoryVfs::new();
+        let resolved = resolve_entity_asset_dir(&vfs, "Assets", "CD/New Album.md").await;
+        assert_eq!(resolved, "Assets/CD/New Album");
     }
 
     #[test]

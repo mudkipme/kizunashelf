@@ -25,7 +25,7 @@ use crate::contract::{
 };
 use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
 use crate::types::{FieldType, Library};
-use crate::vfs::normalize_relative;
+use crate::vfs::{normalize_relative, read_nfc_tolerant};
 use axum::body::Body;
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::http::header;
@@ -42,7 +42,7 @@ use download::{
 };
 use util::{
     all_local_asset_paths, content_type_for_extension, entity_local_asset_paths, is_remote_url,
-    value_to_list,
+    resolve_entity_asset_dir, value_to_list,
 };
 
 // ----------------------------------------------------------------------------
@@ -225,7 +225,6 @@ pub(crate) async fn ingest_entity_asset(
     let entity_id = entity.summary.id.clone();
     let entity_path = entity.summary.path.clone();
     let asset_root = library.config.resolved_asset_root().to_string();
-    let asset_dir = entity_asset_dir(&asset_root, &entity_path);
     let all_local = all_local_asset_paths(&library);
 
     // Read the host-temp file the client downloaded (mirrors `indexCacheDir`'s
@@ -236,6 +235,7 @@ pub(crate) async fn ingest_entity_asset(
     let _ = tokio::fs::remove_file(&request.source_path).await;
 
     let vfs = state.vault_vfs(&library.config.vault_root);
+    let asset_dir = resolve_entity_asset_dir(vfs.as_ref(), &asset_root, &entity_path).await;
     let raw = vfs
         .read_to_string(&entity_path)
         .await
@@ -322,12 +322,12 @@ pub(crate) async fn upload_entity_asset(
     let entity_id = entity.summary.id.clone();
     let entity_path = entity.summary.path.clone();
     let asset_root = library.config.resolved_asset_root().to_string();
-    let asset_dir = entity_asset_dir(&asset_root, &entity_path);
     let all_local = all_local_asset_paths(&library);
 
     // Read the entity's current frontmatter only to learn which assets it already
     // owns (safe to overwrite); we never write it back.
     let vfs = state.vault_vfs(&library.config.vault_root);
+    let asset_dir = resolve_entity_asset_dir(vfs.as_ref(), &asset_root, &entity_path).await;
     let raw = vfs
         .read_to_string(&entity_path)
         .await
@@ -384,8 +384,11 @@ pub(crate) async fn serve_asset(
     }
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let bytes = vfs
-        .read(&normalized)
+    // Read NFC/NFD-tolerant: the stored path is NFC-composed, but Apple
+    // filesystems hand back decomposed (NFD) directory entries, so a byte-exact
+    // read would 404 an asset that exists (matching how entity loading tolerates
+    // the same divide).
+    let bytes = read_nfc_tolerant(vfs.as_ref(), &normalized)
         .await
         .map_err(|_| ApiError::not_found("Asset not found"))?;
     let content_type = Path::new(&normalized)

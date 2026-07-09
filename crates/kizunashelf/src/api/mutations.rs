@@ -218,11 +218,21 @@ async fn move_entity_assets(
 
 /// Rewrites string (and string-array) frontmatter values that begin with
 /// `<old_dir>/` so they point at `<new_dir>/` instead.
+///
+/// `old_dir` is derived from the on-disk entity path, which is decomposed (NFD)
+/// on Apple filesystems, whereas frontmatter cover paths are stored composed
+/// (NFC). The prefix match therefore runs under NFC normalization — a byte-exact
+/// compare would silently skip the rewrite and leave a dangling cover pointer
+/// after the asset folder moved. The rewritten value is NFC, honoring the
+/// stored-data-is-NFC invariant.
 fn rewrite_asset_prefix(frontmatter: &mut Map<String, Value>, old_dir: &str, new_dir: &str) {
-    let old_prefix = format!("{old_dir}/");
+    use unicode_normalization::UnicodeNormalization;
+
+    let old_prefix: String = format!("{old_dir}/").nfc().collect();
     let rewrite = |value: &mut Value| {
         if let Value::String(text) = value {
-            if let Some(rest) = text.strip_prefix(&old_prefix) {
+            let normalized: String = text.nfc().collect();
+            if let Some(rest) = normalized.strip_prefix(&old_prefix) {
                 *text = format!("{new_dir}/{rest}");
             }
         }
@@ -908,5 +918,44 @@ mod tests {
     fn parent_dir_returns_the_directory_or_none_at_root() {
         assert_eq!(parent_dir("Taxonomy/Anime/Foo.md"), Some("Taxonomy/Anime"));
         assert_eq!(parent_dir("Foo.md"), None);
+    }
+
+    #[test]
+    fn rewrite_asset_prefix_repoints_strings_and_arrays() {
+        let mut frontmatter = Map::new();
+        frontmatter.insert("cover".to_string(), json!("Assets/Anime/A/cover.jpg"));
+        frontmatter.insert(
+            "gallery".to_string(),
+            json!(["Assets/Anime/A/1.jpg", "https://cdn/x.jpg"]),
+        );
+        frontmatter.insert("title".to_string(), json!("A"));
+        rewrite_asset_prefix(&mut frontmatter, "Assets/Anime/A", "Assets/Anime/B");
+
+        assert_eq!(frontmatter["cover"], json!("Assets/Anime/B/cover.jpg"));
+        assert_eq!(
+            frontmatter["gallery"],
+            json!(["Assets/Anime/B/1.jpg", "https://cdn/x.jpg"])
+        );
+        // A value that isn't under the old prefix is untouched.
+        assert_eq!(frontmatter["title"], json!("A"));
+    }
+
+    #[test]
+    fn rewrite_asset_prefix_matches_across_nfc_nfd_composition() {
+        // `old_dir` carries the on-disk (NFD) folder name — decomposed katakana GA
+        // (KA + combining voiced mark) — while the frontmatter cover path was
+        // stored composed (NFC, single U+30AC). A byte-exact prefix compare would
+        // miss and leave the cover pointer dangling after the folder moved.
+        let nfd_dir = "Assets/Anime/\u{30AB}\u{3099}";
+        let nfc_cover = "Assets/Anime/\u{30AC}/cover.jpg";
+        let mut frontmatter = Map::new();
+        frontmatter.insert("cover".to_string(), json!(nfc_cover));
+
+        rewrite_asset_prefix(&mut frontmatter, nfd_dir, "Assets/Anime/Renamed");
+
+        assert_eq!(
+            frontmatter["cover"],
+            json!("Assets/Anime/Renamed/cover.jpg")
+        );
     }
 }

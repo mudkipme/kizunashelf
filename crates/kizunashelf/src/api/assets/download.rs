@@ -4,8 +4,9 @@
 
 use super::ssrf::validate_download_url;
 use super::util::{
-    entity_asset_dir, entity_local_asset_paths, extension_for_content_type, extension_from_url,
-    is_remote_url, short_hash, short_hash_bytes, skip_reason, sniff_image_ext, value_to_list,
+    entity_local_asset_paths, extension_for_content_type, extension_from_url, is_remote_url,
+    resolve_entity_asset_dir, short_hash, short_hash_bytes, skip_reason, sniff_image_ext,
+    value_to_list,
 };
 use crate::api::error::ApiError;
 use crate::api::mutations::{parent_dir, write_entity_raw};
@@ -40,7 +41,7 @@ pub(super) async fn download_entity_core(
     if fields.is_empty() {
         return Ok(Vec::new());
     }
-    let asset_dir = entity_asset_dir(asset_root, &entity.summary.path);
+    let asset_dir = resolve_entity_asset_dir(vfs, asset_root, &entity.summary.path).await;
     let owned = entity_local_asset_paths(&entity.frontmatter, type_config);
 
     let source_rel = entity.summary.path.clone();
