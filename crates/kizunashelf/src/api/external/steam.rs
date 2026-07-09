@@ -1,6 +1,6 @@
 use super::{
     external_client, field_option, provider_error, string_list, strip_html, type_option,
-    ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -121,8 +121,8 @@ async fn resolve_steam(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;

@@ -3171,6 +3171,42 @@ async fn smart_lists_create_update_evaluate_and_delete() {
 }
 
 #[tokio::test]
+async fn smart_list_membership_cannot_be_edited_by_hand() {
+    // Smart-list membership is derived from filters, so the manual add/remove
+    // item endpoints must reject a smart-list id rather than 404 or (worse)
+    // mutate a same-named static list.
+    let server = TestServer::new();
+    let app = &server.app;
+
+    let created = request_json(
+        app,
+        Method::POST,
+        "/api/smart-lists",
+        Some(json!({ "name": "Watching Now", "scope": "anime" })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+
+    let added = request_json(
+        app,
+        Method::POST,
+        "/api/lists/Watching%20Now/items",
+        Some(json!({ "entityId": "anime:Star Voyager" })),
+    )
+    .await;
+    assert_eq!(added.0, StatusCode::BAD_REQUEST, "{}", added.1);
+
+    let removed = request_json(
+        app,
+        Method::DELETE,
+        "/api/lists/Watching%20Now/items/anime%3AStar%20Voyager",
+        None,
+    )
+    .await;
+    assert_eq!(removed.0, StatusCode::BAD_REQUEST, "{}", removed.1);
+}
+
+#[tokio::test]
 async fn smart_lists_today_criteria_honor_client_today() {
     // A `today()` date criterion must be judged against the client's local date
     // (the `today` query param), not the host's clock — the same fix as

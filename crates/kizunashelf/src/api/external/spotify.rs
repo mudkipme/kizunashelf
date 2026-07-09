@@ -1,6 +1,7 @@
 use super::{
     cached_or_fetch_token, external_client, field_option, provider_error, send_with_token_retry,
-    string_list, type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    string_list, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -318,8 +319,8 @@ async fn spotify_get(
     )
     .await?;
     response
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)
@@ -507,8 +508,8 @@ async fn spotify_access_token(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;

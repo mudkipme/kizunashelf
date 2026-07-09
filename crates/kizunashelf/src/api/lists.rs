@@ -15,6 +15,7 @@ use crate::lists::{
     basename_ambiguous, compose_document, entity_wikilink, item_target, parse_list, render_list,
     split_frontmatter, ListMarker as CoreMarker, ParsedItem, ParsedList, ParsedSection, LISTS_DIR,
 };
+use crate::smart_lists::SMART_LIST_EXTENSION;
 use crate::types::{EntityRecord, Library};
 use crate::vfs::{Vfs, VfsResult};
 use axum::extract::{Path as AxumPath, Query, State};
@@ -245,6 +246,7 @@ pub(crate) async fn add_list_item(
         return Err(ApiError::not_found("Entity not found"));
     };
     let vfs = state.vault_vfs(&library.config.vault_root);
+    reject_smart_list(vfs.as_ref(), &path_param.id).await?;
 
     let raw = read_list_raw(vfs.as_ref(), &path).await?;
     let (frontmatter, body) = split_frontmatter(&raw);
@@ -296,6 +298,7 @@ pub(crate) async fn remove_list_item(
     let library = require_content_writes(&state).await?;
     let path = list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
+    reject_smart_list(vfs.as_ref(), &path_param.id).await?;
 
     let raw = read_list_raw(vfs.as_ref(), &path).await?;
     let (frontmatter, body) = split_frontmatter(&raw);
@@ -371,6 +374,21 @@ pub(crate) async fn list_file_paths(vfs: &dyn Vfs) -> VfsResult<Vec<String>> {
 fn list_path(id: &str) -> Result<String, ApiError> {
     let basename = sanitize_basename(id).map_err(|_| ApiError::bad_request("Invalid list id"))?;
     Ok(format!("{LISTS_DIR}/{basename}.md"))
+}
+
+/// Rejects an id that names a smart list. Smart-list membership is derived from
+/// filters, so it can't be edited by hand — and because a `.base` and a `.md`
+/// can share a basename, this also stops a smart-list id from silently mutating
+/// a same-named static list.
+async fn reject_smart_list(vfs: &dyn Vfs, id: &str) -> Result<(), ApiError> {
+    let basename = sanitize_basename(id).map_err(|_| ApiError::bad_request("Invalid list id"))?;
+    let base_path = format!("{LISTS_DIR}/{basename}.{SMART_LIST_EXTENSION}");
+    if vfs.exists(&base_path).await.unwrap_or(false) {
+        return Err(ApiError::bad_request(
+            "Smart list membership is derived from its filters and can't be edited",
+        ));
+    }
+    Ok(())
 }
 
 /// The list id (basename without `.md`) from a vault-relative path.

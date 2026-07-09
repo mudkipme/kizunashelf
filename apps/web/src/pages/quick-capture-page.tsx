@@ -240,9 +240,15 @@ export function QuickCapturePage() {
         </section>
 
         {providerErrors.length > 0 ? (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
-            {providerErrors.map((item) => t`${item.label} search failed`).join(" · ")}
-          </div>
+          <ul className="flex flex-col gap-1 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+            {providerErrors.map((item) => (
+              <li key={item.id}>
+                {/* item.error is the provider's own (server) failure text — HTTP
+                    status + body — surfaced verbatim, like other ApiError messages. */}
+                <span className="font-medium">{item.label}</span>: {item.error}
+              </li>
+            ))}
+          </ul>
         ) : null}
 
         <section className="flex flex-col gap-2">

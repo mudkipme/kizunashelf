@@ -1,6 +1,6 @@
 use super::{
     external_client, field_option, provider_error, type_option, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -105,8 +105,8 @@ async fn search_bgg(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .text()
         .await
         .map_err(provider_error)?;
@@ -136,8 +136,8 @@ async fn bgg_thing(client: &reqwest::Client, ids: &str) -> Result<Vec<BggItem>, 
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .text()
         .await
         .map_err(provider_error)?;

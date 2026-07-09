@@ -1,7 +1,7 @@
 use super::{
     external_client, field_option, insert_str, named_strings, non_empty_string_or_integer,
     provider_error, string_array, strip_html_collapsed, type_option, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -88,8 +88,8 @@ async fn search_mangaupdates(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -107,8 +107,8 @@ async fn search_mangaupdates(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;

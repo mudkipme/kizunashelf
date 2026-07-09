@@ -1,6 +1,7 @@
 use super::{
     external_client, field_option, insert_str, named_list, named_strings, provider_error,
-    type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    type_option, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
+    USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -238,8 +239,8 @@ async fn tmdb_get(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)
@@ -273,8 +274,8 @@ pub(crate) async fn tmdb_find_imdb(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;
@@ -402,8 +403,8 @@ async fn search_tmdb(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;
@@ -438,8 +439,8 @@ async fn resolve_tmdb(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;

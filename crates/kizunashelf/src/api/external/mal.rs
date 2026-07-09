@@ -1,6 +1,6 @@
 use super::{
     external_client, field_option, insert_str, named_list, provider_error, type_option,
-    CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -109,8 +109,8 @@ async fn fetch_mal_episodes(ref_value: &str) -> Result<ProviderEpisodes, ApiErro
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -249,8 +249,8 @@ async fn search_mal(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -278,8 +278,8 @@ async fn resolve_mal(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;

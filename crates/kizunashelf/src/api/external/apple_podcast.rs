@@ -1,6 +1,6 @@
 use super::{
     external_client, field_option, provider_error, string_list, type_option, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -69,8 +69,8 @@ async fn fetch_apple_podcast_episodes(ref_value: &str) -> Result<ProviderEpisode
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;
@@ -162,8 +162,8 @@ async fn search_apple_podcast(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -189,8 +189,8 @@ async fn search_apple_podcast(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;

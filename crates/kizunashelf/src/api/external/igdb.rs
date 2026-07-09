@@ -1,6 +1,7 @@
 use super::{
     cached_or_fetch_token, external_client, field_option, named_list, provider_error,
-    send_with_token_retry, type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig,
+    send_with_token_retry, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -102,8 +103,8 @@ async fn search_igdb(
     )
     .await?;
     let data = response
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?
@@ -236,8 +237,8 @@ async fn igdb_access_token(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;

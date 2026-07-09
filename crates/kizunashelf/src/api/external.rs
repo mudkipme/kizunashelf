@@ -1314,6 +1314,59 @@ fn provider_error(error: reqwest::Error) -> ApiError {
     }
 }
 
+/// The most body we fold into the error message. Provider error payloads are
+/// usually a short JSON object (`{"status_message":"Invalid API key"}`); this
+/// caps a runaway HTML error page from bloating a toast.
+const MAX_ERROR_BODY: usize = 500;
+
+/// Builds a gateway error carrying the exact upstream HTTP status and a
+/// truncated copy of the provider's response body, so the concrete reason
+/// (`401 Unauthorized`, a rate-limit message, an "invalid api key" payload)
+/// reaches the user instead of a generic "request failed". Unlike the request
+/// URL, the response body is the provider's own error text and safe to surface.
+fn provider_status_error(status: reqwest::StatusCode, body: &str) -> ApiError {
+    let mut message = match status.canonical_reason() {
+        Some(reason) => format!(
+            "The external provider returned HTTP {} {reason}",
+            status.as_u16()
+        ),
+        None => format!("The external provider returned HTTP {}", status.as_u16()),
+    };
+    let body = body.trim();
+    if !body.is_empty() {
+        let snippet: String = body.chars().take(MAX_ERROR_BODY).collect();
+        message.push_str(": ");
+        message.push_str(&snippet);
+        if body.chars().count() > MAX_ERROR_BODY {
+            message.push('…');
+        }
+    }
+    eprintln!("{message}");
+    ApiError::bad_gateway(&message)
+}
+
+/// Extension on [`reqwest::Response`] that, unlike
+/// [`reqwest::Response::error_for_status`], reads the response body on a
+/// non-success status so the concrete status + body can be surfaced to the user
+/// (see [`provider_status_error`]). Use this in provider request paths in place
+/// of `error_for_status().map_err(provider_error)`.
+pub(super) trait ProviderResponseExt: Sized {
+    async fn error_for_status_body(self) -> Result<reqwest::Response, ApiError>;
+}
+
+impl ProviderResponseExt for reqwest::Response {
+    async fn error_for_status_body(self) -> Result<reqwest::Response, ApiError> {
+        let status = self.status();
+        if status.is_success() {
+            return Ok(self);
+        }
+        // Read the body before discarding the response; `error_for_status`
+        // would drop it, losing the provider's own explanation.
+        let body = self.text().await.unwrap_or_default();
+        Err(provider_status_error(status, &body))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

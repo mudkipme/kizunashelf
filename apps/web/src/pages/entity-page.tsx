@@ -521,7 +521,8 @@ function ManageListsDialog({
   }, [open]);
 
   const newNameError = newName.trim() ? basenameValidationError(normalizeBasename(newName)) : undefined;
-  const items = lists.data?.items ?? [];
+  // Smart lists derive membership from their filters, so they can't be joined/left by hand.
+  const items = (lists.data?.items ?? []).filter((list) => list.kind === "static");
 
   async function toggle(listId: string, contains: boolean) {
     setPendingId(listId);

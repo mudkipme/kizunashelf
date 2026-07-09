@@ -1,6 +1,6 @@
 use super::{
     external_client, field_option, provider_error, string_list_with, type_option, ExternalProvider,
-    ProviderSearchConfig, USER_AGENT,
+    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -283,8 +283,8 @@ async fn search_bangumi(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -305,8 +305,8 @@ async fn search_bangumi(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -327,8 +327,8 @@ async fn search_bangumi(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -349,8 +349,8 @@ async fn bangumi_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiEr
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)

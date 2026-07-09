@@ -72,7 +72,7 @@ msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {找到 # 件}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:590
+#: src/pages/entity-page.tsx:591
 #: src/pages/lists-page.tsx:90
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 個項目}}"
@@ -205,11 +205,6 @@ msgstr "失敗 {0}"
 #: src/components/assets/episode-sync-dialog.tsx:260
 msgid "{0} of {1} selected"
 msgstr "已選取 {1} 項中的 {0} 項"
-
-#. placeholder {0}: item.label
-#: src/pages/quick-capture-page.tsx:244
-msgid "{0} search failed"
-msgstr "{0} 搜尋失敗"
 
 #. placeholder {0}: job.skipped
 #: src/components/assets/asset-download-panel.tsx:136
@@ -444,7 +439,7 @@ msgid "Added, but episode import failed: {0}"
 msgstr "已新增，但劇集匯入失敗：{0}"
 
 #: src/components/settings/preset-picker.tsx:203
-#: src/pages/quick-capture-page.tsx:308
+#: src/pages/quick-capture-page.tsx:314
 msgid "Adding…"
 msgstr "新增中…"
 
@@ -564,7 +559,7 @@ msgstr "返回"
 msgid "Back to home"
 msgstr "返回首頁"
 
-#: src/pages/entity-page.tsx:680
+#: src/pages/entity-page.tsx:681
 msgid "Basename"
 msgstr "基底名稱"
 
@@ -605,7 +600,7 @@ msgstr "日曆"
 #: src/components/settings/settings-dialogs.tsx:512
 #: src/components/smart-lists/save-smart-list-dialog.tsx:113
 #: src/pages/entity-page.tsx:486
-#: src/pages/entity-page.tsx:698
+#: src/pages/entity-page.tsx:699
 #: src/pages/import-wizard-page.tsx:263
 #: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
@@ -647,7 +642,7 @@ msgstr "選一個候選項目以比較欄位。"
 msgid "Choose a type"
 msgstr "選擇一種類型"
 
-#: src/pages/entity-page.tsx:564
+#: src/pages/entity-page.tsx:565
 msgid "Choose which lists {entityName} belongs to."
 msgstr "選擇 {entityName} 所屬的清單。"
 
@@ -756,11 +751,11 @@ msgstr "無法載入選項。"
 msgid "Create"
 msgstr "建立"
 
-#: src/pages/quick-capture-page.tsx:325
+#: src/pages/quick-capture-page.tsx:331
 msgid "Create “{query}” manually →"
 msgstr "手動建立「{query}」 →"
 
-#: src/pages/entity-page.tsx:623
+#: src/pages/entity-page.tsx:624
 msgid "Create & add"
 msgstr "建立並新增"
 
@@ -780,7 +775,7 @@ msgid "Create vault ({0})"
 msgstr "建立保管庫（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:120
-#: src/pages/entity-page.tsx:623
+#: src/pages/entity-page.tsx:624
 #: src/pages/lists-page.tsx:244
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
@@ -967,7 +962,7 @@ msgstr "未連結到"
 
 #: src/components/settings/settings-dialogs.tsx:317
 #: src/components/settings/settings-dialogs.tsx:354
-#: src/pages/entity-page.tsx:631
+#: src/pages/entity-page.tsx:632
 #: src/pages/list-detail-page.tsx:938
 msgid "Done"
 msgstr "完成"
@@ -1296,7 +1291,7 @@ msgstr "位於:"
 
 #: src/pages/import-wizard-page.tsx:587
 #: src/pages/import-wizard-page.tsx:591
-#: src/pages/quick-capture-page.tsx:289
+#: src/pages/quick-capture-page.tsx:295
 msgid "In library ✓"
 msgstr "已在庫中 ✓"
 
@@ -1489,7 +1484,7 @@ msgstr "連結至"
 msgid "List"
 msgstr "清單"
 
-#: src/pages/entity-page.tsx:548
+#: src/pages/entity-page.tsx:549
 #: src/pages/lists-page.tsx:149
 msgid "List created"
 msgstr "已建立清單"
@@ -1537,7 +1532,7 @@ msgstr "正在載入分類"
 #: src/pages/calendar-page.tsx:88
 #: src/pages/entity-edit-page.tsx:198
 #: src/pages/entity-page.tsx:276
-#: src/pages/entity-page.tsx:570
+#: src/pages/entity-page.tsx:571
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:247
@@ -1581,7 +1576,7 @@ msgid "Logging…"
 msgstr "記錄中…"
 
 #: src/pages/entity-page.tsx:442
-#: src/pages/entity-page.tsx:561
+#: src/pages/entity-page.tsx:562
 msgid "Manage lists"
 msgstr "管理清單"
 
@@ -1699,7 +1694,7 @@ msgstr "待檢查"
 msgid "New field"
 msgstr "新欄位"
 
-#: src/pages/entity-page.tsx:611
+#: src/pages/entity-page.tsx:612
 #: src/pages/lists-page.tsx:51
 #: src/pages/lists-page.tsx:169
 msgid "New list"
@@ -1838,7 +1833,7 @@ msgstr "無限制"
 msgid "No links yet"
 msgstr "尚無連結"
 
-#: src/pages/entity-page.tsx:574
+#: src/pages/entity-page.tsx:575
 msgid "No lists yet. Create one below."
 msgstr "尚無清單。在下方建立一份。"
 
@@ -1858,7 +1853,7 @@ msgstr "無比對到的來源"
 msgid "No matches"
 msgstr "無相符項目"
 
-#: src/pages/quick-capture-page.tsx:259
+#: src/pages/quick-capture-page.tsx:265
 msgid "No matches found."
 msgstr "找不到比對結果。"
 
@@ -1993,7 +1988,7 @@ msgstr "只能上傳圖片檔案。"
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "僅支援公開個人檔案。在你檢查規劃前不會寫入任何內容。"
 
-#: src/pages/entity-page.tsx:669
+#: src/pages/entity-page.tsx:670
 msgid "Only the name changes — everything else stays the same."
 msgstr "只有名稱會變更 — 其餘一切保持不變。"
 
@@ -2217,8 +2212,8 @@ msgid "Remove type"
 msgstr "移除類型"
 
 #: src/pages/entity-page.tsx:438
-#: src/pages/entity-page.tsx:666
-#: src/pages/entity-page.tsx:705
+#: src/pages/entity-page.tsx:667
+#: src/pages/entity-page.tsx:706
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
 #: src/pages/list-detail-page.tsx:1006
@@ -2252,7 +2247,7 @@ msgstr "重新命名為「{0}」"
 msgid "Renames the .base file in your vault."
 msgstr "重新命名保管庫中的 .base 檔案。"
 
-#: src/pages/entity-page.tsx:705
+#: src/pages/entity-page.tsx:706
 #: src/pages/list-detail-page.tsx:1006
 #: src/pages/smart-list-page.tsx:672
 msgid "Renaming…"
@@ -2375,7 +2370,7 @@ msgstr "搜尋佇列"
 
 #: src/components/entities/external-match-dialog.tsx:144
 #: src/components/ui/multi-value-combobox.tsx:146
-#: src/pages/quick-capture-page.tsx:255
+#: src/pages/quick-capture-page.tsx:261
 msgid "Searching…"
 msgstr "搜尋中…"
 
@@ -2776,7 +2771,7 @@ msgstr "再試一次"
 msgid "Type"
 msgstr "類型"
 
-#: src/pages/quick-capture-page.tsx:251
+#: src/pages/quick-capture-page.tsx:257
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgstr "至少輸入 {MIN_QUERY_LENGTH} 個字元以搜尋。"
 
@@ -2925,7 +2920,7 @@ msgstr "檢視全部"
 msgid "Watching now"
 msgstr "現正觀看"
 
-#: src/pages/entity-page.tsx:617
+#: src/pages/entity-page.tsx:618
 #: src/pages/lists-page.tsx:214
 msgid "Watchlist"
 msgstr "想看清單"

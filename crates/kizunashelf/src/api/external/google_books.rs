@@ -1,6 +1,7 @@
 use super::{
     external_client, field_option, insert_str, normalize_isbn, provider_error, string_list,
-    strip_html, type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    strip_html, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -126,8 +127,8 @@ async fn search_google_books(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -148,8 +149,8 @@ async fn search_google_books(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?;

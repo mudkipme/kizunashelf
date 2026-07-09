@@ -1,6 +1,7 @@
 use super::{
     external_client, field_option, non_empty_string_or_integer, normalize_isbn, provider_error,
-    type_option, CredentialSpec, ExternalProvider, ProviderSearchConfig, USER_AGENT,
+    type_option, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
+    USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -206,8 +207,8 @@ async fn hardcover_post(
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)

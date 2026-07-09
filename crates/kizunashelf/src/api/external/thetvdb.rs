@@ -1,7 +1,7 @@
 use super::{
     cached_or_fetch_token, external_client, field_option, non_empty_string_or_integer,
     provider_error, send_with_token_retry, string_list, type_option, CredentialSpec,
-    ExternalProvider, ProviderSearchConfig,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -133,8 +133,8 @@ async fn thetvdb_get(client: &reqwest::Client, token: &str, url: &str) -> Result
         .send()
         .await
         .map_err(provider_error)?
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)
@@ -341,8 +341,8 @@ async fn search_thetvdb_type(
     )
     .await?;
     Ok(response
-        .error_for_status()
-        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
         .json::<Value>()
         .await
         .map_err(provider_error)?
@@ -451,8 +451,8 @@ async fn thetvdb_access_token(
             .send()
             .await
             .map_err(provider_error)?
-            .error_for_status()
-            .map_err(provider_error)?
+            .error_for_status_body()
+            .await?
             .json::<Value>()
             .await
             .map_err(provider_error)?;
@@ -525,6 +525,17 @@ fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
         .get("first_air_time")
         .and_then(non_empty_string_or_integer)
         .or_else(|| item.get("year").and_then(non_empty_string_or_integer));
+    // Localize the blurb to the viewer, falling back to the default/original
+    // overview. Both the display field (`brief`) and the value persisted by the
+    // schema mapper (`metadata["overview"]`) read from this, so a Chinese viewer
+    // sees the Chinese overview in search *and* in the created entity.
+    let overview = localized(overviews).or_else(|| {
+        item.get("overview")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(str::to_string)
+    });
     let mut metadata = Map::new();
     metadata.insert("name".to_string(), Value::String(name.clone()));
     if let Some(cover_url) = &cover_url {
@@ -541,12 +552,8 @@ fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
             Value::String(release_date.clone()),
         );
     }
-    if let Some(overview) = item
-        .get("overview")
-        .and_then(Value::as_str)
-        .filter(|value| !value.is_empty())
-    {
-        metadata.insert("overview".to_string(), Value::String(overview.to_string()));
+    if let Some(overview) = &overview {
+        metadata.insert("overview".to_string(), Value::String(overview.clone()));
     }
     for key in ["primary_language", "country", "director", "slug"] {
         if let Some(value) = item
@@ -617,18 +624,13 @@ fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
                 .or_insert_with(|| name.clone());
         }
     }
-    let default_overview = item
-        .get("overview")
-        .and_then(Value::as_str)
-        .filter(|value| !value.is_empty())
-        .map(str::to_string);
     Some(ExternalCandidate {
         provider: "thetvdb".to_string(),
         source_id,
         url,
         original_title: Some(name.clone()),
         title,
-        brief: localized(overviews).or(default_overview),
+        brief: overview,
         cover_url,
         titles,
         metadata,
@@ -756,6 +758,13 @@ mod tests {
         let zh = thetvdb_candidate(&item, Some("zh-Hans")).unwrap();
         assert_eq!(zh.title, "葬送的芙莉莲");
         assert_eq!(zh.brief.as_deref(), Some("一位精灵魔法师的旅程。"));
+        // …and the localized blurb is what gets persisted, not the default one:
+        // the schema mapper reads the overview from `metadata`, so it must match
+        // `brief`, or quick-add would write the English overview it displayed in zh.
+        assert_eq!(
+            zh.metadata.get("overview"),
+            Some(&json!("一位精灵魔法师的旅程。"))
+        );
         // …a ja viewer the Japanese one…
         assert_eq!(
             thetvdb_candidate(&item, Some("ja")).unwrap().title,
@@ -766,6 +775,10 @@ mod tests {
         let de = thetvdb_candidate(&item, Some("de")).unwrap();
         assert_eq!(de.title, "Frieren: Beyond Journey's End");
         assert_eq!(de.brief.as_deref(), Some("An elf mage's journey."));
+        assert_eq!(
+            de.metadata.get("overview"),
+            Some(&json!("An elf mage's journey."))
+        );
         // The original title stays the default name; known translations are tagged.
         assert_eq!(
             zh.original_title.as_deref(),

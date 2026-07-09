@@ -72,7 +72,7 @@ msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, one {# found} other {# found}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:590
+#: src/pages/entity-page.tsx:591
 #: src/pages/lists-page.tsx:90
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
@@ -205,11 +205,6 @@ msgstr "{0} failed"
 #: src/components/assets/episode-sync-dialog.tsx:260
 msgid "{0} of {1} selected"
 msgstr "{0} of {1} selected"
-
-#. placeholder {0}: item.label
-#: src/pages/quick-capture-page.tsx:244
-msgid "{0} search failed"
-msgstr "{0} search failed"
 
 #. placeholder {0}: job.skipped
 #: src/components/assets/asset-download-panel.tsx:136
@@ -444,7 +439,7 @@ msgid "Added, but episode import failed: {0}"
 msgstr "Added, but episode import failed: {0}"
 
 #: src/components/settings/preset-picker.tsx:203
-#: src/pages/quick-capture-page.tsx:308
+#: src/pages/quick-capture-page.tsx:314
 msgid "Adding…"
 msgstr "Adding…"
 
@@ -564,7 +559,7 @@ msgstr "Back"
 msgid "Back to home"
 msgstr "Back to home"
 
-#: src/pages/entity-page.tsx:680
+#: src/pages/entity-page.tsx:681
 msgid "Basename"
 msgstr "Basename"
 
@@ -605,7 +600,7 @@ msgstr "Calendar"
 #: src/components/settings/settings-dialogs.tsx:512
 #: src/components/smart-lists/save-smart-list-dialog.tsx:113
 #: src/pages/entity-page.tsx:486
-#: src/pages/entity-page.tsx:698
+#: src/pages/entity-page.tsx:699
 #: src/pages/import-wizard-page.tsx:263
 #: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:528
@@ -647,7 +642,7 @@ msgstr "Choose a candidate to compare fields."
 msgid "Choose a type"
 msgstr "Choose a type"
 
-#: src/pages/entity-page.tsx:564
+#: src/pages/entity-page.tsx:565
 msgid "Choose which lists {entityName} belongs to."
 msgstr "Choose which lists {entityName} belongs to."
 
@@ -756,11 +751,11 @@ msgstr "Could not load options."
 msgid "Create"
 msgstr "Create"
 
-#: src/pages/quick-capture-page.tsx:325
+#: src/pages/quick-capture-page.tsx:331
 msgid "Create “{query}” manually →"
 msgstr "Create “{query}” manually →"
 
-#: src/pages/entity-page.tsx:623
+#: src/pages/entity-page.tsx:624
 msgid "Create & add"
 msgstr "Create & add"
 
@@ -780,7 +775,7 @@ msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:120
-#: src/pages/entity-page.tsx:623
+#: src/pages/entity-page.tsx:624
 #: src/pages/lists-page.tsx:244
 #: src/pages/onboarding-page.tsx:206
 msgid "Creating…"
@@ -967,7 +962,7 @@ msgstr "does not link to"
 
 #: src/components/settings/settings-dialogs.tsx:317
 #: src/components/settings/settings-dialogs.tsx:354
-#: src/pages/entity-page.tsx:631
+#: src/pages/entity-page.tsx:632
 #: src/pages/list-detail-page.tsx:938
 msgid "Done"
 msgstr "Done"
@@ -1296,7 +1291,7 @@ msgstr "in"
 
 #: src/pages/import-wizard-page.tsx:587
 #: src/pages/import-wizard-page.tsx:591
-#: src/pages/quick-capture-page.tsx:289
+#: src/pages/quick-capture-page.tsx:295
 msgid "In library ✓"
 msgstr "In library ✓"
 
@@ -1489,7 +1484,7 @@ msgstr "Links to"
 msgid "List"
 msgstr "List"
 
-#: src/pages/entity-page.tsx:548
+#: src/pages/entity-page.tsx:549
 #: src/pages/lists-page.tsx:149
 msgid "List created"
 msgstr "List created"
@@ -1537,7 +1532,7 @@ msgstr "Loading taxonomy"
 #: src/pages/calendar-page.tsx:88
 #: src/pages/entity-edit-page.tsx:198
 #: src/pages/entity-page.tsx:276
-#: src/pages/entity-page.tsx:570
+#: src/pages/entity-page.tsx:571
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
 #: src/pages/import-wizard-page.tsx:247
@@ -1581,7 +1576,7 @@ msgid "Logging…"
 msgstr "Logging…"
 
 #: src/pages/entity-page.tsx:442
-#: src/pages/entity-page.tsx:561
+#: src/pages/entity-page.tsx:562
 msgid "Manage lists"
 msgstr "Manage lists"
 
@@ -1699,7 +1694,7 @@ msgstr "Needs review"
 msgid "New field"
 msgstr "New field"
 
-#: src/pages/entity-page.tsx:611
+#: src/pages/entity-page.tsx:612
 #: src/pages/lists-page.tsx:51
 #: src/pages/lists-page.tsx:169
 msgid "New list"
@@ -1838,7 +1833,7 @@ msgstr "No limit"
 msgid "No links yet"
 msgstr "No links yet"
 
-#: src/pages/entity-page.tsx:574
+#: src/pages/entity-page.tsx:575
 msgid "No lists yet. Create one below."
 msgstr "No lists yet. Create one below."
 
@@ -1858,7 +1853,7 @@ msgstr "No matched source"
 msgid "No matches"
 msgstr "No matches"
 
-#: src/pages/quick-capture-page.tsx:259
+#: src/pages/quick-capture-page.tsx:265
 msgid "No matches found."
 msgstr "No matches found."
 
@@ -1993,7 +1988,7 @@ msgstr "Only image files can be uploaded."
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "Only public profiles are supported. Nothing is written until you review the plan."
 
-#: src/pages/entity-page.tsx:669
+#: src/pages/entity-page.tsx:670
 msgid "Only the name changes — everything else stays the same."
 msgstr "Only the name changes — everything else stays the same."
 
@@ -2217,8 +2212,8 @@ msgid "Remove type"
 msgstr "Remove type"
 
 #: src/pages/entity-page.tsx:438
-#: src/pages/entity-page.tsx:666
-#: src/pages/entity-page.tsx:705
+#: src/pages/entity-page.tsx:667
+#: src/pages/entity-page.tsx:706
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
 #: src/pages/list-detail-page.tsx:1006
@@ -2252,7 +2247,7 @@ msgstr "renamed to “{0}”"
 msgid "Renames the .base file in your vault."
 msgstr "Renames the .base file in your vault."
 
-#: src/pages/entity-page.tsx:705
+#: src/pages/entity-page.tsx:706
 #: src/pages/list-detail-page.tsx:1006
 #: src/pages/smart-list-page.tsx:672
 msgid "Renaming…"
@@ -2375,7 +2370,7 @@ msgstr "Search queue"
 
 #: src/components/entities/external-match-dialog.tsx:144
 #: src/components/ui/multi-value-combobox.tsx:146
-#: src/pages/quick-capture-page.tsx:255
+#: src/pages/quick-capture-page.tsx:261
 msgid "Searching…"
 msgstr "Searching…"
 
@@ -2776,7 +2771,7 @@ msgstr "Try again"
 msgid "Type"
 msgstr "Type"
 
-#: src/pages/quick-capture-page.tsx:251
+#: src/pages/quick-capture-page.tsx:257
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgstr "Type at least {MIN_QUERY_LENGTH} characters to search."
 
@@ -2925,7 +2920,7 @@ msgstr "View all"
 msgid "Watching now"
 msgstr "Watching now"
 
-#: src/pages/entity-page.tsx:617
+#: src/pages/entity-page.tsx:618
 #: src/pages/lists-page.tsx:214
 msgid "Watchlist"
 msgstr "Watchlist"
