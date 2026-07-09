@@ -263,7 +263,7 @@ msgstr "{total, plural, other {# 件}}"
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · 第 {0}/{totalPages} 頁"
 
-#: src/pages/smart-list-page.tsx:244
+#: src/pages/smart-list-page.tsx:247
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 項符合}}"
 
@@ -302,7 +302,7 @@ msgid "≥"
 msgstr "≥"
 
 #: src/components/calendar/calendar-entry-item.tsx:40
-#: src/pages/activity-page.tsx:291
+#: src/pages/activity-page.tsx:295
 msgid "✅ Completed"
 msgstr "✅ 已完成"
 
@@ -311,7 +311,7 @@ msgid "✨ Pairs well with your picks"
 msgstr "✨ 與你的選擇很搭"
 
 #: src/components/calendar/calendar-entry-item.tsx:40
-#: src/pages/activity-page.tsx:291
+#: src/pages/activity-page.tsx:295
 msgid "📅 Scheduled"
 msgstr "📅 已排程"
 
@@ -320,7 +320,7 @@ msgstr "📅 已排程"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "已存在以此標題命名的檔案，因此改儲存為「{0}」。"
 
-#: src/pages/smart-list-page.tsx:619
+#: src/pages/smart-list-page.tsx:622
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名清單已存在，或檔案已在磁碟上被修改。"
 
@@ -343,7 +343,7 @@ msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:111
 #: src/components/layout/app-frame.tsx:360
-#: src/pages/activity-page.tsx:108
+#: src/pages/activity-page.tsx:112
 #: src/pages/statistics-page.tsx:80
 msgid "Activity"
 msgstr "活動"
@@ -466,7 +466,7 @@ msgid "All dates"
 msgstr "所有日期"
 
 #. Prefix before a group of filter-criteria chips: all must match
-#: src/pages/smart-list-page.tsx:751
+#: src/pages/smart-list-page.tsx:754
 msgid "all of"
 msgstr "全部符合"
 
@@ -482,12 +482,12 @@ msgstr "所有來源"
 
 #: src/components/analytics/activity-heatmap.tsx:91
 #: src/components/assets/asset-download-panel.tsx:84
-#: src/pages/activity-page.tsx:128
+#: src/pages/activity-page.tsx:132
 #: src/pages/calendar-page.tsx:132
 #: src/pages/lists-page.tsx:227
 #: src/pages/quick-capture-page.tsx:220
 #: src/pages/review-page.tsx:160
-#: src/pages/smart-list-page.tsx:495
+#: src/pages/smart-list-page.tsx:498
 msgid "All types"
 msgstr "所有類型"
 
@@ -516,7 +516,7 @@ msgid "Any {0}"
 msgstr "任何 {0}"
 
 #. Prefix before a group of filter-criteria chips: at least one must match
-#: src/pages/smart-list-page.tsx:743
+#: src/pages/smart-list-page.tsx:746
 msgid "any of"
 msgstr "任一符合"
 
@@ -539,7 +539,7 @@ msgstr "套用中…"
 
 #: src/components/assets/asset-toolbar.tsx:114
 #: src/components/settings/settings-sections.tsx:210
-#: src/pages/smart-list-page.tsx:549
+#: src/pages/smart-list-page.tsx:552
 msgid "Ascending"
 msgstr "遞增"
 
@@ -611,9 +611,9 @@ msgstr "日曆"
 #: src/pages/list-detail-page.tsx:528
 #: src/pages/list-detail-page.tsx:1002
 #: src/pages/lists-page.tsx:240
-#: src/pages/smart-list-page.tsx:256
-#: src/pages/smart-list-page.tsx:409
-#: src/pages/smart-list-page.tsx:662
+#: src/pages/smart-list-page.tsx:259
+#: src/pages/smart-list-page.tsx:412
+#: src/pages/smart-list-page.tsx:665
 msgid "Cancel"
 msgstr "取消"
 
@@ -847,13 +847,13 @@ msgid "Dark theme. Switch to system theme."
 msgstr "深色主題。切換為系統主題。"
 
 #: src/components/calendar/calendar-entry-item.tsx:48
-#: src/pages/activity-page.tsx:269
+#: src/pages/activity-page.tsx:273
 msgid "date"
 msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:133
 #: src/components/smart-lists/rule-builder.tsx:801
-#: src/pages/activity-page.tsx:268
+#: src/pages/activity-page.tsx:272
 msgid "Date"
 msgstr "日期"
 
@@ -902,18 +902,18 @@ msgstr "使用預設的資料來源順序。"
 #: src/pages/entity-page.tsx:461
 #: src/pages/list-detail-page.tsx:414
 #: src/pages/list-detail-page.tsx:628
-#: src/pages/smart-list-page.tsx:298
-#: src/pages/smart-list-page.tsx:412
+#: src/pages/smart-list-page.tsx:301
+#: src/pages/smart-list-page.tsx:415
 msgid "Delete"
 msgstr "刪除"
 
-#: src/pages/smart-list-page.tsx:398
+#: src/pages/smart-list-page.tsx:401
 msgid "Delete this smart list?"
 msgstr "刪除此智慧清單？"
 
 #: src/components/assets/asset-toolbar.tsx:115
 #: src/components/settings/settings-sections.tsx:211
-#: src/pages/smart-list-page.tsx:550
+#: src/pages/smart-list-page.tsx:553
 msgid "Descending"
 msgstr "遞減"
 
@@ -935,7 +935,7 @@ msgstr "詳細資訊"
 
 #: src/components/assets/asset-toolbar.tsx:112
 #: src/components/settings/settings-sections.tsx:198
-#: src/pages/smart-list-page.tsx:536
+#: src/pages/smart-list-page.tsx:539
 msgid "Direction"
 msgstr "方向"
 
@@ -1023,7 +1023,7 @@ msgstr "編輯 {0}"
 msgid "Edit config.yaml"
 msgstr "編輯 config.yaml"
 
-#: src/pages/smart-list-page.tsx:278
+#: src/pages/smart-list-page.tsx:281
 msgid "Edit criteria"
 msgstr "編輯條件"
 
@@ -1088,7 +1088,7 @@ msgstr "項目類型"
 msgid "Enum options"
 msgstr "列舉選項"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:301
 #: src/pages/import-wizard-page.tsx:649
 msgid "Episodes"
 msgstr "劇集"
@@ -1167,12 +1167,12 @@ msgstr "檔名標題 — 用作"
 msgid "Filename title language"
 msgstr "檔名標題語言"
 
-#: src/pages/activity-page.tsx:138
+#: src/pages/activity-page.tsx:142
 msgid "Filter by source"
 msgstr "依來源篩選"
 
 #: src/components/analytics/activity-heatmap.tsx:89
-#: src/pages/activity-page.tsx:126
+#: src/pages/activity-page.tsx:130
 msgid "Filter by type"
 msgstr "依類型篩選"
 
@@ -1443,7 +1443,7 @@ msgid "Light theme. Switch to dark theme."
 msgstr "淺色主題。切換為深色主題。"
 
 #: src/components/settings/settings-sections.tsx:183
-#: src/pages/smart-list-page.tsx:558
+#: src/pages/smart-list-page.tsx:561
 msgid "Limit"
 msgstr "上限"
 
@@ -1511,11 +1511,11 @@ msgstr "清單樣式"
 msgid "Lists"
 msgstr "清單"
 
-#: src/pages/activity-page.tsx:189
+#: src/pages/activity-page.tsx:193
 msgid "Load more"
 msgstr "載入更多"
 
-#: src/pages/activity-page.tsx:150
+#: src/pages/activity-page.tsx:154
 msgid "Loading activity…"
 msgstr "正在載入活動…"
 
@@ -1533,7 +1533,7 @@ msgstr "正在載入分類"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/settings/raw-config-editor.tsx:109
-#: src/pages/activity-page.tsx:189
+#: src/pages/activity-page.tsx:193
 #: src/pages/calendar-page.tsx:88
 #: src/pages/entity-edit-page.tsx:198
 #: src/pages/entity-page.tsx:276
@@ -1549,7 +1549,7 @@ msgstr "正在載入分類"
 #: src/pages/review-page.tsx:128
 #: src/pages/review-page.tsx:138
 #: src/pages/settings-page.tsx:95
-#: src/pages/smart-list-page.tsx:231
+#: src/pages/smart-list-page.tsx:234
 #: src/pages/statistics-page.tsx:33
 #: src/pages/statistics-page.tsx:43
 msgid "Loading…"
@@ -1633,7 +1633,7 @@ msgstr "中繼資料"
 msgid "Metadata Review"
 msgstr "中繼資料檢查"
 
-#: src/pages/activity-page.tsx:283
+#: src/pages/activity-page.tsx:287
 msgid "Missed?"
 msgstr "錯過了？"
 
@@ -1682,7 +1682,7 @@ msgstr "我的保管庫"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:95
 #: src/pages/list-detail-page.tsx:990
 #: src/pages/lists-page.tsx:210
-#: src/pages/smart-list-page.tsx:645
+#: src/pages/smart-list-page.tsx:648
 msgid "Name"
 msgstr "名稱"
 
@@ -1733,7 +1733,7 @@ msgstr "否"
 msgid "No"
 msgstr "否"
 
-#: src/pages/activity-page.tsx:153
+#: src/pages/activity-page.tsx:157
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "尚無活動。有日期的項目、劇集播出／完成日期，以及每日筆記提及都會顯示在這裡。"
 
@@ -1755,7 +1755,7 @@ msgstr "沒有候選欄位或內文版塊符合此類型結構描述。"
 msgid "No candidates loaded"
 msgstr "未載入候選項目"
 
-#: src/pages/smart-list-page.tsx:713
+#: src/pages/smart-list-page.tsx:716
 msgid "No criteria — everything in the library matches."
 msgstr "沒有條件 — 符合庫中的所有內容。"
 
@@ -1789,7 +1789,7 @@ msgstr "未設定任何項目類型。"
 msgid "No entries"
 msgstr "無項目"
 
-#: src/pages/smart-list-page.tsx:372
+#: src/pages/smart-list-page.tsx:375
 msgid "No entries match the criteria"
 msgstr "沒有符合條件的條目"
 
@@ -1809,7 +1809,7 @@ msgstr "未設定任何欄位。"
 msgid "No folder selected"
 msgstr "未選取資料夾"
 
-#: src/pages/smart-list-page.tsx:711
+#: src/pages/smart-list-page.tsx:714
 msgid "No further criteria — every entry of this type matches."
 msgstr "沒有其他條件 — 符合此類型的所有條目。"
 
@@ -1830,7 +1830,7 @@ msgstr "尚無項目 — 從資料來源同步，或在 <0>{0}</0> 標題下新�
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "尚無項目。使用「新增項目」將項目加入此清單，或使用「新增版塊」將它們分組。"
 
-#: src/pages/smart-list-page.tsx:556
+#: src/pages/smart-list-page.tsx:559
 msgid "No limit"
 msgstr "無限制"
 
@@ -1925,7 +1925,7 @@ msgid "None (plain list)"
 msgstr "無（純清單）"
 
 #. Prefix before a group of filter-criteria chips: none may match
-#: src/pages/smart-list-page.tsx:747
+#: src/pages/smart-list-page.tsx:750
 msgid "none of"
 msgstr "全部不符合"
 
@@ -2222,8 +2222,8 @@ msgstr "移除類型"
 #: src/pages/list-detail-page.tsx:404
 #: src/pages/list-detail-page.tsx:624
 #: src/pages/list-detail-page.tsx:1006
-#: src/pages/smart-list-page.tsx:288
-#: src/pages/smart-list-page.tsx:669
+#: src/pages/smart-list-page.tsx:291
+#: src/pages/smart-list-page.tsx:672
 msgid "Rename"
 msgstr "重新命名"
 
@@ -2231,7 +2231,7 @@ msgstr "重新命名"
 msgid "Rename list"
 msgstr "重新命名清單"
 
-#: src/pages/smart-list-page.tsx:630
+#: src/pages/smart-list-page.tsx:633
 msgid "Rename smart list"
 msgstr "重新命名智慧清單"
 
@@ -2248,13 +2248,13 @@ msgstr "已重新命名 — 更新了 {updated, plural, other {# 個連結}}"
 msgid "renamed to “{0}”"
 msgstr "重新命名為「{0}」"
 
-#: src/pages/smart-list-page.tsx:633
+#: src/pages/smart-list-page.tsx:636
 msgid "Renames the .base file in your vault."
 msgstr "重新命名保管庫中的 .base 檔案。"
 
 #: src/pages/entity-page.tsx:705
 #: src/pages/list-detail-page.tsx:1006
-#: src/pages/smart-list-page.tsx:669
+#: src/pages/smart-list-page.tsx:672
 msgid "Renaming…"
 msgstr "重新命名中…"
 
@@ -2283,7 +2283,7 @@ msgstr "執行中…"
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:178
 #: src/pages/list-detail-page.tsx:426
-#: src/pages/smart-list-page.tsx:265
+#: src/pages/smart-list-page.tsx:268
 msgid "Save"
 msgstr "儲存"
 
@@ -2314,7 +2314,7 @@ msgstr "將目前的類型、篩選與排序儲存為智慧清單 — 依條件�
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:178
 #: src/pages/list-detail-page.tsx:426
-#: src/pages/smart-list-page.tsx:265
+#: src/pages/smart-list-page.tsx:268
 msgid "Saving…"
 msgstr "儲存中…"
 
@@ -2324,8 +2324,8 @@ msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHEL
 msgstr "此執行個體已停用結構描述編輯（唯讀）。請設定 <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> 以啟用。"
 
 #: src/pages/lists-page.tsx:221
-#: src/pages/smart-list-page.tsx:484
-#: src/pages/smart-list-page.tsx:489
+#: src/pages/smart-list-page.tsx:487
+#: src/pages/smart-list-page.tsx:492
 msgid "Scope"
 msgstr "範圍"
 
@@ -2474,19 +2474,19 @@ msgstr "智慧清單"
 msgid "Smart list created"
 msgstr "已建立智慧清單"
 
-#: src/pages/smart-list-page.tsx:202
+#: src/pages/smart-list-page.tsx:205
 msgid "Smart list deleted"
 msgstr "已刪除智慧清單"
 
-#: src/pages/smart-list-page.tsx:235
+#: src/pages/smart-list-page.tsx:238
 msgid "Smart list not found"
 msgstr "找不到智慧清單"
 
-#: src/pages/smart-list-page.tsx:611
+#: src/pages/smart-list-page.tsx:614
 msgid "Smart list renamed"
 msgstr "已重新命名智慧清單"
 
-#: src/pages/smart-list-page.tsx:188
+#: src/pages/smart-list-page.tsx:191
 msgid "Smart list saved"
 msgstr "已儲存智慧清單"
 
@@ -2498,7 +2498,7 @@ msgstr "部分圖片無法下載"
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "部分圖片無法下載：{reasons}"
 
-#: src/pages/smart-list-page.tsx:687
+#: src/pages/smart-list-page.tsx:690
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "此檔案的部分語法不受支援，將被忽略:"
 
@@ -2510,13 +2510,13 @@ msgstr "發生錯誤"
 
 #: src/components/assets/asset-toolbar.tsx:94
 #: src/components/settings/settings-sections.tsx:184
-#: src/pages/smart-list-page.tsx:512
+#: src/pages/smart-list-page.tsx:515
 msgid "Sort"
 msgstr "排序"
 
 #. Label before the sort-key picker of the active smart-list view
 #. placeholder {0}: activeView.name
-#: src/pages/smart-list-page.tsx:505
+#: src/pages/smart-list-page.tsx:508
 msgid "Sort {0} by"
 msgstr "{0} 排序方式"
 
@@ -2671,7 +2671,7 @@ msgstr "分類根目錄"
 msgid "taxonomy: {0}"
 msgstr "分類：{0}"
 
-#: src/pages/smart-list-page.tsx:401
+#: src/pages/smart-list-page.tsx:404
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base 檔案將移至保管庫的垃圾桶資料夾。符合的項目不受影響。"
 
@@ -2709,7 +2709,7 @@ msgstr "這會將 <0>{0}</0> 移到垃圾桶。其中包含的項目不會受影
 msgid "This page doesn’t exist or may have moved."
 msgstr "此頁面不存在或可能已被移動。"
 
-#: src/pages/smart-list-page.tsx:193
+#: src/pages/smart-list-page.tsx:196
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "此智慧清單已在磁碟上被修改。請重新載入頁面並重新編輯。"
 
@@ -2725,7 +2725,7 @@ msgstr "勾選要從資料來源寫入的項目 — 新項目會被新增，已�
 #: src/components/settings/settings-sections.tsx:138
 #: src/components/settings/settings-sections.tsx:150
 #: src/pages/entity-create-page.tsx:107
-#: src/pages/smart-list-page.tsx:454
+#: src/pages/smart-list-page.tsx:457
 msgid "Title"
 msgstr "標題"
 
@@ -2835,7 +2835,7 @@ msgid "Up next"
 msgstr "接下來"
 
 #: src/components/settings/settings-sections.tsx:139
-#: src/pages/smart-list-page.tsx:455
+#: src/pages/smart-list-page.tsx:458
 msgid "Update time"
 msgstr "更新時間"
 
