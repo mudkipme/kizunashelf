@@ -27,6 +27,14 @@ Mount the vault directory and the server uses it directly — `KIZUNASHELF_VAULT
 
 The Docker image sets `HOST=0.0.0.0` by default, so the server is reachable from outside the container. Because that is a non-loopback host, content and Settings writes default to **off**. Set `KIZUNASHELF_CONTENT_WRITABLE=true` and/or `KIZUNASHELF_SETTINGS_WRITABLE=true` only when you intentionally want writes available from the published container.
 
+For an enforced read-only deployment, mount the vault read-only as well as leaving both write flags disabled:
+
+```bash
+docker run -p 8787:8787 -v /path/to/vault:/vault:ro kizunashelf
+```
+
+For a writable deployment, the vault mount itself must be writable and the container user must have permission to create, rename, and move files inside it. KizunaShelf uses atomic writes and moves deleted content into the vault's `.trash` directory.
+
 ## Configuration
 
 The self-hosted web server is configured entirely through environment variables — there is no app config file. The most relevant ones:
@@ -38,8 +46,24 @@ The self-hosted web server is configured entirely through environment variables 
 | `PORT` | Bind port. Defaults to `8787`. |
 | `KIZUNASHELF_CONTENT_WRITABLE` | Enables entity create/edit/delete. Defaults to `true` for loopback hosts and `false` otherwise. |
 | `KIZUNASHELF_SETTINGS_WRITABLE` | Enables schema (Settings) writes and path suggestions. Defaults to `true` for loopback hosts and `false` otherwise. |
+| `KIZUNASHELF_INDEX_CACHE_DIR` | Optional host directory for the persistent, disposable library index cache. Keep it outside the vault. |
 
 See [Runtime Environment](config.md#runtime-environment) for the complete table, including the cache TTL, token cache path, asset-download host policy, and the per-provider credential variables.
+
+### Persistent data and caches
+
+The mounted vault is the durable user data: Markdown entities, daily notes, downloaded assets, saved lists, and `KizunaShelf/config.yaml` all live there. Back up or version that folder as you would any other document library.
+
+Two optional host paths stay deliberately outside the vault:
+
+- `KIZUNASHELF_TOKEN_CACHE` stores derived provider OAuth tokens. The default is a temporary file; losing it only forces KizunaShelf to obtain another token.
+- `KIZUNASHELF_INDEX_CACHE_DIR` stores a disposable parsed-file index that speeds cold starts for large vaults. It can be placed on a persistent container volume, but it is always safe to delete.
+
+Neither path should be synchronized as part of the vault, and provider credentials should continue to enter the container as secrets or environment variables rather than files inside the vault.
+
+### Health check
+
+`GET /api/health` returns success after the server can load the configured vault. It can be used by a container health check or reverse proxy, but keep it behind the same access boundary as the app: its response includes library counts and a bounded list of diagnostics.
 
 ### Multiple vaults
 
@@ -50,7 +74,7 @@ A web instance serves exactly one vault. To host more than one, run multiple ins
 **KizunaShelf has no built-in authentication for now.** The web server does not implement user accounts, logins, or sessions, so anyone who can reach the port can use it. Two consequences:
 
 - **Do not expose the port directly to the internet.** Keep it bound to loopback (`HOST=127.0.0.1`, the default) or to a private network, and put an authenticating layer in front of it.
-- **Writes default off for non-loopback hosts.** When `HOST` is not loopback, content and Settings writes are disabled unless you explicitly opt in (see above). This limits a fully unauthenticated exposure to read-only browsing, but it is not a substitute for authentication.
+- **Writes default off for non-loopback hosts.** When `HOST` is not loopback, content and Settings writes are disabled unless you explicitly opt in (see above). This limits mutation, but read-only access still exposes the contents of the vault and is not a substitute for authentication.
 
 To require a login, run KizunaShelf behind a **reverse proxy that handles authentication** and only forward authenticated requests to the app. Any existing solution works — for example:
 

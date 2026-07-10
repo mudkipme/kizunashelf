@@ -2,49 +2,81 @@
 
 > A shelf for everything you love — and it stays yours.
 
-Intro in other languages: [简体中文](docs/intro.zh.md) / [日本語](docs/intro.ja.md)
+KizunaShelf is a personal library for everything you watch, play, read, listen to, and care about. It feels familiar as a media tracker, but its shape is yours: you define the kinds of things in your library, the fields they carry, and how they relate.
 
-KizunaShelf starts with the familiar shape of a media tracker: TV shows, movies, books, games, anime, albums, and every small obsession waiting on your shelf. But it is not built around one fixed idea of what a "thing" should be. It is schema-driven from the ground up. You decide the types, fields, dates, titles, covers, states, ratings, progress, external links, and relationships. If your world needs characters, goods, cards, voice actors, artists, live events, or trains, shoes, museums, coffee beans, or something nobody else would think to model, KizunaShelf gives you the grammar to describe it.
+Underneath, every entry is still a Markdown file in a folder you own. KizunaShelf helps you explore those files as a living shelf without turning them into data only one app can understand.
 
-The shelf is not flat. A game can belong to a franchise. An anime can be based on a novel. A character can point to a voice actor. A remake can look back at the original. Every relation is written as a link, then read back as a map: outgoing, incoming, resolved, unresolved, and grouped into the quiet shape of the things you care about.
+Product introduction in other languages: [简体中文](docs/intro.zh.md) / [日本語](docs/intro.ja.md)
 
-Time matters here. Release dates, seasons, future plans, and past records all become part of the same calendar. You can look ahead to the game you want to buy, the movie you plan to watch, or the event you hope to attend; then look back at what you finished across the last few months. When your daily notes mention an entity through a wikilink, KizunaShelf can connect that ordinary day back to the things you love. And it runs both ways: check off an episode or jot a quick log, and KizunaShelf writes that day's line into your daily note — in a format you choose — then gathers every dated record into an activity feed you can scroll back through, like a diary of what you watched, played, and read. That's the *kizuna*: the bond between you and what you keep.
+## A library that remembers with you
 
-And the files remain yours. KizunaShelf follows the idea of files over apps: Markdown is the source of truth, readable by Obsidian, SilverBullet, Zed, VS Code, any text editor, or no app at all. Even if you stop using KizunaShelf someday, the notes, frontmatter, links, memories, and kizuna are still there.
+KizunaShelf begins with the familiar things waiting on a media shelf: shows, movies, books, games, anime, and albums. But it does not decide what a “thing” must be. You define the types in your library, their titles, covers, statuses, dates, ratings, progress, and relationships. If your world also needs characters, artists, live events, or something nobody else would think to model, KizunaShelf gives you the grammar to describe it.
 
-KizunaShelf is a shelf for what matters to you, and a record book for the life that gathered around it.
+The shelf is not flat. A game can belong to a franchise; an anime can be adapted from a novel; a character can connect to a voice actor. Ordinary Markdown links become a map of the relationships running through your library.
 
-## What It Does
+Time gives that map a history. Releases and plans appear on a calendar. Mentions in daily notes connect an ordinary day back to the things you care about. Episode check-ins become dated activity, while a quick log can write a line to your daily note in a format you choose. The activity feed gathers those moments into a record of what you watched, played, and read — and when it became part of your life.
 
-- Builds a typed catalog from Markdown files in an Obsidian-style vault.
-- Lets each collection define its own titles, covers, states, ratings, progress, dates, external refs, and relations.
-- Provides library browsing, entity detail pages, calendar and activity-feed views, custom lists, statistics, and review/cleanup queues.
-- Surfaces each entity's relations (outgoing, incoming, resolved, and unresolved) directly on its detail page.
-- Connects daily notes back to entities through wikilinks, tying ordinary days to the things you track.
-- Logs what you did and when: checking off an episode or a quick log appends a dated line to your daily note in a per-type format you define, and the activity feed reads those days back as a reverse-chronological diary.
-- Supports external metadata matching across many providers: TMDB, TheTVDB, MyAnimeList, Bangumi (anime/TV/film); IGDB, Steam, BoardGameGeek (games/board games); Google Books, Open Library, Hardcover, MangaUpdates, Comic Vine (books/manga/comics); MusicBrainz, Spotify, Discogs (music); and Apple Podcasts.
-- Adds entities straight from those providers: **Quick Capture** searches them and creates an entity in one click (covers and episodes filled automatically).
-- **Imports** a whole library from another service — MyAnimeList, AniList, Kitsu, Trakt, Steam, Bangumi (public profiles), or IMDb, Goodreads, and Yamtrack (CSV exports) — with a review-before-write plan that maps status, score, dates, notes, and progress onto your own schema and skips anything already in your library.
-- Runs as a self-hosted web app, a Tauri desktop app, or a native iOS app.
+That is the *kizuna*: the bond between you and what you keep.
 
-KizunaShelf treats Markdown files as the source of truth. When content writes are enabled, it can edit entity frontmatter/body and create or delete entity files. In read-only mode, those content write features are disabled.
+And the files remain yours. Markdown is the source of truth, readable by Obsidian, SilverBullet, Zed, VS Code, any text editor, or no app at all. KizunaShelf can leave; your library does not.
 
-The vault schema (`KizunaShelf/config.yaml`) always lives inside the vault and is shared across machines. App-level settings are sourced per runtime:
+## What makes it different
 
-- **Self-hosted web**: a single vault configured entirely through environment variables — there is no app config file. For multiple vaults, run multiple instances (the image is small).
-- **Desktop**: multiple vaults managed in-app (Obsidian-style switching); provider credentials are stored in the OS keychain.
-- **iOS**: vaults are opened from Files (On My iPhone / iCloud / a file provider); credentials are stored in the Keychain.
+### Shape your shelf
 
-## Quick Start
+Each collection has a schema of its own. Define types and fields for titles, covers, statuses, ratings, progress, dates, seasons, external references, and relations. Field names are yours, and the same schema drives every KizunaShelf app.
+
+### Bring things in
+
+**Quick Capture** searches external metadata providers and creates an entity in one action, filling mapped metadata, covers, and episode or track lists when available. Whole-library imports use a review-before-write plan that maps the source service onto your schema and skips entries already on your shelf.
+
+### See the connections
+
+Relations are stored as ordinary wikilinks. KizunaShelf reads them in both directions, resolves their targets, and shows the network around each entity without inventing a separate proprietary graph.
+
+### Remember your time
+
+Calendar, daily-note mentions, episode check-ins, quick logs, activity history, and custom lists turn a catalog into a record of the life around it.
+
+### Keep what is yours
+
+Entity content, relations, lists, and the vault schema remain in the vault. The folder can be synced with whatever you already use.
+
+## One library, three apps
+
+One Rust core interprets the schema and Markdown everywhere. Web and desktop share the React interface; iOS presents the same library through a native SwiftUI app.
+
+| App | How it fits |
+| --- | --- |
+| **Self-hosted web** | Serves one vault per instance through a browser. |
+| **Desktop** | Opens, creates, and switches between local vaults. |
+| **iOS** | Full native mobile app with Liquid Glass design, widgets, notifications, Spotlight and Shortcuts integration. |
+
+Browsing and editing a locally available vault do not depend on a KizunaShelf server. External metadata searches, cover downloads, and cloud or File Provider synchronization use their respective network services when needed.
+
+The vault schema lives at `KizunaShelf/config.yaml`, so it travels with the Markdown files and stays consistent across devices.
+
+## Metadata and imports
+
+External metadata matching is available for:
+
+- **Film, television, and anime:** TMDB, TheTVDB, MyAnimeList, and Bangumi.
+- **Games and board games:** IGDB, Steam, and BoardGameGeek.
+- **Books, manga, and comics:** Google Books, Open Library, Hardcover, MangaUpdates, and Comic Vine.
+- **Music and podcasts:** MusicBrainz, Spotify, Discogs, and Apple Podcasts.
+
+KizunaShelf can import a library from MyAnimeList, AniList, Kitsu, Trakt, Steam, and public Bangumi profiles, or from IMDb, Goodreads, and Yamtrack CSV exports. Before anything is written, the import plan shows what will be created, what needs review, and what is already present.
+
+## Quick start
 
 ```bash
 pnpm install
 KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 ```
 
-Open `http://localhost:5173/`. The web app points at the single vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `KizunaShelf/config.yaml` yet, KizunaShelf redirects to onboarding to create the schema.
+Open `http://localhost:5173/`. The web app points at the vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `KizunaShelf/config.yaml`, onboarding helps you choose some built-in types or create a schema of your own.
 
-See [docs/config.md](docs/config.md) for the full schema, per-runtime configuration, Settings behavior, and provider credentials, and [docs/syncing.md](docs/syncing.md) for how to sync a vault across devices.
+See [docs/config.md](docs/config.md) for the complete schema and runtime configuration, and [docs/syncing.md](docs/syncing.md) for using a vault across devices.
 
 ## Development
 
@@ -65,17 +97,17 @@ pnpm typecheck
 pnpm test
 ```
 
-Generate the OpenAPI document and TypeScript/Zod validators with:
+Generate the OpenAPI document and TypeScript/Zod client with:
 
 ```bash
 pnpm contract:generate
 ```
 
-The generated contract lives in `packages/api-contract`.
+The generated web contract lives in `packages/api-contract`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the schema-driven invariants, shared-core design, generated API contract, and iOS integration workflow.
 
-## Production
+## Production and desktop builds
 
-To self-host the production web app (build, serve, Docker, configuration, multiple vaults, and authentication), see [docs/selfhosting.md](docs/selfhosting.md). KizunaShelf has no built-in authentication — that guide explains how to put it behind a reverse-proxy auth solution (Authentik, Authelia, tinyauth).
+For the production web app — including Docker, configuration, multiple instances, and authentication — see [docs/selfhosting.md](docs/selfhosting.md). KizunaShelf has no built-in authentication, so an internet-facing deployment must sit behind an authenticating reverse proxy.
 
 For desktop development and builds:
 
@@ -83,5 +115,3 @@ For desktop development and builds:
 pnpm dev:desktop
 pnpm build:desktop
 ```
-
-The desktop app uses Tauri and calls the Rust API router in-process, so it does not open an HTTP listener. It manages multiple vaults in-app (open or create, then switch between them) and stores provider credentials in the OS keychain (macOS Keychain, Windows Credential Manager, or the Linux Secret Service).

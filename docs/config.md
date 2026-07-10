@@ -6,7 +6,7 @@ KizunaShelf is schema-driven. There are two kinds of configuration:
 - **App-level settings** — *where* the vault is and *how this runtime behaves* (writable or read-only). These are **not** a synced file; each runtime sources them differently:
   - **Self-hosted web**: from environment variables only — there is no app config file. One instance serves one vault.
   - **Desktop**: a vault list managed in-app (Obsidian-style switching), stored in the app's data directory.
-  - **iOS**: vaults opened from Files via security-scoped bookmarks.
+  - **iOS**: managed vaults created under On My iPhone, plus external vaults opened from Files and remembered with security-scoped bookmarks.
 
 The Rust structs in `crates/kizunashelf/src/types.rs` are the source of truth for the schema, and the built-in **type presets** — the ready-made types the picker seeds during web onboarding, desktop, and iOS vault creation — live in `crates/kizunashelf/src/presets.rs`. A sample vault config is at `config/vault-config.example.yaml`.
 
@@ -21,7 +21,7 @@ KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 
 Open `http://localhost:5173/`. If that vault has no `KizunaShelf/config.yaml`, KizunaShelf redirects to `/onboarding` to create the schema (the web app never asks for a vault root — that comes from the environment).
 
-On **desktop**, onboarding instead opens a native vault chooser: open an existing folder or create a new (empty) vault. On **iOS**, you pick the vault folder from Files.
+On **desktop**, onboarding instead opens a native vault chooser: open an existing folder or create a new, empty vault. On **iOS**, the native vault manager can create a managed vault under On My iPhone or open an existing folder from Files, iCloud Drive, or another File Provider.
 
 Onboarding is a **type-preset picker**. Choose a title language, then pick the built-in types you want — movies, TV, anime, manga, games, books, music, and more. Each preset is one fully-wired type: its title/cover/date/status/progress fields and external-provider mappings are already set (the presets reuse the same provider catalog as external matching, so they never drift). You can add or drop types and refine any field in the structured editor — the same editor Settings uses — before saving.
 
@@ -82,7 +82,7 @@ There is no app config file. The vault root and write mode are sourced per runti
 
 - **Self-hosted web** — environment variables only. `KIZUNASHELF_VAULT_ROOT` (default `/vault`) selects the single vault; `KIZUNASHELF_CONTENT_WRITABLE` and `KIZUNASHELF_SETTINGS_WRITABLE` control write modes. See [Runtime Environment](#runtime-environment).
 - **Desktop** — a vault list (name + path + active selection) is stored as `vaults.json` in the platform app-data directory (e.g. `~/Library/Application Support/me.mudkip.kizunashelf-desktop/` on macOS). Vaults are content-writable.
-- **iOS** — the vault list is stored as security-scoped bookmarks; vaults are content-writable.
+- **iOS** — managed vaults are stored as Documents-relative paths; external vaults are stored as security-scoped bookmarks. The active selection is device-local, and vaults are content-writable.
 
 ### Provider token cache
 
@@ -93,7 +93,9 @@ The provider token cache holds derived OAuth tokens (re-derivable, never user se
 
 ## Settings Editor
 
-The Settings page at `/settings` edits the vault schema (every field below lives in the vault config). There is no longer an "App" section — the vault root and write mode are runtime settings (env vars on web; the vault switcher on desktop), not editable here.
+The web/desktop Settings page at `/settings` edits the vault schema (every field below lives in the vault config). There is no "App" section — the vault root and write mode are runtime settings, not synced schema. iOS exposes the same schema through its native **More → Vault Schema** editor.
+
+Web/desktop offers both a structured **Form** and a raw **YAML** editor. The raw editor validates the complete document strictly and writes the accepted text verbatim, preserving comments and formatting. The structured editor works with the typed schema and reserializes it on save. iOS currently provides the structured native editor; edit `KizunaShelf/config.yaml` in a text editor when you need direct YAML/comment control.
 
 - Vault: `taxonomyRoot`, `assetRoot`
 - Daily notes: `paths`, `dateFormat`
@@ -102,11 +104,11 @@ The Settings page at `/settings` edits the vault schema (every field below lives
 - Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
 - Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
 
-On **desktop**, Settings additionally shows a **Vaults** switcher (open / create / switch / forget vaults) and a **Provider Credentials** editor backed by the OS keychain. These are hidden on the web app, where credentials come from environment variables.
+On **desktop**, Settings additionally shows a **Vaults** switcher (open / create / switch / forget vaults) and a **Provider Credentials** editor backed by the OS keychain. On **iOS**, vault switching lives under **More → Switch Vault…**, and **More → Provider Credentials** renders the same core-owned credential catalog into Keychain-backed native fields. These controls are absent from the web app, where the active vault and credentials come from environment variables.
 
-On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker.
+On the web app, path fields are normal text inputs with autocomplete suggestions from the API. In the desktop app, the same fields also show a folder button that opens the native folder picker. The iOS schema editor uses the same vault-relative suggestion endpoint through a native suggestion field.
 
-Settings writes and path suggestions can be disabled with `KIZUNASHELF_SETTINGS_WRITABLE=false`. In production web mode, Settings writes default to enabled only for loopback hosts.
+On self-hosted web, Settings writes and path suggestions can be disabled with `KIZUNASHELF_SETTINGS_WRITABLE=false`; they default to enabled only for loopback hosts. Desktop and iOS treat an opened vault as schema-writable.
 
 ## Runtime Environment
 
@@ -120,6 +122,7 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_CONTENT_WRITABLE` | Enables entity create/edit/delete. Defaults to `true` for loopback hosts and `false` otherwise. |
 | `KIZUNASHELF_SETTINGS_WRITABLE` | Enables schema (Settings) writes and path suggestions. Defaults to `true` for loopback hosts and `false` otherwise. |
 | `KIZUNASHELF_CACHE_TTL_MS` | In-memory library cache TTL. Defaults to `10000`. |
+| `KIZUNASHELF_INDEX_CACHE_DIR` | Optional host directory for the persistent, disposable library index cache. Keep it outside the vault; unset means the incremental index lives only in memory and is lost on restart. |
 | `KIZUNASHELF_TOKEN_CACHE` | Path for the provider OAuth token cache. Defaults to `<tmp>/.kizunashelf.tokens.json` (outside the vault). |
 | `KIZUNASHELF_WEB_DIST` | Alternate web build path. |
 | `KIZUNASHELF_SERVE_WEB` | Set to `false` to serve only the API. |
@@ -161,6 +164,7 @@ These are not a config file; they are supplied by the runtime (see [Where Settin
 | --- | --- | --- | --- |
 | vault root | `KIZUNASHELF_VAULT_ROOT` | active vault in the vault list | Absolute path to the vault root. |
 | content writable | `KIZUNASHELF_CONTENT_WRITABLE` | always enabled | Enables entity create/edit/delete operations. |
+| settings writable | `KIZUNASHELF_SETTINGS_WRITABLE` | always enabled | Enables vault-schema writes and path suggestions. |
 
 ### Vault config (`<vaultRoot>/KizunaShelf/config.yaml`)
 
