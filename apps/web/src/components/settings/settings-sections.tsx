@@ -7,6 +7,7 @@ import { PlusIcon } from "lucide-react";
 
 import { allTagsQuery } from "@/api/queries";
 import { RuleBuilder, ruleFieldMetas } from "@/components/smart-lists/rule-builder";
+import { titleLanguageLabel } from "@/lib/title-language";
 import { Button } from "@/components/ui/button";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
@@ -231,7 +232,7 @@ function LanguageSelect({
   languages: Language[];
   onChange: (value: string) => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   return (
     <Select
       value={value}
@@ -241,7 +242,7 @@ function LanguageSelect({
       <option value="">{t`None`}</option>
       {languages.map((language) => (
         <option key={language.code} value={language.code}>
-          {language.label} ({language.code})
+          {titleLanguageLabel(language.code, i18n.locale)} ({language.code})
         </option>
       ))}
       <UnknownValueOption value={value} known={languages.map((language) => language.code)} />

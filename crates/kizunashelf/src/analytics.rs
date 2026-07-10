@@ -280,46 +280,22 @@ pub fn build_cleanup_queues(
     // Cluster colliding entries so the queue reads as pairs/groups; a stable sort
     // keeps each group in library order.
     duplicate_filenames.sort_by_cached_key(|entity| normalize_wikilink_target(&entity.basename));
+    // Queues carry only their stable `id`; each client localizes the display
+    // label from that id (the web `review-page` and the iOS `localizedQueueLabel`
+    // both do). The core no longer owns any English queue text.
     let queues = cleanup_queue_summaries(&[
-        (
-            "missing-cover",
-            "Missing Cover",
-            missing_cover.len(),
-            cover_total,
-        ),
-        (
-            "missing-refs",
-            "Missing External Refs",
-            missing_external_refs.len(),
-            refs_total,
-        ),
-        (
-            "isolated",
-            "Isolated Nodes",
-            isolated.len(),
-            relations_total,
-        ),
-        (
-            "broken-asset",
-            "Broken Assets",
-            broken_assets.len(),
-            broken_total,
-        ),
+        ("missing-cover", missing_cover.len(), cover_total),
+        ("missing-refs", missing_external_refs.len(), refs_total),
+        ("isolated", isolated.len(), relations_total),
+        ("broken-asset", broken_assets.len(), broken_total),
         (
             "unresolved-relations",
-            "Unresolved Relations",
             unresolved_relations.len(),
             outgoing.len(),
         ),
-        (
-            "status-mismatch",
-            "Status Mismatch",
-            status_mismatch.len(),
-            status_total,
-        ),
+        ("status-mismatch", status_mismatch.len(), status_total),
         (
             "duplicate-filename",
-            "Duplicate Filenames",
             duplicate_filenames.len(),
             summaries.len(),
         ),
@@ -451,10 +427,10 @@ impl QualityEligibility {
 
 /// Builds cleanup-queue summaries from `(id, label, remaining, total)` rows,
 /// skipping any whose total is zero.
-fn cleanup_queue_summaries(entries: &[(&str, &str, usize, usize)]) -> Vec<CleanupQueueSummary> {
+fn cleanup_queue_summaries(entries: &[(&str, usize, usize)]) -> Vec<CleanupQueueSummary> {
     let mut queues = Vec::new();
-    for &(id, label, remaining, total) in entries {
-        push_cleanup_queue(&mut queues, id, label, remaining, total);
+    for &(id, remaining, total) in entries {
+        push_cleanup_queue(&mut queues, id, remaining, total);
     }
     queues
 }
@@ -462,24 +438,17 @@ fn cleanup_queue_summaries(entries: &[(&str, &str, usize, usize)]) -> Vec<Cleanu
 fn push_cleanup_queue(
     queues: &mut Vec<CleanupQueueSummary>,
     id: &str,
-    label: &str,
     remaining: usize,
     total: usize,
 ) {
     if total > 0 {
-        queues.push(cleanup_queue_summary(id, label, remaining, total));
+        queues.push(cleanup_queue_summary(id, remaining, total));
     }
 }
 
-fn cleanup_queue_summary(
-    id: &str,
-    label: &str,
-    remaining: usize,
-    total: usize,
-) -> CleanupQueueSummary {
+fn cleanup_queue_summary(id: &str, remaining: usize, total: usize) -> CleanupQueueSummary {
     CleanupQueueSummary {
         id: id.to_string(),
-        label: label.to_string(),
         remaining,
         total,
     }
@@ -699,8 +668,7 @@ mod tests {
 
     #[test]
     fn cleanup_queue_summaries_skips_zero_total_queues() {
-        let queues =
-            cleanup_queue_summaries(&[("a", "A", 2, 5), ("b", "B", 0, 0), ("c", "C", 1, 3)]);
+        let queues = cleanup_queue_summaries(&[("a", 2, 5), ("b", 0, 0), ("c", 1, 3)]);
         assert_eq!(queues.len(), 2);
         assert_eq!(queues[0].id, "a");
         assert_eq!(queues[0].remaining, 2);

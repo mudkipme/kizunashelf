@@ -12,8 +12,7 @@ export const cleanupQueueSummaryTotalMin = 0;
 
 
 export const CleanupQueueSummary = zod.object({
-  "id": zod.string(),
-  "label": zod.string(),
+  "id": zod.string().describe('Stable machine id (e.g. `missing-cover`); the client localizes the display\nlabel from this. The core intentionally emits no English queue text.'),
   "remaining": zod.number().min(cleanupQueueSummaryRemainingMin),
   "total": zod.number().min(cleanupQueueSummaryTotalMin)
 })

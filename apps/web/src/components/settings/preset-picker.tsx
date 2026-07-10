@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
+import { titleLanguageLabel } from "@/lib/title-language";
 import type {
   EntityTypeConfig,
   Language,
@@ -48,7 +49,7 @@ export function PresetPickerDialog({
   onClose: () => void;
   onApply: (nextTypes: EntityTypeConfig[]) => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const presets = useQuery(typePresetsQuery());
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [titleLanguage, setTitleLanguage] = useState(() => defaultLanguage(languages));
@@ -189,7 +190,7 @@ export function PresetPickerDialog({
                 >
                   {languages.map((language) => (
                     <option key={language.code} value={language.code}>
-                      {language.label}
+                      {titleLanguageLabel(language.code, i18n.locale)}
                     </option>
                   ))}
                 </Select>

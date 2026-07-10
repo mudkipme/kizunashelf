@@ -7,9 +7,8 @@
 import { z as zod } from 'zod';
 
 export const Language = zod.object({
-  "code": zod.string(),
-  "label": zod.string()
-}).describe('A title-language option for the schema editor: an ISO 639-1 code and its\nEnglish display name. See [`crate::languages`].')
+  "code": zod.string()
+}).describe('A title-language option for the schema editor: an ISO 639-1 `code`. The\ndisplay name is rendered client-side from the code with the platform\'s\nlocalized language-name API (`Locale.localizedString` \/ `Intl.DisplayNames`),\nso it follows the UI language instead of being a hardcoded English exonym.\nSee [`crate::languages`].')
 
 export type Language = zod.input<typeof Language>;
 export type LanguageOutput = zod.output<typeof Language>;

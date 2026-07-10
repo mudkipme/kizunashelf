@@ -91,8 +91,7 @@ export const cleanupQueuesResponseDuplicateFilenamesItemRelationCountMin = 0;
 export const CleanupQueuesResponse = zod.object({
   "generatedAt": zod.string(),
   "queues": zod.array(zod.object({
-  "id": zod.string(),
-  "label": zod.string(),
+  "id": zod.string().describe('Stable machine id (e.g. `missing-cover`); the client localizes the display\nlabel from this. The core intentionally emits no English queue text.'),
   "remaining": zod.number().min(cleanupQueuesResponseQueuesItemRemainingMin),
   "total": zod.number().min(cleanupQueuesResponseQueuesItemTotalMin)
 })),

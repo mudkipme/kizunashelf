@@ -4779,19 +4779,15 @@
         ]
       },
       "Language": {
-        "description": "A title-language option for the schema editor: an ISO 639-1 code and its\nEnglish display name. See [`crate::languages`].",
+        "description": "A title-language option for the schema editor: an ISO 639-1 `code`. The\ndisplay name is rendered client-side from the code with the platform's\nlocalized language-name API (`Locale.localizedString` / `Intl.DisplayNames`),\nso it follows the UI language instead of being a hardcoded English exonym.\nSee [`crate::languages`].",
         "type": "object",
         "properties": {
           "code": {
             "type": "string"
-          },
-          "label": {
-            "type": "string"
           }
         },
         "required": [
-          "code",
-          "label"
+          "code"
         ]
       },
       "UserLanguage": {
@@ -5593,9 +5589,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
-          },
-          "label": {
+            "description": "Stable machine id (e.g. `missing-cover`); the client localizes the display\nlabel from this. The core intentionally emits no English queue text.",
             "type": "string"
           },
           "remaining": {
@@ -5611,7 +5605,6 @@
         },
         "required": [
           "id",
-          "label",
           "remaining",
           "total"
         ]

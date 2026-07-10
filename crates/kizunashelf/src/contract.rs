@@ -304,13 +304,15 @@ pub struct TypePresetCollision {
     pub assigned_path: String,
 }
 
-/// A title-language option for the schema editor: an ISO 639-1 code and its
-/// English display name. See [`crate::languages`].
+/// A title-language option for the schema editor: an ISO 639-1 `code`. The
+/// display name is rendered client-side from the code with the platform's
+/// localized language-name API (`Locale.localizedString` / `Intl.DisplayNames`),
+/// so it follows the UI language instead of being a hardcoded English exonym.
+/// See [`crate::languages`].
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Language {
     pub code: String,
-    pub label: String,
 }
 
 /// A user-language preference option for the clients' single language picker:
@@ -1702,8 +1704,9 @@ pub struct AnalyticsDataQuality {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CleanupQueueSummary {
+    /// Stable machine id (e.g. `missing-cover`); the client localizes the display
+    /// label from this. The core intentionally emits no English queue text.
     pub id: String,
-    pub label: String,
     pub remaining: usize,
     pub total: usize,
 }

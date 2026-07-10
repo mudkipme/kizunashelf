@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Select } from "@/components/ui/select";
 import { isDesktopRuntime } from "@/lib/desktop";
-import type { VaultConfig } from "@/types/api";
+import { titleLanguageLabel } from "@/lib/title-language";
+import type { Language, VaultConfig } from "@/types/api";
 
 /**
  * Onboarding. On desktop with no open vault, choose/create one via the native
@@ -98,13 +99,13 @@ function OnboardingWizard({
   onAdvanced,
   onCreated,
 }: {
-  languages: { code: string; label: string }[];
+  languages: Language[];
   presetCatalog: Parameters<typeof PresetGallery>[0]["catalog"];
   providerCatalog: Parameters<typeof SettingsEditor>[0]["providerCatalog"];
   onAdvanced: (seed: VaultConfig) => void;
   onCreated: () => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [titleLanguage, setTitleLanguage] = useState(() => defaultLanguage(languages));
   const [creating, setCreating] = useState(false);
@@ -192,7 +193,7 @@ function OnboardingWizard({
             >
               {languages.map((language) => (
                 <option key={language.code} value={language.code}>
-                  {language.label}
+                  {titleLanguageLabel(language.code, i18n.locale)}
                 </option>
               ))}
             </Select>

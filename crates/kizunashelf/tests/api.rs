@@ -115,9 +115,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         language_list.len() > 3,
         "expects the full TheTVDB language set"
     );
+    // Languages carry only their code now; clients render the localized display
+    // name from it (the core owns no English language label).
     assert!(language_list
         .iter()
-        .any(|language| language["code"] == "ja" && language["label"] == "Japanese"));
+        .any(|language| language["code"] == "ja"));
 
     let config = server.ok_json("/api/config").await;
     assert_eq!(config["taxonomyRoot"], "Taxonomy");

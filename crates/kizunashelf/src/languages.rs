@@ -16,43 +16,45 @@
 
 use crate::contract::{Language, UserLanguage};
 
-/// `(ISO 639-1 code, English label, TheTVDB ISO 639-2/T code)`, common languages
-/// first then alphabetical. Mirrors TheTVDB's supported set:
-/// <https://thetvdb-api.readthedocs.io/api/languages.html>. The third column maps
-/// our 2-letter code to the 3-letter code TheTVDB's v4 translation endpoints want.
-const SUPPORTED_LANGUAGES: &[(&str, &str, &str)] = &[
-    ("en", "English", "eng"),
-    ("zh", "Chinese", "zho"),
-    ("ja", "Japanese", "jpn"),
-    ("ko", "Korean", "kor"),
-    ("hr", "Croatian", "hrv"),
-    ("cs", "Czech", "ces"),
-    ("da", "Danish", "dan"),
-    ("nl", "Dutch", "nld"),
-    ("fi", "Finnish", "fin"),
-    ("fr", "French", "fra"),
-    ("de", "German", "deu"),
-    ("el", "Greek", "ell"),
-    ("he", "Hebrew", "heb"),
-    ("hu", "Hungarian", "hun"),
-    ("it", "Italian", "ita"),
-    ("no", "Norwegian", "nor"),
-    ("pl", "Polish", "pol"),
-    ("pt", "Portuguese", "por"),
-    ("ru", "Russian", "rus"),
-    ("sl", "Slovenian", "slv"),
-    ("es", "Spanish", "spa"),
-    ("sv", "Swedish", "swe"),
-    ("tr", "Turkish", "tur"),
+/// `(ISO 639-1 code, TheTVDB ISO 639-2/T code)`, common languages first then
+/// alphabetical by code. Mirrors TheTVDB's supported set:
+/// <https://thetvdb-api.readthedocs.io/api/languages.html>. The second column
+/// maps our 2-letter code to the 3-letter code TheTVDB's v4 translation
+/// endpoints want. No display name lives here: clients render one from the code
+/// (see [`Language`]). The `USER_LANGUAGES` table below carries endonyms for the
+/// same codes if you need a human reference while editing.
+const SUPPORTED_LANGUAGES: &[(&str, &str)] = &[
+    ("en", "eng"),
+    ("zh", "zho"),
+    ("ja", "jpn"),
+    ("ko", "kor"),
+    ("hr", "hrv"),
+    ("cs", "ces"),
+    ("da", "dan"),
+    ("nl", "nld"),
+    ("fi", "fin"),
+    ("fr", "fra"),
+    ("de", "deu"),
+    ("el", "ell"),
+    ("he", "heb"),
+    ("hu", "hun"),
+    ("it", "ita"),
+    ("no", "nor"),
+    ("pl", "pol"),
+    ("pt", "por"),
+    ("ru", "rus"),
+    ("sl", "slv"),
+    ("es", "spa"),
+    ("sv", "swe"),
+    ("tr", "tur"),
 ];
 
 /// The supported title languages as contract records.
 pub fn supported_languages() -> Vec<Language> {
     SUPPORTED_LANGUAGES
         .iter()
-        .map(|(code, label, _)| Language {
+        .map(|(code, _tvdb)| Language {
             code: (*code).to_string(),
-            label: (*label).to_string(),
         })
         .collect()
 }
@@ -123,8 +125,8 @@ pub fn thetvdb_language(code: &str) -> Option<&'static str> {
     let code = primary_language(code);
     SUPPORTED_LANGUAGES
         .iter()
-        .find(|(iso, _, _)| *iso == code)
-        .map(|(_, _, tvdb)| *tvdb)
+        .find(|(iso, _)| *iso == code)
+        .map(|(_, tvdb)| *tvdb)
 }
 
 /// The inverse of [`thetvdb_language`]: the ISO 639-1 title language for a
@@ -134,8 +136,8 @@ pub fn thetvdb_iso_language(tvdb_code: &str) -> Option<&'static str> {
     let tvdb_code = tvdb_code.trim().to_ascii_lowercase();
     SUPPORTED_LANGUAGES
         .iter()
-        .find(|(_, _, tvdb)| *tvdb == tvdb_code)
-        .map(|(iso, _, _)| *iso)
+        .find(|(_, tvdb)| *tvdb == tvdb_code)
+        .map(|(iso, _)| *iso)
 }
 
 #[cfg(test)]
@@ -169,7 +171,7 @@ mod tests {
         assert_eq!(thetvdb_iso_language("ENG"), Some("en"));
         assert_eq!(thetvdb_iso_language("xxx"), None);
         // Round-trips for every supported language.
-        for (iso, _, tvdb) in SUPPORTED_LANGUAGES {
+        for (iso, tvdb) in SUPPORTED_LANGUAGES {
             assert_eq!(thetvdb_language(iso), Some(*tvdb));
             assert_eq!(thetvdb_iso_language(tvdb), Some(*iso));
         }
@@ -185,10 +187,8 @@ mod tests {
         }
         // The two tables must not drift: every schema title language is reachable
         // from some preference, and every preference maps to a schema language.
-        let title_codes: BTreeSet<&str> = SUPPORTED_LANGUAGES
-            .iter()
-            .map(|(code, _, _)| *code)
-            .collect();
+        let title_codes: BTreeSet<&str> =
+            SUPPORTED_LANGUAGES.iter().map(|(code, _)| *code).collect();
         let mapped: BTreeSet<&str> = USER_LANGUAGES
             .iter()
             .map(|(_, _, title_language)| *title_language)
