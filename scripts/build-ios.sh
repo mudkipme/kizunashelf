@@ -28,6 +28,11 @@ SWIFT_GEN_DIR="$PKG/Sources/KizunaCore/Generated"
 DEVICE_TARGET="aarch64-apple-ios"
 SIM_TARGETS=("aarch64-apple-ios-sim" "x86_64-apple-ios")
 
+# Where cargo writes build artifacts. Honor CARGO_TARGET_DIR (e.g. a persistent CI
+# cache dir outside the checkout) so the artifact reads below match where cargo
+# actually put them; otherwise the default per-workspace `target/`.
+TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_ROOT/target}"
+
 # Pin a modern iOS deployment target for both rustc's link step and the C/asm
 # builds (aws-lc-sys, pulled in by reqwest's rustls). Without this, rustc links
 # against the iOS 10 default while the SDK compiles aws-lc for a much newer iOS,
@@ -46,7 +51,7 @@ for target in "$DEVICE_TARGET" "${SIM_TARGETS[@]}"; do
     cargo build --release -p "$CRATE" --target "$target" --manifest-path "$REPO_ROOT/Cargo.toml"
 done
 
-DEVICE_LIB="$REPO_ROOT/target/$DEVICE_TARGET/release/$LIB"
+DEVICE_LIB="$TARGET_DIR/$DEVICE_TARGET/release/$LIB"
 
 echo "==> Generating UniFFI bindings (Swift + C module) from the built library"
 cargo run -q -p "$CRATE" --bin uniffi-bindgen -- generate \
@@ -75,7 +80,7 @@ cargo run -q -p kizunashelf --bin kizunashelf-schema --manifest-path "$REPO_ROOT
 echo "==> Creating fat simulator library"
 SIM_LIBS=()
 for target in "${SIM_TARGETS[@]}"; do
-    SIM_LIBS+=("$REPO_ROOT/target/$target/release/$LIB")
+    SIM_LIBS+=("$TARGET_DIR/$target/release/$LIB")
 done
 SIM_FAT="$BUILD_DIR/sim-$LIB"
 lipo -create "${SIM_LIBS[@]}" -output "$SIM_FAT"
