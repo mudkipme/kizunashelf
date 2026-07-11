@@ -5789,15 +5789,16 @@
         ]
       },
       "CalendarDay": {
+        "description": "One day in the month grid. Its `items` are already collapsed per entity — the\nsame `(date, entity)` merge the activity feed uses ([`ActivityItem`]) — so a\nsingle entity that has a dated field, an aired episode, and a daily-note\nmention on this day is one item with three entries, not three items.",
         "type": "object",
         "properties": {
           "date": {
             "type": "string"
           },
-          "entries": {
+          "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CalendarEntry"
+              "$ref": "#/components/schemas/ActivityItem"
             }
           },
           "counts": {
@@ -5806,236 +5807,8 @@
         },
         "required": [
           "date",
-          "entries",
+          "items",
           "counts"
-        ]
-      },
-      "CalendarEntry": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "date": {
-            "type": "string"
-          },
-          "source": {
-            "$ref": "#/components/schemas/CalendarEntrySource"
-          },
-          "entity": {
-            "$ref": "#/components/schemas/EntitySummary"
-          },
-          "dateField": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "rawDate": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "notePath": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "snippets": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/CalendarSnippet"
-            }
-          },
-          "episode": {
-            "description": "Present only for `episode`-source entries: the episode this date belongs\nto (its number, title, and whether the date is its air or completion).",
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CalendarEpisode"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "date",
-          "source",
-          "entity"
-        ]
-      },
-      "CalendarEntrySource": {
-        "description": "Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode/track in the entity body.",
-        "type": "string",
-        "enum": [
-          "taxonomy",
-          "daily-note",
-          "episode"
-        ]
-      },
-      "CalendarSnippet": {
-        "type": "object",
-        "properties": {
-          "text": {
-            "type": "string"
-          },
-          "heading": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "line": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "text",
-          "line"
-        ]
-      },
-      "CalendarEpisode": {
-        "description": "The item behind an `episode`-source calendar entry.",
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "role": {
-            "$ref": "#/components/schemas/EpisodeDateRole"
-          },
-          "heading": {
-            "description": "The schema-defined heading of the section this item lives under (e.g.\n\"Episodes\", \"Tracks\", \"Tasks\"), so clients label it per the entity's type\nrather than with a hardcoded term.",
-            "type": "string"
-          }
-        },
-        "required": [
-          "key",
-          "title",
-          "role",
-          "heading"
-        ]
-      },
-      "EpisodeDateRole": {
-        "description": "Which episode date a calendar placement came from: the air/release date\n(`📅`, \"scheduled\") or the completion date (`✅`, \"completed\").",
-        "type": "string",
-        "enum": [
-          "scheduled",
-          "completed"
-        ]
-      },
-      "CalendarDayCounts": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "taxonomy": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "dailyNotes": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "episodes": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "total",
-          "taxonomy",
-          "dailyNotes",
-          "episodes"
-        ]
-      },
-      "ActivityQuery": {
-        "type": "object",
-        "properties": {
-          "cursor": {
-            "description": "Opaque `YYYY-MM` cursor from the previous page.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "today": {
-            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so `recent` /\n`up-next` / `catch-up` are judged against the user's day rather than a UTC\nserver clock. Falls back to the server's UTC date.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "limit": {
-            "description": "Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.",
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
-          },
-          "type": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "source": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "mode": {
-            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "ActivityResponse": {
-        "type": "object",
-        "properties": {
-          "generatedAt": {
-            "type": "string"
-          },
-          "cursor": {
-            "description": "The next cursor (`YYYY-MM`) to load the following page, or `None` at the\nend of the feed.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActivityItem"
-            }
-          }
-        },
-        "required": [
-          "generatedAt",
-          "items"
         ]
       },
       "ActivityItem": {
@@ -6138,6 +5911,46 @@
           "source"
         ]
       },
+      "CalendarEntrySource": {
+        "description": "Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode/track in the entity body.",
+        "type": "string",
+        "enum": [
+          "taxonomy",
+          "daily-note",
+          "episode"
+        ]
+      },
+      "CalendarSnippet": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "heading": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "line": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "text",
+          "line"
+        ]
+      },
+      "EpisodeDateRole": {
+        "description": "Which episode date a calendar placement came from: the air/release date\n(`📅`, \"scheduled\") or the completion date (`✅`, \"completed\").",
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "completed"
+        ]
+      },
       "ActivityEpisodeRef": {
         "type": "object",
         "properties": {
@@ -6151,6 +5964,108 @@
         "required": [
           "key",
           "title"
+        ]
+      },
+      "CalendarDayCounts": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "taxonomy": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "dailyNotes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "episodes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "total",
+          "taxonomy",
+          "dailyNotes",
+          "episodes"
+        ]
+      },
+      "ActivityQuery": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "description": "Opaque `YYYY-MM` cursor from the previous page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "today": {
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date — so `recent` /\n`up-next` / `catch-up` are judged against the user's day rather than a UTC\nserver clock. Falls back to the server's UTC date.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limit": {
+            "description": "Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mode": {
+            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ActivityResponse": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "cursor": {
+            "description": "The next cursor (`YYYY-MM`) to load the following page, or `None` at the\nend of the feed.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            }
+          }
+        },
+        "required": [
+          "generatedAt",
+          "items"
         ]
       },
       "UpcomingQuery": {

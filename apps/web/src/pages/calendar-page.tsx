@@ -8,13 +8,13 @@ import { useSearchParams } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { calendarQuery, configQuery } from "@/api/queries";
 import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
-import { CalendarEntryItem } from "@/components/calendar/calendar-entry-item";
 import { AppFrame } from "@/components/layout/app-frame";
+import { ActivityCard } from "@/pages/activity-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useDateFormat } from "@/lib/locale";
-import { fieldLabelsByType } from "@/lib/type-config";
+import { coverTypeIds, fieldLabelsByType } from "@/lib/type-config";
 import type { CalendarDay } from "@/types/api";
 
 export function CalendarPage() {
@@ -48,6 +48,7 @@ export function CalendarPage() {
   const selectedDay =
     calendar.data?.days.find((day) => day.date === selectedDate) ?? calendar.data?.days[0];
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
+  const coverTypes = useMemo(() => coverTypeIds(config.data?.types), [config.data]);
 
   function setParam(key: string, value: string, defaultValue?: string, options?: { replace?: boolean }) {
     const next = new URLSearchParams(searchParams);
@@ -175,14 +176,19 @@ export function CalendarPage() {
               <h2 className="text-sm font-semibold">{selectedDay?.date ?? t`No date selected`}</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 {selectedDay
-                  ? plural(selectedDay.entries.length, { one: "# entry", other: "# entries" })
+                  ? plural(selectedDay.items.length, { one: "# entry", other: "# entries" })
                   : t`No entries`}
               </p>
             </header>
             <div className="flex max-h-[720px] flex-col gap-2 overflow-auto p-3">
-              {selectedDay && selectedDay.entries.length > 0 ? (
-                selectedDay.entries.map((entry) => (
-                  <CalendarEntryItem key={entry.id} entry={entry} labelsByType={fieldLabels} />
+              {selectedDay && selectedDay.items.length > 0 ? (
+                selectedDay.items.map((item) => (
+                  <ActivityCard
+                    key={`${item.date}-${item.entity.id}`}
+                    item={item}
+                    labels={fieldLabels}
+                    hasCover={coverTypes.has(item.entity.type)}
+                  />
                 ))
               ) : (
                 <div className="py-8 text-center text-sm text-muted-foreground">

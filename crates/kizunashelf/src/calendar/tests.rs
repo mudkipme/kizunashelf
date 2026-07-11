@@ -84,20 +84,6 @@ fn summary(entity_type: &str, type_label: &str, basename: &str) -> EntitySummary
 
 // --- date bucketing -------------------------------------------------------
 
-fn entry(id: &str, date: &str, source: CalendarEntrySource, title: &str) -> CalendarEntry {
-    CalendarEntry {
-        id: id.to_string(),
-        date: date.to_string(),
-        source,
-        entity: summary("anime", "Anime", title),
-        date_field: None,
-        raw_date: None,
-        note_path: None,
-        snippets: None,
-        episode: None,
-    }
-}
-
 #[test]
 fn calendar_days_length_matches_the_month() {
     assert_eq!(calendar_days(2023, 2, &[]).len(), 28); // non-leap February
@@ -107,15 +93,37 @@ fn calendar_days_length_matches_the_month() {
     assert!(calendar_days(2024, 13, &[]).is_empty()); // out-of-range month
 }
 
+/// One merged item per (date, entity), for exercising `calendar_days` directly.
+fn item(date: &str, title: &str, sources: &[CalendarEntrySource]) -> ActivityItem {
+    ActivityItem {
+        date: date.to_string(),
+        entity: summary("anime", "Anime", title),
+        entries: sources
+            .iter()
+            .map(|&source| ActivityEntry {
+                source,
+                date_field: None,
+                raw_date: None,
+                role: None,
+                note_path: None,
+                snippets: None,
+                episode_role: None,
+                heading: None,
+                episodes: None,
+            })
+            .collect(),
+    }
+}
+
 #[test]
-fn calendar_days_buckets_entries_and_counts_by_source() {
-    let entries = vec![
-        entry("e1", "2024-02-10", CalendarEntrySource::Taxonomy, "A"),
-        entry("e2", "2024-02-10", CalendarEntrySource::DailyNote, "B"),
-        entry("e3", "2024-02-11", CalendarEntrySource::Taxonomy, "C"),
-        entry("e4", "2024-03-01", CalendarEntrySource::Taxonomy, "D"), // other month
+fn calendar_days_buckets_items_and_counts_by_source() {
+    let items = vec![
+        item("2024-02-10", "A", &[CalendarEntrySource::Taxonomy]),
+        item("2024-02-10", "B", &[CalendarEntrySource::DailyNote]),
+        item("2024-02-11", "C", &[CalendarEntrySource::Taxonomy]),
+        item("2024-03-01", "D", &[CalendarEntrySource::Taxonomy]), // other month
     ];
-    let days = calendar_days(2024, 2, &entries);
+    let days = calendar_days(2024, 2, &items);
 
     let tenth = days.iter().find(|day| day.date == "2024-02-10").unwrap();
     assert_eq!(tenth.counts.total, 2);
@@ -125,33 +133,27 @@ fn calendar_days_buckets_entries_and_counts_by_source() {
     let eleventh = days.iter().find(|day| day.date == "2024-02-11").unwrap();
     assert_eq!(eleventh.counts.total, 1);
 
-    // The March entry never lands in a February day.
+    // The March item never lands in a February day.
     assert!(days
         .iter()
-        .flat_map(|day| &day.entries)
-        .all(|entry| entry.date.starts_with("2024-02")));
+        .flat_map(|day| &day.items)
+        .all(|item| item.date.starts_with("2024-02")));
 }
 
 #[test]
-fn compare_calendar_entries_orders_by_date_then_source_then_title() {
-    use std::cmp::Ordering;
-    let tax = |date: &str, title: &str| entry("x", date, CalendarEntrySource::Taxonomy, title);
-    let daily = |date: &str, title: &str| entry("x", date, CalendarEntrySource::DailyNote, title);
-
-    assert_eq!(
-        compare_calendar_entries(&tax("2024-01-01", "A"), &tax("2024-01-02", "A")),
-        Ordering::Less
-    );
-    // Same date: taxonomy sorts before daily-note regardless of title.
-    assert_eq!(
-        compare_calendar_entries(&tax("2024-01-01", "Z"), &daily("2024-01-01", "A")),
-        Ordering::Less
-    );
-    // Same date + source: by title.
-    assert_eq!(
-        compare_calendar_entries(&tax("2024-01-01", "A"), &tax("2024-01-01", "B")),
-        Ordering::Less
-    );
+fn calendar_days_order_items_within_a_day_by_type_then_title() {
+    let items = vec![
+        item("2024-02-10", "Zebra", &[CalendarEntrySource::Taxonomy]),
+        item("2024-02-10", "Apple", &[CalendarEntrySource::Taxonomy]),
+    ];
+    let days = calendar_days(2024, 2, &items);
+    let tenth = days.iter().find(|day| day.date == "2024-02-10").unwrap();
+    let titles: Vec<_> = tenth
+        .items
+        .iter()
+        .map(|item| item.entity.title.as_str())
+        .collect();
+    assert_eq!(titles, vec!["Apple", "Zebra"]);
 }
 
 // --- metadata date entries (schema-driven) -------------------------------
@@ -394,6 +396,71 @@ fn forward_and_back_record() -> EntityRecord {
         },
     ];
     rec
+}
+
+#[tokio::test]
+async fn build_calendar_merges_same_entity_same_day_into_one_item() {
+    let mut entity = summary("anime", "Anime", "Star Voyager");
+    entity.id = "anime:sv".to_string();
+    entity.dates = vec![date_value("aired", "2024-02-12")];
+    let mut rec = record(entity);
+    rec.episode_dates = vec![EpisodeDate {
+        key: "1".to_string(),
+        title: "Pilot".to_string(),
+        date: "2024-02-12".to_string(),
+        role: EpisodeDateRole::Completed,
+    }];
+    let library = Library::new(
+        activity_config(Some(vec!["Journal".to_string()])),
+        vec![rec],
+        Vec::new(),
+        Vec::new(),
+        String::new(),
+    );
+
+    let vfs = InMemoryVfs::new();
+    vfs.insert_file(
+        "Journal/2024-02-12.md",
+        "- watched [[Star Voyager]] 12 #Anime\n",
+    );
+
+    let response = build_calendar(
+        &library,
+        &vfs,
+        CalendarBuildOptions {
+            year: 2024,
+            month: 2,
+            entity_type: None,
+            source: CalendarSource::All,
+        },
+    )
+    .await
+    .unwrap();
+
+    // The dated field, the completed episode, and the daily-note mention all share
+    // (2024-02-12, anime:sv), so the day holds ONE item with three source entries
+    // rather than three separate cards.
+    let day = response
+        .days
+        .iter()
+        .find(|day| day.date == "2024-02-12")
+        .unwrap();
+    assert_eq!(day.items.len(), 1);
+    assert_eq!(day.counts.total, 1);
+    let sources: Vec<_> = day.items[0]
+        .entries
+        .iter()
+        .map(|entry| entry.source)
+        .collect();
+    assert!(sources.contains(&CalendarEntrySource::Taxonomy));
+    assert!(sources.contains(&CalendarEntrySource::Episode));
+    assert!(sources.contains(&CalendarEntrySource::DailyNote));
+    // Totals count merged cards, and per-source facets across them.
+    assert_eq!(response.totals.entries, 1);
+    assert_eq!(response.totals.days_with_entries, 1);
+    assert_eq!(response.totals.taxonomy, 1);
+    assert_eq!(response.totals.episodes, 1);
+    assert_eq!(response.totals.daily_notes, 1);
 }
 
 #[tokio::test]

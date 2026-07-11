@@ -110,11 +110,15 @@ pub struct CalendarEpisode {
     pub heading: String,
 }
 
+/// One day in the month grid. Its `items` are already collapsed per entity — the
+/// same `(date, entity)` merge the activity feed uses ([`ActivityItem`]) — so a
+/// single entity that has a dated field, an aired episode, and a daily-note
+/// mention on this day is one item with three entries, not three items.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CalendarDay {
     pub date: String,
-    pub entries: Vec<CalendarEntry>,
+    pub items: Vec<ActivityItem>,
     pub counts: CalendarDayCounts,
 }
 

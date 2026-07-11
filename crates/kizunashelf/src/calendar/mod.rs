@@ -17,32 +17,53 @@ use crate::types::{CanonicalStatus, DateRole, EntitySummary, EpisodeDateRole, Fi
 use crate::vfs::Vfs;
 use anyhow::Result;
 use chrono::Datelike;
-use mentions::{clean_mention_snippet, mention_blocks};
+use mentions::{clean_mention_snippet, mention_blocks, MarkdownMentionBlock};
 use std::collections::{HashMap, HashSet};
 
 /// Maximum character length of the cleaned context preview shown for a
 /// daily-note mention before it is truncated with an ellipsis.
 const SNIPPET_MAX_LENGTH: usize = 260;
 
+/// Maximum number of distinct mention snippets kept per note for one entity/date.
+const SNIPPET_MAX_PER_NOTE: usize = 5;
+
+/// Appends a cleaned snippet for a mention `block`, skipping it when a snippet
+/// with the same text is already present (the same mention line can recur across
+/// a note's blocks). Shared by the calendar/feed entry builder and the per-entity
+/// dates endpoint so both clean, dedup, and shape snippets identically.
+fn push_mention_snippet(snippets: &mut Vec<CalendarSnippet>, block: &MarkdownMentionBlock) {
+    let text = clean_mention_snippet(&block.text, SNIPPET_MAX_LENGTH);
+    if snippets.iter().any(|snippet| snippet.text == text) {
+        return;
+    }
+    snippets.push(CalendarSnippet {
+        text,
+        heading: block.heading.clone(),
+        line: block.line,
+    });
+}
+
 pub async fn build_calendar(
     library: &Library,
     vfs: &dyn Vfs,
     options: CalendarBuildOptions,
 ) -> Result<CalendarResponse> {
-    let mut entries = Vec::new();
-    if options.source != CalendarSource::DailyNote {
-        entries.extend(taxonomy_calendar_entries(library, &options));
-        // Episodes are entity-derived, so they ride with the taxonomy side.
-        entries.extend(episode_calendar_entries(library, &options));
-    }
-    if options.source != CalendarSource::Taxonomy {
-        // The single-month calendar view walks/indexes for just this month (no
-        // page-level context to reuse).
-        entries.extend(daily_note_calendar_entries(library, vfs, &options, None).await?);
-    }
-    entries.sort_by(compare_calendar_entries);
-    let days = calendar_days(options.year, options.month, &entries);
+    // The single-month calendar view walks/indexes for just this month (no
+    // page-level daily-note context to reuse).
+    let entries = collect_calendar_entries(library, vfs, &options, None).await?;
+    // Collapse every source into one item per (date, entity), exactly as the
+    // activity feed does. `All` mode keeps every fact — it's a pure merge with no
+    // recent/up-next filtering — so a client renders one card per entity per day.
+    let items = group_activity_items(library, entries, &calendar_activity_options(&options));
+    let days = calendar_days(options.year, options.month, &items);
 
+    let totals = CalendarTotals {
+        entries: days.iter().map(|day| day.items.len()).sum(),
+        taxonomy: days.iter().map(|day| day.counts.taxonomy).sum(),
+        daily_notes: days.iter().map(|day| day.counts.daily_notes).sum(),
+        episodes: days.iter().map(|day| day.counts.episodes).sum(),
+        days_with_entries: days.iter().filter(|day| !day.items.is_empty()).count(),
+    };
     Ok(CalendarResponse {
         generated_at: library.generated_at.clone(),
         year: options.year,
@@ -56,24 +77,47 @@ pub async fn build_calendar(
             }
             .to_string(),
         },
-        totals: CalendarTotals {
-            entries: entries.len(),
-            taxonomy: entries
-                .iter()
-                .filter(|entry| entry.source == CalendarEntrySource::Taxonomy)
-                .count(),
-            daily_notes: entries
-                .iter()
-                .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
-                .count(),
-            episodes: entries
-                .iter()
-                .filter(|entry| entry.source == CalendarEntrySource::Episode)
-                .count(),
-            days_with_entries: days.iter().filter(|day| !day.entries.is_empty()).count(),
-        },
+        totals,
         days,
     })
+}
+
+/// Activity-build options that turn [`group_activity_items`] into a pure per-
+/// `(date, entity)` collapse for the calendar: `All` mode keeps every fact (no
+/// recent/up-next filtering), and the single-month view needs no paging cursor.
+/// `today` is only read by the mode filters, so `All` leaves it empty.
+fn calendar_activity_options(options: &CalendarBuildOptions) -> ActivityBuildOptions {
+    ActivityBuildOptions {
+        cursor: None,
+        months: 1,
+        min_items: None,
+        entity_type: options.entity_type.clone(),
+        source: options.source,
+        mode: ActivityMode::All,
+        today: String::new(),
+    }
+}
+
+/// One month's raw calendar entries from every requested source (taxonomy dates,
+/// episode dates, daily-note mentions), before any per-`(date, entity)` merge.
+/// Shared by the calendar (single month, `daily_ctx: None`) and the activity feed
+/// (per page, reusing a prewalked [`DailyNoteFeedContext`]).
+async fn collect_calendar_entries(
+    library: &Library,
+    vfs: &dyn Vfs,
+    options: &CalendarBuildOptions,
+    daily_ctx: Option<&DailyNoteFeedContext>,
+) -> Result<Vec<CalendarEntry>> {
+    let mut entries = Vec::new();
+    if options.source != CalendarSource::DailyNote {
+        entries.extend(taxonomy_calendar_entries(library, options));
+        // Episodes are entity-derived, so they ride with the taxonomy side.
+        entries.extend(episode_calendar_entries(library, options));
+    }
+    if options.source != CalendarSource::Taxonomy {
+        entries.extend(daily_note_calendar_entries(library, vfs, options, daily_ctx).await?);
+    }
+    Ok(entries)
 }
 
 /// Builds one page of the reverse-chronological activity feed. Reuses the three
@@ -240,8 +284,8 @@ fn active_activity_months(library: &Library, options: &ActivityBuildOptions) -> 
     months
 }
 
-/// All calendar entries for one month, assembled exactly as [`build_calendar`]
-/// does minus the day bucketing.
+/// One month's calendar entries for the activity feed: the same source assembly
+/// as the calendar, but reusing the page-level prewalked daily-note context.
 async fn month_activity_entries(
     library: &Library,
     vfs: &dyn Vfs,
@@ -256,15 +300,7 @@ async fn month_activity_entries(
         entity_type: options.entity_type.clone(),
         source: options.source,
     };
-    let mut entries = Vec::new();
-    if options.source != CalendarSource::DailyNote {
-        entries.extend(taxonomy_calendar_entries(library, &build));
-        entries.extend(episode_calendar_entries(library, &build));
-    }
-    if options.source != CalendarSource::Taxonomy {
-        entries.extend(daily_note_calendar_entries(library, vfs, &build, daily_ctx).await?);
-    }
-    Ok(entries)
+    collect_calendar_entries(library, vfs, &build, daily_ctx).await
 }
 
 /// Groups a month's calendar entries by `(date, entity)` into activity items,
@@ -829,21 +865,14 @@ async fn entity_daily_note_entries(
                         note_path: note.relative_path.clone(),
                         snippets: Vec::new(),
                     });
-            let snippet = CalendarSnippet {
-                text: clean_mention_snippet(&block.text, SNIPPET_MAX_LENGTH),
-                heading: block.heading,
-                line: block.line,
-            };
-            if !entry.snippets.iter().any(|item| item.text == snippet.text) {
-                entry.snippets.push(snippet);
-            }
+            push_mention_snippet(&mut entry.snippets, &block);
         }
     }
 
     let mut entries: Vec<_> = grouped
         .into_values()
         .map(|mut entry| {
-            entry.snippets.truncate(5);
+            entry.snippets.truncate(SNIPPET_MAX_PER_NOTE);
             entry
         })
         .collect();
@@ -994,15 +1023,8 @@ fn daily_note_entries_from_files(
                     snippets: Some(Vec::new()),
                     episode: None,
                 });
-                let snippet = CalendarSnippet {
-                    text: clean_mention_snippet(&block.text, SNIPPET_MAX_LENGTH),
-                    heading: block.heading.clone(),
-                    line: block.line,
-                };
                 if let Some(snippets) = &mut entry.snippets {
-                    if !snippets.iter().any(|item| item.text == snippet.text) {
-                        snippets.push(snippet);
-                    }
+                    push_mention_snippet(snippets, &block);
                 }
             }
         }
@@ -1012,14 +1034,14 @@ fn daily_note_entries_from_files(
         .into_values()
         .map(|mut entry| {
             if let Some(snippets) = &mut entry.snippets {
-                snippets.truncate(5);
+                snippets.truncate(SNIPPET_MAX_PER_NOTE);
             }
             entry
         })
         .collect()
 }
 
-fn calendar_days(year: i32, month: u32, entries: &[CalendarEntry]) -> Vec<CalendarDay> {
+fn calendar_days(year: i32, month: u32, items: &[ActivityItem]) -> Vec<CalendarDay> {
     let count = chrono::NaiveDate::from_ymd_opt(year, month + 1, 1)
         .and_then(|date| date.pred_opt())
         .or_else(|| {
@@ -1032,57 +1054,45 @@ fn calendar_days(year: i32, month: u32, entries: &[CalendarEntry]) -> Vec<Calend
         // an out-of-range value here yields no day instead of panicking.
         .filter_map(|day| {
             let date = normalize_date(year, month, day)?;
-            let day_entries: Vec<_> = entries
+            let mut day_items: Vec<ActivityItem> = items
                 .iter()
-                .filter(|entry| entry.date == date)
+                .filter(|item| item.date == date)
                 .cloned()
                 .collect();
+            // Stable within-day order: by type label then title — the tail of the
+            // old per-entry ordering, now applied to the merged items. (Each item's
+            // own entries are already taxonomy → episode → daily-note from the fold.)
+            day_items.sort_by(|a, b| {
+                compare_string(&a.entity.type_label, &b.entity.type_label)
+                    .then_with(|| compare_string(&a.entity.title, &b.entity.title))
+            });
             Some(CalendarDay {
                 date,
-                counts: CalendarDayCounts {
-                    total: day_entries.len(),
-                    taxonomy: day_entries
-                        .iter()
-                        .filter(|entry| entry.source == CalendarEntrySource::Taxonomy)
-                        .count(),
-                    daily_notes: day_entries
-                        .iter()
-                        .filter(|entry| entry.source == CalendarEntrySource::DailyNote)
-                        .count(),
-                    episodes: day_entries
-                        .iter()
-                        .filter(|entry| entry.source == CalendarEntrySource::Episode)
-                        .count(),
-                },
-                entries: day_entries,
+                counts: calendar_day_counts(&day_items),
+                items: day_items,
             })
         })
         .collect()
 }
 
-fn compare_calendar_entries(a: &CalendarEntry, b: &CalendarEntry) -> std::cmp::Ordering {
-    let date_compare = compare_string(&a.date, &b.date);
-    if !date_compare.is_eq() {
-        return date_compare;
+/// Per-day counts over the merged items: `total` is the number of entity cards,
+/// and the per-source counts tally the source facets across those cards (so an
+/// episode binge folded into one entry counts once).
+fn calendar_day_counts(items: &[ActivityItem]) -> CalendarDayCounts {
+    let mut counts = CalendarDayCounts {
+        total: items.len(),
+        taxonomy: 0,
+        daily_notes: 0,
+        episodes: 0,
+    };
+    for entry in items.iter().flat_map(|item| &item.entries) {
+        match entry.source {
+            CalendarEntrySource::Taxonomy => counts.taxonomy += 1,
+            CalendarEntrySource::DailyNote => counts.daily_notes += 1,
+            CalendarEntrySource::Episode => counts.episodes += 1,
+        }
     }
-    if a.source != b.source {
-        // Stable per-source ordering within a day: taxonomy, then episodes, then
-        // daily notes.
-        return source_rank(a.source).cmp(&source_rank(b.source));
-    }
-    let type_compare = compare_string(&a.entity.type_label, &b.entity.type_label);
-    if !type_compare.is_eq() {
-        return type_compare;
-    }
-    compare_string(&a.entity.title, &b.entity.title)
-}
-
-fn source_rank(source: CalendarEntrySource) -> u8 {
-    match source {
-        CalendarEntrySource::Taxonomy => 0,
-        CalendarEntrySource::Episode => 1,
-        CalendarEntrySource::DailyNote => 2,
-    }
+    counts
 }
 
 fn entity_basename_index(library: &Library) -> HashMap<String, Vec<EntitySummary>> {

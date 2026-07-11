@@ -3,12 +3,12 @@ import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ImageIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { activityFeedQuery, configQuery } from "@/api/queries";
 import { AssetImage } from "@/components/assets/asset-image";
+import { CoverFallback } from "@/components/assets/cover-fallback";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { AppFrame } from "@/components/layout/app-frame";
 import { Badge } from "@/components/ui/badge";
@@ -198,7 +198,7 @@ export function ActivityPage() {
   );
 }
 
-function ActivityCard({
+export function ActivityCard({
   item,
   labels,
   hasCover,
@@ -219,7 +219,7 @@ function ActivityCard({
             <AssetImage
               src={item.entity.image}
               className="size-full object-cover"
-              fallback={<ImageIcon className="size-4 text-muted-foreground" />}
+              fallback={<CoverFallback type={item.entity.type} />}
             />
           </div>
         </Link>

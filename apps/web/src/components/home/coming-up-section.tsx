@@ -3,11 +3,11 @@ import type { MessageDescriptor } from "@lingui/core";
 import { msg, plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { configQuery, upcomingQuery } from "@/api/queries";
 import { AssetImage } from "@/components/assets/asset-image";
+import { CoverFallback } from "@/components/assets/cover-fallback";
 import { SectionHeader } from "@/components/home/section-header";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
@@ -114,7 +114,7 @@ function ComingUpCard({
           <AssetImage
             src={item.entity.image}
             className="size-full object-cover"
-            fallback={<ImageIcon className="size-4 text-muted-foreground" />}
+            fallback={<CoverFallback type={item.entity.type} />}
           />
         </div>
       ) : null}

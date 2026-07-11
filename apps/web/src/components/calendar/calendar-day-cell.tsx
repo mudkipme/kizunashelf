@@ -16,10 +16,9 @@ export function CalendarDayCell({
   const dayNumber = Number(day.date.slice(8, 10));
   const language = useTitleLanguage();
 
-  const uniqueEntries = day.entries.filter(
-    (entry, index, entries) =>
-      entries.findIndex((other) => other.entity.id === entry.entity.id) === index,
-  );
+  // `day.items` is already one entry per entity (the core merges same-entity,
+  // same-day facets), so no client-side dedup is needed.
+  const items = day.items;
 
   return (
     <button
@@ -35,23 +34,21 @@ export function CalendarDayCell({
           a couple px below their badge-less neighbors. */}
       <div className="flex items-start justify-between gap-2">
         <span className="text-xs font-medium leading-5">{dayNumber}</span>
-        {uniqueEntries.length > 0 ? (
-          <Badge variant="secondary">{uniqueEntries.length}</Badge>
-        ) : null}
+        {items.length > 0 ? <Badge variant="secondary">{items.length}</Badge> : null}
       </div>
 
       <div className="hidden min-w-0 flex-col gap-1 sm:flex">
-        {uniqueEntries.slice(0, 3).map((entry) => (
+        {items.slice(0, 3).map((item) => (
           <EntityTitle
-            key={entry.id}
+            key={`${item.date}-${item.entity.id}`}
             as="span"
-            entity={entry.entity}
+            entity={item.entity}
             language={language}
             className="truncate text-xs text-muted-foreground"
           />
         ))}
-        {uniqueEntries.length > 3 ? (
-          <span className="text-xs text-muted-foreground">+{uniqueEntries.length - 3}</span>
+        {items.length > 3 ? (
+          <span className="text-xs text-muted-foreground">+{items.length - 3}</span>
         ) : null}
       </div>
     </button>

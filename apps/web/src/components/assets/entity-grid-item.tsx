@@ -2,6 +2,7 @@ import { Plural } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
+import { CoverFallback } from "@/components/assets/cover-fallback";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { StatusBadge } from "@/components/entities/status-badge";
@@ -45,9 +46,7 @@ export function EntityGridItem({
           <AssetImage
             src={entity.image}
             className="size-full object-cover"
-            fallback={
-              <span className="text-sm font-medium text-muted-foreground">{entity.typeLabel}</span>
-            }
+            fallback={<CoverFallback type={entity.type} />}
           />
         </div>
       ) : null}

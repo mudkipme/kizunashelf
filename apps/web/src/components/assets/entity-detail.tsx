@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
+import { CoverFallback } from "@/components/assets/cover-fallback";
 import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
 import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
@@ -449,11 +450,7 @@ function RelationGridItem({
         src={summary?.image}
         alt={label}
         className="aspect-square w-full rounded-md border object-cover"
-        fallback={
-          <span className="flex aspect-square w-full items-center justify-center rounded-md border bg-muted text-sm font-medium text-muted-foreground">
-            {(summary?.typeLabel ?? label).slice(0, 2)}
-          </span>
-        }
+        fallback={<CoverFallback type={summary?.type} className="aspect-square w-full rounded-md border" />}
       />
       <span className="line-clamp-2 text-xs leading-4">{label}</span>
     </>

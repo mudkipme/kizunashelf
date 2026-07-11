@@ -888,8 +888,8 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
         .find(|day| day["date"] == "2025-04-21")
         .unwrap();
     assert_eq!(april_21["counts"]["dailyNotes"], 2);
-    assert!(has_entity_title(&april_21["entries"], "星之航路"));
-    assert!(has_entity_title(&april_21["entries"], "Moon Quest"));
+    assert!(has_entity_title(&april_21["items"], "星之航路"));
+    assert!(has_entity_title(&april_21["items"], "Moon Quest"));
 
     let taxonomy_only = server
         .ok_json("/api/calendar?year=2025&month=4&source=taxonomy&type=anime")
@@ -903,7 +903,7 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
         .await;
     assert_eq!(daily_note_only["totals"]["entries"], 1);
     assert_eq!(
-        daily_note_only["days"][20]["entries"][0]["notePath"],
+        daily_note_only["days"][20]["items"][0]["entries"][0]["notePath"],
         "Daily Notes/2025-04-21.md"
     );
 

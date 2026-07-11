@@ -1,4 +1,5 @@
 import { AssetImage } from "@/components/assets/asset-image";
+import { CoverFallback } from "@/components/assets/cover-fallback";
 import type { EntitySummary } from "@/types/api";
 
 export function EntityCover({
@@ -10,21 +11,14 @@ export function EntityCover({
   size?: "sm" | "lg";
   lightbox?: boolean;
 }) {
-  const className =
-    size === "lg" ? "size-20 rounded-md object-cover" : "size-11 rounded-md object-cover";
+  const size2 = size === "lg" ? "size-20" : "size-11";
 
   return (
     <AssetImage
       src={entity.image}
-      className={className}
+      className={`${size2} rounded-md object-cover`}
       lightbox={lightbox}
-      fallback={
-        <span
-          className={`${className} flex items-center justify-center border bg-muted text-xs font-medium text-muted-foreground`}
-        >
-          {entity.typeLabel.slice(0, 2)}
-        </span>
-      }
+      fallback={<CoverFallback type={entity.type} className={`${size2} rounded-md border`} />}
     />
   );
 }

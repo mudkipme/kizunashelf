@@ -88,6 +88,18 @@ export function typeLabelsById(typeConfigs: TypeConfig[] | undefined) {
   return new Map((typeConfigs ?? []).map((typeConfig) => [typeConfig.id, typeConfig.label]));
 }
 
+/// Maps each entity type's id to its configured emoji icon (when set), so a bare
+/// type id can render the type's glyph — e.g. the shared cover placeholder.
+/// Mirrors `typeLabelsById`; whitespace-only icons are treated as unset.
+export function typeIconsById(typeConfigs: TypeConfig[] | undefined) {
+  const icons = new Map<string, string>();
+  for (const typeConfig of typeConfigs ?? []) {
+    const icon = typeConfig.icon?.trim();
+    if (icon) icons.set(typeConfig.id, icon);
+  }
+  return icons;
+}
+
 /// Whether a type declares a cover — an `image`/`imageList` field. Covers are
 /// shown for types that have one (with a placeholder when the entity has no
 /// value); types without one show no cover slot at all.

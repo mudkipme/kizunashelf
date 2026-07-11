@@ -2,6 +2,7 @@ import { Plural } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
+import { CoverFallback } from "@/components/assets/cover-fallback";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { useTitleLanguage } from "@/lib/language";
@@ -25,11 +26,7 @@ export function HomeEntityCard({
         <AssetImage
           src={entity.image}
           className="size-full object-cover transition-transform group-hover:scale-[1.02]"
-          fallback={
-            <span className="px-3 text-center text-sm font-medium text-muted-foreground">
-              {entity.typeLabel}
-            </span>
-          }
+          fallback={<CoverFallback type={entity.type} />}
         />
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-2.5">

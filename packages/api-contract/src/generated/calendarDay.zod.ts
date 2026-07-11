@@ -6,18 +6,18 @@
  */
 import { z as zod } from 'zod';
 
-export const calendarDayEntriesItemEntityDatesItemParsedOneMonthMin = 0;
+export const calendarDayItemsItemEntityDatesItemParsedOneMonthMin = 0;
 
-export const calendarDayEntriesItemEntityDatesItemParsedOneDayMin = 0;
+export const calendarDayItemsItemEntityDatesItemParsedOneDayMin = 0;
 
-export const calendarDayEntriesItemEntityTagsDefault = [];
-export const calendarDayEntriesItemEntityEpisodeProgressOneWatchedMin = 0;
+export const calendarDayItemsItemEntityTagsDefault = [];
+export const calendarDayItemsItemEntityEpisodeProgressOneWatchedMin = 0;
 
-export const calendarDayEntriesItemEntityEpisodeProgressOneTotalMin = 0;
+export const calendarDayItemsItemEntityEpisodeProgressOneTotalMin = 0;
 
-export const calendarDayEntriesItemEntityRelationCountMin = 0;
+export const calendarDayItemsItemEntityRelationCountMin = 0;
 
-export const calendarDayEntriesItemSnippetsItemLineMin = 0;
+export const calendarDayItemsItemEntriesItemSnippetsItemLineMin = 0;
 
 export const calendarDayCountsTotalMin = 0;
 
@@ -30,10 +30,8 @@ export const calendarDayCountsEpisodesMin = 0;
 
 export const CalendarDay = zod.object({
   "date": zod.string(),
-  "entries": zod.array(zod.object({
-  "id": zod.string(),
+  "items": zod.array(zod.object({
   "date": zod.string(),
-  "source": zod.enum(['taxonomy', 'daily-note', 'episode']).describe('Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode\/track in the entity body.'),
   "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),
@@ -45,8 +43,8 @@ export const CalendarDay = zod.object({
   "value": zod.string(),
   "parsed": zod.union([zod.object({
   "year": zod.number(),
-  "month": zod.number().min(calendarDayEntriesItemEntityDatesItemParsedOneMonthMin).nullish(),
-  "day": zod.number().min(calendarDayEntriesItemEntityDatesItemParsedOneDayMin).nullish(),
+  "month": zod.number().min(calendarDayItemsItemEntityDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.number().min(calendarDayItemsItemEntityDatesItemParsedOneDayMin).nullish(),
   "season": zod.string().nullish(),
   "seasonKey": zod.string().nullish()
 }),zod.null()]).optional(),
@@ -57,40 +55,44 @@ export const CalendarDay = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
-  "tags": zod.array(zod.string()).default(calendarDayEntriesItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "tags": zod.array(zod.string()).default(calendarDayItemsItemEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "episodeProgress": zod.union([zod.object({
-  "watched": zod.number().min(calendarDayEntriesItemEntityEpisodeProgressOneWatchedMin),
-  "total": zod.number().min(calendarDayEntriesItemEntityEpisodeProgressOneTotalMin)
+  "watched": zod.number().min(calendarDayItemsItemEntityEpisodeProgressOneWatchedMin),
+  "total": zod.number().min(calendarDayItemsItemEntityEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "status": zod.union([zod.object({
   "field": zod.string(),
   "value": zod.string(),
   "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
 }).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
-  "relationCount": zod.number().min(calendarDayEntriesItemEntityRelationCountMin)
+  "relationCount": zod.number().min(calendarDayItemsItemEntityRelationCountMin)
 }),
-  "dateField": zod.string().nullish(),
+  "entries": zod.array(zod.object({
+  "source": zod.enum(['taxonomy', 'daily-note', 'episode']).describe('Identifies whether a calendar entry came from taxonomy metadata, a daily\nnote, or a dated episode\/track in the entity body.'),
+  "dateField": zod.string().nullish().describe('`taxonomy`: the date field\'s name, its raw value, and its resolved role.'),
   "rawDate": zod.string().nullish(),
-  "notePath": zod.string().nullish(),
+  "role": zod.union([zod.enum(['planning', 'started', 'completed', 'event']),zod.null()]).optional(),
+  "notePath": zod.string().nullish().describe('`daily-note`: the note path and the mention snippets for this entity\/date.'),
   "snippets": zod.array(zod.object({
   "text": zod.string(),
   "heading": zod.string().nullish(),
-  "line": zod.number().min(calendarDayEntriesItemSnippetsItemLineMin)
+  "line": zod.number().min(calendarDayItemsItemEntriesItemSnippetsItemLineMin)
 })).nullish(),
-  "episode": zod.union([zod.object({
+  "episodeRole": zod.union([zod.enum(['scheduled', 'completed']).describe('Which episode date a calendar placement came from: the air\/release date\n(`📅`, \"scheduled\") or the completion date (`✅`, \"completed\").'),zod.null()]).optional().describe('`episode`: the air-vs-completion role, the schema section heading, and the\nepisodes sharing this date (a binge collapses into one entry).'),
+  "heading": zod.string().nullish(),
+  "episodes": zod.array(zod.object({
   "key": zod.string(),
-  "title": zod.string(),
-  "role": zod.enum(['scheduled', 'completed']).describe('Which episode date a calendar placement came from: the air\/release date\n(`📅`, \"scheduled\") or the completion date (`✅`, \"completed\").'),
-  "heading": zod.string().describe('The schema-defined heading of the section this item lives under (e.g.\n\"Episodes\", \"Tracks\", \"Tasks\"), so clients label it per the entity\'s type\nrather than with a hardcoded term.')
-}).describe('The item behind an `episode`-source calendar entry.'),zod.null()]).optional().describe('Present only for `episode`-source entries: the episode this date belongs\nto (its number, title, and whether the date is its air or completion).')
-})),
+  "title": zod.string()
+})).nullish()
+}).describe('A constituent of an [`ActivityItem`], discriminated by `source` — the same\nflat-struct-plus-discriminator shape as [`CalendarEntry`] (the contract has no\ntagged enums). Only the fields for that source are populated.'))
+}).describe('One reverse-chronological activity item: everything that happened to a single\nentity on a single date, collapsed together. A daily-note mention, a\nstarted\/completed date stamp, and episode air\/completion dates that share a\n`(date, entity)` all land in one item\'s `entries`.')),
   "counts": zod.object({
   "total": zod.number().min(calendarDayCountsTotalMin),
   "taxonomy": zod.number().min(calendarDayCountsTaxonomyMin),
   "dailyNotes": zod.number().min(calendarDayCountsDailyNotesMin),
   "episodes": zod.number().min(calendarDayCountsEpisodesMin)
 })
-})
+}).describe('One day in the month grid. Its `items` are already collapsed per entity — the\nsame `(date, entity)` merge the activity feed uses ([`ActivityItem`]) — so a\nsingle entity that has a dated field, an aired episode, and a daily-note\nmention on this day is one item with three entries, not three items.')
 
 export type CalendarDay = zod.input<typeof CalendarDay>;
 export type CalendarDayOutput = zod.output<typeof CalendarDay>;
