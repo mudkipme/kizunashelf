@@ -60,6 +60,13 @@ pub fn all_tags(library: &Library) -> Vec<String> {
     set.into_iter().collect()
 }
 
+/// Upper bound on a requested page size, shared by the entity list and smart-list
+/// results endpoints. Generous because the in-process native clients (no network
+/// hop) fetch a whole type/list in one page to keep scroll position across
+/// navigation; the web still paginates in small pages of its own choosing. It
+/// only caps abusive requests, not normal ones.
+pub(crate) const MAX_PAGE_SIZE: i64 = 10_000;
+
 /// Filters, sorts, and paginates the library's entities into an
 /// [`EntityListResponse`] per the parsed `params`.
 pub fn build_entity_list(library: &Library, params: &EntityListParams) -> EntityListResponse {
@@ -153,7 +160,7 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
         }
     };
 
-    let page_size = clamp_number(params.page_size, 1, 100);
+    let page_size = clamp_number(params.page_size, 1, MAX_PAGE_SIZE);
     let requested_page = clamp_number(params.page, 1, i64::MAX);
     let total = summaries.len();
     let total_pages = std::cmp::max(1, ((total as f64) / (page_size as f64)).ceil() as i64);

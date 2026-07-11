@@ -390,7 +390,7 @@ fn paginate(
     page: f64,
     page_size: f64,
 ) -> EntityListResponse {
-    let page_size = clamp_number(page_size, 1, 100);
+    let page_size = clamp_number(page_size, 1, crate::entities::MAX_PAGE_SIZE);
     let requested_page = clamp_number(page, 1, i64::MAX);
     let total = records.len();
     let total_pages = std::cmp::max(1, ((total as f64) / (page_size as f64)).ceil() as i64);
