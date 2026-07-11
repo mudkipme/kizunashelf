@@ -15,7 +15,6 @@ export type {
   AssetUploadRequest,
   AssetUploadResponse,
   CalendarDay,
-  CalendarEntry,
   CalendarResponse,
   CalendarSnippet,
   Capabilities,

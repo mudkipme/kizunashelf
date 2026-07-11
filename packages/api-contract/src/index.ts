@@ -191,8 +191,6 @@ export type ExternalProviderSummary = ExternalSearchResponse["providers"][number
 export type EntityDateValue = EntitySummary["dates"][number];
 export type Relation = EntityDetailResponse["relations"][number];
 export type CalendarDay = CalendarResponse["days"][number];
-export type CalendarEntry = CalendarDay["entries"][number];
-export type CalendarSnippet = NonNullable<CalendarEntry["snippets"]>[number];
 export type CleanupQueueSummary = CleanupQueuesResponse["queues"][number];
 export type CleanupUnresolvedRelation = CleanupQueuesResponse["unresolvedRelations"][number];
 export type HomeSectionResponse = HomeResponse["sections"][number];
@@ -205,3 +203,7 @@ export type EntityDateDailyNoteEntry = EntityDatesResponse["dailyNotes"][number]
 export type ActivityItem = ActivityResponse["items"][number];
 export type ActivityEntry = ActivityItem["entries"][number];
 export type ActivityEpisodeRef = NonNullable<ActivityEntry["episodes"]>[number];
+// A calendar day's `items` are `ActivityItem`s (same shape as the feed); its
+// snippets ride on each entry's daily-note source. `CalendarEntry` is gone —
+// the calendar no longer exposes a flat per-source entry.
+export type CalendarSnippet = NonNullable<ActivityEntry["snippets"]>[number];
