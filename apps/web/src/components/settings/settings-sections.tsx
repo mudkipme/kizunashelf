@@ -3,7 +3,7 @@ import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, PlusIcon } from "lucide-react";
 
 import { allTagsQuery } from "@/api/queries";
 import { RuleBuilder, ruleFieldMetas } from "@/components/smart-lists/rule-builder";
@@ -13,6 +13,7 @@ import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
 import {
   externalFieldOptionsForSource,
+  externalSourceLabel,
   externalSourceOptions,
   externalTypeOptionsForSource,
   externalTypesForSource,
@@ -49,7 +50,7 @@ import {
   fieldTypeOptions,
   type FieldOptionKey,
 } from "./settings-field-descriptors";
-import { arrayEditor } from "./settings-model";
+import { arrayEditor, externalRefProviderPriority } from "./settings-model";
 
 export function DailyNotesEditor({
   config,
@@ -290,6 +291,7 @@ export function EntityTypeForm({
         <ConfigSubsection title={t`Providers`}>
           <ExternalPriorityEditor
             providerCatalog={providerCatalog}
+            fields={config.fields}
             values={config.externalPriority ?? []}
             onChange={(externalPriority) => onChange({ ...config, externalPriority })}
           />
@@ -407,59 +409,61 @@ function ConfigSubsection({ title, children }: { title: string; children: ReactN
 
 function ExternalPriorityEditor({
   providerCatalog,
+  fields,
   values,
   onChange,
 }: {
   providerCatalog?: ExternalProviderCatalog;
+  fields: FieldConfig[];
   values: string[];
   onChange: (values: string[]) => void;
 }) {
   const { t } = useLingui();
-  const sourceOptions = externalSourceOptions(providerCatalog);
-  const available = sourceOptions.filter((option) => !values.includes(option.source));
-  const list = arrayEditor(values, onChange);
+  const ordered = externalRefProviderPriority(fields, values);
+
+  function move(index: number, offset: -1 | 1) {
+    const destination = index + offset;
+    if (destination < 0 || destination >= ordered.length) return;
+    const next = [...ordered];
+    [next[index], next[destination]] = [next[destination], next[index]];
+    onChange(next);
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground"><Trans>Provider priority</Trans></span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={available.length === 0}
-          onClick={() => list.append(available[0]?.source ?? "")}
-        >
-          <PlusIcon data-icon="inline-start" />
-          <Trans>Provider</Trans>
-        </Button>
-      </div>
+      <span className="text-xs font-medium text-muted-foreground"><Trans>Provider priority</Trans></span>
       <div className="flex flex-col gap-2">
-        {values.map((value, index) => {
-          const options = sourceOptions.filter(
-            (option) => option.source === value || !values.includes(option.source),
-          );
+        {ordered.map((source, index) => {
+          const label = externalSourceLabel(providerCatalog, source);
           return (
-            <div key={index} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
-              <span className="text-xs font-medium tabular-nums text-muted-foreground">{index + 1}</span>
-              <Select
-                value={value}
-                onChange={(event) => list.update(index, event.target.value)}
-                aria-label={t`Provider priority`}
+            <div key={source} className="flex items-center gap-2 rounded-md border px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                disabled={index === 0}
+                aria-label={t`Move ${label} up`}
+                onClick={() => move(index, -1)}
               >
-                {options.map((option) => (
-                  <option key={option.source} value={option.source}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-              <IconButton
-                label={t`Remove provider priority`}
-                onClick={() => list.remove(index)}
-              />
+                <ArrowUpIcon />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                disabled={index === ordered.length - 1}
+                aria-label={t`Move ${label} down`}
+                onClick={() => move(index, 1)}
+              >
+                <ArrowDownIcon />
+              </Button>
             </div>
           );
         })}
-        {values.length === 0 ? <EmptyConfigLine><Trans>Default provider order is used.</Trans></EmptyConfigLine> : null}
+        {ordered.length === 0 ? (
+          <EmptyConfigLine><Trans>Add an External ref field with a provider to configure priority.</Trans></EmptyConfigLine>
+        ) : null}
       </div>
     </div>
   );

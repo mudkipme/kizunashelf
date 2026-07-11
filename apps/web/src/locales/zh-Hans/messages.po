@@ -21,7 +21,7 @@ msgstr "（已记录）"
 msgid " (new note)"
 msgstr "（新建笔记）"
 
-#: src/components/settings/settings-sections.tsx:390
+#: src/components/settings/settings-sections.tsx:392
 msgid "(daily-notes default)"
 msgstr "（每日笔记默认值）"
 
@@ -345,7 +345,7 @@ msgstr "活动"
 
 #: src/components/entities/metadata-inputs.tsx:641
 #: src/components/settings/settings-controls.tsx:70
-#: src/components/settings/settings-sections.tsx:945
+#: src/components/settings/settings-sections.tsx:949
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
 #: src/pages/library-page.tsx:397
@@ -363,6 +363,10 @@ msgstr "添加「{item}」"
 #: src/components/settings/preset-picker.tsx:400
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "为 <1>{1}</1> 添加一个 <0>{0}</0> 关联"
+
+#: src/components/settings/settings-sections.tsx:465
+msgid "Add an External ref field with a provider to configure priority."
+msgstr "添加已配置数据源的“外部引用”字段，即可设置优先级。"
 
 #: src/components/settings/settings-dialogs.tsx:207
 msgid "Add built-in type"
@@ -385,7 +389,7 @@ msgstr "添加条目"
 msgid "Add Entity"
 msgstr "添加条目"
 
-#: src/components/settings/settings-sections.tsx:913
+#: src/components/settings/settings-sections.tsx:917
 msgid "Add enum options above to map them to statuses."
 msgstr "在上方添加枚举选项以将其映射到状态。"
 
@@ -533,7 +537,7 @@ msgid "Applying…"
 msgstr "正在应用…"
 
 #: src/components/assets/asset-toolbar.tsx:114
-#: src/components/settings/settings-sections.tsx:211
+#: src/components/settings/settings-sections.tsx:212
 #: src/pages/smart-list-page.tsx:552
 msgid "Ascending"
 msgstr "升序"
@@ -563,7 +567,7 @@ msgstr "返回首页"
 msgid "Basename"
 msgstr "基础文件名"
 
-#: src/components/settings/settings-sections.tsx:275
+#: src/components/settings/settings-sections.tsx:276
 msgid "Basics"
 msgstr "基础信息"
 
@@ -625,11 +629,11 @@ msgstr "更改完成日期"
 msgid "Changes the list's name."
 msgstr "更改列表的名称。"
 
-#: src/components/settings/settings-sections.tsx:471
+#: src/components/settings/settings-sections.tsx:475
 msgid "Checklist (per-item checkboxes)"
 msgstr "清单（逐项复选框）"
 
-#: src/components/settings/settings-sections.tsx:760
+#: src/components/settings/settings-sections.tsx:764
 msgid "Chinese"
 msgstr "中文"
 
@@ -665,9 +669,9 @@ msgid "Coming up"
 msgstr "即将到来"
 
 #: src/components/assets/quick-log-dialog.tsx:31
-#: src/components/settings/settings-sections.tsx:699
-#: src/components/settings/settings-sections.tsx:741
-#: src/components/settings/settings-sections.tsx:820
+#: src/components/settings/settings-sections.tsx:703
+#: src/components/settings/settings-sections.tsx:745
+#: src/components/settings/settings-sections.tsx:824
 #: src/pages/activity-page.tsx:46
 #: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
@@ -781,7 +785,7 @@ msgstr "创建保管库（{0}）"
 msgid "Creating…"
 msgstr "正在创建…"
 
-#: src/components/settings/settings-sections.tsx:172
+#: src/components/settings/settings-sections.tsx:173
 msgid "Criteria"
 msgstr "条件"
 
@@ -829,7 +833,7 @@ msgstr "每日笔记"
 msgid "Daily Notes {0}"
 msgstr "每日笔记 {0}"
 
-#: src/components/settings/settings-sections.tsx:341
+#: src/components/settings/settings-sections.tsx:343
 msgid "Daily-note logging"
 msgstr "每日笔记记录"
 
@@ -852,12 +856,12 @@ msgstr "日期"
 msgid "Date"
 msgstr "日期"
 
-#: src/components/settings/settings-sections.tsx:77
+#: src/components/settings/settings-sections.tsx:78
 msgid "Date format"
 msgstr "日期格式"
 
 #. placeholder {0}: fieldDisplayLabel(field)
-#: src/components/settings/settings-sections.tsx:144
+#: src/components/settings/settings-sections.tsx:145
 msgid "Date: {0}"
 msgstr "日期：{0}"
 
@@ -882,17 +886,13 @@ msgstr "日期与剧集"
 msgid "days"
 msgstr "天"
 
-#: src/components/settings/settings-sections.tsx:210
+#: src/components/settings/settings-sections.tsx:211
 msgid "Default"
 msgstr "默认"
 
-#: src/components/settings/settings-sections.tsx:104
+#: src/components/settings/settings-sections.tsx:105
 msgid "Default line format"
 msgstr "默认行格式"
-
-#: src/components/settings/settings-sections.tsx:462
-msgid "Default provider order is used."
-msgstr "使用默认数据源顺序。"
 
 #: src/pages/entity-page.tsx:463
 #: src/pages/list-detail-page.tsx:414
@@ -907,7 +907,7 @@ msgid "Delete this smart list?"
 msgstr "删除此智能列表？"
 
 #: src/components/assets/asset-toolbar.tsx:115
-#: src/components/settings/settings-sections.tsx:212
+#: src/components/settings/settings-sections.tsx:213
 #: src/pages/smart-list-page.tsx:553
 msgid "Descending"
 msgstr "降序"
@@ -929,7 +929,7 @@ msgid "Details"
 msgstr "详情"
 
 #: src/components/assets/asset-toolbar.tsx:112
-#: src/components/settings/settings-sections.tsx:199
+#: src/components/settings/settings-sections.tsx:200
 #: src/pages/smart-list-page.tsx:539
 msgid "Direction"
 msgstr "方向"
@@ -946,7 +946,7 @@ msgstr "丢弃"
 msgid "Discard unsaved changes?"
 msgstr "丢弃未保存的更改？"
 
-#: src/components/settings/settings-sections.tsx:621
+#: src/components/settings/settings-sections.tsx:625
 msgid "Display name"
 msgstr "显示名称"
 
@@ -995,7 +995,7 @@ msgstr "将项目拖到此处"
 msgid "Drag to reorder"
 msgstr "拖动以重新排序"
 
-#: src/components/settings/settings-sections.tsx:821
+#: src/components/settings/settings-sections.tsx:825
 #: src/pages/import-wizard-page.tsx:61
 msgid "Dropped"
 msgstr "弃坑"
@@ -1057,7 +1057,7 @@ msgstr "启用"
 msgid "ends with"
 msgstr "结尾为:"
 
-#: src/components/settings/settings-sections.tsx:762
+#: src/components/settings/settings-sections.tsx:766
 msgid "English"
 msgstr "英语"
 
@@ -1079,7 +1079,7 @@ msgstr "未找到条目"
 msgid "Entity type"
 msgstr "条目类型"
 
-#: src/components/settings/settings-sections.tsx:697
+#: src/components/settings/settings-sections.tsx:701
 msgid "Enum options"
 msgstr "枚举选项"
 
@@ -1088,16 +1088,16 @@ msgstr "枚举选项"
 msgid "Episodes"
 msgstr "剧集"
 
-#: src/components/settings/settings-sections.tsx:742
+#: src/components/settings/settings-sections.tsx:746
 #: src/pages/activity-page.tsx:48
 msgid "Event"
 msgstr "事件"
 
-#: src/components/settings/settings-sections.tsx:971
+#: src/components/settings/settings-sections.tsx:975
 msgid "External field"
 msgstr "外部字段"
 
-#: src/components/settings/settings-sections.tsx:936
+#: src/components/settings/settings-sections.tsx:940
 msgid "External field mappings"
 msgstr "外部字段映射"
 
@@ -1105,7 +1105,7 @@ msgstr "外部字段映射"
 msgid "External Match"
 msgstr "外部匹配"
 
-#: src/components/settings/settings-sections.tsx:553
+#: src/components/settings/settings-sections.tsx:557
 msgid "External metadata"
 msgstr "外部元数据"
 
@@ -1113,13 +1113,13 @@ msgstr "外部元数据"
 msgid "external ref"
 msgstr "外部引用"
 
-#: src/components/settings/settings-sections.tsx:771
-#: src/components/settings/settings-sections.tsx:960
+#: src/components/settings/settings-sections.tsx:775
+#: src/components/settings/settings-sections.tsx:964
 msgid "External source"
 msgstr "外部来源"
 
-#: src/components/settings/settings-sections.tsx:1008
-#: src/components/settings/settings-sections.tsx:1014
+#: src/components/settings/settings-sections.tsx:1012
+#: src/components/settings/settings-sections.tsx:1018
 msgid "External types"
 msgstr "外部类型"
 
@@ -1135,7 +1135,7 @@ msgstr "正在从 {0} 获取你的库…"
 #: src/components/settings/settings-dialogs.tsx:337
 #: src/components/settings/settings-dialogs.tsx:397
 #: src/components/settings/settings-dialogs.tsx:407
-#: src/components/settings/settings-sections.tsx:606
+#: src/components/settings/settings-sections.tsx:610
 #: src/components/smart-lists/rule-builder.tsx:700
 msgid "Field"
 msgstr "字段"
@@ -1150,15 +1150,15 @@ msgstr "字段"
 msgid "File name"
 msgstr "文件名"
 
-#: src/components/settings/settings-sections.tsx:303
+#: src/components/settings/settings-sections.tsx:305
 msgid "Filename"
 msgstr "文件名"
 
-#: src/components/settings/settings-sections.tsx:320
+#: src/components/settings/settings-sections.tsx:322
 msgid "Filename title — used as"
 msgstr "文件名标题 — 用作"
 
-#: src/components/settings/settings-sections.tsx:305
+#: src/components/settings/settings-sections.tsx:307
 msgid "Filename title language"
 msgstr "文件名标题语言"
 
@@ -1224,7 +1224,7 @@ msgstr "有日期"
 msgid "has none of"
 msgstr "不含以下任何"
 
-#: src/components/settings/settings-sections.tsx:543
+#: src/components/settings/settings-sections.tsx:547
 msgid "Heading"
 msgstr "标题"
 
@@ -1244,12 +1244,12 @@ msgstr "主页板块"
 msgid "Home sections are disabled."
 msgstr "主页板块已禁用。"
 
-#: src/components/settings/settings-sections.tsx:279
+#: src/components/settings/settings-sections.tsx:280
 msgid "Icon"
 msgstr "图标"
 
-#: src/components/settings/settings-sections.tsx:150
-#: src/components/settings/settings-sections.tsx:277
+#: src/components/settings/settings-sections.tsx:151
+#: src/components/settings/settings-sections.tsx:278
 msgid "ID"
 msgstr "ID"
 
@@ -1370,7 +1370,7 @@ msgstr "项目"
 msgid "Item {0}"
 msgstr "第 {0} 项"
 
-#: src/components/settings/settings-sections.tsx:554
+#: src/components/settings/settings-sections.tsx:558
 msgid "Item list"
 msgstr "项目列表"
 
@@ -1387,7 +1387,7 @@ msgstr "项目 {0}"
 msgid "Items <0>({totalItems})</0>"
 msgstr "项目 <0>（{totalItems}）</0>"
 
-#: src/components/settings/settings-sections.tsx:761
+#: src/components/settings/settings-sections.tsx:765
 msgid "Japanese"
 msgstr "日语"
 
@@ -1399,11 +1399,11 @@ msgstr "继续编辑"
 msgid "Keep groups"
 msgstr "保留分组"
 
-#: src/components/settings/settings-sections.tsx:547
+#: src/components/settings/settings-sections.tsx:551
 msgid "Kind"
 msgstr "种类"
 
-#: src/components/settings/settings-sections.tsx:278
+#: src/components/settings/settings-sections.tsx:279
 msgid "Label"
 msgstr "标签"
 
@@ -1437,7 +1437,7 @@ msgstr "浅色主题"
 msgid "Light theme. Switch to dark theme."
 msgstr "浅色主题。切换到深色主题。"
 
-#: src/components/settings/settings-sections.tsx:184
+#: src/components/settings/settings-sections.tsx:185
 #: src/pages/smart-list-page.tsx:561
 msgid "Limit"
 msgstr "上限"
@@ -1448,7 +1448,7 @@ msgstr "上限"
 msgid "line {0}"
 msgstr "第 {0} 行"
 
-#: src/components/settings/settings-sections.tsx:382
+#: src/components/settings/settings-sections.tsx:384
 msgid "Line format"
 msgstr "行格式"
 
@@ -1559,15 +1559,15 @@ msgstr "记录"
 msgid "Log activity"
 msgstr "记录活动"
 
-#: src/components/settings/settings-sections.tsx:98
+#: src/components/settings/settings-sections.tsx:99
 msgid "Log section"
 msgstr "记录板块"
 
-#: src/components/settings/settings-sections.tsx:365
+#: src/components/settings/settings-sections.tsx:367
 msgid "Log to daily note"
 msgstr "记录到每日笔记"
 
-#: src/components/settings/settings-sections.tsx:91
+#: src/components/settings/settings-sections.tsx:92
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "记录默认值 — 记录行写入的标题下方，以及后备的行格式。每个类型都可覆盖这些设置并添加自己的标签。"
 
@@ -1580,7 +1580,7 @@ msgstr "正在记录…"
 msgid "Manage lists"
 msgstr "管理列表"
 
-#: src/components/settings/settings-sections.tsx:889
+#: src/components/settings/settings-sections.tsx:893
 msgid "Map each option to a status"
 msgstr "将每个选项映射到状态"
 
@@ -1596,7 +1596,7 @@ msgstr "标记为未完成"
 msgid "Mark watched progress"
 msgstr "标记观看进度"
 
-#: src/components/settings/settings-sections.tsx:498
+#: src/components/settings/settings-sections.tsx:502
 msgid "Markdown body sections"
 msgstr "Markdown 正文板块"
 
@@ -1643,6 +1643,14 @@ msgstr "个月"
 #: src/components/analytics/activity-heatmap.tsx:157
 msgid "more"
 msgstr "展开"
+
+#: src/components/settings/settings-sections.tsx:456
+msgid "Move {label} down"
+msgstr "将 {label} 下移"
+
+#: src/components/settings/settings-sections.tsx:446
+msgid "Move {label} up"
+msgstr "将 {label} 上移"
 
 #: src/pages/list-detail-page.tsx:517
 msgid "Move list to trash?"
@@ -1699,7 +1707,7 @@ msgstr "新建列表"
 msgid "New section"
 msgstr "新板块"
 
-#: src/components/settings/settings-sections.tsx:83
+#: src/components/settings/settings-sections.tsx:84
 msgid "New-note template"
 msgstr "新建笔记模板"
 
@@ -1783,7 +1791,7 @@ msgstr "无条目"
 msgid "No entries match the criteria"
 msgstr "没有符合条件的条目"
 
-#: src/components/settings/settings-sections.tsx:987
+#: src/components/settings/settings-sections.tsx:991
 msgid "No external mappings."
 msgstr "无外部映射。"
 
@@ -1836,7 +1844,7 @@ msgstr "暂无列表。在下方创建一个。"
 msgid "No lists yet. Create one to start collecting entities."
 msgstr "暂无列表。创建一个以开始收集条目。"
 
-#: src/components/settings/settings-sections.tsx:521
+#: src/components/settings/settings-sections.tsx:525
 msgid "No markdown body sections."
 msgstr "无 Markdown 正文板块。"
 
@@ -1884,7 +1892,7 @@ msgstr "无来源"
 msgid "No supported sources"
 msgstr "无支持的来源"
 
-#: src/components/settings/settings-sections.tsx:1018
+#: src/components/settings/settings-sections.tsx:1022
 msgid "No type options."
 msgstr "无类型选项。"
 
@@ -1901,16 +1909,16 @@ msgstr "无值。"
 msgid "No vaults yet."
 msgstr "暂无保管库。"
 
-#: src/components/settings/settings-sections.tsx:242
-#: src/components/settings/settings-sections.tsx:334
-#: src/components/settings/settings-sections.tsx:685
-#: src/components/settings/settings-sections.tsx:738
-#: src/components/settings/settings-sections.tsx:783
+#: src/components/settings/settings-sections.tsx:243
+#: src/components/settings/settings-sections.tsx:336
+#: src/components/settings/settings-sections.tsx:689
+#: src/components/settings/settings-sections.tsx:742
+#: src/components/settings/settings-sections.tsx:787
 #: src/components/smart-lists/rule-builder.tsx:650
 msgid "None"
 msgstr "无"
 
-#: src/components/settings/settings-sections.tsx:472
+#: src/components/settings/settings-sections.tsx:476
 msgid "None (plain list)"
 msgstr "无（纯列表）"
 
@@ -1970,7 +1978,7 @@ msgstr "关"
 msgid "older than"
 msgstr "早于过去"
 
-#: src/components/settings/settings-sections.tsx:818
+#: src/components/settings/settings-sections.tsx:822
 #: src/pages/import-wizard-page.tsx:58
 msgid "Ongoing"
 msgstr "进行中"
@@ -2015,11 +2023,11 @@ msgstr "运算符"
 msgid "Ordered"
 msgstr "有序"
 
-#: src/components/settings/settings-sections.tsx:686
+#: src/components/settings/settings-sections.tsx:690
 msgid "Original"
 msgstr "原始"
 
-#: src/components/settings/settings-sections.tsx:335
+#: src/components/settings/settings-sections.tsx:337
 msgid "Original (filename is the title)"
 msgstr "原始（文件名即标题）"
 
@@ -2040,15 +2048,15 @@ msgid "Paste the contents of the exported .csv file"
 msgstr "粘贴导出的 .csv 文件的内容"
 
 #: src/components/settings/settings-controls.tsx:174
-#: src/components/settings/settings-sections.tsx:281
+#: src/components/settings/settings-sections.tsx:282
 msgid "Path"
 msgstr "路径"
 
-#: src/components/settings/settings-sections.tsx:68
+#: src/components/settings/settings-sections.tsx:69
 msgid "Paths"
 msgstr "路径"
 
-#: src/components/settings/settings-sections.tsx:819
+#: src/components/settings/settings-sections.tsx:823
 #: src/pages/import-wizard-page.tsx:59
 msgid "Paused"
 msgstr "暂停"
@@ -2061,8 +2069,8 @@ msgstr "选几个 — 你随时可以添加更多。你的库是位于你自己�
 msgid "Planned"
 msgstr "计划中"
 
-#: src/components/settings/settings-sections.tsx:739
-#: src/components/settings/settings-sections.tsx:817
+#: src/components/settings/settings-sections.tsx:743
+#: src/components/settings/settings-sections.tsx:821
 #: src/pages/import-wizard-page.tsx:57
 msgid "Planning"
 msgstr "计划中"
@@ -2090,7 +2098,6 @@ msgstr "属性"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:126
-#: src/components/settings/settings-sections.tsx:433
 #: src/pages/quick-capture-page.tsx:250
 msgid "Provider"
 msgstr "数据源"
@@ -2099,12 +2106,11 @@ msgstr "数据源"
 msgid "Provider Credentials"
 msgstr "数据源凭据"
 
-#: src/components/settings/settings-sections.tsx:424
-#: src/components/settings/settings-sections.tsx:447
+#: src/components/settings/settings-sections.tsx:434
 msgid "Provider priority"
 msgstr "数据源优先级"
 
-#: src/components/settings/settings-sections.tsx:290
+#: src/components/settings/settings-sections.tsx:291
 msgid "Providers"
 msgstr "数据源"
 
@@ -2133,15 +2139,15 @@ msgstr "记录你做了什么以及何时做的。选择较早的日期以记录
 msgid "Refresh {0}"
 msgstr "刷新 {0}"
 
-#: src/components/settings/settings-sections.tsx:881
+#: src/components/settings/settings-sections.tsx:885
 msgid "Regular enum"
 msgstr "常规枚举"
 
-#: src/components/settings/settings-sections.tsx:141
+#: src/components/settings/settings-sections.tsx:142
 msgid "Relation count"
 msgstr "关联数量"
 
-#: src/components/settings/settings-sections.tsx:806
+#: src/components/settings/settings-sections.tsx:810
 msgid "Relation type"
 msgstr "关联类型"
 
@@ -2164,11 +2170,11 @@ msgstr "移除 {0}"
 msgid "Remove {label}"
 msgstr "移除 {label}"
 
-#: src/components/settings/settings-sections.tsx:559
+#: src/components/settings/settings-sections.tsx:563
 msgid "Remove body section"
 msgstr "移除正文板块"
 
-#: src/components/settings/settings-sections.tsx:981
+#: src/components/settings/settings-sections.tsx:985
 msgid "Remove external field mapping"
 msgstr "移除外部字段映射"
 
@@ -2188,10 +2194,6 @@ msgstr "移除图片"
 #: src/pages/list-detail-page.tsx:790
 msgid "Remove item"
 msgstr "移除项目"
-
-#: src/components/settings/settings-sections.tsx:456
-msgid "Remove provider priority"
-msgstr "移除数据源优先级"
 
 #: src/components/smart-lists/rule-builder.tsx:682
 #: src/components/smart-lists/rule-builder.tsx:742
@@ -2374,12 +2376,12 @@ msgstr "正在搜索…"
 msgid "season {0}"
 msgstr "季 {0}"
 
-#: src/components/settings/settings-sections.tsx:754
+#: src/components/settings/settings-sections.tsx:758
 msgid "Season language"
 msgstr "季语言"
 
 #: src/components/settings/settings-dialogs.tsx:446
-#: src/components/settings/settings-sections.tsx:506
+#: src/components/settings/settings-sections.tsx:510
 msgid "Section"
 msgstr "板块"
 
@@ -2392,7 +2394,7 @@ msgstr "板块操作"
 msgid "Section heading"
 msgstr "板块标题"
 
-#: src/components/settings/settings-sections.tsx:388
+#: src/components/settings/settings-sections.tsx:390
 msgid "Section override"
 msgstr "板块覆盖"
 
@@ -2416,7 +2418,7 @@ msgstr "查看“{query}”的全部结果"
 msgid "Select all"
 msgstr "全选"
 
-#: src/components/settings/settings-sections.tsx:973
+#: src/components/settings/settings-sections.tsx:977
 msgid "Select field"
 msgstr "选择字段"
 
@@ -2432,7 +2434,7 @@ msgstr "选择分组"
 msgid "Select parent folder"
 msgstr "选择父文件夹"
 
-#: src/components/settings/settings-sections.tsx:1013
+#: src/components/settings/settings-sections.tsx:1017
 msgid "Select type"
 msgstr "选择类型"
 
@@ -2499,7 +2501,7 @@ msgid "Something went wrong"
 msgstr "出了点问题"
 
 #: src/components/assets/asset-toolbar.tsx:94
-#: src/components/settings/settings-sections.tsx:185
+#: src/components/settings/settings-sections.tsx:186
 #: src/pages/smart-list-page.tsx:515
 msgid "Sort"
 msgstr "排序"
@@ -2555,7 +2557,7 @@ msgid "Start over"
 msgstr "重新开始"
 
 #: src/components/assets/quick-log-dialog.tsx:30
-#: src/components/settings/settings-sections.tsx:740
+#: src/components/settings/settings-sections.tsx:744
 #: src/pages/activity-page.tsx:45
 msgid "Started"
 msgstr "已开始"
@@ -2579,7 +2581,7 @@ msgstr "统计"
 msgid "status"
 msgstr "状态"
 
-#: src/components/settings/settings-sections.tsx:882
+#: src/components/settings/settings-sections.tsx:886
 msgid "Status field"
 msgstr "状态字段"
 
@@ -2603,7 +2605,7 @@ msgstr "存储在保管库中。分类、资源、每日笔记、主页和类型
 msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
 msgstr "存储在你的系统密钥链中。此处列出的数据源需要凭据；其他数据源（例如 Bangumi、Google Books）无需凭据。"
 
-#: src/components/settings/settings-sections.tsx:503
+#: src/components/settings/settings-sections.tsx:507
 msgid "Summary"
 msgstr "摘要"
 
@@ -2673,7 +2675,7 @@ msgstr "导入失败。"
 msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "页面遇到意外错误。你可以重试，或重新加载应用。"
 
-#: src/components/settings/settings-sections.tsx:174
+#: src/components/settings/settings-sections.tsx:175
 msgid "The same rules as smart lists; the section shows entries that match."
 msgstr "与智能列表相同的规则；该版块显示符合条件的条目。"
 
@@ -2712,15 +2714,15 @@ msgid "Tick the items to write from the provider — new ones are added, ticked 
 msgstr "勾选要从数据源写入的项目 — 新项目会被添加，勾选的现有项目会更新其标题。已在你列表中的项目默认不勾选，你的进度始终会被保留。"
 
 #: src/components/settings/settings-dialogs.tsx:445
-#: src/components/settings/settings-sections.tsx:139
-#: src/components/settings/settings-sections.tsx:151
+#: src/components/settings/settings-sections.tsx:140
+#: src/components/settings/settings-sections.tsx:152
 #: src/pages/entity-create-page.tsx:107
 #: src/pages/smart-list-page.tsx:457
 msgid "Title"
 msgstr "标题"
 
 #: src/components/settings/preset-picker.tsx:184
-#: src/components/settings/settings-sections.tsx:670
+#: src/components/settings/settings-sections.tsx:674
 #: src/pages/onboarding-page.tsx:187
 msgid "Title language"
 msgstr "标题语言"
@@ -2746,11 +2748,11 @@ msgstr "切换筛选条件"
 msgid "total {0}"
 msgstr "总计 {0}"
 
-#: src/components/settings/settings-sections.tsx:721
+#: src/components/settings/settings-sections.tsx:725
 msgid "Total progress field"
 msgstr "总进度字段"
 
-#: src/components/settings/settings-sections.tsx:563
+#: src/components/settings/settings-sections.tsx:567
 msgid "Tracking"
 msgstr "追踪"
 
@@ -2758,8 +2760,8 @@ msgstr "追踪"
 msgid "Try again"
 msgstr "重试"
 
-#: src/components/settings/settings-sections.tsx:152
-#: src/components/settings/settings-sections.tsx:607
+#: src/components/settings/settings-sections.tsx:153
+#: src/components/settings/settings-sections.tsx:611
 #: src/pages/entity-create-page.tsx:92
 #: src/pages/library-page.tsx:300
 #: src/pages/quick-capture-page.tsx:239
@@ -2796,7 +2798,7 @@ msgstr "单位"
 msgid "Unlinked Items"
 msgstr "未关联的项目"
 
-#: src/components/settings/settings-sections.tsx:901
+#: src/components/settings/settings-sections.tsx:905
 msgid "Unmapped"
 msgstr "未映射"
 
@@ -2828,7 +2830,7 @@ msgstr "未命名板块"
 msgid "Up next"
 msgstr "接下来"
 
-#: src/components/settings/settings-sections.tsx:140
+#: src/components/settings/settings-sections.tsx:141
 #: src/pages/smart-list-page.tsx:458
 msgid "Update time"
 msgstr "更新时间"
@@ -2849,9 +2851,9 @@ msgstr "已更新 {0}"
 msgid "Upload failed."
 msgstr "上传失败。"
 
-#: src/components/settings/settings-sections.tsx:677
-#: src/components/settings/settings-sections.tsx:730
-#: src/components/settings/settings-sections.tsx:868
+#: src/components/settings/settings-sections.tsx:681
+#: src/components/settings/settings-sections.tsx:734
+#: src/components/settings/settings-sections.tsx:872
 msgid "Used as"
 msgstr "用作"
 
@@ -2929,7 +2931,7 @@ msgstr "周"
 msgid "What do you want to track?"
 msgstr "你想追踪什么？"
 
-#: src/components/settings/settings-sections.tsx:367
+#: src/components/settings/settings-sections.tsx:369
 msgid "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
 msgstr "开启后，勾选剧集或点击「记录」按钮会在每日笔记中写入一行。标题会自动以 wikilink 形式关联 — 只需在行格式中添加你的标签。"
 

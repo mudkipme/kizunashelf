@@ -21,7 +21,7 @@ msgstr " (already logged)"
 msgid " (new note)"
 msgstr " (new note)"
 
-#: src/components/settings/settings-sections.tsx:390
+#: src/components/settings/settings-sections.tsx:392
 msgid "(daily-notes default)"
 msgstr "(daily-notes default)"
 
@@ -345,7 +345,7 @@ msgstr "Activity"
 
 #: src/components/entities/metadata-inputs.tsx:641
 #: src/components/settings/settings-controls.tsx:70
-#: src/components/settings/settings-sections.tsx:945
+#: src/components/settings/settings-sections.tsx:949
 #: src/pages/home-page.tsx:48
 #: src/pages/home-page.tsx:53
 #: src/pages/library-page.tsx:397
@@ -363,6 +363,10 @@ msgstr "Add \"{item}\""
 #: src/components/settings/preset-picker.tsx:400
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "Add a <0>{0}</0> link to <1>{1}</1>"
+
+#: src/components/settings/settings-sections.tsx:465
+msgid "Add an External ref field with a provider to configure priority."
+msgstr "Add an External ref field with a provider to configure priority."
 
 #: src/components/settings/settings-dialogs.tsx:207
 msgid "Add built-in type"
@@ -385,7 +389,7 @@ msgstr "Add entity"
 msgid "Add Entity"
 msgstr "Add Entity"
 
-#: src/components/settings/settings-sections.tsx:913
+#: src/components/settings/settings-sections.tsx:917
 msgid "Add enum options above to map them to statuses."
 msgstr "Add enum options above to map them to statuses."
 
@@ -533,7 +537,7 @@ msgid "Applying…"
 msgstr "Applying…"
 
 #: src/components/assets/asset-toolbar.tsx:114
-#: src/components/settings/settings-sections.tsx:211
+#: src/components/settings/settings-sections.tsx:212
 #: src/pages/smart-list-page.tsx:552
 msgid "Ascending"
 msgstr "Ascending"
@@ -563,7 +567,7 @@ msgstr "Back to home"
 msgid "Basename"
 msgstr "Basename"
 
-#: src/components/settings/settings-sections.tsx:275
+#: src/components/settings/settings-sections.tsx:276
 msgid "Basics"
 msgstr "Basics"
 
@@ -625,11 +629,11 @@ msgstr "Change completion date"
 msgid "Changes the list's name."
 msgstr "Changes the list's name."
 
-#: src/components/settings/settings-sections.tsx:471
+#: src/components/settings/settings-sections.tsx:475
 msgid "Checklist (per-item checkboxes)"
 msgstr "Checklist (per-item checkboxes)"
 
-#: src/components/settings/settings-sections.tsx:760
+#: src/components/settings/settings-sections.tsx:764
 msgid "Chinese"
 msgstr "Chinese"
 
@@ -665,9 +669,9 @@ msgid "Coming up"
 msgstr "Coming up"
 
 #: src/components/assets/quick-log-dialog.tsx:31
-#: src/components/settings/settings-sections.tsx:699
-#: src/components/settings/settings-sections.tsx:741
-#: src/components/settings/settings-sections.tsx:820
+#: src/components/settings/settings-sections.tsx:703
+#: src/components/settings/settings-sections.tsx:745
+#: src/components/settings/settings-sections.tsx:824
 #: src/pages/activity-page.tsx:46
 #: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
@@ -781,7 +785,7 @@ msgstr "Create vault ({0})"
 msgid "Creating…"
 msgstr "Creating…"
 
-#: src/components/settings/settings-sections.tsx:172
+#: src/components/settings/settings-sections.tsx:173
 msgid "Criteria"
 msgstr "Criteria"
 
@@ -829,7 +833,7 @@ msgstr "Daily Notes"
 msgid "Daily Notes {0}"
 msgstr "Daily Notes {0}"
 
-#: src/components/settings/settings-sections.tsx:341
+#: src/components/settings/settings-sections.tsx:343
 msgid "Daily-note logging"
 msgstr "Daily-note logging"
 
@@ -852,12 +856,12 @@ msgstr "date"
 msgid "Date"
 msgstr "Date"
 
-#: src/components/settings/settings-sections.tsx:77
+#: src/components/settings/settings-sections.tsx:78
 msgid "Date format"
 msgstr "Date format"
 
 #. placeholder {0}: fieldDisplayLabel(field)
-#: src/components/settings/settings-sections.tsx:144
+#: src/components/settings/settings-sections.tsx:145
 msgid "Date: {0}"
 msgstr "Date: {0}"
 
@@ -882,17 +886,13 @@ msgstr "Dates & episodes"
 msgid "days"
 msgstr "days"
 
-#: src/components/settings/settings-sections.tsx:210
+#: src/components/settings/settings-sections.tsx:211
 msgid "Default"
 msgstr "Default"
 
-#: src/components/settings/settings-sections.tsx:104
+#: src/components/settings/settings-sections.tsx:105
 msgid "Default line format"
 msgstr "Default line format"
-
-#: src/components/settings/settings-sections.tsx:462
-msgid "Default provider order is used."
-msgstr "Default provider order is used."
 
 #: src/pages/entity-page.tsx:463
 #: src/pages/list-detail-page.tsx:414
@@ -907,7 +907,7 @@ msgid "Delete this smart list?"
 msgstr "Delete this smart list?"
 
 #: src/components/assets/asset-toolbar.tsx:115
-#: src/components/settings/settings-sections.tsx:212
+#: src/components/settings/settings-sections.tsx:213
 #: src/pages/smart-list-page.tsx:553
 msgid "Descending"
 msgstr "Descending"
@@ -929,7 +929,7 @@ msgid "Details"
 msgstr "Details"
 
 #: src/components/assets/asset-toolbar.tsx:112
-#: src/components/settings/settings-sections.tsx:199
+#: src/components/settings/settings-sections.tsx:200
 #: src/pages/smart-list-page.tsx:539
 msgid "Direction"
 msgstr "Direction"
@@ -946,7 +946,7 @@ msgstr "Discard"
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
-#: src/components/settings/settings-sections.tsx:621
+#: src/components/settings/settings-sections.tsx:625
 msgid "Display name"
 msgstr "Display name"
 
@@ -995,7 +995,7 @@ msgstr "Drag items here"
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
-#: src/components/settings/settings-sections.tsx:821
+#: src/components/settings/settings-sections.tsx:825
 #: src/pages/import-wizard-page.tsx:61
 msgid "Dropped"
 msgstr "Dropped"
@@ -1057,7 +1057,7 @@ msgstr "Enable"
 msgid "ends with"
 msgstr "ends with"
 
-#: src/components/settings/settings-sections.tsx:762
+#: src/components/settings/settings-sections.tsx:766
 msgid "English"
 msgstr "English"
 
@@ -1079,7 +1079,7 @@ msgstr "Entity not found"
 msgid "Entity type"
 msgstr "Entity type"
 
-#: src/components/settings/settings-sections.tsx:697
+#: src/components/settings/settings-sections.tsx:701
 msgid "Enum options"
 msgstr "Enum options"
 
@@ -1088,16 +1088,16 @@ msgstr "Enum options"
 msgid "Episodes"
 msgstr "Episodes"
 
-#: src/components/settings/settings-sections.tsx:742
+#: src/components/settings/settings-sections.tsx:746
 #: src/pages/activity-page.tsx:48
 msgid "Event"
 msgstr "Event"
 
-#: src/components/settings/settings-sections.tsx:971
+#: src/components/settings/settings-sections.tsx:975
 msgid "External field"
 msgstr "External field"
 
-#: src/components/settings/settings-sections.tsx:936
+#: src/components/settings/settings-sections.tsx:940
 msgid "External field mappings"
 msgstr "External field mappings"
 
@@ -1105,7 +1105,7 @@ msgstr "External field mappings"
 msgid "External Match"
 msgstr "External Match"
 
-#: src/components/settings/settings-sections.tsx:553
+#: src/components/settings/settings-sections.tsx:557
 msgid "External metadata"
 msgstr "External metadata"
 
@@ -1113,13 +1113,13 @@ msgstr "External metadata"
 msgid "external ref"
 msgstr "external ref"
 
-#: src/components/settings/settings-sections.tsx:771
-#: src/components/settings/settings-sections.tsx:960
+#: src/components/settings/settings-sections.tsx:775
+#: src/components/settings/settings-sections.tsx:964
 msgid "External source"
 msgstr "External source"
 
-#: src/components/settings/settings-sections.tsx:1008
-#: src/components/settings/settings-sections.tsx:1014
+#: src/components/settings/settings-sections.tsx:1012
+#: src/components/settings/settings-sections.tsx:1018
 msgid "External types"
 msgstr "External types"
 
@@ -1135,7 +1135,7 @@ msgstr "Fetching your library from {0}…"
 #: src/components/settings/settings-dialogs.tsx:337
 #: src/components/settings/settings-dialogs.tsx:397
 #: src/components/settings/settings-dialogs.tsx:407
-#: src/components/settings/settings-sections.tsx:606
+#: src/components/settings/settings-sections.tsx:610
 #: src/components/smart-lists/rule-builder.tsx:700
 msgid "Field"
 msgstr "Field"
@@ -1150,15 +1150,15 @@ msgstr "Fields"
 msgid "File name"
 msgstr "File name"
 
-#: src/components/settings/settings-sections.tsx:303
+#: src/components/settings/settings-sections.tsx:305
 msgid "Filename"
 msgstr "Filename"
 
-#: src/components/settings/settings-sections.tsx:320
+#: src/components/settings/settings-sections.tsx:322
 msgid "Filename title — used as"
 msgstr "Filename title — used as"
 
-#: src/components/settings/settings-sections.tsx:305
+#: src/components/settings/settings-sections.tsx:307
 msgid "Filename title language"
 msgstr "Filename title language"
 
@@ -1224,7 +1224,7 @@ msgstr "Has date"
 msgid "has none of"
 msgstr "has none of"
 
-#: src/components/settings/settings-sections.tsx:543
+#: src/components/settings/settings-sections.tsx:547
 msgid "Heading"
 msgstr "Heading"
 
@@ -1244,12 +1244,12 @@ msgstr "Home section"
 msgid "Home sections are disabled."
 msgstr "Home sections are disabled."
 
-#: src/components/settings/settings-sections.tsx:279
+#: src/components/settings/settings-sections.tsx:280
 msgid "Icon"
 msgstr "Icon"
 
-#: src/components/settings/settings-sections.tsx:150
-#: src/components/settings/settings-sections.tsx:277
+#: src/components/settings/settings-sections.tsx:151
+#: src/components/settings/settings-sections.tsx:278
 msgid "ID"
 msgstr "ID"
 
@@ -1370,7 +1370,7 @@ msgstr "Item"
 msgid "Item {0}"
 msgstr "Item {0}"
 
-#: src/components/settings/settings-sections.tsx:554
+#: src/components/settings/settings-sections.tsx:558
 msgid "Item list"
 msgstr "Item list"
 
@@ -1387,7 +1387,7 @@ msgstr "Items {0}"
 msgid "Items <0>({totalItems})</0>"
 msgstr "Items <0>({totalItems})</0>"
 
-#: src/components/settings/settings-sections.tsx:761
+#: src/components/settings/settings-sections.tsx:765
 msgid "Japanese"
 msgstr "Japanese"
 
@@ -1399,11 +1399,11 @@ msgstr "Keep editing"
 msgid "Keep groups"
 msgstr "Keep groups"
 
-#: src/components/settings/settings-sections.tsx:547
+#: src/components/settings/settings-sections.tsx:551
 msgid "Kind"
 msgstr "Kind"
 
-#: src/components/settings/settings-sections.tsx:278
+#: src/components/settings/settings-sections.tsx:279
 msgid "Label"
 msgstr "Label"
 
@@ -1437,7 +1437,7 @@ msgstr "Light theme"
 msgid "Light theme. Switch to dark theme."
 msgstr "Light theme. Switch to dark theme."
 
-#: src/components/settings/settings-sections.tsx:184
+#: src/components/settings/settings-sections.tsx:185
 #: src/pages/smart-list-page.tsx:561
 msgid "Limit"
 msgstr "Limit"
@@ -1448,7 +1448,7 @@ msgstr "Limit"
 msgid "line {0}"
 msgstr "line {0}"
 
-#: src/components/settings/settings-sections.tsx:382
+#: src/components/settings/settings-sections.tsx:384
 msgid "Line format"
 msgstr "Line format"
 
@@ -1559,15 +1559,15 @@ msgstr "Log"
 msgid "Log activity"
 msgstr "Log activity"
 
-#: src/components/settings/settings-sections.tsx:98
+#: src/components/settings/settings-sections.tsx:99
 msgid "Log section"
 msgstr "Log section"
 
-#: src/components/settings/settings-sections.tsx:365
+#: src/components/settings/settings-sections.tsx:367
 msgid "Log to daily note"
 msgstr "Log to daily note"
 
-#: src/components/settings/settings-sections.tsx:91
+#: src/components/settings/settings-sections.tsx:92
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 
@@ -1580,7 +1580,7 @@ msgstr "Logging…"
 msgid "Manage lists"
 msgstr "Manage lists"
 
-#: src/components/settings/settings-sections.tsx:889
+#: src/components/settings/settings-sections.tsx:893
 msgid "Map each option to a status"
 msgstr "Map each option to a status"
 
@@ -1596,7 +1596,7 @@ msgstr "Mark as not done"
 msgid "Mark watched progress"
 msgstr "Mark watched progress"
 
-#: src/components/settings/settings-sections.tsx:498
+#: src/components/settings/settings-sections.tsx:502
 msgid "Markdown body sections"
 msgstr "Markdown body sections"
 
@@ -1643,6 +1643,14 @@ msgstr "months"
 #: src/components/analytics/activity-heatmap.tsx:157
 msgid "more"
 msgstr "more"
+
+#: src/components/settings/settings-sections.tsx:456
+msgid "Move {label} down"
+msgstr "Move {label} down"
+
+#: src/components/settings/settings-sections.tsx:446
+msgid "Move {label} up"
+msgstr "Move {label} up"
 
 #: src/pages/list-detail-page.tsx:517
 msgid "Move list to trash?"
@@ -1699,7 +1707,7 @@ msgstr "New list"
 msgid "New section"
 msgstr "New section"
 
-#: src/components/settings/settings-sections.tsx:83
+#: src/components/settings/settings-sections.tsx:84
 msgid "New-note template"
 msgstr "New-note template"
 
@@ -1783,7 +1791,7 @@ msgstr "No entries"
 msgid "No entries match the criteria"
 msgstr "No entries match the criteria"
 
-#: src/components/settings/settings-sections.tsx:987
+#: src/components/settings/settings-sections.tsx:991
 msgid "No external mappings."
 msgstr "No external mappings."
 
@@ -1836,7 +1844,7 @@ msgstr "No lists yet. Create one below."
 msgid "No lists yet. Create one to start collecting entities."
 msgstr "No lists yet. Create one to start collecting entities."
 
-#: src/components/settings/settings-sections.tsx:521
+#: src/components/settings/settings-sections.tsx:525
 msgid "No markdown body sections."
 msgstr "No markdown body sections."
 
@@ -1884,7 +1892,7 @@ msgstr "no source"
 msgid "No supported sources"
 msgstr "No supported sources"
 
-#: src/components/settings/settings-sections.tsx:1018
+#: src/components/settings/settings-sections.tsx:1022
 msgid "No type options."
 msgstr "No type options."
 
@@ -1901,16 +1909,16 @@ msgstr "No values."
 msgid "No vaults yet."
 msgstr "No vaults yet."
 
-#: src/components/settings/settings-sections.tsx:242
-#: src/components/settings/settings-sections.tsx:334
-#: src/components/settings/settings-sections.tsx:685
-#: src/components/settings/settings-sections.tsx:738
-#: src/components/settings/settings-sections.tsx:783
+#: src/components/settings/settings-sections.tsx:243
+#: src/components/settings/settings-sections.tsx:336
+#: src/components/settings/settings-sections.tsx:689
+#: src/components/settings/settings-sections.tsx:742
+#: src/components/settings/settings-sections.tsx:787
 #: src/components/smart-lists/rule-builder.tsx:650
 msgid "None"
 msgstr "None"
 
-#: src/components/settings/settings-sections.tsx:472
+#: src/components/settings/settings-sections.tsx:476
 msgid "None (plain list)"
 msgstr "None (plain list)"
 
@@ -1970,7 +1978,7 @@ msgstr "Off"
 msgid "older than"
 msgstr "older than"
 
-#: src/components/settings/settings-sections.tsx:818
+#: src/components/settings/settings-sections.tsx:822
 #: src/pages/import-wizard-page.tsx:58
 msgid "Ongoing"
 msgstr "Ongoing"
@@ -2015,11 +2023,11 @@ msgstr "Operator"
 msgid "Ordered"
 msgstr "Ordered"
 
-#: src/components/settings/settings-sections.tsx:686
+#: src/components/settings/settings-sections.tsx:690
 msgid "Original"
 msgstr "Original"
 
-#: src/components/settings/settings-sections.tsx:335
+#: src/components/settings/settings-sections.tsx:337
 msgid "Original (filename is the title)"
 msgstr "Original (filename is the title)"
 
@@ -2040,15 +2048,15 @@ msgid "Paste the contents of the exported .csv file"
 msgstr "Paste the contents of the exported .csv file"
 
 #: src/components/settings/settings-controls.tsx:174
-#: src/components/settings/settings-sections.tsx:281
+#: src/components/settings/settings-sections.tsx:282
 msgid "Path"
 msgstr "Path"
 
-#: src/components/settings/settings-sections.tsx:68
+#: src/components/settings/settings-sections.tsx:69
 msgid "Paths"
 msgstr "Paths"
 
-#: src/components/settings/settings-sections.tsx:819
+#: src/components/settings/settings-sections.tsx:823
 #: src/pages/import-wizard-page.tsx:59
 msgid "Paused"
 msgstr "Paused"
@@ -2061,8 +2069,8 @@ msgstr "Pick a few — you can add more anytime. Your library is plain Markdown 
 msgid "Planned"
 msgstr "Planned"
 
-#: src/components/settings/settings-sections.tsx:739
-#: src/components/settings/settings-sections.tsx:817
+#: src/components/settings/settings-sections.tsx:743
+#: src/components/settings/settings-sections.tsx:821
 #: src/pages/import-wizard-page.tsx:57
 msgid "Planning"
 msgstr "Planning"
@@ -2090,7 +2098,6 @@ msgstr "property"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:126
-#: src/components/settings/settings-sections.tsx:433
 #: src/pages/quick-capture-page.tsx:250
 msgid "Provider"
 msgstr "Provider"
@@ -2099,12 +2106,11 @@ msgstr "Provider"
 msgid "Provider Credentials"
 msgstr "Provider Credentials"
 
-#: src/components/settings/settings-sections.tsx:424
-#: src/components/settings/settings-sections.tsx:447
+#: src/components/settings/settings-sections.tsx:434
 msgid "Provider priority"
 msgstr "Provider priority"
 
-#: src/components/settings/settings-sections.tsx:290
+#: src/components/settings/settings-sections.tsx:291
 msgid "Providers"
 msgstr "Providers"
 
@@ -2133,15 +2139,15 @@ msgstr "Record what you did and when. Pick an earlier date to log something from
 msgid "Refresh {0}"
 msgstr "Refresh {0}"
 
-#: src/components/settings/settings-sections.tsx:881
+#: src/components/settings/settings-sections.tsx:885
 msgid "Regular enum"
 msgstr "Regular enum"
 
-#: src/components/settings/settings-sections.tsx:141
+#: src/components/settings/settings-sections.tsx:142
 msgid "Relation count"
 msgstr "Relation count"
 
-#: src/components/settings/settings-sections.tsx:806
+#: src/components/settings/settings-sections.tsx:810
 msgid "Relation type"
 msgstr "Relation type"
 
@@ -2164,11 +2170,11 @@ msgstr "Remove {0}"
 msgid "Remove {label}"
 msgstr "Remove {label}"
 
-#: src/components/settings/settings-sections.tsx:559
+#: src/components/settings/settings-sections.tsx:563
 msgid "Remove body section"
 msgstr "Remove body section"
 
-#: src/components/settings/settings-sections.tsx:981
+#: src/components/settings/settings-sections.tsx:985
 msgid "Remove external field mapping"
 msgstr "Remove external field mapping"
 
@@ -2188,10 +2194,6 @@ msgstr "Remove image"
 #: src/pages/list-detail-page.tsx:790
 msgid "Remove item"
 msgstr "Remove item"
-
-#: src/components/settings/settings-sections.tsx:456
-msgid "Remove provider priority"
-msgstr "Remove provider priority"
 
 #: src/components/smart-lists/rule-builder.tsx:682
 #: src/components/smart-lists/rule-builder.tsx:742
@@ -2374,12 +2376,12 @@ msgstr "Searching…"
 msgid "season {0}"
 msgstr "season {0}"
 
-#: src/components/settings/settings-sections.tsx:754
+#: src/components/settings/settings-sections.tsx:758
 msgid "Season language"
 msgstr "Season language"
 
 #: src/components/settings/settings-dialogs.tsx:446
-#: src/components/settings/settings-sections.tsx:506
+#: src/components/settings/settings-sections.tsx:510
 msgid "Section"
 msgstr "Section"
 
@@ -2392,7 +2394,7 @@ msgstr "Section actions"
 msgid "Section heading"
 msgstr "Section heading"
 
-#: src/components/settings/settings-sections.tsx:388
+#: src/components/settings/settings-sections.tsx:390
 msgid "Section override"
 msgstr "Section override"
 
@@ -2416,7 +2418,7 @@ msgstr "See all results for “{query}”"
 msgid "Select all"
 msgstr "Select all"
 
-#: src/components/settings/settings-sections.tsx:973
+#: src/components/settings/settings-sections.tsx:977
 msgid "Select field"
 msgstr "Select field"
 
@@ -2432,7 +2434,7 @@ msgstr "Select group"
 msgid "Select parent folder"
 msgstr "Select parent folder"
 
-#: src/components/settings/settings-sections.tsx:1013
+#: src/components/settings/settings-sections.tsx:1017
 msgid "Select type"
 msgstr "Select type"
 
@@ -2499,7 +2501,7 @@ msgid "Something went wrong"
 msgstr "Something went wrong"
 
 #: src/components/assets/asset-toolbar.tsx:94
-#: src/components/settings/settings-sections.tsx:185
+#: src/components/settings/settings-sections.tsx:186
 #: src/pages/smart-list-page.tsx:515
 msgid "Sort"
 msgstr "Sort"
@@ -2555,7 +2557,7 @@ msgid "Start over"
 msgstr "Start over"
 
 #: src/components/assets/quick-log-dialog.tsx:30
-#: src/components/settings/settings-sections.tsx:740
+#: src/components/settings/settings-sections.tsx:744
 #: src/pages/activity-page.tsx:45
 msgid "Started"
 msgstr "Started"
@@ -2579,7 +2581,7 @@ msgstr "Statistics"
 msgid "status"
 msgstr "status"
 
-#: src/components/settings/settings-sections.tsx:882
+#: src/components/settings/settings-sections.tsx:886
 msgid "Status field"
 msgstr "Status field"
 
@@ -2603,7 +2605,7 @@ msgstr "Stored in the vault. Taxonomy, assets, daily notes, home, and types — 
 msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
 msgstr "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
 
-#: src/components/settings/settings-sections.tsx:503
+#: src/components/settings/settings-sections.tsx:507
 msgid "Summary"
 msgstr "Summary"
 
@@ -2673,7 +2675,7 @@ msgstr "The import failed."
 msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "The page hit an unexpected error. You can try again, or reload the app."
 
-#: src/components/settings/settings-sections.tsx:174
+#: src/components/settings/settings-sections.tsx:175
 msgid "The same rules as smart lists; the section shows entries that match."
 msgstr "The same rules as smart lists; the section shows entries that match."
 
@@ -2712,15 +2714,15 @@ msgid "Tick the items to write from the provider — new ones are added, ticked 
 msgstr "Tick the items to write from the provider — new ones are added, ticked existing ones have their title updated. Items already in your list start unticked, and your progress is always kept."
 
 #: src/components/settings/settings-dialogs.tsx:445
-#: src/components/settings/settings-sections.tsx:139
-#: src/components/settings/settings-sections.tsx:151
+#: src/components/settings/settings-sections.tsx:140
+#: src/components/settings/settings-sections.tsx:152
 #: src/pages/entity-create-page.tsx:107
 #: src/pages/smart-list-page.tsx:457
 msgid "Title"
 msgstr "Title"
 
 #: src/components/settings/preset-picker.tsx:184
-#: src/components/settings/settings-sections.tsx:670
+#: src/components/settings/settings-sections.tsx:674
 #: src/pages/onboarding-page.tsx:187
 msgid "Title language"
 msgstr "Title language"
@@ -2746,11 +2748,11 @@ msgstr "Toggle filters"
 msgid "total {0}"
 msgstr "total {0}"
 
-#: src/components/settings/settings-sections.tsx:721
+#: src/components/settings/settings-sections.tsx:725
 msgid "Total progress field"
 msgstr "Total progress field"
 
-#: src/components/settings/settings-sections.tsx:563
+#: src/components/settings/settings-sections.tsx:567
 msgid "Tracking"
 msgstr "Tracking"
 
@@ -2758,8 +2760,8 @@ msgstr "Tracking"
 msgid "Try again"
 msgstr "Try again"
 
-#: src/components/settings/settings-sections.tsx:152
-#: src/components/settings/settings-sections.tsx:607
+#: src/components/settings/settings-sections.tsx:153
+#: src/components/settings/settings-sections.tsx:611
 #: src/pages/entity-create-page.tsx:92
 #: src/pages/library-page.tsx:300
 #: src/pages/quick-capture-page.tsx:239
@@ -2796,7 +2798,7 @@ msgstr "Unit"
 msgid "Unlinked Items"
 msgstr "Unlinked Items"
 
-#: src/components/settings/settings-sections.tsx:901
+#: src/components/settings/settings-sections.tsx:905
 msgid "Unmapped"
 msgstr "Unmapped"
 
@@ -2828,7 +2830,7 @@ msgstr "Untitled section"
 msgid "Up next"
 msgstr "Up next"
 
-#: src/components/settings/settings-sections.tsx:140
+#: src/components/settings/settings-sections.tsx:141
 #: src/pages/smart-list-page.tsx:458
 msgid "Update time"
 msgstr "Update time"
@@ -2849,9 +2851,9 @@ msgstr "Updated {0}"
 msgid "Upload failed."
 msgstr "Upload failed."
 
-#: src/components/settings/settings-sections.tsx:677
-#: src/components/settings/settings-sections.tsx:730
-#: src/components/settings/settings-sections.tsx:868
+#: src/components/settings/settings-sections.tsx:681
+#: src/components/settings/settings-sections.tsx:734
+#: src/components/settings/settings-sections.tsx:872
 msgid "Used as"
 msgstr "Used as"
 
@@ -2929,7 +2931,7 @@ msgstr "weeks"
 msgid "What do you want to track?"
 msgstr "What do you want to track?"
 
-#: src/components/settings/settings-sections.tsx:367
+#: src/components/settings/settings-sections.tsx:369
 msgid "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
 msgstr "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
 

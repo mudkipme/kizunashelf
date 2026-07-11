@@ -12,6 +12,7 @@ import {
   arrayEditor,
   cleanVaultConfig,
   defaultVaultConfig,
+  externalRefProviderPriority,
   joinPath,
   normalizeVaultConfig,
   relativeToBase,
@@ -322,9 +323,26 @@ describe("cleanVaultConfig", () => {
     expect(aired.enumOptions).toBeUndefined();
   });
 
-  it("keeps externalPriority deduped/lowercased when no catalog is available", () => {
-    const cleaned = cleanedVault(vault({ types: [type({ externalPriority: ["Bangumi", "bangumi", "igdb"] })] }));
-    expect(cleaned.types[0].externalPriority).toEqual(["bangumi", "igdb"]);
+  it("derives externalPriority from externalRef fields when no catalog is available", () => {
+    const cleaned = cleanedVault(vault({ types: [type({
+      externalPriority: ["igdb", "stale", "igdb"],
+      fields: [
+        field({ field: "bangumi", fieldType: "externalRef", externalRef: "bangumi" }),
+        field({ field: "igdb", fieldType: "externalRef", externalRef: "igdb" }),
+        field({ field: "igdb_alt", fieldType: "externalRef", externalRef: "igdb" }),
+      ],
+    })] }));
+    expect(cleaned.types[0].externalPriority).toEqual(["igdb", "bangumi"]);
+  });
+
+  it("orders configured externalRef providers and appends missing ones", () => {
+    const fields = [
+      field({ field: "mal", fieldType: "externalRef", externalRef: "myanimelist" }),
+      field({ field: "bgm", fieldType: "externalRef", externalRef: "bangumi" }),
+      field({ field: "mal_alt", fieldType: "externalRef", externalRef: "myanimelist" }),
+    ];
+    expect(externalRefProviderPriority(fields, ["bangumi", "stale"]))
+      .toEqual(["bangumi", "myanimelist"]);
   });
 
   // The "preserve unknown values" invariant: when the provider catalog is

@@ -141,7 +141,10 @@ export function cleanVaultConfig(
         label: typeConfig.label,
         icon: emptyToUndefined(typeConfig.icon),
         path: typeConfig.path,
-        externalPriority: cleanExternalPriority(providerCatalog, typeConfig.externalPriority ?? []),
+        externalPriority: cleanExternalPriority(
+          providerCatalog,
+          externalRefProviderPriority(typeConfig.fields, typeConfig.externalPriority ?? []),
+        ),
         filename: cleanFilename(typeConfig.filename),
         bodySections: cleanBodySections(typeConfig.bodySections ?? [], providerCatalog),
         log: cleanLog(typeConfig.log, true),
@@ -406,6 +409,26 @@ export function arrayEditor<T>(values: T[], onChange: (next: T[]) => void) {
 
 function cleanStrings(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
+}
+
+/// Provider priority is a closed vocabulary derived from this type's
+/// `externalRef` fields. Preserve the saved order for still-configured providers,
+/// remove stale/duplicate entries, then append newly configured providers in
+/// field order.
+export function externalRefProviderPriority(fields: FieldConfig[], values: string[]) {
+  const configured = fields
+    .filter((field) => field.fieldType === "externalRef")
+    .map((field) => field.externalRef?.trim() ?? "")
+    .filter((source, index, items) => Boolean(source) && items.indexOf(source) === index);
+  const available = new Set(configured);
+  const ordered = values
+    .map((value) => value.trim())
+    .filter(
+      (source, index, items) =>
+        available.has(source) && items.indexOf(source) === index,
+    );
+  const seen = new Set(ordered);
+  return [...ordered, ...configured.filter((source) => !seen.has(source))];
 }
 
 function cleanExternalPriority(providerCatalog: ExternalProviderCatalog | undefined, values: string[]) {
