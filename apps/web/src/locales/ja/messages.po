@@ -26,7 +26,7 @@ msgid "(daily-notes default)"
 msgstr "（デイリーノートのデフォルト）"
 
 #. placeholder {0}: counts.exists
-#: src/pages/import-wizard-page.tsx:467
+#: src/pages/import-wizard-page.tsx:505
 msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, other {# 件がライブラリに登録済み}}"
 
@@ -36,7 +36,7 @@ msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, other {# 件完了}}"
 
 #. placeholder {0}: job.created
-#: src/pages/import-wizard-page.tsx:681
+#: src/pages/import-wizard-page.tsx:719
 msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {# 件作成}}"
 
@@ -57,7 +57,7 @@ msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, other {# 件の外部タイプ}}"
 
 #. placeholder {0}: job.failed
-#: src/pages/import-wizard-page.tsx:690
+#: src/pages/import-wizard-page.tsx:728
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, other {# 件失敗}}"
 
@@ -67,7 +67,7 @@ msgid "{0, plural, one {# field} other {# fields}}"
 msgstr "{0, plural, other {# 件のフィールド}}"
 
 #. placeholder {0}: items.length
-#: src/pages/import-wizard-page.tsx:461
+#: src/pages/import-wizard-page.tsx:499
 msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {# 件見つかりました}}"
 
@@ -90,7 +90,7 @@ msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, other {# 件のマッピング}}"
 
 #. placeholder {0}: counts.needsReview
-#: src/pages/import-wizard-page.tsx:471
+#: src/pages/import-wizard-page.tsx:509
 msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 件が要レビュー}}"
 
@@ -131,12 +131,12 @@ msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, other {# 件表示}}"
 
 #. placeholder {0}: job.skipped
-#: src/pages/import-wizard-page.tsx:685
+#: src/pages/import-wizard-page.tsx:723
 msgid "{0, plural, one {# skipped} other {# skipped}}"
 msgstr "{0, plural, other {# 件スキップ}}"
 
 #. placeholder {0}: counts.willCreate
-#: src/pages/import-wizard-page.tsx:464
+#: src/pages/import-wizard-page.tsx:502
 msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, other {作成予定 # 件}}"
 
@@ -164,7 +164,7 @@ msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, other {# 件の値}}"
 
 #. placeholder {0}: data.watchedCount
-#: src/pages/import-wizard-page.tsx:626
+#: src/pages/import-wizard-page.tsx:664
 msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {# 件視聴済み}}"
 
@@ -186,7 +186,7 @@ msgstr "{0, plural, other {# 話のエピソードをインポートしました
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
 #: src/components/assets/asset-download-panel.tsx:122
-#: src/pages/import-wizard-page.tsx:676
+#: src/pages/import-wizard-page.tsx:714
 msgid "{0} / {1} processed"
 msgstr "{0} / {1} 件処理済み"
 
@@ -245,7 +245,7 @@ msgstr "{monthLabel}: {0} — カレンダーで開く"
 msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgstr "{selectedTotal, plural, other {# 件に日付あり}}"
 
-#: src/pages/import-wizard-page.tsx:294
+#: src/pages/import-wizard-page.tsx:293
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {# 件のアイテムをインポート}}"
 
@@ -497,7 +497,7 @@ msgstr "すべてのタイプ（{0}）"
 msgid "Amount"
 msgstr "数量"
 
-#: src/pages/import-wizard-page.tsx:47
+#: src/pages/import-wizard-page.tsx:46
 msgid "Anime"
 msgstr "アニメ"
 
@@ -573,7 +573,7 @@ msgstr "基本"
 msgid "Body Sections"
 msgstr "本文セクション"
 
-#: src/pages/import-wizard-page.tsx:46
+#: src/pages/import-wizard-page.tsx:45
 msgid "Book"
 msgstr "書籍"
 
@@ -603,8 +603,8 @@ msgstr "カレンダー"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:113
 #: src/pages/entity-page.tsx:489
 #: src/pages/entity-page.tsx:702
-#: src/pages/import-wizard-page.tsx:264
-#: src/pages/import-wizard-page.tsx:305
+#: src/pages/import-wizard-page.tsx:263
+#: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:529
 #: src/pages/list-detail-page.tsx:1003
 #: src/pages/lists-page.tsx:241
@@ -640,7 +640,7 @@ msgid "Choose a candidate to compare fields."
 msgstr "候補を選択してフィールドを比較します。"
 
 #: src/pages/entity-create-page.tsx:83
-#: src/pages/import-wizard-page.tsx:479
+#: src/pages/import-wizard-page.tsx:517
 msgid "Choose a type"
 msgstr "タイプを選択"
 
@@ -671,7 +671,7 @@ msgstr "近日公開"
 #: src/components/settings/settings-sections.tsx:745
 #: src/components/settings/settings-sections.tsx:824
 #: src/pages/activity-page.tsx:47
-#: src/pages/import-wizard-page.tsx:61
+#: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
 msgstr "完了"
 
@@ -747,6 +747,10 @@ msgstr "コアビュー"
 msgid "Could not load options."
 msgstr "オプションを読み込めませんでした。"
 
+#: src/pages/import-wizard-page.tsx:457
+msgid "Could not read this CSV file."
+msgstr "この CSV ファイルを読み込めませんでした。"
+
 #: src/components/smart-lists/save-smart-list-dialog.tsx:120
 #: src/pages/entity-create-page.tsx:127
 #: src/pages/lists-page.tsx:245
@@ -787,7 +791,7 @@ msgstr "作成中…"
 msgid "Criteria"
 msgstr "条件"
 
-#: src/pages/import-wizard-page.tsx:374
+#: src/pages/import-wizard-page.tsx:370
 msgid "CSV export"
 msgstr "CSV エクスポート"
 
@@ -989,7 +993,7 @@ msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
 #: src/components/settings/settings-sections.tsx:825
-#: src/pages/import-wizard-page.tsx:62
+#: src/pages/import-wizard-page.tsx:61
 msgid "Dropped"
 msgstr "中止"
 
@@ -1077,7 +1081,7 @@ msgid "Enum options"
 msgstr "列挙オプション"
 
 #: src/pages/activity-page.tsx:302
-#: src/pages/import-wizard-page.tsx:650
+#: src/pages/import-wizard-page.tsx:688
 msgid "Episodes"
 msgstr "エピソード"
 
@@ -1116,12 +1120,12 @@ msgstr "外部ソース"
 msgid "External types"
 msgstr "外部タイプ"
 
-#: src/pages/import-wizard-page.tsx:417
+#: src/pages/import-wizard-page.tsx:412
 msgid "Fetch & plan"
 msgstr "取得して計画"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:261
+#: src/pages/import-wizard-page.tsx:260
 msgid "Fetching your library from {0}…"
 msgstr "{0} からライブラリを取得しています…"
 
@@ -1176,7 +1180,7 @@ msgstr "例：エピソード番号"
 msgid "Form"
 msgstr "フォーム"
 
-#: src/pages/import-wizard-page.tsx:49
+#: src/pages/import-wizard-page.tsx:48
 msgid "Game"
 msgstr "ゲーム"
 
@@ -1188,7 +1192,7 @@ msgstr "リストに名前を付けます。"
 msgid "Go back"
 msgstr "戻る"
 
-#: src/pages/import-wizard-page.tsx:310
+#: src/pages/import-wizard-page.tsx:309
 msgid "Go to library"
 msgstr "ライブラリへ移動"
 
@@ -1260,11 +1264,11 @@ msgstr "インポート（新規 {0} 件 · 更新 {already} 件）"
 msgid "Import ({incoming})"
 msgstr "インポート（{incoming}）"
 
-#: src/pages/import-wizard-page.tsx:313
+#: src/pages/import-wizard-page.tsx:312
 msgid "Import another"
 msgstr "別のものをインポート"
 
-#: src/pages/import-wizard-page.tsx:673
+#: src/pages/import-wizard-page.tsx:711
 msgid "Import complete"
 msgstr "インポート完了"
 
@@ -1273,7 +1277,7 @@ msgid "Importing creates files, so it is unavailable here."
 msgstr "インポートはファイルを作成するため、ここでは利用できません。"
 
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/pages/import-wizard-page.tsx:673
+#: src/pages/import-wizard-page.tsx:711
 msgid "Importing…"
 msgstr "インポート中…"
 
@@ -1282,8 +1286,8 @@ msgstr "インポート中…"
 msgid "in"
 msgstr "フォルダ:"
 
-#: src/pages/import-wizard-page.tsx:588
-#: src/pages/import-wizard-page.tsx:592
+#: src/pages/import-wizard-page.tsx:626
+#: src/pages/import-wizard-page.tsx:630
 #: src/pages/quick-capture-page.tsx:317
 msgid "In library ✓"
 msgstr "ライブラリに登録済み ✓"
@@ -1298,7 +1302,7 @@ msgid "in the last"
 msgstr "過去"
 
 #. placeholder {0}: item.title
-#: src/pages/import-wizard-page.tsx:556
+#: src/pages/import-wizard-page.tsx:594
 msgid "Include {0}"
 msgstr "{0} を含める"
 
@@ -1523,7 +1527,7 @@ msgstr "分類を読み込み中"
 #: src/pages/entity-page.tsx:574
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
-#: src/pages/import-wizard-page.tsx:248
+#: src/pages/import-wizard-page.tsx:247
 #: src/pages/library-page.tsx:373
 #: src/pages/list-detail-page.tsx:386
 #: src/pages/list-detail-page.tsx:894
@@ -1580,7 +1584,7 @@ msgstr "完了にする"
 msgid "Mark as not done"
 msgstr "未完了にする"
 
-#: src/pages/import-wizard-page.tsx:659
+#: src/pages/import-wizard-page.tsx:697
 msgid "Mark watched progress"
 msgstr "視聴済みの進捗を記録"
 
@@ -1657,7 +1661,7 @@ msgstr "ゴミ箱に移動しますか？"
 msgid "Moved to trash"
 msgstr "ゴミ箱に移動しました"
 
-#: src/pages/import-wizard-page.tsx:48
+#: src/pages/import-wizard-page.tsx:47
 msgid "Music"
 msgstr "音楽"
 
@@ -1677,7 +1681,7 @@ msgstr "名前"
 msgid "Navigation"
 msgstr "ナビゲーション"
 
-#: src/pages/import-wizard-page.tsx:615
+#: src/pages/import-wizard-page.tsx:653
 msgid "Needs review"
 msgstr "要レビュー"
 
@@ -1761,7 +1765,7 @@ msgstr "まだ日付付きアイテムはありません。"
 msgid "No dates"
 msgstr "日付なし"
 
-#: src/pages/import-wizard-page.tsx:508
+#: src/pages/import-wizard-page.tsx:546
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "{unmatchedLabels} に対応するアイテムのタイプがありません。これらをインポートするには、設定で外部参照フィールドを追加してください。"
 
@@ -1836,7 +1840,7 @@ msgstr "まだリストがありません。作成してアイテムの収集を
 msgid "No markdown body sections."
 msgstr "Markdown 本文セクションがありません。"
 
-#: src/pages/import-wizard-page.tsx:609
+#: src/pages/import-wizard-page.tsx:647
 msgid "No matched source"
 msgstr "一致するソースがありません"
 
@@ -1852,7 +1856,7 @@ msgstr "一致するものが見つかりませんでした。"
 msgid "No matching entities."
 msgstr "一致するアイテムがありません。"
 
-#: src/pages/import-wizard-page.tsx:611
+#: src/pages/import-wizard-page.tsx:649
 msgid "No matching type"
 msgstr "一致するタイプがありません"
 
@@ -1872,7 +1876,7 @@ msgstr "現在のフィルターに一致するキューアイテムがありま
 msgid "No review data"
 msgstr "レビューデータがありません"
 
-#: src/pages/import-wizard-page.tsx:568
+#: src/pages/import-wizard-page.tsx:606
 msgid "no source"
 msgstr "ソースなし"
 
@@ -1924,7 +1928,7 @@ msgstr "除外:"
 msgid "Note <0>(optional)</0>"
 msgstr "ノート <0>(任意)</0>"
 
-#: src/pages/import-wizard-page.tsx:629
+#: src/pages/import-wizard-page.tsx:667
 msgid "notes"
 msgstr "ノート"
 
@@ -1967,7 +1971,7 @@ msgid "older than"
 msgstr "が次より古い"
 
 #: src/components/settings/settings-sections.tsx:822
-#: src/pages/import-wizard-page.tsx:59
+#: src/pages/import-wizard-page.tsx:58
 msgid "Ongoing"
 msgstr "進行中"
 
@@ -1975,7 +1979,7 @@ msgstr "進行中"
 msgid "Only image files can be uploaded."
 msgstr "画像ファイルのみアップロードできます。"
 
-#: src/pages/import-wizard-page.tsx:413
+#: src/pages/import-wizard-page.tsx:407
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "公開プロフィールのみ対応しています。計画を確認するまで何も書き込まれません。"
 
@@ -2031,10 +2035,6 @@ msgstr "ページが見つかりません"
 msgid "Parent folder"
 msgstr "親フォルダー"
 
-#: src/pages/import-wizard-page.tsx:396
-msgid "Paste the contents of the exported .csv file"
-msgstr "エクスポートした .csv ファイルの内容を貼り付けてください"
-
 #: src/components/settings/settings-controls.tsx:174
 #: src/components/settings/settings-sections.tsx:282
 msgid "Path"
@@ -2045,7 +2045,7 @@ msgid "Paths"
 msgstr "パス"
 
 #: src/components/settings/settings-sections.tsx:823
-#: src/pages/import-wizard-page.tsx:60
+#: src/pages/import-wizard-page.tsx:59
 msgid "Paused"
 msgstr "中断"
 
@@ -2059,7 +2059,7 @@ msgstr "予定"
 
 #: src/components/settings/settings-sections.tsx:743
 #: src/components/settings/settings-sections.tsx:821
-#: src/pages/import-wizard-page.tsx:58
+#: src/pages/import-wizard-page.tsx:57
 msgid "Planning"
 msgstr "計画中"
 
@@ -2102,7 +2102,7 @@ msgstr "プロバイダーの優先順位"
 msgid "Providers"
 msgstr "プロバイダー"
 
-#: src/pages/import-wizard-page.tsx:374
+#: src/pages/import-wizard-page.tsx:370
 msgid "Public profile"
 msgstr "公開プロフィール"
 
@@ -2110,7 +2110,7 @@ msgstr "公開プロフィール"
 msgid "Quick Capture"
 msgstr "クイックキャプチャ"
 
-#: src/pages/import-wizard-page.tsx:50
+#: src/pages/import-wizard-page.tsx:49
 msgid "Real"
 msgstr "実際"
 
@@ -2521,11 +2521,11 @@ msgstr "タイトルで並び替え"
 msgid "Sort by update time"
 msgstr "更新日時で並び替え"
 
-#: src/pages/import-wizard-page.tsx:354
+#: src/pages/import-wizard-page.tsx:350
 msgid "Source"
 msgstr "ソース"
 
-#: src/pages/import-wizard-page.tsx:613
+#: src/pages/import-wizard-page.tsx:651
 msgid "Source unavailable"
 msgstr "ソースが利用できません"
 
@@ -2540,7 +2540,7 @@ msgid "Start"
 msgstr "開始"
 
 #: src/pages/import-wizard-page.tsx:219
-#: src/pages/import-wizard-page.tsx:256
+#: src/pages/import-wizard-page.tsx:255
 msgid "Start over"
 msgstr "最初からやり直す"
 
@@ -2550,7 +2550,7 @@ msgstr "最初からやり直す"
 msgid "Started"
 msgstr "開始済み"
 
-#: src/pages/import-wizard-page.tsx:417
+#: src/pages/import-wizard-page.tsx:412
 msgid "Starting…"
 msgstr "開始中…"
 
@@ -2577,7 +2577,7 @@ msgstr "ステータスフィールド"
 msgid "Status Mismatch"
 msgstr "ステータスの不一致"
 
-#: src/pages/import-wizard-page.tsx:646
+#: src/pages/import-wizard-page.tsx:684
 msgid "Status, score & dates"
 msgstr "ステータス、評価、日付"
 
@@ -2654,7 +2654,11 @@ msgstr "分類: {0}"
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base ファイルは保管庫のゴミ箱フォルダに移動します。一致するアイテムには影響しません。"
 
-#: src/pages/import-wizard-page.tsx:253
+#: src/pages/import-wizard-page.tsx:405
+msgid "The file is read in your browser. Nothing is written until you review the plan."
+msgstr "ファイルはブラウザ内で読み込まれます。プランを確認するまで何も書き込まれません。"
+
+#: src/pages/import-wizard-page.tsx:252
 msgid "The import failed."
 msgstr "インポートに失敗しました。"
 

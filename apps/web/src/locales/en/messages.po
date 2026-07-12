@@ -26,7 +26,7 @@ msgid "(daily-notes default)"
 msgstr "(daily-notes default)"
 
 #. placeholder {0}: counts.exists
-#: src/pages/import-wizard-page.tsx:467
+#: src/pages/import-wizard-page.tsx:505
 msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, one {# already in library} other {# already in library}}"
 
@@ -36,7 +36,7 @@ msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, one {# complete} other {# complete}}"
 
 #. placeholder {0}: job.created
-#: src/pages/import-wizard-page.tsx:681
+#: src/pages/import-wizard-page.tsx:719
 msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, one {# created} other {# created}}"
 
@@ -57,7 +57,7 @@ msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, one {# external type} other {# external types}}"
 
 #. placeholder {0}: job.failed
-#: src/pages/import-wizard-page.tsx:690
+#: src/pages/import-wizard-page.tsx:728
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# failed} other {# failed}}"
 
@@ -67,7 +67,7 @@ msgid "{0, plural, one {# field} other {# fields}}"
 msgstr "{0, plural, one {# field} other {# fields}}"
 
 #. placeholder {0}: items.length
-#: src/pages/import-wizard-page.tsx:461
+#: src/pages/import-wizard-page.tsx:499
 msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, one {# found} other {# found}}"
 
@@ -90,7 +90,7 @@ msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, one {# mapping} other {# mappings}}"
 
 #. placeholder {0}: counts.needsReview
-#: src/pages/import-wizard-page.tsx:471
+#: src/pages/import-wizard-page.tsx:509
 msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, one {# needs review} other {# need review}}"
 
@@ -131,12 +131,12 @@ msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, one {# shown} other {# shown}}"
 
 #. placeholder {0}: job.skipped
-#: src/pages/import-wizard-page.tsx:685
+#: src/pages/import-wizard-page.tsx:723
 msgid "{0, plural, one {# skipped} other {# skipped}}"
 msgstr "{0, plural, one {# skipped} other {# skipped}}"
 
 #. placeholder {0}: counts.willCreate
-#: src/pages/import-wizard-page.tsx:464
+#: src/pages/import-wizard-page.tsx:502
 msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, one {# to create} other {# to create}}"
 
@@ -164,7 +164,7 @@ msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, one {# value} other {# values}}"
 
 #. placeholder {0}: data.watchedCount
-#: src/pages/import-wizard-page.tsx:626
+#: src/pages/import-wizard-page.tsx:664
 msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, one {# watched} other {# watched}}"
 
@@ -186,7 +186,7 @@ msgstr "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
 #: src/components/assets/asset-download-panel.tsx:122
-#: src/pages/import-wizard-page.tsx:676
+#: src/pages/import-wizard-page.tsx:714
 msgid "{0} / {1} processed"
 msgstr "{0} / {1} processed"
 
@@ -245,7 +245,7 @@ msgstr "{monthLabel}: {0} — open in calendar"
 msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgstr "{selectedTotal, plural, one {# dated} other {# dated}}"
 
-#: src/pages/import-wizard-page.tsx:294
+#: src/pages/import-wizard-page.tsx:293
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
@@ -497,7 +497,7 @@ msgstr "All types ({0})"
 msgid "Amount"
 msgstr "Amount"
 
-#: src/pages/import-wizard-page.tsx:47
+#: src/pages/import-wizard-page.tsx:46
 msgid "Anime"
 msgstr "Anime"
 
@@ -573,7 +573,7 @@ msgstr "Basics"
 msgid "Body Sections"
 msgstr "Body Sections"
 
-#: src/pages/import-wizard-page.tsx:46
+#: src/pages/import-wizard-page.tsx:45
 msgid "Book"
 msgstr "Book"
 
@@ -603,8 +603,8 @@ msgstr "Calendar"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:113
 #: src/pages/entity-page.tsx:489
 #: src/pages/entity-page.tsx:702
-#: src/pages/import-wizard-page.tsx:264
-#: src/pages/import-wizard-page.tsx:305
+#: src/pages/import-wizard-page.tsx:263
+#: src/pages/import-wizard-page.tsx:304
 #: src/pages/list-detail-page.tsx:529
 #: src/pages/list-detail-page.tsx:1003
 #: src/pages/lists-page.tsx:241
@@ -640,7 +640,7 @@ msgid "Choose a candidate to compare fields."
 msgstr "Choose a candidate to compare fields."
 
 #: src/pages/entity-create-page.tsx:83
-#: src/pages/import-wizard-page.tsx:479
+#: src/pages/import-wizard-page.tsx:517
 msgid "Choose a type"
 msgstr "Choose a type"
 
@@ -671,7 +671,7 @@ msgstr "Coming up"
 #: src/components/settings/settings-sections.tsx:745
 #: src/components/settings/settings-sections.tsx:824
 #: src/pages/activity-page.tsx:47
-#: src/pages/import-wizard-page.tsx:61
+#: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
 msgstr "Completed"
 
@@ -747,6 +747,10 @@ msgstr "Core Views"
 msgid "Could not load options."
 msgstr "Could not load options."
 
+#: src/pages/import-wizard-page.tsx:457
+msgid "Could not read this CSV file."
+msgstr "Could not read this CSV file."
+
 #: src/components/smart-lists/save-smart-list-dialog.tsx:120
 #: src/pages/entity-create-page.tsx:127
 #: src/pages/lists-page.tsx:245
@@ -787,7 +791,7 @@ msgstr "Creating…"
 msgid "Criteria"
 msgstr "Criteria"
 
-#: src/pages/import-wizard-page.tsx:374
+#: src/pages/import-wizard-page.tsx:370
 msgid "CSV export"
 msgstr "CSV export"
 
@@ -989,7 +993,7 @@ msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
 #: src/components/settings/settings-sections.tsx:825
-#: src/pages/import-wizard-page.tsx:62
+#: src/pages/import-wizard-page.tsx:61
 msgid "Dropped"
 msgstr "Dropped"
 
@@ -1077,7 +1081,7 @@ msgid "Enum options"
 msgstr "Enum options"
 
 #: src/pages/activity-page.tsx:302
-#: src/pages/import-wizard-page.tsx:650
+#: src/pages/import-wizard-page.tsx:688
 msgid "Episodes"
 msgstr "Episodes"
 
@@ -1116,12 +1120,12 @@ msgstr "External source"
 msgid "External types"
 msgstr "External types"
 
-#: src/pages/import-wizard-page.tsx:417
+#: src/pages/import-wizard-page.tsx:412
 msgid "Fetch & plan"
 msgstr "Fetch & plan"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:261
+#: src/pages/import-wizard-page.tsx:260
 msgid "Fetching your library from {0}…"
 msgstr "Fetching your library from {0}…"
 
@@ -1176,7 +1180,7 @@ msgstr "For example, an episode number."
 msgid "Form"
 msgstr "Form"
 
-#: src/pages/import-wizard-page.tsx:49
+#: src/pages/import-wizard-page.tsx:48
 msgid "Game"
 msgstr "Game"
 
@@ -1188,7 +1192,7 @@ msgstr "Give your list a name."
 msgid "Go back"
 msgstr "Go back"
 
-#: src/pages/import-wizard-page.tsx:310
+#: src/pages/import-wizard-page.tsx:309
 msgid "Go to library"
 msgstr "Go to library"
 
@@ -1260,11 +1264,11 @@ msgstr "Import ({0} new · {already} updated)"
 msgid "Import ({incoming})"
 msgstr "Import ({incoming})"
 
-#: src/pages/import-wizard-page.tsx:313
+#: src/pages/import-wizard-page.tsx:312
 msgid "Import another"
 msgstr "Import another"
 
-#: src/pages/import-wizard-page.tsx:673
+#: src/pages/import-wizard-page.tsx:711
 msgid "Import complete"
 msgstr "Import complete"
 
@@ -1273,7 +1277,7 @@ msgid "Importing creates files, so it is unavailable here."
 msgstr "Importing creates files, so it is unavailable here."
 
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/pages/import-wizard-page.tsx:673
+#: src/pages/import-wizard-page.tsx:711
 msgid "Importing…"
 msgstr "Importing…"
 
@@ -1282,8 +1286,8 @@ msgstr "Importing…"
 msgid "in"
 msgstr "in"
 
-#: src/pages/import-wizard-page.tsx:588
-#: src/pages/import-wizard-page.tsx:592
+#: src/pages/import-wizard-page.tsx:626
+#: src/pages/import-wizard-page.tsx:630
 #: src/pages/quick-capture-page.tsx:317
 msgid "In library ✓"
 msgstr "In library ✓"
@@ -1298,7 +1302,7 @@ msgid "in the last"
 msgstr "in the last"
 
 #. placeholder {0}: item.title
-#: src/pages/import-wizard-page.tsx:556
+#: src/pages/import-wizard-page.tsx:594
 msgid "Include {0}"
 msgstr "Include {0}"
 
@@ -1523,7 +1527,7 @@ msgstr "Loading taxonomy"
 #: src/pages/entity-page.tsx:574
 #: src/pages/home-page.tsx:33
 #: src/pages/home-page.tsx:61
-#: src/pages/import-wizard-page.tsx:248
+#: src/pages/import-wizard-page.tsx:247
 #: src/pages/library-page.tsx:373
 #: src/pages/list-detail-page.tsx:386
 #: src/pages/list-detail-page.tsx:894
@@ -1580,7 +1584,7 @@ msgstr "Mark as done"
 msgid "Mark as not done"
 msgstr "Mark as not done"
 
-#: src/pages/import-wizard-page.tsx:659
+#: src/pages/import-wizard-page.tsx:697
 msgid "Mark watched progress"
 msgstr "Mark watched progress"
 
@@ -1657,7 +1661,7 @@ msgstr "Move to trash?"
 msgid "Moved to trash"
 msgstr "Moved to trash"
 
-#: src/pages/import-wizard-page.tsx:48
+#: src/pages/import-wizard-page.tsx:47
 msgid "Music"
 msgstr "Music"
 
@@ -1677,7 +1681,7 @@ msgstr "Name"
 msgid "Navigation"
 msgstr "Navigation"
 
-#: src/pages/import-wizard-page.tsx:615
+#: src/pages/import-wizard-page.tsx:653
 msgid "Needs review"
 msgstr "Needs review"
 
@@ -1761,7 +1765,7 @@ msgstr "No dated entities yet."
 msgid "No dates"
 msgstr "No dates"
 
-#: src/pages/import-wizard-page.tsx:508
+#: src/pages/import-wizard-page.tsx:546
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 
@@ -1836,7 +1840,7 @@ msgstr "No lists yet. Create one to start collecting entities."
 msgid "No markdown body sections."
 msgstr "No markdown body sections."
 
-#: src/pages/import-wizard-page.tsx:609
+#: src/pages/import-wizard-page.tsx:647
 msgid "No matched source"
 msgstr "No matched source"
 
@@ -1852,7 +1856,7 @@ msgstr "No matches found."
 msgid "No matching entities."
 msgstr "No matching entities."
 
-#: src/pages/import-wizard-page.tsx:611
+#: src/pages/import-wizard-page.tsx:649
 msgid "No matching type"
 msgstr "No matching type"
 
@@ -1872,7 +1876,7 @@ msgstr "No queue items match the current filters"
 msgid "No review data"
 msgstr "No review data"
 
-#: src/pages/import-wizard-page.tsx:568
+#: src/pages/import-wizard-page.tsx:606
 msgid "no source"
 msgstr "no source"
 
@@ -1924,7 +1928,7 @@ msgstr "not"
 msgid "Note <0>(optional)</0>"
 msgstr "Note <0>(optional)</0>"
 
-#: src/pages/import-wizard-page.tsx:629
+#: src/pages/import-wizard-page.tsx:667
 msgid "notes"
 msgstr "notes"
 
@@ -1967,7 +1971,7 @@ msgid "older than"
 msgstr "older than"
 
 #: src/components/settings/settings-sections.tsx:822
-#: src/pages/import-wizard-page.tsx:59
+#: src/pages/import-wizard-page.tsx:58
 msgid "Ongoing"
 msgstr "Ongoing"
 
@@ -1975,7 +1979,7 @@ msgstr "Ongoing"
 msgid "Only image files can be uploaded."
 msgstr "Only image files can be uploaded."
 
-#: src/pages/import-wizard-page.tsx:413
+#: src/pages/import-wizard-page.tsx:407
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "Only public profiles are supported. Nothing is written until you review the plan."
 
@@ -2031,10 +2035,6 @@ msgstr "Page not found"
 msgid "Parent folder"
 msgstr "Parent folder"
 
-#: src/pages/import-wizard-page.tsx:396
-msgid "Paste the contents of the exported .csv file"
-msgstr "Paste the contents of the exported .csv file"
-
 #: src/components/settings/settings-controls.tsx:174
 #: src/components/settings/settings-sections.tsx:282
 msgid "Path"
@@ -2045,7 +2045,7 @@ msgid "Paths"
 msgstr "Paths"
 
 #: src/components/settings/settings-sections.tsx:823
-#: src/pages/import-wizard-page.tsx:60
+#: src/pages/import-wizard-page.tsx:59
 msgid "Paused"
 msgstr "Paused"
 
@@ -2059,7 +2059,7 @@ msgstr "Planned"
 
 #: src/components/settings/settings-sections.tsx:743
 #: src/components/settings/settings-sections.tsx:821
-#: src/pages/import-wizard-page.tsx:58
+#: src/pages/import-wizard-page.tsx:57
 msgid "Planning"
 msgstr "Planning"
 
@@ -2102,7 +2102,7 @@ msgstr "Provider priority"
 msgid "Providers"
 msgstr "Providers"
 
-#: src/pages/import-wizard-page.tsx:374
+#: src/pages/import-wizard-page.tsx:370
 msgid "Public profile"
 msgstr "Public profile"
 
@@ -2110,7 +2110,7 @@ msgstr "Public profile"
 msgid "Quick Capture"
 msgstr "Quick Capture"
 
-#: src/pages/import-wizard-page.tsx:50
+#: src/pages/import-wizard-page.tsx:49
 msgid "Real"
 msgstr "Real"
 
@@ -2521,11 +2521,11 @@ msgstr "Sort by title"
 msgid "Sort by update time"
 msgstr "Sort by update time"
 
-#: src/pages/import-wizard-page.tsx:354
+#: src/pages/import-wizard-page.tsx:350
 msgid "Source"
 msgstr "Source"
 
-#: src/pages/import-wizard-page.tsx:613
+#: src/pages/import-wizard-page.tsx:651
 msgid "Source unavailable"
 msgstr "Source unavailable"
 
@@ -2540,7 +2540,7 @@ msgid "Start"
 msgstr "Start"
 
 #: src/pages/import-wizard-page.tsx:219
-#: src/pages/import-wizard-page.tsx:256
+#: src/pages/import-wizard-page.tsx:255
 msgid "Start over"
 msgstr "Start over"
 
@@ -2550,7 +2550,7 @@ msgstr "Start over"
 msgid "Started"
 msgstr "Started"
 
-#: src/pages/import-wizard-page.tsx:417
+#: src/pages/import-wizard-page.tsx:412
 msgid "Starting…"
 msgstr "Starting…"
 
@@ -2577,7 +2577,7 @@ msgstr "Status field"
 msgid "Status Mismatch"
 msgstr "Status Mismatch"
 
-#: src/pages/import-wizard-page.tsx:646
+#: src/pages/import-wizard-page.tsx:684
 msgid "Status, score & dates"
 msgstr "Status, score & dates"
 
@@ -2654,7 +2654,11 @@ msgstr "taxonomy: {0}"
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 
-#: src/pages/import-wizard-page.tsx:253
+#: src/pages/import-wizard-page.tsx:405
+msgid "The file is read in your browser. Nothing is written until you review the plan."
+msgstr "The file is read in your browser. Nothing is written until you review the plan."
+
+#: src/pages/import-wizard-page.tsx:252
 msgid "The import failed."
 msgstr "The import failed."
 

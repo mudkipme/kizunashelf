@@ -24,7 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
 import type {
@@ -147,6 +146,7 @@ export function ImportWizardPage() {
 
   function resetToConfigure() {
     setJobId(undefined);
+    setCsvText("");
     setBucketTypes({});
     setSkip(new Set());
   }
@@ -237,7 +237,6 @@ export function ImportWizardPage() {
             source={source}
             username={username}
             onUsername={setUsername}
-            csvText={csvText}
             onCsvText={setCsvText}
             canStart={canStart}
             starting={start.isPending}
@@ -328,7 +327,6 @@ function ConfigureStep({
   source,
   username,
   onUsername,
-  csvText,
   onCsvText,
   canStart,
   starting,
@@ -340,13 +338,11 @@ function ConfigureStep({
   source: ImportSourceCatalogItem | undefined;
   username: string;
   onUsername: (value: string) => void;
-  csvText: string;
   onCsvText: (value: string) => void;
   canStart: boolean;
   starting: boolean;
   onStart: () => void;
 }) {
-  const { t } = useLingui();
   return (
     <section className="flex flex-col gap-4 rounded-md border p-4">
       <div className="flex flex-col gap-2">
@@ -388,16 +384,11 @@ function ConfigureStep({
       {source ? (
         <div className="flex flex-col gap-2">
           {source.input === "csv" ? (
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              {source.inputLabel}
-              <Textarea
-                value={csvText}
-                onChange={(event) => onCsvText(event.target.value)}
-                placeholder={t`Paste the contents of the exported .csv file`}
-                rows={8}
-                className="font-mono text-xs"
-              />
-            </label>
+            <CsvFileInput
+              key={source.id}
+              label={source.inputLabel}
+              onCsvText={onCsvText}
+            />
           ) : (
             <label className="flex max-w-sm flex-col gap-1 text-sm font-medium">
               {source.inputLabel}
@@ -410,7 +401,11 @@ function ConfigureStep({
             </label>
           )}
           <p className="text-xs text-muted-foreground">
-            <Trans>Only public profiles are supported. Nothing is written until you review the plan.</Trans>
+            {source.input === "csv" ? (
+              <Trans>The file is read in your browser. Nothing is written until you review the plan.</Trans>
+            ) : (
+              <Trans>Only public profiles are supported. Nothing is written until you review the plan.</Trans>
+            )}
           </p>
           <div>
             <Button onClick={onStart} disabled={!canStart || starting}>
@@ -420,6 +415,49 @@ function ConfigureStep({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function CsvFileInput({ label, onCsvText }: { label: string; onCsvText: (value: string) => void }) {
+  const [readFailed, setReadFailed] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  async function handleFile(fileInput: HTMLInputElement) {
+    const file = fileInput.files?.[0];
+    setReadFailed(false);
+    onCsvText("");
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      if (mountedRef.current && fileInput.files?.[0] === file) onCsvText(text);
+    } catch {
+      if (mountedRef.current && fileInput.files?.[0] === file) setReadFailed(true);
+    }
+  }
+
+  return (
+    <label className="flex max-w-lg flex-col gap-1 text-sm font-medium">
+      {label}
+      <Input
+        type="file"
+        accept=".csv,text/csv"
+        aria-invalid={readFailed || undefined}
+        onChange={(event) => void handleFile(event.currentTarget)}
+      />
+      {readFailed ? (
+        <span className="text-xs font-normal text-destructive" role="alert">
+          <Trans>Could not read this CSV file.</Trans>
+        </span>
+      ) : null}
+    </label>
   );
 }
 
