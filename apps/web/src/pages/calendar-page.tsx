@@ -9,6 +9,7 @@ import { errorMessage } from "@/api/client";
 import { calendarQuery, configQuery } from "@/api/queries";
 import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { ActivityCard } from "@/pages/activity-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,7 +78,7 @@ export function CalendarPage() {
 
   return (
     <AppFrame error={calendar.error ? errorMessage(calendar.error) : undefined}>
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
+      <PageContainer width="wide">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-base font-semibold">
@@ -198,7 +199,7 @@ export function CalendarPage() {
             </div>
           </aside>
         </div>
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

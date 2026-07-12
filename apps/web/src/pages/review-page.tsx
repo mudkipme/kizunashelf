@@ -12,6 +12,7 @@ import { AssetDownloadPanel } from "@/components/assets/asset-download-panel";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
@@ -117,7 +118,7 @@ export function ReviewPage() {
 
   return (
     <AppFrame error={cleanup.error ? errorMessage(cleanup.error) : undefined}>
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
+      <PageContainer width="wide">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold">
@@ -217,7 +218,7 @@ export function ReviewPage() {
             )}
           </>
         ) : null}
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

@@ -10,6 +10,7 @@ import { useRelationSearch } from "@/api/use-relation-search";
 import { configQuery } from "@/api/queries";
 import { type FrontmatterDraft, MetadataEditor } from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -72,7 +73,7 @@ export function EntityCreatePage() {
 
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
+      <PageContainer>
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">
@@ -128,7 +129,7 @@ export function EntityCreatePage() {
           onBodyChange={setBody}
           onSave={create}
         />
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

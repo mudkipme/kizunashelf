@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { errorMessage } from "@/api/client";
 import { languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { ProviderCredentials } from "@/components/settings/provider-credentials";
 import { RawConfigEditor } from "@/components/settings/raw-config-editor";
 import { SettingsEditor } from "@/components/settings/settings-editor";
@@ -59,7 +60,7 @@ export function SettingsPage() {
 
   return (
     <AppFrame error={(error ? errorMessage(error) : undefined) ?? settings.data?.error ?? undefined}>
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
+      <PageContainer width="wide">
         {/* Desktop manages vaults + credentials natively (multi-vault, OS keychain). */}
         {desktop ? (
           <>
@@ -105,7 +106,7 @@ export function SettingsPage() {
             onDirtyChange={setDirty}
           />
         ) : null}
-      </div>
+      </PageContainer>
 
       <AlertDialog
         open={pendingMode !== null}

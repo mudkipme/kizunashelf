@@ -48,6 +48,7 @@ import { EntityCover } from "@/components/assets/entity-cover";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -379,7 +380,7 @@ export function ListDetailPage() {
 
   return (
     <AppFrame error={list.error ? errorMessage(list.error) : undefined}>
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
+      <PageContainer>
         {list.isPending ? (
           <Placeholder>
             <Trans>Loading…</Trans>
@@ -541,7 +542,7 @@ export function ListDetailPage() {
             </AlertDialog>
           </>
         )}
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

@@ -2,6 +2,7 @@ import { Trans } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 
@@ -10,7 +11,7 @@ import { Placeholder } from "@/components/ui/placeholder";
 export function NotFoundPage() {
   return (
     <AppFrame>
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4">
+      <PageContainer>
         <Placeholder className="flex flex-col items-center gap-3 py-16">
           <p className="text-base font-semibold text-foreground">
             <Trans>Page not found</Trans>
@@ -24,7 +25,7 @@ export function NotFoundPage() {
             </Link>
           </Button>
         </Placeholder>
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

@@ -38,6 +38,7 @@ import { QuickLogDialog } from "@/components/assets/quick-log-dialog";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -272,7 +273,7 @@ export function EntityPage() {
 
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4">
+      <PageContainer width="wide">
         {loading ? (
           <Placeholder>
             <Trans>Loading…</Trans>
@@ -387,7 +388,7 @@ export function EntityPage() {
             <Trans>Entity not found</Trans>
           </Placeholder>
         )}
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

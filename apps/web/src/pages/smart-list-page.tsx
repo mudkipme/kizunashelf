@@ -23,6 +23,7 @@ import { EntityGridItem } from "@/components/assets/entity-grid-item";
 import { EntityListItem } from "@/components/assets/entity-list-item";
 import { PaginationBar } from "@/components/assets/pagination-bar";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   RuleBuilder,
   pruneIncompleteRules,
@@ -228,7 +229,7 @@ export function SmartListPage() {
             : undefined
       }
     >
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
+      <PageContainer>
         {detail.isPending ? (
           <Placeholder>
             <Trans>Loading…</Trans>
@@ -386,7 +387,7 @@ export function SmartListPage() {
             </section>
           </>
         )}
-      </div>
+      </PageContainer>
 
       <RenameSmartListDialog
         open={renameOpen}

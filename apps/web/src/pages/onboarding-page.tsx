@@ -11,6 +11,7 @@ import { defaultLanguage, PresetGallery } from "@/components/settings/preset-pic
 import { cleanVaultConfig, defaultDailyNotes, defaultVaultConfig } from "@/components/settings/settings-model";
 import { SettingsEditor } from "@/components/settings/settings-editor";
 import { VaultSwitcher } from "@/components/settings/vault-switcher";
+import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
@@ -87,7 +88,7 @@ export function OnboardingPage() {
 
   return (
     <main className="h-dvh overflow-auto overscroll-contain bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">{body}</div>
+      <PageContainer>{body}</PageContainer>
     </main>
   );
 }

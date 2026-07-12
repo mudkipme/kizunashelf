@@ -18,6 +18,7 @@ import {
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { configQuery, providerCatalogQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,7 +204,7 @@ export function ImportWizardPage() {
 
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
+      <PageContainer>
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">
@@ -315,7 +316,7 @@ export function ImportWizardPage() {
             )}
           </>
         )}
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

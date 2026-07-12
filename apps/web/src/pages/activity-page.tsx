@@ -11,6 +11,7 @@ import { AssetImage } from "@/components/assets/asset-image";
 import { CoverFallback } from "@/components/assets/cover-fallback";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -107,7 +108,7 @@ export function ActivityPage() {
 
   return (
     <AppFrame error={feed.error ? errorMessage(feed.error) : undefined}>
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 sm:p-6">
+      <PageContainer>
         <header className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold"><Trans>Activity</Trans></h1>
           <div className="flex flex-wrap gap-1">
@@ -193,7 +194,7 @@ export function ActivityPage() {
             {feed.isFetchingNextPage ? <Trans>Loading…</Trans> : <Trans>Load more</Trans>}
           </Button>
         ) : null}
-      </div>
+      </PageContainer>
     </AppFrame>
   );
 }

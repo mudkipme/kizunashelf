@@ -11,6 +11,7 @@ import { addList } from "@/api/lists";
 import { addSmartList } from "@/api/smart-lists";
 import { configQuery, listsQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +37,7 @@ export function ListsPage() {
 
   return (
     <AppFrame error={lists.error ? errorMessage(lists.error) : undefined}>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
+      <PageContainer>
         <header className="flex items-center justify-between gap-2">
           <div>
             <h1 className="text-lg font-semibold">
@@ -106,7 +107,7 @@ export function ListsPage() {
             ))}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       <CreateListDialog open={createOpen} onOpenChange={setCreateOpen} />
     </AppFrame>
