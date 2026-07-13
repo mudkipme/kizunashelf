@@ -197,9 +197,6 @@ export function QuickCapturePage() {
             <h1 className="truncate text-base font-semibold">
               <Trans>Quick Capture</Trans>
             </h1>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              <Trans>Search external sources, or add manually</Trans>
-            </p>
           </div>
           <Button asChild variant="outline">
             <Link to={manualHref}>

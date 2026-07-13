@@ -21,35 +21,29 @@ msgstr "（記録済み）"
 msgid " (new note)"
 msgstr "（新規ノート）"
 
-#: src/components/settings/settings-sections.tsx:392
+#: src/components/settings/settings-sections.tsx:393
 msgid "(daily-notes default)"
 msgstr "（デイリーノートのデフォルト）"
 
 #. placeholder {0}: counts.exists
-#: src/pages/import-wizard-page.tsx:505
+#: src/pages/import-wizard-page.tsx:502
 msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, other {# 件がライブラリに登録済み}}"
 
 #. placeholder {0}: completeCount(summary)
-#: src/pages/review-page.tsx:251
+#: src/pages/review-page.tsx:244
 msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, other {# 件完了}}"
 
 #. placeholder {0}: job.created
-#: src/pages/import-wizard-page.tsx:719
+#: src/pages/import-wizard-page.tsx:716
 msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {# 件作成}}"
 
 #. placeholder {0}: selectedDay.items.length
-#: src/pages/calendar-page.tsx:180
+#: src/pages/calendar-page.tsx:173
 msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, other {# 件}}"
-
-#. placeholder {0}: calendar.data.totals.entries
-#. placeholder {1}: calendar.data.totals.daysWithEntries
-#: src/pages/calendar-page.tsx:92
-msgid "{0, plural, one {# entry} other {# entries}} across {1, plural, one {# day} other {# days}}"
-msgstr "{0, plural, other {# 件}}（{1, plural, other {# 日}}分）"
 
 #. placeholder {0}: field.externalTypes.length
 #: src/components/settings/settings-field-descriptors.ts:78
@@ -57,7 +51,7 @@ msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, other {# 件の外部タイプ}}"
 
 #. placeholder {0}: job.failed
-#: src/pages/import-wizard-page.tsx:728
+#: src/pages/import-wizard-page.tsx:725
 msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, other {# 件失敗}}"
 
@@ -67,13 +61,13 @@ msgid "{0, plural, one {# field} other {# fields}}"
 msgstr "{0, plural, other {# 件のフィールド}}"
 
 #. placeholder {0}: items.length
-#: src/pages/import-wizard-page.tsx:499
+#: src/pages/import-wizard-page.tsx:496
 msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {# 件見つかりました}}"
 
 #. placeholder {0}: list.itemCount
 #: src/pages/entity-page.tsx:594
-#: src/pages/lists-page.tsx:91
+#: src/pages/lists-page.tsx:88
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 件のアイテム}}"
 
@@ -90,13 +84,13 @@ msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, other {# 件のマッピング}}"
 
 #. placeholder {0}: counts.needsReview
-#: src/pages/import-wizard-page.tsx:509
+#: src/pages/import-wizard-page.tsx:506
 msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 件が要レビュー}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
 #: src/components/settings/settings-editor.tsx:104
-#: src/components/settings/settings-editor.tsx:231
+#: src/components/settings/settings-editor.tsx:226
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 件のパス}}"
 
@@ -106,7 +100,7 @@ msgid "{0, plural, one {# provider} other {# providers}}"
 msgstr "{0, plural, other {# 件のプロバイダー}}"
 
 #. placeholder {0}: summary.remaining
-#: src/pages/review-page.tsx:243
+#: src/pages/review-page.tsx:236
 msgid "{0, plural, one {# remaining} other {# remaining}}"
 msgstr "{0, plural, other {残り # 件}}"
 
@@ -116,37 +110,35 @@ msgid "{0, plural, one {# rule} other {# rules}}"
 msgstr "{0, plural, other {# 件のルール}}"
 
 #. placeholder {0}: (config.home.sections ?? []).length
-#. placeholder {0}: home.data?.sections.length ?? 0
 #. placeholder {0}: list.sectionCount
 #: src/components/settings/settings-editor.tsx:111
-#: src/components/settings/settings-editor.tsx:269
-#: src/pages/home-page.tsx:35
-#: src/pages/lists-page.tsx:95
+#: src/components/settings/settings-editor.tsx:264
+#: src/pages/lists-page.tsx:92
 msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, other {# 件のセクション}}"
 
 #. placeholder {0}: filteredItems.length
-#: src/pages/review-page.tsx:181
+#: src/pages/review-page.tsx:174
 msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, other {# 件表示}}"
 
 #. placeholder {0}: job.skipped
-#: src/pages/import-wizard-page.tsx:723
+#: src/pages/import-wizard-page.tsx:720
 msgid "{0, plural, one {# skipped} other {# skipped}}"
 msgstr "{0, plural, other {# 件スキップ}}"
 
 #. placeholder {0}: counts.willCreate
-#: src/pages/import-wizard-page.tsx:502
+#: src/pages/import-wizard-page.tsx:499
 msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, other {作成予定 # 件}}"
 
 #. placeholder {0}: items.length
-#: src/pages/review-page.tsx:184
+#: src/pages/review-page.tsx:177
 msgid "{0, plural, one {# total queue item} other {# total queue items}}"
 msgstr "{0, plural, other {キュー合計 # 件}}"
 
 #. placeholder {0}: summary.total
-#: src/pages/review-page.tsx:254
+#: src/pages/review-page.tsx:247
 msgid "{0, plural, one {# total} other {# total}}"
 msgstr "{0, plural, other {合計 # 件}}"
 
@@ -154,7 +146,7 @@ msgstr "{0, plural, other {合計 # 件}}"
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:118
 #: src/components/settings/settings-editor.tsx:117
-#: src/components/settings/settings-editor.tsx:304
+#: src/components/settings/settings-editor.tsx:299
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 件のタイプ}}"
 
@@ -164,7 +156,7 @@ msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, other {# 件の値}}"
 
 #. placeholder {0}: data.watchedCount
-#: src/pages/import-wizard-page.tsx:664
+#: src/pages/import-wizard-page.tsx:661
 msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {# 件視聴済み}}"
 
@@ -186,7 +178,7 @@ msgstr "{0, plural, other {# 話のエピソードをインポートしました
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
 #: src/components/assets/asset-download-panel.tsx:122
-#: src/pages/import-wizard-page.tsx:714
+#: src/pages/import-wizard-page.tsx:711
 msgid "{0} / {1} processed"
 msgstr "{0} / {1} 件処理済み"
 
@@ -215,7 +207,7 @@ msgstr "{0} 件スキップ"
 msgid "{ariaLabel} new property"
 msgstr "{ariaLabel} の新しいプロパティ"
 
-#: src/components/settings/settings-editor.tsx:306
+#: src/components/settings/settings-editor.tsx:301
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
 
@@ -245,7 +237,7 @@ msgstr "{monthLabel}: {0} — カレンダーで開く"
 msgid "{selectedTotal, plural, one {# dated} other {# dated}}"
 msgstr "{selectedTotal, plural, other {# 件に日付あり}}"
 
-#: src/pages/import-wizard-page.tsx:293
+#: src/pages/import-wizard-page.tsx:290
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {# 件のアイテムをインポート}}"
 
@@ -262,7 +254,7 @@ msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 件が一致}}"
 
-#: src/components/settings/settings-editor.tsx:305
+#: src/components/settings/settings-editor.tsx:300
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 件のフィールド}}"
 
@@ -321,7 +313,7 @@ msgstr "同名のリストが既に存在するか、ファイルがディスク
 msgid "A shelf for everything you love"
 msgstr "君が愛するすべてのための本棚"
 
-#: src/pages/lists-page.tsx:204
+#: src/pages/lists-page.tsx:201
 msgid "A smart list fills itself from criteria you define, and is saved as an Obsidian Bases (.base) file."
 msgstr "スマートリストは指定した条件から自動的に項目を集め、Obsidian Bases (.base) ファイルとして保存されます。"
 
@@ -335,17 +327,17 @@ msgid "Actions"
 msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:111
-#: src/components/layout/app-frame.tsx:360
+#: src/components/layout/app-frame.tsx:361
 #: src/pages/activity-page.tsx:113
-#: src/pages/statistics-page.tsx:81
+#: src/pages/statistics-page.tsx:74
 msgid "Activity"
 msgstr "アクティビティ"
 
 #: src/components/entities/metadata-inputs.tsx:641
 #: src/components/settings/settings-controls.tsx:70
-#: src/components/settings/settings-sections.tsx:949
-#: src/pages/home-page.tsx:48
-#: src/pages/home-page.tsx:53
+#: src/components/settings/settings-sections.tsx:950
+#: src/pages/home-page.tsx:41
+#: src/pages/home-page.tsx:46
 #: src/pages/library-page.tsx:397
 #: src/pages/library-page.tsx:402
 #: src/pages/list-detail-page.tsx:928
@@ -362,7 +354,7 @@ msgstr "「{item}」を追加"
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "<1>{1}</1> に <0>{0}</0> のリンクを追加"
 
-#: src/components/settings/settings-sections.tsx:465
+#: src/components/settings/settings-sections.tsx:466
 msgid "Add an External ref field with a provider to configure priority."
 msgstr "プロバイダーを設定した「外部参照」フィールドを追加すると、優先順位を設定できます。"
 
@@ -378,7 +370,7 @@ msgstr "組み込みタイプを追加"
 msgid "Add custom type"
 msgstr "カスタムタイプを追加"
 
-#: src/pages/home-page.tsx:42
+#: src/pages/home-page.tsx:35
 #: src/pages/library-page.tsx:391
 msgid "Add entity"
 msgstr "アイテムを追加"
@@ -387,7 +379,7 @@ msgstr "アイテムを追加"
 msgid "Add Entity"
 msgstr "アイテムを追加"
 
-#: src/components/settings/settings-sections.tsx:917
+#: src/components/settings/settings-sections.tsx:918
 msgid "Add enum options above to map them to statuses."
 msgstr "上に列挙オプションを追加してステータスに割り当てます。"
 
@@ -404,7 +396,7 @@ msgstr "グループを追加"
 msgid "Add items"
 msgstr "アイテムを追加"
 
-#: src/pages/quick-capture-page.tsx:207
+#: src/pages/quick-capture-page.tsx:204
 msgid "Add manually"
 msgstr "手動で追加"
 
@@ -441,11 +433,11 @@ msgid "Added, but episode import failed: {0}"
 msgstr "追加しましたが、エピソードのインポートに失敗しました: {0}"
 
 #: src/components/settings/preset-picker.tsx:204
-#: src/pages/quick-capture-page.tsx:336
+#: src/pages/quick-capture-page.tsx:333
 msgid "Adding…"
 msgstr "追加中…"
 
-#: src/components/entities/external-match-dialog.tsx:372
+#: src/components/entities/external-match-dialog.tsx:369
 msgid "adds new section"
 msgstr "新しいセクションを追加"
 
@@ -458,7 +450,7 @@ msgstr "詳細設定: スキーマ全体を編集"
 msgid "All"
 msgstr "すべて"
 
-#: src/pages/review-page.tsx:169
+#: src/pages/review-page.tsx:162
 msgid "All dates"
 msgstr "すべての日付"
 
@@ -467,23 +459,23 @@ msgstr "すべての日付"
 msgid "all of"
 msgstr "すべてが一致"
 
-#: src/pages/quick-capture-page.tsx:253
+#: src/pages/quick-capture-page.tsx:250
 msgid "All providers"
 msgstr "すべてのプロバイダー"
 
-#: src/components/entities/external-match-dialog.tsx:130
+#: src/components/entities/external-match-dialog.tsx:127
 #: src/pages/activity-page.tsx:28
-#: src/pages/calendar-page.tsx:129
+#: src/pages/calendar-page.tsx:122
 msgid "All sources"
 msgstr "すべてのソース"
 
 #: src/components/analytics/activity-heatmap.tsx:91
 #: src/components/assets/asset-download-panel.tsx:84
 #: src/pages/activity-page.tsx:133
-#: src/pages/calendar-page.tsx:134
-#: src/pages/lists-page.tsx:228
-#: src/pages/quick-capture-page.tsx:242
-#: src/pages/review-page.tsx:161
+#: src/pages/calendar-page.tsx:127
+#: src/pages/lists-page.tsx:225
+#: src/pages/quick-capture-page.tsx:239
+#: src/pages/review-page.tsx:154
 #: src/pages/smart-list-page.tsx:499
 msgid "All types"
 msgstr "すべてのタイプ"
@@ -526,34 +518,34 @@ msgstr "覚えておきたいこと"
 msgid "Apply"
 msgstr "適用"
 
-#: src/components/entities/external-match-dialog.tsx:210
+#: src/components/entities/external-match-dialog.tsx:207
 msgid "Apply Selected"
 msgstr "選択項目を適用"
 
-#: src/components/entities/external-match-dialog.tsx:210
+#: src/components/entities/external-match-dialog.tsx:207
 msgid "Applying…"
 msgstr "適用中…"
 
 #: src/components/assets/asset-toolbar.tsx:114
-#: src/components/settings/settings-sections.tsx:212
+#: src/components/settings/settings-sections.tsx:213
 #: src/pages/smart-list-page.tsx:553
 msgid "Ascending"
 msgstr "昇順"
 
-#: src/components/settings/settings-editor.tsx:216
+#: src/components/settings/settings-editor.tsx:211
 msgid "Asset root"
 msgstr "アセットのルート"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:206
+#: src/components/settings/settings-editor.tsx:201
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
 #: src/components/layout/app-frame.tsx:122
 #: src/components/settings/preset-picker.tsx:174
 #: src/components/settings/settings-dialogs.tsx:79
-#: src/components/settings/settings-editor.tsx:173
-#: src/pages/entity-edit-page.tsx:128
+#: src/components/settings/settings-editor.tsx:168
+#: src/pages/entity-edit-page.tsx:125
 msgid "Back"
 msgstr "戻る"
 
@@ -565,11 +557,11 @@ msgstr "ホームに戻る"
 msgid "Basename"
 msgstr "ベース名"
 
-#: src/components/settings/settings-sections.tsx:276
+#: src/components/settings/settings-sections.tsx:277
 msgid "Basics"
 msgstr "基本"
 
-#: src/components/entities/external-match-dialog.tsx:350
+#: src/components/entities/external-match-dialog.tsx:347
 msgid "Body Sections"
 msgstr "本文セクション"
 
@@ -577,19 +569,15 @@ msgstr "本文セクション"
 msgid "Book"
 msgstr "書籍"
 
-#: src/pages/import-wizard-page.tsx:214
-msgid "Bring a library in from another service, then review before anything is written"
-msgstr "他のサービスからライブラリを取り込み、書き込む前に確認します"
-
 #: src/pages/review-page.tsx:51
 msgid "Broken Assets"
 msgstr "壊れたアセット"
 
-#: src/pages/home-page.tsx:87
+#: src/pages/home-page.tsx:80
 msgid "Browse library"
 msgstr "ライブラリを閲覧"
 
-#: src/components/layout/app-frame.tsx:357
+#: src/components/layout/app-frame.tsx:358
 #: src/pages/calendar-page.tsx:86
 msgid "Calendar"
 msgstr "カレンダー"
@@ -603,11 +591,11 @@ msgstr "カレンダー"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:113
 #: src/pages/entity-page.tsx:489
 #: src/pages/entity-page.tsx:702
-#: src/pages/import-wizard-page.tsx:263
-#: src/pages/import-wizard-page.tsx:304
+#: src/pages/import-wizard-page.tsx:260
+#: src/pages/import-wizard-page.tsx:301
 #: src/pages/list-detail-page.tsx:529
 #: src/pages/list-detail-page.tsx:1003
-#: src/pages/lists-page.tsx:241
+#: src/pages/lists-page.tsx:238
 #: src/pages/smart-list-page.tsx:260
 #: src/pages/smart-list-page.tsx:413
 #: src/pages/smart-list-page.tsx:666
@@ -627,22 +615,29 @@ msgstr "完了日を変更"
 msgid "Changes the list's name."
 msgstr "リストの名前を変更します。"
 
-#: src/components/settings/settings-sections.tsx:475
+#: src/components/settings/settings-sections.tsx:476
 msgid "Checklist (per-item checkboxes)"
 msgstr "チェックリスト（アイテムごとのチェックボックス）"
 
-#: src/components/settings/settings-sections.tsx:764
+#: src/components/settings/settings-sections.tsx:765
 msgid "Chinese"
 msgstr "中国語"
 
-#: src/components/entities/external-match-dialog.tsx:388
+#: src/components/entities/external-match-dialog.tsx:385
 msgid "Choose a candidate to compare fields."
 msgstr "候補を選択してフィールドを比較します。"
 
-#: src/pages/entity-create-page.tsx:83
-#: src/pages/import-wizard-page.tsx:517
+#: src/pages/import-wizard-page.tsx:514
 msgid "Choose a type"
 msgstr "タイプを選択"
+
+#: src/components/settings/emoji-field.tsx:55
+msgid "Choose an emoji"
+msgstr "絵文字を選択"
+
+#: src/components/settings/emoji-field.tsx:48
+msgid "Choose icon"
+msgstr "アイコンを選択"
 
 #: src/pages/entity-page.tsx:568
 msgid "Choose which lists {entityName} belongs to."
@@ -657,8 +652,8 @@ msgstr "すべてクリア"
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/layout/app-frame.tsx:295
-#: src/components/layout/app-frame.tsx:311
+#: src/components/layout/app-frame.tsx:296
+#: src/components/layout/app-frame.tsx:312
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
@@ -667,9 +662,9 @@ msgid "Coming up"
 msgstr "近日公開"
 
 #: src/components/assets/quick-log-dialog.tsx:31
-#: src/components/settings/settings-sections.tsx:703
-#: src/components/settings/settings-sections.tsx:745
-#: src/components/settings/settings-sections.tsx:824
+#: src/components/settings/settings-sections.tsx:704
+#: src/components/settings/settings-sections.tsx:746
+#: src/components/settings/settings-sections.tsx:825
 #: src/pages/activity-page.tsx:47
 #: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
@@ -679,7 +674,7 @@ msgstr "完了"
 msgid "Configure a section shown on the home page: its source type, filters, and ordering."
 msgstr "ホームページに表示するセクションを設定します: ソースタイプ、フィルター、並び順。"
 
-#: src/pages/home-page.tsx:92
+#: src/pages/home-page.tsx:85
 msgid "Configure Home"
 msgstr "ホームを設定"
 
@@ -695,16 +690,16 @@ msgstr "新しいフィールドを設定し、「完了」を選択して追加
 msgid "Configure Vault"
 msgstr "保管庫を設定"
 
-#: src/pages/statistics-page.tsx:54
+#: src/pages/statistics-page.tsx:47
 msgid "Connected"
 msgstr "接続済み"
 
-#: src/pages/statistics-page.tsx:70
+#: src/pages/statistics-page.tsx:63
 msgid "Connection Fields"
 msgstr "接続フィールド"
 
 #: src/components/assets/entity-detail.tsx:196
-#: src/pages/statistics-page.tsx:52
+#: src/pages/statistics-page.tsx:45
 msgid "Connections"
 msgstr "接続"
 
@@ -739,7 +734,7 @@ msgstr "続行"
 msgid "Continue ({0})"
 msgstr "続行（{0}）"
 
-#: src/components/layout/app-frame.tsx:343
+#: src/components/layout/app-frame.tsx:344
 msgid "Core Views"
 msgstr "コアビュー"
 
@@ -747,17 +742,17 @@ msgstr "コアビュー"
 msgid "Could not load options."
 msgstr "オプションを読み込めませんでした。"
 
-#: src/pages/import-wizard-page.tsx:457
+#: src/pages/import-wizard-page.tsx:454
 msgid "Could not read this CSV file."
 msgstr "この CSV ファイルを読み込めませんでした。"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:120
-#: src/pages/entity-create-page.tsx:127
-#: src/pages/lists-page.tsx:245
+#: src/pages/entity-create-page.tsx:124
+#: src/pages/lists-page.tsx:242
 msgid "Create"
 msgstr "作成"
 
-#: src/pages/quick-capture-page.tsx:353
+#: src/pages/quick-capture-page.tsx:350
 msgid "Create “{query}” manually →"
 msgstr "「{query}」を手動で作成 →"
 
@@ -769,7 +764,7 @@ msgstr "作成して追加"
 msgid "Create new vault"
 msgstr "新しい保管庫を作成"
 
-#: src/components/settings/settings-editor.tsx:178
+#: src/components/settings/settings-editor.tsx:173
 #: src/components/settings/vault-switcher.tsx:166
 #: src/pages/onboarding-page.tsx:211
 msgid "Create vault"
@@ -782,25 +777,21 @@ msgstr "保管庫を作成（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:120
 #: src/pages/entity-page.tsx:627
-#: src/pages/lists-page.tsx:245
+#: src/pages/lists-page.tsx:242
 #: src/pages/onboarding-page.tsx:208
 msgid "Creating…"
 msgstr "作成中…"
 
-#: src/components/settings/settings-sections.tsx:173
+#: src/components/settings/settings-sections.tsx:174
 msgid "Criteria"
 msgstr "条件"
 
-#: src/pages/import-wizard-page.tsx:370
+#: src/pages/import-wizard-page.tsx:367
 msgid "CSV export"
 msgstr "CSV エクスポート"
 
-#: src/pages/lists-page.tsx:47
-msgid "Curated collections of your items, saved as plain files you own."
-msgstr "自分が所有するプレーンファイルとして保存された、厳選されたアイテムのコレクション。"
-
 #. placeholder {0}: formatMetadataValue(currentValues[entry.field])
-#: src/components/entities/external-match-dialog.tsx:333
+#: src/components/entities/external-match-dialog.tsx:330
 msgid "Current: {0}"
 msgstr "現在: {0}"
 
@@ -812,26 +803,26 @@ msgstr "カスタムフィールド"
 msgid "Custom field name"
 msgstr "カスタムフィールド名"
 
-#: src/components/settings/settings-editor.tsx:257
+#: src/components/settings/settings-editor.tsx:252
 msgid "Daily note indexing is disabled."
 msgstr "デイリーノートのインデックス作成は無効です。"
 
-#: src/pages/calendar-page.tsx:131
+#: src/pages/calendar-page.tsx:124
 msgid "Daily note mentions"
 msgstr "デイリーノートでの言及"
 
 #: src/components/settings/settings-editor.tsx:102
-#: src/components/settings/settings-editor.tsx:226
+#: src/components/settings/settings-editor.tsx:221
 #: src/pages/activity-page.tsx:30
 msgid "Daily Notes"
 msgstr "デイリーノート"
 
 #. placeholder {0}: calendar.data.totals.dailyNotes
-#: src/pages/calendar-page.tsx:123
+#: src/pages/calendar-page.tsx:116
 msgid "Daily Notes {0}"
 msgstr "デイリーノート {0}"
 
-#: src/components/settings/settings-sections.tsx:343
+#: src/components/settings/settings-sections.tsx:344
 msgid "Daily-note logging"
 msgstr "デイリーノートへの記録"
 
@@ -853,20 +844,20 @@ msgstr "日付"
 msgid "Date"
 msgstr "日付"
 
-#: src/components/settings/settings-sections.tsx:78
+#: src/components/settings/settings-sections.tsx:79
 msgid "Date format"
 msgstr "日付フォーマット"
 
 #. placeholder {0}: fieldDisplayLabel(field)
-#: src/components/settings/settings-sections.tsx:145
+#: src/components/settings/settings-sections.tsx:146
 msgid "Date: {0}"
 msgstr "日付: {0}"
 
-#: src/pages/statistics-page.tsx:53
+#: src/pages/statistics-page.tsx:46
 msgid "Dated"
 msgstr "日付あり"
 
-#: src/pages/statistics-page.tsx:82
+#: src/pages/statistics-page.tsx:75
 msgid "Dated entities by month and year — compare this year against past years, filter by type"
 msgstr "月・年ごとの日付付きアイテム — 今年と過去の年を比較し、タイプで絞り込みます"
 
@@ -883,11 +874,11 @@ msgstr "日付とエピソード"
 msgid "days"
 msgstr "日"
 
-#: src/components/settings/settings-sections.tsx:211
+#: src/components/settings/settings-sections.tsx:212
 msgid "Default"
 msgstr "デフォルト"
 
-#: src/components/settings/settings-sections.tsx:105
+#: src/components/settings/settings-sections.tsx:106
 msgid "Default line format"
 msgstr "デフォルトの行フォーマット"
 
@@ -904,7 +895,7 @@ msgid "Delete this smart list?"
 msgstr "このスマートリストを削除しますか？"
 
 #: src/components/assets/asset-toolbar.tsx:115
-#: src/components/settings/settings-sections.tsx:213
+#: src/components/settings/settings-sections.tsx:214
 #: src/pages/smart-list-page.tsx:554
 msgid "Descending"
 msgstr "降順"
@@ -926,7 +917,7 @@ msgid "Details"
 msgstr "詳細"
 
 #: src/components/assets/asset-toolbar.tsx:112
-#: src/components/settings/settings-sections.tsx:200
+#: src/components/settings/settings-sections.tsx:201
 #: src/pages/smart-list-page.tsx:540
 msgid "Direction"
 msgstr "方向"
@@ -943,7 +934,7 @@ msgstr "破棄"
 msgid "Discard unsaved changes?"
 msgstr "保存していない変更を破棄しますか？"
 
-#: src/components/settings/settings-sections.tsx:625
+#: src/components/settings/settings-sections.tsx:626
 msgid "Display name"
 msgstr "表示名"
 
@@ -972,7 +963,7 @@ msgstr "カバー画像をダウンロード"
 msgid "Download cover images so you keep your own copy."
 msgstr "自分のコピーを保持できるよう、カバー画像をダウンロードします。"
 
-#: src/components/entities/external-match-dialog.tsx:199
+#: src/components/entities/external-match-dialog.tsx:196
 msgid "Download cover locally"
 msgstr "カバー画像をローカルにダウンロード"
 
@@ -992,7 +983,7 @@ msgstr "ここにアイテムをドラッグ"
 msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
-#: src/components/settings/settings-sections.tsx:825
+#: src/components/settings/settings-sections.tsx:826
 #: src/pages/import-wizard-page.tsx:61
 msgid "Dropped"
 msgstr "中止"
@@ -1054,11 +1045,11 @@ msgstr "有効にする"
 msgid "ends with"
 msgstr "が次で終わる:"
 
-#: src/components/settings/settings-sections.tsx:766
+#: src/components/settings/settings-sections.tsx:767
 msgid "English"
 msgstr "英語"
 
-#: src/pages/statistics-page.tsx:51
+#: src/pages/statistics-page.tsx:44
 msgid "Entities"
 msgstr "アイテム"
 
@@ -1066,7 +1057,7 @@ msgstr "アイテム"
 msgid "Entity name"
 msgstr "アイテム名"
 
-#: src/pages/entity-edit-page.tsx:173
+#: src/pages/entity-edit-page.tsx:170
 #: src/pages/entity-page.tsx:388
 msgid "Entity not found"
 msgstr "アイテムが見つかりません"
@@ -1076,25 +1067,25 @@ msgstr "アイテムが見つかりません"
 msgid "Entity type"
 msgstr "アイテムのタイプ"
 
-#: src/components/settings/settings-sections.tsx:701
+#: src/components/settings/settings-sections.tsx:702
 msgid "Enum options"
 msgstr "列挙オプション"
 
 #: src/pages/activity-page.tsx:302
-#: src/pages/import-wizard-page.tsx:688
+#: src/pages/import-wizard-page.tsx:685
 msgid "Episodes"
 msgstr "エピソード"
 
-#: src/components/settings/settings-sections.tsx:746
+#: src/components/settings/settings-sections.tsx:747
 #: src/pages/activity-page.tsx:49
 msgid "Event"
 msgstr "イベント"
 
-#: src/components/settings/settings-sections.tsx:975
+#: src/components/settings/settings-sections.tsx:976
 msgid "External field"
 msgstr "外部フィールド"
 
-#: src/components/settings/settings-sections.tsx:940
+#: src/components/settings/settings-sections.tsx:941
 msgid "External field mappings"
 msgstr "外部フィールドのマッピング"
 
@@ -1102,37 +1093,37 @@ msgstr "外部フィールドのマッピング"
 msgid "External Match"
 msgstr "外部マッチ"
 
-#: src/components/settings/settings-sections.tsx:557
+#: src/components/settings/settings-sections.tsx:558
 msgid "External metadata"
 msgstr "外部メタデータ"
 
-#: src/components/entities/external-match-dialog.tsx:329
+#: src/components/entities/external-match-dialog.tsx:326
 msgid "external ref"
 msgstr "外部参照"
 
-#: src/components/settings/settings-sections.tsx:775
-#: src/components/settings/settings-sections.tsx:964
+#: src/components/settings/settings-sections.tsx:776
+#: src/components/settings/settings-sections.tsx:965
 msgid "External source"
 msgstr "外部ソース"
 
-#: src/components/settings/settings-sections.tsx:1012
-#: src/components/settings/settings-sections.tsx:1018
+#: src/components/settings/settings-sections.tsx:1013
+#: src/components/settings/settings-sections.tsx:1019
 msgid "External types"
 msgstr "外部タイプ"
 
-#: src/pages/import-wizard-page.tsx:412
+#: src/pages/import-wizard-page.tsx:409
 msgid "Fetch & plan"
 msgstr "取得して計画"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:260
+#: src/pages/import-wizard-page.tsx:257
 msgid "Fetching your library from {0}…"
 msgstr "{0} からライブラリを取得しています…"
 
 #: src/components/settings/settings-dialogs.tsx:337
 #: src/components/settings/settings-dialogs.tsx:397
 #: src/components/settings/settings-dialogs.tsx:407
-#: src/components/settings/settings-sections.tsx:610
+#: src/components/settings/settings-sections.tsx:611
 #: src/components/smart-lists/rule-builder.tsx:700
 msgid "Field"
 msgstr "フィールド"
@@ -1143,19 +1134,19 @@ msgstr "フィールド"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-builder.tsx:144
-#: src/pages/entity-create-page.tsx:103
+#: src/pages/entity-create-page.tsx:100
 msgid "File name"
 msgstr "ファイル名"
 
-#: src/components/settings/settings-sections.tsx:305
+#: src/components/settings/settings-sections.tsx:306
 msgid "Filename"
 msgstr "ファイル名"
 
-#: src/components/settings/settings-sections.tsx:322
+#: src/components/settings/settings-sections.tsx:323
 msgid "Filename title — used as"
 msgstr "ファイル名タイトル — 用途"
 
-#: src/components/settings/settings-sections.tsx:307
+#: src/components/settings/settings-sections.tsx:308
 msgid "Filename title language"
 msgstr "ファイル名タイトルの言語"
 
@@ -1184,7 +1175,7 @@ msgstr "フォーム"
 msgid "Game"
 msgstr "ゲーム"
 
-#: src/pages/lists-page.tsx:173
+#: src/pages/lists-page.tsx:170
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
@@ -1192,7 +1183,7 @@ msgstr "リストに名前を付けます。"
 msgid "Go back"
 msgstr "戻る"
 
-#: src/pages/import-wizard-page.tsx:309
+#: src/pages/import-wizard-page.tsx:306
 msgid "Go to library"
 msgstr "ライブラリへ移動"
 
@@ -1212,7 +1203,7 @@ msgstr "に値がある"
 msgid "has any of"
 msgstr "が次のいずれかを含む"
 
-#: src/pages/review-page.tsx:170
+#: src/pages/review-page.tsx:163
 msgid "Has date"
 msgstr "日付あり"
 
@@ -1221,13 +1212,13 @@ msgstr "日付あり"
 msgid "has none of"
 msgstr "が次のいずれも含まない"
 
-#: src/components/settings/settings-sections.tsx:547
+#: src/components/settings/settings-sections.tsx:548
 msgid "Heading"
 msgstr "見出し"
 
-#: src/components/layout/app-frame.tsx:346
+#: src/components/layout/app-frame.tsx:347
 #: src/components/settings/settings-editor.tsx:109
-#: src/components/settings/settings-editor.tsx:264
+#: src/components/settings/settings-editor.tsx:259
 #: src/pages/home-page.tsx:30
 msgid "Home"
 msgstr "ホーム"
@@ -1237,20 +1228,20 @@ msgstr "ホーム"
 msgid "Home section"
 msgstr "ホームセクション"
 
-#: src/components/settings/settings-editor.tsx:293
+#: src/components/settings/settings-editor.tsx:288
 msgid "Home sections are disabled."
 msgstr "ホームセクションは無効です。"
 
-#: src/components/settings/settings-sections.tsx:280
+#: src/components/settings/settings-sections.tsx:281
 msgid "Icon"
 msgstr "アイコン"
 
-#: src/components/settings/settings-sections.tsx:151
-#: src/components/settings/settings-sections.tsx:278
+#: src/components/settings/settings-sections.tsx:152
+#: src/components/settings/settings-sections.tsx:279
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:394
+#: src/components/layout/app-frame.tsx:395
 #: src/pages/import-wizard-page.tsx:211
 msgid "Import"
 msgstr "インポート"
@@ -1264,20 +1255,20 @@ msgstr "インポート（新規 {0} 件 · 更新 {already} 件）"
 msgid "Import ({incoming})"
 msgstr "インポート（{incoming}）"
 
-#: src/pages/import-wizard-page.tsx:312
+#: src/pages/import-wizard-page.tsx:309
 msgid "Import another"
 msgstr "別のものをインポート"
 
-#: src/pages/import-wizard-page.tsx:711
+#: src/pages/import-wizard-page.tsx:708
 msgid "Import complete"
 msgstr "インポート完了"
 
-#: src/pages/import-wizard-page.tsx:226
+#: src/pages/import-wizard-page.tsx:223
 msgid "Importing creates files, so it is unavailable here."
 msgstr "インポートはファイルを作成するため、ここでは利用できません。"
 
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/pages/import-wizard-page.tsx:711
+#: src/pages/import-wizard-page.tsx:708
 msgid "Importing…"
 msgstr "インポート中…"
 
@@ -1286,9 +1277,9 @@ msgstr "インポート中…"
 msgid "in"
 msgstr "フォルダ:"
 
-#: src/pages/import-wizard-page.tsx:626
-#: src/pages/import-wizard-page.tsx:630
-#: src/pages/quick-capture-page.tsx:317
+#: src/pages/import-wizard-page.tsx:623
+#: src/pages/import-wizard-page.tsx:627
+#: src/pages/quick-capture-page.tsx:314
 msgid "In library ✓"
 msgstr "ライブラリに登録済み ✓"
 
@@ -1302,7 +1293,7 @@ msgid "in the last"
 msgstr "過去"
 
 #. placeholder {0}: item.title
-#: src/pages/import-wizard-page.tsx:594
+#: src/pages/import-wizard-page.tsx:591
 msgid "Include {0}"
 msgstr "{0} を含める"
 
@@ -1363,7 +1354,7 @@ msgstr "がはい"
 msgid "Item {0}"
 msgstr "アイテム {0}"
 
-#: src/components/settings/settings-sections.tsx:558
+#: src/components/settings/settings-sections.tsx:559
 msgid "Item list"
 msgstr "アイテムリスト"
 
@@ -1372,7 +1363,7 @@ msgid "Items"
 msgstr "アイテム"
 
 #. placeholder {0}: calendar.data.totals.episodes
-#: src/pages/calendar-page.tsx:120
+#: src/pages/calendar-page.tsx:113
 msgid "Items {0}"
 msgstr "アイテム {0}"
 
@@ -1380,7 +1371,7 @@ msgstr "アイテム {0}"
 msgid "Items <0>({totalItems})</0>"
 msgstr "アイテム <0>({totalItems})</0>"
 
-#: src/components/settings/settings-sections.tsx:765
+#: src/components/settings/settings-sections.tsx:766
 msgid "Japanese"
 msgstr "日本語"
 
@@ -1392,11 +1383,11 @@ msgstr "編集を続ける"
 msgid "Keep groups"
 msgstr "グループを保持"
 
-#: src/components/settings/settings-sections.tsx:551
+#: src/components/settings/settings-sections.tsx:552
 msgid "Kind"
 msgstr "種類"
 
-#: src/components/settings/settings-sections.tsx:279
+#: src/components/settings/settings-sections.tsx:280
 msgid "Label"
 msgstr "ラベル"
 
@@ -1418,7 +1409,7 @@ msgstr "後で"
 msgid "less"
 msgstr "折りたたむ"
 
-#: src/components/layout/app-frame.tsx:354
+#: src/components/layout/app-frame.tsx:355
 msgid "Library"
 msgstr "ライブラリ"
 
@@ -1430,7 +1421,7 @@ msgstr "ライトテーマ"
 msgid "Light theme. Switch to dark theme."
 msgstr "ライトテーマ。ダークテーマに切り替えます。"
 
-#: src/components/settings/settings-sections.tsx:185
+#: src/components/settings/settings-sections.tsx:186
 #: src/pages/smart-list-page.tsx:562
 msgid "Limit"
 msgstr "上限"
@@ -1440,7 +1431,7 @@ msgstr "上限"
 msgid "line {0}"
 msgstr "行 {0}"
 
-#: src/components/settings/settings-sections.tsx:384
+#: src/components/settings/settings-sections.tsx:385
 msgid "Line format"
 msgstr "行フォーマット"
 
@@ -1472,12 +1463,12 @@ msgid "Links to"
 msgstr "リンク先"
 
 #: src/components/assets/asset-toolbar.tsx:125
-#: src/pages/lists-page.tsx:191
+#: src/pages/lists-page.tsx:188
 msgid "List"
 msgstr "リスト"
 
 #: src/pages/entity-page.tsx:552
-#: src/pages/lists-page.tsx:150
+#: src/pages/lists-page.tsx:147
 msgid "List created"
 msgstr "リストを作成しました"
 
@@ -1493,7 +1484,7 @@ msgstr "リストが見つかりません"
 msgid "List style"
 msgstr "リストのスタイル"
 
-#: src/components/layout/app-frame.tsx:363
+#: src/components/layout/app-frame.tsx:364
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "リスト"
@@ -1501,6 +1492,10 @@ msgstr "リスト"
 #: src/pages/activity-page.tsx:194
 msgid "Load more"
 msgstr "さらに読み込む"
+
+#: src/components/settings/emoji-field.tsx:67
+msgid "Loading"
+msgstr "読み込み中"
 
 #: src/pages/activity-page.tsx:155
 msgid "Loading activity…"
@@ -1510,35 +1505,27 @@ msgstr "アクティビティを読み込み中…"
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
-#: src/pages/entity-edit-page.tsx:117
-msgid "Loading entity"
-msgstr "アイテムを読み込み中"
-
-#: src/components/layout/app-frame.tsx:387
+#: src/components/layout/app-frame.tsx:388
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:194
-#: src/pages/calendar-page.tsx:90
-#: src/pages/entity-edit-page.tsx:152
+#: src/pages/entity-edit-page.tsx:149
 #: src/pages/entity-page.tsx:279
 #: src/pages/entity-page.tsx:574
-#: src/pages/home-page.tsx:33
-#: src/pages/home-page.tsx:61
-#: src/pages/import-wizard-page.tsx:247
+#: src/pages/home-page.tsx:54
+#: src/pages/import-wizard-page.tsx:244
 #: src/pages/library-page.tsx:373
 #: src/pages/list-detail-page.tsx:386
 #: src/pages/list-detail-page.tsx:894
-#: src/pages/lists-page.tsx:58
+#: src/pages/lists-page.tsx:55
 #: src/pages/onboarding-page.tsx:55
-#: src/pages/review-page.tsx:129
-#: src/pages/review-page.tsx:139
+#: src/pages/review-page.tsx:132
 #: src/pages/settings-page.tsx:96
 #: src/pages/smart-list-page.tsx:235
-#: src/pages/statistics-page.tsx:34
-#: src/pages/statistics-page.tsx:44
+#: src/pages/statistics-page.tsx:37
 msgid "Loading…"
 msgstr "読み込み中…"
 
@@ -1551,15 +1538,15 @@ msgstr "記録"
 msgid "Log activity"
 msgstr "アクティビティを記録"
 
-#: src/components/settings/settings-sections.tsx:99
+#: src/components/settings/settings-sections.tsx:100
 msgid "Log section"
 msgstr "記録セクション"
 
-#: src/components/settings/settings-sections.tsx:367
+#: src/components/settings/settings-sections.tsx:368
 msgid "Log to daily note"
 msgstr "デイリーノートに記録"
 
-#: src/components/settings/settings-sections.tsx:92
+#: src/components/settings/settings-sections.tsx:93
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "記録のデフォルト — 記録行を書き込む見出しと、フォールバックの行フォーマット。各タイプはこれらを上書きでき、独自のタグを追加します。"
 
@@ -1572,7 +1559,7 @@ msgstr "記録中…"
 msgid "Manage lists"
 msgstr "リストを管理"
 
-#: src/components/settings/settings-sections.tsx:893
+#: src/components/settings/settings-sections.tsx:894
 msgid "Map each option to a status"
 msgstr "各オプションをステータスに割り当て"
 
@@ -1584,11 +1571,11 @@ msgstr "完了にする"
 msgid "Mark as not done"
 msgstr "未完了にする"
 
-#: src/pages/import-wizard-page.tsx:697
+#: src/pages/import-wizard-page.tsx:694
 msgid "Mark watched progress"
 msgstr "視聴済みの進捗を記録"
 
-#: src/components/settings/settings-sections.tsx:502
+#: src/components/settings/settings-sections.tsx:503
 msgid "Markdown body sections"
 msgstr "Markdown 本文セクション"
 
@@ -1610,8 +1597,8 @@ msgid "Memory Analytics"
 msgstr "メモリー分析"
 
 #: src/components/assets/entity-dates.tsx:23
-#: src/pages/entity-create-page.tsx:118
-#: src/pages/entity-edit-page.tsx:156
+#: src/pages/entity-create-page.tsx:115
+#: src/pages/entity-edit-page.tsx:153
 msgid "Metadata"
 msgstr "メタデータ"
 
@@ -1636,11 +1623,11 @@ msgstr "か月"
 msgid "more"
 msgstr "もっと見る"
 
-#: src/components/settings/settings-sections.tsx:456
+#: src/components/settings/settings-sections.tsx:457
 msgid "Move {label} down"
 msgstr "{label}を下へ移動"
 
-#: src/components/settings/settings-sections.tsx:446
+#: src/components/settings/settings-sections.tsx:447
 msgid "Move {label} up"
 msgstr "{label}を上へ移動"
 
@@ -1671,17 +1658,17 @@ msgstr "マイ保管庫"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:95
 #: src/pages/list-detail-page.tsx:991
-#: src/pages/lists-page.tsx:211
+#: src/pages/lists-page.tsx:208
 #: src/pages/smart-list-page.tsx:649
 msgid "Name"
 msgstr "名前"
 
-#: src/components/layout/app-frame.tsx:300
-#: src/components/layout/app-frame.tsx:308
+#: src/components/layout/app-frame.tsx:301
+#: src/components/layout/app-frame.tsx:309
 msgid "Navigation"
 msgstr "ナビゲーション"
 
-#: src/pages/import-wizard-page.tsx:653
+#: src/pages/import-wizard-page.tsx:650
 msgid "Needs review"
 msgstr "要レビュー"
 
@@ -1690,8 +1677,8 @@ msgid "New field"
 msgstr "新しいフィールド"
 
 #: src/pages/entity-page.tsx:615
-#: src/pages/lists-page.tsx:52
-#: src/pages/lists-page.tsx:170
+#: src/pages/lists-page.tsx:49
+#: src/pages/lists-page.tsx:167
 msgid "New list"
 msgstr "新しいリスト"
 
@@ -1699,15 +1686,15 @@ msgstr "新しいリスト"
 msgid "New section"
 msgstr "新しいセクション"
 
-#: src/components/settings/settings-sections.tsx:84
+#: src/components/settings/settings-sections.tsx:85
 msgid "New-note template"
 msgstr "新規ノートのテンプレート"
 
-#: src/components/entities/external-match-dialog.tsx:337
+#: src/components/entities/external-match-dialog.tsx:334
 msgid "New: {newValue}"
 msgstr "新規: {newValue}"
 
-#: src/pages/calendar-page.tsx:106
+#: src/pages/calendar-page.tsx:99
 msgid "Next"
 msgstr "次へ"
 
@@ -1727,19 +1714,11 @@ msgstr "いいえ"
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "まだアクティビティはありません。日付付きアイテム、エピソードの放送日・完了日、デイリーノートでの言及がここに表示されます。"
 
-#: src/pages/statistics-page.tsx:37
-msgid "No analytics data"
-msgstr "分析データがありません"
-
-#: src/pages/calendar-page.tsx:93
-msgid "No calendar data"
-msgstr "カレンダーデータがありません"
-
-#: src/components/entities/external-match-dialog.tsx:345
+#: src/components/entities/external-match-dialog.tsx:342
 msgid "No candidate fields or body sections match this type schema."
 msgstr "このタイプのスキーマに一致する候補フィールドまたは本文セクションがありません。"
 
-#: src/components/entities/external-match-dialog.tsx:171
+#: src/components/entities/external-match-dialog.tsx:168
 #: src/components/entities/use-external-match.ts:64
 #: src/components/entities/use-external-match.ts:183
 msgid "No candidates loaded"
@@ -1749,11 +1728,11 @@ msgstr "候補が読み込まれていません"
 msgid "No criteria — everything in the library matches."
 msgstr "条件がありません — ライブラリのすべてが一致します。"
 
-#: src/pages/review-page.tsx:171
+#: src/pages/review-page.tsx:164
 msgid "No date"
 msgstr "日付なし"
 
-#: src/pages/calendar-page.tsx:177
+#: src/pages/calendar-page.tsx:170
 msgid "No date selected"
 msgstr "日付が選択されていません"
 
@@ -1765,7 +1744,7 @@ msgstr "まだ日付付きアイテムはありません。"
 msgid "No dates"
 msgstr "日付なし"
 
-#: src/pages/import-wizard-page.tsx:546
+#: src/pages/import-wizard-page.tsx:543
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "{unmatchedLabels} に対応するアイテムのタイプがありません。これらをインポートするには、設定で外部参照フィールドを追加してください。"
 
@@ -1773,8 +1752,8 @@ msgstr "{unmatchedLabels} に対応するアイテムのタイプがありませ
 msgid "No entity types configured."
 msgstr "アイテムのタイプが設定されていません。"
 
-#: src/pages/calendar-page.tsx:181
-#: src/pages/calendar-page.tsx:196
+#: src/pages/calendar-page.tsx:174
+#: src/pages/calendar-page.tsx:189
 #: src/pages/library-page.tsx:434
 msgid "No entries"
 msgstr "エントリなし"
@@ -1783,7 +1762,7 @@ msgstr "エントリなし"
 msgid "No entries match the criteria"
 msgstr "条件に一致する項目がありません"
 
-#: src/components/settings/settings-sections.tsx:991
+#: src/components/settings/settings-sections.tsx:992
 msgid "No external mappings."
 msgstr "外部マッピングがありません。"
 
@@ -1807,7 +1786,7 @@ msgstr "追加の条件はありません — このタイプのすべての項�
 msgid "No home sections configured."
 msgstr "ホームセクションが設定されていません。"
 
-#: src/pages/home-page.tsx:75
+#: src/pages/home-page.tsx:68
 msgid "No Home sections yet"
 msgstr "まだホームセクションはありません"
 
@@ -1832,15 +1811,15 @@ msgstr "まだリンクがありません"
 msgid "No lists yet. Create one below."
 msgstr "まだリストがありません。下で作成してください。"
 
-#: src/pages/lists-page.tsx:62
+#: src/pages/lists-page.tsx:59
 msgid "No lists yet. Create one to start collecting entities."
 msgstr "まだリストがありません。作成してアイテムの収集を始めましょう。"
 
-#: src/components/settings/settings-sections.tsx:525
+#: src/components/settings/settings-sections.tsx:526
 msgid "No markdown body sections."
 msgstr "Markdown 本文セクションがありません。"
 
-#: src/pages/import-wizard-page.tsx:647
+#: src/pages/import-wizard-page.tsx:644
 msgid "No matched source"
 msgstr "一致するソースがありません"
 
@@ -1848,7 +1827,7 @@ msgstr "一致するソースがありません"
 msgid "No matches"
 msgstr "一致なし"
 
-#: src/pages/quick-capture-page.tsx:287
+#: src/pages/quick-capture-page.tsx:284
 msgid "No matches found."
 msgstr "一致するものが見つかりませんでした。"
 
@@ -1856,7 +1835,7 @@ msgstr "一致するものが見つかりませんでした。"
 msgid "No matching entities."
 msgstr "一致するアイテムがありません。"
 
-#: src/pages/import-wizard-page.tsx:649
+#: src/pages/import-wizard-page.tsx:646
 msgid "No matching type"
 msgstr "一致するタイプがありません"
 
@@ -1868,28 +1847,24 @@ msgstr "その他の詳細はありません"
 msgid "No provider with a list is linked on this entity."
 msgstr "このアイテムにはリストを持つプロバイダーがリンクされていません。"
 
-#: src/pages/review-page.tsx:191
+#: src/pages/review-page.tsx:184
 msgid "No queue items match the current filters"
 msgstr "現在のフィルターに一致するキューアイテムがありません"
 
-#: src/pages/review-page.tsx:132
-msgid "No review data"
-msgstr "レビューデータがありません"
-
-#: src/pages/import-wizard-page.tsx:606
+#: src/pages/import-wizard-page.tsx:603
 msgid "no source"
 msgstr "ソースなし"
 
-#: src/components/entities/external-match-dialog.tsx:129
+#: src/components/entities/external-match-dialog.tsx:126
 msgid "No supported sources"
 msgstr "対応するソースがありません"
 
-#: src/components/settings/settings-sections.tsx:1022
+#: src/components/settings/settings-sections.tsx:1023
 msgid "No type options."
 msgstr "タイプのオプションがありません。"
 
-#: src/components/entities/external-match-dialog.tsx:313
-#: src/components/entities/external-match-dialog.tsx:377
+#: src/components/entities/external-match-dialog.tsx:310
+#: src/components/entities/external-match-dialog.tsx:374
 msgid "No value returned"
 msgstr "値が返されませんでした"
 
@@ -1901,16 +1876,16 @@ msgstr "値がありません。"
 msgid "No vaults yet."
 msgstr "まだ保管庫がありません。"
 
-#: src/components/settings/settings-sections.tsx:243
-#: src/components/settings/settings-sections.tsx:336
-#: src/components/settings/settings-sections.tsx:689
-#: src/components/settings/settings-sections.tsx:742
-#: src/components/settings/settings-sections.tsx:787
+#: src/components/settings/settings-sections.tsx:244
+#: src/components/settings/settings-sections.tsx:337
+#: src/components/settings/settings-sections.tsx:690
+#: src/components/settings/settings-sections.tsx:743
+#: src/components/settings/settings-sections.tsx:788
 #: src/components/smart-lists/rule-builder.tsx:650
 msgid "None"
 msgstr "なし"
 
-#: src/components/settings/settings-sections.tsx:476
+#: src/components/settings/settings-sections.tsx:477
 msgid "None (plain list)"
 msgstr "なし（プレーンリスト）"
 
@@ -1928,7 +1903,7 @@ msgstr "除外:"
 msgid "Note <0>(optional)</0>"
 msgstr "ノート <0>(任意)</0>"
 
-#: src/pages/import-wizard-page.tsx:667
+#: src/pages/import-wizard-page.tsx:664
 msgid "notes"
 msgstr "ノート"
 
@@ -1955,8 +1930,8 @@ msgstr "このタイプに記録するものがありません。"
 msgid "of the following match:"
 msgstr "以下の条件:"
 
-#: src/components/settings/settings-editor.tsx:232
-#: src/components/settings/settings-editor.tsx:270
+#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/settings-editor.tsx:265
 msgid "off"
 msgstr "オフ"
 
@@ -1970,7 +1945,7 @@ msgstr "オフ"
 msgid "older than"
 msgstr "が次より古い"
 
-#: src/components/settings/settings-sections.tsx:822
+#: src/components/settings/settings-sections.tsx:823
 #: src/pages/import-wizard-page.tsx:58
 msgid "Ongoing"
 msgstr "進行中"
@@ -1979,7 +1954,7 @@ msgstr "進行中"
 msgid "Only image files can be uploaded."
 msgstr "画像ファイルのみアップロードできます。"
 
-#: src/pages/import-wizard-page.tsx:407
+#: src/pages/import-wizard-page.tsx:404
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "公開プロフィールのみ対応しています。計画を確認するまで何も書き込まれません。"
 
@@ -2015,15 +1990,15 @@ msgstr "演算子"
 msgid "Ordered"
 msgstr "順序あり"
 
-#: src/components/settings/settings-sections.tsx:690
+#: src/components/settings/settings-sections.tsx:691
 msgid "Original"
 msgstr "オリジナル"
 
-#: src/components/settings/settings-sections.tsx:337
+#: src/components/settings/settings-sections.tsx:338
 msgid "Original (filename is the title)"
 msgstr "オリジナル（ファイル名がタイトル）"
 
-#: src/components/settings/settings-editor.tsx:334
+#: src/components/settings/settings-editor.tsx:329
 msgid "Overview"
 msgstr "概要"
 
@@ -2036,15 +2011,15 @@ msgid "Parent folder"
 msgstr "親フォルダー"
 
 #: src/components/settings/settings-controls.tsx:174
-#: src/components/settings/settings-sections.tsx:282
+#: src/components/settings/settings-sections.tsx:283
 msgid "Path"
 msgstr "パス"
 
-#: src/components/settings/settings-sections.tsx:69
+#: src/components/settings/settings-sections.tsx:70
 msgid "Paths"
 msgstr "パス"
 
-#: src/components/settings/settings-sections.tsx:823
+#: src/components/settings/settings-sections.tsx:824
 #: src/pages/import-wizard-page.tsx:59
 msgid "Paused"
 msgstr "中断"
@@ -2057,13 +2032,13 @@ msgstr "いくつか選んでください — いつでも追加できます。�
 msgid "Planned"
 msgstr "予定"
 
-#: src/components/settings/settings-sections.tsx:743
-#: src/components/settings/settings-sections.tsx:821
+#: src/components/settings/settings-sections.tsx:744
+#: src/components/settings/settings-sections.tsx:822
 #: src/pages/import-wizard-page.tsx:57
 msgid "Planning"
 msgstr "計画中"
 
-#: src/pages/calendar-page.tsx:100
+#: src/pages/calendar-page.tsx:93
 msgid "Prev"
 msgstr "前へ"
 
@@ -2076,7 +2051,7 @@ msgid "Previewing…"
 msgstr "プレビュー中…"
 
 #: src/components/assets/quick-log-dialog.tsx:29
-#: src/pages/review-page.tsx:344
+#: src/pages/review-page.tsx:337
 msgid "Progress"
 msgstr "進捗"
 
@@ -2085,8 +2060,8 @@ msgid "property"
 msgstr "プロパティ"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
-#: src/components/entities/external-match-dialog.tsx:126
-#: src/pages/quick-capture-page.tsx:251
+#: src/components/entities/external-match-dialog.tsx:123
+#: src/pages/quick-capture-page.tsx:248
 msgid "Provider"
 msgstr "プロバイダー"
 
@@ -2094,15 +2069,15 @@ msgstr "プロバイダー"
 msgid "Provider Credentials"
 msgstr "プロバイダーの認証情報"
 
-#: src/components/settings/settings-sections.tsx:434
+#: src/components/settings/settings-sections.tsx:435
 msgid "Provider priority"
 msgstr "プロバイダーの優先順位"
 
-#: src/components/settings/settings-sections.tsx:291
+#: src/components/settings/settings-sections.tsx:292
 msgid "Providers"
 msgstr "プロバイダー"
 
-#: src/pages/import-wizard-page.tsx:370
+#: src/pages/import-wizard-page.tsx:367
 msgid "Public profile"
 msgstr "公開プロフィール"
 
@@ -2123,19 +2098,19 @@ msgid "Record what you did and when. Pick an earlier date to log something from 
 msgstr "何をいつ行ったかを記録します。過去の日を記録するには、より前の日付を選んでください。"
 
 #. placeholder {0}: externalSourceLabel(providerCatalog, ref.provider)
-#: src/components/entities/external-match-dialog.tsx:160
+#: src/components/entities/external-match-dialog.tsx:157
 msgid "Refresh {0}"
 msgstr "{0} を更新"
 
-#: src/components/settings/settings-sections.tsx:885
+#: src/components/settings/settings-sections.tsx:886
 msgid "Regular enum"
 msgstr "通常の列挙"
 
-#: src/components/settings/settings-sections.tsx:142
+#: src/components/settings/settings-sections.tsx:143
 msgid "Relation count"
 msgstr "関連数"
 
-#: src/components/settings/settings-sections.tsx:810
+#: src/components/settings/settings-sections.tsx:811
 msgid "Relation type"
 msgstr "関連タイプ"
 
@@ -2143,7 +2118,7 @@ msgstr "関連タイプ"
 msgid "Reload"
 msgstr "再読み込み"
 
-#: src/pages/entity-edit-page.tsx:145
+#: src/pages/entity-edit-page.tsx:142
 msgid "Reload latest version"
 msgstr "最新バージョンを再読み込み"
 
@@ -2158,11 +2133,11 @@ msgstr "{0} を削除"
 msgid "Remove {label}"
 msgstr "{label} を削除"
 
-#: src/components/settings/settings-sections.tsx:563
+#: src/components/settings/settings-sections.tsx:564
 msgid "Remove body section"
 msgstr "本文セクションを削除"
 
-#: src/components/settings/settings-sections.tsx:985
+#: src/components/settings/settings-sections.tsx:986
 msgid "Remove external field mapping"
 msgstr "外部フィールドのマッピングを削除"
 
@@ -2174,6 +2149,10 @@ msgstr "フィールドを削除"
 #: src/components/smart-lists/rule-builder.tsx:600
 msgid "Remove group"
 msgstr "グループを削除"
+
+#: src/components/settings/emoji-field.tsx:81
+msgid "Remove icon"
+msgstr "アイコンを削除"
 
 #: src/components/entities/metadata-inputs.tsx:293
 msgid "Remove image"
@@ -2238,16 +2217,16 @@ msgstr "保管庫内の .base ファイルの名前を変更します。"
 msgid "Renaming…"
 msgstr "名前を変更中…"
 
-#: src/components/entities/external-match-dialog.tsx:371
+#: src/components/entities/external-match-dialog.tsx:368
 msgid "replaces existing section"
 msgstr "既存のセクションを置き換え"
 
-#: src/components/layout/app-frame.tsx:234
 #: src/components/layout/app-frame.tsx:235
+#: src/components/layout/app-frame.tsx:236
 msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
 
-#: src/components/layout/app-frame.tsx:400
+#: src/components/layout/app-frame.tsx:401
 msgid "Review"
 msgstr "レビュー"
 
@@ -2261,7 +2240,7 @@ msgstr "実行中…"
 
 #: src/components/entities/metadata-editor.tsx:127
 #: src/components/settings/raw-config-editor.tsx:90
-#: src/components/settings/settings-editor.tsx:178
+#: src/components/settings/settings-editor.tsx:173
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:269
 msgid "Save"
@@ -2292,26 +2271,26 @@ msgstr "現在のタイプ・フィルター・並び順をスマートリスト
 #: src/components/entities/metadata-editor.tsx:127
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:90
-#: src/components/settings/settings-editor.tsx:178
+#: src/components/settings/settings-editor.tsx:173
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:269
 msgid "Saving…"
 msgstr "保存中…"
 
 #: src/components/settings/raw-config-editor.tsx:97
-#: src/components/settings/settings-editor.tsx:185
+#: src/components/settings/settings-editor.tsx:180
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "このインスタンスではスキーマ編集が無効です（読み取り専用）。有効にするには <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> を設定してください。"
 
-#: src/pages/lists-page.tsx:222
+#: src/pages/lists-page.tsx:219
 #: src/pages/smart-list-page.tsx:488
 #: src/pages/smart-list-page.tsx:493
 msgid "Scope"
 msgstr "範囲"
 
-#: src/components/entities/external-match-dialog.tsx:119
-#: src/components/entities/external-match-dialog.tsx:144
-#: src/pages/quick-capture-page.tsx:221
+#: src/components/entities/external-match-dialog.tsx:116
+#: src/components/entities/external-match-dialog.tsx:141
+#: src/pages/quick-capture-page.tsx:218
 msgid "Search"
 msgstr "検索"
 
@@ -2327,19 +2306,11 @@ msgstr "アイテムを検索してこのリストに追加します。"
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
-#: src/pages/quick-capture-page.tsx:201
-msgid "Search external sources, or add manually"
-msgstr "外部ソースを検索するか、手動で追加"
-
 #: src/components/layout/app-frame.tsx:60
 #: src/components/layout/app-frame.tsx:162
 #: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "ライブラリを検索"
-
-#: src/components/entities/external-match-dialog.tsx:112
-msgid "Search online sources and choose which details to apply."
-msgstr "オンラインソースを検索し、適用する詳細を選択します。"
 
 #: src/components/entities/metadata-inputs.tsx:153
 msgid "Search or add {relationType}"
@@ -2349,13 +2320,13 @@ msgstr "{relationType} を検索または追加"
 msgid "Search or add relation"
 msgstr "関連を検索または追加"
 
-#: src/pages/review-page.tsx:157
+#: src/pages/review-page.tsx:150
 msgid "Search queue"
 msgstr "キューを検索"
 
-#: src/components/entities/external-match-dialog.tsx:144
+#: src/components/entities/external-match-dialog.tsx:141
 #: src/components/ui/multi-value-combobox.tsx:146
-#: src/pages/quick-capture-page.tsx:283
+#: src/pages/quick-capture-page.tsx:280
 msgid "Searching…"
 msgstr "検索中…"
 
@@ -2364,12 +2335,12 @@ msgstr "検索中…"
 msgid "season {0}"
 msgstr "シーズン {0}"
 
-#: src/components/settings/settings-sections.tsx:758
+#: src/components/settings/settings-sections.tsx:759
 msgid "Season language"
 msgstr "シーズンの言語"
 
 #: src/components/settings/settings-dialogs.tsx:446
-#: src/components/settings/settings-sections.tsx:510
+#: src/components/settings/settings-sections.tsx:511
 msgid "Section"
 msgstr "セクション"
 
@@ -2382,7 +2353,7 @@ msgstr "セクションの操作"
 msgid "Section heading"
 msgstr "セクションの見出し"
 
-#: src/components/settings/settings-sections.tsx:390
+#: src/components/settings/settings-sections.tsx:391
 msgid "Section override"
 msgstr "セクションの上書き"
 
@@ -2390,7 +2361,7 @@ msgstr "セクションの上書き"
 msgid "Sections"
 msgstr "セクション"
 
-#: src/pages/home-page.tsx:78
+#: src/pages/home-page.tsx:71
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 msgstr "セクションはライブラリの設定可能な棚です。設定で追加するか、そのままライブラリに移動してください。"
 
@@ -2406,7 +2377,7 @@ msgstr "「{query}」のすべての結果を表示"
 msgid "Select all"
 msgstr "すべて選択"
 
-#: src/components/settings/settings-sections.tsx:977
+#: src/components/settings/settings-sections.tsx:978
 msgid "Select field"
 msgstr "フィールドを選択"
 
@@ -2422,15 +2393,15 @@ msgstr "グループを選択"
 msgid "Select parent folder"
 msgstr "親フォルダーを選択"
 
-#: src/components/settings/settings-sections.tsx:1017
+#: src/components/settings/settings-sections.tsx:1018
 msgid "Select type"
 msgstr "タイプを選択"
 
-#: src/components/entities/external-match-dialog.tsx:307
+#: src/components/entities/external-match-dialog.tsx:304
 msgid "Selected Metadata"
 msgstr "選択したメタデータ"
 
-#: src/components/layout/app-frame.tsx:403
+#: src/components/layout/app-frame.tsx:404
 #: src/components/settings/settings-editor.tsx:162
 msgid "Settings"
 msgstr "設定"
@@ -2441,16 +2412,16 @@ msgid "Settings saved"
 msgstr "設定を保存しました"
 
 #. Badge on a list card marking a smart list (criteria-driven, updates automatically)
-#: src/pages/lists-page.tsx:100
+#: src/pages/lists-page.tsx:97
 msgid "Smart"
 msgstr "スマート"
 
-#: src/pages/lists-page.tsx:199
+#: src/pages/lists-page.tsx:196
 msgid "Smart list"
 msgstr "スマートリスト"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:57
-#: src/pages/lists-page.tsx:150
+#: src/pages/lists-page.tsx:147
 msgid "Smart list created"
 msgstr "スマートリストを作成しました"
 
@@ -2489,7 +2460,7 @@ msgid "Something went wrong"
 msgstr "問題が発生しました"
 
 #: src/components/assets/asset-toolbar.tsx:94
-#: src/components/settings/settings-sections.tsx:186
+#: src/components/settings/settings-sections.tsx:187
 #: src/pages/smart-list-page.tsx:516
 msgid "Sort"
 msgstr "並び替え"
@@ -2521,11 +2492,11 @@ msgstr "タイトルで並び替え"
 msgid "Sort by update time"
 msgstr "更新日時で並び替え"
 
-#: src/pages/import-wizard-page.tsx:350
+#: src/pages/import-wizard-page.tsx:347
 msgid "Source"
 msgstr "ソース"
 
-#: src/pages/import-wizard-page.tsx:651
+#: src/pages/import-wizard-page.tsx:648
 msgid "Source unavailable"
 msgstr "ソースが利用できません"
 
@@ -2539,18 +2510,18 @@ msgstr "{0} = {1} を記録"
 msgid "Start"
 msgstr "開始"
 
-#: src/pages/import-wizard-page.tsx:219
-#: src/pages/import-wizard-page.tsx:255
+#: src/pages/import-wizard-page.tsx:216
+#: src/pages/import-wizard-page.tsx:252
 msgid "Start over"
 msgstr "最初からやり直す"
 
 #: src/components/assets/quick-log-dialog.tsx:30
-#: src/components/settings/settings-sections.tsx:744
+#: src/components/settings/settings-sections.tsx:745
 #: src/pages/activity-page.tsx:46
 msgid "Started"
 msgstr "開始済み"
 
-#: src/pages/import-wizard-page.tsx:412
+#: src/pages/import-wizard-page.tsx:409
 msgid "Starting…"
 msgstr "開始中…"
 
@@ -2561,7 +2532,7 @@ msgstr "開始中…"
 msgid "starts with"
 msgstr "が次で始まる:"
 
-#: src/components/layout/app-frame.tsx:397
+#: src/components/layout/app-frame.tsx:398
 msgid "Statistics"
 msgstr "統計"
 
@@ -2569,7 +2540,7 @@ msgstr "統計"
 msgid "status"
 msgstr "ステータス"
 
-#: src/components/settings/settings-sections.tsx:886
+#: src/components/settings/settings-sections.tsx:887
 msgid "Status field"
 msgstr "ステータスフィールド"
 
@@ -2577,15 +2548,15 @@ msgstr "ステータスフィールド"
 msgid "Status Mismatch"
 msgstr "ステータスの不一致"
 
-#: src/pages/import-wizard-page.tsx:684
+#: src/pages/import-wizard-page.tsx:681
 msgid "Status, score & dates"
 msgstr "ステータス、評価、日付"
 
-#: src/components/settings/settings-editor.tsx:203
+#: src/components/settings/settings-editor.tsx:198
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault."
 msgstr "保管庫内の {vaultPath} に保存されます。分類、アセット、デイリーノート、ホーム、タイプは保管庫と同期されます。"
 
-#: src/components/settings/settings-editor.tsx:204
+#: src/components/settings/settings-editor.tsx:199
 msgid "Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault."
 msgstr "保管庫内に保存されます。分類、アセット、デイリーノート、ホーム、タイプは保管庫と同期されます。"
 
@@ -2593,7 +2564,7 @@ msgstr "保管庫内に保存されます。分類、アセット、デイリー
 msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
 msgstr "システムのキーチェーンに保存されます。ここに表示されているプロバイダーには認証情報が必要です。その他（例: Bangumi、Google Books）には不要です。"
 
-#: src/components/settings/settings-sections.tsx:507
+#: src/components/settings/settings-sections.tsx:508
 msgid "Summary"
 msgstr "サマリー"
 
@@ -2628,20 +2599,20 @@ msgstr "システムテーマ。ライトテーマに切り替えます。"
 msgid "Tags"
 msgstr "タグ"
 
-#: src/components/layout/app-frame.tsx:369
+#: src/components/layout/app-frame.tsx:370
 msgid "Taxonomy"
 msgstr "分類"
 
 #. placeholder {0}: calendar.data.totals.taxonomy
-#: src/pages/calendar-page.tsx:117
+#: src/pages/calendar-page.tsx:110
 msgid "Taxonomy {0}"
 msgstr "分類 {0}"
 
-#: src/pages/calendar-page.tsx:130
+#: src/pages/calendar-page.tsx:123
 msgid "Taxonomy dates"
 msgstr "分類の日付"
 
-#: src/components/settings/settings-editor.tsx:210
+#: src/components/settings/settings-editor.tsx:205
 msgid "Taxonomy root"
 msgstr "分類のルート"
 
@@ -2654,11 +2625,11 @@ msgstr "分類: {0}"
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base ファイルは保管庫のゴミ箱フォルダに移動します。一致するアイテムには影響しません。"
 
-#: src/pages/import-wizard-page.tsx:405
+#: src/pages/import-wizard-page.tsx:402
 msgid "The file is read in your browser. Nothing is written until you review the plan."
 msgstr "ファイルはブラウザ内で読み込まれます。プランを確認するまで何も書き込まれません。"
 
-#: src/pages/import-wizard-page.tsx:252
+#: src/pages/import-wizard-page.tsx:249
 msgid "The import failed."
 msgstr "インポートに失敗しました。"
 
@@ -2666,7 +2637,7 @@ msgstr "インポートに失敗しました。"
 msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "ページで予期しないエラーが発生しました。もう一度試すか、アプリを再読み込みしてください。"
 
-#: src/components/settings/settings-sections.tsx:175
+#: src/components/settings/settings-sections.tsx:176
 msgid "The same rules as smart lists; the section shows entries that match."
 msgstr "スマートリストと同じルールです。セクションには一致するアイテムが表示されます。"
 
@@ -2705,24 +2676,24 @@ msgid "Tick the items to write from the provider — new ones are added, ticked 
 msgstr "プロバイダーから書き込むアイテムにチェックを入れてください — 新規のものは追加され、チェックした既存のものはタイトルが更新されます。すでにリストにあるアイテムは未チェックで始まり、進捗は常に保持されます。"
 
 #: src/components/settings/settings-dialogs.tsx:445
-#: src/components/settings/settings-sections.tsx:140
-#: src/components/settings/settings-sections.tsx:152
-#: src/pages/entity-create-page.tsx:108
+#: src/components/settings/settings-sections.tsx:141
+#: src/components/settings/settings-sections.tsx:153
+#: src/pages/entity-create-page.tsx:105
 #: src/pages/smart-list-page.tsx:458
 msgid "Title"
 msgstr "タイトル"
 
 #: src/components/settings/preset-picker.tsx:184
-#: src/components/settings/settings-sections.tsx:674
+#: src/components/settings/settings-sections.tsx:675
 #: src/pages/onboarding-page.tsx:188
 msgid "Title language"
 msgstr "タイトルの言語"
 
-#: src/pages/quick-capture-page.tsx:233
+#: src/pages/quick-capture-page.tsx:230
 msgid "Title, or paste a provider URL"
 msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 
-#: src/pages/calendar-page.tsx:103
+#: src/pages/calendar-page.tsx:96
 msgid "Today"
 msgstr "今日"
 
@@ -2739,11 +2710,11 @@ msgstr "フィルターを切り替え"
 msgid "total {0}"
 msgstr "合計 {0}"
 
-#: src/components/settings/settings-sections.tsx:725
+#: src/components/settings/settings-sections.tsx:726
 msgid "Total progress field"
 msgstr "合計進捗フィールド"
 
-#: src/components/settings/settings-sections.tsx:567
+#: src/components/settings/settings-sections.tsx:568
 msgid "Tracking"
 msgstr "トラッキング"
 
@@ -2751,25 +2722,25 @@ msgstr "トラッキング"
 msgid "Try again"
 msgstr "もう一度試す"
 
-#: src/components/settings/settings-sections.tsx:153
-#: src/components/settings/settings-sections.tsx:611
-#: src/pages/entity-create-page.tsx:93
+#: src/components/settings/settings-sections.tsx:154
+#: src/components/settings/settings-sections.tsx:612
+#: src/pages/entity-create-page.tsx:90
 #: src/pages/library-page.tsx:300
-#: src/pages/quick-capture-page.tsx:240
+#: src/pages/quick-capture-page.tsx:237
 msgid "Type"
 msgstr "タイプ"
 
-#: src/pages/quick-capture-page.tsx:279
+#: src/pages/quick-capture-page.tsx:276
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgstr "検索するには {MIN_QUERY_LENGTH} 文字以上入力してください。"
 
-#: src/pages/statistics-page.tsx:59
+#: src/pages/statistics-page.tsx:52
 msgid "Type Distribution"
 msgstr "タイプの分布"
 
 #: src/components/settings/settings-dialogs.tsx:202
 #: src/components/settings/settings-editor.tsx:116
-#: src/components/settings/settings-editor.tsx:300
+#: src/components/settings/settings-editor.tsx:295
 msgid "Types"
 msgstr "タイプ"
 
@@ -2789,7 +2760,7 @@ msgstr "単位"
 msgid "Unlinked Items"
 msgstr "リンクされていないアイテム"
 
-#: src/components/settings/settings-sections.tsx:905
+#: src/components/settings/settings-sections.tsx:906
 msgid "Unmapped"
 msgstr "未マッピング"
 
@@ -2801,7 +2772,7 @@ msgstr "未マッチ"
 msgid "Unordered"
 msgstr "順序なし"
 
-#: src/pages/statistics-page.tsx:55
+#: src/pages/statistics-page.tsx:48
 msgid "Unresolved"
 msgstr "未解決"
 
@@ -2821,7 +2792,7 @@ msgstr "無題のセクション"
 msgid "Up next"
 msgstr "次に見る"
 
-#: src/components/settings/settings-sections.tsx:141
+#: src/components/settings/settings-sections.tsx:142
 #: src/pages/smart-list-page.tsx:459
 msgid "Update time"
 msgstr "更新日時"
@@ -2831,20 +2802,13 @@ msgstr "更新日時"
 msgid "Updated"
 msgstr "更新日時"
 
-#. placeholder {0}: cleanup.data.generatedAt.slice(0, 10)
-#. placeholder {0}: data.generatedAt.slice(0, 10)
-#: src/pages/review-page.tsx:131
-#: src/pages/statistics-page.tsx:36
-msgid "Updated {0}"
-msgstr "更新日 {0}"
-
 #: src/components/entities/metadata-inputs.tsx:269
 msgid "Upload failed."
 msgstr "アップロードに失敗しました。"
 
-#: src/components/settings/settings-sections.tsx:681
-#: src/components/settings/settings-sections.tsx:734
-#: src/components/settings/settings-sections.tsx:872
+#: src/components/settings/settings-sections.tsx:682
+#: src/components/settings/settings-sections.tsx:735
+#: src/components/settings/settings-sections.tsx:873
 msgid "Used as"
 msgstr "用途"
 
@@ -2859,7 +2823,7 @@ msgid "Values"
 msgstr "値"
 
 #: src/components/settings/settings-editor.tsx:97
-#: src/components/settings/settings-editor.tsx:200
+#: src/components/settings/settings-editor.tsx:195
 msgid "Vault"
 msgstr "保管庫"
 
@@ -2888,10 +2852,6 @@ msgstr "保管庫を削除しました"
 msgid "Vault rescanned"
 msgstr "保管庫を再スキャンしました"
 
-#: src/components/settings/settings-editor.tsx:166
-msgid "Vault: {vaultPath}"
-msgstr "保管庫: {vaultPath}"
-
 #: src/components/settings/vault-switcher.tsx:74
 msgid "Vaults"
 msgstr "保管庫"
@@ -2909,7 +2869,7 @@ msgid "Watching now"
 msgstr "視聴中"
 
 #: src/pages/entity-page.tsx:621
-#: src/pages/lists-page.tsx:215
+#: src/pages/lists-page.tsx:212
 msgid "Watchlist"
 msgstr "ウォッチリスト"
 
@@ -2922,7 +2882,7 @@ msgstr "週間"
 msgid "What do you want to track?"
 msgstr "何をトラッキングしますか？"
 
-#: src/components/settings/settings-sections.tsx:369
+#: src/components/settings/settings-sections.tsx:370
 msgid "When on, checking an episode or the Log button writes a line to the daily note. The title is auto-linked as a wikilink — just add your tag to the line format."
 msgstr "オンにすると、エピソードにチェックを入れるか「記録」ボタンを押すと、デイリーノートに1行書き込まれます。タイトルは自動的にウィキリンクとしてリンクされます — 行フォーマットにタグを追加するだけです。"
 
@@ -2952,7 +2912,7 @@ msgstr "はい"
 msgid "Yes"
 msgstr "はい"
 
-#: src/pages/quick-capture-page.tsx:214
+#: src/pages/quick-capture-page.tsx:211
 msgid "You can still open items already in your library."
 msgstr "すでにライブラリにあるアイテムは引き続き開けます。"
 

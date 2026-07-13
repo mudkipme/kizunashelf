@@ -29,13 +29,6 @@ export function StatisticsPage() {
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold"><Trans>Memory Analytics</Trans></h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {loading
-                ? t`Loading…`
-                : data
-                  ? t`Updated ${data.generatedAt.slice(0, 10)}`
-                  : t`No analytics data`}
-            </p>
           </div>
         </header>
 

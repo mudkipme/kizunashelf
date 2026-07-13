@@ -161,11 +161,6 @@ export function SettingsEditor({
           <h1 className="truncate text-base font-semibold">
             {onboarding ? <Trans>Configure Vault</Trans> : <Trans>Settings</Trans>}
           </h1>
-          {vaultPath ? (
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              <Trans>Vault: {vaultPath}</Trans>
-            </p>
-          ) : null}
         </div>
         <div className="flex items-center gap-2">
           {onboarding && onBack ? (

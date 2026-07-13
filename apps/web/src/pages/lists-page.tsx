@@ -43,9 +43,6 @@ export function ListsPage() {
             <h1 className="text-lg font-semibold">
               <Trans>Lists</Trans>
             </h1>
-            <p className="text-xs text-muted-foreground">
-              <Trans>Curated collections of your items, saved as plain files you own.</Trans>
-            </p>
           </div>
           <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setCreateOpen(true)}>
             <PlusIcon data-icon="inline-start" />

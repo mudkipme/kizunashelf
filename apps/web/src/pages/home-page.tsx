@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { LayoutGridIcon, PlusIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -28,13 +28,6 @@ export function HomePage() {
         <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">{home.data?.title ?? t`Home`}</h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {loading ? (
-                <Trans>Loading…</Trans>
-              ) : (
-                <Plural value={home.data?.sections.length ?? 0} one="# section" other="# sections" />
-              )}
-            </p>
           </div>
           <Button
             type="button"

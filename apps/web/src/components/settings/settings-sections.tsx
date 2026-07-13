@@ -34,6 +34,7 @@ import type {
   SeasonLanguage,
 } from "@/types/api";
 
+import { EmojiField } from "./emoji-field";
 import {
   EmptyConfigLine,
   Field,
@@ -277,7 +278,7 @@ export function EntityTypeForm({
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
             <TextField label={t`ID`} value={config.id} onChange={(id) => onChange({ ...config, id })} />
             <TextField label={t`Label`} value={config.label} onChange={(label) => onChange({ ...config, label })} />
-            <TextField label={t`Icon`} value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
+            <EmojiField label={t`Icon`} value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
             <PathField
               label={t`Path`}
               value={config.path}

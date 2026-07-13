@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BrowserRouter,
@@ -13,23 +13,61 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { isDesktopRuntime } from "@/lib/desktop";
 import { activateUiLocale } from "@/lib/i18n";
 import { useUiLocale } from "@/lib/language";
-import { ActivityPage } from "@/pages/activity-page";
-import { CalendarPage } from "@/pages/calendar-page";
-import { EntityCreatePage } from "@/pages/entity-create-page";
-import { ImportWizardPage } from "@/pages/import-wizard-page";
-import { QuickCapturePage } from "@/pages/quick-capture-page";
-import { EntityEditPage } from "@/pages/entity-edit-page";
-import { EntityPage } from "@/pages/entity-page";
-import { HomePage } from "@/pages/home-page";
-import { LibraryPage } from "@/pages/library-page";
-import { ListDetailPage } from "@/pages/list-detail-page";
-import { ListsPage } from "@/pages/lists-page";
-import { NotFoundPage } from "@/pages/not-found-page";
-import { OnboardingPage } from "@/pages/onboarding-page";
-import { ReviewPage } from "@/pages/review-page";
-import { SettingsPage } from "@/pages/settings-page";
-import { SmartListPage } from "@/pages/smart-list-page";
-import { StatisticsPage } from "@/pages/statistics-page";
+
+// Pages are lazy-loaded so each route ships as its own chunk; heavy
+// page-specific deps (markdown, lightbox, day-picker, dnd-kit) then only load
+// on the routes that use them instead of bloating the initial bundle.
+const ActivityPage = lazy(() =>
+  import("@/pages/activity-page").then((m) => ({ default: m.ActivityPage })),
+);
+const CalendarPage = lazy(() =>
+  import("@/pages/calendar-page").then((m) => ({ default: m.CalendarPage })),
+);
+const EntityCreatePage = lazy(() =>
+  import("@/pages/entity-create-page").then((m) => ({ default: m.EntityCreatePage })),
+);
+const ImportWizardPage = lazy(() =>
+  import("@/pages/import-wizard-page").then((m) => ({ default: m.ImportWizardPage })),
+);
+const QuickCapturePage = lazy(() =>
+  import("@/pages/quick-capture-page").then((m) => ({ default: m.QuickCapturePage })),
+);
+const EntityEditPage = lazy(() =>
+  import("@/pages/entity-edit-page").then((m) => ({ default: m.EntityEditPage })),
+);
+const EntityPage = lazy(() =>
+  import("@/pages/entity-page").then((m) => ({ default: m.EntityPage })),
+);
+const HomePage = lazy(() =>
+  import("@/pages/home-page").then((m) => ({ default: m.HomePage })),
+);
+const LibraryPage = lazy(() =>
+  import("@/pages/library-page").then((m) => ({ default: m.LibraryPage })),
+);
+const ListDetailPage = lazy(() =>
+  import("@/pages/list-detail-page").then((m) => ({ default: m.ListDetailPage })),
+);
+const ListsPage = lazy(() =>
+  import("@/pages/lists-page").then((m) => ({ default: m.ListsPage })),
+);
+const NotFoundPage = lazy(() =>
+  import("@/pages/not-found-page").then((m) => ({ default: m.NotFoundPage })),
+);
+const OnboardingPage = lazy(() =>
+  import("@/pages/onboarding-page").then((m) => ({ default: m.OnboardingPage })),
+);
+const ReviewPage = lazy(() =>
+  import("@/pages/review-page").then((m) => ({ default: m.ReviewPage })),
+);
+const SettingsPage = lazy(() =>
+  import("@/pages/settings-page").then((m) => ({ default: m.SettingsPage })),
+);
+const SmartListPage = lazy(() =>
+  import("@/pages/smart-list-page").then((m) => ({ default: m.SmartListPage })),
+);
+const StatisticsPage = lazy(() =>
+  import("@/pages/statistics-page").then((m) => ({ default: m.StatisticsPage })),
+);
 
 export default function App() {
   return (
@@ -115,7 +153,8 @@ function ConfigGate() {
 
 function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/settings" element={<SettingsPage />} />
@@ -133,7 +172,18 @@ function AppRoutes() {
       <Route path="/entities/import" element={<ImportWizardPage />} />
       <Route path="/entities/:id/edit" element={<EntityEditPage />} />
       <Route path="/entities/:id" element={<EntityPage />} />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
+  );
+}
+
+// Shown while a lazily-loaded page chunk is fetched. Mirrors the ConfigGate
+// loading state so the transition reads as one continuous "Loading".
+function RouteFallback() {
+  return (
+    <main className="h-dvh overflow-auto bg-background p-8 text-center text-sm text-muted-foreground">
+      Loading
+    </main>
   );
 }

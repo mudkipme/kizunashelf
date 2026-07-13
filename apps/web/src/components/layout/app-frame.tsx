@@ -229,6 +229,7 @@ function RescanButton() {
       type="button"
       variant="ghost"
       size="icon"
+      className="hidden sm:inline-flex"
       onClick={() => rescan.mutate()}
       disabled={rescan.isPending}
       aria-label={t`Rescan vault`}

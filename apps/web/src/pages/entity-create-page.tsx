@@ -79,9 +79,6 @@ export function EntityCreatePage() {
             <h1 className="truncate text-base font-semibold">
               <Trans>Add Entity</Trans>
             </h1>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              {selectedType ? `${selectedType.label} · ${selectedType.path}` : t`Choose a type`}
-            </p>
           </div>
         </header>
 

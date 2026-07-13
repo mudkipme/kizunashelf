@@ -85,13 +85,6 @@ export function CalendarPage() {
               <CalendarDaysIcon />
               <Trans>Calendar</Trans>
             </h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {calendar.isPending
-                ? t`Loading…`
-                : calendar.data
-                  ? t`${plural(calendar.data.totals.entries, { one: "# entry", other: "# entries" })} across ${plural(calendar.data.totals.daysWithEntries, { one: "# day", other: "# days" })}`
-                  : t`No calendar data`}
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

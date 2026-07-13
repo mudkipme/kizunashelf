@@ -113,9 +113,6 @@ export function EntityEditPage() {
             <h1 className="truncate text-base font-semibold">
               {entity ? t`Edit ${entityTitle(entity, language)}` : t`Edit Entity`}
             </h1>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              {entity?.path ?? t`Loading entity`}
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button

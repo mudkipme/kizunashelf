@@ -124,13 +124,6 @@ export function ReviewPage() {
             <h1 className="text-xl font-semibold">
               {activeQueue ? i18n._(activeQueue.label) : t`Metadata Review`}
             </h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {cleanup.isPending
-                ? t`Loading…`
-                : cleanup.data
-                  ? t`Updated ${cleanup.data.generatedAt.slice(0, 10)}`
-                  : t`No review data`}
-            </p>
           </div>
           {activeSummary ? <ProgressPill summary={activeSummary} /> : null}
         </header>
