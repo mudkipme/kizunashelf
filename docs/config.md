@@ -132,8 +132,6 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_TVDB_API_KEY` | TheTVDB API key for external matching. |
 | `KIZUNASHELF_TVDB_PIN` | Optional TheTVDB PIN. |
 | `KIZUNASHELF_TMDB_API_KEY` | TMDB API key (v3) for movie/TV/person matching. |
-| `KIZUNASHELF_SPOTIFY_CLIENT_ID` | Spotify client id for album/artist matching. |
-| `KIZUNASHELF_SPOTIFY_CLIENT_SECRET` | Spotify client secret. |
 | `KIZUNASHELF_DISCOGS_TOKEN` | Discogs personal access token for release/master matching. |
 | `KIZUNASHELF_MAL_CLIENT_ID` | MyAnimeList API client id for anime/manga matching. |
 | `KIZUNASHELF_COMICVINE_API_KEY` | Comic Vine API key for comic matching. |
@@ -541,7 +539,7 @@ Supported providers (keyless unless noted):
 - **TMDB** — movies, TV, people (search + resolve). Requires a TMDB API key.
 - **IGDB** — games (search + resolve). Requires an IGDB (Twitch) client id and secret.
 - **TheTVDB** — series, movies (search + resolve). Requires a TheTVDB API key; a PIN is optional.
-- **Spotify** — albums, artists (search + resolve). Requires a Spotify client id and secret.
+- **Apple Music** — albums (search + resolve, via the keyless iTunes Search API). No credentials.
 - **MusicBrainz** — releases, artists, release groups (search + resolve).
 - **Discogs** — releases, masters (search + resolve). Requires a Discogs token.
 - **Google Books** — books (search + resolve). Requires a Google Books API key.
@@ -661,7 +659,7 @@ list, the detail page's episodes panel offers a **Sync** action that pulls the p
 into a checkable preview and merges the ticked items in — new items are added and ticked existing
 ones have their title updated, while your watched ticks and hand-added entries are always kept.
 Providers that can supply a list (and what they map to the section): Bangumi, MyAnimeList, TMDB,
-TheTVDB, and Apple Podcasts → episodes; MusicBrainz, Spotify, and Discogs → tracks (grouped by
+TheTVDB, and Apple Podcasts → episodes; MusicBrainz, Apple Music, and Discogs → tracks (grouped by
 disc); Comic Vine → a volume's issues. The provider must be configured (credentials set, if it
 needs any) and linked on the entity; when more than one such source is linked, the dialog lets you
 choose which to sync from.

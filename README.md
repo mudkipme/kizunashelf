@@ -63,7 +63,7 @@ External metadata matching is available for:
 - **Film, television, and anime:** TMDB, TheTVDB, MyAnimeList, and Bangumi.
 - **Games and board games:** IGDB, Steam, and BoardGameGeek.
 - **Books, manga, and comics:** Google Books, Open Library, Hardcover, MangaUpdates, and Comic Vine.
-- **Music and podcasts:** MusicBrainz, Spotify, Discogs, and Apple Podcasts.
+- **Music and podcasts:** MusicBrainz, Apple Music, Discogs, and Apple Podcasts.
 
 KizunaShelf can import a library from MyAnimeList, AniList, Kitsu, Trakt, Steam, and public Bangumi profiles, or from IMDb, Goodreads, and Yamtrack CSV exports. Before anything is written, the import plan shows what will be created, what needs review, and what is already present.
 

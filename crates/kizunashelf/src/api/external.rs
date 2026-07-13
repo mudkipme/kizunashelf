@@ -1,5 +1,6 @@
 use super::error::{ApiError, ApiResult};
 mod apple_podcast;
+mod applemusic;
 mod bangumi;
 mod bgg;
 mod comicvine;
@@ -12,7 +13,6 @@ mod mangaupdates;
 mod mapping;
 mod musicbrainz;
 mod open_library;
-mod spotify;
 mod steam;
 mod thetvdb;
 mod tmdb;
@@ -258,11 +258,11 @@ fn registry() -> Vec<ProviderEntry> {
         entry::<google_books::GoogleBooksProvider>(),
         entry::<open_library::OpenLibraryProvider>(),
         entry::<apple_podcast::ApplePodcastProvider>(),
+        entry::<applemusic::AppleMusicProvider>(),
         entry::<steam::SteamProvider>(),
         entry::<musicbrainz::MusicBrainzProvider>(),
         entry::<bgg::BoardGameGeekProvider>(),
         entry::<tmdb::TmdbProvider>(),
-        entry::<spotify::SpotifyProvider>(),
         entry::<discogs::DiscogsProvider>(),
         entry::<mal::MyAnimeListProvider>(),
         entry::<mangaupdates::MangaUpdatesProvider>(),
@@ -1211,7 +1211,7 @@ where
 }
 
 /// Single-flighted cached-token acquisition shared by the OAuth/login providers
-/// (IGDB, Spotify, TheTVDB). Returns the cached access token when still fresh;
+/// (IGDB, TheTVDB). Returns the cached access token when still fresh;
 /// otherwise takes the per-provider lock, re-checks the cache, and on a miss runs
 /// `fetch` to mint a token, stores it, and returns its access token. `force_refresh`
 /// skips the first cache check (used after a 401); `label` names the provider in
@@ -1572,8 +1572,8 @@ mod tests {
             ),
             ("https://www.themoviedb.org/movie/27205", "tmdb"),
             (
-                "https://open.spotify.com/album/4aawyAB9vmqN3uQ7FjRGTy",
-                "spotify",
+                "https://music.apple.com/us/album/thriller/269572838",
+                "applemusic",
             ),
             (
                 "https://www.discogs.com/release/249504-Rick-Astley",

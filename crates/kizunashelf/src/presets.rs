@@ -585,7 +585,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "专辑与 CD——你拥有和喜爱的音乐。",
                     "專輯與 CD——你擁有和喜愛的音樂。",
                 ),
-                providers: &["musicbrainz", "discogs", "spotify", "bangumi"],
+                providers: &["musicbrainz", "applemusic", "discogs", "bangumi"],
                 statuses: Some(&LISTEN_STATUS),
                 name_based: false,
                 original_title: false,
@@ -645,7 +645,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "艺术家、作者、工作室——藏品背后的创作者。",
                     "藝術家、作者、工作室——收藏背後的創作者。",
                 ),
-                providers: &["bangumi", "musicbrainz", "spotify"],
+                providers: &["bangumi", "musicbrainz"],
                 statuses: None,
                 name_based: true,
                 original_title: true,
@@ -1693,12 +1693,12 @@ fn role_field(source: &str, role: Role) -> Option<&'static str> {
             (Role::Cover, "cover_url"),
             (Role::Genre, "genres"),
         ],
-        "spotify" => &[
+        "applemusic" => &[
             (Role::Title, "title"),
             (Role::OriginalTitle, "title"),
             (Role::Cover, "cover_url"),
             (Role::ReleaseDate, "release_date"),
-            (Role::Genre, "genres"),
+            (Role::Genre, "genre"),
         ],
         "bgg" => &[
             (Role::Title, "name"),
