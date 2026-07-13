@@ -328,11 +328,11 @@ pub enum SortDirection {
     Desc,
 }
 
+/// The home page: just its sections. The page *title* is deliberately not
+/// config — every client renders a localized "Home" (app copy, not user data).
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct HomeConfig {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sections: Vec<HomeSectionConfig>,
 }

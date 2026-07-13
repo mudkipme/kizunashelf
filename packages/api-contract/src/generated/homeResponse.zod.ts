@@ -34,7 +34,6 @@ export const homeResponseSectionsItemItemsItemRelationCountMin = 0;
 
 export const HomeResponse = zod.object({
   "generatedAt": zod.string(),
-  "title": zod.string(),
   "sections": zod.array(zod.object({
   "id": zod.string(),
   "title": zod.string(),

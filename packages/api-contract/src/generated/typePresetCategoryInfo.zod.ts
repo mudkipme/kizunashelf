@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const TypePresetCategoryInfo = zod.object({
   "id": zod.enum(['watch', 'play', 'read', 'listen', 'people', 'life']).describe('A preset category — the \"what do you want to track?\" grouping. A flat string\nenum (not doc-commented variants) so swift-openapi-generator renders proper\nSwift cases, matching `FieldType`\/`DateRole`.'),
   "label": zod.string()
-}).describe('A category with its English label, so the picker can render group headers\nwithout hardcoding the set. Order in the response is the display order.')
+}).describe('A category with its display label (localized like the preset labels), so the\npicker can render group headers without hardcoding the set. Order in the\nresponse is the display order.')
 
 export type TypePresetCategoryInfo = zod.input<typeof TypePresetCategoryInfo>;
 export type TypePresetCategoryInfoOutput = zod.output<typeof TypePresetCategoryInfo>;

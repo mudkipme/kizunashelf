@@ -90,6 +90,7 @@ export * from "./generated/libraryDiagnostic.zod.js";
 export * from "./generated/statsResponse.zod.js";
 export * from "./generated/language.zod.js";
 export * from "./generated/languagesResponse.zod.js";
+export * from "./generated/getTypePresetsParams.zod.js";
 export * from "./generated/typePresetsResponse.zod.js";
 export * from "./generated/typePresetSummary.zod.js";
 export * from "./generated/typePresetProvider.zod.js";

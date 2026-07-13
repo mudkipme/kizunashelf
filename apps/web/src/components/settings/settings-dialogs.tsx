@@ -25,7 +25,7 @@ import type {
 } from "@/types/api";
 
 import { PresetPickerDialog } from "./preset-picker";
-import { EmptyConfigLine, TextField } from "./settings-controls";
+import { EmptyConfigLine } from "./settings-controls";
 import { fieldConfigSummary } from "./settings-field-descriptors";
 import {
   arrayEditor,
@@ -253,7 +253,6 @@ export function TypesSection({
       {picking ? (
         <PresetPickerDialog
           currentTypes={types}
-          languages={languages}
           onClose={() => setPicking(false)}
           onApply={(nextTypes) => onChange(nextTypes)}
         />
@@ -442,7 +441,6 @@ export function HomeBlock({
 
   return (
     <div className="flex flex-col gap-3">
-      <TextField label={t`Title`} value={config.title ?? ""} onChange={(title) => onChange({ ...config, title })} />
       <ListHeader title={t`Sections`} count={sections.length} addLabel={t`Section`} onAdd={() => setEditing("new")} />
       {sections.length === 0 ? (
         <EmptyConfigLine>

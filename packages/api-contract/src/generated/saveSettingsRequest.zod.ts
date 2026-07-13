@@ -24,7 +24,6 @@ export const SaveSettingsRequest = zod.object({
   "taxonomyRoot": zod.string(),
   "assetRoot": zod.string().nullish(),
   "home": zod.union([zod.object({
-  "title": zod.string().nullish(),
   "sections": zod.array(zod.object({
   "id": zod.string(),
   "title": zod.string(),
@@ -75,7 +74,7 @@ export const SaveSettingsRequest = zod.object({
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
 })).optional()
-}),zod.null()]).optional(),
+}).describe('The home page: just its sections. The page \*title\* is deliberately not\nconfig — every client renders a localized \"Home\" (app copy, not user data).'),zod.null()]).optional(),
   "dailyNotes": zod.union([zod.object({
   "paths": zod.array(zod.string()).optional(),
   "dateFormat": zod.string().nullish().describe('Moment.js-style date format (as used by Obsidian Daily Notes) for the file\npath relative to the daily-notes folder, without the `.md` extension —\ne.g. `YYYY-MM-DD` or `YYYY\/MM\/YYYY-MM-DD`. Defaults to `YYYY-MM-DD`.'),

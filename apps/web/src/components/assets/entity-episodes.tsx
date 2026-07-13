@@ -5,6 +5,7 @@ import { CheckIcon, RefreshCwIcon } from "lucide-react";
 import { EpisodeSyncDialog } from "@/components/assets/episode-sync-dialog";
 import { InlineMarkdown } from "@/components/assets/markdown-view";
 import { Button } from "@/components/ui/button";
+import { useIsoDateFormat } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 import type { EntityEpisodes, Relation } from "@/types/api";
 
@@ -68,6 +69,7 @@ export function EntityEpisodesPanel({
   relations: Relation[];
 }) {
   const { t } = useLingui();
+  const formatDate = useIsoDateFormat();
   const checklist = episodes.tracking === "checklist";
   const percent = episodes.total > 0 ? Math.round((episodes.watched / episodes.total) * 100) : 0;
   const interactive = checklist && !disabled && !saving;
@@ -133,7 +135,7 @@ export function EntityEpisodesPanel({
                       title={t`Change completion date`}
                       onClick={(event) => event.stopPropagation()}
                     >
-                      ✅ {item.done}
+                      ✅ {formatDate(item.done)}
                       <input
                         type="date"
                         value={item.done}
@@ -148,7 +150,7 @@ export function EntityEpisodesPanel({
                       />
                     </span>
                   ) : (
-                    <span>✅ {item.done}</span>
+                    <span>✅ {formatDate(item.done)}</span>
                   )
                 ) : null;
                 // With both a 📅 and a ✅ date the row runs out of width on
@@ -163,7 +165,7 @@ export function EntityEpisodesPanel({
                         bothDates && "max-sm:mt-0.5 max-sm:basis-full max-sm:pl-6",
                       )}
                     >
-                      {item.date ? <span>📅 {item.date}</span> : null}
+                      {item.date ? <span>📅 {formatDate(item.date)}</span> : null}
                       {doneLabel}
                     </span>
                   ) : null;

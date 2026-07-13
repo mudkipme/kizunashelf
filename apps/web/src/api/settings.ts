@@ -8,6 +8,7 @@ import {
   resolveTypePresets as requestResolveTypePresets,
   saveRawSettingsConfig as requestSaveRawSettingsConfig,
   saveSettingsConfig as requestSaveSettingsConfig,
+  type GetTypePresetsParams,
   type ResolveTypePresetsRequest,
   type SaveRawConfigRequest,
   type SaveSettingsRequest,
@@ -27,8 +28,8 @@ export function getSettingsConfig(init?: RequestInit) {
   return requestSettingsConfig(init, apiFetch);
 }
 
-export function getTypePresets(init?: RequestInit) {
-  return requestTypePresets(init, apiFetch);
+export function getTypePresets(params?: GetTypePresetsParams, init?: RequestInit) {
+  return requestTypePresets(params, init, apiFetch);
 }
 
 // Materialize picked presets into concrete types, merged against the editor's

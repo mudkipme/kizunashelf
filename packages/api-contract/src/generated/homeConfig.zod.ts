@@ -20,7 +20,6 @@ export const homeConfigSectionsItemLimitMin = 0;
 
 
 export const HomeConfig = zod.object({
-  "title": zod.string().nullish(),
   "sections": zod.array(zod.object({
   "id": zod.string(),
   "title": zod.string(),
@@ -71,7 +70,7 @@ export const HomeConfig = zod.object({
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
 })).optional()
-})
+}).describe('The home page: just its sections. The page \*title\* is deliberately not\nconfig — every client renders a localized \"Home\" (app copy, not user data).')
 
 export type HomeConfig = zod.input<typeof HomeConfig>;
 export type HomeConfigOutput = zod.output<typeof HomeConfig>;

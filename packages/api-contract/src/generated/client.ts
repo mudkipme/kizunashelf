@@ -173,6 +173,10 @@ import type {
 } from './getStatsParams.zod';
 
 import type {
+  GetTypePresetsParams
+} from './getTypePresetsParams.zod';
+
+import type {
   GetUpcomingParams
 } from './getUpcomingParams.zod';
 
@@ -576,17 +580,24 @@ export const getPathSuggestions = async (params?: GetPathSuggestionsParams, opti
 
 
 
-export const getGetTypePresetsUrl = () => {
+export const getGetTypePresetsUrl = (params?: GetTypePresetsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/type-presets`
+  return stringifiedParams.length > 0 ? `/api/type-presets?${stringifiedParams}` : `/api/type-presets`
 }
 
-export const getTypePresets = async ( options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<TypePresetsResponse> => {
+export const getTypePresets = async (params?: GetTypePresetsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<TypePresetsResponse> => {
 
-  const res = await (fetchFn ?? fetch)(getGetTypePresetsUrl(),
+  const res = await (fetchFn ?? fetch)(getGetTypePresetsUrl(params),
   {
     ...options,
     method: 'GET'

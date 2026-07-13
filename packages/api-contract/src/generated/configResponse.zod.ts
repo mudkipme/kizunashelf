@@ -25,7 +25,6 @@ export const ConfigResponse = zod.object({
   "assetRoot": zod.string().describe('Vault-relative directory where downloaded assets are stored.'),
   "tagsField": zod.string().describe('The resolved frontmatter key for the built-in tags field (configured via\n`tags.field`, defaulting to `tags`). Clients use this for the tag editor,\nthe Library tag filter, and to hide tags from the generic \"Details\" view —\nso the name lives in one place instead of being hardcoded per client.'),
   "home": zod.union([zod.object({
-  "title": zod.string().nullish(),
   "sections": zod.array(zod.object({
   "id": zod.string(),
   "title": zod.string(),
@@ -76,7 +75,7 @@ export const ConfigResponse = zod.object({
   "sort": zod.string().nullish(),
   "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
 })).optional()
-}),zod.null()]).optional(),
+}).describe('The home page: just its sections. The page \*title\* is deliberately not\nconfig — every client renders a localized \"Home\" (app copy, not user data).'),zod.null()]).optional(),
   "types": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),

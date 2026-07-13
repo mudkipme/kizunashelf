@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { parseIsoDateLocal } from "@/lib/date";
 import { useUiLocale } from "@/lib/language";
 
 /**
@@ -24,4 +25,29 @@ export function useDateFormat(options: Intl.DateTimeFormatOptions): (date: Date)
     const format = new Intl.DateTimeFormat(locale, JSON.parse(optionsKey) as Intl.DateTimeFormatOptions);
     return (date: Date) => format.format(date);
   }, [locale, optionsKey]);
+}
+
+const DEFAULT_ISO_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+};
+
+/**
+ * Formats a stored `YYYY-MM-DD` string in the UI locale — the display counterpart
+ * of the ISO storage form. Empty values render as "" and non-date/partial values
+ * (a bare year, free text) pass through verbatim, so this is safe to point at any
+ * date-field value. Storage stays ISO; only the displayed text is localized.
+ */
+export function useIsoDateFormat(
+  options: Intl.DateTimeFormatOptions = DEFAULT_ISO_DATE_OPTIONS,
+): (value: string | null | undefined) => string {
+  const format = useDateFormat(options);
+  return useMemo(() => {
+    return (value: string | null | undefined) => {
+      if (!value) return "";
+      const date = parseIsoDateLocal(value);
+      return date ? format(date) : value;
+    };
+  }, [format]);
 }

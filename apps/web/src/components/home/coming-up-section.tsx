@@ -11,6 +11,7 @@ import { CoverFallback } from "@/components/assets/cover-fallback";
 import { SectionHeader } from "@/components/home/section-header";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
+import { useIsoDateFormat } from "@/lib/locale";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityItem } from "@/types/api";
@@ -100,6 +101,7 @@ function ComingUpCard({
 }) {
   const { t } = useLingui();
   const language = useTitleLanguage();
+  const formatDate = useIsoDateFormat();
   const days = daysUntil(item.date, today);
   return (
     <Link
@@ -129,7 +131,7 @@ function ComingUpCard({
       </div>
       <div className="shrink-0 text-right">
         <div className="text-xs font-medium">{countdown(days, t)}</div>
-        <div className="text-[11px] tabular-nums text-muted-foreground">{item.date}</div>
+        <div className="text-[11px] tabular-nums text-muted-foreground">{formatDate(item.date)}</div>
       </div>
     </Link>
   );

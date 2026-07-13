@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
-import { useDateFormat } from "@/lib/locale";
+import { useDateFormat, useIsoDateFormat } from "@/lib/locale";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityEntry, ActivityItem } from "@/types/api";
@@ -268,6 +268,7 @@ function ActivityEntryRow({
   missed?: boolean;
 }) {
   const { t, i18n } = useLingui();
+  const formatDate = useIsoDateFormat();
   if (entry.source === "taxonomy") {
     const roleLabel = entry.role ? dateRoleLabels[entry.role] : undefined;
     const role = entry.role ? (roleLabel ? i18n._(roleLabel) : entry.role) : t`Date`;
@@ -278,7 +279,7 @@ function ActivityEntryRow({
           <span className="font-medium text-foreground">{role}</span>
           {" · "}
           {field}
-          {entry.rawDate ? `: ${entry.rawDate}` : ""}
+          {entry.rawDate ? `: ${formatDate(entry.rawDate)}` : ""}
         </span>
         {missed ? (
           <Badge

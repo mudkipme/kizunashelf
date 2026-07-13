@@ -330,6 +330,18 @@
     "/api/type-presets": {
       "get": {
         "operationId": "getTypePresets",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "language",
+            "description": "The user's language preference (may carry a script subtag, e.g.\n`zh-Hant`) — picks the language of the preset display text (labels,\ndescriptions, category headers). English when absent or untranslated.",
+            "schema": {
+              "description": "The user's language preference (may carry a script subtag, e.g.\n`zh-Hant`) — picks the language of the preset display text (labels,\ndescriptions, category headers). English when absent or untranslated.",
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -3583,14 +3595,9 @@
         ]
       },
       "HomeConfig": {
+        "description": "The home page: just its sections. The page *title* is deliberately not\nconfig — every client renders a localized \"Home\" (app copy, not user data).",
         "type": "object",
         "properties": {
-          "title": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "sections": {
             "type": "array",
             "items": {
@@ -4513,6 +4520,18 @@
           "suggestions"
         ]
       },
+      "TypePresetsQuery": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "description": "The user's language preference (may carry a script subtag, e.g.\n`zh-Hant`) — picks the language of the preset display text (labels,\ndescriptions, category headers). English when absent or untranslated.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "TypePresetsResponse": {
         "type": "object",
         "properties": {
@@ -4550,11 +4569,11 @@
             "type": "string"
           },
           "label": {
-            "description": "English display label. Kept as data (keyed by `id`) so clients may localize\nby id later without a contract change; English is the fallback.",
+            "description": "Display label in the requested `language` (English for languages the\npresets aren't written in). Localized by the core — presets seed user\ndata, so their text ships with the registry rather than client catalogs.",
             "type": "string"
           },
           "description": {
-            "description": "One-line, plain-language description for the picker card.",
+            "description": "One-line, plain-language description for the picker card, localized like\n`label`.",
             "type": "string"
           },
           "providers": {
@@ -4610,7 +4629,7 @@
         ]
       },
       "TypePresetCategoryInfo": {
-        "description": "A category with its English label, so the picker can render group headers\nwithout hardcoding the set. Order in the response is the display order.",
+        "description": "A category with its display label (localized like the preset labels), so the\npicker can render group headers without hardcoding the set. Order in the\nresponse is the display order.",
         "type": "object",
         "properties": {
           "id": {
@@ -4644,8 +4663,8 @@
               "type": "string"
             }
           },
-          "titleLanguage": {
-            "description": "ISO 639-1 title language to stamp onto title fields, filenames, and season\nlanguage. Absent → the preset's language-neutral default (English).",
+          "language": {
+            "description": "The language for the new types, as a user-language preference code (may\ncarry a script subtag, e.g. `zh-Hant`). The **single** language choice —\nboth derivations flow from it: its bare primary subtag is stamped as the\ntitle/filename/season language, and it picks the language of the seeded\n*text* (labels, status values, folder names, shelf titles) for the\nlanguages the presets ship. Other languages still stamp their titles but\nfall back to English text (e.g. `ko`: Korean titles, English labels).\nScript subtags affect text glyphs only — stored keys stay bare `zh`.\nAbsent → English throughout.",
             "type": [
               "string",
               "null"
@@ -4828,9 +4847,6 @@
           "generatedAt": {
             "type": "string"
           },
-          "title": {
-            "type": "string"
-          },
           "sections": {
             "type": "array",
             "items": {
@@ -4840,7 +4856,6 @@
         },
         "required": [
           "generatedAt",
-          "title",
           "sections"
         ]
       },

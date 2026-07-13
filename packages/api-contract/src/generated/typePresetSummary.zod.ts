@@ -10,8 +10,8 @@ export const TypePresetSummary = zod.object({
   "id": zod.string().describe('Stable preset id — also the default [`EntityTypeConfig::id`] and the key a\nclient uses to match an already-added type (id equality). Never localized.'),
   "category": zod.enum(['watch', 'play', 'read', 'listen', 'people', 'life']).describe('A preset category — the \"what do you want to track?\" grouping. A flat string\nenum (not doc-commented variants) so swift-openapi-generator renders proper\nSwift cases, matching `FieldType`\/`DateRole`.'),
   "icon": zod.string(),
-  "label": zod.string().describe('English display label. Kept as data (keyed by `id`) so clients may localize\nby id later without a contract change; English is the fallback.'),
-  "description": zod.string().describe('One-line, plain-language description for the picker card.'),
+  "label": zod.string().describe('Display label in the requested `language` (English for languages the\npresets aren\'t written in). Localized by the core — presets seed user\ndata, so their text ships with the registry rather than client catalogs.'),
+  "description": zod.string().describe('One-line, plain-language description for the picker card, localized like\n`label`.'),
   "providers": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string()

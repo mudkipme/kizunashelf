@@ -51,7 +51,7 @@ export const queryKeys = {
   rawSettingsConfig: ["rawSettingsConfig"] as const,
   stats: (params?: GetStatsParams) => ["stats", params ?? {}] as const,
   tags: ["tags"] as const,
-  typePresets: ["typePresets"] as const,
+  typePresets: (language?: string) => ["typePresets", language ?? "en"] as const,
 };
 
 // The vault's whole tag vocabulary, cached client-side (it changes rarely and is
@@ -235,10 +235,12 @@ export function statsQuery(params?: GetStatsParams) {
   });
 }
 
-export function typePresetsQuery() {
+// `language` is the raw user preference (it may carry a script subtag) — the
+// server localizes the preset display text for it, English fallback.
+export function typePresetsQuery(language?: string) {
   return queryOptions({
-    queryKey: queryKeys.typePresets,
-    queryFn: ({ signal }) => getTypePresets({ signal }),
+    queryKey: queryKeys.typePresets(language),
+    queryFn: ({ signal }) => getTypePresets(language ? { language } : undefined, { signal }),
   });
 }
 

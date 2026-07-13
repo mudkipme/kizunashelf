@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select } from "@/components/ui/select";
+import { useIsoDateFormat } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 import {
@@ -735,6 +736,8 @@ function DatePickerInput({
   disabled: boolean;
   ariaLabel: string;
 }) {
+  const { t } = useLingui();
+  const formatDate = useIsoDateFormat();
   const [open, setOpen] = useState(false);
   const selectedDate = parseDateValue(value);
 
@@ -761,7 +764,7 @@ function DatePickerInput({
             aria-label={ariaLabel}
           >
             <CalendarIcon data-icon="inline-start" />
-            <span className="truncate">{value || "Pick a date"}</span>
+            <span className="truncate">{value ? formatDate(value) : t`Pick a date`}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

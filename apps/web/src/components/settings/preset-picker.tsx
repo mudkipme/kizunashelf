@@ -6,7 +6,7 @@ import { CheckIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
-import { typePresetsQuery } from "@/api/queries";
+import { languagesQuery, typePresetsQuery } from "@/api/queries";
 import { resolveTypePresets } from "@/api/settings";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -20,13 +20,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
-import { titleLanguageLabel } from "@/lib/title-language";
+import { useLanguagePreference } from "@/lib/language";
 import type {
   EntityTypeConfig,
-  Language,
   TypePresetBackfill,
   TypePresetSummary,
+  UserLanguage,
 } from "@/types/api";
+
+/**
+ * The languages the preset *seed text* (labels, status values, folder names) is
+ * written in — mirrors `SeedLocale` in the core's `presets.rs`. Any other
+ * choice still gets its titles in that language, just with English labels; the
+ * picker shows an explicit hint for those.
+ */
+const SEED_TEXT_LANGUAGES = new Set(["en", "ja", "zh-Hans", "zh-Hant"]);
 
 /**
  * The "add built-in type" picker. A category-grouped, multi-select gallery over
@@ -40,19 +48,22 @@ import type {
  */
 export function PresetPickerDialog({
   currentTypes,
-  languages,
   onClose,
   onApply,
 }: {
   currentTypes: EntityTypeConfig[];
-  languages: Language[];
   onClose: () => void;
   onApply: (nextTypes: EntityTypeConfig[]) => void;
 }) {
-  const { t, i18n } = useLingui();
-  const presets = useQuery(typePresetsQuery());
+  const { t } = useLingui();
+  // The app's language preference localizes the picker cards and is the
+  // natural default for the single language choice below (which drives both
+  // the seeded labels and the title language of the new types).
+  const preference = useLanguagePreference();
+  const presets = useQuery(typePresetsQuery(preference));
+  const userLanguages = useQuery(languagesQuery()).data?.userLanguages ?? [];
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const [titleLanguage, setTitleLanguage] = useState(() => defaultLanguage(languages));
+  const [language, setLanguage] = useState(preference);
   const [resolving, setResolving] = useState(false);
   // The confirmation step holds the resolve result awaiting the user's decision
   // on back-fills; `null` means we're still on the pick step.
@@ -81,7 +92,7 @@ export function PresetPickerDialog({
       const result = await resolveTypePresets({
         currentTypes,
         presetIds: [...selected],
-        titleLanguage,
+        language,
       });
       const plan: ResolvedPlan = {
         types: result.types ?? [],
@@ -179,22 +190,11 @@ export function PresetPickerDialog({
             </>
           ) : (
             <>
-              <label className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">
-                  <Trans>Title language</Trans>
-                </span>
-                <Select
-                  value={titleLanguage}
-                  onChange={(event) => setTitleLanguage(event.target.value)}
-                  className="h-9 text-base md:text-sm"
-                >
-                  {languages.map((language) => (
-                    <option key={language.code} value={language.code}>
-                      {titleLanguageLabel(language.code, i18n.locale)}
-                    </option>
-                  ))}
-                </Select>
-              </label>
+              <SeedLanguagePicker
+                userLanguages={userLanguages}
+                value={language}
+                onChange={setLanguage}
+              />
               <Button
                 type="button"
                 onClick={resolve}
@@ -419,9 +419,56 @@ function groupByCategory(presets: TypePresetSummary[]) {
   return map;
 }
 
-/** The best default title language: the browser's language if it's supported, else the first option. */
-export function defaultLanguage(languages: Language[]): string {
-  if (languages.length === 0) return "en";
-  const browser = (navigator.language || "en").slice(0, 2).toLowerCase();
-  return languages.some((language) => language.code === browser) ? browser : languages[0].code;
+/**
+ * The single language choice for new types (labels *and* titles), shared by the
+ * settings dialog and onboarding. Options are the core's user-language list
+ * (endonym labels, `zh` split into 简体/繁體) — the same list as the app's
+ * global language picker — and an explicit hint appears for languages the
+ * built-in text isn't written in.
+ */
+export function SeedLanguagePicker({
+  userLanguages,
+  value,
+  onChange,
+}: {
+  userLanguages: UserLanguage[];
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  // Keep the current value selectable even if it isn't in the list (an unusual
+  // stored preference), so the control never shows blank.
+  const options: UserLanguage[] =
+    userLanguages.length > 0 && !userLanguages.some((item) => item.code === value)
+      ? [{ code: value, label: value, titleLanguage: value }, ...userLanguages]
+      : userLanguages;
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground">
+          <Trans>Language</Trans>
+        </span>
+        <Select
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-9 text-base md:text-sm"
+        >
+          {options.map((item) => (
+            <option key={item.code} value={item.code}>
+              {item.label}
+            </option>
+          ))}
+        </Select>
+      </label>
+      {!SEED_TEXT_LANGUAGES.has(value) ? (
+        <p className="text-xs text-muted-foreground">
+          <Trans>Built-in labels will be in English. Titles still use this language.</Trans>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** The initial language for new types: the app's preference when the core offers it, else English. */
+export function defaultSeedLanguage(userLanguages: UserLanguage[], preference: string): string {
+  return userLanguages.some((option) => option.code === preference) ? preference : "en";
 }

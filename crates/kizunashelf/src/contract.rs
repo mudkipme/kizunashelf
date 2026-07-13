@@ -181,10 +181,12 @@ pub struct TypePresetSummary {
     pub id: String,
     pub category: TypePresetCategory,
     pub icon: String,
-    /// English display label. Kept as data (keyed by `id`) so clients may localize
-    /// by id later without a contract change; English is the fallback.
+    /// Display label in the requested `language` (English for languages the
+    /// presets aren't written in). Localized by the core — presets seed user
+    /// data, so their text ships with the registry rather than client catalogs.
     pub label: String,
-    /// One-line, plain-language description for the picker card.
+    /// One-line, plain-language description for the picker card, localized like
+    /// `label`.
     pub description: String,
     /// Providers this preset wires up, in priority order — rendered as chips.
     pub providers: Vec<TypePresetProvider>,
@@ -216,8 +218,9 @@ pub enum TypePresetCategory {
     Life,
 }
 
-/// A category with its English label, so the picker can render group headers
-/// without hardcoding the set. Order in the response is the display order.
+/// A category with its display label (localized like the preset labels), so the
+/// picker can render group headers without hardcoding the set. Order in the
+/// response is the display order.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct TypePresetCategoryInfo {
@@ -246,10 +249,17 @@ pub struct ResolveTypePresetsRequest {
     pub current_types: Vec<EntityTypeConfig>,
     /// Preset ids the user selected, in the order to add them.
     pub preset_ids: Vec<String>,
-    /// ISO 639-1 title language to stamp onto title fields, filenames, and season
-    /// language. Absent → the preset's language-neutral default (English).
+    /// The language for the new types, as a user-language preference code (may
+    /// carry a script subtag, e.g. `zh-Hant`). The **single** language choice —
+    /// both derivations flow from it: its bare primary subtag is stamped as the
+    /// title/filename/season language, and it picks the language of the seeded
+    /// *text* (labels, status values, folder names, shelf titles) for the
+    /// languages the presets ship. Other languages still stamp their titles but
+    /// fall back to English text (e.g. `ko`: Korean titles, English labels).
+    /// Script subtags affect text glyphs only — stored keys stay bare `zh`.
+    /// Absent → English throughout.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub title_language: Option<String>,
+    pub language: Option<String>,
 }
 
 /// The result of resolving presets: ready-to-insert types plus proposed edits to
@@ -359,7 +369,6 @@ pub struct HomeSectionResponse {
 #[serde(rename_all = "camelCase")]
 pub struct HomeResponse {
     pub generated_at: String,
-    pub title: String,
     pub sections: Vec<HomeSectionResponse>,
 }
 

@@ -1,13 +1,19 @@
 import { i18n } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
 
 import type { TypeConfig } from "@/types/api";
 import { iso639TitleLanguage } from "@/lib/title-language";
 
 // The untyped body-wikilink pseudo-field ("body") reads as "Notes", matching the
-// detail page's Notes section. Localized via the active catalog (these are plain
-// functions, so they use the global i18n instead of the `t`/`<Trans>` macros).
-const bodyPseudoFieldLabel = () => i18n._(msg`Notes`);
+// detail page's Notes section. Localized against the active catalog by message
+// id: this module is imported by unit tests, whose standalone Vitest config omits
+// the `@lingui/*/macro` transform, so it must stay macro-free. The id is held in a
+// variable (not a string literal at the call site) so Lingui doesn't extract a
+// second, explicit-id "Notes" entry — the message is already registered by the
+// `t`Notes`` usages in the detail/statistics UI, which is what `i18n._` resolves.
+// The `i18n.locale` guard keeps it working before i18n is activated (unit tests
+// never activate it); the app activates `en` at startup.
+const NOTES_MESSAGE_ID = "Notes";
+const bodyPseudoFieldLabel = () => (i18n.locale ? i18n._(NOTES_MESSAGE_ID) : "Notes");
 
 export type FieldConfig = NonNullable<TypeConfig["fields"]>[number];
 export type FieldType = FieldConfig["fieldType"];

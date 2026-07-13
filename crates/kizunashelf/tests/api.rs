@@ -156,7 +156,6 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(config["types"][0]["fields"][6]["seasonLanguage"], "zh");
 
     let home = server.ok_json("/api/home").await;
-    assert_eq!(home["title"], "Fixture Home");
     assert_eq!(home["sections"][0]["title"], "Recent Anime");
     assert_eq!(home["sections"][0]["total"], 1);
     // Resolved title now falls back to the `original`-role title when no viewer
@@ -1288,7 +1287,6 @@ async fn settings_save_and_read_vault_config() {
             "dateFormat": "YYYY-MM-DD"
         },
         "home": {
-            "title": "Settings Fixture",
             "sections": []
         },
         "types": [
@@ -1328,7 +1326,8 @@ async fn settings_save_and_read_vault_config() {
     let read_back = request_json(&app, Method::GET, "/api/settings/config", None).await;
     assert_eq!(read_back.0, StatusCode::OK);
     assert_eq!(read_back.1["vaultExists"], true);
-    assert_eq!(read_back.1["vault"]["home"]["title"], "Settings Fixture");
+    // The home block round-trips (its page title is app copy, not config).
+    assert!(read_back.1["vault"]["home"].is_object());
 }
 
 #[tokio::test]
@@ -1760,7 +1759,6 @@ impl TestServer {
                 "dateFormat": "YYYY-MM-DD"
             },
             "home": {
-                "title": "Fixture Home",
                 "sections": [
                     {
                         "id": "recent-anime",

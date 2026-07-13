@@ -54,7 +54,6 @@ function normalizeDailyNotes(config: DailyNotesConfig): DailyNotesConfig {
 
 function normalizeHome(config: HomeConfig): HomeConfig {
   return {
-    title: config.title ?? "",
     sections: config.sections ?? [],
   };
 }
@@ -122,7 +121,6 @@ export function cleanVaultConfig(
         : undefined,
       home: config.home
         ? {
-            title: emptyToUndefined(config.home.title),
             sections: (config.home.sections ?? []).map((section) => ({
               id: section.id,
               title: section.title,
@@ -331,7 +329,7 @@ export function defaultDailyNotes(): DailyNotesConfig {
 }
 
 export function defaultHome(): HomeConfig {
-  return { title: "Home", sections: [] };
+  return { sections: [] };
 }
 
 export function defaultHomeSection(type = ""): HomeSectionConfig {

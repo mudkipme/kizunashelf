@@ -59,7 +59,7 @@ export const ResolveTypePresetsBody = zod.object({
 }))
 })).default(resolveTypePresetsBodyCurrentTypesDefault).describe('The types already in the editor\/vault. Used to wire relations, detect\nid\/path collisions, and propose back-fills. Empty for a fresh vault.'),
   "presetIds": zod.array(zod.string()).describe('Preset ids the user selected, in the order to add them.'),
-  "titleLanguage": zod.string().nullish().describe('ISO 639-1 title language to stamp onto title fields, filenames, and season\nlanguage. Absent → the preset\'s language-neutral default (English).')
+  "language": zod.string().nullish().describe('The language for the new types, as a user-language preference code (may\ncarry a script subtag, e.g. `zh-Hant`). The \*\*single\*\* language choice —\nboth derivations flow from it: its bare primary subtag is stamped as the\ntitle\/filename\/season language, and it picks the language of the seeded\n\*text\* (labels, status values, folder names, shelf titles) for the\nlanguages the presets ship. Other languages still stamp their titles but\nfall back to English text (e.g. `ko`: Korean titles, English labels).\nScript subtags affect text glyphs only — stored keys stay bare `zh`.\nAbsent → English throughout.')
 }).describe('Request to materialize one or more presets into concrete types, merged against\nthe schema the client currently holds (empty during onboarding). Stateless: the\nendpoint reads no vault, so onboarding and the settings editor call it the same\nway.')
 
 export type ResolveTypePresetsBody = zod.input<typeof ResolveTypePresetsBody>;

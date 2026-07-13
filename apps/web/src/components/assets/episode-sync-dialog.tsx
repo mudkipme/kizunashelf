@@ -15,6 +15,7 @@ import { errorMessage } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
 import { queryKeys } from "@/api/queries";
 import { useLanguagePreference } from "@/lib/language";
+import { useIsoDateFormat } from "@/lib/locale";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -428,6 +429,7 @@ function ItemRow({
   tracked: boolean;
   onToggle: () => void;
 }) {
+  const formatDate = useIsoDateFormat();
   return (
     <li>
       <button
@@ -449,7 +451,7 @@ function ItemRow({
         ) : null}
         <span className="min-w-0 flex-1 truncate">{item.title || "—"}</span>
         {item.date ? (
-          <span className="shrink-0 tabular-nums text-xs text-muted-foreground">📅 {item.date}</span>
+          <span className="shrink-0 tabular-nums text-xs text-muted-foreground">📅 {formatDate(item.date)}</span>
         ) : null}
         {tracked ? (
           <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">

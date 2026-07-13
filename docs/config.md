@@ -99,7 +99,7 @@ Web/desktop offers both a structured **Form** and a raw **YAML** editor. The raw
 
 - Vault: `taxonomyRoot`, `assetRoot`
 - Daily notes: `paths`, `dateFormat`
-- Home: `title`, section `id`, `title`, `type`, `limit`, `sort`, `direction`, and criteria
+- Home: section `id`, `title`, `type`, `limit`, `sort`, `direction`, and criteria
 - Types: `id`, `label`, `icon`, `path`, `filename`, `externalPriority`, `fields`
 - Type fields: ordered field entries with `field`, `fieldType`, optional display metadata, enum options, date roles, title language, external source, and relation type
 - Field types: `id`, `title`, `image`, `imageList`, `enum`, `enumList`, `progress`, `totalProgress`, `rating`, `bool`, `season`, `date`, `externalRef`, `relation`, `text`, `textList`
@@ -356,6 +356,20 @@ search/dedup time could soften it; it is out of scope today.)
 Server responses (`ApiError` messages, etc.) are **not** localized — clients
 surface them in English. Only the schema-derived, data-driven labels (type/field
 names, headings) and the client UI strings are translated.
+
+**Type presets are the deliberate exception.** The built-in presets *seed* the
+schema — type labels, folder paths, field display names, status values, home
+shelf titles, daily-note hashtags — and that text becomes user data the user
+reads forever, so it must arrive in their language. The preset registry ships
+every string in `en`/`ja`/`zh-Hans`/`zh-Hant`, and the picker offers **one
+language choice** (a user-language preference code, defaulting to the app's
+preference) that drives both derivations: its bare primary subtag is stamped as
+the title/filename/season language, and it selects the seeded text. A language
+the presets aren't written in still stamps its titles — `ko` gets Korean titles
+with English labels (the picker says so explicitly). Script subtags affect text
+glyphs only: a `zh-Hant` choice seeds 繁體 labels while the stamped
+`titleLanguage` and every stored key remain bare `zh`. `GET /api/type-presets`
+takes the same `language` to localize the picker metadata.
 
 All configured title fields are title data:
 
@@ -686,11 +700,11 @@ Import does **not** download covers — imported image fields keep their remote 
 
 ## Home Page
 
-The `home` section defines dashboard sections.
+The `home` section defines dashboard sections. (The page *title* is not
+configurable — every client renders a localized "Home".)
 
 ```yaml
 home:
-  title: Home
   sections:
   - id: recent-anime
     title: Recent Anime
@@ -898,7 +912,6 @@ dailyNotes:
   dateFormat: YYYY-MM-DD
 
 home:
-  title: Home
   sections:
   - id: watching
     title: Watching

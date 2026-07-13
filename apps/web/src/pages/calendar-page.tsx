@@ -14,7 +14,7 @@ import { ActivityCard } from "@/pages/activity-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { useDateFormat } from "@/lib/locale";
+import { useDateFormat, useIsoDateFormat } from "@/lib/locale";
 import { coverTypeIds, fieldLabelsByType } from "@/lib/type-config";
 import type { CalendarDay } from "@/types/api";
 
@@ -42,6 +42,10 @@ export function CalendarPage() {
     () => Array.from({ length: 7 }, (_, index) => formatWeekday(new Date(2024, 0, 1 + index))),
     [formatWeekday],
   );
+  // The visible month title and the selected-day heading, localized (storage
+  // and URL params stay ISO `YYYY-MM` / `YYYY-MM-DD`).
+  const formatMonthTitle = useDateFormat({ month: "long", year: "numeric" });
+  const formatSelectedDate = useIsoDateFormat({ year: "numeric", month: "long", day: "numeric" });
   const gridDays = useMemo(
     () => monthGridDays(calendar.data?.days ?? [], year, month),
     [calendar.data, year, month],
@@ -103,7 +107,7 @@ export function CalendarPage() {
         </header>
 
         <section className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2">
-          <div className="text-sm font-medium">{monthTitle(year, month)}</div>
+          <div className="text-sm font-medium">{formatMonthTitle(new Date(year, month - 1, 1))}</div>
           {calendar.data ? (
             <div className="flex flex-wrap gap-1">
               <Badge variant="outline">
@@ -167,7 +171,9 @@ export function CalendarPage() {
 
           <aside className="min-w-0 rounded-md border">
             <header className="border-b px-3 py-2">
-              <h2 className="text-sm font-semibold">{selectedDay?.date ?? t`No date selected`}</h2>
+              <h2 className="text-sm font-semibold">
+                {selectedDay ? formatSelectedDate(selectedDay.date) : t`No date selected`}
+              </h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 {selectedDay
                   ? plural(selectedDay.items.length, { one: "# entry", other: "# entries" })
@@ -223,6 +229,3 @@ function monthGridDays(days: CalendarDay[], year: number, month: number) {
   return [...Array.from<undefined>({ length: offset }), ...days];
 }
 
-function monthTitle(year: number, month: number) {
-  return `${year}-${String(month).padStart(2, "0")}`;
-}

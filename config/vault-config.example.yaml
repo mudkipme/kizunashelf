@@ -4,7 +4,6 @@
 taxonomyRoot: Taxonomy
 assetRoot: Assets
 home:
-  title: Home
   sections:
   - id: recent-anime
     title: Recent Anime

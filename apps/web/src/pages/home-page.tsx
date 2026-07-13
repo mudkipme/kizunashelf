@@ -27,7 +27,7 @@ export function HomePage() {
       <div className="flex min-h-full flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">{home.data?.title ?? t`Home`}</h1>
+            <h1 className="truncate text-base font-semibold">{t`Home`}</h1>
           </div>
           <Button
             type="button"

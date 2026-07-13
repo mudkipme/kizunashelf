@@ -19,11 +19,23 @@ use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+#[derive(Deserialize, JsonSchema)]
+pub(crate) struct TypePresetsQuery {
+    /// The user's language preference (may carry a script subtag, e.g.
+    /// `zh-Hant`) — picks the language of the preset display text (labels,
+    /// descriptions, category headers). English when absent or untranslated.
+    language: Option<String>,
+}
+
 /// The built-in **type presets** for the onboarding / settings type picker.
 /// Static (no library access) — metadata only; concrete configs come from
 /// [`resolve_type_presets`].
-pub(crate) async fn type_presets() -> Json<TypePresetsResponse> {
-    Json(crate::presets::type_presets_response())
+pub(crate) async fn type_presets(
+    Query(query): Query<TypePresetsQuery>,
+) -> Json<TypePresetsResponse> {
+    Json(crate::presets::type_presets_response(
+        query.language.as_deref(),
+    ))
 }
 
 /// Materialize the selected presets into concrete types, merged against the
@@ -232,12 +244,6 @@ pub(crate) async fn home(
 
     Ok(Json(HomeResponse {
         generated_at: library.generated_at.clone(),
-        title: library
-            .config
-            .home
-            .as_ref()
-            .and_then(|home| home.title.clone())
-            .unwrap_or_else(|| "Home".to_string()),
         sections,
     }))
 }
