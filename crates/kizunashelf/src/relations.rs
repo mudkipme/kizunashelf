@@ -136,17 +136,17 @@ pub fn sort_entities_with_title_language(
             );
         }
 
-        let ordering = if sort == "title" {
-            compare_entity_title(a, b, title_language)
-        } else if sort == "relationCount" {
-            a.relation_count.cmp(&b.relation_count)
-        } else {
+        let ordering = if sort == "type" {
             let type_compare = compare_string(&a.type_label, &b.type_label);
             if type_compare != Ordering::Equal {
                 type_compare
             } else {
                 compare_entity_title(a, b, title_language)
             }
+        } else if sort == "relationCount" {
+            a.relation_count.cmp(&b.relation_count)
+        } else {
+            compare_entity_title(a, b, title_language)
         };
         apply_direction(ordering, direction)
     });
@@ -561,6 +561,24 @@ mod tests {
             None,
         );
         assert_eq!(ids(&sorted), ["high", "low"]);
+    }
+
+    #[test]
+    fn sort_entities_by_type_then_title() {
+        let mut anime_z = entity("anime:z", "Zeta", None);
+        anime_z.type_label = "Anime".to_string();
+        let mut game_a = entity("games:a", "Alpha", None);
+        game_a.type_label = "Games".to_string();
+        let mut anime_a = entity("anime:a", "Alpha", None);
+        anime_a.type_label = "Anime".to_string();
+
+        let sorted = sort_entities_with_title_language(
+            vec![anime_z, game_a, anime_a],
+            "type",
+            SortDirection::Asc,
+            None,
+        );
+        assert_eq!(ids(&sorted), ["anime:a", "anime:z", "games:a"]);
     }
 
     #[test]
