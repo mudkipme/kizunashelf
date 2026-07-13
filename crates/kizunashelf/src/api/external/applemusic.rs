@@ -7,6 +7,7 @@ use crate::contract::{
     ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
     ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
 };
+use crate::languages::apple_storefront;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
@@ -54,21 +55,25 @@ impl ExternalProvider for AppleMusicProvider {
     async fn fetch_episodes(
         _state: &super::AppState,
         ref_value: &str,
-        _language: Option<&str>,
+        language: Option<&str>,
     ) -> Result<ProviderEpisodes, ApiError> {
-        fetch_apple_music_tracks(ref_value).await
+        fetch_apple_music_tracks(ref_value, language).await
     }
 }
 
 /// Fetches an album's tracks via the iTunes lookup API (`entity=song`), grouped
 /// by disc when the album spans more than one.
-async fn fetch_apple_music_tracks(ref_value: &str) -> Result<ProviderEpisodes, ApiError> {
+async fn fetch_apple_music_tracks(
+    ref_value: &str,
+    language: Option<&str>,
+) -> Result<ProviderEpisodes, ApiError> {
     let id = apple_music_id(ref_value)
         .ok_or_else(|| ApiError::bad_request("Not an Apple Music album link or id"))?;
+    let country = apple_storefront(language.unwrap_or(""));
     let client = external_client();
     let value = client
         .get(format!(
-            "https://itunes.apple.com/lookup?id={id}&entity=song&limit=200"
+            "https://itunes.apple.com/lookup?id={id}&entity=song&limit=200&country={country}"
         ))
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send()
@@ -168,11 +173,16 @@ async fn search_apple_music(
     if !apple_music_supported(provider_config) {
         return Ok(Vec::new());
     }
+    // The storefront picks result relevance AND metadata language (a `ja`
+    // preference gets Japanese-market titles from `jp`).
+    let country = apple_storefront(provider_config.language.as_deref().unwrap_or(""));
     let client = external_client();
     // A pasted Apple Music URL or bare numeric id resolves via the lookup API.
     if let Some(id) = apple_music_id(q) {
         let value = client
-            .get(format!("https://itunes.apple.com/lookup?id={id}"))
+            .get(format!(
+                "https://itunes.apple.com/lookup?id={id}&country={country}"
+            ))
             .header(reqwest::header::USER_AGENT, USER_AGENT)
             .send()
             .await
@@ -195,6 +205,7 @@ async fn search_apple_music(
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&[
             ("entity", "album"),
+            ("country", country),
             ("limit", &limit.to_string()),
             ("term", q),
         ])

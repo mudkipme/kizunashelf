@@ -305,9 +305,7 @@ KizunaShelf exposes:
 | `entity.title` | Language-agnostic fallback title, used in search and wherever no viewer language applies. |
 | `entity.titles` | Title map keyed by language, used for language switching, subtitle display, and search. |
 
-There is no `defaultTitle` flag. The **displayed** title is chosen by the
-viewer's language (see [Language preference](#language-preference) below). Each
-surface resolves a title as:
+There is no `defaultTitle` flag. The **displayed** title is chosen by the viewer's language (see [Language preference](#language-preference) below). Each surface resolves a title as:
 
 1. The viewer language's title — `entity.titles[language]`
 2. Otherwise `entity.title` (the language-agnostic fallback below)
@@ -323,54 +321,17 @@ So the effective resolution is **selected language → original → other titles
 
 ### Language preference
 
-Each client holds **one per-device language preference** (not in the vault
-config — it's a viewer choice, so it lives in web `localStorage` / iOS
-`UserDefaults`, sourced per runtime). Everything language-sensitive derives from
-that single value:
+Each client holds **one per-device language preference** (not in the vault config — it's a viewer choice, so it lives in web `localStorage` / iOS `UserDefaults`, sourced per runtime). Everything language-sensitive derives from that single value:
 
-- **UI language** — the app chrome is translated into English, Japanese,
-  Simplified Chinese, and Traditional Chinese. A preference outside that set
-  falls back to the **English UI** (titles still follow the preference). Which
-  languages a client's UI ships is a per-client fact, not something the core
-  reports — `GET /api/languages` returns the selectable options
-  (`userLanguages`: `code`, endonym `label`, `titleLanguage`), and each client
-  layers "is my UI translated into this" on top.
-- **Title/content language** — the preference's bare primary subtag
-  (`zh-Hans` → `zh`) keys `entity.titles[language]`. **Title languages and the
-  schema's `titleLanguage` are always bare ISO codes** — script subtags never
-  enter `titles` maps, `titleLanguage` config, or the dedup index.
-- **Provider request language** — the raw preference (which *may* carry a script
-  subtag) is sent to external providers on search / quick-add / episode fetch,
-  so a provider that distinguishes Simplified vs Traditional (TMDB, Steam) can
-  localize; the core normalizes the subtag per provider (TheTVDB collapses to
-  one Chinese bucket, TMDB maps `zh-Hant` → `zh-TW`, etc.).
+- **UI language** — the app chrome is translated into English, Japanese, Simplified Chinese, and Traditional Chinese. A preference outside that set falls back to the **English UI** (titles still follow the preference). Which languages a client's UI ships is a per-client fact, not something the core reports — `GET /api/languages` returns the selectable options (`userLanguages`: `code`, endonym `label`, `titleLanguage`), and each client layers "is my UI translated into this" on top.
+- **Title/content language** — the preference's bare primary subtag (`zh-Hans` → `zh`) keys `entity.titles[language]`. **Title languages and the schema's `titleLanguage` are always bare ISO codes** — script subtags never enter `titles` maps, `titleLanguage` config, or the dedup index.
+- **Provider request language** — the raw preference (which *may* carry a script subtag) is sent to external providers on search / quick-add / episode fetch, so a provider that distinguishes Simplified vs Traditional (TMDB, Steam) can localize; the core normalizes the subtag per provider (TheTVDB collapses to one Chinese bucket, TMDB maps `zh-Hant` → `zh-TW`, and the Apple providers map every preference to its iTunes storefront — `ja` → `jp`, `zh-Hans` → `cn`, `zh-Hant` → `tw` — since the storefront picks both result relevance and metadata language).
 
-**Simplified vs Traditional Chinese.** The picker offers `zh-Hans` (简体中文)
-and `zh-Hant` (繁體中文) as distinct UI languages, but both map to the single
-title language `zh`. A vault therefore has **one `zh` title bucket**, not two:
-whichever script a provider returned (or the user typed) is what's stored, and
-every Chinese viewer sees that stored script. This is a deliberate simplicity
-trade-off — keeping two Chinese title fields per type would burden every user to
-avoid an occasional script mismatch. (A future Simplified↔Traditional fold at
-search/dedup time could soften it; it is out of scope today.)
+**Simplified vs Traditional Chinese.** The picker offers `zh-Hans` (简体中文) and `zh-Hant` (繁體中文) as distinct UI languages, but both map to the single title language `zh`. A vault therefore has **one `zh` title bucket**, not two: whichever script a provider returned (or the user typed) is what's stored, and every Chinese viewer sees that stored script. This is a deliberate simplicity trade-off — keeping two Chinese title fields per type would burden every user to avoid an occasional script mismatch. (A future Simplified↔Traditional fold at search/dedup time could soften it; it is out of scope today.)
 
-Server responses (`ApiError` messages, etc.) are **not** localized — clients
-surface them in English. Only the schema-derived, data-driven labels (type/field
-names, headings) and the client UI strings are translated.
+Server responses (`ApiError` messages, etc.) are **not** localized — clients surface them in English. Only the schema-derived, data-driven labels (type/field names, headings) and the client UI strings are translated.
 
-**Type presets are the deliberate exception.** The built-in presets *seed* the
-schema — type labels, folder paths, field display names, status values, home
-shelf titles, daily-note hashtags — and that text becomes user data the user
-reads forever, so it must arrive in their language. The preset registry ships
-every string in `en`/`ja`/`zh-Hans`/`zh-Hant`, and the picker offers **one
-language choice** (a user-language preference code, defaulting to the app's
-preference) that drives both derivations: its bare primary subtag is stamped as
-the title/filename/season language, and it selects the seeded text. A language
-the presets aren't written in still stamps its titles — `ko` gets Korean titles
-with English labels (the picker says so explicitly). Script subtags affect text
-glyphs only: a `zh-Hant` choice seeds 繁體 labels while the stamped
-`titleLanguage` and every stored key remain bare `zh`. `GET /api/type-presets`
-takes the same `language` to localize the picker metadata.
+**Type presets are the deliberate exception.** The built-in presets *seed* the schema — type labels, folder paths, field display names, status values, home shelf titles, daily-note hashtags — and that text becomes user data the user reads forever, so it must arrive in their language. The preset registry ships every string in `en`/`ja`/`zh-Hans`/`zh-Hant`, and the picker offers **one language choice** (a user-language preference code, defaulting to the app's preference) that drives both derivations: its bare primary subtag is stamped as the title/filename/season language, and it selects the seeded text. A language the presets aren't written in still stamps its titles — `ko` gets Korean titles with English labels (the picker says so explicitly). Script subtags affect text glyphs only: a `zh-Hant` choice seeds 繁體 labels while the stamped `titleLanguage` and every stored key remain bare `zh`. The choice also picks the **provider wiring** where sources are language-bound: Bangumi (Chinese `name_cn`, Japanese-original `name`, Chinese summaries) leads the search priority and feeds titles for Chinese vaults, feeds Japanese originals for Japanese vaults, and drops to last (covers and links only) everywhere else, where TMDB/TheTVDB/MAL localize per request instead. `GET /api/type-presets` takes the same `language` to localize the picker metadata.
 
 All configured title fields are title data:
 
@@ -528,13 +489,7 @@ External metadata support has two pieces:
 2. `externalFields` map provider metadata into local fields.
 3. `bodySections` of `kind: external` map provider metadata into Markdown body sections.
 
-Each provider exposes one `search` entry point that either resolves a pasted
-URL/id it recognizes or runs a free-text query. Providers that only resolve
-URLs/ids (no catalog search API) return nothing for free-text and resolve when
-handed their URL/id — the catalog's `searchSupported` flag tells clients which
-is which. The provider list, each provider's fields/types, and its credential
-requirements all live in the Rust core and are exposed via
-`/api/external/providers`; clients render from that rather than hard-coding.
+Each provider exposes one `search` entry point that either resolves a pasted URL/id it recognizes or runs a free-text query. Providers that only resolve URLs/ids (no catalog search API) return nothing for free-text and resolve when handed their URL/id — the catalog's `searchSupported` flag tells clients which is which. The provider list, each provider's fields/types, and its credential requirements all live in the Rust core and are exposed via `/api/external/providers`; clients render from that rather than hard-coding.
 
 Supported providers (keyless unless noted):
 
@@ -608,8 +563,7 @@ For example:
 
 ### `bodySections`
 
-`bodySections` declares named sections of an entity's Markdown **body**, each addressed by its
-heading. A section's `kind` chooses its behavior. (This generalizes the former `bodyMappings`.)
+`bodySections` declares named sections of an entity's Markdown **body**, each addressed by its heading. A section's `kind` chooses its behavior. (This generalizes the former `bodyMappings`.)
 
 | Key | Required | Type | Description |
 | --- | --- | --- | --- |
@@ -632,17 +586,11 @@ bodySections:
     tracking: checklist
 ```
 
-When an external section is applied, KizunaShelf replaces the matching heading section if it
-exists, else appends one; other body content is preserved.
+When an external section is applied, KizunaShelf replaces the matching heading section if it exists, else appends one; other body content is preserved.
 
 ### Episodes / tracks / chapters
 
-An `episodes` body section is the built-in episode tracker. The section's body is an ordered
-Markdown list, optionally grouped by **season/disc sub-headings**, with the item number written
-in the item text (so `0`, `12.5`, specials work — Markdown ordered-list markers can't). With
-`tracking: checklist`, items are task-list checkboxes that record exactly which are watched
-(handling skips a `progress` field can't); the engine derives a watched/total roll-up shown in
-the library and on the detail page.
+An `episodes` body section is the built-in episode tracker. The section's body is an ordered Markdown list, optionally grouped by **season/disc sub-headings**, with the item number written in the item text (so `0`, `12.5`, specials work — Markdown ordered-list markers can't). With `tracking: checklist`, items are task-list checkboxes that record exactly which are watched (handling skips a `progress` field can't); the engine derives a watched/total roll-up shown in the library and on the detail page.
 
 ```markdown
 ## Episodes
@@ -653,19 +601,9 @@ the library and on the detail page.
 - [ ] 1 · New Dawn
 ```
 
-Multiple seasons can live as sub-headings in **one** entity, or as **separate** entities linked
-by relations — the engine mirrors whatever the files contain and never merges or splits them.
-The list is plain Markdown: edit it directly in Obsidian, or toggle items on the detail page.
+Multiple seasons can live as sub-headings in **one** entity, or as **separate** entities linked by relations — the engine mirrors whatever the files contain and never merges or splits them. The list is plain Markdown: edit it directly in Obsidian, or toggle items on the detail page.
 
-**Syncing from a provider.** When an entity links an `externalRef` to a source that exposes a
-list, the detail page's episodes panel offers a **Sync** action that pulls the provider's list
-into a checkable preview and merges the ticked items in — new items are added and ticked existing
-ones have their title updated, while your watched ticks and hand-added entries are always kept.
-Providers that can supply a list (and what they map to the section): Bangumi, MyAnimeList, TMDB,
-TheTVDB, and Apple Podcasts → episodes; MusicBrainz, Apple Music, and Discogs → tracks (grouped by
-disc); Comic Vine → a volume's issues. The provider must be configured (credentials set, if it
-needs any) and linked on the entity; when more than one such source is linked, the dialog lets you
-choose which to sync from.
+**Syncing from a provider.** When an entity links an `externalRef` to a source that exposes a list, the detail page's episodes panel offers a **Sync** action that pulls the provider's list into a checkable preview and merges the ticked items in — new items are added and ticked existing ones have their title updated, while your watched ticks and hand-added entries are always kept. Providers that can supply a list (and what they map to the section): Bangumi, MyAnimeList, TMDB, TheTVDB, and Apple Podcasts → episodes; MusicBrainz, Apple Music, and Discogs → tracks (grouped by disc); Comic Vine → a volume's issues. The provider must be configured (credentials set, if it needs any) and linked on the entity; when more than one such source is linked, the dialog lets you choose which to sync from.
 
 ## Quick Capture and Import
 
@@ -701,8 +639,7 @@ Import does **not** download covers — imported image fields keep their remote 
 
 ## Home Page
 
-The `home` section defines dashboard sections. (The page *title* is not
-configurable — every client renders a localized "Home".)
+The `home` section defines dashboard sections. (The page *title* is not configurable — every client renders a localized "Home".)
 
 ```yaml
 home:
@@ -739,9 +676,7 @@ Each section:
 | `sort` | no | string | Sort key. Defaults to `title`. |
 | `direction` | no | `asc` or `desc` | Sort direction. Defaults to `asc`. |
 
-Criteria semantics — the same rule model and evaluation engine as smart lists
-(`.base` files), stored structurally because the vault config is strict-parsed
-YAML rather than a Bases file:
+Criteria semantics — the same rule model and evaluation engine as smart lists (`.base` files), stored structurally because the vault config is strict-parsed YAML rather than a Bases file:
 
 ```yaml
 criteria:
@@ -762,12 +697,7 @@ criteria:
     - { kind: hasTag, values: [favorites] }
 ```
 
-Rule kinds mirror the smart-list rule builder: `contains` matches list fields
-by membership and string fields by substring; `isEmpty` with `negated: true`
-reads as "has a value"; `hasTag` matches the built-in tags field; `linksTo`
-matches an outgoing wikilink/relation to the named entity. Field meaning is
-value-driven, exactly like Bases — a comparison is a date comparison because
-the right-hand side is a date, never because of the field's name.
+Rule kinds mirror the smart-list rule builder: `contains` matches list fields by membership and string fields by substring; `isEmpty` with `negated: true` reads as "has a value"; `hasTag` matches the built-in tags field; `linksTo` matches an outgoing wikilink/relation to the named entity. Field meaning is value-driven, exactly like Bases — a comparison is a date comparison because the right-hand side is a date, never because of the field's name.
 
 Common sort keys:
 
@@ -780,10 +710,7 @@ Common sort keys:
 
 ## Tags
 
-`tags` is a **built-in, universal field**: a free-form list of labels every entity can
-have, independent of its type. You don't declare it per type — it's always available, edited
-with a search-and-add combobox over the whole vault's tag vocabulary, shown next to the type
-on the detail view (not in "Details"), and filterable on the Library page.
+`tags` is a **built-in, universal field**: a free-form list of labels every entity can have, independent of its type. You don't declare it per type — it's always available, edited with a search-and-add combobox over the whole vault's tag vocabulary, shown next to the type on the detail view (not in "Details"), and filterable on the Library page.
 
 ```yaml
 tags:
@@ -794,17 +721,9 @@ tags:
 | --- | --- | --- | --- |
 | `field` | no | string | Frontmatter key that holds an entity's tag list. Defaults to `tags`. |
 
-Tags are the one place the engine treats a field by a fixed *role* across all types rather
-than deriving meaning purely from per-type schema. To keep that honest, the **name is still
-config**, not hardcoded: behavior reads `tags.field` (default `tags`), so you can rename or
-relocate it vault-wide. A per-type schema field that happens to share this name is ignored in
-favor of the built-in.
+Tags are the one place the engine treats a field by a fixed *role* across all types rather than deriving meaning purely from per-type schema. To keep that honest, the **name is still config**, not hardcoded: behavior reads `tags.field` (default `tags`), so you can rename or relocate it vault-wide. A per-type schema field that happens to share this name is ignored in favor of the built-in.
 
-> **Why this is a vault-level field, not a `fieldType`.** A field earns built-in status only
-> when it is (1) genuinely cross-type and universal, (2) declared in vault config with a
-> default, (3) read from config rather than hardcoded, and (4) doing something the per-type
-> schema can't express (here: a single global vocabulary and facet). Concepts that are
-> per-type and schema-expressible (rating, status, …) stay ordinary schema fields.
+> **Why this is a vault-level field, not a `fieldType`.** A field earns built-in status only when it is (1) genuinely cross-type and universal, (2) declared in vault config with a default, (3) read from config rather than hardcoded, and (4) doing something the per-type schema can't express (here: a single global vocabulary and facet). Concepts that are per-type and schema-expressible (rating, status, …) stay ordinary schema fields.
 
 ## Daily Notes
 
@@ -843,29 +762,16 @@ The default date format matches filenames like:
 
 ### Daily-note logging
 
-The quick-log flow appends a line to the day's daily note. The *shape* of that line
-is schema-driven, configured in two places:
+The quick-log flow appends a line to the day's daily note. The *shape* of that line is schema-driven, configured in two places:
 
-- **`dailyNotes.log`** — global defaults: `section` (the heading to write under, as
-  raw heading text — no `#`, default h2, the same convention as `bodySections`) and
-  `lineFormat` (the line template).
-- **`types[].log`** — per-type override, and the **opt-in**: a type is loggable
-  *only if* it declares a `log` block. Same `section` / `lineFormat` keys. The
-  type's hashtag is written as a **literal inside `lineFormat`** (e.g.
-  `- {title} {note} #Anime`), never a separate field — so it's explicit, never
-  inferred from the type name.
+- **`dailyNotes.log`** — global defaults: `section` (the heading to write under, as raw heading text — no `#`, default h2, the same convention as `bodySections`) and `lineFormat` (the line template).
+- **`types[].log`** — per-type override, and the **opt-in**: a type is loggable *only if* it declares a `log` block. Same `section` / `lineFormat` keys. The type's hashtag is written as a **literal inside `lineFormat`** (e.g. `- {title} {note} #Anime`), never a separate field — so it's explicit, never inferred from the type name.
 
-> Logging is **independent of the episode checklist.** Checking an episode
-> (`/episodes/watch`) only stamps that episode's `✅` completion date; it never
-> writes a daily-note line, and logging never reads or ticks episodes. The two show
-> up together only in the read-only activity feed, which aggregates both.
+> Logging is **independent of the episode checklist.** Checking an episode (`/episodes/watch`) only stamps that episode's `✅` completion date; it never writes a daily-note line, and logging never reads or ticks episodes. The two show up together only in the read-only activity feed, which aggregates both.
 
-Resolution for a type: `type.log.<x>` → `dailyNotes.log.<x>` → built-in (`Log` for
-the section, `- {title} {note}` for the line). A blank or whitespace-only value is
-treated as unset.
+Resolution for a type: `type.log.<x>` → `dailyNotes.log.<x>` → built-in (`Log` for the section, `- {title} {note}` for the line). A blank or whitespace-only value is treated as unset.
 
-`lineFormat` tokens (empty tokens collapse with surrounding whitespace, so a
-note-less log renders the bare `- [[Title]] #Tag`):
+`lineFormat` tokens (empty tokens collapse with surrounding whitespace, so a note-less log renders the bare `- [[Title]] #Tag`):
 
 | Token | Meaning |
 | --- | --- |

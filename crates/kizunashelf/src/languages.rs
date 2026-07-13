@@ -118,6 +118,49 @@ pub fn primary_language(code: &str) -> String {
         .to_ascii_lowercase()
 }
 
+/// The Apple storefront (the iTunes Search API `country` parameter) a
+/// user-language preference maps to, `us` when unknown/unset. Storefront picks
+/// both result relevance and metadata language, so — like the UI locale — the
+/// script subtag matters: verified empirically, `cn` returns Simplified
+/// metadata (周杰伦) while `sg` behaves like `us` (English artist names,
+/// Traditional titles), and `tw` returns Traditional (周杰倫). Every
+/// [`USER_LANGUAGES`] preference maps to its home storefront (a test enforces
+/// full coverage).
+pub fn apple_storefront(preference: &str) -> &'static str {
+    let lower = preference.trim().to_ascii_lowercase();
+    if lower.starts_with("zh") {
+        let traditional = lower
+            .split(['-', '_'])
+            .any(|part| matches!(part, "hant" | "tw" | "hk" | "mo"));
+        return if traditional { "tw" } else { "cn" };
+    }
+    match primary_language(&lower).as_str() {
+        "en" => "us",
+        "ja" => "jp",
+        "ko" => "kr",
+        "hr" => "hr",
+        "cs" => "cz",
+        "da" => "dk",
+        "nl" => "nl",
+        "fi" => "fi",
+        "fr" => "fr",
+        "de" => "de",
+        "el" => "gr",
+        "he" => "il",
+        "hu" => "hu",
+        "it" => "it",
+        "no" => "no",
+        "pl" => "pl",
+        "pt" => "pt",
+        "ru" => "ru",
+        "sl" => "si",
+        "es" => "es",
+        "sv" => "se",
+        "tr" => "tr",
+        _ => "us",
+    }
+}
+
 /// The TheTVDB ISO 639-2/T code for a title language (e.g. `zh` → `zho`), used
 /// to request translated episode titles. Subtags are ignored (`zh-Hant` → `zho`
 /// — TheTVDB has a single Chinese bucket). `None` for an unknown code.
@@ -174,6 +217,25 @@ mod tests {
         for (iso, tvdb) in SUPPORTED_LANGUAGES {
             assert_eq!(thetvdb_language(iso), Some(*tvdb));
             assert_eq!(thetvdb_iso_language(tvdb), Some(*iso));
+        }
+    }
+
+    #[test]
+    fn apple_storefront_covers_every_preference_and_respects_scripts() {
+        assert_eq!(apple_storefront("zh-Hans"), "cn");
+        assert_eq!(apple_storefront("zh-Hant"), "tw");
+        assert_eq!(apple_storefront("zh-TW"), "tw");
+        assert_eq!(apple_storefront("ja"), "jp");
+        assert_eq!(apple_storefront("sv"), "se");
+        assert_eq!(apple_storefront(""), "us");
+        assert_eq!(apple_storefront("xx"), "us");
+        // Every preference in the picker maps to its own storefront — landing
+        // on the `us` default would mean a language was added without one.
+        for (code, _, _) in USER_LANGUAGES {
+            assert!(
+                apple_storefront(code) != "us" || *code == "en",
+                "{code} falls through to the default storefront"
+            );
         }
     }
 

@@ -396,13 +396,30 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "记录在看的动画和观看进度。",
                     "記錄在看的動畫與觀看進度。",
                 ),
-                providers: &["bangumi", "myanimelist", "tmdb", "thetvdb"],
-                title_sources: &[
-                    ("bangumi", "name_cn"),
-                    ("myanimelist", "title"),
-                    ("tmdb", "title"),
-                    ("thetvdb", "name"),
-                ],
+                providers: ctx.pick(
+                    &["bangumi", "myanimelist", "tmdb", "thetvdb"],
+                    &["bangumi", "myanimelist", "tmdb", "thetvdb"],
+                    &["myanimelist", "tmdb", "thetvdb", "bangumi"],
+                ),
+                title_sources: ctx.pick(
+                    &[
+                        ("bangumi", "name_cn"),
+                        ("myanimelist", "title"),
+                        ("tmdb", "title"),
+                        ("thetvdb", "name"),
+                    ],
+                    &[
+                        ("bangumi", "name"),
+                        ("myanimelist", "title"),
+                        ("tmdb", "title"),
+                        ("thetvdb", "name"),
+                    ],
+                    &[
+                        ("myanimelist", "title"),
+                        ("tmdb", "title"),
+                        ("thetvdb", "name"),
+                    ],
+                ),
                 original_title: Some(&[
                     ("bangumi", "name"),
                     ("myanimelist", "title"),
@@ -415,12 +432,25 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ("tmdb", "cover_url"),
                     ("thetvdb", "cover_url"),
                 ],
-                summary_sources: &[
-                    ("bangumi", "summary"),
-                    ("myanimelist", "synopsis"),
-                    ("tmdb", "overview"),
-                    ("thetvdb", "overview"),
-                ],
+                summary_sources: ctx.pick(
+                    &[
+                        ("bangumi", "summary"),
+                        ("myanimelist", "synopsis"),
+                        ("tmdb", "overview"),
+                        ("thetvdb", "overview"),
+                    ],
+                    // Bangumi summaries are Chinese — zh only.
+                    &[
+                        ("myanimelist", "synopsis"),
+                        ("tmdb", "overview"),
+                        ("thetvdb", "overview"),
+                    ],
+                    &[
+                        ("myanimelist", "synopsis"),
+                        ("tmdb", "overview"),
+                        ("thetvdb", "overview"),
+                    ],
+                ),
                 // Air dates coerce to a season; MAL has an explicit season label.
                 date_sources: &[
                     ("bangumi", "date"),
@@ -488,12 +518,20 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "看过的电影，和想看的电影。",
                     "看過的電影，和想看的電影。",
                 ),
-                providers: &["tmdb", "bangumi", "thetvdb"],
-                title_sources: &[
-                    ("tmdb", "title"),
-                    ("bangumi", "name_cn"),
-                    ("thetvdb", "name"),
-                ],
+                providers: ctx.pick(
+                    &["tmdb", "bangumi", "thetvdb"],
+                    &["tmdb", "bangumi", "thetvdb"],
+                    &["tmdb", "thetvdb", "bangumi"],
+                ),
+                title_sources: ctx.pick(
+                    &[
+                        ("tmdb", "title"),
+                        ("bangumi", "name_cn"),
+                        ("thetvdb", "name"),
+                    ],
+                    &[("tmdb", "title"), ("bangumi", "name"), ("thetvdb", "name")],
+                    &[("tmdb", "title"), ("thetvdb", "name")],
+                ),
                 original_title: Some(&[
                     ("tmdb", "original_title"),
                     ("bangumi", "name"),
@@ -504,11 +542,15 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ("bangumi", "cover_url"),
                     ("thetvdb", "cover_url"),
                 ],
-                summary_sources: &[
-                    ("tmdb", "overview"),
-                    ("bangumi", "summary"),
-                    ("thetvdb", "overview"),
-                ],
+                summary_sources: ctx.pick(
+                    &[
+                        ("tmdb", "overview"),
+                        ("bangumi", "summary"),
+                        ("thetvdb", "overview"),
+                    ],
+                    &[("tmdb", "overview"), ("thetvdb", "overview")],
+                    &[("tmdb", "overview"), ("thetvdb", "overview")],
+                ),
                 date_sources: &[
                     ("tmdb", "release_date"),
                     ("bangumi", "date"),
@@ -541,18 +583,26 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "願望清單、遊玩中和已全破的遊戲。",
                 ),
                 providers: &["igdb", "steam", "bangumi"],
-                title_sources: &[("igdb", "name"), ("steam", "name"), ("bangumi", "name_cn")],
+                title_sources: ctx.pick(
+                    &[("igdb", "name"), ("steam", "name"), ("bangumi", "name_cn")],
+                    &[("igdb", "name"), ("steam", "name"), ("bangumi", "name")],
+                    &[("igdb", "name"), ("steam", "name")],
+                ),
                 original_title: None,
                 cover_sources: &[
                     ("igdb", "cover_url"),
                     ("steam", "cover_url"),
                     ("bangumi", "cover_url"),
                 ],
-                summary_sources: &[
-                    ("igdb", "summary"),
-                    ("steam", "description"),
-                    ("bangumi", "summary"),
-                ],
+                summary_sources: ctx.pick(
+                    &[
+                        ("igdb", "summary"),
+                        ("steam", "description"),
+                        ("bangumi", "summary"),
+                    ],
+                    &[("igdb", "summary"), ("steam", "description")],
+                    &[("igdb", "summary"), ("steam", "description")],
+                ),
                 date_sources: &[
                     ("igdb", "first_release_date"),
                     ("steam", "release_date"),
@@ -624,12 +674,25 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "在讀的書，帶作者和 ISBN。",
                 ),
                 providers: &["googlebooks", "openlibrary", "hardcover", "bangumi"],
-                title_sources: &[
-                    ("googlebooks", "title"),
-                    ("openlibrary", "title"),
-                    ("hardcover", "title"),
-                    ("bangumi", "name_cn"),
-                ],
+                title_sources: ctx.pick(
+                    &[
+                        ("googlebooks", "title"),
+                        ("openlibrary", "title"),
+                        ("hardcover", "title"),
+                        ("bangumi", "name_cn"),
+                    ],
+                    &[
+                        ("googlebooks", "title"),
+                        ("openlibrary", "title"),
+                        ("hardcover", "title"),
+                        ("bangumi", "name"),
+                    ],
+                    &[
+                        ("googlebooks", "title"),
+                        ("openlibrary", "title"),
+                        ("hardcover", "title"),
+                    ],
+                ),
                 original_title: Some(&[
                     ("googlebooks", "title"),
                     ("openlibrary", "title"),
@@ -642,12 +705,24 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ("hardcover", "cover_url"),
                     ("bangumi", "cover_url"),
                 ],
-                summary_sources: &[
-                    ("googlebooks", "description"),
-                    ("openlibrary", "description"),
-                    ("hardcover", "synopsis"),
-                    ("bangumi", "summary"),
-                ],
+                summary_sources: ctx.pick(
+                    &[
+                        ("googlebooks", "description"),
+                        ("openlibrary", "description"),
+                        ("hardcover", "synopsis"),
+                        ("bangumi", "summary"),
+                    ],
+                    &[
+                        ("googlebooks", "description"),
+                        ("openlibrary", "description"),
+                        ("hardcover", "synopsis"),
+                    ],
+                    &[
+                        ("googlebooks", "description"),
+                        ("openlibrary", "description"),
+                        ("hardcover", "synopsis"),
+                    ],
+                ),
                 date_sources: &[
                     ("googlebooks", "published_date"),
                     ("openlibrary", "published_date"),
@@ -692,13 +767,30 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "漫画，按话数记录。",
                     "漫畫，按話數記錄。",
                 ),
-                providers: &["bangumi", "mangaupdates", "myanimelist", "comicvine"],
-                title_sources: &[
-                    ("bangumi", "name_cn"),
-                    ("mangaupdates", "title"),
-                    ("myanimelist", "title"),
-                    ("comicvine", "title"),
-                ],
+                providers: ctx.pick(
+                    &["bangumi", "mangaupdates", "myanimelist", "comicvine"],
+                    &["bangumi", "mangaupdates", "myanimelist", "comicvine"],
+                    &["mangaupdates", "myanimelist", "comicvine", "bangumi"],
+                ),
+                title_sources: ctx.pick(
+                    &[
+                        ("bangumi", "name_cn"),
+                        ("mangaupdates", "title"),
+                        ("myanimelist", "title"),
+                        ("comicvine", "title"),
+                    ],
+                    &[
+                        ("bangumi", "name"),
+                        ("mangaupdates", "title"),
+                        ("myanimelist", "title"),
+                        ("comicvine", "title"),
+                    ],
+                    &[
+                        ("mangaupdates", "title"),
+                        ("myanimelist", "title"),
+                        ("comicvine", "title"),
+                    ],
+                ),
                 original_title: Some(&[
                     ("bangumi", "name"),
                     ("mangaupdates", "title"),
@@ -711,12 +803,24 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ("myanimelist", "cover_url"),
                     ("comicvine", "cover_url"),
                 ],
-                summary_sources: &[
-                    ("bangumi", "summary"),
-                    ("mangaupdates", "synopsis"),
-                    ("myanimelist", "synopsis"),
-                    ("comicvine", "description"),
-                ],
+                summary_sources: ctx.pick(
+                    &[
+                        ("bangumi", "summary"),
+                        ("mangaupdates", "synopsis"),
+                        ("myanimelist", "synopsis"),
+                        ("comicvine", "description"),
+                    ],
+                    &[
+                        ("mangaupdates", "synopsis"),
+                        ("myanimelist", "synopsis"),
+                        ("comicvine", "description"),
+                    ],
+                    &[
+                        ("mangaupdates", "synopsis"),
+                        ("myanimelist", "synopsis"),
+                        ("comicvine", "description"),
+                    ],
+                ),
                 date_sources: &[("bangumi", "date"), ("myanimelist", "start_date")],
                 // Bangumi counts manga chapters in its `eps` field.
                 total_sources: &[
@@ -753,12 +857,25 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "專輯與 CD——你擁有和喜愛的音樂。",
                 ),
                 providers: &["musicbrainz", "applemusic", "discogs", "bangumi"],
-                title_sources: &[
-                    ("musicbrainz", "title"),
-                    ("applemusic", "title"),
-                    ("discogs", "title"),
-                    ("bangumi", "name_cn"),
-                ],
+                title_sources: ctx.pick(
+                    &[
+                        ("musicbrainz", "title"),
+                        ("applemusic", "title"),
+                        ("discogs", "title"),
+                        ("bangumi", "name_cn"),
+                    ],
+                    &[
+                        ("musicbrainz", "title"),
+                        ("applemusic", "title"),
+                        ("discogs", "title"),
+                        ("bangumi", "name"),
+                    ],
+                    &[
+                        ("musicbrainz", "title"),
+                        ("applemusic", "title"),
+                        ("discogs", "title"),
+                    ],
+                ),
                 original_title: None,
                 cover_sources: &[
                     ("musicbrainz", "cover_url"),
@@ -766,7 +883,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ("discogs", "cover_url"),
                     ("bangumi", "cover_url"),
                 ],
-                summary_sources: &[("bangumi", "summary")],
+                summary_sources: ctx.pick(&[("bangumi", "summary")], &[], &[]),
                 date_sources: &[
                     ("musicbrainz", "release_date"),
                     ("applemusic", "release_date"),
@@ -834,11 +951,20 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "艺术家、作者、工作室——藏品背后的创作者。",
                     "藝術家、作者、工作室——收藏背後的創作者。",
                 ),
-                providers: &["bangumi", "musicbrainz"],
-                title_sources: &[("bangumi", "name_cn"), ("musicbrainz", "title")],
+                providers: ctx.pick(
+                    &["bangumi", "musicbrainz"],
+                    &["bangumi", "musicbrainz"],
+                    &["musicbrainz", "bangumi"],
+                ),
+                title_sources: ctx.pick(
+                    &[("bangumi", "name_cn"), ("musicbrainz", "title")],
+                    &[("bangumi", "name"), ("musicbrainz", "title")],
+                    // Bangumi has no Latin names; the Japanese original beats Chinese.
+                    &[("musicbrainz", "title"), ("bangumi", "name")],
+                ),
                 original_title: None,
                 cover_sources: &[("bangumi", "cover_url"), ("musicbrainz", "cover_url")],
-                summary_sources: &[("bangumi", "summary")],
+                summary_sources: ctx.pick(&[("bangumi", "summary")], &[], &[]),
                 date_sources: &[],
                 total_sources: &[],
                 statuses: None,
@@ -897,10 +1023,14 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "角色，以及配音或飾演的人。",
                 ),
                 providers: &["bangumi"],
-                title_sources: &[("bangumi", "name_cn")],
+                title_sources: ctx.pick(
+                    &[("bangumi", "name_cn")],
+                    &[("bangumi", "name")],
+                    &[("bangumi", "name")],
+                ),
                 original_title: None,
                 cover_sources: &[("bangumi", "cover_url")],
-                summary_sources: &[("bangumi", "summary")],
+                summary_sources: ctx.pick(&[("bangumi", "summary")], &[], &[]),
                 date_sources: &[],
                 total_sources: &[],
                 statuses: None,
@@ -1204,6 +1334,20 @@ impl BuildCtx {
 
     fn text(&self, value: L) -> &'static str {
         value.get(self.locale)
+    }
+
+    /// Per-language wiring pick, keyed on the *stamped* title language's bare
+    /// primary subtag — the wiring analogue of [`L`] for text. Bangumi is
+    /// structurally zh/ja data (`name_cn` Chinese, `name` the Japanese
+    /// original, summaries Chinese), so bangumi-involving presets vary their
+    /// provider priority and bangumi title/summary slots by language; `other`
+    /// is also right for ko/fr/… since TMDB/TheTVDB/MAL localize per request.
+    fn pick<T>(&self, zh: T, ja: T, other: T) -> T {
+        match self.lang.as_str() {
+            "zh" => zh,
+            "ja" => ja,
+            _ => other,
+        }
     }
 }
 
@@ -1812,7 +1956,14 @@ mod tests {
         // preset wires (priority list, field mappings, external refs) resolves,
         // and the wiring actually produced a title and a cover mapping. Nothing
         // is silently filtered, so a typo'd or removed provider fails here.
-        let ctx = BuildCtx::new(None);
+        // Wiring varies per language, so every branch is validated.
+        for language in [None, Some("zh"), Some("ja")] {
+            validate_registry_against_catalog(language);
+        }
+    }
+
+    fn validate_registry_against_catalog(language: Option<&str>) {
+        let ctx = BuildCtx::new(language);
         let catalog_ids: HashSet<&str> = ctx.catalog.iter().map(|item| item.id.as_str()).collect();
         for preset in built_presets(&ctx) {
             let config = &preset.config;
@@ -1875,6 +2026,53 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn wiring_varies_with_the_language() {
+        // Bangumi is zh/ja data: zh leads with it and maps `name_cn`; ja keeps
+        // it but maps the Japanese `name`; every other language demotes it in
+        // the search priority and drops it from the title (TMDB/MAL localize
+        // per request instead). Its Chinese summaries are zh-only.
+        let zh = resolve(vec![], &["anime"], Some("zh-Hant")).types.remove(0);
+        assert_eq!(zh.external_priority[0], "bangumi");
+        let title = find_field(&zh, "title").unwrap();
+        assert_eq!(title.external_fields[0].source, "bangumi");
+        assert_eq!(title.external_fields[0].field, "name_cn");
+        assert!(zh
+            .body_sections
+            .iter()
+            .any(|s| s.external_fields.iter().any(|m| m.source == "bangumi")));
+
+        let ja = resolve(vec![], &["anime"], Some("ja")).types.remove(0);
+        assert_eq!(ja.external_priority[0], "bangumi");
+        let title = find_field(&ja, "title").unwrap();
+        assert_eq!(title.external_fields[0].source, "bangumi");
+        assert_eq!(title.external_fields[0].field, "name");
+
+        let en = resolve(vec![], &["anime"], Some("en")).types.remove(0);
+        assert_eq!(en.external_priority[0], "myanimelist");
+        assert_eq!(
+            en.external_priority.last().map(String::as_str),
+            Some("bangumi")
+        );
+        let title = find_field(&en, "title").unwrap();
+        assert!(title.external_fields.iter().all(|m| m.source != "bangumi"));
+        // Bangumi still wires covers and the external-ref field for everyone.
+        let cover = find_field(&en, "cover_url").unwrap();
+        assert!(cover.external_fields.iter().any(|m| m.source == "bangumi"));
+        assert!(find_field(&en, "bangumi_url").is_some());
+        // Music's only summary source was Bangumi's Chinese text — no Summary
+        // section outside zh.
+        let music = resolve(vec![], &["music"], Some("en")).types.remove(0);
+        assert!(!music
+            .body_sections
+            .iter()
+            .any(|s| s.kind == BodySectionKind::External));
+        // Characters fall back to the Japanese original name, never Chinese.
+        let character = resolve(vec![], &["character"], Some("ko")).types.remove(0);
+        let title = find_field(&character, "title").unwrap();
+        assert_eq!(title.external_fields[0].field, "name");
     }
 
     #[test]
@@ -2072,7 +2270,8 @@ mod tests {
 
     #[test]
     fn external_refs_and_mappings_wire_from_catalog() {
-        let anime = resolve(vec![], &["anime"], None).types.remove(0);
+        // Chinese wiring — the branch where Bangumi feeds the title.
+        let anime = resolve(vec![], &["anime"], Some("zh-Hans")).types.remove(0);
         // Title maps from Bangumi's localized name.
         let title = find_field(&anime, "title").unwrap();
         assert!(title
@@ -2087,7 +2286,7 @@ mod tests {
         assert!(anime
             .body_sections
             .iter()
-            .any(|s| s.heading == "Summary" && !s.external_fields.is_empty()));
+            .any(|s| s.kind == BodySectionKind::External && !s.external_fields.is_empty()));
     }
 
     #[test]

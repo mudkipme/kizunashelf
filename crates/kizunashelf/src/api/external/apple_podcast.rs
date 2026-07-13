@@ -7,6 +7,7 @@ use crate::contract::{
     ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
     ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
 };
+use crate::languages::apple_storefront;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
@@ -51,9 +52,9 @@ impl ExternalProvider for ApplePodcastProvider {
     async fn fetch_episodes(
         _state: &super::AppState,
         ref_value: &str,
-        _language: Option<&str>,
+        language: Option<&str>,
     ) -> Result<ProviderEpisodes, ApiError> {
-        fetch_apple_podcast_episodes(ref_value).await
+        fetch_apple_podcast_episodes(ref_value, language).await
     }
 }
 
@@ -61,13 +62,17 @@ impl ExternalProvider for ApplePodcastProvider {
 /// One flat list — podcasts have no seasons. The lookup returns at most 200 rows
 /// (the podcast itself plus its latest episodes), so very long back catalogs are
 /// truncated to the most recent 200.
-async fn fetch_apple_podcast_episodes(ref_value: &str) -> Result<ProviderEpisodes, ApiError> {
+async fn fetch_apple_podcast_episodes(
+    ref_value: &str,
+    language: Option<&str>,
+) -> Result<ProviderEpisodes, ApiError> {
     let id = apple_podcast_id(ref_value)
         .ok_or_else(|| ApiError::bad_request("Not an Apple Podcasts link or id"))?;
+    let country = apple_storefront(language.unwrap_or(""));
     let client = external_client();
     let value = client
         .get(format!(
-            "https://itunes.apple.com/lookup?id={id}&entity=podcastEpisode&limit=200"
+            "https://itunes.apple.com/lookup?id={id}&entity=podcastEpisode&limit=200&country={country}"
         ))
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .send()
@@ -157,11 +162,16 @@ async fn search_apple_podcast(
     if !apple_podcast_supported(provider_config) {
         return Ok(Vec::new());
     }
+    // The storefront picks result relevance AND metadata language (a `ja`
+    // preference gets Japanese-market shows from `jp`).
+    let country = apple_storefront(provider_config.language.as_deref().unwrap_or(""));
     let client = external_client();
     // A pasted Apple Podcasts URL or bare numeric id resolves via the lookup API.
     if let Some(id) = apple_podcast_id(q) {
         let value = client
-            .get(format!("https://itunes.apple.com/lookup?id={id}"))
+            .get(format!(
+                "https://itunes.apple.com/lookup?id={id}&country={country}"
+            ))
             .header(reqwest::header::USER_AGENT, USER_AGENT)
             .send()
             .await
@@ -187,6 +197,7 @@ async fn search_apple_podcast(
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&[
             ("entity", "podcast"),
+            ("country", country),
             ("limit", &limit.to_string()),
             ("term", q),
         ])
