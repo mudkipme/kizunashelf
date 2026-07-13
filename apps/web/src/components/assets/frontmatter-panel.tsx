@@ -1,7 +1,6 @@
 import { Trans } from "@lingui/react/macro";
 import { ExternalLinkIcon } from "lucide-react";
 
-import { EmptyLine } from "@/components/assets/detail-section";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars, ratingNumber } from "@/components/ui/rating-stars";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +14,18 @@ import type { Entity, Relation, TypeConfig } from "@/types/api";
 type FrontmatterValue = null | boolean | number | string | FrontmatterValue[] | FrontmatterObject;
 type FrontmatterObject = { [key: string]: FrontmatterValue | undefined };
 
+/// The frontmatter entries "Details" would show, after hiding titles/status/dates
+/// /refs/relations and values already displayed elsewhere. Exposed so the parent
+/// can hide the whole section (title included) when there's nothing to show.
+export function useVisibleFrontmatterEntries(
+  entity: Entity,
+  relationGroups: Array<{ field: string; items: Relation[] }>,
+  typeConfig?: TypeConfig,
+) {
+  const tagsFieldName = useQuery(configQuery()).data?.tagsField ?? defaultTagsField;
+  return visibleFrontmatterEntries(entity, relationGroups, typeConfig, tagsFieldName);
+}
+
 export function FrontmatterPanel({
   entity,
   relationGroups,
@@ -24,17 +35,12 @@ export function FrontmatterPanel({
   relationGroups: Array<{ field: string; items: Relation[] }>;
   typeConfig?: TypeConfig;
 }) {
-  const tagsFieldName = useQuery(configQuery()).data?.tagsField ?? defaultTagsField;
-  const entries = visibleFrontmatterEntries(entity, relationGroups, typeConfig, tagsFieldName);
+  const entries = useVisibleFrontmatterEntries(entity, relationGroups, typeConfig);
   const fieldTypes = new Map(configFields(typeConfig).map((field) => [field.field, field.fieldType]));
 
-  if (entries.length === 0) {
-    return (
-      <EmptyLine>
-        <Trans>No other details</Trans>
-      </EmptyLine>
-    );
-  }
+  // The parent gates this section on the same entries, so empty shouldn't reach
+  // here — return nothing rather than an empty shell if it ever does.
+  if (entries.length === 0) return null;
 
   return (
     <div className="overflow-hidden rounded-md border">

@@ -305,9 +305,6 @@ function MobileSidebar({
           <AppLogo />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">KizunaShelf</div>
-            <div className="truncate text-xs text-muted-foreground">
-              <Trans>Navigation</Trans>
-            </div>
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label={t`Close navigation`}>
             <XIcon />
@@ -340,9 +337,6 @@ function SidebarContent({
   return (
     <>
       <section className="flex flex-col gap-1">
-        <SidebarSectionLabel>
-          <Trans>Core Views</Trans>
-        </SidebarSectionLabel>
         <SidebarNavLink to="/" icon={HomeIcon} end onNavigate={onNavigate}>
           <Trans>Home</Trans>
         </SidebarNavLink>
@@ -366,10 +360,6 @@ function SidebarContent({
       </section>
 
       <section className="flex flex-col gap-1">
-        <SidebarSectionLabel>
-          <Trans>Taxonomy</Trans>
-        </SidebarSectionLabel>
-
         {stats?.byType.map((type) => (
           <SidebarNavLink
             key={type.id}
@@ -405,14 +395,6 @@ function SidebarContent({
         </SidebarNavLink>
       </section>
     </>
-  );
-}
-
-function SidebarSectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <div className="px-2 pb-1 text-[11px] font-medium uppercase tracking-normal text-muted-foreground">
-      {children}
-    </div>
   );
 }
 

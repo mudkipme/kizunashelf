@@ -131,7 +131,7 @@ export function PresetPickerDialog({
 
   return (
     <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
-      <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 max-sm:inset-0 max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0 sm:max-h-[85vh] sm:max-w-3xl">
+      <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-3xl">
         <DialogHeader className="space-y-0 border-b px-4 py-3 pr-12 text-left">
           <DialogTitle className="min-w-0 truncate">{title}</DialogTitle>
           <DialogDescription className="mt-1">{description}</DialogDescription>

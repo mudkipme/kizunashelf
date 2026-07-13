@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -97,15 +96,12 @@ export function QuickLogDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle><Trans>Log activity</Trans></DialogTitle>
-          <DialogDescription>
-            <Trans>Record what you did and when. Pick an earlier date to log something from a past day.</Trans>
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-h-0 flex-col gap-4 max-sm:flex-1 max-sm:overflow-auto">
           {kinds.length > 1 ? (
             <div className="flex flex-col gap-1.5">
               <span className="text-sm font-medium"><Trans>Activity</Trans></span>

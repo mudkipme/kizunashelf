@@ -873,14 +873,11 @@ function AddItemsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>
             <Trans>Add items</Trans>
           </DialogTitle>
-          <DialogDescription>
-            <Trans>Search entities and add them to this list.</Trans>
-          </DialogDescription>
         </DialogHeader>
         <Input
           value={query}
@@ -888,7 +885,7 @@ function AddItemsDialog({
           placeholder={t`Search entities…`}
           autoFocus
         />
-        <div className="flex max-h-80 flex-col gap-1 overflow-auto">
+        <div className="flex min-h-0 flex-col gap-1 overflow-auto max-sm:flex-1 sm:max-h-80">
           {search.isPending ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
               <Trans>Loading…</Trans>

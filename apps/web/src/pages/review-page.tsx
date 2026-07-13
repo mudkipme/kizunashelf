@@ -122,7 +122,7 @@ export function ReviewPage() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold">
-              {activeQueue ? i18n._(activeQueue.label) : t`Metadata Review`}
+              {activeQueue ? i18n._(activeQueue.label) : t`Review`}
             </h1>
           </div>
           {activeSummary ? <ProgressPill summary={activeSummary} /> : null}
@@ -348,7 +348,7 @@ function ProgressBar({ summary }: { summary: CleanupQueueSummary }) {
   const percent = summary.total > 0 ? Math.round((completeCount(summary) / summary.total) * 100) : 100;
   return (
     <div className="mt-2 h-2 rounded-sm bg-muted">
-      <div className="h-2 rounded-sm bg-primary" style={{ width: `${percent}%` }} />
+      <div className="h-2 rounded-sm bg-emerald-500" style={{ width: `${percent}%` }} />
     </div>
   );
 }

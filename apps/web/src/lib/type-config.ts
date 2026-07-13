@@ -1,5 +1,13 @@
+import { i18n } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+
 import type { TypeConfig } from "@/types/api";
 import { iso639TitleLanguage } from "@/lib/title-language";
+
+// The untyped body-wikilink pseudo-field ("body") reads as "Notes", matching the
+// detail page's Notes section. Localized via the active catalog (these are plain
+// functions, so they use the global i18n instead of the `t`/`<Trans>` macros).
+const bodyPseudoFieldLabel = () => i18n._(msg`Notes`);
 
 export type FieldConfig = NonNullable<TypeConfig["fields"]>[number];
 export type FieldType = FieldConfig["fieldType"];
@@ -46,10 +54,9 @@ export function fieldDisplayLabel(field: FieldConfig) {
 export function fieldLabelForKey(typeConfig: TypeConfig | undefined, key: string) {
   const field = configFields(typeConfig).find((item) => item.field === key);
   if (field) return fieldDisplayLabel(field);
-  // The untyped body-wikilink pseudo-field ("body") reads as "Notes" — matching
-  // the detail page's Notes section — unless the schema defines a real field named
-  // "body" (handled above). The technical term stays only in the schema editor.
-  if (key === "body") return "Notes";
+  // Unless the schema defines a real field named "body" (handled above), the
+  // technical term stays only in the schema editor; here it reads as "Notes".
+  if (key === "body") return bodyPseudoFieldLabel();
   return key;
 }
 
@@ -121,10 +128,9 @@ export function entityFieldLabel(
 ) {
   const configured = labelsByType?.get(type)?.get(field);
   if (configured) return configured;
-  // The untyped body-wikilink pseudo-field ("body") reads as "Notes" — matching
-  // the outgoing side (`fieldLabelForKey`) and the detail page's Notes section —
-  // unless the type declares a real field named "body" (a hit above).
-  if (field === "body") return "Notes";
+  // Matches the outgoing side (`fieldLabelForKey`) and the detail page's Notes
+  // section, unless the type declares a real field named "body" (a hit above).
+  if (field === "body") return bodyPseudoFieldLabel();
   return field;
 }
 

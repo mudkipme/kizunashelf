@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
 import { Select } from "@/components/ui/select";
@@ -10,8 +10,9 @@ import type { AnalyticsActivity } from "@/types/api";
 const MONTH_INDEXES = Array.from({ length: 12 }, (_, index) => index);
 
 // Discrete intensity levels (index 0 = empty). Listed as literals so Tailwind's
-// JIT keeps these classes in the build.
-const CELL_LEVELS = ["bg-muted", "bg-primary/30", "bg-primary/55", "bg-primary/80", "bg-primary"];
+// JIT keeps these classes in the build. Empty stays neutral; activity ramps
+// through emerald (the app's "active" accent, GitHub-contributions style).
+const CELL_LEVELS = ["bg-muted", "bg-emerald-500/30", "bg-emerald-500/55", "bg-emerald-500/80", "bg-emerald-500"];
 
 function cellLevel(count: number, max: number) {
   if (count <= 0) return 0;
@@ -64,10 +65,6 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
   // Global scales so a dark cell/long bar means the same across every year.
   const maxMonth = Math.max(1, ...rows.flatMap((row) => row.months));
   const maxTotal = Math.max(1, ...rows.map((row) => row.total));
-  const selectedTotal =
-    selectedType === "all"
-      ? activity.totalDated
-      : (activity.types.find((item) => item.id === selectedType)?.total ?? 0);
 
   if (activity.years.length === 0) {
     return <p className="text-xs text-muted-foreground"><Trans>No dated entities yet.</Trans></p>;
@@ -82,7 +79,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Select
           value={selectedType}
           onChange={(event) => setSelectedType(event.target.value)}
@@ -95,9 +92,6 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
             </option>
           ))}
         </Select>
-        <span className="text-xs tabular-nums text-muted-foreground">
-          <Plural value={selectedTotal} one="# dated" other="# dated" />
-        </span>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -138,7 +132,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
               </div>
               <div className="flex w-24 shrink-0 items-center gap-2 sm:w-auto sm:flex-1">
                 <div className="h-2 flex-1 rounded-sm bg-muted">
-                  <div className="h-2 rounded-sm bg-primary" style={{ width: barWidth }} />
+                  <div className="h-2 rounded-sm bg-emerald-500" style={{ width: barWidth }} />
                 </div>
                 <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
                   {formatNumber(row.total)}

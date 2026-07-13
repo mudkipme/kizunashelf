@@ -23,12 +23,23 @@ export function StatisticsPage() {
   const data = analytics.data;
   const maxTypeCount = Math.max(1, ...(data?.distributions.byType.map((item) => item.count) ?? [1]));
 
+  // The relation-source distribution includes two synthetic "fields": body
+  // wikilinks and daily-note backlinks. Show them as the detail page's "Notes"
+  // and "Daily Notes" (localized), unless a real field of that name is configured.
+  const connectionFieldLabel = (key: string) => {
+    const configured = fieldLabelAcrossTypes(config.data?.types, key);
+    if (configured !== key) return configured;
+    if (key === "body") return t`Notes`;
+    if (key === "daily-note") return t`Daily Notes`;
+    return configured;
+  };
+
   return (
     <AppFrame error={error ? errorMessage(error) : undefined}>
       <PageContainer width="wide">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold"><Trans>Memory Analytics</Trans></h1>
+            <h1 className="truncate text-base font-semibold"><Trans>Statistics</Trans></h1>
           </div>
         </header>
 
@@ -64,16 +75,13 @@ export function StatisticsPage() {
                 <BarList
                   items={data.distributions.byRelationField.map((item) => ({
                     ...item,
-                    name: fieldLabelAcrossTypes(config.data?.types, item.name),
+                    name: connectionFieldLabel(item.name),
                   }))}
                 />
               </AnalyticsSection>
             </div>
 
-            <AnalyticsSection
-              title={t`Activity`}
-              description={t`Dated entities by month and year — compare this year against past years, filter by type`}
-            >
+            <AnalyticsSection title={t`Activity`}>
               <ActivityHeatmap activity={data.activity} />
             </AnalyticsSection>
           </>

@@ -196,14 +196,6 @@ function CreateListDialog({
               <Trans>Smart list</Trans>
             </Button>
           </div>
-          {kind === "smart" ? (
-            <p className="text-xs text-muted-foreground">
-              <Trans>
-                A smart list fills itself from criteria you define, and is saved as an Obsidian
-                Bases (.base) file.
-              </Trans>
-            </p>
-          ) : null}
           <label className="text-sm font-medium">
             <Trans>Name</Trans>
             <Input

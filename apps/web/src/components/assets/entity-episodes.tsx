@@ -151,9 +151,18 @@ export function EntityEpisodesPanel({
                     <span>✅ {item.done}</span>
                   )
                 ) : null;
+                // With both a 📅 and a ✅ date the row runs out of width on
+                // mobile and the title gets crushed, so drop the dates onto
+                // their own line below the title there (desktop stays inline).
+                const bothDates = Boolean(item.date && item.done);
                 const dateLabel =
                   item.date || item.done ? (
-                    <span className="shrink-0 space-x-2 tabular-nums text-xs text-muted-foreground">
+                    <span
+                      className={cn(
+                        "shrink-0 space-x-2 tabular-nums text-xs text-muted-foreground",
+                        bothDates && "max-sm:mt-0.5 max-sm:basis-full max-sm:pl-6",
+                      )}
+                    >
                       {item.date ? <span>📅 {item.date}</span> : null}
                       {doneLabel}
                     </span>
@@ -165,7 +174,7 @@ export function EntityEpisodesPanel({
                 // clickable while the row toggles.
                 if (!checklist) {
                   return (
-                    <li key={itemIndex} className="flex items-start gap-2 px-2 py-1.5 text-sm">
+                    <li key={itemIndex} className="flex items-start gap-2 px-2 py-1.5 text-sm max-sm:flex-wrap">
                       <span className="mt-0.5 text-xs text-muted-foreground">•</span>
                       {keyLabel}
                       <span className="min-w-0 flex-1">{title}</span>
@@ -193,7 +202,7 @@ export function EntityEpisodesPanel({
                           : undefined
                       }
                       className={cn(
-                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors max-sm:flex-wrap",
                         interactive ? "cursor-pointer hover:bg-accent" : "cursor-default",
                       )}
                     >

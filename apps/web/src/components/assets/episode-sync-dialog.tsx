@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -223,18 +222,11 @@ export function EpisodeSyncDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
             <Trans>Sync from a provider</Trans>
           </DialogTitle>
-          <DialogDescription>
-            <Trans>
-              Tick the items to write from the provider — new ones are added, ticked existing ones
-              have their title updated. Items already in your list start unticked, and your progress
-              is always kept.
-            </Trans>
-          </DialogDescription>
         </DialogHeader>
 
         {data && data.sources.length > 1 ? (
@@ -271,7 +263,7 @@ export function EpisodeSyncDialog({
           </div>
         ) : null}
 
-        <div className="flex max-h-[55vh] flex-col gap-0.5 overflow-auto rounded-md border p-1">
+        <div className="flex min-h-0 flex-col gap-0.5 overflow-auto rounded-md border p-1 max-sm:flex-1 sm:max-h-[55vh]">
           {sources.isPending ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
               <Trans>Loading…</Trans>

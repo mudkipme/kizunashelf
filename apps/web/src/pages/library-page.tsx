@@ -182,7 +182,6 @@ export function LibraryPage() {
   const entities = list.data?.items ?? [];
   const total = list.data?.total ?? 0;
   const totalPages = list.data?.totalPages ?? 1;
-  const loading = globalStats.isPending || config.isPending || capabilities.isPending || list.isPending;
   const error = globalStats.error ?? categoryStats.error ?? config.error ?? capabilities.error ?? list.error;
 
   // Stable across renders for a given URL/type so the normalization effects below
@@ -369,9 +368,6 @@ export function LibraryPage() {
                 )}
               </span>
               <div className="flex items-center gap-2">
-                <span>
-                  {loading ? t`Loading…` : globalStats.data?.generatedAt.slice(0, 10)}
-                </span>
                 <Button
                   type="button"
                   variant="outline"

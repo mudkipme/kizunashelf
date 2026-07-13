@@ -1,4 +1,4 @@
-import { Trans, useLingui } from "@lingui/react/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
   BookOpenIcon,
   CalendarDaysIcon,
@@ -13,11 +13,11 @@ import { Link } from "react-router-dom";
 
 import { AssetImage } from "@/components/assets/asset-image";
 import { CoverFallback } from "@/components/assets/cover-fallback";
-import { DetailSection, EmptyLine } from "@/components/assets/detail-section";
+import { DetailSection } from "@/components/assets/detail-section";
 import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { EntityEpisodesPanel, EpisodeSyncButton } from "@/components/assets/entity-episodes";
-import { FrontmatterPanel } from "@/components/assets/frontmatter-panel";
+import { FrontmatterPanel, useVisibleFrontmatterEntries } from "@/components/assets/frontmatter-panel";
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { StatusBadge } from "@/components/entities/status-badge";
@@ -32,6 +32,7 @@ import {
   typeHasCoverField,
 } from "@/lib/type-config";
 import { entityTitle, entityTitleParts, titleLanguageLabel } from "@/lib/title-language";
+import { cn } from "@/lib/utils";
 import type {
   Entity,
   EntityDatesResponse,
@@ -104,11 +105,18 @@ export function EntityDetail({
   // The cover slot shows only for types that declare an image/imageList field
   // (with a placeholder when this entity has no value); other types show none.
   const showCover = typeHasCoverField(typeConfig);
+  // Sidebar sections hide entirely (title included) when empty; when both go the
+  // whole aside collapses so the content column reclaims its width.
+  const detailEntries = useVisibleFrontmatterEntries(entity, relationGroups, typeConfig);
+  const hasDetails = detailEntries.length > 0;
+  const hasLinks = Object.keys(entity.externalRefs).length > 0;
+  const hasDates = Boolean(dates && dates.totals.metadata + dates.totals.dailyNotes > 0);
+  const showAside = hasLinks || hasDates;
 
   return (
     <LightboxProvider>
       <div className="flex flex-col gap-4">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className={cn("grid gap-4", showAside && "lg:grid-cols-[minmax(0,1fr)_360px]")}>
           <section className="min-w-0 rounded-md border">
             <div className="border-b p-4">
               {/* On narrow screens the actions drop to their own row below, so the
@@ -156,9 +164,11 @@ export function EntityDetail({
               </div>
             </div>
             <div className="p-4">
-              <DetailSection title={t`Details`} icon={<BookOpenIcon />}>
-                <FrontmatterPanel entity={entity} relationGroups={relationGroups} typeConfig={typeConfig} />
-              </DetailSection>
+              {hasDetails ? (
+                <DetailSection title={t`Details`} icon={<BookOpenIcon />}>
+                  <FrontmatterPanel entity={entity} relationGroups={relationGroups} typeConfig={typeConfig} />
+                </DetailSection>
+              ) : null}
 
               {episodes ? (
                 <DetailSection
@@ -221,33 +231,33 @@ export function EntityDetail({
             </div>
           </section>
 
-          <aside className="min-w-0 rounded-md border p-4">
-            <DetailSection title={t`Links`} icon={<LinkIcon />}>
-              {Object.entries(entity.externalRefs).length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {Object.entries(entity.externalRefs).map(([key, value]) => (
-                    <a
-                      key={key}
-                      href={value}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="truncate rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                    >
-                      {fieldLabelForKey(typeConfig, key)}: {value}
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <EmptyLine>
-                  <Trans>No links yet</Trans>
-                </EmptyLine>
-              )}
-            </DetailSection>
+          {showAside ? (
+            <aside className="min-w-0 rounded-md border p-4">
+              {hasLinks ? (
+                <DetailSection title={t`Links`} icon={<LinkIcon />}>
+                  <div className="flex flex-col gap-2">
+                    {Object.entries(entity.externalRefs).map(([key, value]) => (
+                      <a
+                        key={key}
+                        href={value}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        {fieldLabelForKey(typeConfig, key)}: {value}
+                      </a>
+                    ))}
+                  </div>
+                </DetailSection>
+              ) : null}
 
-            <DetailSection title={t`Dates`} icon={<CalendarDaysIcon />}>
-              <EntityDates dates={dates} typeConfig={typeConfig} />
-            </DetailSection>
-          </aside>
+              {hasDates ? (
+                <DetailSection title={t`Dates`} icon={<CalendarDaysIcon />}>
+                  <EntityDates dates={dates} typeConfig={typeConfig} />
+                </DetailSection>
+              ) : null}
+            </aside>
+          ) : null}
         </div>
       </div>
     </LightboxProvider>

@@ -72,7 +72,7 @@ function DialogShell({
         full-screen sheet on phones (`max-sm:` resets the base card positioning),
         reverting to a centered `max-w-2xl` card at `sm`+.
       */}
-      <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 max-sm:inset-0 max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0 sm:max-h-[85vh] sm:max-w-2xl">
+      <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-2xl">
         <DialogHeader className="space-y-0 border-b px-4 py-3 pr-12 text-left">
           <div className="flex min-w-0 items-center gap-2">
             {onBack ? (

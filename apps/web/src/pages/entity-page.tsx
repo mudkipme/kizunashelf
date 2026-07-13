@@ -53,7 +53,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -379,7 +378,6 @@ export function EntityPage() {
               open={manageListsOpen}
               onOpenChange={setManageListsOpen}
               entityId={entity.id}
-              entityName={entityTitle(entity, language)}
               contentWritable={contentWritable}
             />
           </>
@@ -502,13 +500,11 @@ function ManageListsDialog({
   open,
   onOpenChange,
   entityId,
-  entityName,
   contentWritable,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityId: string;
-  entityName: string;
   contentWritable: boolean;
 }) {
   const { t } = useLingui();
@@ -559,16 +555,13 @@ function ManageListsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>
             <Trans>Manage lists</Trans>
           </DialogTitle>
-          <DialogDescription className="truncate">
-            <Trans>Choose which lists {entityName} belongs to.</Trans>
-          </DialogDescription>
         </DialogHeader>
-        <div className="flex max-h-72 flex-col gap-1 overflow-auto">
+        <div className="flex min-h-0 flex-col gap-1 overflow-auto max-sm:flex-1 sm:max-h-72">
           {lists.isPending ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
               <Trans>Loading…</Trans>
@@ -664,14 +657,11 @@ function RenameDialog({
   const unchanged = normalizedBasename === currentBasename;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-sm:inset-0 max-sm:flex max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:flex-col max-sm:rounded-none max-sm:border-0">
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>
             <Trans>Rename</Trans>
           </DialogTitle>
-          <DialogDescription>
-            <Trans>Only the name changes — everything else stays the same.</Trans>
-          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(event) => {

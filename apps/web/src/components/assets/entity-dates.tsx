@@ -7,13 +7,9 @@ import { fieldLabelForKey } from "@/lib/type-config";
 import type { EntityDatesResponse, TypeConfig } from "@/types/api";
 
 export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse; typeConfig?: TypeConfig }) {
-  if (!dates || dates.totals.metadata + dates.totals.dailyNotes === 0) {
-    return (
-      <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
-        <Trans>No dates</Trans>
-      </div>
-    );
-  }
+  // The parent gates this section on the same emptiness check, so this is a
+  // defensive guard rather than a visible empty state.
+  if (!dates || dates.totals.metadata + dates.totals.dailyNotes === 0) return null;
 
   return (
     <div className="flex flex-col gap-3">

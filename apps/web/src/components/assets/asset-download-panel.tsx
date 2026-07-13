@@ -70,9 +70,6 @@ export function AssetDownloadPanel() {
           <h2 className="text-sm font-semibold">
             <Trans>Download remote covers</Trans>
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            <Trans>Download cover images so you keep your own copy.</Trans>
-          </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Select

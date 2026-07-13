@@ -77,10 +77,7 @@ export function SaveSmartListDialog({
             <Trans>Save as smart list</Trans>
           </DialogTitle>
           <DialogDescription>
-            <Trans>
-              Saves the current type, filters, and sort as a smart list — a criteria-driven list
-              that keeps itself up to date, stored as an Obsidian Bases (.base) file.
-            </Trans>
+            <Trans>Saves the current type, filters, and sort as a smart list.</Trans>
           </DialogDescription>
         </DialogHeader>
         <form
