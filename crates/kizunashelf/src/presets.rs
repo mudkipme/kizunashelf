@@ -28,10 +28,13 @@
 //! - **Relations.** A preset carries its relation fields, but a relation only
 //!   *survives* when its target type is present — see the module's resolve rules.
 //!
-//! External-field wiring reuses the same provider catalog that backs
-//! `/api/external/providers`, so a preset can never drift from the providers it
-//! references (a registry-integrity test asserts every referenced provider id
-//! resolves in the catalog).
+//! External-field wiring is **literal**: each preset spells out its
+//! `(provider, provider field)` pairs at the declaration — there is no shared
+//! role table to cross-reference, and deliberately no cleverness; what you read
+//! is what gets seeded. A registry-integrity test validates every referenced
+//! provider id *and* mapped field id against the provider catalog that backs
+//! `/api/external/providers`, so a preset can never silently drift from the
+//! providers it references.
 
 use crate::api::external::provider_catalog_items;
 use crate::contract::{
@@ -394,15 +397,49 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "記錄在看的動畫與觀看進度。",
                 ),
                 providers: &["bangumi", "myanimelist", "tmdb", "thetvdb"],
+                title_sources: &[
+                    ("bangumi", "name_cn"),
+                    ("myanimelist", "title"),
+                    ("tmdb", "title"),
+                    ("thetvdb", "name"),
+                ],
+                original_title: Some(&[
+                    ("bangumi", "name"),
+                    ("myanimelist", "title"),
+                    ("tmdb", "original_title"),
+                    ("thetvdb", "name"),
+                ]),
+                cover_sources: &[
+                    ("bangumi", "cover_url"),
+                    ("myanimelist", "cover_url"),
+                    ("tmdb", "cover_url"),
+                    ("thetvdb", "cover_url"),
+                ],
+                summary_sources: &[
+                    ("bangumi", "summary"),
+                    ("myanimelist", "synopsis"),
+                    ("tmdb", "overview"),
+                    ("thetvdb", "overview"),
+                ],
+                // Air dates coerce to a season; MAL has an explicit season label.
+                date_sources: &[
+                    ("bangumi", "date"),
+                    ("myanimelist", "season"),
+                    ("tmdb", "release_date"),
+                    ("thetvdb", "first_air_time"),
+                ],
+                total_sources: &[
+                    ("bangumi", "eps"),
+                    ("myanimelist", "episodes"),
+                    ("tmdb", "episode_count"),
+                ],
                 statuses: Some(&WATCH_STATUS),
                 name_based: false,
-                original_title: true,
                 primary_date: PrimaryDate::Season,
                 completed_date: true,
                 list: Some(&EPISODES_LIST),
                 extras: &[],
                 relations: &[FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("Anime", "アニメ", "动画", "動畫")),
             },
         ),
@@ -421,15 +458,19 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "電視劇與影集，一集一集地記錄。",
                 ),
                 providers: &["tmdb", "thetvdb"],
+                title_sources: &[("tmdb", "title"), ("thetvdb", "name")],
+                original_title: Some(&[("tmdb", "original_title"), ("thetvdb", "name")]),
+                cover_sources: &[("tmdb", "cover_url"), ("thetvdb", "cover_url")],
+                summary_sources: &[("tmdb", "overview"), ("thetvdb", "overview")],
+                date_sources: &[("tmdb", "release_date"), ("thetvdb", "first_air_time")],
+                total_sources: &[("tmdb", "episode_count")],
                 statuses: Some(&WATCH_STATUS),
                 name_based: false,
-                original_title: true,
                 primary_date: PrimaryDate::Season,
                 completed_date: true,
                 list: Some(&EPISODES_LIST),
                 extras: &[],
                 relations: &[FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("Drama", "ドラマ", "剧集", "影集")),
             },
         ),
@@ -448,15 +489,39 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "看過的電影，和想看的電影。",
                 ),
                 providers: &["tmdb", "bangumi", "thetvdb"],
+                title_sources: &[
+                    ("tmdb", "title"),
+                    ("bangumi", "name_cn"),
+                    ("thetvdb", "name"),
+                ],
+                original_title: Some(&[
+                    ("tmdb", "original_title"),
+                    ("bangumi", "name"),
+                    ("thetvdb", "name"),
+                ]),
+                cover_sources: &[
+                    ("tmdb", "cover_url"),
+                    ("bangumi", "cover_url"),
+                    ("thetvdb", "cover_url"),
+                ],
+                summary_sources: &[
+                    ("tmdb", "overview"),
+                    ("bangumi", "summary"),
+                    ("thetvdb", "overview"),
+                ],
+                date_sources: &[
+                    ("tmdb", "release_date"),
+                    ("bangumi", "date"),
+                    ("thetvdb", "first_air_time"),
+                ],
+                total_sources: &[],
                 statuses: Some(&WATCH_STATUS),
                 name_based: false,
-                original_title: true,
                 primary_date: PrimaryDate::ReleaseDate,
                 completed_date: true,
                 list: None,
                 extras: &[],
                 relations: &[FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("Movie", "映画", "电影", "電影")),
             },
         ),
@@ -476,15 +541,38 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "願望清單、遊玩中和已全破的遊戲。",
                 ),
                 providers: &["igdb", "steam", "bangumi"],
+                title_sources: &[("igdb", "name"), ("steam", "name"), ("bangumi", "name_cn")],
+                original_title: None,
+                cover_sources: &[
+                    ("igdb", "cover_url"),
+                    ("steam", "cover_url"),
+                    ("bangumi", "cover_url"),
+                ],
+                summary_sources: &[
+                    ("igdb", "summary"),
+                    ("steam", "description"),
+                    ("bangumi", "summary"),
+                ],
+                date_sources: &[
+                    ("igdb", "first_release_date"),
+                    ("steam", "release_date"),
+                    ("bangumi", "date"),
+                ],
+                total_sources: &[],
                 statuses: Some(&PLAY_STATUS),
                 name_based: false,
-                original_title: false,
                 primary_date: PrimaryDate::ReleaseDate,
                 completed_date: true,
                 list: None,
-                extras: &[Extra::Platform, Extra::Genre],
+                extras: &[
+                    Extra::Platform(&[("igdb", "platforms"), ("steam", "platform")]),
+                    Extra::Genre(&[
+                        ("igdb", "genres"),
+                        ("steam", "genres"),
+                        ("bangumi", "genre"),
+                    ]),
+                ],
                 relations: &[FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("Game", "ゲーム", "游戏", "遊戲")),
             },
         ),
@@ -503,15 +591,20 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "桌遊與桌上遊戲，帶玩家人數和時長。",
                 ),
                 providers: &["bgg"],
+                title_sources: &[("bgg", "name")],
+                original_title: None,
+                cover_sources: &[("bgg", "cover_url")],
+                summary_sources: &[("bgg", "description")],
+                // BGG exposes only a year, which the release-date field can't hold.
+                date_sources: &[],
+                total_sources: &[],
                 statuses: Some(&PLAY_STATUS),
                 name_based: false,
-                original_title: false,
                 primary_date: PrimaryDate::ReleaseDate,
                 completed_date: false,
                 list: None,
                 extras: &[Extra::Players, Extra::Playtime],
                 relations: &[FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("BoardGame", "ボードゲーム", "桌游", "桌遊")),
             },
         ),
@@ -531,15 +624,57 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "在讀的書，帶作者和 ISBN。",
                 ),
                 providers: &["googlebooks", "openlibrary", "hardcover", "bangumi"],
+                title_sources: &[
+                    ("googlebooks", "title"),
+                    ("openlibrary", "title"),
+                    ("hardcover", "title"),
+                    ("bangumi", "name_cn"),
+                ],
+                original_title: Some(&[
+                    ("googlebooks", "title"),
+                    ("openlibrary", "title"),
+                    ("hardcover", "title"),
+                    ("bangumi", "name"),
+                ]),
+                cover_sources: &[
+                    ("googlebooks", "cover_url"),
+                    ("openlibrary", "cover_url"),
+                    ("hardcover", "cover_url"),
+                    ("bangumi", "cover_url"),
+                ],
+                summary_sources: &[
+                    ("googlebooks", "description"),
+                    ("openlibrary", "description"),
+                    ("hardcover", "synopsis"),
+                    ("bangumi", "summary"),
+                ],
+                date_sources: &[
+                    ("googlebooks", "published_date"),
+                    ("openlibrary", "published_date"),
+                    ("hardcover", "publish_date"),
+                    ("bangumi", "date"),
+                ],
+                total_sources: &[],
                 statuses: Some(&READ_STATUS),
                 name_based: false,
-                original_title: true,
                 primary_date: PrimaryDate::ReleaseDate,
                 completed_date: true,
                 list: None,
-                extras: &[Extra::Author, Extra::Isbn],
+                extras: &[
+                    Extra::Author(&[
+                        ("googlebooks", "authors"),
+                        ("openlibrary", "authors"),
+                        ("hardcover", "authors"),
+                        ("bangumi", "author"),
+                    ]),
+                    Extra::Isbn(&[
+                        ("googlebooks", "isbn"),
+                        ("openlibrary", "isbn"),
+                        ("hardcover", "isbn"),
+                        ("bangumi", "isbn"),
+                    ]),
+                ],
                 relations: &[FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("Book", "読書", "读书", "讀書")),
             },
         ),
@@ -558,15 +693,47 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "漫畫，按話數記錄。",
                 ),
                 providers: &["bangumi", "mangaupdates", "myanimelist", "comicvine"],
+                title_sources: &[
+                    ("bangumi", "name_cn"),
+                    ("mangaupdates", "title"),
+                    ("myanimelist", "title"),
+                    ("comicvine", "title"),
+                ],
+                original_title: Some(&[
+                    ("bangumi", "name"),
+                    ("mangaupdates", "title"),
+                    ("myanimelist", "title"),
+                    ("comicvine", "title"),
+                ]),
+                cover_sources: &[
+                    ("bangumi", "cover_url"),
+                    ("mangaupdates", "cover_url"),
+                    ("myanimelist", "cover_url"),
+                    ("comicvine", "cover_url"),
+                ],
+                summary_sources: &[
+                    ("bangumi", "summary"),
+                    ("mangaupdates", "synopsis"),
+                    ("myanimelist", "synopsis"),
+                    ("comicvine", "description"),
+                ],
+                date_sources: &[("bangumi", "date"), ("myanimelist", "start_date")],
+                // Bangumi counts manga chapters in its `eps` field.
+                total_sources: &[
+                    ("bangumi", "eps"),
+                    ("mangaupdates", "latest_chapter"),
+                    ("myanimelist", "chapters"),
+                ],
                 statuses: Some(&READ_STATUS),
                 name_based: false,
-                original_title: true,
                 primary_date: PrimaryDate::ReleaseDate,
                 completed_date: true,
                 list: Some(&CHAPTERS_LIST),
-                extras: &[Extra::Author],
+                extras: &[Extra::Author(&[
+                    ("bangumi", "author"),
+                    ("mangaupdates", "authors"),
+                ])],
                 relations: &[FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("Manga", "マンガ", "漫画", "漫畫")),
             },
         ),
@@ -586,15 +753,33 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "專輯與 CD——你擁有和喜愛的音樂。",
                 ),
                 providers: &["musicbrainz", "applemusic", "discogs", "bangumi"],
+                title_sources: &[
+                    ("musicbrainz", "title"),
+                    ("applemusic", "title"),
+                    ("discogs", "title"),
+                    ("bangumi", "name_cn"),
+                ],
+                original_title: None,
+                cover_sources: &[
+                    ("musicbrainz", "cover_url"),
+                    ("applemusic", "cover_url"),
+                    ("discogs", "cover_url"),
+                    ("bangumi", "cover_url"),
+                ],
+                summary_sources: &[("bangumi", "summary")],
+                date_sources: &[
+                    ("musicbrainz", "release_date"),
+                    ("applemusic", "release_date"),
+                    ("bangumi", "date"),
+                ],
+                total_sources: &[],
                 statuses: Some(&LISTEN_STATUS),
                 name_based: false,
-                original_title: false,
                 primary_date: PrimaryDate::ReleaseDate,
                 completed_date: false,
                 list: Some(&TRACKS_LIST),
                 extras: &[Extra::OwnedFormats],
                 relations: &[ARTIST_REL, FRANCHISE_REL],
-                summary_body: true,
                 log_hashtag: Some(l("Music", "音楽", "音乐", "音樂")),
             },
         ),
@@ -613,15 +798,19 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "追蹤中的 Podcast。",
                 ),
                 providers: &["applepodcast"],
+                title_sources: &[("applepodcast", "title")],
+                original_title: None,
+                cover_sources: &[("applepodcast", "cover_url")],
+                summary_sources: &[],
+                date_sources: &[],
+                total_sources: &[],
                 statuses: Some(&LISTEN_STATUS),
                 name_based: false,
-                original_title: false,
                 primary_date: PrimaryDate::None,
                 completed_date: false,
                 list: Some(&PODCAST_EPISODES_LIST),
                 extras: &[],
                 relations: &[],
-                summary_body: false,
                 log_hashtag: Some(l("Podcast", "ポッドキャスト", "播客", "Podcast")),
             },
         ),
@@ -646,15 +835,19 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "藝術家、作者、工作室——收藏背後的創作者。",
                 ),
                 providers: &["bangumi", "musicbrainz"],
+                title_sources: &[("bangumi", "name_cn"), ("musicbrainz", "title")],
+                original_title: None,
+                cover_sources: &[("bangumi", "cover_url"), ("musicbrainz", "cover_url")],
+                summary_sources: &[("bangumi", "summary")],
+                date_sources: &[],
+                total_sources: &[],
                 statuses: None,
                 name_based: true,
-                original_title: true,
                 primary_date: PrimaryDate::None,
                 completed_date: false,
                 list: None,
-                extras: &[Extra::Birthday],
+                extras: &[Extra::Birthday(&[("bangumi", "birthday")])],
                 relations: &[FRANCHISE_REL, GROUPS_REL],
-                summary_body: true,
                 log_hashtag: None,
             },
         ),
@@ -673,15 +866,19 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "把相關條目歸為系列或同一世界觀。",
                 ),
                 providers: &[],
+                title_sources: &[],
+                original_title: None,
+                cover_sources: &[],
+                summary_sources: &[],
+                date_sources: &[],
+                total_sources: &[],
                 statuses: None,
                 name_based: true,
-                original_title: true,
                 primary_date: PrimaryDate::None,
                 completed_date: false,
                 list: None,
                 extras: &[],
                 relations: &[],
-                summary_body: false,
                 log_hashtag: None,
             },
         ),
@@ -700,15 +897,19 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "角色，以及配音或飾演的人。",
                 ),
                 providers: &["bangumi"],
+                title_sources: &[("bangumi", "name_cn")],
+                original_title: None,
+                cover_sources: &[("bangumi", "cover_url")],
+                summary_sources: &[("bangumi", "summary")],
+                date_sources: &[],
+                total_sources: &[],
                 statuses: None,
                 name_based: true,
-                original_title: true,
                 primary_date: PrimaryDate::None,
                 completed_date: false,
                 list: None,
-                extras: &[Extra::Birthday],
+                extras: &[Extra::Birthday(&[("bangumi", "birthday")])],
                 relations: &[FRANCHISE_REL, VOICE_BY_REL],
-                summary_body: true,
                 log_hashtag: None,
             },
         ),
@@ -728,15 +929,19 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "參加的演出、展覽與活動。",
                 ),
                 providers: &[],
+                title_sources: &[],
+                original_title: None,
+                cover_sources: &[],
+                summary_sources: &[],
+                date_sources: &[],
+                total_sources: &[],
                 statuses: Some(&EVENT_STATUS),
                 name_based: false,
-                original_title: false,
                 primary_date: PrimaryDate::EventDate,
                 completed_date: false,
                 list: None,
                 extras: &[Extra::Location],
                 relations: &[ARTIST_REL, FRANCHISE_REL],
-                summary_body: false,
                 log_hashtag: Some(l("Event", "イベント", "活动", "活動")),
             },
         ),
@@ -937,7 +1142,6 @@ const EPISODES_LIST: ListSpec = ListSpec {
     progress: Some(ProgressSpec {
         total_field: "episodes",
         total_label: l("Episodes", "話数", "总集数", "總集數"),
-        total_role: Some(Role::TotalEpisodes),
     }),
 };
 const CHAPTERS_LIST: ListSpec = ListSpec {
@@ -946,7 +1150,6 @@ const CHAPTERS_LIST: ListSpec = ListSpec {
     progress: Some(ProgressSpec {
         total_field: "chapters",
         total_label: l("Chapters", "話数", "话数", "話數"),
-        total_role: Some(Role::Chapters),
     }),
 };
 // Podcasts are open-ended (no reliable total to count against), so they get the
@@ -1014,15 +1217,15 @@ enum PrimaryDate {
 
 #[derive(Clone, Copy)]
 enum Extra {
-    Platform,
-    Genre,
-    Author,
-    Isbn,
+    Platform(Sources),
+    Genre(Sources),
+    Author(Sources),
+    Isbn(Sources),
     Players,
     Playtime,
     OwnedFormats,
     Location,
-    Birthday,
+    Birthday(Sources),
 }
 
 struct ListSpec {
@@ -1037,8 +1240,6 @@ struct ListSpec {
 struct ProgressSpec {
     total_field: &'static str,
     total_label: L,
-    /// External role for the total-count field, when providers expose one.
-    total_role: Option<Role>,
 }
 
 struct TypeSpec {
@@ -1054,6 +1255,21 @@ struct TypeSpec {
     /// exist in the provider catalog (a registry test enforces it — unknown ids
     /// are NOT silently filtered).
     providers: &'static [&'static str],
+    /// Sources for the primary title field.
+    title_sources: Sources,
+    /// A separate original-title field with these sources; `None` for types
+    /// without one (and for `name_based` types, whose *primary* title already
+    /// carries the original role).
+    original_title: Option<Sources>,
+    /// Sources for the cover image field.
+    cover_sources: Sources,
+    /// Sources for the Summary body section; empty → no such section.
+    summary_sources: Sources,
+    /// Sources for the primary date field. For [`PrimaryDate::Season`] these
+    /// may be plain air dates — the core coerces a date into a season.
+    date_sources: Sources,
+    /// Sources for the list total-count field (when `list` has a progress pair).
+    total_sources: Sources,
     /// `None` → no status field (people/hub types).
     statuses: Option<&'static StatusVocab>,
     /// People/hub types: the filename and primary title use the
@@ -1061,13 +1277,11 @@ struct TypeSpec {
     /// and there is no rating field. Explicit — meaning is never inferred from
     /// the shape of the other fields.
     name_based: bool,
-    original_title: bool,
     primary_date: PrimaryDate,
     completed_date: bool,
     list: Option<&'static ListSpec>,
     extras: &'static [Extra],
     relations: &'static [RelationSpec],
-    summary_body: bool,
     /// Per-type daily-note hashtag, e.g. `Anime` → `- {title} {note} #Anime`.
     /// Localized text: the entity link is the `[[wikilink]]`, the hashtag is
     /// human organization. `None` → the type is not loggable.
@@ -1096,17 +1310,17 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
     } else {
         title.title_role = Some(TitleRole::Original);
     }
-    title.external_fields = ext_maps(spec.providers, Role::Title);
+    title.external_fields = source_mappings(spec.title_sources);
     fields.push(title);
 
-    if spec.original_title && !spec.name_based {
+    if let Some(sources) = spec.original_title {
         let mut original = field(
             "title_original",
             FieldType::Title,
             ctx.text(l("Title (original)", "原題", "原名", "原名")),
         );
         original.title_role = Some(TitleRole::Original);
-        original.external_fields = ext_maps(spec.providers, Role::OriginalTitle);
+        original.external_fields = source_mappings(sources);
         fields.push(original);
     }
 
@@ -1115,7 +1329,7 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
         FieldType::Image,
         ctx.text(l("Cover", "カバー", "封面", "封面")),
     );
-    cover.external_fields = ext_maps(spec.providers, Role::Cover);
+    cover.external_fields = source_mappings(spec.cover_sources);
     fields.push(cover);
 
     if let Some(vocab) = spec.statuses {
@@ -1144,15 +1358,13 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
                 FieldType::TotalProgress,
                 ctx.text(progress.total_label),
             );
-            if let Some(role) = progress.total_role {
-                total.external_fields = ext_maps(spec.providers, role);
-            }
+            total.external_fields = source_mappings(spec.total_sources);
             fields.push(total);
         }
     }
 
     for extra in spec.extras {
-        fields.push(extra_field(ctx, spec.providers, *extra));
+        fields.push(extra_field(ctx, *extra));
     }
 
     match spec.primary_date {
@@ -1165,7 +1377,7 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
             );
             season.date_role = Some(DateRole::Planning);
             season.season_language = Some(ctx.season_language());
-            season.external_fields = ext_maps(spec.providers, Role::Season);
+            season.external_fields = source_mappings(spec.date_sources);
             fields.push(season);
         }
         PrimaryDate::ReleaseDate => {
@@ -1175,7 +1387,7 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
                 ctx.text(l("Release date", "リリース日", "发行日期", "發行日期")),
             );
             release.date_role = Some(DateRole::Planning);
-            release.external_fields = ext_maps(spec.providers, Role::ReleaseDate);
+            release.external_fields = source_mappings(spec.date_sources);
             fields.push(release);
         }
         PrimaryDate::EventDate => {
@@ -1254,9 +1466,9 @@ const TITLE_NAME: L = l("Title", "タイトル", "标题", "標題");
 
 fn build_body_sections(ctx: &BuildCtx, spec: &TypeSpec) -> Vec<BodySection> {
     let mut sections = Vec::new();
-    if spec.summary_body {
-        let external_fields = ext_maps(spec.providers, Role::Summary);
-        if !external_fields.is_empty() {
+    if !spec.summary_sources.is_empty() {
+        let external_fields = source_mappings(spec.summary_sources);
+        {
             sections.push(BodySection {
                 heading: ctx.text(l("Summary", "概要", "简介", "簡介")).to_string(),
                 kind: BodySectionKind::External,
@@ -1276,9 +1488,9 @@ fn build_body_sections(ctx: &BuildCtx, spec: &TypeSpec) -> Vec<BodySection> {
     sections
 }
 
-fn extra_field(ctx: &BuildCtx, providers: &[&str], extra: Extra) -> FieldConfig {
+fn extra_field(ctx: &BuildCtx, extra: Extra) -> FieldConfig {
     match extra {
-        Extra::Platform => {
+        Extra::Platform(sources) => {
             let mut f = field(
                 "platform",
                 FieldType::EnumList,
@@ -1296,10 +1508,10 @@ fn extra_field(ctx: &BuildCtx, providers: &[&str], extra: Extra) -> FieldConfig 
             .iter()
             .map(|v| v.to_string())
             .collect();
-            f.external_fields = ext_maps(providers, Role::Platform);
+            f.external_fields = source_mappings(sources);
             f
         }
-        Extra::Genre => {
+        Extra::Genre(sources) => {
             let mut f = field(
                 "genre",
                 FieldType::EnumList,
@@ -1316,21 +1528,21 @@ fn extra_field(ctx: &BuildCtx, providers: &[&str], extra: Extra) -> FieldConfig 
             .iter()
             .map(|v| ctx.text(*v).to_string())
             .collect();
-            f.external_fields = ext_maps(providers, Role::Genre);
+            f.external_fields = source_mappings(sources);
             f
         }
-        Extra::Author => {
+        Extra::Author(sources) => {
             let mut f = field(
                 "author",
                 FieldType::TextList,
                 ctx.text(l("Author", "著者", "作者", "作者")),
             );
-            f.external_fields = ext_maps(providers, Role::Author);
+            f.external_fields = source_mappings(sources);
             f
         }
-        Extra::Isbn => {
+        Extra::Isbn(sources) => {
             let mut f = field("isbn", FieldType::Text, "ISBN");
-            f.external_fields = ext_maps(providers, Role::Isbn);
+            f.external_fields = source_mappings(sources);
             f
         }
         Extra::Players => field(
@@ -1364,13 +1576,13 @@ fn extra_field(ctx: &BuildCtx, providers: &[&str], extra: Extra) -> FieldConfig 
             FieldType::Text,
             ctx.text(l("Location", "場所", "地点", "地點")),
         ),
-        Extra::Birthday => {
+        Extra::Birthday(sources) => {
             let mut f = field(
                 "birthday",
                 FieldType::Date,
                 ctx.text(l("Birthday", "誕生日", "生日", "生日")),
             );
-            f.external_fields = ext_maps(providers, Role::Birthday);
+            f.external_fields = source_mappings(sources);
             f
         }
     }
@@ -1540,200 +1752,22 @@ fn unique_key(base: &str, taken: &HashSet<String>, suffix: impl Fn(&str, u32) ->
     }
 }
 
-// --- Provider role → field mapping ---------------------------------------------
-//
-// Default role→field guesses used ONLY to pre-fill a preset. The running app is
-// strictly schema-driven — a type's explicit `externalFields` declare which
-// provider field maps to which internal field — so this guessing lives here, in
-// the preset seed, and nowhere else. A registry test asserts every provider a
-// preset references is in the catalog and has at least a title and cover here.
+// --- Literal external wiring -----------------------------------------------------
 
-#[derive(Clone, Copy, PartialEq)]
-enum Role {
-    Title,
-    OriginalTitle,
-    Cover,
-    ReleaseDate,
-    Summary,
-    Author,
-    Isbn,
-    Platform,
-    Genre,
-    Birthday,
-    /// The airing season. Mapped to a provider's air date (coerced date→season by
-    /// the core) or an explicit season label (MAL).
-    Season,
-    /// Total episode count (the `TotalProgress` denominator).
-    TotalEpisodes,
-    /// Total chapter count for manga/comics.
-    Chapters,
-}
+/// `(provider id, provider field id)` pairs — the literal external wiring for
+/// one seeded field, written in the preset's provider-priority order. There is
+/// deliberately no shared role table and no cleverness here: every preset
+/// spells its mappings out at its declaration, and the registry test validates
+/// each pair against the provider catalog's field options. The running app is
+/// strictly schema-driven — this literal seeding lives here and nowhere else.
+type Sources = &'static [(&'static str, &'static str)];
 
-/// The provider field that fills `role` for `source`, or `None` when the provider
-/// has nothing meaningful for it.
-fn role_field(source: &str, role: Role) -> Option<&'static str> {
-    let table: &[(Role, &str)] = match source {
-        "bangumi" => &[
-            (Role::Title, "name_cn"),
-            (Role::OriginalTitle, "name"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "date"),
-            (Role::Season, "date"),
-            (Role::TotalEpisodes, "eps"),
-            (Role::Chapters, "eps"),
-            (Role::Summary, "summary"),
-            (Role::Author, "author"),
-            (Role::Isbn, "isbn"),
-            (Role::Genre, "genre"),
-            (Role::Birthday, "birthday"),
-        ],
-        "myanimelist" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "start_date"),
-            (Role::Season, "season"),
-            (Role::TotalEpisodes, "episodes"),
-            (Role::Chapters, "chapters"),
-            (Role::Summary, "synopsis"),
-            (Role::Genre, "genres"),
-        ],
-        "tmdb" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "original_title"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "release_date"),
-            (Role::Season, "release_date"),
-            (Role::TotalEpisodes, "episode_count"),
-            (Role::Summary, "overview"),
-            (Role::Genre, "genres"),
-        ],
-        "thetvdb" => &[
-            (Role::Title, "name"),
-            (Role::OriginalTitle, "name"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "first_air_time"),
-            (Role::Season, "first_air_time"),
-            (Role::Summary, "overview"),
-            (Role::Genre, "genres"),
-        ],
-        "igdb" => &[
-            (Role::Title, "name"),
-            (Role::OriginalTitle, "name"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "first_release_date"),
-            (Role::Summary, "summary"),
-            (Role::Genre, "genres"),
-            (Role::Platform, "platforms"),
-        ],
-        "steam" => &[
-            (Role::Title, "name"),
-            (Role::OriginalTitle, "name"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "release_date"),
-            (Role::Summary, "description"),
-            (Role::Genre, "genres"),
-            (Role::Platform, "platform"),
-        ],
-        "googlebooks" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "published_date"),
-            (Role::Summary, "description"),
-            (Role::Author, "authors"),
-            (Role::Isbn, "isbn"),
-            (Role::Genre, "categories"),
-        ],
-        "openlibrary" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "published_date"),
-            (Role::Summary, "description"),
-            (Role::Author, "authors"),
-            (Role::Isbn, "isbn"),
-        ],
-        "hardcover" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "publish_date"),
-            (Role::Summary, "synopsis"),
-            (Role::Author, "authors"),
-            (Role::Isbn, "isbn"),
-            (Role::Genre, "genres"),
-        ],
-        "mangaupdates" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::Chapters, "latest_chapter"),
-            (Role::Summary, "synopsis"),
-            (Role::Author, "authors"),
-            (Role::Genre, "genres"),
-        ],
-        "comicvine" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::Summary, "description"),
-            (Role::Genre, "genres"),
-        ],
-        "musicbrainz" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "release_date"),
-            (Role::Genre, "genres"),
-        ],
-        "discogs" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::Genre, "genres"),
-        ],
-        "applemusic" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::ReleaseDate, "release_date"),
-            (Role::Genre, "genre"),
-        ],
-        "bgg" => &[
-            (Role::Title, "name"),
-            (Role::OriginalTitle, "name"),
-            (Role::Cover, "cover_url"),
-            (Role::Summary, "description"),
-            (Role::Genre, "categories"),
-        ],
-        "applepodcast" => &[
-            (Role::Title, "title"),
-            (Role::OriginalTitle, "title"),
-            (Role::Cover, "cover_url"),
-            (Role::Genre, "genre"),
-        ],
-        _ => return None,
-    };
-    table
+fn source_mappings(sources: Sources) -> Vec<ExternalFieldMapping> {
+    sources
         .iter()
-        .find(|(candidate, _)| *candidate == role)
-        .map(|(_, field)| *field)
-}
-
-/// External mappings for `role` across every provider (in priority order) that
-/// has a field for it — mirroring how the real vault fills a field from several
-/// providers. Unknown providers are not filtered here: the registry test catches
-/// a preset referencing a provider the catalog doesn't know, instead of the
-/// wiring silently vanishing.
-fn ext_maps(providers: &[&str], role: Role) -> Vec<ExternalFieldMapping> {
-    providers
-        .iter()
-        .filter_map(|p| {
-            role_field(p, role).map(|field| ExternalFieldMapping {
-                source: (*p).to_string(),
-                field: field.to_string(),
-            })
+        .map(|(source, field)| ExternalFieldMapping {
+            source: (*source).to_string(),
+            field: (*field).to_string(),
         })
         .collect()
 }
@@ -1791,12 +1825,30 @@ mod tests {
             }
             for field in &config.fields {
                 for mapping in &field.external_fields {
+                    // The mappings are literal per preset, so validate both
+                    // halves of each pair: the provider exists, and the mapped
+                    // field is one the provider actually declares mappable — a
+                    // typo'd field id would otherwise seed a dead mapping.
+                    let provider = ctx
+                        .catalog
+                        .iter()
+                        .find(|item| item.id == mapping.source)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}.{}: mapping source {} not in the catalog",
+                                config.id, field.field, mapping.source
+                            )
+                        });
                     assert!(
-                        catalog_ids.contains(mapping.source.as_str()),
-                        "{}.{}: mapping source {} not in the catalog",
+                        provider
+                            .fields
+                            .iter()
+                            .any(|option| option.field == mapping.field),
+                        "{}.{}: {} declares no mappable field {:?}",
                         config.id,
                         field.field,
-                        mapping.source
+                        mapping.source,
+                        mapping.field
                     );
                 }
                 if let Some(provider) = &field.external_ref {
