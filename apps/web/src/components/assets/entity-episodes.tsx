@@ -126,7 +126,9 @@ export function EntityEpisodesPanel({
                 ) : null;
                 // A checked episode's ✅ date is editable: the overlaid transparent
                 // date input opens the native picker on click; `stopPropagation`
-                // keeps that click from toggling the row.
+                // keeps that click from toggling the row. Chrome only opens the
+                // picker from the (invisible) calendar icon, so the click handler
+                // calls `showPicker()` explicitly.
                 const editableDone = checklist && interactive && item.watched && Boolean(item.done);
                 const doneLabel = item.done ? (
                   editableDone ? (
@@ -140,7 +142,14 @@ export function EntityEpisodesPanel({
                         type="date"
                         value={item.done}
                         aria-label={t`Change completion date`}
-                        onClick={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          try {
+                            event.currentTarget.showPicker();
+                          } catch {
+                            // Unsupported or already open — segment focus still works.
+                          }
+                        }}
                         onChange={(event) => {
                           if (event.target.value) {
                             onSetDate?.(group.label, item.key, itemIndex, event.target.value);
