@@ -1,9 +1,11 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
     ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
+use crate::api::state::AppState;
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
+use crate::secrets::SECRET_BGG_API_TOKEN;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use serde_json::{Map, Value};
@@ -23,6 +25,29 @@ impl ExternalProvider for BoardGameGeekProvider {
         bgg_supported(provider_config)
     }
 
+    /// BGG restricted the XML API to registered applications (401 otherwise —
+    /// <https://boardgamegeek.com/using_the_xml_api>): register the app once,
+    /// get an application token, send it as a Bearer header. An app identity,
+    /// not a user account — clients may bundle it.
+    fn credentials() -> &'static [CredentialSpec] {
+        &[CredentialSpec {
+            key: SECRET_BGG_API_TOKEN,
+            label: "BGG XML API Token",
+            secret: true,
+            required: true,
+        }]
+    }
+
+    fn unavailable_reason(state: &AppState) -> Option<String> {
+        bgg_token(state).is_none().then(|| {
+            "Set a BGG XML API token (register at boardgamegeek.com/using_the_xml_api)".to_string()
+        })
+    }
+
+    fn available(state: &AppState) -> bool {
+        bgg_token(state).is_some()
+    }
+
     fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_options()
     }
@@ -32,14 +57,21 @@ impl ExternalProvider for BoardGameGeekProvider {
     }
 
     async fn search(
-        _state: &super::AppState,
+        state: &super::AppState,
         q: &str,
         page: usize,
         page_size: usize,
         provider_config: &ProviderSearchConfig,
     ) -> Result<Vec<ExternalCandidate>, ApiError> {
-        search_bgg(q, page, page_size, provider_config).await
+        search_bgg(state, q, page, page_size, provider_config).await
     }
+}
+
+fn bgg_token(state: &AppState) -> Option<String> {
+    state
+        .secret_store()
+        .get(SECRET_BGG_API_TOKEN)
+        .filter(|value| !value.is_empty())
 }
 
 const BGG_TYPES: &str = "boardgame,boardgameexpansion";
@@ -86,6 +118,7 @@ pub(super) fn type_options() -> Vec<ExternalProviderTypeOption> {
 }
 
 async fn search_bgg(
+    state: &AppState,
     q: &str,
     page: usize,
     page_size: usize,
@@ -94,10 +127,13 @@ async fn search_bgg(
     if !bgg_supported(provider_config) {
         return Ok(Vec::new());
     }
+    let Some(token) = bgg_token(state) else {
+        return Ok(Vec::new());
+    };
     let client = external_client();
     // A pasted BGG URL or bare numeric id resolves to a single game.
     if let Some(id) = bgg_id(q) {
-        let items = bgg_thing(client, &id).await?;
+        let items = bgg_thing(client, &token, &id).await?;
         return Ok(items.iter().filter_map(bgg_candidate).collect());
     }
     // Search returns ids + names with no pagination; resolve the requested page's
@@ -105,6 +141,7 @@ async fn search_bgg(
     let xml = client
         .get("https://boardgamegeek.com/xmlapi2/search")
         .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .bearer_auth(&token)
         .query(&[("query", q), ("type", BGG_TYPES)])
         .send()
         .await
@@ -127,14 +164,19 @@ async fn search_bgg(
     if page_ids.is_empty() {
         return Ok(Vec::new());
     }
-    let items = bgg_thing(client, &page_ids.join(",")).await?;
+    let items = bgg_thing(client, &token, &page_ids.join(",")).await?;
     Ok(items.iter().filter_map(bgg_candidate).collect())
 }
 
-async fn bgg_thing(client: &reqwest::Client, ids: &str) -> Result<Vec<BggItem>, ApiError> {
+async fn bgg_thing(
+    client: &reqwest::Client,
+    token: &str,
+    ids: &str,
+) -> Result<Vec<BggItem>, ApiError> {
     let xml = client
         .get("https://boardgamegeek.com/xmlapi2/thing")
         .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .bearer_auth(token)
         // `stats=1` includes the ratings/rank block (average, usersrated, rank).
         .query(&[("type", BGG_TYPES), ("stats", "1"), ("id", ids)])
         .send()

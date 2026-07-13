@@ -136,8 +136,9 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_DISCOGS_CONSUMER_KEY` | Discogs app consumer key — an application identity limited to catalog reads; the alternative to a personal token. |
 | `KIZUNASHELF_DISCOGS_CONSUMER_SECRET` | Discogs app consumer secret. |
 | `KIZUNASHELF_MAL_CLIENT_ID` | MyAnimeList API client id for anime/manga matching. |
+| `KIZUNASHELF_BGG_API_TOKEN` | BGG XML API application token for board-game matching — BGG requires registered apps (see [using_the_xml_api](https://boardgamegeek.com/using_the_xml_api)). |
 | `KIZUNASHELF_COMICVINE_API_KEY` | Comic Vine API key for comic matching. |
-| `KIZUNASHELF_HARDCOVER_API_KEY` | Hardcover API token (the full `Bearer …` value) for book matching. |
+| `KIZUNASHELF_HARDCOVER_API_KEY` | Hardcover API token (the full `Bearer …` value) for book matching. A **personal account token** — it can read and mutate its owner's Hardcover data, so never embed it in anything you distribute. |
 | `KIZUNASHELF_GOOGLE_BOOKS_API_KEY` | Google Books API key for book matching (keyless access shares an exhausted quota and returns 429). |
 | `KIZUNASHELF_TRAKT_CLIENT_ID` | Trakt client id (its `trakt-api-key`) for [importing](#quick-capture-and-import) a Trakt profile. |
 | `KIZUNASHELF_STEAM_API_KEY` | Steam Web API key for importing a Steam library (`GetOwnedGames`). Distinct from the keyless store API the Steam search provider uses. |
@@ -546,12 +547,12 @@ Supported providers (keyless unless noted):
 - **Discogs** — releases, masters (search + resolve). Requires a Discogs personal access token, **or** an app consumer key + secret (either works; the token wins when both are set).
 - **Google Books** — books (search + resolve). Requires a Google Books API key.
 - **Open Library** — books, works (search + resolve).
-- **Hardcover** — books (search + resolve, via the GraphQL API). Requires a Hardcover API token.
+- **Hardcover** — books (search + resolve, via the GraphQL API). Requires a Hardcover API token (a personal account token — per-user only, never bundled).
 - **MyAnimeList** — anime, manga (search + resolve). Requires a MyAnimeList API client id.
 - **MangaUpdates** — manga (search + resolve).
-- **Comic Vine** — comic volumes (search + resolve). Requires a Comic Vine API key.
+- **Comic Vine** — comic volumes (search + resolve). Requires a Comic Vine API key (read-only, but rate-limited per key — per-user only).
 - **Apple Podcasts** — podcasts (search + resolve, via the iTunes API).
-- **BoardGameGeek** — board games and expansions (search + resolve, via the BGG XML API).
+- **BoardGameGeek** — board games and expansions (search + resolve, via the BGG XML API). Requires a registered application token — BGG returns 401 without one (register at [boardgamegeek.com/using_the_xml_api](https://boardgamegeek.com/using_the_xml_api)).
 - **Steam** — games (resolve a store URL/app id only; Steam has no public catalog search).
 
 Credentials are supplied per runtime: the web app reads them from `KIZUNASHELF_*` environment variables (see the env table above — the var name is `KIZUNASHELF_<UPPER_KEY>` for each catalog credential key); the desktop and iOS apps store them in the OS keychain (entered under Settings → Provider Credentials, which renders its fields from the provider catalog).

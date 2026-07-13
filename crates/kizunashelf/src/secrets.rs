@@ -22,6 +22,9 @@ pub const SECRET_IGDB_CLIENT_SECRET: &str = "igdb_client_secret";
 pub const SECRET_TVDB_API_KEY: &str = "tvdb_api_key";
 pub const SECRET_TVDB_PIN: &str = "tvdb_pin";
 pub const SECRET_TMDB_API_KEY: &str = "tmdb_api_key";
+/// BGG XML API application token — BGG restricted the API to registered apps
+/// (401 otherwise); an app identity, not a user credential.
+pub const SECRET_BGG_API_TOKEN: &str = "bgg_api_token";
 pub const SECRET_DISCOGS_TOKEN: &str = "discogs_token";
 pub const SECRET_DISCOGS_CONSUMER_KEY: &str = "discogs_consumer_key";
 pub const SECRET_DISCOGS_CONSUMER_SECRET: &str = "discogs_consumer_secret";
