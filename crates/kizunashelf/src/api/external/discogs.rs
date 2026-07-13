@@ -9,7 +9,9 @@ use crate::contract::{
     ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption,
     ProviderEpisodeGroup, ProviderEpisodeItem, ProviderEpisodes,
 };
-use crate::secrets::SECRET_DISCOGS_TOKEN;
+use crate::secrets::{
+    SECRET_DISCOGS_CONSUMER_KEY, SECRET_DISCOGS_CONSUMER_SECRET, SECRET_DISCOGS_TOKEN,
+};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
@@ -27,23 +29,42 @@ impl ExternalProvider for DiscogsProvider {
         !discogs_types(provider_config).is_empty()
     }
 
+    /// Either/or: a personal access token (quickest for an individual — but it
+    /// grants access to *its owner's* Discogs account, so it must never ship as
+    /// a bundled default), or an app consumer key + secret (an application
+    /// identity limited to catalog reads — the pair a client may bundle). All
+    /// marked non-required because one of the two paths suffices.
     fn credentials() -> &'static [CredentialSpec] {
-        &[CredentialSpec {
-            key: SECRET_DISCOGS_TOKEN,
-            label: "Discogs Token",
-            secret: true,
-            required: true,
-        }]
+        &[
+            CredentialSpec {
+                key: SECRET_DISCOGS_TOKEN,
+                label: "Discogs Personal Access Token",
+                secret: true,
+                required: false,
+            },
+            CredentialSpec {
+                key: SECRET_DISCOGS_CONSUMER_KEY,
+                label: "Discogs Consumer Key",
+                secret: false,
+                required: false,
+            },
+            CredentialSpec {
+                key: SECRET_DISCOGS_CONSUMER_SECRET,
+                label: "Discogs Consumer Secret",
+                secret: true,
+                required: false,
+            },
+        ]
     }
 
     fn unavailable_reason(state: &AppState) -> Option<String> {
-        discogs_token(state)
-            .is_none()
-            .then(|| "Set the Discogs token".to_string())
+        discogs_authorization(state).is_none().then(|| {
+            "Set a Discogs personal access token, or a consumer key and secret".to_string()
+        })
     }
 
     fn available(state: &AppState) -> bool {
-        discogs_token(state).is_some()
+        discogs_authorization(state).is_some()
     }
 
     fn field_options() -> Vec<ExternalProviderFieldOption> {
@@ -83,16 +104,13 @@ async fn fetch_discogs_tracks(
 ) -> Result<ProviderEpisodes, ApiError> {
     let (kind, id) =
         discogs_ref(ref_value).ok_or_else(|| ApiError::bad_request("Not a Discogs link"))?;
-    let token = discogs_token(state)
-        .ok_or_else(|| ApiError::bad_request("Discogs token is not configured"))?;
+    let authorization = discogs_authorization(state)
+        .ok_or_else(|| ApiError::bad_request("Discogs credentials are not configured"))?;
     let client = external_client();
     let value = client
         .get(format!("https://api.discogs.com/{kind}s/{id}"))
         .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(
-            reqwest::header::AUTHORIZATION,
-            format!("Discogs token={token}"),
-        )
+        .header(reqwest::header::AUTHORIZATION, authorization)
         .send()
         .await
         .map_err(provider_error)?
@@ -167,11 +185,29 @@ fn discogs_track_groups(release: &Value) -> Vec<ProviderEpisodeGroup> {
     groups
 }
 
-fn discogs_token(state: &AppState) -> Option<String> {
-    state
-        .secret_store()
-        .get(SECRET_DISCOGS_TOKEN)
-        .filter(|value| !value.is_empty())
+/// The `Authorization` header value: the personal token when set (it always
+/// wins — a user-entered token overrides bundled app keys), else the consumer
+/// key/secret pair. `None` when neither path is configured.
+fn discogs_authorization(state: &AppState) -> Option<String> {
+    let store = state.secret_store();
+    let secret = |key: &str| store.get(key).filter(|value| !value.is_empty());
+    discogs_authorization_from(
+        secret(SECRET_DISCOGS_TOKEN),
+        secret(SECRET_DISCOGS_CONSUMER_KEY),
+        secret(SECRET_DISCOGS_CONSUMER_SECRET),
+    )
+}
+
+fn discogs_authorization_from(
+    token: Option<String>,
+    consumer_key: Option<String>,
+    consumer_secret: Option<String>,
+) -> Option<String> {
+    if let Some(token) = token {
+        return Some(format!("Discogs token={token}"));
+    }
+    let (key, secret) = consumer_key.zip(consumer_secret)?;
+    Some(format!("Discogs key={key}, secret={secret}"))
 }
 
 /// The Discogs entity kinds (`release`, `master`) this field searches.
@@ -226,11 +262,10 @@ async fn search_discogs(
     if types.is_empty() {
         return Ok(Vec::new());
     }
-    let Some(token) = discogs_token(state) else {
+    let Some(authorization) = discogs_authorization(state) else {
         return Ok(Vec::new());
     };
     let client = external_client();
-    let authorization = format!("Discogs token={token}");
     // A pasted Discogs URL resolves a single release/master. Only surface it under
     // a field that accepts that kind, so it doesn't appear once per discogs-mapped
     // entity type.
@@ -466,7 +501,32 @@ fn named_list(value: Option<&Value>) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{discogs_detail, discogs_ref, discogs_search_result, discogs_track_groups};
+    use super::{
+        discogs_authorization_from, discogs_detail, discogs_ref, discogs_search_result,
+        discogs_track_groups,
+    };
+
+    #[test]
+    fn authorization_prefers_the_personal_token_over_app_keys() {
+        let owned = |value: &str| Some(value.to_string());
+        // Token alone, pair alone, and token-beats-pair.
+        assert_eq!(
+            discogs_authorization_from(owned("T"), None, None).as_deref(),
+            Some("Discogs token=T")
+        );
+        assert_eq!(
+            discogs_authorization_from(None, owned("K"), owned("S")).as_deref(),
+            Some("Discogs key=K, secret=S")
+        );
+        assert_eq!(
+            discogs_authorization_from(owned("T"), owned("K"), owned("S")).as_deref(),
+            Some("Discogs token=T")
+        );
+        // Half a pair is not a credential.
+        assert_eq!(discogs_authorization_from(None, owned("K"), None), None);
+        assert_eq!(discogs_authorization_from(None, None, owned("S")), None);
+        assert_eq!(discogs_authorization_from(None, None, None), None);
+    }
     use serde_json::json;
 
     #[test]

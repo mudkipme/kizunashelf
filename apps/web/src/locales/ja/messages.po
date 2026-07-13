@@ -602,8 +602,8 @@ msgstr "キャンセル"
 msgid "Catch up"
 msgstr "追いつく"
 
-#: src/components/assets/entity-episodes.tsx:135
-#: src/components/assets/entity-episodes.tsx:142
+#: src/components/assets/entity-episodes.tsx:137
+#: src/components/assets/entity-episodes.tsx:144
 msgid "Change completion date"
 msgstr "完了日を変更"
 

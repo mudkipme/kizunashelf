@@ -132,7 +132,9 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_TVDB_API_KEY` | TheTVDB API key for external matching. |
 | `KIZUNASHELF_TVDB_PIN` | Optional TheTVDB PIN. |
 | `KIZUNASHELF_TMDB_API_KEY` | TMDB API key (v3) for movie/TV/person matching. |
-| `KIZUNASHELF_DISCOGS_TOKEN` | Discogs personal access token for release/master matching. |
+| `KIZUNASHELF_DISCOGS_TOKEN` | Discogs personal access token for release/master matching (grants access to *its owner's* account — prefer the consumer pair for anything shared). |
+| `KIZUNASHELF_DISCOGS_CONSUMER_KEY` | Discogs app consumer key — an application identity limited to catalog reads; the alternative to a personal token. |
+| `KIZUNASHELF_DISCOGS_CONSUMER_SECRET` | Discogs app consumer secret. |
 | `KIZUNASHELF_MAL_CLIENT_ID` | MyAnimeList API client id for anime/manga matching. |
 | `KIZUNASHELF_COMICVINE_API_KEY` | Comic Vine API key for comic matching. |
 | `KIZUNASHELF_HARDCOVER_API_KEY` | Hardcover API token (the full `Bearer …` value) for book matching. |
@@ -541,7 +543,7 @@ Supported providers (keyless unless noted):
 - **TheTVDB** — series, movies (search + resolve). Requires a TheTVDB API key; a PIN is optional.
 - **Apple Music** — albums (search + resolve, via the keyless iTunes Search API). No credentials.
 - **MusicBrainz** — releases, artists, release groups (search + resolve).
-- **Discogs** — releases, masters (search + resolve). Requires a Discogs token.
+- **Discogs** — releases, masters (search + resolve). Requires a Discogs personal access token, **or** an app consumer key + secret (either works; the token wins when both are set).
 - **Google Books** — books (search + resolve). Requires a Google Books API key.
 - **Open Library** — books, works (search + resolve).
 - **Hardcover** — books (search + resolve, via the GraphQL API). Requires a Hardcover API token.

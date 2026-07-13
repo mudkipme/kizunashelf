@@ -602,8 +602,8 @@ msgstr "取消"
 msgid "Catch up"
 msgstr "補進度"
 
-#: src/components/assets/entity-episodes.tsx:135
-#: src/components/assets/entity-episodes.tsx:142
+#: src/components/assets/entity-episodes.tsx:137
+#: src/components/assets/entity-episodes.tsx:144
 msgid "Change completion date"
 msgstr "變更完成日期"
 

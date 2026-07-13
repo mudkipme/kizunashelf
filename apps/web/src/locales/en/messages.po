@@ -602,8 +602,8 @@ msgstr "Cancel"
 msgid "Catch up"
 msgstr "Catch up"
 
-#: src/components/assets/entity-episodes.tsx:135
-#: src/components/assets/entity-episodes.tsx:142
+#: src/components/assets/entity-episodes.tsx:137
+#: src/components/assets/entity-episodes.tsx:144
 msgid "Change completion date"
 msgstr "Change completion date"
 
