@@ -194,7 +194,7 @@ msgstr "{0} failed"
 
 #. placeholder {0}: selected.size
 #. placeholder {1}: allIds.length
-#: src/components/assets/episode-sync-dialog.tsx:253
+#: src/components/assets/episode-sync-dialog.tsx:256
 msgid "{0} of {1} selected"
 msgstr "{0} of {1} selected"
 
@@ -579,7 +579,7 @@ msgid "Calendar"
 msgstr "Calendar"
 
 #: src/components/assets/asset-download-panel.tsx:100
-#: src/components/assets/episode-sync-dialog.tsx:327
+#: src/components/assets/episode-sync-dialog.tsx:330
 #: src/components/assets/quick-log-dialog.tsx:156
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
@@ -635,7 +635,7 @@ msgstr "Choose an emoji"
 msgid "Choose icon"
 msgstr "Choose icon"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Clear all"
 msgstr "Clear all"
 
@@ -893,7 +893,7 @@ msgstr "Describe this list (appears above the items)…"
 msgid "Description"
 msgstr "Description"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Deselect group"
 msgstr "Deselect group"
 
@@ -1228,11 +1228,11 @@ msgid "Import"
 msgstr "Import"
 
 #. placeholder {0}: incoming - already
-#: src/components/assets/episode-sync-dialog.tsx:338
+#: src/components/assets/episode-sync-dialog.tsx:341
 msgid "Import ({0} new · {already} updated)"
 msgstr "Import ({0} new · {already} updated)"
 
-#: src/components/assets/episode-sync-dialog.tsx:339
+#: src/components/assets/episode-sync-dialog.tsx:342
 msgid "Import ({incoming})"
 msgstr "Import ({incoming})"
 
@@ -1248,7 +1248,7 @@ msgstr "Import complete"
 msgid "Importing creates files, so it is unavailable here."
 msgstr "Importing creates files, so it is unavailable here."
 
-#: src/components/assets/episode-sync-dialog.tsx:336
+#: src/components/assets/episode-sync-dialog.tsx:339
 #: src/pages/import-wizard-page.tsx:708
 msgid "Importing…"
 msgstr "Importing…"
@@ -1264,7 +1264,7 @@ msgstr "in"
 msgid "In library ✓"
 msgstr "In library ✓"
 
-#: src/components/assets/episode-sync-dialog.tsx:458
+#: src/components/assets/episode-sync-dialog.tsx:461
 msgid "in list"
 msgstr "in list"
 
@@ -1339,7 +1339,7 @@ msgstr "Item {0}"
 msgid "Item list"
 msgstr "Item list"
 
-#: src/components/assets/episode-sync-dialog.tsx:397
+#: src/components/assets/episode-sync-dialog.tsx:400
 msgid "Items"
 msgstr "Items"
 
@@ -1360,7 +1360,7 @@ msgstr "Japanese"
 msgid "Keep editing"
 msgstr "Keep editing"
 
-#: src/components/assets/episode-sync-dialog.tsx:320
+#: src/components/assets/episode-sync-dialog.tsx:323
 msgid "Keep groups"
 msgstr "Keep groups"
 
@@ -1491,7 +1491,7 @@ msgstr "Loading built-in types…"
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
-#: src/components/assets/episode-sync-dialog.tsx:270
+#: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:194
 #: src/pages/entity-edit-page.tsx:149
@@ -1803,7 +1803,7 @@ msgstr "No matching entities."
 msgid "No matching type"
 msgstr "No matching type"
 
-#: src/components/assets/episode-sync-dialog.tsx:276
+#: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "No provider with a list is linked on this entity."
 
@@ -2020,7 +2020,7 @@ msgstr "Progress"
 msgid "property"
 msgstr "property"
 
-#: src/components/assets/episode-sync-dialog.tsx:235
+#: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:123
 #: src/pages/quick-capture-page.tsx:248
 msgid "Provider"
@@ -2327,7 +2327,7 @@ msgstr "See all results"
 msgid "See all results for “{query}”"
 msgstr "See all results for “{query}”"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Select all"
 msgstr "Select all"
 
@@ -2339,7 +2339,7 @@ msgstr "Select field"
 msgid "Select folder"
 msgstr "Select folder"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Select group"
 msgstr "Select group"
 
@@ -2535,7 +2535,7 @@ msgstr "Switched vault"
 msgid "Sync"
 msgstr "Sync"
 
-#: src/components/assets/episode-sync-dialog.tsx:229
+#: src/components/assets/episode-sync-dialog.tsx:232
 msgid "Sync from a provider"
 msgstr "Sync from a provider"
 

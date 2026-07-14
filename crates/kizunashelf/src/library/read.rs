@@ -242,6 +242,7 @@ async fn read_entities(
     for type_config in &config.types {
         let batch = read_entities_for_type(config, type_config, vfs, loaded).await?;
         misses += batch.misses;
+        diagnostics.extend(batch.diagnostics);
         for (key, entry) in batch.entries {
             records.push(entry.record.clone());
             diagnostics.extend(entry.diagnostics.clone());
@@ -283,10 +284,12 @@ pub(super) fn sort_records(records: &mut [EntityRecord]) {
 }
 
 /// One type directory's read: the per-file cache entries (cached hits + freshly
-/// parsed misses, keyed by NFC path) and how many files were re-parsed.
+/// parsed misses, keyed by NFC path), how many files were re-parsed, and the
+/// diagnostics for files that could not be parsed at all (skipped, no entry).
 struct TypeRead {
     entries: Vec<(String, CachedEntry)>,
     misses: usize,
+    diagnostics: Vec<LibraryDiagnostic>,
 }
 
 async fn read_entities_for_type(
@@ -306,6 +309,7 @@ async fn read_entities_for_type(
             return Ok(TypeRead {
                 entries: Vec::new(),
                 misses: 0,
+                diagnostics: Vec::new(),
             });
         }
         Err(error) => {
@@ -351,18 +355,38 @@ async fn read_entities_for_type(
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entities in {relative_dir}: {error}"))?;
 
+    let mut skipped: Vec<LibraryDiagnostic> = Vec::new();
     for (relative_path, bytes) in files {
         let (len, modified_unix_nanos) = miss_fingerprints
             .get(&relative_path)
             .copied()
             .unwrap_or((0, 0));
         let key = cache_key(&relative_path);
+        // A file that can't be parsed at all (e.g. not valid UTF-8) is skipped
+        // with a diagnostic rather than failing the whole library load — one bad
+        // file must never take every endpoint down.
+        let parsed = match parse_entity(
+            type_config,
+            config.tags_field(),
+            relative_path.clone(),
+            bytes,
+        ) {
+            Ok(parsed) => parsed,
+            Err(error) => {
+                skipped.push(LibraryDiagnostic {
+                    path: relative_path,
+                    kind: "file".to_string(),
+                    message: error.to_string(),
+                });
+                continue;
+            }
+        };
         let EntityReadResult {
             entity,
             body_links,
             episode_dates,
             diagnostics,
-        } = parse_entity(type_config, config.tags_field(), relative_path, bytes)?;
+        } = parsed;
         entries.push((
             key,
             CachedEntry {
@@ -380,5 +404,9 @@ async fn read_entities_for_type(
             },
         ));
     }
-    Ok(TypeRead { entries, misses })
+    Ok(TypeRead {
+        entries,
+        misses,
+        diagnostics: skipped,
+    })
 }

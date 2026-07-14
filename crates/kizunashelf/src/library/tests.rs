@@ -123,6 +123,38 @@ async fn read_library_uses_configured_id_fields_and_reports_frontmatter_errors()
 }
 
 #[tokio::test]
+async fn read_library_skips_an_unparseable_file_instead_of_failing() {
+    // One bad file (here: not valid UTF-8) must never take the whole library
+    // down — it is skipped with a diagnostic and every other entity still loads.
+    let temp = tempfile::tempdir().unwrap();
+    let taxonomy = temp.path().join("Taxonomy/Anime");
+    std::fs::create_dir_all(&taxonomy).unwrap();
+    std::fs::write(
+        taxonomy.join("Good.md"),
+        "---\ntitle: Star Voyager\n---\n\nBody.\n",
+    )
+    .unwrap();
+    // Shift-JIS bytes (「アニメ」), invalid as UTF-8.
+    std::fs::write(
+        taxonomy.join("Legacy.md"),
+        [0x83u8, 0x41, 0x83, 0x6a, 0x83, 0x81],
+    )
+    .unwrap();
+    let config = test_config(temp.path().to_string_lossy().as_ref());
+    let vfs = native_vfs(&config);
+
+    let library = read_library(config, vfs).await.unwrap();
+
+    assert!(library
+        .summaries()
+        .any(|entity| entity.title == "Star Voyager"));
+    assert_eq!(library.diagnostics.len(), 1);
+    assert_eq!(library.diagnostics[0].path, "Taxonomy/Anime/Legacy.md");
+    assert_eq!(library.diagnostics[0].kind, "file");
+    assert!(library.diagnostics[0].message.contains("not valid UTF-8"));
+}
+
+#[tokio::test]
 async fn read_library_reads_entities_from_an_in_memory_vfs() {
     let config = test_config("/virtual-vault");
     let vfs = Arc::new(InMemoryVfs::new());

@@ -194,7 +194,7 @@ msgstr "失敗 {0}"
 
 #. placeholder {0}: selected.size
 #. placeholder {1}: allIds.length
-#: src/components/assets/episode-sync-dialog.tsx:253
+#: src/components/assets/episode-sync-dialog.tsx:256
 msgid "{0} of {1} selected"
 msgstr "已選取 {1} 項中的 {0} 項"
 
@@ -579,7 +579,7 @@ msgid "Calendar"
 msgstr "日曆"
 
 #: src/components/assets/asset-download-panel.tsx:100
-#: src/components/assets/episode-sync-dialog.tsx:327
+#: src/components/assets/episode-sync-dialog.tsx:330
 #: src/components/assets/quick-log-dialog.tsx:156
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
@@ -635,7 +635,7 @@ msgstr "選擇表情符號"
 msgid "Choose icon"
 msgstr "選擇圖示"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Clear all"
 msgstr "全部清除"
 
@@ -893,7 +893,7 @@ msgstr "描述此清單（顯示於項目上方）…"
 msgid "Description"
 msgstr "描述"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Deselect group"
 msgstr "取消選取群組"
 
@@ -1228,11 +1228,11 @@ msgid "Import"
 msgstr "匯入"
 
 #. placeholder {0}: incoming - already
-#: src/components/assets/episode-sync-dialog.tsx:338
+#: src/components/assets/episode-sync-dialog.tsx:341
 msgid "Import ({0} new · {already} updated)"
 msgstr "匯入（{0} 新增 · {already} 更新）"
 
-#: src/components/assets/episode-sync-dialog.tsx:339
+#: src/components/assets/episode-sync-dialog.tsx:342
 msgid "Import ({incoming})"
 msgstr "匯入（{incoming}）"
 
@@ -1248,7 +1248,7 @@ msgstr "匯入完成"
 msgid "Importing creates files, so it is unavailable here."
 msgstr "匯入會建立檔案，因此在此無法使用。"
 
-#: src/components/assets/episode-sync-dialog.tsx:336
+#: src/components/assets/episode-sync-dialog.tsx:339
 #: src/pages/import-wizard-page.tsx:708
 msgid "Importing…"
 msgstr "匯入中…"
@@ -1264,7 +1264,7 @@ msgstr "位於:"
 msgid "In library ✓"
 msgstr "已在庫中 ✓"
 
-#: src/components/assets/episode-sync-dialog.tsx:458
+#: src/components/assets/episode-sync-dialog.tsx:461
 msgid "in list"
 msgstr "在清單中"
 
@@ -1339,7 +1339,7 @@ msgstr "項目 {0}"
 msgid "Item list"
 msgstr "項目清單"
 
-#: src/components/assets/episode-sync-dialog.tsx:397
+#: src/components/assets/episode-sync-dialog.tsx:400
 msgid "Items"
 msgstr "項目"
 
@@ -1360,7 +1360,7 @@ msgstr "日文"
 msgid "Keep editing"
 msgstr "繼續編輯"
 
-#: src/components/assets/episode-sync-dialog.tsx:320
+#: src/components/assets/episode-sync-dialog.tsx:323
 msgid "Keep groups"
 msgstr "保留群組"
 
@@ -1491,7 +1491,7 @@ msgstr "正在載入內建類型…"
 msgid "Loading taxonomy"
 msgstr "正在載入分類"
 
-#: src/components/assets/episode-sync-dialog.tsx:270
+#: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:194
 #: src/pages/entity-edit-page.tsx:149
@@ -1803,7 +1803,7 @@ msgstr "無符合的項目。"
 msgid "No matching type"
 msgstr "無符合的類型"
 
-#: src/components/assets/episode-sync-dialog.tsx:276
+#: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "此項目上未連結任何具有清單的資料來源。"
 
@@ -2020,7 +2020,7 @@ msgstr "進度"
 msgid "property"
 msgstr "屬性"
 
-#: src/components/assets/episode-sync-dialog.tsx:235
+#: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:123
 #: src/pages/quick-capture-page.tsx:248
 msgid "Provider"
@@ -2327,7 +2327,7 @@ msgstr "查看全部結果"
 msgid "See all results for “{query}”"
 msgstr "查看「{query}」的全部結果"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Select all"
 msgstr "全選"
 
@@ -2339,7 +2339,7 @@ msgstr "選擇欄位"
 msgid "Select folder"
 msgstr "選擇資料夾"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Select group"
 msgstr "選取群組"
 
@@ -2535,7 +2535,7 @@ msgstr "已切換保管庫"
 msgid "Sync"
 msgstr "同步"
 
-#: src/components/assets/episode-sync-dialog.tsx:229
+#: src/components/assets/episode-sync-dialog.tsx:232
 msgid "Sync from a provider"
 msgstr "從資料來源同步"
 

@@ -194,7 +194,7 @@ msgstr "{0} 项失败"
 
 #. placeholder {0}: selected.size
 #. placeholder {1}: allIds.length
-#: src/components/assets/episode-sync-dialog.tsx:253
+#: src/components/assets/episode-sync-dialog.tsx:256
 msgid "{0} of {1} selected"
 msgstr "已选择 {0} / {1}"
 
@@ -579,7 +579,7 @@ msgid "Calendar"
 msgstr "日历"
 
 #: src/components/assets/asset-download-panel.tsx:100
-#: src/components/assets/episode-sync-dialog.tsx:327
+#: src/components/assets/episode-sync-dialog.tsx:330
 #: src/components/assets/quick-log-dialog.tsx:156
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
@@ -635,7 +635,7 @@ msgstr "选择表情符号"
 msgid "Choose icon"
 msgstr "选择图标"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Clear all"
 msgstr "全部清除"
 
@@ -893,7 +893,7 @@ msgstr "描述此列表（显示在条目上方）…"
 msgid "Description"
 msgstr "描述"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Deselect group"
 msgstr "取消选择分组"
 
@@ -1228,11 +1228,11 @@ msgid "Import"
 msgstr "导入"
 
 #. placeholder {0}: incoming - already
-#: src/components/assets/episode-sync-dialog.tsx:338
+#: src/components/assets/episode-sync-dialog.tsx:341
 msgid "Import ({0} new · {already} updated)"
 msgstr "导入（{0} 新增 · {already} 更新）"
 
-#: src/components/assets/episode-sync-dialog.tsx:339
+#: src/components/assets/episode-sync-dialog.tsx:342
 msgid "Import ({incoming})"
 msgstr "导入（{incoming}）"
 
@@ -1248,7 +1248,7 @@ msgstr "导入完成"
 msgid "Importing creates files, so it is unavailable here."
 msgstr "导入会创建文件，因此在此不可用。"
 
-#: src/components/assets/episode-sync-dialog.tsx:336
+#: src/components/assets/episode-sync-dialog.tsx:339
 #: src/pages/import-wizard-page.tsx:708
 msgid "Importing…"
 msgstr "正在导入…"
@@ -1264,7 +1264,7 @@ msgstr "位于:"
 msgid "In library ✓"
 msgstr "已在库中 ✓"
 
-#: src/components/assets/episode-sync-dialog.tsx:458
+#: src/components/assets/episode-sync-dialog.tsx:461
 msgid "in list"
 msgstr "在列表中"
 
@@ -1339,7 +1339,7 @@ msgstr "第 {0} 项"
 msgid "Item list"
 msgstr "项目列表"
 
-#: src/components/assets/episode-sync-dialog.tsx:397
+#: src/components/assets/episode-sync-dialog.tsx:400
 msgid "Items"
 msgstr "项目"
 
@@ -1360,7 +1360,7 @@ msgstr "日语"
 msgid "Keep editing"
 msgstr "继续编辑"
 
-#: src/components/assets/episode-sync-dialog.tsx:320
+#: src/components/assets/episode-sync-dialog.tsx:323
 msgid "Keep groups"
 msgstr "保留分组"
 
@@ -1491,7 +1491,7 @@ msgstr "正在加载内置类型…"
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
-#: src/components/assets/episode-sync-dialog.tsx:270
+#: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:194
 #: src/pages/entity-edit-page.tsx:149
@@ -1803,7 +1803,7 @@ msgstr "无匹配的条目。"
 msgid "No matching type"
 msgstr "无匹配的类型"
 
-#: src/components/assets/episode-sync-dialog.tsx:276
+#: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "此条目上未关联任何带列表的数据源。"
 
@@ -2020,7 +2020,7 @@ msgstr "进度"
 msgid "property"
 msgstr "属性"
 
-#: src/components/assets/episode-sync-dialog.tsx:235
+#: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:123
 #: src/pages/quick-capture-page.tsx:248
 msgid "Provider"
@@ -2327,7 +2327,7 @@ msgstr "查看全部结果"
 msgid "See all results for “{query}”"
 msgstr "查看“{query}”的全部结果"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Select all"
 msgstr "全选"
 
@@ -2339,7 +2339,7 @@ msgstr "选择字段"
 msgid "Select folder"
 msgstr "选择文件夹"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Select group"
 msgstr "选择分组"
 
@@ -2535,7 +2535,7 @@ msgstr "已切换保管库"
 msgid "Sync"
 msgstr "同步"
 
-#: src/components/assets/episode-sync-dialog.tsx:229
+#: src/components/assets/episode-sync-dialog.tsx:232
 msgid "Sync from a provider"
 msgstr "从数据源同步"
 

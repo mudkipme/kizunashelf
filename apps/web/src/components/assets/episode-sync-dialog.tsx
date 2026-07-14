@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
+import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { queryKeys } from "@/api/queries";
 import { useLanguagePreference } from "@/lib/language";
 import { useIsoDateFormat } from "@/lib/locale";
@@ -61,6 +62,7 @@ export function EpisodeSyncDialog({
 }) {
   const { t } = useLingui();
   const queryClient = useQueryClient();
+  const invalidateEntityData = useInvalidateEntityData();
   // The full preference (possibly zh-Hans/zh-Hant) — providers that distinguish
   // the scripts localize episode titles with it.
   const language = useLanguagePreference();
@@ -209,7 +211,8 @@ export function EpisodeSyncDialog({
       // Ticked items are deliberate writes: overwrite matched titles, add new ones.
       const detail = await syncEpisodes(entityId, { revision, groups: payloadGroups, overwrite: true });
       queryClient.setQueryData(queryKeys.entity(entityId), detail);
-      void queryClient.invalidateQueries({ queryKey: ["entities"] });
+      // Shared helper, so the derived-view key list can't drift per call site.
+      void invalidateEntityData();
       onOpenChange(false);
     } catch (importError) {
       toast.error(errorMessage(importError));

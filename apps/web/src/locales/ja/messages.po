@@ -194,7 +194,7 @@ msgstr "{0} 件失敗"
 
 #. placeholder {0}: selected.size
 #. placeholder {1}: allIds.length
-#: src/components/assets/episode-sync-dialog.tsx:253
+#: src/components/assets/episode-sync-dialog.tsx:256
 msgid "{0} of {1} selected"
 msgstr "{1} 件中 {0} 件を選択"
 
@@ -579,7 +579,7 @@ msgid "Calendar"
 msgstr "カレンダー"
 
 #: src/components/assets/asset-download-panel.tsx:100
-#: src/components/assets/episode-sync-dialog.tsx:327
+#: src/components/assets/episode-sync-dialog.tsx:330
 #: src/components/assets/quick-log-dialog.tsx:156
 #: src/components/entities/metadata-editor.tsx:122
 #: src/components/settings/settings-dialogs.tsx:378
@@ -635,7 +635,7 @@ msgstr "絵文字を選択"
 msgid "Choose icon"
 msgstr "アイコンを選択"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Clear all"
 msgstr "すべてクリア"
 
@@ -893,7 +893,7 @@ msgstr "このリストの説明（アイテムの上に表示されます）…
 msgid "Description"
 msgstr "説明"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Deselect group"
 msgstr "グループの選択を解除"
 
@@ -1228,11 +1228,11 @@ msgid "Import"
 msgstr "インポート"
 
 #. placeholder {0}: incoming - already
-#: src/components/assets/episode-sync-dialog.tsx:338
+#: src/components/assets/episode-sync-dialog.tsx:341
 msgid "Import ({0} new · {already} updated)"
 msgstr "インポート（新規 {0} 件 · 更新 {already} 件）"
 
-#: src/components/assets/episode-sync-dialog.tsx:339
+#: src/components/assets/episode-sync-dialog.tsx:342
 msgid "Import ({incoming})"
 msgstr "インポート（{incoming}）"
 
@@ -1248,7 +1248,7 @@ msgstr "インポート完了"
 msgid "Importing creates files, so it is unavailable here."
 msgstr "インポートはファイルを作成するため、ここでは利用できません。"
 
-#: src/components/assets/episode-sync-dialog.tsx:336
+#: src/components/assets/episode-sync-dialog.tsx:339
 #: src/pages/import-wizard-page.tsx:708
 msgid "Importing…"
 msgstr "インポート中…"
@@ -1264,7 +1264,7 @@ msgstr "フォルダ:"
 msgid "In library ✓"
 msgstr "ライブラリに登録済み ✓"
 
-#: src/components/assets/episode-sync-dialog.tsx:458
+#: src/components/assets/episode-sync-dialog.tsx:461
 msgid "in list"
 msgstr "リスト内"
 
@@ -1339,7 +1339,7 @@ msgstr "アイテム {0}"
 msgid "Item list"
 msgstr "アイテムリスト"
 
-#: src/components/assets/episode-sync-dialog.tsx:397
+#: src/components/assets/episode-sync-dialog.tsx:400
 msgid "Items"
 msgstr "アイテム"
 
@@ -1360,7 +1360,7 @@ msgstr "日本語"
 msgid "Keep editing"
 msgstr "編集を続ける"
 
-#: src/components/assets/episode-sync-dialog.tsx:320
+#: src/components/assets/episode-sync-dialog.tsx:323
 msgid "Keep groups"
 msgstr "グループを保持"
 
@@ -1491,7 +1491,7 @@ msgstr "組み込みタイプを読み込み中…"
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
-#: src/components/assets/episode-sync-dialog.tsx:270
+#: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:194
 #: src/pages/entity-edit-page.tsx:149
@@ -1803,7 +1803,7 @@ msgstr "一致するアイテムがありません。"
 msgid "No matching type"
 msgstr "一致するタイプがありません"
 
-#: src/components/assets/episode-sync-dialog.tsx:276
+#: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "このアイテムにはリストを持つプロバイダーがリンクされていません。"
 
@@ -2020,7 +2020,7 @@ msgstr "進捗"
 msgid "property"
 msgstr "プロパティ"
 
-#: src/components/assets/episode-sync-dialog.tsx:235
+#: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:123
 #: src/pages/quick-capture-page.tsx:248
 msgid "Provider"
@@ -2327,7 +2327,7 @@ msgstr "すべての結果を表示"
 msgid "See all results for “{query}”"
 msgstr "「{query}」のすべての結果を表示"
 
-#: src/components/assets/episode-sync-dialog.tsx:262
+#: src/components/assets/episode-sync-dialog.tsx:265
 msgid "Select all"
 msgstr "すべて選択"
 
@@ -2339,7 +2339,7 @@ msgstr "フィールドを選択"
 msgid "Select folder"
 msgstr "フォルダーを選択"
 
-#: src/components/assets/episode-sync-dialog.tsx:374
+#: src/components/assets/episode-sync-dialog.tsx:377
 msgid "Select group"
 msgstr "グループを選択"
 
@@ -2535,7 +2535,7 @@ msgstr "保管庫を切り替えました"
 msgid "Sync"
 msgstr "同期"
 
-#: src/components/assets/episode-sync-dialog.tsx:229
+#: src/components/assets/episode-sync-dialog.tsx:232
 msgid "Sync from a provider"
 msgstr "プロバイダーから同期"
 

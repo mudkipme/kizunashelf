@@ -249,10 +249,10 @@ export function EntityPage() {
     try {
       const response = await setEpisodeWatched(entity.id, { revision: entity.revision, ...args });
       queryClient.setQueryData(queryKeys.entity(entity.id), response);
-      // Refresh the resident watched/total badge + the activity/calendar views.
-      void queryClient.invalidateQueries({ queryKey: ["entities"] });
-      void queryClient.invalidateQueries({ queryKey: ["activity"] });
-      void queryClient.invalidateQueries({ queryKey: ["calendar"] });
+      // Refresh everything derived from the entity set (watched/total badges,
+      // home/upcoming shelves, activity, calendar, …) via the shared helper so
+      // this path can't drift from the other mutation flows.
+      void invalidateEntityData();
     } catch (error) {
       reportEntityError(error, { onConflict: refetchOnConflict });
     } finally {
