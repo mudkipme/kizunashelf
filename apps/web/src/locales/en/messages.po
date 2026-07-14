@@ -627,11 +627,11 @@ msgstr "Choose a candidate to compare fields."
 msgid "Choose a type"
 msgstr "Choose a type"
 
-#: src/components/settings/emoji-field.tsx:55
+#: src/components/settings/emoji-field.tsx:59
 msgid "Choose an emoji"
 msgstr "Choose an emoji"
 
-#: src/components/settings/emoji-field.tsx:48
+#: src/components/settings/emoji-field.tsx:52
 msgid "Choose icon"
 msgstr "Choose icon"
 
@@ -1475,7 +1475,7 @@ msgstr "Lists"
 msgid "Load more"
 msgstr "Load more"
 
-#: src/components/settings/emoji-field.tsx:67
+#: src/components/settings/emoji-field.tsx:71
 msgid "Loading"
 msgstr "Loading"
 
@@ -2107,7 +2107,7 @@ msgstr "Remove field"
 msgid "Remove group"
 msgstr "Remove group"
 
-#: src/components/settings/emoji-field.tsx:81
+#: src/components/settings/emoji-field.tsx:85
 msgid "Remove icon"
 msgstr "Remove icon"
 

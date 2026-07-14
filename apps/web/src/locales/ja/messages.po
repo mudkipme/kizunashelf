@@ -627,11 +627,11 @@ msgstr "候補を選択してフィールドを比較します。"
 msgid "Choose a type"
 msgstr "タイプを選択"
 
-#: src/components/settings/emoji-field.tsx:55
+#: src/components/settings/emoji-field.tsx:59
 msgid "Choose an emoji"
 msgstr "絵文字を選択"
 
-#: src/components/settings/emoji-field.tsx:48
+#: src/components/settings/emoji-field.tsx:52
 msgid "Choose icon"
 msgstr "アイコンを選択"
 
@@ -1475,7 +1475,7 @@ msgstr "リスト"
 msgid "Load more"
 msgstr "さらに読み込む"
 
-#: src/components/settings/emoji-field.tsx:67
+#: src/components/settings/emoji-field.tsx:71
 msgid "Loading"
 msgstr "読み込み中"
 
@@ -2107,7 +2107,7 @@ msgstr "フィールドを削除"
 msgid "Remove group"
 msgstr "グループを削除"
 
-#: src/components/settings/emoji-field.tsx:81
+#: src/components/settings/emoji-field.tsx:85
 msgid "Remove icon"
 msgstr "アイコンを削除"
 

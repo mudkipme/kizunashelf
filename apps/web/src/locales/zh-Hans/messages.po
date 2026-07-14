@@ -627,11 +627,11 @@ msgstr "选择一个候选项以比较字段。"
 msgid "Choose a type"
 msgstr "选择一个类型"
 
-#: src/components/settings/emoji-field.tsx:55
+#: src/components/settings/emoji-field.tsx:59
 msgid "Choose an emoji"
 msgstr "选择表情符号"
 
-#: src/components/settings/emoji-field.tsx:48
+#: src/components/settings/emoji-field.tsx:52
 msgid "Choose icon"
 msgstr "选择图标"
 
@@ -1475,7 +1475,7 @@ msgstr "列表"
 msgid "Load more"
 msgstr "加载更多"
 
-#: src/components/settings/emoji-field.tsx:67
+#: src/components/settings/emoji-field.tsx:71
 msgid "Loading"
 msgstr "加载中"
 
@@ -2107,7 +2107,7 @@ msgstr "移除字段"
 msgid "Remove group"
 msgstr "移除分组"
 
-#: src/components/settings/emoji-field.tsx:81
+#: src/components/settings/emoji-field.tsx:85
 msgid "Remove icon"
 msgstr "移除图标"
 
