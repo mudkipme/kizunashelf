@@ -401,6 +401,12 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     &["bangumi", "myanimelist", "tmdb", "thetvdb"],
                     &["myanimelist", "tmdb", "thetvdb", "bangumi"],
                 ),
+                external_types: &[
+                    ("bangumi", &["2"]),
+                    ("myanimelist", &["anime"]),
+                    ("tmdb", &["tv"]),
+                    ("thetvdb", &["series"]),
+                ],
                 title_sources: ctx.pick(
                     &[
                         ("bangumi", "name_cn"),
@@ -488,6 +494,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "電視劇與影集，一集一集地記錄。",
                 ),
                 providers: &["tmdb", "thetvdb"],
+                external_types: &[("tmdb", &["tv"]), ("thetvdb", &["series"])],
                 title_sources: &[("tmdb", "title"), ("thetvdb", "name")],
                 original_title: Some(&[("tmdb", "original_title"), ("thetvdb", "name")]),
                 cover_sources: &[("tmdb", "cover_url"), ("thetvdb", "cover_url")],
@@ -523,6 +530,13 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     &["tmdb", "bangumi", "thetvdb"],
                     &["tmdb", "thetvdb", "bangumi"],
                 ),
+                // Bangumi has no "movie" subject: films are anime (2) or
+                // live-action "real" (6), so the constraint keeps both.
+                external_types: &[
+                    ("tmdb", &["movie"]),
+                    ("bangumi", &["2", "6"]),
+                    ("thetvdb", &["movie"]),
+                ],
                 title_sources: ctx.pick(
                     &[
                         ("tmdb", "title"),
@@ -583,6 +597,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "願望清單、遊玩中和已全破的遊戲。",
                 ),
                 providers: &["igdb", "steam", "bangumi"],
+                external_types: &[("bangumi", &["4"])],
                 title_sources: ctx.pick(
                     &[("igdb", "name"), ("steam", "name"), ("bangumi", "name_cn")],
                     &[("igdb", "name"), ("steam", "name"), ("bangumi", "name")],
@@ -641,6 +656,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "桌遊與桌上遊戲，帶玩家人數和時長。",
                 ),
                 providers: &["bgg"],
+                external_types: &[],
                 title_sources: &[("bgg", "name")],
                 original_title: None,
                 cover_sources: &[("bgg", "cover_url")],
@@ -674,6 +690,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "在讀的書，帶作者和 ISBN。",
                 ),
                 providers: &["googlebooks", "openlibrary", "hardcover", "bangumi"],
+                external_types: &[("bangumi", &["1"])],
                 title_sources: ctx.pick(
                     &[
                         ("googlebooks", "title"),
@@ -772,6 +789,8 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     &["bangumi", "mangaupdates", "myanimelist", "comicvine"],
                     &["mangaupdates", "myanimelist", "comicvine", "bangumi"],
                 ),
+                // Bangumi files manga under its book (1) subject type.
+                external_types: &[("bangumi", &["1"]), ("myanimelist", &["manga"])],
                 title_sources: ctx.pick(
                     &[
                         ("bangumi", "name_cn"),
@@ -857,6 +876,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "專輯與 CD——你擁有和喜愛的音樂。",
                 ),
                 providers: &["musicbrainz", "applemusic", "discogs", "bangumi"],
+                external_types: &[("musicbrainz", &["release"]), ("bangumi", &["3"])],
                 title_sources: ctx.pick(
                     &[
                         ("musicbrainz", "title"),
@@ -915,6 +935,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "追蹤中的 Podcast。",
                 ),
                 providers: &["applepodcast"],
+                external_types: &[],
                 title_sources: &[("applepodcast", "title")],
                 original_title: None,
                 cover_sources: &[("applepodcast", "cover_url")],
@@ -956,6 +977,9 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     &["bangumi", "musicbrainz"],
                     &["musicbrainz", "bangumi"],
                 ),
+                // Unconstrained MusicBrainz searches releases, not artists, so
+                // this pin is what makes the artist field find people at all.
+                external_types: &[("bangumi", &["person"]), ("musicbrainz", &["artist"])],
                 title_sources: ctx.pick(
                     &[("bangumi", "name_cn"), ("musicbrainz", "title")],
                     &[("bangumi", "name"), ("musicbrainz", "title")],
@@ -992,6 +1016,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "把相關條目歸為系列或同一世界觀。",
                 ),
                 providers: &[],
+                external_types: &[],
                 title_sources: &[],
                 original_title: None,
                 cover_sources: &[],
@@ -1023,6 +1048,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "角色，以及配音或飾演的人。",
                 ),
                 providers: &["bangumi"],
+                external_types: &[("bangumi", &["character"])],
                 title_sources: ctx.pick(
                     &[("bangumi", "name_cn")],
                     &[("bangumi", "name")],
@@ -1059,6 +1085,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "參加的演出、展覽與活動。",
                 ),
                 providers: &[],
+                external_types: &[],
                 title_sources: &[],
                 original_title: None,
                 cover_sources: &[],
@@ -1399,6 +1426,14 @@ struct TypeSpec {
     /// exist in the provider catalog (a registry test enforces it — unknown ids
     /// are NOT silently filtered).
     providers: &'static [&'static str],
+    /// Per-provider `externalTypes` constraint for the generated external-ref
+    /// fields, `(provider id, type values)`. Multi-type providers (Bangumi,
+    /// TMDB, MAL, TheTVDB, MusicBrainz) deliberately ship no catalog default —
+    /// but a preset knows its subject, so it pins the constraint here and its
+    /// searches don't return every media kind the provider indexes. Providers
+    /// absent from this list fall back to the catalog default. Every value must
+    /// be one of the provider's type options (registry test enforced).
+    external_types: &'static [(&'static str, &'static [&'static str])],
     /// Sources for the primary title field.
     title_sources: Sources,
     /// A separate original-title field with these sources; `None` for types
@@ -1563,7 +1598,12 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
                 &item.label,
             );
             external.external_ref = Some((*provider).to_string());
-            external.external_types = item.default_external_types.clone();
+            external.external_types = spec
+                .external_types
+                .iter()
+                .find(|(id, _)| id == provider)
+                .map(|(_, types)| types.iter().map(|t| (*t).to_string()).collect())
+                .unwrap_or_else(|| item.default_external_types.clone());
             fields.push(external);
         }
     }
@@ -2003,12 +2043,30 @@ mod tests {
                     );
                 }
                 if let Some(provider) = &field.external_ref {
-                    assert!(
-                        catalog_ids.contains(provider.as_str()),
-                        "{}.{}: externalRef {provider} not in the catalog",
-                        config.id,
-                        field.field
-                    );
+                    let item = ctx
+                        .catalog
+                        .iter()
+                        .find(|item| item.id == *provider)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}.{}: externalRef {provider} not in the catalog",
+                                config.id, field.field
+                            )
+                        });
+                    // The type constraint is literal per preset too: every
+                    // value must be one the provider actually offers.
+                    for external_type in &field.external_types {
+                        assert!(
+                            item.types
+                                .iter()
+                                .any(|option| option.value == *external_type),
+                            "{}.{}: {} declares no external type {:?}",
+                            config.id,
+                            field.field,
+                            provider,
+                            external_type
+                        );
+                    }
                 }
             }
             if !config.external_priority.is_empty() {
@@ -2278,10 +2336,12 @@ mod tests {
             .external_fields
             .iter()
             .any(|m| m.source == "bangumi" && m.field == "name_cn"));
-        // External-ref field carries the provider id and default types.
+        // External-ref field carries the provider id and the preset's type
+        // constraint — Bangumi is multi-type, so anime pins subject type 2.
         let bgm = find_field(&anime, "bangumi_url").expect("bangumi_url");
         assert_eq!(bgm.external_ref.as_deref(), Some("bangumi"));
         assert_eq!(bgm.field_type, FieldType::ExternalRef);
+        assert_eq!(bgm.external_types, ["2"]);
         // Summary body section wired from providers.
         assert!(anime
             .body_sections
