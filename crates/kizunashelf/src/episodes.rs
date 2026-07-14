@@ -8,7 +8,7 @@
 //! it composes [`crate::markdown`] (heading sections) with a list-item regex.
 
 use crate::contract::{EntityEpisodes, Episode, EpisodeGroup};
-use crate::markdown::{find_section, headings, splice_section};
+use crate::markdown::{find_section, headings, splice_section, FenceState};
 use crate::types::{
     BodySection, BodySectionKind, EntityTypeConfig, EpisodeDate, EpisodeDateRole, EpisodeProgress,
     EpisodeTracking,
@@ -31,10 +31,12 @@ fn resolved_tracking(section: &BodySection) -> EpisodeTracking {
 
 fn item_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    // indent, marker, optional task-list checkbox, content.
-    RE.get_or_init(|| {
-        Regex::new(r"^[ \t]*([-*+]|\d+[.)])[ \t]+(?:\[([ xX])\][ \t]+)?(.*)$").unwrap()
-    })
+    // marker, optional task-list checkbox, content. Column-0 items only: unlike
+    // headings/fences (absolute ≤3-space rule), list nesting is relative, and a
+    // bullet 2 spaces under a column-0 item is already its child — so any indented
+    // bullet is content nested *under* an episode (the item's tail), not an
+    // episode. `render_item` always emits at column 0, so round-trips are exact.
+    RE.get_or_init(|| Regex::new(r"^([-*+]|\d+[.)])[ \t]+(?:\[([ xX])\][ \t]+)?(.*)$").unwrap())
 }
 
 /// The leading episode number in an item's content (e.g. `12.5`, `#5`, `E12`).
@@ -130,10 +132,21 @@ fn strip_leading_separator(value: &str) -> &str {
 /// An absent heading yields an empty (but configured) result.
 pub fn parse_episodes(body: &str, section: &BodySection) -> EntityEpisodes {
     let tracking = resolved_tracking(section);
-    let parsed = parse_section(body, &section.heading);
-    let total = parsed.groups.iter().map(|group| group.items.len()).sum();
-    let watched = parsed
+    let layout = parse_layout(body, &section.heading);
+    let groups: Vec<EpisodeGroup> = layout
         .groups
+        .iter()
+        .map(|group| EpisodeGroup {
+            label: group.label.clone(),
+            items: group
+                .items
+                .iter()
+                .map(|item| item.episode.clone())
+                .collect(),
+        })
+        .collect();
+    let total = groups.iter().map(|group| group.items.len()).sum();
+    let watched = groups
         .iter()
         .flat_map(|group| &group.items)
         .filter(|episode| episode.watched)
@@ -141,11 +154,11 @@ pub fn parse_episodes(body: &str, section: &BodySection) -> EntityEpisodes {
     EntityEpisodes {
         heading: section.heading.clone(),
         tracking,
-        groups: parsed.groups,
+        groups,
         total,
         watched,
-        description: parsed.description,
-        trailing: parsed.trailing,
+        description: layout.description.trim().to_string(),
+        trailing: layout.trailing.trim().to_string(),
     }
 }
 
@@ -155,8 +168,9 @@ pub fn parse_episodes(body: &str, section: &BodySection) -> EntityEpisodes {
 /// record, so the calendar never re-reads bodies.
 pub fn episode_calendar_dates(body: &str, section: &BodySection) -> Vec<EpisodeDate> {
     let mut dates = Vec::new();
-    for group in parse_section(body, &section.heading).groups {
+    for group in parse_layout(body, &section.heading).groups {
         for item in group.items {
+            let item = item.episode;
             if let Some(date) = non_empty_date(&item.date) {
                 dates.push(EpisodeDate {
                     key: item.key.clone(),
@@ -198,8 +212,13 @@ pub fn episode_progress(body: &str, section: &BodySection) -> EpisodeProgress {
     let content = &body[found.content_start..found.end];
     let mut total = 0;
     let mut watched = 0;
+    let mut fence = FenceState::default();
     for line in content.lines() {
-        if let Some(item) = parse_item(line) {
+        let text = line.strip_suffix('\r').unwrap_or(line);
+        if fence.observe(text) || fence.in_fence() {
+            continue;
+        }
+        if let Some(item) = parse_item(text) {
             total += 1;
             if item.watched {
                 watched += 1;
@@ -209,30 +228,44 @@ pub fn episode_progress(body: &str, section: &BodySection) -> EpisodeProgress {
     EpisodeProgress { watched, total }
 }
 
-/// The parsed episodes section: the structured groups plus the free prose that
-/// sits *above* the first list item/sub-heading (`description`) and *below* the
-/// last list item (`trailing`). The prose is kept so the dedicated episodes UI can
-/// display hand-written notes the user wraps around the list — the body's generic
+/// The parsed episodes section with its full **layout**: the structured items plus
+/// every non-item line captured verbatim, so a rewrite re-emits the user's own
+/// text instead of dropping it — the prose above the first structural line
+/// (`description`), each group's `lead` (lines between its sub-heading and first
+/// item), each item's `tail` (nested bullets/continuation lines under it), and the
+/// prose after the list (`trailing`). Description/trailing also surface on the
+/// contract so the dedicated episodes UI can display them — the body's generic
 /// render drops the whole section to avoid duplication.
-struct ParsedSection {
-    groups: Vec<EpisodeGroup>,
+struct SectionLayout {
     description: String,
+    groups: Vec<GroupLayout>,
     trailing: String,
 }
 
-fn parse_section(body: &str, heading: &str) -> ParsedSection {
+struct GroupLayout {
+    label: String,
+    /// Verbatim lines between the group sub-heading and its first item.
+    lead: String,
+    items: Vec<ItemLayout>,
+}
+
+struct ItemLayout {
+    episode: Episode,
+    /// Verbatim lines under the item (up to the next item/sub-heading), re-attached
+    /// to the same episode on rewrite.
+    tail: String,
+}
+
+fn parse_layout(body: &str, heading: &str) -> SectionLayout {
+    let mut layout = SectionLayout {
+        description: String::new(),
+        groups: Vec::new(),
+        trailing: String::new(),
+    };
     let Some(section) = find_section(body, heading) else {
-        return ParsedSection {
-            groups: Vec::new(),
-            description: String::new(),
-            trailing: String::new(),
-        };
+        return layout;
     };
     let content = &body[section.content_start..section.end];
-    // Byte offset of the first structural line (a group sub-heading or list item)
-    // and the end of the last list item — the boundaries of the surrounding prose.
-    let mut first_struct: Option<usize> = None;
-    let mut last_item_end: Option<usize> = None;
     // Sub-headings inside the section are group labels (find_section already stopped
     // at the next same/higher heading, so every heading here is deeper).
     let group_starts: std::collections::HashMap<usize, String> = headings(content)
@@ -240,87 +273,200 @@ fn parse_section(body: &str, heading: &str) -> ParsedSection {
         .map(|h| (h.start, h.text))
         .collect();
 
-    let mut groups: Vec<EpisodeGroup> = Vec::new();
-    let mut current = EpisodeGroup {
-        label: String::new(),
-        items: Vec::new(),
-    };
+    // `current` starts as `None` so everything before the first structural line
+    // (sub-heading or item) accumulates as the description.
+    let mut current: Option<GroupLayout> = None;
+    let mut fence = FenceState::default();
     let mut offset = 0usize;
     for line in content.split_inclusive('\n') {
         let line_start = offset;
         offset += line.len();
-        if let Some(label) = group_starts.get(&line_start) {
-            first_struct.get_or_insert(line_start);
-            if !current.label.is_empty() || !current.items.is_empty() {
-                groups.push(std::mem::replace(
-                    &mut current,
-                    EpisodeGroup {
-                        label: String::new(),
-                        items: Vec::new(),
-                    },
-                ));
-            }
-            current.label = label.clone();
-            continue;
-        }
         let text = line.strip_suffix('\n').unwrap_or(line);
-        if let Some(item) = parse_item(text) {
-            first_struct.get_or_insert(line_start);
-            last_item_end = Some(offset);
-            let (content, date, done) = extract_dates(item.content);
-            let (key, title) = split_key_title(&content, item.marker_number);
-            current.items.push(Episode {
-                key,
-                title,
-                watched: item.watched,
-                date,
-                done,
-            });
+        let text = text.strip_suffix('\r').unwrap_or(text);
+        // Fence delimiters and lines inside a code block are never structural —
+        // they flow into the surrounding description/lead/tail verbatim.
+        let in_code = fence.observe(text) || fence.in_fence();
+        if !in_code {
+            if let Some(label) = group_starts.get(&line_start) {
+                if let Some(group) = current.take() {
+                    layout.groups.push(group);
+                }
+                current = Some(GroupLayout {
+                    label: label.clone(),
+                    lead: String::new(),
+                    items: Vec::new(),
+                });
+                continue;
+            }
+            if let Some(item) = parse_item(text) {
+                let (content, date, done) = extract_dates(item.content);
+                let (key, title) = split_key_title(&content, item.marker_number);
+                let group = current.get_or_insert_with(|| GroupLayout {
+                    label: String::new(),
+                    lead: String::new(),
+                    items: Vec::new(),
+                });
+                group.items.push(ItemLayout {
+                    episode: Episode {
+                        key,
+                        title,
+                        watched: item.watched,
+                        date,
+                        done,
+                    },
+                    tail: String::new(),
+                });
+                continue;
+            }
+        }
+        match current.as_mut() {
+            Some(group) => match group.items.last_mut() {
+                Some(item) => item.tail.push_str(line),
+                None => group.lead.push_str(line),
+            },
+            None => layout.description.push_str(line),
         }
     }
-    if !current.label.is_empty() || !current.items.is_empty() {
-        groups.push(current);
+    if let Some(group) = current.take() {
+        layout.groups.push(group);
     }
 
-    // Prose above the first structural line, and after the last list item. With no
-    // structure at all, the whole section is treated as leading prose.
-    let description = match first_struct {
-        Some(start) => content[..start].trim(),
-        None => content.trim(),
+    // The overall last item's tail ran to the section end, so it also swallowed the
+    // trailing prose; split it back out at the first column-0 prose line.
+    if let Some(item) = layout
+        .groups
+        .last_mut()
+        .and_then(|group| group.items.last_mut())
+    {
+        let (tail, trailing) = split_trailing(&item.tail);
+        item.tail = tail;
+        layout.trailing = trailing;
     }
-    .to_string();
-    let trailing = match last_item_end {
-        Some(end) => content[end..].trim(),
-        None => "",
-    }
-    .to_string();
-
-    ParsedSection {
-        groups,
-        description,
-        trailing,
-    }
+    layout
 }
 
-/// Renders the episodes section body (without the heading line) for `splice_section`.
-fn render_groups(groups: &[EpisodeGroup], tracking: EpisodeTracking) -> String {
+/// Splits a last-item tail at the first non-blank column-0 line: indented and
+/// blank lines stay nested under the item, everything from the first flush-left
+/// prose line onward is the section's trailing block.
+fn split_trailing(tail: &str) -> (String, String) {
+    let mut offset = 0usize;
+    for line in tail.split_inclusive('\n') {
+        let text = line.trim_end_matches(['\n', '\r']);
+        if !text.trim().is_empty() && !text.starts_with([' ', '\t']) {
+            return (tail[..offset].to_string(), tail[offset..].to_string());
+        }
+        offset += line.len();
+    }
+    (tail.to_string(), String::new())
+}
+
+/// Renders the episodes section body (without the heading line) for
+/// `splice_section`, re-attaching the old layout's prose: the description above
+/// the list, each matched group's lead, each matched item's tail, and the
+/// trailing prose — so a rewrite only canonicalizes the item lines themselves and
+/// never drops hand-written text.
+fn render_section(
+    layout: SectionLayout,
+    groups: &[EpisodeGroup],
+    tracking: EpisodeTracking,
+) -> String {
     let mut blocks: Vec<String> = Vec::new();
+    let description = layout.description.trim();
+    if !description.is_empty() {
+        blocks.push(description.to_string());
+    }
+    let mut old_groups: Vec<Option<GroupLayout>> = layout.groups.into_iter().map(Some).collect();
     for group in groups {
+        let old = take_group(&mut old_groups, &group.label);
         let mut lines: Vec<String> = Vec::new();
         let label = group.label.trim();
         if !label.is_empty() {
             lines.push(format!("### {label}"));
             lines.push(String::new());
         }
-        for episode in &group.items {
+        if let Some(old) = &old {
+            let lead = old.lead.trim();
+            if !lead.is_empty() {
+                lines.extend(lead.lines().map(str::to_string));
+                lines.push(String::new());
+            }
+        }
+        let tails = item_tails(old.as_ref().map_or(&[], |old| &old.items), &group.items);
+        for (episode, tail) in group.items.iter().zip(&tails) {
             lines.push(render_item(episode, tracking));
+            let tail = tail.trim_end();
+            if !tail.is_empty() {
+                lines.extend(tail.lines().map(str::to_string));
+            }
         }
         let block = lines.join("\n").trim_end().to_string();
         if !block.is_empty() {
             blocks.push(block);
         }
     }
+    let trailing = layout.trailing.trim();
+    if !trailing.is_empty() {
+        blocks.push(trailing.to_string());
+    }
     blocks.join("\n\n")
+}
+
+/// Takes (at most once) the old layout group matching `label`, so duplicate labels
+/// pair up in order.
+fn take_group(groups: &mut [Option<GroupLayout>], label: &str) -> Option<GroupLayout> {
+    let index = groups
+        .iter()
+        .position(|group| group.as_ref().is_some_and(|g| same_label(&g.label, label)))?;
+    groups[index].take()
+}
+
+/// Pairs each episode being rendered with the tail captured for the same item in
+/// the old layout: a unique key match wins, then position — so toggles and merges
+/// (which keep existing order) re-attach every tail, and newly appended items get
+/// none.
+fn item_tails(old: &[ItemLayout], new: &[Episode]) -> Vec<String> {
+    let mut tails: Vec<Option<String>> = vec![None; new.len()];
+    let mut used = vec![false; old.len()];
+    for (index, episode) in new.iter().enumerate() {
+        let key = episode.key.trim();
+        if key.is_empty() {
+            continue;
+        }
+        let mut matching = old
+            .iter()
+            .enumerate()
+            .filter(|(_, item)| item.episode.key.trim() == key);
+        let first = matching.next();
+        if matching.next().is_some() {
+            // Duplicate keys — fall through to the positional pass.
+            continue;
+        }
+        if let Some((position, item)) = first {
+            if !used[position] {
+                used[position] = true;
+                tails[index] = Some(item.tail.clone());
+            }
+        }
+    }
+    for (index, episode) in new.iter().enumerate() {
+        if tails[index].is_some() {
+            continue;
+        }
+        let Some(item) = old.get(index) else {
+            continue;
+        };
+        if used[index] {
+            continue;
+        }
+        let old_key = item.episode.key.trim();
+        let new_key = episode.key.trim();
+        if !old_key.is_empty() && !new_key.is_empty() && old_key != new_key {
+            continue;
+        }
+        used[index] = true;
+        tails[index] = Some(item.tail.clone());
+    }
+    tails.into_iter().map(Option::unwrap_or_default).collect()
 }
 
 fn render_item(episode: &Episode, tracking: EpisodeTracking) -> String {
@@ -353,9 +499,12 @@ fn emoji_suffix(emoji: &str, date: Option<&str>) -> String {
 }
 
 /// Renders `groups` back into `body`'s episodes section (replacing only that
-/// section; appending the heading if absent). The body stays the source of truth.
+/// section; appending the heading if absent). The body stays the source of truth:
+/// the section's existing layout is re-parsed so the surrounding prose, group
+/// leads, and per-item nested lines are re-emitted rather than dropped.
 pub fn apply_episodes(body: &str, section: &BodySection, groups: &[EpisodeGroup]) -> String {
-    let rendered = render_groups(groups, resolved_tracking(section));
+    let layout = parse_layout(body, &section.heading);
+    let rendered = render_section(layout, groups, resolved_tracking(section));
     splice_section(body, &section.heading, &rendered)
 }
 
@@ -678,6 +827,82 @@ mod tests {
         let parsed = parse_episodes(body, &section());
         assert_eq!(parsed.groups[0].items[0].key, "1");
         assert_eq!(parsed.groups[0].items[0].title, "Pilot");
+    }
+
+    #[test]
+    fn nested_bullets_are_item_tails_not_episodes() {
+        // A sub-bullet indented under an episode is the user's note, not an episode:
+        // it must not count, and both parse paths must agree.
+        let body = "## Episodes\n- [ ] 1 · Pilot\n  - [ ] extra sub-task\n- [ ] 2 · Dawn\n";
+        let parsed = parse_episodes(body, &section());
+        assert_eq!(parsed.total, 2);
+        assert_eq!(parsed.groups[0].items[1].title, "Dawn");
+        let progress = episode_progress(body, &section());
+        assert_eq!(progress.total, 2);
+    }
+
+    #[test]
+    fn toggle_round_trips_prose_and_nested_bullets_byte_for_byte() {
+        // The full layout: description prose, a nested note under an item, and
+        // trailing prose. Toggling one checkbox must touch only that item's line.
+        let body = "## Episodes\n\nWatch order notes.\n\n- [ ] 1 · Pilot\n  - my nested note\n- [ ] 2 · Dawn\n\nMore after the list.\n";
+        let checked =
+            set_episode_watched(body, &section(), "", "1", 0, true, "2024-01-17").unwrap();
+        assert_eq!(
+            checked,
+            "## Episodes\n\nWatch order notes.\n\n- [x] 1 · Pilot ✅ 2024-01-17\n  - my nested note\n- [ ] 2 · Dawn\n\nMore after the list.\n"
+        );
+        // The nested note is still not an episode after the rewrite.
+        assert_eq!(parse_episodes(&checked, &section()).total, 2);
+
+        // Unchecking restores the original body exactly.
+        let unchecked =
+            set_episode_watched(&checked, &section(), "", "1", 0, false, "2024-02-01").unwrap();
+        assert_eq!(unchecked, body);
+    }
+
+    #[test]
+    fn apply_with_unchanged_groups_is_the_identity() {
+        let body = "## Episodes\n\nIntro.\n\n### Season 1\n\nGroup notes.\n\n- [x] 1 · Pilot\n  - note under pilot\n- [ ] 2 · Dawn\n\nOutro.\n";
+        let parsed = parse_episodes(body, &section());
+        assert_eq!(parsed.description, "Intro.");
+        assert_eq!(parsed.trailing, "Outro.");
+        let next = apply_episodes(body, &section(), &parsed.groups);
+        assert_eq!(next, body);
+    }
+
+    #[test]
+    fn merge_write_keeps_leads_tails_and_prose_around_appended_items() {
+        // The import path: merge provider episodes into a section the user has
+        // annotated. Every hand-written line must survive the rewrite.
+        let body = "## Episodes\n\nIntro.\n\n### Season 1\n\nGroup notes.\n\n- [x] 1 · Pilot\n  - note under pilot\n\nOutro.\n";
+        let existing = parse_episodes(body, &section());
+        let incoming = vec![EpisodeGroup {
+            label: "Season 1".to_string(),
+            items: vec![unwatched("1", "Pilot"), unwatched("2", "Dawn")],
+        }];
+        let merged = merge_episodes(&existing, &incoming, false);
+        let next = apply_episodes(body, &section(), &merged);
+        assert_eq!(
+            next,
+            "## Episodes\n\nIntro.\n\n### Season 1\n\nGroup notes.\n\n- [x] 1 · Pilot\n  - note under pilot\n- [ ] 2 · Dawn\n\nOutro.\n"
+        );
+    }
+
+    #[test]
+    fn item_lines_inside_code_fences_are_content_not_episodes() {
+        let body = "## Episodes\n\n- [ ] 1 · A\n\n```\n- [ ] fake item\n### fake group\n```\n";
+        let parsed = parse_episodes(body, &section());
+        assert_eq!(parsed.total, 1);
+        assert_eq!(parsed.groups.len(), 1);
+        assert_eq!(episode_progress(body, &section()).total, 1);
+        // A toggle rewrite keeps the fenced block intact.
+        let checked =
+            set_episode_watched(body, &section(), "", "1", 0, true, "2024-01-17").unwrap();
+        assert_eq!(
+            checked,
+            "## Episodes\n\n- [x] 1 · A ✅ 2024-01-17\n\n```\n- [ ] fake item\n### fake group\n```\n"
+        );
     }
 
     #[test]
