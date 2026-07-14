@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { I18n, MessageDescriptor } from "@lingui/core";
 import { msg, plural } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
@@ -151,6 +151,17 @@ export function ImportWizardPage() {
     setSkip(new Set());
   }
 
+  // Stable, so the memoized plan rows don't all re-render on every toggle —
+  // plans from a MAL/Goodreads export routinely run to thousands of rows.
+  const onToggleSkip = useCallback((index: number) => {
+    setSkip((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }, []);
+
   const start = useMutation({
     mutationFn: () => {
       // `language` localizes review-list display titles where the source
@@ -199,7 +210,10 @@ export function ImportWizardPage() {
     (source?.input === "csv" ? csvText.trim().length > 0 : username.trim().length > 0) &&
     (source?.available ?? false);
 
-  const willCreate = (plan?.items ?? []).filter((item) => item.state === "willCreate");
+  const willCreate = useMemo(
+    () => (plan?.items ?? []).filter((item) => item.state === "willCreate"),
+    [plan],
+  );
   const toCreate = willCreate.filter((item) => !skip.has(item.index)).length;
 
   return (
@@ -268,14 +282,7 @@ export function ImportWizardPage() {
               onBucketType={(bucket, type) => setBucketTypes((prev) => ({ ...prev, [bucket]: type }))}
               effectiveType={effectiveType}
               skip={skip}
-              onToggleSkip={(index) =>
-                setSkip((prev) => {
-                  const next = new Set(prev);
-                  if (next.has(index)) next.delete(index);
-                  else next.add(index);
-                  return next;
-                })
-              }
+              onToggleSkip={onToggleSkip}
               typeLabels={typeLabels}
               providerLabels={providerLabels}
             />
@@ -476,13 +483,43 @@ function PlanReview({
   providerLabels: Map<string, string>;
 }) {
   const { i18n } = useLingui();
+  const items = useMemo(() => plan?.items ?? [], [plan]);
+  const counts = useMemo(
+    () => ({
+      willCreate: items.filter((item) => item.state === "willCreate").length,
+      exists: items.filter((item) => item.state === "exists").length,
+      needsReview: items.filter((item) => item.state === "needsReview").length,
+    }),
+    [items],
+  );
+
+  // Large exports (a MAL/Goodreads library is routinely 1,000–5,000 rows) are
+  // revealed in windows instead of mounting every row at once: a sentinel below
+  // the list grows the window as the user scrolls, and "Show all" mounts the
+  // rest for anyone who wants to Ctrl-F the plan. Skip decisions key off
+  // `item.index`, so windowing never affects what the commit sends.
+  const [visibleCount, setVisibleCount] = useState(PLAN_WINDOW);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const total = items.length;
+  const hasMore = visibleCount < total;
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((prev) => Math.min(prev + PLAN_WINDOW, total));
+        }
+      },
+      // Grow before the sentinel is actually on screen, so scrolling feels
+      // continuous rather than stopping at each window edge.
+      { rootMargin: "600px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, total]);
+
   if (!plan) return null;
-  const items = plan.items;
-  const counts = {
-    willCreate: items.filter((item) => item.state === "willCreate").length,
-    exists: items.filter((item) => item.state === "exists").length,
-    needsReview: items.filter((item) => item.state === "needsReview").length,
-  };
   const ambiguous = plan.buckets.filter((bucket) => bucket.candidateTypes.length > 1);
   const unmatched = plan.buckets.filter((bucket) => bucket.candidateTypes.length === 0);
   const unmatchedLabels = unmatched
@@ -548,21 +585,44 @@ function PlanReview({
       ) : null}
 
       <ul className="flex flex-col gap-1.5">
-        {items.map((item) => (
+        {items.slice(0, visibleCount).map((item) => (
           <PlanItemRow
             key={item.index}
             item={item}
             skipped={skip.has(item.index)}
-            onToggleSkip={() => onToggleSkip(item.index)}
+            onToggleSkip={onToggleSkip}
             providerLabels={providerLabels}
           />
         ))}
       </ul>
+      {hasMore ? (
+        <div
+          ref={sentinelRef}
+          className="flex items-center justify-center gap-3 p-2 text-xs text-muted-foreground"
+        >
+          <span className="tabular-nums">
+            <Trans>
+              Showing {visibleCount} of {total}
+            </Trans>
+          </span>
+          <Button variant="outline" size="sm" onClick={() => setVisibleCount(total)}>
+            <Trans>Show all</Trans>
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function PlanItemRow({
+/// How many plan rows mount per window; the scroll sentinel adds another
+/// window each time it comes near the viewport.
+const PLAN_WINDOW = 200;
+
+// Memoized (with a stable `onToggleSkip`) so ticking one checkbox re-renders
+// one row, not every mounted row of a multi-thousand-item plan. The
+// `content-visibility` classes let the browser skip layout/paint for rows
+// scrolled out of view once mounted.
+const PlanItemRow = memo(function PlanItemRow({
   item,
   skipped,
   onToggleSkip,
@@ -570,7 +630,7 @@ function PlanItemRow({
 }: {
   item: ImportPlanItem;
   skipped: boolean;
-  onToggleSkip: () => void;
+  onToggleSkip: (index: number) => void;
   providerLabels: Map<string, string>;
 }) {
   const { t, i18n } = useLingui();
@@ -579,6 +639,7 @@ function PlanItemRow({
     <li
       className={[
         "flex items-start gap-3 rounded-md border p-2.5 text-sm",
+        "[contain-intrinsic-size:auto_4rem] [content-visibility:auto]",
         skipped ? "opacity-50" : "",
       ].join(" ")}
     >
@@ -586,7 +647,7 @@ function PlanItemRow({
         <input
           type="checkbox"
           checked={!skipped}
-          onChange={onToggleSkip}
+          onChange={() => onToggleSkip(item.index)}
           className="mt-1"
           aria-label={t`Include ${item.title}`}
         />
@@ -610,7 +671,7 @@ function PlanItemRow({
       </div>
     </li>
   );
-}
+});
 
 function StatePill({ item }: { item: ImportPlanItem }) {
   const { i18n } = useLingui();
