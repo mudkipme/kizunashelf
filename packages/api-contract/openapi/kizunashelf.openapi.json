@@ -4731,12 +4731,7 @@
             "type": "string"
           },
           "field": {
-            "description": "The relation field to add to `type_id`.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FieldConfig"
-              }
-            ]
+            "$ref": "#/components/schemas/FieldConfig"
           }
         },
         "required": [

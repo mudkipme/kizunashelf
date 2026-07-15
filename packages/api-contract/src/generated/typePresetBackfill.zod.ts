@@ -36,7 +36,7 @@ export const TypePresetBackfill = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-}).describe('The relation field to add to `type_id`.')
+})
 }).describe('A proposed relation field to add to an existing type.')
 
 export type TypePresetBackfill = zod.input<typeof TypePresetBackfill>;

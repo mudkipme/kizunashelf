@@ -297,7 +297,11 @@ pub struct TypePresetBackfill {
     /// The preset (newly added) that this relation targets.
     pub preset_id: String,
     pub preset_label: String,
-    /// The relation field to add to `type_id`.
+    // The relation field to add to `type_id`. Deliberately NOT a doc comment:
+    // schemars encodes a described required ref as `allOf: [$ref]`, which
+    // swift-openapi-generator turns into an inline `fieldPayload` wrapper
+    // reached through `.value1`. Undescribed, it stays a plain `$ref` and the
+    // Swift client sees `FieldConfig` directly.
     pub field: crate::types::FieldConfig,
 }
 

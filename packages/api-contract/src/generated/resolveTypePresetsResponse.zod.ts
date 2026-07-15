@@ -100,7 +100,7 @@ export const ResolveTypePresetsResponse = zod.object({
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
-}).describe('The relation field to add to `type_id`.')
+})
 }).describe('A proposed relation field to add to an existing type.')).optional().describe('Proposed relation fields to add to \*existing\* types so they can link to a\nnewly added type (the \"add one, then another later\" case). Proposals only —\nthe client applies the ones the user accepts.'),
   "homeSections": zod.array(zod.object({
   "id": zod.string(),
