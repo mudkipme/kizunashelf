@@ -18,6 +18,10 @@ export const importJobNeedsReviewMin = 0;
 
 export const importJobFailedMin = 0;
 
+export const importJobEpisodesTotalMin = 0;
+
+export const importJobEpisodesProcessedMin = 0;
+
 export const importJobPlanOneItemsItemIndexMin = 0;
 
 export const importJobPlanOneItemsItemUserDataWatchedCountMin = 0;
@@ -33,6 +37,8 @@ export const ImportJob = zod.object({
   "skipped": zod.number().min(importJobSkippedMin),
   "needsReview": zod.number().min(importJobNeedsReviewMin),
   "failed": zod.number().min(importJobFailedMin),
+  "episodesTotal": zod.number().min(importJobEpisodesTotalMin).nullish().describe('Present once the post-create episode-enrichment phase starts: how many\ncreated entities will have their episodes fetched, and how many are done.\nOne provider fetch per entity, so on big imports this phase outlasts the\ncreate phase — clients show it as its own progress instead of sitting on\na full `processed`\/`total` bar while the job is still `committing`.'),
+  "episodesProcessed": zod.number().min(importJobEpisodesProcessedMin).nullish(),
   "errors": zod.array(zod.string()).optional(),
   "startedAt": zod.string(),
   "finishedAt": zod.string().nullish(),

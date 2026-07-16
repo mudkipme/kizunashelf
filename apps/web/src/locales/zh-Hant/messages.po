@@ -1096,6 +1096,10 @@ msgstr "外部類型"
 msgid "Fetch & plan"
 msgstr "擷取並規劃"
 
+#: src/pages/import-wizard-page.tsx:800
+msgid "Fetching episodes…"
+msgstr "正在取得劇集…"
+
 #. placeholder {0}: source?.label ?? sourceId
 #: src/pages/import-wizard-page.tsx:271
 msgid "Fetching your library from {0}…"

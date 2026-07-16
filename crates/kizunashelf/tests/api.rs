@@ -4111,6 +4111,8 @@ async fn import_plan_then_commit_creates_entities_with_user_data() {
     let done = await_import_status(&app, &id, "completed").await;
     assert_eq!(done["created"], 1, "{done}");
     assert_eq!(done["failed"], 0, "{done}");
+    // Enrichment was off, so the episodes-phase counters never appear.
+    assert!(done["episodesTotal"].is_null(), "{done}");
 
     // The entity file carries the mapped ref + cover + title and the user data
     // applied through the schema roles (status via statusValues, rating, the
@@ -4165,6 +4167,36 @@ async fn import_dedupes_already_created_entities_on_rerun() {
             assert!(done["skipped"].as_u64().unwrap() >= 1, "{done}");
         }
     }
+}
+
+#[tokio::test]
+async fn import_commit_reports_episode_enrichment_progress() {
+    let (app, _vault, _temp) = build_import_server(true);
+    let (_, job) = request_json(
+        &app,
+        Method::POST,
+        "/api/import-jobs",
+        Some(json!({ "source": "yamtrack", "input": { "csvText": YAMTRACK_CSV } })),
+    )
+    .await;
+    let id = job["id"].as_str().unwrap().to_string();
+    await_import_status(&app, &id, "planned").await;
+    request_json(
+        &app,
+        Method::POST,
+        &format!("/api/import-jobs/{id}/commit"),
+        Some(json!({
+            "options": { "importUserData": true, "importEpisodes": true, "markProgress": true }
+        })),
+    )
+    .await;
+    let done = await_import_status(&app, &id, "completed").await;
+    assert_eq!(done["created"], 1, "{done}");
+    // The enrichment phase reports its own progress — one step per created
+    // entity (here a no-op step: the type has no episodes section), all counted
+    // by the time the job completes.
+    assert_eq!(done["episodesTotal"], 1, "{done}");
+    assert_eq!(done["episodesProcessed"], 1, "{done}");
 }
 
 #[tokio::test]

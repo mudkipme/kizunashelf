@@ -1604,6 +1604,15 @@ pub struct ImportJob {
     pub skipped: u32,
     pub needs_review: u32,
     pub failed: u32,
+    /// Present once the post-create episode-enrichment phase starts: how many
+    /// created entities will have their episodes fetched, and how many are done.
+    /// One provider fetch per entity, so on big imports this phase outlasts the
+    /// create phase — clients show it as its own progress instead of sitting on
+    /// a full `processed`/`total` bar while the job is still `committing`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episodes_total: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episodes_processed: Option<u32>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub errors: Vec<String>,
     pub started_at: String,

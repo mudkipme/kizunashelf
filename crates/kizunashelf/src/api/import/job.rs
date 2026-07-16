@@ -435,32 +435,47 @@ pub(super) async fn run_commit_job(
     }
 
     // Episode enrichment for the created entities (fail-safe): reload once so the
-    // new files are indexed, then import each source's episodes.
+    // new files are indexed, then import each source's episodes. One provider
+    // fetch per entity means this phase can dwarf the create phase on big
+    // imports, so it reports its own `episodes_*` progress — without it, clients
+    // sit on a full `processed`/`total` bar while the job is still `committing`.
     if request.options.import_episodes && !created.is_empty() && !cancel.load(Ordering::Relaxed) {
+        state
+            .update_import_job(&job_id, |job| {
+                job.episodes_total = Some(created.len() as u32);
+                job.episodes_processed = Some(0);
+            })
+            .await;
         state.invalidate_cache().await;
         if let Ok(reloaded) = get_library(&state).await {
             for (path, watched) in &created {
                 if cancel.load(Ordering::Relaxed) {
                     break;
                 }
-                let Some(entity_id) = reloaded
+                let entity_id = reloaded
                     .record_by_path(path)
-                    .map(|record| record.summary.id.clone())
-                else {
-                    continue;
-                };
-                if let Some(result) =
-                    import_new_entity_episodes_marked(&state, &reloaded, &entity_id, *watched, None)
-                        .await
-                {
-                    if let Some(error) = result.error {
-                        state
-                            .update_import_job(&job_id, |job| {
-                                push_error(job, format!("episodes: {error}"));
-                            })
-                            .await;
+                    .map(|record| record.summary.id.clone());
+                if let Some(entity_id) = entity_id {
+                    if let Some(result) = import_new_entity_episodes_marked(
+                        &state, &reloaded, &entity_id, *watched, None,
+                    )
+                    .await
+                    {
+                        if let Some(error) = result.error {
+                            state
+                                .update_import_job(&job_id, |job| {
+                                    push_error(job, format!("episodes: {error}"));
+                                })
+                                .await;
+                        }
                     }
                 }
+                state
+                    .update_import_job(&job_id, |job| {
+                        job.episodes_processed =
+                            Some(job.episodes_processed.unwrap_or(0).saturating_add(1));
+                    })
+                    .await;
             }
         }
     }

@@ -790,6 +790,29 @@ function JobProgress({ job }: { job: ImportJob }) {
       <div className="mt-2 h-2 rounded-sm bg-muted">
         <div className="h-2 rounded-sm bg-primary" style={{ width: `${percent}%` }} />
       </div>
+      {job.episodesTotal != null && !done ? (
+        // The post-create enrichment phase (one provider fetch per created
+        // entity) can outlast the create phase, so it gets its own bar — without
+        // it the job looks stuck on a full bar while still committing.
+        <>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>
+              <Trans>Fetching episodes…</Trans>
+            </span>
+            <span className="tabular-nums">
+              {job.episodesProcessed ?? 0} / {job.episodesTotal}
+            </span>
+          </div>
+          <div className="mt-2 h-2 rounded-sm bg-muted">
+            <div
+              className="h-2 rounded-sm bg-primary"
+              style={{
+                width: `${Math.round(((job.episodesProcessed ?? 0) / Math.max(job.episodesTotal, 1)) * 100)}%`,
+              }}
+            />
+          </div>
+        </>
+      ) : null}
       {errors.length > 0 ? (
         <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
           {errors.slice(0, 8).map((message, index) => (

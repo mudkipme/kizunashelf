@@ -1096,6 +1096,10 @@ msgstr "External types"
 msgid "Fetch & plan"
 msgstr "Fetch & plan"
 
+#: src/pages/import-wizard-page.tsx:800
+msgid "Fetching episodes…"
+msgstr "Fetching episodes…"
+
 #. placeholder {0}: source?.label ?? sourceId
 #: src/pages/import-wizard-page.tsx:271
 msgid "Fetching your library from {0}…"

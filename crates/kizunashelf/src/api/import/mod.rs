@@ -122,6 +122,8 @@ pub(crate) async fn create_import_job(
         skipped: 0,
         needs_review: 0,
         failed: 0,
+        episodes_total: None,
+        episodes_processed: None,
         errors: Vec::new(),
         started_at: now_iso(),
         finished_at: None,

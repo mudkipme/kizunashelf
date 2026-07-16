@@ -1096,6 +1096,10 @@ msgstr "外部タイプ"
 msgid "Fetch & plan"
 msgstr "取得して計画"
 
+#: src/pages/import-wizard-page.tsx:800
+msgid "Fetching episodes…"
+msgstr "エピソードを取得中…"
+
 #. placeholder {0}: source?.label ?? sourceId
 #: src/pages/import-wizard-page.tsx:271
 msgid "Fetching your library from {0}…"

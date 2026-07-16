@@ -7946,6 +7946,23 @@
             "format": "uint32",
             "minimum": 0
           },
+          "episodesTotal": {
+            "description": "Present once the post-create episode-enrichment phase starts: how many\ncreated entities will have their episodes fetched, and how many are done.\nOne provider fetch per entity, so on big imports this phase outlasts the\ncreate phase — clients show it as its own progress instead of sitting on\na full `processed`/`total` bar while the job is still `committing`.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "episodesProcessed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
           "errors": {
             "type": "array",
             "items": {
