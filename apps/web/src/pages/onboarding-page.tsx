@@ -138,9 +138,14 @@ function OnboardingWizard({
     if (selected.size === 0) {
       return { ...base, types: [], home: { sections: [] } };
     }
+    // Catalog order, not Set (click) order — the created types follow the
+    // order the picker displayed.
+    const presetIds = (presetCatalog?.presets ?? [])
+      .map((preset) => preset.id)
+      .filter((id) => selected.has(id));
     const resolved = await resolveTypePresets({
       currentTypes: [],
-      presetIds: [...selected],
+      presetIds,
       language,
     });
     return {

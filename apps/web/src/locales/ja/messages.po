@@ -144,7 +144,7 @@ msgstr "{0, plural, other {合計 # 件}}"
 
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
-#: src/components/settings/preset-picker.tsx:129
+#: src/components/settings/preset-picker.tsx:134
 #: src/components/settings/settings-editor.tsx:117
 #: src/components/settings/settings-editor.tsx:299
 msgid "{0, plural, one {# type} other {# types}}"
@@ -161,7 +161,7 @@ msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {# 件視聴済み}}"
 
 #. placeholder {0}: pending.types.length
-#: src/components/settings/preset-picker.tsx:188
+#: src/components/settings/preset-picker.tsx:193
 msgid "{0, plural, one {Add # type} other {Add # types}}"
 msgstr "{0, plural, other {# 件のタイプを追加}}"
 
@@ -288,7 +288,7 @@ msgstr "≥"
 msgid "✅ Completed"
 msgstr "✅ 完了"
 
-#: src/components/settings/preset-picker.tsx:282
+#: src/components/settings/preset-picker.tsx:287
 msgid "✨ Pairs well with your picks"
 msgstr "✨ お気に入りとの相性が良い作品"
 
@@ -309,7 +309,7 @@ msgstr "同名のリストが既に存在するか、ファイルがディスク
 msgid "A shelf for everything you love"
 msgstr "君が愛するすべてのための本棚"
 
-#: src/components/settings/preset-picker.tsx:372
+#: src/components/settings/preset-picker.tsx:377
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "同名のタイプがすでに存在するため、代わりに {assignedIds} を使用しました。追加後に名前を変更できます。"
 
@@ -342,7 +342,7 @@ msgstr "「{item}」を追加"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
-#: src/components/settings/preset-picker.tsx:400
+#: src/components/settings/preset-picker.tsx:405
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "<1>{1}</1> に <0>{0}</0> のリンクを追加"
 
@@ -354,7 +354,7 @@ msgstr "プロバイダーを設定した「外部参照」フィールドを追
 msgid "Add built-in type"
 msgstr "組み込みタイプを追加"
 
-#: src/components/settings/preset-picker.tsx:138
+#: src/components/settings/preset-picker.tsx:143
 msgid "Add built-in types"
 msgstr "組み込みタイプを追加"
 
@@ -410,12 +410,12 @@ msgstr "セクションを追加"
 msgid "Add value"
 msgstr "値を追加"
 
-#: src/components/settings/preset-picker.tsx:338
+#: src/components/settings/preset-picker.tsx:343
 #: src/pages/list-detail-page.tsx:914
 msgid "Added"
 msgstr "追加済み"
 
-#: src/components/settings/preset-picker.tsx:133
+#: src/components/settings/preset-picker.tsx:138
 msgid "Added {added} — {renamed}"
 msgstr "追加 {added} — {renamed}"
 
@@ -424,7 +424,7 @@ msgstr "追加 {added} — {renamed}"
 msgid "Added, but episode import failed: {0}"
 msgstr "追加しましたが、エピソードのインポートに失敗しました: {0}"
 
-#: src/components/settings/preset-picker.tsx:204
+#: src/components/settings/preset-picker.tsx:209
 #: src/pages/quick-capture-page.tsx:333
 msgid "Adding…"
 msgstr "追加中…"
@@ -433,7 +433,7 @@ msgstr "追加中…"
 msgid "adds new section"
 msgstr "新しいセクションを追加"
 
-#: src/pages/onboarding-page.tsx:202
+#: src/pages/onboarding-page.tsx:207
 msgid "Advanced: edit full schema"
 msgstr "詳細設定: スキーマ全体を編集"
 
@@ -534,7 +534,7 @@ msgid "assets: {0}"
 msgstr "アセット: {0}"
 
 #: src/components/layout/app-frame.tsx:122
-#: src/components/settings/preset-picker.tsx:185
+#: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:168
 #: src/pages/entity-edit-page.tsx:125
@@ -569,7 +569,7 @@ msgstr "壊れたアセット"
 msgid "Browse library"
 msgstr "ライブラリを閲覧"
 
-#: src/components/settings/preset-picker.tsx:464
+#: src/components/settings/preset-picker.tsx:469
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "組み込みラベルは英語になりますが、タイトルはこの言語になります。"
 
@@ -717,12 +717,12 @@ msgstr "が次をすべて含む"
 msgid "contains any of"
 msgstr "が次のいずれかを含む"
 
-#: src/components/settings/preset-picker.tsx:207
+#: src/components/settings/preset-picker.tsx:212
 msgid "Continue"
 msgstr "続行"
 
 #. placeholder {0}: selected.size
-#: src/components/settings/preset-picker.tsx:206
+#: src/components/settings/preset-picker.tsx:211
 msgid "Continue ({0})"
 msgstr "続行（{0}）"
 
@@ -754,19 +754,19 @@ msgstr "新しい保管庫を作成"
 
 #: src/components/settings/settings-editor.tsx:173
 #: src/components/settings/vault-switcher.tsx:166
-#: src/pages/onboarding-page.tsx:210
+#: src/pages/onboarding-page.tsx:215
 msgid "Create vault"
 msgstr "保管庫を作成"
 
 #. placeholder {0}: selected.size
-#: src/pages/onboarding-page.tsx:209
+#: src/pages/onboarding-page.tsx:214
 msgid "Create vault ({0})"
 msgstr "保管庫を作成（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:117
 #: src/pages/entity-page.tsx:620
 #: src/pages/lists-page.tsx:234
-#: src/pages/onboarding-page.tsx:207
+#: src/pages/onboarding-page.tsx:212
 msgid "Creating…"
 msgstr "作成中…"
 
@@ -1379,7 +1379,7 @@ msgstr "言語 {0}"
 
 #: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/settings/preset-picker.tsx:448
+#: src/components/settings/preset-picker.tsx:453
 msgid "Language"
 msgstr "言語"
 
@@ -1421,7 +1421,7 @@ msgstr "行フォーマット"
 msgid "Link target"
 msgstr "リンク先"
 
-#: src/components/settings/preset-picker.tsx:138
+#: src/components/settings/preset-picker.tsx:143
 msgid "Link your new types"
 msgstr "新しいタイプをリンク"
 
@@ -1483,7 +1483,7 @@ msgstr "読み込み中"
 msgid "Loading activity…"
 msgstr "アクティビティを読み込み中…"
 
-#: src/components/settings/preset-picker.tsx:167
+#: src/components/settings/preset-picker.tsx:172
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
@@ -1985,7 +1985,7 @@ msgstr "中断"
 msgid "Pick a date"
 msgstr "日付を選択"
 
-#: src/pages/onboarding-page.tsx:185
+#: src/pages/onboarding-page.tsx:190
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "いくつか選んでください — いつでも追加できます。ライブラリは自分が所有するフォルダー内のプレーンな Markdown ファイルで、このアプリがなくても読めます。"
 
@@ -2160,7 +2160,7 @@ msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "名前を変更しました — {updated, plural, other {# 件のリンク}}を更新しました"
 
 #. placeholder {0}: collision.assignedId
-#: src/components/settings/preset-picker.tsx:131
+#: src/components/settings/preset-picker.tsx:136
 msgid "renamed to “{0}”"
 msgstr "「{0}」に名前を変更しました"
 
@@ -2188,7 +2188,7 @@ msgstr "保管庫を再スキャン"
 msgid "Review"
 msgstr "レビュー"
 
-#: src/components/settings/preset-picker.tsx:141
+#: src/components/settings/preset-picker.tsx:146
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
 msgstr "完全なメタデータマッチングに対応した、堅牢ですぐに使えるタイプ。追加後にすべて編集または名前変更できます。"
 
@@ -2600,7 +2600,7 @@ msgstr "ページで予期しないエラーが発生しました。もう一度
 msgid "The same rules as smart lists; the section shows entries that match."
 msgstr "スマートリストと同じルールです。セクションには一致するアイテムが表示されます。"
 
-#: src/components/settings/preset-picker.tsx:140
+#: src/components/settings/preset-picker.tsx:145
 msgid "These existing types can link to what you're adding."
 msgstr "これらの既存のタイプは、追加するものにリンクできます。"
 
@@ -2784,7 +2784,7 @@ msgid "Vault added"
 msgstr "保管庫を追加しました"
 
 #: src/components/settings/vault-switcher.tsx:163
-#: src/pages/onboarding-page.tsx:160
+#: src/pages/onboarding-page.tsx:165
 msgid "Vault created"
 msgstr "保管庫を作成しました"
 
@@ -2830,7 +2830,7 @@ msgstr "ウォッチリスト"
 msgid "weeks"
 msgstr "週間"
 
-#: src/pages/onboarding-page.tsx:182
+#: src/pages/onboarding-page.tsx:187
 msgid "What do you want to track?"
 msgstr "何をトラッキングしますか？"
 

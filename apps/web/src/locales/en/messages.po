@@ -144,7 +144,7 @@ msgstr "{0, plural, one {# total} other {# total}}"
 
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
-#: src/components/settings/preset-picker.tsx:129
+#: src/components/settings/preset-picker.tsx:134
 #: src/components/settings/settings-editor.tsx:117
 #: src/components/settings/settings-editor.tsx:299
 msgid "{0, plural, one {# type} other {# types}}"
@@ -161,7 +161,7 @@ msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, one {# watched} other {# watched}}"
 
 #. placeholder {0}: pending.types.length
-#: src/components/settings/preset-picker.tsx:188
+#: src/components/settings/preset-picker.tsx:193
 msgid "{0, plural, one {Add # type} other {Add # types}}"
 msgstr "{0, plural, one {Add # type} other {Add # types}}"
 
@@ -288,7 +288,7 @@ msgstr "≥"
 msgid "✅ Completed"
 msgstr "✅ Completed"
 
-#: src/components/settings/preset-picker.tsx:282
+#: src/components/settings/preset-picker.tsx:287
 msgid "✨ Pairs well with your picks"
 msgstr "✨ Pairs well with your picks"
 
@@ -309,7 +309,7 @@ msgstr "A list with this name already exists, or the file changed on disk."
 msgid "A shelf for everything you love"
 msgstr "A shelf for everything you love"
 
-#: src/components/settings/preset-picker.tsx:372
+#: src/components/settings/preset-picker.tsx:377
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 
@@ -342,7 +342,7 @@ msgstr "Add \"{item}\""
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
-#: src/components/settings/preset-picker.tsx:400
+#: src/components/settings/preset-picker.tsx:405
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "Add a <0>{0}</0> link to <1>{1}</1>"
 
@@ -354,7 +354,7 @@ msgstr "Add an External ref field with a provider to configure priority."
 msgid "Add built-in type"
 msgstr "Add built-in type"
 
-#: src/components/settings/preset-picker.tsx:138
+#: src/components/settings/preset-picker.tsx:143
 msgid "Add built-in types"
 msgstr "Add built-in types"
 
@@ -410,12 +410,12 @@ msgstr "Add section"
 msgid "Add value"
 msgstr "Add value"
 
-#: src/components/settings/preset-picker.tsx:338
+#: src/components/settings/preset-picker.tsx:343
 #: src/pages/list-detail-page.tsx:914
 msgid "Added"
 msgstr "Added"
 
-#: src/components/settings/preset-picker.tsx:133
+#: src/components/settings/preset-picker.tsx:138
 msgid "Added {added} — {renamed}"
 msgstr "Added {added} — {renamed}"
 
@@ -424,7 +424,7 @@ msgstr "Added {added} — {renamed}"
 msgid "Added, but episode import failed: {0}"
 msgstr "Added, but episode import failed: {0}"
 
-#: src/components/settings/preset-picker.tsx:204
+#: src/components/settings/preset-picker.tsx:209
 #: src/pages/quick-capture-page.tsx:333
 msgid "Adding…"
 msgstr "Adding…"
@@ -433,7 +433,7 @@ msgstr "Adding…"
 msgid "adds new section"
 msgstr "adds new section"
 
-#: src/pages/onboarding-page.tsx:202
+#: src/pages/onboarding-page.tsx:207
 msgid "Advanced: edit full schema"
 msgstr "Advanced: edit full schema"
 
@@ -534,7 +534,7 @@ msgid "assets: {0}"
 msgstr "assets: {0}"
 
 #: src/components/layout/app-frame.tsx:122
-#: src/components/settings/preset-picker.tsx:185
+#: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:168
 #: src/pages/entity-edit-page.tsx:125
@@ -569,7 +569,7 @@ msgstr "Broken Assets"
 msgid "Browse library"
 msgstr "Browse library"
 
-#: src/components/settings/preset-picker.tsx:464
+#: src/components/settings/preset-picker.tsx:469
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "Built-in labels will be in English. Titles still use this language."
 
@@ -717,12 +717,12 @@ msgstr "contains all of"
 msgid "contains any of"
 msgstr "contains any of"
 
-#: src/components/settings/preset-picker.tsx:207
+#: src/components/settings/preset-picker.tsx:212
 msgid "Continue"
 msgstr "Continue"
 
 #. placeholder {0}: selected.size
-#: src/components/settings/preset-picker.tsx:206
+#: src/components/settings/preset-picker.tsx:211
 msgid "Continue ({0})"
 msgstr "Continue ({0})"
 
@@ -754,19 +754,19 @@ msgstr "Create new vault"
 
 #: src/components/settings/settings-editor.tsx:173
 #: src/components/settings/vault-switcher.tsx:166
-#: src/pages/onboarding-page.tsx:210
+#: src/pages/onboarding-page.tsx:215
 msgid "Create vault"
 msgstr "Create vault"
 
 #. placeholder {0}: selected.size
-#: src/pages/onboarding-page.tsx:209
+#: src/pages/onboarding-page.tsx:214
 msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:117
 #: src/pages/entity-page.tsx:620
 #: src/pages/lists-page.tsx:234
-#: src/pages/onboarding-page.tsx:207
+#: src/pages/onboarding-page.tsx:212
 msgid "Creating…"
 msgstr "Creating…"
 
@@ -1379,7 +1379,7 @@ msgstr "lang {0}"
 
 #: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/settings/preset-picker.tsx:448
+#: src/components/settings/preset-picker.tsx:453
 msgid "Language"
 msgstr "Language"
 
@@ -1421,7 +1421,7 @@ msgstr "Line format"
 msgid "Link target"
 msgstr "Link target"
 
-#: src/components/settings/preset-picker.tsx:138
+#: src/components/settings/preset-picker.tsx:143
 msgid "Link your new types"
 msgstr "Link your new types"
 
@@ -1483,7 +1483,7 @@ msgstr "Loading"
 msgid "Loading activity…"
 msgstr "Loading activity…"
 
-#: src/components/settings/preset-picker.tsx:167
+#: src/components/settings/preset-picker.tsx:172
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
@@ -1985,7 +1985,7 @@ msgstr "Paused"
 msgid "Pick a date"
 msgstr "Pick a date"
 
-#: src/pages/onboarding-page.tsx:185
+#: src/pages/onboarding-page.tsx:190
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 
@@ -2160,7 +2160,7 @@ msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
 
 #. placeholder {0}: collision.assignedId
-#: src/components/settings/preset-picker.tsx:131
+#: src/components/settings/preset-picker.tsx:136
 msgid "renamed to “{0}”"
 msgstr "renamed to “{0}”"
 
@@ -2188,7 +2188,7 @@ msgstr "Rescan vault"
 msgid "Review"
 msgstr "Review"
 
-#: src/components/settings/preset-picker.tsx:141
+#: src/components/settings/preset-picker.tsx:146
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
 msgstr "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
 
@@ -2600,7 +2600,7 @@ msgstr "The page hit an unexpected error. You can try again, or reload the app."
 msgid "The same rules as smart lists; the section shows entries that match."
 msgstr "The same rules as smart lists; the section shows entries that match."
 
-#: src/components/settings/preset-picker.tsx:140
+#: src/components/settings/preset-picker.tsx:145
 msgid "These existing types can link to what you're adding."
 msgstr "These existing types can link to what you're adding."
 
@@ -2784,7 +2784,7 @@ msgid "Vault added"
 msgstr "Vault added"
 
 #: src/components/settings/vault-switcher.tsx:163
-#: src/pages/onboarding-page.tsx:160
+#: src/pages/onboarding-page.tsx:165
 msgid "Vault created"
 msgstr "Vault created"
 
@@ -2830,7 +2830,7 @@ msgstr "Watchlist"
 msgid "weeks"
 msgstr "weeks"
 
-#: src/pages/onboarding-page.tsx:182
+#: src/pages/onboarding-page.tsx:187
 msgid "What do you want to track?"
 msgstr "What do you want to track?"
 

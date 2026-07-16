@@ -144,7 +144,7 @@ msgstr "{0, plural, other {共 # 项}}"
 
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
-#: src/components/settings/preset-picker.tsx:129
+#: src/components/settings/preset-picker.tsx:134
 #: src/components/settings/settings-editor.tsx:117
 #: src/components/settings/settings-editor.tsx:299
 msgid "{0, plural, one {# type} other {# types}}"
@@ -161,7 +161,7 @@ msgid "{0, plural, one {# watched} other {# watched}}"
 msgstr "{0, plural, other {已观看 # 项}}"
 
 #. placeholder {0}: pending.types.length
-#: src/components/settings/preset-picker.tsx:188
+#: src/components/settings/preset-picker.tsx:193
 msgid "{0, plural, one {Add # type} other {Add # types}}"
 msgstr "{0, plural, other {添加 # 个类型}}"
 
@@ -288,7 +288,7 @@ msgstr "≥"
 msgid "✅ Completed"
 msgstr "✅ 已完成"
 
-#: src/components/settings/preset-picker.tsx:282
+#: src/components/settings/preset-picker.tsx:287
 msgid "✨ Pairs well with your picks"
 msgstr "✨ 与你的选择很搭"
 
@@ -309,7 +309,7 @@ msgstr "同名列表已存在，或文件已在磁盘上被修改。"
 msgid "A shelf for everything you love"
 msgstr "安放你所爱之物的书架"
 
-#: src/components/settings/preset-picker.tsx:372
+#: src/components/settings/preset-picker.tsx:377
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "已存在同名类型，因此改用了 {assignedIds}。添加后可重命名。"
 
@@ -342,7 +342,7 @@ msgstr "添加「{item}」"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
-#: src/components/settings/preset-picker.tsx:400
+#: src/components/settings/preset-picker.tsx:405
 msgid "Add a <0>{0}</0> link to <1>{1}</1>"
 msgstr "为 <1>{1}</1> 添加一个 <0>{0}</0> 关联"
 
@@ -354,7 +354,7 @@ msgstr "添加已配置数据源的“外部引用”字段，即可设置优先
 msgid "Add built-in type"
 msgstr "添加内置类型"
 
-#: src/components/settings/preset-picker.tsx:138
+#: src/components/settings/preset-picker.tsx:143
 msgid "Add built-in types"
 msgstr "添加内置类型"
 
@@ -410,12 +410,12 @@ msgstr "添加板块"
 msgid "Add value"
 msgstr "添加值"
 
-#: src/components/settings/preset-picker.tsx:338
+#: src/components/settings/preset-picker.tsx:343
 #: src/pages/list-detail-page.tsx:914
 msgid "Added"
 msgstr "已添加"
 
-#: src/components/settings/preset-picker.tsx:133
+#: src/components/settings/preset-picker.tsx:138
 msgid "Added {added} — {renamed}"
 msgstr "已添加 {added} — {renamed}"
 
@@ -424,7 +424,7 @@ msgstr "已添加 {added} — {renamed}"
 msgid "Added, but episode import failed: {0}"
 msgstr "已添加，但剧集导入失败：{0}"
 
-#: src/components/settings/preset-picker.tsx:204
+#: src/components/settings/preset-picker.tsx:209
 #: src/pages/quick-capture-page.tsx:333
 msgid "Adding…"
 msgstr "正在添加…"
@@ -433,7 +433,7 @@ msgstr "正在添加…"
 msgid "adds new section"
 msgstr "添加新板块"
 
-#: src/pages/onboarding-page.tsx:202
+#: src/pages/onboarding-page.tsx:207
 msgid "Advanced: edit full schema"
 msgstr "高级：编辑完整 schema"
 
@@ -534,7 +534,7 @@ msgid "assets: {0}"
 msgstr "资源：{0}"
 
 #: src/components/layout/app-frame.tsx:122
-#: src/components/settings/preset-picker.tsx:185
+#: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:168
 #: src/pages/entity-edit-page.tsx:125
@@ -569,7 +569,7 @@ msgstr "损坏的资源"
 msgid "Browse library"
 msgstr "浏览库"
 
-#: src/components/settings/preset-picker.tsx:464
+#: src/components/settings/preset-picker.tsx:469
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "内置标签将使用英文，标题仍使用该语言。"
 
@@ -717,12 +717,12 @@ msgstr "包含以下全部"
 msgid "contains any of"
 msgstr "包含以下任一"
 
-#: src/components/settings/preset-picker.tsx:207
+#: src/components/settings/preset-picker.tsx:212
 msgid "Continue"
 msgstr "继续"
 
 #. placeholder {0}: selected.size
-#: src/components/settings/preset-picker.tsx:206
+#: src/components/settings/preset-picker.tsx:211
 msgid "Continue ({0})"
 msgstr "继续（{0}）"
 
@@ -754,19 +754,19 @@ msgstr "新建保管库"
 
 #: src/components/settings/settings-editor.tsx:173
 #: src/components/settings/vault-switcher.tsx:166
-#: src/pages/onboarding-page.tsx:210
+#: src/pages/onboarding-page.tsx:215
 msgid "Create vault"
 msgstr "创建保管库"
 
 #. placeholder {0}: selected.size
-#: src/pages/onboarding-page.tsx:209
+#: src/pages/onboarding-page.tsx:214
 msgid "Create vault ({0})"
 msgstr "创建保管库（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:117
 #: src/pages/entity-page.tsx:620
 #: src/pages/lists-page.tsx:234
-#: src/pages/onboarding-page.tsx:207
+#: src/pages/onboarding-page.tsx:212
 msgid "Creating…"
 msgstr "正在创建…"
 
@@ -1379,7 +1379,7 @@ msgstr "语言 {0}"
 
 #: src/components/layout/language-select.tsx:52
 #: src/components/layout/language-select.tsx:53
-#: src/components/settings/preset-picker.tsx:448
+#: src/components/settings/preset-picker.tsx:453
 msgid "Language"
 msgstr "语言"
 
@@ -1421,7 +1421,7 @@ msgstr "行格式"
 msgid "Link target"
 msgstr "链接目标"
 
-#: src/components/settings/preset-picker.tsx:138
+#: src/components/settings/preset-picker.tsx:143
 msgid "Link your new types"
 msgstr "关联你的新类型"
 
@@ -1483,7 +1483,7 @@ msgstr "加载中"
 msgid "Loading activity…"
 msgstr "正在加载活动…"
 
-#: src/components/settings/preset-picker.tsx:167
+#: src/components/settings/preset-picker.tsx:172
 msgid "Loading built-in types…"
 msgstr "正在加载内置类型…"
 
@@ -1985,7 +1985,7 @@ msgstr "暂停"
 msgid "Pick a date"
 msgstr "选择日期"
 
-#: src/pages/onboarding-page.tsx:185
+#: src/pages/onboarding-page.tsx:190
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "选几个 — 你随时可以添加更多。你的库是位于你自己文件夹中的纯 Markdown 文件，即使没有此应用也能读取。"
 
@@ -2160,7 +2160,7 @@ msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "已重命名 — 更新了 {updated, plural, other {# 个关联}}"
 
 #. placeholder {0}: collision.assignedId
-#: src/components/settings/preset-picker.tsx:131
+#: src/components/settings/preset-picker.tsx:136
 msgid "renamed to “{0}”"
 msgstr "重命名为「{0}」"
 
@@ -2188,7 +2188,7 @@ msgstr "重新扫描保管库"
 msgid "Review"
 msgstr "检查"
 
-#: src/components/settings/preset-picker.tsx:141
+#: src/components/settings/preset-picker.tsx:146
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
 msgstr "功能完善、开箱即用的类型，具备完整的元数据匹配。添加后可编辑或重命名一切。"
 
@@ -2600,7 +2600,7 @@ msgstr "页面遇到意外错误。你可以重试，或重新加载应用。"
 msgid "The same rules as smart lists; the section shows entries that match."
 msgstr "与智能列表相同的规则；该版块显示符合条件的条目。"
 
-#: src/components/settings/preset-picker.tsx:140
+#: src/components/settings/preset-picker.tsx:145
 msgid "These existing types can link to what you're adding."
 msgstr "这些现有类型可以关联到你正在添加的内容。"
 
@@ -2784,7 +2784,7 @@ msgid "Vault added"
 msgstr "已添加保管库"
 
 #: src/components/settings/vault-switcher.tsx:163
-#: src/pages/onboarding-page.tsx:160
+#: src/pages/onboarding-page.tsx:165
 msgid "Vault created"
 msgstr "已创建保管库"
 
@@ -2830,7 +2830,7 @@ msgstr "想看清单"
 msgid "weeks"
 msgstr "周"
 
-#: src/pages/onboarding-page.tsx:182
+#: src/pages/onboarding-page.tsx:187
 msgid "What do you want to track?"
 msgstr "你想追踪什么？"
 

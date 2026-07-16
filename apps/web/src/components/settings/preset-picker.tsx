@@ -89,9 +89,14 @@ export function PresetPickerDialog({
   async function resolve() {
     setResolving(true);
     try {
+      // Catalog order, not Set (click) order — the new types append in the
+      // order the picker displayed.
+      const presetIds = (catalog?.presets ?? [])
+        .map((preset) => preset.id)
+        .filter((id) => selected.has(id));
       const result = await resolveTypePresets({
         currentTypes,
-        presetIds: [...selected],
+        presetIds,
         language,
       });
       const plan: ResolvedPlan = {
