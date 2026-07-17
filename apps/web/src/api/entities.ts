@@ -1,4 +1,5 @@
 import {
+  applyExternalCandidate,
   cancelAssetJob,
   createAssetJob,
   createEntity,
@@ -8,6 +9,7 @@ import {
   getCapabilities,
   listAssetJobs,
   quickAddExternalEntity,
+  reviewExternalCandidate,
   searchExternalSources,
   updateEntity,
   uploadEntityAsset,
@@ -16,6 +18,8 @@ import {
   type AssetUploadRequest,
   type CreateEntityRequest,
   type DeleteEntityRequest,
+  type ExternalApplyRequest,
+  type ExternalReviewRequest,
   type QuickAddRequest,
   type SearchExternalSourcesParams,
   type UpdateEntityRequest,
@@ -45,6 +49,19 @@ export function searchSources(params: SearchExternalSourcesParams, init?: Reques
 
 export function quickAddEntity(request: QuickAddRequest) {
   return quickAddExternalEntity(request, undefined, apiFetch);
+}
+
+/// Resolve a chosen candidate against an existing entity: the core returns
+/// per-field/section current-vs-incoming values plus the default selection
+/// policy (ref locked on, no-ops locked off, empties on, existing off).
+export function reviewMatch(id: string, request: ExternalReviewRequest) {
+  return reviewExternalCandidate(id, request, undefined, apiFetch);
+}
+
+/// Apply the reviewed selection: the core re-resolves the candidate, merges the
+/// selected fields, and splices the selected body sections, revision-guarded.
+export function applyMatch(id: string, request: ExternalApplyRequest) {
+  return applyExternalCandidate(id, request, undefined, apiFetch);
 }
 
 export function downloadAssets(id: string, request: AssetDownloadRequest) {

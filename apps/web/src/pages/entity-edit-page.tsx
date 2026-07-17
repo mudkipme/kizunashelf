@@ -11,7 +11,6 @@ import { useRelationSearch } from "@/api/use-relation-search";
 import { configQuery, entityQuery } from "@/api/queries";
 import {
   type FrontmatterDraft,
-  frontmatterPatch,
   MetadataEditor,
   normalizeFrontmatter,
 } from "@/components/entities/metadata-editor";
@@ -81,9 +80,11 @@ export function EntityEditPage() {
     setConflict(false);
     await run(
       async () => {
+        // The draft goes to the core verbatim; it serializes against the schema
+        // and deletes keys the draft no longer carries (cleared fields).
         const result = await saveEntity(entity.id, {
           revision: entity.revision,
-          frontmatter: frontmatterPatch(entity.frontmatter, frontmatter),
+          frontmatterDraft: frontmatter,
           body,
         });
         await invalidateEntityData();

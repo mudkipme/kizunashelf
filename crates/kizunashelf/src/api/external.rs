@@ -1,6 +1,7 @@
 use super::error::{ApiError, ApiResult};
 mod apple_podcast;
 mod applemusic;
+mod apply;
 mod bangumi;
 mod bgg;
 mod comicvine;
@@ -16,6 +17,8 @@ mod open_library;
 mod steam;
 mod thetvdb;
 mod tmdb;
+
+pub(crate) use apply::{apply_external_candidate, review_external_candidate};
 
 use crate::contract::{
     ExistingEntityRef, ExternalCandidate, ExternalProviderCatalogItem,

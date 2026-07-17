@@ -4,6 +4,7 @@ mod entities;
 mod episodes;
 mod error;
 pub(crate) mod external;
+mod frontmatter_draft;
 mod handlers;
 mod import;
 mod lists;

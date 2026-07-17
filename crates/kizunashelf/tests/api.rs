@@ -870,6 +870,282 @@ async fn quick_add_is_forbidden_in_read_only_mode() {
 }
 
 #[tokio::test]
+async fn entity_update_serializes_a_frontmatter_draft() {
+    let server = TestServer::new();
+    let path = format!(
+        "/api/entities/{}",
+        urlencoding::encode("anime:Star Voyager")
+    );
+    let detail = server.ok_json(&path).await;
+    let revision = detail["entity"]["revision"].as_str().unwrap();
+
+    // The editor sends its draft verbatim: strings/bools/string-lists. The core
+    // trims, wraps relations, and deletes keys the draft no longer carries
+    // (`season` and `complete_date` were cleared).
+    let (status, updated) = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({
+            "revision": revision,
+            "frontmatterDraft": {
+                "title": "Star Voyager",
+                "title_en": "A Voyage of Stars",
+                "title_original": "星之航路",
+                "status": " Completed ",
+                "favorite": true,
+                "cover_url": "https://img.example/star.jpg",
+                "bgm_url": "https://bgm.example/star",
+                "franchise": ["Star Saga"],
+                "studio": ["Nova Studio", "[[Second Studio]]", "  "]
+            }
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    let frontmatter = &updated["entity"]["frontmatter"];
+    assert_eq!(frontmatter["status"], "Completed");
+    assert_eq!(frontmatter["favorite"], true);
+    assert_eq!(frontmatter["franchise"], json!(["[[Star Saga]]"]));
+    assert_eq!(
+        frontmatter["studio"],
+        json!(["[[Nova Studio]]", "[[Second Studio]]"])
+    );
+    assert!(
+        frontmatter.get("season").is_none(),
+        "cleared key is deleted"
+    );
+    assert!(frontmatter.get("complete_date").is_none());
+    // The body was not part of the request and is untouched.
+    assert_eq!(updated["entity"]["body"], detail["entity"]["body"]);
+}
+
+#[tokio::test]
+async fn entity_create_serializes_a_frontmatter_draft() {
+    let server = TestServer::new();
+    let (status, created) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/entities",
+        Some(json!({
+            "type": "games",
+            "basename": "Solar Draft",
+            "frontmatterDraft": {
+                "title": "Solar Draft",
+                "status": "Backlog",
+                "genres": [" RPG ", ""],
+                "developer": ["Orbit Dev"],
+                "favorite": ""
+            }
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let frontmatter = &created["entity"]["frontmatter"];
+    assert_eq!(frontmatter["genres"], json!(["RPG"]));
+    assert_eq!(frontmatter["developer"], json!(["[[Orbit Dev]]"]));
+    assert!(
+        frontmatter.get("favorite").is_none(),
+        "an empty draft value is never written"
+    );
+}
+
+/// A vault whose anime type maps a bangumi text field and an external body
+/// section, plus one entity with hand-written Summary content — the review/apply
+/// fixture.
+fn external_apply_fixture() -> (Router, PathBuf, TempDir) {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    fs::create_dir_all(vault.join("Taxonomy/Anime")).unwrap();
+    fs::write(
+        vault.join("Taxonomy/Anime/Show.md"),
+        r#"---
+title: Show
+---
+## Summary
+
+Old words.
+
+## Keep
+
+Kept.
+"#,
+    )
+    .unwrap();
+    let config = json!({
+        "taxonomyRoot": "Taxonomy",
+        "dailyNotes": { "paths": ["Daily Notes"], "dateFormat": "YYYY-MM-DD" },
+        "types": [
+            {
+                "id": "anime",
+                "label": "Anime",
+                "path": "Anime",
+                "filename": { "titleLanguage": "zh" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "titleLanguage": "zh" },
+                    { "field": "note", "fieldType": "text",
+                      "externalFields": [{ "source": "bangumi", "field": "note" }] },
+                    { "field": "bgm_url", "fieldType": "externalRef", "externalRef": "bangumi" }
+                ],
+                "bodySections": [
+                    { "heading": "Summary", "kind": "external",
+                      "externalFields": [{ "source": "bangumi", "field": "summary" }] }
+                ]
+            }
+        ]
+    });
+    write_vault_config(&vault, &config);
+    let app = inline_router(&vault, true, true);
+    (app, vault, temp)
+}
+
+fn bangumi_candidate() -> Value {
+    json!({
+        "provider": "bangumi",
+        "sourceId": "5",
+        "url": "https://bgm.tv/subject/5",
+        "title": "Show",
+        "titles": { "zh": "Show" },
+        "metadata": { "note": "Great.", "summary": "From provider." }
+    })
+}
+
+#[tokio::test]
+async fn external_review_reports_defaults_against_the_entity() {
+    let (app, _vault, _temp) = external_apply_fixture();
+    let (status, review) = request_json(
+        &app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}/external/review",
+            urlencoding::encode("anime:Show")
+        ),
+        Some(json!({ "candidate": bangumi_candidate() })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{review}");
+    assert_eq!(review["entityType"], "anime");
+
+    let field = |name: &str| {
+        review["fields"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["field"] == name)
+            .unwrap_or_else(|| panic!("field {name} missing: {review}"))
+            .clone()
+    };
+    // The candidate title equals the current one: a no-op, locked off.
+    let title = field("title");
+    assert_eq!(title["current"], "Show");
+    assert_eq!(title["selected"], false);
+    assert_eq!(title["locked"], true);
+    // An empty target defaults on.
+    let note = field("note");
+    assert_eq!(note["value"], "Great.");
+    assert!(note.get("current").is_none());
+    assert_eq!(note["selected"], true);
+    assert_eq!(note["locked"], false);
+    // The external ref is the refresh anchor: locked on.
+    let bgm = field("bgm_url");
+    assert_eq!(bgm["value"], "https://bgm.tv/subject/5");
+    assert_eq!(bgm["selected"], true);
+    assert_eq!(bgm["locked"], true);
+
+    // The Summary section exists with different content: off but editable, and
+    // applying would replace it rather than append.
+    let section = &review["sections"][0];
+    assert_eq!(section["key"], "Summary:bangumi:summary");
+    assert_eq!(section["markdown"], "From provider.");
+    assert_eq!(section["selected"], false);
+    assert_eq!(section["locked"], false);
+    assert_eq!(section["exists"], true);
+}
+
+#[tokio::test]
+async fn external_apply_merges_fields_and_splices_sections() {
+    let (app, _vault, _temp) = external_apply_fixture();
+    let path = format!("/api/entities/{}", urlencoding::encode("anime:Show"));
+    let detail = request_json(&app, Method::GET, &path, None).await.1;
+    let revision = detail["entity"]["revision"].as_str().unwrap();
+
+    // Nothing selected is rejected before any write.
+    let (status, body) = request_json(
+        &app,
+        Method::POST,
+        &format!("{path}/external/apply"),
+        Some(json!({
+            "revision": revision,
+            "candidate": bangumi_candidate(),
+            "fields": [],
+            "sections": []
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "{body}");
+
+    let (status, applied) = request_json(
+        &app,
+        Method::POST,
+        &format!("{path}/external/apply"),
+        Some(json!({
+            "revision": revision,
+            "candidate": bangumi_candidate(),
+            "fields": ["bgm_url", "note"],
+            "sections": ["Summary:bangumi:summary"]
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    let frontmatter = &applied["entity"]["frontmatter"];
+    assert_eq!(frontmatter["bgm_url"], "https://bgm.tv/subject/5");
+    assert_eq!(frontmatter["note"], "Great.");
+    // The unselected title stays untouched, the Summary content is replaced, and
+    // the neighboring section survives byte-for-byte.
+    assert_eq!(frontmatter["title"], "Show");
+    assert_eq!(
+        applied["entity"]["body"],
+        "## Summary\n\nFrom provider.\n\n## Keep\n\nKept."
+    );
+
+    // The pre-apply revision is now stale: a second apply must 409.
+    let (status, conflict) = request_json(
+        &app,
+        Method::POST,
+        &format!("{path}/external/apply"),
+        Some(json!({
+            "revision": revision,
+            "candidate": bangumi_candidate(),
+            "fields": ["note"],
+            "sections": []
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{conflict}");
+}
+
+#[tokio::test]
+async fn external_apply_is_forbidden_in_read_only_mode() {
+    let server = TestServer::read_only();
+    let (status, body) = request_json(
+        &server.app,
+        Method::POST,
+        &format!(
+            "/api/entities/{}/external/apply",
+            urlencoding::encode("anime:Star Voyager")
+        ),
+        Some(json!({
+            "revision": "whatever",
+            "candidate": bangumi_candidate(),
+            "fields": ["bgm_url"],
+            "sections": []
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
+}
+
+#[tokio::test]
 async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
     let server = TestServer::new();
 

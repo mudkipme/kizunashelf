@@ -14,10 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
-  bodySectionSelectionState,
-  externalBodySectionState,
   externalSourceLabel,
-  fieldSelectionState,
   type ExternalBodyPreviewEntry,
   type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
@@ -44,7 +41,12 @@ type ExternalMatchDialogProps = {
   providerOptions: string[];
   externalSearchEnabled: boolean;
   currentValues?: Record<string, unknown>;
-  bodyText?: string;
+  // Locked checkboxes and replace-vs-append badges, from the core's review of
+  // the chosen candidate (`reviewExternalCandidate`). `sectionModes` is
+  // undefined until the review resolves; the badges are hidden meanwhile.
+  fieldLocks?: ReadonlySet<string>;
+  sectionLocks?: ReadonlySet<string>;
+  sectionModes?: Record<string, "replace" | "append">;
   existingExternalRefs?: ExternalRefAction[];
   searching: boolean;
   applying: boolean;
@@ -78,7 +80,9 @@ export function ExternalMatchDialog({
   providerOptions,
   externalSearchEnabled,
   currentValues,
-  bodyText,
+  fieldLocks,
+  sectionLocks,
+  sectionModes,
   existingExternalRefs = [],
   searching,
   applying,
@@ -176,7 +180,9 @@ export function ExternalMatchDialog({
               selectedFields={selectedFields}
               selectedBodySections={selectedBodySections}
               currentValues={currentValues}
-              bodyText={bodyText}
+              fieldLocks={fieldLocks}
+              sectionLocks={sectionLocks}
+              sectionModes={sectionModes}
               contentWritable={contentWritable}
               onSelectedFieldsChange={onSelectedFieldsChange}
               onSelectedBodySectionsChange={onSelectedBodySectionsChange}
@@ -268,7 +274,9 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
   selectedFields,
   selectedBodySections,
   currentValues,
-  bodyText,
+  fieldLocks,
+  sectionLocks,
+  sectionModes,
   contentWritable,
   onSelectedFieldsChange,
   onSelectedBodySectionsChange,
@@ -279,7 +287,9 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
   selectedFields: Set<string>;
   selectedBodySections: Set<string>;
   currentValues?: Record<string, unknown>;
-  bodyText?: string;
+  fieldLocks?: ReadonlySet<string>;
+  sectionLocks?: ReadonlySet<string>;
+  sectionModes?: Record<string, "replace" | "append">;
   contentWritable: boolean;
   onSelectedFieldsChange: (fields: Set<string>) => void;
   onSelectedBodySectionsChange: (sections: Set<string>) => void;
@@ -309,8 +319,9 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
               ? formatMetadataValue(entry.value)
               : t`No value returned`;
             // The external ref is forced on and no-op values forced off; empty
-            // fields default on, existing ones off (see fieldSelectionState).
-            const { locked } = fieldSelectionState(entry, currentValues?.[entry.field]);
+            // fields default on, existing ones off — the core's review supplies
+            // both the default selection and these locks.
+            const locked = fieldLocks?.has(entry.field) ?? false;
             return (
               <label key={entry.field} className="flex min-w-0 items-start gap-2 text-sm">
                 <input
@@ -347,7 +358,7 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
               <h4 className="text-xs font-semibold uppercase text-muted-foreground"><Trans>Body Sections</Trans></h4>
               <div className="mt-2 flex flex-col gap-2">
                 {bodyEntries.map((entry) => {
-                  const { locked } = bodySectionSelectionState(entry, bodyText);
+                  const locked = sectionLocks?.has(entry.key) ?? false;
                   return (
                   <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
                     <input
@@ -361,10 +372,10 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                       <span className="block font-medium">{entry.heading}</span>
                       <span className="block text-xs text-muted-foreground">
                         {entry.externalField}
-                        {bodyText !== undefined ? (
+                        {sectionModes?.[entry.key] ? (
                           <>
                             {" · "}
-                            {externalBodySectionState(bodyText, entry.heading) === "replace"
+                            {sectionModes[entry.key] === "replace"
                               ? t`replaces existing section`
                               : t`adds new section`}
                           </>

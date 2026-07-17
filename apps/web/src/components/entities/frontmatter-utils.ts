@@ -28,14 +28,6 @@ function normalizeFrontmatterValue(value: unknown): FrontmatterValue {
   return String(value ?? "");
 }
 
-export function frontmatterPatch(original: Record<string, unknown>, next: FrontmatterDraft) {
-  const patch: Record<string, unknown> = { ...next };
-  for (const key of Object.keys(original)) {
-    if (!(key in next)) patch[key] = null;
-  }
-  return patch;
-}
-
 export function valueToText(value: FrontmatterValue | undefined): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "string") return value;

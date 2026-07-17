@@ -1372,6 +1372,164 @@
         }
       }
     },
+    "/api/entities/{id}/external/review": {
+      "post": {
+        "operationId": "reviewExternalCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Review a chosen candidate against an existing entity: the core re-resolves\nthe candidate's schema mapping and returns, per field and body section, the\nincoming and current values plus the default selection policy. The client\nrenders toggles from this and passes the confirmed keys to the apply\nendpoint — the policy and the Markdown section comparison live here so every\nruntime reviews a match identically.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalReviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/entities/{id}/external/apply": {
+      "post": {
+        "operationId": "applyExternalCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Apply a reviewed candidate to an existing entity. The core re-resolves the\ncandidate server-side (it never trusts client-mapped values), merges the\nselected fields into frontmatter, and splices each selected body section\nunder its heading (replacing existing content, appending a new `##` section\notherwise). Revision-guarded like every entity write.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/episodes/watch": {
       "post": {
         "operationId": "toggleEpisode",
@@ -4270,7 +4428,7 @@
             ]
           },
           "vaultExists": {
-            "description": "Whether the vault config file exists on disk.",
+            "description": "Whether the vault config file exists on disk.\n`false` means the VFS definitively returned `NotFound`; malformed and\ntemporarily unreadable files are never reported as missing.",
             "type": "boolean"
           },
           "vault": {
@@ -4284,6 +4442,7 @@
             ]
           },
           "error": {
+            "description": "Validation error for an existing config that could be read but not used.\nVFS/read failures return a non-2xx response instead.",
             "type": [
               "string",
               "null"
@@ -6899,6 +7058,14 @@
             "additionalProperties": true,
             "default": {}
           },
+          "frontmatterDraft": {
+            "description": "An entity-editor draft, serialized server-side exactly like\n[`UpdateEntityRequest::frontmatter_draft`] (minus the deletion diff —\nempty values are simply not written). When present it replaces\n`frontmatter`.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
           "body": {
             "type": [
               "string",
@@ -7236,6 +7403,14 @@
             ],
             "additionalProperties": true
           },
+          "frontmatterDraft": {
+            "description": "An entity-editor draft: every value the way the user entered it (strings,\nbools, string lists). The core serializes it against the schema — trims,\ndrops empties, coerces progress/rating text to numbers, wraps relations in\n`[[wikilinks]]` — and deletes every currently-present key the draft no\nlonger carries, so a cleared field is removed rather than kept stale.\nEditors send this instead of hand-building a `frontmatter` merge patch.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
           "body": {
             "type": [
               "string",
@@ -7277,6 +7452,164 @@
         "required": [
           "deletedId",
           "backupPath"
+        ]
+      },
+      "ExternalReviewRequest": {
+        "description": "Review a chosen candidate against an existing entity: the core re-resolves\nthe candidate's schema mapping and returns, per field and body section, the\nincoming and current values plus the default selection policy. The client\nrenders toggles from this and passes the confirmed keys to the apply\nendpoint — the policy and the Markdown section comparison live here so every\nruntime reviews a match identically.",
+        "type": "object",
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/ExternalCandidate"
+          }
+        },
+        "required": [
+          "candidate"
+        ]
+      },
+      "ExternalReviewResponse": {
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "description": "The entity type the candidate was resolved against.",
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalReviewField"
+            }
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalReviewSection"
+            }
+          }
+        },
+        "required": [
+          "entityType",
+          "fields",
+          "sections"
+        ]
+      },
+      "ExternalReviewField": {
+        "description": "One frontmatter field of a reviewed candidate, with its default selection.\n`selected`/`locked` follow the shared policy: a valueless or no-op entry is\nlocked off, the external ref is locked on, an empty target defaults on, and a\npopulated target defaults off so hand-entered metadata is only overwritten by\nan explicit choice.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "value": {
+            "description": "The incoming (schema-resolved) value."
+          },
+          "current": {
+            "description": "The entity's current value for this field. Absent when the field is unset."
+          },
+          "source": {
+            "type": "string"
+          },
+          "externalField": {
+            "description": "Absent for an `externalRef` field (see [`MappedFieldValue::external_field`]).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasValue": {
+            "type": "boolean"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "locked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "value",
+          "source",
+          "hasValue",
+          "selected",
+          "locked"
+        ]
+      },
+      "ExternalReviewSection": {
+        "description": "One body section of a reviewed candidate. A section absent from the body\ndefaults on; one whose current content already matches is locked off; a\ndiffering existing section defaults off but stays editable.",
+        "type": "object",
+        "properties": {
+          "key": {
+            "description": "Stable selection key (`heading:source:field`), as on [`MappedBodySection`].",
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "externalField": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          },
+          "hasValue": {
+            "type": "boolean"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "locked": {
+            "type": "boolean"
+          },
+          "exists": {
+            "description": "Whether the heading already exists in the body — applying replaces its\ncontent; otherwise a new section is appended.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "heading",
+          "source",
+          "externalField",
+          "markdown",
+          "hasValue",
+          "selected",
+          "locked",
+          "exists"
+        ]
+      },
+      "ExternalApplyRequest": {
+        "description": "Apply a reviewed candidate to an existing entity. The core re-resolves the\ncandidate server-side (it never trusts client-mapped values), merges the\nselected fields into frontmatter, and splices each selected body section\nunder its heading (replacing existing content, appending a new `##` section\notherwise). Revision-guarded like every entity write.",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/ExternalCandidate"
+          },
+          "fields": {
+            "description": "Field keys to apply, from the review's `fields`.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "sections": {
+            "description": "Body-section keys to apply, from the review's `sections`.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "revision",
+          "candidate"
         ]
       },
       "ToggleEpisodeRequest": {

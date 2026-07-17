@@ -55,6 +55,12 @@ pub(crate) async fn update_entity(
     if let Some(frontmatter) = request.frontmatter {
         apply_frontmatter_patch(&mut document.frontmatter, frontmatter);
     }
+    if let Some(draft) = request.frontmatter_draft {
+        let type_config = type_config_or_err(&library.config, &entity.summary.entity_type)?;
+        let patch =
+            super::frontmatter_draft::draft_update_patch(draft, type_config, &document.frontmatter);
+        apply_frontmatter_patch(&mut document.frontmatter, patch);
+    }
     if let Some(body) = request.body {
         document.body = body;
     }
@@ -140,13 +146,17 @@ pub(crate) async fn create_entity(
     let type_config = type_config_or_err(&library.config, &request.entity_type)?;
     let basename = sanitize_basename(&request.basename)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
+    let frontmatter = match request.frontmatter_draft {
+        Some(draft) => super::frontmatter_draft::normalize_draft(draft, type_config),
+        None => request.frontmatter,
+    };
     let vfs = state.vault_vfs(&library.config.vault_root);
     let path = write_new_entity_file(
         vfs.as_ref(),
         &library.config.taxonomy_root,
         type_config,
         &basename,
-        &request.frontmatter,
+        &frontmatter,
         request.body.as_deref().unwrap_or(""),
     )
     .await?;

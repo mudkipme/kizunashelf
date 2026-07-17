@@ -5,7 +5,10 @@ use super::assets::{
 };
 use super::entities::{entities, entity_dates, entity_detail};
 use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
-use super::external::{external_provider_catalog, external_search, quick_add_entity};
+use super::external::{
+    apply_external_candidate, external_provider_catalog, external_search, quick_add_entity,
+    review_external_candidate,
+};
 use super::handlers::{
     activity, calendar, capabilities, config, health, home, languages, raw_settings_config,
     refresh, resolve_type_presets, save_raw_settings_config, save_settings_config, settings_config,
@@ -33,11 +36,11 @@ use crate::contract::{
     AssetDownloadResponse, AssetIngestResponse, AssetUploadResponse, CalendarResponse,
     CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse,
     DeleteListResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
-    EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalSearchResponse,
-    HealthResponse, HomeResponse, ImportJob, ImportJobListResponse, ImportSourceCatalogResponse,
-    LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse, PathSuggestionsResponse,
-    QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse, SettingsConfigResponse,
-    SmartListDetail, StatsResponse, TagsResponse, TypePresetsResponse,
+    EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalReviewResponse,
+    ExternalSearchResponse, HealthResponse, HomeResponse, ImportJob, ImportJobListResponse,
+    ImportSourceCatalogResponse, LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse,
+    PathSuggestionsResponse, QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse,
+    SettingsConfigResponse, SmartListDetail, StatsResponse, TagsResponse, TypePresetsResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -349,6 +352,28 @@ fn api_router() -> ApiRouter<AppState> {
             .delete_with(delete_entity, |op| {
                 op.id("deleteEntity")
                     .response::<200, Json<DeleteEntityResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/external/review",
+            post_with(review_external_candidate, |op| {
+                op.id("reviewExternalCandidate")
+                    .response::<200, Json<ExternalReviewResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/external/apply",
+            post_with(apply_external_candidate, |op| {
+                op.id("applyExternalCandidate")
+                    .response::<200, Json<EntityMutationResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()
                     .response::<409, Json<ErrorResponse>>()

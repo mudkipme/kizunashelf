@@ -21,7 +21,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
-import { downloadAssets, removeEntity, saveEntity } from "@/api/entities";
+import { applyMatch, downloadAssets, removeEntity, saveEntity } from "@/api/entities";
 import { addItemToList, addList, removeItemFromList } from "@/api/lists";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { useInvalidateLists } from "@/api/invalidate-lists";
@@ -73,7 +73,6 @@ import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { setEpisodeWatched } from "@/api/episodes";
 import { todayLocal } from "@/lib/date";
-import { applyExternalBodySections } from "@/lib/external-metadata";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
@@ -135,11 +134,10 @@ export function EntityPage() {
   const external = useExternalMatch({
     typeConfig,
     providerCatalog: providerCatalog.data,
+    entityId: entity?.id,
     entityType: entity?.type,
     defaultQuery: entity ? entityTitle(entity, language) : undefined,
     externalRefs: entity?.externalRefs,
-    currentValues: entity?.frontmatter as Record<string, unknown> | undefined,
-    bodyText: entity?.body,
     assetDownloadEnabled: capabilities.assetDownloadEnabled,
   });
   const relationGroups = useMemo(
@@ -190,15 +188,17 @@ export function EntityPage() {
     }, { onConflict: refetchOnConflict });
   }
 
+  // The core re-resolves the candidate and applies the selected fields/body
+  // sections server-side; the client only names what to apply.
   async function applyCandidate() {
     if (!entity || !external.selectedCandidate) return;
-    const patch = external.selectedPatch();
-    const nextBody = applyExternalBodySections(entity.body, external.selectedBodyPatch());
+    const candidate = external.selectedCandidate.candidate;
     await run(async () => {
-      const result = await saveEntity(entity.id, {
+      const result = await applyMatch(entity.id, {
         revision: entity.revision,
-        frontmatter: patch,
-        body: nextBody === entity.body ? undefined : nextBody,
+        candidate,
+        fields: [...external.selectedFields],
+        sections: [...external.selectedBodySections],
       });
       external.setOpen(false);
       await external.maybeDownloadCover(result.entity);
@@ -307,7 +307,9 @@ export function EntityPage() {
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}
               currentValues={entity.frontmatter as Record<string, unknown>}
-              bodyText={entity.body}
+              fieldLocks={external.fieldLocks}
+              sectionLocks={external.sectionLocks}
+              sectionModes={external.sectionModes}
               searching={external.searching}
               applying={saving}
               contentWritable={contentWritable}

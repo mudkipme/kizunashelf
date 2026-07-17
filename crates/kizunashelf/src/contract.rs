@@ -619,6 +619,14 @@ pub struct UpdateEntityRequest {
     pub revision: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frontmatter: Option<Map<String, Value>>,
+    /// An entity-editor draft: every value the way the user entered it (strings,
+    /// bools, string lists). The core serializes it against the schema — trims,
+    /// drops empties, coerces progress/rating text to numbers, wraps relations in
+    /// `[[wikilinks]]` — and deletes every currently-present key the draft no
+    /// longer carries, so a cleared field is removed rather than kept stale.
+    /// Editors send this instead of hand-building a `frontmatter` merge patch.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frontmatter_draft: Option<Map<String, Value>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -633,6 +641,12 @@ pub struct CreateEntityRequest {
     pub basename: String,
     #[serde(default)]
     pub frontmatter: Map<String, Value>,
+    /// An entity-editor draft, serialized server-side exactly like
+    /// [`UpdateEntityRequest::frontmatter_draft`] (minus the deletion diff —
+    /// empty values are simply not written). When present it replaces
+    /// `frontmatter`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frontmatter_draft: Option<Map<String, Value>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
 }
@@ -1429,6 +1443,88 @@ pub struct ExternalMatch {
 pub struct ExternalSearchResponse {
     pub providers: Vec<ExternalProviderSummary>,
     pub items: Vec<ExternalMatch>,
+}
+
+/// Review a chosen candidate against an existing entity: the core re-resolves
+/// the candidate's schema mapping and returns, per field and body section, the
+/// incoming and current values plus the default selection policy. The client
+/// renders toggles from this and passes the confirmed keys to the apply
+/// endpoint — the policy and the Markdown section comparison live here so every
+/// runtime reviews a match identically.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalReviewRequest {
+    pub candidate: ExternalCandidate,
+}
+
+/// One frontmatter field of a reviewed candidate, with its default selection.
+/// `selected`/`locked` follow the shared policy: a valueless or no-op entry is
+/// locked off, the external ref is locked on, an empty target defaults on, and a
+/// populated target defaults off so hand-entered metadata is only overwritten by
+/// an explicit choice.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalReviewField {
+    pub field: String,
+    /// The incoming (schema-resolved) value.
+    pub value: Value,
+    /// The entity's current value for this field. Absent when the field is unset.
+    #[serde(default, skip_serializing_if = "Value::is_null")]
+    pub current: Value,
+    pub source: String,
+    /// Absent for an `externalRef` field (see [`MappedFieldValue::external_field`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub external_field: Option<String>,
+    pub has_value: bool,
+    pub selected: bool,
+    pub locked: bool,
+}
+
+/// One body section of a reviewed candidate. A section absent from the body
+/// defaults on; one whose current content already matches is locked off; a
+/// differing existing section defaults off but stays editable.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalReviewSection {
+    /// Stable selection key (`heading:source:field`), as on [`MappedBodySection`].
+    pub key: String,
+    pub heading: String,
+    pub source: String,
+    pub external_field: String,
+    pub markdown: String,
+    pub has_value: bool,
+    pub selected: bool,
+    pub locked: bool,
+    /// Whether the heading already exists in the body — applying replaces its
+    /// content; otherwise a new section is appended.
+    pub exists: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalReviewResponse {
+    /// The entity type the candidate was resolved against.
+    pub entity_type: String,
+    pub fields: Vec<ExternalReviewField>,
+    pub sections: Vec<ExternalReviewSection>,
+}
+
+/// Apply a reviewed candidate to an existing entity. The core re-resolves the
+/// candidate server-side (it never trusts client-mapped values), merges the
+/// selected fields into frontmatter, and splices each selected body section
+/// under its heading (replacing existing content, appending a new `##` section
+/// otherwise). Revision-guarded like every entity write.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalApplyRequest {
+    pub revision: String,
+    pub candidate: ExternalCandidate,
+    /// Field keys to apply, from the review's `fields`.
+    #[serde(default)]
+    pub fields: Vec<String>,
+    /// Body-section keys to apply, from the review's `sections`.
+    #[serde(default)]
+    pub sections: Vec<String>,
 }
 
 // ---- Batch import ----------------------------------------------------------

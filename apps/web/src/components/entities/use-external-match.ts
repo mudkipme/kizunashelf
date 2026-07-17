@@ -1,21 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
-import { downloadAssets, searchSources } from "@/api/entities";
+import { downloadAssets, reviewMatch, searchSources } from "@/api/entities";
 import { isRemoteAsset } from "@/lib/asset-src";
 import {
   externalProviderPriority,
-  matchBodyPatch,
   matchBodyPreviewEntries,
-  matchDefaultBodySections,
-  matchDefaultFields,
   matchFieldPatch,
   matchFieldPreviewEntries,
 } from "@/lib/external-metadata";
 import { useLanguagePreference } from "@/lib/language";
-import type { ExternalMatch, ExternalProviderCatalog, TypeConfig } from "@/types/api";
+import type {
+  ExternalMatch,
+  ExternalProviderCatalog,
+  ExternalReviewResponse,
+  TypeConfig,
+} from "@/types/api";
 
 type ExternalRefs = Record<string, string | undefined>;
 
@@ -30,23 +32,22 @@ function patchValueHasRemote(value: unknown): boolean {
 export function useExternalMatch({
   typeConfig,
   providerCatalog,
+  entityId,
   entityType,
   defaultQuery,
   externalRefs,
-  currentValues,
-  bodyText,
   assetDownloadEnabled = false,
 }: {
   typeConfig?: TypeConfig;
   providerCatalog?: ExternalProviderCatalog;
+  // The entity a chosen candidate is reviewed against. The core computes the
+  // default selection (empty/ref on, same/existing off) and locked flags via
+  // `reviewExternalCandidate`, so the hook no longer needs the entity's
+  // frontmatter/body.
+  entityId?: string;
   entityType?: string;
   defaultQuery?: string;
   externalRefs?: ExternalRefs;
-  // The entity's current frontmatter/body — drive which fields and body sections
-  // are checked by default (empty/ref on, same/existing off) when a candidate is
-  // chosen.
-  currentValues?: Record<string, unknown>;
-  bodyText?: string;
   assetDownloadEnabled?: boolean;
 }) {
   const { t } = useLingui();
@@ -61,6 +62,11 @@ export function useExternalMatch({
   const [selectedCandidate, setSelectedCandidate] = useState<ExternalMatch>();
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [selectedBodySections, setSelectedBodySections] = useState<Set<string>>(new Set());
+  // The core's per-candidate review (current values, default selection, locked
+  // flags, replace-vs-append). Undefined until the review request resolves; the
+  // dialog then renders everything unlocked/unbadged rather than guessing.
+  const [review, setReview] = useState<ExternalReviewResponse>();
+  const reviewToken = useRef(0);
   const [emptyMessage, setEmptyMessage] = useState(t`No candidates loaded`);
   const [downloadAfterApply, setDownloadAfterApply] = useState(false);
 
@@ -167,9 +173,11 @@ export function useExternalMatch({
   );
 
   const resetSelection = useCallback(() => {
+    reviewToken.current += 1;
     setSelectedCandidate(undefined);
     setSelectedFields(new Set());
     setSelectedBodySections(new Set());
+    setReview(undefined);
   }, []);
 
   const search = useCallback(
@@ -212,24 +220,56 @@ export function useExternalMatch({
     [search],
   );
 
+  // Choosing a candidate asks the core to review it against the entity; the
+  // response seeds the default selection. A late-resolving review for a
+  // previously chosen candidate is dropped via the token.
   const chooseCandidate = useCallback(
     (match: ExternalMatch) => {
+      const token = ++reviewToken.current;
       setSelectedCandidate(match);
-      setSelectedFields(new Set(matchDefaultFields(match, currentValues)));
-      setSelectedBodySections(new Set(matchDefaultBodySections(match, bodyText)));
+      setSelectedFields(new Set());
+      setSelectedBodySections(new Set());
+      setReview(undefined);
+      if (!entityId) return;
+      void (async () => {
+        try {
+          const result = await reviewMatch(entityId, { candidate: match.candidate });
+          if (token !== reviewToken.current) return;
+          setReview(result);
+          setSelectedFields(
+            new Set(result.fields.filter((field) => field.selected).map((field) => field.field)),
+          );
+          setSelectedBodySections(
+            new Set(result.sections.filter((section) => section.selected).map((section) => section.key)),
+          );
+        } catch (error) {
+          if (token !== reviewToken.current) return;
+          toast.error(errorMessage(error));
+        }
+      })();
     },
-    [currentValues, bodyText],
+    [entityId],
   );
 
-  const selectedPatch = useCallback(() => {
-    if (!selectedCandidate) return {};
-    return matchFieldPatch(selectedCandidate, selectedFields);
-  }, [selectedCandidate, selectedFields]);
-
-  const selectedBodyPatch = useCallback(() => {
-    if (!selectedCandidate) return [];
-    return matchBodyPatch(selectedCandidate, selectedBodySections);
-  }, [selectedCandidate, selectedBodySections]);
+  // Locked/replace-vs-append flags for the dialog, straight from the review.
+  const fieldLocks = useMemo(
+    () => new Set((review?.fields ?? []).filter((field) => field.locked).map((field) => field.field)),
+    [review],
+  );
+  const sectionLocks = useMemo(
+    () =>
+      new Set((review?.sections ?? []).filter((section) => section.locked).map((section) => section.key)),
+    [review],
+  );
+  const sectionModes = useMemo(
+    () =>
+      review
+        ? Object.fromEntries(
+            review.sections.map((section) => [section.key, section.exists ? "replace" : "append"] as const),
+          )
+        : undefined,
+    [review],
+  );
 
   return {
     open,
@@ -258,7 +298,8 @@ export function useExternalMatch({
     search,
     refreshFromExternalRef,
     chooseCandidate,
-    selectedPatch,
-    selectedBodyPatch,
+    fieldLocks,
+    sectionLocks,
+    sectionModes,
   };
 }

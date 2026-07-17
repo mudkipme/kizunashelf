@@ -124,9 +124,21 @@ import {
   EpisodeSyncResponse
 } from './episodeSyncResponse.zod';
 
+import type {
+  ExternalApplyRequest
+} from './externalApplyRequest.zod';
+
 import {
   ExternalProviderCatalogResponse
 } from './externalProviderCatalogResponse.zod';
+
+import type {
+  ExternalReviewRequest
+} from './externalReviewRequest.zod';
+
+import {
+  ExternalReviewResponse
+} from './externalReviewResponse.zod';
 
 import {
   ExternalSearchResponse
@@ -1191,6 +1203,66 @@ export const deleteEntity = async (id: string,
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? DeleteEntityResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getReviewExternalCandidateUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/external/review`
+}
+
+export const reviewExternalCandidate = async (id: string,
+    externalReviewRequest: ExternalReviewRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ExternalReviewResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getReviewExternalCandidateUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(externalReviewRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ExternalReviewResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getApplyExternalCandidateUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/external/apply`
+}
+
+export const applyExternalCandidate = async (id: string,
+    externalApplyRequest: ExternalApplyRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityMutationResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getApplyExternalCandidateUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(externalApplyRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityMutationResponse.parse(parsedBody) : parsedBody
   return data
 }
 

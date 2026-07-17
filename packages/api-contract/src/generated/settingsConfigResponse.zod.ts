@@ -25,7 +25,7 @@ export const SettingsConfigResponse = zod.object({
   "contentWritable": zod.boolean().nullish()
 }).describe('App-level configuration. Describes how \*this machine\* runs KizunaShelf and\nwhere the vault lives on disk. This is owned by the runtime and passed\ninline: env vars for web, the native vault switcher for desktop, and the\nhost app\'s local state for iOS. It is never stored in the synced vault config.'),zod.null()]).optional().describe('The inline app config (vault root + write mode), owned by the runtime.'),
   "vaultConfigPath": zod.string().nullish().describe('Path to the vault config file (`<vaultRoot>\/KizunaShelf\/config.yaml`).\n`None` until a vault root is configured.'),
-  "vaultExists": zod.boolean().describe('Whether the vault config file exists on disk.'),
+  "vaultExists": zod.boolean().describe('Whether the vault config file exists on disk.\n`false` means the VFS definitively returned `NotFound`; malformed and\ntemporarily unreadable files are never reported as missing.'),
   "vault": zod.union([zod.object({
   "taxonomyRoot": zod.string(),
   "assetRoot": zod.string().nullish(),
@@ -144,7 +144,7 @@ export const SettingsConfigResponse = zod.object({
 }))
 }))
 }).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/KizunaShelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional(),
-  "error": zod.string().nullish()
+  "error": zod.string().nullish().describe('Validation error for an existing config that could be read but not used.\nVFS\/read failures return a non-2xx response instead.')
 })
 
 export type SettingsConfigResponse = zod.input<typeof SettingsConfigResponse>;

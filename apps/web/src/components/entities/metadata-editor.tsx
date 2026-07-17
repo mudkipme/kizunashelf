@@ -26,7 +26,7 @@ export type {
   FrontmatterValue,
   RelationSuggestionSearch,
 } from "./metadata-types";
-export { frontmatterPatch, normalizeFrontmatter } from "./frontmatter-utils";
+export { normalizeFrontmatter } from "./frontmatter-utils";
 export { NumberStepper } from "./metadata-inputs";
 
 export function MetadataEditor({

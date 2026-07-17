@@ -11,6 +11,7 @@ export const CreateEntityBody = zod.object({
   "type": zod.string(),
   "basename": zod.string(),
   "frontmatter": zod.record(zod.string(), zod.unknown()).default(createEntityBodyFrontmatterDefault),
+  "frontmatterDraft": zod.record(zod.string(), zod.unknown()).nullish().describe('An entity-editor draft, serialized server-side exactly like\n[`UpdateEntityRequest::frontmatter_draft`] (minus the deletion diff —\nempty values are simply not written). When present it replaces\n`frontmatter`.'),
   "body": zod.string().nullish()
 })
 
