@@ -78,7 +78,8 @@ pub(crate) async fn get_lists(
         query.entity.as_deref(),
         query.today.as_deref(),
     )
-    .await;
+    .await
+    .map_err(|err| anyhow::anyhow!("failed to read smart lists: {err}"))?;
 
     let mut items: Vec<ListSummary> = files
         .into_iter()

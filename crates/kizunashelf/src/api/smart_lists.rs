@@ -276,17 +276,16 @@ pub(crate) async fn smart_list_summaries(
     library: &Library,
     entity: Option<&str>,
     today: Option<&str>,
-) -> Vec<ListSummary> {
+) -> VfsResult<Vec<ListSummary>> {
     let paths = match smart_list_file_paths(vfs).await {
         Ok(paths) => paths,
-        Err(_) => return Vec::new(),
+        Err(error) if error.is_not_found() => return Ok(Vec::new()),
+        Err(error) => return Err(error),
     };
-    let Ok(files) = vfs.read_files(&paths).await else {
-        return Vec::new();
-    };
+    let files = vfs.read_files(&paths).await?;
     let ctx = eval_context(library, today);
     let wanted = entity.and_then(|id| library.record_by_id(id));
-    files
+    Ok(files
         .into_iter()
         .filter_map(|(path, bytes)| String::from_utf8(bytes).ok().map(|raw| (path, raw)))
         .filter_map(|(path, raw)| {
@@ -312,7 +311,7 @@ pub(crate) async fn smart_list_summaries(
                 contains,
             })
         })
-        .collect()
+        .collect())
 }
 
 // ---------------------------------------------------------------------------

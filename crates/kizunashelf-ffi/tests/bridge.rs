@@ -19,6 +19,7 @@ use serde_json::Value;
 struct FakeVault {
     files: Mutex<HashMap<String, Vec<u8>>>,
     config_read_error: Option<String>,
+    batch_read_error: Option<(String, String)>,
 }
 
 impl FakeVault {
@@ -33,6 +34,15 @@ impl FakeVault {
         Self {
             files: Mutex::new(HashMap::new()),
             config_read_error: Some(message.to_string()),
+            batch_read_error: None,
+        }
+    }
+
+    fn with_unavailable_batch_reads(prefix: &str, message: &str) -> Self {
+        Self {
+            files: Mutex::new(HashMap::new()),
+            config_read_error: None,
+            batch_read_error: Some((prefix.to_string(), message.to_string())),
         }
     }
 
@@ -68,6 +78,13 @@ impl VaultFileSystem for FakeVault {
     }
 
     fn read_files(&self, paths: Vec<String>) -> Result<Vec<VfsFile>, VfsError> {
+        if let Some((prefix, message)) = &self.batch_read_error {
+            if paths.iter().any(|path| path.starts_with(prefix)) {
+                return Err(VfsError::Other {
+                    message: message.clone(),
+                });
+            }
+        }
         let files = self.files.lock().unwrap();
         Ok(paths
             .into_iter()
@@ -278,6 +295,88 @@ fn ios_settings_does_not_report_an_unavailable_config_as_missing() {
         .as_str()
         .unwrap_or_default()
         .contains("file provider is temporarily offline"));
+}
+
+#[test]
+fn ios_library_load_propagates_a_batch_read_failure() {
+    let vault = FakeVault::with_unavailable_batch_reads(
+        "Taxonomy/",
+        "file provider is temporarily offline",
+    );
+    vault.seed(
+        "KizunaShelf/config.yaml",
+        "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
+    );
+    vault.seed(
+        "Taxonomy/Anime/Star Voyager.md",
+        "---\ntitle: Star Voyager\n---\n",
+    );
+
+    let engine = KizunaEngine::with_vault(
+        VaultOptions {
+            vault_root_label: "Cloud Vault".to_string(),
+            vault_identity: "vault-cloud".to_string(),
+            content_writable: true,
+            cache_ttl_ms: Some(0),
+            index_cache_dir: None,
+        },
+        Box::new(vault),
+        Box::new(FakeSecretStore::default()),
+    )
+    .expect("engine initializes");
+
+    let response = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/entities".to_string(),
+        None,
+    ))
+    .expect("entities request returns an API response");
+
+    assert_eq!(response.status, 500, "entities: {}", response.body);
+    assert!(response
+        .body
+        .contains("file provider is temporarily offline"));
+}
+
+#[test]
+fn ios_lists_propagate_a_smart_list_batch_read_failure() {
+    let vault = FakeVault::with_unavailable_batch_reads(
+        "KizunaShelf/Lists/Unavailable.base",
+        "smart list is temporarily unavailable",
+    );
+    vault.seed(
+        "KizunaShelf/config.yaml",
+        "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
+    );
+    vault.seed(
+        "KizunaShelf/Lists/Unavailable.base",
+        "filters:\n  and: []\nviews:\n- type: table\n  name: Default\n",
+    );
+
+    let engine = KizunaEngine::with_vault(
+        VaultOptions {
+            vault_root_label: "Cloud Vault".to_string(),
+            vault_identity: "vault-cloud-lists".to_string(),
+            content_writable: true,
+            cache_ttl_ms: Some(0),
+            index_cache_dir: None,
+        },
+        Box::new(vault),
+        Box::new(FakeSecretStore::default()),
+    )
+    .expect("engine initializes");
+
+    let response = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/lists".to_string(),
+        None,
+    ))
+    .expect("lists request returns an API response");
+
+    assert_eq!(response.status, 500, "lists: {}", response.body);
+    assert!(response
+        .body
+        .contains("smart list is temporarily unavailable"));
 }
 
 #[test]
