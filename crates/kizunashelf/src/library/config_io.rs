@@ -16,7 +16,9 @@ use std::path::{Component, Path};
 /// unreadable or malformed file. Onboarding is safe only for `Missing`.
 pub enum VaultConfigInspection {
     Missing,
-    Ready(VaultConfig),
+    // Boxed: `VaultConfig` is large and would dominate the enum's size
+    // (clippy::large_enum_variant).
+    Ready(Box<VaultConfig>),
     Invalid(String),
 }
 
@@ -140,7 +142,7 @@ pub async fn inspect_vault_config_via_vfs(
     if let Err(error) = validate_config_paths(&merged) {
         return Ok(VaultConfigInspection::Invalid(error.to_string()));
     }
-    Ok(VaultConfigInspection::Ready(vault))
+    Ok(VaultConfigInspection::Ready(Box::new(vault)))
 }
 
 fn parse_vault_config(content: &str) -> Result<VaultConfig> {

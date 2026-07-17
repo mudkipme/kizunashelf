@@ -123,7 +123,7 @@ async fn settings_config_response(
         .map_err(ApiError::from)?;
     let (vault_exists, vault, error) = match inspection {
         VaultConfigInspection::Missing => (false, None, None),
-        VaultConfigInspection::Ready(vault) => (true, Some(vault), None),
+        VaultConfigInspection::Ready(vault) => (true, Some(*vault), None),
         VaultConfigInspection::Invalid(error) => (true, None, Some(error)),
     };
     Ok(Json(SettingsConfigResponse {
