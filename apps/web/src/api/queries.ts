@@ -9,6 +9,7 @@ import {
   getEntity,
   getEntityDates,
   getHome,
+  getHealth,
   getStats,
   getTags,
   getUpcoming,
@@ -40,6 +41,7 @@ export const queryKeys = {
   entity: (id: string) => ["entity", id] as const,
   entityDates: (id: string) => ["entityDates", id] as const,
   home: ["home"] as const,
+  health: ["health"] as const,
   languages: ["languages"] as const,
   lists: ["lists"] as const,
   list: (id: string) => ["list", id] as const,
@@ -204,6 +206,13 @@ export function homeQuery() {
   return queryOptions({
     queryKey: [...queryKeys.home, today] as const,
     queryFn: ({ signal }) => getHome({ today }, { signal }, apiFetch),
+  });
+}
+
+export function healthQuery() {
+  return queryOptions({
+    queryKey: queryKeys.health,
+    queryFn: ({ signal }) => getHealth({ signal }, apiFetch),
   });
 }
 

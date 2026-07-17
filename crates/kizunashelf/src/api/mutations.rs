@@ -183,8 +183,17 @@ pub(crate) async fn delete_entity(
     };
     check_revision(&request.revision, &entity.revision)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let trash_path = move_to_trash(vfs.as_ref(), &entity.summary.path).await?;
-    let asset_dir = entity_asset_dir(library.config.resolved_asset_root(), &entity.summary.path);
+    let source_rel = entity.summary.path.clone();
+    let raw = vfs
+        .read_to_string(&source_rel)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
+    // Match `update_entity`'s TOCTOU guard: the resident index can still carry
+    // the client's revision when another editor changed the file behind a long
+    // cache TTL. Never trash those newer bytes under a stale confirmation.
+    check_revision(&request.revision, &file_revision(&raw))?;
+    let trash_path = move_to_trash(vfs.as_ref(), &source_rel).await?;
+    let asset_dir = entity_asset_dir(library.config.resolved_asset_root(), &source_rel);
     trash_entity_assets(vfs.as_ref(), &asset_dir).await;
     state.invalidate_cache().await;
     Ok(Json(DeleteEntityResponse {

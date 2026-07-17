@@ -120,13 +120,16 @@ where
 impl Vfs for FfiVfs {
     async fn read(&self, path: &str) -> vfs::VfsResult<Vec<u8>> {
         let inner = Arc::clone(&self.inner);
-        let path = path.to_string();
+        let path = vfs::normalize_relative(path)?;
         run_blocking(move || inner.read(path)).await
     }
 
     async fn read_files(&self, paths: &[String]) -> vfs::VfsResult<Vec<(String, Vec<u8>)>> {
         let inner = Arc::clone(&self.inner);
-        let paths = paths.to_vec();
+        let paths = paths
+            .iter()
+            .map(|path| vfs::normalize_relative(path))
+            .collect::<vfs::VfsResult<Vec<_>>>()?;
         let files = run_blocking(move || inner.read_files(paths)).await?;
         Ok(files
             .into_iter()
@@ -136,27 +139,27 @@ impl Vfs for FfiVfs {
 
     async fn write(&self, path: &str, data: &[u8]) -> vfs::VfsResult<()> {
         let inner = Arc::clone(&self.inner);
-        let path = path.to_string();
+        let path = vfs::normalize_relative(path)?;
         let data = data.to_vec();
         run_blocking(move || inner.write(path, data)).await
     }
 
     async fn write_atomic(&self, path: &str, data: &[u8]) -> vfs::VfsResult<()> {
         let inner = Arc::clone(&self.inner);
-        let path = path.to_string();
+        let path = vfs::normalize_relative(path)?;
         let data = data.to_vec();
         run_blocking(move || inner.write_atomic(path, data)).await
     }
 
     async fn create_dir_all(&self, path: &str) -> vfs::VfsResult<()> {
         let inner = Arc::clone(&self.inner);
-        let path = path.to_string();
+        let path = vfs::normalize_relative(path)?;
         run_blocking(move || inner.create_dir_all(path)).await
     }
 
     async fn read_dir(&self, path: &str) -> vfs::VfsResult<Vec<vfs::DirEntry>> {
         let inner = Arc::clone(&self.inner);
-        let path = path.to_string();
+        let path = vfs::normalize_relative(path)?;
         let entries = run_blocking(move || inner.read_dir(path)).await?;
         Ok(entries
             .into_iter()
@@ -172,7 +175,7 @@ impl Vfs for FfiVfs {
 
     async fn metadata(&self, path: &str) -> vfs::VfsResult<vfs::Metadata> {
         let inner = Arc::clone(&self.inner);
-        let path = path.to_string();
+        let path = vfs::normalize_relative(path)?;
         let metadata = run_blocking(move || inner.metadata(path)).await?;
         Ok(vfs::Metadata {
             is_dir: metadata.is_dir,
@@ -184,14 +187,14 @@ impl Vfs for FfiVfs {
 
     async fn rename(&self, from: &str, to: &str) -> vfs::VfsResult<()> {
         let inner = Arc::clone(&self.inner);
-        let from = from.to_string();
-        let to = to.to_string();
+        let from = vfs::normalize_relative(from)?;
+        let to = vfs::normalize_relative(to)?;
         run_blocking(move || inner.rename(from, to)).await
     }
 
     async fn remove_file(&self, path: &str) -> vfs::VfsResult<()> {
         let inner = Arc::clone(&self.inner);
-        let path = path.to_string();
+        let path = vfs::normalize_relative(path)?;
         run_blocking(move || inner.remove_file(path)).await
     }
 }

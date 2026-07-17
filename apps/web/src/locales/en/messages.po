@@ -31,7 +31,7 @@ msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, one {# already in library} other {# already in library}}"
 
 #. placeholder {0}: completeCount(summary)
-#: src/pages/review-page.tsx:244
+#: src/pages/review-page.tsx:316
 msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, one {# complete} other {# complete}}"
 
@@ -64,6 +64,11 @@ msgstr "{0, plural, one {# field} other {# fields}}"
 #: src/pages/import-wizard-page.tsx:533
 msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, one {# found} other {# found}}"
+
+#. placeholder {0}: health.diagnosticCount
+#: src/pages/review-page.tsx:244
+msgid "{0, plural, one {# issue} other {# issues}}"
+msgstr "{0, plural, one {# issue} other {# issues}}"
 
 #. placeholder {0}: list.itemCount
 #: src/pages/entity-page.tsx:589
@@ -100,7 +105,7 @@ msgid "{0, plural, one {# provider} other {# providers}}"
 msgstr "{0, plural, one {# provider} other {# providers}}"
 
 #. placeholder {0}: summary.remaining
-#: src/pages/review-page.tsx:236
+#: src/pages/review-page.tsx:308
 msgid "{0, plural, one {# remaining} other {# remaining}}"
 msgstr "{0, plural, one {# remaining} other {# remaining}}"
 
@@ -118,7 +123,7 @@ msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, one {# section} other {# sections}}"
 
 #. placeholder {0}: filteredItems.length
-#: src/pages/review-page.tsx:174
+#: src/pages/review-page.tsx:186
 msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, one {# shown} other {# shown}}"
 
@@ -133,12 +138,12 @@ msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, one {# to create} other {# to create}}"
 
 #. placeholder {0}: items.length
-#: src/pages/review-page.tsx:177
+#: src/pages/review-page.tsx:189
 msgid "{0, plural, one {# total queue item} other {# total queue items}}"
 msgstr "{0, plural, one {# total queue item} other {# total queue items}}"
 
 #. placeholder {0}: summary.total
-#: src/pages/review-page.tsx:247
+#: src/pages/review-page.tsx:319
 msgid "{0, plural, one {# total} other {# total}}"
 msgstr "{0, plural, one {# total} other {# total}}"
 
@@ -442,7 +447,7 @@ msgstr "Advanced: edit full schema"
 msgid "All"
 msgstr "All"
 
-#: src/pages/review-page.tsx:162
+#: src/pages/review-page.tsx:174
 msgid "All dates"
 msgstr "All dates"
 
@@ -467,7 +472,7 @@ msgstr "All sources"
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
 #: src/pages/quick-capture-page.tsx:239
-#: src/pages/review-page.tsx:154
+#: src/pages/review-page.tsx:166
 #: src/pages/smart-list-page.tsx:499
 msgid "All types"
 msgstr "All types"
@@ -561,7 +566,7 @@ msgstr "Body Sections"
 msgid "Book"
 msgstr "Book"
 
-#: src/pages/review-page.tsx:51
+#: src/pages/review-page.tsx:52
 msgid "Broken Assets"
 msgstr "Broken Assets"
 
@@ -969,7 +974,7 @@ msgstr "Drag to reorder"
 msgid "Dropped"
 msgstr "Dropped"
 
-#: src/pages/review-page.tsx:56
+#: src/pages/review-page.tsx:57
 msgid "Duplicate Filenames"
 msgstr "Duplicate Filenames"
 
@@ -1117,6 +1122,10 @@ msgstr "Field"
 msgid "Fields"
 msgstr "Fields"
 
+#: src/pages/review-page.tsx:266
+msgid "File"
+msgstr "File"
+
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-builder.tsx:144
 #: src/pages/entity-create-page.tsx:100
@@ -1134,6 +1143,10 @@ msgstr "Filename title — used as"
 #: src/components/settings/settings-sections.tsx:308
 msgid "Filename title language"
 msgstr "Filename title language"
+
+#: src/pages/review-page.tsx:240
+msgid "Files the library could not parse cleanly."
+msgstr "Files the library could not parse cleanly."
 
 #: src/pages/activity-page.tsx:143
 msgid "Filter by source"
@@ -1155,6 +1168,10 @@ msgstr "For example, an episode number."
 #: src/pages/settings-page.tsx:80
 msgid "Form"
 msgstr "Form"
+
+#: src/pages/review-page.tsx:264
+msgid "Frontmatter"
+msgstr "Frontmatter"
 
 #: src/pages/import-wizard-page.tsx:48
 msgid "Game"
@@ -1188,7 +1205,7 @@ msgstr "has a value"
 msgid "has any of"
 msgstr "has any of"
 
-#: src/pages/review-page.tsx:163
+#: src/pages/review-page.tsx:175
 msgid "Has date"
 msgstr "Has date"
 
@@ -1399,6 +1416,10 @@ msgstr "less"
 msgid "Library"
 msgstr "Library"
 
+#: src/pages/review-page.tsx:238
+msgid "Library Issues"
+msgstr "Library Issues"
+
 #: src/components/layout/theme-mode-select.tsx:12
 msgid "Light theme"
 msgstr "Light theme"
@@ -1507,7 +1528,7 @@ msgstr "Loading taxonomy"
 #: src/pages/list-detail-page.tsx:891
 #: src/pages/lists-page.tsx:55
 #: src/pages/onboarding-page.tsx:60
-#: src/pages/review-page.tsx:132
+#: src/pages/review-page.tsx:142
 #: src/pages/settings-page.tsx:96
 #: src/pages/smart-list-page.tsx:235
 #: src/pages/statistics-page.tsx:48
@@ -1587,7 +1608,7 @@ msgstr "Metadata"
 msgid "Missed?"
 msgstr "Missed?"
 
-#: src/pages/review-page.tsx:50
+#: src/pages/review-page.tsx:51
 msgid "Missing Cover"
 msgstr "Missing Cover"
 
@@ -1704,7 +1725,7 @@ msgstr "No candidates loaded"
 msgid "No criteria — everything in the library matches."
 msgstr "No criteria — everything in the library matches."
 
-#: src/pages/review-page.tsx:164
+#: src/pages/review-page.tsx:176
 msgid "No date"
 msgstr "No date"
 
@@ -1807,11 +1828,15 @@ msgstr "No matching entities."
 msgid "No matching type"
 msgstr "No matching type"
 
+#: src/pages/review-page.tsx:250
+msgid "No parsing issues found."
+msgstr "No parsing issues found."
+
 #: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "No provider with a list is linked on this entity."
 
-#: src/pages/review-page.tsx:184
+#: src/pages/review-page.tsx:196
 msgid "No queue items match the current filters"
 msgstr "No queue items match the current filters"
 
@@ -2016,7 +2041,7 @@ msgid "Previewing…"
 msgstr "Previewing…"
 
 #: src/components/assets/quick-log-dialog.tsx:28
-#: src/pages/review-page.tsx:337
+#: src/pages/review-page.tsx:409
 msgid "Progress"
 msgstr "Progress"
 
@@ -2188,7 +2213,7 @@ msgid "Rescan vault"
 msgstr "Rescan vault"
 
 #: src/components/layout/app-frame.tsx:391
-#: src/pages/review-page.tsx:125
+#: src/pages/review-page.tsx:135
 msgid "Review"
 msgstr "Review"
 
@@ -2278,7 +2303,7 @@ msgstr "Search or add {relationType}"
 msgid "Search or add relation"
 msgstr "Search or add relation"
 
-#: src/pages/review-page.tsx:150
+#: src/pages/review-page.tsx:162
 msgid "Search queue"
 msgstr "Search queue"
 
@@ -2372,6 +2397,11 @@ msgstr "Settings saved"
 #: src/pages/import-wizard-page.tsx:609
 msgid "Show all"
 msgstr "Show all"
+
+#. placeholder {0}: health.diagnosticCount
+#: src/pages/review-page.tsx:280
+msgid "Showing {shownCount} of {0} issues."
+msgstr "Showing {shownCount} of {0} issues."
 
 #: src/pages/import-wizard-page.tsx:604
 msgid "Showing {visibleCount} of {total}"
@@ -2511,7 +2541,7 @@ msgstr "status"
 msgid "Status field"
 msgstr "Status field"
 
-#: src/pages/review-page.tsx:55
+#: src/pages/review-page.tsx:56
 msgid "Status Mismatch"
 msgstr "Status Mismatch"
 
@@ -2712,7 +2742,7 @@ msgstr "Ungrouped"
 msgid "Unit"
 msgstr "Unit"
 
-#: src/pages/review-page.tsx:53
+#: src/pages/review-page.tsx:54
 msgid "Unlinked Items"
 msgstr "Unlinked Items"
 
@@ -2720,7 +2750,7 @@ msgstr "Unlinked Items"
 msgid "Unmapped"
 msgstr "Unmapped"
 
-#: src/pages/review-page.tsx:52
+#: src/pages/review-page.tsx:53
 msgid "Unmatched"
 msgstr "Unmatched"
 
@@ -2736,7 +2766,7 @@ msgstr "Unresolved"
 msgid "Unresolved link"
 msgstr "Unresolved link"
 
-#: src/pages/review-page.tsx:54
+#: src/pages/review-page.tsx:55
 msgid "Unresolved Relations"
 msgstr "Unresolved Relations"
 

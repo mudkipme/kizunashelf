@@ -37,8 +37,8 @@ TARGET_DIR="${CARGO_TARGET_DIR:-$REPO_ROOT/target}"
 # builds (aws-lc-sys, pulled in by reqwest's rustls). Without this, rustc links
 # against the iOS 10 default while the SDK compiles aws-lc for a much newer iOS,
 # leaving stack-probe builtins like `___chkstk_darwin` undefined. Matches the
-# KizunaCore SwiftPM platform (.iOS(.v17), required by the app's @Observable use).
-export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-17.0}"
+# KizunaCore SwiftPM platform and every app/extension target (iOS 18.0).
+export IPHONEOS_DEPLOYMENT_TARGET="18.0"
 
 BUILD_DIR="$(mktemp -d)"
 HEADERS_DIR="$BUILD_DIR/Headers"

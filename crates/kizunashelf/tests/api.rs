@@ -18,14 +18,36 @@ use tower::ServiceExt;
 /// root + write mode) is passed inline like every real runtime (web/desktop/iOS),
 /// and only the vault config lives on disk inside the vault.
 fn inline_router(vault_root: &Path, settings_writable: bool, content_writable: bool) -> Router {
-    build_inline_router(vault_root, settings_writable, content_writable, false)
+    build_inline_router(
+        vault_root,
+        settings_writable,
+        content_writable,
+        false,
+        Duration::ZERO,
+    )
+}
+
+/// Keeps the resident library snapshot alive so mutation tests can reproduce an
+/// external edit landing behind the native runtimes' long cache TTL.
+fn cached_inline_router(
+    vault_root: &Path,
+    settings_writable: bool,
+    content_writable: bool,
+) -> Router {
+    build_inline_router(
+        vault_root,
+        settings_writable,
+        content_writable,
+        false,
+        Duration::from_secs(60 * 60),
+    )
 }
 
 /// Like [`inline_router`] but with host-driven asset ingest enabled — the iOS
 /// in-process-host posture the `plan`/`ingest` endpoints require. The network
 /// server uses [`inline_router`] (off), so the host-path surface is gated there.
 fn host_inline_router(vault_root: &Path, content_writable: bool) -> Router {
-    build_inline_router(vault_root, true, content_writable, true)
+    build_inline_router(vault_root, true, content_writable, true, Duration::ZERO)
 }
 
 fn build_inline_router(
@@ -33,6 +55,7 @@ fn build_inline_router(
     settings_writable: bool,
     content_writable: bool,
     host_asset_ingest: bool,
+    cache_ttl: Duration,
 ) -> Router {
     let token_path = vault_root
         .parent()
@@ -41,7 +64,7 @@ fn build_inline_router(
     router_native(
         ApiOptions {
             config_path: PathBuf::new(),
-            cache_ttl: Duration::from_millis(0),
+            cache_ttl,
             web_dist_path: None,
             settings_writable,
             content_writable,
@@ -3213,6 +3236,49 @@ async fn delete_trashes_asset_directory() {
     assert!(vault
         .join(".trash/Assets/Taxonomy/Anime/Star Voyager")
         .exists());
+}
+
+#[tokio::test]
+async fn delete_rechecks_revision_against_fresh_file() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    let entity_path = vault.join("Taxonomy/Anime/Show.md");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "anime",
+                "label": "Anime",
+                "path": "Anime",
+                "filename": { "titleLanguage": "en" },
+                "fields": [{
+                    "field": "title",
+                    "fieldType": "title",
+                    "titleLanguage": "en"
+                }]
+            }]
+        }),
+    );
+    write_file(&entity_path, "---\ntitle: Show\n---\nOriginal\n");
+    let app = cached_inline_router(&vault, true, true);
+
+    // Prime the long-lived resident snapshot, then change the file without
+    // notifying the core, as Files/iCloud/an external editor would.
+    let revision = entity_revision(&app, "anime:Show").await;
+    let externally_edited = "---\ntitle: Show\n---\nEdited elsewhere\n";
+    write_file(&entity_path, externally_edited);
+
+    let deleted = request_json(
+        &app,
+        Method::DELETE,
+        "/api/entities/anime%3AShow",
+        Some(json!({ "revision": revision })),
+    )
+    .await;
+    assert_eq!(deleted.0, StatusCode::CONFLICT, "{}", deleted.1);
+    assert_eq!(fs::read_to_string(&entity_path).unwrap(), externally_edited);
+    assert!(!vault.join(".trash/Show.md").exists());
 }
 
 #[tokio::test]

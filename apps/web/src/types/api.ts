@@ -57,6 +57,7 @@ export type {
   QuickAddRequest,
   QuickAddResponse,
   HomeResponse,
+  HealthResponse,
   HomeSectionResponse,
   EpisodeSource,
   EpisodeSyncResponse,

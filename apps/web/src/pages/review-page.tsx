@@ -7,7 +7,7 @@ import { ArrowRightIcon, SearchIcon } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { cleanupQueuesQuery, configQuery } from "@/api/queries";
+import { cleanupQueuesQuery, configQuery, healthQuery } from "@/api/queries";
 import { AssetDownloadPanel } from "@/components/assets/asset-download-panel";
 import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityTitle } from "@/components/entities/entity-title";
@@ -34,6 +34,7 @@ import type {
   CleanupQueuesResponse,
   CleanupUnresolvedRelation,
   EntitySummary,
+  HealthResponse,
 } from "@/types/api";
 
 type QueueDefinition = {
@@ -64,6 +65,7 @@ export function ReviewPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const cleanup = useQuery(cleanupQueuesQuery());
   const config = useQuery(configQuery());
+  const health = useQuery(healthQuery());
   const query = searchParams.get("q") ?? "";
   const selectedType = searchParams.get("type") ?? allEntityFilter;
   const selectedDate = searchParams.get("date") ?? allEntityFilter;
@@ -117,7 +119,15 @@ export function ReviewPage() {
   );
 
   return (
-    <AppFrame error={cleanup.error ? errorMessage(cleanup.error) : undefined}>
+    <AppFrame
+      error={
+        cleanup.error
+          ? errorMessage(cleanup.error)
+          : health.error
+            ? errorMessage(health.error)
+            : undefined
+      }
+    >
       <PageContainer width="wide">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -135,6 +145,8 @@ export function ReviewPage() {
         {cleanup.data && (!activeQueue || assetQueueIds.has(activeQueue.id)) ? (
           <AssetDownloadPanel />
         ) : null}
+
+        {health.data && !activeQueue ? <LibraryIssuesPanel health={health.data} /> : null}
 
         {cleanup.data && !activeQueue ? <ReviewOverview summaries={summaries} /> : null}
 
@@ -213,6 +225,66 @@ export function ReviewPage() {
         ) : null}
       </PageContainer>
     </AppFrame>
+  );
+}
+
+function LibraryIssuesPanel({ health }: { health: HealthResponse }) {
+  const shownCount = health.diagnostics.length;
+
+  return (
+    <section className="rounded-md border">
+      <header className="flex items-start justify-between gap-3 border-b px-3 py-3">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold"><Trans>Library Issues</Trans></h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            <Trans>Files the library could not parse cleanly.</Trans>
+          </p>
+        </div>
+        <Badge variant={health.diagnosticCount > 0 ? "secondary" : "outline"}>
+          <Plural value={health.diagnosticCount} one="# issue" other="# issues" />
+        </Badge>
+      </header>
+
+      {health.diagnosticCount === 0 ? (
+        <p className="px-3 py-3 text-sm text-muted-foreground">
+          <Trans>No parsing issues found.</Trans>
+        </p>
+      ) : (
+        <>
+          <div className="divide-y">
+            {health.diagnostics.map((diagnostic, index) => (
+              <div
+                key={`${diagnostic.path}-${diagnostic.kind}-${index}`}
+                className="min-w-0 px-3 py-3"
+              >
+                <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                  <code className="min-w-0 break-all text-xs font-medium">{diagnostic.path}</code>
+                  <Badge variant="outline">
+                    {diagnostic.kind === "frontmatter" ? (
+                      <Trans>Frontmatter</Trans>
+                    ) : diagnostic.kind === "file" ? (
+                      <Trans>File</Trans>
+                    ) : (
+                      diagnostic.kind
+                    )}
+                  </Badge>
+                </div>
+                <p className="mt-1 break-words text-xs text-muted-foreground">
+                  {diagnostic.message}
+                </p>
+              </div>
+            ))}
+          </div>
+          {health.diagnosticCount > shownCount ? (
+            <p className="border-t px-3 py-2 text-xs text-muted-foreground">
+              <Trans>
+                Showing {shownCount} of {health.diagnosticCount} issues.
+              </Trans>
+            </p>
+          ) : null}
+        </>
+      )}
+    </section>
   );
 }
 

@@ -6,9 +6,10 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+use kizunashelf::vfs::{Vfs, VfsError as CoreVfsError};
 use kizunashelf_ffi::{
-    HostSecretStore, KizunaEngine, VaultFileSystem, VaultOptions, VfsDirEntry, VfsError, VfsFile,
-    VfsMetadata,
+    FfiVfs, HostSecretStore, KizunaEngine, VaultFileSystem, VaultOptions, VfsDirEntry, VfsError,
+    VfsFile, VfsMetadata,
 };
 use serde_json::Value;
 
@@ -210,6 +211,49 @@ impl HostSecretStore for FakeSecretStore {
     fn set(&self, key: String, value: String) {
         self.secrets.lock().unwrap().insert(key, value);
     }
+}
+
+fn assert_invalid_path<T>(result: kizunashelf::vfs::VfsResult<T>, expected: &str) {
+    match result {
+        Err(CoreVfsError::InvalidPath(path)) => assert_eq!(path, expected),
+        Err(error) => panic!("expected invalid path {expected:?}, got {error}"),
+        Ok(_) => panic!("expected invalid path {expected:?}, got success"),
+    }
+}
+
+#[test]
+fn ffi_vfs_normalizes_paths_and_rejects_traversal_before_calling_the_host() {
+    let vault = FakeVault::default();
+    vault.seed("Folder/Entry.md", "inside");
+    let vfs = FfiVfs::new(Box::new(vault));
+
+    tokio::runtime::Builder::new_multi_thread()
+        .build()
+        .expect("Tokio runtime")
+        .block_on(async {
+            assert_eq!(vfs.read("Folder//./Entry.md").await.unwrap(), b"inside");
+            assert_eq!(vfs.read("Folder\\Entry.md").await.unwrap(), b"inside");
+            vfs.read_dir("")
+                .await
+                .expect("the empty path remains the root");
+
+            let traversal = "../outside.md";
+            assert_invalid_path(vfs.read(traversal).await, traversal);
+            assert_invalid_path(vfs.read_files(&[traversal.to_string()]).await, traversal);
+            assert_invalid_path(vfs.write(traversal, b"outside").await, traversal);
+            assert_invalid_path(vfs.write_atomic(traversal, b"outside").await, traversal);
+            assert_invalid_path(vfs.create_dir_all(traversal).await, traversal);
+            assert_invalid_path(vfs.read_dir(traversal).await, traversal);
+            assert_invalid_path(vfs.metadata(traversal).await, traversal);
+            assert_invalid_path(vfs.rename(traversal, "inside.md").await, traversal);
+            assert_invalid_path(vfs.rename("Folder/Entry.md", traversal).await, traversal);
+            assert_invalid_path(vfs.remove_file(traversal).await, traversal);
+
+            let backslash_traversal = "Folder\\..\\outside.md";
+            assert_invalid_path(vfs.read(backslash_traversal).await, backslash_traversal);
+            let drive_path = "C:/outside.md";
+            assert_invalid_path(vfs.read(drive_path).await, drive_path);
+        });
 }
 
 #[test]
