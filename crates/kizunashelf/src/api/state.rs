@@ -106,6 +106,11 @@ pub struct ApiOptions {
     /// start re-parses the whole vault. A pure optimization; see
     /// [`crate::library`]'s index cache.
     pub index_cache_dir: Option<PathBuf>,
+    /// Stable host-provided identity for the active vault. Native hosts that use
+    /// a display label in `AppConfig::vault_root` (notably iOS) set this to the
+    /// remembered vault UUID so two same-named vaults never share an index cache.
+    /// Network/desktop runtimes leave it `None` and use the real vault root.
+    pub index_cache_identity: Option<String>,
 }
 
 #[derive(Clone)]
@@ -607,13 +612,16 @@ async fn build_index_cache_context(
     config: &KizunaConfig,
 ) -> Option<IndexCacheContext> {
     let raw = read_raw_vault_config_via_vfs(vfs).await.ok().flatten()?;
+    let vault_identity = state
+        .options
+        .index_cache_identity
+        .as_deref()
+        .unwrap_or(&config.vault_root);
     Some(match state.options.index_cache_dir.clone() {
-        Some(dir) => IndexCacheContext::new(dir, &raw, &config.vault_root),
-        None => IndexCacheContext::memory(
-            Arc::clone(&state.index_cache_memory),
-            &raw,
-            &config.vault_root,
-        ),
+        Some(dir) => IndexCacheContext::new(dir, &raw, vault_identity),
+        None => {
+            IndexCacheContext::memory(Arc::clone(&state.index_cache_memory), &raw, vault_identity)
+        }
     })
 }
 

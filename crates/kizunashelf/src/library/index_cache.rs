@@ -275,3 +275,26 @@ impl IndexCacheContext {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn disk_path(context: &IndexCacheContext) -> &Path {
+        match &context.store {
+            IndexCacheStore::Disk(path) => path,
+            IndexCacheStore::Memory(_) => panic!("expected disk cache"),
+        }
+    }
+
+    #[test]
+    fn stable_vault_identity_separates_same_named_vault_caches() {
+        let root = PathBuf::from("cache");
+        let first = IndexCacheContext::new(root.clone(), "same schema", "vault-uuid-a");
+        let second = IndexCacheContext::new(root.clone(), "same schema", "vault-uuid-b");
+        let reopened = IndexCacheContext::new(root, "same schema", "vault-uuid-a");
+
+        assert_ne!(disk_path(&first), disk_path(&second));
+        assert_eq!(disk_path(&first), disk_path(&reopened));
+    }
+}

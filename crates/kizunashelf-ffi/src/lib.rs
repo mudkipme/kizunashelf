@@ -41,6 +41,10 @@ uniffi::setup_scaffolding!();
 #[derive(uniffi::Record)]
 pub struct VaultOptions {
     pub vault_root_label: String,
+    /// Stable identity of the remembered vault (the iOS `VaultBookmark.id`).
+    /// Kept separate from the display label so same-named vaults never share
+    /// host-side caches.
+    pub vault_identity: String,
     /// Whether content writes (create/update/delete, asset downloads) are
     /// allowed. Phase 2 browsing uses `false`.
     pub content_writable: bool,
@@ -109,6 +113,7 @@ impl KizunaEngine {
             settings_writable: true,
             content_writable: options.content_writable,
             index_cache_dir: options.index_cache_dir.map(PathBuf::from),
+            index_cache_identity: Some(options.vault_identity),
             // The in-process host (the Swift app) downloads covers itself and hands
             // the core a sandboxed temp-file path to ingest. This runtime is the
             // only trusted caller, so it's the only one allowed host-path ingest.

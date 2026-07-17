@@ -195,6 +195,7 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
     let engine = KizunaEngine::with_vault(
         VaultOptions {
             vault_root_label: "My Vault".to_string(),
+            vault_identity: "vault-my".to_string(),
             content_writable: false,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
@@ -233,6 +234,52 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
 }
 
 #[test]
+fn ios_index_cache_separates_same_named_vaults_by_stable_identity() {
+    const CONFIG: &str = "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n";
+
+    fn cached_title(cache_dir: &str, vault_identity: &str, title: &str) -> String {
+        let vault = FakeVault::default();
+        vault.seed("KizunaShelf/config.yaml", CONFIG);
+        // Keep path, length, and synthetic mtime identical between vaults. If
+        // identity is omitted from the cache namespace, the second engine will
+        // incorrectly reuse the first vault's parsed entity.
+        vault.seed(
+            "Taxonomy/Anime/Entry.md",
+            &format!("---\ntitle: {title}\n---\n"),
+        );
+        let engine = KizunaEngine::with_vault(
+            VaultOptions {
+                vault_root_label: "Same Name".to_string(),
+                vault_identity: vault_identity.to_string(),
+                content_writable: false,
+                cache_ttl_ms: Some(0),
+                index_cache_dir: Some(cache_dir.to_string()),
+            },
+            Box::new(vault),
+            Box::new(FakeSecretStore::default()),
+        )
+        .expect("engine initializes");
+        let response = futures::executor::block_on(engine.request(
+            "GET".to_string(),
+            "/api/entities".to_string(),
+            None,
+        ))
+        .expect("entities request succeeds");
+        assert_eq!(response.status, 200, "entities: {}", response.body);
+        let body: Value = serde_json::from_str(&response.body).unwrap();
+        body["items"][0]["title"]
+            .as_str()
+            .expect("entity title")
+            .to_string()
+    }
+
+    let cache = tempfile::tempdir().expect("cache dir");
+    let cache_dir = cache.path().to_string_lossy();
+    assert_eq!(cached_title(&cache_dir, "vault-a", "Alpha"), "Alpha");
+    assert_eq!(cached_title(&cache_dir, "vault-b", "Bravo"), "Bravo");
+}
+
+#[test]
 fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
     let vault = FakeVault::default();
     vault.seed(
@@ -247,6 +294,7 @@ fn ios_engine_writes_and_loads_assets_through_the_swift_filesystem() {
     let engine = KizunaEngine::with_vault(
         VaultOptions {
             vault_root_label: "My Vault".to_string(),
+            vault_identity: "vault-my".to_string(),
             content_writable: true,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
@@ -311,6 +359,7 @@ fn igdb_provider_summary(secrets: FakeSecretStore) -> Value {
     let engine = KizunaEngine::with_vault(
         VaultOptions {
             vault_root_label: "Vault".to_string(),
+            vault_identity: "vault-provider".to_string(),
             content_writable: false,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,
@@ -375,6 +424,7 @@ fn ios_settings_write_vault_config_through_the_vfs() {
     let engine = KizunaEngine::with_vault(
         VaultOptions {
             vault_root_label: "My Vault".to_string(),
+            vault_identity: "vault-settings".to_string(),
             content_writable: true,
             cache_ttl_ms: Some(0),
             index_cache_dir: None,

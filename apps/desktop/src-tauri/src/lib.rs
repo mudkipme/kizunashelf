@@ -208,6 +208,7 @@ fn build_router(
             // entries are keyed by vault identity inside the dir, so one dir is
             // shared across vaults.
             index_cache_dir: Some(index_cache_dir),
+            index_cache_identity: None,
             // The desktop frontend uses the reqwest-based download path; it never
             // hands the core a host file path, so this host-only surface stays off.
             host_asset_ingest: false,
