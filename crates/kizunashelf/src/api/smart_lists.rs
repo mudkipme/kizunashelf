@@ -990,3 +990,349 @@ fn contract_view_to_spec(
         image,
     })
 }
+
+#[cfg(test)]
+mod mapping_tests {
+    //! Round-trip tests for the hand-written contract ⇄ core criteria mapping
+    //! above. An asymmetry between the two directions silently changes what a
+    //! saved filter *means*, so every rule kind and value shape the editor can
+    //! produce must survive contract → core → contract unchanged — and a
+    //! hand-authored core tree must survive core → contract → core.
+
+    use super::*;
+    use crate::contract::SmartRelativeDate;
+
+    /// Contract structs don't derive `PartialEq`; their serialized form is the
+    /// wire truth anyway, so compare that.
+    fn contract_json<T: serde::Serialize>(value: &T) -> serde_json::Value {
+        serde_json::to_value(value).expect("contract value serializes")
+    }
+
+    fn compare(field: &str, op: SmartCompareOp) -> SmartFilterRule {
+        SmartFilterRule {
+            kind: SmartFilterRuleKind::Compare,
+            field: Some(field.to_string()),
+            op: Some(op),
+            ..Default::default()
+        }
+    }
+
+    fn relative(amount: u32, unit: SmartDurationUnit, future: bool) -> Option<SmartRelativeDate> {
+        Some(SmartRelativeDate {
+            amount,
+            unit,
+            future,
+        })
+    }
+
+    fn all_group(rules: Vec<SmartFilterRule>) -> SmartFilterGroup {
+        SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules,
+            groups: Vec::new(),
+        }
+    }
+
+    /// `ApiError` has no `Debug` impl, so unwrap through its message.
+    fn to_core(group: &SmartFilterGroup, scope: Option<&str>) -> FilterNode {
+        group_to_node(group, scope)
+            .unwrap_or_else(|error| panic!("maps to core: {}", error.message()))
+    }
+
+    fn round_trip(group: &SmartFilterGroup) -> SmartFilterGroup {
+        root_group(&to_core(group, None), None)
+    }
+
+    #[test]
+    fn every_rule_kind_round_trips_from_the_contract() {
+        let group = SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules: vec![
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::InFolder,
+                    values: vec!["Media/Anime".into()],
+                    ..Default::default()
+                },
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::HasTag,
+                    values: vec!["favorite".into(), "seasonal/2026".into()],
+                    negated: true,
+                    ..Default::default()
+                },
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::LinksTo,
+                    values: vec!["Star Saga".into()],
+                    ..Default::default()
+                },
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::Contains,
+                    field: Some("genres".into()),
+                    mode: Some(SmartContainsMode::Any),
+                    values: vec!["SF".into(), "Space".into()],
+                    ..Default::default()
+                },
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::Contains,
+                    field: Some("file.name".into()),
+                    mode: Some(SmartContainsMode::All),
+                    values: vec!["OVA".into()],
+                    ..Default::default()
+                },
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::StartsWith,
+                    field: Some("title".into()),
+                    values: vec!["Star".into()],
+                    ..Default::default()
+                },
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::EndsWith,
+                    field: Some("title".into()),
+                    values: vec!["Voyager".into()],
+                    negated: true,
+                    ..Default::default()
+                },
+                SmartFilterRule {
+                    kind: SmartFilterRuleKind::IsEmpty,
+                    field: Some("rating".into()),
+                    ..Default::default()
+                },
+                // Every operator, and every compare value shape: string,
+                // number, bool, absolute date, and each relative-date unit in
+                // both directions (past and future), including zero ("today")
+                // and the `file.mtime` instant base.
+                SmartFilterRule {
+                    value: Some("Watching".into()),
+                    ..compare("status", SmartCompareOp::Eq)
+                },
+                SmartFilterRule {
+                    number: Some(7.5),
+                    ..compare("rating", SmartCompareOp::Gt)
+                },
+                SmartFilterRule {
+                    boolean: Some(true),
+                    ..compare("favorite", SmartCompareOp::Eq)
+                },
+                SmartFilterRule {
+                    date: Some("2026-04-03".into()),
+                    ..compare("complete_date", SmartCompareOp::Lte)
+                },
+                SmartFilterRule {
+                    relative: relative(7, SmartDurationUnit::Days, true),
+                    ..compare("complete_date", SmartCompareOp::Gte)
+                },
+                SmartFilterRule {
+                    relative: relative(2, SmartDurationUnit::Weeks, false),
+                    ..compare("complete_date", SmartCompareOp::Lt)
+                },
+                SmartFilterRule {
+                    relative: relative(3, SmartDurationUnit::Months, false),
+                    ..compare("start_date", SmartCompareOp::Gte)
+                },
+                SmartFilterRule {
+                    relative: relative(1, SmartDurationUnit::Years, true),
+                    ..compare("start_date", SmartCompareOp::Lt)
+                },
+                SmartFilterRule {
+                    relative: relative(0, SmartDurationUnit::Days, false),
+                    ..compare("complete_date", SmartCompareOp::Gte)
+                },
+                SmartFilterRule {
+                    relative: relative(30, SmartDurationUnit::Days, false),
+                    ..compare("file.mtime", SmartCompareOp::Gte)
+                },
+                SmartFilterRule {
+                    value: Some("Star Voyager".into()),
+                    ..compare("file.name", SmartCompareOp::Ne)
+                },
+            ],
+            groups: vec![
+                SmartFilterSubgroup {
+                    conjunction: SmartFilterConjunction::Any,
+                    rules: vec![SmartFilterRule {
+                        value: Some("Paused".into()),
+                        ..compare("status", SmartCompareOp::Eq)
+                    }],
+                },
+                SmartFilterSubgroup {
+                    conjunction: SmartFilterConjunction::NoneOf,
+                    rules: vec![SmartFilterRule {
+                        kind: SmartFilterRuleKind::HasTag,
+                        values: vec!["dropped".into()],
+                        ..Default::default()
+                    }],
+                },
+            ],
+        };
+        assert_eq!(contract_json(&group), contract_json(&round_trip(&group)));
+    }
+
+    #[test]
+    fn a_core_tree_round_trips_through_the_contract() {
+        let node = FilterNode::Group {
+            conjunction: Conjunction::All,
+            children: vec![
+                FilterNode::Expr(FilterAtom::new(
+                    AtomKind::InFolder {
+                        folder: "Media/Games".into(),
+                    },
+                    false,
+                )),
+                FilterNode::Expr(FilterAtom::new(
+                    AtomKind::HasTag {
+                        tags: vec!["backlog".into()],
+                    },
+                    true,
+                )),
+                FilterNode::Expr(FilterAtom::new(
+                    AtomKind::Compare {
+                        field: FieldRef::Note("rating".into()),
+                        op: CompareOp::Gte,
+                        value: CompareValue::Number(8.0),
+                    },
+                    false,
+                )),
+                FilterNode::Expr(FilterAtom::new(
+                    AtomKind::Compare {
+                        field: FieldRef::FileMtime,
+                        op: CompareOp::Gte,
+                        value: CompareValue::Date(DateExpr {
+                            base: DateBase::Now,
+                            offsets: vec![DateOffset {
+                                negative: true,
+                                duration: DurationSpec {
+                                    days: 90,
+                                    ..Default::default()
+                                },
+                            }],
+                        }),
+                    },
+                    false,
+                )),
+                FilterNode::Expr(FilterAtom::new(
+                    AtomKind::Compare {
+                        field: FieldRef::Note("complete_date".into()),
+                        op: CompareOp::Lte,
+                        value: CompareValue::Date(DateExpr {
+                            base: DateBase::Absolute(
+                                chrono::NaiveDate::from_ymd_opt(2026, 4, 3).expect("valid date"),
+                            ),
+                            offsets: Vec::new(),
+                        }),
+                    },
+                    false,
+                )),
+                // An opaque construct must survive as `unsupported` raw YAML.
+                FilterNode::Opaque(serde_yaml::Value::String("custom.magic()".into())),
+                FilterNode::Group {
+                    conjunction: Conjunction::Any,
+                    children: vec![
+                        FilterNode::Expr(FilterAtom::new(
+                            AtomKind::IsEmpty {
+                                field: FieldRef::Note("status".into()),
+                            },
+                            false,
+                        )),
+                        FilterNode::Expr(FilterAtom::new(
+                            AtomKind::EndsWith {
+                                field: FieldRef::FileName,
+                                value: "OVA".into(),
+                            },
+                            false,
+                        )),
+                    ],
+                },
+            ],
+        };
+        let back = to_core(&root_group(&node, None), None);
+        assert_eq!(node, back);
+    }
+
+    #[test]
+    fn a_negated_compare_normalizes_to_the_flipped_operator() {
+        // The contract can say "negated eq"; the core expresses that as `!=`.
+        // The round trip therefore normalizes rather than reproduces — assert
+        // the exact normalized form, and that it is a fixed point from there.
+        let group = all_group(vec![SmartFilterRule {
+            negated: true,
+            value: Some("Dropped".into()),
+            ..compare("status", SmartCompareOp::Eq)
+        }]);
+        let normalized = round_trip(&group);
+        let rule = contract_json(&normalized.rules[0]);
+        assert_eq!(rule["op"], "ne");
+        assert_eq!(rule["negated"], false);
+        assert_eq!(rule["value"], "Dropped");
+        assert_eq!(
+            contract_json(&normalized),
+            contract_json(&round_trip(&normalized))
+        );
+    }
+
+    #[test]
+    fn a_note_prefixed_field_normalizes_to_the_bare_key() {
+        let group = all_group(vec![SmartFilterRule {
+            value: Some("x".into()),
+            ..compare("note.rating", SmartCompareOp::Eq)
+        }]);
+        let rule = contract_json(&round_trip(&group).rules[0]);
+        assert_eq!(rule["field"], "rating");
+    }
+
+    #[test]
+    fn the_scope_atom_is_prepended_and_hidden_for_an_all_group() {
+        let group = all_group(vec![SmartFilterRule {
+            value: Some("Watching".into()),
+            ..compare("status", SmartCompareOp::Eq)
+        }]);
+        let node = to_core(&group, Some("Media/Anime"));
+        let FilterNode::Group { children, .. } = &node else {
+            panic!("root must be a group");
+        };
+        assert_eq!(
+            children[0],
+            FilterNode::Expr(FilterAtom::new(
+                AtomKind::InFolder {
+                    folder: "Media/Anime".into()
+                },
+                false,
+            ))
+        );
+        // Reading back with the scope hidden reproduces the original group.
+        assert_eq!(
+            contract_json(&group),
+            contract_json(&root_group(&node, Some(0)))
+        );
+    }
+
+    #[test]
+    fn a_non_all_scope_wraps_once_and_is_stable_after_the_first_round_trip() {
+        // An `any` group with a scope gets an outer `and` wrapper so the scope
+        // always constrains. The first read-back moves the rules into one
+        // subgroup of an `all` root — a deliberate reshaping — and from then
+        // on the shape must be a fixed point, not wrap again on every save.
+        let group = SmartFilterGroup {
+            conjunction: SmartFilterConjunction::Any,
+            rules: vec![
+                SmartFilterRule {
+                    value: Some("Watching".into()),
+                    ..compare("status", SmartCompareOp::Eq)
+                },
+                SmartFilterRule {
+                    value: Some("Paused".into()),
+                    ..compare("status", SmartCompareOp::Eq)
+                },
+            ],
+            groups: Vec::new(),
+        };
+        let node = to_core(&group, Some("Media/Anime"));
+        let first = root_group(&node, Some(0));
+        assert_eq!(contract_json(&first.conjunction), "all");
+        assert_eq!(first.rules.len(), 0);
+        assert_eq!(first.groups.len(), 1);
+        assert_eq!(contract_json(&first.groups[0].conjunction), "any");
+        assert_eq!(first.groups[0].rules.len(), 2);
+
+        let again = root_group(&to_core(&first, Some("Media/Anime")), Some(0));
+        assert_eq!(contract_json(&first), contract_json(&again));
+    }
+}

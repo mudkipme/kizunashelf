@@ -196,6 +196,18 @@ struct DiskCachedAccessToken {
     expires_at_unix_seconds: u64,
 }
 
+/// Base builder both outbound HTTP clients start from, so shared settings
+/// (connect timeout, user agent) can't drift apart. The two clients then set
+/// their deliberate differences on top: [`AppState::http_client`] disables
+/// redirects (SSRF re-validation) and has no overall timeout (streams assets);
+/// the provider client (`external::external_client`) caps whole requests and
+/// follows redirects.
+pub(super) fn base_http_client() -> reqwest::ClientBuilder {
+    reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(15))
+        .user_agent(concat!("KizunaShelf/", env!("CARGO_PKG_VERSION")))
+}
+
 impl AppState {
     /// Builds state with an inline app config, an optional injected vault
     /// filesystem (iOS) or a [`NativeVfs`] derived from the vault root
@@ -206,12 +218,11 @@ impl AppState {
         app_config: AppConfig,
         secret_store: Arc<dyn SecretStore>,
     ) -> Self {
-        let http_client = reqwest::Client::builder()
-            .connect_timeout(Duration::from_secs(15))
-            .user_agent(concat!("KizunaShelf/", env!("CARGO_PKG_VERSION")))
+        let http_client = base_http_client()
             // Asset downloads follow redirects manually (see assets.rs) so each
             // hop's destination can be re-validated against the SSRF guard; never
-            // let reqwest follow a redirect into an unvalidated host.
+            // let reqwest follow a redirect into an unvalidated host. No overall
+            // request timeout either: this client streams large asset bodies.
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());

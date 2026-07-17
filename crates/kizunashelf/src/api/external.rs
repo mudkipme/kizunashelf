@@ -53,7 +53,6 @@ use super::mutations::{
 use super::state::{get_library, require_content_writes, AppState, CachedAccessToken};
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
-const EXTERNAL_CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 const EXTERNAL_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 trait ExternalProvider {
@@ -1139,8 +1138,7 @@ fn provider_order(config: &KizunaConfig, entity_type: &str) -> Vec<&'static str>
 pub(super) fn external_client() -> &'static reqwest::Client {
     static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
     CLIENT.get_or_init(|| {
-        reqwest::Client::builder()
-            .connect_timeout(EXTERNAL_CONNECT_TIMEOUT)
+        super::state::base_http_client()
             .timeout(EXTERNAL_REQUEST_TIMEOUT)
             .build()
             .unwrap_or_else(|_| reqwest::Client::new())
