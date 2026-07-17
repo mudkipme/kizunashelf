@@ -46,10 +46,14 @@ pub struct SettingsConfigResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vault_config_path: Option<String>,
     /// Whether the vault config file exists on disk.
+    /// `false` means the VFS definitively returned `NotFound`; malformed and
+    /// temporarily unreadable files are never reported as missing.
     pub vault_exists: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vault: Option<VaultConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Validation error for an existing config that could be read but not used.
+    /// VFS/read failures return a non-2xx response instead.
     pub error: Option<String>,
 }
 

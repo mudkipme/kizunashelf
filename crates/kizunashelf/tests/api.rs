@@ -1332,6 +1332,49 @@ async fn settings_save_and_read_vault_config() {
 }
 
 #[tokio::test]
+async fn settings_config_keeps_malformed_existing_file_out_of_onboarding() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    let config_path = vault.join("KizunaShelf/config.yaml");
+    std::fs::create_dir_all(config_path.parent().unwrap()).unwrap();
+    let malformed = "taxonomyRoot: [unterminated\n";
+    std::fs::write(&config_path, malformed).unwrap();
+    let app = inline_router(&vault, true, true);
+
+    let response = request_json(&app, Method::GET, "/api/settings/config", None).await;
+
+    assert_eq!(response.0, StatusCode::OK, "{}", response.1);
+    assert_eq!(response.1["vaultExists"], true, "{}", response.1);
+    assert!(response.1["vault"].is_null(), "{}", response.1);
+    assert!(response.1["error"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("invalid vault config"));
+    assert_eq!(std::fs::read_to_string(config_path).unwrap(), malformed);
+}
+
+#[tokio::test]
+async fn settings_config_reports_invalid_paths_as_existing_config_errors() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({ "taxonomyRoot": "../outside", "types": [] }),
+    );
+    let app = inline_router(&vault, true, true);
+
+    let response = request_json(&app, Method::GET, "/api/settings/config", None).await;
+
+    assert_eq!(response.0, StatusCode::OK, "{}", response.1);
+    assert_eq!(response.1["vaultExists"], true, "{}", response.1);
+    assert!(response.1["vault"].is_null(), "{}", response.1);
+    assert!(response.1["error"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("taxonomyRoot cannot contain parent directory components"));
+}
+
+#[tokio::test]
 async fn home_sections_evaluate_smart_list_criteria() {
     let server = TestServer::new();
     let app = &server.app;

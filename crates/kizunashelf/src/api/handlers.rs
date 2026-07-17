@@ -109,15 +109,29 @@ pub(crate) async fn settings_config(
     // the vault config (the schema) is read through the VFS.
     let app = state.app_config();
     let vfs = state.vault_vfs(&app.vault_root);
-    let vault = crate::library::load_vault_config_via_vfs(vfs.as_ref())
+    settings_config_response(app, vfs.as_ref()).await
+}
+
+async fn settings_config_response(
+    app: crate::types::AppConfig,
+    vfs: &dyn crate::vfs::Vfs,
+) -> ApiResult<SettingsConfigResponse> {
+    use crate::library::VaultConfigInspection;
+
+    let inspection = crate::library::inspect_vault_config_via_vfs(vfs, &app)
         .await
-        .ok();
+        .map_err(ApiError::from)?;
+    let (vault_exists, vault, error) = match inspection {
+        VaultConfigInspection::Missing => (false, None, None),
+        VaultConfigInspection::Ready(vault) => (true, Some(vault), None),
+        VaultConfigInspection::Invalid(error) => (true, None, Some(error)),
+    };
     Ok(Json(SettingsConfigResponse {
         app: Some(app),
         vault_config_path: Some(crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string()),
-        vault_exists: vault.is_some(),
+        vault_exists,
         vault,
-        error: None,
+        error,
     }))
 }
 
@@ -145,16 +159,7 @@ pub(crate) async fn save_settings_config(
             .map_err(ApiError::from)?;
     }
     state.invalidate_cache().await;
-    let saved = crate::library::load_vault_config_via_vfs(vfs.as_ref())
-        .await
-        .ok();
-    Ok(Json(SettingsConfigResponse {
-        app: Some(app),
-        vault_config_path: Some(crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string()),
-        vault_exists: saved.is_some(),
-        vault: saved,
-        error: None,
-    }))
+    settings_config_response(app, vfs.as_ref()).await
 }
 
 /// Returns the raw YAML text of the vault config for the plain-text editor.
@@ -203,8 +208,7 @@ pub(crate) async fn save_raw_settings_config(
 
     let saved = crate::library::read_raw_vault_config_via_vfs(vfs.as_ref())
         .await
-        .ok()
-        .flatten();
+        .map_err(ApiError::from)?;
     Ok(Json(RawConfigResponse {
         vault_config_path: crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string(),
         vault_exists: saved.is_some(),

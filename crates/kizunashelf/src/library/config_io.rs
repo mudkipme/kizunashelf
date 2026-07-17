@@ -12,6 +12,14 @@ use crate::vfs::{Vfs, VfsError};
 use anyhow::{Context, Result};
 use std::path::{Component, Path};
 
+/// Result of inspecting the vault config without conflating absence with an
+/// unreadable or malformed file. Onboarding is safe only for `Missing`.
+pub enum VaultConfigInspection {
+    Missing,
+    Ready(VaultConfig),
+    Invalid(String),
+}
+
 /// Name of the visible app folder at the vault root. Holds the config — and, in
 /// future, other app-owned artifacts meant to sync with the vault (e.g. saved
 /// lists). Hidden from directory autocomplete so users don't nest entity
@@ -86,9 +94,57 @@ pub async fn save_raw_vault_config_via_vfs(vfs: &dyn Vfs, content: &str) -> Resu
 pub async fn read_raw_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<Option<String>> {
     match vfs.read_to_string(VAULT_CONFIG_RELATIVE_PATH).await {
         Ok(raw) => Ok(Some(raw)),
-        Err(VfsError::NotFound) => Ok(None),
+        Err(VfsError::NotFound) => {
+            // File Providers can occasionally surface an unavailable placeholder
+            // read as `NotFound`. If metadata still sees the file, preserve it as
+            // an I/O failure. Otherwise confirm the vault root itself is reachable
+            // before declaring the config absent; only that shape may enter setup.
+            match vfs.metadata(VAULT_CONFIG_RELATIVE_PATH).await {
+                Ok(_) => anyhow::bail!(
+                    "vault config exists at {VAULT_CONFIG_RELATIVE_PATH} but could not be read"
+                ),
+                Err(VfsError::NotFound) => {}
+                Err(error) => anyhow::bail!("failed to inspect vault config: {error}"),
+            }
+            let root = vfs
+                .metadata("")
+                .await
+                .map_err(|error| anyhow::anyhow!("failed to access vault root: {error}"))?;
+            if !root.is_dir {
+                anyhow::bail!("vault root is not a directory");
+            }
+            Ok(None)
+        }
         Err(other) => Err(anyhow::anyhow!("failed to read vault config: {other}")),
     }
+}
+
+/// Reads and validates the vault config for a settings/onboarding gate.
+///
+/// A missing file is a normal first-run state. Invalid YAML/schema/path data is
+/// returned as an existing-but-invalid state so clients can offer repair without
+/// overwriting it. Actual VFS failures remain `Err` and must be retried rather
+/// than treated as absence.
+pub async fn inspect_vault_config_via_vfs(
+    vfs: &dyn Vfs,
+    app: &crate::types::AppConfig,
+) -> Result<VaultConfigInspection> {
+    let Some(raw) = read_raw_vault_config_via_vfs(vfs).await? else {
+        return Ok(VaultConfigInspection::Missing);
+    };
+    let vault = match parse_vault_config(&raw) {
+        Ok(vault) => vault,
+        Err(error) => return Ok(VaultConfigInspection::Invalid(format!("{error:#}"))),
+    };
+    let merged = KizunaConfig::from_parts(app.clone(), vault.clone());
+    if let Err(error) = validate_config_paths(&merged) {
+        return Ok(VaultConfigInspection::Invalid(error.to_string()));
+    }
+    Ok(VaultConfigInspection::Ready(vault))
+}
+
+fn parse_vault_config(content: &str) -> Result<VaultConfig> {
+    serde_yaml::from_str(content).context("invalid vault config")
 }
 
 /// Strictly parses raw vault-config YAML into a [`VaultConfig`]. Unlike
@@ -121,7 +177,7 @@ pub async fn load_vault_config_via_vfs(vfs: &dyn Vfs) -> Result<VaultConfig> {
             ),
             other => anyhow::anyhow!("failed to read vault config: {other}"),
         })?;
-    serde_yaml::from_str(&raw).context("invalid vault config")
+    parse_vault_config(&raw)
 }
 
 pub(super) fn validate_config_paths(config: &KizunaConfig) -> Result<()> {

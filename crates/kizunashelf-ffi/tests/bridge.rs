@@ -18,6 +18,7 @@ use serde_json::Value;
 #[derive(Default)]
 struct FakeVault {
     files: Mutex<HashMap<String, Vec<u8>>>,
+    config_read_error: Option<String>,
 }
 
 impl FakeVault {
@@ -28,6 +29,13 @@ impl FakeVault {
             .insert(path.to_string(), contents.as_bytes().to_vec());
     }
 
+    fn with_unavailable_config(message: &str) -> Self {
+        Self {
+            files: Mutex::new(HashMap::new()),
+            config_read_error: Some(message.to_string()),
+        }
+    }
+
     fn is_dir(files: &HashMap<String, Vec<u8>>, path: &str) -> bool {
         path.is_empty() || files.keys().any(|key| key.starts_with(&format!("{path}/")))
     }
@@ -35,6 +43,13 @@ impl FakeVault {
 
 impl VaultFileSystem for FakeVault {
     fn read(&self, path: String) -> Result<Vec<u8>, VfsError> {
+        if path == "KizunaShelf/config.yaml" {
+            if let Some(message) = &self.config_read_error {
+                return Err(VfsError::Other {
+                    message: message.clone(),
+                });
+            }
+        }
         self.files
             .lock()
             .unwrap()
@@ -231,6 +246,38 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
         .filter_map(|item| item["title"].as_str())
         .collect();
     assert!(titles.contains(&"Star Voyager"), "entities: {body}");
+}
+
+#[test]
+fn ios_settings_does_not_report_an_unavailable_config_as_missing() {
+    let engine = KizunaEngine::with_vault(
+        VaultOptions {
+            vault_root_label: "Cloud Vault".to_string(),
+            vault_identity: "vault-cloud".to_string(),
+            content_writable: true,
+            cache_ttl_ms: Some(0),
+            index_cache_dir: None,
+        },
+        Box::new(FakeVault::with_unavailable_config(
+            "file provider is temporarily offline",
+        )),
+        Box::new(FakeSecretStore::default()),
+    )
+    .expect("engine initializes");
+
+    let response = futures::executor::block_on(engine.request(
+        "GET".to_string(),
+        "/api/settings/config".to_string(),
+        None,
+    ))
+    .expect("settings request returns an API response");
+
+    assert_eq!(response.status, 500, "settings: {}", response.body);
+    let body: Value = serde_json::from_str(&response.body).unwrap();
+    assert!(body["error"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("file provider is temporarily offline"));
 }
 
 #[test]

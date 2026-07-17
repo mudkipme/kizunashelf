@@ -20,9 +20,10 @@ pub(crate) use index_cache::{IndexCacheContext, MemoryIndexCache};
 
 pub use collation::{compare_optional_string, compare_string, compare_string_for_title_language};
 pub use config_io::{
-    ensure_config_directories_via_vfs, load_vault_config_via_vfs, parse_vault_config_strict,
-    read_raw_vault_config_via_vfs, save_raw_vault_config_via_vfs, save_vault_config_via_vfs,
-    VAULT_APP_DIR_NAME, VAULT_CONFIG_RELATIVE_PATH,
+    ensure_config_directories_via_vfs, inspect_vault_config_via_vfs, load_vault_config_via_vfs,
+    parse_vault_config_strict, read_raw_vault_config_via_vfs, save_raw_vault_config_via_vfs,
+    save_vault_config_via_vfs, VaultConfigInspection, VAULT_APP_DIR_NAME,
+    VAULT_CONFIG_RELATIVE_PATH,
 };
 pub use frontmatter::{
     serialize_markdown_document, split_markdown_document, wikilink_regex, MarkdownDocument,
