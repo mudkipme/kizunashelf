@@ -36,7 +36,9 @@ fn item_regex() -> &'static Regex {
     // bullet 2 spaces under a column-0 item is already its child — so any indented
     // bullet is content nested *under* an episode (the item's tail), not an
     // episode. `render_item` always emits at column 0, so round-trips are exact.
-    RE.get_or_init(|| Regex::new(r"^([-*+]|\d+[.)])[ \t]+(?:\[([ xX])\][ \t]+)?(.*)$").unwrap())
+    RE.get_or_init(|| {
+        Regex::new(r"^([-*+]|\d+(?:\.\d+)?[.)])[ \t]+(?:\[([ xX])\][ \t]+)?(.*)$").unwrap()
+    })
 }
 
 /// The leading episode number in an item's content (e.g. `12.5`, `#5`, `E12`).
@@ -87,8 +89,8 @@ fn strip_emoji_date(content: &str, regex: &Regex) -> (String, Option<String>) {
 struct ParsedItem<'a> {
     watched: bool,
     content: &'a str,
-    /// The numeric part of an ordered-list marker (e.g. `12` from `12.`), used as a
-    /// fallback key when the content carries no number.
+    /// The numeric part of an ordered-list marker (e.g. `12` from `12.` or `2.5`
+    /// from `2.5.`), used as the structural episode key.
     marker_number: Option<&'a str>,
 }
 
@@ -109,17 +111,21 @@ fn parse_item(line: &str) -> Option<ParsedItem<'_>> {
     })
 }
 
-/// Splits item content into `(key, title)`: a leading number in the content wins;
-/// otherwise an ordered-list marker number is the key; otherwise no key.
+/// Splits item content into `(key, title)`: an ordered-list marker number wins;
+/// otherwise a leading number in the content is the key; otherwise no key.
+///
+/// The marker takes precedence because numeric song/chapter titles (for example
+/// `1. 2016 -Third cosmic velocity-`) are content, not episode identifiers. The
+/// marker is the explicit structural identifier in that form.
 fn split_key_title(content: &str, marker_number: Option<&str>) -> (String, String) {
     let trimmed = content.trim();
+    if let Some(marker_number) = marker_number {
+        return (marker_number.to_string(), trimmed.to_string());
+    }
     if let Some(caps) = key_regex().captures(trimmed) {
         let key = caps.get(1).unwrap().as_str().to_string();
         let rest = &trimmed[caps.get(0).unwrap().end()..];
         return (key, strip_leading_separator(rest).to_string());
-    }
-    if let Some(marker_number) = marker_number {
-        return (marker_number.to_string(), trimmed.to_string());
     }
     (String::new(), trimmed.to_string())
 }
@@ -827,6 +833,37 @@ mod tests {
         let parsed = parse_episodes(body, &section());
         assert_eq!(parsed.groups[0].items[0].key, "1");
         assert_eq!(parsed.groups[0].items[0].title, "Pilot");
+    }
+
+    #[test]
+    fn ordered_marker_wins_over_numeric_title() {
+        let body = "## Episodes\n1. 2016 -Third cosmic velocity-\n2. Luminize\n3. 1983-schwarzesmarken- (IS3 version)\n";
+        let parsed = parse_episodes(body, &section());
+        let items = &parsed.groups[0].items;
+
+        assert_eq!(items[0].key, "1");
+        assert_eq!(items[0].title, "2016 -Third cosmic velocity-");
+        assert_eq!(items[1].key, "2");
+        assert_eq!(items[1].title, "Luminize");
+        assert_eq!(items[2].key, "3");
+        assert_eq!(items[2].title, "1983-schwarzesmarken- (IS3 version)");
+    }
+
+    #[test]
+    fn decimal_ordered_marker_is_an_episode_key() {
+        let body = "## Episodes\n0. Special Episode\n1. Episode 1\n2. Episode 2\n2.5. Review of Episode 1 and 2\n3. Episode 3\n";
+        let parsed = parse_episodes(body, &section());
+        let items = &parsed.groups[0].items;
+
+        assert_eq!(parsed.total, 5);
+        assert_eq!(
+            items
+                .iter()
+                .map(|item| item.key.as_str())
+                .collect::<Vec<_>>(),
+            ["0", "1", "2", "2.5", "3"]
+        );
+        assert_eq!(items[3].title, "Review of Episode 1 and 2");
     }
 
     #[test]
