@@ -694,6 +694,12 @@ pub struct EpisodeDate {
     /// The calendar date (`YYYY-MM-DD`).
     pub date: String,
     pub role: EpisodeDateRole,
+    /// The checklist item's checked state (`- [x]`). Usually redundant with a
+    /// `completed` entry existing for the key, but a hand-edited item can be
+    /// checked *without* a `✅` date — still consumed, so "unwatched" derivations
+    /// (the catch-up backlog) must consult this, not just completion entries.
+    #[serde(default)]
+    pub watched: bool,
 }
 
 /// Which episode date a calendar placement came from: the air/release date

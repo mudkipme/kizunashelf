@@ -23,9 +23,12 @@ pub struct CalendarBuildOptions {
 /// future daily notes) — so it's the recent past, not just completions; `UpNext`
 /// shows only what's still ahead (planning fields + scheduled episodes from today
 /// on, and future daily notes), in ascending order; `CatchUp` is the mirror of
-/// `UpNext` — planning dates that have *passed* while the entity is still
-/// `planning` (released/aired, still on your list), reverse-chronological so the
-/// most recently-available sits on top and the old tail pages away.
+/// `UpNext` — what has *passed* while still unconsumed: planning dates whose
+/// entity is still `planning` (released/aired, still on your list), plus an
+/// `ongoing` entity's aired-but-unwatched episodes (one item per missed air
+/// date, same-day episodes merged, exactly like up next's per-air-date items),
+/// reverse-chronological so the most recently-available sits on top and the old
+/// tail pages away.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum ActivityMode {
     #[default]

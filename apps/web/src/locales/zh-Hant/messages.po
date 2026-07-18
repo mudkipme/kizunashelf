@@ -289,7 +289,7 @@ msgstr "≤"
 msgid "≥"
 msgstr "≥"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:298
 msgid "✅ Completed"
 msgstr "✅ 已完成"
 
@@ -297,7 +297,7 @@ msgstr "✅ 已完成"
 msgid "✨ Pairs well with your picks"
 msgstr "✨ 與你的選擇很搭"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:298
 msgid "📅 Scheduled"
 msgstr "📅 已排程"
 
@@ -325,7 +325,7 @@ msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:107
 #: src/components/layout/app-frame.tsx:355
-#: src/pages/activity-page.tsx:113
+#: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
 msgstr "活動"
@@ -443,7 +443,7 @@ msgid "Advanced: edit full schema"
 msgstr "進階：編輯完整結構描述"
 
 #: src/components/smart-lists/rule-builder.tsx:648
-#: src/pages/activity-page.tsx:40
+#: src/pages/activity-page.tsx:41
 msgid "All"
 msgstr "全部"
 
@@ -468,7 +468,7 @@ msgstr "所有來源"
 
 #: src/components/analytics/activity-heatmap.tsx:88
 #: src/components/assets/asset-download-panel.tsx:81
-#: src/pages/activity-page.tsx:133
+#: src/pages/activity-page.tsx:134
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
 #: src/pages/quick-capture-page.tsx:239
@@ -603,7 +603,7 @@ msgstr "日曆"
 msgid "Cancel"
 msgstr "取消"
 
-#: src/pages/activity-page.tsx:39
+#: src/pages/activity-page.tsx:40
 msgid "Catch up"
 msgstr "補進度"
 
@@ -662,7 +662,7 @@ msgstr "即將登場"
 #: src/components/settings/settings-sections.tsx:704
 #: src/components/settings/settings-sections.tsx:746
 #: src/components/settings/settings-sections.tsx:825
-#: src/pages/activity-page.tsx:47
+#: src/pages/activity-page.tsx:48
 #: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
 msgstr "已完成"
@@ -828,13 +828,13 @@ msgstr "深色主題"
 msgid "Dark theme. Switch to system theme."
 msgstr "深色主題。切換為系統主題。"
 
-#: src/pages/activity-page.tsx:275
+#: src/pages/activity-page.tsx:276
 msgid "date"
 msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:129
 #: src/components/smart-lists/rule-builder.tsx:801
-#: src/pages/activity-page.tsx:274
+#: src/pages/activity-page.tsx:275
 msgid "Date"
 msgstr "日期"
 
@@ -1057,13 +1057,13 @@ msgstr "項目類型"
 msgid "Enum options"
 msgstr "列舉選項"
 
-#: src/pages/activity-page.tsx:303
+#: src/pages/activity-page.tsx:304
 #: src/pages/import-wizard-page.tsx:746
 msgid "Episodes"
 msgstr "劇集"
 
 #: src/components/settings/settings-sections.tsx:747
-#: src/pages/activity-page.tsx:49
+#: src/pages/activity-page.tsx:50
 msgid "Event"
 msgstr "事件"
 
@@ -1148,12 +1148,12 @@ msgstr "檔名標題語言"
 msgid "Files the library could not parse cleanly."
 msgstr "庫無法正常解析的檔案。"
 
-#: src/pages/activity-page.tsx:143
+#: src/pages/activity-page.tsx:144
 msgid "Filter by source"
 msgstr "依來源篩選"
 
 #: src/components/analytics/activity-heatmap.tsx:86
-#: src/pages/activity-page.tsx:131
+#: src/pages/activity-page.tsx:132
 msgid "Filter by type"
 msgstr "依類型篩選"
 
@@ -1496,7 +1496,7 @@ msgstr "清單樣式"
 msgid "Lists"
 msgstr "清單"
 
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:195
 msgid "Load more"
 msgstr "載入更多"
 
@@ -1504,7 +1504,7 @@ msgstr "載入更多"
 msgid "Loading"
 msgstr "載入中"
 
-#: src/pages/activity-page.tsx:155
+#: src/pages/activity-page.tsx:156
 msgid "Loading activity…"
 msgstr "正在載入活動…"
 
@@ -1518,7 +1518,7 @@ msgstr "正在載入分類"
 
 #: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/settings/raw-config-editor.tsx:109
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:195
 #: src/pages/entity-edit-page.tsx:150
 #: src/pages/entity-page.tsx:278
 #: src/pages/entity-page.tsx:569
@@ -1604,7 +1604,7 @@ msgstr "符合方式"
 msgid "Metadata"
 msgstr "中繼資料"
 
-#: src/pages/activity-page.tsx:289
+#: src/pages/activity-page.tsx:290
 msgid "Missed?"
 msgstr "錯過了？"
 
@@ -1707,7 +1707,7 @@ msgstr "否"
 msgid "No"
 msgstr "否"
 
-#: src/pages/activity-page.tsx:158
+#: src/pages/activity-page.tsx:159
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "尚無活動。有日期的項目、劇集播出／完成日期，以及每日筆記提及都會顯示在這裡。"
 
@@ -2018,7 +2018,7 @@ msgstr "選擇日期"
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "先選幾個 — 你隨時可以再新增。你的庫是一個由你擁有的資料夾中的純 Markdown 檔案，即使沒有這個 app 也能閱讀。"
 
-#: src/pages/activity-page.tsx:48
+#: src/pages/activity-page.tsx:49
 msgid "Planned"
 msgstr "計劃中"
 
@@ -2079,7 +2079,7 @@ msgstr "快速擷取"
 msgid "Real"
 msgstr "實際"
 
-#: src/pages/activity-page.tsx:37
+#: src/pages/activity-page.tsx:38
 msgid "Recent"
 msgstr "最近"
 
@@ -2513,7 +2513,7 @@ msgstr "重新開始"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 #: src/components/settings/settings-sections.tsx:745
-#: src/pages/activity-page.tsx:46
+#: src/pages/activity-page.tsx:47
 msgid "Started"
 msgstr "已開始"
 
@@ -2774,7 +2774,7 @@ msgstr "未解析的關聯"
 msgid "Untitled section"
 msgstr "未命名版塊"
 
-#: src/pages/activity-page.tsx:38
+#: src/pages/activity-page.tsx:39
 msgid "Up next"
 msgstr "接下來"
 

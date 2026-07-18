@@ -660,9 +660,9 @@
           {
             "in": "query",
             "name": "mode",
-            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
+            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (passed but unconsumed:\nplanning dates still in `planning` status, and `ongoing` entities'\naired-but-unwatched episodes, one item per missed air date).",
             "schema": {
-              "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
+              "description": "`all` (default), `recent`, `up-next`, or `catch-up` (passed but unconsumed:\nplanning dates still in `planning` status, and `ongoing` entities'\naired-but-unwatched episodes, one item per missed air date).",
               "type": "string"
             },
             "style": "form"
@@ -6204,7 +6204,7 @@
             ]
           },
           "mode": {
-            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released/aired, still on your list).",
+            "description": "`all` (default), `recent`, `up-next`, or `catch-up` (passed but unconsumed:\nplanning dates still in `planning` status, and `ongoing` entities'\naired-but-unwatched episodes, one item per missed air date).",
             "type": [
               "string",
               "null"

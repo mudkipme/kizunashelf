@@ -12,7 +12,7 @@ export const GetActivityParams = zod.object({
   "limit": zod.number().optional().describe('Target number of items per page (1–100, default 20). A page gathers whole\nmonths until it holds at least this many, so a sparse feed (one item each in\nscattered months) fills a single page instead of one request per month.'),
   "type": zod.string().optional(),
   "source": zod.string().optional(),
-  "mode": zod.string().optional().describe('`all` (default), `recent`, `up-next`, or `catch-up` (past planning dates\nstill in `planning` status — released\/aired, still on your list).')
+  "mode": zod.string().optional().describe('`all` (default), `recent`, `up-next`, or `catch-up` (passed but unconsumed:\nplanning dates still in `planning` status, and `ongoing` entities\'\naired-but-unwatched episodes, one item per missed air date).')
 })
 
 export type GetActivityParams = zod.input<typeof GetActivityParams>;

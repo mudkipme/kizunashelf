@@ -370,25 +370,31 @@ fn fold_activity_entries(
                     Some(DateRole::Started | DateRole::Completed)
                 )
         });
-    // Global reconciliation (up next only): an episode completed on *any* date must
-    // not resurface as "up next" on its (possibly later) recorded air date — you've
-    // already watched it. Read the entity's full episode-date set, not just this
-    // (date, entity) group, so a watch on a different day still hides the schedule.
-    let completed_episode_keys: HashSet<&str> = if mode == ActivityMode::UpNext {
-        library
-            .record_by_id(&entity.id)
-            .map(|record| {
-                record
-                    .episode_dates
-                    .iter()
-                    .filter(|episode| episode.role == EpisodeDateRole::Completed)
-                    .map(|episode| episode.key.as_str())
-                    .collect()
-            })
-            .unwrap_or_default()
-    } else {
-        HashSet::new()
-    };
+    // Global reconciliation (up next / catch up): a consumed episode must not
+    // resurface on its (possibly different) recorded air date — you've already
+    // watched it. Read the entity's full episode-date set, not just this
+    // (date, entity) group, so a watch on a different day still hides the
+    // schedule. "Consumed" is a completion stamp on any date; catch up also counts
+    // a checked item without one (a hand-edited `- [x]` with no `✅`).
+    let consumed_episode_keys: HashSet<&str> =
+        if matches!(mode, ActivityMode::UpNext | ActivityMode::CatchUp) {
+            library
+                .record_by_id(&entity.id)
+                .map(|record| {
+                    record
+                        .episode_dates
+                        .iter()
+                        .filter(|episode| {
+                            episode.role == EpisodeDateRole::Completed
+                                || (mode == ActivityMode::CatchUp && episode.watched)
+                        })
+                        .map(|episode| episode.key.as_str())
+                        .collect()
+                })
+                .unwrap_or_default()
+        } else {
+            HashSet::new()
+        };
 
     // Canonical status drives the intention/record axis. A `completed`/`dropped`
     // entity never appears "up next" (the intention is fulfilled or abandoned);
@@ -481,8 +487,15 @@ fn fold_activity_entries(
             ActivityMode::Recent => role == EpisodeDateRole::Completed,
             // A dropped/completed entity's remaining air dates aren't "up next".
             ActivityMode::UpNext => role == EpisodeDateRole::Scheduled && !up_next_blocked,
-            // Catch up is the entity's planning date, not per-episode.
-            ActivityMode::CatchUp => false,
+            // Catch up: an `ongoing` entity's aired-but-unwatched episodes, one
+            // item per missed air date (strictly past — today belongs to "up
+            // next"), same-day episodes merged — the mirror of up next's
+            // per-air-date items.
+            ActivityMode::CatchUp => {
+                role == EpisodeDateRole::Scheduled
+                    && status == Some(CanonicalStatus::Ongoing)
+                    && date < today
+            }
         };
         if !keep_role {
             continue;
@@ -491,10 +504,14 @@ fn fold_activity_entries(
             .iter()
             .filter_map(|entry| entry.episode.as_ref())
             .filter(|episode| episode.role == role)
-            .filter(|episode| {
-                // Up next: today-or-later, and not already completed (on any date).
-                mode != ActivityMode::UpNext
-                    || (date >= today && !completed_episode_keys.contains(episode.key.as_str()))
+            .filter(|episode| match mode {
+                // Up next: today-or-later, and not already consumed (on any date).
+                ActivityMode::UpNext => {
+                    date >= today && !consumed_episode_keys.contains(episode.key.as_str())
+                }
+                // Catch up: only this air date's still-unwatched items.
+                ActivityMode::CatchUp => !consumed_episode_keys.contains(episode.key.as_str()),
+                _ => true,
             })
             .map(|episode| ActivityEpisodeRef {
                 key: episode.key.clone(),
@@ -523,7 +540,7 @@ fn fold_activity_entries(
         ActivityMode::All => true,
         ActivityMode::Recent => date <= today,
         ActivityMode::UpNext => date > today,
-        // Catch up is about unconsumed planning dates, not diary mentions.
+        // Catch up is about unconsumed dates, not diary mentions.
         ActivityMode::CatchUp => false,
     };
     if keep_daily {

@@ -289,7 +289,7 @@ msgstr "≤"
 msgid "≥"
 msgstr "≥"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:298
 msgid "✅ Completed"
 msgstr "✅ Completed"
 
@@ -297,7 +297,7 @@ msgstr "✅ Completed"
 msgid "✨ Pairs well with your picks"
 msgstr "✨ Pairs well with your picks"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:298
 msgid "📅 Scheduled"
 msgstr "📅 Scheduled"
 
@@ -325,7 +325,7 @@ msgstr "Actions"
 
 #: src/components/assets/quick-log-dialog.tsx:107
 #: src/components/layout/app-frame.tsx:355
-#: src/pages/activity-page.tsx:113
+#: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
 msgstr "Activity"
@@ -443,7 +443,7 @@ msgid "Advanced: edit full schema"
 msgstr "Advanced: edit full schema"
 
 #: src/components/smart-lists/rule-builder.tsx:648
-#: src/pages/activity-page.tsx:40
+#: src/pages/activity-page.tsx:41
 msgid "All"
 msgstr "All"
 
@@ -468,7 +468,7 @@ msgstr "All sources"
 
 #: src/components/analytics/activity-heatmap.tsx:88
 #: src/components/assets/asset-download-panel.tsx:81
-#: src/pages/activity-page.tsx:133
+#: src/pages/activity-page.tsx:134
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
 #: src/pages/quick-capture-page.tsx:239
@@ -603,7 +603,7 @@ msgstr "Calendar"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/pages/activity-page.tsx:39
+#: src/pages/activity-page.tsx:40
 msgid "Catch up"
 msgstr "Catch up"
 
@@ -662,7 +662,7 @@ msgstr "Coming up"
 #: src/components/settings/settings-sections.tsx:704
 #: src/components/settings/settings-sections.tsx:746
 #: src/components/settings/settings-sections.tsx:825
-#: src/pages/activity-page.tsx:47
+#: src/pages/activity-page.tsx:48
 #: src/pages/import-wizard-page.tsx:60
 msgid "Completed"
 msgstr "Completed"
@@ -828,13 +828,13 @@ msgstr "Dark theme"
 msgid "Dark theme. Switch to system theme."
 msgstr "Dark theme. Switch to system theme."
 
-#: src/pages/activity-page.tsx:275
+#: src/pages/activity-page.tsx:276
 msgid "date"
 msgstr "date"
 
 #: src/components/assets/quick-log-dialog.tsx:129
 #: src/components/smart-lists/rule-builder.tsx:801
-#: src/pages/activity-page.tsx:274
+#: src/pages/activity-page.tsx:275
 msgid "Date"
 msgstr "Date"
 
@@ -1057,13 +1057,13 @@ msgstr "Entity type"
 msgid "Enum options"
 msgstr "Enum options"
 
-#: src/pages/activity-page.tsx:303
+#: src/pages/activity-page.tsx:304
 #: src/pages/import-wizard-page.tsx:746
 msgid "Episodes"
 msgstr "Episodes"
 
 #: src/components/settings/settings-sections.tsx:747
-#: src/pages/activity-page.tsx:49
+#: src/pages/activity-page.tsx:50
 msgid "Event"
 msgstr "Event"
 
@@ -1148,12 +1148,12 @@ msgstr "Filename title language"
 msgid "Files the library could not parse cleanly."
 msgstr "Files the library could not parse cleanly."
 
-#: src/pages/activity-page.tsx:143
+#: src/pages/activity-page.tsx:144
 msgid "Filter by source"
 msgstr "Filter by source"
 
 #: src/components/analytics/activity-heatmap.tsx:86
-#: src/pages/activity-page.tsx:131
+#: src/pages/activity-page.tsx:132
 msgid "Filter by type"
 msgstr "Filter by type"
 
@@ -1496,7 +1496,7 @@ msgstr "List style"
 msgid "Lists"
 msgstr "Lists"
 
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:195
 msgid "Load more"
 msgstr "Load more"
 
@@ -1504,7 +1504,7 @@ msgstr "Load more"
 msgid "Loading"
 msgstr "Loading"
 
-#: src/pages/activity-page.tsx:155
+#: src/pages/activity-page.tsx:156
 msgid "Loading activity…"
 msgstr "Loading activity…"
 
@@ -1518,7 +1518,7 @@ msgstr "Loading taxonomy"
 
 #: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/settings/raw-config-editor.tsx:109
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:195
 #: src/pages/entity-edit-page.tsx:150
 #: src/pages/entity-page.tsx:278
 #: src/pages/entity-page.tsx:569
@@ -1604,7 +1604,7 @@ msgstr "Match mode"
 msgid "Metadata"
 msgstr "Metadata"
 
-#: src/pages/activity-page.tsx:289
+#: src/pages/activity-page.tsx:290
 msgid "Missed?"
 msgstr "Missed?"
 
@@ -1707,7 +1707,7 @@ msgstr "no"
 msgid "No"
 msgstr "No"
 
-#: src/pages/activity-page.tsx:158
+#: src/pages/activity-page.tsx:159
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 
@@ -2018,7 +2018,7 @@ msgstr "Pick a date"
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 
-#: src/pages/activity-page.tsx:48
+#: src/pages/activity-page.tsx:49
 msgid "Planned"
 msgstr "Planned"
 
@@ -2079,7 +2079,7 @@ msgstr "Quick Capture"
 msgid "Real"
 msgstr "Real"
 
-#: src/pages/activity-page.tsx:37
+#: src/pages/activity-page.tsx:38
 msgid "Recent"
 msgstr "Recent"
 
@@ -2513,7 +2513,7 @@ msgstr "Start over"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 #: src/components/settings/settings-sections.tsx:745
-#: src/pages/activity-page.tsx:46
+#: src/pages/activity-page.tsx:47
 msgid "Started"
 msgstr "Started"
 
@@ -2774,7 +2774,7 @@ msgstr "Unresolved Relations"
 msgid "Untitled section"
 msgstr "Untitled section"
 
-#: src/pages/activity-page.tsx:38
+#: src/pages/activity-page.tsx:39
 msgid "Up next"
 msgstr "Up next"
 

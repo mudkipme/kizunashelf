@@ -245,18 +245,21 @@ fn episode_calendar_entries_place_cached_dates_in_the_month() {
             title: "Pilot".to_string(),
             date: "2024-02-10".to_string(),
             role: EpisodeDateRole::Scheduled,
+            watched: false,
         },
         EpisodeDate {
             key: "1".to_string(),
             title: "Pilot".to_string(),
             date: "2024-02-12".to_string(),
             role: EpisodeDateRole::Completed,
+            watched: true,
         },
         EpisodeDate {
             key: "2".to_string(),
             title: "Dawn".to_string(),
             date: "2024-03-01".to_string(), // other month — excluded
             role: EpisodeDateRole::Scheduled,
+            watched: false,
         },
     ];
     let mut anime_type = entity_type("anime", "Anime");
@@ -387,12 +390,14 @@ fn forward_and_back_record() -> EntityRecord {
             title: "Pilot".to_string(),
             date: "2024-05-10".to_string(),
             role: EpisodeDateRole::Completed,
+            watched: true,
         },
         EpisodeDate {
             key: "2".to_string(),
             title: "Dawn".to_string(),
             date: "2024-07-01".to_string(),
             role: EpisodeDateRole::Scheduled,
+            watched: false,
         },
     ];
     rec
@@ -409,6 +414,7 @@ async fn build_calendar_merges_same_entity_same_day_into_one_item() {
         title: "Pilot".to_string(),
         date: "2024-02-12".to_string(),
         role: EpisodeDateRole::Completed,
+        watched: true,
     }];
     let library = Library::new(
         activity_config(Some(vec!["Journal".to_string()])),
@@ -474,6 +480,7 @@ async fn build_activity_collapses_all_sources_for_one_date_and_entity() {
         title: "Pilot".to_string(),
         date: "2024-02-12".to_string(),
         role: EpisodeDateRole::Completed,
+        watched: true,
     }];
     let library = Library::new(
         activity_config(Some(vec!["Journal".to_string()])),
@@ -538,6 +545,7 @@ async fn build_activity_aggregates_an_episode_binge_into_one_entry() {
             title: format!("Episode {number}"),
             date: "2024-05-01".to_string(),
             role: EpisodeDateRole::Completed,
+            watched: true,
         })
         .collect();
     let library = Library::new(
@@ -787,12 +795,14 @@ async fn build_activity_up_next_hides_today_items_already_done() {
             title: "Five".to_string(),
             date: "2024-06-15".to_string(),
             role: EpisodeDateRole::Scheduled,
+            watched: false,
         },
         EpisodeDate {
             key: "5".to_string(),
             title: "Five".to_string(),
             date: "2024-06-15".to_string(),
             role: EpisodeDateRole::Completed,
+            watched: true,
         },
     ];
     let library = Library::new(
@@ -832,12 +842,14 @@ async fn build_activity_up_next_hides_episode_completed_on_a_different_day() {
             title: "Five".to_string(),
             date: "2024-07-01".to_string(),
             role: EpisodeDateRole::Scheduled,
+            watched: false,
         },
         EpisodeDate {
             key: "5".to_string(),
             title: "Five".to_string(),
             date: "2024-06-10".to_string(),
             role: EpisodeDateRole::Completed,
+            watched: true,
         },
     ];
     let library = Library::new(
@@ -1059,6 +1071,7 @@ async fn recent_keeps_completed_episodes_of_dropped_and_paused_entities() {
             title: "Three".to_string(),
             date: "2024-05-10".to_string(),
             role: EpisodeDateRole::Completed,
+            watched: true,
         }];
         let response = recent(&library_of(rec), "2024-06-15").await;
         assert_eq!(response.items.len(), 1, "status {status:?}");
@@ -1186,7 +1199,9 @@ async fn catch_up_is_reverse_chronological() {
 #[tokio::test]
 async fn catch_up_excludes_episodes_and_daily_notes() {
     // A still-planning entity with a past planning date AND a past completed episode:
-    // catch up surfaces the entity once via its planning date, never per-episode.
+    // catch up surfaces the entity once via its planning date; episode history never
+    // rides along (the episode nag below is for *ongoing* entities' unwatched air
+    // dates only).
     let mut entity = with_status(
         summary("anime", "Anime", "Star Voyager"),
         CanonicalStatus::Planning,
@@ -1199,6 +1214,7 @@ async fn catch_up_excludes_episodes_and_daily_notes() {
         title: "Pilot".to_string(),
         date: "2024-05-02".to_string(),
         role: EpisodeDateRole::Completed,
+        watched: true,
     }];
     let response = catch_up(&library_of(rec), "2024-06-15").await;
     let entries: Vec<_> = response
@@ -1212,6 +1228,146 @@ async fn catch_up_excludes_episodes_and_daily_notes() {
     assert!(entries
         .iter()
         .any(|entry| entry.role == Some(DateRole::Planning)));
+}
+
+// --- catch up (ongoing, aired-but-unwatched episodes) -----------------------
+
+fn episode_date(key: &str, date: &str, role: EpisodeDateRole) -> EpisodeDate {
+    EpisodeDate {
+        key: key.to_string(),
+        title: format!("Episode {key}"),
+        date: date.to_string(),
+        role,
+        watched: role == EpisodeDateRole::Completed,
+    }
+}
+
+/// An entity with the given status and episode dates (no taxonomy dates).
+fn episode_record(status: CanonicalStatus, episode_dates: Vec<EpisodeDate>) -> EntityRecord {
+    let mut entity = with_status(summary("anime", "Anime", "Star Voyager"), status);
+    entity.id = "anime:sv".to_string();
+    let mut rec = record(entity);
+    rec.episode_dates = episode_dates;
+    rec
+}
+
+#[tokio::test]
+async fn catch_up_lists_unwatched_aired_episodes_one_item_per_air_date() {
+    // Episode 1 aired and was watched; 2 aired in April, 3 and 4 aired together in
+    // June — all three unwatched. Like up next mirrored backward: one item per
+    // missed air date (reverse-chronological, across month pages), and only
+    // same-day episodes merge into one entry.
+    let response = catch_up(
+        &library_of(episode_record(
+            CanonicalStatus::Ongoing,
+            vec![
+                episode_date("1", "2024-04-01", EpisodeDateRole::Scheduled),
+                episode_date("1", "2024-04-02", EpisodeDateRole::Completed),
+                episode_date("2", "2024-04-20", EpisodeDateRole::Scheduled),
+                episode_date("3", "2024-06-08", EpisodeDateRole::Scheduled),
+                episode_date("4", "2024-06-08", EpisodeDateRole::Scheduled),
+            ],
+        )),
+        "2024-06-15",
+    )
+    .await;
+    let items: Vec<(&str, Vec<&str>)> = response
+        .items
+        .iter()
+        .map(|item| {
+            assert_eq!(item.entries.len(), 1, "date {}", item.date);
+            let entry = &item.entries[0];
+            assert_eq!(entry.episode_role, Some(EpisodeDateRole::Scheduled));
+            (
+                item.date.as_str(),
+                entry
+                    .episodes
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .map(|episode| episode.key.as_str())
+                    .collect(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        items,
+        [("2024-06-08", vec!["3", "4"]), ("2024-04-20", vec!["2"])]
+    );
+}
+
+#[tokio::test]
+async fn catch_up_excludes_watched_and_not_yet_aired_episodes() {
+    // Fully caught up (every aired episode watched, next air date today or later):
+    // nothing to catch up on — today's air date belongs to "up next".
+    let response = catch_up(
+        &library_of(episode_record(
+            CanonicalStatus::Ongoing,
+            vec![
+                episode_date("1", "2024-06-01", EpisodeDateRole::Scheduled),
+                episode_date("1", "2024-06-10", EpisodeDateRole::Completed),
+                episode_date("2", "2024-06-15", EpisodeDateRole::Scheduled),
+                episode_date("3", "2024-06-22", EpisodeDateRole::Scheduled),
+            ],
+        )),
+        "2024-06-15",
+    )
+    .await;
+    assert!(response.items.is_empty());
+}
+
+#[tokio::test]
+async fn catch_up_excludes_a_checked_episode_without_a_completion_date() {
+    // A hand-edited `- [x]` with no `✅` stamp yields a scheduled entry marked
+    // watched and no completed entry — still consumed, so it must not nag. Only
+    // the unchecked episode 2's air date surfaces.
+    let mut checked = episode_date("1", "2024-06-08", EpisodeDateRole::Scheduled);
+    checked.watched = true;
+    let response = catch_up(
+        &library_of(episode_record(
+            CanonicalStatus::Ongoing,
+            vec![
+                checked,
+                episode_date("2", "2024-06-01", EpisodeDateRole::Scheduled),
+            ],
+        )),
+        "2024-06-15",
+    )
+    .await;
+    assert_eq!(response.items.len(), 1);
+    let item = &response.items[0];
+    assert_eq!(item.date, "2024-06-01");
+    let keys: Vec<_> = item.entries[0]
+        .episodes
+        .as_ref()
+        .unwrap()
+        .iter()
+        .map(|episode| episode.key.as_str())
+        .collect();
+    assert_eq!(keys, ["2"]);
+}
+
+#[tokio::test]
+async fn catch_up_episode_nag_is_for_ongoing_entities_only() {
+    // The unwatched-air-date nag is about something you're actively watching.
+    // Planning hasn't started (its planning date nags instead), and
+    // paused/completed/dropped are deferred or done.
+    for status in [
+        CanonicalStatus::Planning,
+        CanonicalStatus::Paused,
+        CanonicalStatus::Completed,
+        CanonicalStatus::Dropped,
+    ] {
+        let response = catch_up(
+            &library_of(episode_record(
+                status,
+                vec![episode_date("1", "2024-06-01", EpisodeDateRole::Scheduled)],
+            )),
+            "2024-06-15",
+        )
+        .await;
+        assert!(response.items.is_empty(), "status {status:?}");
+    }
 }
 
 #[tokio::test]

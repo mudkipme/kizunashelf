@@ -31,8 +31,9 @@ const sources = [
 ] as const;
 
 // Recent leads — it's the everyday "what happened" view; Up next is already
-// surfaced on Home; Catch up is the reverse-chron "released, still on my list"
-// backlog; All is the full ledger. Recent is also the default (below).
+// surfaced on Home; Catch up is the reverse-chron backlog ("released, still on
+// my list" plans + ongoing entities' aired-but-unwatched episodes); All is the
+// full ledger. Recent is also the default (below).
 const modes = [
   { value: "recent", label: msg`Recent` },
   { value: "up-next", label: msg`Up next` },

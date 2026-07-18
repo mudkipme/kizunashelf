@@ -317,8 +317,9 @@ pub(crate) struct ActivityQuery {
     #[serde(rename = "type")]
     entity_type: Option<String>,
     source: Option<String>,
-    /// `all` (default), `recent`, `up-next`, or `catch-up` (past planning dates
-    /// still in `planning` status — released/aired, still on your list).
+    /// `all` (default), `recent`, `up-next`, or `catch-up` (passed but unconsumed:
+    /// planning dates still in `planning` status, and `ongoing` entities'
+    /// aired-but-unwatched episodes, one item per missed air date).
     mode: Option<String>,
 }
 

@@ -183,6 +183,7 @@ pub fn episode_calendar_dates(body: &str, section: &BodySection) -> Vec<EpisodeD
                     title: item.title.clone(),
                     date,
                     role: EpisodeDateRole::Scheduled,
+                    watched: item.watched,
                 });
             }
             if let Some(date) = non_empty_date(&item.done) {
@@ -191,6 +192,7 @@ pub fn episode_calendar_dates(body: &str, section: &BodySection) -> Vec<EpisodeD
                     title: item.title.clone(),
                     date,
                     role: EpisodeDateRole::Completed,
+                    watched: item.watched,
                 });
             }
         }
