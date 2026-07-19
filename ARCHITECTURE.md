@@ -38,6 +38,7 @@ crates/
       vfs/                Vfs trait + NativeVfs + InMemoryVfs (the storage seam)
       bin/api.rs          the self-hosted web server binary (kizunashelf-api)
       bin/schema.rs       emits the OpenAPI spec (kizunashelf-schema)
+      bin/docs.rs         emits the manual's generated reference pages (kizunashelf-docs)
   kizunashelf-ffi/        UniFFI wrapper of the router for in-process hosts (iOS)
 apps/
   web/                    React 19 + Vite + TanStack Query; consumes the generated client
@@ -45,7 +46,7 @@ apps/
 packages/
   api-contract/           orval-generated TS client + Zod validators (from the OpenAPI spec)
 scripts/build-ios.sh      builds KizunaFFI.xcframework + the collapsed iOS openapi.json
-docs/                     config.md (the schema reference), intro.*
+manual/                   the user manual (Zola site); content/reference/ is the schema reference (config.md is the entry page)
 ```
 
 The native iOS app lives in a **separate repo at `../kizunashelf-ios`** and embeds this core in-process. Its internals (UniFFI bridge, managed/security-scoped vault FS, Keychain, background downloads, widgets, reminders, Spotlight, sharing, and App Intents) are documented in `../kizunashelf-ios/ARCHITECTURE.md` — read that for iOS work. This document covers the core and the cross-cutting seams.
@@ -57,7 +58,7 @@ A vault's `KizunaShelf/config.yaml` (the **vault config**, synced inside the vau
 This is the single most important thing to internalize, because it inverts the usual instinct. The rules that follow all flow from it:
 
 - **Field names are user-defined and arbitrary.** A cover might be `cover_url`, `poster`, or `画像`. A title field might be `title`, `name_jp`, or anything at all. **Never branch on a field name to infer semantics.** Code keys off the schema instead: the `FieldType` (`title`, `date`, `season`, `image`, `imageList`, `relation`, `externalRef`, `enum`, `enumList`, `progress`, `id`, `text`, …) and the role enums (`TitleRole`, `DateRole`, `SeasonLanguage`, …). If you need "the cover," ask the schema for the first `Image`/`ImageList` field — don't look for a field literally named `cover`.
-- **Meaning flows one direction: schema → behavior.** New semantics belong in the schema model (`types.rs`) and the config docs (`docs/config.md`), then in the derivation logic — *not* in special-cased field-name checks scattered through handlers or the UI.
+- **Meaning flows one direction: schema → behavior.** New semantics belong in the schema model (`types.rs`) and the config docs (`manual/content/reference/`), then in the derivation logic — *not* in special-cased field-name checks scattered through handlers or the UI.
 - **Preserve unknown values.** Hand-edited frontmatter and config values the UI doesn't recognize must be kept, not silently dropped — e.g. unknown title languages stay selectable, and provider mappings aren't stripped when the provider catalog is unavailable.
 
 App-level settings (which vault, write mode) are deliberately **not** in the vault config; they're sourced per runtime, as described next.
@@ -77,7 +78,7 @@ Two seams make this portability possible. Both are traits injected into `AppStat
 - **`Vfs` trait** (`src/vfs/mod.rs`) — **all** vault I/O goes through it: `NativeVfs` (web/desktop), `InMemoryVfs` (tests), and a Swift-backed FS (iOS). **Never use `std::fs` or `tokio::fs` to touch the vault folder.** Every read/write/list/rename inside the vault (entities, assets, config, daily notes, `.trash`) goes through the `Vfs` with vault-relative paths. This is what keeps the core platform-agnostic: on iOS there is no real filesystem at those paths, only the Swift-backed VFS. Paths are lexically contained — `normalize_relative` rejects `..`, absolute paths, and drive prefixes without `canonicalize`. Direct `std::fs`/`tokio::fs` is allowed *only* for genuinely non-vault host paths owned by a runtime (e.g. the desktop vault list, the web token cache, or the persistent index cache). Anything that lists or reads *inside* the vault must use the `Vfs` — including directory autocomplete (`api/path_suggestions.rs` lists vault directories through the VFS with vault-relative paths, so it stays contained and works on iOS).
 - **`SecretStore` trait** (`src/secrets.rs`) — provider credentials and the OAuth token cache. Env+file (web), keychain (desktop/iOS).
 
-Per-runtime config sourcing is documented in `docs/config.md`. Don't add an app-config *file* in core; `AppConfig` is always passed inline.
+Per-runtime config sourcing is documented in `manual/content/reference/config.md`. Don't add an app-config *file* in core; `AppConfig` is always passed inline.
 
 ## The API contract: one source, two clients
 
@@ -134,6 +135,7 @@ pnpm typecheck        # tsc across packages + cargo check -p kizunashelf
 pnpm lint             # oxlint (web)
 pnpm contract:generate  # regenerate the OpenAPI spec + TS client (run after API changes)
 pnpm i18n:extract       # re-extract the web UI-string catalogs (run after UI string changes)
+pnpm docs:generate      # regenerate the manual's reference pages from the Rust source (run after schema/provider/preset changes)
 pnpm build
 ```
 
@@ -146,6 +148,7 @@ cargo test -p kizunashelf
 pnpm lint && pnpm typecheck
 pnpm contract:generate   # then ensure git diff is clean (CI fails otherwise)
 pnpm i18n:extract        # same deal — CI diffs apps/web/src/locales after extract
+pnpm docs:generate       # same deal — CI diffs manual/content/reference after generating
 ```
 
 ## Conventions & gotchas
@@ -158,6 +161,6 @@ pnpm i18n:extract        # same deal — CI diffs apps/web/src/locales after ext
 
 ## Further reading
 
-- `docs/config.md` — the full schema/config reference (types, fields, roles, per-runtime config, provider credentials). The authority for what the schema means.
+- `manual/content/reference/` — the full schema/config reference (types, fields, roles, per-runtime config, provider credentials), split into per-topic pages with `config.md` as the entry/overview page. The authority for what the schema means. It lives in the user manual (`manual/`, a Zola site — see `manual/README.md`).
 - `../kizunashelf-ios/ARCHITECTURE.md` — the iOS app's architecture and the regenerate-bindings workflow.
 - `README.md` — product overview and quick start.

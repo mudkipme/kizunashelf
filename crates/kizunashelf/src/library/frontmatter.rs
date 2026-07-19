@@ -422,8 +422,8 @@ mod tests {
     #[test]
     fn parse_markdown_reads_frontmatter_and_body() {
         let parsed =
-            parse_markdown("---\ntitle: Star Voyager\nstatus: Watching\n---\n\nBody text.\n");
-        assert_eq!(parsed.frontmatter.get("title").unwrap(), "Star Voyager");
+            parse_markdown("---\ntitle: Steins;Gate 0\nstatus: Watching\n---\n\nBody text.\n");
+        assert_eq!(parsed.frontmatter.get("title").unwrap(), "Steins;Gate 0");
         assert_eq!(parsed.frontmatter.get("status").unwrap(), "Watching");
         assert_eq!(parsed.body, "Body text.");
         assert!(parsed.diagnostics.is_empty());
@@ -455,9 +455,9 @@ mod tests {
 
     #[test]
     fn split_then_serialize_round_trips() {
-        let raw = "---\ntitle: Star Voyager\n---\n\nBody text.\n";
+        let raw = "---\ntitle: Steins;Gate 0\n---\n\nBody text.\n";
         let doc = split_markdown_document(raw);
-        assert_eq!(doc.frontmatter.get("title").unwrap(), "Star Voyager");
+        assert_eq!(doc.frontmatter.get("title").unwrap(), "Steins;Gate 0");
         let serialized = serialize_markdown_document(&doc.frontmatter, &doc.body);
         let reparsed = split_markdown_document(&serialized);
         assert_eq!(reparsed.frontmatter, doc.frontmatter);
@@ -523,9 +523,15 @@ mod tests {
 
     #[test]
     fn strip_wikilink_handles_plain_alias_and_heading() {
-        assert_eq!(strip_wikilink("[[Star Voyager]]"), "Star Voyager");
-        assert_eq!(strip_wikilink("[[Star Voyager|SV]]"), "SV");
-        assert_eq!(strip_wikilink("[[Star Voyager#Episodes]]"), "Star Voyager");
+        assert_eq!(
+            strip_wikilink("[[Steins;Gate 0 (Anime)]]"),
+            "Steins;Gate 0 (Anime)"
+        );
+        assert_eq!(strip_wikilink("[[Steins;Gate 0 (Anime)|SG0]]"), "SG0");
+        assert_eq!(
+            strip_wikilink("[[Steins;Gate 0 (Anime)#Episodes]]"),
+            "Steins;Gate 0 (Anime)"
+        );
         assert_eq!(strip_wikilink("Plain text"), "Plain text");
         assert_eq!(strip_wikilink("  [[Trimmed]]  "), "Trimmed");
     }

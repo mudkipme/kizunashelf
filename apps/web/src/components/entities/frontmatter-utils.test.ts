@@ -58,15 +58,15 @@ describe("valueToText", () => {
 
 describe("wikilinks", () => {
   it("strips a plain or aliased wikilink to its target", () => {
-    expect(stripWikilink("[[Star Voyager]]")).toBe("Star Voyager");
-    expect(stripWikilink("[[Star Voyager|SV]]")).toBe("Star Voyager");
+    expect(stripWikilink("[[Steins;Gate 0 (Anime)]]")).toBe("Steins;Gate 0 (Anime)");
+    expect(stripWikilink("[[Steins;Gate 0 (Anime)|SG0]]")).toBe("Steins;Gate 0 (Anime)");
     expect(stripWikilink("Plain")).toBe("Plain");
   });
 
   it("wraps a value, idempotently, and drops empties", () => {
-    expect(toWikilink("Star Voyager")).toBe("[[Star Voyager]]");
-    expect(toWikilink("[[Star Voyager]]")).toBe("[[Star Voyager]]");
-    expect(toWikilink("[[Star Voyager|SV]]")).toBe("[[Star Voyager]]");
+    expect(toWikilink("Steins;Gate 0 (Anime)")).toBe("[[Steins;Gate 0 (Anime)]]");
+    expect(toWikilink("[[Steins;Gate 0 (Anime)]]")).toBe("[[Steins;Gate 0 (Anime)]]");
+    expect(toWikilink("[[Steins;Gate 0 (Anime)|SG0]]")).toBe("[[Steins;Gate 0 (Anime)]]");
     expect(toWikilink("   ")).toBe("");
   });
 });
@@ -132,7 +132,7 @@ describe("date values", () => {
 describe("normalizeFrontmatter", () => {
   it("coerces unknown scalar shapes to strings while keeping known scalars and nesting", () => {
     const normalized = normalizeFrontmatter({
-      title: "Star Voyager",
+      title: "Steins;Gate 0",
       rating: 5,
       watched: true,
       empty: null,
@@ -140,7 +140,7 @@ describe("normalizeFrontmatter", () => {
       nested: { a: 1 },
     });
     expect(normalized).toEqual({
-      title: "Star Voyager",
+      title: "Steins;Gate 0",
       rating: 5,
       watched: true,
       empty: null,

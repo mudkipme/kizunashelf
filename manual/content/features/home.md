@@ -1,0 +1,33 @@
++++
+title = "Configuring the Home page"
+description = "Ordered sections over your library, driven by smart-list-grade criteria in the vault config."
+weight = 9
++++
+
+The Home page is a stack of **sections** you define — *Watching*, *Coming this season*, *Recently finished*, *Highly rated backlog* — each an ordered, filtered slice of one type.
+
+{{ screenshot(caption="A configured Home page: each section is one entry in the vault config.") }}
+
+Sections live in the vault config's `home` block, so your Home page travels with the vault and looks the same on every device:
+
+```yaml
+home:
+  sections:
+  - id: watching
+    title: Watching
+    type: anime
+    limit: 12
+    sort: date:season
+    direction: desc
+    criteria:
+      conjunction: all
+      rules:
+      - kind: compare
+        field: status
+        op: eq
+        value: Watching
+```
+
+Each section declares its `type`, an optional `criteria` block (the same rule model as [smart lists](@/features/lists.md#smart-lists) — omit it and every entity of the type matches), a `sort` key (`title`, `date:<field>`, `relationCount`, `path`), a direction, and a `limit`.
+
+Edit sections in **Settings** (the structured form or raw YAML), or in the file directly. [Type presets](@/reference/presets.md) seed a sensible section per type — the *Watching Anime* section you get out of the box is just like the one above, yours to reshape. Full option reference: [Home Page](@/reference/home-tags-daily-notes.md#home-page).

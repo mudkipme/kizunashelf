@@ -15,6 +15,10 @@ path = "src/bin/api.rs"
 name = "kizunashelf-schema"
 path = "src/bin/schema.rs"
 
+[[bin]]
+name = "kizunashelf-docs"
+path = "src/bin/docs.rs"
+
 [features]
 # Off by default: env-var proxies (HTTP_PROXY/HTTPS_PROXY/…) are always honored
 # regardless. This adds reading the OS-level system proxy on macOS/Windows (a

@@ -807,8 +807,8 @@ mod tests {
     #[test]
     fn sanitize_basename_accepts_a_plain_name_and_trims() {
         assert_eq!(
-            sanitize_basename("  Star Voyager  ").unwrap(),
-            "Star Voyager"
+            sanitize_basename("  Steins;Gate 0 (Anime)  ").unwrap(),
+            "Steins;Gate 0 (Anime)"
         );
     }
 
@@ -907,8 +907,8 @@ mod tests {
     #[test]
     fn derive_basename_normalizes_whitespace_and_control_chars() {
         assert_eq!(
-            derive_basename("  Star   Voyager\t\u{0007}II \n").unwrap(),
-            "Star Voyager II"
+            derive_basename("  Steins;Gate   0 (Anime)\t\u{0007}II \n").unwrap(),
+            "Steins;Gate 0 (Anime) II"
         );
     }
 

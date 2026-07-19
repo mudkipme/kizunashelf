@@ -173,7 +173,7 @@ export function HomeSectionForm({
             <div>
               <div className="text-sm font-medium"><Trans>Criteria</Trans></div>
               <div className="text-xs text-muted-foreground">
-                <Trans>The same rules as smart lists; the section shows entries that match.</Trans>
+                <Trans>The same rules as smart lists; the section shows entities that match.</Trans>
               </div>
             </div>
             <RuleBuilder
@@ -773,7 +773,7 @@ function FieldOptionEditor({
   if (optionKey === "externalRef") {
     return (
       <>
-        <Field label={t`External source`}>
+        <Field label={t`Provider`}>
           <Select
             value={field.externalRef ?? ""}
             onChange={(event) =>
@@ -962,7 +962,7 @@ function ExternalFieldMappingsEditor({
                   const firstField = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
                   list.update(index, { source, field: firstField });
                 }}
-                aria-label={t`External source`}
+                aria-label={t`Provider`}
               >
                 {sourceOptions.map((option) => (
                   <option key={option.source} value={option.source}>

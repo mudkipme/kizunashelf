@@ -6,8 +6,6 @@ KizunaShelf is a personal library for everything you watch, play, read, listen t
 
 Underneath, every entry is still a Markdown file in a folder you own. KizunaShelf helps you explore those files as a living shelf without turning them into data only one app can understand.
 
-Product introduction in other languages: [简体中文](docs/intro.zh.md) / [日本語](docs/intro.ja.md)
-
 ## A library that remembers with you
 
 KizunaShelf begins with the familiar things waiting on a media shelf: shows, movies, books, games, anime, and albums. But it does not decide what a “thing” must be. You define the types in your library, their titles, covers, statuses, dates, ratings, progress, and relationships. If your world also needs characters, artists, live events, or something nobody else would think to model, KizunaShelf gives you the grammar to describe it.
@@ -76,7 +74,7 @@ KIZUNASHELF_VAULT_ROOT=/path/to/your/vault pnpm dev
 
 Open `http://localhost:5173/`. The web app points at the vault named by `KIZUNASHELF_VAULT_ROOT`; if that vault has no `KizunaShelf/config.yaml`, onboarding helps you choose some built-in types or create a schema of your own.
 
-See [docs/config.md](docs/config.md) for the complete schema and runtime configuration, and [docs/syncing.md](docs/syncing.md) for using a vault across devices.
+See the [schema & configuration reference](manual/content/reference/config.md) for the complete schema and runtime configuration, and [Syncing your vault](manual/content/guides/syncing.md) for using a vault across devices.
 
 ## Development
 
@@ -107,7 +105,7 @@ The generated web contract lives in `packages/api-contract`. See [ARCHITECTURE.m
 
 ## Production and desktop builds
 
-For the production web app — including Docker, configuration, multiple instances, and authentication — see [docs/selfhosting.md](docs/selfhosting.md). KizunaShelf has no built-in authentication, so an internet-facing deployment must sit behind an authenticating reverse proxy.
+For the production web app — including Docker, configuration, multiple instances, and authentication — see the [self-hosting guide](manual/content/start/self-hosting.md). KizunaShelf has no built-in authentication, so an internet-facing deployment must sit behind an authenticating reverse proxy.
 
 For desktop development and builds:
 

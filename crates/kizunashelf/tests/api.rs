@@ -184,7 +184,10 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(home["sections"][0]["total"], 1);
     // Resolved title now falls back to the `original`-role title when no viewer
     // language is matched (the core no longer has a `defaultTitle`).
-    assert_eq!(home["sections"][0]["items"][0]["title"], "星之航路");
+    assert_eq!(
+        home["sections"][0]["items"][0]["title"],
+        "シュタインズ・ゲート ゼロ"
+    );
     assert_eq!(home["sections"][2]["title"], "Completed Anime");
     assert_eq!(home["sections"][2]["total"], 0);
 
@@ -207,7 +210,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(analytics["totals"]["relations"], 9);
     assert_eq!(analytics["totals"]["unresolvedRelations"], 2);
     assert_eq!(analytics["totals"]["datedEntities"], 3);
-    // Activity buckets dated entities into a year × month matrix. Star Voyager
+    // Activity buckets dated entities into a year × month matrix. Steins;Gate 0 (Anime)
     // completed 2025-04-20 → year 2025, April (month index 3).
     let activity = &analytics["activity"];
     assert_eq!(activity["totalDated"], 3);
@@ -230,7 +233,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let isolated = queue_summary(&cleanup["queues"], "isolated");
     assert_eq!(isolated["total"], 3);
     assert_eq!(isolated["remaining"], 0);
-    assert_eq!(cleanup["missingCover"][0]["id"], "games:Moon Quest");
+    assert_eq!(cleanup["missingCover"][0]["id"], "games:Robotics;Notes");
     assert_eq!(
         cleanup["missingExternalRefs"][0]["id"],
         "music:Opening Theme"
@@ -239,14 +242,23 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
 
     let entities = server.ok_json("/api/entities").await;
     assert_eq!(entities["total"], 4);
-    assert!(has_entity_title(&entities["items"], "星之航路"));
-    assert!(has_entity_title(&entities["items"], "Moon Quest"));
-    assert_eq!(entities["items"][0]["titles"]["zh"], "Star Voyager");
-    assert_eq!(entities["items"][0]["titles"]["en"], "A Voyage of Stars");
-    assert_eq!(entities["items"][0]["titles"]["title_original"], "星之航路");
-    let star_voyager_summary = entity_by_title(&entities["items"], "星之航路");
-    assert_eq!(star_voyager_summary["relationCount"], 4);
-    let completed_date = star_voyager_summary["dates"]
+    assert!(has_entity_title(
+        &entities["items"],
+        "シュタインズ・ゲート ゼロ"
+    ));
+    assert!(has_entity_title(&entities["items"], "Robotics;Notes"));
+    assert_eq!(
+        entities["items"][0]["titles"]["zh"],
+        "Steins;Gate 0 (Anime)"
+    );
+    assert_eq!(entities["items"][0]["titles"]["en"], "Amadeus of Zero");
+    assert_eq!(
+        entities["items"][0]["titles"]["title_original"],
+        "シュタインズ・ゲート ゼロ"
+    );
+    let steins_gate_summary = entity_by_title(&entities["items"], "シュタインズ・ゲート ゼロ");
+    assert_eq!(steins_gate_summary["relationCount"], 4);
+    let completed_date = steins_gate_summary["dates"]
         .as_array()
         .unwrap()
         .iter()
@@ -261,21 +273,34 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let english_title_sort = server
         .ok_json("/api/entities?sort=title&titleLanguage=en")
         .await;
-    assert_eq!(english_title_sort["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(
+        english_title_sort["items"][0]["id"],
+        "anime:Steins;Gate 0 (Anime)"
+    );
 
     let relation_count_sort = server
         .ok_json("/api/entities?sort=relationCount&direction=desc")
         .await;
-    assert_eq!(relation_count_sort["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(
+        relation_count_sort["items"][0]["id"],
+        "anime:Steins;Gate 0 (Anime)"
+    );
 
-    // Relation-field filter: entities whose `franchise` relation points to Star Saga.
-    let franchise_filter = urlencoding::encode(r#"[{"field":"franchise","values":["Star Saga"]}]"#);
+    // Relation-field filter: entities whose `franchise` relation points to Steins;Gate.
+    let franchise_filter =
+        urlencoding::encode(r#"[{"field":"franchise","values":["Steins;Gate"]}]"#);
     let franchise_filtered = server
         .ok_json(&format!("/api/entities?filters={franchise_filter}"))
         .await;
     assert_eq!(franchise_filtered["total"], 2);
-    assert!(has_entity_title(&franchise_filtered["items"], "星之航路"));
-    assert!(has_entity_title(&franchise_filtered["items"], "Moon Quest"));
+    assert!(has_entity_title(
+        &franchise_filtered["items"],
+        "シュタインズ・ゲート ゼロ"
+    ));
+    assert!(has_entity_title(
+        &franchise_filtered["items"],
+        "Robotics;Notes"
+    ));
 
     let status_filters =
         urlencoding::encode(r#"[{"field":"status","values":["Watching","Playing"]}]"#);
@@ -283,15 +308,21 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .ok_json(&format!("/api/entities?filters={status_filters}"))
         .await;
     assert_eq!(status_filtered["total"], 2);
-    assert!(has_entity_title(&status_filtered["items"], "星之航路"));
-    assert!(has_entity_title(&status_filtered["items"], "Moon Quest"));
+    assert!(has_entity_title(
+        &status_filtered["items"],
+        "シュタインズ・ゲート ゼロ"
+    ));
+    assert!(has_entity_title(
+        &status_filtered["items"],
+        "Robotics;Notes"
+    ));
 
     let genre_filters = urlencoding::encode(r#"[{"field":"genres","values":["Strategy","RPG"]}]"#);
     let genre_filtered = server
         .ok_json(&format!("/api/entities?type=games&filters={genre_filters}"))
         .await;
     assert_eq!(genre_filtered["total"], 1);
-    assert_eq!(genre_filtered["items"][0]["id"], "games:Moon Quest");
+    assert_eq!(genre_filtered["items"][0]["id"], "games:Robotics;Notes");
 
     let missing_genre_filters = urlencoding::encode(r#"[{"field":"genres","values":["RPG"]}]"#);
     let missing_genre_filtered = server
@@ -306,59 +337,77 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .ok_json(&format!("/api/entities?filters={favorite_filters}"))
         .await;
     assert_eq!(favorite_filtered["total"], 1);
-    assert_eq!(favorite_filtered["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(
+        favorite_filtered["items"][0]["id"],
+        "anime:Steins;Gate 0 (Anime)"
+    );
 
     let not_favorite_filters = urlencoding::encode(r#"[{"field":"favorite","values":["false"]}]"#);
     let not_favorite_filtered = server
         .ok_json(&format!("/api/entities?filters={not_favorite_filters}"))
         .await;
     assert_eq!(not_favorite_filtered["total"], 1);
-    assert_eq!(not_favorite_filtered["items"][0]["id"], "games:Moon Quest");
+    assert_eq!(
+        not_favorite_filtered["items"][0]["id"],
+        "games:Robotics;Notes"
+    );
 
-    let searched = server.ok_json("/api/entities?q=starlanes").await;
+    let searched = server.ok_json("/api/entities?q=worldline").await;
     assert_eq!(searched["total"], 1);
-    assert_eq!(searched["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(searched["items"][0]["id"], "anime:Steins;Gate 0 (Anime)");
 
     let searched_title_language = server
         .ok_json(&format!(
             "/api/entities?q={}",
-            urlencoding::encode("Lunar Errand")
+            urlencoding::encode("Robot Club Diary")
         ))
         .await;
     assert_eq!(searched_title_language["total"], 1);
     assert_eq!(
         searched_title_language["items"][0]["id"],
-        "games:Moon Quest"
+        "games:Robotics;Notes"
     );
 
     let by_relation = server
         .ok_json(&format!(
             "/api/entities?relation={}",
-            urlencoding::encode("franchise:Star Saga")
+            urlencoding::encode("franchise:Steins;Gate")
         ))
         .await;
     assert_eq!(by_relation["total"], 2);
-    assert!(has_entity_title(&by_relation["items"], "星之航路"));
-    assert!(has_entity_title(&by_relation["items"], "Moon Quest"));
+    assert!(has_entity_title(
+        &by_relation["items"],
+        "シュタインズ・ゲート ゼロ"
+    ));
+    assert!(has_entity_title(&by_relation["items"], "Robotics;Notes"));
 
     let detail = server
         .ok_json(&format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ))
         .await;
-    assert_eq!(detail["entity"]["title"], "星之航路");
-    assert_eq!(detail["entity"]["titles"]["zh"], "Star Voyager");
-    assert_eq!(detail["entity"]["titles"]["en"], "A Voyage of Stars");
-    assert_eq!(detail["entity"]["titles"]["title_original"], "星之航路");
-    assert_eq!(detail["entity"]["path"], "Taxonomy/Anime/Star Voyager.md");
+    assert_eq!(detail["entity"]["title"], "シュタインズ・ゲート ゼロ");
+    assert_eq!(detail["entity"]["titles"]["zh"], "Steins;Gate 0 (Anime)");
+    assert_eq!(detail["entity"]["titles"]["en"], "Amadeus of Zero");
+    assert_eq!(
+        detail["entity"]["titles"]["title_original"],
+        "シュタインズ・ゲート ゼロ"
+    );
+    assert_eq!(
+        detail["entity"]["path"],
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md"
+    );
     assert_eq!(detail["relations"].as_array().unwrap().len(), 4);
     assert_eq!(relation_field_count(&detail["relations"], "daily-note"), 0);
     assert_eq!(relation_field_count(&detail["relations"], "body"), 2);
-    assert!(has_entity_title(&detail["relatedEntities"], "Moon Quest"));
-    assert!(has_entity_title(&detail["relatedEntities"], "Star Saga"));
+    assert!(has_entity_title(
+        &detail["relatedEntities"],
+        "Robotics;Notes"
+    ));
+    assert!(has_entity_title(&detail["relatedEntities"], "Steins;Gate"));
     assert_eq!(
-        unique_relation_target_count("anime:Star Voyager", &detail["relations"]),
+        unique_relation_target_count("anime:Steins;Gate 0 (Anime)", &detail["relations"]),
         3
     );
     assert_eq!(detail["entity"]["relationCount"], 4);
@@ -443,7 +492,7 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
     let detail = server
         .ok_json(&format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ))
         .await;
     let revision = detail["entity"]["revision"].as_str().unwrap();
@@ -452,7 +501,7 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
         Method::POST,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         Some(json!({
             "revision": revision,
@@ -461,7 +510,7 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
                 "progress": 12,
                 "bgm_url": null
             },
-            "body": "Updated body with [[Moon Quest]]."
+            "body": "Updated body with [[Robotics;Notes]]."
         })),
     )
     .await;
@@ -471,7 +520,7 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
     assert!(updated.1["entity"]["frontmatter"].get("bgm_url").is_none());
     assert_eq!(
         updated.1["entity"]["body"],
-        "Updated body with [[Moon Quest]]."
+        "Updated body with [[Robotics;Notes]]."
     );
 
     let stale = request_json(
@@ -479,7 +528,7 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
         Method::POST,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         Some(json!({
             "revision": revision,
@@ -497,20 +546,26 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
         Method::POST,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         Some(json!({
             "revision": rename_revision,
-            "renameTo": "  Star Voyager Renamed  "
+            "renameTo": "  Steins;Gate 0 (Anime) Renamed  "
         })),
     )
     .await;
     assert_eq!(renamed.0, StatusCode::OK, "{}", renamed.1);
-    assert_eq!(renamed.1["entity"]["id"], "anime:Star Voyager Renamed");
-    assert_eq!(renamed.1["entity"]["basename"], "Star Voyager Renamed");
+    assert_eq!(
+        renamed.1["entity"]["id"],
+        "anime:Steins;Gate 0 (Anime) Renamed"
+    );
+    assert_eq!(
+        renamed.1["entity"]["basename"],
+        "Steins;Gate 0 (Anime) Renamed"
+    );
     assert_eq!(
         renamed.1["entity"]["path"],
-        "Taxonomy/Anime/Star Voyager Renamed.md"
+        "Taxonomy/Anime/Steins;Gate 0 (Anime) Renamed.md"
     );
 
     let invalid_rename_revision = renamed.1["entity"]["revision"].as_str().unwrap();
@@ -519,7 +574,7 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
         Method::POST,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager Renamed")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime) Renamed")
         ),
         Some(json!({
             "revision": invalid_rename_revision,
@@ -589,7 +644,7 @@ async fn concurrent_entity_mutations_accept_one_revision_once() {
     let server = TestServer::new();
     let path = format!(
         "/api/entities/{}",
-        urlencoding::encode("anime:Star Voyager")
+        urlencoding::encode("anime:Steins;Gate 0 (Anime)")
     );
     let detail = server.ok_json(&path).await;
     let revision = detail["entity"]["revision"].as_str().unwrap().to_string();
@@ -646,19 +701,19 @@ async fn concurrent_entity_mutations_accept_one_revision_once() {
 async fn rename_repoints_inbound_wikilinks_in_managed_files() {
     let server = TestServer::new();
 
-    // A user-curated list under `KizunaShelf/Lists/` links Star Voyager. Lists are
+    // A user-curated list under `KizunaShelf/Lists/` links Steins;Gate 0 (Anime). Lists are
     // never indexed into the relation graph (read live from the VFS), so a rename
-    // must sweep the directory directly. The aliased Moon Quest link must survive.
+    // must sweep the directory directly. The aliased Robotics;Notes link must survive.
     write_file(
         &server.vault.join("KizunaShelf/Lists/Favorites.md"),
-        "Personal favorites.\n\n- [[Star Voyager]]\n- [[Moon Quest|the quest]]\n",
+        "Personal favorites.\n\n- [[Steins;Gate 0 (Anime)]]\n- [[Robotics;Notes|the quest]]\n",
     );
 
-    // Star Voyager is linked from Moon Quest's body and from the daily note.
+    // Steins;Gate 0 (Anime) is linked from Robotics;Notes's body and from the daily note.
     let detail = server
         .ok_json(&format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ))
         .await;
     let revision = detail["entity"]["revision"].as_str().unwrap();
@@ -668,48 +723,51 @@ async fn rename_repoints_inbound_wikilinks_in_managed_files() {
         Method::POST,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         Some(json!({
             "revision": revision,
-            "renameTo": "Star Voyager Redux"
+            "renameTo": "Steins;Gate 0 (Anime) Redux"
         })),
     )
     .await;
     assert_eq!(renamed.0, StatusCode::OK, "{}", renamed.1);
-    assert_eq!(renamed.1["entity"]["id"], "anime:Star Voyager Redux");
-    // Three inbound links across three files: Moon Quest's body, the daily note,
+    assert_eq!(
+        renamed.1["entity"]["id"],
+        "anime:Steins;Gate 0 (Anime) Redux"
+    );
+    // Three inbound links across three files: Robotics;Notes's body, the daily note,
     // and the Favorites list page.
     assert_eq!(renamed.1["updatedLinks"]["files"], 3);
     assert_eq!(renamed.1["updatedLinks"]["links"], 3);
 
     // The raw files were rewritten in place (no YAML round-trip): the inbound
-    // links now point at the new basename while the unrelated `[[Star Saga]]`
-    // franchise link and the `[[Moon Quest|the quest]]` alias survive verbatim.
-    let moon = fs::read_to_string(server.vault.join("Taxonomy/Games/Moon Quest.md")).unwrap();
-    assert!(moon.contains("[[Star Voyager Redux]]"), "{moon}");
-    assert!(!moon.contains("[[Star Voyager]]"), "{moon}");
-    assert!(moon.contains("franchise: \"[[Star Saga]]\""), "{moon}");
+    // links now point at the new basename while the unrelated `[[Steins;Gate]]`
+    // franchise link and the `[[Robotics;Notes|the quest]]` alias survive verbatim.
+    let moon = fs::read_to_string(server.vault.join("Taxonomy/Games/Robotics;Notes.md")).unwrap();
+    assert!(moon.contains("[[Steins;Gate 0 (Anime) Redux]]"), "{moon}");
+    assert!(!moon.contains("[[Steins;Gate 0 (Anime)]]"), "{moon}");
+    assert!(moon.contains("franchise: \"[[Steins;Gate]]\""), "{moon}");
 
     let daily = fs::read_to_string(server.vault.join("Daily Notes/2025-04-21.md")).unwrap();
-    assert!(daily.contains("[[Star Voyager Redux]]"), "{daily}");
+    assert!(daily.contains("[[Steins;Gate 0 (Anime) Redux]]"), "{daily}");
     assert!(
-        daily.contains("[[Moon Quest|the quest]]"),
+        daily.contains("[[Robotics;Notes|the quest]]"),
         "alias link preserved: {daily}"
     );
 
     // The list page (not in the relation graph — swept directly) was repointed
-    // too, and its unrelated aliased Moon Quest link is untouched.
+    // too, and its unrelated aliased Robotics;Notes link is untouched.
     let list = fs::read_to_string(server.vault.join("KizunaShelf/Lists/Favorites.md")).unwrap();
-    assert!(list.contains("[[Star Voyager Redux]]"), "{list}");
-    assert!(!list.contains("[[Star Voyager]]"), "{list}");
-    assert!(list.contains("[[Moon Quest|the quest]]"), "{list}");
+    assert!(list.contains("[[Steins;Gate 0 (Anime) Redux]]"), "{list}");
+    assert!(!list.contains("[[Steins;Gate 0 (Anime)]]"), "{list}");
+    assert!(list.contains("[[Robotics;Notes|the quest]]"), "{list}");
 
     // A plain (non-rename) update reports no link changes.
     let redux = server
         .ok_json(&format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager Redux")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime) Redux")
         ))
         .await;
     let redux_revision = redux["entity"]["revision"].as_str().unwrap();
@@ -718,7 +776,7 @@ async fn rename_repoints_inbound_wikilinks_in_managed_files() {
         Method::POST,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager Redux")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime) Redux")
         ),
         Some(json!({ "revision": redux_revision, "frontmatter": { "favorite": false } })),
     )
@@ -954,7 +1012,7 @@ async fn entity_update_serializes_a_frontmatter_draft() {
     let server = TestServer::new();
     let path = format!(
         "/api/entities/{}",
-        urlencoding::encode("anime:Star Voyager")
+        urlencoding::encode("anime:Steins;Gate 0 (Anime)")
     );
     let detail = server.ok_json(&path).await;
     let revision = detail["entity"]["revision"].as_str().unwrap();
@@ -969,14 +1027,14 @@ async fn entity_update_serializes_a_frontmatter_draft() {
         Some(json!({
             "revision": revision,
             "frontmatterDraft": {
-                "title": "Star Voyager",
-                "title_en": "A Voyage of Stars",
-                "title_original": "星之航路",
+                "title": "Steins;Gate 0",
+                "title_en": "Amadeus of Zero",
+                "title_original": "シュタインズ・ゲート ゼロ",
                 "status": " Completed ",
                 "favorite": true,
                 "cover_url": "https://img.example/star.jpg",
                 "bgm_url": "https://bgm.example/star",
-                "franchise": ["Star Saga"],
+                "franchise": ["Steins;Gate"],
                 "studio": ["Nova Studio", "[[Second Studio]]", "  "]
             }
         })),
@@ -986,7 +1044,7 @@ async fn entity_update_serializes_a_frontmatter_draft() {
     let frontmatter = &updated["entity"]["frontmatter"];
     assert_eq!(frontmatter["status"], "Completed");
     assert_eq!(frontmatter["favorite"], true);
-    assert_eq!(frontmatter["franchise"], json!(["[[Star Saga]]"]));
+    assert_eq!(frontmatter["franchise"], json!(["[[Steins;Gate]]"]));
     assert_eq!(
         frontmatter["studio"],
         json!(["[[Nova Studio]]", "[[Second Studio]]"])
@@ -1212,7 +1270,7 @@ async fn external_apply_is_forbidden_in_read_only_mode() {
         Method::POST,
         &format!(
             "/api/entities/{}/external/apply",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         Some(json!({
             "revision": "whatever",
@@ -1244,8 +1302,11 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
         .find(|day| day["date"] == "2025-04-21")
         .unwrap();
     assert_eq!(april_21["counts"]["dailyNotes"], 2);
-    assert!(has_entity_title(&april_21["items"], "星之航路"));
-    assert!(has_entity_title(&april_21["items"], "Moon Quest"));
+    assert!(has_entity_title(
+        &april_21["items"],
+        "シュタインズ・ゲート ゼロ"
+    ));
+    assert!(has_entity_title(&april_21["items"], "Robotics;Notes"));
 
     let taxonomy_only = server
         .ok_json("/api/calendar?year=2025&month=4&source=taxonomy&type=anime")
@@ -1267,11 +1328,11 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
     let activity = server.ok_json("/api/activity").await;
     let items = activity["items"].as_array().unwrap();
     assert!(!items.is_empty());
-    // Star Voyager's completed date stamp shows up among its activity items (it
+    // Steins;Gate 0 (Anime)'s completed date stamp shows up among its activity items (it
     // appears in several — a daily-note mention and date stamps on other dates).
     assert!(items
         .iter()
-        .filter(|item| item["entity"]["id"] == "anime:Star Voyager")
+        .filter(|item| item["entity"]["id"] == "anime:Steins;Gate 0 (Anime)")
         .flat_map(|item| item["entries"].as_array().unwrap())
         .any(|entry| entry["source"] == "taxonomy"
             && entry["dateField"] == "complete_date"
@@ -1287,10 +1348,10 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
     let dates = server
         .ok_json(&format!(
             "/api/entities/{}/dates",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ))
         .await;
-    assert_eq!(dates["entityId"], "anime:Star Voyager");
+    assert_eq!(dates["entityId"], "anime:Steins;Gate 0 (Anime)");
     assert_eq!(dates["totals"]["metadata"], 2);
     assert_eq!(dates["totals"]["dailyNotes"], 1);
     assert_eq!(dates["totals"]["snippets"], 1);
@@ -1360,7 +1421,7 @@ async fn log_endpoint_writes_a_daily_note_line() {
     let server = TestServer::new();
     let path = format!(
         "/api/entities/{}/log",
-        urlencoding::encode("anime:Star Voyager")
+        urlencoding::encode("anime:Steins;Gate 0 (Anime)")
     );
 
     // Dry run: previews the line + the completed-date it would stamp; writes nothing.
@@ -1375,7 +1436,7 @@ async fn log_endpoint_writes_a_daily_note_line() {
     assert_eq!(preview["dryRun"], true);
     assert_eq!(preview["section"], "Log");
     let line = preview["line"].as_str().unwrap();
-    assert!(line.contains("[[Star Voyager]]"), "{line}");
+    assert!(line.contains("[[Steins;Gate 0 (Anime)]]"), "{line}");
     assert!(line.contains("rewatch done #Anime"), "{line}");
     assert_eq!(preview["willStampDate"]["field"], "complete_date");
 
@@ -1405,7 +1466,7 @@ async fn log_endpoint_writes_a_daily_note_line() {
 #[tokio::test]
 async fn log_endpoint_applies_and_reverses_date_stamp() {
     let server = TestServer::new();
-    let entity = urlencoding::encode("anime:Star Voyager");
+    let entity = urlencoding::encode("anime:Steins;Gate 0 (Anime)");
     let log = format!("/api/entities/{entity}/log");
 
     async fn revision_of(server: &TestServer, entity: &str) -> String {
@@ -1472,7 +1533,7 @@ async fn log_endpoint_applies_and_reverses_date_stamp() {
 #[tokio::test]
 async fn log_endpoint_flips_status_monotonically_and_never_reverts_on_remove() {
     let server = TestServer::new();
-    let entity = urlencoding::encode("anime:Star Voyager");
+    let entity = urlencoding::encode("anime:Steins;Gate 0 (Anime)");
     let log = format!("/api/entities/{entity}/log");
 
     async fn revision_of(server: &TestServer, entity: &str) -> String {
@@ -1482,7 +1543,7 @@ async fn log_endpoint_flips_status_monotonically_and_never_reverts_on_remove() {
             .to_string()
     }
 
-    // Star Voyager starts as `Watching` (ongoing). A dry-run `completed` log
+    // Steins;Gate 0 (Anime) starts as `Watching` (ongoing). A dry-run `completed` log
     // previews the flip to the mapped write value `Completed` without writing.
     let (status, preview) = request_json(
         &server.app,
@@ -1548,7 +1609,7 @@ async fn log_endpoint_flips_status_monotonically_and_never_reverts_on_remove() {
 #[tokio::test]
 async fn log_started_resumes_a_paused_entity() {
     let server = TestServer::new();
-    let id = urlencoding::encode("anime:Star Voyager");
+    let id = urlencoding::encode("anime:Steins;Gate 0 (Anime)");
     let entity_path = format!("/api/entities/{id}");
     let log = format!("{entity_path}/log");
 
@@ -1592,7 +1653,7 @@ async fn log_started_resumes_a_paused_entity() {
 #[tokio::test]
 async fn log_conflict_leaves_no_partial_write() {
     let server = TestServer::new();
-    let entity = urlencoding::encode("anime:Star Voyager");
+    let entity = urlencoding::encode("anime:Steins;Gate 0 (Anime)");
     let log = format!("/api/entities/{entity}/log");
 
     // A `completed` log stamps a frontmatter date *and* writes a daily-note line —
@@ -1770,7 +1831,7 @@ async fn home_sections_evaluate_smart_list_criteria() {
     let section = &read_back.1["vault"]["home"]["sections"][3];
     assert_eq!(section["criteria"]["rules"].as_array().unwrap().len(), 2);
 
-    // …and the section evaluates through the smart-list engine: Star Voyager
+    // …and the section evaluates through the smart-list engine: Steins;Gate 0 (Anime)
     // is Watching + favorite. The fixture sections keep working beside it.
     let home = request_json(app, Method::GET, "/api/home", None).await;
     assert_eq!(home.0, StatusCode::OK, "{}", home.1);
@@ -1780,7 +1841,7 @@ async fn home_sections_evaluate_smart_list_criteria() {
         .find(|section| section["id"] == "watching-favorites")
         .expect("criteria section present");
     assert_eq!(section["total"], 1);
-    assert_eq!(section["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(section["items"][0]["id"], "anime:Steins;Gate 0 (Anime)");
     assert_eq!(
         section["criteria"]["rules"][0]["value"], "Watching",
         "criteria echoed on the response"
@@ -2113,7 +2174,7 @@ async fn content_mutation_endpoints_can_be_disabled() {
         Method::GET,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         None,
     )
@@ -2125,7 +2186,7 @@ async fn content_mutation_endpoints_can_be_disabled() {
         Method::POST,
         &format!(
             "/api/entities/{}",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         Some(json!({
             "revision": revision,
@@ -2338,47 +2399,47 @@ async fn request_json(
 
 fn write_fixture_vault(vault: &Path) {
     write_file(
-        &vault.join("Taxonomy/Anime/Star Voyager.md"),
+        &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
         r#"---
-title: Star Voyager
-title_en: A Voyage of Stars
-title_original: 星之航路
+title: Steins;Gate 0
+title_en: Amadeus of Zero
+title_original: シュタインズ・ゲート ゼロ
 status: Watching
 favorite: true
 season: "2025"
 complete_date: 2025-04-20
 cover_url: https://img.example/star.jpg
 bgm_url: https://bgm.example/star
-franchise: "[[Star Saga]]"
+franchise: "[[Steins;Gate]]"
 studio: "[[Nova Studio]]"
 ---
 ## Summary
-Star Voyager follows a crew crossing old starlanes.
+Steins;Gate 0 (Anime) follows Rintaro across the beta worldline.
 
-It shares continuity with [[Moon Quest]].
+It shares continuity with [[Robotics;Notes]].
 "#,
     );
     write_file(
-        &vault.join("Taxonomy/Games/Moon Quest.md"),
+        &vault.join("Taxonomy/Games/Robotics;Notes.md"),
         r#"---
-title: Moon Quest
-title_en: Lunar Errand
+title: Robotics;Notes
+title_en: Robot Club Diary
 status: Playing
 favorite: false
 genres: [Adventure, Strategy]
 release_date: 2025-04-05
 igdb_url: https://igdb.example/moon
-franchise: "[[Star Saga]]"
+franchise: "[[Steins;Gate]]"
 developer: "[[Orbit Dev]]"
 ---
-Moon Quest is a tactical adventure that references [[Star Voyager]].
+Robotics;Notes is a robotics-club adventure that references [[Steins;Gate 0 (Anime)]].
 "#,
     );
     write_file(
-        &vault.join("Taxonomy/Franchise/Star Saga.md"),
+        &vault.join("Taxonomy/Franchise/Steins;Gate.md"),
         r#"---
-title: Star Saga
-related: "[[Moon Quest]]"
+title: Steins;Gate
+related: "[[Robotics;Notes]]"
 ---
 The shared setting for the fixture.
 "#,
@@ -2397,7 +2458,7 @@ release_date: 2024-01-01
 tags: [daily]
 ---
 ## Watched
-Revisited [[Star Voyager]] and [[Moon Quest|the quest]] after dinner.
+Revisited [[Steins;Gate 0 (Anime)]] and [[Robotics;Notes|the quest]] after dinner.
 
 ```text
 [[Opening Theme]] inside a code fence should not count.
@@ -2629,12 +2690,12 @@ async fn asset_download_writes_local_file_and_serves_it() {
     let cover = format!("http://{addr}/image.png");
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: {cover}\n---\nBody\n"),
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let revision = entity_revision(&app, id).await;
     let (status, body) = download_assets(&app, id, &revision).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -2646,7 +2707,7 @@ async fn asset_download_writes_local_file_and_serves_it() {
     let local_path = results[0]["path"].as_str().unwrap();
     assert_eq!(
         local_path,
-        "Assets/Taxonomy/Anime/Star Voyager/cover_url.png"
+        "Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png"
     );
 
     // Frontmatter (and therefore the summary cover) now points at the local file.
@@ -2670,12 +2731,12 @@ async fn asset_download_does_not_overwrite_an_edit_during_network_fetch() {
     let cover = format!("http://{addr}/slow.png");
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nOriginal body\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: {cover}\n---\nOriginal body\n"),
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let revision = entity_revision(&app, id).await;
     let task_app = app.clone();
     let task_revision = revision.clone();
@@ -2685,11 +2746,11 @@ async fn asset_download_does_not_overwrite_an_edit_during_network_fetch() {
     // The mock response stays in flight long enough for an Obsidian-style
     // external edit to land after the request has begun but before its commit.
     tokio::time::sleep(Duration::from_millis(50)).await;
-    let entity_path = vault.join("Taxonomy/Anime/Star Voyager.md");
+    let entity_path = vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md");
     write_file(
         &entity_path,
         &format!(
-            "---\ntitle: Star Voyager\ncover_url: {cover}\nexternal_note: keep me\n---\nExternally edited body\n"
+            "---\ntitle: Steins;Gate 0\ncover_url: {cover}\nexternal_note: keep me\n---\nExternally edited body\n"
         ),
     );
 
@@ -2709,12 +2770,12 @@ async fn asset_download_failure_keeps_remote_url() {
     let not_image = format!("http://{addr}/notimage");
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\ncover_url: {missing}\nshots:\n  - {not_image}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: {missing}\nshots:\n  - {not_image}\n---\nBody\n"),
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let revision = entity_revision(&app, id).await;
     let (status, body) = download_assets(&app, id, &revision).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -2727,7 +2788,9 @@ async fn asset_download_failure_keeps_remote_url() {
     assert_eq!(body["entity"]["frontmatter"]["shots"][0], not_image);
 
     // No asset directory was created for this entity.
-    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(!vault
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)")
+        .exists());
 }
 
 #[tokio::test]
@@ -2737,12 +2800,12 @@ async fn asset_download_handles_image_list_partially() {
     let bad = format!("http://{addr}/missing");
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\nshots:\n  - {ok}\n  - {bad}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\nshots:\n  - {ok}\n  - {bad}\n---\nBody\n"),
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let revision = entity_revision(&app, id).await;
     let (status, body) = download_assets(&app, id, &revision).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -2752,7 +2815,7 @@ async fn asset_download_handles_image_list_partially() {
     assert!(shots[0]
         .as_str()
         .unwrap()
-        .starts_with("Assets/Taxonomy/Anime/Star Voyager/shots/"));
+        .starts_with("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/shots/"));
     assert!(shots[0].as_str().unwrap().ends_with(".png"));
     assert_eq!(shots[1], bad);
 }
@@ -2761,8 +2824,8 @@ async fn asset_download_handles_image_list_partially() {
 async fn plan_lists_remote_image_fields_only() {
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\ncover_url: https://img.example/cover.jpg\nshots:\n  - https://img.example/a.png\n  - Assets/Taxonomy/Anime/Star Voyager/shots/local.png\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: https://img.example/cover.jpg\nshots:\n  - https://img.example/a.png\n  - Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/shots/local.png\n---\nBody\n",
         );
     });
 
@@ -2778,7 +2841,7 @@ async fn plan_lists_remote_image_fields_only() {
         .iter()
         .find(|item| item["field"] == "cover_url")
         .unwrap();
-    assert_eq!(cover["entityId"], "anime:Star Voyager");
+    assert_eq!(cover["entityId"], "anime:Steins;Gate 0 (Anime)");
     assert_eq!(cover["sourceUrl"], "https://img.example/cover.jpg");
     assert!(cover["listKey"].is_null());
 
@@ -2801,8 +2864,8 @@ async fn plan_lists_remote_image_fields_only() {
 async fn ingest_places_host_downloaded_file_and_rewrites_single_field() {
     let (app, temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\ncover_url: https://img.example/cover.jpg\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: https://img.example/cover.jpg\n---\nBody\n",
         );
     });
 
@@ -2810,7 +2873,7 @@ async fn ingest_places_host_downloaded_file_and_rewrites_single_field() {
     let source = temp.path().join("ingest-cover.png");
     fs::write(&source, PNG_1X1).unwrap();
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let (status, body) = request_json(
         &app,
         Method::POST,
@@ -2827,10 +2890,10 @@ async fn ingest_places_host_downloaded_file_and_rewrites_single_field() {
     assert_eq!(body["result"]["status"], "downloaded");
     assert_eq!(
         body["entity"]["frontmatter"]["cover_url"],
-        "Assets/Taxonomy/Anime/Star Voyager/cover_url.png"
+        "Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png"
     );
     assert!(vault
-        .join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png")
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png")
         .exists());
     // The host-temp source file is consumed (deleted) by the core.
     assert!(!source.exists());
@@ -2840,15 +2903,15 @@ async fn ingest_places_host_downloaded_file_and_rewrites_single_field() {
 async fn ingest_rewrites_one_list_element() {
     let (app, temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\nshots:\n  - https://img.example/a.png\n  - https://img.example/b.png\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\nshots:\n  - https://img.example/a.png\n  - https://img.example/b.png\n---\nBody\n",
         );
     });
 
     let source = temp.path().join("shot-a.png");
     fs::write(&source, PNG_1X1).unwrap();
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let (status, body) = request_json(
         &app,
         Method::POST,
@@ -2870,7 +2933,7 @@ async fn ingest_rewrites_one_list_element() {
     assert!(shots[0]
         .as_str()
         .unwrap()
-        .starts_with("Assets/Taxonomy/Anime/Star Voyager/shots/"));
+        .starts_with("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/shots/"));
     assert!(shots[0].as_str().unwrap().ends_with(".png"));
     assert_eq!(shots[1], "https://img.example/b.png");
 }
@@ -2879,15 +2942,15 @@ async fn ingest_rewrites_one_list_element() {
 async fn ingest_skips_when_source_url_no_longer_matches() {
     let (app, temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\ncover_url: https://img.example/new.jpg\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: https://img.example/new.jpg\n---\nBody\n",
         );
     });
 
     let source = temp.path().join("stale.png");
     fs::write(&source, PNG_1X1).unwrap();
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let (status, body) = request_json(
         &app,
         Method::POST,
@@ -2908,7 +2971,9 @@ async fn ingest_skips_when_source_url_no_longer_matches() {
         body["entity"]["frontmatter"]["cover_url"],
         "https://img.example/new.jpg"
     );
-    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(!vault
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)")
+        .exists());
     // Even on skip, the stale temp file is cleaned up.
     assert!(!source.exists());
 }
@@ -2917,12 +2982,12 @@ async fn ingest_skips_when_source_url_no_longer_matches() {
 async fn upload_places_single_image_and_leaves_frontmatter_for_save() {
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\ncover_url: https://img.example/cover.jpg\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: https://img.example/cover.jpg\n---\nBody\n",
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let (status, body) = upload_asset(
         &app,
         id,
@@ -2937,7 +3002,10 @@ async fn upload_places_single_image_and_leaves_frontmatter_for_save() {
     assert_eq!(status, StatusCode::OK, "{body}");
 
     let path = body["path"].as_str().unwrap();
-    assert_eq!(path, "Assets/Taxonomy/Anime/Star Voyager/cover_url.png");
+    assert_eq!(
+        path,
+        "Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png"
+    );
     assert_eq!(body["conflictResolved"], false);
     // The file is placed under the vault.
     assert_eq!(fs::read(vault.join(path)).unwrap(), PNG_1X1);
@@ -2961,12 +3029,12 @@ async fn upload_places_single_image_and_leaves_frontmatter_for_save() {
 async fn upload_places_image_list_element_by_content_hash() {
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\n---\nBody\n",
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let (status, body) = upload_asset(
         &app,
         id,
@@ -2980,7 +3048,7 @@ async fn upload_places_image_list_element_by_content_hash() {
     assert_eq!(status, StatusCode::OK, "{body}");
 
     let path = body["path"].as_str().unwrap();
-    assert!(path.starts_with("Assets/Taxonomy/Anime/Star Voyager/shots/"));
+    assert!(path.starts_with("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/shots/"));
     assert!(path.ends_with(".png"));
     assert!(vault.join(path).exists());
 }
@@ -2989,14 +3057,14 @@ async fn upload_places_image_list_element_by_content_hash() {
 async fn upload_rejects_non_image_bytes() {
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\n---\nBody\n",
         );
     });
 
     let (status, _body) = upload_asset(
         &app,
-        "anime:Star Voyager",
+        "anime:Steins;Gate 0 (Anime)",
         json!({
             "field": "cover_url",
             "dataBase64": b64(b"<html>nope</html>"),
@@ -3011,15 +3079,15 @@ async fn upload_rejects_non_image_bytes() {
 async fn upload_rejects_non_image_field_and_bad_base64() {
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\n---\nBody\n",
         );
     });
 
     // `title` is not an image field.
     let (status, _body) = upload_asset(
         &app,
-        "anime:Star Voyager",
+        "anime:Steins;Gate 0 (Anime)",
         json!({ "field": "title", "dataBase64": b64(PNG_1X1) }),
     )
     .await;
@@ -3028,7 +3096,7 @@ async fn upload_rejects_non_image_field_and_bad_base64() {
     // Malformed base64 payload.
     let (status, _body) = upload_asset(
         &app,
-        "anime:Star Voyager",
+        "anime:Steins;Gate 0 (Anime)",
         json!({ "field": "cover_url", "dataBase64": "not valid base64!!!" }),
     )
     .await;
@@ -3039,14 +3107,14 @@ async fn upload_rejects_non_image_field_and_bad_base64() {
 async fn upload_is_disabled_in_read_only_mode() {
     let (app, _temp, vault) = asset_test_app(false, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\n---\nBody\n",
         );
     });
 
     let (status, body) = upload_asset(
         &app,
-        "anime:Star Voyager",
+        "anime:Steins;Gate 0 (Anime)",
         json!({
             "field": "cover_url",
             "dataBase64": b64(PNG_1X1),
@@ -3057,7 +3125,9 @@ async fn upload_is_disabled_in_read_only_mode() {
     assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
     assert_eq!(body["error"], "Content writes are disabled");
     // Nothing was written under the vault.
-    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(!vault
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)")
+        .exists());
 }
 
 #[tokio::test]
@@ -3078,7 +3148,7 @@ async fn host_driven_asset_endpoints_are_rejected_on_the_network_runtime() {
         Method::POST,
         &format!(
             "/api/entities/{}/assets/ingest",
-            urlencoding::encode("anime:Star Voyager")
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
         ),
         Some(json!({
             "field": "cover_url",
@@ -3102,13 +3172,13 @@ async fn host_driven_asset_endpoints_are_rejected_on_the_network_runtime() {
 async fn asset_download_avoids_overwriting_another_entitys_file() {
     let addr = start_mock_image_server().await;
     let cover = format!("http://{addr}/image.png");
-    // "Old Show" references a local cover that sits inside "Star Voyager"'s asset
+    // "Old Show" references a local cover that sits inside "Steins;Gate 0 (Anime)"'s asset
     // directory (as if filenames were swapped outside the app).
-    let collide = "Assets/Taxonomy/Anime/Star Voyager/cover_url.png";
+    let collide = "Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png";
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: {cover}\n---\nBody\n"),
         );
         write_file(
             &vault.join("Taxonomy/Anime/Old Show.md"),
@@ -3116,14 +3186,14 @@ async fn asset_download_avoids_overwriting_another_entitys_file() {
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let revision = entity_revision(&app, id).await;
     let (status, body) = download_assets(&app, id, &revision).await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
     let new_path = body["entity"]["frontmatter"]["cover_url"].as_str().unwrap();
     assert_ne!(new_path, collide, "must not reuse another entity's file");
-    assert!(new_path.starts_with("Assets/Taxonomy/Anime/Star Voyager/cover_url-"));
+    assert!(new_path.starts_with("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url-"));
     assert_eq!(body["results"][0]["conflictResolved"], true);
 
     // The other entity's reference is untouched.
@@ -3135,8 +3205,8 @@ async fn asset_download_avoids_overwriting_another_entitys_file() {
 async fn asset_serve_route_rejects_path_escape() {
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\n---\nBody\n",
         );
         // A secret outside the asset root.
         write_file(&vault.join("secret.txt"), "top secret");
@@ -3156,15 +3226,15 @@ async fn asset_download_is_disabled_in_read_only_mode() {
     let cover = format!("http://{addr}/image.png");
     let (app, _temp, _vault) = asset_test_app(false, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: {cover}\n---\nBody\n"),
         );
     });
 
     let capabilities = request_json(&app, Method::GET, "/api/capabilities", None).await;
     assert_eq!(capabilities.1["assetDownloadEnabled"], false);
 
-    let (status, body) = download_assets(&app, "anime:Star Voyager", "any-revision").await;
+    let (status, body) = download_assets(&app, "anime:Steins;Gate 0 (Anime)", "any-revision").await;
     assert_eq!(status, StatusCode::FORBIDDEN);
     assert_eq!(body["error"], "Content writes are disabled");
 }
@@ -3175,12 +3245,12 @@ async fn asset_batch_job_downloads_remote_covers() {
     let cover = format!("http://{addr}/image.png");
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: {cover}\n---\nBody\n"),
         );
         write_file(
-            &vault.join("Taxonomy/Anime/Moon Quest.md"),
-            &format!("---\ntitle: Moon Quest\ncover_url: {cover}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Robotics;Notes.md"),
+            &format!("---\ntitle: Robotics;Notes\ncover_url: {cover}\n---\nBody\n"),
         );
     });
 
@@ -3212,10 +3282,10 @@ async fn asset_batch_job_downloads_remote_covers() {
     assert_eq!(job["failed"], 0);
 
     assert!(vault
-        .join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png")
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png")
         .exists());
     assert!(vault
-        .join("Assets/Taxonomy/Anime/Moon Quest/cover_url.png")
+        .join("Assets/Taxonomy/Anime/Robotics;Notes/cover_url.png")
         .exists());
 
     let list = request_json(&app, Method::GET, "/api/asset-jobs", None).await;
@@ -3233,8 +3303,8 @@ async fn asset_batch_job_rejects_a_second_job_while_one_is_running() {
     let cover = format!("http://{addr}/slow.png");
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nBody\n"),
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: {cover}\n---\nBody\n"),
         );
     });
 
@@ -3269,33 +3339,35 @@ async fn asset_batch_job_rejects_a_second_job_while_one_is_running() {
 async fn rename_moves_asset_directory_and_rewrites_paths() {
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\ncover_url: Assets/Taxonomy/Anime/Star Voyager/cover_url.png\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png\n---\nBody\n",
         );
         write_file(
-            &vault.join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png"),
+            &vault.join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png"),
             "fake-bytes",
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let revision = entity_revision(&app, id).await;
     let updated = request_json(
         &app,
         Method::POST,
         &format!("/api/entities/{}", urlencoding::encode(id)),
-        Some(json!({ "revision": revision, "renameTo": "Star Voyager 2" })),
+        Some(json!({ "revision": revision, "renameTo": "Steins;Gate 0 (Anime) 2" })),
     )
     .await;
     assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
 
-    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(!vault
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)")
+        .exists());
     assert!(vault
-        .join("Assets/Taxonomy/Anime/Star Voyager 2/cover_url.png")
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime) 2/cover_url.png")
         .exists());
     assert_eq!(
         updated.1["entity"]["frontmatter"]["cover_url"],
-        "Assets/Taxonomy/Anime/Star Voyager 2/cover_url.png"
+        "Assets/Taxonomy/Anime/Steins;Gate 0 (Anime) 2/cover_url.png"
     );
 }
 
@@ -3303,16 +3375,16 @@ async fn rename_moves_asset_directory_and_rewrites_paths() {
 async fn delete_trashes_asset_directory() {
     let (app, _temp, vault) = asset_test_app(true, |vault| {
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\ncover_url: Assets/Taxonomy/Anime/Star Voyager/cover_url.png\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png\n---\nBody\n",
         );
         write_file(
-            &vault.join("Assets/Taxonomy/Anime/Star Voyager/cover_url.png"),
+            &vault.join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png"),
             "fake-bytes",
         );
     });
 
-    let id = "anime:Star Voyager";
+    let id = "anime:Steins;Gate 0 (Anime)";
     let revision = entity_revision(&app, id).await;
     let deleted = request_json(
         &app,
@@ -3324,11 +3396,15 @@ async fn delete_trashes_asset_directory() {
     assert_eq!(deleted.0, StatusCode::OK, "{}", deleted.1);
 
     // The note and its asset directory are moved into the vault's `.trash`.
-    assert!(!vault.join("Taxonomy/Anime/Star Voyager.md").exists());
-    assert!(vault.join(".trash/Star Voyager.md").exists());
-    assert!(!vault.join("Assets/Taxonomy/Anime/Star Voyager").exists());
+    assert!(!vault
+        .join("Taxonomy/Anime/Steins;Gate 0 (Anime).md")
+        .exists());
+    assert!(vault.join(".trash/Steins;Gate 0 (Anime).md").exists());
+    assert!(!vault
+        .join("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)")
+        .exists());
     assert!(vault
-        .join(".trash/Assets/Taxonomy/Anime/Star Voyager")
+        .join(".trash/Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)")
         .exists());
 }
 
@@ -3380,8 +3456,8 @@ async fn broken_asset_cleanup_queue_flags_missing_files() {
     let (app, _temp, _vault) = asset_test_app(true, |vault| {
         // References a local cover that does not exist on disk.
         write_file(
-            &vault.join("Taxonomy/Anime/Star Voyager.md"),
-            "---\ntitle: Star Voyager\ncover_url: Assets/Taxonomy/Anime/Star Voyager/cover_url.png\n---\nBody\n",
+            &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png\n---\nBody\n",
         );
     });
 
@@ -3389,7 +3465,7 @@ async fn broken_asset_cleanup_queue_flags_missing_files() {
     assert_eq!(cleanup.0, StatusCode::OK);
     let broken = cleanup.1["brokenAssets"].as_array().unwrap();
     assert_eq!(broken.len(), 1);
-    assert_eq!(broken[0]["title"], "Star Voyager");
+    assert_eq!(broken[0]["title"], "Steins;Gate 0");
     assert!(cleanup.1["queues"]
         .as_array()
         .unwrap()
@@ -3426,7 +3502,7 @@ async fn lists_crud_add_reorder_and_delete() {
         app,
         Method::POST,
         "/api/lists/Watchlist/items",
-        Some(json!({ "entityId": "anime:Star Voyager" })),
+        Some(json!({ "entityId": "anime:Steins;Gate 0 (Anime)" })),
     )
     .await;
     assert_eq!(added.0, StatusCode::OK, "{}", added.1);
@@ -3436,11 +3512,11 @@ async fn lists_crud_add_reorder_and_delete() {
     assert_eq!(added.1["sections"][0]["items"].as_array().unwrap().len(), 1);
     assert_eq!(
         added.1["sections"][0]["items"][0]["text"],
-        "[[Star Voyager]]"
+        "[[Steins;Gate 0 (Anime)]]"
     );
     assert_eq!(
         added.1["sections"][0]["items"][0]["entity"]["id"],
-        "anime:Star Voyager"
+        "anime:Steins;Gate 0 (Anime)"
     );
 
     // Adding the same entity again is idempotent.
@@ -3448,7 +3524,7 @@ async fn lists_crud_add_reorder_and_delete() {
         app,
         Method::POST,
         "/api/lists/Watchlist/items",
-        Some(json!({ "entityId": "anime:Star Voyager" })),
+        Some(json!({ "entityId": "anime:Steins;Gate 0 (Anime)" })),
     )
     .await;
     assert_eq!(again.0, StatusCode::OK, "{}", again.1);
@@ -3459,7 +3535,7 @@ async fn lists_crud_add_reorder_and_delete() {
         app,
         Method::POST,
         "/api/lists/Watchlist/items",
-        Some(json!({ "entityId": "games:Moon Quest" })),
+        Some(json!({ "entityId": "games:Robotics;Notes" })),
     )
     .await;
     assert_eq!(added2.0, StatusCode::OK, "{}", added2.1);
@@ -3483,12 +3559,12 @@ async fn lists_crud_add_reorder_and_delete() {
             {
                 "heading": "Todo",
                 "marker": "todo",
-                "items": [{ "text": "[[Moon Quest]]", "checked": true }]
+                "items": [{ "text": "[[Robotics;Notes]]", "checked": true }]
             },
             {
                 "heading": "Finished",
                 "marker": "ordered",
-                "items": [{ "text": "[[Star Voyager]]" }]
+                "items": [{ "text": "[[Steins;Gate 0 (Anime)]]" }]
             }
         ]
     });
@@ -3507,7 +3583,7 @@ async fn lists_crud_add_reorder_and_delete() {
     assert_eq!(updated.1["sections"][0]["items"][0]["checked"], true);
     assert_eq!(
         updated.1["sections"][0]["items"][0]["entity"]["id"],
-        "games:Moon Quest"
+        "games:Robotics;Notes"
     );
     assert_eq!(updated.1["sections"][1]["heading"], "Finished");
     assert_eq!(updated.1["sections"][1]["marker"], "ordered");
@@ -3517,7 +3593,7 @@ async fn lists_crud_add_reorder_and_delete() {
         .is_none());
     assert_eq!(
         updated.1["sections"][1]["items"][0]["entity"]["id"],
-        "anime:Star Voyager"
+        "anime:Steins;Gate 0 (Anime)"
     );
 
     // The stale revision is now rejected.
@@ -3536,7 +3612,7 @@ async fn lists_crud_add_reorder_and_delete() {
     let member = request_json(
         app,
         Method::GET,
-        "/api/lists?entity=anime%3AStar%20Voyager",
+        "/api/lists?entity=anime%3ASteins;Gate%200%20(Anime)",
         None,
     )
     .await;
@@ -3549,7 +3625,7 @@ async fn lists_crud_add_reorder_and_delete() {
     let removed = request_json(
         app,
         Method::DELETE,
-        "/api/lists/Watchlist/items/anime%3AStar%20Voyager",
+        "/api/lists/Watchlist/items/anime%3ASteins;Gate%200%20(Anime)",
         None,
     )
     .await;
@@ -3557,7 +3633,7 @@ async fn lists_crud_add_reorder_and_delete() {
     // It drops out of its section; the now-empty "Finished" heading is preserved.
     assert_eq!(
         removed.1["sections"][0]["items"][0]["entity"]["id"],
-        "games:Moon Quest"
+        "games:Robotics;Notes"
     );
     assert_eq!(removed.1["sections"][1]["heading"], "Finished");
     assert_eq!(
@@ -3567,7 +3643,7 @@ async fn lists_crud_add_reorder_and_delete() {
     let member_after = request_json(
         app,
         Method::GET,
-        "/api/lists?entity=anime%3AStar%20Voyager",
+        "/api/lists?entity=anime%3ASteins;Gate%200%20(Anime)",
         None,
     )
     .await;
@@ -3627,7 +3703,7 @@ async fn smart_lists_create_update_evaluate_and_delete() {
     .await;
     assert_eq!(results.0, StatusCode::OK, "{}", results.1);
     assert_eq!(results.1["total"], 1);
-    assert_eq!(results.1["items"][0]["id"], "anime:Star Voyager");
+    assert_eq!(results.1["items"][0]["id"], "anime:Steins;Gate 0 (Anime)");
 
     // Update: add criteria (status is Watching AND favorite) plus a sorted,
     // limited table view.
@@ -3675,7 +3751,7 @@ async fn smart_lists_create_update_evaluate_and_delete() {
     .await;
     assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
 
-    // The criteria evaluate: Star Voyager is Watching + favorite.
+    // The criteria evaluate: Steins;Gate 0 (Anime) is Watching + favorite.
     let results = request_json(
         app,
         Method::GET,
@@ -3700,7 +3776,7 @@ async fn smart_lists_create_update_evaluate_and_delete() {
     let index = request_json(
         app,
         Method::GET,
-        "/api/lists?entity=anime%3AStar%20Voyager",
+        "/api/lists?entity=anime%3ASteins;Gate%200%20(Anime)",
         None,
     )
     .await;
@@ -3762,7 +3838,7 @@ async fn smart_list_summary_cache_tracks_library_and_definition_revisions() {
     let warm = request_json(
         &server.app,
         Method::GET,
-        "/api/lists?today=2030-01-01&entity=anime%3AStar%20Voyager",
+        "/api/lists?today=2030-01-01&entity=anime%3ASteins;Gate%200%20(Anime)",
         None,
     )
     .await;
@@ -3836,7 +3912,7 @@ async fn smart_list_membership_cannot_be_edited_by_hand() {
         app,
         Method::POST,
         "/api/lists/Watching%20Now/items",
-        Some(json!({ "entityId": "anime:Star Voyager" })),
+        Some(json!({ "entityId": "anime:Steins;Gate 0 (Anime)" })),
     )
     .await;
     assert_eq!(added.0, StatusCode::BAD_REQUEST, "{}", added.1);
@@ -3844,7 +3920,7 @@ async fn smart_list_membership_cannot_be_edited_by_hand() {
     let removed = request_json(
         app,
         Method::DELETE,
-        "/api/lists/Watching%20Now/items/anime%3AStar%20Voyager",
+        "/api/lists/Watching%20Now/items/anime%3ASteins;Gate%200%20(Anime)",
         None,
     )
     .await;

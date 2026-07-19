@@ -661,7 +661,7 @@ const PlanItemRow = memo(function PlanItemRow({
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           <span className="rounded border px-1.5 py-0.5">
-            {providerLabels.get(item.provider) ?? item.provider ?? t`no source`}
+            {providerLabels.get(item.provider) ?? item.provider ?? t`no provider`}
           </span>
           <span className="rounded border px-1.5 py-0.5">
             {bucketLabel(i18n, item.provider, item.bucket)}
@@ -702,11 +702,11 @@ function StatePill({ item }: { item: ImportPlanItem }) {
 function reviewReasonLabel(reason: ImportPlanItem["reviewReason"]): MessageDescriptor {
   switch (reason) {
     case "noSupportedId":
-      return msg`No matched source`;
+      return msg`No matched provider`;
     case "noTypeMatch":
       return msg`No matching type`;
     case "providerUnavailable":
-      return msg`Source unavailable`;
+      return msg`Provider unavailable`;
     default:
       return msg`Needs review`;
   }

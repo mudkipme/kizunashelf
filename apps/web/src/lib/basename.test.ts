@@ -4,15 +4,15 @@ import { basenameValidationError, normalizeBasename } from "./basename";
 
 describe("normalizeBasename", () => {
   it("trims surrounding whitespace", () => {
-    expect(normalizeBasename("  Star Voyager  ")).toBe("Star Voyager");
+    expect(normalizeBasename("  Steins;Gate 0 (Anime)  ")).toBe("Steins;Gate 0 (Anime)");
   });
 });
 
 describe("basenameValidationError", () => {
   it("accepts a plain basename", () => {
-    expect(basenameValidationError("Star Voyager")).toBeUndefined();
+    expect(basenameValidationError("Steins;Gate 0 (Anime)")).toBeUndefined();
     // Leading/trailing whitespace is normalized before validating.
-    expect(basenameValidationError("  Star Voyager  ")).toBeUndefined();
+    expect(basenameValidationError("  Steins;Gate 0 (Anime)  ")).toBeUndefined();
   });
 
   it("rejects an empty or whitespace-only name", () => {
@@ -26,9 +26,9 @@ describe("basenameValidationError", () => {
   });
 
   it("rejects a trailing .md (the caller stores the basename only)", () => {
-    expect(basenameValidationError("Star Voyager.md")).toBe("Enter the basename without .md.");
+    expect(basenameValidationError("Steins;Gate 0 (Anime).md")).toBe("Enter the basename without .md.");
     // Case-insensitive on the extension.
-    expect(basenameValidationError("Star Voyager.MD")).toBe("Enter the basename without .md.");
+    expect(basenameValidationError("Steins;Gate 0 (Anime).MD")).toBe("Enter the basename without .md.");
   });
 
   it("rejects forbidden filesystem characters and control chars", () => {

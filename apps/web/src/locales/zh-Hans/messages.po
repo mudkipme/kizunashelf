@@ -367,13 +367,10 @@ msgstr "添加内置类型"
 msgid "Add custom type"
 msgstr "添加自定义类型"
 
+#: src/pages/entity-create-page.tsx:80
 #: src/pages/home-page.tsx:35
 #: src/pages/library-page.tsx:387
 msgid "Add entity"
-msgstr "添加条目"
-
-#: src/pages/entity-create-page.tsx:80
-msgid "Add Entity"
 msgstr "添加条目"
 
 #: src/components/settings/settings-sections.tsx:918
@@ -456,11 +453,11 @@ msgstr "所有日期"
 msgid "all of"
 msgstr "全部满足"
 
+#: src/components/entities/external-match-dialog.tsx:131
 #: src/pages/quick-capture-page.tsx:256
 msgid "All providers"
 msgstr "所有数据源"
 
-#: src/components/entities/external-match-dialog.tsx:131
 #: src/pages/activity-page.tsx:28
 #: src/pages/calendar-page.tsx:126
 msgid "All sources"
@@ -997,7 +994,7 @@ msgid "Edit criteria"
 msgstr "编辑条件"
 
 #: src/pages/entity-edit-page.tsx:115
-msgid "Edit Entity"
+msgid "Edit entity"
 msgstr "编辑条目"
 
 #: src/components/settings/settings-dialogs.tsx:374
@@ -1086,11 +1083,6 @@ msgstr "外部元数据"
 #: src/components/entities/external-match-dialog.tsx:337
 msgid "external ref"
 msgstr "外部引用"
-
-#: src/components/settings/settings-sections.tsx:776
-#: src/components/settings/settings-sections.tsx:965
-msgid "External source"
-msgstr "外部来源"
 
 #: src/components/settings/settings-sections.tsx:1013
 #: src/components/settings/settings-sections.tsx:1019
@@ -1772,7 +1764,7 @@ msgid "No folder selected"
 msgstr "未选择文件夹"
 
 #: src/pages/smart-list-page.tsx:707
-msgid "No further criteria — every entry of this type matches."
+msgid "No further criteria — every entity of this type matches."
 msgstr "没有其他条件 — 匹配此类型的所有条目。"
 
 #: src/components/settings/settings-dialogs.tsx:447
@@ -1809,8 +1801,8 @@ msgid "No markdown body sections."
 msgstr "无 Markdown 正文板块。"
 
 #: src/pages/import-wizard-page.tsx:705
-msgid "No matched source"
-msgstr "无匹配来源"
+msgid "No matched provider"
+msgstr "无匹配数据源"
 
 #: src/components/layout/header-search.tsx:188
 msgid "No matches"
@@ -1832,6 +1824,10 @@ msgstr "无匹配的类型"
 msgid "No parsing issues found."
 msgstr "未发现解析问题。"
 
+#: src/pages/import-wizard-page.tsx:664
+msgid "no provider"
+msgstr "无数据源"
+
 #: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "此条目上未关联任何带列表的数据源。"
@@ -1840,13 +1836,9 @@ msgstr "此条目上未关联任何带列表的数据源。"
 msgid "No queue items match the current filters"
 msgstr "没有队列项目与当前筛选条件匹配"
 
-#: src/pages/import-wizard-page.tsx:664
-msgid "no source"
-msgstr "无来源"
-
 #: src/components/entities/external-match-dialog.tsx:130
-msgid "No supported sources"
-msgstr "无支持的来源"
+msgid "No supported providers"
+msgstr "无支持的数据源"
 
 #: src/components/settings/settings-sections.tsx:1023
 msgid "No type options."
@@ -2051,6 +2043,8 @@ msgstr "属性"
 
 #: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:127
+#: src/components/settings/settings-sections.tsx:776
+#: src/components/settings/settings-sections.tsx:965
 #: src/pages/quick-capture-page.tsx:254
 msgid "Provider"
 msgstr "数据源"
@@ -2062,6 +2056,10 @@ msgstr "数据源凭据"
 #: src/components/settings/settings-sections.tsx:435
 msgid "Provider priority"
 msgstr "数据源优先级"
+
+#: src/pages/import-wizard-page.tsx:709
+msgid "Provider unavailable"
+msgstr "数据源不可用"
 
 #: src/components/settings/settings-sections.tsx:292
 msgid "Providers"
@@ -2492,10 +2490,6 @@ msgstr "按更新时间排序"
 msgid "Source"
 msgstr "来源"
 
-#: src/pages/import-wizard-page.tsx:709
-msgid "Source unavailable"
-msgstr "来源不可用"
-
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
 #: src/components/assets/quick-log-dialog.tsx:205
@@ -2631,7 +2625,7 @@ msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "页面遇到意外错误。你可以重试，或重新加载应用。"
 
 #: src/components/settings/settings-sections.tsx:176
-msgid "The same rules as smart lists; the section shows entries that match."
+msgid "The same rules as smart lists; the section shows entities that match."
 msgstr "与智能列表相同的规则；该版块显示符合条件的条目。"
 
 #: src/components/settings/preset-picker.tsx:145
@@ -2743,8 +2737,8 @@ msgid "Unit"
 msgstr "单位"
 
 #: src/pages/review-page.tsx:55
-msgid "Unlinked Items"
-msgstr "未关联的项目"
+msgid "Unlinked entities"
+msgstr "未关联的条目"
 
 #: src/components/settings/settings-sections.tsx:906
 msgid "Unmapped"
@@ -2899,8 +2893,8 @@ msgid "Yes"
 msgstr "是"
 
 #: src/pages/quick-capture-page.tsx:214
-msgid "You can still open items already in your library."
-msgstr "你仍可以打开库中已有的项目。"
+msgid "You can still open entities already in your library."
+msgstr "你仍可以打开库中已有的条目。"
 
 #: src/pages/settings-page.tsx:124
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."

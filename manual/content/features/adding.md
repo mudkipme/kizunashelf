@@ -1,0 +1,34 @@
++++
+title = "Adding an entity"
+description = "Quick Capture creates a fully populated entity from a provider search in one action, while Manual Add starts from a blank form."
+weight = 1
++++
+
+There are two ways to add a new entity to your library: **Quick Capture** (search a provider and add in one click) and **Manual Add** (a blank, schema-driven form). Both create a real Markdown file in the entity type's folder.
+
+## Quick Capture
+
+Quick Capture is only available when the entity type has at least one `externalRef` field. Select a type, then enter a search query or paste a provider URL or ID. The search runs across the providers mapped to that type in order of their `externalPriority`. Select a result, and create the entity with a single click:
+
+- The entity title mapped to filename via `filename.titleLanguage` or `filename.titleRole`, and normalized to strip or replace characters not allowed be in filenames.
+- Every mapped field and body section is populated from the provider.
+- The cover image is downloaded into the vault's `assetRoot`, and the episode or track list is imported into the `episodes` body section.
+- If the item already resolves to an existing library entity (via external reference or title match), Quick Capture opens that entity instead of creating a duplicate.
+
+{{ screenshot(caption="Quick Capture: search a provider and create in one action.") }}
+
+Statuses, ratings, and dates are yours to log afterward at your own pace; Quick Capture only populates what the provider supplies.
+
+On iOS, sharing a provider page from Safari to KizunaShelf pre-fills the search query automatically. See [iOS features](@/features/ios.md).
+
+## Manual Add
+
+When the thing you're adding isn't in any provider's catalog, such as a figure, a concert, or a restaurant from a food manga, you can use the manual form. It renders exactly the fields your schema declares for that type, using the appropriate editor for each `fieldType`.
+
+{{ screenshot(caption="Manual add: a blank form derived from your schema.") }}
+
+A manually added entity can be [matched to a provider later](@/features/editing.md#matching-external-metadata).
+
+## Whole Libraries
+
+To import an existing collection from another service (such as MyAnimeList, Bangumi, Trakt, Steam, or Goodreads), you can also use [Batch import](@/features/import.md).

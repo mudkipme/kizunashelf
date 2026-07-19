@@ -13,9 +13,9 @@ describe("editableFieldSpecs relation suggestions", () => {
   } as unknown as TypeConfig;
 
   const suggestion = {
-    basename: "Star Voyager",
-    title: "Star Voyager",
-    titles: { ja: "スターボイジャー" },
+    basename: "Steins;Gate 0 (Anime)",
+    title: "Steins;Gate 0",
+    titles: { ja: "シュタインズ・ゲート ゼロ" },
     type: "anime",
     typeLabel: "Anime",
   } as unknown as EntitySummary;
@@ -26,10 +26,10 @@ describe("editableFieldSpecs relation suggestions", () => {
   }
 
   it("labels suggestions with the viewer's language title (value stays the basename)", () => {
-    expect(relationOptions("ja")).toEqual([{ value: "Star Voyager", label: "スターボイジャー" }]);
+    expect(relationOptions("ja")).toEqual([{ value: "Steins;Gate 0 (Anime)", label: "シュタインズ・ゲート ゼロ" }]);
   });
 
   it("falls back to the canonical title when the viewer's language is missing", () => {
-    expect(relationOptions("en")).toEqual([{ value: "Star Voyager", label: "Star Voyager" }]);
+    expect(relationOptions("en")).toEqual([{ value: "Steins;Gate 0 (Anime)", label: "Steins;Gate 0" }]);
   });
 });

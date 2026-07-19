@@ -199,7 +199,7 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     //! Tests for the schema-driven field selection that drives summary derivation.
-    //! The invariant under test (see CLAUDE.md): meaning comes from a field's
+    //! The invariant under test (see ARCHITECTURE.md): meaning comes from a field's
     //! `FieldType`/role, never its name. These exercise the glue through
     //! `parse_entity` end-to-end rather than the private helpers in isolation.
     use super::*;

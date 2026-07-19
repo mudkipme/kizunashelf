@@ -367,14 +367,11 @@ msgstr "Add built-in types"
 msgid "Add custom type"
 msgstr "Add custom type"
 
+#: src/pages/entity-create-page.tsx:80
 #: src/pages/home-page.tsx:35
 #: src/pages/library-page.tsx:387
 msgid "Add entity"
 msgstr "Add entity"
-
-#: src/pages/entity-create-page.tsx:80
-msgid "Add Entity"
-msgstr "Add Entity"
 
 #: src/components/settings/settings-sections.tsx:918
 msgid "Add enum options above to map them to statuses."
@@ -456,11 +453,11 @@ msgstr "All dates"
 msgid "all of"
 msgstr "all of"
 
+#: src/components/entities/external-match-dialog.tsx:131
 #: src/pages/quick-capture-page.tsx:256
 msgid "All providers"
 msgstr "All providers"
 
-#: src/components/entities/external-match-dialog.tsx:131
 #: src/pages/activity-page.tsx:28
 #: src/pages/calendar-page.tsx:126
 msgid "All sources"
@@ -997,8 +994,8 @@ msgid "Edit criteria"
 msgstr "Edit criteria"
 
 #: src/pages/entity-edit-page.tsx:115
-msgid "Edit Entity"
-msgstr "Edit Entity"
+msgid "Edit entity"
+msgstr "Edit entity"
 
 #: src/components/settings/settings-dialogs.tsx:374
 msgid "Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema."
@@ -1086,11 +1083,6 @@ msgstr "External metadata"
 #: src/components/entities/external-match-dialog.tsx:337
 msgid "external ref"
 msgstr "external ref"
-
-#: src/components/settings/settings-sections.tsx:776
-#: src/components/settings/settings-sections.tsx:965
-msgid "External source"
-msgstr "External source"
 
 #: src/components/settings/settings-sections.tsx:1013
 #: src/components/settings/settings-sections.tsx:1019
@@ -1772,8 +1764,8 @@ msgid "No folder selected"
 msgstr "No folder selected"
 
 #: src/pages/smart-list-page.tsx:707
-msgid "No further criteria — every entry of this type matches."
-msgstr "No further criteria — every entry of this type matches."
+msgid "No further criteria — every entity of this type matches."
+msgstr "No further criteria — every entity of this type matches."
 
 #: src/components/settings/settings-dialogs.tsx:447
 msgid "No home sections configured."
@@ -1809,8 +1801,8 @@ msgid "No markdown body sections."
 msgstr "No markdown body sections."
 
 #: src/pages/import-wizard-page.tsx:705
-msgid "No matched source"
-msgstr "No matched source"
+msgid "No matched provider"
+msgstr "No matched provider"
 
 #: src/components/layout/header-search.tsx:188
 msgid "No matches"
@@ -1832,6 +1824,10 @@ msgstr "No matching type"
 msgid "No parsing issues found."
 msgstr "No parsing issues found."
 
+#: src/pages/import-wizard-page.tsx:664
+msgid "no provider"
+msgstr "no provider"
+
 #: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "No provider with a list is linked on this entity."
@@ -1840,13 +1836,9 @@ msgstr "No provider with a list is linked on this entity."
 msgid "No queue items match the current filters"
 msgstr "No queue items match the current filters"
 
-#: src/pages/import-wizard-page.tsx:664
-msgid "no source"
-msgstr "no source"
-
 #: src/components/entities/external-match-dialog.tsx:130
-msgid "No supported sources"
-msgstr "No supported sources"
+msgid "No supported providers"
+msgstr "No supported providers"
 
 #: src/components/settings/settings-sections.tsx:1023
 msgid "No type options."
@@ -2051,6 +2043,8 @@ msgstr "property"
 
 #: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:127
+#: src/components/settings/settings-sections.tsx:776
+#: src/components/settings/settings-sections.tsx:965
 #: src/pages/quick-capture-page.tsx:254
 msgid "Provider"
 msgstr "Provider"
@@ -2062,6 +2056,10 @@ msgstr "Provider Credentials"
 #: src/components/settings/settings-sections.tsx:435
 msgid "Provider priority"
 msgstr "Provider priority"
+
+#: src/pages/import-wizard-page.tsx:709
+msgid "Provider unavailable"
+msgstr "Provider unavailable"
 
 #: src/components/settings/settings-sections.tsx:292
 msgid "Providers"
@@ -2492,10 +2490,6 @@ msgstr "Sort by update time"
 msgid "Source"
 msgstr "Source"
 
-#: src/pages/import-wizard-page.tsx:709
-msgid "Source unavailable"
-msgstr "Source unavailable"
-
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
 #: src/components/assets/quick-log-dialog.tsx:205
@@ -2631,8 +2625,8 @@ msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "The page hit an unexpected error. You can try again, or reload the app."
 
 #: src/components/settings/settings-sections.tsx:176
-msgid "The same rules as smart lists; the section shows entries that match."
-msgstr "The same rules as smart lists; the section shows entries that match."
+msgid "The same rules as smart lists; the section shows entities that match."
+msgstr "The same rules as smart lists; the section shows entities that match."
 
 #: src/components/settings/preset-picker.tsx:145
 msgid "These existing types can link to what you're adding."
@@ -2743,8 +2737,8 @@ msgid "Unit"
 msgstr "Unit"
 
 #: src/pages/review-page.tsx:55
-msgid "Unlinked Items"
-msgstr "Unlinked Items"
+msgid "Unlinked entities"
+msgstr "Unlinked entities"
 
 #: src/components/settings/settings-sections.tsx:906
 msgid "Unmapped"
@@ -2899,8 +2893,8 @@ msgid "Yes"
 msgstr "Yes"
 
 #: src/pages/quick-capture-page.tsx:214
-msgid "You can still open items already in your library."
-msgstr "You can still open items already in your library."
+msgid "You can still open entities already in your library."
+msgstr "You can still open entities already in your library."
 
 #: src/pages/settings-page.tsx:124
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."

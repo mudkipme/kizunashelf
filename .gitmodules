@@ -1,0 +1,3 @@
+[submodule "manual/themes/goyo"]
+	path = manual/themes/goyo
+	url = https://github.com/hahwul/goyo

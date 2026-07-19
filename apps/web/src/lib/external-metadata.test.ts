@@ -21,7 +21,7 @@ function match(
       provider: "bangumi",
       sourceId: "123",
       url: "https://bgm.tv/subject/123",
-      title: "Star Voyager",
+      title: "Steins;Gate 0",
       titles: {},
       metadata: {},
     },
@@ -42,14 +42,14 @@ describe("matchFieldPreviewEntries", () => {
   it("decorates each core-mapped field with its schema label", () => {
     const tc = typeConfig([field({ field: "name_jp", fieldType: "title", displayName: "Japanese title" })]);
     const entries = matchFieldPreviewEntries(
-      match([fieldValue({ field: "name_jp", value: "スターボイジャー", externalField: "name" })]),
+      match([fieldValue({ field: "name_jp", value: "シュタインズ・ゲート ゼロ", externalField: "name" })]),
       tc,
     );
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       field: "name_jp",
       label: "Japanese title",
-      value: "スターボイジャー",
+      value: "シュタインズ・ゲート ゼロ",
       externalField: "name",
       hasValue: true,
     });

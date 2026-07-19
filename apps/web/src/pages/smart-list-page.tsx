@@ -704,7 +704,7 @@ function CriteriaSummary({ detail }: { detail: SmartListDetail }) {
     return (
       <p className="text-xs text-muted-foreground">
         {detail.scope ? (
-          <Trans>No further criteria — every entry of this type matches.</Trans>
+          <Trans>No further criteria — every entity of this type matches.</Trans>
         ) : (
           <Trans>No criteria — everything in the library matches.</Trans>
         )}

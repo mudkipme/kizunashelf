@@ -336,7 +336,7 @@ mod tests {
             provider: provider.to_string(),
             source_id: "1".to_string(),
             url: "https://example.test/1".to_string(),
-            title: "Star Voyager".to_string(),
+            title: "Steins;Gate 0".to_string(),
             original_title: None,
             brief: None,
             cover_url: None,
@@ -528,11 +528,11 @@ mod tests {
         name.title_language = Some("ja".to_string());
         let mut cand = candidate("bangumi", json!({}));
         cand.titles
-            .insert("ja".to_string(), "スターボイジャー".to_string());
+            .insert("ja".to_string(), "シュタインズ・ゲート ゼロ".to_string());
         let config = type_with(vec![name]);
         assert_eq!(
             field_value(&cand, &config, "name_jp"),
-            json!("スターボイジャー")
+            json!("シュタインズ・ゲート ゼロ")
         );
     }
 

@@ -275,6 +275,17 @@ fn registry() -> Vec<ProviderEntry> {
     ]
 }
 
+/// Which providers can pull an episode/track/issue list into an entity's
+/// episodes body section (`(provider id, supports episodes)`). Static registry
+/// facts for the `kizunashelf-docs` generator; runtime callers use
+/// [`provider_supports_episodes`], which also checks configuration.
+pub fn provider_episode_support() -> Vec<(&'static str, bool)> {
+    registry()
+        .iter()
+        .map(|provider_entry| (provider_entry.id, provider_entry.supports_episodes))
+        .collect()
+}
+
 /// Every distinct credential-store key declared by any provider. Hosts that
 /// enumerate credentials (the desktop keychain editor) derive their key list
 /// from this so it stays in sync with the registry — no hard-coded provider
@@ -983,9 +994,10 @@ pub(crate) async fn external_provider_catalog() -> Json<ExternalProviderCatalogR
 }
 
 /// The static provider catalog (id, label, field/type options, default
-/// role→field mappings). Shared between the `/api/external/providers` endpoint
-/// and the vault-template builder so external-field wiring has a single source.
-pub(crate) fn provider_catalog_items() -> Vec<ExternalProviderCatalogItem> {
+/// role→field mappings). Shared between the `/api/external/providers` endpoint,
+/// the vault-template builder, and the `kizunashelf-docs` generator so
+/// external-field wiring has a single source.
+pub fn provider_catalog_items() -> Vec<ExternalProviderCatalogItem> {
     registry()
         .iter()
         .map(|provider_entry| ExternalProviderCatalogItem {
@@ -1048,10 +1060,10 @@ fn provider_reason(
     configured_providers: &BTreeMap<&'static str, ProviderSearchConfig>,
 ) -> Option<String> {
     let Some(provider_config) = configured_providers.get(provider_entry.id) else {
-        return Some("No external source mapping configured for this source".to_string());
+        return Some("No external mapping configured for this provider".to_string());
     };
     if !(provider_entry.configured_and_supported)(provider_config) {
-        return Some("No supported externalTypes configured for this source".to_string());
+        return Some("No supported externalTypes configured for this provider".to_string());
     }
     (provider_entry.unavailable_reason)(state)
 }

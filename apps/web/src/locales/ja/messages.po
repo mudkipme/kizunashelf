@@ -367,13 +367,10 @@ msgstr "組み込みタイプを追加"
 msgid "Add custom type"
 msgstr "カスタムタイプを追加"
 
+#: src/pages/entity-create-page.tsx:80
 #: src/pages/home-page.tsx:35
 #: src/pages/library-page.tsx:387
 msgid "Add entity"
-msgstr "アイテムを追加"
-
-#: src/pages/entity-create-page.tsx:80
-msgid "Add Entity"
 msgstr "アイテムを追加"
 
 #: src/components/settings/settings-sections.tsx:918
@@ -456,11 +453,11 @@ msgstr "すべての日付"
 msgid "all of"
 msgstr "すべてが一致"
 
+#: src/components/entities/external-match-dialog.tsx:131
 #: src/pages/quick-capture-page.tsx:256
 msgid "All providers"
 msgstr "すべてのプロバイダー"
 
-#: src/components/entities/external-match-dialog.tsx:131
 #: src/pages/activity-page.tsx:28
 #: src/pages/calendar-page.tsx:126
 msgid "All sources"
@@ -997,7 +994,7 @@ msgid "Edit criteria"
 msgstr "条件を編集"
 
 #: src/pages/entity-edit-page.tsx:115
-msgid "Edit Entity"
+msgid "Edit entity"
 msgstr "アイテムを編集"
 
 #: src/components/settings/settings-dialogs.tsx:374
@@ -1086,11 +1083,6 @@ msgstr "外部メタデータ"
 #: src/components/entities/external-match-dialog.tsx:337
 msgid "external ref"
 msgstr "外部参照"
-
-#: src/components/settings/settings-sections.tsx:776
-#: src/components/settings/settings-sections.tsx:965
-msgid "External source"
-msgstr "外部ソース"
 
 #: src/components/settings/settings-sections.tsx:1013
 #: src/components/settings/settings-sections.tsx:1019
@@ -1772,8 +1764,8 @@ msgid "No folder selected"
 msgstr "フォルダーが選択されていません"
 
 #: src/pages/smart-list-page.tsx:707
-msgid "No further criteria — every entry of this type matches."
-msgstr "追加の条件はありません — このタイプのすべての項目が一致します。"
+msgid "No further criteria — every entity of this type matches."
+msgstr "追加の条件はありません — このタイプのすべてのアイテムが一致します。"
 
 #: src/components/settings/settings-dialogs.tsx:447
 msgid "No home sections configured."
@@ -1809,8 +1801,8 @@ msgid "No markdown body sections."
 msgstr "Markdown 本文セクションがありません。"
 
 #: src/pages/import-wizard-page.tsx:705
-msgid "No matched source"
-msgstr "一致するソースがありません"
+msgid "No matched provider"
+msgstr "一致するプロバイダーがありません"
 
 #: src/components/layout/header-search.tsx:188
 msgid "No matches"
@@ -1832,6 +1824,10 @@ msgstr "一致するタイプがありません"
 msgid "No parsing issues found."
 msgstr "解析上の問題は見つかりませんでした。"
 
+#: src/pages/import-wizard-page.tsx:664
+msgid "no provider"
+msgstr "プロバイダーなし"
+
 #: src/components/assets/episode-sync-dialog.tsx:279
 msgid "No provider with a list is linked on this entity."
 msgstr "このアイテムにはリストを持つプロバイダーがリンクされていません。"
@@ -1840,13 +1836,9 @@ msgstr "このアイテムにはリストを持つプロバイダーがリンク
 msgid "No queue items match the current filters"
 msgstr "現在のフィルターに一致するキューアイテムがありません"
 
-#: src/pages/import-wizard-page.tsx:664
-msgid "no source"
-msgstr "ソースなし"
-
 #: src/components/entities/external-match-dialog.tsx:130
-msgid "No supported sources"
-msgstr "対応するソースがありません"
+msgid "No supported providers"
+msgstr "対応するプロバイダーがありません"
 
 #: src/components/settings/settings-sections.tsx:1023
 msgid "No type options."
@@ -2051,6 +2043,8 @@ msgstr "プロパティ"
 
 #: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:127
+#: src/components/settings/settings-sections.tsx:776
+#: src/components/settings/settings-sections.tsx:965
 #: src/pages/quick-capture-page.tsx:254
 msgid "Provider"
 msgstr "プロバイダー"
@@ -2062,6 +2056,10 @@ msgstr "プロバイダーの認証情報"
 #: src/components/settings/settings-sections.tsx:435
 msgid "Provider priority"
 msgstr "プロバイダーの優先順位"
+
+#: src/pages/import-wizard-page.tsx:709
+msgid "Provider unavailable"
+msgstr "プロバイダーが利用できません"
 
 #: src/components/settings/settings-sections.tsx:292
 msgid "Providers"
@@ -2492,10 +2490,6 @@ msgstr "更新日時で並び替え"
 msgid "Source"
 msgstr "ソース"
 
-#: src/pages/import-wizard-page.tsx:709
-msgid "Source unavailable"
-msgstr "ソースが利用できません"
-
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
 #: src/components/assets/quick-log-dialog.tsx:205
@@ -2631,7 +2625,7 @@ msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "ページで予期しないエラーが発生しました。もう一度試すか、アプリを再読み込みしてください。"
 
 #: src/components/settings/settings-sections.tsx:176
-msgid "The same rules as smart lists; the section shows entries that match."
+msgid "The same rules as smart lists; the section shows entities that match."
 msgstr "スマートリストと同じルールです。セクションには一致するアイテムが表示されます。"
 
 #: src/components/settings/preset-picker.tsx:145
@@ -2743,7 +2737,7 @@ msgid "Unit"
 msgstr "単位"
 
 #: src/pages/review-page.tsx:55
-msgid "Unlinked Items"
+msgid "Unlinked entities"
 msgstr "リンクされていないアイテム"
 
 #: src/components/settings/settings-sections.tsx:906
@@ -2899,7 +2893,7 @@ msgid "Yes"
 msgstr "はい"
 
 #: src/pages/quick-capture-page.tsx:214
-msgid "You can still open items already in your library."
+msgid "You can still open entities already in your library."
 msgstr "すでにライブラリにあるアイテムは引き続き開けます。"
 
 #: src/pages/settings-page.tsx:124

@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KizunaShelf — a shelf for everything you love</title>
+<meta name="description" content="KizunaShelf is a personal library for everything you watch, play, read, and listen to, kept as plain Markdown files that stay yours.">
+
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0A">
+
+<link rel="icon" href="/icons/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icons/favicon-96x96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="KizunaShelf — a shelf for everything you love">
+<meta property="og:description" content="A personal library for everything you watch, play, read, and listen to, kept as plain Markdown files that stay yours.">
+<meta property="og:image" content="{{ get_url(path="images/og-image.png") }}">
+<meta name="twitter:card" content="summary">
+
+<link rel="preload" href="/assets/fonts/bookman-demi.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/bookman-lightitalic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/c059-roman.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/jbmono.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* ---------- fonts ---------- */
+@font-face { font-family: 'Bookman'; src: url('/assets/fonts/bookman-demi.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Bookman'; src: url('/assets/fonts/bookman-light.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Bookman'; src: url('/assets/fonts/bookman-lightitalic.woff2') format('woff2'); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Schoolbook'; src: url('/assets/fonts/c059-roman.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Schoolbook'; src: url('/assets/fonts/c059-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Schoolbook'; src: url('/assets/fonts/c059-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'JBMono'; src: url('/assets/fonts/jbmono.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+
+/* ---------- tokens ---------- */
+:root {
+  --paper: #FFFFFF;
+  --paper-deep: #F5F5F5;
+  --card: #FFFFFF;
+  --ink: #0A0A0A;
+  --ink-soft: #737373;
+  --wood: #FF7659;
+  --wood-deep: #DE4A2B;
+  --line: #E5E5E5;
+  --red: #F67D5F;
+  --amber: #F8AF48;
+  --teal: #49968E;
+  --blue: #4C6DA5;
+  --purple: #86698A;
+  --shadow: 0 18px 50px -18px rgba(0, 0, 0, .16);
+  --display: 'Bookman', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --body: 'Schoolbook', 'Century Schoolbook', Georgia, 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --mono: 'JBMono', 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0A0A0A;
+    --paper-deep: #171717;
+    --card: #121212;
+    --ink: #FAFAFA;
+    --ink-soft: #A3A3A3;
+    --wood: #FF8A70;
+    --wood-deep: #FF6B4A;
+    --line: #262626;
+    --red: #F67D5F;
+    --amber: #F8AF48;
+    --teal: #55A89F;
+    --blue: #6486BC;
+    --purple: #9B7DA0;
+    --shadow: 0 18px 50px -18px rgba(0, 0, 0, .6);
+  }
+}
+:root[data-theme="light"] {
+  --paper: #FFFFFF; --paper-deep: #F5F5F5; --card: #FFFFFF;
+  --ink: #0A0A0A; --ink-soft: #737373;
+  --wood: #FF7659; --wood-deep: #DE4A2B; --line: #E5E5E5;
+  --red: #F67D5F; --amber: #F8AF48; --teal: #49968E; --blue: #4C6DA5; --purple: #86698A;
+  --shadow: 0 18px 50px -18px rgba(0, 0, 0, .16);
+}
+:root[data-theme="dark"] {
+  --paper: #0A0A0A; --paper-deep: #171717; --card: #121212;
+  --ink: #FAFAFA; --ink-soft: #A3A3A3;
+  --wood: #FF8A70; --wood-deep: #FF6B4A; --line: #262626;
+  --red: #F67D5F; --amber: #F8AF48; --teal: #55A89F; --blue: #6486BC; --purple: #9B7DA0;
+  --shadow: 0 18px 50px -18px rgba(0, 0, 0, .6);
+}
+
+/* ---------- theme-conditional images ---------- */
+.only-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  .only-dark { display: block; }
+  .only-light { display: none; }
+}
+:root[data-theme="light"] .only-dark { display: none; }
+:root[data-theme="light"] .only-light { display: block; }
+:root[data-theme="dark"] .only-dark { display: block; }
+:root[data-theme="dark"] .only-light { display: none; }
+
+/* ---------- skip link ---------- */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: .85rem;
+  padding: .7em 1.2em;
+  border-radius: 0 0 8px 0;
+  text-decoration: none;
+}
+.skip-link:focus { left: 0; }
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1.075rem;
+  line-height: 1.72;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration-color: var(--wood); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { color: var(--wood-deep); }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--ink-soft); outline-offset: 3px; border-radius: 2px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; line-height: 1.15; text-wrap: balance; margin: 0 0 .6em; letter-spacing: -.01em; }
+h2 { font-size: clamp(1.7rem, 3.5vw, 2.3rem); }
+p { margin: 0 0 1.2em; max-width: 62ch; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 44px); }
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: .74rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-bottom: 1.4rem;
+  color: var(--ink-soft);
+}
+
+section { padding: clamp(56px, 9vw, 110px) 0; }
+.section-head { margin-bottom: 2.2rem; }
+
+.aside-note {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: .95rem;
+  transform: rotate(-1.2deg);
+  max-width: 30ch;
+}
+
+/* ---------- header ---------- */
+header.site { padding: 22px 0 0; }
+header.site .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.wordmark { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 600; font-size: 1.25rem; }
+.wordmark img { width: 34px; height: 34px; border-radius: 8px; transform: translateY(-3px); }
+nav.site { margin-left: auto; display: flex; gap: 1.6em; font-family: var(--mono); font-size: .78rem; letter-spacing: .04em; }
+nav.site a { text-decoration: none; border-bottom: 2px solid transparent; padding-bottom: 2px; }
+nav.site a:hover { border-bottom-color: var(--wood); }
+
+/* ---------- hero ---------- */
+.hero { padding: clamp(48px, 8vw, 96px) 0 clamp(40px, 6vw, 80px); }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: clamp(32px, 6vw, 80px); align-items: center; }
+.hero h1 { font-size: clamp(2.5rem, 6vw, 4.1rem); margin-bottom: .35em; }
+.hero h1 em { font-style: normal; }
+.hero h1 .stays {
+  display: block;
+  font-weight: 300;
+  font-style: italic;
+  font-size: .62em;
+  color: var(--wood-deep);
+  margin-top: .35em;
+}
+.hero .lede { font-size: 1.14rem; }
+.hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 2rem; }
+.btn {
+  font-family: var(--display); font-weight: 600; font-size: 1rem;
+  text-decoration: none;
+  padding: .68em 1.5em;
+  border-radius: 999px;
+  border: 2.5px solid var(--ink);
+  transition: transform .18s ease, background .18s ease, color .18s ease;
+}
+.btn.primary { background: var(--ink); color: var(--paper); }
+.btn.primary:hover { background: var(--wood-deep); border-color: var(--wood-deep); color: #FFFFFF; transform: translateY(-2px); }
+.btn.ghost:hover { background: var(--paper-deep); transform: translateY(-2px); color: var(--ink); }
+
+.phone {
+  width: min(300px, 78%);
+  margin: 0 auto;
+  transform: rotate(2.6deg);
+  border-radius: 42px;
+  border: 10px solid #1A1A1A;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: #1A1A1A;
+}
+.phone img { border-radius: 32px; }
+.hero-fig { position: relative; margin: 0; }
+.hero-fig .aside-note { margin: 1.3rem 0 0 auto; text-align: right; }
+
+/* ---------- bookshelf ---------- */
+.bookshelf { margin: 3rem 0 1rem; max-width: 720px; }
+.books { display: flex; align-items: flex-end; gap: 7px; padding: 0 26px; }
+.spine {
+  writing-mode: vertical-rl;
+  font-family: var(--display); font-weight: 600;
+  font-size: .95rem;
+  letter-spacing: .06em;
+  color: #FFFFFF;
+  padding: 16px 0 14px;
+  width: 44px;
+  border-radius: 6px 6px 2px 2px;
+  text-align: left;
+  display: inline-flex;
+  justify-content: flex-start;
+  box-shadow: inset -4px 0 0 rgba(0,0,0,.12);
+  transition: transform .22s ease;
+  cursor: default;
+  flex: none;
+}
+.spine:hover { transform: translateY(-9px); }
+.s-red { background: var(--red); }
+.s-amber { background: var(--amber); }
+.s-teal { background: var(--teal); height: 148px; }
+.s-blue { background: var(--blue); }
+.s-purple { background: var(--purple); }
+.spine.tall { height: 172px; }
+.spine.mid { height: 156px; }
+.spine.short { height: 138px; }
+.spine.lean {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 2.5px dashed var(--wood);
+  box-shadow: none;
+  transform: rotate(-9deg);
+  transform-origin: bottom left;
+  margin-left: 6px;
+  margin-right: 14px;
+  font-style: italic;
+  font-weight: 300;
+  font-family: var(--body);
+}
+.spine.lean:hover { transform: rotate(0deg) translateY(-4px); }
+.plank { height: 14px; background: var(--wood); border-radius: 99px; box-shadow: 0 3px 0 var(--wood-deep); }
+.shelf-feet { display: flex; justify-content: space-between; padding: 0 34px; }
+.shelf-feet i { width: 12px; height: 26px; background: var(--wood-deep); border-radius: 0 0 6px 6px; }
+.shelf-caption { font-style: italic; color: var(--ink-soft); font-size: .95rem; margin-top: 1.6rem; }
+
+/* ---------- two-column feature prose ---------- */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 72px); align-items: center; }
+
+/* ---------- file cards ---------- */
+.filecard {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: .82rem;
+  line-height: 1.75;
+  max-width: 460px;
+}
+.filecard .bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px;
+  background: var(--paper-deep);
+  border-bottom: 1.5px solid var(--line);
+  color: var(--ink-soft);
+  font-size: .74rem;
+  letter-spacing: .02em;
+}
+.filecard .bar::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--dot, var(--teal)); flex: none; }
+.filecard pre { margin: 0; padding: 18px 22px; overflow-x: auto; }
+.filecard .k { color: var(--teal); }
+.filecard .v { color: var(--ink); }
+.filecard .dim { color: var(--ink-soft); }
+.filecard .wl { color: var(--blue); }
+.filecard .star { color: var(--amber); }
+.filecard .prose-line { color: var(--ink); font-family: var(--body); font-size: .95rem; }
+.filecard.tilt { transform: rotate(-1.1deg); }
+.filecard.tilt-r { transform: rotate(.9deg); }
+
+.promise {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 2.6vw, 1.7rem);
+  line-height: 1.35;
+  text-wrap: balance;
+  max-width: 24ch;
+  margin: 2.2rem 0 0;
+}
+
+/* ---------- graph ---------- */
+.graph-fig { margin: 2.5rem 0 0; }
+.graph-fig svg { width: 100%; max-width: 660px; height: auto; display: block; }
+.graph-fig .node-label { font-family: var(--body); font-style: italic; font-size: 15px; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 5px; stroke-linejoin: round; }
+.graph-fig .node-sub { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-soft); letter-spacing: .05em; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+.graph-fig .edge { stroke: var(--wood); stroke-width: 2.5; stroke-dasharray: 1 7; stroke-linecap: round; fill: none; opacity: .8; }
+
+/* ---------- kizuna ---------- */
+.kizuna { background: var(--paper-deep); }
+.kizuna .wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(28px, 6vw, 72px); align-items: center; }
+.kanji {
+  font-size: clamp(7rem, 18vw, 13rem);
+  line-height: 1;
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', 'Noto Serif JP', var(--body);
+  color: var(--wood);
+  user-select: none;
+}
+.kizuna .reading { font-family: var(--mono); font-size: .78rem; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-soft); display: block; margin-bottom: 1rem; }
+.kizuna p { font-size: 1.16rem; }
+
+/* ---------- apps colophon ---------- */
+.app-list { list-style: none; margin: 0; padding: 0; }
+.app-list li { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); gap: clamp(18px, 4vw, 48px); padding: 2.2rem 0; border-top: 1.5px solid var(--line); }
+.app-list li:last-child { border-bottom: 1.5px solid var(--line); }
+.app-name { font-family: var(--display); font-weight: 600; font-size: 1.35rem; line-height: 1.25; }
+.app-name small { display: block; font-family: var(--mono); font-weight: 400; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-top: .5em; }
+.status {
+  font-family: var(--mono); font-weight: 400; font-style: normal;
+  font-size: .66rem; letter-spacing: .08em; text-transform: uppercase;
+  display: inline-block; vertical-align: 4px;
+  margin-left: .7em; padding: .3em .95em;
+  border-radius: 999px;
+  border: 2px solid var(--teal);
+  color: var(--ink);
+  white-space: nowrap;
+}
+.status.soon { border-color: var(--amber); }
+.status.planned { border-style: dashed; border-color: var(--wood); color: var(--ink-soft); }
+.app-list p { margin-bottom: .4em; }
+.fine { font-size: .92rem; color: var(--ink-soft); font-style: italic; }
+
+/* ---------- import stickers ---------- */
+.stickers { display: flex; flex-wrap: wrap; gap: 12px 10px; margin: 2rem 0 1.4rem; max-width: 640px; }
+.stickers span {
+  font-family: var(--mono); font-size: .78rem;
+  padding: .45em 1em;
+  border: 2px solid var(--c, var(--wood));
+  color: var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+}
+.stickers span:nth-child(5n+1) { --c: var(--red); transform: rotate(-1.5deg); }
+.stickers span:nth-child(5n+2) { --c: var(--teal); transform: rotate(1deg); }
+.stickers span:nth-child(5n+3) { --c: var(--blue); transform: rotate(-.7deg); }
+.stickers span:nth-child(5n+4) { --c: var(--amber); transform: rotate(1.4deg); }
+.stickers span:nth-child(5n+5) { --c: var(--purple); transform: rotate(-1deg); }
+
+/* ---------- footer ---------- */
+footer.site { padding: clamp(56px, 8vw, 90px) 0 64px; }
+footer.site .wrap { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+footer.site img { width: 56px; height: 56px; border-radius: 13px; }
+.foot-line { font-family: var(--display); font-weight: 600; font-size: 1.25rem; }
+.foot-small { font-family: var(--mono); font-size: .75rem; color: var(--ink-soft); letter-spacing: .04em; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 840px) {
+  .hero .wrap, .split, .kizuna .wrap { grid-template-columns: 1fr; }
+  .hero-fig { order: -1; }
+  .hero-fig .aside-note { position: static; margin: 1.4rem auto 0; text-align: center; transform: rotate(-1.2deg); }
+  .phone { width: min(250px, 72%); }
+  .app-list li { grid-template-columns: 1fr; gap: 10px; }
+  .books { padding: 0 12px; }
+  .spine { width: 38px; font-size: .85rem; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="wrap">
+    <span class="wordmark">
+      <img src="/assets/icon.webp" alt="" class="only-light">
+      <img src="/assets/icon-dark.webp" alt="" class="only-dark">
+      KizunaShelf
+    </span>
+    <nav class="site" aria-label="Sections">
+      <a href="#shelf">the shelf</a>
+      <a href="#files">the files</a>
+      <a href="#time">the record</a>
+      <a href="#apps">the apps</a>
+      <a href="/introduction/">the manual</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1>A shelf for everything you&nbsp;love.
+        <span class="stays">— and it stays yours.</span>
+      </h1>
+      <p class="lede">KizunaShelf is a home for the anime you're three episodes behind on, the game you swore you'd finish this year, the book that has lived on your nightstand since March. It looks and feels like a media tracker. Underneath, it's a folder of plain Markdown files: yours to keep, sync, grep, and read in any editor, with or without this app.</p>
+      <div class="hero-ctas">
+        <a class="btn primary" href="https://testflight.apple.com/join/hE7k3sWd">Join the iOS beta</a>
+        <a class="btn ghost" href="/introduction/">Read the manual</a>
+      </div>
+      <p class="fine" style="margin-top: 1.1rem">On TestFlight for iPhone &amp; iPad today · <a href="#apps">desktop &amp; web coming soon · Android planned</a></p>
+    </div>
+    <figure class="hero-fig">
+      <div class="phone">
+        <img src="/assets/screenshot.webp" alt="KizunaShelf home screen on iPhone: Coming Up, In Progress, Recent and Planned tiles above shelves for Watching Anime and Playing Games" width="720" height="1561">
+      </div>
+      <figcaption class="aside-note">75 things in progress is a&nbsp;lifestyle, not a problem.</figcaption>
+    </figure>
+  </div>
+</section>
+
+
+<section id="shelf">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">your shelf, your shapes</span>
+      <h2>It starts familiar. It ends up yours.</h2>
+    </div>
+    <p>Anime, games, books, films, music. The usual residents of a media shelf are ready on day one, with statuses, ratings, progress, seasons, and covers. But KizunaShelf never decides what a “thing” must be. You define the types in your library and the fields they carry, in a schema that travels with your files: one human-readable <span style="font-family: var(--mono); font-size:.9em">KizunaShelf/config.yaml</span> in your vault, yours to open, read, and change.</p>
+    <p>If your world also needs characters, voice actors, concerts, or board games, you can put those on the shelf too. Figure skaters, train models, the restaurants from that one food manga: if you would think to track it, your schema can describe it.</p>
+
+    <div class="bookshelf" aria-hidden="true">
+      <div class="books">
+        <span class="spine s-red tall">Anime</span>
+        <span class="spine s-amber mid">Games</span>
+        <span class="spine s-teal">Books</span>
+        <span class="spine s-blue mid">Films</span>
+        <span class="spine s-purple short">Music</span>
+        <span class="spine s-red short">Manga</span>
+        <span class="spine lean short">yours?</span>
+      </div>
+      <div class="plank"></div>
+      <div class="shelf-feet"><i></i><i></i></div>
+    </div>
+    <p class="shelf-caption">The leaning one is yours to name.</p>
+
+    <figure class="filecard tilt" style="--dot: var(--amber); margin: 2.6rem 0 0">
+      <div class="bar">KizunaShelf/config.yaml</div>
+      <pre><span class="k">types</span><span class="dim">:</span>
+  <span class="k">figure</span><span class="dim">:</span>          <span class="dim"># the leaning one, named</span>
+    <span class="k">title</span><span class="dim">:</span> <span class="v">name</span>
+    <span class="k">status</span><span class="dim">:</span>
+      <span class="k">options</span><span class="dim">:</span> <span class="v">[preordered, on its way, home]</span>
+    <span class="k">date</span><span class="dim">:</span>
+      <span class="k">field</span><span class="dim">:</span> <span class="v">arrived</span>
+      <span class="k">means</span><span class="dim">:</span> <span class="v">the day it came home</span>
+    <span class="k">relates-to</span><span class="dim">:</span> <span class="v">[character, event]</span></pre>
+    </figure>
+  </div>
+</section>
+
+
+<section id="files">
+  <div class="wrap split">
+    <div>
+      <span class="eyebrow">no lock-in, no export button needed</span>
+      <h2>Underneath, every entry is a text file.</h2>
+      <p>Each thing on your shelf is a Markdown file with a little front&nbsp;matter, sitting in a folder you own. Open it in Obsidian. Read it in a terminal. Sync it however you already sync things. Back it up like anything else you'd hate to lose.</p>
+      <p>KizunaShelf reads those files as a living shelf, with covers, filters, search, and statistics, without ever turning them into data only one app understands.</p>
+      <p>It even speaks the dialects your tools already know. The episodes of a series or the tracks of an album live in the same file as an ordinary checklist, with airing dates in the Obsidian Tasks emoji format — 📅 for the date, ✅ when you check one off. Smart lists use a subset of the Obsidian Bases format, so Obsidian opens them and shows the exact same items.</p>
+      <p class="promise">KizunaShelf can leave. Your library does not.</p>
+    </div>
+    <figure class="filecard tilt" style="--dot: var(--teal)">
+      <div class="bar">Anime/きみが死ぬまで恋をしたい.md</div>
+      <pre><span class="dim">---</span>
+<span class="k">type</span><span class="dim">:</span> <span class="v">anime</span>
+<span class="k">status</span><span class="dim">:</span> <span class="v">watching</span>
+<span class="k">progress</span><span class="dim">:</span> <span class="v">7 / 13</span>
+<span class="k">rating</span><span class="dim">:</span> <span class="star">★★★★</span><span class="dim">☆</span>
+<span class="k">season</span><span class="dim">:</span> <span class="v">2026-spring</span>
+<span class="k">adapted-from</span><span class="dim">:</span> <span class="wl">"[[きみ恋 (novel)]]"</span>
+<span class="dim">---</span>
+
+<span class="prose-line">Episode 7 broke me a little.</span>
+<span class="prose-line">The rooftop scene — I had to</span>
+<span class="prose-line">pause and just sit there.</span></pre>
+    </figure>
+  </div>
+</section>
+
+
+<section id="connections">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">the shelf is not flat</span>
+      <h2>Things belong to each other.</h2>
+    </div>
+    <p>A game belongs to a franchise. An anime was adapted from a novel, and its opening song belongs to a band you now follow. A character connects to the actor who gave her a voice. In KizunaShelf, those relations are ordinary <span style="font-family: var(--mono); font-size:.9em">[[wikilinks]]</span> written in your files. KizunaShelf reads them in both directions, so every entry shows you the little web of things around it.</p>
+    <p>No proprietary graph database. Just links in text, the way you'd write them anyway.</p>
+
+    <figure class="graph-fig">
+      <svg viewBox="0 0 660 320" role="img" aria-label="A small relation graph: an anime connects to the novel it adapts, the studio, its opening song, and a character, who connects to her voice actor">
+        <path class="edge" d="M 330 150 C 280 110, 220 80, 160 72"></path>
+        <path class="edge" d="M 330 150 C 360 100, 420 68, 480 60"></path>
+        <path class="edge" d="M 330 150 C 260 190, 200 220, 148 236"></path>
+        <path class="edge" d="M 330 150 C 400 180, 440 210, 484 238"></path>
+        <path class="edge" d="M 484 238 C 540 250, 570 258, 600 262"></path>
+        <circle cx="330" cy="150" r="30" fill="var(--red)"></circle>
+        <circle cx="160" cy="72" r="22" fill="var(--teal)"></circle>
+        <circle cx="480" cy="60" r="22" fill="var(--blue)"></circle>
+        <circle cx="148" cy="236" r="22" fill="var(--amber)"></circle>
+        <circle cx="484" cy="238" r="22" fill="var(--purple)"></circle>
+        <circle cx="600" cy="262" r="14" fill="var(--wood)"></circle>
+        <text class="node-label" x="330" y="205" text-anchor="middle">the anime you're watching</text>
+        <text class="node-sub" x="330" y="222" text-anchor="middle">anime</text>
+        <text class="node-label" x="160" y="34" text-anchor="middle">the novel it adapts</text>
+        <text class="node-sub" x="160" y="50" text-anchor="middle">book · adapted-from</text>
+        <text class="node-label" x="480" y="22" text-anchor="middle">the studio</text>
+        <text class="node-sub" x="480" y="38" text-anchor="middle">studio</text>
+        <text class="node-label" x="148" y="285" text-anchor="middle">its opening song</text>
+        <text class="node-sub" x="148" y="302" text-anchor="middle">music · theme-of</text>
+        <text class="node-label" x="448" y="288" text-anchor="middle">the character you love</text>
+        <text class="node-sub" x="448" y="305" text-anchor="middle">character</text>
+        <text class="node-sub" x="602" y="292" text-anchor="middle">her voice actor</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+
+<section id="time">
+  <div class="wrap split">
+    <figure class="filecard tilt-r" style="--dot: var(--purple)">
+      <div class="bar">Notes/2026-07-11.md</div>
+      <pre><span class="prose-line">Friday. Rain all afternoon —</span>
+<span class="prose-line">perfect excuse to stay in.</span>
+
+<span class="dim">-</span> <span class="v">21:04</span> watched <span class="wl">[[きみ恋]]</span> ep 7
+<span class="dim">-</span> <span class="v">22:30</span> started <span class="wl">[[Forza Horizon 6]]</span>
+  <span class="dim">— the Tokyo map!</span>
+<span class="dim">-</span> 34 days until <span class="wl">[[MyGO!!!!! the movie]]</span>
+  <span class="dim">(from the calendar)</span></pre>
+    </figure>
+    <div>
+      <span class="eyebrow">a catalog with a memory</span>
+      <h2>It remembers <em>when</em>.</h2>
+      <p>Releases and plans land on a calendar, so the next episode and the next volume are never a surprise. Checking off an episode becomes a dated moment in your history. A quick log can write one line into that day's note, in a format you choose. And mentioning something in your daily note ties an ordinary day back to it.</p>
+      <p>Years from now the activity feed won't just say that you loved something. It will say when it became part of your life.</p>
+    </div>
+  </div>
+</section>
+
+<section class="kizuna">
+  <div class="wrap">
+    <div class="kanji" aria-hidden="true">絆</div>
+    <div>
+      <span class="reading">kizuna — きずな</span>
+      <p>The word means <em>bond</em>: the quiet tie between things that stay connected. Between a story and the people who made it. Between a rainy Friday and the episode you watched that night. Between you and the things you keep.</p>
+      <p>That's the whole idea: a shelf for the things you have a history with, and for the history itself.</p>
+      <p class="fine" style="margin-top: 1.4rem"><a href="https://mudkip.me/2026/07/16/Introduction-to-KizunaShelf/">Read the story behind KizunaShelf&hairsp;→</a></p>
+    </div>
+  </div>
+</section>
+
+<section id="apps">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">one library, wherever your downtime is</span>
+      <h2>Wherever the quiet hours find you.</h2>
+    </div>
+    <p>On the couch, at your desk, on the train home. Your shelf looks the same in every app, because the same Rust core runs inside every one of them, reading the same files and understanding them the same way. Everything works offline — the internet is only for cover art, looking things up, and whatever syncing you already use.</p>
+
+    <ul class="app-list">
+      <li>
+        <div class="app-name">iPhone &amp; iPad <span class="status">on testflight</span><small>native · swiftui</small></div>
+        <div>
+          <p>A fully native app with the whole core running inside it: no server, no round trips. Keep your vault on-device or in iCloud Drive. A Coming&nbsp;Up widget on your Home Screen, Spotlight search, share-sheet capture from Safari, Siri and the Action button for quick logs.</p>
+          <p><a href="https://testflight.apple.com/join/hE7k3sWd">Join the beta on TestFlight&hairsp;→</a></p>
+          <p class="fine">Check off an episode from the couch. It's still just a line of Markdown.</p>
+        </div>
+      </li>
+      <li>
+        <div class="app-name">Android <span class="status planned">planned</span><small>native</small></div>
+        <div>
+          <p>The same shelf, in your other pocket. An Android app is on the roadmap once the iOS app finds its footing — same files, same shelf, nothing to migrate.</p>
+        </div>
+      </li>
+      <li>
+        <div class="app-name">Desktop <span class="status soon">coming soon</span><small>mac · windows · linux</small></div>
+        <div>
+          <p>Open local vaults, create new ones, and switch between them. The same interface as the web, pointed at the folders where your life already lives.</p>
+        </div>
+      </li>
+      <li>
+        <div class="app-name">Self-hosted web <span class="status soon">coming soon</span><small>your server · your rules</small></div>
+        <div>
+          <p>One vault per instance, served from your own machine to any browser. A single Docker container away, for people whose shelf lives on their NAS.</p>
+        </div>
+      </li>
+    </ul>
+    <p class="fine" style="margin-top: 1.6rem">No account. No feed. No streaks to maintain. No one watching what you watch.</p>
+  </div>
+</section>
+
+
+<section id="imports">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">your history comes with you</span>
+      <h2>Bring the years you've already logged.</h2>
+    </div>
+    <p>Quick Capture searches the big metadata sources and creates an entry in one motion, with the cover, episodes, and tracks filled in when available. And whole libraries can move in from the places you've been keeping score:</p>
+    <div class="stickers" role="list">
+      <span role="listitem">MyAnimeList</span><span role="listitem">AniList</span><span role="listitem">Kitsu</span><span role="listitem">Trakt</span><span role="listitem">Steam</span><span role="listitem">Bangumi</span><span role="listitem">IMDb csv</span><span role="listitem">Goodreads csv</span><span role="listitem">Yamtrack csv</span><span role="listitem">TMDB</span><span role="listitem">TheTVDB</span><span role="listitem">IGDB</span><span role="listitem">BoardGameGeek</span><span role="listitem">MusicBrainz</span><span role="listitem">Spotify</span><span role="listitem">Discogs</span><span role="listitem">Open Library</span><span role="listitem">Hardcover</span><span role="listitem">MangaUpdates</span><span role="listitem">Comic Vine</span>
+    </div>
+    <p class="fine">Every import shows you its plan before a single file is written: what it will create, what needs a second look, and what's already on the shelf.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <img src="/assets/icon.webp" alt="KizunaShelf icon: a small wooden shelf of colorful books beneath a constellation of connected dots" class="only-light">
+    <img src="/assets/icon-dark.webp" alt="KizunaShelf icon: a small wooden shelf of colorful books beneath a constellation of connected dots" class="only-dark">
+    <p class="foot-line">Made for the quiet hours.</p>
+    <p class="foot-small">KizunaShelf · Forever for dreaming</p>
+  </div>
+</footer>
+
+</body>
+</html>
