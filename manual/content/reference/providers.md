@@ -574,11 +574,20 @@ Mappable fields (for `externalFields` and external body sections):
 | `season_count` | Season count |
 | `season_number` | Season number |
 | `official_site` | Official site |
+| `opening_date` | Opening date |
+| `closing_date` | Closing date |
 | `tags` | Tags |
 | `authors` | Authors |
 | `translators` | Translators |
 | `publishers` | Publishers |
 | `directors` | Directors |
+| `playwrights` | Playwrights |
+| `original_creators` | Original creators |
+| `composers` | Composers |
+| `choreographers` | Choreographers |
+| `performers` | Performers |
+| `actors` | Actors |
+| `crew` | Crew |
 | `genres` | Genres |
 | `artists` | Artists |
 | `developers` | Developers |

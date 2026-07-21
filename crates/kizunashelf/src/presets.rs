@@ -1101,12 +1101,17 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "参加的演出、展览与活动。",
                     "參加的演出、展覽與活動。",
                 ),
-                providers: &[],
-                external_types: &[],
-                title_sources: &[],
-                original_title: None,
-                cover_sources: &[],
-                summary_sources: &[],
+                // NeoDB performances (theatre, musicals, stage plays) are the
+                // one catalog covering live events; key-less, so a safe default
+                // for every language even though coverage skews zh/ja.
+                providers: &["neodb"],
+                external_types: &[("neodb", &["performance"])],
+                title_sources: &[("neodb", "title")],
+                original_title: Some(&[("neodb", "original_title")]),
+                cover_sources: &[("neodb", "cover_url")],
+                summary_sources: &[("neodb", "description")],
+                // Deliberately empty: the event date is the *attendance* date
+                // (role Event), not the production's opening date.
                 date_sources: &[],
                 total_sources: &[],
                 statuses: Some(&EVENT_STATUS),

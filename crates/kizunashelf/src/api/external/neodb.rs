@@ -9,7 +9,8 @@
 
 use super::{
     external_client, field_option, insert_str, provider_error, send_limited, string_list,
-    type_option, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    string_list_with, type_option, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
+    USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -102,12 +103,21 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("season_count", "Season count"),
         field_option("season_number", "Season number"),
         field_option("official_site", "Official site"),
+        field_option("opening_date", "Opening date"),
+        field_option("closing_date", "Closing date"),
         // Lists — map these to list-type fields (enum list / text list / relation).
         field_option("tags", "Tags"),
         field_option("authors", "Authors"),
         field_option("translators", "Translators"),
         field_option("publishers", "Publishers"),
         field_option("directors", "Directors"),
+        field_option("playwrights", "Playwrights"),
+        field_option("original_creators", "Original creators"),
+        field_option("composers", "Composers"),
+        field_option("choreographers", "Choreographers"),
+        field_option("performers", "Performers"),
+        field_option("actors", "Actors"),
+        field_option("crew", "Crew"),
         field_option("genres", "Genres"),
         field_option("artists", "Artists"),
         field_option("developers", "Developers"),
@@ -330,6 +340,9 @@ fn neodb_item(value: &Value) -> Option<ExternalCandidate> {
     insert_str(&mut metadata, "series", value.get("series"));
     insert_str(&mut metadata, "format", value.get("format"));
     insert_str(&mut metadata, "official_site", value.get("official_site"));
+    // Performances carry a run window instead of a single release date.
+    insert_str(&mut metadata, "opening_date", value.get("opening_date"));
+    insert_str(&mut metadata, "closing_date", value.get("closing_date"));
     for (key, source) in [
         ("episode_count", "episode_count"),
         ("season_count", "season_count"),
@@ -357,6 +370,11 @@ fn neodb_item(value: &Value) -> Option<ExternalCandidate> {
         ("translators", "translator"),
         ("publishers", "publisher"),
         ("directors", "director"),
+        ("playwrights", "playwright"),
+        ("original_creators", "orig_creator"),
+        ("composers", "composer"),
+        ("choreographers", "choreographer"),
+        ("performers", "performer"),
         ("genres", "genre"),
         ("artists", "artist"),
         ("developers", "developer"),
@@ -365,6 +383,13 @@ fn neodb_item(value: &Value) -> Option<ExternalCandidate> {
         ("company", "company"),
     ] {
         if let Some(list) = string_list(value.get(source)) {
+            metadata.insert(key.to_string(), list);
+        }
+    }
+    // Cast/crew credits are plain names on movies and TV but `{name, role}`
+    // objects on performances; both collapse to the name list.
+    for (key, source) in [("actors", "actor"), ("crew", "crew")] {
+        if let Some(list) = credit_names(value.get(source)) {
             metadata.insert(key.to_string(), list);
         }
     }
@@ -379,6 +404,16 @@ fn neodb_item(value: &Value) -> Option<ExternalCandidate> {
         cover_url,
         titles,
         metadata,
+    })
+}
+
+/// Names from a NeoDB credit list, whose entries are plain strings (movie/TV
+/// `actor`) or `{name, role}` objects (performance `actor`/`crew`).
+fn credit_names(value: Option<&Value>) -> Option<Value> {
+    string_list_with(value, |entry| {
+        entry
+            .as_str()
+            .or_else(|| entry.get("name").and_then(Value::as_str))
     })
 }
 
@@ -514,6 +549,82 @@ mod tests {
             Some(&json!("9780765377067"))
         );
         assert_eq!(candidate.metadata.get("language"), Some(&json!("en")));
+    }
+
+    // Field values mirror the real neodb.social payload for
+    // /api/performance/3mlQvenprPworABqWVWz3o (阿波罗尼亚 / Mia Famiglia).
+    #[test]
+    fn item_maps_typed_performance_detail() {
+        let candidate = neodb_item(&json!({
+            "uuid": "3mlQvenprPworABqWVWz3o",
+            "url": "/performance/3mlQvenprPworABqWVWz3o",
+            "category": "performance",
+            "title": "阿波罗尼亚",
+            "orig_title": "Mia Famiglia",
+            "localized_title": [
+                { "lang": "zh-cn", "text": "阿波罗尼亚" },
+                { "lang": "en", "text": "Mia Famiglia" }
+            ],
+            "genre": ["musical"],
+            "language": [],
+            "opening_date": "2020-08-28",
+            "closing_date": null,
+            "director": ["高瑞嘉"],
+            "playwright": ["金琪 赵阳"],
+            "orig_creator": [],
+            "composer": [],
+            "choreographer": [],
+            "performer": [],
+            "actor": [
+                { "name": "李磊", "role": "" },
+                { "name": "李苏霖", "role": "" }
+            ],
+            "crew": [],
+            "official_site": null
+        }))
+        .unwrap();
+
+        assert_eq!(candidate.original_title, Some("Mia Famiglia".to_string()));
+        assert_eq!(candidate.titles.get("zh"), Some(&"阿波罗尼亚".to_string()));
+        assert_eq!(
+            candidate.metadata.get("opening_date"),
+            Some(&json!("2020-08-28"))
+        );
+        assert_eq!(
+            candidate.metadata.get("directors"),
+            Some(&json!(["高瑞嘉"]))
+        );
+        assert_eq!(
+            candidate.metadata.get("playwrights"),
+            Some(&json!(["金琪 赵阳"]))
+        );
+        // `{name, role}` credit objects collapse to the name list.
+        assert_eq!(
+            candidate.metadata.get("actors"),
+            Some(&json!(["李磊", "李苏霖"]))
+        );
+        assert_eq!(candidate.metadata.get("genres"), Some(&json!(["musical"])));
+        // Null and empty-list fields are omitted, never stored as null/[].
+        for absent in ["closing_date", "composers", "crew", "language"] {
+            assert!(!candidate.metadata.contains_key(absent), "{absent}");
+        }
+    }
+
+    #[test]
+    fn credit_lists_accept_plain_names() {
+        // Movie/TV payloads carry `actor` as plain strings.
+        let candidate = neodb_item(&json!({
+            "uuid": "0TzoWm9YrObiCm4Pj5UJTA",
+            "url": "/movie/0TzoWm9YrObiCm4Pj5UJTA",
+            "category": "movie",
+            "title": "银河护卫队",
+            "actor": ["Chris Pratt", "Zoe Saldana"]
+        }))
+        .unwrap();
+        assert_eq!(
+            candidate.metadata.get("actors"),
+            Some(&json!(["Chris Pratt", "Zoe Saldana"]))
+        );
     }
 
     #[test]

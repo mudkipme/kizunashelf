@@ -307,18 +307,22 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `event` (イベント · 活动 · 活動) — Concerts, exhibitions, and events you attend.
 
+- **Provider priority**: `neodb`
 - **Filename**: titleLanguage `en`
+- **Body section** "Summary": external: `neodb.description`
 - **Daily-note log**: `- {title} {note} #Event`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en` | Title |
-| `cover_url` | `image` |  | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `neodb.title` | Title |
+| `title_original` | `title` | titleRole `original`; filled from `neodb.original_title` | Title (original) |
+| `cover_url` | `image` | filled from `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Planned / Attended | Status |
 | `rating` | `rating` |  | Rating |
 | `location` | `text` |  | Location |
 | `date` | `date` | dateRole `event` | Date |
+| `neodb_url` | `externalRef` | externalRef `neodb` (types performance) | NeoDB |
 | `artist` | `relation` | relation → `artist` | Artist |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 

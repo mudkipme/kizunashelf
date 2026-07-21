@@ -22,7 +22,6 @@ FROM deps AS build
 
 COPY apps apps
 COPY packages packages
-COPY config config
 COPY crates crates
 
 # Build the web bundle from the committed contract. CI enforces that the
@@ -55,7 +54,6 @@ WORKDIR /app
 
 COPY --from=build /usr/local/bin/kizunashelf-api /usr/local/bin/kizunashelf-api
 COPY --from=build /app/apps/web/dist apps/web/dist
-COPY config config
 
 EXPOSE 8787
 
