@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 
 import { allTagsQuery, configQuery } from "@/api/queries";
-import { defaultTagsField } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,7 +68,7 @@ export function MetadataEditor({
   const language = useTitleLanguage();
   const allTagsData = useQuery(allTagsQuery()).data?.tags;
   const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
-  const tagsFieldName = useQuery(configQuery()).data?.tagsField ?? defaultTagsField;
+  const tagsFieldName = useQuery(configQuery()).data?.tagsField ?? undefined;
   const fieldSpecs = useMemo(
     () =>
       editableFieldSpecs(

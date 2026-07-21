@@ -34,9 +34,9 @@ export function normalizeVaultConfig(vault?: VaultConfig): VaultConfig {
         : null
       : base.dailyNotes,
     home: vault ? (vault.home ? normalizeHome(vault.home) : null) : base.home,
-    // The tags block has no editor UI; carry it through verbatim so the schema
-    // editor never drops a hand-set `tags.field` (preserve unknown values).
-    tags: vault?.tags,
+    // Tags are opt-in: the block's presence is the switch, mirroring dailyNotes
+    // and home. A fresh vault starts with tags off.
+    tags: vault?.tags ? { field: vault.tags.field ?? "" } : null,
     types: vault ? (vault.types ?? []).map(normalizeEntityType) : base.types,
   };
 }
@@ -132,8 +132,9 @@ export function cleanVaultConfig(
             })),
           }
         : undefined,
-      // No tags UI, but round-trip the block so saving the schema never drops it.
-      tags: config.tags,
+      // The core treats a blank `tags.field` as disabled, so an enabled block
+      // with an empty key saves as no block at all rather than a broken one.
+      tags: config.tags?.field?.trim() ? { field: config.tags.field.trim() } : undefined,
       types: config.types.map((typeConfig) => ({
         id: typeConfig.id,
         label: typeConfig.label,
@@ -317,6 +318,8 @@ export function defaultVaultConfig(): VaultConfig {
     assetRoot: "Assets",
     dailyNotes: defaultDailyNotes(),
     home: defaultHome(),
+    // Tags are opt-in — a fresh vault starts without them.
+    tags: null,
     types: [defaultEntityType()],
   };
 }
@@ -330,6 +333,12 @@ export function defaultDailyNotes(): DailyNotesConfig {
 
 export function defaultHome(): HomeConfig {
   return { sections: [] };
+}
+
+/// Seed for enabling the opt-in tags feature: the conventional Obsidian key.
+/// Purely a starting value for the input — the user can rename it freely.
+export function defaultTags(): NonNullable<VaultConfig["tags"]> {
+  return { field: "tags" };
 }
 
 export function defaultHomeSection(type = ""): HomeSectionConfig {

@@ -1,0 +1,6 @@
+/* Zola's dual-theme code highlighting inlines `color-scheme: light dark` on each <pre>,
+   which makes its light-dark() colors follow the OS preference — but goyo switches theme
+   via data-theme, so a mismatched OS gives light code blocks on the dark theme (and vice
+   versa). Pin the scheme to the active goyo theme; !important beats the inline declaration. */
+[data-theme="goyo-light"] pre { color-scheme: light !important; }
+[data-theme="goyo-dark"] pre { color-scheme: dark !important; }

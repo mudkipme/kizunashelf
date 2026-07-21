@@ -29,11 +29,11 @@ function summary(extra: Partial<EntitySummary>): EntitySummary {
 
 describe("entityMatchesQuery", () => {
   const entity = summary({
-    title: "Star Voyager",
-    summary: "a space opera",
-    basename: "star-voyager",
-    path: "Taxonomy/Anime/star-voyager.md",
-    titles: { ja: "スターボイジャー", en: "Star Voyager" },
+    title: "Steins;Gate 0",
+    summary: "a time travel story",
+    basename: "steins-gate-zero",
+    path: "Taxonomy/Anime/steins-gate-zero.md",
+    titles: { ja: "シュタインズ・ゲート ゼロ", en: "Steins;Gate 0" },
   });
 
   it("treats a blank query as a match", () => {
@@ -42,10 +42,10 @@ describe("entityMatchesQuery", () => {
   });
 
   it("matches across title, summary, basename, path, and alternate titles, case-insensitively", () => {
-    expect(entityMatchesQuery(entity, "voyager")).toBe(true);
-    expect(entityMatchesQuery(entity, "SPACE")).toBe(true);
-    expect(entityMatchesQuery(entity, "star-voyager")).toBe(true);
-    expect(entityMatchesQuery(entity, "スター")).toBe(true);
+    expect(entityMatchesQuery(entity, "gate 0")).toBe(true);
+    expect(entityMatchesQuery(entity, "TRAVEL")).toBe(true);
+    expect(entityMatchesQuery(entity, "steins-gate-zero")).toBe(true);
+    expect(entityMatchesQuery(entity, "ゲート")).toBe(true);
     expect(entityMatchesQuery(entity, "nope")).toBe(false);
   });
 

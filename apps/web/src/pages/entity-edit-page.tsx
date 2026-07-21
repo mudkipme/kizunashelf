@@ -112,7 +112,7 @@ export function EntityEditPage() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">
-              {entity ? t`Edit ${entityTitle(entity, language)}` : t`Edit Entity`}
+              {entity ? t`Edit ${entityTitle(entity, language)}` : t`Edit entity`}
             </h1>
           </div>
           <div className="flex flex-wrap gap-2">

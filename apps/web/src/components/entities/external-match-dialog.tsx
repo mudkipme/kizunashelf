@@ -127,8 +127,8 @@ export function ExternalMatchDialog({
               aria-label={t`Provider`}
               disabled={!externalSearchEnabled}
             >
-              {providerOptions.length === 0 ? <option value="all">{t`No supported sources`}</option> : null}
-              {providerOptions.length > 1 ? <option value="all">{t`All sources`}</option> : null}
+              {providerOptions.length === 0 ? <option value="all">{t`No supported providers`}</option> : null}
+              {providerOptions.length > 1 ? <option value="all">{t`All providers`}</option> : null}
               {providerOptions.map((providerOption) => (
                 <option key={providerOption} value={providerOption}>
                   {externalSourceLabel(providerCatalog, providerOption)}

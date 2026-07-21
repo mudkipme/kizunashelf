@@ -160,6 +160,13 @@ describe("normalizeVaultConfig", () => {
     expect(result.taxonomyRoot).toBe("T");
   });
 
+  it("keeps tags disabled (null) unless the config carries a tags block", () => {
+    expect(normalizeVaultConfig(vault({ types: [] })).tags).toBeNull();
+    expect(normalizeVaultConfig(vault({ tags: { field: "labels" }, types: [] })).tags).toEqual({
+      field: "labels",
+    });
+  });
+
   it("fills field-level defaults (seasonLanguage, null roles, empty lists)", () => {
     const result = normalizeVaultConfig(
       vault({ types: [type({ fields: [field({ field: "title", fieldType: "title" })] })] }),
@@ -187,6 +194,15 @@ describe("cleanVaultConfig", () => {
     expect(cleaned.dailyNotes).toBeUndefined();
     expect(cleaned.home).toBeUndefined();
     expect(cleaned.types).toEqual([]);
+  });
+
+  it("saves a tags block only with a non-blank key (trimmed)", () => {
+    expect(cleanedVault(vault({ tags: { field: "  labels " }, types: [] })).tags).toEqual({
+      field: "labels",
+    });
+    // A blank key means disabled in the core, so it saves as no block at all.
+    expect(cleanedVault(vault({ tags: { field: "  " }, types: [] })).tags).toBeUndefined();
+    expect(cleanedVault(vault({ tags: null, types: [] })).tags).toBeUndefined();
   });
 
   it("drops fields with an empty name", () => {

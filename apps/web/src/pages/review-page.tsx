@@ -52,7 +52,7 @@ const queueDefinitions: QueueDefinition[] = [
   { id: "missing-cover", label: msg`Missing Cover`, kind: "entity" },
   { id: "broken-asset", label: msg`Broken Assets`, kind: "entity" },
   { id: "missing-refs", label: msg`Unmatched`, kind: "entity" },
-  { id: "isolated", label: msg`Unlinked Items`, kind: "entity" },
+  { id: "isolated", label: msg`Unlinked entities`, kind: "entity" },
   { id: "unresolved-relations", label: msg`Unresolved Relations`, kind: "relation" },
   { id: "status-mismatch", label: msg`Status Mismatch`, kind: "entity" },
   { id: "duplicate-filename", label: msg`Duplicate Filenames`, kind: "entity" },

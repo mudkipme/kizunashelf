@@ -1,0 +1,28 @@
++++
+title = "Statistics & review"
+description = "Analytics over your library and its history, plus cleanup queues that keep the catalog healthy."
+weight = 11
++++
+
+## Statistics
+
+The analytics views aggregate what the schema knows: how your library breaks down by type and status, how ratings distribute, and how activity lays out over time — the timeline of what you watched, played, and read, built from the same dated events as the [activity feed](@/features/calendar.md#what-have-i-done-recently).
+
+Because everything derives from your schema's roles, statistics work for custom types too: any type with a status field, a rating field, or dated fields participates automatically.
+
+{{ screenshot(caption="Analytics: the library in aggregate, and your activity over time.") }}
+
+<!-- TODO: enumerate the exact charts/tiles once the analytics page settles; keep this page in
+     sync with analytics/api. -->
+
+## Review: cleanup queues & library diagnosis
+
+A big catalog drifts: covers go missing, entities never got matched, frontmatter accumulates oddities. The review tools surface that drift as **queues you can work through** instead of problems you discover by accident:
+
+- entities missing a cover (fix en masse with the [batch cover downloader](@/features/covers.md)),
+- entities without an external match for a wired provider,
+- **library diagnosis** — a bounded list of things the indexer noticed while reading your vault (unparseable frontmatter, unresolved relations, files it had to skip), also exposed on the server's health check.
+
+{{ screenshot(caption="Cleanup queues: the catalog's to-do list.") }}
+
+Nothing in a queue is ever auto-"fixed" behind your back — queues point, you decide. The [FAQ](@/faq/_index.md) covers the most common findings.

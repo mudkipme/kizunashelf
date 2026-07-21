@@ -215,9 +215,10 @@ fn entity_matches_field_filters(
     filters: &[EntityFieldFilter],
 ) -> bool {
     filters.iter().all(|filter| {
-        // The built-in tags field matches against the normalized tag list (any
-        // selected tag → match), independent of the schema field machinery.
-        if filter.field == library.config.tags_field() {
+        // The built-in tags field (when enabled) matches against the normalized
+        // tag list (any selected tag → match), independent of the schema field
+        // machinery.
+        if library.config.tags_field() == Some(filter.field.as_str()) {
             return filter
                 .values
                 .iter()

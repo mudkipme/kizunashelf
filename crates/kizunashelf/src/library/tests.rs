@@ -131,7 +131,7 @@ async fn read_library_skips_an_unparseable_file_instead_of_failing() {
     std::fs::create_dir_all(&taxonomy).unwrap();
     std::fs::write(
         taxonomy.join("Good.md"),
-        "---\ntitle: Star Voyager\n---\n\nBody.\n",
+        "---\ntitle: Steins;Gate 0\n---\n\nBody.\n",
     )
     .unwrap();
     // Shift-JIS bytes (「アニメ」), invalid as UTF-8.
@@ -147,7 +147,7 @@ async fn read_library_skips_an_unparseable_file_instead_of_failing() {
 
     assert!(library
         .summaries()
-        .any(|entity| entity.title == "Star Voyager"));
+        .any(|entity| entity.title == "Steins;Gate 0"));
     assert_eq!(library.diagnostics.len(), 1);
     assert_eq!(library.diagnostics[0].path, "Taxonomy/Anime/Legacy.md");
     assert_eq!(library.diagnostics[0].kind, "file");
@@ -160,16 +160,16 @@ async fn read_library_reads_entities_from_an_in_memory_vfs() {
     let vfs = Arc::new(InMemoryVfs::new());
     vfs.insert_dir("Taxonomy/Anime");
     vfs.insert_file(
-        "Taxonomy/Anime/Star Voyager.md",
-        "---\ntitle: Star Voyager\nstatus: Watching\n---\n\nBody.\n",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
+        "---\ntitle: Steins;Gate 0\nstatus: Watching\n---\n\nBody.\n",
     );
 
     let library = read_library(config, vfs).await.unwrap();
 
     assert_eq!(library.summaries().count(), 1);
     let summary = library.summaries().next().unwrap();
-    assert_eq!(summary.title, "Star Voyager");
-    assert_eq!(summary.path, "Taxonomy/Anime/Star Voyager.md");
+    assert_eq!(summary.title, "Steins;Gate 0");
+    assert_eq!(summary.path, "Taxonomy/Anime/Steins;Gate 0 (Anime).md");
     // Revision is derived from content + metadata, both supplied by the VFS.
     assert!(!library.records[0].revision.is_empty());
     // The resident record keeps frontmatter (for in-memory filtering) but the
@@ -184,8 +184,8 @@ async fn load_entity_reads_full_body_and_raw_on_demand() {
     let vfs = Arc::new(InMemoryVfs::new());
     vfs.insert_dir("Taxonomy/Anime");
     vfs.insert_file(
-        "Taxonomy/Anime/Star Voyager.md",
-        "---\ntitle: Star Voyager\nstatus: Watching\n---\n\nBody text.\n",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
+        "---\ntitle: Steins;Gate 0\nstatus: Watching\n---\n\nBody text.\n",
     );
 
     let library = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
@@ -199,7 +199,7 @@ async fn load_entity_reads_full_body_and_raw_on_demand() {
 
     // The on-demand load reconstructs the full document...
     assert!(entity.body.contains("Body text."));
-    assert!(entity.raw.contains("title: Star Voyager"));
+    assert!(entity.raw.contains("title: Steins;Gate 0"));
     assert!(entity.frontmatter.contains_key("status"));
     // ...and carries the library-wide relation count from the resident summary.
     assert_eq!(entity.summary.relation_count, summary.relation_count);
@@ -406,7 +406,7 @@ fn cache_ctx(dir: &std::path::Path, schema: &str) -> IndexCacheContext {
 fn seed_one(vfs: &InMemoryVfs, title: &str) {
     vfs.insert_dir("Taxonomy/Anime");
     vfs.insert_file(
-        "Taxonomy/Anime/Star Voyager.md",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
         &format!("---\ntitle: {title}\n---\n\nBody.\n"),
     );
 }
@@ -430,7 +430,7 @@ async fn index_cache_reuses_unchanged_entries_without_rereading() {
     assert_eq!(first.summaries().next().unwrap().title, "AAAA");
 
     vfs.overwrite_preserving_stamp(
-        "Taxonomy/Anime/Star Voyager.md",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
         "---\ntitle: BBBB\n---\n\nBody.\n",
     );
     let second = read_library_cached(
@@ -464,7 +464,7 @@ async fn index_cache_reparses_when_fingerprint_changes() {
     .unwrap();
 
     vfs.insert_file(
-        "Taxonomy/Anime/Star Voyager.md",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
         "---\ntitle: CCCC\n---\n\nBody.\n",
     );
     let updated = read_library_cached(
@@ -495,7 +495,7 @@ async fn index_cache_busts_when_schema_fingerprint_changes() {
     .unwrap();
 
     vfs.overwrite_preserving_stamp(
-        "Taxonomy/Anime/Star Voyager.md",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
         "---\ntitle: BBBB\n---\n\nBody.\n",
     );
     let updated = read_library_cached(
@@ -599,7 +599,7 @@ async fn memory_index_cache_reuses_unchanged_entries() {
     // Edit the bytes but keep size + mtime: a re-read would surface "BBBB", so
     // serving "AAAA" proves the cached parse (held in `store`) was reused.
     vfs.overwrite_preserving_stamp(
-        "Taxonomy/Anime/Star Voyager.md",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
         "---\ntitle: BBBB\n---\n\nBody.\n",
     );
     let second = read_library_cached(
@@ -617,7 +617,7 @@ async fn memory_index_cache_reuses_unchanged_entries() {
 
     // A schema change busts the whole in-memory cache (gate mismatch).
     vfs.overwrite_preserving_stamp(
-        "Taxonomy/Anime/Star Voyager.md",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
         "---\ntitle: CCCC\n---\n\nBody.\n",
     );
     let rebuilt = read_library_cached(

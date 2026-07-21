@@ -19,3 +19,4 @@ CLAUDE.md
 .pnpm-store
 docs/*-plan.md
 skills-lock.json
+manual/public/

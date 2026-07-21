@@ -96,7 +96,7 @@ pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigRes
         taxonomy_root: library.config.taxonomy_root.clone(),
         vault_root: library.config.vault_root.clone(),
         asset_root: library.config.resolved_asset_root().to_string(),
-        tags_field: library.config.tags_field().to_string(),
+        tags_field: library.config.tags_field().map(str::to_string),
         home: library.config.home.clone(),
         types: library.config.types.clone(),
     }))

@@ -236,7 +236,7 @@ fn metadata_date_entries_only_includes_schema_date_fields_with_a_role() {
 
 #[test]
 fn episode_calendar_entries_place_cached_dates_in_the_month() {
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     let mut record = record(entity);
     record.episode_dates = vec![
@@ -377,7 +377,7 @@ fn activity_options_items(cursor: Option<&str>, limit: u32) -> ActivityBuildOpti
 /// An entity completed in the past (2024-05-10) and planned for the future
 /// (2024-07-01), with one completed and one scheduled episode on those dates.
 fn forward_and_back_record() -> EntityRecord {
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     entity.dates = vec![
         date_value("aired", "2024-05-10"),
@@ -405,7 +405,7 @@ fn forward_and_back_record() -> EntityRecord {
 
 #[tokio::test]
 async fn build_calendar_merges_same_entity_same_day_into_one_item() {
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     entity.dates = vec![date_value("aired", "2024-02-12")];
     let mut rec = record(entity);
@@ -427,7 +427,7 @@ async fn build_calendar_merges_same_entity_same_day_into_one_item() {
     let vfs = InMemoryVfs::new();
     vfs.insert_file(
         "Journal/2024-02-12.md",
-        "- watched [[Star Voyager]] 12 #Anime\n",
+        "- watched [[Steins;Gate 0 (Anime)]] 12 #Anime\n",
     );
 
     let response = build_calendar(
@@ -471,7 +471,7 @@ async fn build_calendar_merges_same_entity_same_day_into_one_item() {
 
 #[tokio::test]
 async fn build_activity_collapses_all_sources_for_one_date_and_entity() {
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     entity.dates = vec![date_value("aired", "2024-02-12")];
     let mut rec = record(entity);
@@ -493,7 +493,7 @@ async fn build_activity_collapses_all_sources_for_one_date_and_entity() {
     let vfs = InMemoryVfs::new();
     vfs.insert_file(
         "Journal/2024-02-12.md",
-        "- watched [[Star Voyager]] 12 #Anime\n",
+        "- watched [[Steins;Gate 0 (Anime)]] 12 #Anime\n",
     );
 
     let response = build_activity(&library, &vfs, activity_options(None, 12))
@@ -536,7 +536,7 @@ async fn build_activity_collapses_all_sources_for_one_date_and_entity() {
 
 #[tokio::test]
 async fn build_activity_aggregates_an_episode_binge_into_one_entry() {
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     let mut rec = record(entity);
     rec.episode_dates = (3..=6)
@@ -782,7 +782,7 @@ async fn build_activity_up_next_shows_only_future_ascending() {
 
 #[tokio::test]
 async fn build_activity_up_next_hides_today_items_already_done() {
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     entity.dates = vec![
         date_value("planned", "2024-06-15"),
@@ -833,7 +833,7 @@ async fn build_activity_up_next_hides_episode_completed_on_a_different_day() {
     // completion lives in a *different* (date, entity) group, so only a global
     // reconciliation — reading the entity's full episode-date set — hides the future
     // air date from "up next".
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     let mut rec = record(entity);
     rec.episode_dates = vec![
@@ -879,12 +879,12 @@ async fn build_activity_discovers_daily_note_only_months_from_relations() {
     // No dates and no episodes — August's only signal is a daily-note mention, so
     // the month must be discovered from the resident (index-cached) relation graph
     // rather than a VFS walk. This pins the cache-driven discovery.
-    let mut entity = summary("anime", "Anime", "Star Voyager");
+    let mut entity = summary("anime", "Anime", "Steins;Gate 0 (Anime)");
     entity.id = "anime:sv".to_string();
     let relation = Relation {
         source_id: "daily-note:2024-08-20:Journal/2024-08-20.md".to_string(),
         target_id: Some(entity.id.clone()),
-        target_title: "Star Voyager".to_string(),
+        target_title: "Steins;Gate 0".to_string(),
         target_type: Some("anime".to_string()),
         field: "daily-note".to_string(),
         direction: RelationDirection::Out,
@@ -900,7 +900,7 @@ async fn build_activity_discovers_daily_note_only_months_from_relations() {
     let vfs = InMemoryVfs::new();
     vfs.insert_file(
         "Journal/2024-08-20.md",
-        "- watched [[Star Voyager]] 1 #Anime\n",
+        "- watched [[Steins;Gate 0 (Anime)]] 1 #Anime\n",
     );
 
     let response = build_activity(&library, &vfs, activity_options(None, 12))
@@ -930,7 +930,7 @@ fn with_status(mut summary: EntitySummary, canonical: CanonicalStatus) -> Entity
 
 /// An entity with a single planning date, at `date`, plus a canonical status.
 fn planning_record(date: &str, status: CanonicalStatus) -> EntityRecord {
-    let mut entity = with_status(summary("anime", "Anime", "Star Voyager"), status);
+    let mut entity = with_status(summary("anime", "Anime", "Steins;Gate 0 (Anime)"), status);
     entity.id = "anime:sv".to_string();
     entity.dates = vec![date_value("planned", date)];
     record(entity)
@@ -1022,14 +1022,14 @@ async fn recent_keeps_daily_note_mentions_of_a_dropped_entity() {
     // A daily-note mention is a factual diary record — dropping the entity must not
     // remove it from the "recent" feed.
     let mut entity = with_status(
-        summary("anime", "Anime", "Star Voyager"),
+        summary("anime", "Anime", "Steins;Gate 0 (Anime)"),
         CanonicalStatus::Dropped,
     );
     entity.id = "anime:sv".to_string();
     let relation = Relation {
         source_id: "daily-note:2024-05-20:Journal/2024-05-20.md".to_string(),
         target_id: Some(entity.id.clone()),
-        target_title: "Star Voyager".to_string(),
+        target_title: "Steins;Gate 0".to_string(),
         target_type: Some("anime".to_string()),
         field: "daily-note".to_string(),
         direction: RelationDirection::Out,
@@ -1042,7 +1042,10 @@ async fn recent_keeps_daily_note_mentions_of_a_dropped_entity() {
         String::new(),
     );
     let vfs = InMemoryVfs::new();
-    vfs.insert_file("Journal/2024-05-20.md", "- rewatched [[Star Voyager]] 3\n");
+    vfs.insert_file(
+        "Journal/2024-05-20.md",
+        "- rewatched [[Steins;Gate 0 (Anime)]] 3\n",
+    );
 
     let response = build_activity(
         &library,
@@ -1063,7 +1066,7 @@ async fn recent_keeps_completed_episodes_of_dropped_and_paused_entities() {
     // Dropping or pausing an entity removes it from "up next" but must NOT erase
     // its history: a completed episode still belongs in the diary.
     for status in [CanonicalStatus::Dropped, CanonicalStatus::Paused] {
-        let mut entity = with_status(summary("anime", "Anime", "Star Voyager"), status);
+        let mut entity = with_status(summary("anime", "Anime", "Steins;Gate 0 (Anime)"), status);
         entity.id = "anime:sv".to_string();
         let mut rec = record(entity);
         rec.episode_dates = vec![EpisodeDate {
@@ -1203,7 +1206,7 @@ async fn catch_up_excludes_episodes_and_daily_notes() {
     // rides along (the episode nag below is for *ongoing* entities' unwatched air
     // dates only).
     let mut entity = with_status(
-        summary("anime", "Anime", "Star Voyager"),
+        summary("anime", "Anime", "Steins;Gate 0 (Anime)"),
         CanonicalStatus::Planning,
     );
     entity.id = "anime:sv".to_string();
@@ -1244,7 +1247,7 @@ fn episode_date(key: &str, date: &str, role: EpisodeDateRole) -> EpisodeDate {
 
 /// An entity with the given status and episode dates (no taxonomy dates).
 fn episode_record(status: CanonicalStatus, episode_dates: Vec<EpisodeDate>) -> EntityRecord {
-    let mut entity = with_status(summary("anime", "Anime", "Star Voyager"), status);
+    let mut entity = with_status(summary("anime", "Anime", "Steins;Gate 0 (Anime)"), status);
     entity.id = "anime:sv".to_string();
     let mut rec = record(entity);
     rec.episode_dates = episode_dates;
@@ -1392,7 +1395,7 @@ async fn recent_does_not_proxy_when_a_completed_stamp_exists() {
     // With an explicit completed stamp, the completed date is the record; the
     // planning date is not also surfaced as a proxy.
     let mut entity = with_status(
-        summary("anime", "Anime", "Star Voyager"),
+        summary("anime", "Anime", "Steins;Gate 0 (Anime)"),
         CanonicalStatus::Completed,
     );
     entity.id = "anime:sv".to_string();
@@ -1518,7 +1521,7 @@ async fn recent_excludes_a_future_completed_stamp_time_travel() {
     // A completed date in the future is contradictory — it must not show as a
     // "recent" record (a cleanup queue surfaces it instead; Phase 4).
     let mut entity = with_status(
-        summary("anime", "Anime", "Star Voyager"),
+        summary("anime", "Anime", "Steins;Gate 0 (Anime)"),
         CanonicalStatus::Completed,
     );
     entity.id = "anime:sv".to_string();

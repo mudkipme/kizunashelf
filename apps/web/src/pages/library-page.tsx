@@ -26,7 +26,6 @@ import {
   defaultSort,
   defaultView,
   pageSize,
-  defaultTagsField,
   relevanceSort,
 } from "@/lib/constants";
 import {
@@ -93,19 +92,23 @@ export function LibraryPage() {
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const allTagsData = useQuery(allTagsQuery()).data?.tags;
   const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
-  // The built-in tags filter is universal (not schema-derived). Its selected
+  // The built-in tags filter is universal (not schema-derived) but opt-in: it
+  // exists only when the vault config enables tags (`tags.field`). Its selected
   // values are read straight from the URL — not restricted to the current
   // vocabulary — so they survive while `allTags` loads and serialize through the
   // same `filters` param as schema field filters (server OR-matches them).
-  const tagsFieldName = config.data?.tagsField ?? defaultTagsField;
-  const tagFilter: FieldFilter = useMemo(
-    () => ({
-      field: tagsFieldName,
-      label: t`Tags`,
-      kind: "multi",
-      options: allTags.map((value) => ({ value })),
-      values: uniqueStrings(searchParams.getAll(fieldFilterParamKey(tagsFieldName))),
-    }),
+  const tagsFieldName = config.data?.tagsField ?? undefined;
+  const tagFilter: FieldFilter | undefined = useMemo(
+    () =>
+      tagsFieldName
+        ? {
+            field: tagsFieldName,
+            label: t`Tags`,
+            kind: "multi",
+            options: allTags.map((value) => ({ value })),
+            values: uniqueStrings(searchParams.getAll(fieldFilterParamKey(tagsFieldName))),
+          }
+        : undefined,
     [allTags, searchParams, tagsFieldName, t],
   );
   // Relation fields (per selected type) become dynamically-loaded multi-selects,
@@ -146,8 +149,10 @@ export function LibraryPage() {
     // Enum/enumList/bool field filters are type-specific, so only "all types"
     // keeps the universal Tags filter; a concrete type adds its schema fields.
     const schemaFilters = isGlobalType ? [] : fieldFiltersForTypes(scopeTypeConfigs, searchParams, i18n);
-    // Hide the tags filter only when the vault has no tags and none are selected.
-    const showTags = tagFilter.options.length > 0 || tagFilter.values.length > 0;
+    // Show the tags filter only when the feature is enabled, and hide it while
+    // the vault has no tags and none are selected.
+    const showTags =
+      tagFilter !== undefined && (tagFilter.options.length > 0 || tagFilter.values.length > 0);
     const base = showTags ? [tagFilter, ...schemaFilters] : schemaFilters;
     return [...base, ...relationFilters];
   }, [tagFilter, scopeTypeConfigs, searchParams, isGlobalType, relationFilters, i18n]);

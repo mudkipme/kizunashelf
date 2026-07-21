@@ -23,7 +23,9 @@ export function smartListFromLibraryState({
 }: {
   selectedType: string;
   typeConfig: TypeConfig | undefined;
-  tagsField: string;
+  /** The configured tags key, or `undefined` when the tags feature is disabled
+   * — then no filter can be a tag filter and nothing maps to `hasTag`. */
+  tagsField: string | undefined;
   activeFilters: FieldFilter[];
   sort: string;
   direction: string;
@@ -33,7 +35,7 @@ export function smartListFromLibraryState({
 
   for (const filter of activeFilters) {
     if (filter.values.length === 0) continue;
-    if (filter.field === tagsField) {
+    if (tagsField !== undefined && filter.field === tagsField) {
       rules.push({ kind: "hasTag", negated: false, values: filter.values });
       continue;
     }

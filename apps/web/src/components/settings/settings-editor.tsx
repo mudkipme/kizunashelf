@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { saveSettingsConfig } from "@/api/settings";
-import { defaultTagsField } from "@/lib/constants";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,11 +21,13 @@ import {
   OptionalToggle,
   PathField,
   SettingsSection,
+  TextField,
 } from "./settings-controls";
 import {
   cleanVaultConfig,
   defaultDailyNotes,
   defaultHome,
+  defaultTags,
   joinPath,
   normalizeVaultConfig,
 } from "./settings-model";
@@ -103,6 +104,11 @@ export function SettingsEditor({
       detail: config.dailyNotes
         ? plural((config.dailyNotes.paths ?? []).length, { one: "# path", other: "# paths" })
         : t`Off`,
+    },
+    {
+      id: "tags",
+      title: t`Tags`,
+      detail: config.tags ? config.tags.field?.trim() || t`On` : t`Off`,
     },
     {
       id: "home",
@@ -255,6 +261,41 @@ export function SettingsEditor({
           </SettingsSection>
 
           <SettingsSection
+            id="tags"
+            title={t`Tags`}
+            description={t`A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list.`}
+            summary={
+              <SummaryBadges
+                items={[config.tags ? config.tags.field?.trim() || t`on` : t`off`]}
+              />
+            }
+            action={
+              <OptionalToggle
+                enabled={Boolean(config.tags)}
+                onEnable={() =>
+                  setConfig((current) => ({ ...current, tags: current.tags ?? defaultTags() }))
+                }
+                onDisable={() => setConfig((current) => ({ ...current, tags: null }))}
+              />
+            }
+          >
+            {config.tags ? (
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <TextField
+                  label={t`Frontmatter key`}
+                  value={config.tags.field ?? ""}
+                  placeholder="tags"
+                  onChange={(value) => setConfig((current) => ({ ...current, tags: { field: value } }))}
+                />
+              </div>
+            ) : (
+              <EmptyConfigLine>
+                <Trans>Tags are disabled.</Trans>
+              </EmptyConfigLine>
+            )}
+          </SettingsSection>
+
+          <SettingsSection
             id="home"
             title={t`Home`}
             summary={
@@ -280,7 +321,7 @@ export function SettingsEditor({
               <HomeBlock
                 config={config.home}
                 types={config.types}
-                tagsField={config.tags?.field?.trim() || defaultTagsField}
+                tagsField={config.tags?.field?.trim() || undefined}
                 onChange={(home) => setConfig((current) => ({ ...current, home }))}
               />
             ) : (

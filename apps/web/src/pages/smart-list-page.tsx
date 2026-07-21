@@ -56,7 +56,7 @@ import { Select } from "@/components/ui/select";
 import { useDebouncedValue } from "@/hooks/use-debounce";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useCapabilities } from "@/lib/capabilities";
-import { defaultTagsField, pageSize } from "@/lib/constants";
+import { pageSize } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
 import { fieldDisplayLabel, fieldLabelsByType, typeHasCoverField } from "@/lib/type-config";
 import type {
@@ -145,7 +145,7 @@ export function SmartListPage() {
     () => (scopeConfig ? [scopeConfig] : typeConfigs),
     [scopeConfig, typeConfigs],
   );
-  const tagsField = config.data?.tagsField ?? defaultTagsField;
+  const tagsField = config.data?.tagsField ?? undefined;
   const fieldMetas = useMemo(
     () => ruleFieldMetas(scopeTypeConfigs, tagsField, allTags, t),
     [scopeTypeConfigs, tagsField, allTags, t],
@@ -704,7 +704,7 @@ function CriteriaSummary({ detail }: { detail: SmartListDetail }) {
     return (
       <p className="text-xs text-muted-foreground">
         {detail.scope ? (
-          <Trans>No further criteria — every entry of this type matches.</Trans>
+          <Trans>No further criteria — every entity of this type matches.</Trans>
         ) : (
           <Trans>No criteria — everything in the library matches.</Trans>
         )}

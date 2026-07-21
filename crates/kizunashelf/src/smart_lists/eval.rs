@@ -22,7 +22,9 @@ use std::collections::HashMap;
 /// across one evaluation pass.
 pub struct EvalContext<'a> {
     pub library: &'a Library,
-    pub tags_field: &'a str,
+    /// The configured tags key, or `None` when the tags feature is disabled —
+    /// then `note.<key>` falls through to raw frontmatter like any other field.
+    pub tags_field: Option<&'a str>,
     pub today: NaiveDate,
     pub now: DateTime<Utc>,
     basename_index: HashMap<String, Vec<&'a EntityRecord>>,
@@ -178,7 +180,7 @@ pub(super) fn note_value(
     record: &EntityRecord,
     ctx: &EvalContext,
 ) -> Option<serde_json::Value> {
-    if name == ctx.tags_field {
+    if ctx.tags_field == Some(name) {
         return Some(serde_json::Value::Array(
             record
                 .summary

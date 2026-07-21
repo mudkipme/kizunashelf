@@ -211,7 +211,7 @@ export function QuickCapturePage() {
 
         {!contentWritable ? (
           <Alert>
-            {CONTENT_WRITES_DISABLED} <Trans>You can still open items already in your library.</Trans>
+            {CONTENT_WRITES_DISABLED} <Trans>You can still open entities already in your library.</Trans>
           </Alert>
         ) : null}
 

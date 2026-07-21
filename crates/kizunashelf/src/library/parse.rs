@@ -65,7 +65,7 @@ pub(super) struct EntityReadResult {
 /// don't re-scan.
 pub(super) fn parse_entity(
     type_config: &EntityTypeConfig,
-    tags_field: &str,
+    tags_field: Option<&str>,
     relative_path: String,
     bytes: Vec<u8>,
 ) -> Result<EntityReadResult> {
@@ -199,7 +199,7 @@ fn date_field_names(type_config: &EntityTypeConfig) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     //! Tests for the schema-driven field selection that drives summary derivation.
-    //! The invariant under test (see CLAUDE.md): meaning comes from a field's
+    //! The invariant under test (see ARCHITECTURE.md): meaning comes from a field's
     //! `FieldType`/role, never its name. These exercise the glue through
     //! `parse_entity` end-to-end rather than the private helpers in isolation.
     use super::*;
@@ -249,7 +249,7 @@ mod tests {
     fn summary_of(type_config: &EntityTypeConfig, path: &str, raw: &str) -> EntitySummary {
         parse_entity(
             type_config,
-            crate::types::DEFAULT_TAGS_FIELD,
+            Some("tags"),
             path.to_string(),
             raw.as_bytes().to_vec(),
         )

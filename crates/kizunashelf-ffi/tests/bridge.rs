@@ -264,8 +264,8 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
         "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
     );
     vault.seed(
-        "Taxonomy/Anime/Star Voyager.md",
-        "---\ntitle: Star Voyager\n---\n\nBody.\n",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
+        "---\ntitle: Steins;Gate 0\n---\n\nBody.\n",
     );
 
     let engine = KizunaEngine::with_vault(
@@ -306,7 +306,7 @@ fn ios_engine_browses_a_vault_through_the_swift_filesystem() {
         .iter()
         .filter_map(|item| item["title"].as_str())
         .collect();
-    assert!(titles.contains(&"Star Voyager"), "entities: {body}");
+    assert!(titles.contains(&"Steins;Gate 0"), "entities: {body}");
 }
 
 #[test]
@@ -352,8 +352,8 @@ fn ios_library_load_propagates_a_batch_read_failure() {
         "taxonomyRoot: Taxonomy\nassetRoot: Assets\ntypes:\n- id: anime\n  label: Anime\n  path: Anime\n  fields:\n  - field: title\n    fieldType: title\n    displayName: Title\n    defaultTitle: true\n",
     );
     vault.seed(
-        "Taxonomy/Anime/Star Voyager.md",
-        "---\ntitle: Star Voyager\n---\n",
+        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
+        "---\ntitle: Steins;Gate 0\n---\n",
     );
 
     let engine = KizunaEngine::with_vault(

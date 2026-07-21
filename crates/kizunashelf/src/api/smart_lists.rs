@@ -1183,7 +1183,7 @@ mod mapping_tests {
                 },
                 SmartFilterRule {
                     kind: SmartFilterRuleKind::LinksTo,
-                    values: vec!["Star Saga".into()],
+                    values: vec!["Steins;Gate".into()],
                     ..Default::default()
                 },
                 SmartFilterRule {
@@ -1263,7 +1263,7 @@ mod mapping_tests {
                     ..compare("file.mtime", SmartCompareOp::Gte)
                 },
                 SmartFilterRule {
-                    value: Some("Star Voyager".into()),
+                    value: Some("Steins;Gate 0 (Anime)".into()),
                     ..compare("file.name", SmartCompareOp::Ne)
                 },
             ],

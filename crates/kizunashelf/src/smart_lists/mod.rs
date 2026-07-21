@@ -17,8 +17,8 @@
 //! Evaluation is deliberately *value-driven*, exactly like Bases: a comparison
 //! is a date comparison because the right-hand side is a date expression, and
 //! numeric because the literal is a number — never because of what a field is
-//! called. The schema is consulted only for the built-in tags field name and
-//! for sort-key derivation.
+//! called. The schema is consulted only for the built-in tags field name (when
+//! the opt-in tags feature is enabled) and for sort-key derivation.
 //!
 //! The submodules are the pipeline stages, in data-flow order:
 //!

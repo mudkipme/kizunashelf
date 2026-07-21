@@ -58,6 +58,11 @@ jobs:
           pnpm i18n:extract
           git diff --exit-code -- apps/web/src/locales
 
+      - name: Verify committed generated reference docs are in sync
+        run: |
+          pnpm docs:generate
+          git diff --exit-code -- manual/content/reference
+
       - run: pnpm build
 
   desktop-check:
