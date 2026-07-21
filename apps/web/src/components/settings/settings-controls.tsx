@@ -7,6 +7,7 @@ import { getPathSuggestions } from "@/api/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
+import { useDebouncedAbortableCallback } from "@/hooks/use-debounce";
 import { isDesktopRuntime, selectDirectory } from "@/lib/desktop";
 
 import { arrayEditor, relativeToBase } from "./settings-model";
@@ -127,21 +128,25 @@ export function PathField({
   const datalistId = useId();
   const desktop = isDesktopRuntime();
 
+  const { schedule: scheduleSuggestions, cancel: cancelSuggestions } =
+    useDebouncedAbortableCallback(
+      (signal, prefix: string, relativeBase: string | undefined) => {
+        // The prefix is relative to `relativeBase`; suggestions come back in
+        // that same coordinate system.
+        void getPathSuggestions(prefix, relativeBase, { signal }).then(
+          (result) => setSuggestions(result.suggestions),
+          () => {
+            if (!signal.aborted) setSuggestions([]);
+          },
+        );
+      },
+      120,
+    );
+
   useEffect(() => {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => {
-      // `value` is the prefix relative to `suggestionBase`; suggestions come back
-      // in that same coordinate system.
-      void getPathSuggestions(value, suggestionBase, { signal: controller.signal }).then(
-        (result) => setSuggestions(result.suggestions),
-        () => setSuggestions([]),
-      );
-    }, 120);
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeout);
-    };
-  }, [suggestionBase, value]);
+    scheduleSuggestions(value, suggestionBase);
+    return cancelSuggestions;
+  }, [suggestionBase, value, scheduleSuggestions, cancelSuggestions]);
 
   async function browse() {
     const selected = await selectDirectory(base || value).catch(() => undefined);

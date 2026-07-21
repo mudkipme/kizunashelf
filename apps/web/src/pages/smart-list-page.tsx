@@ -53,6 +53,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Select } from "@/components/ui/select";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useCapabilities } from "@/lib/capabilities";
 import { defaultTagsField, pageSize } from "@/lib/constants";
@@ -113,7 +114,7 @@ export function SmartListPage() {
     }),
     enabled: !editing,
   });
-  const debouncedDraft = useDebounced(draft, 350);
+  const debouncedDraft = useDebouncedValue(draft, 350);
   const previewResults = useQuery({
     queryKey: ["smartListPreview", id, debouncedDraft, activeViewIndex, page, language] as const,
     queryFn: ({ signal }) =>
@@ -420,15 +421,6 @@ export function SmartListPage() {
       </AlertDialog>
     </AppFrame>
   );
-}
-
-function useDebounced<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(value), delayMs);
-    return () => window.clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
 }
 
 /// The edit surface: type scope, the rule builder, and the active view's sort

@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { errorMessage, isConflictError } from "@/api/client";
 import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addItemToList, removeList, saveList } from "@/api/lists";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 import { entitiesQuery, listQuery, queryKeys } from "@/api/queries";
 import { EntityCover } from "@/components/assets/entity-cover";
 import { MarkdownView } from "@/components/assets/markdown-view";
@@ -211,7 +212,6 @@ export function ListDetailPage() {
   // debounce coalesces rapid checks into one write; on success we adopt the new
   // revision and the saved detail in place (no refetch/re-sync), so the toggle
   // stays put and any other in-progress edits aren't clobbered or reset.
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const autoSave = useMutation({
     mutationFn: (payload: ReturnType<typeof listPayload>) => saveList(id, payload),
     onSuccess: (detail) => {
@@ -223,20 +223,17 @@ export function ListDetailPage() {
     },
     onError: recoverFromConflict,
   });
+  const { schedule: queueAutoSave, cancel: cancelAutoSave } = useDebouncedCallback(
+    (payload: ReturnType<typeof listPayload>) => autoSave.mutate(payload),
+    500,
+  );
 
   function scheduleAutoSave() {
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(() => autoSave.mutate(listPayload(sectionsRef.current)), 500);
+    queueAutoSave(listPayload(sectionsRef.current));
   }
-
-  useEffect(() => () => clearTimeout(autoSaveTimer.current), []);
 
   // Drop a pending toggle auto-save before any explicit write so a late timer
   // can't fire a redundant save or a stale-revision 409 over it.
-  function cancelAutoSave() {
-    clearTimeout(autoSaveTimer.current);
-  }
-
   // Adding an entity writes to the file directly (server-side wikilink
   // disambiguation), so persist any pending edits first — otherwise the append
   // would build on the stale on-disk version and the local edits would be lost.

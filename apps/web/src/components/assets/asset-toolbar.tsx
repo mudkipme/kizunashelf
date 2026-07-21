@@ -6,6 +6,7 @@ import { isAbortError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
+import { useDebouncedAbortableCallback } from "@/hooks/use-debounce";
 import { Separator } from "@/components/ui/separator";
 import { allOptions, defaultDirection, defaultSort, relevanceSort } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -210,30 +211,39 @@ function RelationFilterControl({
   }
 
   const { loadOptions } = filter;
+  const { schedule: scheduleOptionsLoad, cancel: cancelOptionsLoad } =
+    useDebouncedAbortableCallback(
+      (
+        signal,
+        loader: (query: string, signal: AbortSignal) => Promise<FieldFilterOption[]>,
+        query: string,
+      ) => {
+        setLoading(true);
+        setError(undefined);
+        loader(query, signal)
+          .then((items) => {
+            if (!signal.aborted) setOptions(items);
+          })
+          .catch((caught) => {
+            if (isAbortError(caught) || signal.aborted) return;
+            setOptions([]);
+            setError(caught instanceof Error ? caught.message : t`Could not load options.`);
+          })
+          .finally(() => {
+            if (!signal.aborted) setLoading(false);
+          });
+      },
+      200,
+    );
+
   useEffect(() => {
-    if (!open || !loadOptions) return;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      setError(undefined);
-      loadOptions(inputValue.trim(), controller.signal)
-        .then((items) => {
-          if (!controller.signal.aborted) setOptions(items);
-        })
-        .catch((caught) => {
-          if (isAbortError(caught) || controller.signal.aborted) return;
-          setOptions([]);
-          setError(caught instanceof Error ? caught.message : t`Could not load options.`);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoading(false);
-        });
-    }, 200);
-    return () => {
-      controller.abort();
-      window.clearTimeout(timer);
-    };
-  }, [open, inputValue, loadOptions, t]);
+    if (!open || !loadOptions) {
+      cancelOptionsLoad();
+      return;
+    }
+    scheduleOptionsLoad(loadOptions, inputValue.trim());
+    return cancelOptionsLoad;
+  }, [open, inputValue, loadOptions, t, scheduleOptionsLoad, cancelOptionsLoad]);
 
   return (
     <MultiValueCombobox

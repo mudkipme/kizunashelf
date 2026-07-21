@@ -13,6 +13,7 @@ import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select } from "@/components/ui/select";
 import { useIsoDateFormat } from "@/lib/locale";
+import { useDebouncedAbortableCallback } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 
 import {
@@ -404,30 +405,39 @@ function MultiValueInput({
   const normalizedOptions = uniqueOptions([...options, ...remoteOptions], wikilinks);
   const labels = new Map(normalizedOptions.map((option) => [option.value, option.label || option.value]));
 
+  const { schedule: scheduleOptionsLoad, cancel: cancelOptionsLoad } =
+    useDebouncedAbortableCallback(
+      (
+        signal,
+        loader: (query: string, signal: AbortSignal) => Promise<MultiValueOption[]>,
+        query: string,
+      ) => {
+        setLoadingOptions(true);
+        setOptionsError(undefined);
+        loader(query, signal)
+          .then((items) => {
+            if (!signal.aborted) setRemoteOptions(items);
+          })
+          .catch((error) => {
+            if (isAbortError(error) || signal.aborted) return;
+            setRemoteOptions([]);
+            setOptionsError(error instanceof Error ? error.message : "Could not load options.");
+          })
+          .finally(() => {
+            if (!signal.aborted) setLoadingOptions(false);
+          });
+      },
+      200,
+    );
+
   useEffect(() => {
-    if (!open || disabled || !loadOptions) return;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoadingOptions(true);
-      setOptionsError(undefined);
-      loadOptions(inputValue.trim(), controller.signal)
-        .then((items) => {
-          if (!controller.signal.aborted) setRemoteOptions(items);
-        })
-        .catch((error) => {
-          if (isAbortError(error) || controller.signal.aborted) return;
-          setRemoteOptions([]);
-          setOptionsError(error instanceof Error ? error.message : "Could not load options.");
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoadingOptions(false);
-        });
-    }, 200);
-    return () => {
-      controller.abort();
-      window.clearTimeout(timer);
-    };
-  }, [disabled, inputValue, loadOptions, open]);
+    if (!open || disabled || !loadOptions) {
+      cancelOptionsLoad();
+      return;
+    }
+    scheduleOptionsLoad(loadOptions, inputValue.trim());
+    return cancelOptionsLoad;
+  }, [disabled, inputValue, loadOptions, open, scheduleOptionsLoad, cancelOptionsLoad]);
 
   function updateValues(nextValues: string[]) {
     if (disabled) return;

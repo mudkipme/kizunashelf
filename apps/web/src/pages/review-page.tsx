@@ -25,6 +25,7 @@ import {
   entityMatchesQuery,
   entityTypeOptions,
 } from "@/lib/entity-filters";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
 import { useNumberFormat } from "@/lib/locale";
 import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
@@ -75,17 +76,20 @@ export function ReviewPage() {
     setQueryInput(query);
   }, [query]);
 
-  // Debounces the search box into the URL. Keyed on the input/query delta only;
-  // `setFilter` is intentionally omitted so the timer is not reset by the very
-  // searchParams change it triggers.
+  const { schedule: scheduleQueryUpdate, cancel: cancelQueryUpdate } = useDebouncedCallback(
+    (value: string) => setFilter("q", value, allEntityFilter, true),
+    180,
+  );
+
+  // Debounce the search box into the URL without giving the URL its own timer.
   useEffect(() => {
-    if (queryInput === query) return;
-    const timeout = window.setTimeout(() => {
-      setFilter("q", queryInput.trim(), allEntityFilter, true);
-    }, 180);
-    return () => window.clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryInput, query, searchParams]);
+    if (queryInput === query) {
+      cancelQueryUpdate();
+      return;
+    }
+    scheduleQueryUpdate(queryInput.trim());
+    return cancelQueryUpdate;
+  }, [queryInput, query, searchParams, scheduleQueryUpdate, cancelQueryUpdate]);
 
   function setFilter(key: string, value: string, defaultValue = allEntityFilter, replace = false) {
     const next = new URLSearchParams(searchParams);

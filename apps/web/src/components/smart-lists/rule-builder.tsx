@@ -10,6 +10,7 @@ import { formatRule } from "@/components/smart-lists/rule-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
+import { useDebouncedAbortableCallback } from "@/hooks/use-debounce";
 import type { MultiValueComboboxOption } from "@/components/ui/multi-value-combobox";
 import { Select } from "@/components/ui/select";
 import { entityTitle } from "@/lib/title-language";
@@ -903,32 +904,45 @@ function RelationTargetPicker({
   }
 
   const relationType = meta.relationType;
+  const { schedule: scheduleRelationSearch, cancel: cancelRelationSearch } =
+    useDebouncedAbortableCallback(
+      (signal, targetType: string, query: string) => {
+        setLoading(true);
+        onRelationSearch({ relationType: targetType, query, signal })
+          .then((items) => {
+            if (signal.aborted) return;
+            setOptions(
+              items
+                .map((item) => ({ value: item.basename, label: entityTitle(item, language) }))
+                .filter((option) => option.value),
+            );
+          })
+          .catch((caught) => {
+            if (!isAbortError(caught) && !signal.aborted) setOptions([]);
+          })
+          .finally(() => {
+            if (!signal.aborted) setLoading(false);
+          });
+      },
+      200,
+    );
+
   useEffect(() => {
-    if (!open || !relationType) return;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      onRelationSearch({ relationType, query: inputValue.trim(), signal: controller.signal })
-        .then((items) => {
-          if (controller.signal.aborted) return;
-          setOptions(
-            items
-              .map((item) => ({ value: item.basename, label: entityTitle(item, language) }))
-              .filter((option) => option.value),
-          );
-        })
-        .catch((caught) => {
-          if (!isAbortError(caught) && !controller.signal.aborted) setOptions([]);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoading(false);
-        });
-    }, 200);
-    return () => {
-      controller.abort();
-      window.clearTimeout(timer);
-    };
-  }, [open, inputValue, relationType, onRelationSearch, language]);
+    if (!open || !relationType) {
+      cancelRelationSearch();
+      return;
+    }
+    scheduleRelationSearch(relationType, inputValue.trim());
+    return cancelRelationSearch;
+  }, [
+    open,
+    inputValue,
+    relationType,
+    onRelationSearch,
+    language,
+    scheduleRelationSearch,
+    cancelRelationSearch,
+  ]);
 
   return (
     <MultiValueCombobox

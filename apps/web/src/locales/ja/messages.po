@@ -31,7 +31,7 @@ msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, other {# 件がライブラリに登録済み}}"
 
 #. placeholder {0}: completeCount(summary)
-#: src/pages/review-page.tsx:316
+#: src/pages/review-page.tsx:320
 msgid "{0, plural, one {# complete} other {# complete}}"
 msgstr "{0, plural, other {# 件完了}}"
 
@@ -66,7 +66,7 @@ msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, other {# 件見つかりました}}"
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:244
+#: src/pages/review-page.tsx:248
 msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, other {# 件の問題}}"
 
@@ -105,7 +105,7 @@ msgid "{0, plural, one {# provider} other {# providers}}"
 msgstr "{0, plural, other {# 件のプロバイダー}}"
 
 #. placeholder {0}: summary.remaining
-#: src/pages/review-page.tsx:308
+#: src/pages/review-page.tsx:312
 msgid "{0, plural, one {# remaining} other {# remaining}}"
 msgstr "{0, plural, other {残り # 件}}"
 
@@ -123,7 +123,7 @@ msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, other {# 件のセクション}}"
 
 #. placeholder {0}: filteredItems.length
-#: src/pages/review-page.tsx:186
+#: src/pages/review-page.tsx:190
 msgid "{0, plural, one {# shown} other {# shown}}"
 msgstr "{0, plural, other {# 件表示}}"
 
@@ -138,12 +138,12 @@ msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, other {作成予定 # 件}}"
 
 #. placeholder {0}: items.length
-#: src/pages/review-page.tsx:189
+#: src/pages/review-page.tsx:193
 msgid "{0, plural, one {# total queue item} other {# total queue items}}"
 msgstr "{0, plural, other {キュー合計 # 件}}"
 
 #. placeholder {0}: summary.total
-#: src/pages/review-page.tsx:319
+#: src/pages/review-page.tsx:323
 msgid "{0, plural, one {# total} other {# total}}"
 msgstr "{0, plural, other {合計 # 件}}"
 
@@ -176,7 +176,7 @@ msgid "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)
 msgstr "{0, plural, other {デイリーノート（# 件のスニペット）}}"
 
 #. placeholder {0}: result.episodes.imported
-#: src/pages/quick-capture-page.tsx:170
+#: src/pages/quick-capture-page.tsx:173
 msgid "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
 msgstr "{0, plural, other {# 話のエピソードをインポートしました。}}"
 
@@ -208,7 +208,7 @@ msgstr "{1} 件中 {0} 件を選択"
 msgid "{0} skipped"
 msgstr "{0} 件スキップ"
 
-#: src/components/entities/metadata-inputs.tsx:638
+#: src/components/entities/metadata-inputs.tsx:648
 msgid "{ariaLabel} new property"
 msgstr "{ariaLabel} の新しいプロパティ"
 
@@ -224,7 +224,7 @@ msgstr "{CONTENT_WRITES_DISABLED} 編集操作は利用できません。"
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 日}}"
 
-#: src/pages/quick-capture-page.tsx:160
+#: src/pages/quick-capture-page.tsx:163
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
 msgstr "{failedCovers, plural, other {追加しました。ただし # 件のカバー画像をダウンロードできませんでした（URL は保持）。}}"
 
@@ -251,7 +251,7 @@ msgstr "{total, plural, other {# 件}}"
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
 
-#: src/pages/smart-list-page.tsx:248
+#: src/pages/smart-list-page.tsx:249
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 件が一致}}"
 
@@ -260,32 +260,32 @@ msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 件のフィールド}}"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:174
+#: src/components/smart-lists/rule-builder.tsx:175
 msgid "<"
 msgstr "<"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:170
+#: src/components/smart-lists/rule-builder.tsx:171
 msgid "="
 msgstr "="
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:171
+#: src/components/smart-lists/rule-builder.tsx:172
 msgid "≠"
 msgstr "≠"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:172
+#: src/components/smart-lists/rule-builder.tsx:173
 msgid ">"
 msgstr ">"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:175
+#: src/components/smart-lists/rule-builder.tsx:176
 msgid "≤"
 msgstr "≤"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:173
+#: src/components/smart-lists/rule-builder.tsx:174
 msgid "≥"
 msgstr "≥"
 
@@ -302,11 +302,11 @@ msgid "📅 Scheduled"
 msgstr "📅 予定"
 
 #. placeholder {0}: result.entity.basename
-#: src/pages/quick-capture-page.tsx:177
+#: src/pages/quick-capture-page.tsx:180
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "このタイトルと同名のファイルがすでに存在したため、「{0}」として保存しました。"
 
-#: src/pages/smart-list-page.tsx:623
+#: src/pages/smart-list-page.tsx:615
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名のリストが既に存在するか、ファイルがディスク上で変更されています。"
 
@@ -330,14 +330,14 @@ msgstr "操作"
 msgid "Activity"
 msgstr "アクティビティ"
 
-#: src/components/entities/metadata-inputs.tsx:642
-#: src/components/settings/settings-controls.tsx:70
+#: src/components/entities/metadata-inputs.tsx:652
+#: src/components/settings/settings-controls.tsx:71
 #: src/components/settings/settings-sections.tsx:950
 #: src/pages/home-page.tsx:41
 #: src/pages/home-page.tsx:46
 #: src/pages/library-page.tsx:393
 #: src/pages/library-page.tsx:398
-#: src/pages/list-detail-page.tsx:925
+#: src/pages/list-detail-page.tsx:922
 msgid "Add"
 msgstr "追加"
 
@@ -384,39 +384,39 @@ msgstr "上に列挙オプションを追加してステータスに割り当て
 msgid "Add Field"
 msgstr "フィールドを追加"
 
-#: src/components/smart-lists/rule-builder.tsx:558
+#: src/components/smart-lists/rule-builder.tsx:559
 msgid "Add group"
 msgstr "グループを追加"
 
-#: src/pages/list-detail-page.tsx:452
-#: src/pages/list-detail-page.tsx:879
+#: src/pages/list-detail-page.tsx:449
+#: src/pages/list-detail-page.tsx:876
 msgid "Add items"
 msgstr "アイテムを追加"
 
-#: src/pages/quick-capture-page.tsx:204
+#: src/pages/quick-capture-page.tsx:207
 msgid "Add manually"
 msgstr "手動で追加"
 
-#: src/components/entities/metadata-inputs.tsx:314
+#: src/components/entities/metadata-inputs.tsx:315
 msgid "Add path or URL"
 msgstr "パスまたは URL を追加"
 
-#: src/components/smart-lists/rule-builder.tsx:543
-#: src/components/smart-lists/rule-builder.tsx:624
+#: src/components/smart-lists/rule-builder.tsx:544
+#: src/components/smart-lists/rule-builder.tsx:625
 msgid "Add rule"
 msgstr "ルールを追加"
 
-#: src/pages/list-detail-page.tsx:448
+#: src/pages/list-detail-page.tsx:445
 msgid "Add section"
 msgstr "セクションを追加"
 
-#: src/components/entities/metadata-inputs.tsx:156
-#: src/components/smart-lists/rule-builder.tsx:847
+#: src/components/entities/metadata-inputs.tsx:157
+#: src/components/smart-lists/rule-builder.tsx:848
 msgid "Add value"
 msgstr "値を追加"
 
 #: src/components/settings/preset-picker.tsx:343
-#: src/pages/list-detail-page.tsx:914
+#: src/pages/list-detail-page.tsx:911
 msgid "Added"
 msgstr "追加済み"
 
@@ -425,12 +425,12 @@ msgid "Added {added} — {renamed}"
 msgstr "追加 {added} — {renamed}"
 
 #. placeholder {0}: result.episodes.error
-#: src/pages/quick-capture-page.tsx:167
+#: src/pages/quick-capture-page.tsx:170
 msgid "Added, but episode import failed: {0}"
 msgstr "追加しましたが、エピソードのインポートに失敗しました: {0}"
 
 #: src/components/settings/preset-picker.tsx:209
-#: src/pages/quick-capture-page.tsx:333
+#: src/pages/quick-capture-page.tsx:339
 msgid "Adding…"
 msgstr "追加中…"
 
@@ -442,21 +442,21 @@ msgstr "新しいセクションを追加"
 msgid "Advanced: edit full schema"
 msgstr "詳細設定: スキーマ全体を編集"
 
-#: src/components/smart-lists/rule-builder.tsx:648
+#: src/components/smart-lists/rule-builder.tsx:649
 #: src/pages/activity-page.tsx:41
 msgid "All"
 msgstr "すべて"
 
-#: src/pages/review-page.tsx:174
+#: src/pages/review-page.tsx:178
 msgid "All dates"
 msgstr "すべての日付"
 
 #. Prefix before a group of filter-criteria chips: all must match
-#: src/pages/smart-list-page.tsx:755
+#: src/pages/smart-list-page.tsx:747
 msgid "all of"
 msgstr "すべてが一致"
 
-#: src/pages/quick-capture-page.tsx:250
+#: src/pages/quick-capture-page.tsx:256
 msgid "All providers"
 msgstr "すべてのプロバイダー"
 
@@ -471,9 +471,9 @@ msgstr "すべてのソース"
 #: src/pages/activity-page.tsx:134
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
-#: src/pages/quick-capture-page.tsx:239
-#: src/pages/review-page.tsx:166
-#: src/pages/smart-list-page.tsx:499
+#: src/pages/quick-capture-page.tsx:245
+#: src/pages/review-page.tsx:170
+#: src/pages/smart-list-page.tsx:491
 msgid "All types"
 msgstr "すべてのタイプ"
 
@@ -482,7 +482,7 @@ msgstr "すべてのタイプ"
 msgid "All types ({0})"
 msgstr "すべてのタイプ（{0}）"
 
-#: src/components/smart-lists/rule-builder.tsx:775
+#: src/components/smart-lists/rule-builder.tsx:776
 msgid "Amount"
 msgstr "数量"
 
@@ -490,19 +490,19 @@ msgstr "数量"
 msgid "Anime"
 msgstr "アニメ"
 
-#: src/components/smart-lists/rule-builder.tsx:649
+#: src/components/smart-lists/rule-builder.tsx:650
 msgid "Any"
 msgstr "いずれか"
 
 #. placeholder {0}: filter.label
-#: src/components/assets/asset-toolbar.tsx:160
-#: src/components/assets/asset-toolbar.tsx:178
-#: src/components/assets/asset-toolbar.tsx:242
+#: src/components/assets/asset-toolbar.tsx:161
+#: src/components/assets/asset-toolbar.tsx:179
+#: src/components/assets/asset-toolbar.tsx:252
 msgid "Any {0}"
 msgstr "すべての {0}"
 
 #. Prefix before a group of filter-criteria chips: at least one must match
-#: src/pages/smart-list-page.tsx:747
+#: src/pages/smart-list-page.tsx:739
 msgid "any of"
 msgstr "いずれかが一致"
 
@@ -523,9 +523,9 @@ msgstr "選択項目を適用"
 msgid "Applying…"
 msgstr "適用中…"
 
-#: src/components/assets/asset-toolbar.tsx:114
+#: src/components/assets/asset-toolbar.tsx:115
 #: src/components/settings/settings-sections.tsx:213
-#: src/pages/smart-list-page.tsx:553
+#: src/pages/smart-list-page.tsx:545
 msgid "Ascending"
 msgstr "昇順"
 
@@ -566,7 +566,7 @@ msgstr "本文セクション"
 msgid "Book"
 msgstr "書籍"
 
-#: src/pages/review-page.tsx:52
+#: src/pages/review-page.tsx:53
 msgid "Broken Assets"
 msgstr "壊れたアセット"
 
@@ -594,12 +594,12 @@ msgstr "カレンダー"
 #: src/pages/entity-page.tsx:694
 #: src/pages/import-wizard-page.tsx:274
 #: src/pages/import-wizard-page.tsx:308
-#: src/pages/list-detail-page.tsx:529
-#: src/pages/list-detail-page.tsx:1000
+#: src/pages/list-detail-page.tsx:526
+#: src/pages/list-detail-page.tsx:997
 #: src/pages/lists-page.tsx:230
-#: src/pages/smart-list-page.tsx:260
-#: src/pages/smart-list-page.tsx:413
-#: src/pages/smart-list-page.tsx:666
+#: src/pages/smart-list-page.tsx:261
+#: src/pages/smart-list-page.tsx:414
+#: src/pages/smart-list-page.tsx:658
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -612,7 +612,7 @@ msgstr "追いつく"
 msgid "Change completion date"
 msgstr "完了日を変更"
 
-#: src/pages/list-detail-page.tsx:976
+#: src/pages/list-detail-page.tsx:973
 msgid "Changes the list's name."
 msgstr "リストの名前を変更します。"
 
@@ -702,7 +702,7 @@ msgstr "接続"
 
 #. Text rule operator: substring match
 #. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)
-#: src/components/smart-lists/rule-builder.tsx:193
+#: src/components/smart-lists/rule-builder.tsx:194
 #: src/components/smart-lists/rule-format.ts:40
 msgid "contains"
 msgstr "が次を含む:"
@@ -713,12 +713,12 @@ msgid "contains all"
 msgstr "が次をすべて含む:"
 
 #. Rule operator: list field contains all of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:160
+#: src/components/smart-lists/rule-builder.tsx:161
 msgid "contains all of"
 msgstr "が次をすべて含む"
 
 #. Rule operator: list field contains any of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:156
+#: src/components/smart-lists/rule-builder.tsx:157
 msgid "contains any of"
 msgstr "が次のいずれかを含む"
 
@@ -731,7 +731,7 @@ msgstr "続行"
 msgid "Continue ({0})"
 msgstr "続行（{0}）"
 
-#: src/components/assets/asset-toolbar.tsx:226
+#: src/components/assets/asset-toolbar.tsx:230
 msgid "Could not load options."
 msgstr "オプションを読み込めませんでした。"
 
@@ -745,7 +745,7 @@ msgstr "この CSV ファイルを読み込めませんでした。"
 msgid "Create"
 msgstr "作成"
 
-#: src/pages/quick-capture-page.tsx:350
+#: src/pages/quick-capture-page.tsx:356
 msgid "Create “{query}” manually →"
 msgstr "「{query}」を手動で作成 →"
 
@@ -833,7 +833,7 @@ msgid "date"
 msgstr "日付"
 
 #: src/components/assets/quick-log-dialog.tsx:129
-#: src/components/smart-lists/rule-builder.tsx:801
+#: src/components/smart-lists/rule-builder.tsx:802
 #: src/pages/activity-page.tsx:275
 msgid "Date"
 msgstr "日付"
@@ -860,7 +860,7 @@ msgid "Dates & episodes"
 msgstr "日付とエピソード"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:206
+#: src/components/smart-lists/rule-builder.tsx:207
 msgid "days"
 msgstr "日"
 
@@ -873,28 +873,28 @@ msgid "Default line format"
 msgstr "デフォルトの行フォーマット"
 
 #: src/pages/entity-page.tsx:464
-#: src/pages/list-detail-page.tsx:415
-#: src/pages/list-detail-page.tsx:629
-#: src/pages/smart-list-page.tsx:302
-#: src/pages/smart-list-page.tsx:416
+#: src/pages/list-detail-page.tsx:412
+#: src/pages/list-detail-page.tsx:626
+#: src/pages/smart-list-page.tsx:303
+#: src/pages/smart-list-page.tsx:417
 msgid "Delete"
 msgstr "削除"
 
-#: src/pages/smart-list-page.tsx:402
+#: src/pages/smart-list-page.tsx:403
 msgid "Delete this smart list?"
 msgstr "このスマートリストを削除しますか？"
 
-#: src/components/assets/asset-toolbar.tsx:115
+#: src/components/assets/asset-toolbar.tsx:116
 #: src/components/settings/settings-sections.tsx:214
-#: src/pages/smart-list-page.tsx:554
+#: src/pages/smart-list-page.tsx:546
 msgid "Descending"
 msgstr "降順"
 
-#: src/pages/list-detail-page.tsx:434
+#: src/pages/list-detail-page.tsx:431
 msgid "Describe this list (appears above the items)…"
 msgstr "このリストの説明（アイテムの上に表示されます）…"
 
-#: src/pages/list-detail-page.tsx:432
+#: src/pages/list-detail-page.tsx:429
 msgid "Description"
 msgstr "説明"
 
@@ -906,13 +906,13 @@ msgstr "グループの選択を解除"
 msgid "Details"
 msgstr "詳細"
 
-#: src/components/assets/asset-toolbar.tsx:112
+#: src/components/assets/asset-toolbar.tsx:113
 #: src/components/settings/settings-sections.tsx:201
-#: src/pages/smart-list-page.tsx:540
+#: src/pages/smart-list-page.tsx:532
 msgid "Direction"
 msgstr "方向"
 
-#: src/components/settings/settings-controls.tsx:271
+#: src/components/settings/settings-controls.tsx:276
 msgid "Disable"
 msgstr "無効にする"
 
@@ -929,19 +929,19 @@ msgid "Display name"
 msgstr "表示名"
 
 #. Rule operator: field does not contain the value(s)
-#: src/components/smart-lists/rule-builder.tsx:164
+#: src/components/smart-lists/rule-builder.tsx:165
 msgid "does not contain"
 msgstr "を含まない"
 
 #. Relation rule operator: note does not link to the entity
-#: src/components/smart-lists/rule-builder.tsx:197
+#: src/components/smart-lists/rule-builder.tsx:198
 msgid "does not link to"
 msgstr "にリンクしていない"
 
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
 #: src/pages/entity-page.tsx:630
-#: src/pages/list-detail-page.tsx:936
+#: src/pages/list-detail-page.tsx:933
 msgid "Done"
 msgstr "完了"
 
@@ -961,11 +961,11 @@ msgstr "リモートのカバー画像をダウンロード"
 msgid "Download scope"
 msgstr "ダウンロード範囲"
 
-#: src/pages/list-detail-page.tsx:669
+#: src/pages/list-detail-page.tsx:666
 msgid "Drag items here"
 msgstr "ここにアイテムをドラッグ"
 
-#: src/pages/list-detail-page.tsx:732
+#: src/pages/list-detail-page.tsx:729
 msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
@@ -974,12 +974,12 @@ msgstr "ドラッグして並べ替え"
 msgid "Dropped"
 msgstr "中止"
 
-#: src/pages/review-page.tsx:57
+#: src/pages/review-page.tsx:58
 msgid "Duplicate Filenames"
 msgstr "重複したファイル名"
 
 #: src/pages/entity-page.tsx:437
-#: src/pages/list-detail-page.tsx:823
+#: src/pages/list-detail-page.tsx:820
 msgid "Edit"
 msgstr "編集"
 
@@ -992,7 +992,7 @@ msgstr "{0} を編集"
 msgid "Edit config.yaml"
 msgstr "config.yaml を編集"
 
-#: src/pages/smart-list-page.tsx:282
+#: src/pages/smart-list-page.tsx:283
 msgid "Edit criteria"
 msgstr "条件を編集"
 
@@ -1007,8 +1007,8 @@ msgstr "このタイプの基本情報、プロバイダー、ファイル名、
 #: src/components/assets/frontmatter-panel.tsx:127
 #: src/components/assets/frontmatter-panel.tsx:217
 #: src/components/assets/frontmatter-panel.tsx:239
-#: src/components/entities/metadata-inputs.tsx:83
-#: src/components/entities/metadata-inputs.tsx:136
+#: src/components/entities/metadata-inputs.tsx:84
+#: src/components/entities/metadata-inputs.tsx:137
 msgid "Empty"
 msgstr "空"
 
@@ -1020,13 +1020,13 @@ msgstr "空のリスト"
 msgid "Empty object"
 msgstr "空のオブジェクト"
 
-#: src/components/settings/settings-controls.tsx:271
+#: src/components/settings/settings-controls.tsx:276
 msgid "Enable"
 msgstr "有効にする"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title ends with !'
-#: src/components/smart-lists/rule-builder.tsx:195
+#: src/components/smart-lists/rule-builder.tsx:196
 #: src/components/smart-lists/rule-format.ts:54
 msgid "ends with"
 msgstr "が次で終わる:"
@@ -1039,7 +1039,7 @@ msgstr "英語"
 msgid "Entities"
 msgstr "アイテム"
 
-#: src/components/smart-lists/rule-builder.tsx:937
+#: src/components/smart-lists/rule-builder.tsx:951
 msgid "Entity name"
 msgstr "アイテム名"
 
@@ -1114,7 +1114,7 @@ msgstr "{0} からライブラリを取得しています…"
 #: src/components/settings/settings-dialogs.tsx:396
 #: src/components/settings/settings-dialogs.tsx:406
 #: src/components/settings/settings-sections.tsx:611
-#: src/components/smart-lists/rule-builder.tsx:700
+#: src/components/smart-lists/rule-builder.tsx:701
 msgid "Field"
 msgstr "フィールド"
 
@@ -1122,12 +1122,12 @@ msgstr "フィールド"
 msgid "Fields"
 msgstr "フィールド"
 
-#: src/pages/review-page.tsx:266
+#: src/pages/review-page.tsx:270
 msgid "File"
 msgstr "ファイル"
 
 #. Rule-builder field for the note's file name (its title)
-#: src/components/smart-lists/rule-builder.tsx:144
+#: src/components/smart-lists/rule-builder.tsx:145
 #: src/pages/entity-create-page.tsx:100
 msgid "File name"
 msgstr "ファイル名"
@@ -1144,7 +1144,7 @@ msgstr "ファイル名タイトル — 用途"
 msgid "Filename title language"
 msgstr "ファイル名タイトルの言語"
 
-#: src/pages/review-page.tsx:240
+#: src/pages/review-page.tsx:244
 msgid "Files the library could not parse cleanly."
 msgstr "ライブラリが正常に解析できなかったファイルです。"
 
@@ -1157,7 +1157,7 @@ msgstr "ソースで絞り込む"
 msgid "Filter by type"
 msgstr "タイプで絞り込む"
 
-#: src/components/assets/asset-toolbar.tsx:76
+#: src/components/assets/asset-toolbar.tsx:77
 msgid "Filters"
 msgstr "フィルター"
 
@@ -1169,7 +1169,7 @@ msgstr "例：エピソード番号"
 msgid "Form"
 msgstr "フォーム"
 
-#: src/pages/review-page.tsx:264
+#: src/pages/review-page.tsx:268
 msgid "Frontmatter"
 msgstr "フロントマター"
 
@@ -1189,28 +1189,28 @@ msgstr "戻る"
 msgid "Go to library"
 msgstr "ライブラリへ移動"
 
-#: src/components/assets/asset-toolbar.tsx:134
+#: src/components/assets/asset-toolbar.tsx:135
 msgid "Grid"
 msgstr "グリッド"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'
 #. Rule operator: field has any value
-#: src/components/smart-lists/rule-builder.tsx:155
+#: src/components/smart-lists/rule-builder.tsx:156
 #: src/components/smart-lists/rule-format.ts:58
 msgid "has a value"
 msgstr "に値がある"
 
 #. Tags rule operator: has any of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:201
+#: src/components/smart-lists/rule-builder.tsx:202
 msgid "has any of"
 msgstr "が次のいずれかを含む"
 
-#: src/pages/review-page.tsx:175
+#: src/pages/review-page.tsx:179
 msgid "Has date"
 msgstr "日付あり"
 
 #. Tags rule operator: has none of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:202
+#: src/components/smart-lists/rule-builder.tsx:203
 msgid "has none of"
 msgstr "が次のいずれも含まない"
 
@@ -1281,7 +1281,7 @@ msgstr "フォルダ:"
 
 #: src/pages/import-wizard-page.tsx:684
 #: src/pages/import-wizard-page.tsx:688
-#: src/pages/quick-capture-page.tsx:314
+#: src/pages/quick-capture-page.tsx:320
 msgid "In library ✓"
 msgstr "ライブラリに登録済み ✓"
 
@@ -1290,7 +1290,7 @@ msgid "in list"
 msgstr "リスト内"
 
 #. Date rule operator: within the last N days/weeks/months/years
-#: src/components/smart-lists/rule-builder.tsx:181
+#: src/components/smart-lists/rule-builder.tsx:182
 msgid "in the last"
 msgstr "過去"
 
@@ -1300,54 +1300,54 @@ msgid "Include {0}"
 msgstr "{0} を含める"
 
 #. Rule operator: field equals the value
-#: src/components/smart-lists/rule-builder.tsx:152
+#: src/components/smart-lists/rule-builder.tsx:153
 msgid "is"
 msgstr "が次と一致"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:179
+#: src/components/smart-lists/rule-builder.tsx:180
 msgid "is after"
 msgstr "が次より後"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:177
+#: src/components/smart-lists/rule-builder.tsx:178
 msgid "is before"
 msgstr "が次より前"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'
 #. Rule operator: field has no value
-#: src/components/smart-lists/rule-builder.tsx:154
+#: src/components/smart-lists/rule-builder.tsx:155
 #: src/components/smart-lists/rule-format.ts:62
 msgid "is empty"
 msgstr "が空"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:169
+#: src/components/smart-lists/rule-builder.tsx:170
 msgid "is no"
 msgstr "がいいえ"
 
 #. Rule operator: field does not equal the value
-#: src/components/smart-lists/rule-builder.tsx:153
+#: src/components/smart-lists/rule-builder.tsx:154
 msgid "is not"
 msgstr "が次と不一致"
 
 #. Date rule operator: on this exact day/period
-#: src/components/smart-lists/rule-builder.tsx:176
+#: src/components/smart-lists/rule-builder.tsx:177
 msgid "is on"
 msgstr "が次の日付"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:180
+#: src/components/smart-lists/rule-builder.tsx:181
 msgid "is on or after"
 msgstr "が次の日付以降"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:178
+#: src/components/smart-lists/rule-builder.tsx:179
 msgid "is on or before"
 msgstr "が次の日付以前"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:168
+#: src/components/smart-lists/rule-builder.tsx:169
 msgid "is yes"
 msgstr "がはい"
 
@@ -1369,7 +1369,7 @@ msgstr "アイテム"
 msgid "Items {0}"
 msgstr "アイテム {0}"
 
-#: src/pages/list-detail-page.tsx:442
+#: src/pages/list-detail-page.tsx:439
 msgid "Items <0>({totalItems})</0>"
 msgstr "アイテム <0>({totalItems})</0>"
 
@@ -1416,7 +1416,7 @@ msgstr "折りたたむ"
 msgid "Library"
 msgstr "ライブラリ"
 
-#: src/pages/review-page.tsx:238
+#: src/pages/review-page.tsx:242
 msgid "Library Issues"
 msgstr "ライブラリの問題"
 
@@ -1429,7 +1429,7 @@ msgid "Light theme. Switch to dark theme."
 msgstr "ライトテーマ。ダークテーマに切り替えます。"
 
 #: src/components/settings/settings-sections.tsx:186
-#: src/pages/smart-list-page.tsx:562
+#: src/pages/smart-list-page.tsx:554
 msgid "Limit"
 msgstr "上限"
 
@@ -1442,7 +1442,7 @@ msgstr "行 {0}"
 msgid "Line format"
 msgstr "行フォーマット"
 
-#: src/components/smart-lists/rule-builder.tsx:938
+#: src/components/smart-lists/rule-builder.tsx:952
 msgid "Link target"
 msgstr "リンク先"
 
@@ -1460,7 +1460,7 @@ msgstr "リンク"
 
 #. Relation rule operator: note links to the entity
 #. Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'
-#: src/components/smart-lists/rule-builder.tsx:196
+#: src/components/smart-lists/rule-builder.tsx:197
 #: src/components/smart-lists/rule-format.ts:66
 msgid "links to"
 msgstr "リンク先:"
@@ -1469,7 +1469,7 @@ msgstr "リンク先:"
 msgid "Links to"
 msgstr "リンク先"
 
-#: src/components/assets/asset-toolbar.tsx:125
+#: src/components/assets/asset-toolbar.tsx:126
 #: src/pages/lists-page.tsx:188
 msgid "List"
 msgstr "リスト"
@@ -1479,15 +1479,15 @@ msgstr "リスト"
 msgid "List created"
 msgstr "リストを作成しました"
 
-#: src/pages/list-detail-page.tsx:368
+#: src/pages/list-detail-page.tsx:365
 msgid "List deleted"
 msgstr "リストを削除しました"
 
-#: src/pages/list-detail-page.tsx:390
+#: src/pages/list-detail-page.tsx:387
 msgid "List not found"
 msgstr "リストが見つかりません"
 
-#: src/pages/list-detail-page.tsx:635
+#: src/pages/list-detail-page.tsx:632
 msgid "List style"
 msgstr "リストのスタイル"
 
@@ -1524,13 +1524,13 @@ msgstr "分類を読み込み中"
 #: src/pages/entity-page.tsx:569
 #: src/pages/home-page.tsx:54
 #: src/pages/import-wizard-page.tsx:258
-#: src/pages/list-detail-page.tsx:386
-#: src/pages/list-detail-page.tsx:891
+#: src/pages/list-detail-page.tsx:383
+#: src/pages/list-detail-page.tsx:888
 #: src/pages/lists-page.tsx:55
 #: src/pages/onboarding-page.tsx:60
-#: src/pages/review-page.tsx:142
+#: src/pages/review-page.tsx:146
 #: src/pages/settings-page.tsx:96
-#: src/pages/smart-list-page.tsx:235
+#: src/pages/smart-list-page.tsx:236
 #: src/pages/statistics-page.tsx:48
 msgid "Loading…"
 msgstr "読み込み中…"
@@ -1569,11 +1569,11 @@ msgstr "リストを管理"
 msgid "Map each option to a status"
 msgstr "各オプションをステータスに割り当て"
 
-#: src/pages/list-detail-page.tsx:747
+#: src/pages/list-detail-page.tsx:744
 msgid "Mark as done"
 msgstr "完了にする"
 
-#: src/pages/list-detail-page.tsx:747
+#: src/pages/list-detail-page.tsx:744
 msgid "Mark as not done"
 msgstr "未完了にする"
 
@@ -1594,7 +1594,7 @@ msgstr "{0} にする"
 msgid "Match"
 msgstr "マッチ"
 
-#: src/components/smart-lists/rule-builder.tsx:644
+#: src/components/smart-lists/rule-builder.tsx:645
 msgid "Match mode"
 msgstr "一致モード"
 
@@ -1608,12 +1608,12 @@ msgstr "メタデータ"
 msgid "Missed?"
 msgstr "見逃した？"
 
-#: src/pages/review-page.tsx:51
+#: src/pages/review-page.tsx:52
 msgid "Missing Cover"
 msgstr "カバー画像なし"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:208
+#: src/components/smart-lists/rule-builder.tsx:209
 msgid "months"
 msgstr "か月"
 
@@ -1629,12 +1629,12 @@ msgstr "{label}を下へ移動"
 msgid "Move {label} up"
 msgstr "{label}を上へ移動"
 
-#: src/pages/list-detail-page.tsx:518
+#: src/pages/list-detail-page.tsx:515
 msgid "Move list to trash?"
 msgstr "リストをゴミ箱に移動しますか？"
 
 #: src/pages/entity-page.tsx:492
-#: src/pages/list-detail-page.tsx:538
+#: src/pages/list-detail-page.tsx:535
 msgid "Move to Trash"
 msgstr "ゴミ箱に移動"
 
@@ -1655,9 +1655,9 @@ msgid "My Vault"
 msgstr "マイ保管庫"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:92
-#: src/pages/list-detail-page.tsx:988
+#: src/pages/list-detail-page.tsx:985
 #: src/pages/lists-page.tsx:200
-#: src/pages/smart-list-page.tsx:649
+#: src/pages/smart-list-page.tsx:641
 msgid "Name"
 msgstr "名前"
 
@@ -1679,7 +1679,7 @@ msgstr "新しいフィールド"
 msgid "New list"
 msgstr "新しいリスト"
 
-#: src/pages/list-detail-page.tsx:311
+#: src/pages/list-detail-page.tsx:308
 msgid "New section"
 msgstr "新しいセクション"
 
@@ -1702,7 +1702,7 @@ msgstr "いいえ"
 
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
-#: src/components/entities/metadata-inputs.tsx:138
+#: src/components/entities/metadata-inputs.tsx:139
 #: src/pages/library-page.tsx:497
 msgid "No"
 msgstr "いいえ"
@@ -1721,11 +1721,11 @@ msgstr "このタイプのスキーマに一致する候補フィールドまた
 msgid "No candidates loaded"
 msgstr "候補が読み込まれていません"
 
-#: src/pages/smart-list-page.tsx:717
+#: src/pages/smart-list-page.tsx:709
 msgid "No criteria — everything in the library matches."
 msgstr "条件がありません — ライブラリのすべてが一致します。"
 
-#: src/pages/review-page.tsx:176
+#: src/pages/review-page.tsx:180
 msgid "No date"
 msgstr "日付なし"
 
@@ -1751,7 +1751,7 @@ msgstr "アイテムのタイプが設定されていません。"
 msgid "No entries"
 msgstr "エントリなし"
 
-#: src/pages/smart-list-page.tsx:376
+#: src/pages/smart-list-page.tsx:377
 msgid "No entries match the criteria"
 msgstr "条件に一致する項目がありません"
 
@@ -1771,7 +1771,7 @@ msgstr "フィールドが設定されていません。"
 msgid "No folder selected"
 msgstr "フォルダーが選択されていません"
 
-#: src/pages/smart-list-page.tsx:715
+#: src/pages/smart-list-page.tsx:707
 msgid "No further criteria — every entry of this type matches."
 msgstr "追加の条件はありません — このタイプのすべての項目が一致します。"
 
@@ -1788,11 +1788,11 @@ msgstr "まだホームセクションはありません"
 msgid "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
 msgstr "まだアイテムがありません — プロバイダーから同期するか、<0>{0}</0> 見出しの下にリストを追加してください。"
 
-#: src/pages/list-detail-page.tsx:458
+#: src/pages/list-detail-page.tsx:455
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "まだアイテムがありません。「アイテムを追加」でこのリストにアイテムを入れるか、「セクションを追加」でグループ化してください。"
 
-#: src/pages/smart-list-page.tsx:560
+#: src/pages/smart-list-page.tsx:552
 msgid "No limit"
 msgstr "制限なし"
 
@@ -1816,11 +1816,11 @@ msgstr "一致するソースがありません"
 msgid "No matches"
 msgstr "一致なし"
 
-#: src/pages/quick-capture-page.tsx:284
+#: src/pages/quick-capture-page.tsx:290
 msgid "No matches found."
 msgstr "一致するものが見つかりませんでした。"
 
-#: src/pages/list-detail-page.tsx:895
+#: src/pages/list-detail-page.tsx:892
 msgid "No matching entities."
 msgstr "一致するアイテムがありません。"
 
@@ -1828,7 +1828,7 @@ msgstr "一致するアイテムがありません。"
 msgid "No matching type"
 msgstr "一致するタイプがありません"
 
-#: src/pages/review-page.tsx:250
+#: src/pages/review-page.tsx:254
 msgid "No parsing issues found."
 msgstr "解析上の問題は見つかりませんでした。"
 
@@ -1836,7 +1836,7 @@ msgstr "解析上の問題は見つかりませんでした。"
 msgid "No provider with a list is linked on this entity."
 msgstr "このアイテムにはリストを持つプロバイダーがリンクされていません。"
 
-#: src/pages/review-page.tsx:196
+#: src/pages/review-page.tsx:200
 msgid "No queue items match the current filters"
 msgstr "現在のフィルターに一致するキューアイテムがありません"
 
@@ -1857,7 +1857,7 @@ msgstr "タイプのオプションがありません。"
 msgid "No value returned"
 msgstr "値が返されませんでした"
 
-#: src/components/settings/settings-controls.tsx:97
+#: src/components/settings/settings-controls.tsx:98
 msgid "No values."
 msgstr "値がありません。"
 
@@ -1870,7 +1870,7 @@ msgstr "まだ保管庫がありません。"
 #: src/components/settings/settings-sections.tsx:690
 #: src/components/settings/settings-sections.tsx:743
 #: src/components/settings/settings-sections.tsx:788
-#: src/components/smart-lists/rule-builder.tsx:650
+#: src/components/smart-lists/rule-builder.tsx:651
 msgid "None"
 msgstr "なし"
 
@@ -1879,7 +1879,7 @@ msgid "None (plain list)"
 msgstr "なし（プレーンリスト）"
 
 #. Prefix before a group of filter-criteria chips: none may match
-#: src/pages/smart-list-page.tsx:751
+#: src/pages/smart-list-page.tsx:743
 msgid "none of"
 msgstr "いずれも不一致"
 
@@ -1898,12 +1898,12 @@ msgstr "ノート"
 
 #: src/components/assets/entity-detail.tsx:227
 #: src/components/entities/metadata-editor.tsx:165
-#: src/pages/list-detail-page.tsx:489
+#: src/pages/list-detail-page.tsx:486
 #: src/pages/statistics-page.tsx:32
 msgid "Notes"
 msgstr "ノート"
 
-#: src/pages/list-detail-page.tsx:491
+#: src/pages/list-detail-page.tsx:488
 msgid "Notes shown below the items…"
 msgstr "アイテムの下に表示されるノート…"
 
@@ -1915,8 +1915,8 @@ msgstr "まだ何もありません"
 msgid "Nothing to log for this type."
 msgstr "このタイプに記録するものがありません。"
 
-#: src/components/smart-lists/rule-builder.tsx:513
-#: src/components/smart-lists/rule-builder.tsx:593
+#: src/components/smart-lists/rule-builder.tsx:514
+#: src/components/smart-lists/rule-builder.tsx:594
 msgid "of the following match:"
 msgstr "以下の条件:"
 
@@ -1931,7 +1931,7 @@ msgid "Off"
 msgstr "オフ"
 
 #. Date rule operator: earlier than N days/weeks/months/years ago
-#: src/components/smart-lists/rule-builder.tsx:185
+#: src/components/smart-lists/rule-builder.tsx:186
 msgid "older than"
 msgstr "が次より古い"
 
@@ -1940,7 +1940,7 @@ msgstr "が次より古い"
 msgid "Ongoing"
 msgstr "進行中"
 
-#: src/components/entities/metadata-inputs.tsx:252
+#: src/components/entities/metadata-inputs.tsx:253
 msgid "Only image files can be uploaded."
 msgstr "画像ファイルのみアップロードできます。"
 
@@ -1968,11 +1968,11 @@ msgstr "ナビゲーションを開く"
 msgid "Open or create a vault to get started."
 msgstr "保管庫を開くか作成して始めましょう。"
 
-#: src/components/smart-lists/rule-builder.tsx:720
+#: src/components/smart-lists/rule-builder.tsx:721
 msgid "Operator"
 msgstr "演算子"
 
-#: src/pages/list-detail-page.tsx:647
+#: src/pages/list-detail-page.tsx:644
 msgid "Ordered"
 msgstr "順序あり"
 
@@ -1996,7 +1996,7 @@ msgstr "ページが見つかりません"
 msgid "Parent folder"
 msgstr "親フォルダー"
 
-#: src/components/settings/settings-controls.tsx:174
+#: src/components/settings/settings-controls.tsx:179
 #: src/components/settings/settings-sections.tsx:283
 msgid "Path"
 msgstr "パス"
@@ -2010,7 +2010,7 @@ msgstr "パス"
 msgid "Paused"
 msgstr "中断"
 
-#: src/components/entities/metadata-inputs.tsx:767
+#: src/components/entities/metadata-inputs.tsx:777
 msgid "Pick a date"
 msgstr "日付を選択"
 
@@ -2032,7 +2032,7 @@ msgstr "計画中"
 msgid "Prev"
 msgstr "前へ"
 
-#: src/pages/list-detail-page.tsx:823
+#: src/pages/list-detail-page.tsx:820
 msgid "Preview"
 msgstr "プレビュー"
 
@@ -2041,17 +2041,17 @@ msgid "Previewing…"
 msgstr "プレビュー中…"
 
 #: src/components/assets/quick-log-dialog.tsx:28
-#: src/pages/review-page.tsx:409
+#: src/pages/review-page.tsx:413
 msgid "Progress"
 msgstr "進捗"
 
-#: src/components/entities/metadata-inputs.tsx:635
+#: src/components/entities/metadata-inputs.tsx:645
 msgid "property"
 msgstr "プロパティ"
 
 #: src/components/assets/episode-sync-dialog.tsx:238
 #: src/components/entities/external-match-dialog.tsx:127
-#: src/pages/quick-capture-page.tsx:248
+#: src/pages/quick-capture-page.tsx:254
 msgid "Provider"
 msgstr "プロバイダー"
 
@@ -2071,7 +2071,7 @@ msgstr "プロバイダー"
 msgid "Public profile"
 msgstr "公開プロフィール"
 
-#: src/pages/quick-capture-page.tsx:198
+#: src/pages/quick-capture-page.tsx:201
 msgid "Quick Capture"
 msgstr "クイックキャプチャ"
 
@@ -2115,7 +2115,7 @@ msgstr "最新バージョンを再読み込み"
 msgid "Remove {0}"
 msgstr "{0} を削除"
 
-#: src/components/settings/settings-controls.tsx:92
+#: src/components/settings/settings-controls.tsx:93
 msgid "Remove {label}"
 msgstr "{label} を削除"
 
@@ -2132,7 +2132,7 @@ msgstr "外部フィールドのマッピングを削除"
 msgid "Remove field"
 msgstr "フィールドを削除"
 
-#: src/components/smart-lists/rule-builder.tsx:600
+#: src/components/smart-lists/rule-builder.tsx:601
 msgid "Remove group"
 msgstr "グループを削除"
 
@@ -2140,16 +2140,16 @@ msgstr "グループを削除"
 msgid "Remove icon"
 msgstr "アイコンを削除"
 
-#: src/components/entities/metadata-inputs.tsx:294
+#: src/components/entities/metadata-inputs.tsx:295
 msgid "Remove image"
 msgstr "画像を削除"
 
-#: src/pages/list-detail-page.tsx:791
+#: src/pages/list-detail-page.tsx:788
 msgid "Remove item"
 msgstr "アイテムを削除"
 
-#: src/components/smart-lists/rule-builder.tsx:682
-#: src/components/smart-lists/rule-builder.tsx:742
+#: src/components/smart-lists/rule-builder.tsx:683
+#: src/components/smart-lists/rule-builder.tsx:743
 msgid "Remove rule"
 msgstr "ルールを削除"
 
@@ -2164,19 +2164,19 @@ msgstr "タイプを削除"
 #: src/pages/entity-page.tsx:441
 #: src/pages/entity-page.tsx:665
 #: src/pages/entity-page.tsx:701
-#: src/pages/list-detail-page.tsx:405
-#: src/pages/list-detail-page.tsx:625
-#: src/pages/list-detail-page.tsx:1004
-#: src/pages/smart-list-page.tsx:292
-#: src/pages/smart-list-page.tsx:673
+#: src/pages/list-detail-page.tsx:402
+#: src/pages/list-detail-page.tsx:622
+#: src/pages/list-detail-page.tsx:1001
+#: src/pages/smart-list-page.tsx:293
+#: src/pages/smart-list-page.tsx:665
 msgid "Rename"
 msgstr "名前を変更"
 
-#: src/pages/list-detail-page.tsx:973
+#: src/pages/list-detail-page.tsx:970
 msgid "Rename list"
 msgstr "リストの名前を変更"
 
-#: src/pages/smart-list-page.tsx:634
+#: src/pages/smart-list-page.tsx:626
 msgid "Rename smart list"
 msgstr "スマートリストの名前を変更"
 
@@ -2193,13 +2193,13 @@ msgstr "名前を変更しました — {updated, plural, other {# 件のリン�
 msgid "renamed to “{0}”"
 msgstr "「{0}」に名前を変更しました"
 
-#: src/pages/smart-list-page.tsx:637
+#: src/pages/smart-list-page.tsx:629
 msgid "Renames the .base file in your vault."
 msgstr "保管庫内の .base ファイルの名前を変更します。"
 
 #: src/pages/entity-page.tsx:701
-#: src/pages/list-detail-page.tsx:1004
-#: src/pages/smart-list-page.tsx:673
+#: src/pages/list-detail-page.tsx:1001
+#: src/pages/smart-list-page.tsx:665
 msgid "Renaming…"
 msgstr "名前を変更中…"
 
@@ -2213,7 +2213,7 @@ msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
 
 #: src/components/layout/app-frame.tsx:391
-#: src/pages/review-page.tsx:135
+#: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "レビュー"
 
@@ -2228,8 +2228,8 @@ msgstr "実行中…"
 #: src/components/entities/metadata-editor.tsx:127
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:173
-#: src/pages/list-detail-page.tsx:427
-#: src/pages/smart-list-page.tsx:269
+#: src/pages/list-detail-page.tsx:424
+#: src/pages/smart-list-page.tsx:270
 msgid "Save"
 msgstr "保存"
 
@@ -2259,8 +2259,8 @@ msgstr "現在のタイプ、フィルター、並び順をスマートリスト
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:173
-#: src/pages/list-detail-page.tsx:427
-#: src/pages/smart-list-page.tsx:269
+#: src/pages/list-detail-page.tsx:424
+#: src/pages/smart-list-page.tsx:270
 msgid "Saving…"
 msgstr "保存中…"
 
@@ -2270,14 +2270,14 @@ msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHEL
 msgstr "このインスタンスではスキーマ編集が無効です（読み取り専用）。有効にするには <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> を設定してください。"
 
 #: src/pages/lists-page.tsx:211
-#: src/pages/smart-list-page.tsx:488
-#: src/pages/smart-list-page.tsx:493
+#: src/pages/smart-list-page.tsx:480
+#: src/pages/smart-list-page.tsx:485
 msgid "Scope"
 msgstr "範囲"
 
 #: src/components/entities/external-match-dialog.tsx:120
 #: src/components/entities/external-match-dialog.tsx:145
-#: src/pages/quick-capture-page.tsx:218
+#: src/pages/quick-capture-page.tsx:221
 msgid "Search"
 msgstr "検索"
 
@@ -2285,7 +2285,7 @@ msgstr "検索"
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
 
-#: src/pages/list-detail-page.tsx:885
+#: src/pages/list-detail-page.tsx:882
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
@@ -2295,21 +2295,21 @@ msgstr "アイテムを検索…"
 msgid "Search library"
 msgstr "ライブラリを検索"
 
-#: src/components/entities/metadata-inputs.tsx:154
+#: src/components/entities/metadata-inputs.tsx:155
 msgid "Search or add {relationType}"
 msgstr "{relationType} を検索または追加"
 
-#: src/components/entities/metadata-inputs.tsx:155
+#: src/components/entities/metadata-inputs.tsx:156
 msgid "Search or add relation"
 msgstr "関連を検索または追加"
 
-#: src/pages/review-page.tsx:162
+#: src/pages/review-page.tsx:166
 msgid "Search queue"
 msgstr "キューを検索"
 
 #: src/components/entities/external-match-dialog.tsx:145
 #: src/components/ui/multi-value-combobox.tsx:146
-#: src/pages/quick-capture-page.tsx:280
+#: src/pages/quick-capture-page.tsx:286
 msgid "Searching…"
 msgstr "検索中…"
 
@@ -2327,12 +2327,12 @@ msgstr "シーズンの言語"
 msgid "Section"
 msgstr "セクション"
 
-#: src/pages/list-detail-page.tsx:615
+#: src/pages/list-detail-page.tsx:612
 msgid "Section actions"
 msgstr "セクションの操作"
 
-#: src/pages/list-detail-page.tsx:588
-#: src/pages/list-detail-page.tsx:590
+#: src/pages/list-detail-page.tsx:585
+#: src/pages/list-detail-page.tsx:587
 msgid "Section heading"
 msgstr "セクションの見出し"
 
@@ -2364,7 +2364,7 @@ msgstr "すべて選択"
 msgid "Select field"
 msgstr "フィールドを選択"
 
-#: src/components/settings/settings-controls.tsx:166
+#: src/components/settings/settings-controls.tsx:171
 msgid "Select folder"
 msgstr "フォルダーを選択"
 
@@ -2399,7 +2399,7 @@ msgid "Show all"
 msgstr "すべて表示"
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:280
+#: src/pages/review-page.tsx:284
 msgid "Showing {shownCount} of {0} issues."
 msgstr "全{0}件中{shownCount}件の問題を表示しています。"
 
@@ -2421,19 +2421,19 @@ msgstr "スマートリスト"
 msgid "Smart list created"
 msgstr "スマートリストを作成しました"
 
-#: src/pages/smart-list-page.tsx:206
+#: src/pages/smart-list-page.tsx:207
 msgid "Smart list deleted"
 msgstr "スマートリストを削除しました"
 
-#: src/pages/smart-list-page.tsx:239
+#: src/pages/smart-list-page.tsx:240
 msgid "Smart list not found"
 msgstr "スマートリストが見つかりません"
 
-#: src/pages/smart-list-page.tsx:615
+#: src/pages/smart-list-page.tsx:607
 msgid "Smart list renamed"
 msgstr "スマートリストの名前を変更しました"
 
-#: src/pages/smart-list-page.tsx:192
+#: src/pages/smart-list-page.tsx:193
 msgid "Smart list saved"
 msgstr "スマートリストを保存しました"
 
@@ -2445,7 +2445,7 @@ msgstr "一部の画像をダウンロードできませんでした"
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "一部の画像をダウンロードできませんでした: {reasons}"
 
-#: src/pages/smart-list-page.tsx:691
+#: src/pages/smart-list-page.tsx:683
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "このファイルの一部の構文はサポートされていないため無視されます:"
 
@@ -2455,36 +2455,36 @@ msgstr "このファイルの一部の構文はサポートされていないた
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
-#: src/components/assets/asset-toolbar.tsx:94
+#: src/components/assets/asset-toolbar.tsx:95
 #: src/components/settings/settings-sections.tsx:187
-#: src/pages/smart-list-page.tsx:516
+#: src/pages/smart-list-page.tsx:508
 msgid "Sort"
 msgstr "並び替え"
 
 #. Label before the sort-key picker of the active smart-list view
 #. placeholder {0}: activeView.name
-#: src/pages/smart-list-page.tsx:509
+#: src/pages/smart-list-page.tsx:501
 msgid "Sort {0} by"
 msgstr "{0} の並び順"
 
 #. placeholder {0}: dateFieldLabel(field)
-#: src/components/assets/asset-toolbar.tsx:103
+#: src/components/assets/asset-toolbar.tsx:104
 msgid "Sort by {0}"
 msgstr "{0} で並び替え"
 
-#: src/components/assets/asset-toolbar.tsx:106
+#: src/components/assets/asset-toolbar.tsx:107
 msgid "Sort by connections"
 msgstr "関連数で並び替え"
 
-#: src/components/assets/asset-toolbar.tsx:97
+#: src/components/assets/asset-toolbar.tsx:98
 msgid "Sort by relevance"
 msgstr "関連度で並び替え"
 
-#: src/components/assets/asset-toolbar.tsx:99
+#: src/components/assets/asset-toolbar.tsx:100
 msgid "Sort by title"
 msgstr "タイトルで並び替え"
 
-#: src/components/assets/asset-toolbar.tsx:100
+#: src/components/assets/asset-toolbar.tsx:101
 msgid "Sort by update time"
 msgstr "更新日時で並び替え"
 
@@ -2523,7 +2523,7 @@ msgstr "開始中…"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title starts with My'
-#: src/components/smart-lists/rule-builder.tsx:194
+#: src/components/smart-lists/rule-builder.tsx:195
 #: src/components/smart-lists/rule-format.ts:50
 msgid "starts with"
 msgstr "が次で始まる:"
@@ -2541,7 +2541,7 @@ msgstr "ステータス"
 msgid "Status field"
 msgstr "ステータスフィールド"
 
-#: src/pages/review-page.tsx:56
+#: src/pages/review-page.tsx:57
 msgid "Status Mismatch"
 msgstr "ステータスの不一致"
 
@@ -2591,7 +2591,7 @@ msgstr "システムテーマ。ライトテーマに切り替えます。"
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:83
-#: src/components/smart-lists/rule-builder.tsx:143
+#: src/components/smart-lists/rule-builder.tsx:144
 #: src/pages/library-page.tsx:104
 msgid "Tags"
 msgstr "タグ"
@@ -2614,7 +2614,7 @@ msgstr "分類のルート"
 msgid "taxonomy: {0}"
 msgstr "分類: {0}"
 
-#: src/pages/smart-list-page.tsx:405
+#: src/pages/smart-list-page.tsx:406
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base ファイルは保管庫のゴミ箱フォルダに移動します。一致するアイテムには影響しません。"
 
@@ -2648,7 +2648,7 @@ msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "{0} をゴミ箱に移動します。必要になったら後で復元できます。"
 
 #. placeholder {0}: data.name
-#: src/pages/list-detail-page.tsx:521
+#: src/pages/list-detail-page.tsx:518
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 msgstr "<0>{0}</0> をゴミ箱に移動します。含まれるアイテムはそのままです。"
 
@@ -2656,7 +2656,7 @@ msgstr "<0>{0}</0> をゴミ箱に移動します。含まれるアイテムは�
 msgid "This page doesn’t exist or may have moved."
 msgstr "このページは存在しないか、移動された可能性があります。"
 
-#: src/pages/smart-list-page.tsx:197
+#: src/pages/smart-list-page.tsx:198
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "このスマートリストはディスク上で変更されました。ページを再読み込みして編集をやり直してください。"
 
@@ -2667,7 +2667,7 @@ msgstr "今週"
 #: src/components/settings/settings-sections.tsx:141
 #: src/components/settings/settings-sections.tsx:153
 #: src/pages/entity-create-page.tsx:105
-#: src/pages/smart-list-page.tsx:458
+#: src/pages/smart-list-page.tsx:450
 msgid "Title"
 msgstr "タイトル"
 
@@ -2675,7 +2675,7 @@ msgstr "タイトル"
 msgid "Title language"
 msgstr "タイトルの言語"
 
-#: src/pages/quick-capture-page.tsx:230
+#: src/pages/quick-capture-page.tsx:236
 msgid "Title, or paste a provider URL"
 msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 
@@ -2683,7 +2683,7 @@ msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 msgid "Today"
 msgstr "今日"
 
-#: src/pages/list-detail-page.tsx:651
+#: src/pages/list-detail-page.tsx:648
 msgid "Todo"
 msgstr "未対応"
 
@@ -2712,11 +2712,11 @@ msgstr "もう一度試す"
 #: src/components/settings/settings-sections.tsx:612
 #: src/pages/entity-create-page.tsx:90
 #: src/pages/library-page.tsx:299
-#: src/pages/quick-capture-page.tsx:237
+#: src/pages/quick-capture-page.tsx:243
 msgid "Type"
 msgstr "タイプ"
 
-#: src/pages/quick-capture-page.tsx:276
+#: src/pages/quick-capture-page.tsx:282
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgstr "検索するには {MIN_QUERY_LENGTH} 文字以上入力してください。"
 
@@ -2734,15 +2734,15 @@ msgstr "タイプ"
 msgid "UI in English"
 msgstr "UI を英語で表示"
 
-#: src/pages/list-detail-page.tsx:582
+#: src/pages/list-detail-page.tsx:579
 msgid "Ungrouped"
 msgstr "グループなし"
 
-#: src/components/smart-lists/rule-builder.tsx:782
+#: src/components/smart-lists/rule-builder.tsx:783
 msgid "Unit"
 msgstr "単位"
 
-#: src/pages/review-page.tsx:54
+#: src/pages/review-page.tsx:55
 msgid "Unlinked Items"
 msgstr "リンクされていないアイテム"
 
@@ -2750,11 +2750,11 @@ msgstr "リンクされていないアイテム"
 msgid "Unmapped"
 msgstr "未マッピング"
 
-#: src/pages/review-page.tsx:53
+#: src/pages/review-page.tsx:54
 msgid "Unmatched"
 msgstr "未マッチ"
 
-#: src/pages/list-detail-page.tsx:643
+#: src/pages/list-detail-page.tsx:640
 msgid "Unordered"
 msgstr "順序なし"
 
@@ -2762,15 +2762,15 @@ msgstr "順序なし"
 msgid "Unresolved"
 msgstr "未解決"
 
-#: src/pages/list-detail-page.tsx:776
+#: src/pages/list-detail-page.tsx:773
 msgid "Unresolved link"
 msgstr "未解決のリンク"
 
-#: src/pages/review-page.tsx:55
+#: src/pages/review-page.tsx:56
 msgid "Unresolved Relations"
 msgstr "未解決の関連"
 
-#: src/pages/list-detail-page.tsx:603
+#: src/pages/list-detail-page.tsx:600
 msgid "Untitled section"
 msgstr "無題のセクション"
 
@@ -2779,16 +2779,16 @@ msgid "Up next"
 msgstr "次に見る"
 
 #: src/components/settings/settings-sections.tsx:142
-#: src/pages/smart-list-page.tsx:459
+#: src/pages/smart-list-page.tsx:451
 msgid "Update time"
 msgstr "更新日時"
 
 #. Rule-builder field for the note file's last-modified time
-#: src/components/smart-lists/rule-builder.tsx:148
+#: src/components/smart-lists/rule-builder.tsx:149
 msgid "Updated"
 msgstr "更新日時"
 
-#: src/components/entities/metadata-inputs.tsx:270
+#: src/components/entities/metadata-inputs.tsx:271
 msgid "Upload failed."
 msgstr "アップロードに失敗しました。"
 
@@ -2798,13 +2798,13 @@ msgstr "アップロードに失敗しました。"
 msgid "Used as"
 msgstr "用途"
 
-#: src/components/smart-lists/rule-builder.tsx:815
-#: src/components/smart-lists/rule-builder.tsx:828
-#: src/components/smart-lists/rule-builder.tsx:872
+#: src/components/smart-lists/rule-builder.tsx:816
+#: src/components/smart-lists/rule-builder.tsx:829
+#: src/components/smart-lists/rule-builder.tsx:873
 msgid "Value"
 msgstr "値"
 
-#: src/components/smart-lists/rule-builder.tsx:848
+#: src/components/smart-lists/rule-builder.tsx:849
 msgid "Values"
 msgstr "値"
 
@@ -2826,7 +2826,7 @@ msgstr "保管庫を作成しました"
 msgid "Vault name"
 msgstr "保管庫名"
 
-#: src/components/entities/metadata-inputs.tsx:324
+#: src/components/entities/metadata-inputs.tsx:325
 msgid "Vault path or URL"
 msgstr "保管庫のパスまたは URL"
 
@@ -2860,7 +2860,7 @@ msgid "Watchlist"
 msgstr "ウォッチリスト"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:207
+#: src/components/smart-lists/rule-builder.tsx:208
 msgid "weeks"
 msgstr "週間"
 
@@ -2873,7 +2873,7 @@ msgid "When on, checking an episode or the Log button writes a line to the daily
 msgstr "オンにすると、エピソードにチェックを入れるか「記録」ボタンを押すと、デイリーノートに1行書き込まれます。タイトルは自動的にウィキリンクとしてリンクされます — 行フォーマットにタグを追加するだけです。"
 
 #. Date rule operator: no later than N days/weeks/months/years from now
-#: src/components/smart-lists/rule-builder.tsx:189
+#: src/components/smart-lists/rule-builder.tsx:190
 msgid "within the next"
 msgstr "今後"
 
@@ -2882,7 +2882,7 @@ msgid "YAML"
 msgstr "YAML"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:209
+#: src/components/smart-lists/rule-builder.tsx:210
 msgid "years"
 msgstr "年"
 
@@ -2893,12 +2893,12 @@ msgstr "はい"
 
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
-#: src/components/entities/metadata-inputs.tsx:137
+#: src/components/entities/metadata-inputs.tsx:138
 #: src/pages/library-page.tsx:496
 msgid "Yes"
 msgstr "はい"
 
-#: src/pages/quick-capture-page.tsx:211
+#: src/pages/quick-capture-page.tsx:214
 msgid "You can still open items already in your library."
 msgstr "すでにライブラリにあるアイテムは引き続き開けます。"
 

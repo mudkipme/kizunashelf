@@ -19,6 +19,7 @@ import { Select } from "@/components/ui/select";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
 import { typeExternalRefs } from "@/lib/type-config";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 import type { ExternalMatch } from "@/types/api";
 
 const ALL = "all";
@@ -50,12 +51,14 @@ export function QuickCapturePage() {
   const [provider, setProvider] = useState(ALL);
   const [addingKey, setAddingKey] = useState<string>();
 
-  // Debounce typing so a cross-type "search anything" doesn't fan out to every
-  // provider on each keystroke.
+  const { schedule: scheduleQuery, cancel: cancelQuery } = useDebouncedCallback(
+    (value: string) => setQuery(value),
+    400,
+  );
   useEffect(() => {
-    const handle = window.setTimeout(() => setQuery(rawQuery.trim()), 400);
-    return () => window.clearTimeout(handle);
-  }, [rawQuery]);
+    scheduleQuery(rawQuery.trim());
+    return cancelQuery;
+  }, [rawQuery, scheduleQuery, cancelQuery]);
 
   const typeLabels = useMemo(() => {
     const labels = new Map<string, string>();
@@ -225,7 +228,10 @@ export function QuickCapturePage() {
                   value={rawQuery}
                   onChange={(event) => setRawQuery(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") setQuery(rawQuery.trim());
+                    if (event.key === "Enter") {
+                      cancelQuery();
+                      setQuery(rawQuery.trim());
+                    }
                   }}
                   placeholder={t`Title, or paste a provider URL`}
                   className="pl-8"
