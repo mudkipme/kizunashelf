@@ -429,7 +429,7 @@ export function HomeBlock({
 }: {
   config: HomeConfig;
   types: EntityTypeConfig[];
-  tagsField: string;
+  tagsField: string | undefined;
   onChange: (config: HomeConfig) => void;
 }) {
   const { t } = useLingui();
@@ -492,7 +492,7 @@ function HomeSectionDialog({
 }: {
   initial: HomeSectionConfig;
   types: EntityTypeConfig[];
-  tagsField: string;
+  tagsField: string | undefined;
   onClose: () => void;
   onApply: (value: HomeSectionConfig) => void;
 }) {

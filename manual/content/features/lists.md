@@ -14,7 +14,7 @@ A **list** is a hand-curated page of entities — a ranking, a "favorites of 202
 
 ## Smart lists
 
-A **smart list** is computed: you define criteria, and its items are whatever currently matches. Rules cover comparisons (`eq`/`ne`/`gt`/`gte`/`lt`/`lte` — dates, numbers, and relative windows like "in the last 30 days"), text (`contains`, `startsWith`, `endsWith`), presence (`isEmpty`, negatable), tags (`hasTag`), links (`linksTo`), and folders (`inFolder`), combined with `all`/`any`/`none` conjunctions and one level of subgroups.
+A **smart list** is computed: you define criteria, and its items are whatever currently matches. Rules cover comparisons (`eq`/`ne`/`gt`/`gte`/`lt`/`lte` — dates, numbers, and relative windows like "in the last 30 days"), text (`contains`, `startsWith`, `endsWith`), presence (`isEmpty`, negatable), tags (`hasTag` — matches only when the vault's [tags feature](@/reference/home-tags-daily-notes.md#tags) is enabled), links (`linksTo`), and folders (`inFolder`), combined with `all`/`any`/`none` conjunctions and one level of subgroups.
 
 Like everything else, a rule's meaning is value-driven: a comparison is a date comparison because the right-hand side is a date — never because of the field's name.
 

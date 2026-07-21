@@ -122,7 +122,7 @@ export function HomeSectionForm({
 }: {
   section: HomeSectionConfig;
   types: EntityTypeConfig[];
-  tagsField: string;
+  tagsField: string | undefined;
   onChange: (section: HomeSectionConfig) => void;
 }) {
   const { t } = useLingui();

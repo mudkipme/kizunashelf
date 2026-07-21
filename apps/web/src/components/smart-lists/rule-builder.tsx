@@ -57,7 +57,9 @@ export type RuleFieldMeta = {
 /// built-in tags field and the two supported `file.*` properties.
 export function ruleFieldMetas(
   typeConfigs: RuleFieldSource[],
-  tagsField: string,
+  // The configured tags key, or `undefined` when the opt-in tags feature is
+  // disabled — then no tags field is offered in the builder.
+  tagsField: string | undefined,
   allTags: string[],
   t: (descriptor: MessageDescriptor) => string,
 ): RuleFieldMeta[] {
@@ -107,7 +109,9 @@ export function ruleFieldMetas(
   // rule would sit empty until values are picked.
   return [
     ...metas.values(),
-    { key: tagsField, label: t(builderWords.tags), kind: "tags", options: allTags },
+    ...(tagsField
+      ? [{ key: tagsField, label: t(builderWords.tags), kind: "tags" as const, options: allTags }]
+      : []),
     { key: "file.name", label: t(builderWords.fileName), kind: "text" },
     { key: "file.mtime", label: t(builderWords.updated), kind: "mtime" },
   ];

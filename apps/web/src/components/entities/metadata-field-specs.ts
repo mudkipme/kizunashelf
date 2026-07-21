@@ -4,7 +4,6 @@ import {
   isListFieldType,
   type FieldConfig,
 } from "@/lib/type-config";
-import { defaultTagsField } from "@/lib/constants";
 import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
@@ -25,7 +24,9 @@ export function editableFieldSpecs(
   onRelationSearch: RelationSuggestionSearch | undefined,
   language: string,
   allTags: string[] = [],
-  tagsFieldName: string = defaultTagsField,
+  // The configured tags key, or `undefined` when the opt-in tags feature is
+  // disabled (no `tags.field` in the vault config) — then no tags editor shows.
+  tagsFieldName: string | undefined = undefined,
   // Display label for the built-in tags field; callers pass a localized string
   // (this module is not a component, so it cannot resolve translations itself).
   tagsLabel: string = "Tags",
@@ -33,20 +34,23 @@ export function editableFieldSpecs(
   const specs: EditableFieldSpec[] = [];
   const seen = new Set<string>();
 
-  // The built-in tags field is always editable (a list with autocomplete over the
-  // whole tag vocabulary, plus free entry). Claim its key up front so a
-  // schema-configured or hand-written field of the same name isn't rendered twice.
-  seen.add(tagsFieldName);
-  specs.push({
-    key: tagsFieldName,
-    label: tagsLabel,
-    kind: "list",
-    options: allTags,
-    relationOptions: [],
-    loadRelationOptions: undefined,
-    seasonLanguage: "zh",
-    configured: true,
-  });
+  // When enabled, the built-in tags field is always editable (a list with
+  // autocomplete over the whole tag vocabulary, plus free entry). Claim its key
+  // up front so a schema-configured or hand-written field of the same name isn't
+  // rendered twice.
+  if (tagsFieldName) {
+    seen.add(tagsFieldName);
+    specs.push({
+      key: tagsFieldName,
+      label: tagsLabel,
+      kind: "list",
+      options: allTags,
+      relationOptions: [],
+      loadRelationOptions: undefined,
+      seasonLanguage: "zh",
+      configured: true,
+    });
+  }
 
   for (const field of configFields(typeConfig)) {
     const key = field.field.trim();

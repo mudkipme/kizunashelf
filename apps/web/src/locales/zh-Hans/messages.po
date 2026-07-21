@@ -94,8 +94,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 项待检查}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:104
-#: src/components/settings/settings-editor.tsx:226
+#: src/components/settings/settings-editor.tsx:105
+#: src/components/settings/settings-editor.tsx:232
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 个路径}}"
 
@@ -116,8 +116,8 @@ msgstr "{0, plural, other {# 条规则}}"
 
 #. placeholder {0}: (config.home.sections ?? []).length
 #. placeholder {0}: list.sectionCount
-#: src/components/settings/settings-editor.tsx:111
-#: src/components/settings/settings-editor.tsx:264
+#: src/components/settings/settings-editor.tsx:117
+#: src/components/settings/settings-editor.tsx:305
 #: src/pages/lists-page.tsx:92
 msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, other {# 个板块}}"
@@ -150,8 +150,8 @@ msgstr "{0, plural, other {共 # 项}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:134
-#: src/components/settings/settings-editor.tsx:117
-#: src/components/settings/settings-editor.tsx:299
+#: src/components/settings/settings-editor.tsx:123
+#: src/components/settings/settings-editor.tsx:340
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 个类型}}"
 
@@ -212,7 +212,7 @@ msgstr "已跳过 {0}"
 msgid "{ariaLabel} new property"
 msgstr "{ariaLabel} 新建属性"
 
-#: src/components/settings/settings-editor.tsx:301
+#: src/components/settings/settings-editor.tsx:342
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 
@@ -242,12 +242,12 @@ msgstr "{monthLabel}：{0} — 在日历中打开"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {导入 # 项}}"
 
-#: src/pages/library-page.tsx:367
+#: src/pages/library-page.tsx:372
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 条}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:362
+#: src/pages/library-page.tsx:367
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 条}} · 第 {0}/{totalPages} 页"
 
@@ -255,37 +255,37 @@ msgstr "{total, plural, other {# 条}} · 第 {0}/{totalPages} 页"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 项匹配}}"
 
-#: src/components/settings/settings-editor.tsx:300
+#: src/components/settings/settings-editor.tsx:341
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 个字段}}"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:175
+#: src/components/smart-lists/rule-builder.tsx:179
 msgid "<"
 msgstr "<"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:171
+#: src/components/smart-lists/rule-builder.tsx:175
 msgid "="
 msgstr "="
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:172
+#: src/components/smart-lists/rule-builder.tsx:176
 msgid "≠"
 msgstr "≠"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:173
+#: src/components/smart-lists/rule-builder.tsx:177
 msgid ">"
 msgstr ">"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:176
+#: src/components/smart-lists/rule-builder.tsx:180
 msgid "≤"
 msgstr "≤"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:174
+#: src/components/smart-lists/rule-builder.tsx:178
 msgid "≥"
 msgstr "≥"
 
@@ -318,6 +318,10 @@ msgstr "安放你所爱之物的书架"
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "已存在同名类型，因此改用了 {assignedIds}。添加后可重命名。"
 
+#: src/components/settings/settings-editor.tsx:266
+msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
+msgstr "所有条目通用的标签列表，带有专属编辑器、筛选器和规则支持。按需启用：指定保存标签列表的前置元数据键即可启用。"
+
 #: src/pages/entity-page.tsx:427
 #: src/pages/entity-page.tsx:430
 msgid "Actions"
@@ -335,8 +339,8 @@ msgstr "活动"
 #: src/components/settings/settings-sections.tsx:950
 #: src/pages/home-page.tsx:41
 #: src/pages/home-page.tsx:46
-#: src/pages/library-page.tsx:393
 #: src/pages/library-page.tsx:398
+#: src/pages/library-page.tsx:403
 #: src/pages/list-detail-page.tsx:922
 msgid "Add"
 msgstr "添加"
@@ -369,7 +373,7 @@ msgstr "添加自定义类型"
 
 #: src/pages/entity-create-page.tsx:80
 #: src/pages/home-page.tsx:35
-#: src/pages/library-page.tsx:387
+#: src/pages/library-page.tsx:392
 msgid "Add entity"
 msgstr "添加条目"
 
@@ -377,11 +381,11 @@ msgstr "添加条目"
 msgid "Add enum options above to map them to statuses."
 msgstr "在上方添加枚举选项以将其映射到状态。"
 
-#: src/components/entities/metadata-editor.tsx:159
+#: src/components/entities/metadata-editor.tsx:158
 msgid "Add Field"
 msgstr "添加字段"
 
-#: src/components/smart-lists/rule-builder.tsx:559
+#: src/components/smart-lists/rule-builder.tsx:563
 msgid "Add group"
 msgstr "添加分组"
 
@@ -398,8 +402,8 @@ msgstr "手动添加"
 msgid "Add path or URL"
 msgstr "添加路径或 URL"
 
-#: src/components/smart-lists/rule-builder.tsx:544
-#: src/components/smart-lists/rule-builder.tsx:625
+#: src/components/smart-lists/rule-builder.tsx:548
+#: src/components/smart-lists/rule-builder.tsx:629
 msgid "Add rule"
 msgstr "添加规则"
 
@@ -408,7 +412,7 @@ msgid "Add section"
 msgstr "添加板块"
 
 #: src/components/entities/metadata-inputs.tsx:157
-#: src/components/smart-lists/rule-builder.tsx:848
+#: src/components/smart-lists/rule-builder.tsx:852
 msgid "Add value"
 msgstr "添加值"
 
@@ -439,7 +443,7 @@ msgstr "添加新板块"
 msgid "Advanced: edit full schema"
 msgstr "高级：编辑完整 schema"
 
-#: src/components/smart-lists/rule-builder.tsx:649
+#: src/components/smart-lists/rule-builder.tsx:653
 #: src/pages/activity-page.tsx:41
 msgid "All"
 msgstr "全部"
@@ -475,11 +479,11 @@ msgid "All types"
 msgstr "所有类型"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:302
+#: src/pages/library-page.tsx:307
 msgid "All types ({0})"
 msgstr "所有类型（{0}）"
 
-#: src/components/smart-lists/rule-builder.tsx:776
+#: src/components/smart-lists/rule-builder.tsx:780
 msgid "Amount"
 msgstr "数量"
 
@@ -487,7 +491,7 @@ msgstr "数量"
 msgid "Anime"
 msgstr "动画"
 
-#: src/components/smart-lists/rule-builder.tsx:650
+#: src/components/smart-lists/rule-builder.tsx:654
 msgid "Any"
 msgstr "任一"
 
@@ -526,19 +530,19 @@ msgstr "正在应用…"
 msgid "Ascending"
 msgstr "升序"
 
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/settings-editor.tsx:217
 msgid "Asset root"
 msgstr "资源根目录"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:201
+#: src/components/settings/settings-editor.tsx:207
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
 #: src/components/layout/app-frame.tsx:122
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
-#: src/components/settings/settings-editor.tsx:168
+#: src/components/settings/settings-editor.tsx:174
 #: src/pages/entity-edit-page.tsx:126
 msgid "Back"
 msgstr "返回"
@@ -583,7 +587,7 @@ msgstr "日历"
 #: src/components/assets/asset-download-panel.tsx:100
 #: src/components/assets/episode-sync-dialog.tsx:330
 #: src/components/assets/quick-log-dialog.tsx:156
-#: src/components/entities/metadata-editor.tsx:122
+#: src/components/entities/metadata-editor.tsx:121
 #: src/components/settings/settings-dialogs.tsx:378
 #: src/components/settings/settings-dialogs.tsx:510
 #: src/components/smart-lists/save-smart-list-dialog.tsx:110
@@ -680,7 +684,7 @@ msgstr "配置此字段的读取、派生和显示方式。"
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "配置新字段，然后选择「完成」以添加。返回将丢弃它。"
 
-#: src/components/settings/settings-editor.tsx:162
+#: src/components/settings/settings-editor.tsx:168
 msgid "Configure Vault"
 msgstr "配置保管库"
 
@@ -699,7 +703,7 @@ msgstr "连接"
 
 #. Text rule operator: substring match
 #. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)
-#: src/components/smart-lists/rule-builder.tsx:194
+#: src/components/smart-lists/rule-builder.tsx:198
 #: src/components/smart-lists/rule-format.ts:40
 msgid "contains"
 msgstr "包含:"
@@ -710,12 +714,12 @@ msgid "contains all"
 msgstr "包含全部:"
 
 #. Rule operator: list field contains all of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:161
+#: src/components/smart-lists/rule-builder.tsx:165
 msgid "contains all of"
 msgstr "包含以下全部"
 
 #. Rule operator: list field contains any of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:157
+#: src/components/smart-lists/rule-builder.tsx:161
 msgid "contains any of"
 msgstr "包含以下任一"
 
@@ -754,7 +758,7 @@ msgstr "创建并添加"
 msgid "Create new vault"
 msgstr "新建保管库"
 
-#: src/components/settings/settings-editor.tsx:173
+#: src/components/settings/settings-editor.tsx:179
 #: src/components/settings/vault-switcher.tsx:166
 #: src/pages/onboarding-page.tsx:215
 msgid "Create vault"
@@ -785,15 +789,15 @@ msgstr "CSV 导出"
 msgid "Current: {0}"
 msgstr "当前：{0}"
 
-#: src/components/entities/metadata-editor.tsx:149
+#: src/components/entities/metadata-editor.tsx:148
 msgid "Custom field"
 msgstr "自定义字段"
 
-#: src/components/entities/metadata-editor.tsx:212
+#: src/components/entities/metadata-editor.tsx:211
 msgid "Custom field name"
 msgstr "自定义字段名"
 
-#: src/components/settings/settings-editor.tsx:252
+#: src/components/settings/settings-editor.tsx:258
 msgid "Daily note indexing is disabled."
 msgstr "每日笔记索引已禁用。"
 
@@ -801,8 +805,8 @@ msgstr "每日笔记索引已禁用。"
 msgid "Daily note mentions"
 msgstr "每日笔记提及"
 
-#: src/components/settings/settings-editor.tsx:102
-#: src/components/settings/settings-editor.tsx:221
+#: src/components/settings/settings-editor.tsx:103
+#: src/components/settings/settings-editor.tsx:227
 #: src/pages/activity-page.tsx:30
 #: src/pages/statistics-page.tsx:33
 msgid "Daily Notes"
@@ -830,7 +834,7 @@ msgid "date"
 msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:129
-#: src/components/smart-lists/rule-builder.tsx:802
+#: src/components/smart-lists/rule-builder.tsx:806
 #: src/pages/activity-page.tsx:275
 msgid "Date"
 msgstr "日期"
@@ -857,7 +861,7 @@ msgid "Dates & episodes"
 msgstr "日期与剧集"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:207
+#: src/components/smart-lists/rule-builder.tsx:211
 msgid "days"
 msgstr "天"
 
@@ -926,12 +930,12 @@ msgid "Display name"
 msgstr "显示名称"
 
 #. Rule operator: field does not contain the value(s)
-#: src/components/smart-lists/rule-builder.tsx:165
+#: src/components/smart-lists/rule-builder.tsx:169
 msgid "does not contain"
 msgstr "不包含"
 
 #. Relation rule operator: note does not link to the entity
-#: src/components/smart-lists/rule-builder.tsx:198
+#: src/components/smart-lists/rule-builder.tsx:202
 msgid "does not link to"
 msgstr "未链接到"
 
@@ -1023,7 +1027,7 @@ msgstr "启用"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title ends with !'
-#: src/components/smart-lists/rule-builder.tsx:196
+#: src/components/smart-lists/rule-builder.tsx:200
 #: src/components/smart-lists/rule-format.ts:54
 msgid "ends with"
 msgstr "结尾为:"
@@ -1036,7 +1040,7 @@ msgstr "英语"
 msgid "Entities"
 msgstr "条目"
 
-#: src/components/smart-lists/rule-builder.tsx:951
+#: src/components/smart-lists/rule-builder.tsx:955
 msgid "Entity name"
 msgstr "条目名称"
 
@@ -1106,7 +1110,7 @@ msgstr "正在从 {0} 获取你的库…"
 #: src/components/settings/settings-dialogs.tsx:396
 #: src/components/settings/settings-dialogs.tsx:406
 #: src/components/settings/settings-sections.tsx:611
-#: src/components/smart-lists/rule-builder.tsx:701
+#: src/components/smart-lists/rule-builder.tsx:705
 msgid "Field"
 msgstr "字段"
 
@@ -1119,7 +1123,7 @@ msgid "File"
 msgstr "文件"
 
 #. Rule-builder field for the note's file name (its title)
-#: src/components/smart-lists/rule-builder.tsx:145
+#: src/components/smart-lists/rule-builder.tsx:149
 #: src/pages/entity-create-page.tsx:100
 msgid "File name"
 msgstr "文件名"
@@ -1165,6 +1169,10 @@ msgstr "表单"
 msgid "Frontmatter"
 msgstr "前置元数据"
 
+#: src/components/settings/settings-editor.tsx:285
+msgid "Frontmatter key"
+msgstr "前置元数据键"
+
 #: src/pages/import-wizard-page.tsx:48
 msgid "Game"
 msgstr "游戏"
@@ -1187,13 +1195,13 @@ msgstr "网格"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'
 #. Rule operator: field has any value
-#: src/components/smart-lists/rule-builder.tsx:156
+#: src/components/smart-lists/rule-builder.tsx:160
 #: src/components/smart-lists/rule-format.ts:58
 msgid "has a value"
 msgstr "有值"
 
 #. Tags rule operator: has any of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:202
+#: src/components/smart-lists/rule-builder.tsx:206
 msgid "has any of"
 msgstr "含有以下任一"
 
@@ -1202,7 +1210,7 @@ msgid "Has date"
 msgstr "有日期"
 
 #. Tags rule operator: has none of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:203
+#: src/components/smart-lists/rule-builder.tsx:207
 msgid "has none of"
 msgstr "不含以下任何"
 
@@ -1211,8 +1219,8 @@ msgid "Heading"
 msgstr "标题"
 
 #: src/components/layout/app-frame.tsx:341
-#: src/components/settings/settings-editor.tsx:109
-#: src/components/settings/settings-editor.tsx:259
+#: src/components/settings/settings-editor.tsx:115
+#: src/components/settings/settings-editor.tsx:300
 #: src/pages/home-page.tsx:30
 msgid "Home"
 msgstr "主页"
@@ -1222,7 +1230,7 @@ msgstr "主页"
 msgid "Home section"
 msgstr "主页板块"
 
-#: src/components/settings/settings-editor.tsx:288
+#: src/components/settings/settings-editor.tsx:329
 msgid "Home sections are disabled."
 msgstr "主页板块已禁用。"
 
@@ -1282,7 +1290,7 @@ msgid "in list"
 msgstr "在列表中"
 
 #. Date rule operator: within the last N days/weeks/months/years
-#: src/components/smart-lists/rule-builder.tsx:182
+#: src/components/smart-lists/rule-builder.tsx:186
 msgid "in the last"
 msgstr "过去"
 
@@ -1292,54 +1300,54 @@ msgid "Include {0}"
 msgstr "包含 {0}"
 
 #. Rule operator: field equals the value
-#: src/components/smart-lists/rule-builder.tsx:153
+#: src/components/smart-lists/rule-builder.tsx:157
 msgid "is"
 msgstr "等于"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:180
+#: src/components/smart-lists/rule-builder.tsx:184
 msgid "is after"
 msgstr "晚于"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:178
+#: src/components/smart-lists/rule-builder.tsx:182
 msgid "is before"
 msgstr "早于"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'
 #. Rule operator: field has no value
-#: src/components/smart-lists/rule-builder.tsx:155
+#: src/components/smart-lists/rule-builder.tsx:159
 #: src/components/smart-lists/rule-format.ts:62
 msgid "is empty"
 msgstr "为空"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:170
+#: src/components/smart-lists/rule-builder.tsx:174
 msgid "is no"
 msgstr "为否"
 
 #. Rule operator: field does not equal the value
-#: src/components/smart-lists/rule-builder.tsx:154
+#: src/components/smart-lists/rule-builder.tsx:158
 msgid "is not"
 msgstr "不等于"
 
 #. Date rule operator: on this exact day/period
-#: src/components/smart-lists/rule-builder.tsx:177
+#: src/components/smart-lists/rule-builder.tsx:181
 msgid "is on"
 msgstr "为当天"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:181
+#: src/components/smart-lists/rule-builder.tsx:185
 msgid "is on or after"
 msgstr "不早于"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:179
+#: src/components/smart-lists/rule-builder.tsx:183
 msgid "is on or before"
 msgstr "不晚于"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:169
+#: src/components/smart-lists/rule-builder.tsx:173
 msgid "is yes"
 msgstr "为是"
 
@@ -1434,7 +1442,7 @@ msgstr "第 {0} 行"
 msgid "Line format"
 msgstr "行格式"
 
-#: src/components/smart-lists/rule-builder.tsx:952
+#: src/components/smart-lists/rule-builder.tsx:956
 msgid "Link target"
 msgstr "链接目标"
 
@@ -1452,7 +1460,7 @@ msgstr "关联"
 
 #. Relation rule operator: note links to the entity
 #. Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'
-#: src/components/smart-lists/rule-builder.tsx:197
+#: src/components/smart-lists/rule-builder.tsx:201
 #: src/components/smart-lists/rule-format.ts:66
 msgid "links to"
 msgstr "链接到:"
@@ -1586,7 +1594,7 @@ msgstr "标记为 {0}"
 msgid "Match"
 msgstr "匹配"
 
-#: src/components/smart-lists/rule-builder.tsx:645
+#: src/components/smart-lists/rule-builder.tsx:649
 msgid "Match mode"
 msgstr "匹配方式"
 
@@ -1605,7 +1613,7 @@ msgid "Missing Cover"
 msgstr "缺少封面"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:209
+#: src/components/smart-lists/rule-builder.tsx:213
 msgid "months"
 msgstr "个月"
 
@@ -1695,7 +1703,7 @@ msgstr "否"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:139
-#: src/pages/library-page.tsx:497
+#: src/pages/library-page.tsx:502
 msgid "No"
 msgstr "否"
 
@@ -1739,7 +1747,7 @@ msgstr "未配置条目类型。"
 
 #: src/pages/calendar-page.tsx:180
 #: src/pages/calendar-page.tsx:195
-#: src/pages/library-page.tsx:430
+#: src/pages/library-page.tsx:435
 msgid "No entries"
 msgstr "无条目"
 
@@ -1862,7 +1870,7 @@ msgstr "暂无保管库。"
 #: src/components/settings/settings-sections.tsx:690
 #: src/components/settings/settings-sections.tsx:743
 #: src/components/settings/settings-sections.tsx:788
-#: src/components/smart-lists/rule-builder.tsx:651
+#: src/components/smart-lists/rule-builder.tsx:655
 msgid "None"
 msgstr "无"
 
@@ -1889,7 +1897,7 @@ msgid "notes"
 msgstr "笔记"
 
 #: src/components/assets/entity-detail.tsx:227
-#: src/components/entities/metadata-editor.tsx:165
+#: src/components/entities/metadata-editor.tsx:164
 #: src/pages/list-detail-page.tsx:486
 #: src/pages/statistics-page.tsx:32
 msgid "Notes"
@@ -1907,25 +1915,35 @@ msgstr "这里还什么都没有"
 msgid "Nothing to log for this type."
 msgstr "此类型没有可记录的内容。"
 
-#: src/components/smart-lists/rule-builder.tsx:514
-#: src/components/smart-lists/rule-builder.tsx:594
+#: src/components/smart-lists/rule-builder.tsx:518
+#: src/components/smart-lists/rule-builder.tsx:598
 msgid "of the following match:"
 msgstr "满足以下条件:"
 
-#: src/components/settings/settings-editor.tsx:227
-#: src/components/settings/settings-editor.tsx:265
+#: src/components/settings/settings-editor.tsx:233
+#: src/components/settings/settings-editor.tsx:269
+#: src/components/settings/settings-editor.tsx:306
 msgid "off"
 msgstr "关"
 
-#: src/components/settings/settings-editor.tsx:105
-#: src/components/settings/settings-editor.tsx:112
+#: src/components/settings/settings-editor.tsx:106
+#: src/components/settings/settings-editor.tsx:111
+#: src/components/settings/settings-editor.tsx:118
 msgid "Off"
 msgstr "关"
 
 #. Date rule operator: earlier than N days/weeks/months/years ago
-#: src/components/smart-lists/rule-builder.tsx:186
+#: src/components/smart-lists/rule-builder.tsx:190
 msgid "older than"
 msgstr "早于过去"
+
+#: src/components/settings/settings-editor.tsx:269
+msgid "on"
+msgstr "开"
+
+#: src/components/settings/settings-editor.tsx:111
+msgid "On"
+msgstr "开"
 
 #: src/components/settings/settings-sections.tsx:823
 #: src/pages/import-wizard-page.tsx:58
@@ -1960,7 +1978,7 @@ msgstr "打开导航"
 msgid "Open or create a vault to get started."
 msgstr "打开或创建保管库以开始。"
 
-#: src/components/smart-lists/rule-builder.tsx:721
+#: src/components/smart-lists/rule-builder.tsx:725
 msgid "Operator"
 msgstr "运算符"
 
@@ -1976,7 +1994,7 @@ msgstr "原始"
 msgid "Original (filename is the title)"
 msgstr "原始（文件名即标题）"
 
-#: src/components/settings/settings-editor.tsx:329
+#: src/components/settings/settings-editor.tsx:370
 msgid "Overview"
 msgstr "概览"
 
@@ -2108,7 +2126,7 @@ msgstr "重新加载最新版本"
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
-#: src/components/entities/metadata-editor.tsx:221
+#: src/components/entities/metadata-editor.tsx:220
 #: src/components/settings/vault-switcher.tsx:107
 msgid "Remove {0}"
 msgstr "移除 {0}"
@@ -2130,7 +2148,7 @@ msgstr "移除外部字段映射"
 msgid "Remove field"
 msgstr "移除字段"
 
-#: src/components/smart-lists/rule-builder.tsx:601
+#: src/components/smart-lists/rule-builder.tsx:605
 msgid "Remove group"
 msgstr "移除分组"
 
@@ -2146,8 +2164,8 @@ msgstr "移除图片"
 msgid "Remove item"
 msgstr "移除项目"
 
-#: src/components/smart-lists/rule-builder.tsx:683
-#: src/components/smart-lists/rule-builder.tsx:743
+#: src/components/smart-lists/rule-builder.tsx:687
+#: src/components/smart-lists/rule-builder.tsx:747
 msgid "Remove rule"
 msgstr "移除规则"
 
@@ -2223,17 +2241,17 @@ msgstr "功能完善、开箱即用的类型，具备完整的元数据匹配。
 msgid "Running…"
 msgstr "运行中…"
 
-#: src/components/entities/metadata-editor.tsx:127
+#: src/components/entities/metadata-editor.tsx:126
 #: src/components/settings/raw-config-editor.tsx:90
-#: src/components/settings/settings-editor.tsx:173
+#: src/components/settings/settings-editor.tsx:179
 #: src/pages/list-detail-page.tsx:424
 #: src/pages/smart-list-page.tsx:270
 msgid "Save"
 msgstr "保存"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:77
-#: src/pages/library-page.tsx:376
-#: src/pages/library-page.tsx:380
+#: src/pages/library-page.tsx:381
+#: src/pages/library-page.tsx:385
 msgid "Save as smart list"
 msgstr "保存为智能列表"
 
@@ -2253,17 +2271,17 @@ msgstr "原样保存。整个文件在保存时都会经过校验 — 未知字�
 msgid "Saves the current type, filters, and sort as a smart list."
 msgstr "将当前类型、筛选和排序保存为智能列表。"
 
-#: src/components/entities/metadata-editor.tsx:127
+#: src/components/entities/metadata-editor.tsx:126
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:90
-#: src/components/settings/settings-editor.tsx:173
+#: src/components/settings/settings-editor.tsx:179
 #: src/pages/list-detail-page.tsx:424
 #: src/pages/smart-list-page.tsx:270
 msgid "Saving…"
 msgstr "正在保存…"
 
 #: src/components/settings/raw-config-editor.tsx:97
-#: src/components/settings/settings-editor.tsx:180
+#: src/components/settings/settings-editor.tsx:186
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "此实例已禁用 schema 编辑（只读）。设置 <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> 以启用。"
 
@@ -2383,12 +2401,12 @@ msgid "Selected Metadata"
 msgstr "所选元数据"
 
 #: src/components/layout/app-frame.tsx:394
-#: src/components/settings/settings-editor.tsx:162
+#: src/components/settings/settings-editor.tsx:168
 msgid "Settings"
 msgstr "设置"
 
 #: src/components/settings/raw-config-editor.tsx:67
-#: src/components/settings/settings-editor.tsx:147
+#: src/components/settings/settings-editor.tsx:153
 msgid "Settings saved"
 msgstr "设置已保存"
 
@@ -2517,7 +2535,7 @@ msgstr "正在启动…"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title starts with My'
-#: src/components/smart-lists/rule-builder.tsx:195
+#: src/components/smart-lists/rule-builder.tsx:199
 #: src/components/smart-lists/rule-format.ts:50
 msgid "starts with"
 msgstr "开头为:"
@@ -2543,11 +2561,11 @@ msgstr "状态不匹配"
 msgid "Status, score & dates"
 msgstr "状态、评分和日期"
 
-#: src/components/settings/settings-editor.tsx:198
+#: src/components/settings/settings-editor.tsx:204
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault."
 msgstr "存储在保管库的 {vaultPath}。分类、资源、每日笔记、主页和类型 — 均与保管库同步。"
 
-#: src/components/settings/settings-editor.tsx:199
+#: src/components/settings/settings-editor.tsx:205
 msgid "Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault."
 msgstr "存储在保管库中。分类、资源、每日笔记、主页和类型 — 均与保管库同步。"
 
@@ -2584,11 +2602,17 @@ msgid "System theme. Switch to light theme."
 msgstr "跟随系统主题。切换到浅色主题。"
 
 #. Field name for the built-in tags field in the rule builder
-#: src/components/entities/metadata-editor.tsx:83
-#: src/components/smart-lists/rule-builder.tsx:144
-#: src/pages/library-page.tsx:104
+#: src/components/entities/metadata-editor.tsx:82
+#: src/components/settings/settings-editor.tsx:110
+#: src/components/settings/settings-editor.tsx:265
+#: src/components/smart-lists/rule-builder.tsx:148
+#: src/pages/library-page.tsx:106
 msgid "Tags"
 msgstr "标签"
+
+#: src/components/settings/settings-editor.tsx:293
+msgid "Tags are disabled."
+msgstr "标签已禁用。"
 
 #. placeholder {0}: calendar.data.totals.taxonomy
 #: src/pages/calendar-page.tsx:114
@@ -2599,12 +2623,12 @@ msgstr "分类 {0}"
 msgid "Taxonomy dates"
 msgstr "分类日期"
 
-#: src/components/settings/settings-editor.tsx:205
+#: src/components/settings/settings-editor.tsx:211
 msgid "Taxonomy root"
 msgstr "分类根目录"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:98
+#: src/components/settings/settings-editor.tsx:99
 msgid "taxonomy: {0}"
 msgstr "分类：{0}"
 
@@ -2681,7 +2705,7 @@ msgstr "今天"
 msgid "Todo"
 msgstr "待办"
 
-#: src/pages/library-page.tsx:316
+#: src/pages/library-page.tsx:321
 msgid "Toggle filters"
 msgstr "切换筛选条件"
 
@@ -2705,7 +2729,7 @@ msgstr "重试"
 #: src/components/settings/settings-sections.tsx:154
 #: src/components/settings/settings-sections.tsx:612
 #: src/pages/entity-create-page.tsx:90
-#: src/pages/library-page.tsx:299
+#: src/pages/library-page.tsx:304
 #: src/pages/quick-capture-page.tsx:243
 msgid "Type"
 msgstr "类型"
@@ -2719,8 +2743,8 @@ msgid "Type Distribution"
 msgstr "类型分布"
 
 #: src/components/settings/settings-dialogs.tsx:202
-#: src/components/settings/settings-editor.tsx:116
-#: src/components/settings/settings-editor.tsx:295
+#: src/components/settings/settings-editor.tsx:122
+#: src/components/settings/settings-editor.tsx:336
 msgid "Types"
 msgstr "类型"
 
@@ -2732,7 +2756,7 @@ msgstr "英文界面"
 msgid "Ungrouped"
 msgstr "未分组"
 
-#: src/components/smart-lists/rule-builder.tsx:783
+#: src/components/smart-lists/rule-builder.tsx:787
 msgid "Unit"
 msgstr "单位"
 
@@ -2778,7 +2802,7 @@ msgid "Update time"
 msgstr "更新时间"
 
 #. Rule-builder field for the note file's last-modified time
-#: src/components/smart-lists/rule-builder.tsx:149
+#: src/components/smart-lists/rule-builder.tsx:153
 msgid "Updated"
 msgstr "更新时间"
 
@@ -2792,18 +2816,18 @@ msgstr "上传失败。"
 msgid "Used as"
 msgstr "用作"
 
-#: src/components/smart-lists/rule-builder.tsx:816
-#: src/components/smart-lists/rule-builder.tsx:829
-#: src/components/smart-lists/rule-builder.tsx:873
+#: src/components/smart-lists/rule-builder.tsx:820
+#: src/components/smart-lists/rule-builder.tsx:833
+#: src/components/smart-lists/rule-builder.tsx:877
 msgid "Value"
 msgstr "值"
 
-#: src/components/smart-lists/rule-builder.tsx:849
+#: src/components/smart-lists/rule-builder.tsx:853
 msgid "Values"
 msgstr "值"
 
-#: src/components/settings/settings-editor.tsx:97
-#: src/components/settings/settings-editor.tsx:195
+#: src/components/settings/settings-editor.tsx:98
+#: src/components/settings/settings-editor.tsx:201
 msgid "Vault"
 msgstr "保管库"
 
@@ -2854,7 +2878,7 @@ msgid "Watchlist"
 msgstr "想看清单"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:208
+#: src/components/smart-lists/rule-builder.tsx:212
 msgid "weeks"
 msgstr "周"
 
@@ -2867,7 +2891,7 @@ msgid "When on, checking an episode or the Log button writes a line to the daily
 msgstr "开启后，勾选剧集或点击「记录」按钮会在每日笔记中写入一行。标题会自动以 wikilink 形式关联 — 只需在行格式中添加你的标签。"
 
 #. Date rule operator: no later than N days/weeks/months/years from now
-#: src/components/smart-lists/rule-builder.tsx:190
+#: src/components/smart-lists/rule-builder.tsx:194
 msgid "within the next"
 msgstr "未来"
 
@@ -2876,7 +2900,7 @@ msgid "YAML"
 msgstr "YAML"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:210
+#: src/components/smart-lists/rule-builder.tsx:214
 msgid "years"
 msgstr "年"
 
@@ -2888,7 +2912,7 @@ msgstr "是"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:138
-#: src/pages/library-page.tsx:496
+#: src/pages/library-page.tsx:501
 msgid "Yes"
 msgstr "是"
 

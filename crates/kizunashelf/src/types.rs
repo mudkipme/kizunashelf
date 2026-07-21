@@ -338,16 +338,18 @@ pub struct HomeConfig {
 }
 
 /// Configuration for the built-in **tags** field — a universal, cross-type label
-/// list. Tags are a vault-level "well-known field": the *name* is configured here
-/// (defaulting to `tags`), so the engine reads the field name from config rather
-/// than hardcoding it. A schema field that happens to share this name is ignored
-/// in favor of the built-in. This is a deliberate, narrow extension of the
-/// schema-driven model — meaning still flows config → behavior, just at the vault
-/// scope rather than the per-type scope.
+/// list. Tags are a vault-level "well-known field" and **opt-in**: the feature is
+/// active only when `tags.field` names the frontmatter key, so the engine reads
+/// the field name from config rather than hardcoding it. Without it, no tags are
+/// derived and clients hide the tag UI. A schema field that happens to share the
+/// configured name is ignored in favor of the built-in. This is a deliberate,
+/// narrow extension of the schema-driven model — meaning still flows config →
+/// behavior, just at the vault scope rather than the per-type scope.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct TagsConfig {
-    /// The frontmatter key holding the entity's tag list. Defaults to `tags`.
+    /// The frontmatter key holding the entity's tag list. Setting it enables the
+    /// tags feature; absent (or empty) → tags are disabled vault-wide.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub field: Option<String>,
 }
@@ -462,12 +464,6 @@ pub struct KizunaConfig {
 
 pub const DEFAULT_ASSET_ROOT: &str = "Assets";
 
-/// Default frontmatter key for the built-in tags field when the vault config does
-/// not set one (the common case). This is a *default value*, not a hardcoded
-/// branch: behavior reads [`KizunaConfig::tags_field`], which returns this only as
-/// a fallback.
-pub const DEFAULT_TAGS_FIELD: &str = "tags";
-
 /// Built-in daily-note log heading when neither the type nor `dailyNotes.log` sets
 /// one — raw heading text (default h2), matching `bodySections`.
 pub const DEFAULT_LOG_SECTION: &str = "Log";
@@ -536,16 +532,16 @@ impl KizunaConfig {
             .unwrap_or(DEFAULT_ASSET_ROOT)
     }
 
-    /// The frontmatter key for the built-in tags field — configured via
-    /// `tags.field`, defaulting to [`DEFAULT_TAGS_FIELD`]. The single resolution
+    /// The frontmatter key for the built-in tags field, or `None` when the
+    /// feature is disabled. Tags are opt-in: only a non-empty `tags.field` in the
+    /// vault config enables them — there is no default key. The single resolution
     /// point so no code hardcodes the tag field name.
-    pub fn tags_field(&self) -> &str {
+    pub fn tags_field(&self) -> Option<&str> {
         self.tags
             .as_ref()
             .and_then(|tags| tags.field.as_deref())
             .map(str::trim)
             .filter(|value| !value.is_empty())
-            .unwrap_or(DEFAULT_TAGS_FIELD)
     }
 
     /// Builds the merged runtime config from its on-disk parts.

@@ -159,7 +159,7 @@ fn relation_fields(config: &KizunaConfig, entity_type: &str) -> Vec<RelationFiel
             .filter(|field| field.field_type == FieldType::Relation)
             // The built-in tags field is never a relation source, even if a schema
             // field shares its (configurable) name.
-            .filter(|field| field.field != config.tags_field())
+            .filter(|field| config.tags_field() != Some(field.field.as_str()))
     }) {
         if !fields
             .iter()

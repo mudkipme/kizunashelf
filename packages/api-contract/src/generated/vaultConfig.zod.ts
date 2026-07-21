@@ -84,8 +84,8 @@ export const VaultConfig = zod.object({
 }).describe('Global defaults for daily-note logging, under `dailyNotes.log`. Both fields are\noptional; a per-type [`TypeLogConfig`] overrides them, and the built-ins\n([`DEFAULT_LOG_SECTION`] \/ [`DEFAULT_LOG_LINE_FORMAT`]) fill any remaining gap.'),zod.null()]).optional().describe('Global defaults for daily-note logging — the heading written under and the\nline format. Per-type `log` blocks override these; see\n[`KizunaConfig::resolve_log_config`].')
 }),zod.null()]).optional(),
   "tags": zod.union([zod.object({
-  "field": zod.string().nullish().describe('The frontmatter key holding the entity\'s tag list. Defaults to `tags`.')
-}).describe('Configuration for the built-in \*\*tags\*\* field — a universal, cross-type label\nlist. Tags are a vault-level \"well-known field\": the \*name\* is configured here\n(defaulting to `tags`), so the engine reads the field name from config rather\nthan hardcoding it. A schema field that happens to share this name is ignored\nin favor of the built-in. This is a deliberate, narrow extension of the\nschema-driven model — meaning still flows config → behavior, just at the vault\nscope rather than the per-type scope.'),zod.null()]).optional(),
+  "field": zod.string().nullish().describe('The frontmatter key holding the entity\'s tag list. Setting it enables the\ntags feature; absent (or empty) → tags are disabled vault-wide.')
+}).describe('Configuration for the built-in \*\*tags\*\* field — a universal, cross-type label\nlist. Tags are a vault-level \"well-known field\" and \*\*opt-in\*\*: the feature is\nactive only when `tags.field` names the frontmatter key, so the engine reads\nthe field name from config rather than hardcoding it. Without it, no tags are\nderived and clients hide the tag UI. A schema field that happens to share the\nconfigured name is ignored in favor of the built-in. This is a deliberate,\nnarrow extension of the schema-driven model — meaning still flows config →\nbehavior, just at the vault scope rather than the per-type scope.'),zod.null()]).optional(),
   "types": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),

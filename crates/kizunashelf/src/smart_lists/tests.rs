@@ -9,7 +9,7 @@ use serde_yaml::Value;
 use super::*;
 use crate::types::{
     EntitySummary, EntityTypeConfig, FieldConfig, FieldType, KizunaConfig, Relation,
-    RelationDirection,
+    RelationDirection, TagsConfig,
 };
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -95,6 +95,16 @@ fn record(id: &str, title: &str, frontmatter: serde_json::Value) -> EntityRecord
 
 fn library(records: Vec<EntityRecord>, relations: Vec<Relation>) -> Library {
     Library::new(config(), records, relations, Vec::new(), "gen".to_string())
+}
+
+/// Like [`library`], but with the opt-in tags feature enabled under the key
+/// `tags` — for the tests exercising the built-in tags behavior.
+fn library_with_tags(records: Vec<EntityRecord>, relations: Vec<Relation>) -> Library {
+    let mut config = config();
+    config.tags = Some(TagsConfig {
+        field: Some("tags".to_string()),
+    });
+    Library::new(config, records, relations, Vec::new(), "gen".to_string())
 }
 
 fn fixed_ctx(library: &Library) -> EvalContext<'_> {
@@ -447,7 +457,7 @@ fn has_link_matches_through_the_relation_graph() {
 fn tags_field_reads_the_resident_tag_list() {
     let mut entity = record("anime:a", "Alpha", json!({}));
     entity.summary.tags = vec!["cozy".to_string()];
-    let library = library(vec![entity], Vec::new());
+    let library = library_with_tags(vec![entity], Vec::new());
     let ctx = fixed_ctx(&library);
     assert_eq!(
         eval_expr(r#"tags.contains("cozy")"#, &library.records[0], &ctx),
@@ -456,6 +466,27 @@ fn tags_field_reads_the_resident_tag_list() {
     assert_eq!(
         eval_expr(r#"tags.isEmpty()"#, &library.records[0], &ctx),
         Some(false)
+    );
+}
+
+#[test]
+fn tags_reference_is_a_plain_frontmatter_field_when_tags_are_disabled() {
+    // With no `tags.field` configured, `note.tags` gets no built-in treatment:
+    // it reads raw frontmatter like any other field name.
+    let entity = record("anime:a", "Alpha", json!({"tags": ["cozy"]}));
+    let library = library(vec![entity], Vec::new());
+    let ctx = fixed_ctx(&library);
+    assert_eq!(
+        eval_expr(r#"tags.contains("cozy")"#, &library.records[0], &ctx),
+        Some(true)
+    );
+    // And with no frontmatter value either, it is simply empty.
+    let bare = record("anime:b", "Beta", json!({}));
+    let bare_library = self::library(vec![bare], Vec::new());
+    let ctx = fixed_ctx(&bare_library);
+    assert_eq!(
+        eval_expr(r#"tags.isEmpty()"#, &bare_library.records[0], &ctx),
+        Some(true)
     );
 }
 

@@ -3724,8 +3724,11 @@
             "type": "string"
           },
           "tagsField": {
-            "description": "The resolved frontmatter key for the built-in tags field (configured via\n`tags.field`, defaulting to `tags`). Clients use this for the tag editor,\nthe Library tag filter, and to hide tags from the generic \"Details\" view —\nso the name lives in one place instead of being hardcoded per client.",
-            "type": "string"
+            "description": "The resolved frontmatter key for the built-in tags field (configured via\n`tags.field`), or absent when the tags feature is disabled — it is opt-in,\nenabled only by setting `tags.field`. Clients use this for the tag editor,\nthe Library tag filter, and to hide tags from the generic \"Details\" view —\nand hide the tag UI entirely when it is absent.",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "home": {
             "anyOf": [
@@ -3748,7 +3751,6 @@
           "taxonomyRoot",
           "vaultRoot",
           "assetRoot",
-          "tagsField",
           "types"
         ]
       },
@@ -4583,11 +4585,11 @@
         }
       },
       "TagsConfig": {
-        "description": "Configuration for the built-in **tags** field — a universal, cross-type label\nlist. Tags are a vault-level \"well-known field\": the *name* is configured here\n(defaulting to `tags`), so the engine reads the field name from config rather\nthan hardcoding it. A schema field that happens to share this name is ignored\nin favor of the built-in. This is a deliberate, narrow extension of the\nschema-driven model — meaning still flows config → behavior, just at the vault\nscope rather than the per-type scope.",
+        "description": "Configuration for the built-in **tags** field — a universal, cross-type label\nlist. Tags are a vault-level \"well-known field\" and **opt-in**: the feature is\nactive only when `tags.field` names the frontmatter key, so the engine reads\nthe field name from config rather than hardcoding it. Without it, no tags are\nderived and clients hide the tag UI. A schema field that happens to share the\nconfigured name is ignored in favor of the built-in. This is a deliberate,\nnarrow extension of the schema-driven model — meaning still flows config →\nbehavior, just at the vault scope rather than the per-type scope.",
         "type": "object",
         "properties": {
           "field": {
-            "description": "The frontmatter key holding the entity's tag list. Defaults to `tags`.",
+            "description": "The frontmatter key holding the entity's tag list. Setting it enables the\ntags feature; absent (or empty) → tags are disabled vault-wide.",
             "type": [
               "string",
               "null"

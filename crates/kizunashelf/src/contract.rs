@@ -106,10 +106,12 @@ pub struct ConfigResponse {
     /// Vault-relative directory where downloaded assets are stored.
     pub asset_root: String,
     /// The resolved frontmatter key for the built-in tags field (configured via
-    /// `tags.field`, defaulting to `tags`). Clients use this for the tag editor,
+    /// `tags.field`), or absent when the tags feature is disabled — it is opt-in,
+    /// enabled only by setting `tags.field`. Clients use this for the tag editor,
     /// the Library tag filter, and to hide tags from the generic "Details" view —
-    /// so the name lives in one place instead of being hardcoded per client.
-    pub tags_field: String,
+    /// and hide the tag UI entirely when it is absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tags_field: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub home: Option<HomeConfig>,
     pub types: Vec<EntityTypeConfig>,

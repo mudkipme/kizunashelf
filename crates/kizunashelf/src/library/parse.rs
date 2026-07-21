@@ -65,7 +65,7 @@ pub(super) struct EntityReadResult {
 /// don't re-scan.
 pub(super) fn parse_entity(
     type_config: &EntityTypeConfig,
-    tags_field: &str,
+    tags_field: Option<&str>,
     relative_path: String,
     bytes: Vec<u8>,
 ) -> Result<EntityReadResult> {
@@ -249,7 +249,7 @@ mod tests {
     fn summary_of(type_config: &EntityTypeConfig, path: &str, raw: &str) -> EntitySummary {
         parse_entity(
             type_config,
-            crate::types::DEFAULT_TAGS_FIELD,
+            Some("tags"),
             path.to_string(),
             raw.as_bytes().to_vec(),
         )

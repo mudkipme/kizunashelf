@@ -13,7 +13,7 @@ The Library page is the shelf itself: every entity of a type, with covers, title
 Filters are built from your schema, not a fixed list:
 
 - **Status** — the options of the type's `enumRole: status` field become a facet.
-- **Tags** — the built-in, vault-wide tags field is filterable everywhere.
+- **Tags** — the built-in, vault-wide [tags field](@/reference/home-tags-daily-notes.md#tags) is filterable everywhere, when the vault has opted in by setting `tags.field`.
 - **Relations** — filter by linked entities (e.g. every anime in one franchise), with autocomplete suggestions.
 - Enum fields and other declared facets follow the same pattern: declare a field, get a filter.
 

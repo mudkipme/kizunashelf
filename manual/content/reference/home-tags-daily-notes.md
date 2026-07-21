@@ -64,7 +64,7 @@ criteria:
     - { kind: hasTag, values: [favorites] }
 ```
 
-Rule kinds mirror the smart-list rule builder: `contains` matches list fields by membership and string fields by substring; `isEmpty` with `negated: true` reads as "has a value"; `hasTag` matches the built-in tags field; `linksTo` matches an outgoing wikilink/relation to the named entity. Field meaning is value-driven, exactly like Bases — a comparison is a date comparison because the right-hand side is a date, never because of the field's name.
+Rule kinds mirror the smart-list rule builder: `contains` matches list fields by membership and string fields by substring; `isEmpty` with `negated: true` reads as "has a value"; `hasTag` matches the built-in [tags](#tags) field (and matches nothing while tags are disabled); `linksTo` matches an outgoing wikilink/relation to the named entity. Field meaning is value-driven, exactly like Bases — a comparison is a date comparison because the right-hand side is a date, never because of the field's name.
 
 Common sort keys:
 
@@ -77,20 +77,22 @@ Common sort keys:
 
 ## Tags
 
-`tags` is a **built-in, universal field**: a free-form list of labels every entity can have, independent of its type. You don't declare it per type — it's always available, edited with a search-and-add combobox over the whole vault's tag vocabulary, shown next to the type on the detail view (not in "Details"), and filterable on the Library page.
+`tags` is a **built-in, universal field**: a free-form list of labels every entity can have, independent of its type. You don't declare it per type — but the feature is **opt-in**: it exists only when the vault config sets `tags.field`. When enabled, tags are edited with a search-and-add combobox over the whole vault's tag vocabulary, shown next to the type on the detail view (not in "Details"), and filterable on the Library page. Without a `tags` block, none of that UI appears, no tags are derived, and a frontmatter key named `tags` is just an ordinary field.
 
 ```yaml
 tags:
-  field: tags   # the frontmatter key holding the tag list; defaults to "tags"
+  field: tags   # the frontmatter key holding the tag list; setting it enables the feature
 ```
+
+Enable it from **Settings → Tags** (toggle it on and name the key — `tags` is the seeded default), or add the block to `config.yaml` by hand.
 
 | Key | Required | Type | Description |
 | --- | --- | --- | --- |
-| `field` | no | string | Frontmatter key that holds an entity's tag list. Defaults to `tags`. |
+| `field` | yes | string | Frontmatter key that holds an entity's tag list. Setting it turns the tags feature on; there is no default — omit the `tags` block to keep tags disabled. |
 
-Tags are the one place the engine treats a field by a fixed *role* across all types rather than deriving meaning purely from per-type schema. To keep that honest, the **name is still config**, not hardcoded: behavior reads `tags.field` (default `tags`), so you can rename or relocate it vault-wide. A per-type schema field that happens to share this name is ignored in favor of the built-in.
+Tags are the one place the engine treats a field by a fixed *role* across all types rather than deriving meaning purely from per-type schema. To keep that honest, the feature is opt-in and the **name is config**, not hardcoded: behavior reads `tags.field`, so you choose whether the vault has tags at all and, if so, which key holds them. A per-type schema field that happens to share the configured name is ignored in favor of the built-in; with tags disabled, that same schema field behaves like any other (a relation field named `tags` builds relations, for example).
 
-> **Why this is a vault-level field, not a `fieldType`.** A field earns built-in status only when it is (1) genuinely cross-type and universal, (2) declared in vault config with a default, (3) read from config rather than hardcoded, and (4) doing something the per-type schema can't express (here: a single global vocabulary and facet). Concepts that are per-type and schema-expressible (rating, status, …) stay ordinary schema fields.
+> **Why this is a vault-level field, not a `fieldType`.** A field earns built-in status only when it is (1) genuinely cross-type and universal, (2) declared explicitly in vault config, (3) read from config rather than hardcoded, and (4) doing something the per-type schema can't express (here: a single global vocabulary and facet). Concepts that are per-type and schema-expressible (rating, status, …) stay ordinary schema fields.
 
 ## Daily Notes
 

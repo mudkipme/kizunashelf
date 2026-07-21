@@ -137,16 +137,6 @@ h2 { font-size: clamp(1.7rem, 3.5vw, 2.3rem); }
 p { margin: 0 0 1.2em; max-width: 62ch; }
 .wrap { max-width: 1080px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 44px); }
 
-.eyebrow {
-  font-family: var(--mono);
-  font-size: .74rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  display: inline-block;
-  margin-bottom: 1.4rem;
-  color: var(--ink-soft);
-}
-
 section { padding: clamp(56px, 9vw, 110px) 0; }
 .section-head { margin-bottom: 2.2rem; }
 
@@ -411,7 +401,7 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
         <a class="btn primary" href="https://testflight.apple.com/join/hE7k3sWd">Join the iOS beta</a>
         <a class="btn ghost" href="/introduction/">Read the manual</a>
       </div>
-      <p class="fine" style="margin-top: 1.1rem">On TestFlight for iPhone &amp; iPad today · <a href="#apps">desktop &amp; web coming soon · Android planned</a></p>
+      <p class="fine" style="margin-top: 1.1rem">desktop &amp; web coming soon · Android planned</p>
     </div>
     <figure class="hero-fig">
       <div class="phone">
@@ -426,7 +416,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
 <section id="shelf">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">your shelf, your shapes</span>
       <h2>It starts familiar. It ends up yours.</h2>
     </div>
     <p>Anime, games, books, films, music. The usual residents of a media shelf are ready on day one, with statuses, ratings, progress, seasons, and covers. But KizunaShelf never decides what a “thing” must be. You define the types in your library and the fields they carry, in a schema that travels with your files: one human-readable <span style="font-family: var(--mono); font-size:.9em">KizunaShelf/config.yaml</span> in your vault, yours to open, read, and change.</p>
@@ -466,7 +455,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
 <section id="files">
   <div class="wrap split">
     <div>
-      <span class="eyebrow">no lock-in, no export button needed</span>
       <h2>Underneath, every entry is a text file.</h2>
       <p>Each thing on your shelf is a Markdown file with a little front&nbsp;matter, sitting in a folder you own. Open it in Obsidian. Read it in a terminal. Sync it however you already sync things. Back it up like anything else you'd hate to lose.</p>
       <p>KizunaShelf reads those files as a living shelf, with covers, filters, search, and statistics, without ever turning them into data only one app understands.</p>
@@ -495,7 +483,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
 <section id="connections">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">the shelf is not flat</span>
       <h2>Things belong to each other.</h2>
     </div>
     <p>A game belongs to a franchise. An anime was adapted from a novel, and its opening song belongs to a band you now follow. A character connects to the actor who gave her a voice. In KizunaShelf, those relations are ordinary <span style="font-family: var(--mono); font-size:.9em">[[wikilinks]]</span> written in your files. KizunaShelf reads them in both directions, so every entry shows you the little web of things around it.</p>
@@ -545,7 +532,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
   <span class="dim">(from the calendar)</span></pre>
     </figure>
     <div>
-      <span class="eyebrow">a catalog with a memory</span>
       <h2>It remembers <em>when</em>.</h2>
       <p>Releases and plans land on a calendar, so the next episode and the next volume are never a surprise. Checking off an episode becomes a dated moment in your history. A quick log can write one line into that day's note, in a format you choose. And mentioning something in your daily note ties an ordinary day back to it.</p>
       <p>Years from now the activity feed won't just say that you loved something. It will say when it became part of your life.</p>
@@ -568,7 +554,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
 <section id="apps">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">one library, wherever your downtime is</span>
       <h2>Wherever the quiet hours find you.</h2>
     </div>
     <p>On the couch, at your desk, on the train home. Your shelf looks the same in every app, because the same Rust core runs inside every one of them, reading the same files and understanding them the same way. Everything works offline — the internet is only for cover art, looking things up, and whatever syncing you already use.</p>
@@ -609,12 +594,11 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
 <section id="imports">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">your history comes with you</span>
       <h2>Bring the years you've already logged.</h2>
     </div>
     <p>Quick Capture searches the big metadata sources and creates an entry in one motion, with the cover, episodes, and tracks filled in when available. And whole libraries can move in from the places you've been keeping score:</p>
     <div class="stickers" role="list">
-      <span role="listitem">MyAnimeList</span><span role="listitem">AniList</span><span role="listitem">Kitsu</span><span role="listitem">Trakt</span><span role="listitem">Steam</span><span role="listitem">Bangumi</span><span role="listitem">IMDb csv</span><span role="listitem">Goodreads csv</span><span role="listitem">Yamtrack csv</span><span role="listitem">TMDB</span><span role="listitem">TheTVDB</span><span role="listitem">IGDB</span><span role="listitem">BoardGameGeek</span><span role="listitem">MusicBrainz</span><span role="listitem">Spotify</span><span role="listitem">Discogs</span><span role="listitem">Open Library</span><span role="listitem">Hardcover</span><span role="listitem">MangaUpdates</span><span role="listitem">Comic Vine</span>
+      <span role="listitem">TMDB</span><span role="listitem">TheTVDB</span><span role="listitem">MyAnimeList</span><span role="listitem">AniList</span><span role="listitem">Kitsu</span><span role="listitem">Trakt</span><span role="listitem">Steam</span><span role="listitem">Bangumi</span><span role="listitem">IMDb exports</span><span role="listitem">Goodreads exports</span><span role="listitem">Yamtrack exports</span><span role="listitem">IGDB</span><span role="listitem">BoardGameGeek</span><span role="listitem">MusicBrainz</span><span role="listitem">Apple Podcasts</span><span role="listitem">NeoDB</span><span role="listitem">Discogs</span><span role="listitem">Open Library</span><span role="listitem">Hardcover</span><span role="listitem">MangaUpdates</span><span role="listitem">Comic Vine</span>
     </div>
     <p class="fine">Every import shows you its plan before a single file is written: what it will create, what needs a second look, and what's already on the shelf.</p>
   </div>

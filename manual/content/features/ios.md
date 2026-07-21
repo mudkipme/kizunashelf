@@ -44,4 +44,4 @@ Cover and asset downloads run through background `URLSession` transfers, so a ba
 
 ---
 
-The iOS app is on [TestFlight](https://testflight.apple.com/join/hE7k3sWd). One writing note honored throughout: iOS error messages speak plain English — with an in-process core there is no "server" or "request" to blame.
+The iOS app is on [TestFlight](https://testflight.apple.com/join/hE7k3sWd).

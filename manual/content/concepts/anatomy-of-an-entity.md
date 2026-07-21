@@ -121,7 +121,7 @@ Schema: `fieldType: relation` with `relationType: franchise`. This uses standard
 
 ### `tags: ["sci-fi", "time-traveling"]`
 
-Tags are vault-wide, shared across all entity types, and filterable everywhere. The key name is configured via `tags.field`. See [Tags](@/reference/home-tags-daily-notes.md#tags).
+Tags are vault-wide, shared across all entity types, and filterable everywhere — but only when the vault opts in by setting `tags.field` in the config (this vault sets it to `tags`). Without that, a `tags` key is just an ordinary frontmatter field. See [Tags](@/reference/home-tags-daily-notes.md#tags).
 
 ## The body
 

@@ -23,7 +23,7 @@ types: [...]
 | `taxonomyRoot` | yes | string | Path inside `vaultRoot` that contains typed entity folders. Must be relative. |
 | `assetRoot` | no | string | Vault-relative directory where downloaded assets are stored. Defaults to `Assets`. |
 | `dailyNotes` | no | object | Daily note paths and date extraction settings. |
-| `tags` | no | object | Built-in tags field (see [Tags](@/reference/home-tags-daily-notes.md#tags)). |
+| `tags` | no | object | Opt-in built-in tags field — tags exist only when `tags.field` is set (see [Tags](@/reference/home-tags-daily-notes.md#tags)). |
 | `home` | no | object | Home dashboard sections. |
 | `types` | yes | array | Entity type definitions. |
 

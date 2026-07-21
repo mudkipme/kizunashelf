@@ -6,7 +6,6 @@ import { RatingStars, ratingNumber } from "@/components/ui/rating-stars";
 import { useQuery } from "@tanstack/react-query";
 
 import { configQuery } from "@/api/queries";
-import { defaultTagsField } from "@/lib/constants";
 import { configFields, fieldsByType, fieldLabelForKey, type FieldType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type { Entity, Relation, TypeConfig } from "@/types/api";
@@ -22,7 +21,7 @@ export function useVisibleFrontmatterEntries(
   relationGroups: Array<{ field: string; items: Relation[] }>,
   typeConfig?: TypeConfig,
 ) {
-  const tagsFieldName = useQuery(configQuery()).data?.tagsField ?? defaultTagsField;
+  const tagsFieldName = useQuery(configQuery()).data?.tagsField ?? undefined;
   return visibleFrontmatterEntries(entity, relationGroups, typeConfig, tagsFieldName);
 }
 
@@ -67,11 +66,12 @@ function visibleFrontmatterEntries(
   entity: Entity,
   relationGroups: Array<{ field: string; items: Relation[] }>,
   typeConfig: TypeConfig | undefined,
-  tagsFieldName: string,
+  tagsFieldName: string | undefined,
 ): Array<[string, FrontmatterValue | undefined]> {
   const hiddenKeys = new Set<string>([
-    // Tags have their own display next to the type chip; never in "Details".
-    tagsFieldName,
+    // When the opt-in tags feature is enabled, tags have their own display next
+    // to the type chip; never in "Details". Disabled → no key to hide.
+    ...(tagsFieldName ? [tagsFieldName] : []),
     ...fieldsByType(typeConfig, "title").map((field) => field.field),
     // The status field shows as a badge in the header — not repeated in "Details".
     ...configFields(typeConfig)

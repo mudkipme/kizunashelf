@@ -4126,12 +4126,14 @@ async fn lists_writes_blocked_in_read_only_mode() {
 async fn tags_surface_on_summary_filter_and_vocabulary() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
-    // A configured `tags` field (here a relation) must be IGNORED — the built-in
-    // tags feature owns the name, so no relations are built from it.
+    // Tags are opt-in: `tags.field` enables the feature. A schema field sharing
+    // the configured name (here a relation) must be IGNORED — the built-in tags
+    // feature owns the name, so no relations are built from it.
     write_vault_config(
         &vault,
         &json!({
             "taxonomyRoot": "Taxonomy",
+            "tags": { "field": "tags" },
             "types": [{
                 "id": "anime", "label": "Anime", "path": "Anime",
                 "filename": { "titleLanguage": "zh" },
@@ -4206,6 +4208,56 @@ async fn tags_surface_on_summary_filter_and_vocabulary() {
         .collect();
     many_titles.sort();
     assert_eq!(many_titles, ["Alpha", "Beta"]);
+}
+
+#[tokio::test]
+async fn tags_are_disabled_without_a_configured_tags_field() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    // No `tags` block: the opt-in feature is off. A schema field named `tags`
+    // is then an ordinary schema field — here a relation that must be honored.
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "anime", "label": "Anime", "path": "Anime",
+                "filename": { "titleLanguage": "zh" },
+                "fields": [
+                    { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" },
+                    { "field": "tags", "fieldType": "relation", "displayName": "Tags", "relationType": "tag" }
+                ]
+            }]
+        }),
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Alpha.md"),
+        "---\ntitle: Alpha\ntags: [Beta]\n---\nBody\n",
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Beta.md"),
+        "---\ntitle: Beta\n---\nBody\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    // The config carries no tags field — the signal for clients to hide tag UI.
+    let config = request_json(&app, Method::GET, "/api/config", None).await;
+    assert_eq!(config.0, StatusCode::OK, "{}", config.1);
+    assert_eq!(config.1["tagsField"], serde_json::Value::Null);
+
+    // No tags are derived, even from a frontmatter key literally named `tags`...
+    let entities = request_json(&app, Method::GET, "/api/entities?type=anime", None).await;
+    assert_eq!(entities.0, StatusCode::OK, "{}", entities.1);
+    let items = entities.1["items"].as_array().unwrap();
+    let alpha = items.iter().find(|e| e["title"] == "Alpha").unwrap();
+    assert_eq!(alpha["tags"], json!([]));
+    // ...and the schema relation field named `tags` is a real relation source.
+    assert_eq!(alpha["relationCount"], 1);
+
+    // The vocabulary is empty.
+    let tags = request_json(&app, Method::GET, "/api/tags", None).await;
+    assert_eq!(tags.0, StatusCode::OK, "{}", tags.1);
+    assert_eq!(tags.1["tags"], json!([]));
 }
 
 #[tokio::test]

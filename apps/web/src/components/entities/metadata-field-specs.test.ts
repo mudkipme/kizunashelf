@@ -33,3 +33,21 @@ describe("editableFieldSpecs relation suggestions", () => {
     expect(relationOptions("en")).toEqual([{ value: "Steins;Gate 0 (Anime)", label: "Steins;Gate 0" }]);
   });
 });
+
+describe("editableFieldSpecs built-in tags (opt-in)", () => {
+  it("claims the configured tags key up front when the feature is enabled", () => {
+    const specs = editableFieldSpecs(undefined, {}, [], undefined, "en", ["cozy"], "labels");
+    expect(specs[0]).toMatchObject({ key: "labels", kind: "list", options: ["cozy"], configured: true });
+  });
+
+  it("offers no tags editor when the feature is disabled", () => {
+    const specs = editableFieldSpecs(undefined, {}, [], undefined, "en", [], undefined);
+    expect(specs).toEqual([]);
+  });
+
+  it("treats a frontmatter key named tags as an ordinary unknown field when disabled", () => {
+    const specs = editableFieldSpecs(undefined, { tags: ["cozy"] }, [], undefined, "en", [], undefined);
+    expect(specs).toHaveLength(1);
+    expect(specs[0]).toMatchObject({ key: "tags", kind: "list", configured: false });
+  });
+});
