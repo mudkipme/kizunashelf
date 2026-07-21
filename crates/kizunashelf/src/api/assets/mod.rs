@@ -20,8 +20,8 @@ use super::mutations::{check_revision, type_config_or_err, write_entity_raw, Ent
 use super::state::{get_library, require_content_writes, require_host_asset_ingest, AppState};
 use crate::contract::{
     AssetDownloadItemResult, AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest,
-    AssetDownloadResponse, AssetDownloadStatus, AssetIngestRequest, AssetIngestResponse,
-    AssetUploadRequest, AssetUploadResponse,
+    AssetDownloadResponse, AssetIngestRequest, AssetIngestResponse, AssetUploadRequest,
+    AssetUploadResponse,
 };
 use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
 use crate::types::{FieldType, Library};
@@ -64,7 +64,7 @@ pub(crate) async fn download_entity_assets(
     let all_local = all_local_asset_paths(&library);
     let vfs = state.vault_vfs(&library.config.vault_root);
     let results = download_entity_core(
-        state.http_client(),
+        &state,
         vfs.as_ref(),
         library.config.resolved_asset_root(),
         entity,
@@ -73,13 +73,6 @@ pub(crate) async fn download_entity_assets(
         request.fields.as_deref(),
     )
     .await?;
-
-    if results
-        .iter()
-        .any(|item| item.status == AssetDownloadStatus::Downloaded)
-    {
-        state.invalidate_cache().await;
-    }
 
     let reloaded = get_library(&state).await?;
     let record = reloaded
@@ -91,10 +84,9 @@ pub(crate) async fn download_entity_assets(
 
 /// Downloads every remote cover for a freshly-created entity, rewriting each into
 /// a local asset path in frontmatter. A failed download keeps its remote URL (a
-/// `Failed` result item) — fail-safe. Unlike [`download_entity_assets`] there is
-/// no revision guard (the entity was just created in the same request) and no
-/// cache invalidation — the quick-add caller reloads once after the whole
-/// pipeline. Returns an empty list if the entity vanished or has no cover fields.
+/// `Failed` result item) — fail-safe. The entity's just-created revision guards
+/// the short final commit, and the quick-add caller reloads after all enrichment.
+/// Returns an empty list if the entity vanished or has no cover fields.
 pub(crate) async fn download_new_entity_covers(
     state: &AppState,
     library: &Library,
@@ -107,7 +99,7 @@ pub(crate) async fn download_new_entity_covers(
     let all_local = all_local_asset_paths(library);
     let vfs = state.vault_vfs(&library.config.vault_root);
     download_entity_core(
-        state.http_client(),
+        state,
         vfs.as_ref(),
         library.config.resolved_asset_root(),
         entity,
@@ -235,6 +227,7 @@ pub(crate) async fn ingest_entity_asset(
     let _ = tokio::fs::remove_file(&request.source_path).await;
 
     let vfs = state.vault_vfs(&library.config.vault_root);
+    let _mutation = state.content_mutation_lock().await;
     let asset_dir = resolve_entity_asset_dir(vfs.as_ref(), &asset_root, &entity_path).await;
     let raw = vfs
         .read_to_string(&entity_path)

@@ -11,7 +11,7 @@ use crate::library::{
     file_revision, find_target, load_entity, normalize_full_target,
     normalized_entity_basename_index, parse_daily_note_source_id, rewrite_backlink_wikilinks,
     rewrite_self_wikilinks, rewrite_wikilinks_matching, serialize_markdown_document,
-    split_markdown_document,
+    split_markdown_document, MarkdownDocument,
 };
 use crate::types::{EntityTypeConfig, KizunaConfig, Library, RelationDirection};
 use crate::vfs::Vfs;
@@ -35,6 +35,7 @@ pub(crate) async fn update_entity(
     Json(request): Json<UpdateEntityRequest>,
 ) -> ApiResult<EntityMutationResponse> {
     let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
@@ -143,6 +144,7 @@ pub(crate) async fn create_entity(
     Json(request): Json<CreateEntityRequest>,
 ) -> ApiResult<EntityMutationResponse> {
     let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
     let type_config = type_config_or_err(&library.config, &request.entity_type)?;
     let basename = sanitize_basename(&request.basename)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
@@ -178,6 +180,7 @@ pub(crate) async fn delete_entity(
     Json(request): Json<DeleteEntityRequest>,
 ) -> ApiResult<DeleteEntityResponse> {
     let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
@@ -337,6 +340,57 @@ pub(super) fn check_revision(expected: &str, actual: &str) -> Result<(), ApiErro
         return Err(ApiError::conflict("Entity changed since it was loaded"));
     }
     Ok(())
+}
+
+/// Performs the shared entity read → fresh revision check → parse → mutate →
+/// serialize → atomic write sequence under the router-wide content mutation
+/// lock. The mutation closure is deliberately synchronous so provider/network
+/// work cannot accidentally hold the lock.
+pub(super) async fn edit_entity_document<T, F>(
+    state: &AppState,
+    vfs: &dyn Vfs,
+    relative: &str,
+    expected_revision: &str,
+    edit: F,
+) -> Result<T, ApiError>
+where
+    F: FnOnce(&mut MarkdownDocument) -> Result<T, ApiError>,
+{
+    let _mutation = state.content_mutation_lock().await;
+    let (value, changed) =
+        edit_entity_document_locked(vfs, relative, expected_revision, edit).await?;
+    if changed {
+        state.invalidate_cache().await;
+    }
+    Ok(value)
+}
+
+/// The guarded Markdown edit primitive for callers that already hold the
+/// AppState content-mutation lock across a larger multi-file transaction.
+pub(super) async fn edit_entity_document_locked<T, F>(
+    vfs: &dyn Vfs,
+    relative: &str,
+    expected_revision: &str,
+    edit: F,
+) -> Result<(T, bool), ApiError>
+where
+    F: FnOnce(&mut MarkdownDocument) -> Result<T, ApiError>,
+{
+    let raw = vfs
+        .read_to_string(relative)
+        .await
+        .map_err(|error| anyhow::anyhow!("failed to read entity {relative}: {error}"))?;
+    check_revision(expected_revision, &file_revision(&raw))?;
+
+    let mut document = split_markdown_document(&raw);
+    let value = edit(&mut document)?;
+    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
+    let changed = new_raw != raw;
+    if changed {
+        write_entity_raw(vfs, relative, &new_raw).await?;
+    }
+
+    Ok((value, changed))
 }
 
 /// Resolve an entity's declared type against the schema, with the uniform 400

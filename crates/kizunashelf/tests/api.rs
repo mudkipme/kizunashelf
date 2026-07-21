@@ -584,6 +584,63 @@ async fn entity_mutation_endpoints_edit_create_and_trash_markdown_files() {
     let entities = server.ok_json("/api/entities").await;
     assert_eq!(entities["total"], 4);
 }
+#[tokio::test]
+async fn concurrent_entity_mutations_accept_one_revision_once() {
+    let server = TestServer::new();
+    let path = format!(
+        "/api/entities/{}",
+        urlencoding::encode("anime:Star Voyager")
+    );
+    let detail = server.ok_json(&path).await;
+    let revision = detail["entity"]["revision"].as_str().unwrap().to_string();
+
+    let status_update = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({
+            "revision": revision,
+            "frontmatter": { "status": "Completed" }
+        })),
+    );
+    let progress_update = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({
+            "revision": detail["entity"]["revision"],
+            "frontmatter": { "progress": 99 }
+        })),
+    );
+    let (status_result, progress_result) = tokio::join!(status_update, progress_update);
+
+    let statuses = [status_result.0, progress_result.0];
+    assert_eq!(
+        statuses
+            .iter()
+            .filter(|status| **status == StatusCode::OK)
+            .count(),
+        1,
+        "exactly one concurrent mutation should commit: {statuses:?}"
+    );
+    assert_eq!(
+        statuses
+            .iter()
+            .filter(|status| **status == StatusCode::CONFLICT)
+            .count(),
+        1,
+        "the other mutation must observe the consumed revision: {statuses:?}"
+    );
+
+    let current = server.ok_json(&path).await;
+    let entity = &current["entity"];
+    let status_won = entity["frontmatter"]["status"] == "Completed";
+    let progress_won = entity["frontmatter"]["progress"] == 99;
+    assert_ne!(
+        status_won, progress_won,
+        "the losing mutation must not leak into the file: {entity}"
+    );
+}
 
 #[tokio::test]
 async fn rename_repoints_inbound_wikilinks_in_managed_files() {
@@ -2606,6 +2663,43 @@ async fn asset_download_writes_local_file_and_serves_it() {
     assert_eq!(serve_status, StatusCode::OK);
     assert_eq!(content_type.as_deref(), Some("image/png"));
     assert_eq!(bytes, PNG_1X1);
+}
+#[tokio::test]
+async fn asset_download_does_not_overwrite_an_edit_during_network_fetch() {
+    let addr = start_mock_image_server().await;
+    let cover = format!("http://{addr}/slow.png");
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(
+            &vault.join("Taxonomy/Anime/Star Voyager.md"),
+            &format!("---\ntitle: Star Voyager\ncover_url: {cover}\n---\nOriginal body\n"),
+        );
+    });
+
+    let id = "anime:Star Voyager";
+    let revision = entity_revision(&app, id).await;
+    let task_app = app.clone();
+    let task_revision = revision.clone();
+    let download =
+        tokio::spawn(async move { download_assets(&task_app, id, &task_revision).await });
+
+    // The mock response stays in flight long enough for an Obsidian-style
+    // external edit to land after the request has begun but before its commit.
+    tokio::time::sleep(Duration::from_millis(50)).await;
+    let entity_path = vault.join("Taxonomy/Anime/Star Voyager.md");
+    write_file(
+        &entity_path,
+        &format!(
+            "---\ntitle: Star Voyager\ncover_url: {cover}\nexternal_note: keep me\n---\nExternally edited body\n"
+        ),
+    );
+
+    let (status, body) = download.await.unwrap();
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+
+    let raw = fs::read_to_string(entity_path).unwrap();
+    assert!(raw.contains("external_note: keep me"), "{raw}");
+    assert!(raw.contains("Externally edited body"), "{raw}");
+    assert!(raw.contains(&cover), "{raw}");
 }
 
 #[tokio::test]

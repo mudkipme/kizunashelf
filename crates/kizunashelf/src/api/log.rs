@@ -1,12 +1,12 @@
 use super::entities::build_entity_detail;
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, write_entity_raw};
+use super::mutations::{check_revision, edit_entity_document_locked};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     FlippedStatus, LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate,
 };
 use crate::daily_notes::{remove_log_line, render_log_line, write_log_line, LogWriteError};
-use crate::library::{file_revision, serialize_markdown_document, split_markdown_document};
+use crate::library::file_revision;
 use crate::types::{CanonicalStatus, DateRole, EntityTypeConfig, ResolvedStatus};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
@@ -49,6 +49,11 @@ pub(crate) async fn log_activity(
         get_library(&state).await?
     } else {
         require_content_writes(&state).await?
+    };
+    let _mutation = if dry_run {
+        None
+    } else {
+        Some(state.content_mutation_lock().await)
     };
     let Some(record) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
@@ -238,10 +243,9 @@ pub(crate) async fn log_activity(
     }))
 }
 
-/// Applies the `started`/`completed` date stamp to the entity, revision-guarded
-/// against a **fresh** read of the file — so a concurrent edit since the caller's
-/// preflight is caught (409) instead of clobbered. `field` is `None` for a kind
-/// that doesn't stamp; the guarded write still round-trips.
+/// Applies the `started`/`completed` date stamp to the entity through the
+/// already-locked guarded Markdown edit primitive. The caller holds the content
+/// mutation lock across both the daily-note side effect and this entity write.
 async fn stamp_entity_date(
     vfs: &dyn crate::vfs::Vfs,
     source_rel: &str,
@@ -251,25 +255,21 @@ async fn stamp_entity_date(
     op: LogOp,
     status_flip: Option<&FlippedStatus>,
 ) -> Result<(), ApiError> {
-    let raw = vfs
-        .read_to_string(source_rel)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
-    check_revision(revision, &file_revision(&raw))?;
-    let mut document = split_markdown_document(&raw);
-    if let Some(field) = field {
-        apply_date_stamp(&mut document.frontmatter, field, date, op);
-    }
-    // The status flip (`add` only, precomputed as a promotion) writes the mapped
-    // value directly into the status field, alongside any date stamp — one atomic
-    // entity write.
-    if let Some(flip) = status_flip {
-        document
-            .frontmatter
-            .insert(flip.field.clone(), Value::String(flip.value.clone()));
-    }
-    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    write_entity_raw(vfs, source_rel, &new_raw).await?;
+    edit_entity_document_locked(vfs, source_rel, revision, |document| {
+        if let Some(field) = field {
+            apply_date_stamp(&mut document.frontmatter, field, date, op);
+        }
+        // The status flip (`add` only, precomputed as a promotion) writes the
+        // mapped value directly into the status field, alongside any date stamp
+        // — one atomic entity write.
+        if let Some(flip) = status_flip {
+            document
+                .frontmatter
+                .insert(flip.field.clone(), Value::String(flip.value.clone()));
+        }
+        Ok(())
+    })
+    .await?;
     Ok(())
 }
 

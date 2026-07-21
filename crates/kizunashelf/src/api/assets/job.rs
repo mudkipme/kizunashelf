@@ -198,7 +198,7 @@ async fn run_asset_job(
             };
 
             let outcome = download_entity_core(
-                task_state.http_client(),
+                &task_state,
                 vfs.as_ref(),
                 asset_root.as_str(),
                 &entity,

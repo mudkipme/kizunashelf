@@ -9,7 +9,7 @@ use super::error::{ApiError, ApiResult};
 use super::external::{
     provider_fetch_episodes, provider_for_external_ref, provider_label, provider_supports_episodes,
 };
-use super::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
+use super::mutations::{edit_entity_document, type_config_or_err, EntityPath};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityDetailResponse, Episode, EpisodeGroup, EpisodeSource, EpisodeSyncResponse,
@@ -18,8 +18,7 @@ use crate::contract::{
 use crate::episodes::{
     apply_episodes, episode_section, merge_episodes, parse_episodes, set_episode_watched,
 };
-use crate::library::{file_revision, serialize_markdown_document, split_markdown_document};
-use crate::types::{BodySection, EntityTypeConfig, FieldType, Library};
+use crate::types::{BodySection, EntityRecord, EntityTypeConfig, FieldType, Library};
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
 use serde_json::{Map, Value};
@@ -54,29 +53,28 @@ pub(crate) async fn toggle_episode(
     }
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = vfs
-        .read_to_string(&source_rel)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
-    check_revision(&request.revision, &file_revision(&raw))?;
-
-    let mut document = split_markdown_document(&raw);
-    let Some(body) = set_episode_watched(
-        &document.body,
-        &section,
-        &request.group,
-        &request.key,
-        request.index as usize,
-        request.watched,
-        date,
-    ) else {
-        return Err(ApiError::not_found("Episode not found"));
-    };
-    document.body = body;
-    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    write_entity_raw(vfs.as_ref(), &source_rel, &new_raw).await?;
-
-    state.invalidate_cache().await;
+    edit_entity_document(
+        &state,
+        vfs.as_ref(),
+        &source_rel,
+        &request.revision,
+        |document| {
+            let Some(body) = set_episode_watched(
+                &document.body,
+                &section,
+                &request.group,
+                &request.key,
+                request.index as usize,
+                request.watched,
+                date,
+            ) else {
+                return Err(ApiError::not_found("Episode not found"));
+            };
+            document.body = body;
+            Ok(())
+        },
+    )
+    .await?;
     let reloaded = get_library(&state).await?;
     let Some(record) = reloaded.record_by_id(&entity_id) else {
         return Err(ApiError::not_found("Entity not found"));
@@ -224,7 +222,7 @@ pub(crate) async fn import_new_entity_episodes_marked(
     match fetch_and_write_new_episodes(
         state,
         library,
-        &record.summary.path,
+        record,
         &section,
         chosen,
         watched_count,
@@ -251,7 +249,7 @@ pub(crate) async fn import_new_entity_episodes_marked(
 async fn fetch_and_write_new_episodes(
     state: &AppState,
     library: &Library,
-    source_rel: &str,
+    record: &EntityRecord,
     section: &BodySection,
     chosen: &ResolvedSource,
     watched_count: Option<u32>,
@@ -291,16 +289,19 @@ async fn fetch_and_write_new_episodes(
         .collect();
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = vfs
-        .read_to_string(source_rel)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
-    let mut document = split_markdown_document(&raw);
-    let existing = parse_episodes(&document.body, section);
-    let merged = merge_episodes(&existing, &incoming, false);
-    document.body = apply_episodes(&document.body, section, &merged);
-    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    write_entity_raw(vfs.as_ref(), source_rel, &new_raw).await?;
+    edit_entity_document(
+        state,
+        vfs.as_ref(),
+        &record.summary.path,
+        &record.revision,
+        |document| {
+            let existing = parse_episodes(&document.body, section);
+            let merged = merge_episodes(&existing, &incoming, false);
+            document.body = apply_episodes(&document.body, section, &merged);
+            Ok(())
+        },
+    )
+    .await?;
     Ok(imported)
 }
 
@@ -322,22 +323,22 @@ pub(crate) async fn import_episodes(
     let source_rel = record.summary.path.clone();
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = vfs
-        .read_to_string(&source_rel)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
-    check_revision(&request.revision, &file_revision(&raw))?;
-
-    let mut document = split_markdown_document(&raw);
-    // Merge the incoming groups into the existing episodes (preserve watched + extras,
-    // fill empty titles only), then write the merged result back.
-    let existing = parse_episodes(&document.body, &section);
-    let merged = merge_episodes(&existing, &request.groups, request.overwrite);
-    document.body = apply_episodes(&document.body, &section, &merged);
-    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    write_entity_raw(vfs.as_ref(), &source_rel, &new_raw).await?;
-
-    state.invalidate_cache().await;
+    edit_entity_document(
+        &state,
+        vfs.as_ref(),
+        &source_rel,
+        &request.revision,
+        |document| {
+            // Merge the incoming groups into the existing episodes (preserve
+            // watched + extras, fill empty titles only), then write the merged
+            // result back.
+            let existing = parse_episodes(&document.body, &section);
+            let merged = merge_episodes(&existing, &request.groups, request.overwrite);
+            document.body = apply_episodes(&document.body, &section, &merged);
+            Ok(())
+        },
+    )
+    .await?;
     let reloaded = get_library(&state).await?;
     let Some(record) = reloaded.record_by_id(&entity_id) else {
         return Err(ApiError::not_found("Entity not found"));

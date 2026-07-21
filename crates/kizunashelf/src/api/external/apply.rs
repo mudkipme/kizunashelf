@@ -9,15 +9,13 @@
 
 use super::mapping::match_candidate;
 use crate::api::error::{ApiError, ApiResult};
-use crate::api::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
+use crate::api::mutations::{check_revision, edit_entity_document, type_config_or_err, EntityPath};
 use crate::api::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityMutationResponse, ExternalApplyRequest, ExternalReviewField, ExternalReviewRequest,
     ExternalReviewResponse, ExternalReviewSection, MappedBodySection, MappedFieldValue,
 };
-use crate::library::{
-    file_revision, load_entity, serialize_markdown_document, split_markdown_document,
-};
+use crate::library::load_entity;
 use crate::markdown::{find_section, splice_section};
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
@@ -98,47 +96,45 @@ pub(crate) async fn apply_external_candidate(
     let source_rel = record.summary.path.clone();
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = vfs
-        .read_to_string(&source_rel)
-        .await
-        .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
-    // Same TOCTOU re-check as `update_entity`: an external edit landing between
-    // the cache snapshot and this read must still 409.
-    check_revision(&request.revision, &file_revision(&raw))?;
-    let mut document = split_markdown_document(&raw);
-
     let resolved = match_candidate(request.candidate, type_config);
     let selected_fields: HashSet<&str> = request.fields.iter().map(String::as_str).collect();
     let selected_sections: HashSet<&str> = request.sections.iter().map(String::as_str).collect();
-    for entry in &resolved.fields {
-        if entry.has_value && selected_fields.contains(entry.field.as_str()) {
-            document
-                .frontmatter
-                .insert(entry.field.clone(), entry.value.clone());
-        }
-    }
-    for section in &resolved.body_sections {
-        if section.has_value && selected_sections.contains(section.key.as_str()) {
-            document.body = splice_section(&document.body, &section.heading, &section.markdown);
-        }
-    }
-    // An entity with no body still gets the candidate's brief as a starting
-    // point (only when nothing else filled the body).
-    if document.body.trim().is_empty() {
-        if let Some(brief) = resolved
-            .candidate
-            .brief
-            .as_deref()
-            .map(str::trim)
-            .filter(|brief| !brief.is_empty())
-        {
-            document.body = brief.to_string();
-        }
-    }
-
-    let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    write_entity_raw(vfs.as_ref(), &source_rel, &new_raw).await?;
-    state.invalidate_cache().await;
+    edit_entity_document(
+        &state,
+        vfs.as_ref(),
+        &source_rel,
+        &request.revision,
+        |document| {
+            for entry in &resolved.fields {
+                if entry.has_value && selected_fields.contains(entry.field.as_str()) {
+                    document
+                        .frontmatter
+                        .insert(entry.field.clone(), entry.value.clone());
+                }
+            }
+            for section in &resolved.body_sections {
+                if section.has_value && selected_sections.contains(section.key.as_str()) {
+                    document.body =
+                        splice_section(&document.body, &section.heading, &section.markdown);
+                }
+            }
+            // An entity with no body still gets the candidate's brief as a
+            // starting point (only when nothing else filled the body).
+            if document.body.trim().is_empty() {
+                if let Some(brief) = resolved
+                    .candidate
+                    .brief
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|brief| !brief.is_empty())
+                {
+                    document.body = brief.to_string();
+                }
+            }
+            Ok(())
+        },
+    )
+    .await?;
     let reloaded = get_library(&state).await?;
     let record = reloaded
         .record_by_id(&path.id)

@@ -127,6 +127,11 @@ pub(crate) struct AppState {
     /// uses the Keychain via an injected store.
     secret_store: Arc<dyn SecretStore>,
     cache: Arc<Mutex<Option<CachedLibrary>>>,
+    /// Monotonic generation bumped before every cache invalidation. A library
+    /// reload only publishes its result when the generation is unchanged across
+    /// the load, so a write landing mid-reload cannot be hidden by that older
+    /// reload storing stale state afterward.
+    cache_generation: Arc<AtomicU64>,
     /// Process-resident per-file index cache, used when no persistent
     /// `index_cache_dir` is configured (e.g. the web server default) so a changed
     /// reload re-parses only changed files instead of the whole vault. Lost on
@@ -134,6 +139,11 @@ pub(crate) struct AppState {
     /// clone/replace inside the cache load/save, never across an `.await`.
     index_cache_memory: Arc<std::sync::Mutex<MemoryIndexCache>>,
     reload: Arc<Mutex<()>>,
+    /// Serializes vault content mutations within this router. Atomic VFS writes
+    /// prevent torn files; this lock additionally prevents two in-process
+    /// read-check-write requests from both accepting the same revision and
+    /// silently overwriting one another.
+    content_mutation: Arc<Mutex<()>>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
     /// Per-provider locks that single-flight token acquisition so a cold cache
     /// under concurrent searches does not stampede the upstream token endpoint.
@@ -170,6 +180,7 @@ pub(crate) struct AppState {
 struct CachedLibrary {
     library: Arc<Library>,
     cached_at: Instant,
+    generation: u64,
     /// Fingerprint of the vault file listing this library was built from (schema +
     /// every entity/daily-note file's `(path, len, mtime)`). On a reload, an
     /// unchanged fingerprint means the library is still valid and can be reused
@@ -233,8 +244,10 @@ impl AppState {
             secret_store,
             cache: Arc::new(Mutex::new(None)),
             index_cache_memory: Arc::new(std::sync::Mutex::new(MemoryIndexCache::default())),
+            cache_generation: Arc::new(AtomicU64::new(0)),
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
+            content_mutation: Arc::new(Mutex::new(())),
             token_locks: Arc::new(Mutex::new(HashMap::new())),
             token_disk_lock: Arc::new(Mutex::new(())),
             analytics: Arc::new(RevisionMemo::new()),
@@ -384,7 +397,15 @@ impl AppState {
 
     pub(crate) async fn invalidate_cache(&self) {
         let mut cache = self.cache.lock().await;
+        self.cache_generation.fetch_add(1, Ordering::AcqRel);
         *cache = None;
+    }
+
+    /// Acquires the router-wide vault-content mutation lock. Callers hold this
+    /// across the authoritative fresh read, revision check, and every related
+    /// write. Network/provider preparation should happen before taking it.
+    pub(crate) async fn content_mutation_lock(&self) -> tokio::sync::MutexGuard<'_, ()> {
+        self.content_mutation.lock().await
     }
 
     /// Returns the per-provider lock used to single-flight token acquisition.
@@ -537,27 +558,34 @@ fn cached_token_from_disk(token: DiskCachedAccessToken) -> Option<CachedAccessTo
 }
 
 pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
+    let generation = state.cache_generation.load(Ordering::Acquire);
     {
         let cache = state.cache.lock().await;
         if let Some(cached) = cache.as_ref() {
-            if cached.cached_at.elapsed() < state.options.cache_ttl {
+            if cached.generation == generation
+                && cached.cached_at.elapsed() < state.options.cache_ttl
+            {
                 return Ok(Arc::clone(&cached.library));
             }
         }
     }
 
     let _reload = state.reload.lock().await;
+    let generation = state.cache_generation.load(Ordering::Acquire);
     // Re-check: a concurrent reload may have just refreshed the cache.
     let previous = {
         let cache = state.cache.lock().await;
         match cache.as_ref() {
-            Some(cached) if cached.cached_at.elapsed() < state.options.cache_ttl => {
+            Some(cached)
+                if cached.generation == generation
+                    && cached.cached_at.elapsed() < state.options.cache_ttl =>
+            {
                 return Ok(Arc::clone(&cached.library));
             }
-            Some(cached) => cached
+            Some(cached) if cached.generation == generation => cached
                 .listing_fingerprint
                 .map(|fingerprint| (Arc::clone(&cached.library), fingerprint)),
-            None => None,
+            _ => None,
         }
     };
 
@@ -573,6 +601,7 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
                 library: Arc::clone(&library),
                 cached_at: Instant::now(),
                 listing_fingerprint: Some(fingerprint),
+                generation,
             });
             return Ok(library);
         }
@@ -588,6 +617,7 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
         library: Arc::clone(&library),
         cached_at: Instant::now(),
         listing_fingerprint,
+        generation,
     });
     Ok(library)
 }
@@ -663,5 +693,73 @@ pub(crate) fn require_host_asset_ingest(state: &AppState) -> Result<(), ApiError
         Err(ApiError::forbidden(
             "Host-driven asset ingest is not available on this runtime",
         ))
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::secrets::NativeSecretStore;
+    use crate::vfs::InMemoryVfs;
+
+    fn test_state(vfs: Arc<InMemoryVfs>) -> AppState {
+        AppState::with_vault(
+            ApiOptions {
+                config_path: PathBuf::new(),
+                cache_ttl: Duration::from_secs(60 * 60),
+                web_dist_path: None,
+                settings_writable: true,
+                content_writable: true,
+                host_asset_ingest: false,
+                index_cache_dir: None,
+                index_cache_identity: None,
+            },
+            Some(vfs as Arc<dyn Vfs>),
+            AppConfig {
+                vault_root: "test-vault".to_string(),
+                content_writable: Some(true),
+            },
+            Arc::new(NativeSecretStore::with_token_path(PathBuf::from(
+                "/tmp/kizunashelf-state-test-tokens.json",
+            ))),
+        )
+    }
+
+    #[tokio::test]
+    async fn stale_reload_publication_is_ignored_after_invalidation() {
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_file(
+            "KizunaShelf/config.yaml",
+            r#"taxonomyRoot: Taxonomy
+types:
+  - id: note
+    label: Note
+    path: Notes
+    fields:
+      - field: title
+        fieldType: title
+"#,
+        );
+        let entity_path = "Taxonomy/Notes/Example.md";
+        vfs.insert_file(entity_path, "---\ntitle: Before\n---\n");
+        let state = test_state(Arc::clone(&vfs));
+
+        let before = get_library(&state).await.unwrap();
+        assert_eq!(before.records[0].frontmatter["title"], "Before");
+        let stale_generation = state.cache_generation.load(Ordering::Acquire);
+
+        vfs.insert_file(entity_path, "---\ntitle: After\n---\n");
+        state.invalidate_cache().await;
+
+        // Simulate an older reload finishing after the invalidation. Its cached
+        // library carries the generation from when that reload began.
+        *state.cache.lock().await = Some(CachedLibrary {
+            library: before,
+            cached_at: Instant::now(),
+            generation: stale_generation,
+            listing_fingerprint: None,
+        });
+
+        let after = get_library(&state).await.unwrap();
+        assert_eq!(after.records[0].frontmatter["title"], "After");
     }
 }

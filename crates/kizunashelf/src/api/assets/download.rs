@@ -9,9 +9,10 @@ use super::util::{
     value_to_list,
 };
 use crate::api::error::ApiError;
-use crate::api::mutations::{parent_dir, write_entity_raw};
+use crate::api::mutations::{check_revision, edit_entity_document, parent_dir};
+use crate::api::state::AppState;
 use crate::contract::{AssetDownloadItemResult, AssetDownloadStatus};
-use crate::library::{serialize_markdown_document, split_markdown_document};
+use crate::library::{file_revision, split_markdown_document};
 use crate::types::{EntityRecord, EntityTypeConfig, FieldType};
 use crate::vfs::Vfs;
 use axum::http::header;
@@ -26,10 +27,11 @@ const ASSET_DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(60);
 const MAX_ASSET_REDIRECTS: u32 = 5;
 
 /// Downloads remote image fields for one entity, rewriting and persisting its
-/// frontmatter. Shared by the single-entity endpoint and the batch worker. Does
-/// not touch the library cache; the caller decides when to invalidate.
+/// frontmatter. Shared by the single-entity endpoint and the batch worker.
+/// Network work happens before the short coordinated commit; the entity revision
+/// is checked both before downloading and again under the commit lock.
 pub(super) async fn download_entity_core(
-    client: &reqwest::Client,
+    state: &AppState,
     vfs: &dyn Vfs,
     asset_root: &str,
     entity: &EntityRecord,
@@ -49,6 +51,7 @@ pub(super) async fn download_entity_core(
         .read_to_string(&source_rel)
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entity {source_rel}: {error}"))?;
+    check_revision(&entity.revision, &file_revision(&raw))?;
     let mut document = split_markdown_document(&raw);
 
     let ctx = DownloadContext {
@@ -63,7 +66,7 @@ pub(super) async fn download_entity_core(
     let mut changed = false;
     for field in fields {
         let field_changed = process_field(
-            client,
+            state.http_client(),
             &ctx,
             &mut document.frontmatter,
             &field,
@@ -74,8 +77,12 @@ pub(super) async fn download_entity_core(
     }
 
     if changed {
-        let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-        write_entity_raw(vfs, &source_rel, &new_raw).await?;
+        let frontmatter = document.frontmatter;
+        edit_entity_document(state, vfs, &source_rel, &entity.revision, move |latest| {
+            latest.frontmatter = frontmatter;
+            Ok(())
+        })
+        .await?;
     }
 
     Ok(results)
