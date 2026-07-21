@@ -689,34 +689,45 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "在读的书，带作者和 ISBN。",
                     "在讀的書，帶作者和 ISBN。",
                 ),
-                providers: &["googlebooks", "openlibrary", "hardcover", "bangumi"],
-                external_types: &[("bangumi", &["1"])],
+                providers: &[
+                    "neodb",
+                    "googlebooks",
+                    "openlibrary",
+                    "hardcover",
+                    "bangumi",
+                ],
+                external_types: &[("neodb", &["book"]), ("bangumi", &["1"])],
                 title_sources: ctx.pick(
                     &[
+                        ("neodb", "title"),
                         ("googlebooks", "title"),
                         ("openlibrary", "title"),
                         ("hardcover", "title"),
                         ("bangumi", "name_cn"),
                     ],
                     &[
+                        ("neodb", "title"),
                         ("googlebooks", "title"),
                         ("openlibrary", "title"),
                         ("hardcover", "title"),
                         ("bangumi", "name"),
                     ],
                     &[
+                        ("neodb", "title"),
                         ("googlebooks", "title"),
                         ("openlibrary", "title"),
                         ("hardcover", "title"),
                     ],
                 ),
                 original_title: Some(&[
+                    ("neodb", "original_title"),
                     ("googlebooks", "title"),
                     ("openlibrary", "title"),
                     ("hardcover", "title"),
                     ("bangumi", "name"),
                 ]),
                 cover_sources: &[
+                    ("neodb", "cover_url"),
                     ("googlebooks", "cover_url"),
                     ("openlibrary", "cover_url"),
                     ("hardcover", "cover_url"),
@@ -724,23 +735,27 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 ],
                 summary_sources: ctx.pick(
                     &[
+                        ("neodb", "description"),
                         ("googlebooks", "description"),
                         ("openlibrary", "description"),
                         ("hardcover", "synopsis"),
                         ("bangumi", "summary"),
                     ],
                     &[
+                        ("neodb", "description"),
                         ("googlebooks", "description"),
                         ("openlibrary", "description"),
                         ("hardcover", "synopsis"),
                     ],
                     &[
+                        ("neodb", "description"),
                         ("googlebooks", "description"),
                         ("openlibrary", "description"),
                         ("hardcover", "synopsis"),
                     ],
                 ),
                 date_sources: &[
+                    ("neodb", "published_date"),
                     ("googlebooks", "published_date"),
                     ("openlibrary", "published_date"),
                     ("hardcover", "publish_date"),
@@ -754,12 +769,14 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 list: None,
                 extras: &[
                     Extra::Author(&[
+                        ("neodb", "authors"),
                         ("googlebooks", "authors"),
                         ("openlibrary", "authors"),
                         ("hardcover", "authors"),
                         ("bangumi", "author"),
                     ]),
                     Extra::Isbn(&[
+                        ("neodb", "isbn"),
                         ("googlebooks", "isbn"),
                         ("openlibrary", "isbn"),
                         ("hardcover", "isbn"),

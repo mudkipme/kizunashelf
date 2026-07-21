@@ -13,6 +13,7 @@ mod mal;
 mod mangaupdates;
 mod mapping;
 mod musicbrainz;
+mod neodb;
 mod open_library;
 mod steam;
 mod thetvdb;
@@ -270,6 +271,7 @@ fn registry() -> Vec<ProviderEntry> {
         entry::<mangaupdates::MangaUpdatesProvider>(),
         entry::<comicvine::ComicVineProvider>(),
         entry::<hardcover::HardcoverProvider>(),
+        entry::<neodb::NeoDbProvider>(),
     ]
 }
 
