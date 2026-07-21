@@ -3741,6 +3741,81 @@ async fn smart_lists_create_update_evaluate_and_delete() {
 }
 
 #[tokio::test]
+async fn smart_list_summary_cache_tracks_library_and_definition_revisions() {
+    let server = TestServer::new();
+    let list_path = server.vault.join("KizunaShelf/Lists/All Anime.base");
+    write_file(
+        &list_path,
+        "filters:\n  and:\n    - file.inFolder(\"Taxonomy/Anime\")\nviews:\n  - type: table\n    name: List\n",
+    );
+
+    // The first request builds the memo; the second takes its unchanged-key hit.
+    let first = request_json(
+        &server.app,
+        Method::GET,
+        "/api/lists?today=2030-01-01",
+        None,
+    )
+    .await;
+    assert_eq!(first.0, StatusCode::OK, "{}", first.1);
+    assert_eq!(first.1["items"][0]["itemCount"], 1);
+    let warm = request_json(
+        &server.app,
+        Method::GET,
+        "/api/lists?today=2030-01-01&entity=anime%3AStar%20Voyager",
+        None,
+    )
+    .await;
+    assert_eq!(warm.0, StatusCode::OK, "{}", warm.1);
+    assert_eq!(warm.1["items"][0]["itemCount"], 1);
+    assert_eq!(warm.1["items"][0]["contains"], true);
+
+    // An entity mutation changes Library::content_revision, so the cached count
+    // cannot survive even though the smart-list definition is unchanged.
+    let created = request_json(
+        &server.app,
+        Method::POST,
+        "/api/entities",
+        Some(json!({
+            "type": "anime",
+            "basename": "Cache Miss",
+            "frontmatter": {
+                "title": "Cache Miss",
+                "status": "Watching"
+            },
+            "body": ""
+        })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+    let after_entity = request_json(
+        &server.app,
+        Method::GET,
+        "/api/lists?today=2030-01-01",
+        None,
+    )
+    .await;
+    assert_eq!(after_entity.0, StatusCode::OK, "{}", after_entity.1);
+    assert_eq!(after_entity.1["items"][0]["itemCount"], 2);
+
+    // Smart-list files deliberately do not participate in the library revision.
+    // Their independent listing fingerprint must therefore catch external edits.
+    write_file(
+        &list_path,
+        "filters:\n  and:\n    - file.inFolder(\"Taxonomy/Anime\")\n    - note.status == \"Never\"\nviews:\n  - type: table\n    name: List\n",
+    );
+    let after_definition = request_json(
+        &server.app,
+        Method::GET,
+        "/api/lists?today=2030-01-01",
+        None,
+    )
+    .await;
+    assert_eq!(after_definition.0, StatusCode::OK, "{}", after_definition.1);
+    assert_eq!(after_definition.1["items"][0]["itemCount"], 0);
+}
+
+#[tokio::test]
 async fn smart_list_membership_cannot_be_edited_by_hand() {
     // Smart-list membership is derived from filters, so the manual add/remove
     // item endpoints must reject a smart-list id rather than 404 or (worse)

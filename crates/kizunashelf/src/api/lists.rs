@@ -73,6 +73,7 @@ pub(crate) async fn get_lists(
 
     // Smart lists (`.base` files in the same directory) join the same index.
     let smart_items = super::smart_lists::smart_list_summaries(
+        &state,
         vfs.as_ref(),
         &library,
         query.entity.as_deref(),

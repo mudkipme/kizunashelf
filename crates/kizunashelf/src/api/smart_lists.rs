@@ -35,6 +35,8 @@ use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct SmartListPath {
@@ -255,16 +257,59 @@ pub(crate) async fn preview_smart_list(
 // Lists-index integration
 // ---------------------------------------------------------------------------
 
-/// Vault-relative paths of every smart list — the `*.base` files directly
-/// under [`LISTS_DIR`].
-pub(crate) async fn smart_list_file_paths(vfs: &dyn Vfs) -> VfsResult<Vec<String>> {
+struct SmartListFileListing {
+    paths: Vec<String>,
+    /// Hash of every `.base` path, length, and mtime. `None` means the VFS
+    /// cannot report a trustworthy mtime, so callers must bypass the memo.
+    fingerprint: Option<u64>,
+}
+
+async fn smart_list_file_listing(vfs: &dyn Vfs) -> VfsResult<SmartListFileListing> {
     let entries = vfs.read_dir(LISTS_DIR).await?;
     let suffix = format!(".{SMART_LIST_EXTENSION}");
-    Ok(entries
+    let mut files: Vec<_> = entries
         .into_iter()
         .filter(|entry| entry.is_file && entry.name.ends_with(&suffix))
-        .map(|entry| format!("{LISTS_DIR}/{}", entry.name))
-        .collect())
+        .map(|entry| {
+            (
+                format!("{LISTS_DIR}/{}", entry.name),
+                entry.len,
+                entry.modified_unix_nanos,
+            )
+        })
+        .collect();
+    files.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let fingerprint = files.iter().try_fold(
+        std::collections::hash_map::DefaultHasher::new(),
+        |mut hasher, (path, len, modified)| {
+            if *modified == 0 {
+                return None;
+            }
+            path.hash(&mut hasher);
+            len.hash(&mut hasher);
+            modified.hash(&mut hasher);
+            Some(hasher)
+        },
+    );
+    Ok(SmartListFileListing {
+        paths: files.into_iter().map(|(path, _, _)| path).collect(),
+        fingerprint: fingerprint.map(|hasher| hasher.finish()),
+    })
+}
+
+#[derive(Clone)]
+struct CachedSmartListSummary {
+    summary: ListSummary,
+    filters: FilterNode,
+    uses_now: bool,
+}
+
+/// Resident smart-list index data. Counts and parsed filters are reused for an
+/// unchanged library/list catalog/day; membership remains request-specific and
+/// is evaluated against the one requested entity rather than the whole vault.
+pub(crate) struct SmartListSummaryCache {
+    rows: Vec<CachedSmartListSummary>,
 }
 
 /// The smart-list rows of the lists index: one [`ListSummary`] per parseable
@@ -272,46 +317,123 @@ pub(crate) async fn smart_list_file_paths(vfs: &dyn Vfs) -> VfsResult<Vec<String
 /// limits intentionally ignored — membership means "matches the criteria").
 /// Unparseable files are skipped; the detail endpoint reports their error.
 pub(crate) async fn smart_list_summaries(
+    state: &AppState,
     vfs: &dyn Vfs,
     library: &Library,
     entity: Option<&str>,
     today: Option<&str>,
 ) -> VfsResult<Vec<ListSummary>> {
-    let paths = match smart_list_file_paths(vfs).await {
-        Ok(paths) => paths,
-        Err(error) if error.is_not_found() => return Ok(Vec::new()),
+    let listing = match smart_list_file_listing(vfs).await {
+        Ok(listing) => listing,
+        Err(error) if error.is_not_found() => SmartListFileListing {
+            paths: Vec::new(),
+            fingerprint: Some(0),
+        },
         Err(error) => return Err(error),
     };
-    let files = vfs.read_files(&paths).await?;
-    let ctx = eval_context(library, today);
-    let wanted = entity.and_then(|id| library.record_by_id(id));
-    Ok(files
-        .into_iter()
-        .filter_map(|(path, bytes)| String::from_utf8(bytes).ok().map(|raw| (path, raw)))
-        .filter_map(|(path, raw)| {
-            let list = parse_smart_list(&raw).ok()?;
-            let item_count = library
-                .records
-                .iter()
-                .filter(|record| smart_lists::record_matches(&list.filters, record, &ctx))
-                .count();
-            let contains = entity.map(|_| {
-                wanted
-                    .is_some_and(|record| smart_lists::record_matches(&list.filters, record, &ctx))
-            });
-            let id = smart_list_id(&path);
-            Some(ListSummary {
-                name: id.clone(),
-                id,
-                kind: ListKind::Smart,
-                path,
-                description: String::new(),
-                item_count,
-                section_count: 0,
-                contains,
+    let resolved_today = resolve_today(today);
+    let build = || async {
+        let files = vfs.read_files(&listing.paths).await?;
+        let ctx = EvalContext::new(library, chrono::Utc::now(), resolved_today);
+        let rows = files
+            .into_iter()
+            .filter_map(|(path, bytes)| String::from_utf8(bytes).ok().map(|raw| (path, raw)))
+            .filter_map(|(path, raw)| {
+                let list = parse_smart_list(&raw).ok()?;
+                let item_count = library
+                    .records
+                    .iter()
+                    .filter(|record| smart_lists::record_matches(&list.filters, record, &ctx))
+                    .count();
+                let id = smart_list_id(&path);
+                Some(CachedSmartListSummary {
+                    summary: ListSummary {
+                        name: id.clone(),
+                        id,
+                        kind: ListKind::Smart,
+                        path,
+                        description: String::new(),
+                        item_count,
+                        section_count: 0,
+                        contains: None,
+                    },
+                    uses_now: filters_use_now(&list.filters),
+                    filters: list.filters,
+                })
             })
+            .collect();
+        Ok(Arc::new(SmartListSummaryCache { rows }))
+    };
+
+    let cached = match listing.fingerprint {
+        Some(fingerprint) => {
+            let library_revision = smart_list_library_revision(library);
+            let memo_key = format!("{library_revision}|{fingerprint}|{resolved_today}");
+            state
+                .smart_list_summaries()
+                .get_or_try_build(&memo_key, build)
+                .await?
+        }
+        // A backend without listing mtimes cannot prove the definitions are
+        // unchanged. Build fresh instead of risking stale externally edited lists.
+        None => build().await?,
+    };
+
+    let ctx = EvalContext::new(library, chrono::Utc::now(), resolved_today);
+    let wanted = entity.and_then(|id| library.record_by_id(id));
+    Ok(cached
+        .rows
+        .iter()
+        .map(|row| {
+            let mut summary = row.summary.clone();
+            // `now()` is an instant, not content. Keep those uncommon counts
+            // live while still reusing the parsed filter tree.
+            if row.uses_now {
+                summary.item_count = library
+                    .records
+                    .iter()
+                    .filter(|record| smart_lists::record_matches(&row.filters, record, &ctx))
+                    .count();
+            }
+            summary.contains = entity.map(|_| {
+                wanted.is_some_and(|record| smart_lists::record_matches(&row.filters, record, &ctx))
+            });
+            summary
         })
         .collect())
+}
+
+fn filters_use_now(node: &FilterNode) -> bool {
+    match node {
+        FilterNode::Group { children, .. } => children.iter().any(filters_use_now),
+        FilterNode::Expr(FilterAtom {
+            kind:
+                AtomKind::Compare {
+                    value:
+                        CompareValue::Date(DateExpr {
+                            base: DateBase::Now,
+                            ..
+                        }),
+                    ..
+                },
+            ..
+        }) => true,
+        FilterNode::Expr(_) | FilterNode::Opaque(_) => false,
+    }
+}
+
+/// Smart-list filters can observe `file.mtime`, which is intentionally absent
+/// from `Library::content_revision` (touching a file does not change its content).
+/// Add resident entity mtimes to this feature-local revision so such touches
+/// invalidate summary counts without invalidating unrelated analytics memos.
+fn smart_list_library_revision(library: &Library) -> u64 {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    library.content_revision.hash(&mut hasher);
+    for record in &library.records {
+        record.summary.id.hash(&mut hasher);
+        record.file_modified_unix_nanos.hash(&mut hasher);
+    }
+    hasher.finish()
 }
 
 // ---------------------------------------------------------------------------

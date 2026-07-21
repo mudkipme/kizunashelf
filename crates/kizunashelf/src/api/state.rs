@@ -75,6 +75,30 @@ impl<T> RevisionMemo<T> {
         self.store(content_revision, Arc::clone(&value)).await;
         value
     }
+
+    /// Fallible counterpart of [`Self::get_or_build`] for derived views whose
+    /// construction performs VFS I/O. Errors are never cached; a later request
+    /// gets a fresh chance to build the value.
+    pub(crate) async fn get_or_try_build<F, Fut, E>(
+        &self,
+        content_revision: &str,
+        build: F,
+    ) -> Result<Arc<T>, E>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = Result<Arc<T>, E>>,
+    {
+        if let Some(value) = self.get(content_revision).await {
+            return Ok(value);
+        }
+        let _build = self.build_lock.lock().await;
+        if let Some(value) = self.get(content_revision).await {
+            return Ok(value);
+        }
+        let value = build().await?;
+        self.store(content_revision, Arc::clone(&value)).await;
+        Ok(value)
+    }
 }
 
 /// In-memory record for a batch asset-download job. Jobs do not survive a
@@ -169,6 +193,11 @@ pub(crate) struct AppState {
     /// cheap resident scan, so the single-flight lock barely matters here — it
     /// just avoids recomputing the sorted set on every autocomplete/filter request.
     tags: Arc<RevisionMemo<Vec<String>>>,
+    /// Memoized parsed smart-list filters and summary counts. Unlike the other
+    /// whole-library views, this key also includes the `.base` directory listing
+    /// fingerprint and the client's local date: list definitions live outside
+    /// the library revision, and `today()` filters change at the day boundary.
+    smart_list_summaries: Arc<RevisionMemo<super::smart_lists::SmartListSummaryCache>>,
     http_client: reqwest::Client,
     asset_jobs: Arc<Mutex<HashMap<String, AssetJobRecord>>>,
     asset_job_counter: Arc<AtomicU64>,
@@ -253,6 +282,7 @@ impl AppState {
             analytics: Arc::new(RevisionMemo::new()),
             cleanup: Arc::new(RevisionMemo::new()),
             tags: Arc::new(RevisionMemo::new()),
+            smart_list_summaries: Arc::new(RevisionMemo::new()),
             http_client,
             asset_jobs: Arc::new(Mutex::new(HashMap::new())),
             asset_job_counter: Arc::new(AtomicU64::new(0)),
@@ -432,6 +462,14 @@ impl AppState {
     /// The tag-vocabulary memo, keyed on the library's `content_revision`.
     pub(crate) fn tags(&self) -> &RevisionMemo<Vec<String>> {
         &self.tags
+    }
+
+    /// The smart-list summary memo, keyed on library content, `.base` listing,
+    /// and the client's resolved local date.
+    pub(crate) fn smart_list_summaries(
+        &self,
+    ) -> &RevisionMemo<super::smart_lists::SmartListSummaryCache> {
+        &self.smart_list_summaries
     }
 
     pub(crate) async fn cached_access_token(&self, key: &str) -> Option<CachedAccessToken> {
