@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, insert_str, normalize_isbn, provider_error, string_list,
-    strip_html, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    external_client, field_option, insert_str, normalize_isbn, provider_error, send_limited,
+    string_list, strip_html, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
     ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
@@ -122,35 +122,14 @@ async fn search_google_books(
     let client = external_client();
     // A pasted Google Books URL/volume id resolves to a single volume.
     if let Some(volume_id) = google_books_volume_id(q) {
-        let value = client
-            .get(format!(
-                "https://www.googleapis.com/books/v1/volumes/{volume_id}"
-            ))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .query(&[("country", "us"), ("key", api_key.as_str())])
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
-        return Ok(google_books_candidate(&value).into_iter().collect());
-    }
-    let start_index = (page - 1) * page_size;
-    let response = client
-        .get("https://www.googleapis.com/books/v1/volumes")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("country", "us"),
-            ("q", q),
-            ("startIndex", &start_index.to_string()),
-            ("maxResults", &page_size.to_string()),
-            ("maxAllowedMaturityRating", "MATURE"),
-            ("key", api_key.as_str()),
-        ])
-        .send()
+        let value = send_limited(
+            client
+                .get(format!(
+                    "https://www.googleapis.com/books/v1/volumes/{volume_id}"
+                ))
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .query(&[("country", "us"), ("key", api_key.as_str())]),
+        )
         .await
         .map_err(provider_error)?
         .error_for_status_body()
@@ -158,6 +137,29 @@ async fn search_google_books(
         .json::<Value>()
         .await
         .map_err(provider_error)?;
+        return Ok(google_books_candidate(&value).into_iter().collect());
+    }
+    let start_index = (page - 1) * page_size;
+    let response = send_limited(
+        client
+            .get("https://www.googleapis.com/books/v1/volumes")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("country", "us"),
+                ("q", q),
+                ("startIndex", &start_index.to_string()),
+                ("maxResults", &page_size.to_string()),
+                ("maxAllowedMaturityRating", "MATURE"),
+                ("key", api_key.as_str()),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let items = response
         .get("items")
         .and_then(Value::as_array)

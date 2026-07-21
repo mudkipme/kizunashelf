@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, insert_str, provider_error, type_option, url_type_allowed,
-    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, insert_str, provider_error, send_limited, type_option,
+    url_type_allowed, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -65,18 +65,19 @@ async fn fetch_musicbrainz_tracks(ref_value: &str) -> Result<ProviderEpisodes, A
         ));
     }
     let client = external_client();
-    let value = client
-        .get(format!("https://musicbrainz.org/ws/2/release/{mbid}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[("inc", "recordings"), ("fmt", "json")])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("https://musicbrainz.org/ws/2/release/{mbid}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[("inc", "recordings"), ("fmt", "json")]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     Ok(ProviderEpisodes {
         groups: musicbrainz_track_groups(&value),
     })
@@ -222,24 +223,25 @@ async fn search_musicbrainz(
     let mut items = Vec::new();
     for entity in entities {
         let plural = format!("{entity}s");
-        let value = client
-            .get(format!("https://musicbrainz.org/ws/2/{entity}"))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .header(reqwest::header::ACCEPT, "application/json")
-            .query(&[
-                ("query", q),
-                ("fmt", "json"),
-                ("limit", &page_size.to_string()),
-                ("offset", &offset.to_string()),
-            ])
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let value = send_limited(
+            client
+                .get(format!("https://musicbrainz.org/ws/2/{entity}"))
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .header(reqwest::header::ACCEPT, "application/json")
+                .query(&[
+                    ("query", q),
+                    ("fmt", "json"),
+                    ("limit", &page_size.to_string()),
+                    ("offset", &offset.to_string()),
+                ]),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         if let Some(found) = value.get(&plural).and_then(Value::as_array) {
             items.extend(found.iter().filter_map(|item| match entity {
                 "artist" => musicbrainz_artist(item),
@@ -260,19 +262,20 @@ async fn resolve_musicbrainz(
         "release" => "artists+labels+release-groups+genres+tags",
         _ => "artists+genres+tags",
     };
-    let value = client
-        .get(format!("https://musicbrainz.org/ws/2/{entity}/{mbid}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(reqwest::header::ACCEPT, "application/json")
-        .query(&[("fmt", "json"), ("inc", inc)])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("https://musicbrainz.org/ws/2/{entity}/{mbid}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header(reqwest::header::ACCEPT, "application/json")
+            .query(&[("fmt", "json"), ("inc", inc)]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let candidate = if entity == "artist" {
         musicbrainz_artist(&value)
     } else {

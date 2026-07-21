@@ -1,7 +1,7 @@
 use super::{
     external_client, field_option, named_strings, non_empty_string_or_integer, provider_error,
-    string_array, strip_html_collapsed, type_option, CredentialSpec, ExternalProvider,
-    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    send_limited, string_array, strip_html_collapsed, type_option, CredentialSpec,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -96,22 +96,23 @@ async fn fetch_comicvine_issues(
     let api_key = comicvine_api_key(state)
         .ok_or_else(|| ApiError::bad_request("Comic Vine API key is not configured"))?;
     let client = external_client();
-    let value = client
-        .get(format!("{BASE}/volume/{VOLUME_PREFIX}{id}/"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("api_key", api_key.as_str()),
-            ("format", "json"),
-            ("field_list", "issues"),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("{BASE}/volume/{VOLUME_PREFIX}{id}/"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("api_key", api_key.as_str()),
+                ("format", "json"),
+                ("field_list", "issues"),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let issues = value
         .pointer("/results/issues")
         .and_then(Value::as_array)
@@ -222,7 +223,7 @@ async fn search_comicvine(
     let client = external_client();
     // A pasted Comic Vine URL or bare id resolves a single volume.
     if let Some(id) = comicvine_id(q) {
-        let value = client
+        let value = send_limited(client
             .get(format!("{BASE}/volume/{VOLUME_PREFIX}{id}/"))
             .header(reqwest::header::USER_AGENT, USER_AGENT)
             .query(&[
@@ -232,8 +233,7 @@ async fn search_comicvine(
                     "field_list",
                     "id,name,image,description,publisher,start_year,count_of_issues,concepts,people",
                 ),
-            ])
-            .send()
+            ]))
             .await
             .map_err(provider_error)?
             .error_for_status_body()
@@ -248,29 +248,30 @@ async fn search_comicvine(
             .into_iter()
             .collect());
     }
-    let value = client
-        .get(format!("{BASE}/search/"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("api_key", api_key.as_str()),
-            ("format", "json"),
-            ("query", q),
-            ("resources", "volume"),
-            (
-                "field_list",
-                "id,name,image,publisher,start_year,count_of_issues",
-            ),
-            ("limit", &page_size.to_string()),
-            ("page", &page.to_string()),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("{BASE}/search/"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("api_key", api_key.as_str()),
+                ("format", "json"),
+                ("query", q),
+                ("resources", "volume"),
+                (
+                    "field_list",
+                    "id,name,image,publisher,start_year,count_of_issues",
+                ),
+                ("limit", &page_size.to_string()),
+                ("page", &page.to_string()),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let results = value
         .get("results")
         .and_then(Value::as_array)

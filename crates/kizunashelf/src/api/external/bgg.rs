@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, type_option, CredentialSpec, ExternalProvider,
-    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, provider_error, send_limited, type_option, CredentialSpec,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -138,19 +138,20 @@ async fn search_bgg(
     }
     // Search returns ids + names with no pagination; resolve the requested page's
     // ids via one `thing` call so each candidate carries full metadata.
-    let xml = client
-        .get("https://boardgamegeek.com/xmlapi2/search")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .bearer_auth(&token)
-        .query(&[("query", q), ("type", BGG_TYPES)])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .text()
-        .await
-        .map_err(provider_error)?;
+    let xml = send_limited(
+        client
+            .get("https://boardgamegeek.com/xmlapi2/search")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .bearer_auth(&token)
+            .query(&[("query", q), ("type", BGG_TYPES)]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .text()
+    .await
+    .map_err(provider_error)?;
     let mut ids: Vec<String> = parse_bgg_items(&xml)
         .into_iter()
         .filter_map(|item| item.id)
@@ -173,20 +174,21 @@ async fn bgg_thing(
     token: &str,
     ids: &str,
 ) -> Result<Vec<BggItem>, ApiError> {
-    let xml = client
-        .get("https://boardgamegeek.com/xmlapi2/thing")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .bearer_auth(token)
-        // `stats=1` includes the ratings/rank block (average, usersrated, rank).
-        .query(&[("type", BGG_TYPES), ("stats", "1"), ("id", ids)])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .text()
-        .await
-        .map_err(provider_error)?;
+    let xml = send_limited(
+        client
+            .get("https://boardgamegeek.com/xmlapi2/thing")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .bearer_auth(token)
+            // `stats=1` includes the ratings/rank block (average, usersrated, rank).
+            .query(&[("type", BGG_TYPES), ("stats", "1"), ("id", ids)]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .text()
+    .await
+    .map_err(provider_error)?;
     Ok(parse_bgg_items(&xml))
 }
 

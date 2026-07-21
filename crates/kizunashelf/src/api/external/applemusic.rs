@@ -1,5 +1,5 @@
 use super::{
-    external_client, field_option, provider_error, type_option, ExternalProvider,
+    external_client, field_option, provider_error, send_limited, type_option, ExternalProvider,
     ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
@@ -71,19 +71,20 @@ async fn fetch_apple_music_tracks(
         .ok_or_else(|| ApiError::bad_request("Not an Apple Music album link or id"))?;
     let country = apple_storefront(language.unwrap_or(""));
     let client = external_client();
-    let value = client
-        .get(format!(
-            "https://itunes.apple.com/lookup?id={id}&entity=song&limit=200&country={country}"
-        ))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!(
+                "https://itunes.apple.com/lookup?id={id}&entity=song&limit=200&country={country}"
+            ))
+            .header(reqwest::header::USER_AGENT, USER_AGENT),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let results = value
         .get("results")
         .and_then(Value::as_array)
@@ -179,19 +180,20 @@ async fn search_apple_music(
     let client = external_client();
     // A pasted Apple Music URL or bare numeric id resolves via the lookup API.
     if let Some(id) = apple_music_id(q) {
-        let value = client
-            .get(format!(
-                "https://itunes.apple.com/lookup?id={id}&country={country}"
-            ))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let value = send_limited(
+            client
+                .get(format!(
+                    "https://itunes.apple.com/lookup?id={id}&country={country}"
+                ))
+                .header(reqwest::header::USER_AGENT, USER_AGENT),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         let result = value
             .get("results")
             .and_then(Value::as_array)
@@ -200,23 +202,24 @@ async fn search_apple_music(
     }
     // iTunes search has no offset; ask for `page * page_size` then skip prior pages.
     let limit = page * page_size;
-    let value = client
-        .get("https://itunes.apple.com/search")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("entity", "album"),
-            ("country", country),
-            ("limit", &limit.to_string()),
-            ("term", q),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get("https://itunes.apple.com/search")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("entity", "album"),
+                ("country", country),
+                ("limit", &limit.to_string()),
+                ("term", q),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let results = value
         .get("results")
         .and_then(Value::as_array)

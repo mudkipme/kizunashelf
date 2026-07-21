@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, string_list, type_option, ExternalProvider,
-    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, provider_error, send_limited, string_list, type_option,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -70,12 +70,11 @@ async fn fetch_apple_podcast_episodes(
         .ok_or_else(|| ApiError::bad_request("Not an Apple Podcasts link or id"))?;
     let country = apple_storefront(language.unwrap_or(""));
     let client = external_client();
-    let value = client
+    let value = send_limited(client
         .get(format!(
             "https://itunes.apple.com/lookup?id={id}&entity=podcastEpisode&limit=200&country={country}"
         ))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send()
+        .header(reqwest::header::USER_AGENT, USER_AGENT))
         .await
         .map_err(provider_error)?
         .error_for_status_body()
@@ -168,19 +167,20 @@ async fn search_apple_podcast(
     let client = external_client();
     // A pasted Apple Podcasts URL or bare numeric id resolves via the lookup API.
     if let Some(id) = apple_podcast_id(q) {
-        let value = client
-            .get(format!(
-                "https://itunes.apple.com/lookup?id={id}&country={country}"
-            ))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let value = send_limited(
+            client
+                .get(format!(
+                    "https://itunes.apple.com/lookup?id={id}&country={country}"
+                ))
+                .header(reqwest::header::USER_AGENT, USER_AGENT),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         let result = value
             .get("results")
             .and_then(Value::as_array)
@@ -192,23 +192,24 @@ async fn search_apple_podcast(
     }
     // iTunes search has no offset; ask for `page * page_size` then skip prior pages.
     let limit = page * page_size;
-    let value = client
-        .get("https://itunes.apple.com/search")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("entity", "podcast"),
-            ("country", country),
-            ("limit", &limit.to_string()),
-            ("term", q),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get("https://itunes.apple.com/search")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("entity", "podcast"),
+                ("country", country),
+                ("limit", &limit.to_string()),
+                ("term", q),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let results = value
         .get("results")
         .and_then(Value::as_array)

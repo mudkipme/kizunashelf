@@ -7,7 +7,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::USER_AGENT;
+use crate::api::external::{send_limited, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::types::CanonicalStatus;
@@ -54,17 +54,18 @@ impl ImportSource for AniListSource {
             .ok_or_else(|| ApiError::bad_request("An AniList username is required"))?;
 
         let body = json!({ "query": QUERY, "variables": { "userName": username } });
-        let value: Value = state
-            .http_client()
-            .post(ENDPOINT)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .json(&body)
-            .send()
-            .await
-            .map_err(|_| ApiError::bad_gateway("The AniList request failed"))?
-            .json()
-            .await
-            .map_err(|_| ApiError::bad_gateway("Invalid AniList response"))?;
+        let value: Value = send_limited(
+            state
+                .http_client()
+                .post(ENDPOINT)
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .json(&body),
+        )
+        .await
+        .map_err(|_| ApiError::bad_gateway("The AniList request failed"))?
+        .json()
+        .await
+        .map_err(|_| ApiError::bad_gateway("Invalid AniList response"))?;
 
         // AniList reports a missing/private user as a GraphQL error with null data.
         if value.get("data").map(Value::is_null).unwrap_or(true) {

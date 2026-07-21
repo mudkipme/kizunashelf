@@ -1,7 +1,7 @@
 use super::{
-    external_client, field_option, insert_str, named_list, provider_error, type_option,
-    url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
-    USER_AGENT,
+    external_client, field_option, insert_str, named_list, provider_error, send_limited,
+    type_option, url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -106,19 +106,20 @@ async fn fetch_mal_episodes(ref_value: &str) -> Result<ProviderEpisodes, ApiErro
     // Page through Jikan (100/page) until it reports no next page, with a hard cap
     // so a malformed response can't loop forever.
     loop {
-        let value = client
-            .get(format!(
-                "https://api.jikan.moe/v4/anime/{id}/episodes?page={page}"
-            ))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let value = send_limited(
+            client
+                .get(format!(
+                    "https://api.jikan.moe/v4/anime/{id}/episodes?page={page}"
+                ))
+                .header(reqwest::header::USER_AGENT, USER_AGENT),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         let Some(data) = value.get("data").and_then(Value::as_array) else {
             break;
         };
@@ -246,24 +247,25 @@ async fn search_mal(
     let offset = (page - 1) * page_size;
     let mut items = Vec::new();
     for media_type in media {
-        let value = client
-            .get(format!("{BASE}/{media_type}"))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .header("X-MAL-CLIENT-ID", &client_id)
-            .query(&[
-                ("q", q),
-                ("fields", "media_type"),
-                ("limit", &page_size.to_string()),
-                ("offset", &offset.to_string()),
-            ])
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let value = send_limited(
+            client
+                .get(format!("{BASE}/{media_type}"))
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .header("X-MAL-CLIENT-ID", &client_id)
+                .query(&[
+                    ("q", q),
+                    ("fields", "media_type"),
+                    ("limit", &page_size.to_string()),
+                    ("offset", &offset.to_string()),
+                ]),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         if let Some(data) = value.get("data").and_then(Value::as_array) {
             items.extend(
                 data.iter()
@@ -280,19 +282,20 @@ async fn resolve_mal(
     media_type: &str,
     id: &str,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
-    let value = client
-        .get(format!("{BASE}/{media_type}/{id}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header("X-MAL-CLIENT-ID", client_id)
-        .query(&[("fields", DETAIL_FIELDS)])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("{BASE}/{media_type}/{id}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header("X-MAL-CLIENT-ID", client_id)
+            .query(&[("fields", DETAIL_FIELDS)]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     Ok(mal_detail(media_type, id, &value).into_iter().collect())
 }
 

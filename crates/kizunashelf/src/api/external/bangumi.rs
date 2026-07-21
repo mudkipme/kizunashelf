@@ -1,6 +1,6 @@
 use super::{
-    cached_json_get, external_client, field_option, provider_error, string_list_with, type_option,
-    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    cached_json_get, external_client, field_option, provider_error, send_limited, string_list_with,
+    type_option, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -285,20 +285,21 @@ async fn search_bangumi(
     let offset = (page - 1) * page_size;
     let mut items = Vec::new();
     if let Some(filter_types) = &subject_types {
-        let response = client
-            .post(format!(
-                "https://api.bgm.tv/v0/search/subjects?limit={page_size}&offset={offset}"
-            ))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .json(&json!({ "keyword": q, "filter": { "type": filter_types } }))
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let response = send_limited(
+            client
+                .post(format!(
+                    "https://api.bgm.tv/v0/search/subjects?limit={page_size}&offset={offset}"
+                ))
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .json(&json!({ "keyword": q, "filter": { "type": filter_types } })),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
             items.extend(
                 data.iter()
@@ -307,20 +308,21 @@ async fn search_bangumi(
         }
     }
     if wants_characters {
-        let response = client
-            .post(format!(
-                "https://api.bgm.tv/v0/search/characters?limit={page_size}&offset={offset}"
-            ))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .json(&json!({ "keyword": q }))
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let response = send_limited(
+            client
+                .post(format!(
+                    "https://api.bgm.tv/v0/search/characters?limit={page_size}&offset={offset}"
+                ))
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .json(&json!({ "keyword": q })),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
             items.extend(
                 data.iter()
@@ -329,20 +331,21 @@ async fn search_bangumi(
         }
     }
     if wants_persons {
-        let response = client
-            .post(format!(
-                "https://api.bgm.tv/v0/search/persons?limit={page_size}&offset={offset}"
-            ))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .json(&json!({ "keyword": q }))
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let response = send_limited(
+            client
+                .post(format!(
+                    "https://api.bgm.tv/v0/search/persons?limit={page_size}&offset={offset}"
+                ))
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .json(&json!({ "keyword": q })),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
             items.extend(
                 data.iter()
@@ -360,17 +363,18 @@ async fn bangumi_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiEr
     // All Bangumi by-id GETs (subjects/characters/persons/episodes) route through
     // here; the keyword search uses a separate POST and is not cached.
     let value = cached_json_get(url, || async {
-        client
-            .get(url)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)
+        send_limited(
+            client
+                .get(url)
+                .header(reqwest::header::USER_AGENT, USER_AGENT),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)
     })
     .await?;
     Ok((*value).clone())

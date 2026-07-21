@@ -1,7 +1,7 @@
 use super::{
-    external_client, field_option, named_strings, provider_error, string_list, type_option,
-    url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
-    USER_AGENT,
+    external_client, field_option, named_strings, provider_error, send_limited, string_list,
+    type_option, url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -107,18 +107,19 @@ async fn fetch_discogs_tracks(
     let authorization = discogs_authorization(state)
         .ok_or_else(|| ApiError::bad_request("Discogs credentials are not configured"))?;
     let client = external_client();
-    let value = client
-        .get(format!("https://api.discogs.com/{kind}s/{id}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(reqwest::header::AUTHORIZATION, authorization)
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("https://api.discogs.com/{kind}s/{id}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header(reqwest::header::AUTHORIZATION, authorization),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     Ok(ProviderEpisodes {
         groups: discogs_track_groups(&value),
     })
@@ -273,31 +274,12 @@ async fn search_discogs(
         if !url_type_allowed(provider_config, kind) {
             return Ok(Vec::new());
         }
-        let value = client
-            .get(format!("https://api.discogs.com/{kind}s/{id}"))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .header(reqwest::header::AUTHORIZATION, &authorization)
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
-        return Ok(discogs_detail(kind, &id, &value).into_iter().collect());
-    }
-    let value = client
-        .get("https://api.discogs.com/database/search")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(reqwest::header::AUTHORIZATION, &authorization)
-        .query(&[
-            ("q", q),
-            ("type", &types.join(",")),
-            ("per_page", &page_size.to_string()),
-            ("page", &page.to_string()),
-        ])
-        .send()
+        let value = send_limited(
+            client
+                .get(format!("https://api.discogs.com/{kind}s/{id}"))
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .header(reqwest::header::AUTHORIZATION, &authorization),
+        )
         .await
         .map_err(provider_error)?
         .error_for_status_body()
@@ -305,6 +287,27 @@ async fn search_discogs(
         .json::<Value>()
         .await
         .map_err(provider_error)?;
+        return Ok(discogs_detail(kind, &id, &value).into_iter().collect());
+    }
+    let value = send_limited(
+        client
+            .get("https://api.discogs.com/database/search")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header(reqwest::header::AUTHORIZATION, &authorization)
+            .query(&[
+                ("q", q),
+                ("type", &types.join(",")),
+                ("per_page", &page_size.to_string()),
+                ("page", &page.to_string()),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let results = value
         .get("results")
         .and_then(Value::as_array)

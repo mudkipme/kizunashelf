@@ -1,5 +1,5 @@
 use super::{
-    cached_or_fetch_token, external_client, field_option, named_list, provider_error,
+    cached_or_fetch_token, external_client, field_option, named_list, provider_error, send_limited,
     send_with_token_retry, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
     ProviderSearchConfig,
 };
@@ -229,23 +229,24 @@ async fn igdb_access_token(
     force_refresh: bool,
 ) -> Result<String, ApiError> {
     cached_or_fetch_token(state, "igdb", "IGDB", force_refresh, || async {
-        let value = client
-            .post("https://id.twitch.tv/oauth2/token")
-            // Credentials go in the form body, never the query string, so they are
-            // not echoed back in any error/log carrying the request URL.
-            .form(&[
-                ("client_id", client_id),
-                ("client_secret", client_secret),
-                ("grant_type", "client_credentials"),
-            ])
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
+        let value = send_limited(
+            client
+                .post("https://id.twitch.tv/oauth2/token")
+                // Credentials go in the form body, never the query string, so they are
+                // not echoed back in any error/log carrying the request URL.
+                .form(&[
+                    ("client_id", client_id),
+                    ("client_secret", client_secret),
+                    ("grant_type", "client_credentials"),
+                ]),
+        )
+        .await
+        .map_err(provider_error)?
+        .error_for_status_body()
+        .await?
+        .json::<Value>()
+        .await
+        .map_err(provider_error)?;
         let access_token = value
             .get("access_token")
             .and_then(Value::as_str)

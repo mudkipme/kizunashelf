@@ -1,6 +1,6 @@
 use super::{
     cached_or_fetch_token, external_client, field_option, non_empty_string_or_integer,
-    provider_error, send_with_token_retry, string_list, type_option, CredentialSpec,
+    provider_error, send_limited, send_with_token_retry, string_list, type_option, CredentialSpec,
     ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
@@ -131,10 +131,7 @@ fn thetvdb_series_ref(ref_value: &str) -> Option<SeriesRef> {
 
 /// A bearer GET against the TheTVDB v4 API returning the parsed JSON.
 async fn thetvdb_get(client: &reqwest::Client, token: &str, url: &str) -> Result<Value, ApiError> {
-    client
-        .get(url)
-        .bearer_auth(token)
-        .send()
+    send_limited(client.get(url).bearer_auth(token))
         .await
         .map_err(provider_error)?
         .error_for_status_body()
@@ -449,10 +446,7 @@ async fn thetvdb_access_token(
     force_refresh: bool,
 ) -> Result<String, ApiError> {
     cached_or_fetch_token(state, "thetvdb", "TheTVDB", force_refresh, || async {
-        let value = client
-            .post("https://api4.thetvdb.com/v4/login")
-            .json(login)
-            .send()
+        let value = send_limited(client.post("https://api4.thetvdb.com/v4/login").json(login))
             .await
             .map_err(provider_error)?
             .error_for_status_body()

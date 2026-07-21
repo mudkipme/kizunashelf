@@ -7,7 +7,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::USER_AGENT;
+use crate::api::external::{send_limited, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::types::CanonicalStatus;
@@ -76,13 +76,14 @@ impl ImportSource for KitsuSource {
 }
 
 async fn kitsu_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiError> {
-    let response = client
-        .get(url)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(reqwest::header::ACCEPT, "application/vnd.api+json")
-        .send()
-        .await
-        .map_err(|_| ApiError::bad_gateway("The Kitsu request failed"))?;
+    let response = send_limited(
+        client
+            .get(url)
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header(reqwest::header::ACCEPT, "application/vnd.api+json"),
+    )
+    .await
+    .map_err(|_| ApiError::bad_gateway("The Kitsu request failed"))?;
     if response.status() == reqwest::StatusCode::NOT_FOUND {
         return Err(ApiError::bad_request("Kitsu user not found"));
     }

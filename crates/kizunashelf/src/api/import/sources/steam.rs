@@ -7,7 +7,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{CredentialSpec, USER_AGENT};
+use crate::api::external::{send_limited, CredentialSpec, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::secrets::SECRET_STEAM_API_KEY;
@@ -63,13 +63,14 @@ impl ImportSource for SteamSource {
             urlencoding::encode(&api_key),
             urlencoding::encode(steam_id)
         );
-        let response = state
-            .http_client()
-            .get(&url)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .map_err(|_| ApiError::bad_gateway("The Steam request failed"))?;
+        let response = send_limited(
+            state
+                .http_client()
+                .get(&url)
+                .header(reqwest::header::USER_AGENT, USER_AGENT),
+        )
+        .await
+        .map_err(|_| ApiError::bad_gateway("The Steam request failed"))?;
         match response.status().as_u16() {
             403 => return Err(ApiError::bad_request("Steam profile is private")),
             401 => return Err(ApiError::bad_request("Invalid Steam Web API key")),

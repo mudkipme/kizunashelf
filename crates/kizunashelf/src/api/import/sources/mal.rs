@@ -7,7 +7,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{mal_list_candidate, MAL_LIST_FIELDS, USER_AGENT};
+use crate::api::external::{mal_list_candidate, send_limited, MAL_LIST_FIELDS, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ImportInput, ImportInputKind};
 use crate::secrets::SECRET_MAL_CLIENT_ID;
@@ -87,13 +87,14 @@ async fn fetch_list(
         urlencoding::encode(username)
     );
     loop {
-        let response = client
-            .get(&url)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .header("X-MAL-CLIENT-ID", client_id)
-            .send()
-            .await
-            .map_err(|_| ApiError::bad_gateway("The MyAnimeList request failed"))?;
+        let response = send_limited(
+            client
+                .get(&url)
+                .header(reqwest::header::USER_AGENT, USER_AGENT)
+                .header("X-MAL-CLIENT-ID", client_id),
+        )
+        .await
+        .map_err(|_| ApiError::bad_gateway("The MyAnimeList request failed"))?;
         if response.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(ApiError::bad_request("MyAnimeList user not found"));
         }

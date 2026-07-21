@@ -1,7 +1,7 @@
 use super::{
     external_client, field_option, non_empty_string_or_integer, normalize_isbn, provider_error,
-    type_option, CredentialSpec, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
-    USER_AGENT,
+    send_limited, type_option, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -200,22 +200,23 @@ async fn hardcover_post(
     query: &str,
     variables: Value,
 ) -> Result<Value, ApiError> {
-    client
-        .post(ENDPOINT)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(
-            reqwest::header::AUTHORIZATION,
-            hardcover_authorization(token),
-        )
-        .json(&json!({ "query": query, "variables": variables }))
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)
+    send_limited(
+        client
+            .post(ENDPOINT)
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header(
+                reqwest::header::AUTHORIZATION,
+                hardcover_authorization(token),
+            )
+            .json(&json!({ "query": query, "variables": variables })),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)
 }
 
 /// Hardcover expects `Authorization: Bearer <token>`. Accept a token that

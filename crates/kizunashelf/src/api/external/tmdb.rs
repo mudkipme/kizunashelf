@@ -1,7 +1,7 @@
 use super::{
     external_client, field_option, insert_str, named_list, named_strings, provider_error,
-    type_option, url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt,
-    ProviderSearchConfig, USER_AGENT,
+    send_limited, type_option, url_type_allowed, CredentialSpec, ExternalProvider,
+    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -236,18 +236,19 @@ async fn tmdb_get(
     api_key: &str,
     language: &str,
 ) -> Result<Value, ApiError> {
-    client
-        .get(format!("https://api.themoviedb.org/3/{path}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[("api_key", api_key), ("language", language)])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)
+    send_limited(
+        client
+            .get(format!("https://api.themoviedb.org/3/{path}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[("api_key", api_key), ("language", language)]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)
 }
 
 fn tmdb_api_key(state: &AppState) -> Option<String> {
@@ -268,21 +269,22 @@ pub(crate) async fn tmdb_find_imdb(
     let Some(api_key) = tmdb_api_key(state) else {
         return Err(ApiError::bad_request("Set the TMDB API key"));
     };
-    let value = external_client()
-        .get(format!("https://api.themoviedb.org/3/find/{imdb_id}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("api_key", api_key.as_str()),
-            ("external_source", "imdb_id"),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        external_client()
+            .get(format!("https://api.themoviedb.org/3/find/{imdb_id}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("api_key", api_key.as_str()),
+                ("external_source", "imdb_id"),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let first = |key: &str, media_type: &'static str| {
         value
             .get(key)
@@ -399,24 +401,25 @@ async fn search_tmdb(
     // page plus an in-page offset, then slice.
     let tmdb_page = (page - 1) * page_size / 20 + 1;
     let offset = (page - 1) * page_size % 20;
-    let value = client
-        .get(&endpoint)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("query", q),
-            ("page", &tmdb_page.to_string()),
-            ("api_key", &api_key),
-            ("language", &request_language),
-            ("include_adult", "true"),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(&endpoint)
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("query", q),
+                ("page", &tmdb_page.to_string()),
+                ("api_key", &api_key),
+                ("language", &request_language),
+                ("include_adult", "true"),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let results = value
         .get("results")
         .and_then(Value::as_array)
@@ -437,22 +440,23 @@ async fn resolve_tmdb(
     id: &str,
     request_language: &str,
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
-    let value = client
-        .get(format!("https://api.themoviedb.org/3/{media_type}/{id}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .query(&[
-            ("api_key", api_key),
-            ("language", request_language),
-            ("append_to_response", "external_ids,credits"),
-        ])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("https://api.themoviedb.org/3/{media_type}/{id}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .query(&[
+                ("api_key", api_key),
+                ("language", request_language),
+                ("append_to_response", "external_ids,credits"),
+            ]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     Ok(tmdb_detail(media_type, id, &value, request_language)
         .into_iter()
         .collect())

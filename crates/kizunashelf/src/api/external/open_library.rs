@@ -1,7 +1,7 @@
 use super::{
-    external_client, field_option, insert_str, normalize_isbn, provider_error, string_list,
-    strip_html, type_option, ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
-    USER_AGENT,
+    external_client, field_option, insert_str, normalize_isbn, provider_error, send_limited,
+    string_list, strip_html, type_option, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -91,7 +91,7 @@ async fn search_open_library(
         return resolve_open_library(client, &olid).await;
     }
     let offset = (page - 1) * page_size;
-    let response = client
+    let response = send_limited(client
         .get("https://openlibrary.org/search.json")
         .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&[
@@ -102,8 +102,7 @@ async fn search_open_library(
                 "fields",
                 "key,title,subtitle,author_name,first_publish_year,cover_edition_key,cover_i,editions,editions.key,editions.title",
             ),
-        ])
-        .send()
+        ]))
         .await
         .map_err(provider_error)?
         .error_for_status_body()
@@ -126,17 +125,18 @@ async fn resolve_open_library(
 ) -> Result<Vec<ExternalCandidate>, ApiError> {
     let is_work = olid.ends_with('W') || olid.ends_with('w');
     let path = if is_work { "works" } else { "books" };
-    let value = client
-        .get(format!("https://openlibrary.org/{path}/{olid}.json"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get(format!("https://openlibrary.org/{path}/{olid}.json"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let authors = fetch_author_names(client, &value, is_work).await;
     Ok(open_library_record(olid, &value, is_work, authors)
         .into_iter()
@@ -170,13 +170,14 @@ async fn fetch_author_names(client: &reqwest::Client, value: &Value, is_work: bo
     let mut names = Vec::new();
     for key in keys {
         let url = format!("https://openlibrary.org{key}.json");
-        let name = client
-            .get(url)
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .ok()
-            .and_then(|response| response.error_for_status().ok());
+        let name = send_limited(
+            client
+                .get(url)
+                .header(reqwest::header::USER_AGENT, USER_AGENT),
+        )
+        .await
+        .ok()
+        .and_then(|response| response.error_for_status().ok());
         if let Some(response) = name {
             if let Ok(author) = response.json::<Value>().await {
                 if let Some(name) = author

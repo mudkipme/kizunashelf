@@ -1,6 +1,6 @@
 use super::{
-    external_client, field_option, provider_error, string_list, strip_html, type_option,
-    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, provider_error, send_limited, string_list, strip_html,
+    type_option, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -117,19 +117,20 @@ async fn resolve_steam(
     };
     let (store_language, accept_language) = steam_language(provider_config.language.as_deref());
     let client = external_client();
-    let value = client
-        .get("https://store.steampowered.com/api/appdetails")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(reqwest::header::ACCEPT_LANGUAGE, accept_language)
-        .query(&[("appids", appid.as_str()), ("l", store_language)])
-        .send()
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)?;
+    let value = send_limited(
+        client
+            .get("https://store.steampowered.com/api/appdetails")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header(reqwest::header::ACCEPT_LANGUAGE, accept_language)
+            .query(&[("appids", appid.as_str()), ("l", store_language)]),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let data = value
         .get(&appid)
         .filter(|entry| entry.get("success").and_then(Value::as_bool) == Some(true))

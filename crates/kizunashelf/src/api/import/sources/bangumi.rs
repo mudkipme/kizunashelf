@@ -8,7 +8,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::USER_AGENT;
+use crate::api::external::{send_limited, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::types::CanonicalStatus;
@@ -48,12 +48,13 @@ impl ImportSource for BangumiSource {
                 "https://api.bgm.tv/v0/users/{}/collections?limit={PAGE_LIMIT}&offset={offset}",
                 urlencoding::encode(username)
             );
-            let response = client
-                .get(&url)
-                .header(reqwest::header::USER_AGENT, USER_AGENT)
-                .send()
-                .await
-                .map_err(|_| ApiError::bad_gateway("The Bangumi request failed"))?;
+            let response = send_limited(
+                client
+                    .get(&url)
+                    .header(reqwest::header::USER_AGENT, USER_AGENT),
+            )
+            .await
+            .map_err(|_| ApiError::bad_gateway("The Bangumi request failed"))?;
             if response.status() == reqwest::StatusCode::NOT_FOUND {
                 return Err(ApiError::bad_request("Bangumi user not found"));
             }

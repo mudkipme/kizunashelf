@@ -8,7 +8,7 @@ use super::super::csv_util::{field, parse_csv, CsvRow};
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::USER_AGENT;
+use crate::api::external::{send_limited, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::types::CanonicalStatus;
@@ -124,13 +124,14 @@ fn build_item(parsed: ParsedRow, resolved: Option<(String, String)>) -> ImportIt
 /// or server error propagates so the user sees Open Library was unreachable
 /// rather than a silent all-review result.
 async fn resolve_isbn(state: &AppState, isbn: &str) -> Result<Option<(String, String)>, ApiError> {
-    let response = state
-        .http_client()
-        .get(format!("https://openlibrary.org/isbn/{isbn}.json"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .send()
-        .await
-        .map_err(|_| ApiError::bad_gateway("The Open Library request failed"))?;
+    let response = send_limited(
+        state
+            .http_client()
+            .get(format!("https://openlibrary.org/isbn/{isbn}.json"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT),
+    )
+    .await
+    .map_err(|_| ApiError::bad_gateway("The Open Library request failed"))?;
     // The shared client doesn't follow redirects; `/isbn` may 3xx to `/books/OLID`.
     if response.status().is_redirection() {
         let location = response

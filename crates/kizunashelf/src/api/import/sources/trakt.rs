@@ -8,7 +8,7 @@
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{CredentialSpec, USER_AGENT};
+use crate::api::external::{send_limited, CredentialSpec, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::secrets::SECRET_TRAKT_CLIENT_ID;
@@ -79,15 +79,16 @@ fn client_id(state: &AppState) -> Option<String> {
 }
 
 async fn trakt_get(state: &AppState, client_id: &str, path: &str) -> Result<Value, ApiError> {
-    let response = state
-        .http_client()
-        .get(format!("{BASE}{path}"))
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header("trakt-api-version", "2")
-        .header("trakt-api-key", client_id)
-        .send()
-        .await
-        .map_err(|_| ApiError::bad_gateway("The Trakt request failed"))?;
+    let response = send_limited(
+        state
+            .http_client()
+            .get(format!("{BASE}{path}"))
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .header("trakt-api-version", "2")
+            .header("trakt-api-key", client_id),
+    )
+    .await
+    .map_err(|_| ApiError::bad_gateway("The Trakt request failed"))?;
     match response.status().as_u16() {
         404 => return Err(ApiError::bad_request("Trakt user not found")),
         401 => {

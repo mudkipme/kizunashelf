@@ -1,7 +1,7 @@
 use super::{
     external_client, field_option, insert_str, named_strings, non_empty_string_or_integer,
-    provider_error, string_array, strip_html_collapsed, type_option, ExternalProvider,
-    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    provider_error, send_limited, string_array, strip_html_collapsed, type_option,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalProviderTypeOption};
@@ -86,29 +86,11 @@ async fn search_mangaupdates(
     let client = external_client();
     // A pasted MangaUpdates URL or bare numeric id resolves a single series.
     if let Some(id) = mangaupdates_id(q) {
-        let value = client
-            .get(format!("https://api.mangaupdates.com/v1/series/{id}"))
-            .header(reqwest::header::USER_AGENT, USER_AGENT)
-            .send()
-            .await
-            .map_err(provider_error)?
-            .error_for_status_body()
-            .await?
-            .json::<Value>()
-            .await
-            .map_err(provider_error)?;
-        return Ok(mangaupdates_detail(&value).into_iter().collect());
-    }
-    let response = client
-        .post("https://api.mangaupdates.com/v1/series/search")
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .json(&json!({
-            "search": q,
-            "stype": "title",
-            "perpage": page_size,
-            "page": page,
-        }))
-        .send()
+        let value = send_limited(
+            client
+                .get(format!("https://api.mangaupdates.com/v1/series/{id}"))
+                .header(reqwest::header::USER_AGENT, USER_AGENT),
+        )
         .await
         .map_err(provider_error)?
         .error_for_status_body()
@@ -116,6 +98,26 @@ async fn search_mangaupdates(
         .json::<Value>()
         .await
         .map_err(provider_error)?;
+        return Ok(mangaupdates_detail(&value).into_iter().collect());
+    }
+    let response = send_limited(
+        client
+            .post("https://api.mangaupdates.com/v1/series/search")
+            .header(reqwest::header::USER_AGENT, USER_AGENT)
+            .json(&json!({
+                "search": q,
+                "stype": "title",
+                "perpage": page_size,
+                "page": page,
+            })),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)?;
     let results = response
         .get("results")
         .and_then(Value::as_array)

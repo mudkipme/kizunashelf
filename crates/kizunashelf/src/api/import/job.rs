@@ -24,12 +24,6 @@ use std::sync::Arc;
 
 const MAX_IMPORT_ERRORS: usize = 50;
 
-/// Minimum spacing between per-item provider detail fetches in the commit loop.
-/// Interactive flows fire one fetch at a time, but a large import would
-/// otherwise hammer a provider with hundreds of back-to-back requests and trip
-/// its rate limit (AniList and MAL throttle around one request per second).
-const DETAIL_FETCH_SPACING: std::time::Duration = std::time::Duration::from_secs(1);
-
 /// A resolved item held on the job record for commit. The wire [`ImportPlanItem`]
 /// is a projection of this.
 #[derive(Clone)]
@@ -266,7 +260,6 @@ pub(super) async fn run_commit_job(
     // Refs created this run, so a second item can't re-create the same work
     // against the (pre-run) library index.
     let mut created_refs: HashSet<(String, String)> = HashSet::new();
-    let mut last_detail_fetch: Option<std::time::Instant> = None;
     // (path, watched_count) for episode enrichment after the create pass.
     let mut created: Vec<(String, Option<u32>)> = Vec::new();
 
@@ -340,13 +333,6 @@ pub(super) async fn run_commit_job(
             .cloned()
             .or_else(|| planned_item.item.candidate.clone());
         if needs_detail_fetch(candidate.as_ref(), &type_config, &provider) {
-            if let Some(last) = last_detail_fetch {
-                let elapsed = last.elapsed();
-                if elapsed < DETAIL_FETCH_SPACING {
-                    tokio::time::sleep(DETAIL_FETCH_SPACING - elapsed).await;
-                }
-            }
-            last_detail_fetch = Some(std::time::Instant::now());
             match resolve_candidate(
                 &state,
                 &provider,
