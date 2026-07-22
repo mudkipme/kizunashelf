@@ -55,6 +55,7 @@ use super::state::{get_library, require_content_writes, AppState, CachedAccessTo
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
 const EXTERNAL_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+const ENRICH_BEFORE_APPLY_METADATA_KEY: &str = "__kizunashelf_enrich_before_apply";
 
 trait ExternalProvider {
     const ID: &'static str;
@@ -484,13 +485,19 @@ pub(crate) async fn external_search(
     // library, and keep priority order.
     let existing_index = build_existing_index(&library);
     let mut items = Vec::new();
-    let mut seen: HashSet<(&str, &str)> = HashSet::new();
-    for candidate in &found {
-        if !seen.insert((candidate.provider.as_str(), candidate.source_id.as_str())) {
+    let mut seen: HashSet<(String, String)> = HashSet::new();
+    let enrich_before_apply = url_provider.is_none();
+    for mut candidate in found {
+        if !seen.insert((candidate.provider.clone(), candidate.source_id.clone())) {
             continue;
         }
+        if enrich_before_apply {
+            // Keep search latency bounded: return the provider's result now and
+            // resolve detail only for the one candidate the user chooses.
+            mark_candidate_for_enrichment(&mut candidate);
+        }
         let mut item = mapping::match_candidate(candidate.clone(), type_config);
-        item.existing = lookup_existing(&existing_index, candidate, &type_config.id);
+        item.existing = lookup_existing(&existing_index, &candidate, &type_config.id);
         items.push(item);
     }
     Ok(Json(ExternalSearchResponse { providers, items }))
@@ -690,8 +697,19 @@ pub(crate) async fn quick_add_entity(
         }
     }
 
+    // Free-text provider results are often deliberately thin. Resolve the
+    // candidate's canonical URL before mapping so quick-add gets the same rich
+    // metadata as pasting that URL directly.
+    let candidate = enrich_candidate_for_type(
+        &state,
+        request.candidate,
+        type_config,
+        request.language.as_deref(),
+    )
+    .await?;
+
     // Re-map the candidate against the schema ourselves — never trust client values.
-    let (mut frontmatter, body, mapped_fields) = build_mapped_document(candidate, type_config);
+    let (mut frontmatter, body, mapped_fields) = build_mapped_document(&candidate, type_config);
     // Quick Capture files things you intend to get to, so seed a "planning" status
     // when the schema models one and the candidate didn't already supply a value.
     apply_default_planning_status(&mut frontmatter, type_config);
@@ -711,7 +729,7 @@ pub(crate) async fn quick_add_entity(
             false,
         ),
         None => {
-            let base = candidate_basename_base(candidate, type_config)?;
+            let base = candidate_basename_base(&candidate, type_config)?;
             let year = candidate_year(type_config, &mapped_fields);
             resolve_free_basename(
                 vfs.as_ref(),
@@ -871,10 +889,10 @@ fn apply_default_planning_status(
 
 /// Resolves a full candidate for a provider from a `query` (a stored external-ref
 /// URL or a free-text title), constrained to `external_types` (the source
-/// bucket). Batch import uses this to fetch provider *detail* when the item it
-/// carries lacks a metadata key the target type maps — the gap quick-add never
-/// has (it echoes the search candidate). Prefers an exact URL/id match, else the
-/// first result. `None` means the provider returned nothing.
+/// bucket). Batch import and candidate enrichment use this to fetch provider
+/// *detail* rather than applying a deliberately thin free-text search result.
+/// Prefers an exact URL/id match, else the first result. `None` means the
+/// provider returned nothing.
 pub(super) async fn resolve_candidate(
     state: &AppState,
     provider_id: &str,
@@ -901,6 +919,95 @@ pub(super) async fn resolve_candidate(
         Some(index) => results.into_iter().nth(index),
         None => results.into_iter().next(),
     })
+}
+
+/// Re-resolves a marked free-text search candidate by its canonical URL before
+/// review/apply. Provider search endpoints commonly omit detail-only fields
+/// (credits, descriptions, counts, and relations), so applying the echoed search
+/// result directly would silently miss schema mappings. URL-resolved and
+/// unmarked candidates pass through without another network call. The original
+/// result's localized display title is retained while detail metadata wins for
+/// mapped values.
+pub(super) async fn enrich_candidate_for_type(
+    state: &AppState,
+    mut candidate: ExternalCandidate,
+    type_config: &EntityTypeConfig,
+    language: Option<&str>,
+) -> Result<ExternalCandidate, ApiError> {
+    if !take_candidate_enrichment_marker(&mut candidate) {
+        return Ok(candidate);
+    }
+    let provider = provider_for_external_ref(&candidate.provider)
+        .ok_or_else(|| ApiError::bad_request("Unknown external provider"))?;
+    let external_types = candidate_external_types(type_config, provider);
+    let query = if candidate.url.trim().is_empty() {
+        candidate.source_id.as_str()
+    } else {
+        candidate.url.as_str()
+    };
+    let detail = resolve_candidate(state, provider, query, &external_types, language)
+        .await?
+        .ok_or_else(|| ApiError::bad_gateway("External provider returned no candidate detail"))?;
+    Ok(merge_enriched_candidate(candidate, detail))
+}
+
+fn mark_candidate_for_enrichment(candidate: &mut ExternalCandidate) {
+    candidate.metadata.insert(
+        ENRICH_BEFORE_APPLY_METADATA_KEY.to_string(),
+        Value::Bool(true),
+    );
+}
+
+fn take_candidate_enrichment_marker(candidate: &mut ExternalCandidate) -> bool {
+    candidate
+        .metadata
+        .remove(ENRICH_BEFORE_APPLY_METADATA_KEY)
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false)
+}
+
+fn candidate_external_types(type_config: &EntityTypeConfig, provider: &str) -> Vec<String> {
+    type_config
+        .fields
+        .iter()
+        .filter(|field| {
+            field.field_type == FieldType::ExternalRef
+                && field
+                    .external_ref
+                    .as_deref()
+                    .and_then(provider_for_external_ref)
+                    == Some(provider)
+        })
+        .flat_map(|field| field.external_types.iter().cloned())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
+}
+
+fn merge_enriched_candidate(
+    search: ExternalCandidate,
+    mut detail: ExternalCandidate,
+) -> ExternalCandidate {
+    // The detail response is authoritative for metadata, but a language-less
+    // review/apply request must not erase localized titles already returned to
+    // the client by the original search request.
+    detail.titles.extend(search.titles);
+    if !search.title.trim().is_empty() {
+        detail.title = search.title;
+    }
+    if detail.original_title.is_none() {
+        detail.original_title = search.original_title;
+    }
+    if detail.brief.is_none() {
+        detail.brief = search.brief;
+    }
+    if detail.cover_url.is_none() {
+        detail.cover_url = search.cover_url;
+    }
+    let mut metadata = search.metadata;
+    metadata.extend(detail.metadata);
+    detail.metadata = metadata;
+    detail
 }
 
 /// The `fields=` selection for a MyAnimeList user list, and the candidate builder
@@ -2004,6 +2111,87 @@ mod tests {
                 .collect(),
             metadata: Map::new(),
         }
+    }
+
+    #[test]
+    fn candidate_enrichment_uses_the_provider_external_type_constraints() {
+        let mut config =
+            entity_type_with_external_types("board", "BGG Link", "bgg", &["boardgame"]);
+        config.fields.push(
+            entity_type_with_external_types(
+                "board",
+                "BGG Expansion Link",
+                "bgg",
+                &["boardgameexpansion", "boardgame"],
+            )
+            .fields
+            .remove(0),
+        );
+        // An unrelated provider's constraint must not leak into the resolve.
+        config.fields.push(
+            entity_type_with_external_types("board", "TVDB Link", "thetvdb", &["series"])
+                .fields
+                .remove(0),
+        );
+
+        assert_eq!(
+            candidate_external_types(&config, "bgg"),
+            vec!["boardgame".to_string(), "boardgameexpansion".to_string()]
+        );
+    }
+
+    #[test]
+    fn enriched_detail_wins_without_losing_search_localization() {
+        let mut search = candidate("thetvdb", "123", "https://thetvdb.com/series/123");
+        search.title = "Localized search title".to_string();
+        search
+            .titles
+            .insert("zh".to_string(), "本地化标题".to_string());
+        search
+            .metadata
+            .insert("name".to_string(), Value::String("Thin name".to_string()));
+
+        let mut detail = candidate("thetvdb", "123", "https://thetvdb.com/series/123");
+        detail.title = "Default detail title".to_string();
+        detail.original_title = Some("Original title".to_string());
+        detail.brief = Some("Full overview".to_string());
+        detail.metadata.insert(
+            "name".to_string(),
+            Value::String("Original title".to_string()),
+        );
+        detail
+            .metadata
+            .insert("genres".to_string(), Value::String("Drama".to_string()));
+
+        let merged = merge_enriched_candidate(search, detail);
+        assert_eq!(merged.title, "Localized search title");
+        assert_eq!(
+            merged.titles.get("zh").map(String::as_str),
+            Some("本地化标题")
+        );
+        assert_eq!(merged.original_title.as_deref(), Some("Original title"));
+        assert_eq!(merged.brief.as_deref(), Some("Full overview"));
+        assert_eq!(
+            merged.metadata.get("name"),
+            Some(&Value::String("Original title".to_string()))
+        );
+        assert_eq!(
+            merged.metadata.get("genres"),
+            Some(&Value::String("Drama".to_string()))
+        );
+    }
+
+    #[test]
+    fn free_text_enrichment_marker_is_one_shot_and_not_applied_as_metadata() {
+        let mut candidate = candidate("mangaupdates", "123", "https://mangaupdates.com/123");
+        assert!(!take_candidate_enrichment_marker(&mut candidate));
+
+        mark_candidate_for_enrichment(&mut candidate);
+        assert!(take_candidate_enrichment_marker(&mut candidate));
+        assert!(!candidate
+            .metadata
+            .contains_key(ENRICH_BEFORE_APPLY_METADATA_KEY));
+        assert!(!take_candidate_enrichment_marker(&mut candidate));
     }
 
     #[test]

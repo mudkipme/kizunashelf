@@ -38,10 +38,11 @@
 
 use crate::api::external::provider_catalog_items;
 use crate::contract::{
-    ResolveTypePresetsRequest, ResolveTypePresetsResponse, SmartCompareOp, SmartFilterConjunction,
-    SmartFilterGroup, SmartFilterRule, SmartFilterRuleKind, SmartFilterSubgroup,
-    TypePresetBackfill, TypePresetCategory, TypePresetCategoryInfo, TypePresetCollision,
-    TypePresetProvider, TypePresetSummary, TypePresetsResponse,
+    ResolveTypePresetsRequest, ResolveTypePresetsResponse, SmartCompareOp, SmartDurationUnit,
+    SmartFilterConjunction, SmartFilterGroup, SmartFilterRule, SmartFilterRuleKind,
+    SmartFilterSubgroup, SmartRelativeDate, TypePresetBackfill, TypePresetCategory,
+    TypePresetCategoryInfo, TypePresetCollision, TypePresetProvider, TypePresetSummary,
+    TypePresetsResponse,
 };
 use crate::languages::primary_language;
 use crate::types::{
@@ -163,9 +164,10 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
             false // target absent → drop the relation field
         });
         // One default shelf per type, so a multi-type vault's home doesn't
-        // start out bloated: the "in progress" shelf when the type's status
-        // role maps an ongoing value, else the chronological "recent" shelf.
-        if let Some(section) = ongoing_home_section_for(&config, preset.ongoing_shelf)
+        // start out bloated: upcoming events, otherwise an "in progress" shelf
+        // when the status role maps an ongoing value, otherwise "recent".
+        if let Some(section) = upcoming_event_home_section_for(&config, ctx.locale)
+            .or_else(|| ongoing_home_section_for(&config, preset.ongoing_shelf))
             .or_else(|| recent_home_section_for(&config, ctx.locale))
         {
             home_sections.push(section);
@@ -412,23 +414,16 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                         ("bangumi", "name_cn"),
                         ("myanimelist", "title"),
                         ("tmdb", "title"),
-                        ("thetvdb", "name"),
                     ],
                     &[
                         ("bangumi", "name"),
                         ("myanimelist", "title"),
                         ("tmdb", "title"),
-                        ("thetvdb", "name"),
                     ],
-                    &[
-                        ("myanimelist", "title"),
-                        ("tmdb", "title"),
-                        ("thetvdb", "name"),
-                    ],
+                    &[("myanimelist", "title"), ("tmdb", "title")],
                 ),
                 original_title: Some(&[
                     ("bangumi", "name"),
-                    ("myanimelist", "title"),
                     ("tmdb", "original_title"),
                     ("thetvdb", "name"),
                 ]),
@@ -464,15 +459,12 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ("tmdb", "release_date"),
                     ("thetvdb", "first_air_time"),
                 ],
-                total_sources: &[
-                    ("bangumi", "eps"),
-                    ("myanimelist", "episodes"),
-                    ("tmdb", "episode_count"),
-                ],
                 statuses: Some(&WATCH_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::Season,
+                started_date: true,
                 completed_date: true,
+                progress: Some(&ANIME_PROGRESS),
                 list: Some(&EPISODES_LIST),
                 extras: &[],
                 relations: &[FRANCHISE_REL],
@@ -493,18 +485,39 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "电视剧与剧集，一集一集地记录。",
                     "電視劇與影集，一集一集地記錄。",
                 ),
-                providers: &["tmdb", "thetvdb"],
-                external_types: &[("tmdb", &["tv"]), ("thetvdb", &["series"])],
-                title_sources: &[("tmdb", "title"), ("thetvdb", "name")],
-                original_title: Some(&[("tmdb", "original_title"), ("thetvdb", "name")]),
-                cover_sources: &[("tmdb", "cover_url"), ("thetvdb", "cover_url")],
-                summary_sources: &[("tmdb", "overview"), ("thetvdb", "overview")],
-                date_sources: &[("tmdb", "release_date"), ("thetvdb", "first_air_time")],
-                total_sources: &[("tmdb", "episode_count")],
+                providers: &["tmdb", "thetvdb", "neodb"],
+                external_types: &[
+                    ("tmdb", &["tv"]),
+                    ("thetvdb", &["series"]),
+                    ("neodb", &["tv"]),
+                ],
+                title_sources: &[("tmdb", "title"), ("neodb", "title")],
+                original_title: Some(&[
+                    ("tmdb", "original_title"),
+                    ("thetvdb", "name"),
+                    ("neodb", "original_title"),
+                ]),
+                cover_sources: &[
+                    ("tmdb", "cover_url"),
+                    ("thetvdb", "cover_url"),
+                    ("neodb", "cover_url"),
+                ],
+                summary_sources: &[
+                    ("tmdb", "overview"),
+                    ("thetvdb", "overview"),
+                    ("neodb", "description"),
+                ],
+                date_sources: &[
+                    ("tmdb", "release_date"),
+                    ("thetvdb", "first_air_time"),
+                    ("neodb", "release_date"),
+                ],
                 statuses: Some(&WATCH_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::Season,
+                started_date: true,
                 completed_date: true,
+                progress: Some(&DRAMA_PROGRESS),
                 list: Some(&EPISODES_LIST),
                 extras: &[],
                 relations: &[FRANCHISE_REL],
@@ -525,56 +538,39 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "看过的电影，和想看的电影。",
                     "看過的電影，和想看的電影。",
                 ),
-                providers: ctx.pick(
-                    &["tmdb", "bangumi", "thetvdb"],
-                    &["tmdb", "bangumi", "thetvdb"],
-                    &["tmdb", "thetvdb", "bangumi"],
-                ),
-                // Bangumi has no "movie" subject: films are anime (2) or
-                // live-action "real" (6), so the constraint keeps both.
+                providers: &["tmdb", "thetvdb", "neodb"],
                 external_types: &[
                     ("tmdb", &["movie"]),
-                    ("bangumi", &["2", "6"]),
                     ("thetvdb", &["movie"]),
+                    ("neodb", &["movie"]),
                 ],
-                title_sources: ctx.pick(
-                    &[
-                        ("tmdb", "title"),
-                        ("bangumi", "name_cn"),
-                        ("thetvdb", "name"),
-                    ],
-                    &[("tmdb", "title"), ("bangumi", "name"), ("thetvdb", "name")],
-                    &[("tmdb", "title"), ("thetvdb", "name")],
-                ),
+                title_sources: &[("tmdb", "title"), ("neodb", "title")],
                 original_title: Some(&[
                     ("tmdb", "original_title"),
-                    ("bangumi", "name"),
                     ("thetvdb", "name"),
+                    ("neodb", "original_title"),
                 ]),
                 cover_sources: &[
                     ("tmdb", "cover_url"),
-                    ("bangumi", "cover_url"),
                     ("thetvdb", "cover_url"),
+                    ("neodb", "cover_url"),
                 ],
-                summary_sources: ctx.pick(
-                    &[
-                        ("tmdb", "overview"),
-                        ("bangumi", "summary"),
-                        ("thetvdb", "overview"),
-                    ],
-                    &[("tmdb", "overview"), ("thetvdb", "overview")],
-                    &[("tmdb", "overview"), ("thetvdb", "overview")],
-                ),
+                summary_sources: &[
+                    ("tmdb", "overview"),
+                    ("thetvdb", "overview"),
+                    ("neodb", "description"),
+                ],
                 date_sources: &[
                     ("tmdb", "release_date"),
-                    ("bangumi", "date"),
                     ("thetvdb", "first_air_time"),
+                    ("neodb", "release_date"),
                 ],
-                total_sources: &[],
                 statuses: Some(&WATCH_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::ReleaseDate,
+                started_date: false,
                 completed_date: true,
+                progress: None,
                 list: None,
                 extras: &[],
                 relations: &[FRANCHISE_REL],
@@ -596,48 +592,75 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "愿望单、在玩和已通关的游戏。",
                     "願望清單、遊玩中和已全破的遊戲。",
                 ),
-                providers: &["igdb", "steam", "bangumi"],
-                external_types: &[("bangumi", &["4"])],
+                providers: &["igdb", "steam", "bangumi", "neodb"],
+                external_types: &[("bangumi", &["4"]), ("neodb", &["game"])],
                 title_sources: ctx.pick(
-                    &[("igdb", "name"), ("steam", "name"), ("bangumi", "name_cn")],
-                    &[("igdb", "name"), ("steam", "name"), ("bangumi", "name")],
-                    &[("igdb", "name"), ("steam", "name")],
+                    &[
+                        ("igdb", "name"),
+                        ("steam", "name"),
+                        ("bangumi", "name_cn"),
+                        ("neodb", "title"),
+                    ],
+                    &[
+                        ("igdb", "name"),
+                        ("steam", "name"),
+                        ("bangumi", "name"),
+                        ("neodb", "title"),
+                    ],
+                    &[("igdb", "name"), ("steam", "name"), ("neodb", "title")],
                 ),
                 original_title: None,
                 cover_sources: &[
                     ("igdb", "cover_url"),
                     ("steam", "cover_url"),
                     ("bangumi", "cover_url"),
+                    ("neodb", "cover_url"),
                 ],
                 summary_sources: ctx.pick(
                     &[
                         ("igdb", "summary"),
                         ("steam", "description"),
                         ("bangumi", "summary"),
+                        ("neodb", "description"),
                     ],
-                    &[("igdb", "summary"), ("steam", "description")],
-                    &[("igdb", "summary"), ("steam", "description")],
+                    &[
+                        ("igdb", "summary"),
+                        ("steam", "description"),
+                        ("neodb", "description"),
+                    ],
+                    &[
+                        ("igdb", "summary"),
+                        ("steam", "description"),
+                        ("neodb", "description"),
+                    ],
                 ),
                 date_sources: &[
                     ("igdb", "first_release_date"),
                     ("steam", "release_date"),
                     ("bangumi", "date"),
+                    ("neodb", "release_date"),
                 ],
-                total_sources: &[],
                 statuses: Some(&PLAY_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::ReleaseDate,
+                started_date: true,
                 completed_date: true,
+                progress: None,
                 list: None,
                 extras: &[
-                    Extra::Platform(&[("igdb", "platforms"), ("steam", "platform")]),
+                    Extra::Platform(&[
+                        ("igdb", "platforms"),
+                        ("steam", "platform"),
+                        ("neodb", "platforms"),
+                    ]),
                     Extra::Genre(&[
                         ("igdb", "genres"),
                         ("steam", "genres"),
                         ("bangumi", "genre"),
+                        ("neodb", "genres"),
                     ]),
                 ],
-                relations: &[FRANCHISE_REL],
+                relations: &[GAMES_FRANCHISE_REL],
                 log_hashtag: Some(l("Game", "ゲーム", "游戏", "遊戲")),
             },
         ),
@@ -656,20 +679,24 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "桌遊與桌上遊戲，帶玩家人數和時長。",
                 ),
                 providers: &["bgg"],
-                external_types: &[],
+                external_types: &[("bgg", &["boardgame", "boardgameexpansion"])],
                 title_sources: &[("bgg", "name")],
                 original_title: None,
                 cover_sources: &[("bgg", "cover_url")],
                 summary_sources: &[("bgg", "description")],
                 // BGG exposes only a year, which the release-date field can't hold.
                 date_sources: &[],
-                total_sources: &[],
                 statuses: Some(&PLAY_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::ReleaseDate,
+                started_date: false,
                 completed_date: false,
+                progress: None,
                 list: None,
-                extras: &[Extra::Players, Extra::Playtime],
+                extras: &[
+                    Extra::Players(&[("bgg", "players")]),
+                    Extra::Playtime(&[("bgg", "playtime")]),
+                ],
                 relations: &[FRANCHISE_REL],
                 log_hashtag: Some(l("BoardGame", "ボードゲーム", "桌游", "桌遊")),
             },
@@ -689,83 +716,39 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "在读的书，带作者和 ISBN。",
                     "在讀的書，帶作者和 ISBN。",
                 ),
-                providers: &[
-                    "neodb",
-                    "googlebooks",
-                    "openlibrary",
-                    "hardcover",
-                    "bangumi",
-                ],
-                external_types: &[("neodb", &["book"]), ("bangumi", &["1"])],
-                title_sources: ctx.pick(
-                    &[
-                        ("neodb", "title"),
-                        ("googlebooks", "title"),
-                        ("openlibrary", "title"),
-                        ("hardcover", "title"),
-                        ("bangumi", "name_cn"),
-                    ],
-                    &[
-                        ("neodb", "title"),
-                        ("googlebooks", "title"),
-                        ("openlibrary", "title"),
-                        ("hardcover", "title"),
-                        ("bangumi", "name"),
-                    ],
-                    &[
-                        ("neodb", "title"),
-                        ("googlebooks", "title"),
-                        ("openlibrary", "title"),
-                        ("hardcover", "title"),
-                    ],
-                ),
-                original_title: Some(&[
-                    ("neodb", "original_title"),
+                providers: &["neodb", "googlebooks", "openlibrary", "hardcover"],
+                external_types: &[("neodb", &["book"])],
+                title_sources: &[
+                    ("neodb", "title"),
                     ("googlebooks", "title"),
                     ("openlibrary", "title"),
                     ("hardcover", "title"),
-                    ("bangumi", "name"),
-                ]),
+                ],
+                original_title: Some(&[("neodb", "original_title")]),
                 cover_sources: &[
                     ("neodb", "cover_url"),
                     ("googlebooks", "cover_url"),
                     ("openlibrary", "cover_url"),
                     ("hardcover", "cover_url"),
-                    ("bangumi", "cover_url"),
                 ],
-                summary_sources: ctx.pick(
-                    &[
-                        ("neodb", "description"),
-                        ("googlebooks", "description"),
-                        ("openlibrary", "description"),
-                        ("hardcover", "synopsis"),
-                        ("bangumi", "summary"),
-                    ],
-                    &[
-                        ("neodb", "description"),
-                        ("googlebooks", "description"),
-                        ("openlibrary", "description"),
-                        ("hardcover", "synopsis"),
-                    ],
-                    &[
-                        ("neodb", "description"),
-                        ("googlebooks", "description"),
-                        ("openlibrary", "description"),
-                        ("hardcover", "synopsis"),
-                    ],
-                ),
+                summary_sources: &[
+                    ("neodb", "description"),
+                    ("googlebooks", "description"),
+                    ("openlibrary", "description"),
+                    ("hardcover", "synopsis"),
+                ],
                 date_sources: &[
                     ("neodb", "published_date"),
                     ("googlebooks", "published_date"),
                     ("openlibrary", "published_date"),
                     ("hardcover", "publish_date"),
-                    ("bangumi", "date"),
                 ],
-                total_sources: &[],
                 statuses: Some(&READ_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::ReleaseDate,
+                started_date: true,
                 completed_date: true,
+                progress: Some(&BOOK_PROGRESS),
                 list: None,
                 extras: &[
                     Extra::Author(&[
@@ -773,17 +756,15 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                         ("googlebooks", "authors"),
                         ("openlibrary", "authors"),
                         ("hardcover", "authors"),
-                        ("bangumi", "author"),
                     ]),
                     Extra::Isbn(&[
                         ("neodb", "isbn"),
                         ("googlebooks", "isbn"),
                         ("openlibrary", "isbn"),
                         ("hardcover", "isbn"),
-                        ("bangumi", "isbn"),
                     ]),
                 ],
-                relations: &[FRANCHISE_REL],
+                relations: &[BOOKS_FRANCHISE_REL],
                 log_hashtag: Some(l("Book", "読書", "读书", "讀書")),
             },
         ),
@@ -827,12 +808,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                         ("comicvine", "title"),
                     ],
                 ),
-                original_title: Some(&[
-                    ("bangumi", "name"),
-                    ("mangaupdates", "title"),
-                    ("myanimelist", "title"),
-                    ("comicvine", "title"),
-                ]),
+                original_title: Some(&[("bangumi", "name")]),
                 cover_sources: &[
                     ("bangumi", "cover_url"),
                     ("mangaupdates", "cover_url"),
@@ -858,16 +834,12 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ],
                 ),
                 date_sources: &[("bangumi", "date"), ("myanimelist", "start_date")],
-                // Bangumi counts manga chapters in its `eps` field.
-                total_sources: &[
-                    ("bangumi", "eps"),
-                    ("mangaupdates", "latest_chapter"),
-                    ("myanimelist", "chapters"),
-                ],
                 statuses: Some(&READ_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::ReleaseDate,
+                started_date: true,
                 completed_date: true,
+                progress: Some(&MANGA_PROGRESS),
                 list: Some(&CHAPTERS_LIST),
                 extras: &[Extra::Author(&[
                     ("bangumi", "author"),
@@ -892,25 +864,33 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "专辑与 CD——你拥有和喜爱的音乐。",
                     "專輯與 CD——你擁有和喜愛的音樂。",
                 ),
-                providers: &["musicbrainz", "applemusic", "discogs", "bangumi"],
-                external_types: &[("musicbrainz", &["release"]), ("bangumi", &["3"])],
+                providers: &["musicbrainz", "applemusic", "discogs", "bangumi", "neodb"],
+                external_types: &[
+                    ("musicbrainz", &["release"]),
+                    ("discogs", &["release"]),
+                    ("bangumi", &["3"]),
+                    ("neodb", &["music"]),
+                ],
                 title_sources: ctx.pick(
                     &[
                         ("musicbrainz", "title"),
                         ("applemusic", "title"),
                         ("discogs", "title"),
                         ("bangumi", "name_cn"),
+                        ("neodb", "title"),
                     ],
                     &[
                         ("musicbrainz", "title"),
                         ("applemusic", "title"),
                         ("discogs", "title"),
                         ("bangumi", "name"),
+                        ("neodb", "title"),
                     ],
                     &[
                         ("musicbrainz", "title"),
                         ("applemusic", "title"),
                         ("discogs", "title"),
+                        ("neodb", "title"),
                     ],
                 ),
                 original_title: None,
@@ -919,21 +899,28 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     ("applemusic", "cover_url"),
                     ("discogs", "cover_url"),
                     ("bangumi", "cover_url"),
+                    ("neodb", "cover_url"),
                 ],
-                summary_sources: ctx.pick(&[("bangumi", "summary")], &[], &[]),
+                summary_sources: ctx.pick(
+                    &[("bangumi", "summary"), ("neodb", "description")],
+                    &[("neodb", "description")],
+                    &[("neodb", "description")],
+                ),
                 date_sources: &[
                     ("musicbrainz", "release_date"),
                     ("applemusic", "release_date"),
                     ("bangumi", "date"),
+                    ("neodb", "release_date"),
                 ],
-                total_sources: &[],
                 statuses: Some(&LISTEN_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::ReleaseDate,
+                started_date: false,
                 completed_date: false,
+                progress: None,
                 list: Some(&TRACKS_LIST),
-                extras: &[Extra::OwnedFormats],
-                relations: &[ARTIST_REL, FRANCHISE_REL],
+                extras: MUSIC_EXTRAS,
+                relations: &[MUSIC_ARTIST_REL, FRANCHISE_REL],
                 log_hashtag: Some(l("Music", "音楽", "音乐", "音樂")),
             },
         ),
@@ -951,21 +938,22 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "关注的播客。",
                     "追蹤中的 Podcast。",
                 ),
-                providers: &["applepodcast"],
-                external_types: &[],
-                title_sources: &[("applepodcast", "title")],
+                providers: &["applepodcast", "neodb"],
+                external_types: &[("neodb", &["podcast"])],
+                title_sources: &[("applepodcast", "title"), ("neodb", "title")],
                 original_title: None,
-                cover_sources: &[("applepodcast", "cover_url")],
-                summary_sources: &[],
+                cover_sources: &[("applepodcast", "cover_url"), ("neodb", "cover_url")],
+                summary_sources: &[("neodb", "description")],
                 date_sources: &[],
-                total_sources: &[],
                 statuses: Some(&LISTEN_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::None,
+                started_date: false,
                 completed_date: false,
+                progress: None,
                 list: Some(&PODCAST_EPISODES_LIST),
-                extras: &[],
-                relations: &[],
+                extras: PODCAST_EXTRAS,
+                relations: &[PODCAST_HOST_REL],
                 log_hashtag: Some(l("Podcast", "ポッドキャスト", "播客", "Podcast")),
             },
         ),
@@ -1007,11 +995,12 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 cover_sources: &[("bangumi", "cover_url"), ("musicbrainz", "cover_url")],
                 summary_sources: ctx.pick(&[("bangumi", "summary")], &[], &[]),
                 date_sources: &[],
-                total_sources: &[],
                 statuses: None,
                 name_based: true,
                 primary_date: PrimaryDate::None,
+                started_date: false,
                 completed_date: false,
+                progress: None,
                 list: None,
                 extras: &[Extra::Birthday(&[("bangumi", "birthday")])],
                 relations: &[FRANCHISE_REL, GROUPS_REL],
@@ -1039,11 +1028,12 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 cover_sources: &[],
                 summary_sources: &[],
                 date_sources: &[],
-                total_sources: &[],
                 statuses: None,
                 name_based: true,
                 primary_date: PrimaryDate::None,
+                started_date: false,
                 completed_date: false,
+                progress: None,
                 list: None,
                 extras: &[],
                 relations: &[],
@@ -1075,11 +1065,12 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 cover_sources: &[("bangumi", "cover_url")],
                 summary_sources: ctx.pick(&[("bangumi", "summary")], &[], &[]),
                 date_sources: &[],
-                total_sources: &[],
                 statuses: None,
                 name_based: true,
                 primary_date: PrimaryDate::None,
+                started_date: false,
                 completed_date: false,
+                progress: None,
                 list: None,
                 extras: &[Extra::Birthday(&[("bangumi", "birthday")])],
                 relations: &[FRANCHISE_REL, VOICE_BY_REL],
@@ -1113,14 +1104,15 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 // Deliberately empty: the event date is the *attendance* date
                 // (role Event), not the production's opening date.
                 date_sources: &[],
-                total_sources: &[],
                 statuses: Some(&EVENT_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::EventDate,
+                started_date: false,
                 completed_date: false,
+                progress: None,
                 list: None,
                 extras: &[Extra::Location],
-                relations: &[ARTIST_REL, FRANCHISE_REL],
+                relations: &[EVENT_ARTIST_REL, FRANCHISE_REL],
                 log_hashtag: Some(l("Event", "イベント", "活动", "活動")),
             },
         ),
@@ -1133,27 +1125,61 @@ struct RelationSpec {
     field: &'static str,
     label: L,
     target: &'static str,
+    sources: Sources,
 }
 
 const FRANCHISE_REL: RelationSpec = RelationSpec {
     field: "franchise",
     label: l("Franchise", "シリーズ", "系列", "系列"),
     target: "franchise",
+    sources: &[],
 };
-const ARTIST_REL: RelationSpec = RelationSpec {
+const GAMES_FRANCHISE_REL: RelationSpec = RelationSpec {
+    field: "franchise",
+    label: l("Franchise", "シリーズ", "系列", "系列"),
+    target: "franchise",
+    sources: &[("igdb", "franchise")],
+};
+const BOOKS_FRANCHISE_REL: RelationSpec = RelationSpec {
+    field: "franchise",
+    label: l("Franchise", "シリーズ", "系列", "系列"),
+    target: "franchise",
+    sources: &[("neodb", "series")],
+};
+const MUSIC_ARTIST_REL: RelationSpec = RelationSpec {
     field: "artist",
     label: l("Artist", "アーティスト", "艺术家", "藝術家"),
     target: "artist",
+    sources: &[
+        ("musicbrainz", "artists"),
+        ("applemusic", "artists"),
+        ("discogs", "artists"),
+        ("neodb", "artists"),
+    ],
+};
+const PODCAST_HOST_REL: RelationSpec = RelationSpec {
+    field: "host",
+    label: l("Host", "ホスト", "主播", "主持人"),
+    target: "artist",
+    sources: &[("applepodcast", "host"), ("neodb", "hosts")],
+};
+const EVENT_ARTIST_REL: RelationSpec = RelationSpec {
+    field: "artist",
+    label: l("Artist", "アーティスト", "艺术家", "藝術家"),
+    target: "artist",
+    sources: &[("neodb", "performers")],
 };
 const GROUPS_REL: RelationSpec = RelationSpec {
     field: "groups",
     label: l("Groups", "グループ", "团体", "團體"),
     target: "artist",
+    sources: &[],
 };
 const VOICE_BY_REL: RelationSpec = RelationSpec {
     field: "voice_by",
     label: l("Voice by", "CV", "配音", "配音"),
     target: "artist",
+    sources: &[("bangumi", "voice_actors")],
 };
 
 /// A status vocabulary: the enum options (with their canonical-status mapping)
@@ -1315,35 +1341,66 @@ const RECENT_SHELF: L = l(
     "最近的{label}",
 );
 
+const UPCOMING_SHELF: L = l(
+    "Upcoming {label}",
+    "今後の{label}",
+    "即将到来的{label}",
+    "即將到來的{label}",
+);
+
 const EPISODES_LIST: ListSpec = ListSpec {
     heading: l("Episodes", "エピソード", "剧集", "劇集"),
     tracking: EpisodeTracking::Checklist,
-    progress: Some(ProgressSpec {
-        total_field: "episodes",
-        total_label: l("Episodes", "話数", "总集数", "總集數"),
-    }),
 };
 const CHAPTERS_LIST: ListSpec = ListSpec {
     heading: l("Chapters", "チャプター", "章节", "章節"),
     tracking: EpisodeTracking::Checklist,
-    progress: Some(ProgressSpec {
-        total_field: "chapters",
-        total_label: l("Chapters", "話数", "话数", "話數"),
-    }),
 };
-// Podcasts are open-ended (no reliable total to count against), so they get the
-// episode checklist without the scalar progress pair.
 const PODCAST_EPISODES_LIST: ListSpec = ListSpec {
     heading: l("Episodes", "エピソード", "单集", "單集"),
     tracking: EpisodeTracking::Checklist,
-    progress: None,
 };
-// Albums are owned, not progressed through — a track list, no checklist and no
-// "x of y" fields.
 const TRACKS_LIST: ListSpec = ListSpec {
     heading: l("Tracks", "トラック", "曲目", "曲目"),
     tracking: EpisodeTracking::None,
-    progress: None,
+};
+
+// Numeric frontmatter progress is deliberately independent from provider-backed
+// body lists. A type may seed both (Anime), progress only (Books), list only
+// (Podcasts/Music), or neither.
+const ANIME_PROGRESS: ProgressSpec = ProgressSpec {
+    total_field: "episodes",
+    total_label: l("Episodes", "話数", "总集数", "總集數"),
+    total_sources: &[
+        ("bangumi", "eps"),
+        ("myanimelist", "episodes"),
+        ("tmdb", "episode_count"),
+    ],
+};
+const DRAMA_PROGRESS: ProgressSpec = ProgressSpec {
+    total_field: "episodes",
+    total_label: l("Episodes", "話数", "总集数", "總集數"),
+    total_sources: &[("tmdb", "episode_count"), ("neodb", "episode_count")],
+};
+const BOOK_PROGRESS: ProgressSpec = ProgressSpec {
+    total_field: "pages",
+    total_label: l("Pages", "ページ数", "总页数", "總頁數"),
+    total_sources: &[
+        ("neodb", "pages"),
+        ("googlebooks", "pages"),
+        ("openlibrary", "pages"),
+        ("hardcover", "pages"),
+    ],
+};
+const MANGA_PROGRESS: ProgressSpec = ProgressSpec {
+    total_field: "chapters",
+    total_label: l("Chapters", "話数", "话数", "話數"),
+    total_sources: &[
+        ("bangumi", "eps"),
+        ("mangaupdates", "latest_chapter"),
+        ("myanimelist", "chapters"),
+        ("comicvine", "issues_count"),
+    ],
 };
 
 // --- The builder ---------------------------------------------------------------
@@ -1414,25 +1471,80 @@ enum Extra {
     Genre(Sources),
     Author(Sources),
     Isbn(Sources),
-    Players,
-    Playtime,
-    OwnedFormats,
+    Players(Sources),
+    Playtime(Sources),
+    OwnedFormats(Sources),
+    Text {
+        field: &'static str,
+        label: L,
+        sources: Sources,
+    },
+    TextList {
+        field: &'static str,
+        label: L,
+        sources: Sources,
+    },
+    Count {
+        field: &'static str,
+        label: L,
+        sources: Sources,
+    },
     Location,
     Birthday(Sources),
 }
 
+const MUSIC_EXTRAS: &[Extra] = &[
+    Extra::OwnedFormats(&[("discogs", "format"), ("neodb", "format")]),
+    Extra::Count {
+        field: "track_count",
+        label: l("Track count", "曲数", "曲目数", "曲目數"),
+        sources: &[("applemusic", "track_count")],
+    },
+    Extra::TextList {
+        field: "genres",
+        label: l("Genres", "ジャンル", "流派", "曲風"),
+        sources: &[
+            ("musicbrainz", "genres"),
+            ("applemusic", "genre"),
+            ("discogs", "genres"),
+            ("bangumi", "genre"),
+            ("neodb", "genres"),
+        ],
+    },
+    Extra::TextList {
+        field: "styles",
+        label: l("Styles", "スタイル", "风格", "風格"),
+        sources: &[("discogs", "styles")],
+    },
+];
+
+const PODCAST_EXTRAS: &[Extra] = &[
+    Extra::TextList {
+        field: "hosts",
+        label: l("Hosts", "ホスト", "主播", "主持人"),
+        sources: &[("applepodcast", "host"), ("neodb", "hosts")],
+    },
+    Extra::TextList {
+        field: "genres",
+        label: l("Genres", "ジャンル", "类型", "類型"),
+        sources: &[("applepodcast", "genre"), ("neodb", "genres")],
+    },
+    Extra::Text {
+        field: "feed_url",
+        label: l("Feed URL", "フィードURL", "订阅源 URL", "訂閱來源 URL"),
+        sources: &[("applepodcast", "feed_url")],
+    },
+];
+
 struct ListSpec {
     heading: L,
     tracking: EpisodeTracking,
-    /// The scalar progress/total field pair. `None` for open-ended lists
-    /// (podcast episodes) and ownership lists (album tracks), where an
-    /// "x of y" fraction isn't meaningful.
-    progress: Option<ProgressSpec>,
 }
 
 struct ProgressSpec {
     total_field: &'static str,
     total_label: L,
+    total_sources: Sources,
 }
 
 struct TypeSpec {
@@ -1449,12 +1561,11 @@ struct TypeSpec {
     /// are NOT silently filtered).
     providers: &'static [&'static str],
     /// Per-provider `externalTypes` constraint for the generated external-ref
-    /// fields, `(provider id, type values)`. Multi-type providers (Bangumi,
-    /// TMDB, MAL, TheTVDB, MusicBrainz) deliberately ship no catalog default —
-    /// but a preset knows its subject, so it pins the constraint here and its
-    /// searches don't return every media kind the provider indexes. Providers
-    /// absent from this list fall back to the catalog default. Every value must
-    /// be one of the provider's type options (registry test enforced).
+    /// fields, `(provider id, type values)`. A preset knows its subject, so it
+    /// pins multi-type providers here and searches do not return unrelated media
+    /// kinds. Providers absent from this list fall back to the catalog default.
+    /// Every value must be one of the provider's type options (registry test
+    /// enforced).
     external_types: &'static [(&'static str, &'static [&'static str])],
     /// Sources for the primary title field.
     title_sources: Sources,
@@ -1469,8 +1580,6 @@ struct TypeSpec {
     /// Sources for the primary date field. For [`PrimaryDate::Season`] these
     /// may be plain air dates — the core coerces a date into a season.
     date_sources: Sources,
-    /// Sources for the list total-count field (when `list` has a progress pair).
-    total_sources: Sources,
     /// `None` → no status field (people/hub types).
     statuses: Option<&'static StatusVocab>,
     /// People/hub types: the filename and primary title use the
@@ -1479,7 +1588,14 @@ struct TypeSpec {
     /// the shape of the other fields.
     name_based: bool,
     primary_date: PrimaryDate,
+    /// Whether logging a `started` activity stamps a dedicated date field.
+    started_date: bool,
     completed_date: bool,
+    /// Optional scalar `progress` + total field pair. Independent from `list`:
+    /// this is for users who prefer a simple number over checking every item.
+    progress: Option<&'static ProgressSpec>,
+    /// Optional provider-backed episode/chapter/track section in the Markdown
+    /// body. This does not imply or derive any scalar progress fields.
     list: Option<&'static ListSpec>,
     extras: &'static [Extra],
     relations: &'static [RelationSpec],
@@ -1545,23 +1661,21 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
         ));
     }
 
-    if let Some(list) = spec.list {
-        if let Some(progress) = &list.progress {
-            let mut progress_field = field(
-                "progress",
-                FieldType::Progress,
-                ctx.text(l("Progress", "進捗", "进度", "進度")),
-            );
-            progress_field.total_progress_field = Some(progress.total_field.to_string());
-            fields.push(progress_field);
-            let mut total = field(
-                progress.total_field,
-                FieldType::TotalProgress,
-                ctx.text(progress.total_label),
-            );
-            total.external_fields = source_mappings(spec.total_sources);
-            fields.push(total);
-        }
+    if let Some(progress) = spec.progress {
+        let mut progress_field = field(
+            "progress",
+            FieldType::Progress,
+            ctx.text(l("Progress", "進捗", "进度", "進度")),
+        );
+        progress_field.total_progress_field = Some(progress.total_field.to_string());
+        fields.push(progress_field);
+        let mut total = field(
+            progress.total_field,
+            FieldType::TotalProgress,
+            ctx.text(progress.total_label),
+        );
+        total.external_fields = source_mappings(progress.total_sources);
+        fields.push(total);
     }
 
     for extra in spec.extras {
@@ -1602,6 +1716,16 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
         }
     }
 
+    if spec.started_date {
+        let mut started = field(
+            "started_date",
+            FieldType::Date,
+            ctx.text(l("Started date", "開始日", "开始日期", "開始日期")),
+        );
+        started.date_role = Some(DateRole::Started);
+        fields.push(started);
+    }
+
     if spec.completed_date {
         let mut completed = field(
             "complete_date",
@@ -1637,6 +1761,7 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
             ctx.text(relation_spec.label),
         );
         relation.relation_type = Some(relation_spec.target.to_string());
+        relation.external_fields = source_mappings(relation_spec.sources);
         fields.push(relation);
     }
 
@@ -1699,41 +1824,18 @@ fn extra_field(ctx: &BuildCtx, extra: Extra) -> FieldConfig {
         Extra::Platform(sources) => {
             let mut f = field(
                 "platform",
-                FieldType::EnumList,
+                FieldType::TextList,
                 ctx.text(l("Platform", "プラットフォーム", "平台", "平台")),
             );
-            // Platform names are proper nouns — the same in every language.
-            f.enum_options = [
-                "PC",
-                "Nintendo Switch",
-                "PS5",
-                "Xbox Series X|S",
-                "iOS",
-                "Android",
-            ]
-            .iter()
-            .map(|v| v.to_string())
-            .collect();
             f.external_fields = source_mappings(sources);
             f
         }
         Extra::Genre(sources) => {
             let mut f = field(
                 "genre",
-                FieldType::EnumList,
+                FieldType::TextList,
                 ctx.text(l("Genre", "ジャンル", "类型", "類型")),
             );
-            f.enum_options = [
-                l("RPG", "RPG", "角色扮演", "角色扮演"),
-                l("Action", "アクション", "动作", "動作"),
-                l("Adventure", "アドベンチャー", "冒险", "冒險"),
-                l("Strategy", "ストラテジー", "策略", "策略"),
-                l("Simulation", "シミュレーション", "模拟", "模擬"),
-                l("Puzzle", "パズル", "解谜", "解謎"),
-            ]
-            .iter()
-            .map(|v| ctx.text(*v).to_string())
-            .collect();
             f.external_fields = source_mappings(sources);
             f
         }
@@ -1751,30 +1853,58 @@ fn extra_field(ctx: &BuildCtx, extra: Extra) -> FieldConfig {
             f.external_fields = source_mappings(sources);
             f
         }
-        Extra::Players => field(
-            "players",
-            FieldType::Text,
-            ctx.text(l("Players", "プレイ人数", "玩家人数", "玩家人數")),
-        ),
-        Extra::Playtime => field(
-            "playtime",
-            FieldType::Text,
-            ctx.text(l("Playtime", "プレイ時間", "游玩时长", "遊玩時長")),
-        ),
-        Extra::OwnedFormats => {
+        Extra::Players(sources) => {
+            let mut f = field(
+                "players",
+                FieldType::Text,
+                ctx.text(l("Players", "プレイ人数", "玩家人数", "玩家人數")),
+            );
+            f.external_fields = source_mappings(sources);
+            f
+        }
+        Extra::Playtime(sources) => {
+            let mut f = field(
+                "playtime",
+                FieldType::Text,
+                ctx.text(l("Playtime", "プレイ時間", "游玩时长", "遊玩時長")),
+            );
+            f.external_fields = source_mappings(sources);
+            f
+        }
+        Extra::OwnedFormats(sources) => {
             let mut f = field(
                 "owned",
-                FieldType::EnumList,
+                FieldType::TextList,
                 ctx.text(l("Owned", "所持形式", "收藏形式", "收藏形式")),
             );
-            f.enum_options = [
-                l("CD", "CD", "CD", "CD"),
-                l("Vinyl", "レコード", "黑胶", "黑膠"),
-                l("Digital", "デジタル", "数字", "數位"),
-            ]
-            .iter()
-            .map(|v| ctx.text(*v).to_string())
-            .collect();
+            f.external_fields = source_mappings(sources);
+            f
+        }
+        Extra::Text {
+            field: field_name,
+            label,
+            sources,
+        } => {
+            let mut f = field(field_name, FieldType::Text, ctx.text(label));
+            f.external_fields = source_mappings(sources);
+            f
+        }
+        Extra::TextList {
+            field: field_name,
+            label,
+            sources,
+        } => {
+            let mut f = field(field_name, FieldType::TextList, ctx.text(label));
+            f.external_fields = source_mappings(sources);
+            f
+        }
+        Extra::Count {
+            field: field_name,
+            label,
+            sources,
+        } => {
+            let mut f = field(field_name, FieldType::TotalProgress, ctx.text(label));
+            f.external_fields = source_mappings(sources);
             f
         }
         Extra::Location => field(
@@ -1819,6 +1949,73 @@ fn status_field(vocab: &StatusVocab, locale: SeedLocale) -> FieldConfig {
     }
     f.status_values = Some(values);
     f
+}
+
+/// The default upcoming shelf for a type with an event date and a status role
+/// that maps at least one planning value. Events are sorted soonest-first and
+/// exclude past dates, so the initial Home highlights what is actually ahead.
+fn upcoming_event_home_section_for(
+    config: &EntityTypeConfig,
+    locale: SeedLocale,
+) -> Option<HomeSectionConfig> {
+    let event = config
+        .fields
+        .iter()
+        .find(|field| field.date_role == Some(DateRole::Event))?;
+    let status = config
+        .fields
+        .iter()
+        .find(|field| field.enum_role == Some(EnumRole::Status))?;
+    let planning = status
+        .status_values
+        .as_ref()
+        .map(|values| values.planning.as_slice())
+        .unwrap_or_default();
+    planning.first()?;
+
+    let status_rule = |value: &String| SmartFilterRule {
+        kind: SmartFilterRuleKind::Compare,
+        field: Some(status.field.clone()),
+        op: Some(SmartCompareOp::Eq),
+        value: Some(value.clone()),
+        ..Default::default()
+    };
+    let date_rule = SmartFilterRule {
+        kind: SmartFilterRuleKind::Compare,
+        field: Some(event.field.clone()),
+        op: Some(SmartCompareOp::Gte),
+        relative: Some(SmartRelativeDate {
+            amount: 0,
+            unit: SmartDurationUnit::Days,
+            future: false,
+        }),
+        ..Default::default()
+    };
+    let criteria = if planning.len() == 1 {
+        SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules: vec![status_rule(&planning[0]), date_rule],
+            groups: Vec::new(),
+        }
+    } else {
+        SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules: vec![date_rule],
+            groups: vec![SmartFilterSubgroup {
+                conjunction: SmartFilterConjunction::Any,
+                rules: planning.iter().map(status_rule).collect(),
+            }],
+        }
+    };
+    Some(HomeSectionConfig {
+        id: format!("upcoming-{}", config.id),
+        title: UPCOMING_SHELF.get(locale).replace("{label}", &config.label),
+        entity_type: config.id.clone(),
+        criteria: Some(criteria),
+        limit: Some(12),
+        sort: Some(format!("date:{}", event.field)),
+        direction: Some(SortDirection::Asc),
+    })
 }
 
 /// The default "in progress" home section ("Watching Anime", "Playing Games")
@@ -1891,8 +2088,8 @@ fn ongoing_home_section_for(
 /// A default "Recent {label}" home section for a type — but **only** when the type
 /// has a release/completion date to sort by. A chronological shelf is meaningless
 /// for types with no such date (people, franchises) or whose only date is an
-/// attendance date (events), so those are left out of the default Home entirely
-/// rather than getting a title-sorted "recent" shelf that isn't really recent.
+/// attendance date (events have their dedicated upcoming shelf), so those do not
+/// fall back to a title-sorted "recent" shelf that isn't really recent.
 fn recent_home_section_for(
     config: &EntityTypeConfig,
     locale: SeedLocale,
@@ -1996,6 +2193,49 @@ mod tests {
 
     fn find_field<'a>(type_config: &'a EntityTypeConfig, name: &str) -> Option<&'a FieldConfig> {
         type_config.fields.iter().find(|f| f.field == name)
+    }
+
+    fn find_type<'a>(result: &'a ResolveTypePresetsResponse, id: &str) -> &'a EntityTypeConfig {
+        result
+            .types
+            .iter()
+            .find(|type_config| type_config.id == id)
+            .unwrap_or_else(|| panic!("missing resolved type {id}"))
+    }
+
+    fn assert_mapping(field: &FieldConfig, source: &str, source_field: &str) {
+        assert!(
+            field
+                .external_fields
+                .iter()
+                .any(|mapping| mapping.source == source && mapping.field == source_field),
+            "{}.{} should map from {source}.{source_field}",
+            field.field,
+            field
+                .display_name
+                .as_deref()
+                .unwrap_or("unnamed preset field")
+        );
+    }
+
+    fn mapping_pairs(field: &FieldConfig) -> Vec<(&str, &str)> {
+        field
+            .external_fields
+            .iter()
+            .map(|mapping| (mapping.source.as_str(), mapping.field.as_str()))
+            .collect()
+    }
+
+    fn assert_external_types(config: &EntityTypeConfig, provider: &str, expected: &[&str]) {
+        let field = find_field(config, &format!("{provider}_url"))
+            .unwrap_or_else(|| panic!("{}.{} external ref missing", config.id, provider));
+        assert_eq!(
+            field.external_types,
+            expected
+                .iter()
+                .map(|value| value.to_string())
+                .collect::<Vec<_>>()
+        );
     }
 
     #[test]
@@ -2142,13 +2382,15 @@ mod tests {
         let cover = find_field(&en, "cover_url").unwrap();
         assert!(cover.external_fields.iter().any(|m| m.source == "bangumi"));
         assert!(find_field(&en, "bangumi_url").is_some());
-        // Music's only summary source was Bangumi's Chinese text — no Summary
-        // section outside zh.
+        // NeoDB provides a language-independent fallback summary for Music.
         let music = resolve(vec![], &["music"], Some("en")).types.remove(0);
-        assert!(!music
+        assert!(music
             .body_sections
             .iter()
-            .any(|s| s.kind == BodySectionKind::External));
+            .any(|s| s.kind == BodySectionKind::External
+                && s.external_fields
+                    .iter()
+                    .any(|mapping| mapping.source == "neodb" && mapping.field == "description")));
         // Characters fall back to the Japanese original name, never Chinese.
         let character = resolve(vec![], &["character"], Some("ko")).types.remove(0);
         let title = find_field(&character, "title").unwrap();
@@ -2372,7 +2614,235 @@ mod tests {
     }
 
     #[test]
-    fn season_and_total_episodes_are_mapped() {
+    fn provider_priorities_and_type_constraints_match_each_domain() {
+        for (preset_id, neodb_type) in [
+            ("drama", "tv"),
+            ("movie", "movie"),
+            ("games", "game"),
+            ("music", "music"),
+            ("podcast", "podcast"),
+        ] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            assert_eq!(
+                config.external_priority.last().map(String::as_str),
+                Some("neodb"),
+                "{preset_id} should keep NeoDB at lowest priority"
+            );
+            assert_external_types(&config, "neodb", &[neodb_type]);
+        }
+
+        for preset_id in ["drama", "movie", "books"] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            assert!(!config.external_priority.iter().any(|id| id == "bangumi"));
+            assert!(find_field(&config, "bangumi_url").is_none());
+        }
+        for preset_id in ["anime", "games", "manga", "music", "character", "artist"] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            assert!(config.external_priority.iter().any(|id| id == "bangumi"));
+        }
+
+        let music = resolve(vec![], &["music"], None).types.remove(0);
+        assert_external_types(&music, "discogs", &["release"]);
+        let board_games = resolve(vec![], &["board"], None).types.remove(0);
+        assert_external_types(&board_games, "bgg", &["boardgame", "boardgameexpansion"]);
+        assert_mapping(
+            find_field(&board_games, "players").unwrap(),
+            "bgg",
+            "players",
+        );
+        assert_mapping(
+            find_field(&board_games, "playtime").unwrap(),
+            "bgg",
+            "playtime",
+        );
+    }
+
+    #[test]
+    fn localized_and_original_title_sources_keep_their_semantics() {
+        for language in [None, Some("zh"), Some("ja")] {
+            for preset_id in ["anime", "drama", "movie"] {
+                let config = resolve(vec![], &[preset_id], language).types.remove(0);
+                let title = find_field(&config, "title").unwrap();
+                assert!(
+                    mapping_pairs(title)
+                        .iter()
+                        .all(|mapping| *mapping != ("thetvdb", "name")),
+                    "{preset_id} must use TheTVDB's localized candidate title fallback"
+                );
+            }
+        }
+
+        let anime = resolve(vec![], &["anime"], None).types.remove(0);
+        assert_eq!(
+            mapping_pairs(find_field(&anime, "title_original").unwrap()),
+            vec![
+                ("bangumi", "name"),
+                ("tmdb", "original_title"),
+                ("thetvdb", "name")
+            ]
+        );
+
+        for preset_id in ["drama", "movie"] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            assert_eq!(
+                mapping_pairs(find_field(&config, "title_original").unwrap()),
+                vec![
+                    ("tmdb", "original_title"),
+                    ("thetvdb", "name"),
+                    ("neodb", "original_title")
+                ]
+            );
+        }
+
+        let books = resolve(vec![], &["books"], None).types.remove(0);
+        assert_eq!(
+            mapping_pairs(find_field(&books, "title_original").unwrap()),
+            vec![("neodb", "original_title")]
+        );
+        let manga = resolve(vec![], &["manga"], None).types.remove(0);
+        assert_eq!(
+            mapping_pairs(find_field(&manga, "title_original").unwrap()),
+            vec![("bangumi", "name")]
+        );
+    }
+
+    #[test]
+    fn started_dates_are_seeded_only_for_progressive_media() {
+        for preset_id in ["anime", "drama", "games", "books", "manga"] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            let started = find_field(&config, "started_date").expect("started date");
+            assert_eq!(started.field_type, FieldType::Date);
+            assert_eq!(started.date_role, Some(DateRole::Started));
+        }
+        for preset_id in [
+            "movie",
+            "board",
+            "music",
+            "podcast",
+            "artist",
+            "franchise",
+            "character",
+            "event",
+        ] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            assert!(
+                find_field(&config, "started_date").is_none(),
+                "{preset_id} should not seed a started date"
+            );
+        }
+    }
+
+    #[test]
+    fn open_taxonomies_and_new_metadata_fields_preserve_provider_values() {
+        let games = resolve(vec![], &["games"], None).types.remove(0);
+        for field_name in ["platform", "genre"] {
+            let taxonomy = find_field(&games, field_name).expect("game taxonomy");
+            assert_eq!(taxonomy.field_type, FieldType::TextList);
+            assert!(taxonomy.enum_options.is_empty());
+        }
+
+        let music = resolve(vec![], &["music"], None).types.remove(0);
+        for field_name in ["owned", "genres", "styles"] {
+            let taxonomy = find_field(&music, field_name).expect("music taxonomy");
+            assert_eq!(taxonomy.field_type, FieldType::TextList);
+            assert!(taxonomy.enum_options.is_empty());
+        }
+        assert_mapping(find_field(&music, "owned").unwrap(), "discogs", "format");
+        assert_mapping(find_field(&music, "owned").unwrap(), "neodb", "format");
+        assert_mapping(
+            find_field(&music, "track_count").unwrap(),
+            "applemusic",
+            "track_count",
+        );
+        assert_mapping(find_field(&music, "genres").unwrap(), "discogs", "genres");
+        assert_mapping(find_field(&music, "styles").unwrap(), "discogs", "styles");
+
+        let podcast = resolve(vec![], &["podcast"], None).types.remove(0);
+        assert_eq!(
+            find_field(&podcast, "hosts").unwrap().field_type,
+            FieldType::TextList
+        );
+        assert_eq!(
+            find_field(&podcast, "genres").unwrap().field_type,
+            FieldType::TextList
+        );
+        assert_eq!(
+            find_field(&podcast, "feed_url").unwrap().field_type,
+            FieldType::Text
+        );
+        assert_mapping(
+            find_field(&podcast, "hosts").unwrap(),
+            "applepodcast",
+            "host",
+        );
+        assert_mapping(find_field(&podcast, "hosts").unwrap(), "neodb", "hosts");
+        assert_mapping(find_field(&podcast, "genres").unwrap(), "neodb", "genres");
+        assert_mapping(
+            find_field(&podcast, "feed_url").unwrap(),
+            "applepodcast",
+            "feed_url",
+        );
+        assert!(podcast.body_sections.iter().any(|section| {
+            section.kind == BodySectionKind::External
+                && section
+                    .external_fields
+                    .iter()
+                    .any(|mapping| mapping.source == "neodb" && mapping.field == "description")
+        }));
+    }
+
+    #[test]
+    fn provider_credits_map_into_relations_when_targets_survive_resolution() {
+        for (preset_id, target_id, field_name, expected) in [
+            (
+                "games",
+                "franchise",
+                "franchise",
+                &[("igdb", "franchise")][..],
+            ),
+            (
+                "books",
+                "franchise",
+                "franchise",
+                &[("neodb", "series")][..],
+            ),
+            (
+                "music",
+                "artist",
+                "artist",
+                &[
+                    ("musicbrainz", "artists"),
+                    ("applemusic", "artists"),
+                    ("discogs", "artists"),
+                    ("neodb", "artists"),
+                ][..],
+            ),
+            (
+                "podcast",
+                "artist",
+                "host",
+                &[("applepodcast", "host"), ("neodb", "hosts")][..],
+            ),
+            ("event", "artist", "artist", &[("neodb", "performers")][..]),
+            (
+                "character",
+                "artist",
+                "voice_by",
+                &[("bangumi", "voice_actors")][..],
+            ),
+        ] {
+            let result = resolve(vec![], &[preset_id, target_id], None);
+            let relation = find_field(find_type(&result, preset_id), field_name)
+                .unwrap_or_else(|| panic!("{preset_id}.{field_name} relation missing"));
+            assert_eq!(relation.relation_type.as_deref(), Some(target_id));
+            for (source, source_field) in expected {
+                assert_mapping(relation, source, source_field);
+            }
+        }
+    }
+
+    #[test]
+    fn progress_totals_are_mapped_from_each_presets_providers() {
         // The season field pulls from providers' air dates (coerced to a season)
         // and MAL's explicit season; the total-episodes field pulls the count.
         let anime = resolve(vec![], &["anime"], None).types.remove(0);
@@ -2399,7 +2869,7 @@ mod tests {
             .iter()
             .any(|m| m.source == "tmdb" && m.field == "episode_count"));
 
-        // Manga's chapter count wires from MAL/MangaUpdates.
+        // Manga's chapter count wires from MAL/MangaUpdates/Comic Vine.
         let manga = resolve(vec![], &["manga"], None).types.remove(0);
         let chapters = find_field(&manga, "chapters").expect("chapters field");
         assert!(chapters
@@ -2410,12 +2880,50 @@ mod tests {
             .external_fields
             .iter()
             .any(|m| m.source == "mangaupdates" && m.field == "latest_chapter"));
+        assert_mapping(chapters, "comicvine", "issues_count");
+
+        // Books use the same scalar pair for current/total pages without
+        // declaring a provider-backed chapter list.
+        let books = resolve(vec![], &["books"], None).types.remove(0);
+        let progress = find_field(&books, "progress").expect("book progress field");
+        assert_eq!(progress.field_type, FieldType::Progress);
+        assert_eq!(progress.total_progress_field.as_deref(), Some("pages"));
+        let pages = find_field(&books, "pages").expect("book pages field");
+        assert_eq!(pages.field_type, FieldType::TotalProgress);
+        for provider in ["neodb", "googlebooks", "openlibrary", "hardcover"] {
+            assert_mapping(pages, provider, "pages");
+        }
+        assert!(!books
+            .body_sections
+            .iter()
+            .any(|section| section.kind == BodySectionKind::Episodes));
     }
 
     #[test]
-    fn open_ended_lists_seed_no_progress_pair() {
-        // Podcasts are open-ended: an episode checklist, but no scalar
-        // progress/total fields ("x of y" has no meaningful y).
+    fn scalar_progress_and_provider_lists_are_independent() {
+        // Anime opts into both independent features.
+        let anime = resolve(vec![], &["anime"], None).types.remove(0);
+        assert_eq!(
+            find_field(&anime, "progress").and_then(|field| field.total_progress_field.as_deref()),
+            Some("episodes")
+        );
+        assert!(anime
+            .body_sections
+            .iter()
+            .any(|section| section.kind == BodySectionKind::Episodes));
+
+        // Books opt into scalar page progress only; this is asserted in detail
+        // above, and should remain list-free even though they have a total.
+        let books = resolve(vec![], &["books"], None).types.remove(0);
+        assert!(find_field(&books, "progress").is_some());
+        assert!(find_field(&books, "pages").is_some());
+        assert!(!books
+            .body_sections
+            .iter()
+            .any(|section| section.kind == BodySectionKind::Episodes));
+
+        // Podcasts opt into a provider-backed checklist only. Being open-ended
+        // does not create scalar "x of y" fields.
         let podcast = resolve(vec![], &["podcast"], None).types.remove(0);
         assert!(find_field(&podcast, "progress").is_none());
         assert!(find_field(&podcast, "episodes").is_none());
@@ -2426,33 +2934,61 @@ mod tests {
             .expect("episodes section");
         assert_eq!(list.tracking, Some(EpisodeTracking::Checklist));
 
-        // Albums are owned, not progressed through: a plain track list.
+        // Music also opts into a list only: imported tracks are plain rows, and
+        // Apple Music's standalone track_count is not paired to a progress field.
         let music = resolve(vec![], &["music"], None).types.remove(0);
         assert!(find_field(&music, "progress").is_none());
         assert!(find_field(&music, "tracks").is_none());
+        assert!(find_field(&music, "track_count").is_some());
         let list = music
             .body_sections
             .iter()
             .find(|s| s.kind == BodySectionKind::Episodes)
             .expect("tracks section");
         assert_eq!(list.tracking, Some(EpisodeTracking::None));
+
+        // Movies opt into neither feature.
+        let movie = resolve(vec![], &["movie"], None).types.remove(0);
+        assert!(find_field(&movie, "progress").is_none());
+        assert!(!movie
+            .body_sections
+            .iter()
+            .any(|section| section.kind == BodySectionKind::Episodes));
     }
 
     #[test]
     fn one_default_home_shelf_per_type_preferring_ongoing() {
-        // Anime has an ongoing status ("Watching"), so its single default shelf
-        // is the in-progress one — not a second "Recent" shelf on top. Franchise
-        // has no date field or status; Event's only date is an attendance date
-        // (role Event) and its statuses map no ongoing value — so neither gets
-        // a shelf at all.
+        // Anime has an ongoing shelf, Event has an upcoming shelf, and the
+        // date-less Franchise type has no default shelf.
         let result = resolve(vec![], &["anime", "franchise", "event"], None);
-        assert_eq!(result.home_sections.len(), 1);
+        assert_eq!(result.home_sections.len(), 2);
         let ongoing = &result.home_sections[0];
         assert_eq!(ongoing.id, "ongoing-anime");
         assert_eq!(ongoing.entity_type, "anime");
         assert_eq!(ongoing.title, "Watching Anime");
         assert_eq!(ongoing.sort.as_deref(), Some("date:season"));
-        // The date-less types are still added — just shelf-less.
+
+        let upcoming = &result.home_sections[1];
+        assert_eq!(upcoming.id, "upcoming-event");
+        assert_eq!(upcoming.entity_type, "event");
+        assert_eq!(upcoming.title, "Upcoming Events");
+        assert_eq!(upcoming.sort.as_deref(), Some("date:date"));
+        assert_eq!(upcoming.direction, Some(SortDirection::Asc));
+        let criteria = upcoming.criteria.as_ref().expect("upcoming criteria");
+        assert!(criteria.rules.iter().any(|rule| {
+            rule.field.as_deref() == Some("status") && rule.value.as_deref() == Some("Planned")
+        }));
+        assert!(criteria.rules.iter().any(|rule| {
+            rule.field.as_deref() == Some("date")
+                && rule.op == Some(SmartCompareOp::Gte)
+                && rule.relative.as_ref().is_some_and(|relative| {
+                    relative.amount == 0
+                        && relative.unit == SmartDurationUnit::Days
+                        && !relative.future
+                })
+        }));
+
+        // The date-less type is still added — just shelf-less.
         assert!(result.types.iter().any(|t| t.id == "franchise"));
         assert!(result.types.iter().any(|t| t.id == "event"));
     }

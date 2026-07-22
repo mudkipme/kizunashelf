@@ -259,9 +259,12 @@ async fn search_bangumi(
             &format!("https://api.bgm.tv/v0/characters/{character_id}"),
         )
         .await?;
-        return Ok(bangumi_character_candidate(&value, language)
-            .into_iter()
-            .collect());
+        return Ok(
+            bangumi_character_candidate_with_credits(client, &value, language)
+                .await
+                .into_iter()
+                .collect(),
+        );
     }
     // Resolve a pasted subject URL/id (subjects mode only).
     if let Some(filter_types) = &subject_types {
@@ -324,10 +327,12 @@ async fn search_bangumi(
         .await
         .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
-            items.extend(
+            let candidates = futures_util::future::join_all(
                 data.iter()
-                    .filter_map(|item| bangumi_character_candidate(item, language)),
-            );
+                    .map(|item| bangumi_character_candidate_with_credits(client, item, language)),
+            )
+            .await;
+            items.extend(candidates.into_iter().flatten());
         }
     }
     if wants_persons {
@@ -462,6 +467,58 @@ fn bangumi_people_id(q: &str, marker: &str, allow_bare: bool) -> Option<String> 
 
 fn bangumi_character_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandidate> {
     bangumi_people_candidate(item, "character", language)
+}
+
+/// Builds a character candidate and enriches it with the related-person endpoint.
+/// Bangumi returns one row per person/subject credit, so a voice actor may occur
+/// many times; `bangumi_voice_actors` collapses those rows to stable unique names.
+/// Credit enrichment is best-effort: a transient failure must not hide the base
+/// character search result.
+async fn bangumi_character_candidate_with_credits(
+    client: &reqwest::Client,
+    item: &Value,
+    language: Option<&str>,
+) -> Option<ExternalCandidate> {
+    let mut candidate = bangumi_character_candidate(item, language)?;
+    let url = format!(
+        "https://api.bgm.tv/v0/characters/{}/persons",
+        candidate.source_id
+    );
+    if let Ok(credits) = bangumi_get(client, &url).await {
+        let actors = bangumi_voice_actors(&credits);
+        if !actors.is_empty() {
+            candidate.metadata.insert(
+                "voice_actors".to_string(),
+                Value::Array(actors.into_iter().map(Value::String).collect()),
+            );
+        }
+    }
+    Some(candidate)
+}
+
+fn bangumi_voice_actors(value: &Value) -> Vec<String> {
+    let mut seen_ids = BTreeSet::new();
+    let mut seen_names = BTreeSet::new();
+    let mut actors = Vec::new();
+    for credit in value.as_array().into_iter().flatten() {
+        let name = credit
+            .get("name")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|name| !name.is_empty());
+        let Some(name) = name else { continue };
+        if credit
+            .get("id")
+            .and_then(Value::as_i64)
+            .is_some_and(|id| !seen_ids.insert(id))
+        {
+            continue;
+        }
+        if seen_names.insert(name.to_string()) {
+            actors.push(name.to_string());
+        }
+    }
+    actors
 }
 
 fn bangumi_person_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandidate> {
@@ -639,6 +696,7 @@ pub(super) fn field_options() -> Vec<ExternalProviderFieldOption> {
         field_option("gender", "Gender"),
         field_option("birthday", "Birthday"),
         field_option("career", "Career"),
+        field_option("voice_actors", "Voice actors"),
         field_option("summary", "Summary"),
     ]
 }
@@ -1049,6 +1107,19 @@ mod tests {
         // A bare id resolves only when the field is character-/person-only.
         assert_eq!(super::bangumi_person_id("4", false), None);
         assert_eq!(super::bangumi_person_id("4", true), Some("4".to_string()));
+    }
+
+    #[test]
+    fn character_voice_actors_are_deduplicated_across_subject_credits() {
+        let actors = super::bangumi_voice_actors(&json!([
+            { "id": 4, "name": "水樹奈々", "subject_id": 1 },
+            { "id": 4, "name": "水樹奈々", "subject_id": 2 },
+            { "id": 9, "name": "平野綾", "subject_id": 1 },
+            { "name": "平野綾", "subject_id": 3 },
+            { "id": 10, "name": "  " }
+        ]));
+
+        assert_eq!(actors, ["水樹奈々", "平野綾"]);
     }
 
     #[test]

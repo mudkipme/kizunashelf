@@ -26,14 +26,15 @@ The tables below show each preset resolved with **English** as the picker langua
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `myanimelist.title`, `tmdb.title`, `thetvdb.name` | Title |
-| `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `myanimelist.title`, `tmdb.original_title`, `thetvdb.name` | Title (original) |
+| `title` | `title` | titleLanguage `en`; filled from `myanimelist.title`, `tmdb.title` | Title |
+| `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `tmdb.original_title`, `thetvdb.name` | Title (original) |
 | `cover_url` | `image` | filled from `bangumi.cover_url`, `myanimelist.cover_url`, `tmdb.cover_url`, `thetvdb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
 | `progress` | `progress` | total from `episodes` | Progress |
 | `episodes` | `totalProgress` | filled from `bangumi.eps`, `myanimelist.episodes`, `tmdb.episode_count` | Episodes |
 | `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `bangumi.date`, `myanimelist.season`, `tmdb.release_date`, `thetvdb.first_air_time` | Season |
+| `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `myanimelist_url` | `externalRef` | externalRef `myanimelist` (types anime) | MyAnimeList |
 | `tmdb_url` | `externalRef` | externalRef `tmdb` (types tv) | TMDB |
@@ -45,9 +46,9 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `drama` (ドラマ · 剧集 · 影集) — TV series and dramas, episode by episode.
 
-- **Provider priority**: `tmdb` → `thetvdb`
+- **Provider priority**: `tmdb` → `thetvdb` → `neodb`
 - **Filename**: titleLanguage `en`
-- **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`
+- **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`, `neodb.description`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Drama`
 - **Home section**: "Watching TV & Drama", sorted by `date:season`
@@ -55,42 +56,44 @@ The tables below show each preset resolved with **English** as the picker langua
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `tmdb.title`, `thetvdb.name` | Title |
-| `title_original` | `title` | titleRole `original`; filled from `tmdb.original_title`, `thetvdb.name` | Title (original) |
-| `cover_url` | `image` | filled from `tmdb.cover_url`, `thetvdb.cover_url` | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `tmdb.title`, `neodb.title` | Title |
+| `title_original` | `title` | titleRole `original`; filled from `tmdb.original_title`, `thetvdb.name`, `neodb.original_title` | Title (original) |
+| `cover_url` | `image` | filled from `tmdb.cover_url`, `thetvdb.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
 | `progress` | `progress` | total from `episodes` | Progress |
-| `episodes` | `totalProgress` | filled from `tmdb.episode_count` | Episodes |
-| `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `tmdb.release_date`, `thetvdb.first_air_time` | Season |
+| `episodes` | `totalProgress` | filled from `tmdb.episode_count`, `neodb.episode_count` | Episodes |
+| `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `tmdb.release_date`, `thetvdb.first_air_time`, `neodb.release_date` | Season |
+| `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `tmdb_url` | `externalRef` | externalRef `tmdb` (types tv) | TMDB |
 | `thetvdb_url` | `externalRef` | externalRef `thetvdb` (types series) | TheTVDB |
+| `neodb_url` | `externalRef` | externalRef `neodb` (types tv) | NeoDB |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 
 ### Movies
 
 `movie` (映画 · 电影 · 電影) — Films you've seen or want to see.
 
-- **Provider priority**: `tmdb` → `thetvdb` → `bangumi`
+- **Provider priority**: `tmdb` → `thetvdb` → `neodb`
 - **Filename**: titleLanguage `en`
-- **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`
+- **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`, `neodb.description`
 - **Daily-note log**: `- {title} {note} #Movie`
 - **Home section**: "Watching Movies", sorted by `date:release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `tmdb.title`, `thetvdb.name` | Title |
-| `title_original` | `title` | titleRole `original`; filled from `tmdb.original_title`, `bangumi.name`, `thetvdb.name` | Title (original) |
-| `cover_url` | `image` | filled from `tmdb.cover_url`, `bangumi.cover_url`, `thetvdb.cover_url` | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `tmdb.title`, `neodb.title` | Title |
+| `title_original` | `title` | titleRole `original`; filled from `tmdb.original_title`, `thetvdb.name`, `neodb.original_title` | Title (original) |
+| `cover_url` | `image` | filled from `tmdb.cover_url`, `thetvdb.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `release_date` | `date` | dateRole `planning`; filled from `tmdb.release_date`, `bangumi.date`, `thetvdb.first_air_time` | Release date |
+| `release_date` | `date` | dateRole `planning`; filled from `tmdb.release_date`, `thetvdb.first_air_time`, `neodb.release_date` | Release date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `tmdb_url` | `externalRef` | externalRef `tmdb` (types movie) | TMDB |
 | `thetvdb_url` | `externalRef` | externalRef `thetvdb` (types movie) | TheTVDB |
-| `bangumi_url` | `externalRef` | externalRef `bangumi` (types 2, 6) | Bangumi |
+| `neodb_url` | `externalRef` | externalRef `neodb` (types movie) | NeoDB |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 
 ## Play
@@ -99,27 +102,29 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `games` (ゲーム · 游戏 · 遊戲) — Your backlog, what you're playing, and what you've beaten.
 
-- **Provider priority**: `igdb` → `steam` → `bangumi`
+- **Provider priority**: `igdb` → `steam` → `bangumi` → `neodb`
 - **Filename**: titleLanguage `en`
-- **Body section** "Summary": external: `igdb.summary`, `steam.description`
+- **Body section** "Summary": external: `igdb.summary`, `steam.description`, `neodb.description`
 - **Daily-note log**: `- {title} {note} #Game`
 - **Home section**: "Playing Games", sorted by `date:release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `igdb.name`, `steam.name` | Title |
-| `cover_url` | `image` | filled from `igdb.cover_url`, `steam.cover_url`, `bangumi.cover_url` | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `igdb.name`, `steam.name`, `neodb.title` | Title |
+| `cover_url` | `image` | filled from `igdb.cover_url`, `steam.cover_url`, `bangumi.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Playing / Completed / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `platform` | `enumList` | options: PC / Nintendo Switch / PS5 / Xbox Series X\|S / iOS / Android; filled from `igdb.platforms`, `steam.platform` | Platform |
-| `genre` | `enumList` | options: RPG / Action / Adventure / Strategy / Simulation / Puzzle; filled from `igdb.genres`, `steam.genres`, `bangumi.genre` | Genre |
-| `release_date` | `date` | dateRole `planning`; filled from `igdb.first_release_date`, `steam.release_date`, `bangumi.date` | Release date |
+| `platform` | `textList` | filled from `igdb.platforms`, `steam.platform`, `neodb.platforms` | Platform |
+| `genre` | `textList` | filled from `igdb.genres`, `steam.genres`, `bangumi.genre`, `neodb.genres` | Genre |
+| `release_date` | `date` | dateRole `planning`; filled from `igdb.first_release_date`, `steam.release_date`, `bangumi.date`, `neodb.release_date` | Release date |
+| `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `igdb_url` | `externalRef` | externalRef `igdb` (types game) | IGDB |
 | `steam_url` | `externalRef` | externalRef `steam` (types game) | Steam |
 | `bangumi_url` | `externalRef` | externalRef `bangumi` (types 4) | Bangumi |
-| `franchise` | `relation` | relation → `franchise` | Franchise |
+| `neodb_url` | `externalRef` | externalRef `neodb` (types game) | NeoDB |
+| `franchise` | `relation` | relation → `franchise`; filled from `igdb.franchise` | Franchise |
 
 ### Board Games
 
@@ -138,10 +143,10 @@ The tables below show each preset resolved with **English** as the picker langua
 | `cover_url` | `image` | filled from `bgg.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Playing / Completed / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `players` | `text` |  | Players |
-| `playtime` | `text` |  | Playtime |
+| `players` | `text` | filled from `bgg.players` | Players |
+| `playtime` | `text` | filled from `bgg.playtime` | Playtime |
 | `release_date` | `date` | dateRole `planning` | Release date |
-| `bgg_url` | `externalRef` | externalRef `bgg` | BoardGameGeek |
+| `bgg_url` | `externalRef` | externalRef `bgg` (types boardgame, boardgameexpansion) | BoardGameGeek |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 
 ## Read
@@ -150,7 +155,7 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `books` (本 · 书籍 · 書籍) — Books you're reading, with authors and ISBNs.
 
-- **Provider priority**: `neodb` → `googlebooks` → `openlibrary` → `hardcover` → `bangumi`
+- **Provider priority**: `neodb` → `googlebooks` → `openlibrary` → `hardcover`
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `neodb.description`, `googlebooks.description`, `openlibrary.description`, `hardcover.synopsis`
 - **Daily-note log**: `- {title} {note} #Book`
@@ -160,20 +165,22 @@ The tables below show each preset resolved with **English** as the picker langua
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
 | `title` | `title` | titleLanguage `en`; filled from `neodb.title`, `googlebooks.title`, `openlibrary.title`, `hardcover.title` | Title |
-| `title_original` | `title` | titleRole `original`; filled from `neodb.original_title`, `googlebooks.title`, `openlibrary.title`, `hardcover.title`, `bangumi.name` | Title (original) |
-| `cover_url` | `image` | filled from `neodb.cover_url`, `googlebooks.cover_url`, `openlibrary.cover_url`, `hardcover.cover_url`, `bangumi.cover_url` | Cover |
+| `title_original` | `title` | titleRole `original`; filled from `neodb.original_title` | Title (original) |
+| `cover_url` | `image` | filled from `neodb.cover_url`, `googlebooks.cover_url`, `openlibrary.cover_url`, `hardcover.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `author` | `textList` | filled from `neodb.authors`, `googlebooks.authors`, `openlibrary.authors`, `hardcover.authors`, `bangumi.author` | Author |
-| `isbn` | `text` | filled from `neodb.isbn`, `googlebooks.isbn`, `openlibrary.isbn`, `hardcover.isbn`, `bangumi.isbn` | ISBN |
-| `release_date` | `date` | dateRole `planning`; filled from `neodb.published_date`, `googlebooks.published_date`, `openlibrary.published_date`, `hardcover.publish_date`, `bangumi.date` | Release date |
+| `progress` | `progress` | total from `pages` | Progress |
+| `pages` | `totalProgress` | filled from `neodb.pages`, `googlebooks.pages`, `openlibrary.pages`, `hardcover.pages` | Pages |
+| `author` | `textList` | filled from `neodb.authors`, `googlebooks.authors`, `openlibrary.authors`, `hardcover.authors` | Author |
+| `isbn` | `text` | filled from `neodb.isbn`, `googlebooks.isbn`, `openlibrary.isbn`, `hardcover.isbn` | ISBN |
+| `release_date` | `date` | dateRole `planning`; filled from `neodb.published_date`, `googlebooks.published_date`, `openlibrary.published_date`, `hardcover.publish_date` | Release date |
+| `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `neodb_url` | `externalRef` | externalRef `neodb` (types book) | NeoDB |
 | `googlebooks_url` | `externalRef` | externalRef `googlebooks` (types book) | Google Books |
 | `openlibrary_url` | `externalRef` | externalRef `openlibrary` (types book) | Open Library |
 | `hardcover_url` | `externalRef` | externalRef `hardcover` (types book) | Hardcover |
-| `bangumi_url` | `externalRef` | externalRef `bangumi` (types 1) | Bangumi |
-| `franchise` | `relation` | relation → `franchise` | Franchise |
+| `franchise` | `relation` | relation → `franchise`; filled from `neodb.series` | Franchise |
 
 ### Manga & Comics
 
@@ -190,14 +197,15 @@ The tables below show each preset resolved with **English** as the picker langua
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
 | `title` | `title` | titleLanguage `en`; filled from `mangaupdates.title`, `myanimelist.title`, `comicvine.title` | Title |
-| `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `mangaupdates.title`, `myanimelist.title`, `comicvine.title` | Title (original) |
+| `title_original` | `title` | titleRole `original`; filled from `bangumi.name` | Title (original) |
 | `cover_url` | `image` | filled from `bangumi.cover_url`, `mangaupdates.cover_url`, `myanimelist.cover_url`, `comicvine.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
 | `progress` | `progress` | total from `chapters` | Progress |
-| `chapters` | `totalProgress` | filled from `bangumi.eps`, `mangaupdates.latest_chapter`, `myanimelist.chapters` | Chapters |
+| `chapters` | `totalProgress` | filled from `bangumi.eps`, `mangaupdates.latest_chapter`, `myanimelist.chapters`, `comicvine.issues_count` | Chapters |
 | `author` | `textList` | filled from `bangumi.author`, `mangaupdates.authors` | Author |
 | `release_date` | `date` | dateRole `planning`; filled from `bangumi.date`, `myanimelist.start_date` | Release date |
+| `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `mangaupdates_url` | `externalRef` | externalRef `mangaupdates` (types manga) | MangaUpdates |
 | `myanimelist_url` | `externalRef` | externalRef `myanimelist` (types manga) | MyAnimeList |
@@ -211,8 +219,9 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `music` (音楽アルバム · 音乐专辑 · 音樂專輯) — Albums and CDs — the music you own and love.
 
-- **Provider priority**: `musicbrainz` → `applemusic` → `discogs` → `bangumi`
+- **Provider priority**: `musicbrainz` → `applemusic` → `discogs` → `bangumi` → `neodb`
 - **Filename**: titleLanguage `en`
+- **Body section** "Summary": external: `neodb.description`
 - **Body section** "Tracks": episodes, tracking `none`
 - **Daily-note log**: `- {title} {note} #Music`
 - **Home section**: "Listening to Music Albums", sorted by `date:release_date`
@@ -220,25 +229,30 @@ The tables below show each preset resolved with **English** as the picker langua
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `musicbrainz.title`, `applemusic.title`, `discogs.title` | Title |
-| `cover_url` | `image` | filled from `musicbrainz.cover_url`, `applemusic.cover_url`, `discogs.cover_url`, `bangumi.cover_url` | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `musicbrainz.title`, `applemusic.title`, `discogs.title`, `neodb.title` | Title |
+| `cover_url` | `image` | filled from `musicbrainz.cover_url`, `applemusic.cover_url`, `discogs.cover_url`, `bangumi.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Listening / Listened / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `owned` | `enumList` | options: CD / Vinyl / Digital | Owned |
-| `release_date` | `date` | dateRole `planning`; filled from `musicbrainz.release_date`, `applemusic.release_date`, `bangumi.date` | Release date |
+| `owned` | `textList` | filled from `discogs.format`, `neodb.format` | Owned |
+| `track_count` | `totalProgress` | filled from `applemusic.track_count` | Track count |
+| `genres` | `textList` | filled from `musicbrainz.genres`, `applemusic.genre`, `discogs.genres`, `bangumi.genre`, `neodb.genres` | Genres |
+| `styles` | `textList` | filled from `discogs.styles` | Styles |
+| `release_date` | `date` | dateRole `planning`; filled from `musicbrainz.release_date`, `applemusic.release_date`, `bangumi.date`, `neodb.release_date` | Release date |
 | `musicbrainz_url` | `externalRef` | externalRef `musicbrainz` (types release) | MusicBrainz |
 | `applemusic_url` | `externalRef` | externalRef `applemusic` (types album) | Apple Music |
-| `discogs_url` | `externalRef` | externalRef `discogs` | Discogs |
+| `discogs_url` | `externalRef` | externalRef `discogs` (types release) | Discogs |
 | `bangumi_url` | `externalRef` | externalRef `bangumi` (types 3) | Bangumi |
-| `artist` | `relation` | relation → `artist` | Artist |
+| `neodb_url` | `externalRef` | externalRef `neodb` (types music) | NeoDB |
+| `artist` | `relation` | relation → `artist`; filled from `musicbrainz.artists`, `applemusic.artists`, `discogs.artists`, `neodb.artists` | Artist |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 
 ### Podcasts
 
 `podcast` (ポッドキャスト · 播客 · Podcast) — Podcasts you follow.
 
-- **Provider priority**: `applepodcast`
+- **Provider priority**: `applepodcast` → `neodb`
 - **Filename**: titleLanguage `en`
+- **Body section** "Summary": external: `neodb.description`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Podcast`
 - **Home section**: "Listening to Podcasts", sorted by `recentlyUpdated`
@@ -246,11 +260,16 @@ The tables below show each preset resolved with **English** as the picker langua
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `applepodcast.title` | Title |
-| `cover_url` | `image` | filled from `applepodcast.cover_url` | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `applepodcast.title`, `neodb.title` | Title |
+| `cover_url` | `image` | filled from `applepodcast.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Listening / Listened / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
+| `hosts` | `textList` | filled from `applepodcast.host`, `neodb.hosts` | Hosts |
+| `genres` | `textList` | filled from `applepodcast.genre`, `neodb.genres` | Genres |
+| `feed_url` | `text` | filled from `applepodcast.feed_url` | Feed URL |
 | `applepodcast_url` | `externalRef` | externalRef `applepodcast` (types podcast) | Apple Podcasts |
+| `neodb_url` | `externalRef` | externalRef `neodb` (types podcast) | NeoDB |
+| `host` | `relation` | relation → `artist`; filled from `applepodcast.host`, `neodb.hosts` | Host |
 
 ## People & connections
 
@@ -299,7 +318,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `birthday` | `date` | filled from `bangumi.birthday` | Birthday |
 | `bangumi_url` | `externalRef` | externalRef `bangumi` (types character) | Bangumi |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
-| `voice_by` | `relation` | relation → `artist` | Voice by |
+| `voice_by` | `relation` | relation → `artist`; filled from `bangumi.voice_actors` | Voice by |
 
 ## Life
 
@@ -311,6 +330,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `neodb.description`
 - **Daily-note log**: `- {title} {note} #Event`
+- **Home section**: "Upcoming Events", sorted by `date:date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -323,6 +343,6 @@ The tables below show each preset resolved with **English** as the picker langua
 | `location` | `text` |  | Location |
 | `date` | `date` | dateRole `event` | Date |
 | `neodb_url` | `externalRef` | externalRef `neodb` (types performance) | NeoDB |
-| `artist` | `relation` | relation → `artist` | Artist |
+| `artist` | `relation` | relation → `artist`; filled from `neodb.performers` | Artist |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 

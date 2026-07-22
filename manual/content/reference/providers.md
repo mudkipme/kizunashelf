@@ -73,6 +73,7 @@ Mappable fields (for `externalFields` and external body sections):
 | `gender` | Gender |
 | `birthday` | Birthday |
 | `career` | Career |
+| `voice_actors` | Voice actors |
 | `summary` | Summary |
 
 ## IGDB {#igdb}
