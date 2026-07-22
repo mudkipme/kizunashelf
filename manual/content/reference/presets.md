@@ -102,7 +102,7 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `games` (ゲーム · 游戏 · 遊戲) — Your backlog, what you're playing, and what you've beaten.
 
-- **Provider priority**: `igdb` → `steam` → `bangumi` → `neodb`
+- **Provider priority**: `igdb` → `steam` → `neodb` → `bangumi`
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `igdb.summary`, `steam.description`, `neodb.description`
 - **Daily-note log**: `- {title} {note} #Game`
@@ -122,8 +122,8 @@ The tables below show each preset resolved with **English** as the picker langua
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `igdb_url` | `externalRef` | externalRef `igdb` (types game) | IGDB |
 | `steam_url` | `externalRef` | externalRef `steam` (types game) | Steam |
-| `bangumi_url` | `externalRef` | externalRef `bangumi` (types 4) | Bangumi |
 | `neodb_url` | `externalRef` | externalRef `neodb` (types game) | NeoDB |
+| `bangumi_url` | `externalRef` | externalRef `bangumi` (types 4) | Bangumi |
 | `franchise` | `relation` | relation → `franchise`; filled from `igdb.franchise` | Franchise |
 
 ### Board Games
@@ -155,31 +155,31 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `books` (本 · 书籍 · 書籍) — Books you're reading, with authors and ISBNs.
 
-- **Provider priority**: `neodb` → `googlebooks` → `openlibrary` → `hardcover`
+- **Provider priority**: `openlibrary` → `googlebooks` → `hardcover` → `neodb`
 - **Filename**: titleLanguage `en`
-- **Body section** "Summary": external: `neodb.description`, `googlebooks.description`, `openlibrary.description`, `hardcover.synopsis`
+- **Body section** "Summary": external: `neodb.description`, `openlibrary.description`, `googlebooks.description`, `hardcover.synopsis`
 - **Daily-note log**: `- {title} {note} #Book`
 - **Home section**: "Reading Books", sorted by `date:release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `neodb.title`, `googlebooks.title`, `openlibrary.title`, `hardcover.title` | Title |
+| `title` | `title` | titleLanguage `en`; filled from `neodb.title`, `openlibrary.title`, `googlebooks.title`, `hardcover.title` | Title |
 | `title_original` | `title` | titleRole `original`; filled from `neodb.original_title` | Title (original) |
-| `cover_url` | `image` | filled from `neodb.cover_url`, `googlebooks.cover_url`, `openlibrary.cover_url`, `hardcover.cover_url` | Cover |
+| `cover_url` | `image` | filled from `neodb.cover_url`, `openlibrary.cover_url`, `googlebooks.cover_url`, `hardcover.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
 | `progress` | `progress` | total from `pages` | Progress |
-| `pages` | `totalProgress` | filled from `neodb.pages`, `googlebooks.pages`, `openlibrary.pages`, `hardcover.pages` | Pages |
-| `author` | `textList` | filled from `neodb.authors`, `googlebooks.authors`, `openlibrary.authors`, `hardcover.authors` | Author |
-| `isbn` | `text` | filled from `neodb.isbn`, `googlebooks.isbn`, `openlibrary.isbn`, `hardcover.isbn` | ISBN |
-| `release_date` | `date` | dateRole `planning`; filled from `neodb.published_date`, `googlebooks.published_date`, `openlibrary.published_date`, `hardcover.publish_date` | Release date |
+| `pages` | `totalProgress` | filled from `neodb.pages`, `openlibrary.pages`, `googlebooks.pages`, `hardcover.pages` | Pages |
+| `author` | `textList` | filled from `neodb.authors`, `openlibrary.authors`, `googlebooks.authors`, `hardcover.authors` | Author |
+| `isbn` | `text` | filled from `neodb.isbn`, `openlibrary.isbn`, `googlebooks.isbn`, `hardcover.isbn` | ISBN |
+| `release_date` | `date` | dateRole `planning`; filled from `neodb.published_date`, `openlibrary.published_date`, `googlebooks.published_date`, `hardcover.publish_date` | Release date |
 | `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
-| `neodb_url` | `externalRef` | externalRef `neodb` (types book) | NeoDB |
-| `googlebooks_url` | `externalRef` | externalRef `googlebooks` (types book) | Google Books |
 | `openlibrary_url` | `externalRef` | externalRef `openlibrary` (types book) | Open Library |
+| `googlebooks_url` | `externalRef` | externalRef `googlebooks` (types book) | Google Books |
 | `hardcover_url` | `externalRef` | externalRef `hardcover` (types book) | Hardcover |
+| `neodb_url` | `externalRef` | externalRef `neodb` (types book) | NeoDB |
 | `franchise` | `relation` | relation → `franchise`; filled from `neodb.series` | Franchise |
 
 ### Manga & Comics
@@ -219,7 +219,7 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `music` (音楽アルバム · 音乐专辑 · 音樂專輯) — Albums and CDs — the music you own and love.
 
-- **Provider priority**: `musicbrainz` → `applemusic` → `discogs` → `bangumi` → `neodb`
+- **Provider priority**: `musicbrainz` → `applemusic` → `discogs` → `neodb` → `bangumi`
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `neodb.description`
 - **Body section** "Tracks": episodes, tracking `none`
@@ -241,8 +241,8 @@ The tables below show each preset resolved with **English** as the picker langua
 | `musicbrainz_url` | `externalRef` | externalRef `musicbrainz` (types release) | MusicBrainz |
 | `applemusic_url` | `externalRef` | externalRef `applemusic` (types album) | Apple Music |
 | `discogs_url` | `externalRef` | externalRef `discogs` (types release) | Discogs |
-| `bangumi_url` | `externalRef` | externalRef `bangumi` (types 3) | Bangumi |
 | `neodb_url` | `externalRef` | externalRef `neodb` (types music) | NeoDB |
+| `bangumi_url` | `externalRef` | externalRef `bangumi` (types 3) | Bangumi |
 | `artist` | `relation` | relation → `artist`; filled from `musicbrainz.artists`, `applemusic.artists`, `discogs.artists`, `neodb.artists` | Artist |
 | `franchise` | `relation` | relation → `franchise` | Franchise |
 
@@ -264,7 +264,6 @@ The tables below show each preset resolved with **English** as the picker langua
 | `cover_url` | `image` | filled from `applepodcast.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Listening / Listened / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `hosts` | `textList` | filled from `applepodcast.host`, `neodb.hosts` | Hosts |
 | `genres` | `textList` | filled from `applepodcast.genre`, `neodb.genres` | Genres |
 | `feed_url` | `text` | filled from `applepodcast.feed_url` | Feed URL |
 | `applepodcast_url` | `externalRef` | externalRef `applepodcast` (types podcast) | Apple Podcasts |

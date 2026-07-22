@@ -26,7 +26,10 @@
 //!   their language. Stored language *keys* are unaffected — a `zh-Hant`
 //!   choice stamps bare `zh` and picks Traditional glyphs for the text.
 //! - **Relations.** A preset carries its relation fields, but a relation only
-//!   *survives* when its target type is present — see the module's resolve rules.
+//!   *binds* when its target type is present (existing or co-selected).
+//!   Otherwise a provider-wired relation falls back to a plain text-list field
+//!   with the same wiring — the provider names are still captured, just as text
+//!   instead of links — and an unwired relation is dropped.
 //!
 //! External-field wiring is **literal**: each preset spells out its
 //! `(provider, provider field)` pairs at the declaration — there is no shared
@@ -161,7 +164,16 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
                 field.relation_type = Some(assigned_id.to_string()); // co-selected
                 return true;
             }
-            false // target absent → drop the relation field
+            // Target absent. A provider-wired relation falls back to a plain
+            // text list — the providers still supply names worth capturing
+            // (album artists, podcast hosts), just as text instead of links.
+            // An unwired relation is dropped: nothing would ever fill it.
+            if field.external_fields.is_empty() {
+                return false;
+            }
+            field.field_type = FieldType::TextList;
+            field.relation_type = None;
+            true
         });
         // One default shelf per type, so a multi-type vault's home doesn't
         // start out bloated: upcoming events, otherwise an "in progress" shelf
@@ -592,7 +604,11 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "愿望单、在玩和已通关的游戏。",
                     "願望清單、遊玩中和已全破的遊戲。",
                 ),
-                providers: &["igdb", "steam", "bangumi", "neodb"],
+                providers: ctx.pick(
+                    &["igdb", "steam", "bangumi", "neodb"],
+                    &["igdb", "steam", "bangumi", "neodb"],
+                    &["igdb", "steam", "neodb", "bangumi"],
+                ),
                 external_types: &[("bangumi", &["4"]), ("neodb", &["game"])],
                 title_sources: ctx.pick(
                     &[
@@ -647,19 +663,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 completed_date: true,
                 progress: None,
                 list: None,
-                extras: &[
-                    Extra::Platform(&[
-                        ("igdb", "platforms"),
-                        ("steam", "platform"),
-                        ("neodb", "platforms"),
-                    ]),
-                    Extra::Genre(&[
-                        ("igdb", "genres"),
-                        ("steam", "genres"),
-                        ("bangumi", "genre"),
-                        ("neodb", "genres"),
-                    ]),
-                ],
+                extras: GAMES_EXTRAS,
                 relations: &[GAMES_FRANCHISE_REL],
                 log_hashtag: Some(l("Game", "ゲーム", "游戏", "遊戲")),
             },
@@ -693,10 +697,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 completed_date: false,
                 progress: None,
                 list: None,
-                extras: &[
-                    Extra::Players(&[("bgg", "players")]),
-                    Extra::Playtime(&[("bgg", "playtime")]),
-                ],
+                extras: BOARD_EXTRAS,
                 relations: &[FRANCHISE_REL],
                 log_hashtag: Some(l("BoardGame", "ボードゲーム", "桌游", "桌遊")),
             },
@@ -716,31 +717,40 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "在读的书，带作者和 ISBN。",
                     "在讀的書，帶作者和 ISBN。",
                 ),
-                providers: &["neodb", "googlebooks", "openlibrary", "hardcover"],
+                // The two key-less providers bracket the keyed ones: NeoDB's
+                // book catalog skews Chinese, so it leads for zh users and
+                // falls to the bottom for everyone else, where key-less
+                // OpenLibrary leads instead — book search works out of the
+                // box in every language with no credentials configured.
+                providers: ctx.pick(
+                    &["neodb", "openlibrary", "googlebooks", "hardcover"],
+                    &["openlibrary", "googlebooks", "hardcover", "neodb"],
+                    &["openlibrary", "googlebooks", "hardcover", "neodb"],
+                ),
                 external_types: &[("neodb", &["book"])],
                 title_sources: &[
                     ("neodb", "title"),
-                    ("googlebooks", "title"),
                     ("openlibrary", "title"),
+                    ("googlebooks", "title"),
                     ("hardcover", "title"),
                 ],
                 original_title: Some(&[("neodb", "original_title")]),
                 cover_sources: &[
                     ("neodb", "cover_url"),
-                    ("googlebooks", "cover_url"),
                     ("openlibrary", "cover_url"),
+                    ("googlebooks", "cover_url"),
                     ("hardcover", "cover_url"),
                 ],
                 summary_sources: &[
                     ("neodb", "description"),
-                    ("googlebooks", "description"),
                     ("openlibrary", "description"),
+                    ("googlebooks", "description"),
                     ("hardcover", "synopsis"),
                 ],
                 date_sources: &[
                     ("neodb", "published_date"),
-                    ("googlebooks", "published_date"),
                     ("openlibrary", "published_date"),
+                    ("googlebooks", "published_date"),
                     ("hardcover", "publish_date"),
                 ],
                 statuses: Some(&READ_STATUS),
@@ -750,20 +760,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 completed_date: true,
                 progress: Some(&BOOK_PROGRESS),
                 list: None,
-                extras: &[
-                    Extra::Author(&[
-                        ("neodb", "authors"),
-                        ("googlebooks", "authors"),
-                        ("openlibrary", "authors"),
-                        ("hardcover", "authors"),
-                    ]),
-                    Extra::Isbn(&[
-                        ("neodb", "isbn"),
-                        ("googlebooks", "isbn"),
-                        ("openlibrary", "isbn"),
-                        ("hardcover", "isbn"),
-                    ]),
-                ],
+                extras: BOOKS_EXTRAS,
                 relations: &[BOOKS_FRANCHISE_REL],
                 log_hashtag: Some(l("Book", "読書", "读书", "讀書")),
             },
@@ -841,10 +838,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 completed_date: true,
                 progress: Some(&MANGA_PROGRESS),
                 list: Some(&CHAPTERS_LIST),
-                extras: &[Extra::Author(&[
-                    ("bangumi", "author"),
-                    ("mangaupdates", "authors"),
-                ])],
+                extras: MANGA_EXTRAS,
                 relations: &[FRANCHISE_REL],
                 log_hashtag: Some(l("Manga", "マンガ", "漫画", "漫畫")),
             },
@@ -864,7 +858,11 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "专辑与 CD——你拥有和喜爱的音乐。",
                     "專輯與 CD——你擁有和喜愛的音樂。",
                 ),
-                providers: &["musicbrainz", "applemusic", "discogs", "bangumi", "neodb"],
+                providers: ctx.pick(
+                    &["musicbrainz", "applemusic", "discogs", "bangumi", "neodb"],
+                    &["musicbrainz", "applemusic", "discogs", "bangumi", "neodb"],
+                    &["musicbrainz", "applemusic", "discogs", "neodb", "bangumi"],
+                ),
                 external_types: &[
                     ("musicbrainz", &["release"]),
                     ("discogs", &["release"]),
@@ -1002,7 +1000,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 completed_date: false,
                 progress: None,
                 list: None,
-                extras: &[Extra::Birthday(&[("bangumi", "birthday")])],
+                extras: PERSON_EXTRAS,
                 relations: &[FRANCHISE_REL, GROUPS_REL],
                 log_hashtag: None,
             },
@@ -1072,7 +1070,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 completed_date: false,
                 progress: None,
                 list: None,
-                extras: &[Extra::Birthday(&[("bangumi", "birthday")])],
+                extras: PERSON_EXTRAS,
                 relations: &[FRANCHISE_REL, VOICE_BY_REL],
                 log_hashtag: None,
             },
@@ -1111,7 +1109,7 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 completed_date: false,
                 progress: None,
                 list: None,
-                extras: &[Extra::Location],
+                extras: EVENT_EXTRAS,
                 relations: &[EVENT_ARTIST_REL, FRANCHISE_REL],
                 log_hashtag: Some(l("Event", "イベント", "活动", "活動")),
             },
@@ -1120,7 +1118,9 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
 }
 
 /// A relation field a preset seeds: field name (never localized), display label,
-/// target preset id.
+/// target preset id. When the target type is absent at resolve time, a spec
+/// *with* sources becomes a plain text-list field instead (the provider names
+/// survive as text); one without sources is dropped.
 struct RelationSpec {
     field: &'static str,
     label: L,
@@ -1387,8 +1387,8 @@ const BOOK_PROGRESS: ProgressSpec = ProgressSpec {
     total_label: l("Pages", "ページ数", "总页数", "總頁數"),
     total_sources: &[
         ("neodb", "pages"),
-        ("googlebooks", "pages"),
         ("openlibrary", "pages"),
+        ("googlebooks", "pages"),
         ("hardcover", "pages"),
     ],
 };
@@ -1465,15 +1465,11 @@ enum PrimaryDate {
     EventDate,
 }
 
+/// An additional seeded field. The variants mirror [`FieldType`] — nothing
+/// about the field's *meaning* lives here; the field name, label, and wiring
+/// are spelled out literally at each preset's declaration.
 #[derive(Clone, Copy)]
 enum Extra {
-    Platform(Sources),
-    Genre(Sources),
-    Author(Sources),
-    Isbn(Sources),
-    Players(Sources),
-    Playtime(Sources),
-    OwnedFormats(Sources),
     Text {
         field: &'static str,
         label: L,
@@ -1484,18 +1480,102 @@ enum Extra {
         label: L,
         sources: Sources,
     },
-    Count {
+    Date {
         field: &'static str,
         label: L,
         sources: Sources,
     },
-    Location,
-    Birthday(Sources),
+    TotalProgress {
+        field: &'static str,
+        label: L,
+        sources: Sources,
+    },
 }
 
+const GAMES_EXTRAS: &[Extra] = &[
+    Extra::TextList {
+        field: "platform",
+        label: l("Platform", "プラットフォーム", "平台", "平台"),
+        sources: &[
+            ("igdb", "platforms"),
+            ("steam", "platform"),
+            ("neodb", "platforms"),
+        ],
+    },
+    Extra::TextList {
+        field: "genre",
+        label: l("Genre", "ジャンル", "类型", "類型"),
+        sources: &[
+            ("igdb", "genres"),
+            ("steam", "genres"),
+            ("bangumi", "genre"),
+            ("neodb", "genres"),
+        ],
+    },
+];
+
+const BOARD_EXTRAS: &[Extra] = &[
+    Extra::Text {
+        field: "players",
+        label: l("Players", "プレイ人数", "玩家人数", "玩家人數"),
+        sources: &[("bgg", "players")],
+    },
+    Extra::Text {
+        field: "playtime",
+        label: l("Playtime", "プレイ時間", "游玩时长", "遊玩時長"),
+        sources: &[("bgg", "playtime")],
+    },
+];
+
+const BOOKS_EXTRAS: &[Extra] = &[
+    Extra::TextList {
+        field: "author",
+        label: l("Author", "著者", "作者", "作者"),
+        sources: &[
+            ("neodb", "authors"),
+            ("openlibrary", "authors"),
+            ("googlebooks", "authors"),
+            ("hardcover", "authors"),
+        ],
+    },
+    Extra::Text {
+        field: "isbn",
+        label: l("ISBN", "ISBN", "ISBN", "ISBN"),
+        sources: &[
+            ("neodb", "isbn"),
+            ("openlibrary", "isbn"),
+            ("googlebooks", "isbn"),
+            ("hardcover", "isbn"),
+        ],
+    },
+];
+
+const MANGA_EXTRAS: &[Extra] = &[Extra::TextList {
+    field: "author",
+    label: l("Author", "著者", "作者", "作者"),
+    sources: &[("bangumi", "author"), ("mangaupdates", "authors")],
+}];
+
+/// Artists and characters share the one Bangumi-backed birthday field.
+const PERSON_EXTRAS: &[Extra] = &[Extra::Date {
+    field: "birthday",
+    label: l("Birthday", "誕生日", "生日", "生日"),
+    sources: &[("bangumi", "birthday")],
+}];
+
+const EVENT_EXTRAS: &[Extra] = &[Extra::Text {
+    field: "location",
+    label: l("Location", "場所", "地点", "地點"),
+    sources: &[],
+}];
+
 const MUSIC_EXTRAS: &[Extra] = &[
-    Extra::OwnedFormats(&[("discogs", "format"), ("neodb", "format")]),
-    Extra::Count {
+    Extra::TextList {
+        field: "owned",
+        label: l("Owned", "所持形式", "收藏形式", "收藏形式"),
+        sources: &[("discogs", "format"), ("neodb", "format")],
+    },
+    Extra::TotalProgress {
         field: "track_count",
         label: l("Track count", "曲数", "曲目数", "曲目數"),
         sources: &[("applemusic", "track_count")],
@@ -1518,12 +1598,10 @@ const MUSIC_EXTRAS: &[Extra] = &[
     },
 ];
 
+// Hosts are deliberately *not* an extra here: PODCAST_HOST_REL carries the
+// same wiring, binding to the artist type when present and falling back to a
+// text list when not — one field either way, never both.
 const PODCAST_EXTRAS: &[Extra] = &[
-    Extra::TextList {
-        field: "hosts",
-        label: l("Hosts", "ホスト", "主播", "主持人"),
-        sources: &[("applepodcast", "host"), ("neodb", "hosts")],
-    },
     Extra::TextList {
         field: "genres",
         label: l("Genres", "ジャンル", "类型", "類型"),
@@ -1820,108 +1898,31 @@ fn build_body_sections(ctx: &BuildCtx, spec: &TypeSpec) -> Vec<BodySection> {
 }
 
 fn extra_field(ctx: &BuildCtx, extra: Extra) -> FieldConfig {
-    match extra {
-        Extra::Platform(sources) => {
-            let mut f = field(
-                "platform",
-                FieldType::TextList,
-                ctx.text(l("Platform", "プラットフォーム", "平台", "平台")),
-            );
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::Genre(sources) => {
-            let mut f = field(
-                "genre",
-                FieldType::TextList,
-                ctx.text(l("Genre", "ジャンル", "类型", "類型")),
-            );
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::Author(sources) => {
-            let mut f = field(
-                "author",
-                FieldType::TextList,
-                ctx.text(l("Author", "著者", "作者", "作者")),
-            );
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::Isbn(sources) => {
-            let mut f = field("isbn", FieldType::Text, "ISBN");
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::Players(sources) => {
-            let mut f = field(
-                "players",
-                FieldType::Text,
-                ctx.text(l("Players", "プレイ人数", "玩家人数", "玩家人數")),
-            );
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::Playtime(sources) => {
-            let mut f = field(
-                "playtime",
-                FieldType::Text,
-                ctx.text(l("Playtime", "プレイ時間", "游玩时长", "遊玩時長")),
-            );
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::OwnedFormats(sources) => {
-            let mut f = field(
-                "owned",
-                FieldType::TextList,
-                ctx.text(l("Owned", "所持形式", "收藏形式", "收藏形式")),
-            );
-            f.external_fields = source_mappings(sources);
-            f
-        }
+    let (name, field_type, label, sources) = match extra {
         Extra::Text {
-            field: field_name,
+            field,
             label,
             sources,
-        } => {
-            let mut f = field(field_name, FieldType::Text, ctx.text(label));
-            f.external_fields = source_mappings(sources);
-            f
-        }
+        } => (field, FieldType::Text, label, sources),
         Extra::TextList {
-            field: field_name,
+            field,
             label,
             sources,
-        } => {
-            let mut f = field(field_name, FieldType::TextList, ctx.text(label));
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::Count {
-            field: field_name,
+        } => (field, FieldType::TextList, label, sources),
+        Extra::Date {
+            field,
             label,
             sources,
-        } => {
-            let mut f = field(field_name, FieldType::TotalProgress, ctx.text(label));
-            f.external_fields = source_mappings(sources);
-            f
-        }
-        Extra::Location => field(
-            "location",
-            FieldType::Text,
-            ctx.text(l("Location", "場所", "地点", "地點")),
-        ),
-        Extra::Birthday(sources) => {
-            let mut f = field(
-                "birthday",
-                FieldType::Date,
-                ctx.text(l("Birthday", "誕生日", "生日", "生日")),
-            );
-            f.external_fields = source_mappings(sources);
-            f
-        }
-    }
+        } => (field, FieldType::Date, label, sources),
+        Extra::TotalProgress {
+            field,
+            label,
+            sources,
+        } => (field, FieldType::TotalProgress, label, sources),
+    };
+    let mut f = field(name, field_type, ctx.text(label));
+    f.external_fields = source_mappings(sources);
+    f
 }
 
 fn status_field(vocab: &StatusVocab, locale: SeedLocale) -> FieldConfig {
@@ -1973,13 +1974,6 @@ fn upcoming_event_home_section_for(
         .unwrap_or_default();
     planning.first()?;
 
-    let status_rule = |value: &String| SmartFilterRule {
-        kind: SmartFilterRuleKind::Compare,
-        field: Some(status.field.clone()),
-        op: Some(SmartCompareOp::Eq),
-        value: Some(value.clone()),
-        ..Default::default()
-    };
     let date_rule = SmartFilterRule {
         kind: SmartFilterRuleKind::Compare,
         field: Some(event.field.clone()),
@@ -1991,22 +1985,7 @@ fn upcoming_event_home_section_for(
         }),
         ..Default::default()
     };
-    let criteria = if planning.len() == 1 {
-        SmartFilterGroup {
-            conjunction: SmartFilterConjunction::All,
-            rules: vec![status_rule(&planning[0]), date_rule],
-            groups: Vec::new(),
-        }
-    } else {
-        SmartFilterGroup {
-            conjunction: SmartFilterConjunction::All,
-            rules: vec![date_rule],
-            groups: vec![SmartFilterSubgroup {
-                conjunction: SmartFilterConjunction::Any,
-                rules: planning.iter().map(status_rule).collect(),
-            }],
-        }
-    };
+    let criteria = status_criteria(&status.field, planning, vec![date_rule]);
     Some(HomeSectionConfig {
         id: format!("upcoming-{}", config.id),
         title: UPCOMING_SHELF.get(locale).replace("{label}", &config.label),
@@ -2041,31 +2020,7 @@ fn ongoing_home_section_for(
         .map(|values| values.ongoing.as_slice())
         .unwrap_or_default();
     ongoing.first()?;
-    let rule = |value: &String| SmartFilterRule {
-        kind: SmartFilterRuleKind::Compare,
-        field: Some(status.field.clone()),
-        op: Some(SmartCompareOp::Eq),
-        value: Some(value.clone()),
-        ..Default::default()
-    };
-    // The canonical shapes the settings editor produces: one equality, or an
-    // "any of" subgroup when several values mean ongoing.
-    let criteria = if ongoing.len() == 1 {
-        SmartFilterGroup {
-            conjunction: SmartFilterConjunction::All,
-            rules: ongoing.iter().map(rule).collect(),
-            groups: Vec::new(),
-        }
-    } else {
-        SmartFilterGroup {
-            conjunction: SmartFilterConjunction::All,
-            rules: Vec::new(),
-            groups: vec![SmartFilterSubgroup {
-                conjunction: SmartFilterConjunction::Any,
-                rules: ongoing.iter().map(rule).collect(),
-            }],
-        }
-    };
+    let criteria = status_criteria(&status.field, ongoing, Vec::new());
     // Newest release first when the type has a planning date (season, release
     // date); otherwise the most recently touched file leads.
     let sort = config
@@ -2083,6 +2038,42 @@ fn ongoing_home_section_for(
         sort: Some(sort),
         direction: Some(SortDirection::Desc),
     })
+}
+
+/// Criteria matching `values` on a status field, in the canonical shapes the
+/// settings editor produces: one equality rule (followed by `extra_rules`) when
+/// a single value maps to the bucket, or an "any of" subgroup alongside
+/// `extra_rules` when several do.
+fn status_criteria(
+    status_field: &str,
+    values: &[String],
+    extra_rules: Vec<SmartFilterRule>,
+) -> SmartFilterGroup {
+    let rule = |value: &String| SmartFilterRule {
+        kind: SmartFilterRuleKind::Compare,
+        field: Some(status_field.to_string()),
+        op: Some(SmartCompareOp::Eq),
+        value: Some(value.clone()),
+        ..Default::default()
+    };
+    if let [value] = values {
+        let mut rules = vec![rule(value)];
+        rules.extend(extra_rules);
+        SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules,
+            groups: Vec::new(),
+        }
+    } else {
+        SmartFilterGroup {
+            conjunction: SmartFilterConjunction::All,
+            rules: extra_rules,
+            groups: vec![SmartFilterSubgroup {
+                conjunction: SmartFilterConjunction::Any,
+                rules: values.iter().map(rule).collect(),
+            }],
+        }
+    }
 }
 
 /// A default "Recent {label}" home section for a type — but **only** when the type
@@ -2430,6 +2421,48 @@ mod tests {
     }
 
     #[test]
+    fn wired_relation_falls_back_to_a_text_list_when_target_absent() {
+        // Music alone: no artist type, so the provider-wired artist relation
+        // keeps its wiring as a plain text list instead of vanishing.
+        let music = resolve(vec![], &["music"], None).types.remove(0);
+        let artist = find_field(&music, "artist").expect("artist fallback");
+        assert_eq!(artist.field_type, FieldType::TextList);
+        assert!(artist.relation_type.is_none());
+        assert_mapping(artist, "musicbrainz", "artists");
+
+        // Same for event performers and the credit-wired franchise links.
+        let event = resolve(vec![], &["event"], None).types.remove(0);
+        let performer = find_field(&event, "artist").expect("performer fallback");
+        assert_eq!(performer.field_type, FieldType::TextList);
+        assert_mapping(performer, "neodb", "performers");
+
+        let books = resolve(vec![], &["books"], None).types.remove(0);
+        let series = find_field(&books, "franchise").expect("series fallback");
+        assert_eq!(series.field_type, FieldType::TextList);
+        assert_mapping(series, "neodb", "series");
+    }
+
+    #[test]
+    fn podcast_hosts_seed_exactly_one_field() {
+        // Alone: the host relation falls back to a text list; there is no
+        // second hosts field duplicating the same wiring.
+        let podcast = resolve(vec![], &["podcast"], None).types.remove(0);
+        let host = find_field(&podcast, "host").expect("host fallback");
+        assert_eq!(host.field_type, FieldType::TextList);
+        assert_mapping(host, "applepodcast", "host");
+        assert_mapping(host, "neodb", "hosts");
+        assert!(find_field(&podcast, "hosts").is_none());
+
+        // With the artist preset co-selected: a real relation, still one field.
+        let result = resolve(vec![], &["podcast", "artist"], None);
+        let podcast = find_type(&result, "podcast");
+        let host = find_field(podcast, "host").expect("host relation");
+        assert_eq!(host.field_type, FieldType::Relation);
+        assert_eq!(host.relation_type.as_deref(), Some("artist"));
+        assert!(find_field(podcast, "hosts").is_none());
+    }
+
+    #[test]
     fn relation_wired_when_co_selected() {
         // Anime + Franchise together: the franchise link survives.
         let result = resolve(vec![], &["anime", "franchise"], None);
@@ -2623,13 +2656,46 @@ mod tests {
             ("podcast", "podcast"),
         ] {
             let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            assert_external_types(&config, "neodb", &[neodb_type]);
+        }
+
+        // Key-less fallbacks sit at the bottom for a non-zh/ja user: NeoDB
+        // last where Bangumi isn't wired, and Bangumi (structurally zh/ja
+        // data) below even NeoDB where it is. zh keeps Bangumi above NeoDB.
+        for preset_id in ["drama", "movie", "podcast", "books"] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
             assert_eq!(
                 config.external_priority.last().map(String::as_str),
                 Some("neodb"),
                 "{preset_id} should keep NeoDB at lowest priority"
             );
-            assert_external_types(&config, "neodb", &[neodb_type]);
         }
+        for preset_id in ["games", "music"] {
+            let config = resolve(vec![], &[preset_id], None).types.remove(0);
+            assert_eq!(
+                config.external_priority.last().map(String::as_str),
+                Some("bangumi"),
+                "{preset_id} should demote Bangumi below NeoDB for non-zh/ja"
+            );
+            let zh = resolve(vec![], &[preset_id], Some("zh")).types.remove(0);
+            assert_eq!(
+                zh.external_priority.last().map(String::as_str),
+                Some("neodb"),
+                "{preset_id} should keep Bangumi above NeoDB for zh"
+            );
+        }
+
+        // Books: NeoDB's catalog skews Chinese, so it leads only for zh.
+        let books_zh = resolve(vec![], &["books"], Some("zh")).types.remove(0);
+        assert_eq!(
+            books_zh.external_priority.first().map(String::as_str),
+            Some("neodb")
+        );
+        let books_ja = resolve(vec![], &["books"], Some("ja")).types.remove(0);
+        assert_eq!(
+            books_ja.external_priority.last().map(String::as_str),
+            Some("neodb")
+        );
 
         for preset_id in ["drama", "movie", "books"] {
             let config = resolve(vec![], &[preset_id], None).types.remove(0);
@@ -2759,10 +2825,6 @@ mod tests {
 
         let podcast = resolve(vec![], &["podcast"], None).types.remove(0);
         assert_eq!(
-            find_field(&podcast, "hosts").unwrap().field_type,
-            FieldType::TextList
-        );
-        assert_eq!(
             find_field(&podcast, "genres").unwrap().field_type,
             FieldType::TextList
         );
@@ -2770,12 +2832,6 @@ mod tests {
             find_field(&podcast, "feed_url").unwrap().field_type,
             FieldType::Text
         );
-        assert_mapping(
-            find_field(&podcast, "hosts").unwrap(),
-            "applepodcast",
-            "host",
-        );
-        assert_mapping(find_field(&podcast, "hosts").unwrap(), "neodb", "hosts");
         assert_mapping(find_field(&podcast, "genres").unwrap(), "neodb", "genres");
         assert_mapping(
             find_field(&podcast, "feed_url").unwrap(),
