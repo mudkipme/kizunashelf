@@ -1,13 +1,16 @@
 //! AniList import. Fetches a public user's anime + manga lists via the AniList
-//! GraphQL API (no credentials). AniList entries carry an embedded MyAnimeList id
-//! (`idMal`); items are keyed to the `myanimelist` provider by it (entries with
-//! no `idMal` go to review). The candidate is minimal (title + cover + ref), so
-//! commit detail-fetches from MAL for types that map richer fields.
+//! GraphQL API (no credentials). Items carry an `anilist` ref first and, when
+//! the entry embeds a MyAnimeList id (`idMal`), a `myanimelist` ref second —
+//! the plan/commit pipeline resolves each item to the first ref the vault's
+//! schema maps (see `ImportItem::ref_for_config`), so an anilist-wired type
+//! links AniList and a MAL-only vault keeps working. The candidate is minimal
+//! (title + cover + ref), so commit detail-fetches for types that map richer
+//! fields.
 
 use super::super::model::{ImportItem, ImportUserData, ProviderRef};
 use super::ImportSource;
 use crate::api::error::ApiError;
-use crate::api::external::{send_limited, USER_AGENT};
+use crate::api::external::{anilist_fuzzy_date, anilist_origin_language, send_limited, USER_AGENT};
 use crate::api::state::AppState;
 use crate::contract::{ExternalCandidate, ImportInput, ImportInputKind};
 use crate::types::CanonicalStatus;
@@ -16,8 +19,8 @@ use std::collections::BTreeMap;
 
 const ENDPOINT: &str = "https://graphql.anilist.co";
 
-/// One request pulls both lists; each entry carries the embedded MAL id, the user
-/// data, and enough of the media to build a minimal candidate.
+/// One request pulls both lists; each entry carries the AniList id, the embedded
+/// MAL id, the user data, and enough of the media to build a minimal candidate.
 const QUERY: &str = "\
 query ($userName: String) {
   anime: MediaListCollection(userName: $userName, type: ANIME) { lists { entries { ...entry } } }
@@ -30,7 +33,7 @@ fragment entry on MediaList {
   notes
   startedAt { year month day }
   completedAt { year month day }
-  media { idMal title { romaji english native } countryOfOrigin coverImage { large } }
+  media { id idMal title { romaji english native } countryOfOrigin coverImage { large } }
 }";
 
 pub(in crate::api::import) struct AniListSource;
@@ -42,7 +45,7 @@ impl ImportSource for AniListSource {
     const INPUT_LABEL: &'static str = "AniList username";
 
     fn providers() -> &'static [&'static str] {
-        &["myanimelist"]
+        &["anilist", "myanimelist"]
     }
 
     async fn fetch(state: &AppState, input: &ImportInput) -> Result<Vec<ImportItem>, ApiError> {
@@ -96,11 +99,16 @@ impl ImportSource for AniListSource {
     }
 }
 
-/// Builds an item from one AniList list entry. Entries with no `idMal` carry no
-/// ref (they land in review); the in-batch dedup collapses the same media
-/// appearing across AniList's per-status and custom lists.
+/// Builds an item from one AniList list entry. Refs are in preference order:
+/// `anilist` (always — every entry has an AniList id), then `myanimelist` when
+/// the entry embeds an `idMal`. The in-batch dedup (keyed on the primary
+/// AniList ref) collapses the same media appearing across AniList's per-status
+/// and custom lists.
 fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
     let media = entry.get("media");
+    let id_anilist = media
+        .and_then(|media| media.get("id"))
+        .and_then(Value::as_i64);
     let id_mal = media
         .and_then(|media| media.get("idMal"))
         .and_then(Value::as_i64);
@@ -138,7 +146,7 @@ fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
     let native_language = media
         .and_then(|media| media.get("countryOfOrigin"))
         .and_then(Value::as_str)
-        .and_then(origin_language);
+        .and_then(anilist_origin_language);
     if let (Some(native), Some(language)) = (native, native_language) {
         titles.insert(language.to_string(), native.to_string());
     }
@@ -157,8 +165,8 @@ fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
             .and_then(Value::as_u64)
             .map(|count| count as u32)
             .filter(|count| *count > 0),
-        started: entry.get("startedAt").and_then(anilist_date),
-        completed: entry.get("completedAt").and_then(anilist_date),
+        started: entry.get("startedAt").and_then(anilist_fuzzy_date),
+        completed: entry.get("completedAt").and_then(anilist_fuzzy_date),
         notes: entry
             .get("notes")
             .and_then(Value::as_str)
@@ -167,32 +175,39 @@ fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
             .map(str::to_string),
     };
 
-    let (refs, candidate) = match id_mal {
-        Some(id_mal) => {
-            let id = id_mal.to_string();
-            let url = format!("https://myanimelist.net/{media_type}/{id}");
-            let candidate = ExternalCandidate {
-                provider: "myanimelist".to_string(),
-                source_id: id.clone(),
-                url: url.clone(),
-                title: title.clone(),
-                original_title: None,
-                brief: None,
-                cover_url,
-                titles: titles.clone(),
-                metadata: Map::new(),
-            };
-            (
-                vec![ProviderRef {
-                    provider: "myanimelist".to_string(),
-                    id,
-                    url,
-                }],
-                Some(candidate),
-            )
-        }
-        None => (Vec::new(), None),
-    };
+    let mut refs = Vec::new();
+    let mut candidate = None;
+    if let Some(id_anilist) = id_anilist {
+        let id = id_anilist.to_string();
+        let url = format!("https://anilist.co/{media_type}/{id}");
+        // The partial candidate is an AniList one (the primary ref's provider);
+        // commit discards it when the item resolves to another provider's ref
+        // and detail-fetches that provider instead.
+        candidate = Some(ExternalCandidate {
+            provider: "anilist".to_string(),
+            source_id: id.clone(),
+            url: url.clone(),
+            title: title.clone(),
+            original_title: None,
+            brief: None,
+            cover_url,
+            titles: titles.clone(),
+            metadata: Map::new(),
+        });
+        refs.push(ProviderRef {
+            provider: "anilist".to_string(),
+            id,
+            url,
+        });
+    }
+    if let Some(id_mal) = id_mal {
+        let id = id_mal.to_string();
+        refs.push(ProviderRef {
+            provider: "myanimelist".to_string(),
+            id: id.clone(),
+            url: format!("https://myanimelist.net/{media_type}/{id}"),
+        });
+    }
 
     ImportItem {
         refs,
@@ -201,18 +216,6 @@ fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
         titles,
         candidate,
         user,
-    }
-}
-
-/// The title language an AniList `countryOfOrigin` implies for `native`.
-/// Chinese works are tagged bare `zh` regardless of origin script — script
-/// subtags never enter title maps.
-fn origin_language(region: &str) -> Option<&'static str> {
-    match region {
-        "JP" => Some("ja"),
-        "KR" => Some("ko"),
-        "CN" | "TW" => Some("zh"),
-        _ => None,
     }
 }
 
@@ -228,25 +231,12 @@ fn status_from(value: &str) -> Option<CanonicalStatus> {
     }
 }
 
-/// An AniList fuzzy date `{ year, month, day }` → an ISO string, using whatever
-/// parts are present. `None` when there's no year.
-fn anilist_date(value: &Value) -> Option<String> {
-    let year = value.get("year").and_then(Value::as_i64)?;
-    let month = value.get("month").and_then(Value::as_i64);
-    let day = value.get("day").and_then(Value::as_i64);
-    Some(match (month, day) {
-        (Some(month), Some(day)) => format!("{year:04}-{month:02}-{day:02}"),
-        (Some(month), None) => format!("{year:04}-{month:02}"),
-        _ => format!("{year:04}"),
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn maps_an_entry_via_embedded_mal_id() {
+    fn maps_an_entry_with_anilist_ref_first_then_mal() {
         let entry = json!({
             "status": "COMPLETED",
             "score": 8.5,
@@ -255,31 +245,39 @@ mod tests {
             "startedAt": { "year": 2020, "month": 1, "day": 3 },
             "completedAt": { "year": 2020, "month": 2, "day": null },
             "media": {
+                "id": 1,
                 "idMal": 1,
                 "title": { "romaji": "Cowboy Bebop", "english": "Cowboy Bebop", "native": "カウボーイビバップ" },
                 "coverImage": { "large": "http://img/cb.jpg" }
             }
         });
         let item = anilist_item(&entry, "anime");
-        assert_eq!(item.refs[0].url, "https://myanimelist.net/anime/1");
+        assert_eq!(item.refs[0].provider, "anilist");
+        assert_eq!(item.refs[0].url, "https://anilist.co/anime/1");
+        assert_eq!(item.refs[1].provider, "myanimelist");
+        assert_eq!(item.refs[1].url, "https://myanimelist.net/anime/1");
         assert_eq!(item.bucket, "anime");
         assert_eq!(item.user.status, Some(CanonicalStatus::Completed));
         assert_eq!(item.user.score10, Some(8.5));
         assert_eq!(item.user.watched_count, Some(26));
         assert_eq!(item.user.started.as_deref(), Some("2020-01-03"));
         assert_eq!(item.user.completed.as_deref(), Some("2020-02"));
-        assert!(item.candidate.is_some());
+        assert_eq!(
+            item.candidate.as_ref().map(|c| c.provider.as_str()),
+            Some("anilist")
+        );
     }
 
     #[test]
-    fn an_entry_without_mal_id_has_no_ref() {
+    fn an_entry_without_mal_id_still_carries_the_anilist_ref() {
         let entry = json!({
             "status": "PLANNING",
-            "media": { "idMal": null, "title": { "romaji": "Original Work" } }
+            "media": { "id": 99, "idMal": null, "title": { "romaji": "Original Work" } }
         });
         let item = anilist_item(&entry, "manga");
-        assert!(item.refs.is_empty());
-        assert!(item.candidate.is_none());
+        assert_eq!(item.refs.len(), 1);
+        assert_eq!(item.refs[0].provider, "anilist");
+        assert_eq!(item.refs[0].url, "https://anilist.co/manga/99");
         assert_eq!(item.title, "Original Work");
     }
 }

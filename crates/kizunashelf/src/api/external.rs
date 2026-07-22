@@ -1,4 +1,5 @@
 use super::error::{ApiError, ApiResult};
+mod anilist;
 mod apple_podcast;
 mod applemusic;
 mod apply;
@@ -273,6 +274,7 @@ fn registry() -> Vec<ProviderEntry> {
         entry::<comicvine::ComicVineProvider>(),
         entry::<hardcover::HardcoverProvider>(),
         entry::<neodb::NeoDbProvider>(),
+        entry::<anilist::AniListProvider>(),
     ]
 }
 
@@ -768,6 +770,10 @@ pub(crate) async fn quick_add_entity(
     let cover = download_new_entity_covers(&state, &reloaded, &entity_id)
         .await
         .unwrap_or_default();
+    // A downloaded cover rewrote the entity's frontmatter (remote URL → local
+    // asset path), so the episode import's guarded write needs the
+    // post-download revision — the pre-download snapshot would 409.
+    let reloaded = get_library(&state).await?;
     let episodes =
         import_new_entity_episodes(&state, &reloaded, &entity_id, request.language.as_deref())
             .await;
@@ -1014,6 +1020,7 @@ fn merge_enriched_candidate(
 /// for one list entry — re-exported so the batch-import MAL adapter can request
 /// rich entries and reuse the exact search-path mapping (the `mal` submodule is
 /// private to this module).
+pub(super) use anilist::{anilist_fuzzy_date, anilist_origin_language};
 pub(super) use mal::{mal_list_candidate, LIST_FIELDS as MAL_LIST_FIELDS};
 /// Re-exported for the batch-import IMDB adapter, which resolves an IMDb id to a
 /// TMDB ref (the `tmdb` submodule is private to this module).
@@ -1528,6 +1535,22 @@ pub(super) fn strip_html(value: &str) -> String {
     strip_tags(&value.replace("<br", "\n<br"))
         .trim()
         .to_string()
+}
+
+/// Title-cases an underscore/space separated string (`light_novel` → `Light Novel`).
+pub(super) fn title_case(value: &str) -> String {
+    value
+        .split(['_', ' '])
+        .filter(|word| !word.is_empty())
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// Like [`strip_html`] but collapses every run of whitespace (including the

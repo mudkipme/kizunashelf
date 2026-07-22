@@ -16,9 +16,9 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `anime` (アニメ · 动画 · 動畫) — Track what you're watching and where you left off.
 
-- **Provider priority**: `myanimelist` → `tmdb` → `thetvdb` → `bangumi`
+- **Provider priority**: `anilist` → `myanimelist` → `tmdb` → `thetvdb` → `bangumi`
 - **Filename**: titleLanguage `en`
-- **Body section** "Summary": external: `myanimelist.synopsis`, `tmdb.overview`, `thetvdb.overview`
+- **Body section** "Summary": external: `anilist.synopsis`, `myanimelist.synopsis`, `tmdb.overview`, `thetvdb.overview`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Anime`
 - **Home section**: "Watching Anime", sorted by `date:season`
@@ -26,16 +26,17 @@ The tables below show each preset resolved with **English** as the picker langua
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `myanimelist.title`, `tmdb.title` | Title |
-| `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `tmdb.original_title`, `thetvdb.name` | Title (original) |
-| `cover_url` | `image` | filled from `bangumi.cover_url`, `myanimelist.cover_url`, `tmdb.cover_url`, `thetvdb.cover_url` | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `anilist.title`, `myanimelist.title`, `tmdb.title` | Title |
+| `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `anilist.native_title`, `tmdb.original_title`, `thetvdb.name` | Title (original) |
+| `cover_url` | `image` | filled from `bangumi.cover_url`, `anilist.cover_url`, `myanimelist.cover_url`, `tmdb.cover_url`, `thetvdb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
 | `progress` | `progress` | total from `episodes` | Progress |
-| `episodes` | `totalProgress` | filled from `bangumi.eps`, `myanimelist.episodes`, `tmdb.episode_count` | Episodes |
-| `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `bangumi.date`, `myanimelist.season`, `tmdb.release_date`, `thetvdb.first_air_time` | Season |
+| `episodes` | `totalProgress` | filled from `bangumi.eps`, `anilist.episodes`, `myanimelist.episodes`, `tmdb.episode_count` | Episodes |
+| `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `bangumi.date`, `anilist.season`, `myanimelist.season`, `tmdb.release_date`, `thetvdb.first_air_time` | Season |
 | `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
+| `anilist_url` | `externalRef` | externalRef `anilist` (types anime) | AniList |
 | `myanimelist_url` | `externalRef` | externalRef `myanimelist` (types anime) | MyAnimeList |
 | `tmdb_url` | `externalRef` | externalRef `tmdb` (types tv) | TMDB |
 | `thetvdb_url` | `externalRef` | externalRef `thetvdb` (types series) | TheTVDB |
@@ -186,9 +187,9 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `manga` (マンガ · 漫画 · 漫畫) — Manga and comics, tracked by chapter.
 
-- **Provider priority**: `mangaupdates` → `myanimelist` → `comicvine` → `bangumi`
+- **Provider priority**: `mangaupdates` → `anilist` → `myanimelist` → `comicvine` → `bangumi`
 - **Filename**: titleLanguage `en`
-- **Body section** "Summary": external: `mangaupdates.synopsis`, `myanimelist.synopsis`, `comicvine.description`
+- **Body section** "Summary": external: `mangaupdates.synopsis`, `anilist.synopsis`, `myanimelist.synopsis`, `comicvine.description`
 - **Body section** "Chapters": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Manga`
 - **Home section**: "Reading Manga & Comics", sorted by `date:release_date`
@@ -196,18 +197,19 @@ The tables below show each preset resolved with **English** as the picker langua
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
 | `id` | `id` |  | ID |
-| `title` | `title` | titleLanguage `en`; filled from `mangaupdates.title`, `myanimelist.title`, `comicvine.title` | Title |
-| `title_original` | `title` | titleRole `original`; filled from `bangumi.name` | Title (original) |
-| `cover_url` | `image` | filled from `bangumi.cover_url`, `mangaupdates.cover_url`, `myanimelist.cover_url`, `comicvine.cover_url` | Cover |
+| `title` | `title` | titleLanguage `en`; filled from `mangaupdates.title`, `anilist.title`, `myanimelist.title`, `comicvine.title` | Title |
+| `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `anilist.native_title` | Title (original) |
+| `cover_url` | `image` | filled from `bangumi.cover_url`, `mangaupdates.cover_url`, `anilist.cover_url`, `myanimelist.cover_url`, `comicvine.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
 | `progress` | `progress` | total from `chapters` | Progress |
-| `chapters` | `totalProgress` | filled from `bangumi.eps`, `mangaupdates.latest_chapter`, `myanimelist.chapters`, `comicvine.issues_count` | Chapters |
+| `chapters` | `totalProgress` | filled from `bangumi.eps`, `mangaupdates.latest_chapter`, `anilist.chapters`, `myanimelist.chapters`, `comicvine.issues_count` | Chapters |
 | `author` | `textList` | filled from `bangumi.author`, `mangaupdates.authors` | Author |
-| `release_date` | `date` | dateRole `planning`; filled from `bangumi.date`, `myanimelist.start_date` | Release date |
+| `release_date` | `date` | dateRole `planning`; filled from `bangumi.date`, `anilist.start_date`, `myanimelist.start_date` | Release date |
 | `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `mangaupdates_url` | `externalRef` | externalRef `mangaupdates` (types manga) | MangaUpdates |
+| `anilist_url` | `externalRef` | externalRef `anilist` (types manga) | AniList |
 | `myanimelist_url` | `externalRef` | externalRef `myanimelist` (types manga) | MyAnimeList |
 | `comicvine_url` | `externalRef` | externalRef `comicvine` (types comic) | Comic Vine |
 | `bangumi_url` | `externalRef` | externalRef `bangumi` (types 1) | Bangumi |

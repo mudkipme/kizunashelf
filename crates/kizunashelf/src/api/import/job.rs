@@ -2,7 +2,9 @@
 //! resolves items (in-batch dedup, bucket→type match, "in library" lookup); the
 //! commit worker creates the approved entities through the quick-add primitives.
 
-use super::model::{apply_user_data, candidate_types_for, needs_detail_fetch, ImportItem};
+use super::model::{
+    apply_user_data, candidate_types_for, needs_detail_fetch, ImportItem, ProviderRef,
+};
 use super::now_iso;
 use super::sources::SourceFetchFn;
 use crate::api::episodes::import_new_entity_episodes_marked;
@@ -31,6 +33,10 @@ pub(super) struct PlannedItem {
     pub item: ImportItem,
     pub state: ImportPlanItemState,
     pub candidate_types: Vec<String>,
+    /// The ref the item resolved to against the plan-time schema — the first of
+    /// the item's refs some type maps ([`ImportItem::ref_for_config`]). Commit
+    /// creates under this ref's provider.
+    pub resolved_ref: Option<ProviderRef>,
 }
 
 // ---- Plan ------------------------------------------------------------------
@@ -78,12 +84,13 @@ pub(super) async fn run_plan_job(
     let mut needs_review = 0u32;
 
     for (position, item) in items.into_iter().enumerate() {
-        let provider = item
-            .primary_ref()
+        let resolved_ref = item.ref_for_config(&library.config).cloned();
+        let provider = resolved_ref
+            .as_ref()
             .map(|reference| reference.provider.clone());
-        let ref_url = item.primary_ref().map(|reference| reference.url.clone());
+        let ref_url = resolved_ref.as_ref().map(|reference| reference.url.clone());
         let (state_kind, candidate_types, existing, review_reason) =
-            resolve_plan_state(&library.config, &index, &item, provider.as_deref());
+            resolve_plan_state(&library.config, &index, &item, resolved_ref.as_ref());
         if state_kind == ImportPlanItemState::NeedsReview {
             needs_review += 1;
         }
@@ -102,6 +109,7 @@ pub(super) async fn run_plan_job(
             item,
             state: state_kind,
             candidate_types,
+            resolved_ref,
         });
     }
 
@@ -132,14 +140,14 @@ fn resolve_plan_state(
     config: &KizunaConfig,
     index: &crate::api::external::ExistingIndex,
     item: &ImportItem,
-    provider: Option<&str>,
+    reference: Option<&ProviderRef>,
 ) -> (
     ImportPlanItemState,
     Vec<String>,
     Option<ExistingEntityRef>,
     Option<ImportReviewReason>,
 ) {
-    let Some(provider) = provider else {
+    let Some(reference) = reference else {
         return (
             ImportPlanItemState::NeedsReview,
             Vec::new(),
@@ -147,7 +155,7 @@ fn resolve_plan_state(
             Some(ImportReviewReason::NoSupportedId),
         );
     };
-    let types = candidate_types_for(config, provider, &item.bucket);
+    let types = candidate_types_for(config, &reference.provider, &item.bucket);
     if types.is_empty() {
         return (
             ImportPlanItemState::NeedsReview,
@@ -156,7 +164,7 @@ fn resolve_plan_state(
             Some(ImportReviewReason::NoTypeMatch),
         );
     }
-    let candidate = item.lookup_candidate();
+    let candidate = item.lookup_candidate(Some(reference));
     let existing = types
         .iter()
         .find_map(|entity_type| lookup_existing(index, &candidate, entity_type));
@@ -174,7 +182,7 @@ fn build_buckets(planned: &[PlannedItem]) -> Vec<ImportPlanBucket> {
     let mut seen: HashSet<(String, String)> = HashSet::new();
     let mut types_for: HashMap<(String, String), Vec<String>> = HashMap::new();
     for planned_item in planned {
-        let Some(reference) = planned_item.item.primary_ref() else {
+        let Some(reference) = planned_item.resolved_ref.as_ref() else {
             continue;
         };
         let key = (reference.provider.clone(), planned_item.item.bucket.clone());
@@ -287,7 +295,7 @@ pub(super) async fn run_commit_job(
         let override_candidate = decision.and_then(|decision| decision.candidate_override.as_ref());
         let (provider, ref_url) = if let Some(candidate) = override_candidate {
             (candidate.provider.clone(), candidate.url.clone())
-        } else if let Some(reference) = planned_item.item.primary_ref() {
+        } else if let Some(reference) = planned_item.resolved_ref.as_ref() {
             (reference.provider.clone(), reference.url.clone())
         } else {
             mark_failed(
@@ -328,10 +336,16 @@ pub(super) async fn run_commit_job(
         };
 
         // Candidate: override or the item's partial, detail-fetched when the type
-        // maps a metadata key the partial candidate lacks.
-        let mut candidate = override_candidate
-            .cloned()
-            .or_else(|| planned_item.item.candidate.clone());
+        // maps a metadata key the partial candidate lacks. A partial from a
+        // provider other than the resolved one is discarded (a multi-ref item's
+        // partial carries its primary provider) so mapping never mixes providers.
+        let mut candidate = override_candidate.cloned().or_else(|| {
+            planned_item
+                .item
+                .candidate
+                .clone()
+                .filter(|candidate| candidate.provider.eq_ignore_ascii_case(&provider))
+        });
         if needs_detail_fetch(candidate.as_ref(), &type_config, &provider) {
             match resolve_candidate(
                 &state,

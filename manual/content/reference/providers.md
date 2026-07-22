@@ -29,6 +29,7 @@ On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment
 | [Comic Vine](#comicvine) | `comicvine` | search + resolve | yes | Comic Vine API Key |
 | [Hardcover](#hardcover) | `hardcover` | search + resolve | — | Hardcover API Token |
 | [NeoDB](#neodb) | `neodb` | search + resolve | — | none |
+| [AniList](#anilist) | `anilist` | search + resolve | yes | none |
 
 ## Bangumi {#bangumi}
 
@@ -595,4 +596,38 @@ Mappable fields (for `externalFields` and external body sections):
 | `platforms` | Platforms |
 | `hosts` | Hosts |
 | `company` | Company |
+
+## AniList {#anilist}
+
+`externalRef: anilist` — Supports free-text search and resolving a pasted URL/id. Can pull an episode/track list into an entity's episodes body section.
+
+`externalTypes` values (defaults marked ✓):
+
+| Value | Meaning | Default |
+| --- | --- | --- |
+| `anime` | Anime |  |
+| `manga` | Manga |  |
+
+Mappable fields (for `externalFields` and external body sections):
+
+| Field | Meaning |
+| --- | --- |
+| `title` | Title |
+| `romaji_title` | Romaji title |
+| `native_title` | Native title |
+| `cover_url` | Cover URL |
+| `format` | Type |
+| `start_date` | Start date |
+| `end_date` | End date |
+| `status` | Status |
+| `episodes` | Episodes |
+| `chapters` | Chapters |
+| `volumes` | Volumes |
+| `runtime` | Runtime (minutes) |
+| `season` | Season |
+| `source` | Source material |
+| `score` | Score |
+| `synopsis` | Synopsis |
+| `genres` | Genres |
+| `studios` | Studios |
 

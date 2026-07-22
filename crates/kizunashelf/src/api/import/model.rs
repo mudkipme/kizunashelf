@@ -54,6 +54,19 @@ impl ImportItem {
         self.refs.first()
     }
 
+    /// The ref this item resolves to against a vault's schema: the first ref
+    /// (they're in source preference order) whose provider some type maps for
+    /// this bucket, else the primary ref — so an item none of whose providers
+    /// are mapped still plans (and reads in review) under its preferred one.
+    pub(super) fn ref_for_config(&self, config: &KizunaConfig) -> Option<&ProviderRef> {
+        self.refs
+            .iter()
+            .find(|reference| {
+                !candidate_types_for(config, &reference.provider, &self.bucket).is_empty()
+            })
+            .or_else(|| self.primary_ref())
+    }
+
     /// The in-batch dedup key: the primary ref's provider + normalized id. `None`
     /// for an item with no ref (it can't be deduped by id).
     pub(super) fn dedup_key(&self) -> Option<(String, String)> {
@@ -118,8 +131,8 @@ impl ImportItem {
 
     /// A synthetic candidate for the "in library" lookup — enough of an
     /// [`ExternalCandidate`] for `lookup_existing` to match by ref or title.
-    pub(super) fn lookup_candidate(&self) -> ExternalCandidate {
-        let reference = self.primary_ref();
+    /// `reference` is the ref the item resolved to ([`Self::ref_for_config`]).
+    pub(super) fn lookup_candidate(&self, reference: Option<&ProviderRef>) -> ExternalCandidate {
         ExternalCandidate {
             provider: reference.map(|r| r.provider.clone()).unwrap_or_default(),
             source_id: reference.map(|r| r.id.clone()).unwrap_or_default(),

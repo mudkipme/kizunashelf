@@ -1,7 +1,7 @@
 use super::{
     external_client, field_option, insert_str, named_list, provider_error, send_limited,
-    type_option, url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt,
-    ProviderSearchConfig, USER_AGENT,
+    title_case, type_option, url_type_allowed, CredentialSpec, ExternalProvider,
+    ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::state::AppState;
 use crate::api::ApiError;
@@ -494,22 +494,6 @@ fn mal_status(response: &Value) -> Option<String> {
         other => return Some(title_case(other)),
     };
     Some(readable.to_string())
-}
-
-/// Title-cases an underscore/space separated string (`light_novel` → `Light Novel`).
-fn title_case(value: &str) -> String {
-    value
-        .split(['_', ' '])
-        .filter(|word| !word.is_empty())
-        .map(|word| {
-            let mut chars = word.chars();
-            match chars.next() {
-                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-                None => String::new(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
 }
 
 #[cfg(test)]

@@ -411,12 +411,13 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "記錄在看的動畫與觀看進度。",
                 ),
                 providers: ctx.pick(
-                    &["bangumi", "myanimelist", "tmdb", "thetvdb"],
-                    &["bangumi", "myanimelist", "tmdb", "thetvdb"],
-                    &["myanimelist", "tmdb", "thetvdb", "bangumi"],
+                    &["bangumi", "anilist", "myanimelist", "tmdb", "thetvdb"],
+                    &["bangumi", "anilist", "myanimelist", "tmdb", "thetvdb"],
+                    &["anilist", "myanimelist", "tmdb", "thetvdb", "bangumi"],
                 ),
                 external_types: &[
                     ("bangumi", &["2"]),
+                    ("anilist", &["anime"]),
                     ("myanimelist", &["anime"]),
                     ("tmdb", &["tv"]),
                     ("thetvdb", &["series"]),
@@ -424,23 +425,31 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 title_sources: ctx.pick(
                     &[
                         ("bangumi", "name_cn"),
+                        ("anilist", "title"),
                         ("myanimelist", "title"),
                         ("tmdb", "title"),
                     ],
                     &[
                         ("bangumi", "name"),
+                        ("anilist", "title"),
                         ("myanimelist", "title"),
                         ("tmdb", "title"),
                     ],
-                    &[("myanimelist", "title"), ("tmdb", "title")],
+                    &[
+                        ("anilist", "title"),
+                        ("myanimelist", "title"),
+                        ("tmdb", "title"),
+                    ],
                 ),
                 original_title: Some(&[
                     ("bangumi", "name"),
+                    ("anilist", "native_title"),
                     ("tmdb", "original_title"),
                     ("thetvdb", "name"),
                 ]),
                 cover_sources: &[
                     ("bangumi", "cover_url"),
+                    ("anilist", "cover_url"),
                     ("myanimelist", "cover_url"),
                     ("tmdb", "cover_url"),
                     ("thetvdb", "cover_url"),
@@ -448,25 +457,29 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 summary_sources: ctx.pick(
                     &[
                         ("bangumi", "summary"),
+                        ("anilist", "synopsis"),
                         ("myanimelist", "synopsis"),
                         ("tmdb", "overview"),
                         ("thetvdb", "overview"),
                     ],
                     // Bangumi summaries are Chinese — zh only.
                     &[
+                        ("anilist", "synopsis"),
                         ("myanimelist", "synopsis"),
                         ("tmdb", "overview"),
                         ("thetvdb", "overview"),
                     ],
                     &[
+                        ("anilist", "synopsis"),
                         ("myanimelist", "synopsis"),
                         ("tmdb", "overview"),
                         ("thetvdb", "overview"),
                     ],
                 ),
-                // Air dates coerce to a season; MAL has an explicit season label.
+                // Air dates coerce to a season; AniList/MAL have explicit season labels.
                 date_sources: &[
                     ("bangumi", "date"),
+                    ("anilist", "season"),
                     ("myanimelist", "season"),
                     ("tmdb", "release_date"),
                     ("thetvdb", "first_air_time"),
@@ -780,35 +793,61 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "漫畫，按話數記錄。",
                 ),
                 providers: ctx.pick(
-                    &["bangumi", "mangaupdates", "myanimelist", "comicvine"],
-                    &["bangumi", "mangaupdates", "myanimelist", "comicvine"],
-                    &["mangaupdates", "myanimelist", "comicvine", "bangumi"],
+                    &[
+                        "bangumi",
+                        "mangaupdates",
+                        "anilist",
+                        "myanimelist",
+                        "comicvine",
+                    ],
+                    &[
+                        "bangumi",
+                        "mangaupdates",
+                        "anilist",
+                        "myanimelist",
+                        "comicvine",
+                    ],
+                    &[
+                        "mangaupdates",
+                        "anilist",
+                        "myanimelist",
+                        "comicvine",
+                        "bangumi",
+                    ],
                 ),
                 // Bangumi files manga under its book (1) subject type.
-                external_types: &[("bangumi", &["1"]), ("myanimelist", &["manga"])],
+                external_types: &[
+                    ("bangumi", &["1"]),
+                    ("anilist", &["manga"]),
+                    ("myanimelist", &["manga"]),
+                ],
                 title_sources: ctx.pick(
                     &[
                         ("bangumi", "name_cn"),
                         ("mangaupdates", "title"),
+                        ("anilist", "title"),
                         ("myanimelist", "title"),
                         ("comicvine", "title"),
                     ],
                     &[
                         ("bangumi", "name"),
                         ("mangaupdates", "title"),
+                        ("anilist", "title"),
                         ("myanimelist", "title"),
                         ("comicvine", "title"),
                     ],
                     &[
                         ("mangaupdates", "title"),
+                        ("anilist", "title"),
                         ("myanimelist", "title"),
                         ("comicvine", "title"),
                     ],
                 ),
-                original_title: Some(&[("bangumi", "name")]),
+                original_title: Some(&[("bangumi", "name"), ("anilist", "native_title")]),
                 cover_sources: &[
                     ("bangumi", "cover_url"),
                     ("mangaupdates", "cover_url"),
+                    ("anilist", "cover_url"),
                     ("myanimelist", "cover_url"),
                     ("comicvine", "cover_url"),
                 ],
@@ -816,21 +855,28 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     &[
                         ("bangumi", "summary"),
                         ("mangaupdates", "synopsis"),
+                        ("anilist", "synopsis"),
                         ("myanimelist", "synopsis"),
                         ("comicvine", "description"),
                     ],
                     &[
                         ("mangaupdates", "synopsis"),
+                        ("anilist", "synopsis"),
                         ("myanimelist", "synopsis"),
                         ("comicvine", "description"),
                     ],
                     &[
                         ("mangaupdates", "synopsis"),
+                        ("anilist", "synopsis"),
                         ("myanimelist", "synopsis"),
                         ("comicvine", "description"),
                     ],
                 ),
-                date_sources: &[("bangumi", "date"), ("myanimelist", "start_date")],
+                date_sources: &[
+                    ("bangumi", "date"),
+                    ("anilist", "start_date"),
+                    ("myanimelist", "start_date"),
+                ],
                 statuses: Some(&READ_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::ReleaseDate,
@@ -1373,6 +1419,7 @@ const ANIME_PROGRESS: ProgressSpec = ProgressSpec {
     total_label: l("Episodes", "話数", "总集数", "總集數"),
     total_sources: &[
         ("bangumi", "eps"),
+        ("anilist", "episodes"),
         ("myanimelist", "episodes"),
         ("tmdb", "episode_count"),
     ],
@@ -1398,6 +1445,7 @@ const MANGA_PROGRESS: ProgressSpec = ProgressSpec {
     total_sources: &[
         ("bangumi", "eps"),
         ("mangaupdates", "latest_chapter"),
+        ("anilist", "chapters"),
         ("myanimelist", "chapters"),
         ("comicvine", "issues_count"),
     ],
@@ -2362,7 +2410,7 @@ mod tests {
         assert_eq!(title.external_fields[0].field, "name");
 
         let en = resolve(vec![], &["anime"], Some("en")).types.remove(0);
-        assert_eq!(en.external_priority[0], "myanimelist");
+        assert_eq!(en.external_priority[0], "anilist");
         assert_eq!(
             en.external_priority.last().map(String::as_str),
             Some("bangumi")
@@ -2743,6 +2791,7 @@ mod tests {
             mapping_pairs(find_field(&anime, "title_original").unwrap()),
             vec![
                 ("bangumi", "name"),
+                ("anilist", "native_title"),
                 ("tmdb", "original_title"),
                 ("thetvdb", "name")
             ]
@@ -2768,7 +2817,7 @@ mod tests {
         let manga = resolve(vec![], &["manga"], None).types.remove(0);
         assert_eq!(
             mapping_pairs(find_field(&manga, "title_original").unwrap()),
-            vec![("bangumi", "name")]
+            vec![("bangumi", "name"), ("anilist", "native_title")]
         );
     }
 
