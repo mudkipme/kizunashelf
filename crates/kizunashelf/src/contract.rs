@@ -1507,10 +1507,6 @@ pub struct ExternalReviewSection {
 pub struct ExternalReviewResponse {
     /// The entity type the candidate was resolved against.
     pub entity_type: String,
-    /// The candidate the review actually resolved — enriched with provider
-    /// detail when the client sent a thin free-text search result. Send *this*
-    /// candidate to apply so the provider detail is fetched once per selected
-    /// match rather than once more at apply time.
     pub candidate: ExternalCandidate,
     pub fields: Vec<ExternalReviewField>,
     pub sections: Vec<ExternalReviewSection>,

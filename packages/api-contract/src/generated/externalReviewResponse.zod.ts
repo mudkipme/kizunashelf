@@ -6,8 +6,8 @@
  */
 import { z as zod } from 'zod';
 
-export const externalReviewResponseCandidateOneTitlesDefault = {};
-export const externalReviewResponseCandidateOneMetadataDefault = {};
+export const externalReviewResponseCandidateTitlesDefault = {};
+export const externalReviewResponseCandidateMetadataDefault = {};
 export const ExternalReviewResponse = zod.object({
   "entityType": zod.string().describe('The entity type the candidate was resolved against.'),
   "candidate": zod.object({
@@ -18,9 +18,9 @@ export const ExternalReviewResponse = zod.object({
   "originalTitle": zod.string().nullish(),
   "brief": zod.string().nullish(),
   "coverUrl": zod.string().nullish(),
-  "titles": zod.record(zod.string(), zod.string()).default(externalReviewResponseCandidateOneTitlesDefault),
-  "metadata": zod.record(zod.string(), zod.unknown()).default(externalReviewResponseCandidateOneMetadataDefault)
-}).describe('The candidate the review actually resolved — enriched with provider\ndetail when the client sent a thin free-text search result. Send \*this\*\ncandidate to apply so the provider detail is fetched once per selected\nmatch rather than once more at apply time.'),
+  "titles": zod.record(zod.string(), zod.string()).default(externalReviewResponseCandidateTitlesDefault),
+  "metadata": zod.record(zod.string(), zod.unknown()).default(externalReviewResponseCandidateMetadataDefault)
+}),
   "fields": zod.array(zod.object({
   "field": zod.string(),
   "value": zod.unknown().describe('The incoming (schema-resolved) value.'),

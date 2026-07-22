@@ -140,14 +140,6 @@ p { margin: 0 0 1.2em; max-width: 62ch; }
 section { padding: clamp(56px, 9vw, 110px) 0; }
 .section-head { margin-bottom: 2.2rem; }
 
-.aside-note {
-  font-style: italic;
-  color: var(--ink-soft);
-  font-size: .95rem;
-  transform: rotate(-1.2deg);
-  max-width: 30ch;
-}
-
 /* ---------- header ---------- */
 header.site { padding: 22px 0 0; }
 header.site .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -196,7 +188,6 @@ nav.site a:hover { border-bottom-color: var(--wood); }
 }
 .phone img { border-radius: 32px; }
 .hero-fig { position: relative; margin: 0; }
-.hero-fig .aside-note { margin: 1.3rem 0 0 auto; text-align: right; }
 
 /* ---------- bookshelf ---------- */
 .bookshelf { margin: 3rem 0 1rem; max-width: 720px; }
@@ -244,7 +235,6 @@ nav.site a:hover { border-bottom-color: var(--wood); }
 .plank { height: 14px; background: var(--wood); border-radius: 99px; box-shadow: 0 3px 0 var(--wood-deep); }
 .shelf-feet { display: flex; justify-content: space-between; padding: 0 34px; }
 .shelf-feet i { width: 12px; height: 26px; background: var(--wood-deep); border-radius: 0 0 6px 6px; }
-.shelf-caption { font-style: italic; color: var(--ink-soft); font-size: .95rem; margin-top: 1.6rem; }
 
 /* ---------- two-column feature prose ---------- */
 .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 72px); align-items: center; }
@@ -281,16 +271,6 @@ nav.site a:hover { border-bottom-color: var(--wood); }
 .filecard.tilt { transform: rotate(-1.1deg); }
 .filecard.tilt-r { transform: rotate(.9deg); }
 
-.promise {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: clamp(1.4rem, 2.6vw, 1.7rem);
-  line-height: 1.35;
-  text-wrap: balance;
-  max-width: 24ch;
-  margin: 2.2rem 0 0;
-}
-
 /* ---------- graph ---------- */
 .graph-fig { margin: 2.5rem 0 0; }
 .graph-fig svg { width: 100%; max-width: 660px; height: auto; display: block; }
@@ -316,7 +296,6 @@ nav.site a:hover { border-bottom-color: var(--wood); }
 .app-list li { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); gap: clamp(18px, 4vw, 48px); padding: 2.2rem 0; border-top: 1.5px solid var(--line); }
 .app-list li:last-child { border-bottom: 1.5px solid var(--line); }
 .app-name { font-family: var(--display); font-weight: 600; font-size: 1.35rem; line-height: 1.25; }
-.app-name small { display: block; font-family: var(--mono); font-weight: 400; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-top: .5em; }
 .status {
   font-family: var(--mono); font-weight: 400; font-style: normal;
   font-size: .66rem; letter-spacing: .08em; text-transform: uppercase;
@@ -352,14 +331,12 @@ nav.site a:hover { border-bottom-color: var(--wood); }
 footer.site { padding: clamp(56px, 8vw, 90px) 0 64px; }
 footer.site .wrap { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
 footer.site img { width: 56px; height: 56px; border-radius: 13px; }
-.foot-line { font-family: var(--display); font-weight: 600; font-size: 1.25rem; }
 .foot-small { font-family: var(--mono); font-size: .75rem; color: var(--ink-soft); letter-spacing: .04em; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 840px) {
   .hero .wrap, .split, .kizuna .wrap { grid-template-columns: 1fr; }
   .hero-fig { order: -1; }
-  .hero-fig .aside-note { position: static; margin: 1.4rem auto 0; text-align: center; transform: rotate(-1.2deg); }
   .phone { width: min(250px, 72%); }
   .app-list li { grid-template-columns: 1fr; gap: 10px; }
   .books { padding: 0 12px; }
@@ -396,7 +373,7 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
       <h1>A shelf for everything you&nbsp;love.
         <span class="stays">— and it stays yours.</span>
       </h1>
-      <p class="lede">KizunaShelf is a home for the anime you're three episodes behind on, the game you swore you'd finish this year, the book that has lived on your nightstand since March. It looks and feels like a media tracker. Underneath, it's a folder of plain Markdown files: yours to keep, sync, grep, and read in any editor, with or without this app.</p>
+      <p class="lede">KizunaShelf is a personal library for everything you watch, play, read, and love. It works like a media tracker, but you shape it: you decide what kinds of things live on your shelf, what details they carry, and how they connect. Underneath, it's all plain Markdown files in a folder you own. KizunaShelf helps you browse them like a living shelf, without locking them into one app.</p>
       <div class="hero-ctas">
         <a class="btn primary" href="https://testflight.apple.com/join/hE7k3sWd">Join the iOS beta</a>
         <a class="btn ghost" href="/introduction/">Read the manual</a>
@@ -407,7 +384,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
       <div class="phone">
         <img src="/assets/screenshot.webp" alt="KizunaShelf home screen on iPhone: Coming Up, In Progress, Recent and Planned tiles above shelves for Watching Anime and Playing Games" width="720" height="1561">
       </div>
-      <figcaption class="aside-note">75 things in progress is a&nbsp;lifestyle, not a problem.</figcaption>
     </figure>
   </div>
 </section>
@@ -418,15 +394,15 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
     <div class="section-head">
       <h2>It starts familiar. It ends up yours.</h2>
     </div>
-    <p>Anime, games, books, films, music. The usual residents of a media shelf are ready on day one, with statuses, ratings, progress, seasons, and covers. But KizunaShelf never decides what a “thing” must be. You define the types in your library and the fields they carry, in a schema that travels with your files: one human-readable <span style="font-family: var(--mono); font-size:.9em">KizunaShelf/config.yaml</span> in your vault, yours to open, read, and change.</p>
-    <p>If your world also needs characters, voice actors, concerts, or board games, you can put those on the shelf too. Figure skaters, train models, the restaurants from that one food manga: if you would think to track it, your schema can describe it.</p>
+    <p>KizunaShelf begins with the familiar things waiting on a media shelf: shows, movies, books, games, anime, and albums. But it does not decide what a “thing” must be. You define the types in your library, their titles, covers, statuses, dates, ratings, progress, and relationships.</p>
+    <p>If your world needs goods, cards, voice actors, live events, or trains, shoes, museums, coffee beans, or something nobody else would think to model, KizunaShelf gives you the grammar to describe it.</p>
 
     <div class="bookshelf" aria-hidden="true">
       <div class="books">
         <span class="spine s-red tall">Anime</span>
         <span class="spine s-amber mid">Games</span>
         <span class="spine s-teal">Books</span>
-        <span class="spine s-blue mid">Films</span>
+        <span class="spine s-blue mid">Movies</span>
         <span class="spine s-purple short">Music</span>
         <span class="spine s-red short">Manga</span>
         <span class="spine lean short">yours?</span>
@@ -434,20 +410,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
       <div class="plank"></div>
       <div class="shelf-feet"><i></i><i></i></div>
     </div>
-    <p class="shelf-caption">The leaning one is yours to name.</p>
-
-    <figure class="filecard tilt" style="--dot: var(--amber); margin: 2.6rem 0 0">
-      <div class="bar">KizunaShelf/config.yaml</div>
-      <pre><span class="k">types</span><span class="dim">:</span>
-  <span class="k">figure</span><span class="dim">:</span>          <span class="dim"># the leaning one, named</span>
-    <span class="k">title</span><span class="dim">:</span> <span class="v">name</span>
-    <span class="k">status</span><span class="dim">:</span>
-      <span class="k">options</span><span class="dim">:</span> <span class="v">[preordered, on its way, home]</span>
-    <span class="k">date</span><span class="dim">:</span>
-      <span class="k">field</span><span class="dim">:</span> <span class="v">arrived</span>
-      <span class="k">means</span><span class="dim">:</span> <span class="v">the day it came home</span>
-    <span class="k">relates-to</span><span class="dim">:</span> <span class="v">[character, event]</span></pre>
-    </figure>
   </div>
 </section>
 
@@ -458,24 +420,18 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
       <h2>Underneath, every entry is a text file.</h2>
       <p>Each thing on your shelf is a Markdown file with a little front&nbsp;matter, sitting in a folder you own. Open it in Obsidian. Read it in a terminal. Sync it however you already sync things. Back it up like anything else you'd hate to lose.</p>
       <p>KizunaShelf reads those files as a living shelf, with covers, filters, search, and statistics, without ever turning them into data only one app understands.</p>
-      <p>It even speaks the dialects your tools already know. The episodes of a series or the tracks of an album live in the same file as an ordinary checklist, with airing dates in the Obsidian Tasks emoji format — 📅 for the date, ✅ when you check one off. Smart lists use a subset of the Obsidian Bases format, so Obsidian opens them and shows the exact same items.</p>
-      <p class="promise">KizunaShelf can leave. Your library does not.</p>
     </div>
     <figure class="filecard tilt" style="--dot: var(--teal)">
-      <div class="bar">Anime/きみが死ぬまで恋をしたい.md</div>
+      <div class="bar">Anime/BanG Dream! YUME∞MITA.md</div>
       <pre><span class="dim">---</span>
-<span class="k">type</span><span class="dim">:</span> <span class="v">anime</span>
-<span class="k">status</span><span class="dim">:</span> <span class="v">watching</span>
-<span class="k">progress</span><span class="dim">:</span> <span class="v">7 / 13</span>
-<span class="k">rating</span><span class="dim">:</span> <span class="star">★★★★</span><span class="dim">☆</span>
-<span class="k">season</span><span class="dim">:</span> <span class="v">2026-spring</span>
-<span class="k">adapted-from</span><span class="dim">:</span> <span class="wl">"[[きみ恋 (novel)]]"</span>
+<span class="k">title_original</span><span class="dim">:</span> <span class="v">バンドリ！ゆめ∞みた</span>
+<span class="k">status</span><span class="dim">:</span> <span class="v">Watching</span>
+<span class="k">season</span><span class="dim">:</span> <span class="v">Summer 2026</span>
+<span class="k">franchise</span><span class="dim">:</span> <span class="wl">["[[BanG Dream!]]"]</span>
+<span class="k">anilist</span><span class="dim">:</span> <span class="wl">https://anilist.co/anime/198376</span>
 <span class="dim">---</span>
 
-<span class="prose-line">Episode 7 broke me a little.</span>
-<span class="prose-line">The rooftop scene — I had to</span>
-<span class="prose-line">pause and just sit there.</span></pre>
-    </figure>
+<span class="prose-line">夢はパワー!夢はパワー!</span></figure>
   </div>
 </section>
 
@@ -485,8 +441,7 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
     <div class="section-head">
       <h2>Things belong to each other.</h2>
     </div>
-    <p>A game belongs to a franchise. An anime was adapted from a novel, and its opening song belongs to a band you now follow. A character connects to the actor who gave her a voice. In KizunaShelf, those relations are ordinary <span style="font-family: var(--mono); font-size:.9em">[[wikilinks]]</span> written in your files. KizunaShelf reads them in both directions, so every entry shows you the little web of things around it.</p>
-    <p>No proprietary graph database. Just links in text, the way you'd write them anyway.</p>
+    <p>The shelf is not flat. A game can belong to a franchise. An anime can be based on a novel. A character can point to a voice actor. A remake can look back at the original. Ordinary <span style="font-family: var(--mono); font-size:.9em">[[wikilinks]]</span> become a map of the relationships running through your library, and grouped into the quiet shape of the things you care about.</p>
 
     <figure class="graph-fig">
       <svg viewBox="0 0 660 320" role="img" aria-label="A small relation graph: an anime connects to the novel it adapts, the studio, its opening song, and a character, who connects to her voice actor">
@@ -501,17 +456,18 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
         <circle cx="148" cy="236" r="22" fill="var(--amber)"></circle>
         <circle cx="484" cy="238" r="22" fill="var(--purple)"></circle>
         <circle cx="600" cy="262" r="14" fill="var(--wood)"></circle>
-        <text class="node-label" x="330" y="205" text-anchor="middle">the anime you're watching</text>
-        <text class="node-sub" x="330" y="222" text-anchor="middle">anime</text>
-        <text class="node-label" x="160" y="34" text-anchor="middle">the novel it adapts</text>
-        <text class="node-sub" x="160" y="50" text-anchor="middle">book · adapted-from</text>
-        <text class="node-label" x="480" y="22" text-anchor="middle">the studio</text>
-        <text class="node-sub" x="480" y="38" text-anchor="middle">studio</text>
-        <text class="node-label" x="148" y="285" text-anchor="middle">its opening song</text>
-        <text class="node-sub" x="148" y="302" text-anchor="middle">music · theme-of</text>
-        <text class="node-label" x="448" y="288" text-anchor="middle">the character you love</text>
+        <text class="node-label" x="330" y="202" text-anchor="middle">Steins;Gate</text>
+        <text class="node-sub" x="330" y="219" text-anchor="middle">franchise</text>
+        <text class="node-label" x="160" y="31" text-anchor="middle">Steins;Gate Re：Boot</text>
+        <text class="node-sub" x="160" y="47" text-anchor="middle">game</text>
+        <text class="node-label" x="480" y="19" text-anchor="middle">Steins;Gate 0 (Anime)</text>
+        <text class="node-sub" x="480" y="35" text-anchor="middle">anime</text>
+        <text class="node-label" x="148" y="285" text-anchor="middle">Hacking to the Gate</text>
+        <text class="node-sub" x="148" y="302" text-anchor="middle">music</text>
+        <text class="node-label" x="448" y="288" text-anchor="middle">Kurisu Makise</text>
         <text class="node-sub" x="448" y="305" text-anchor="middle">character</text>
-        <text class="node-sub" x="602" y="292" text-anchor="middle">her voice actor</text>
+        <text class="node-label" x="602" y="292" text-anchor="middle">Asami Imai</text>
+        <text class="node-sub" x="602" y="308" text-anchor="middle">artist · voice-by</text>
       </svg>
     </figure>
   </div>
@@ -521,20 +477,19 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
 <section id="time">
   <div class="wrap split">
     <figure class="filecard tilt-r" style="--dot: var(--purple)">
-      <div class="bar">Notes/2026-07-11.md</div>
-      <pre><span class="prose-line">Friday. Rain all afternoon —</span>
-<span class="prose-line">perfect excuse to stay in.</span>
-
-<span class="dim">-</span> <span class="v">21:04</span> watched <span class="wl">[[きみ恋]]</span> ep 7
-<span class="dim">-</span> <span class="v">22:30</span> started <span class="wl">[[Forza Horizon 6]]</span>
-  <span class="dim">— the Tokyo map!</span>
-<span class="dim">-</span> 34 days until <span class="wl">[[MyGO!!!!! the movie]]</span>
-  <span class="dim">(from the calendar)</span></pre>
-    </figure>
+      <div class="bar">Daily Notes/2026-01-03.md</div>
+      <pre><span class="prose-line">Speedrun trip in Tokyo. What a big day!</span>
+<span class="dim">-</span> <span class="v">08:30</span> Arrived at Tokyo Big Sight
+<span class="dim">-</span> <span class="v">13:00</span> Odaiba Statue of Liberty 🗽
+<span class="dim">-</span> <span class="v">14:30</span> <span class="wl">[[Nijigasaki The Movie Part 2]]</span> 🌈
+  <span class="dim">— The stage at Umeda Sky Building
+    is wonderful!</span>
+<span class="dim">-</span> <span class="v">17:00</span> <span class="wl">[[Poppin'Party New Year LIVE]]</span> 🎸
+  <span class="dim">— <span class="wl">[[FIRE BIRD]]</span> is a big surprise! 🔥</span>
+</figure>
     <div>
       <h2>It remembers <em>when</em>.</h2>
-      <p>Releases and plans land on a calendar, so the next episode and the next volume are never a surprise. Checking off an episode becomes a dated moment in your history. A quick log can write one line into that day's note, in a format you choose. And mentioning something in your daily note ties an ordinary day back to it.</p>
-      <p>Years from now the activity feed won't just say that you loved something. It will say when it became part of your life.</p>
+      <p>Time gives that map a history. Releases and plans appear on a calendar. Mentions in daily notes connect an ordinary day back to the things you care about. Episode check-ins become dated activity, while a quick log can write a line to your daily note in a format you choose. The activity feed gathers those moments into a record of what you watched, played and read; and when they became part of your life.</p>
     </div>
   </div>
 </section>
@@ -545,7 +500,7 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
     <div>
       <span class="reading">kizuna — きずな</span>
       <p>The word means <em>bond</em>: the quiet tie between things that stay connected. Between a story and the people who made it. Between a rainy Friday and the episode you watched that night. Between you and the things you keep.</p>
-      <p>That's the whole idea: a shelf for the things you have a history with, and for the history itself.</p>
+      <p>That's the whole idea: a shelf for what matters to you, and a record book for the life that gathered around it.</p>
       <p class="fine" style="margin-top: 1.4rem"><a href="https://mudkip.me/2026/07/16/Introduction-to-KizunaShelf/">Read the story behind KizunaShelf&hairsp;→</a></p>
     </div>
   </div>
@@ -556,37 +511,33 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
     <div class="section-head">
       <h2>Wherever the quiet hours find you.</h2>
     </div>
-    <p>On the couch, at your desk, on the train home. Your shelf looks the same in every app, because the same Rust core runs inside every one of them, reading the same files and understanding them the same way. Everything works offline — the internet is only for cover art, looking things up, and whatever syncing you already use.</p>
-
     <ul class="app-list">
       <li>
-        <div class="app-name">iPhone &amp; iPad <span class="status">on testflight</span><small>native · swiftui</small></div>
+        <div class="app-name">iPhone &amp; iPad <span class="status">on TestFlight</span></div>
         <div>
-          <p>A fully native app with the whole core running inside it: no server, no round trips. Keep your vault on-device or in iCloud Drive. A Coming&nbsp;Up widget on your Home Screen, Spotlight search, share-sheet capture from Safari, Siri and the Action button for quick logs.</p>
+          <p>A fully native app in your pocket. Keep your vault on-device or in iCloud Drive. A Coming&nbsp;Up widget on your Home Screen, Spotlight search, share-sheet capture from Safari, Shortcuts for quick logs.</p>
           <p><a href="https://testflight.apple.com/join/hE7k3sWd">Join the beta on TestFlight&hairsp;→</a></p>
-          <p class="fine">Check off an episode from the couch. It's still just a line of Markdown.</p>
         </div>
       </li>
       <li>
-        <div class="app-name">Android <span class="status planned">planned</span><small>native</small></div>
+        <div class="app-name">Desktop <span class="status soon">coming soon</span></div>
         <div>
-          <p>The same shelf, in your other pocket. An Android app is on the roadmap once the iOS app finds its footing — same files, same shelf, nothing to migrate.</p>
+          <p>Open or create vaults with an open source desktop app on your Mac, Linux or Windows PC.</p>
         </div>
       </li>
       <li>
-        <div class="app-name">Desktop <span class="status soon">coming soon</span><small>mac · windows · linux</small></div>
+        <div class="app-name">Self-hosted web <span class="status soon">coming soon</span></div>
         <div>
-          <p>Open local vaults, create new ones, and switch between them. The same interface as the web, pointed at the folders where your life already lives.</p>
+          <p>Served from your container to any browser, for people whose shelf lives on their NAS.</p>
         </div>
       </li>
       <li>
-        <div class="app-name">Self-hosted web <span class="status soon">coming soon</span><small>your server · your rules</small></div>
+        <div class="app-name">Android <span class="status planned">planned</span></div>
         <div>
-          <p>One vault per instance, served from your own machine to any browser. A single Docker container away, for people whose shelf lives on their NAS.</p>
+          <p>An Android app is on the roadmap with same files, same shelf, and a beautiful M3 Expressive design.</p>
         </div>
       </li>
     </ul>
-    <p class="fine" style="margin-top: 1.6rem">No account. No feed. No streaks to maintain. No one watching what you watch.</p>
   </div>
 </section>
 
@@ -596,11 +547,10 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
     <div class="section-head">
       <h2>Bring the years you've already logged.</h2>
     </div>
-    <p>Quick Capture searches the big metadata sources and creates an entry in one motion, with the cover, episodes, and tracks filled in when available. And whole libraries can move in from the places you've been keeping score:</p>
+    <p>Quick Capture searches the metadata sources and creates an entry in one motion, with the cover, episodes, and tracks filled in when available. And whole libraries can move in from the places you've been keeping score:</p>
     <div class="stickers" role="list">
-      <span role="listitem">TMDB</span><span role="listitem">TheTVDB</span><span role="listitem">MyAnimeList</span><span role="listitem">AniList</span><span role="listitem">Kitsu</span><span role="listitem">Trakt</span><span role="listitem">Steam</span><span role="listitem">Bangumi</span><span role="listitem">IMDb exports</span><span role="listitem">Goodreads exports</span><span role="listitem">Yamtrack exports</span><span role="listitem">IGDB</span><span role="listitem">BoardGameGeek</span><span role="listitem">MusicBrainz</span><span role="listitem">Apple Podcasts</span><span role="listitem">NeoDB</span><span role="listitem">Discogs</span><span role="listitem">Open Library</span><span role="listitem">Hardcover</span><span role="listitem">MangaUpdates</span><span role="listitem">Comic Vine</span>
+      <span role="listitem">TMDB</span><span role="listitem">TheTVDB</span><span role="listitem">AniList</span><span role="listitem">MyAnimeList</span><span role="listitem">Bangumi</span><span role="listitem">IGDB</span><span role="listitem">Steam</span><span role="listitem">BoardGameGeek</span><span role="listitem">MusicBrainz</span><span role="listitem">Apple Music</span><span role="listitem">Apple Podcasts</span><span role="listitem">Discogs</span><span role="listitem">NeoDB</span><span role="listitem">Open Library</span><span role="listitem">Google Books</span><span role="listitem">Hardcover</span><span role="listitem">MangaUpdates</span><span role="listitem">Comic Vine</span><span role="listitem">IMDb imoprt</span><span role="listitem">Goodreads import</span><span role="listitem">Yamtrack import</span><span role="listitem">Kitsu import</span><span role="listitem">Trakt import</span>
     </div>
-    <p class="fine">Every import shows you its plan before a single file is written: what it will create, what needs a second look, and what's already on the shelf.</p>
   </div>
 </section>
 
@@ -610,7 +560,6 @@ footer.site img { width: 56px; height: 56px; border-radius: 13px; }
   <div class="wrap">
     <img src="/assets/icon.webp" alt="KizunaShelf icon: a small wooden shelf of colorful books beneath a constellation of connected dots" class="only-light">
     <img src="/assets/icon-dark.webp" alt="KizunaShelf icon: a small wooden shelf of colorful books beneath a constellation of connected dots" class="only-dark">
-    <p class="foot-line">Made for the quiet hours.</p>
     <p class="foot-small">KizunaShelf · Forever for dreaming</p>
   </div>
 </footer>

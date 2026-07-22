@@ -37,6 +37,7 @@ export function MetadataEditor({
   bodyText,
   saving,
   disabled = false,
+  saveDisabled = false,
   relationSuggestions = [],
   onRelationSearch,
   saveLabel,
@@ -55,6 +56,9 @@ export function MetadataEditor({
   bodyText: string;
   saving: boolean;
   disabled?: boolean;
+  /** Disables only the save/create button (not the fields), e.g. while the
+   * form is missing something required. */
+  saveDisabled?: boolean;
   relationSuggestions?: EntitySummary[];
   onRelationSearch?: RelationSuggestionSearch;
   saveLabel?: string;
@@ -121,7 +125,7 @@ export function MetadataEditor({
               <Trans>Cancel</Trans>
             </Button>
           ) : null}
-          <Button type="button" size="sm" onClick={onSave} disabled={saving || disabled}>
+          <Button type="button" size="sm" onClick={onSave} disabled={saving || disabled || saveDisabled}>
             <CheckIcon data-icon="inline-start" />
             {saving ? <Trans>Saving…</Trans> : (saveLabel ?? <Trans>Save</Trans>)}
           </Button>

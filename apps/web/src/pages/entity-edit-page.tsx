@@ -17,9 +17,20 @@ import {
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 import { ENTITY_EDIT_CONFLICT_MESSAGE, useEntityMutation } from "@/hooks/use-entity-mutation";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
@@ -34,11 +45,15 @@ export function EntityEditPage() {
   const capabilities = useCapabilities();
   const { saving, run } = useEntityMutation();
   const [conflict, setConflict] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   // Tracks which entity the local draft was seeded from, so a background refetch
   // of the same entity doesn't clobber in-progress edits.
   const seededEntityIdRef = useRef<string | undefined>(undefined);
+  // Snapshot of the seeded draft, for dirty detection (Back/Cancel confirmation
+  // and the tab-close warning).
+  const seededSnapshotRef = useRef<{ frontmatter: string; body: string } | null>(null);
   const loading = detail.isPending || config.isPending || capabilities.isPending;
   const queryError = detail.error ?? config.error ?? capabilities.error;
   const entity = detail.data?.entity;
@@ -50,9 +65,20 @@ export function EntityEditPage() {
   );
   const seedDraft = useCallback((source: NonNullable<typeof entity>) => {
     seededEntityIdRef.current = source.id;
-    setFrontmatter(normalizeFrontmatter(source.frontmatter));
+    const seeded = normalizeFrontmatter(source.frontmatter);
+    seededSnapshotRef.current = { frontmatter: JSON.stringify(seeded), body: source.body };
+    setFrontmatter(seeded);
     setBody(source.body);
   }, []);
+
+  const snapshot = seededSnapshotRef.current;
+  const dirty = Boolean(
+    snapshot && (JSON.stringify(frontmatter) !== snapshot.frontmatter || body !== snapshot.body),
+  );
+
+  // Warn on tab close/reload while edits are unsaved. In-app leaving (Back/
+  // Cancel) is confirmed via the discard dialog below.
+  useUnsavedChangesWarning(dirty);
 
   useEffect(() => {
     if (!entity) return;
@@ -101,9 +127,18 @@ export function EntityEditPage() {
     );
   }
 
-  function cancel() {
+  function leave() {
     if (entity) navigate(`/entities/${encodeURIComponent(entity.id)}`);
     else navigate("/library");
+  }
+
+  // Leaving discards the draft, so confirm first when dirty.
+  function cancel() {
+    if (dirty) {
+      setConfirmDiscard(true);
+      return;
+    }
+    leave();
   }
 
   return (
@@ -172,6 +207,34 @@ export function EntityEditPage() {
           </Placeholder>
         )}
       </PageContainer>
+
+      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              <Trans>Discard unsaved changes?</Trans>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <Trans comment="Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes">
+                You have unsaved edits to this entity. Leaving will discard them.
+              </Trans>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              <Trans>Keep editing</Trans>
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmDiscard(false);
+                leave();
+              }}
+            >
+              <Trans>Discard</Trans>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppFrame>
   );
 }

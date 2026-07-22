@@ -15,7 +15,9 @@ import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useEntityMutation } from "@/hooks/use-entity-mutation";
-import { basenameValidationError, normalizeBasename } from "@/lib/basename";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
+import { normalizeBasename } from "@/lib/basename";
+import { filenameTitleField, resolveCreateBasename } from "@/lib/entity-create-form";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 
 export function EntityCreatePage() {
@@ -34,9 +36,6 @@ export function EntityCreatePage() {
   const [body, setBody] = useState("");
   const contentWritable = capabilities.contentWritable;
   const queryError = config.error ?? capabilities.error;
-  const normalizedBasename = normalizeBasename(basename);
-  const basenameError = basenameValidationError(basename);
-  const showBasenameError = Boolean(basename) && Boolean(basenameError);
 
   useEffect(() => {
     if (typeId) return;
@@ -51,18 +50,27 @@ export function EntityCreatePage() {
     [config.data, typeId],
   );
 
+  // The filename an empty input falls back to comes from the schema's filename
+  // title field, mirroring the core's quick-add derivation. With neither a
+  // filename nor a title, Create is disabled (with the explanation below)
+  // instead of silently doing nothing.
+  const filename = useMemo(
+    () => resolveCreateBasename({ typeConfig: selectedType, frontmatter, manualBasename: basename }),
+    [selectedType, frontmatter, basename],
+  );
+
+  // Warn on tab close/reload once anything has been entered.
+  const dirty = basename !== (requestedTitle ?? "") || Object.keys(frontmatter).length > 0 || body !== "";
+  useUnsavedChangesWarning(dirty);
+
   const searchRelations = useRelationSearch();
 
   async function create() {
-    if (!contentWritable) return;
-    if (basenameError) {
-      setBasename(normalizedBasename);
-      return;
-    }
+    if (!contentWritable || !filename.canCreate) return;
     await run(async () => {
       const result = await addEntity({
         type: typeId,
-        basename: normalizedBasename,
+        basename: filename.basename,
         frontmatter,
         body,
       });
@@ -102,11 +110,31 @@ export function EntityCreatePage() {
                 value={basename}
                 onChange={(event) => setBasename(event.target.value)}
                 onBlur={() => setBasename(normalizeBasename(basename))}
-                placeholder={t`Title`}
+                placeholder={filename.derived ?? t`Title`}
                 disabled={!contentWritable}
-                aria-invalid={showBasenameError}
+                aria-invalid={Boolean(filename.error)}
               />
-              {showBasenameError ? <span className="text-xs text-destructive">{basenameError}</span> : null}
+              {filename.error ? (
+                <span className="text-xs text-destructive">{filename.error}</span>
+              ) : filename.source === "title" ? (
+                <span className="text-xs font-normal text-muted-foreground">
+                  <Trans comment="Hint below the empty file-name field on the entity create page; the placeholder is the file name derived from the entity's title field">
+                    Will be created as “{filename.basename}.md”, from the title.
+                  </Trans>
+                </span>
+              ) : filename.source === "none" ? (
+                <span className="text-xs font-normal text-muted-foreground">
+                  {filenameTitleField(selectedType) ? (
+                    <Trans comment="Hint below the empty file-name field on the entity create page; the Create button stays disabled until a file name or a title is entered">
+                      Required — enter a file name here or fill in the title below.
+                    </Trans>
+                  ) : (
+                    <Trans comment="Hint below the empty file-name field on the entity create page for a type with no title field; the Create button stays disabled until a file name is entered">
+                      Required — enter a file name.
+                    </Trans>
+                  )}
+                </span>
+              ) : null}
             </label>
           </div>
         </section>
@@ -119,6 +147,7 @@ export function EntityCreatePage() {
           bodyText={body}
           saving={creating}
           disabled={!contentWritable}
+          saveDisabled={!filename.canCreate}
           relationSuggestions={[]}
           onRelationSearch={searchRelations}
           saveLabel={t`Create`}

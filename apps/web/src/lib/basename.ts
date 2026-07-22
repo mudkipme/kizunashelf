@@ -22,3 +22,67 @@ export function basenameValidationError(value: string) {
   }
   return undefined;
 }
+
+// The full-width stand-in for each character Obsidian/Windows forbids in a
+// filename, so a title keeps its shape (`Fate/stay` → `Fate／stay`) instead of
+// being rejected outright. Mirrors the core's `fullwidth_forbidden_char`.
+const FULLWIDTH_FORBIDDEN: Record<string, string> = {
+  "/": "／",
+  "\\": "＼",
+  ":": "：",
+  "*": "＊",
+  "?": "？",
+  '"': "＂",
+  "<": "＜",
+  ">": "＞",
+  "|": "｜",
+};
+
+// Kept well under the common 255-byte filesystem limit so `.md`, a
+// disambiguating suffix, and multi-byte characters all still fit. Matches the
+// core's `MAX_DERIVED_BASENAME_BYTES`.
+const MAX_DERIVED_BASENAME_BYTES = 200;
+
+const UTF8 = new TextEncoder();
+
+/**
+ * Derive a valid basename from an arbitrary title, *replacing* forbidden
+ * characters rather than rejecting the whole title as `basenameValidationError`
+ * does. Mirrors the core's `derive_basename` (quick-add uses the same rules
+ * server-side): NFC-normalize, collapse whitespace, drop control characters,
+ * swap forbidden characters for full-width equivalents, strip trailing dots and
+ * spaces, sidestep reserved Windows device names, and cap the byte length.
+ * Returns `undefined` when nothing usable remains.
+ */
+export function deriveBasenameFromTitle(title: string): string | undefined {
+  let normalized = "";
+  let pendingSpace = false;
+  for (const character of title.trim().normalize("NFC")) {
+    if (/\s/u.test(character)) {
+      pendingSpace = normalized.length > 0;
+      continue;
+    }
+    if (/\p{Cc}/u.test(character)) continue;
+    if (pendingSpace) {
+      normalized += " ";
+      pendingSpace = false;
+    }
+    normalized += FULLWIDTH_FORBIDDEN[character] ?? character;
+  }
+
+  let basename = "";
+  let bytes = 0;
+  for (const character of normalized) {
+    bytes += UTF8.encode(character).length;
+    if (bytes > MAX_DERIVED_BASENAME_BYTES) break;
+    basename += character;
+  }
+  basename = basename.replace(/[. ]+$/u, "");
+  if (!basename) return undefined;
+
+  if (RESERVED_WINDOWS_NAME.test(basename.split(".")[0] ?? basename)) {
+    basename += "-";
+  }
+
+  return basenameValidationError(basename) ? undefined : basename;
+}
