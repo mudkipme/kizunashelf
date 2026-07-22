@@ -841,28 +841,20 @@ async fn external_search_lists_providers_without_querying_network_for_empty_sear
         .any(|provider| provider["id"] == "igdb"));
 
     let unknown = server
-        .json("/api/external/search?provider=missing&q=Star")
+        .json("/api/external/search?provider=missing&type=anime&q=Star")
         .await;
     assert_eq!(unknown.0, StatusCode::BAD_REQUEST);
     assert_eq!(unknown.1["error"], "Unknown external provider");
 
-    // Cross-type search: `type=all` (and an omitted type) is now valid and lists
-    // providers merged across every configured type. Probed with an empty query so
-    // it stays offline.
-    let all_type = server.ok_json("/api/external/search?type=all&q=").await;
-    assert_eq!(all_type["items"].as_array().unwrap().len(), 0);
-    assert!(all_type["providers"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|provider| provider["id"] == "bangumi" && provider["enabled"] == true));
+    // Cross-type search is gone: every search is scoped to one type, so `type=all`
+    // resolves like any other unknown type id and an omitted type is rejected at
+    // deserialization.
+    let all_type = server.json("/api/external/search?type=all&q=").await;
+    assert_eq!(all_type.0, StatusCode::BAD_REQUEST);
+    assert_eq!(all_type.1["error"], "Unknown entity type");
 
-    let missing_type = server.ok_json("/api/external/search?q=").await;
-    assert!(missing_type["providers"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|provider| provider["id"] == "bangumi"));
+    let missing_type = server.status("/api/external/search?q=").await;
+    assert_eq!(missing_type, StatusCode::BAD_REQUEST);
 
     let unknown_type = server
         .json("/api/external/search?type=animation&q=Star")
@@ -2340,6 +2332,24 @@ impl TestServer {
 
     async fn json(&self, path: &str) -> (StatusCode, Value) {
         request_json(&self.app, Method::GET, path, None).await
+    }
+
+    /// The response status alone, for rejections whose body isn't JSON (e.g. a
+    /// missing required query parameter, rejected by the extractor).
+    async fn status(&self, path: &str) -> StatusCode {
+        let response = self
+            .app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .uri(path)
+                    .body(body::Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        response.status()
     }
 }
 

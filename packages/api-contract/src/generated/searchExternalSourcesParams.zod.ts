@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const SearchExternalSourcesParams = zod.object({
   "provider": zod.string().optional(),
   "q": zod.string().optional(),
-  "type": zod.string().optional(),
+  "type": zod.string().describe('The entity type to search under — always required. A search fans out to\nevery provider the type maps, so an unscoped \"all types\" search would\nmultiply provider traffic (and rate-limit pressure) by the type count;\nthe API deliberately has no such mode.'),
   "pageSize": zod.number().optional(),
   "page": zod.number().optional(),
   "language": zod.string().optional().describe('The viewer\'s language preference (may carry a script subtag —\n`zh-Hans`\/`zh-Hant`). Providers that localize honor it.')

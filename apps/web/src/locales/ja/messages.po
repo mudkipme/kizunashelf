@@ -176,7 +176,7 @@ msgid "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)
 msgstr "{0, plural, other {デイリーノート（# 件のスニペット）}}"
 
 #. placeholder {0}: result.episodes.imported
-#: src/pages/quick-capture-page.tsx:173
+#: src/pages/quick-capture-page.tsx:177
 msgid "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
 msgstr "{0, plural, other {# 話のエピソードをインポートしました。}}"
 
@@ -224,7 +224,7 @@ msgstr "{CONTENT_WRITES_DISABLED} 編集操作は利用できません。"
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 日}}"
 
-#: src/pages/quick-capture-page.tsx:163
+#: src/pages/quick-capture-page.tsx:167
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
 msgstr "{failedCovers, plural, other {追加しました。ただし # 件のカバー画像をダウンロードできませんでした（URL は保持）。}}"
 
@@ -302,7 +302,7 @@ msgid "📅 Scheduled"
 msgstr "📅 予定"
 
 #. placeholder {0}: result.entity.basename
-#: src/pages/quick-capture-page.tsx:180
+#: src/pages/quick-capture-page.tsx:184
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "このタイトルと同名のファイルがすでに存在したため、「{0}」として保存しました。"
 
@@ -394,7 +394,7 @@ msgstr "グループを追加"
 msgid "Add items"
 msgstr "アイテムを追加"
 
-#: src/pages/quick-capture-page.tsx:207
+#: src/pages/quick-capture-page.tsx:211
 msgid "Add manually"
 msgstr "手動で追加"
 
@@ -426,12 +426,12 @@ msgid "Added {added} — {renamed}"
 msgstr "追加 {added} — {renamed}"
 
 #. placeholder {0}: result.episodes.error
-#: src/pages/quick-capture-page.tsx:170
+#: src/pages/quick-capture-page.tsx:174
 msgid "Added, but episode import failed: {0}"
 msgstr "追加しましたが、エピソードのインポートに失敗しました: {0}"
 
 #: src/components/settings/preset-picker.tsx:209
-#: src/pages/quick-capture-page.tsx:339
+#: src/pages/quick-capture-page.tsx:359
 msgid "Adding…"
 msgstr "追加中…"
 
@@ -458,7 +458,7 @@ msgid "all of"
 msgstr "すべてが一致"
 
 #: src/components/entities/external-match-dialog.tsx:131
-#: src/pages/quick-capture-page.tsx:256
+#: src/pages/quick-capture-page.tsx:270
 msgid "All providers"
 msgstr "すべてのプロバイダー"
 
@@ -472,7 +472,6 @@ msgstr "すべてのソース"
 #: src/pages/activity-page.tsx:134
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
-#: src/pages/quick-capture-page.tsx:245
 #: src/pages/review-page.tsx:170
 #: src/pages/smart-list-page.tsx:491
 msgid "All types"
@@ -746,7 +745,7 @@ msgstr "この CSV ファイルを読み込めませんでした。"
 msgid "Create"
 msgstr "作成"
 
-#: src/pages/quick-capture-page.tsx:356
+#: src/pages/quick-capture-page.tsx:382
 msgid "Create “{query}” manually →"
 msgstr "「{query}」を手動で作成 →"
 
@@ -1281,7 +1280,7 @@ msgstr "フォルダ:"
 
 #: src/pages/import-wizard-page.tsx:684
 #: src/pages/import-wizard-page.tsx:688
-#: src/pages/quick-capture-page.tsx:320
+#: src/pages/quick-capture-page.tsx:343
 msgid "In library ✓"
 msgstr "ライブラリに登録済み ✓"
 
@@ -1816,7 +1815,7 @@ msgstr "一致するプロバイダーがありません"
 msgid "No matches"
 msgstr "一致なし"
 
-#: src/pages/quick-capture-page.tsx:290
+#: src/pages/quick-capture-page.tsx:313
 msgid "No matches found."
 msgstr "一致するものが見つかりませんでした。"
 
@@ -1843,6 +1842,10 @@ msgstr "このアイテムにはリストを持つプロバイダーがリンク
 #: src/pages/review-page.tsx:200
 msgid "No queue items match the current filters"
 msgstr "現在のフィルターに一致するキューアイテムがありません"
+
+#: src/pages/quick-capture-page.tsx:283
+msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
+msgstr "このタイプで有効な検索プロバイダーがありません — 設定でプロバイダーの認証情報を確認するか、手動で追加してください。"
 
 #: src/components/entities/external-match-dialog.tsx:130
 msgid "No supported providers"
@@ -2063,7 +2066,7 @@ msgstr "プロパティ"
 #: src/components/entities/external-match-dialog.tsx:127
 #: src/components/settings/settings-sections.tsx:776
 #: src/components/settings/settings-sections.tsx:965
-#: src/pages/quick-capture-page.tsx:254
+#: src/pages/quick-capture-page.tsx:268
 msgid "Provider"
 msgstr "プロバイダー"
 
@@ -2087,7 +2090,7 @@ msgstr "プロバイダー"
 msgid "Public profile"
 msgstr "公開プロフィール"
 
-#: src/pages/quick-capture-page.tsx:201
+#: src/pages/quick-capture-page.tsx:205
 msgid "Quick Capture"
 msgstr "クイックキャプチャ"
 
@@ -2293,7 +2296,7 @@ msgstr "範囲"
 
 #: src/components/entities/external-match-dialog.tsx:120
 #: src/components/entities/external-match-dialog.tsx:145
-#: src/pages/quick-capture-page.tsx:221
+#: src/pages/quick-capture-page.tsx:246
 msgid "Search"
 msgstr "検索"
 
@@ -2323,9 +2326,13 @@ msgstr "関連を検索または追加"
 msgid "Search queue"
 msgstr "キューを検索"
 
+#: src/pages/quick-capture-page.tsx:373
+msgid "Search results come from third-party providers and are not affiliated with KizunaShelf."
+msgstr "検索結果はサードパーティのプロバイダーによるもので、KizunaShelf とは提携していません。"
+
 #: src/components/entities/external-match-dialog.tsx:145
 #: src/components/ui/multi-value-combobox.tsx:146
-#: src/pages/quick-capture-page.tsx:286
+#: src/pages/quick-capture-page.tsx:309
 msgid "Searching…"
 msgstr "検索中…"
 
@@ -2693,7 +2700,7 @@ msgstr "タイトル"
 msgid "Title language"
 msgstr "タイトルの言語"
 
-#: src/pages/quick-capture-page.tsx:236
+#: src/pages/quick-capture-page.tsx:261
 msgid "Title, or paste a provider URL"
 msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 
@@ -2730,11 +2737,11 @@ msgstr "もう一度試す"
 #: src/components/settings/settings-sections.tsx:612
 #: src/pages/entity-create-page.tsx:90
 #: src/pages/library-page.tsx:304
-#: src/pages/quick-capture-page.tsx:243
+#: src/pages/quick-capture-page.tsx:223
 msgid "Type"
 msgstr "タイプ"
 
-#: src/pages/quick-capture-page.tsx:282
+#: src/pages/quick-capture-page.tsx:305
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgstr "検索するには {MIN_QUERY_LENGTH} 文字以上入力してください。"
 
@@ -2916,7 +2923,7 @@ msgstr "はい"
 msgid "Yes"
 msgstr "はい"
 
-#: src/pages/quick-capture-page.tsx:214
+#: src/pages/quick-capture-page.tsx:218
 msgid "You can still open entities already in your library."
 msgstr "すでにライブラリにあるアイテムは引き続き開けます。"
 

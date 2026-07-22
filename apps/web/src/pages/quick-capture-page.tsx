@@ -18,24 +18,25 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
+import { useQuickCaptureTypeStore } from "@/lib/quick-capture-preferences";
 import { typeExternalRefs } from "@/lib/type-config";
+import { cn } from "@/lib/utils";
 import { useDebouncedCallback } from "@/hooks/use-debounce";
 import type { ExternalMatch } from "@/types/api";
 
 const ALL = "all";
 const MIN_QUERY_LENGTH = 2;
 
-// A candidate's stable identity across a result set (a work can appear once per
-// type in cross-type search, so the type is part of the key).
+// A candidate's stable identity across a result set.
 function matchKey(match: ExternalMatch): string {
-  return `${match.candidate.provider}:${match.candidate.sourceId}:${match.entityType}`;
+  return `${match.candidate.provider}:${match.candidate.sourceId}`;
 }
 
 export function QuickCapturePage() {
   const { t } = useLingui();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const requestedType = searchParams.get("type") ?? ALL;
+  const requestedType = searchParams.get("type") ?? undefined;
   const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
   const providerCatalog = useQuery(providerCatalogQuery());
@@ -45,9 +46,15 @@ export function QuickCapturePage() {
   // the scripts localize search results and quick-add episode titles with it.
   const language = useLanguagePreference();
 
+  // Every search is scoped to one type (the core has no cross-type search). An
+  // explicit `?type=` wins; otherwise start from the remembered last selection
+  // and let the fallback effect below settle on a valid searchable type.
+  const lastType = useQuickCaptureTypeStore((state) => state.lastType);
+  const setLastType = useQuickCaptureTypeStore((state) => state.setLastType);
+
   const [rawQuery, setRawQuery] = useState("");
   const [query, setQuery] = useState("");
-  const [typeId, setTypeId] = useState(requestedType);
+  const [typeId, setTypeId] = useState(requestedType ?? lastType);
   const [provider, setProvider] = useState(ALL);
   const [addingKey, setAddingKey] = useState<string>();
 
@@ -59,12 +66,6 @@ export function QuickCapturePage() {
     scheduleQuery(rawQuery.trim());
     return cancelQuery;
   }, [rawQuery, scheduleQuery, cancelQuery]);
-
-  const typeLabels = useMemo(() => {
-    const labels = new Map<string, string>();
-    for (const type of config.data?.types ?? []) labels.set(type.id, type.label);
-    return labels;
-  }, [config.data]);
 
   const providerLabels = useMemo(() => {
     const labels = new Map<string, string>();
@@ -84,46 +85,49 @@ export function QuickCapturePage() {
     return types.filter((type) => typeExternalRefs(type).some((ref) => providerIds.has(ref)));
   }, [config.data, providerCatalog.data]);
 
-  // If the selected type isn't searchable (e.g. arrived via `?type=`), fall back to
-  // All so the picker stays valid rather than showing a hidden value.
+  // A later `?type=` navigation (the route doesn't remount) re-selects that type.
   useEffect(() => {
-    if (typeId !== ALL && providerCatalog.data && !searchableTypes.some((type) => type.id === typeId)) {
-      setTypeId(ALL);
+    if (requestedType) setTypeId(requestedType);
+  }, [requestedType]);
+
+  // Settle the selection once the searchable set is known: keep a valid choice,
+  // otherwise fall back to the remembered last type, then the first searchable
+  // one. No searchable type at all → Quick Capture has nothing to search; fall
+  // back to the manual add page (which stays available in read-only mode too).
+  useEffect(() => {
+    if (!config.data || !providerCatalog.data) return;
+    if (searchableTypes.length === 0) {
+      navigate(
+        `/entities/new/manual${requestedType ? `?type=${encodeURIComponent(requestedType)}` : ""}`,
+        { replace: true },
+      );
+      return;
     }
-  }, [typeId, providerCatalog.data, searchableTypes]);
+    if (typeId && searchableTypes.some((type) => type.id === typeId)) return;
+    const fallback = searchableTypes.find((type) => type.id === lastType) ?? searchableTypes[0];
+    setTypeId(fallback.id);
+  }, [config.data, providerCatalog.data, searchableTypes, typeId, lastType, navigate, requestedType]);
 
-  // Empty-query probes return per-provider `enabled` summaries without hitting any
-  // provider network. The gate probe spans every type (is Quick Capture usable at
-  // all?); the provider-list probe is scoped to the selected type, so the dropdown
-  // lists only the providers that type's `externalRef` fields map to.
-  const gateProbe = useQuery({
-    queryKey: ["externalSearch", "probe", ALL],
-    queryFn: ({ signal }) => searchSources({ type: ALL, q: "" }, { signal }),
-    staleTime: 60_000,
-  });
-  const anyProviderEnabled = (gateProbe.data?.providers ?? []).some((item) => item.enabled);
+  // Remember every validated selection (picked here or arrived via `?type=`), so
+  // type-less entry points (home, the all-types library view) reuse it.
+  useEffect(() => {
+    if (!providerCatalog.data || !typeId) return;
+    if (searchableTypes.some((type) => type.id === typeId)) setLastType(typeId);
+  }, [providerCatalog.data, typeId, searchableTypes, setLastType]);
 
-  // Keyed by the selected type; when it is "all" this matches the gate probe's key
-  // so React Query serves it from the same fetch.
+  // Empty-query probes return per-provider `enabled` summaries without hitting
+  // any provider network; scoped to the selected type, so the dropdown lists
+  // only the providers that type's `externalRef` fields map to.
   const providerProbe = useQuery({
     queryKey: ["externalSearch", "probe", typeId],
-    queryFn: ({ signal }) => searchSources({ type: typeId, q: "" }, { signal }),
+    queryFn: ({ signal }) => searchSources({ type: typeId ?? "", q: "" }, { signal }),
+    enabled: Boolean(typeId),
     staleTime: 60_000,
   });
   const enabledProviders = useMemo(
     () => (providerProbe.data?.providers ?? []).filter((item) => item.enabled),
     [providerProbe.data],
   );
-
-  // No usable provider anywhere → Quick Capture has nothing to search; fall back to
-  // the manual add page (which stays available in read-only mode too).
-  useEffect(() => {
-    if (gateProbe.isSuccess && !anyProviderEnabled) {
-      navigate(`/entities/new/manual${requestedType !== ALL ? `?type=${encodeURIComponent(requestedType)}` : ""}`, {
-        replace: true,
-      });
-    }
-  }, [gateProbe.isSuccess, anyProviderEnabled, navigate, requestedType]);
 
   // A provider chosen for one type may not exist under the next; reset to All so
   // the search doesn't silently return nothing.
@@ -133,11 +137,11 @@ export function QuickCapturePage() {
     }
   }, [provider, enabledProviders, providerProbe.isSuccess]);
 
-  const searchEnabled = query.length >= MIN_QUERY_LENGTH;
+  const searchEnabled = query.length >= MIN_QUERY_LENGTH && Boolean(typeId);
   const results = useQuery({
     queryKey: ["externalSearch", "results", { query, typeId, provider, language }],
     queryFn: ({ signal }) =>
-      searchSources({ type: typeId, provider, q: query, pageSize: 15, language }, { signal }),
+      searchSources({ type: typeId ?? "", provider, q: query, pageSize: 15, language }, { signal }),
     enabled: searchEnabled,
     placeholderData: keepPreviousData,
   });
@@ -187,9 +191,9 @@ export function QuickCapturePage() {
     }
   }
 
-  const queryError = config.error ?? capabilities.error ?? gateProbe.error ?? providerProbe.error;
+  const queryError = config.error ?? capabilities.error ?? providerProbe.error;
   const manualHref = `/entities/new/manual${
-    typeId !== ALL || query ? `?${new URLSearchParams({ ...(typeId !== ALL ? { type: typeId } : {}), ...(query ? { title: query } : {}) })}` : ""
+    typeId || query ? `?${new URLSearchParams({ ...(typeId ? { type: typeId } : {}), ...(query ? { title: query } : {}) })}` : ""
   }`;
 
   return (
@@ -215,8 +219,29 @@ export function QuickCapturePage() {
           </Alert>
         ) : null}
 
-        <section className="rounded-md border p-4">
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+        <section className="flex flex-col gap-3 rounded-md border p-4">
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t`Type`}>
+            {searchableTypes.map((type) => {
+              const selected = type.id === typeId;
+              return (
+                <button
+                  key={type.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setTypeId(type.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-sm font-medium transition-colors",
+                    selected
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {type.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
             <label className="flex flex-col gap-1 text-sm font-medium">
               <Trans>Search</Trans>
               <div className="relative">
@@ -240,17 +265,6 @@ export function QuickCapturePage() {
               </div>
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium">
-              <Trans>Type</Trans>
-              <Select value={typeId} onChange={(event) => setTypeId(event.target.value)}>
-                <option value={ALL}>{t`All types`}</option>
-                {searchableTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-medium">
               <Trans>Provider</Trans>
               <Select value={provider} onChange={(event) => setProvider(event.target.value)}>
                 <option value={ALL}>{t`All providers`}</option>
@@ -263,6 +277,15 @@ export function QuickCapturePage() {
             </label>
           </div>
         </section>
+
+        {providerProbe.isSuccess && enabledProviders.length === 0 ? (
+          <Alert>
+            <Trans>
+              No search provider is enabled for this type — check its provider credentials in
+              Settings, or add the entity manually.
+            </Trans>
+          </Alert>
+        ) : null}
 
         {providerErrors.length > 0 ? (
           <ul className="flex flex-col gap-1 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
@@ -331,9 +354,6 @@ export function QuickCapturePage() {
                           <span className="rounded border px-1.5 py-0.5">
                             {providerLabels.get(match.candidate.provider) ?? match.candidate.provider}
                           </span>
-                          <span className="rounded border px-1.5 py-0.5">
-                            {typeLabels.get(match.entityType) ?? match.entityType}
-                          </span>
                           {addingKey === key ? (
                             <span>
                               <Trans>Adding…</Trans>
@@ -347,6 +367,12 @@ export function QuickCapturePage() {
               })}
             </ul>
           )}
+
+          {searchEnabled && (results.data?.items.length ?? 0) > 0 ? (
+            <p className="text-center text-xs text-muted-foreground">
+              <Trans>Search results come from third-party providers and are not affiliated with KizunaShelf.</Trans>
+            </p>
+          ) : null}
 
           {searchEnabled ? (
             <Link

@@ -176,7 +176,7 @@ msgid "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)
 msgstr "{0, plural, other {每日筆記（# 則片段）}}"
 
 #. placeholder {0}: result.episodes.imported
-#: src/pages/quick-capture-page.tsx:173
+#: src/pages/quick-capture-page.tsx:177
 msgid "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
 msgstr "{0, plural, other {已匯入 # 集。}}"
 
@@ -224,7 +224,7 @@ msgstr "{CONTENT_WRITES_DISABLED} 無法使用編輯操作。"
 msgid "{days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 天}}"
 
-#: src/pages/quick-capture-page.tsx:163
+#: src/pages/quick-capture-page.tsx:167
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
 msgstr "{failedCovers, plural, other {已新增，但有 # 張封面無法下載（已保留 URL）。}}"
 
@@ -302,7 +302,7 @@ msgid "📅 Scheduled"
 msgstr "📅 已排程"
 
 #. placeholder {0}: result.entity.basename
-#: src/pages/quick-capture-page.tsx:180
+#: src/pages/quick-capture-page.tsx:184
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "已存在以此標題命名的檔案，因此改儲存為「{0}」。"
 
@@ -394,7 +394,7 @@ msgstr "新增群組"
 msgid "Add items"
 msgstr "新增項目"
 
-#: src/pages/quick-capture-page.tsx:207
+#: src/pages/quick-capture-page.tsx:211
 msgid "Add manually"
 msgstr "手動新增"
 
@@ -426,12 +426,12 @@ msgid "Added {added} — {renamed}"
 msgstr "已新增 {added} — {renamed}"
 
 #. placeholder {0}: result.episodes.error
-#: src/pages/quick-capture-page.tsx:170
+#: src/pages/quick-capture-page.tsx:174
 msgid "Added, but episode import failed: {0}"
 msgstr "已新增，但劇集匯入失敗：{0}"
 
 #: src/components/settings/preset-picker.tsx:209
-#: src/pages/quick-capture-page.tsx:339
+#: src/pages/quick-capture-page.tsx:359
 msgid "Adding…"
 msgstr "新增中…"
 
@@ -458,7 +458,7 @@ msgid "all of"
 msgstr "全部符合"
 
 #: src/components/entities/external-match-dialog.tsx:131
-#: src/pages/quick-capture-page.tsx:256
+#: src/pages/quick-capture-page.tsx:270
 msgid "All providers"
 msgstr "所有資料來源"
 
@@ -472,7 +472,6 @@ msgstr "所有來源"
 #: src/pages/activity-page.tsx:134
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
-#: src/pages/quick-capture-page.tsx:245
 #: src/pages/review-page.tsx:170
 #: src/pages/smart-list-page.tsx:491
 msgid "All types"
@@ -746,7 +745,7 @@ msgstr "無法讀取此 CSV 檔案。"
 msgid "Create"
 msgstr "建立"
 
-#: src/pages/quick-capture-page.tsx:356
+#: src/pages/quick-capture-page.tsx:382
 msgid "Create “{query}” manually →"
 msgstr "手動建立「{query}」 →"
 
@@ -1281,7 +1280,7 @@ msgstr "位於:"
 
 #: src/pages/import-wizard-page.tsx:684
 #: src/pages/import-wizard-page.tsx:688
-#: src/pages/quick-capture-page.tsx:320
+#: src/pages/quick-capture-page.tsx:343
 msgid "In library ✓"
 msgstr "已在庫中 ✓"
 
@@ -1816,7 +1815,7 @@ msgstr "無比對到的資料來源"
 msgid "No matches"
 msgstr "無相符項目"
 
-#: src/pages/quick-capture-page.tsx:290
+#: src/pages/quick-capture-page.tsx:313
 msgid "No matches found."
 msgstr "找不到比對結果。"
 
@@ -1843,6 +1842,10 @@ msgstr "此項目上未連結任何具有清單的資料來源。"
 #: src/pages/review-page.tsx:200
 msgid "No queue items match the current filters"
 msgstr "沒有佇列項目符合目前的篩選條件"
+
+#: src/pages/quick-capture-page.tsx:283
+msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
+msgstr "此類型沒有可用的搜尋資料來源 — 請在設定中檢查資料來源憑證，或手動新增條目。"
 
 #: src/components/entities/external-match-dialog.tsx:130
 msgid "No supported providers"
@@ -2063,7 +2066,7 @@ msgstr "屬性"
 #: src/components/entities/external-match-dialog.tsx:127
 #: src/components/settings/settings-sections.tsx:776
 #: src/components/settings/settings-sections.tsx:965
-#: src/pages/quick-capture-page.tsx:254
+#: src/pages/quick-capture-page.tsx:268
 msgid "Provider"
 msgstr "資料來源"
 
@@ -2087,7 +2090,7 @@ msgstr "資料來源"
 msgid "Public profile"
 msgstr "公開個人檔案"
 
-#: src/pages/quick-capture-page.tsx:201
+#: src/pages/quick-capture-page.tsx:205
 msgid "Quick Capture"
 msgstr "快速擷取"
 
@@ -2293,7 +2296,7 @@ msgstr "範圍"
 
 #: src/components/entities/external-match-dialog.tsx:120
 #: src/components/entities/external-match-dialog.tsx:145
-#: src/pages/quick-capture-page.tsx:221
+#: src/pages/quick-capture-page.tsx:246
 msgid "Search"
 msgstr "搜尋"
 
@@ -2323,9 +2326,13 @@ msgstr "搜尋或新增關聯"
 msgid "Search queue"
 msgstr "搜尋佇列"
 
+#: src/pages/quick-capture-page.tsx:373
+msgid "Search results come from third-party providers and are not affiliated with KizunaShelf."
+msgstr "搜尋結果來自第三方資料來源，與 KizunaShelf 無關聯。"
+
 #: src/components/entities/external-match-dialog.tsx:145
 #: src/components/ui/multi-value-combobox.tsx:146
-#: src/pages/quick-capture-page.tsx:286
+#: src/pages/quick-capture-page.tsx:309
 msgid "Searching…"
 msgstr "搜尋中…"
 
@@ -2693,7 +2700,7 @@ msgstr "標題"
 msgid "Title language"
 msgstr "標題語言"
 
-#: src/pages/quick-capture-page.tsx:236
+#: src/pages/quick-capture-page.tsx:261
 msgid "Title, or paste a provider URL"
 msgstr "標題，或貼上資料來源 URL"
 
@@ -2730,11 +2737,11 @@ msgstr "再試一次"
 #: src/components/settings/settings-sections.tsx:612
 #: src/pages/entity-create-page.tsx:90
 #: src/pages/library-page.tsx:304
-#: src/pages/quick-capture-page.tsx:243
+#: src/pages/quick-capture-page.tsx:223
 msgid "Type"
 msgstr "類型"
 
-#: src/pages/quick-capture-page.tsx:282
+#: src/pages/quick-capture-page.tsx:305
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgstr "至少輸入 {MIN_QUERY_LENGTH} 個字元以搜尋。"
 
@@ -2916,7 +2923,7 @@ msgstr "是"
 msgid "Yes"
 msgstr "是"
 
-#: src/pages/quick-capture-page.tsx:214
+#: src/pages/quick-capture-page.tsx:218
 msgid "You can still open entities already in your library."
 msgstr "你仍可開啟已在庫中的項目。"
 

@@ -960,7 +960,7 @@ export const getExternalProviderCatalog = async ( options?: RequestInit, fetchFn
 
 
 
-export const getSearchExternalSourcesUrl = (params?: SearchExternalSourcesParams,) => {
+export const getSearchExternalSourcesUrl = (params: SearchExternalSourcesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -975,7 +975,7 @@ export const getSearchExternalSourcesUrl = (params?: SearchExternalSourcesParams
   return stringifiedParams.length > 0 ? `/api/external/search?${stringifiedParams}` : `/api/external/search`
 }
 
-export const searchExternalSources = async (params?: SearchExternalSourcesParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ExternalSearchResponse> => {
+export const searchExternalSources = async (params: SearchExternalSourcesParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ExternalSearchResponse> => {
 
   const res = await (fetchFn ?? fetch)(getSearchExternalSourcesUrl(params),
   {

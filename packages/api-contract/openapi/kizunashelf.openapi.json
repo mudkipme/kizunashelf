@@ -790,7 +790,10 @@
           {
             "in": "query",
             "name": "type",
+            "description": "The entity type to search under — always required. A search fans out to\nevery provider the type maps, so an unscoped \"all types\" search would\nmultiply provider traffic (and rate-limit pressure) by the type count;\nthe API deliberately has no such mode.",
+            "required": true,
             "schema": {
+              "description": "The entity type to search under — always required. A search fans out to\nevery provider the type maps, so an unscoped \"all types\" search would\nmultiply provider traffic (and rate-limit pressure) by the type count;\nthe API deliberately has no such mode.",
               "type": "string"
             },
             "style": "form"
@@ -6419,10 +6422,8 @@
             ]
           },
           "type": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "The entity type to search under — always required. A search fans out to\nevery provider the type maps, so an unscoped \"all types\" search would\nmultiply provider traffic (and rate-limit pressure) by the type count;\nthe API deliberately has no such mode.",
+            "type": "string"
           },
           "pageSize": {
             "type": [
@@ -6445,7 +6446,10 @@
               "null"
             ]
           }
-        }
+        },
+        "required": [
+          "type"
+        ]
       },
       "ExternalSearchResponse": {
         "type": "object",

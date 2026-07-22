@@ -361,8 +361,12 @@ fn url_type_allowed(config: &ProviderSearchConfig, kind: &str) -> bool {
 pub(crate) struct ExternalSearchQuery {
     provider: Option<String>,
     q: Option<String>,
+    /// The entity type to search under — always required. A search fans out to
+    /// every provider the type maps, so an unscoped "all types" search would
+    /// multiply provider traffic (and rate-limit pressure) by the type count;
+    /// the API deliberately has no such mode.
     #[serde(rename = "type")]
-    entity_type: Option<String>,
+    entity_type: String,
     #[serde(rename = "pageSize")]
     page_size: Option<f64>,
     page: Option<f64>,
@@ -390,43 +394,13 @@ pub(crate) async fn external_search(
 
     let library = get_library(&state).await?;
 
-    // A concrete `type` searches just that type; omitted or `all` searches every
-    // type that has any external source configured (cross-type "search anything").
-    let requested_type = query
-        .entity_type
-        .as_deref()
-        .map(str::trim)
-        .filter(|value| !value.is_empty() && *value != "all");
-    let searched_types: Vec<&EntityTypeConfig> = match requested_type {
-        Some(entity_type) => {
-            let type_config = library
-                .config
-                .type_config(entity_type)
-                .ok_or_else(|| ApiError::bad_request("Unknown entity type"))?;
-            vec![type_config]
-        }
-        None => library
-            .config
-            .types
-            .iter()
-            .filter(|type_config| {
-                !configured_external_providers(&library.config, &type_config.id).is_empty()
-            })
-            .collect(),
-    };
+    let type_config = library
+        .config
+        .type_config(query.entity_type.trim())
+        .ok_or_else(|| ApiError::bad_request("Unknown entity type"))?;
 
-    // The provider summary spans every searched type: a provider is enabled if any
-    // searched type maps it. Per-type configs (not this merge) drive the actual
-    // searches, so unioning the filters here only affects what the UI lists.
-    let mut merged_providers: BTreeMap<&'static str, ProviderSearchConfig> = BTreeMap::new();
-    for type_config in &searched_types {
-        for (provider, config) in configured_external_providers(&library.config, &type_config.id) {
-            let entry = merged_providers.entry(provider).or_default();
-            entry.unconstrained |= config.unconstrained;
-            entry.external_types.extend(config.external_types);
-        }
-    }
-    let mut providers = provider_summaries(&state, &merged_providers);
+    let configured = configured_external_providers(&library.config, &type_config.id);
+    let mut providers = provider_summaries(&state, &configured);
 
     let q = query.q.as_deref().unwrap_or_default().trim();
     if q.is_empty() {
@@ -444,14 +418,11 @@ pub(crate) async fn external_search(
         .filter(|value| !value.is_empty())
         .map(str::to_string);
 
-    // Gather the per-type provider order/config, and the deduplicated set of
-    // searches to run: a provider queried under identical `externalTypes` for two
-    // types hits its API once and both types reuse the result.
     let entries = registry();
 
     // A pasted provider URL is exact-match intent: route it to the single provider
     // that owns the URL and skip every other provider (still subject to the type
-    // filter — the owning provider must be configured for a searched type below).
+    // filter — the owning provider must be configured for the searched type below).
     // A URL no known provider claims searches nothing, saving every request.
     let url_provider = if query_is_url(q) {
         match entries.iter().find(|entry| (entry.recognizes_url)(q)) {
@@ -467,108 +438,62 @@ pub(crate) async fn external_search(
         None
     };
 
-    let mut per_type: Vec<(
-        &EntityTypeConfig,
-        BTreeMap<&'static str, ProviderSearchConfig>,
-        Vec<&'static str>,
-    )> = Vec::new();
-    let mut specs: BTreeMap<SearchKey, (&ProviderEntry, ProviderSearchConfig)> = BTreeMap::new();
-    for type_config in &searched_types {
-        let configured = configured_external_providers(&library.config, &type_config.id);
-        let order = provider_order(&library.config, &type_config.id);
-        for (provider, config) in &configured {
-            if url_provider.is_some_and(|only| only != *provider) {
-                continue;
-            }
-            if !should_search_provider(requested_provider, &providers, provider) {
-                continue;
-            }
-            if let Some(entry) = entries.iter().find(|entry| entry.id == *provider) {
-                // The viewer language is per-request context, not part of the
-                // dedup key (it is identical across every spec of one request).
-                specs
-                    .entry(search_key(provider, config))
-                    .or_insert_with(|| {
-                        let mut config = config.clone();
-                        config.language = language.clone();
-                        (entry, config)
-                    });
-            }
-        }
-        per_type.push((type_config, configured, order));
-    }
-
-    // Run every unique search concurrently rather than summing their latencies.
+    // Run every provider search concurrently (in `externalPriority` order, which
+    // join_all preserves) rather than summing their latencies.
+    let order = provider_order(&library.config, &type_config.id);
     let state_ref = &state;
-    let searches = specs.iter().map(|(key, (entry, config))| {
-        let key = key.clone();
-        async move {
-            let result = (entry.search)(state_ref, q, page, page_size, config).await;
-            (key, result)
+    let mut searches = Vec::new();
+    for provider in order {
+        let Some(config) = configured.get(provider) else {
+            continue;
+        };
+        if url_provider.is_some_and(|only| only != provider) {
+            continue;
         }
-    });
+        if !should_search_provider(requested_provider, &providers, provider) {
+            continue;
+        }
+        let Some(entry) = entries.iter().find(|entry| entry.id == provider) else {
+            continue;
+        };
+        let mut config = config.clone();
+        config.language = language.clone();
+        searches.push(async move {
+            let result = (entry.search)(state_ref, q, page, page_size, &config).await;
+            (provider, result)
+        });
+    }
     let results = futures_util::future::join_all(searches).await;
 
     // A single provider failing must not blank the whole search: capture its error
     // onto the summary and keep every other provider's results.
-    let mut by_key: BTreeMap<SearchKey, Vec<ExternalCandidate>> = BTreeMap::new();
-    let mut errors: BTreeMap<&'static str, String> = BTreeMap::new();
-    for (key, result) in results {
+    let mut found: Vec<ExternalCandidate> = Vec::new();
+    for (provider, result) in results {
         match result {
-            Ok(found) => {
-                by_key.insert(key, found);
-            }
+            Ok(candidates) => found.extend(candidates),
             Err(error) => {
-                errors
-                    .entry(key.0)
-                    .or_insert_with(|| error.message().to_string());
+                if let Some(summary) = providers.iter_mut().find(|summary| summary.id == provider) {
+                    summary.error = Some(error.message().to_string());
+                }
             }
-        }
-    }
-    for (provider, message) in errors {
-        if let Some(summary) = providers.iter_mut().find(|summary| summary.id == provider) {
-            summary.error = Some(message);
         }
     }
 
-    // Resolve each candidate against every type it was searched for (once,
-    // server-side, so every runtime applies identical values), tag any that
-    // already exist in the library, and keep priority order within each type.
+    // Resolve each candidate against the searched type (once, server-side, so
+    // every runtime applies identical values), tag any that already exist in the
+    // library, and keep priority order.
     let existing_index = build_existing_index(&library);
     let mut items = Vec::new();
-    for (type_config, configured, order) in &per_type {
-        let mut seen: HashSet<(&str, &str)> = HashSet::new();
-        for provider in order {
-            let Some(config) = configured.get(provider) else {
-                continue;
-            };
-            let Some(candidates) = by_key.get(&search_key(provider, config)) else {
-                continue;
-            };
-            for candidate in candidates {
-                if !seen.insert((candidate.provider.as_str(), candidate.source_id.as_str())) {
-                    continue;
-                }
-                let mut item = mapping::match_candidate(candidate.clone(), type_config);
-                item.existing = lookup_existing(&existing_index, candidate, &type_config.id);
-                items.push(item);
-            }
+    let mut seen: HashSet<(&str, &str)> = HashSet::new();
+    for candidate in &found {
+        if !seen.insert((candidate.provider.as_str(), candidate.source_id.as_str())) {
+            continue;
         }
+        let mut item = mapping::match_candidate(candidate.clone(), type_config);
+        item.existing = lookup_existing(&existing_index, candidate, &type_config.id);
+        items.push(item);
     }
     Ok(Json(ExternalSearchResponse { providers, items }))
-}
-
-/// A deduplication key for an outbound provider search: the provider plus the
-/// exact `externalTypes` constraint it will be queried under. Two types that map
-/// the same provider identically share one API call.
-type SearchKey = (&'static str, bool, Vec<String>);
-
-fn search_key(provider: &'static str, config: &ProviderSearchConfig) -> SearchKey {
-    (
-        provider,
-        config.unconstrained,
-        config.external_types.iter().cloned().collect(),
-    )
 }
 
 /// Normalizes an external-ref value (a stored URL/id, or a candidate's URL/id)
