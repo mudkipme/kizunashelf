@@ -668,6 +668,11 @@ pub struct QuickAddRequest {
     /// type's filename title language (falling back to the candidate title).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub basename: Option<String>,
+    /// Canonical status to seed when the provider candidate does not map one.
+    /// Defaults to `planning` for existing clients and the ordinary Quick Capture
+    /// flow; status-specific clients can opt into another mapped write target.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_status: Option<CanonicalStatus>,
     /// The viewer's language preference (may carry a script subtag), used for the
     /// fail-safe episode import so episode titles arrive localized.
     #[serde(default, skip_serializing_if = "Option::is_none")]

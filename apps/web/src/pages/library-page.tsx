@@ -7,7 +7,7 @@ import { PlusIcon, SlidersHorizontalIcon, SparklesIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
-import { allTagsQuery, configQuery, entitiesQuery, statsQuery } from "@/api/queries";
+import { allTagsQuery, configQuery, entitiesQuery, providerCatalogQuery, statsQuery } from "@/api/queries";
 import { useRelationSearch } from "@/api/use-relation-search";
 import { AssetToolbar } from "@/components/assets/asset-toolbar";
 import type { FieldFilter, FieldFilterOption } from "@/components/assets/asset-toolbar";
@@ -32,7 +32,9 @@ import {
   fieldDisplayLabel,
   fieldLabelAcrossTypes,
   fieldLabelsByType,
+  typeExternalRefs,
   typeHasCoverField,
+  typeSupportsQuickCapture,
 } from "@/lib/type-config";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
@@ -52,6 +54,7 @@ export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const globalStats = useQuery(statsQuery());
   const config = useQuery(configQuery());
+  const providerCatalog = useQuery(providerCatalogQuery());
   const capabilities = useCapabilities();
   const contentWritable = capabilities.contentWritable;
   const firstType = globalStats.data?.byType[0]?.id ?? allTypes;
@@ -77,6 +80,10 @@ export function LibraryPage() {
   const [saveSmartOpen, setSaveSmartOpen] = useState(false);
   const scopeStats = isGlobalType ? globalStats.data : categoryStats.data;
   const selectedTypeConfig = config.data?.types.find((type) => type.id === selectedType);
+  const providerIds = useMemo(
+    () => new Set((providerCatalog.data?.providers ?? []).map((item) => item.id.toLowerCase())),
+    [providerCatalog.data],
+  );
   // Covers show for "all types" and for any concrete type that declares an
   // image/imageList field; a type without one shows no cover slot at all.
   const showCovers = isGlobalType || typeHasCoverField(selectedTypeConfig);
@@ -163,9 +170,16 @@ export function LibraryPage() {
     !scopeStats.dateFields.includes(sort.slice("date:".length))
       ? contextDefaultSort
       : sort;
+  const selectedTypeSupportsQuickCapture = selectedTypeConfig
+    ? providerCatalog.data
+      ? typeSupportsQuickCapture(selectedTypeConfig, providerIds)
+      : typeExternalRefs(selectedTypeConfig).length > 0
+    : true;
   const createHref = isGlobalType
     ? "/entities/new"
-    : `/entities/new?type=${encodeURIComponent(selectedType)}`;
+    : selectedTypeSupportsQuickCapture
+      ? `/entities/new?type=${encodeURIComponent(selectedType)}`
+      : `/entities/new/manual?type=${encodeURIComponent(selectedType)}`;
   const filtersActive =
     activeFieldFilters.length > 0 ||
     effectiveSort !== contextDefaultSort ||

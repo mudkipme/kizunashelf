@@ -242,12 +242,12 @@ msgstr "{monthLabel}：{0} — 在日历中打开"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {导入 # 项}}"
 
-#: src/pages/library-page.tsx:372
+#: src/pages/library-page.tsx:386
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 条}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:367
+#: src/pages/library-page.tsx:381
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 条}} · 第 {0}/{totalPages} 页"
 
@@ -339,8 +339,8 @@ msgstr "活动"
 #: src/components/settings/settings-sections.tsx:950
 #: src/pages/home-page.tsx:41
 #: src/pages/home-page.tsx:46
-#: src/pages/library-page.tsx:398
-#: src/pages/library-page.tsx:403
+#: src/pages/library-page.tsx:412
+#: src/pages/library-page.tsx:417
 #: src/pages/list-detail-page.tsx:922
 msgid "Add"
 msgstr "添加"
@@ -373,7 +373,7 @@ msgstr "添加自定义类型"
 
 #: src/pages/entity-create-page.tsx:88
 #: src/pages/home-page.tsx:35
-#: src/pages/library-page.tsx:392
+#: src/pages/library-page.tsx:406
 msgid "Add entity"
 msgstr "添加条目"
 
@@ -478,7 +478,7 @@ msgid "All types"
 msgstr "所有类型"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:307
+#: src/pages/library-page.tsx:321
 msgid "All types ({0})"
 msgstr "所有类型（{0}）"
 
@@ -1705,7 +1705,7 @@ msgstr "否"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:139
-#: src/pages/library-page.tsx:502
+#: src/pages/library-page.tsx:516
 msgid "No"
 msgstr "否"
 
@@ -1749,7 +1749,7 @@ msgstr "未配置条目类型。"
 
 #: src/pages/calendar-page.tsx:180
 #: src/pages/calendar-page.tsx:195
-#: src/pages/library-page.tsx:435
+#: src/pages/library-page.tsx:449
 msgid "No entries"
 msgstr "无条目"
 
@@ -2266,8 +2266,8 @@ msgid "Save"
 msgstr "保存"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:77
-#: src/pages/library-page.tsx:381
-#: src/pages/library-page.tsx:385
+#: src/pages/library-page.tsx:395
+#: src/pages/library-page.tsx:399
 msgid "Save as smart list"
 msgstr "保存为智能列表"
 
@@ -2626,7 +2626,7 @@ msgstr "跟随系统主题。切换到浅色主题。"
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:265
 #: src/components/smart-lists/rule-builder.tsx:148
-#: src/pages/library-page.tsx:106
+#: src/pages/library-page.tsx:113
 msgid "Tags"
 msgstr "标签"
 
@@ -2725,7 +2725,7 @@ msgstr "今天"
 msgid "Todo"
 msgstr "待办"
 
-#: src/pages/library-page.tsx:321
+#: src/pages/library-page.tsx:335
 msgid "Toggle filters"
 msgstr "切换筛选条件"
 
@@ -2749,7 +2749,7 @@ msgstr "重试"
 #: src/components/settings/settings-sections.tsx:154
 #: src/components/settings/settings-sections.tsx:612
 #: src/pages/entity-create-page.tsx:98
-#: src/pages/library-page.tsx:304
+#: src/pages/library-page.tsx:318
 #: src/pages/quick-capture-page.tsx:223
 msgid "Type"
 msgstr "类型"
@@ -2938,7 +2938,7 @@ msgstr "是"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:138
-#: src/pages/library-page.tsx:501
+#: src/pages/library-page.tsx:515
 msgid "Yes"
 msgstr "是"
 

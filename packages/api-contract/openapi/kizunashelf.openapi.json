@@ -6702,6 +6702,17 @@
               "null"
             ]
           },
+          "defaultStatus": {
+            "description": "Canonical status to seed when the provider candidate does not map one.\nDefaults to `planning` for existing clients and the ordinary Quick Capture\nflow; status-specific clients can opt into another mapped write target.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanonicalStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "language": {
             "description": "The viewer's language preference (may carry a script subtag), used for the\nfail-safe episode import so episode titles arrive localized.",
             "type": [

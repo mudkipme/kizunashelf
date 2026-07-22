@@ -13,6 +13,7 @@ import {
   supportsDateRole,
   supportsEnumOptions,
   typeExternalRefs,
+  typeSupportsQuickCapture,
 } from "./type-config";
 
 describe("field-type role predicates", () => {
@@ -132,5 +133,23 @@ describe("typeExternalRefs", () => {
       ] as FieldConfig[],
     });
     expect(typeExternalRefs(config)).toEqual([]);
+  });
+});
+
+describe("typeSupportsQuickCapture", () => {
+  const type = (externalRef?: string): TypeConfig =>
+    ({
+      id: "t",
+      label: "T",
+      path: "T",
+      fields: externalRef
+        ? ([{ field: "ref", fieldType: "externalRef", externalRef }] as FieldConfig[])
+        : [],
+    }) as TypeConfig;
+
+  it("requires the external source to exist in the provider catalog", () => {
+    expect(typeSupportsQuickCapture(type("Bangumi"), new Set([" BANGUMI "]))).toBe(true);
+    expect(typeSupportsQuickCapture(type("Bangumi"), new Set(["tmdb"]))).toBe(false);
+    expect(typeSupportsQuickCapture(type(), new Set(["bangumi"]))).toBe(false);
   });
 });

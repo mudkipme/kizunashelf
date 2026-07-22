@@ -242,12 +242,12 @@ msgstr "{monthLabel}: {0} — カレンダーで開く"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {# 件のアイテムをインポート}}"
 
-#: src/pages/library-page.tsx:372
+#: src/pages/library-page.tsx:386
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 件}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:367
+#: src/pages/library-page.tsx:381
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
 
@@ -339,8 +339,8 @@ msgstr "アクティビティ"
 #: src/components/settings/settings-sections.tsx:950
 #: src/pages/home-page.tsx:41
 #: src/pages/home-page.tsx:46
-#: src/pages/library-page.tsx:398
-#: src/pages/library-page.tsx:403
+#: src/pages/library-page.tsx:412
+#: src/pages/library-page.tsx:417
 #: src/pages/list-detail-page.tsx:922
 msgid "Add"
 msgstr "追加"
@@ -373,7 +373,7 @@ msgstr "カスタムタイプを追加"
 
 #: src/pages/entity-create-page.tsx:88
 #: src/pages/home-page.tsx:35
-#: src/pages/library-page.tsx:392
+#: src/pages/library-page.tsx:406
 msgid "Add entity"
 msgstr "アイテムを追加"
 
@@ -478,7 +478,7 @@ msgid "All types"
 msgstr "すべてのタイプ"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:307
+#: src/pages/library-page.tsx:321
 msgid "All types ({0})"
 msgstr "すべてのタイプ（{0}）"
 
@@ -1705,7 +1705,7 @@ msgstr "いいえ"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:139
-#: src/pages/library-page.tsx:502
+#: src/pages/library-page.tsx:516
 msgid "No"
 msgstr "いいえ"
 
@@ -1749,7 +1749,7 @@ msgstr "アイテムのタイプが設定されていません。"
 
 #: src/pages/calendar-page.tsx:180
 #: src/pages/calendar-page.tsx:195
-#: src/pages/library-page.tsx:435
+#: src/pages/library-page.tsx:449
 msgid "No entries"
 msgstr "エントリなし"
 
@@ -2266,8 +2266,8 @@ msgid "Save"
 msgstr "保存"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:77
-#: src/pages/library-page.tsx:381
-#: src/pages/library-page.tsx:385
+#: src/pages/library-page.tsx:395
+#: src/pages/library-page.tsx:399
 msgid "Save as smart list"
 msgstr "スマートリストとして保存"
 
@@ -2626,7 +2626,7 @@ msgstr "システムテーマ。ライトテーマに切り替えます。"
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:265
 #: src/components/smart-lists/rule-builder.tsx:148
-#: src/pages/library-page.tsx:106
+#: src/pages/library-page.tsx:113
 msgid "Tags"
 msgstr "タグ"
 
@@ -2725,7 +2725,7 @@ msgstr "今日"
 msgid "Todo"
 msgstr "未対応"
 
-#: src/pages/library-page.tsx:321
+#: src/pages/library-page.tsx:335
 msgid "Toggle filters"
 msgstr "フィルターを切り替え"
 
@@ -2749,7 +2749,7 @@ msgstr "もう一度試す"
 #: src/components/settings/settings-sections.tsx:154
 #: src/components/settings/settings-sections.tsx:612
 #: src/pages/entity-create-page.tsx:98
-#: src/pages/library-page.tsx:304
+#: src/pages/library-page.tsx:318
 #: src/pages/quick-capture-page.tsx:223
 msgid "Type"
 msgstr "タイプ"
@@ -2938,7 +2938,7 @@ msgstr "はい"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:138
-#: src/pages/library-page.tsx:501
+#: src/pages/library-page.tsx:515
 msgid "Yes"
 msgstr "はい"
 

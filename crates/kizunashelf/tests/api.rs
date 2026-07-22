@@ -921,7 +921,7 @@ async fn quick_add_creates_entity_from_candidate_and_dedupes_on_second_add() {
 }
 
 #[tokio::test]
-async fn quick_add_defaults_status_to_first_planning_option() {
+async fn quick_add_defaults_status_to_first_option_for_requested_canonical() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");
     fs::create_dir_all(vault.join("Taxonomy/Anime")).unwrap();
@@ -968,12 +968,32 @@ async fn quick_add_defaults_status_to_first_planning_option() {
         &app,
         Method::POST,
         "/api/external/quick-add",
-        Some(json!({ "type": "anime", "candidate": candidate })),
+        Some(json!({ "type": "anime", "candidate": candidate.clone() })),
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{created}");
     // The candidate mapped no status, so quick-add seeds the first planning option.
     assert_eq!(created["entity"]["frontmatter"]["status"], "Backlog");
+
+    // A status-specific entry point can opt into the first ongoing write target.
+    let mut ongoing_candidate = candidate;
+    ongoing_candidate["sourceId"] = json!("445566");
+    ongoing_candidate["url"] = json!("https://bgm.tv/subject/445566");
+    ongoing_candidate["title"] = json!("Another Show");
+    ongoing_candidate["titles"] = json!({ "en": "Another Show" });
+    let (status, ongoing) = request_json(
+        &app,
+        Method::POST,
+        "/api/external/quick-add",
+        Some(json!({
+            "type": "anime",
+            "candidate": ongoing_candidate,
+            "defaultStatus": "ongoing"
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{ongoing}");
+    assert_eq!(ongoing["entity"]["frontmatter"]["status"], "Watching");
 }
 
 #[tokio::test]

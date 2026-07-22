@@ -242,12 +242,12 @@ msgstr "{monthLabel}: {0} — open in calendar"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
-#: src/pages/library-page.tsx:372
+#: src/pages/library-page.tsx:386
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, one {# entry} other {# entries}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:367
+#: src/pages/library-page.tsx:381
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 
@@ -339,8 +339,8 @@ msgstr "Activity"
 #: src/components/settings/settings-sections.tsx:950
 #: src/pages/home-page.tsx:41
 #: src/pages/home-page.tsx:46
-#: src/pages/library-page.tsx:398
-#: src/pages/library-page.tsx:403
+#: src/pages/library-page.tsx:412
+#: src/pages/library-page.tsx:417
 #: src/pages/list-detail-page.tsx:922
 msgid "Add"
 msgstr "Add"
@@ -373,7 +373,7 @@ msgstr "Add custom type"
 
 #: src/pages/entity-create-page.tsx:88
 #: src/pages/home-page.tsx:35
-#: src/pages/library-page.tsx:392
+#: src/pages/library-page.tsx:406
 msgid "Add entity"
 msgstr "Add entity"
 
@@ -478,7 +478,7 @@ msgid "All types"
 msgstr "All types"
 
 #. placeholder {0}: formatNumber(globalStats.data?.total ?? 0)
-#: src/pages/library-page.tsx:307
+#: src/pages/library-page.tsx:321
 msgid "All types ({0})"
 msgstr "All types ({0})"
 
@@ -1705,7 +1705,7 @@ msgstr "no"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:139
-#: src/pages/library-page.tsx:502
+#: src/pages/library-page.tsx:516
 msgid "No"
 msgstr "No"
 
@@ -1749,7 +1749,7 @@ msgstr "No entity types configured."
 
 #: src/pages/calendar-page.tsx:180
 #: src/pages/calendar-page.tsx:195
-#: src/pages/library-page.tsx:435
+#: src/pages/library-page.tsx:449
 msgid "No entries"
 msgstr "No entries"
 
@@ -2266,8 +2266,8 @@ msgid "Save"
 msgstr "Save"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:77
-#: src/pages/library-page.tsx:381
-#: src/pages/library-page.tsx:385
+#: src/pages/library-page.tsx:395
+#: src/pages/library-page.tsx:399
 msgid "Save as smart list"
 msgstr "Save as smart list"
 
@@ -2626,7 +2626,7 @@ msgstr "System theme. Switch to light theme."
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:265
 #: src/components/smart-lists/rule-builder.tsx:148
-#: src/pages/library-page.tsx:106
+#: src/pages/library-page.tsx:113
 msgid "Tags"
 msgstr "Tags"
 
@@ -2725,7 +2725,7 @@ msgstr "Today"
 msgid "Todo"
 msgstr "Todo"
 
-#: src/pages/library-page.tsx:321
+#: src/pages/library-page.tsx:335
 msgid "Toggle filters"
 msgstr "Toggle filters"
 
@@ -2749,7 +2749,7 @@ msgstr "Try again"
 #: src/components/settings/settings-sections.tsx:154
 #: src/components/settings/settings-sections.tsx:612
 #: src/pages/entity-create-page.tsx:98
-#: src/pages/library-page.tsx:304
+#: src/pages/library-page.tsx:318
 #: src/pages/quick-capture-page.tsx:223
 msgid "Type"
 msgstr "Type"
@@ -2938,7 +2938,7 @@ msgstr "yes"
 #: src/components/assets/frontmatter-panel.tsx:135
 #: src/components/assets/frontmatter-panel.tsx:240
 #: src/components/entities/metadata-inputs.tsx:138
-#: src/pages/library-page.tsx:501
+#: src/pages/library-page.tsx:515
 msgid "Yes"
 msgstr "Yes"
 

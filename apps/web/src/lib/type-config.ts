@@ -49,6 +49,16 @@ export function typeExternalRefs(typeConfig: TypeConfig | undefined): string[] {
   return refs;
 }
 
+/** Whether at least one external source on this type resolves to a provider in
+ *  the core catalog. Quick Capture and type-scoped Add links share this rule. */
+export function typeSupportsQuickCapture(
+  typeConfig: TypeConfig | undefined,
+  providerIds: ReadonlySet<string>,
+): boolean {
+  const known = new Set([...providerIds].map((id) => id.trim().toLowerCase()));
+  return typeExternalRefs(typeConfig).some((ref) => known.has(ref));
+}
+
 export function fieldNamesByType(typeConfig: TypeConfig | undefined, fieldType: FieldType): string[] {
   return fieldsByType(typeConfig, fieldType).map((field) => field.field);
 }

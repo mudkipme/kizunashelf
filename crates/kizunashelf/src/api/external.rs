@@ -712,9 +712,14 @@ pub(crate) async fn quick_add_entity(
 
     // Re-map the candidate against the schema ourselves — never trust client values.
     let (mut frontmatter, body, mapped_fields) = build_mapped_document(&candidate, type_config);
-    // Quick Capture files things you intend to get to, so seed a "planning" status
-    // when the schema models one and the candidate didn't already supply a value.
-    apply_default_planning_status(&mut frontmatter, type_config);
+    // Ordinary Quick Capture files things you intend to get to, so it defaults to
+    // planning. Status-specific entry points can request another canonical status.
+    // Either way, the schema owns the concrete option string that gets written.
+    apply_default_status(
+        &mut frontmatter,
+        type_config,
+        request.default_status.unwrap_or(CanonicalStatus::Planning),
+    );
 
     // Filename: the type's filename title language, falling back to the candidate
     // title, then the provider id. Collisions with a *different* work of the same
@@ -868,14 +873,15 @@ pub(super) fn build_mapped_document(
     (frontmatter, body, mapped.fields)
 }
 
-/// Seeds the type's status field with its first planning option when the mapped
-/// candidate supplied none. Meaning is schema-driven: this only fires when the type
-/// has an `enumRole: status` field that maps at least one planning option, and it
-/// never overwrites a value the candidate already mapped. Scoped to Quick Capture —
-/// batch import takes the status from the user's per-item choice instead.
-fn apply_default_planning_status(
+/// Seeds the type's status field with the first option mapped to `canonical` when
+/// the candidate supplied none. Meaning is schema-driven: this only fires when the
+/// type has an `enumRole: status` field with a write target for that canonical, and
+/// it never overwrites a value the candidate already mapped. Scoped to Quick
+/// Capture — batch import takes the status from the user's per-item choice instead.
+fn apply_default_status(
     frontmatter: &mut Map<String, Value>,
     type_config: &EntityTypeConfig,
+    canonical: CanonicalStatus,
 ) {
     let Some(field) = status_field(type_config) else {
         return;
@@ -886,7 +892,7 @@ fn apply_default_planning_status(
     let Some(value) = field
         .status_values
         .as_ref()
-        .and_then(|values| values.write_value(CanonicalStatus::Planning))
+        .and_then(|values| values.write_value(canonical))
     else {
         return;
     };
@@ -1647,8 +1653,48 @@ impl ProviderResponseExt for reqwest::Response {
 mod tests {
     use super::*;
     use crate::types::{
-        BodySection, BodySectionKind, EntityTypeConfig, ExternalFieldMapping, FieldConfig,
+        BodySection, BodySectionKind, EntityTypeConfig, EnumRole, ExternalFieldMapping,
+        FieldConfig, StatusValues,
     };
+
+    #[test]
+    fn quick_add_default_status_uses_the_first_mapped_option() {
+        let type_config = status_type();
+        let mut frontmatter = Map::new();
+
+        apply_default_status(&mut frontmatter, &type_config, CanonicalStatus::Ongoing);
+
+        assert_eq!(
+            frontmatter.get("status"),
+            Some(&Value::String("Watching".to_string()))
+        );
+    }
+
+    #[test]
+    fn quick_add_default_status_never_overwrites_provider_mapping() {
+        let type_config = status_type();
+        let mut frontmatter = Map::from_iter([(
+            "status".to_string(),
+            Value::String("Provider status".to_string()),
+        )]);
+
+        apply_default_status(&mut frontmatter, &type_config, CanonicalStatus::Planning);
+
+        assert_eq!(
+            frontmatter.get("status"),
+            Some(&Value::String("Provider status".to_string()))
+        );
+    }
+
+    #[test]
+    fn quick_add_default_status_skips_an_unmapped_canonical() {
+        let type_config = status_type();
+        let mut frontmatter = Map::new();
+
+        apply_default_status(&mut frontmatter, &type_config, CanonicalStatus::Paused);
+
+        assert!(!frontmatter.contains_key("status"));
+    }
 
     #[test]
     fn parse_retry_after_forms() {
@@ -1960,6 +2006,25 @@ mod tests {
 
     fn entity_type(id: &str, field: &str, external_ref: &str) -> EntityTypeConfig {
         entity_type_with_external_types(id, field, external_ref, &[])
+    }
+
+    fn status_type() -> EntityTypeConfig {
+        let mut type_config = entity_type("anime", "status", "bangumi");
+        let field = &mut type_config.fields[0];
+        field.field_type = FieldType::Enum;
+        field.external_ref = None;
+        field.enum_options = vec![
+            "Plan to Watch".to_string(),
+            "Watching".to_string(),
+            "In Progress".to_string(),
+        ];
+        field.enum_role = Some(EnumRole::Status);
+        field.status_values = Some(StatusValues {
+            planning: vec!["Plan to Watch".to_string()],
+            ongoing: vec!["Watching".to_string(), "In Progress".to_string()],
+            ..StatusValues::default()
+        });
+        type_config
     }
 
     fn entity_type_with_external_types(

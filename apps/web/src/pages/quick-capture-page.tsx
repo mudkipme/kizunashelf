@@ -19,7 +19,7 @@ import { Select } from "@/components/ui/select";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
 import { useQuickCaptureTypeStore } from "@/lib/quick-capture-preferences";
-import { typeExternalRefs } from "@/lib/type-config";
+import { typeSupportsQuickCapture } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import { useDebouncedCallback } from "@/hooks/use-debounce";
 import type { ExternalMatch } from "@/types/api";
@@ -82,7 +82,7 @@ export function QuickCapturePage() {
     const catalog = providerCatalog.data;
     if (!catalog) return types;
     const providerIds = new Set(catalog.providers.map((item) => item.id.toLowerCase()));
-    return types.filter((type) => typeExternalRefs(type).some((ref) => providerIds.has(ref)));
+    return types.filter((type) => typeSupportsQuickCapture(type, providerIds));
   }, [config.data, providerCatalog.data]);
 
   // A later `?type=` navigation (the route doesn't remount) re-selects that type.
