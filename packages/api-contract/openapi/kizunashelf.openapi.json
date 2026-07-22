@@ -7479,6 +7479,14 @@
             "description": "The entity type the candidate was resolved against.",
             "type": "string"
           },
+          "candidate": {
+            "description": "The candidate the review actually resolved — enriched with provider\ndetail when the client sent a thin free-text search result. Send *this*\ncandidate to apply so the provider detail is fetched once per selected\nmatch rather than once more at apply time.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalCandidate"
+              }
+            ]
+          },
           "fields": {
             "type": "array",
             "items": {
@@ -7494,6 +7502,7 @@
         },
         "required": [
           "entityType",
+          "candidate",
           "fields",
           "sections"
         ]

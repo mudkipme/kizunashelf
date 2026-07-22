@@ -7,7 +7,6 @@ import { downloadAssets, reviewMatch, searchSources } from "@/api/entities";
 import { isRemoteAsset } from "@/lib/asset-src";
 import {
   externalProviderPriority,
-  matchBodyPreviewEntries,
   matchFieldPatch,
   matchFieldPreviewEntries,
 } from "@/lib/external-metadata";
@@ -86,13 +85,22 @@ export function useExternalMatch({
   // Whether the type has any external source configured at all — gates whether
   // the match feature is offered (independent of credentials).
   const externalSearchEnabled = schemaProviderOptions.length > 0;
+  // The review's fields/sections carry the enriched candidate's values (search
+  // results are deliberately thin; the core resolves provider detail during
+  // review), so once it lands they supersede the search-time mapping. Until
+  // then the thin mapping keeps the panel from flashing empty.
+  const effectiveFields = review?.fields ?? selectedCandidate?.fields;
+  // Apply sends the review's enriched candidate (its enrichment marker already
+  // consumed server-side) so provider detail is fetched once per selection —
+  // the original search candidate is only a fallback if the review failed.
+  const candidateForApply = review?.candidate ?? selectedCandidate?.candidate;
   const metadataEntries = useMemo(
-    () => (selectedCandidate ? matchFieldPreviewEntries(selectedCandidate, typeConfig) : []),
-    [selectedCandidate, typeConfig],
+    () => (selectedCandidate ? matchFieldPreviewEntries(effectiveFields, typeConfig) : []),
+    [selectedCandidate, effectiveFields, typeConfig],
   );
   const bodyEntries = useMemo(
-    () => (selectedCandidate ? matchBodyPreviewEntries(selectedCandidate) : []),
-    [selectedCandidate],
+    () => (selectedCandidate ? (review?.sections ?? selectedCandidate.bodySections ?? []) : []),
+    [selectedCandidate, review],
   );
   const existingExternalRefs = useMemo(
     () =>
@@ -148,13 +156,13 @@ export function useExternalMatch({
 
   const coverDownloadAvailable = useMemo(() => {
     if (!assetDownloadEnabled || !selectedCandidate || !typeConfig) return false;
-    const patch = matchFieldPatch(selectedCandidate, selectedFields);
+    const patch = matchFieldPatch(effectiveFields, selectedFields);
     return (typeConfig.fields ?? []).some(
       (field) =>
         (field.fieldType === "image" || field.fieldType === "imageList") &&
         patchValueHasRemote(patch[field.field]),
     );
-  }, [assetDownloadEnabled, selectedCandidate, typeConfig, selectedFields]);
+  }, [assetDownloadEnabled, selectedCandidate, typeConfig, selectedFields, effectiveFields]);
 
   // Downloads the entity's freshly applied remote cover when the user opted in.
   // Best-effort: a failure is surfaced but does not block the caller's flow.
@@ -281,6 +289,7 @@ export function useExternalMatch({
     candidates,
     searching,
     selectedCandidate,
+    candidateForApply,
     selectedFields,
     setSelectedFields,
     selectedBodySections,

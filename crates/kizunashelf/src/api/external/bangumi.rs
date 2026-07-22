@@ -1,6 +1,6 @@
 use super::{
-    cached_json_get, external_client, field_option, provider_error, send_limited, string_list_with,
-    type_option, ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
+    external_client, field_option, provider_error, send_limited, string_list_with, type_option,
+    ExternalProvider, ProviderResponseExt, ProviderSearchConfig, USER_AGENT,
 };
 use crate::api::ApiError;
 use crate::contract::{
@@ -327,12 +327,14 @@ async fn search_bangumi(
         .await
         .map_err(provider_error)?;
         if let Some(data) = response.get("data").and_then(Value::as_array) {
-            let candidates = futures_util::future::join_all(
+            // Search rows stay thin: fetching `/characters/{id}/persons` here would
+            // cost one paced request per row before anything is selected. Credits
+            // arrive via enrich-before-apply, which re-resolves the chosen
+            // candidate through the by-id branch above.
+            items.extend(
                 data.iter()
-                    .map(|item| bangumi_character_candidate_with_credits(client, item, language)),
-            )
-            .await;
-            items.extend(candidates.into_iter().flatten());
+                    .filter_map(|item| bangumi_character_candidate(item, language)),
+            );
         }
     }
     if wants_persons {
@@ -361,28 +363,23 @@ async fn search_bangumi(
     Ok(items)
 }
 
+/// All Bangumi by-id GETs (subjects/characters/persons/episodes) route through
+/// here; pacing comes from `send_limited`. No response cache: search requires a
+/// single type and review hands its enriched candidate to apply, so nothing
+/// fans out identical by-id fetches anymore.
 async fn bangumi_get(client: &reqwest::Client, url: &str) -> Result<Value, ApiError> {
-    // Cached + single-flighted by URL: one pasted subject URL is searched once per
-    // entity type that maps Bangumi, and each resolves the same `/v0/subjects/{id}`.
-    // Coalescing keeps that from hitting Bangumi's rate limit N times per paste.
-    // All Bangumi by-id GETs (subjects/characters/persons/episodes) route through
-    // here; the keyword search uses a separate POST and is not cached.
-    let value = cached_json_get(url, || async {
-        send_limited(
-            client
-                .get(url)
-                .header(reqwest::header::USER_AGENT, USER_AGENT),
-        )
-        .await
-        .map_err(provider_error)?
-        .error_for_status_body()
-        .await?
-        .json::<Value>()
-        .await
-        .map_err(provider_error)
-    })
-    .await?;
-    Ok((*value).clone())
+    send_limited(
+        client
+            .get(url)
+            .header(reqwest::header::USER_AGENT, USER_AGENT),
+    )
+    .await
+    .map_err(provider_error)?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)
 }
 
 fn bangumi_subject_id(q: &str) -> Option<String> {
@@ -470,10 +467,12 @@ fn bangumi_character_candidate(item: &Value, language: Option<&str>) -> Option<E
 }
 
 /// Builds a character candidate and enriches it with the related-person endpoint.
-/// Bangumi returns one row per person/subject credit, so a voice actor may occur
-/// many times; `bangumi_voice_actors` collapses those rows to stable unique names.
-/// Credit enrichment is best-effort: a transient failure must not hide the base
-/// character search result.
+/// Only the by-id resolve path uses this (a pasted URL, or enrich-before-apply
+/// re-resolving a chosen search result) — one extra request per selection, never
+/// per search row. Bangumi returns one row per person/subject credit, so a voice
+/// actor may occur many times; `bangumi_voice_actors` collapses those rows to
+/// stable unique names. Credit enrichment is best-effort: a transient failure
+/// must not hide the base character result.
 async fn bangumi_character_candidate_with_credits(
     client: &reqwest::Client,
     item: &Value,

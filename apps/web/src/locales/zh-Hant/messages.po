@@ -71,7 +71,7 @@ msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, other {# 個問題}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:589
+#: src/pages/entity-page.tsx:591
 #: src/pages/lists-page.tsx:88
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 個項目}}"
@@ -216,7 +216,7 @@ msgstr "{ariaLabel} 新屬性"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 個資料來源}}"
 
-#: src/pages/entity-page.tsx:470
+#: src/pages/entity-page.tsx:472
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 無法使用編輯操作。"
 
@@ -322,8 +322,8 @@ msgstr "已存在同名類型，因此改用 {assignedIds}。新增後可再重�
 msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 msgstr "所有條目通用的標籤清單，具有專屬編輯器、篩選器與規則支援。選擇性啟用：指定保存標籤清單的前置中繼資料鍵即可啟用。"
 
-#: src/pages/entity-page.tsx:427
-#: src/pages/entity-page.tsx:430
+#: src/pages/entity-page.tsx:429
+#: src/pages/entity-page.tsx:432
 msgid "Actions"
 msgstr "操作"
 
@@ -550,7 +550,7 @@ msgstr "返回"
 msgid "Back to home"
 msgstr "返回首頁"
 
-#: src/pages/entity-page.tsx:676
+#: src/pages/entity-page.tsx:678
 msgid "Basename"
 msgstr "基底名稱"
 
@@ -590,8 +590,8 @@ msgstr "日曆"
 #: src/components/settings/settings-dialogs.tsx:378
 #: src/components/settings/settings-dialogs.tsx:510
 #: src/components/smart-lists/save-smart-list-dialog.tsx:110
-#: src/pages/entity-page.tsx:489
-#: src/pages/entity-page.tsx:694
+#: src/pages/entity-page.tsx:491
+#: src/pages/entity-page.tsx:696
 #: src/pages/import-wizard-page.tsx:274
 #: src/pages/import-wizard-page.tsx:308
 #: src/pages/list-detail-page.tsx:526
@@ -749,7 +749,7 @@ msgstr "建立"
 msgid "Create “{query}” manually →"
 msgstr "手動建立「{query}」 →"
 
-#: src/pages/entity-page.tsx:622
+#: src/pages/entity-page.tsx:624
 msgid "Create & add"
 msgstr "建立並新增"
 
@@ -769,7 +769,7 @@ msgid "Create vault ({0})"
 msgstr "建立保管庫（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:117
-#: src/pages/entity-page.tsx:622
+#: src/pages/entity-page.tsx:624
 #: src/pages/lists-page.tsx:234
 #: src/pages/onboarding-page.tsx:212
 msgid "Creating…"
@@ -872,7 +872,7 @@ msgstr "預設"
 msgid "Default line format"
 msgstr "預設行格式"
 
-#: src/pages/entity-page.tsx:464
+#: src/pages/entity-page.tsx:466
 #: src/pages/list-detail-page.tsx:412
 #: src/pages/list-detail-page.tsx:626
 #: src/pages/smart-list-page.tsx:303
@@ -940,12 +940,12 @@ msgstr "未連結到"
 
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
-#: src/pages/entity-page.tsx:630
+#: src/pages/entity-page.tsx:632
 #: src/pages/list-detail-page.tsx:933
 msgid "Done"
 msgstr "完成"
 
-#: src/pages/entity-page.tsx:454
+#: src/pages/entity-page.tsx:456
 msgid "Download cover"
 msgstr "下載封面"
 
@@ -978,7 +978,7 @@ msgstr "已棄坑"
 msgid "Duplicate Filenames"
 msgstr "重複的檔名"
 
-#: src/pages/entity-page.tsx:437
+#: src/pages/entity-page.tsx:439
 #: src/pages/list-detail-page.tsx:820
 msgid "Edit"
 msgstr "編輯"
@@ -1044,7 +1044,7 @@ msgid "Entity name"
 msgstr "項目名稱"
 
 #: src/pages/entity-edit-page.tsx:171
-#: src/pages/entity-page.tsx:388
+#: src/pages/entity-page.tsx:390
 msgid "Entity not found"
 msgstr "找不到項目"
 
@@ -1473,7 +1473,7 @@ msgstr "連結至"
 msgid "List"
 msgstr "清單"
 
-#: src/pages/entity-page.tsx:550
+#: src/pages/entity-page.tsx:552
 #: src/pages/lists-page.tsx:147
 msgid "List created"
 msgstr "已建立清單"
@@ -1519,8 +1519,8 @@ msgstr "正在載入分類"
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:195
 #: src/pages/entity-edit-page.tsx:150
-#: src/pages/entity-page.tsx:278
-#: src/pages/entity-page.tsx:569
+#: src/pages/entity-page.tsx:280
+#: src/pages/entity-page.tsx:571
 #: src/pages/home-page.tsx:54
 #: src/pages/import-wizard-page.tsx:258
 #: src/pages/list-detail-page.tsx:383
@@ -1535,7 +1535,7 @@ msgid "Loading…"
 msgstr "載入中…"
 
 #: src/components/assets/quick-log-dialog.tsx:160
-#: src/pages/entity-page.tsx:351
+#: src/pages/entity-page.tsx:353
 msgid "Log"
 msgstr "記錄"
 
@@ -1559,8 +1559,8 @@ msgstr "記錄預設值 — 記錄行寫入所在的標題，以及備用的行�
 msgid "Logging…"
 msgstr "記錄中…"
 
-#: src/pages/entity-page.tsx:445
-#: src/pages/entity-page.tsx:563
+#: src/pages/entity-page.tsx:447
+#: src/pages/entity-page.tsx:565
 msgid "Manage lists"
 msgstr "管理清單"
 
@@ -1589,7 +1589,7 @@ msgstr "Markdown 內文版塊"
 msgid "Marks as {0}"
 msgstr "標記為 {0}"
 
-#: src/pages/entity-page.tsx:449
+#: src/pages/entity-page.tsx:451
 msgid "Match"
 msgstr "比對"
 
@@ -1632,16 +1632,16 @@ msgstr "將 {label} 上移"
 msgid "Move list to trash?"
 msgstr "將清單移到垃圾桶？"
 
-#: src/pages/entity-page.tsx:492
+#: src/pages/entity-page.tsx:494
 #: src/pages/list-detail-page.tsx:535
 msgid "Move to Trash"
 msgstr "移到垃圾桶"
 
-#: src/pages/entity-page.tsx:479
+#: src/pages/entity-page.tsx:481
 msgid "Move to trash?"
 msgstr "移到垃圾桶？"
 
-#: src/pages/entity-page.tsx:232
+#: src/pages/entity-page.tsx:234
 msgid "Moved to trash"
 msgstr "已移到垃圾桶"
 
@@ -1672,7 +1672,7 @@ msgstr "待檢查"
 msgid "New field"
 msgstr "新欄位"
 
-#: src/pages/entity-page.tsx:610
+#: src/pages/entity-page.tsx:612
 #: src/pages/lists-page.tsx:49
 #: src/pages/lists-page.tsx:167
 msgid "New list"
@@ -1715,8 +1715,8 @@ msgid "No candidate fields or body sections match this type schema."
 msgstr "沒有候選欄位或內文版塊符合此類型結構描述。"
 
 #: src/components/entities/external-match-dialog.tsx:172
-#: src/components/entities/use-external-match.ts:70
-#: src/components/entities/use-external-match.ts:191
+#: src/components/entities/use-external-match.ts:69
+#: src/components/entities/use-external-match.ts:199
 msgid "No candidates loaded"
 msgstr "未載入候選項目"
 
@@ -1758,7 +1758,7 @@ msgstr "沒有符合條件的條目"
 msgid "No external mappings."
 msgstr "無外部對應。"
 
-#: src/components/entities/use-external-match.ts:203
+#: src/components/entities/use-external-match.ts:211
 msgid "No external matches"
 msgstr "無外部比對"
 
@@ -1795,7 +1795,7 @@ msgstr "尚無項目。使用「新增項目」將項目加入此清單，或使
 msgid "No limit"
 msgstr "無限制"
 
-#: src/pages/entity-page.tsx:573
+#: src/pages/entity-page.tsx:575
 msgid "No lists yet. Create one below."
 msgstr "尚無清單。在下方建立一份。"
 
@@ -2180,9 +2180,9 @@ msgstr "移除版塊"
 msgid "Remove type"
 msgstr "移除類型"
 
-#: src/pages/entity-page.tsx:441
-#: src/pages/entity-page.tsx:665
-#: src/pages/entity-page.tsx:701
+#: src/pages/entity-page.tsx:443
+#: src/pages/entity-page.tsx:667
+#: src/pages/entity-page.tsx:703
 #: src/pages/list-detail-page.tsx:402
 #: src/pages/list-detail-page.tsx:622
 #: src/pages/list-detail-page.tsx:1001
@@ -2216,7 +2216,7 @@ msgstr "重新命名為「{0}」"
 msgid "Renames the .base file in your vault."
 msgstr "重新命名保管庫中的 .base 檔案。"
 
-#: src/pages/entity-page.tsx:701
+#: src/pages/entity-page.tsx:703
 #: src/pages/list-detail-page.tsx:1001
 #: src/pages/smart-list-page.tsx:665
 msgid "Renaming…"
@@ -2460,11 +2460,11 @@ msgstr "已重新命名智慧清單"
 msgid "Smart list saved"
 msgstr "已儲存智慧清單"
 
-#: src/pages/entity-page.tsx:221
+#: src/pages/entity-page.tsx:223
 msgid "Some images could not be downloaded"
 msgstr "部分圖片無法下載"
 
-#: src/pages/entity-page.tsx:221
+#: src/pages/entity-page.tsx:223
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "部分圖片無法下載：{reasons}"
 
@@ -2668,7 +2668,7 @@ msgid "This month"
 msgstr "本月"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:482
+#: src/pages/entity-page.tsx:484
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "這會將 {0} 移到垃圾桶。之後需要時你可以還原它。"
 
@@ -2879,7 +2879,7 @@ msgstr "檢視全部"
 msgid "Watching now"
 msgstr "現正觀看"
 
-#: src/pages/entity-page.tsx:616
+#: src/pages/entity-page.tsx:618
 #: src/pages/lists-page.tsx:204
 msgid "Watchlist"
 msgstr "想看清單"

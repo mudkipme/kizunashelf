@@ -1,6 +1,5 @@
 import { configFields, configuredFieldLabel } from "@/lib/type-config";
 import type {
-  ExternalMatch,
   ExternalProviderCatalog,
   ExternalProviderCatalogItem,
   MappedBodySection,
@@ -89,28 +88,30 @@ export function externalTypesForSource(
 }
 
 /// The core-mapped field values, decorated with the schema's display label so
-/// the preview can show "Original title", "Completed date", etc.
+/// the preview can show "Original title", "Completed date", etc. Takes the
+/// entry array rather than the match: once `reviewExternalCandidate` resolves,
+/// its enriched `fields` (detail-only values included) supersede the thin
+/// search-time mapping on the candidate.
 export function matchFieldPreviewEntries(
-  match: ExternalMatch,
+  fields: MappedFieldValue[] | undefined,
   typeConfig: TypeConfig | undefined,
 ): ExternalMetadataPreviewEntry[] {
   const labels = fieldLabels(typeConfig);
-  return (match.fields ?? []).map((entry) => ({
+  return (fields ?? []).map((entry) => ({
     ...entry,
     label: labels.get(entry.field) ?? entry.field,
   }));
 }
 
-export function matchFieldPatch(match: ExternalMatch, fields: Set<string>): Record<string, unknown> {
+export function matchFieldPatch(
+  entries: MappedFieldValue[] | undefined,
+  fields: Set<string>,
+): Record<string, unknown> {
   return Object.fromEntries(
-    (match.fields ?? [])
+    (entries ?? [])
       .filter((entry) => entry.hasValue && fields.has(entry.field))
       .map((entry) => [entry.field, entry.value]),
   );
-}
-
-export function matchBodyPreviewEntries(match: ExternalMatch): ExternalBodyPreviewEntry[] {
-  return match.bodySections ?? [];
 }
 
 function fieldLabels(typeConfig: TypeConfig | undefined): Map<string, string> {

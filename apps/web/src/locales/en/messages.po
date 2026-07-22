@@ -71,7 +71,7 @@ msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, one {# issue} other {# issues}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:589
+#: src/pages/entity-page.tsx:591
 #: src/pages/lists-page.tsx:88
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
@@ -216,7 +216,7 @@ msgstr "{ariaLabel} new property"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 
-#: src/pages/entity-page.tsx:470
+#: src/pages/entity-page.tsx:472
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 
@@ -322,8 +322,8 @@ msgstr "A type with the same name already exists, so {assignedIds} was used inst
 msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 msgstr "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 
-#: src/pages/entity-page.tsx:427
-#: src/pages/entity-page.tsx:430
+#: src/pages/entity-page.tsx:429
+#: src/pages/entity-page.tsx:432
 msgid "Actions"
 msgstr "Actions"
 
@@ -550,7 +550,7 @@ msgstr "Back"
 msgid "Back to home"
 msgstr "Back to home"
 
-#: src/pages/entity-page.tsx:676
+#: src/pages/entity-page.tsx:678
 msgid "Basename"
 msgstr "Basename"
 
@@ -590,8 +590,8 @@ msgstr "Calendar"
 #: src/components/settings/settings-dialogs.tsx:378
 #: src/components/settings/settings-dialogs.tsx:510
 #: src/components/smart-lists/save-smart-list-dialog.tsx:110
-#: src/pages/entity-page.tsx:489
-#: src/pages/entity-page.tsx:694
+#: src/pages/entity-page.tsx:491
+#: src/pages/entity-page.tsx:696
 #: src/pages/import-wizard-page.tsx:274
 #: src/pages/import-wizard-page.tsx:308
 #: src/pages/list-detail-page.tsx:526
@@ -749,7 +749,7 @@ msgstr "Create"
 msgid "Create “{query}” manually →"
 msgstr "Create “{query}” manually →"
 
-#: src/pages/entity-page.tsx:622
+#: src/pages/entity-page.tsx:624
 msgid "Create & add"
 msgstr "Create & add"
 
@@ -769,7 +769,7 @@ msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:117
-#: src/pages/entity-page.tsx:622
+#: src/pages/entity-page.tsx:624
 #: src/pages/lists-page.tsx:234
 #: src/pages/onboarding-page.tsx:212
 msgid "Creating…"
@@ -872,7 +872,7 @@ msgstr "Default"
 msgid "Default line format"
 msgstr "Default line format"
 
-#: src/pages/entity-page.tsx:464
+#: src/pages/entity-page.tsx:466
 #: src/pages/list-detail-page.tsx:412
 #: src/pages/list-detail-page.tsx:626
 #: src/pages/smart-list-page.tsx:303
@@ -940,12 +940,12 @@ msgstr "does not link to"
 
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
-#: src/pages/entity-page.tsx:630
+#: src/pages/entity-page.tsx:632
 #: src/pages/list-detail-page.tsx:933
 msgid "Done"
 msgstr "Done"
 
-#: src/pages/entity-page.tsx:454
+#: src/pages/entity-page.tsx:456
 msgid "Download cover"
 msgstr "Download cover"
 
@@ -978,7 +978,7 @@ msgstr "Dropped"
 msgid "Duplicate Filenames"
 msgstr "Duplicate Filenames"
 
-#: src/pages/entity-page.tsx:437
+#: src/pages/entity-page.tsx:439
 #: src/pages/list-detail-page.tsx:820
 msgid "Edit"
 msgstr "Edit"
@@ -1044,7 +1044,7 @@ msgid "Entity name"
 msgstr "Entity name"
 
 #: src/pages/entity-edit-page.tsx:171
-#: src/pages/entity-page.tsx:388
+#: src/pages/entity-page.tsx:390
 msgid "Entity not found"
 msgstr "Entity not found"
 
@@ -1473,7 +1473,7 @@ msgstr "Links to"
 msgid "List"
 msgstr "List"
 
-#: src/pages/entity-page.tsx:550
+#: src/pages/entity-page.tsx:552
 #: src/pages/lists-page.tsx:147
 msgid "List created"
 msgstr "List created"
@@ -1519,8 +1519,8 @@ msgstr "Loading taxonomy"
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/pages/activity-page.tsx:195
 #: src/pages/entity-edit-page.tsx:150
-#: src/pages/entity-page.tsx:278
-#: src/pages/entity-page.tsx:569
+#: src/pages/entity-page.tsx:280
+#: src/pages/entity-page.tsx:571
 #: src/pages/home-page.tsx:54
 #: src/pages/import-wizard-page.tsx:258
 #: src/pages/list-detail-page.tsx:383
@@ -1535,7 +1535,7 @@ msgid "Loading…"
 msgstr "Loading…"
 
 #: src/components/assets/quick-log-dialog.tsx:160
-#: src/pages/entity-page.tsx:351
+#: src/pages/entity-page.tsx:353
 msgid "Log"
 msgstr "Log"
 
@@ -1559,8 +1559,8 @@ msgstr "Logging defaults — the heading log lines are written under, and the fa
 msgid "Logging…"
 msgstr "Logging…"
 
-#: src/pages/entity-page.tsx:445
-#: src/pages/entity-page.tsx:563
+#: src/pages/entity-page.tsx:447
+#: src/pages/entity-page.tsx:565
 msgid "Manage lists"
 msgstr "Manage lists"
 
@@ -1589,7 +1589,7 @@ msgstr "Markdown body sections"
 msgid "Marks as {0}"
 msgstr "Marks as {0}"
 
-#: src/pages/entity-page.tsx:449
+#: src/pages/entity-page.tsx:451
 msgid "Match"
 msgstr "Match"
 
@@ -1632,16 +1632,16 @@ msgstr "Move {label} up"
 msgid "Move list to trash?"
 msgstr "Move list to trash?"
 
-#: src/pages/entity-page.tsx:492
+#: src/pages/entity-page.tsx:494
 #: src/pages/list-detail-page.tsx:535
 msgid "Move to Trash"
 msgstr "Move to Trash"
 
-#: src/pages/entity-page.tsx:479
+#: src/pages/entity-page.tsx:481
 msgid "Move to trash?"
 msgstr "Move to trash?"
 
-#: src/pages/entity-page.tsx:232
+#: src/pages/entity-page.tsx:234
 msgid "Moved to trash"
 msgstr "Moved to trash"
 
@@ -1672,7 +1672,7 @@ msgstr "Needs review"
 msgid "New field"
 msgstr "New field"
 
-#: src/pages/entity-page.tsx:610
+#: src/pages/entity-page.tsx:612
 #: src/pages/lists-page.tsx:49
 #: src/pages/lists-page.tsx:167
 msgid "New list"
@@ -1715,8 +1715,8 @@ msgid "No candidate fields or body sections match this type schema."
 msgstr "No candidate fields or body sections match this type schema."
 
 #: src/components/entities/external-match-dialog.tsx:172
-#: src/components/entities/use-external-match.ts:70
-#: src/components/entities/use-external-match.ts:191
+#: src/components/entities/use-external-match.ts:69
+#: src/components/entities/use-external-match.ts:199
 msgid "No candidates loaded"
 msgstr "No candidates loaded"
 
@@ -1758,7 +1758,7 @@ msgstr "No entries match the criteria"
 msgid "No external mappings."
 msgstr "No external mappings."
 
-#: src/components/entities/use-external-match.ts:203
+#: src/components/entities/use-external-match.ts:211
 msgid "No external matches"
 msgstr "No external matches"
 
@@ -1795,7 +1795,7 @@ msgstr "No items yet. Use “Add items” to put entities on this list, or “Ad
 msgid "No limit"
 msgstr "No limit"
 
-#: src/pages/entity-page.tsx:573
+#: src/pages/entity-page.tsx:575
 msgid "No lists yet. Create one below."
 msgstr "No lists yet. Create one below."
 
@@ -2180,9 +2180,9 @@ msgstr "Remove section"
 msgid "Remove type"
 msgstr "Remove type"
 
-#: src/pages/entity-page.tsx:441
-#: src/pages/entity-page.tsx:665
-#: src/pages/entity-page.tsx:701
+#: src/pages/entity-page.tsx:443
+#: src/pages/entity-page.tsx:667
+#: src/pages/entity-page.tsx:703
 #: src/pages/list-detail-page.tsx:402
 #: src/pages/list-detail-page.tsx:622
 #: src/pages/list-detail-page.tsx:1001
@@ -2216,7 +2216,7 @@ msgstr "renamed to “{0}”"
 msgid "Renames the .base file in your vault."
 msgstr "Renames the .base file in your vault."
 
-#: src/pages/entity-page.tsx:701
+#: src/pages/entity-page.tsx:703
 #: src/pages/list-detail-page.tsx:1001
 #: src/pages/smart-list-page.tsx:665
 msgid "Renaming…"
@@ -2460,11 +2460,11 @@ msgstr "Smart list renamed"
 msgid "Smart list saved"
 msgstr "Smart list saved"
 
-#: src/pages/entity-page.tsx:221
+#: src/pages/entity-page.tsx:223
 msgid "Some images could not be downloaded"
 msgstr "Some images could not be downloaded"
 
-#: src/pages/entity-page.tsx:221
+#: src/pages/entity-page.tsx:223
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "Some images could not be downloaded: {reasons}"
 
@@ -2668,7 +2668,7 @@ msgid "This month"
 msgstr "This month"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:482
+#: src/pages/entity-page.tsx:484
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "This moves {0} to the Trash. You can restore it later if you need it."
 
@@ -2879,7 +2879,7 @@ msgstr "View all"
 msgid "Watching now"
 msgstr "Watching now"
 
-#: src/pages/entity-page.tsx:616
+#: src/pages/entity-page.tsx:618
 #: src/pages/lists-page.tsx:204
 msgid "Watchlist"
 msgstr "Watchlist"

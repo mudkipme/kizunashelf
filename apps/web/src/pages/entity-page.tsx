@@ -189,10 +189,12 @@ export function EntityPage() {
   }
 
   // The core re-resolves the candidate and applies the selected fields/body
-  // sections server-side; the client only names what to apply.
+  // sections server-side; the client only names what to apply. The candidate
+  // comes from the review response (already enriched with provider detail) so
+  // apply doesn't fetch it from the provider a second time.
   async function applyCandidate() {
-    if (!entity || !external.selectedCandidate) return;
-    const candidate = external.selectedCandidate.candidate;
+    if (!entity || !external.candidateForApply) return;
+    const candidate = external.candidateForApply;
     await run(async () => {
       const result = await applyMatch(entity.id, {
         revision: entity.revision,

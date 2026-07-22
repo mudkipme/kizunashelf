@@ -37,7 +37,7 @@ pub(crate) async fn review_external_candidate(
 
     let candidate =
         super::enrich_candidate_for_type(&state, request.candidate, type_config, None).await?;
-    let resolved = match_candidate(candidate, type_config);
+    let resolved = match_candidate(candidate.clone(), type_config);
     let fields = resolved
         .fields
         .into_iter()
@@ -76,6 +76,10 @@ pub(crate) async fn review_external_candidate(
         .collect();
     Ok(Json(ExternalReviewResponse {
         entity_type: resolved.entity_type,
+        // The enriched candidate (its enrichment marker already consumed):
+        // clients echo it to apply, which then passes it through unchanged
+        // instead of resolving provider detail a second time.
+        candidate,
         fields,
         sections,
     }))

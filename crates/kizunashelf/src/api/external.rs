@@ -43,7 +43,7 @@ use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, OnceLock};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use super::assets::download_new_entity_covers;
 use super::episodes::import_new_entity_episodes;
@@ -1310,72 +1310,6 @@ pub(super) async fn send_limited(
     }
 }
 
-/// How long a cached provider GET-by-id response stays fresh. Deliberately short:
-/// this exists to *coalesce* the identical requests one action fans out, not to be
-/// a real cache — the payloads are effectively static reference data.
-const RESPONSE_CACHE_TTL: Duration = Duration::from_secs(300);
-
-/// Process-wide, single-flighted cache for idempotent provider GET-by-id fetches
-/// (see [`cached_json_get`]).
-#[derive(Default)]
-struct ResponseCache {
-    entries: tokio::sync::Mutex<HashMap<String, (Instant, Arc<Value>)>>,
-    locks: tokio::sync::Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
-}
-
-fn response_cache() -> &'static ResponseCache {
-    static CACHE: OnceLock<ResponseCache> = OnceLock::new();
-    CACHE.get_or_init(ResponseCache::default)
-}
-
-async fn cached_response(cache: &ResponseCache, key: &str) -> Option<Arc<Value>> {
-    let entries = cache.entries.lock().await;
-    entries.get(key).and_then(|(at, value)| {
-        (Instant::now().duration_since(*at) < RESPONSE_CACHE_TTL).then(|| Arc::clone(value))
-    })
-}
-
-/// Returns a fresh cached response for `key`, else runs `fetch` — single-flighted
-/// per key so concurrent identical requests collapse to one call. The motivating
-/// case: a pasted provider URL is searched once per entity type that maps the
-/// provider, and every one resolves the *same* record; without this that's N
-/// identical requests for one paste, an easy way to trip a provider's rate limit.
-/// `key` must uniquely identify the request (its URL). Only successful responses
-/// are cached, so a transient failure is retried rather than remembered.
-pub(super) async fn cached_json_get<F, Fut>(key: &str, fetch: F) -> Result<Arc<Value>, ApiError>
-where
-    F: FnOnce() -> Fut,
-    Fut: Future<Output = Result<Value, ApiError>>,
-{
-    let cache = response_cache();
-    if let Some(value) = cached_response(cache, key).await {
-        return Ok(value);
-    }
-    // Take the per-key lock so concurrent callers for the same URL wait here and
-    // reuse the first fetch's result instead of each hitting the provider.
-    let lock = {
-        let mut locks = cache.locks.lock().await;
-        Arc::clone(locks.entry(key.to_string()).or_default())
-    };
-    let _guard = lock.lock().await;
-    // Another caller may have populated the cache while we waited for the lock.
-    if let Some(value) = cached_response(cache, key).await {
-        return Ok(value);
-    }
-    let value = Arc::new(fetch().await?);
-    {
-        let mut entries = cache.entries.lock().await;
-        let now = Instant::now();
-        entries.retain(|_, (at, _)| now.duration_since(*at) < RESPONSE_CACHE_TTL);
-        entries.insert(key.to_string(), (now, Arc::clone(&value)));
-    }
-    // The result is cached now, so no later caller needs this per-key lock; drop it
-    // to keep the lock map from growing with every distinct URL. Callers already
-    // waiting hold their own clone, so they still re-check the (now-populated) cache.
-    cache.locks.lock().await.remove(key);
-    Ok(value)
-}
-
 /// Single-flighted cached-token acquisition shared by the OAuth/login providers
 /// (IGDB, TheTVDB). Returns the cached access token when still fresh;
 /// otherwise takes the per-provider lock, re-checks the cache, and on a miss runs
@@ -1818,41 +1752,6 @@ mod tests {
         // Wholly unknown hosts belong to nobody → Quick Capture searches nothing.
         assert_eq!(url_owner("https://example.com/foo/123456"), None);
         assert_eq!(url_owner("https://nintendo.com/store/games/x"), None);
-    }
-
-    #[tokio::test]
-    async fn cached_json_get_coalesces_concurrent_identical_fetches() {
-        use std::sync::atomic::{AtomicUsize, Ordering};
-
-        let calls = Arc::new(AtomicUsize::new(0));
-        // A unique key so the process-wide cache can't collide with another test.
-        let key = "test://coalesce/subject/541285";
-        let futures = (0..5).map(|_| {
-            let calls = Arc::clone(&calls);
-            async move {
-                cached_json_get(key, || {
-                    let calls = Arc::clone(&calls);
-                    async move {
-                        // Yield so the other four callers reach the per-key lock
-                        // before this fetch completes — exercising single-flight,
-                        // not just cache reuse.
-                        tokio::task::yield_now().await;
-                        calls.fetch_add(1, Ordering::SeqCst);
-                        Ok(serde_json::json!({ "id": 541285 }))
-                    }
-                })
-                .await
-            }
-        });
-        let results = futures_util::future::join_all(futures).await;
-        assert!(results.iter().all(|result| result.is_ok()));
-        assert_eq!(
-            calls.load(Ordering::SeqCst),
-            1,
-            "five concurrent identical GETs must fetch once"
-        );
-        let first = results[0].as_ref().ok().expect("first get ok");
-        assert_eq!(first["id"], 541285);
     }
 
     #[test]
