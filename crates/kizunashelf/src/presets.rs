@@ -1137,17 +1137,19 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                     "參加的演出、展覽與活動。",
                 ),
                 // NeoDB performances (theatre, musicals, stage plays) are the
-                // one catalog covering live events; key-less, so a safe default
-                // for every language even though coverage skews zh/ja.
-                providers: &["neodb"],
-                external_types: &[("neodb", &["performance"])],
-                title_sources: &[("neodb", "title")],
-                original_title: Some(&[("neodb", "original_title")]),
-                cover_sources: &[("neodb", "cover_url")],
-                summary_sources: &[("neodb", "description")],
-                // Deliberately empty: the event date is the *attendance* date
-                // (role Event), not the production's opening date.
-                date_sources: &[],
+                // one catalog covering live events, but its coverage is
+                // overwhelmingly Chinese — seed it only for zh; every other
+                // language starts provider-less, like the hub types.
+                providers: ctx.pick(&["neodb"], &[], &[]),
+                external_types: ctx.pick(&[("neodb", &["performance"])], &[], &[]),
+                title_sources: ctx.pick(&[("neodb", "title")], &[], &[]),
+                original_title: ctx.pick(Some(&[("neodb", "original_title")]), None, None),
+                cover_sources: ctx.pick(&[("neodb", "cover_url")], &[], &[]),
+                summary_sources: ctx.pick(&[("neodb", "description")], &[], &[]),
+                // The event date is the *attendance* date (role Event); the
+                // production's run start is still the best default a catalog
+                // can offer, so seed it and let the user adjust on review.
+                date_sources: ctx.pick(&[("neodb", "opening_date")], &[], &[]),
                 statuses: Some(&EVENT_STATUS),
                 name_based: false,
                 primary_date: PrimaryDate::EventDate,
@@ -1156,7 +1158,11 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 progress: None,
                 list: None,
                 extras: EVENT_EXTRAS,
-                relations: &[EVENT_ARTIST_REL, FRANCHISE_REL],
+                relations: ctx.pick(
+                    &[EVENT_ARTIST_REL, FRANCHISE_REL],
+                    &[EVENT_ARTIST_PLAIN_REL, FRANCHISE_REL],
+                    &[EVENT_ARTIST_PLAIN_REL, FRANCHISE_REL],
+                ),
                 log_hashtag: Some(l("Event", "イベント", "活动", "活動")),
             },
         ),
@@ -1214,6 +1220,14 @@ const EVENT_ARTIST_REL: RelationSpec = RelationSpec {
     label: l("Artist", "アーティスト", "艺术家", "藝術家"),
     target: "artist",
     sources: &[("neodb", "performers")],
+};
+/// [`EVENT_ARTIST_REL`] without the NeoDB wiring — the event preset outside zh
+/// ships provider-less, so its artist link is a bare relation.
+const EVENT_ARTIST_PLAIN_REL: RelationSpec = RelationSpec {
+    field: "artist",
+    label: l("Artist", "アーティスト", "艺术家", "藝術家"),
+    target: "artist",
+    sources: &[],
 };
 const GROUPS_REL: RelationSpec = RelationSpec {
     field: "groups",
@@ -1838,6 +1852,7 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
                 ctx.text(l("Date", "開催日", "日期", "日期")),
             );
             date.date_role = Some(DateRole::Event);
+            date.external_fields = source_mappings(spec.date_sources);
             fields.push(date);
         }
     }
@@ -2437,6 +2452,32 @@ mod tests {
     }
 
     #[test]
+    fn event_preset_is_neodb_backed_only_for_zh() {
+        // NeoDB's performance catalog is overwhelmingly Chinese, so only zh
+        // seeds it — including the run's opening date as the event-date
+        // default (the user adjusts it to the attended date on review).
+        let zh = resolve(vec![], &["event"], Some("zh-Hans")).types.remove(0);
+        assert_eq!(zh.external_priority, vec!["neodb".to_string()]);
+        assert!(find_field(&zh, "neodb_url").is_some());
+        assert!(find_field(&zh, "title_original").is_some());
+        let date = find_field(&zh, "date").expect("event date");
+        assert_eq!(date.date_role, Some(DateRole::Event));
+        assert_mapping(date, "neodb", "opening_date");
+
+        for language in [None, Some("ja"), Some("en")] {
+            let other = resolve(vec![], &["event"], language).types.remove(0);
+            assert!(
+                other.external_priority.is_empty(),
+                "{language:?} event preset should be provider-less"
+            );
+            assert!(find_field(&other, "neodb_url").is_none());
+            assert!(find_field(&other, "title_original").is_none());
+            let date = find_field(&other, "date").expect("event date");
+            assert!(date.external_fields.is_empty());
+        }
+    }
+
+    #[test]
     fn every_media_preset_has_a_status_role() {
         // The bug the presets fix vs. the old templates: status-driven behavior
         // needs enumRole + statusValues on the status field.
@@ -2478,8 +2519,9 @@ mod tests {
         assert!(artist.relation_type.is_none());
         assert_mapping(artist, "musicbrainz", "artists");
 
-        // Same for event performers and the credit-wired franchise links.
-        let event = resolve(vec![], &["event"], None).types.remove(0);
+        // Same for event performers (zh — elsewhere the event preset is
+        // provider-less) and the credit-wired franchise links.
+        let event = resolve(vec![], &["event"], Some("zh")).types.remove(0);
         let performer = find_field(&event, "artist").expect("performer fallback");
         assert_eq!(performer.field_type, FieldType::TextList);
         assert_mapping(performer, "neodb", "performers");
@@ -2898,23 +2940,26 @@ mod tests {
 
     #[test]
     fn provider_credits_map_into_relations_when_targets_survive_resolution() {
-        for (preset_id, target_id, field_name, expected) in [
+        for (preset_id, target_id, field_name, language, expected) in [
             (
                 "games",
                 "franchise",
                 "franchise",
+                None,
                 &[("igdb", "franchise")][..],
             ),
             (
                 "books",
                 "franchise",
                 "franchise",
+                None,
                 &[("neodb", "series")][..],
             ),
             (
                 "music",
                 "artist",
                 "artist",
+                None,
                 &[
                     ("musicbrainz", "artists"),
                     ("applemusic", "artists"),
@@ -2926,17 +2971,26 @@ mod tests {
                 "podcast",
                 "artist",
                 "host",
+                None,
                 &[("applepodcast", "host"), ("neodb", "hosts")][..],
             ),
-            ("event", "artist", "artist", &[("neodb", "performers")][..]),
+            // NeoDB backs the event preset only for zh.
+            (
+                "event",
+                "artist",
+                "artist",
+                Some("zh"),
+                &[("neodb", "performers")][..],
+            ),
             (
                 "character",
                 "artist",
                 "voice_by",
+                None,
                 &[("bangumi", "voice_actors")][..],
             ),
         ] {
-            let result = resolve(vec![], &[preset_id, target_id], None);
+            let result = resolve(vec![], &[preset_id, target_id], language);
             let relation = find_field(find_type(&result, preset_id), field_name)
                 .unwrap_or_else(|| panic!("{preset_id}.{field_name} relation missing"));
             assert_eq!(relation.relation_type.as_deref(), Some(target_id));
