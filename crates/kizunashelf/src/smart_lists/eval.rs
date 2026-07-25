@@ -7,9 +7,9 @@ use super::model::{
     FieldRef, FilterNode,
 };
 use crate::daily_notes::normalize_wikilink_target;
-use crate::dates::parsed_date_sort_key;
+use crate::dates::{parsed_date_sort_key, season_key};
 use crate::library::find_target;
-use crate::types::{EntityRecord, Library};
+use crate::types::{EntityRecord, FieldType, Library};
 use chrono::{DateTime, Months, NaiveDate, Utc};
 use std::collections::HashMap;
 
@@ -200,6 +200,42 @@ pub(super) fn note_value(
     record.frontmatter.get(name).cloned()
 }
 
+/// The schema `FieldType` a `note.<field>` reference resolves to for one
+/// record, or `None` when the record's own type doesn't declare that field.
+/// The record's type decides, never the field's name — the same key can be
+/// declared differently by another type.
+pub(super) fn note_field_type(
+    name: &str,
+    record: &EntityRecord,
+    ctx: &EvalContext,
+) -> Option<FieldType> {
+    ctx.library
+        .config
+        .type_config(&record.summary.entity_type)?
+        .fields
+        .iter()
+        .find(|field| field.field == name)
+        .map(|field| field.field_type)
+}
+
+fn is_season_field(field: &FieldRef, record: &EntityRecord, ctx: &EvalContext) -> bool {
+    let FieldRef::Note(name) = field else {
+        return false;
+    };
+    note_field_type(name, record, ctx) == Some(FieldType::Season)
+}
+
+/// Whether two values name the same season. `None` — "not a season question" —
+/// when the field isn't a schema season field or either side doesn't resolve to
+/// a year *and* a season, and the caller then compares raw text. That fallback
+/// is what keeps `note.season.contains("2024")` a plain substring test.
+fn same_season(season_field: bool, value: &str, wanted: &str) -> Option<bool> {
+    if !season_field {
+        return None;
+    }
+    Some(season_key(value)? == season_key(wanted)?)
+}
+
 /// The string a text operation (`contains`, `startsWith`, …) reads for a field
 /// reference; `None` for missing/non-scalar values.
 fn field_string(field: &FieldRef, record: &EntityRecord) -> Option<String> {
@@ -216,21 +252,27 @@ fn field_string(field: &FieldRef, record: &EntityRecord) -> Option<String> {
 }
 
 /// `contains` semantics per the value's own type: membership on a list value,
-/// substring on a string value (both case-sensitive, like Bases).
+/// substring on a string value (both case-sensitive, like Bases). On a schema
+/// season field a season-naming argument matches by season instead, so
+/// `containsAny("Spring 2024")` finds a note whose value reads `2024年春`.
 fn field_contains(
     field: &FieldRef,
     wanted: &str,
     record: &EntityRecord,
     ctx: &EvalContext,
 ) -> bool {
+    let season_field = is_season_field(field, record, ctx);
     if let FieldRef::Note(name) = field {
         if let Some(serde_json::Value::Array(items)) = note_value(name, record, ctx) {
             return items
                 .iter()
-                .any(|item| json_scalar_string(item).as_deref() == Some(wanted));
+                .filter_map(json_scalar_string)
+                .any(|item| same_season(season_field, &item, wanted).unwrap_or(item == wanted));
         }
     }
-    field_string(field, record).is_some_and(|value| value.contains(wanted))
+    field_string(field, record).is_some_and(|value| {
+        same_season(season_field, &value, wanted).unwrap_or_else(|| value.contains(wanted))
+    })
 }
 
 pub(super) fn json_scalar_string(value: &serde_json::Value) -> Option<String> {
@@ -270,8 +312,15 @@ fn eval_compare(
             op,
             value,
             ctx,
+            false,
         ),
-        FieldRef::Note(name) => compare_scalar(note_value(name, record, ctx), op, value, ctx),
+        FieldRef::Note(name) => compare_scalar(
+            note_value(name, record, ctx),
+            op,
+            value,
+            ctx,
+            is_season_field(field, record, ctx),
+        ),
     }
 }
 
@@ -283,6 +332,7 @@ fn compare_scalar(
     op: CompareOp,
     value: &CompareValue,
     ctx: &EvalContext,
+    season_field: bool,
 ) -> bool {
     let ordering = actual.and_then(|actual| match value {
         CompareValue::Number(rhs) => {
@@ -299,7 +349,18 @@ fn compare_scalar(
         },
         CompareValue::String(rhs) => {
             let lhs = json_scalar_string(&actual)?;
-            Some(lhs.as_str().cmp(rhs.as_str()))
+            // On a season field both sides name a season, so they compare as
+            // the season they name rather than as text: `2024年春` equals
+            // `Spring 2024`, and `2023 Fall` is genuinely earlier than both
+            // (alphabetically it wouldn't be). Anything that doesn't resolve to
+            // a season on either side compares as plain text.
+            let seasons = season_field
+                .then(|| season_key(&lhs).zip(season_key(rhs)))
+                .flatten();
+            Some(match &seasons {
+                Some((lhs, rhs)) => lhs.cmp(rhs),
+                None => lhs.as_str().cmp(rhs.as_str()),
+            })
         }
         CompareValue::Date(date) => {
             let lhs = json_scalar_string(&actual)

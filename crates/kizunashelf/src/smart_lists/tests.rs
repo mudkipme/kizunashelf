@@ -943,6 +943,94 @@ fn an_explicit_view_sort_wins_over_relevance() {
 }
 
 #[test]
+fn season_rules_match_the_season_a_value_names_not_its_text() {
+    let library = library(
+        vec![
+            record("anime:a", "Alpha", json!({"season": "2024年春"})),
+            record("anime:b", "Beta", json!({"season": "Spring 2024"})),
+            record("anime:c", "Gamma", json!({"season": "2024 Fall"})),
+            record("anime:d", "Delta", json!({"season": "2023年春季"})),
+            // A season field may hold several seasons; membership tests each.
+            record(
+                "anime:e",
+                "Eps",
+                json!({"season": ["2025 Winter", "2024 Fall"]}),
+            ),
+        ],
+        Vec::new(),
+    );
+    let ctx = fixed_ctx(&library);
+    let matches = |expression: &str| -> Vec<&str> {
+        library
+            .records
+            .iter()
+            .filter(|record| eval_expr(expression, record, &ctx) == Some(true))
+            .map(|record| record.summary.id.as_str())
+            .collect()
+    };
+
+    // Equality is by season, so the Japanese, English and Chinese spellings of
+    // the same season all match one rule — this is what makes a `.base` written
+    // in the field's own season language work against a hand-edited vault.
+    assert_eq!(
+        matches(r#"note.season == "Spring 2024""#),
+        ["anime:a", "anime:b"]
+    );
+    assert_eq!(
+        matches(r#"note.season == "2024年春""#),
+        ["anime:a", "anime:b"]
+    );
+    assert_eq!(
+        matches(r#"note.season.containsAny("Spring 2024", "Autumn 2024")"#),
+        ["anime:a", "anime:b", "anime:c", "anime:e"]
+    );
+    // A bare year names no season, so it stays a plain text test — Bases' own
+    // semantics, which on a *list* value is membership rather than substring
+    // (Eps is missed). That asymmetry is why the builder's "year is" rule
+    // enumerates the year's four seasons instead of matching the year text.
+    assert_eq!(
+        matches(r#"note.season.contains("2024")"#),
+        ["anime:a", "anime:b", "anime:c"]
+    );
+    assert_eq!(
+        matches(
+            r#"note.season.containsAny("Winter 2024", "Spring 2024", "Summer 2024", "Autumn 2024")"#
+        ),
+        ["anime:a", "anime:b", "anime:c", "anime:e"]
+    );
+    // Ordering is chronological. Alphabetically `2023年春季` would sort *after*
+    // `2023 Fall` (年 outranks a space), so this would match Delta too.
+    assert_eq!(
+        matches(r#"note.season > "Autumn 2023""#),
+        ["anime:a", "anime:b", "anime:c"]
+    );
+}
+
+#[test]
+fn only_season_fields_compare_as_seasons() {
+    let library = library(
+        vec![record(
+            "anime:a",
+            "Alpha",
+            json!({"season": "2024年春", "started": "2024年春"}),
+        )],
+        Vec::new(),
+    );
+    let ctx = fixed_ctx(&library);
+    let record = &library.records[0];
+    // `started` is a plain date field: its value is compared as written, so the
+    // English spelling doesn't match. Only the schema decides — never the name.
+    assert_eq!(
+        eval_expr(r#"note.started == "Spring 2024""#, record, &ctx),
+        Some(false)
+    );
+    assert_eq!(
+        eval_expr(r#"note.season == "Spring 2024""#, record, &ctx),
+        Some(true)
+    );
+}
+
+#[test]
 fn season_fields_sort_chronologically_not_alphabetically() {
     let raw = r#"views:
   - type: table

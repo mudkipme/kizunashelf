@@ -260,32 +260,32 @@ msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, one {# field} other {# fields}}"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:191
+#: src/components/smart-lists/rule-builder.tsx:237
 msgid "<"
 msgstr "<"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:187
+#: src/components/smart-lists/rule-builder.tsx:233
 msgid "="
 msgstr "="
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:188
+#: src/components/smart-lists/rule-builder.tsx:234
 msgid "≠"
 msgstr "≠"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:189
+#: src/components/smart-lists/rule-builder.tsx:235
 msgid ">"
 msgstr ">"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:192
+#: src/components/smart-lists/rule-builder.tsx:238
 msgid "≤"
 msgstr "≤"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:190
+#: src/components/smart-lists/rule-builder.tsx:236
 msgid "≥"
 msgstr "≥"
 
@@ -385,7 +385,7 @@ msgstr "Add enum options above to map them to statuses."
 msgid "Add Field"
 msgstr "Add Field"
 
-#: src/components/smart-lists/rule-builder.tsx:586
+#: src/components/smart-lists/rule-builder.tsx:679
 msgid "Add group"
 msgstr "Add group"
 
@@ -402,19 +402,27 @@ msgstr "Add manually"
 msgid "Add path or URL"
 msgstr "Add path or URL"
 
-#: src/components/smart-lists/rule-builder.tsx:571
-#: src/components/smart-lists/rule-builder.tsx:652
+#: src/components/smart-lists/rule-builder.tsx:664
+#: src/components/smart-lists/rule-builder.tsx:745
 msgid "Add rule"
 msgstr "Add rule"
+
+#: src/components/smart-lists/rule-builder.tsx:951
+msgid "Add season"
+msgstr "Add season"
 
 #: src/pages/list-detail-page.tsx:445
 msgid "Add section"
 msgstr "Add section"
 
 #: src/components/entities/metadata-inputs.tsx:157
-#: src/components/smart-lists/rule-builder.tsx:877
+#: src/components/smart-lists/rule-builder.tsx:988
 msgid "Add value"
 msgstr "Add value"
+
+#: src/components/smart-lists/rule-builder.tsx:951
+msgid "Add year"
+msgstr "Add year"
 
 #: src/components/settings/preset-picker.tsx:343
 #: src/pages/list-detail-page.tsx:911
@@ -443,7 +451,7 @@ msgstr "adds new section"
 msgid "Advanced: edit full schema"
 msgstr "Advanced: edit full schema"
 
-#: src/components/smart-lists/rule-builder.tsx:676
+#: src/components/smart-lists/rule-builder.tsx:769
 #: src/pages/activity-page.tsx:41
 msgid "All"
 msgstr "All"
@@ -482,7 +490,7 @@ msgstr "All types"
 msgid "All types ({0})"
 msgstr "All types ({0})"
 
-#: src/components/smart-lists/rule-builder.tsx:805
+#: src/components/smart-lists/rule-builder.tsx:898
 msgid "Amount"
 msgstr "Amount"
 
@@ -490,12 +498,12 @@ msgstr "Amount"
 msgid "Anime"
 msgstr "Anime"
 
-#: src/components/smart-lists/rule-builder.tsx:677
+#: src/components/smart-lists/rule-builder.tsx:770
 msgid "Any"
 msgstr "Any"
 
 #. Rule-builder field standing for a link from anywhere in the note, rather than from one relation field
-#: src/components/smart-lists/rule-builder.tsx:164
+#: src/components/smart-lists/rule-builder.tsx:202
 msgid "Any link"
 msgstr "Any link"
 
@@ -699,7 +707,7 @@ msgstr "Connections"
 
 #. Text rule operator: substring match
 #. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)
-#: src/components/smart-lists/rule-builder.tsx:210
+#: src/components/smart-lists/rule-builder.tsx:256
 #: src/components/smart-lists/rule-format.ts:40
 msgid "contains"
 msgstr "contains"
@@ -710,12 +718,12 @@ msgid "contains all"
 msgstr "contains all"
 
 #. Rule operator: list field contains all of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:177
+#: src/components/smart-lists/rule-builder.tsx:215
 msgid "contains all of"
 msgstr "contains all of"
 
 #. Rule operator: list field contains any of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:173
+#: src/components/smart-lists/rule-builder.tsx:211
 msgid "contains any of"
 msgstr "contains any of"
 
@@ -826,7 +834,7 @@ msgid "date"
 msgstr "date"
 
 #: src/components/assets/quick-log-dialog.tsx:129
-#: src/components/smart-lists/rule-builder.tsx:831
+#: src/components/smart-lists/rule-builder.tsx:924
 #: src/pages/activity-page.tsx:275
 msgid "Date"
 msgstr "Date"
@@ -853,7 +861,7 @@ msgid "Dates & episodes"
 msgstr "Dates & episodes"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:223
+#: src/components/smart-lists/rule-builder.tsx:269
 msgid "days"
 msgstr "days"
 
@@ -922,12 +930,12 @@ msgid "Display name"
 msgstr "Display name"
 
 #. Rule operator: field does not contain the value(s)
-#: src/components/smart-lists/rule-builder.tsx:181
+#: src/components/smart-lists/rule-builder.tsx:219
 msgid "does not contain"
 msgstr "does not contain"
 
 #. Relation rule operator: note does not link to the entity
-#: src/components/smart-lists/rule-builder.tsx:214
+#: src/components/smart-lists/rule-builder.tsx:260
 msgid "does not link to"
 msgstr "does not link to"
 
@@ -1019,7 +1027,7 @@ msgstr "Enable"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title ends with !'
-#: src/components/smart-lists/rule-builder.tsx:212
+#: src/components/smart-lists/rule-builder.tsx:258
 #: src/components/smart-lists/rule-format.ts:54
 msgid "ends with"
 msgstr "ends with"
@@ -1032,7 +1040,7 @@ msgstr "English"
 msgid "Entities"
 msgstr "Entities"
 
-#: src/components/smart-lists/rule-builder.tsx:980
+#: src/components/smart-lists/rule-builder.tsx:1091
 msgid "Entity name"
 msgstr "Entity name"
 
@@ -1102,7 +1110,7 @@ msgstr "Fetching your library from {0}…"
 #: src/components/settings/settings-dialogs.tsx:396
 #: src/components/settings/settings-dialogs.tsx:406
 #: src/components/settings/settings-sections.tsx:611
-#: src/components/smart-lists/rule-builder.tsx:728
+#: src/components/smart-lists/rule-builder.tsx:821
 msgid "Field"
 msgstr "Field"
 
@@ -1115,7 +1123,7 @@ msgid "File"
 msgstr "File"
 
 #. Rule-builder field for the note's file name (its title)
-#: src/components/smart-lists/rule-builder.tsx:156
+#: src/components/smart-lists/rule-builder.tsx:194
 #: src/pages/entity-create-page.tsx:108
 msgid "File name"
 msgstr "File name"
@@ -1187,13 +1195,13 @@ msgstr "Grid"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'
 #. Rule operator: field has any value
-#: src/components/smart-lists/rule-builder.tsx:172
+#: src/components/smart-lists/rule-builder.tsx:210
 #: src/components/smart-lists/rule-format.ts:58
 msgid "has a value"
 msgstr "has a value"
 
 #. Tags rule operator: has any of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:218
+#: src/components/smart-lists/rule-builder.tsx:264
 msgid "has any of"
 msgstr "has any of"
 
@@ -1202,7 +1210,7 @@ msgid "Has date"
 msgstr "Has date"
 
 #. Tags rule operator: has none of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:219
+#: src/components/smart-lists/rule-builder.tsx:265
 msgid "has none of"
 msgstr "has none of"
 
@@ -1282,7 +1290,7 @@ msgid "in list"
 msgstr "in list"
 
 #. Date rule operator: within the last N days/weeks/months/years
-#: src/components/smart-lists/rule-builder.tsx:198
+#: src/components/smart-lists/rule-builder.tsx:244
 msgid "in the last"
 msgstr "in the last"
 
@@ -1292,54 +1300,59 @@ msgid "Include {0}"
 msgstr "Include {0}"
 
 #. Rule operator: field equals the value
-#: src/components/smart-lists/rule-builder.tsx:169
+#: src/components/smart-lists/rule-builder.tsx:207
 msgid "is"
 msgstr "is"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:196
+#: src/components/smart-lists/rule-builder.tsx:242
 msgid "is after"
 msgstr "is after"
 
+#. Rule operator: season field is one of the chosen seasons
+#: src/components/smart-lists/rule-builder.tsx:223
+msgid "is any of"
+msgstr "is any of"
+
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:194
+#: src/components/smart-lists/rule-builder.tsx:240
 msgid "is before"
 msgstr "is before"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'
 #. Rule operator: field has no value
-#: src/components/smart-lists/rule-builder.tsx:171
+#: src/components/smart-lists/rule-builder.tsx:209
 #: src/components/smart-lists/rule-format.ts:62
 msgid "is empty"
 msgstr "is empty"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:186
+#: src/components/smart-lists/rule-builder.tsx:232
 msgid "is no"
 msgstr "is no"
 
 #. Rule operator: field does not equal the value
-#: src/components/smart-lists/rule-builder.tsx:170
+#: src/components/smart-lists/rule-builder.tsx:208
 msgid "is not"
 msgstr "is not"
 
 #. Date rule operator: on this exact day/period
-#: src/components/smart-lists/rule-builder.tsx:193
+#: src/components/smart-lists/rule-builder.tsx:239
 msgid "is on"
 msgstr "is on"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:197
+#: src/components/smart-lists/rule-builder.tsx:243
 msgid "is on or after"
 msgstr "is on or after"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:195
+#: src/components/smart-lists/rule-builder.tsx:241
 msgid "is on or before"
 msgstr "is on or before"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:185
+#: src/components/smart-lists/rule-builder.tsx:231
 msgid "is yes"
 msgstr "is yes"
 
@@ -1435,7 +1448,7 @@ msgstr "line {0}"
 msgid "Line format"
 msgstr "Line format"
 
-#: src/components/smart-lists/rule-builder.tsx:981
+#: src/components/smart-lists/rule-builder.tsx:1092
 msgid "Link target"
 msgstr "Link target"
 
@@ -1453,7 +1466,7 @@ msgstr "Links"
 
 #. Relation rule operator: note links to the entity
 #. Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'
-#: src/components/smart-lists/rule-builder.tsx:213
+#: src/components/smart-lists/rule-builder.tsx:259
 #: src/components/smart-lists/rule-format.ts:66
 msgid "links to"
 msgstr "links to"
@@ -1587,7 +1600,7 @@ msgstr "Marks as {0}"
 msgid "Match"
 msgstr "Match"
 
-#: src/components/smart-lists/rule-builder.tsx:672
+#: src/components/smart-lists/rule-builder.tsx:765
 msgid "Match mode"
 msgstr "Match mode"
 
@@ -1606,7 +1619,7 @@ msgid "Missing Cover"
 msgstr "Missing Cover"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:225
+#: src/components/smart-lists/rule-builder.tsx:271
 msgid "months"
 msgstr "months"
 
@@ -1866,7 +1879,7 @@ msgstr "No vaults yet."
 #: src/components/settings/settings-sections.tsx:690
 #: src/components/settings/settings-sections.tsx:743
 #: src/components/settings/settings-sections.tsx:788
-#: src/components/smart-lists/rule-builder.tsx:678
+#: src/components/smart-lists/rule-builder.tsx:771
 msgid "None"
 msgstr "None"
 
@@ -1911,8 +1924,8 @@ msgstr "Nothing here yet"
 msgid "Nothing to log for this type."
 msgstr "Nothing to log for this type."
 
-#: src/components/smart-lists/rule-builder.tsx:541
-#: src/components/smart-lists/rule-builder.tsx:621
+#: src/components/smart-lists/rule-builder.tsx:634
+#: src/components/smart-lists/rule-builder.tsx:714
 msgid "of the following match:"
 msgstr "of the following match:"
 
@@ -1929,7 +1942,7 @@ msgid "Off"
 msgstr "Off"
 
 #. Date rule operator: earlier than N days/weeks/months/years ago
-#: src/components/smart-lists/rule-builder.tsx:202
+#: src/components/smart-lists/rule-builder.tsx:248
 msgid "older than"
 msgstr "older than"
 
@@ -1974,7 +1987,7 @@ msgstr "Open navigation"
 msgid "Open or create a vault to get started."
 msgstr "Open or create a vault to get started."
 
-#: src/components/smart-lists/rule-builder.tsx:750
+#: src/components/smart-lists/rule-builder.tsx:843
 msgid "Operator"
 msgstr "Operator"
 
@@ -2156,7 +2169,7 @@ msgstr "Remove external field mapping"
 msgid "Remove field"
 msgstr "Remove field"
 
-#: src/components/smart-lists/rule-builder.tsx:628
+#: src/components/smart-lists/rule-builder.tsx:721
 msgid "Remove group"
 msgstr "Remove group"
 
@@ -2172,8 +2185,8 @@ msgstr "Remove image"
 msgid "Remove item"
 msgstr "Remove item"
 
-#: src/components/smart-lists/rule-builder.tsx:710
-#: src/components/smart-lists/rule-builder.tsx:772
+#: src/components/smart-lists/rule-builder.tsx:803
+#: src/components/smart-lists/rule-builder.tsx:865
 msgid "Remove rule"
 msgstr "Remove rule"
 
@@ -2539,7 +2552,7 @@ msgstr "Starting…"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title starts with My'
-#: src/components/smart-lists/rule-builder.tsx:211
+#: src/components/smart-lists/rule-builder.tsx:257
 #: src/components/smart-lists/rule-format.ts:50
 msgid "starts with"
 msgstr "starts with"
@@ -2609,7 +2622,7 @@ msgstr "System theme. Switch to light theme."
 #: src/components/entities/metadata-editor.tsx:86
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:265
-#: src/components/smart-lists/rule-builder.tsx:155
+#: src/components/smart-lists/rule-builder.tsx:193
 msgid "Tags"
 msgstr "Tags"
 
@@ -2755,7 +2768,7 @@ msgstr "UI in English"
 msgid "Ungrouped"
 msgstr "Ungrouped"
 
-#: src/components/smart-lists/rule-builder.tsx:812
+#: src/components/smart-lists/rule-builder.tsx:905
 msgid "Unit"
 msgstr "Unit"
 
@@ -2801,7 +2814,7 @@ msgid "Update time"
 msgstr "Update time"
 
 #. Rule-builder field for the note file's last-modified time
-#: src/components/smart-lists/rule-builder.tsx:160
+#: src/components/smart-lists/rule-builder.tsx:198
 msgid "Updated"
 msgstr "Updated"
 
@@ -2815,13 +2828,14 @@ msgstr "Upload failed."
 msgid "Used as"
 msgstr "Used as"
 
-#: src/components/smart-lists/rule-builder.tsx:845
-#: src/components/smart-lists/rule-builder.tsx:858
-#: src/components/smart-lists/rule-builder.tsx:902
+#: src/components/smart-lists/rule-builder.tsx:938
+#: src/components/smart-lists/rule-builder.tsx:969
+#: src/components/smart-lists/rule-builder.tsx:1013
 msgid "Value"
 msgstr "Value"
 
-#: src/components/smart-lists/rule-builder.tsx:878
+#: src/components/smart-lists/rule-builder.tsx:952
+#: src/components/smart-lists/rule-builder.tsx:989
 msgid "Values"
 msgstr "Values"
 
@@ -2877,7 +2891,7 @@ msgid "Watchlist"
 msgstr "Watchlist"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:224
+#: src/components/smart-lists/rule-builder.tsx:270
 msgid "weeks"
 msgstr "weeks"
 
@@ -2896,7 +2910,7 @@ msgid "Will be created as “{0}.md”, from the title."
 msgstr "Will be created as “{0}.md”, from the title."
 
 #. Date rule operator: no later than N days/weeks/months/years from now
-#: src/components/smart-lists/rule-builder.tsx:206
+#: src/components/smart-lists/rule-builder.tsx:252
 msgid "within the next"
 msgstr "within the next"
 
@@ -2904,8 +2918,13 @@ msgstr "within the next"
 msgid "YAML"
 msgstr "YAML"
 
+#. Rule operator: the season falls in one of the chosen years
+#: src/components/smart-lists/rule-builder.tsx:227
+msgid "year is"
+msgstr "year is"
+
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:226
+#: src/components/smart-lists/rule-builder.tsx:272
 msgid "years"
 msgstr "years"
 

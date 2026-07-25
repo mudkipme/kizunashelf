@@ -2,13 +2,13 @@
 //! free-text search, sort by the view's keys (schema-aware date keys,
 //! absent-last), truncate to its limit.
 
-use super::eval::{json_scalar_string, note_value, record_matches, EvalContext};
+use super::eval::{json_scalar_string, note_field_type, note_value, record_matches, EvalContext};
 use super::model::{SmartList, SmartView, SortProperty, ViewSort};
 use crate::dates::parsed_date_sort_key;
 use crate::entities::entity_match_score;
 use crate::library::compare_string_for_title_language;
 use crate::relations::SortDirection;
-use crate::types::EntityRecord;
+use crate::types::{EntityRecord, FieldType};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -198,19 +198,10 @@ fn compare_sort_values(a: &SortValue, b: &SortValue) -> Ordering {
 /// season* fields sort by the normalized date key (so fuzzy values like
 /// `2024 Spring` order correctly); everything else sorts by its own value type.
 fn note_sort_value(field: &str, record: &EntityRecord, ctx: &EvalContext) -> Option<SortValue> {
-    let is_date_field = ctx
-        .library
-        .config
-        .type_config(&record.summary.entity_type)
-        .is_some_and(|type_config| {
-            type_config.fields.iter().any(|field_config| {
-                field_config.field == field
-                    && matches!(
-                        field_config.field_type,
-                        crate::types::FieldType::Date | crate::types::FieldType::Season
-                    )
-            })
-        });
+    let is_date_field = matches!(
+        note_field_type(field, record, ctx),
+        Some(FieldType::Date | FieldType::Season)
+    );
     if is_date_field {
         // The derived date values are already normalized and flattened, so a
         // list-valued season/date field sorts by its first entry — the key the

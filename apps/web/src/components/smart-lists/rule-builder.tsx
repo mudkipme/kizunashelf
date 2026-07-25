@@ -7,11 +7,20 @@ import { CopyPlusIcon, PlusIcon, XIcon } from "lucide-react";
 import { isAbortError } from "@/api/client";
 import { useRelationSearch } from "@/api/use-relation-search";
 import { formatRule } from "@/components/smart-lists/rule-format";
+import {
+  normalizeSeasonLanguage,
+  seasonValueOptions,
+  seasonYearOptions,
+  seasonsOfYear,
+  wholeYearsOf,
+  yearsFrom,
+} from "@/components/smart-lists/season-values";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MultiValueCombobox } from "@/components/ui/multi-value-combobox";
 import { useDebouncedAbortableCallback } from "@/hooks/use-debounce";
 import type { MultiValueComboboxOption } from "@/components/ui/multi-value-combobox";
+import type { SeasonLanguage } from "@/components/entities/metadata-types";
 import { Select } from "@/components/ui/select";
 import { entityTitle } from "@/lib/title-language";
 import { useTitleLanguage } from "@/lib/language";
@@ -34,6 +43,7 @@ export type RuleFieldSource = {
         displayName?: string | null;
         enumOptions?: string[] | null;
         relationType?: string | null;
+        seasonLanguage?: string | null;
       }[]
     | null;
 };
@@ -45,9 +55,23 @@ export type RuleFieldMeta = {
   /** The rule's `field` value: a frontmatter key, `file.name`, or `file.mtime`. */
   key: string;
   label: string;
-  kind: "enum" | "list" | "bool" | "number" | "date" | "relation" | "text" | "tags" | "mtime";
+  kind:
+    | "enum"
+    | "list"
+    | "bool"
+    | "number"
+    | "date"
+    | "season"
+    | "relation"
+    | "text"
+    | "tags"
+    | "mtime";
   options?: string[];
   relationType?: string;
+  /** `season` kind: the years the "year is" operator offers. */
+  yearOptions?: string[];
+  /** `season` kind: the language the rule's season text is written in. */
+  seasonLanguage?: SeasonLanguage;
   /** `list` kind: whether values outside `options` may be typed in. */
   allowCustomValues?: boolean;
 };
@@ -97,6 +121,19 @@ export function ruleFieldMetas(
       case "date":
         metas.set(field.field, { ...base, kind: "date" });
         break;
+      case "season": {
+        // The offered values are written in the field's own season language —
+        // see `season-values.ts` for why the rule stores plain text.
+        const language = normalizeSeasonLanguage(field.seasonLanguage);
+        metas.set(field.field, {
+          ...base,
+          kind: "season",
+          seasonLanguage: language,
+          options: seasonValueOptions(language),
+          yearOptions: seasonYearOptions(),
+        });
+        break;
+      }
       case "relation":
         metas.set(field.field, {
           ...base,
@@ -145,6 +182,7 @@ const opsByKind: Record<RuleFieldMeta["kind"], string[]> = {
     "isEmpty",
     "hasValue",
   ],
+  season: ["is", "isAnyOf", "yearIs", "isNot", "isEmpty", "hasValue"],
   relation: ["linksTo", "notLinksTo"],
   text: ["contains", "notContains", "startsWith", "endsWith", "is", "isNot", "isEmpty", "hasValue"],
   tags: ["hasAny", "notHasAny"],
@@ -181,6 +219,14 @@ const builderWords = {
   notContains: msg({
     comment: "Rule operator: field does not contain the value(s)",
     message: "does not contain",
+  }),
+  isAnyOf: msg({
+    comment: "Rule operator: season field is one of the chosen seasons",
+    message: "is any of",
+  }),
+  yearIs: msg({
+    comment: "Rule operator: the season falls in one of the chosen years",
+    message: "year is",
   }),
   isTrue: msg({ comment: "Rule operator on a yes/no field", message: "is yes" }),
   isFalse: msg({ comment: "Rule operator on a yes/no field", message: "is no" }),
@@ -234,6 +280,8 @@ const opWord: Record<string, MessageDescriptor> = {
   containsAny: builderWords.containsAny,
   containsAll: builderWords.containsAll,
   notContains: builderWords.notContains,
+  isAnyOf: builderWords.isAnyOf,
+  yearIs: builderWords.yearIs,
   isTrue: builderWords.isTrue,
   isFalse: builderWords.isFalse,
   eq: builderWords.eq,
@@ -259,13 +307,26 @@ const opWord: Record<string, MessageDescriptor> = {
   notHasAny: builderWords.notHasAny,
 };
 
+/// The single-value and multi-value sides of a season row, each filled from the
+/// other when it's empty.
+function carriedSeasonInputs(inputs: { values: string[]; text: string }) {
+  const text = inputs.text.trim();
+  const values = inputs.values.length > 0 ? inputs.values : text ? [text] : [];
+  return { values, text: text || values[0] || "" };
+}
+
 /// Builds the rule a row's (field, operator, inputs) selection means.
 function ruleFromEditor(
   meta: RuleFieldMeta,
   op: string,
-  inputs: { values: string[]; text: string; number: string; date: string; amount: string; unit: string },
+  editorInputs: { values: string[]; text: string; number: string; date: string; amount: string; unit: string },
 ): SmartFilterRule {
   const field = meta.key;
+  // A season rule holds one value or several depending on its operator, so the
+  // two sides carry into each other: switching "is Spring 2024" to "is any of"
+  // keeps that season picked rather than emptying the row.
+  const inputs =
+    meta.kind === "season" ? { ...editorInputs, ...carriedSeasonInputs(editorInputs) } : editorInputs;
   const compare = (extra: Partial<SmartFilterRule>): SmartFilterRule => ({
     kind: "compare",
     field,
@@ -296,7 +357,20 @@ function ruleFromEditor(
     case "hasValue":
       return { kind: "isEmpty", field, negated: true, values: [] };
     case "containsAny":
+    case "isAnyOf":
       return { kind: "contains", field, mode: "any", negated: false, values: inputs.values };
+    // "Year is 2024" is stored as that year's four seasons, which is both what
+    // Obsidian can evaluate and what works on a multi-season field.
+    case "yearIs":
+      return {
+        kind: "contains",
+        field,
+        mode: "any",
+        negated: false,
+        values: yearsFrom(inputs.values).flatMap((year) =>
+          seasonsOfYear(year, meta.seasonLanguage ?? "zh"),
+        ),
+      };
     case "containsAll":
       return { kind: "contains", field, mode: "all", negated: false, values: inputs.values };
     case "notContains":
@@ -381,7 +455,11 @@ function editorFromRule(
 
   switch (rule.kind) {
     case "isEmpty":
-      return state(findMeta(["text", "enum", "list", "number", "date"]), rule.negated ? "hasValue" : "isEmpty", {});
+      return state(
+        findMeta(["text", "enum", "list", "number", "date", "season"]),
+        rule.negated ? "hasValue" : "isEmpty",
+        {},
+      );
     case "hasTag": {
       const meta = metas.find((meta) => meta.kind === "tags");
       return meta
@@ -411,8 +489,18 @@ function editorFromRule(
         ? null
         : state(findMeta(["text", "enum"]), "endsWith", { text: rule.values?.[0] ?? "" });
     case "contains": {
-      const meta = findMeta(["list", "text", "tags", "enum"]);
+      const meta = findMeta(["list", "text", "tags", "enum", "season"]);
       if (!meta) return null;
+      if (meta.kind === "season") {
+        if (rule.negated || rule.mode === "all") return null;
+        const values = rule.values ?? [];
+        // Whole years round-trip back to "year is"; anything else is a plain
+        // season list. See `wholeYearsOf`.
+        const years = wholeYearsOf(values, meta.seasonLanguage ?? "zh");
+        return years
+          ? { meta, op: "yearIs", inputs: { ...emptyInputs, values: years } }
+          : { meta, op: "isAnyOf", inputs: { ...emptyInputs, values } };
+      }
       if (meta.kind === "list" || meta.kind === "tags") {
         const op = rule.negated
           ? rule.mode === "all"
@@ -470,9 +558,11 @@ function editorFromRule(
         return op ? state(findMeta(["date", "text"]), op, { date: rule.date }) : null;
       }
       if (rule.op === "eq" || rule.op === "ne") {
-        return state(findMeta(["enum", "text", "list", "date"]), rule.op === "eq" ? "is" : "isNot", {
-          text: rule.value ?? "",
-        });
+        return state(
+          findMeta(["enum", "text", "list", "date", "season"]),
+          rule.op === "eq" ? "is" : "isNot",
+          { text: rule.value ?? "" },
+        );
       }
       return null;
     }
@@ -487,6 +577,9 @@ function defaultRuleFor(meta: RuleFieldMeta): SmartFilterRule {
   const inputs = { ...emptyInputs, values: [] as string[] };
   switch (meta.kind) {
     case "enum":
+    // The season options run newest-first, so a fresh rule starts on the
+    // season a catalog is most likely to be filtered by.
+    case "season":
       return ruleFromEditor(meta, "is", { ...inputs, text: meta.options?.[0] ?? "" });
     case "list":
       return ruleFromEditor(meta, "containsAny", inputs);
@@ -849,7 +942,25 @@ function RuleValueInput({
     );
   }
 
-  if (meta.kind === "enum" && (op === "is" || op === "isNot")) {
+  if (meta.kind === "season" && (op === "isAnyOf" || op === "yearIs")) {
+    const options = (op === "yearIs" ? meta.yearOptions : meta.options) ?? [];
+    return (
+      <MultiValueCombobox
+        values={inputs.values}
+        options={options.map((option) => ({ value: option }))}
+        placeholder={op === "yearIs" ? t`Add year` : t`Add season`}
+        ariaLabel={t`Values`}
+        disabled={disabled}
+        // A season written some other way — by hand, or in another language —
+        // still filters: the engine matches the season a value names.
+        allowCustomValue
+        className="min-h-8 w-64 px-2 py-1 text-xs"
+        onChange={(values) => onChange({ ...inputs, values })}
+      />
+    );
+  }
+
+  if ((meta.kind === "enum" || meta.kind === "season") && (op === "is" || op === "isNot")) {
     const options = meta.options ?? [];
     return (
       <Select

@@ -80,6 +80,19 @@ pub fn date_sort_key(value: Option<&str>) -> Option<String> {
     normalize_date(parsed.year, month, day).or_else(|| Some(value.to_string()))
 }
 
+/// The season a value names, as a comparable key: the first day of that season
+/// in that year. `2024 Spring`, `Spring 2024`, `2024年春`, `2024年春季` and
+/// `2024-04-16` all collapse to `2024-04-01`, which is what lets a season rule
+/// match a vault whose values are written in several languages or styles.
+///
+/// `None` when the value doesn't resolve to a year *and* a season — a bare
+/// `2024`, or free text — so callers can fall back to comparing raw strings.
+pub fn season_key(value: &str) -> Option<String> {
+    let parsed = parse_entity_date(Some(value))?;
+    let month = season_start_month(parsed.season_key.as_deref()?)?;
+    normalize_date(parsed.year, month, 1)
+}
+
 pub fn season_compare_value(season: &str) -> i32 {
     match normalize_season_name(season).as_deref() {
         Some("winter") => 0,

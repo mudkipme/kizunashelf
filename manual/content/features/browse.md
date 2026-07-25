@@ -22,6 +22,7 @@ Criteria are built from your schema, not a fixed list of facets. Open **Filter**
 - **List fields** and the built-in, vault-wide [tags field](@/reference/home-tags-daily-notes.md#tags) match by membership, any-of or all-of.
 - **Relations** match by linked entity, with autocomplete over the target type — either scoped to one field ("studio links to X") or file-wide ("links to X anywhere").
 - **Dates** compare against a day or a relative window ("in the last 30 days", "within the next 2 weeks"), **numbers** against a threshold, and any field can be tested for emptiness.
+- **Seasons** match by the season a value *names*, not by its text — `2024年春`, `Spring 2024` and `2024-04-16` are all the same season — one at a time, several at once, or a whole year. What gets written into a saved list, and how faithfully Obsidian reproduces it, is covered under [smart lists](@/features/lists.md#seasons).
 
 Field rules need a type. Browsing **All types** offers only what every entry has — the file name, the update time, and tags — because a field key means whatever its own type's schema says it means: `status` can be an enum of watch states in one type and free text in another. Pick a type and its own fields appear.
 

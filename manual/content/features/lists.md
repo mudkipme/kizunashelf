@@ -20,6 +20,10 @@ Like everything else, a rule's meaning is value-driven: a comparison is a date c
 
 A list's **scope** — one type, or all of them — decides which fields the builder offers. Frontmatter fields need a scope: a field key means whatever its own type's schema says it means, so `status` can be an enum of watch states in one type and free text in another, and a rule built against the wrong one would match nothing. An unscoped list is therefore built from the properties every entry has: the file name, the file's update time, and tags — and its views sort by those same properties. Hand-written rules and sort keys in the `.base` file are not restricted this way — they keep working, and stay editable, whatever the scope.
 
+### Seasons
+
+A season field filters by the season a value names rather than by its text, so `2024年春`, `Spring 2024` and even `2024-04-16` are one and the same season. Three operators cover it: **is** (one season), **is any of** (several), and **year is** (a whole year, stored as that year's four seasons — a bare year test would be a substring match, which on a multi-season field finds nothing). Seasons written some other way can still be typed in, and they still match.
+
 {{ screenshot(caption="The smart-list rule builder.") }}
 
 ## Browsing and smart lists are the same thing
@@ -29,3 +33,5 @@ A list's **scope** — one type, or all of them — decides which fields the bui
 ## The Obsidian bridge
 
 Smart lists are stored as **`.base` files using a subset of the Obsidian Bases format** — open the same file in Obsidian and it shows the exact same items. That's the files-over-apps promise applied to queries: your saved views aren't locked in either.
+
+The one place the two can disagree is [seasons](#seasons). Obsidian has no notion of a season, so a season rule is written as an ordinary text test — `note.season.containsAny("Winter 2024", "Spring 2024", "Summer 2024", "Autumn 2024")` for "year is 2024" — in the field's own [season language](@/reference/field-types.md#season-languages-seasonlanguage). Obsidian matches that text literally; KizunaShelf matches the season the value *names*. A vault whose season values are all written the same way therefore gives both apps the same items, and one mixing `2024年春` with `Spring 2024` gives KizunaShelf the full set and Obsidian only the literal matches.
