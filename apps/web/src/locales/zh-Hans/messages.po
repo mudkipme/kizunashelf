@@ -522,7 +522,7 @@ msgid "Applying…"
 msgstr "正在应用…"
 
 #: src/components/settings/settings-sections.tsx:213
-#: src/components/smart-lists/sort-picker.tsx:100
+#: src/components/smart-lists/sort-picker.tsx:114
 msgid "Ascending"
 msgstr "升序"
 
@@ -878,7 +878,7 @@ msgid "Delete this smart list?"
 msgstr "删除此智能列表？"
 
 #: src/components/settings/settings-sections.tsx:214
-#: src/components/smart-lists/sort-picker.tsx:101
+#: src/components/smart-lists/sort-picker.tsx:115
 msgid "Descending"
 msgstr "降序"
 
@@ -899,7 +899,7 @@ msgid "Details"
 msgstr "详情"
 
 #: src/components/settings/settings-sections.tsx:201
-#: src/components/smart-lists/sort-picker.tsx:91
+#: src/components/smart-lists/sort-picker.tsx:105
 msgid "Direction"
 msgstr "方向"
 
@@ -2490,7 +2490,7 @@ msgid "Something went wrong"
 msgstr "出了点问题"
 
 #: src/components/settings/settings-sections.tsx:187
-#: src/components/smart-lists/sort-picker.tsx:72
+#: src/components/smart-lists/sort-picker.tsx:86
 msgid "Sort"
 msgstr "排序"
 
@@ -2679,7 +2679,7 @@ msgstr "本周"
 
 #: src/components/settings/settings-sections.tsx:141
 #: src/components/settings/settings-sections.tsx:153
-#: src/components/smart-lists/sort-picker.tsx:21
+#: src/components/smart-lists/sort-picker.tsx:35
 #: src/pages/entity-create-page.tsx:113
 msgid "Title"
 msgstr "标题"
@@ -2788,7 +2788,7 @@ msgid "Up next"
 msgstr "接下来"
 
 #: src/components/settings/settings-sections.tsx:142
-#: src/components/smart-lists/sort-picker.tsx:22
+#: src/components/smart-lists/sort-picker.tsx:36
 msgid "Update time"
 msgstr "更新时间"
 

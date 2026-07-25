@@ -6,9 +6,23 @@ import { defaultSort } from "@/lib/constants";
 import { fieldDisplayLabel } from "@/lib/type-config";
 import type { SmartSortSpec, TypeConfig } from "@/types/api";
 
-/// Which schema field types are meaningfully orderable. Deliberately schema-
-/// driven — a field sorts because of its declared type, never its name.
-const sortableFieldTypes = ["date", "rating", "progress", "totalProgress"];
+/// Bases sorts by any property, so the offer is defined by exclusion: a field
+/// is sortable unless its value has no single orderable key. List-valued fields
+/// (and relations, which may hold a list) sort as absent for every entity;
+/// id/image/external-ref fields hold opaque strings nobody browses by; and a
+/// title field would only duplicate the built-in `file.name`, which already
+/// sorts by the title resolved in the viewer's language. Schema-driven
+/// throughout — a field sorts because of its declared type, never its name.
+const unsortableFieldTypes = [
+  "id",
+  "title",
+  "image",
+  "imageList",
+  "enumList",
+  "textList",
+  "relation",
+  "externalRef",
+];
 
 /// The sort properties offered for a set of types: the two `file.*` built-ins
 /// plus every orderable schema field across the scope. `current` is kept in the
@@ -25,7 +39,7 @@ function useSortOptions(typeConfigs: TypeConfig[], current?: string) {
     for (const typeConfig of typeConfigs) {
       for (const field of typeConfig.fields ?? []) {
         if (seen.has(field.field)) continue;
-        if (!sortableFieldTypes.includes(field.fieldType)) continue;
+        if (unsortableFieldTypes.includes(field.fieldType)) continue;
         seen.add(field.field);
         options.push({ value: `note.${field.field}`, label: fieldDisplayLabel(field) });
       }

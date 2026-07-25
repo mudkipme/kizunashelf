@@ -36,6 +36,15 @@ fn field(name: &str, field_type: FieldType) -> FieldConfig {
     }
 }
 
+/// A season field carries a date role, so the library derives normalized date
+/// values for it — that's what makes `2024 Spring` sort chronologically.
+fn season_field(name: &str) -> FieldConfig {
+    FieldConfig {
+        date_role: Some(crate::types::DateRole::Planning),
+        ..field(name, FieldType::Season)
+    }
+}
+
 fn config() -> KizunaConfig {
     KizunaConfig {
         vault_root: "/virtual-vault".to_string(),
@@ -61,6 +70,7 @@ fn config() -> KizunaConfig {
                 field("started", FieldType::Date),
                 field("cover", FieldType::Image),
                 field("studio", FieldType::Relation),
+                season_field("season"),
             ],
         }],
     }
@@ -91,6 +101,22 @@ fn record(id: &str, title: &str, frontmatter: serde_json::Value) -> EntityRecord
         file_modified_unix_nanos: 0,
         episode_dates: Vec::new(),
     }
+}
+
+/// A record whose `dates` carry the normalized sort keys the library derives on
+/// parse — what anything sorting on a date/season field reads.
+fn dated_record(id: &str, title: &str, field: &str, values: &[&str]) -> EntityRecord {
+    let mut record = record(id, title, json!({ field: values }));
+    record.summary.dates = values
+        .iter()
+        .map(|value| crate::types::EntityDateValue {
+            field: field.to_string(),
+            value: value.to_string(),
+            parsed: crate::dates::parse_entity_date(Some(value)),
+            sort_key: crate::dates::parsed_date_sort_key(Some(value)),
+        })
+        .collect();
+    record
 }
 
 fn library(records: Vec<EntityRecord>, relations: Vec<Relation>) -> Library {
@@ -914,6 +940,40 @@ fn an_explicit_view_sort_wins_over_relevance() {
     let ids: Vec<&str> = records.iter().map(|r| r.summary.id.as_str()).collect();
     // "Hero" is the better match, but the view sorts by rating.
     assert_eq!(ids, ["anime:b", "anime:a"]);
+}
+
+#[test]
+fn season_fields_sort_chronologically_not_alphabetically() {
+    let raw = r#"views:
+  - type: table
+    name: List
+    sort:
+      - property: note.season
+        direction: ASC
+"#;
+    let list = parse_smart_list(raw).unwrap();
+    let library = library(
+        vec![
+            // Alphabetically "2024 Fall" < "2024 Spring" < "2024 Winter";
+            // chronologically Winter, Spring, Fall.
+            dated_record("anime:b", "Beta", "season", &["2024 Spring"]),
+            dated_record("anime:c", "Gamma", "season", &["2024 Fall"]),
+            dated_record("anime:a", "Alpha", "season", &["2024 Winter"]),
+            // A list-valued season sorts by its first entry.
+            dated_record(
+                "anime:d",
+                "Delta",
+                "season",
+                &["2025 Winter", "2025 Spring"],
+            ),
+            record("anime:e", "Eps", json!({})), // absent → last
+        ],
+        Vec::new(),
+    );
+    let ctx = fixed_ctx(&library);
+    let records = smart_list_records(&list, list.views.first(), &ctx, &ResultOptions::default());
+    let ids: Vec<&str> = records.iter().map(|r| r.summary.id.as_str()).collect();
+    assert_eq!(ids, ["anime:a", "anime:b", "anime:c", "anime:d", "anime:e"]);
 }
 
 #[test]

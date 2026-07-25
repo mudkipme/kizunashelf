@@ -194,9 +194,9 @@ fn compare_sort_values(a: &SortValue, b: &SortValue) -> Ordering {
     }
 }
 
-/// A record's sort value for a `note.<field>` key. Schema-declared date fields
-/// sort by the normalized date key (so fuzzy values like `2024 Spring` order
-/// correctly); everything else sorts by its own value type.
+/// A record's sort value for a `note.<field>` key. Schema-declared date *and
+/// season* fields sort by the normalized date key (so fuzzy values like
+/// `2024 Spring` order correctly); everything else sorts by its own value type.
 fn note_sort_value(field: &str, record: &EntityRecord, ctx: &EvalContext) -> Option<SortValue> {
     let is_date_field = ctx
         .library
@@ -205,9 +205,27 @@ fn note_sort_value(field: &str, record: &EntityRecord, ctx: &EvalContext) -> Opt
         .is_some_and(|type_config| {
             type_config.fields.iter().any(|field_config| {
                 field_config.field == field
-                    && field_config.field_type == crate::types::FieldType::Date
+                    && matches!(
+                        field_config.field_type,
+                        crate::types::FieldType::Date | crate::types::FieldType::Season
+                    )
             })
         });
+    if is_date_field {
+        // The derived date values are already normalized and flattened, so a
+        // list-valued season/date field sorts by its first entry — the key the
+        // entity list has always used. Fall back to the raw frontmatter for a
+        // date field the derivation skips (one with no date role).
+        if let Some(sort_key) = record
+            .summary
+            .dates
+            .iter()
+            .find(|date| date.field == field)
+            .and_then(|date| date.sort_key.clone())
+        {
+            return Some(SortValue::Text(sort_key));
+        }
+    }
     let value = note_value(field, record, ctx)?;
     if is_date_field {
         return json_scalar_string(&value)
