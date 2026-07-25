@@ -52,11 +52,20 @@ export type RuleFieldMeta = {
   allowCustomValues?: boolean;
 };
 
-/// The field vocabulary for a set of types (the scope type, or every type for
-/// an unscoped list): schema fields that map onto rule shapes, plus the
-/// built-in tags field and the two supported `file.*` properties.
+/// The field vocabulary for one type's schema: its fields that map onto rule
+/// shapes, plus the built-in tags field and the two supported `file.*`
+/// properties.
+///
+/// `typeConfig: undefined` is an unscoped list, and then **only** the built-ins
+/// are offered. A frontmatter rule bakes one type's schema into itself — the
+/// operator menu, the enum choices, a relation's target type — and nothing
+/// makes a field key mean the same thing in two types: `status` can be an enum
+/// of watch states in one and free text in another. Merging the types would
+/// build rules against a schema no single entity actually has, so a field rule
+/// requires a scope. Rules already written against a field are still edited
+/// (see `editorFromRule`), just not offered here.
 export function ruleFieldMetas(
-  typeConfigs: RuleFieldSource[],
+  typeConfig: RuleFieldSource | undefined,
   // The configured tags key, or `undefined` when the opt-in tags feature is
   // disabled — then no tags field is offered in the builder.
   tagsField: string | undefined,
@@ -64,44 +73,42 @@ export function ruleFieldMetas(
   t: (descriptor: MessageDescriptor) => string,
 ): RuleFieldMeta[] {
   const metas = new Map<string, RuleFieldMeta>();
-  for (const typeConfig of typeConfigs) {
-    for (const field of typeConfig.fields ?? []) {
-      if (metas.has(field.field) || field.field === tagsField) continue;
-      const base = { key: field.field, label: field.displayName?.trim() || field.field };
-      switch (field.fieldType) {
-        case "enum":
-          metas.set(field.field, { ...base, kind: "enum", options: field.enumOptions ?? [] });
-          break;
-        case "enumList":
-          metas.set(field.field, { ...base, kind: "list", options: field.enumOptions ?? [] });
-          break;
-        case "textList":
-          metas.set(field.field, { ...base, kind: "list", options: [], allowCustomValues: true });
-          break;
-        case "bool":
-          metas.set(field.field, { ...base, kind: "bool" });
-          break;
-        case "rating":
-        case "progress":
-        case "totalProgress":
-          metas.set(field.field, { ...base, kind: "number" });
-          break;
-        case "date":
-          metas.set(field.field, { ...base, kind: "date" });
-          break;
-        case "relation":
-          metas.set(field.field, {
-            ...base,
-            kind: "relation",
-            relationType: field.relationType ?? undefined,
-          });
-          break;
-        case "text":
-          metas.set(field.field, { ...base, kind: "text" });
-          break;
-        default:
-          break;
-      }
+  for (const field of typeConfig?.fields ?? []) {
+    if (metas.has(field.field) || field.field === tagsField) continue;
+    const base = { key: field.field, label: field.displayName?.trim() || field.field };
+    switch (field.fieldType) {
+      case "enum":
+        metas.set(field.field, { ...base, kind: "enum", options: field.enumOptions ?? [] });
+        break;
+      case "enumList":
+        metas.set(field.field, { ...base, kind: "list", options: field.enumOptions ?? [] });
+        break;
+      case "textList":
+        metas.set(field.field, { ...base, kind: "list", options: [], allowCustomValues: true });
+        break;
+      case "bool":
+        metas.set(field.field, { ...base, kind: "bool" });
+        break;
+      case "rating":
+      case "progress":
+      case "totalProgress":
+        metas.set(field.field, { ...base, kind: "number" });
+        break;
+      case "date":
+        metas.set(field.field, { ...base, kind: "date" });
+        break;
+      case "relation":
+        metas.set(field.field, {
+          ...base,
+          kind: "relation",
+          relationType: field.relationType ?? undefined,
+        });
+        break;
+      case "text":
+        metas.set(field.field, { ...base, kind: "text" });
+        break;
+      default:
+        break;
     }
   }
   // Schema fields first: the first meta seeds a freshly added rule, and an

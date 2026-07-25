@@ -23,6 +23,8 @@ Criteria are built from your schema, not a fixed list of facets. Open **Filter**
 - **Relations** match by linked entity, with autocomplete over the target type — either scoped to one field ("studio links to X") or file-wide ("links to X anywhere").
 - **Dates** compare against a day or a relative window ("in the last 30 days", "within the next 2 weeks"), **numbers** against a threshold, and any field can be tested for emptiness.
 
+Field rules need a type. Browsing **All types** offers only what every entry has — the file name, the update time, and tags — because a field key means whatever its own type's schema says it means: `status` can be an enum of watch states in one type and free text in another. Pick a type and its own fields appear.
+
 Rules combine with `all` / `any` / `none`, plus one level of subgroups — enough for "watching, rated 8+, and either SF or Drama". A rule's meaning is value-driven: a comparison is a date comparison because the right-hand side is a date, never because of what the field is called.
 
 ## Search
@@ -34,6 +36,8 @@ While you are searching, results rank by relevance (title matches over body ment
 ## Sorting
 
 Sorting uses the same property references as smart lists: the title (`file.name`), the file's update time (`file.mtime`), or any orderable schema field — dates, ratings, and progress (`note.<field>`). Date fields sort by their normalized key, so fuzzy values like `2024 Spring` order correctly, and entities missing the field always sort last.
+
+Sort keys follow the same scope rule as criteria: **All types** sorts by the title or the update time, and a type's own fields appear once you pick it.
 
 ## Titles follow your language
 

@@ -137,14 +137,12 @@ export function SmartListPage() {
   const typeConfigs = useMemo(() => configTypes ?? [], [configTypes]);
   const scope = editing ? draft.scope : data?.scope;
   const scopeConfig = scope ? typeConfigs.find((type) => type.id === scope) : undefined;
-  const scopeTypeConfigs = useMemo(
-    () => (scopeConfig ? [scopeConfig] : typeConfigs),
-    [scopeConfig, typeConfigs],
-  );
   const tagsField = config.data?.tagsField ?? undefined;
+  // Only a scoped list offers frontmatter fields — for the criteria and for
+  // the sort key alike. See `ruleFieldMetas`.
   const fieldMetas = useMemo(
-    () => ruleFieldMetas(scopeTypeConfigs, tagsField, allTags, t),
-    [scopeTypeConfigs, tagsField, allTags, t],
+    () => ruleFieldMetas(scopeConfig, tagsField, allTags, t),
+    [scopeConfig, tagsField, allTags, t],
   );
 
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
@@ -330,7 +328,7 @@ export function SmartListPage() {
                 draft={draft}
                 typeConfigs={typeConfigs}
                 fieldMetas={fieldMetas}
-                scopeTypeConfigs={scopeTypeConfigs}
+                scopeConfig={scopeConfig}
                 activeViewIndex={activeViewIndex}
                 disabled={save.isPending}
                 onChange={setDraft}
@@ -409,7 +407,7 @@ function EditPanel({
   draft,
   typeConfigs,
   fieldMetas,
-  scopeTypeConfigs,
+  scopeConfig,
   activeViewIndex,
   disabled,
   onChange,
@@ -417,7 +415,7 @@ function EditPanel({
   draft: Draft;
   typeConfigs: TypeConfig[];
   fieldMetas: ReturnType<typeof ruleFieldMetas>;
-  scopeTypeConfigs: TypeConfig[];
+  scopeConfig: TypeConfig | undefined;
   activeViewIndex: number;
   disabled: boolean;
   onChange: (draft: Draft) => void;
@@ -466,7 +464,7 @@ function EditPanel({
               </Trans>
             </label>
             <SortPicker
-              typeConfigs={scopeTypeConfigs}
+              typeConfig={scopeConfig}
               sort={sortSpec}
               disabled={disabled}
               onChange={(sort) => updateActiveView({ sort: sort ? [sort] : [] })}
@@ -488,6 +486,14 @@ function EditPanel({
           </>
         ) : null}
       </div>
+      {draft.scope ? null : (
+        <p className="text-xs text-muted-foreground">
+          <Trans>
+            Pick a scope to filter on that type's own fields — across all types only the
+            properties every entry has can be matched.
+          </Trans>
+        </p>
+      )}
       <RuleBuilder
         fieldMetas={fieldMetas}
         value={draft.filters}

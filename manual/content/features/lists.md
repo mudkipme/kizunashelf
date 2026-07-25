@@ -18,6 +18,8 @@ A **smart list** is computed: you define criteria, and its items are whatever cu
 
 Like everything else, a rule's meaning is value-driven: a comparison is a date comparison because the right-hand side is a date — never because of the field's name.
 
+A list's **scope** — one type, or all of them — decides which fields the builder offers. Frontmatter fields need a scope: a field key means whatever its own type's schema says it means, so `status` can be an enum of watch states in one type and free text in another, and a rule built against the wrong one would match nothing. An unscoped list is therefore built from the properties every entry has: the file name, the file's update time, and tags — and its views sort by those same properties. Hand-written rules and sort keys in the `.base` file are not restricted this way — they keep working, and stay editable, whatever the scope.
+
 {{ screenshot(caption="The smart-list rule builder.") }}
 
 ## Browsing and smart lists are the same thing

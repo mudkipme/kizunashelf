@@ -24,11 +24,16 @@ const unsortableFieldTypes = [
   "externalRef",
 ];
 
-/// The sort properties offered for a set of types: the two `file.*` built-ins
-/// plus every orderable schema field across the scope. `current` is kept in the
-/// list even when the schema doesn't declare it, so a hand-written sort key
-/// stays visible instead of silently switching to the title.
-function useSortOptions(typeConfigs: TypeConfig[], current?: string) {
+/// The sort properties offered for one type: the two `file.*` built-ins plus
+/// its orderable schema fields. `current` is kept in the list even when the
+/// schema doesn't declare it, so a hand-written sort key stays visible instead
+/// of silently switching to the title.
+///
+/// `typeConfig: undefined` is an unscoped list, and then only the built-ins are
+/// offered — the same rule the criteria builder follows (`ruleFieldMetas`).
+/// A field key doesn't mean one thing across types, and its label wouldn't
+/// either: whichever type declared it first would name the menu entry.
+function useSortOptions(typeConfig: TypeConfig | undefined, current?: string) {
   const { t } = useLingui();
   return useMemo(() => {
     const options: { value: string; label: string }[] = [
@@ -36,19 +41,17 @@ function useSortOptions(typeConfigs: TypeConfig[], current?: string) {
       { value: "file.mtime", label: t`Update time` },
     ];
     const seen = new Set<string>();
-    for (const typeConfig of typeConfigs) {
-      for (const field of typeConfig.fields ?? []) {
-        if (seen.has(field.field)) continue;
-        if (unsortableFieldTypes.includes(field.fieldType)) continue;
-        seen.add(field.field);
-        options.push({ value: `note.${field.field}`, label: fieldDisplayLabel(field) });
-      }
+    for (const field of typeConfig?.fields ?? []) {
+      if (seen.has(field.field)) continue;
+      if (unsortableFieldTypes.includes(field.fieldType)) continue;
+      seen.add(field.field);
+      options.push({ value: `note.${field.field}`, label: fieldDisplayLabel(field) });
     }
     if (current && !options.some((option) => option.value === current)) {
       options.push({ value: current, label: current });
     }
     return options;
-  }, [typeConfigs, current, t]);
+  }, [typeConfig, current, t]);
 }
 
 /// Paired property + direction selects. Both pages render the same control;
@@ -59,14 +62,14 @@ function useSortOptions(typeConfigs: TypeConfig[], current?: string) {
 /// choice only when `unsortedLabel` names it, and carries no direction — a
 /// relevance ranking is always best-match-first.
 export function SortPicker({
-  typeConfigs,
+  typeConfig,
   sort,
   unsortedLabel,
   disabled = false,
   className,
   onChange,
 }: {
-  typeConfigs: TypeConfig[];
+  typeConfig: TypeConfig | undefined;
   sort: SmartSortSpec | undefined;
   unsortedLabel?: string;
   disabled?: boolean;
@@ -75,7 +78,7 @@ export function SortPicker({
 }) {
   const { t } = useLingui();
   const direction = sort?.direction === "desc" ? "desc" : "asc";
-  const options = useSortOptions(typeConfigs, sort?.property);
+  const options = useSortOptions(typeConfig, sort?.property);
   const value = sort ? sort.property : unsortedLabel ? "" : defaultSort;
 
   return (

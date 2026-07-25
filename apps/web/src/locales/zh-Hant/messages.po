@@ -242,16 +242,16 @@ msgstr "{monthLabel}：{0} — 在日曆中開啟"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {匯入 # 個項目}}"
 
-#: src/pages/library-page.tsx:335
+#: src/pages/library-page.tsx:343
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 件}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:330
+#: src/pages/library-page.tsx:338
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · 第 {0}/{totalPages} 頁"
 
-#: src/pages/smart-list-page.tsx:245
+#: src/pages/smart-list-page.tsx:243
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 項符合}}"
 
@@ -260,32 +260,32 @@ msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 個欄位}}"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:184
+#: src/components/smart-lists/rule-builder.tsx:191
 msgid "<"
 msgstr "<"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:180
+#: src/components/smart-lists/rule-builder.tsx:187
 msgid "="
 msgstr "="
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:181
+#: src/components/smart-lists/rule-builder.tsx:188
 msgid "≠"
 msgstr "≠"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:182
+#: src/components/smart-lists/rule-builder.tsx:189
 msgid ">"
 msgstr ">"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:185
+#: src/components/smart-lists/rule-builder.tsx:192
 msgid "≤"
 msgstr "≤"
 
 #. Numeric rule operator
-#: src/components/smart-lists/rule-builder.tsx:183
+#: src/components/smart-lists/rule-builder.tsx:190
 msgid "≥"
 msgstr "≥"
 
@@ -306,7 +306,7 @@ msgstr "📅 已排程"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "已存在以此標題命名的檔案，因此改儲存為「{0}」。"
 
-#: src/pages/smart-list-page.tsx:541
+#: src/pages/smart-list-page.tsx:547
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名清單已存在，或檔案已在磁碟上被修改。"
 
@@ -339,8 +339,8 @@ msgstr "活動"
 #: src/components/settings/settings-sections.tsx:950
 #: src/pages/home-page.tsx:41
 #: src/pages/home-page.tsx:46
-#: src/pages/library-page.tsx:361
-#: src/pages/library-page.tsx:366
+#: src/pages/library-page.tsx:369
+#: src/pages/library-page.tsx:374
 #: src/pages/list-detail-page.tsx:922
 msgid "Add"
 msgstr "新增"
@@ -373,7 +373,7 @@ msgstr "新增自訂類型"
 
 #: src/pages/entity-create-page.tsx:88
 #: src/pages/home-page.tsx:35
-#: src/pages/library-page.tsx:355
+#: src/pages/library-page.tsx:363
 msgid "Add entity"
 msgstr "新增項目"
 
@@ -385,7 +385,7 @@ msgstr "請在上方新增列舉選項，以便將其對應到狀態。"
 msgid "Add Field"
 msgstr "新增欄位"
 
-#: src/components/smart-lists/rule-builder.tsx:579
+#: src/components/smart-lists/rule-builder.tsx:586
 msgid "Add group"
 msgstr "新增群組"
 
@@ -402,8 +402,8 @@ msgstr "手動新增"
 msgid "Add path or URL"
 msgstr "新增路徑或 URL"
 
-#: src/components/smart-lists/rule-builder.tsx:564
-#: src/components/smart-lists/rule-builder.tsx:645
+#: src/components/smart-lists/rule-builder.tsx:571
+#: src/components/smart-lists/rule-builder.tsx:652
 msgid "Add rule"
 msgstr "新增規則"
 
@@ -412,7 +412,7 @@ msgid "Add section"
 msgstr "新增版塊"
 
 #: src/components/entities/metadata-inputs.tsx:157
-#: src/components/smart-lists/rule-builder.tsx:870
+#: src/components/smart-lists/rule-builder.tsx:877
 msgid "Add value"
 msgstr "新增值"
 
@@ -443,7 +443,7 @@ msgstr "新增版塊"
 msgid "Advanced: edit full schema"
 msgstr "進階：編輯完整結構描述"
 
-#: src/components/smart-lists/rule-builder.tsx:669
+#: src/components/smart-lists/rule-builder.tsx:676
 #: src/pages/activity-page.tsx:41
 msgid "All"
 msgstr "全部"
@@ -473,7 +473,7 @@ msgstr "所有來源"
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
 #: src/pages/review-page.tsx:170
-#: src/pages/smart-list-page.tsx:454
+#: src/pages/smart-list-page.tsx:452
 msgid "All types"
 msgstr "所有類型"
 
@@ -482,7 +482,7 @@ msgstr "所有類型"
 msgid "All types ({0})"
 msgstr "所有類型（{0}）"
 
-#: src/components/smart-lists/rule-builder.tsx:798
+#: src/components/smart-lists/rule-builder.tsx:805
 msgid "Amount"
 msgstr "數量"
 
@@ -490,12 +490,12 @@ msgstr "數量"
 msgid "Anime"
 msgstr "動畫"
 
-#: src/components/smart-lists/rule-builder.tsx:670
+#: src/components/smart-lists/rule-builder.tsx:677
 msgid "Any"
 msgstr "任一"
 
 #. Rule-builder field standing for a link from anywhere in the note, rather than from one relation field
-#: src/components/smart-lists/rule-builder.tsx:157
+#: src/components/smart-lists/rule-builder.tsx:164
 msgid "Any link"
 msgstr "任意連結"
 
@@ -522,7 +522,7 @@ msgid "Applying…"
 msgstr "套用中…"
 
 #: src/components/settings/settings-sections.tsx:213
-#: src/components/smart-lists/sort-picker.tsx:114
+#: src/components/smart-lists/sort-picker.tsx:117
 msgid "Ascending"
 msgstr "遞增"
 
@@ -594,9 +594,9 @@ msgstr "日曆"
 #: src/pages/list-detail-page.tsx:526
 #: src/pages/list-detail-page.tsx:997
 #: src/pages/lists-page.tsx:230
-#: src/pages/smart-list-page.tsx:257
-#: src/pages/smart-list-page.tsx:394
-#: src/pages/smart-list-page.tsx:584
+#: src/pages/smart-list-page.tsx:255
+#: src/pages/smart-list-page.tsx:392
+#: src/pages/smart-list-page.tsx:590
 msgid "Cancel"
 msgstr "取消"
 
@@ -699,7 +699,7 @@ msgstr "連線"
 
 #. Text rule operator: substring match
 #. Verb between a field name and values in a filter-criteria chip, e.g. 'genres contains comedy, drama' (any of the values)
-#: src/components/smart-lists/rule-builder.tsx:203
+#: src/components/smart-lists/rule-builder.tsx:210
 #: src/components/smart-lists/rule-format.ts:40
 msgid "contains"
 msgstr "包含:"
@@ -710,12 +710,12 @@ msgid "contains all"
 msgstr "包含全部:"
 
 #. Rule operator: list field contains all of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:170
+#: src/components/smart-lists/rule-builder.tsx:177
 msgid "contains all of"
 msgstr "包含以下全部"
 
 #. Rule operator: list field contains any of the chosen values
-#: src/components/smart-lists/rule-builder.tsx:166
+#: src/components/smart-lists/rule-builder.tsx:173
 msgid "contains any of"
 msgstr "包含以下任一"
 
@@ -826,7 +826,7 @@ msgid "date"
 msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:129
-#: src/components/smart-lists/rule-builder.tsx:824
+#: src/components/smart-lists/rule-builder.tsx:831
 #: src/pages/activity-page.tsx:275
 msgid "Date"
 msgstr "日期"
@@ -853,7 +853,7 @@ msgid "Dates & episodes"
 msgstr "日期與劇集"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:216
+#: src/components/smart-lists/rule-builder.tsx:223
 msgid "days"
 msgstr "天"
 
@@ -868,17 +868,17 @@ msgstr "預設行格式"
 #: src/pages/entity-page.tsx:466
 #: src/pages/list-detail-page.tsx:412
 #: src/pages/list-detail-page.tsx:626
-#: src/pages/smart-list-page.tsx:299
-#: src/pages/smart-list-page.tsx:397
+#: src/pages/smart-list-page.tsx:297
+#: src/pages/smart-list-page.tsx:395
 msgid "Delete"
 msgstr "刪除"
 
-#: src/pages/smart-list-page.tsx:383
+#: src/pages/smart-list-page.tsx:381
 msgid "Delete this smart list?"
 msgstr "刪除此智慧清單？"
 
 #: src/components/settings/settings-sections.tsx:214
-#: src/components/smart-lists/sort-picker.tsx:115
+#: src/components/smart-lists/sort-picker.tsx:118
 msgid "Descending"
 msgstr "遞減"
 
@@ -899,7 +899,7 @@ msgid "Details"
 msgstr "詳細資訊"
 
 #: src/components/settings/settings-sections.tsx:201
-#: src/components/smart-lists/sort-picker.tsx:105
+#: src/components/smart-lists/sort-picker.tsx:108
 msgid "Direction"
 msgstr "方向"
 
@@ -922,12 +922,12 @@ msgid "Display name"
 msgstr "顯示名稱"
 
 #. Rule operator: field does not contain the value(s)
-#: src/components/smart-lists/rule-builder.tsx:174
+#: src/components/smart-lists/rule-builder.tsx:181
 msgid "does not contain"
 msgstr "不包含"
 
 #. Relation rule operator: note does not link to the entity
-#: src/components/smart-lists/rule-builder.tsx:207
+#: src/components/smart-lists/rule-builder.tsx:214
 msgid "does not link to"
 msgstr "未連結到"
 
@@ -985,7 +985,7 @@ msgstr "編輯 {0}"
 msgid "Edit config.yaml"
 msgstr "編輯 config.yaml"
 
-#: src/pages/smart-list-page.tsx:279
+#: src/pages/smart-list-page.tsx:277
 msgid "Edit criteria"
 msgstr "編輯條件"
 
@@ -1019,7 +1019,7 @@ msgstr "啟用"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title ends with !'
-#: src/components/smart-lists/rule-builder.tsx:205
+#: src/components/smart-lists/rule-builder.tsx:212
 #: src/components/smart-lists/rule-format.ts:54
 msgid "ends with"
 msgstr "結尾為:"
@@ -1032,7 +1032,7 @@ msgstr "英文"
 msgid "Entities"
 msgstr "項目"
 
-#: src/components/smart-lists/rule-builder.tsx:973
+#: src/components/smart-lists/rule-builder.tsx:980
 msgid "Entity name"
 msgstr "項目名稱"
 
@@ -1102,7 +1102,7 @@ msgstr "正在從 {0} 擷取你的庫…"
 #: src/components/settings/settings-dialogs.tsx:396
 #: src/components/settings/settings-dialogs.tsx:406
 #: src/components/settings/settings-sections.tsx:611
-#: src/components/smart-lists/rule-builder.tsx:721
+#: src/components/smart-lists/rule-builder.tsx:728
 msgid "Field"
 msgstr "欄位"
 
@@ -1115,7 +1115,7 @@ msgid "File"
 msgstr "檔案"
 
 #. Rule-builder field for the note's file name (its title)
-#: src/components/smart-lists/rule-builder.tsx:149
+#: src/components/smart-lists/rule-builder.tsx:156
 #: src/pages/entity-create-page.tsx:108
 msgid "File name"
 msgstr "檔名"
@@ -1187,13 +1187,13 @@ msgstr "格狀"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating has a value'
 #. Rule operator: field has any value
-#: src/components/smart-lists/rule-builder.tsx:165
+#: src/components/smart-lists/rule-builder.tsx:172
 #: src/components/smart-lists/rule-format.ts:58
 msgid "has a value"
 msgstr "有值"
 
 #. Tags rule operator: has any of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:211
+#: src/components/smart-lists/rule-builder.tsx:218
 msgid "has any of"
 msgstr "含有以下任一"
 
@@ -1202,7 +1202,7 @@ msgid "Has date"
 msgstr "有日期"
 
 #. Tags rule operator: has none of the chosen tags
-#: src/components/smart-lists/rule-builder.tsx:212
+#: src/components/smart-lists/rule-builder.tsx:219
 msgid "has none of"
 msgstr "不含以下任何"
 
@@ -1282,7 +1282,7 @@ msgid "in list"
 msgstr "在清單中"
 
 #. Date rule operator: within the last N days/weeks/months/years
-#: src/components/smart-lists/rule-builder.tsx:191
+#: src/components/smart-lists/rule-builder.tsx:198
 msgid "in the last"
 msgstr "過去"
 
@@ -1292,54 +1292,54 @@ msgid "Include {0}"
 msgstr "包含 {0}"
 
 #. Rule operator: field equals the value
-#: src/components/smart-lists/rule-builder.tsx:162
+#: src/components/smart-lists/rule-builder.tsx:169
 msgid "is"
 msgstr "等於"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:189
+#: src/components/smart-lists/rule-builder.tsx:196
 msgid "is after"
 msgstr "晚於"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:187
+#: src/components/smart-lists/rule-builder.tsx:194
 msgid "is before"
 msgstr "早於"
 
 #. Predicate after a field name in a filter-criteria chip, e.g. 'rating is empty'
 #. Rule operator: field has no value
-#: src/components/smart-lists/rule-builder.tsx:164
+#: src/components/smart-lists/rule-builder.tsx:171
 #: src/components/smart-lists/rule-format.ts:62
 msgid "is empty"
 msgstr "為空"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:179
+#: src/components/smart-lists/rule-builder.tsx:186
 msgid "is no"
 msgstr "為否"
 
 #. Rule operator: field does not equal the value
-#: src/components/smart-lists/rule-builder.tsx:163
+#: src/components/smart-lists/rule-builder.tsx:170
 msgid "is not"
 msgstr "不等於"
 
 #. Date rule operator: on this exact day/period
-#: src/components/smart-lists/rule-builder.tsx:186
+#: src/components/smart-lists/rule-builder.tsx:193
 msgid "is on"
 msgstr "為當天"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:190
+#: src/components/smart-lists/rule-builder.tsx:197
 msgid "is on or after"
 msgstr "不早於"
 
 #. Date rule operator
-#: src/components/smart-lists/rule-builder.tsx:188
+#: src/components/smart-lists/rule-builder.tsx:195
 msgid "is on or before"
 msgstr "不晚於"
 
 #. Rule operator on a yes/no field
-#: src/components/smart-lists/rule-builder.tsx:178
+#: src/components/smart-lists/rule-builder.tsx:185
 msgid "is yes"
 msgstr "為是"
 
@@ -1422,7 +1422,7 @@ msgid "Light theme. Switch to dark theme."
 msgstr "淺色主題。切換為深色主題。"
 
 #: src/components/settings/settings-sections.tsx:186
-#: src/pages/smart-list-page.tsx:480
+#: src/pages/smart-list-page.tsx:478
 msgid "Limit"
 msgstr "上限"
 
@@ -1435,7 +1435,7 @@ msgstr "第 {0} 行"
 msgid "Line format"
 msgstr "行格式"
 
-#: src/components/smart-lists/rule-builder.tsx:974
+#: src/components/smart-lists/rule-builder.tsx:981
 msgid "Link target"
 msgstr "連結目標"
 
@@ -1453,7 +1453,7 @@ msgstr "連結"
 
 #. Relation rule operator: note links to the entity
 #. Verb before an entity name in a filter-criteria chip, e.g. 'links to Kyoto Animation'
-#: src/components/smart-lists/rule-builder.tsx:206
+#: src/components/smart-lists/rule-builder.tsx:213
 #: src/components/smart-lists/rule-format.ts:66
 msgid "links to"
 msgstr "連結到:"
@@ -1523,7 +1523,7 @@ msgstr "正在載入分類"
 #: src/pages/onboarding-page.tsx:60
 #: src/pages/review-page.tsx:146
 #: src/pages/settings-page.tsx:96
-#: src/pages/smart-list-page.tsx:232
+#: src/pages/smart-list-page.tsx:230
 #: src/pages/statistics-page.tsx:48
 msgid "Loading…"
 msgstr "載入中…"
@@ -1587,7 +1587,7 @@ msgstr "標記為 {0}"
 msgid "Match"
 msgstr "比對"
 
-#: src/components/smart-lists/rule-builder.tsx:665
+#: src/components/smart-lists/rule-builder.tsx:672
 msgid "Match mode"
 msgstr "符合方式"
 
@@ -1606,7 +1606,7 @@ msgid "Missing Cover"
 msgstr "缺少封面"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:218
+#: src/components/smart-lists/rule-builder.tsx:225
 msgid "months"
 msgstr "個月"
 
@@ -1650,7 +1650,7 @@ msgstr "我的保管庫"
 #: src/components/smart-lists/save-smart-list-dialog.tsx:105
 #: src/pages/list-detail-page.tsx:985
 #: src/pages/lists-page.tsx:200
-#: src/pages/smart-list-page.tsx:567
+#: src/pages/smart-list-page.tsx:573
 msgid "Name"
 msgstr "名稱"
 
@@ -1713,7 +1713,7 @@ msgstr "沒有候選欄位或內文版塊符合此類型結構描述。"
 msgid "No candidates loaded"
 msgstr "未載入候選項目"
 
-#: src/pages/smart-list-page.tsx:345
+#: src/pages/smart-list-page.tsx:343
 msgid "No criteria — everything in the library matches."
 msgstr "沒有條件 — 符合庫中的所有內容。"
 
@@ -1739,11 +1739,11 @@ msgstr "未設定任何項目類型。"
 
 #: src/pages/calendar-page.tsx:180
 #: src/pages/calendar-page.tsx:195
-#: src/pages/library-page.tsx:382
+#: src/pages/library-page.tsx:390
 msgid "No entries"
 msgstr "無項目"
 
-#: src/pages/smart-list-page.tsx:366
+#: src/pages/smart-list-page.tsx:364
 msgid "No entries match the criteria"
 msgstr "沒有符合條件的條目"
 
@@ -1763,7 +1763,7 @@ msgstr "未設定任何欄位。"
 msgid "No folder selected"
 msgstr "未選取資料夾"
 
-#: src/pages/smart-list-page.tsx:343
+#: src/pages/smart-list-page.tsx:341
 msgid "No further criteria — every entity of this type matches."
 msgstr "沒有其他條件 — 符合此類型的所有項目。"
 
@@ -1784,7 +1784,7 @@ msgstr "尚無項目 — 從資料來源同步，或在 <0>{0}</0> 標題下新�
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "尚無項目。使用「新增項目」將項目加入此清單，或使用「新增版塊」將它們分組。"
 
-#: src/pages/smart-list-page.tsx:478
+#: src/pages/smart-list-page.tsx:476
 msgid "No limit"
 msgstr "無限制"
 
@@ -1866,7 +1866,7 @@ msgstr "尚無保管庫。"
 #: src/components/settings/settings-sections.tsx:690
 #: src/components/settings/settings-sections.tsx:743
 #: src/components/settings/settings-sections.tsx:788
-#: src/components/smart-lists/rule-builder.tsx:671
+#: src/components/smart-lists/rule-builder.tsx:678
 msgid "None"
 msgstr "無"
 
@@ -1911,8 +1911,8 @@ msgstr "這裡尚無內容"
 msgid "Nothing to log for this type."
 msgstr "此類型沒有可記錄的內容。"
 
-#: src/components/smart-lists/rule-builder.tsx:534
-#: src/components/smart-lists/rule-builder.tsx:614
+#: src/components/smart-lists/rule-builder.tsx:541
+#: src/components/smart-lists/rule-builder.tsx:621
 msgid "of the following match:"
 msgstr "符合以下條件:"
 
@@ -1929,7 +1929,7 @@ msgid "Off"
 msgstr "關閉"
 
 #. Date rule operator: earlier than N days/weeks/months/years ago
-#: src/components/smart-lists/rule-builder.tsx:195
+#: src/components/smart-lists/rule-builder.tsx:202
 msgid "older than"
 msgstr "早於過去"
 
@@ -1974,7 +1974,7 @@ msgstr "開啟導覽"
 msgid "Open or create a vault to get started."
 msgstr "開啟或建立一個保管庫以開始。"
 
-#: src/components/smart-lists/rule-builder.tsx:743
+#: src/components/smart-lists/rule-builder.tsx:750
 msgid "Operator"
 msgstr "運算子"
 
@@ -2023,6 +2023,14 @@ msgstr "選擇日期"
 #: src/pages/onboarding-page.tsx:190
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "先選幾個 — 你隨時可以再新增。你的庫是一個由你擁有的資料夾中的純 Markdown 檔案，即使沒有這個 app 也能閱讀。"
+
+#: src/pages/smart-list-page.tsx:491
+msgid "Pick a scope to filter on that type's own fields — across all types only the properties every entry has can be matched."
+msgstr "選擇範圍類型後即可依該類型自有的欄位篩選；在所有類型下只能比對每個項目都具備的屬性。"
+
+#: src/pages/library-page.tsx:317
+msgid "Pick a type to filter on its own fields — across all types only the properties every entry has can be matched."
+msgstr "選擇類型後即可依該類型自有的欄位篩選；在所有類型下只能比對每個項目都具備的屬性。"
 
 #: src/pages/activity-page.tsx:49
 msgid "Planned"
@@ -2148,7 +2156,7 @@ msgstr "移除外部欄位對應"
 msgid "Remove field"
 msgstr "移除欄位"
 
-#: src/components/smart-lists/rule-builder.tsx:621
+#: src/components/smart-lists/rule-builder.tsx:628
 msgid "Remove group"
 msgstr "移除群組"
 
@@ -2164,8 +2172,8 @@ msgstr "移除圖片"
 msgid "Remove item"
 msgstr "移除項目"
 
-#: src/components/smart-lists/rule-builder.tsx:703
-#: src/components/smart-lists/rule-builder.tsx:765
+#: src/components/smart-lists/rule-builder.tsx:710
+#: src/components/smart-lists/rule-builder.tsx:772
 msgid "Remove rule"
 msgstr "移除規則"
 
@@ -2183,8 +2191,8 @@ msgstr "移除類型"
 #: src/pages/list-detail-page.tsx:402
 #: src/pages/list-detail-page.tsx:622
 #: src/pages/list-detail-page.tsx:1001
-#: src/pages/smart-list-page.tsx:289
-#: src/pages/smart-list-page.tsx:591
+#: src/pages/smart-list-page.tsx:287
+#: src/pages/smart-list-page.tsx:597
 msgid "Rename"
 msgstr "重新命名"
 
@@ -2192,7 +2200,7 @@ msgstr "重新命名"
 msgid "Rename list"
 msgstr "重新命名清單"
 
-#: src/pages/smart-list-page.tsx:552
+#: src/pages/smart-list-page.tsx:558
 msgid "Rename smart list"
 msgstr "重新命名智慧清單"
 
@@ -2209,13 +2217,13 @@ msgstr "已重新命名 — 更新了 {updated, plural, other {# 個連結}}"
 msgid "renamed to “{0}”"
 msgstr "重新命名為「{0}」"
 
-#: src/pages/smart-list-page.tsx:555
+#: src/pages/smart-list-page.tsx:561
 msgid "Renames the .base file in your vault."
 msgstr "重新命名保管庫中的 .base 檔案。"
 
 #: src/pages/entity-page.tsx:703
 #: src/pages/list-detail-page.tsx:1001
-#: src/pages/smart-list-page.tsx:591
+#: src/pages/smart-list-page.tsx:597
 msgid "Renaming…"
 msgstr "重新命名中…"
 
@@ -2255,13 +2263,13 @@ msgstr "執行中…"
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:179
 #: src/pages/list-detail-page.tsx:424
-#: src/pages/smart-list-page.tsx:266
+#: src/pages/smart-list-page.tsx:264
 msgid "Save"
 msgstr "儲存"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:83
-#: src/pages/library-page.tsx:344
-#: src/pages/library-page.tsx:348
+#: src/pages/library-page.tsx:352
+#: src/pages/library-page.tsx:356
 msgid "Save as smart list"
 msgstr "儲存為智慧清單"
 
@@ -2290,7 +2298,7 @@ msgstr "將目前類型、條件與排序儲存為智慧清單。搜尋內容不
 #: src/components/settings/raw-config-editor.tsx:90
 #: src/components/settings/settings-editor.tsx:179
 #: src/pages/list-detail-page.tsx:424
-#: src/pages/smart-list-page.tsx:266
+#: src/pages/smart-list-page.tsx:264
 msgid "Saving…"
 msgstr "儲存中…"
 
@@ -2300,8 +2308,8 @@ msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHEL
 msgstr "此執行個體已停用結構描述編輯（唯讀）。請設定 <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> 以啟用。"
 
 #: src/pages/lists-page.tsx:211
-#: src/pages/smart-list-page.tsx:443
-#: src/pages/smart-list-page.tsx:448
+#: src/pages/smart-list-page.tsx:441
+#: src/pages/smart-list-page.tsx:446
 msgid "Scope"
 msgstr "範圍"
 
@@ -2455,19 +2463,19 @@ msgstr "智慧清單"
 msgid "Smart list created"
 msgstr "已建立智慧清單"
 
-#: src/pages/smart-list-page.tsx:203
+#: src/pages/smart-list-page.tsx:201
 msgid "Smart list deleted"
 msgstr "已刪除智慧清單"
 
-#: src/pages/smart-list-page.tsx:236
+#: src/pages/smart-list-page.tsx:234
 msgid "Smart list not found"
 msgstr "找不到智慧清單"
 
-#: src/pages/smart-list-page.tsx:533
+#: src/pages/smart-list-page.tsx:539
 msgid "Smart list renamed"
 msgstr "已重新命名智慧清單"
 
-#: src/pages/smart-list-page.tsx:189
+#: src/pages/smart-list-page.tsx:187
 msgid "Smart list saved"
 msgstr "已儲存智慧清單"
 
@@ -2479,7 +2487,7 @@ msgstr "部分圖片無法下載"
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "部分圖片無法下載：{reasons}"
 
-#: src/pages/smart-list-page.tsx:609
+#: src/pages/smart-list-page.tsx:615
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "此檔案的部分語法不受支援，將被忽略:"
 
@@ -2490,13 +2498,13 @@ msgid "Something went wrong"
 msgstr "發生錯誤"
 
 #: src/components/settings/settings-sections.tsx:187
-#: src/components/smart-lists/sort-picker.tsx:86
+#: src/components/smart-lists/sort-picker.tsx:89
 msgid "Sort"
 msgstr "排序"
 
 #. Label before the sort-key picker of the active smart-list view
 #. placeholder {0}: activeView.name
-#: src/pages/smart-list-page.tsx:464
+#: src/pages/smart-list-page.tsx:462
 msgid "Sort {0} by"
 msgstr "{0} 排序方式"
 
@@ -2531,7 +2539,7 @@ msgstr "開始中…"
 
 #. Text rule operator
 #. Verb in a filter-criteria chip, e.g. 'title starts with My'
-#: src/components/smart-lists/rule-builder.tsx:204
+#: src/components/smart-lists/rule-builder.tsx:211
 #: src/components/smart-lists/rule-format.ts:50
 msgid "starts with"
 msgstr "開頭為:"
@@ -2601,7 +2609,7 @@ msgstr "系統主題。切換為淺色主題。"
 #: src/components/entities/metadata-editor.tsx:86
 #: src/components/settings/settings-editor.tsx:110
 #: src/components/settings/settings-editor.tsx:265
-#: src/components/smart-lists/rule-builder.tsx:148
+#: src/components/smart-lists/rule-builder.tsx:155
 msgid "Tags"
 msgstr "標籤"
 
@@ -2627,7 +2635,7 @@ msgstr "分類根目錄"
 msgid "taxonomy: {0}"
 msgstr "分類：{0}"
 
-#: src/pages/smart-list-page.tsx:386
+#: src/pages/smart-list-page.tsx:384
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base 檔案將移至保管庫的垃圾桶資料夾。符合的項目不受影響。"
 
@@ -2669,7 +2677,7 @@ msgstr "這會將 <0>{0}</0> 移到垃圾桶。其中包含的項目不會受影
 msgid "This page doesn’t exist or may have moved."
 msgstr "此頁面不存在或可能已被移動。"
 
-#: src/pages/smart-list-page.tsx:194
+#: src/pages/smart-list-page.tsx:192
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "此智慧清單已在磁碟上被修改。請重新載入頁面並重新編輯。"
 
@@ -2679,7 +2687,7 @@ msgstr "本週"
 
 #: src/components/settings/settings-sections.tsx:141
 #: src/components/settings/settings-sections.tsx:153
-#: src/components/smart-lists/sort-picker.tsx:35
+#: src/components/smart-lists/sort-picker.tsx:40
 #: src/pages/entity-create-page.tsx:113
 msgid "Title"
 msgstr "標題"
@@ -2747,7 +2755,7 @@ msgstr "介面使用英文"
 msgid "Ungrouped"
 msgstr "未分組"
 
-#: src/components/smart-lists/rule-builder.tsx:805
+#: src/components/smart-lists/rule-builder.tsx:812
 msgid "Unit"
 msgstr "單位"
 
@@ -2788,12 +2796,12 @@ msgid "Up next"
 msgstr "接下來"
 
 #: src/components/settings/settings-sections.tsx:142
-#: src/components/smart-lists/sort-picker.tsx:36
+#: src/components/smart-lists/sort-picker.tsx:41
 msgid "Update time"
 msgstr "更新時間"
 
 #. Rule-builder field for the note file's last-modified time
-#: src/components/smart-lists/rule-builder.tsx:153
+#: src/components/smart-lists/rule-builder.tsx:160
 msgid "Updated"
 msgstr "更新時間"
 
@@ -2807,13 +2815,13 @@ msgstr "上傳失敗。"
 msgid "Used as"
 msgstr "用作"
 
-#: src/components/smart-lists/rule-builder.tsx:838
-#: src/components/smart-lists/rule-builder.tsx:851
-#: src/components/smart-lists/rule-builder.tsx:895
+#: src/components/smart-lists/rule-builder.tsx:845
+#: src/components/smart-lists/rule-builder.tsx:858
+#: src/components/smart-lists/rule-builder.tsx:902
 msgid "Value"
 msgstr "值"
 
-#: src/components/smart-lists/rule-builder.tsx:871
+#: src/components/smart-lists/rule-builder.tsx:878
 msgid "Values"
 msgstr "值"
 
@@ -2869,7 +2877,7 @@ msgid "Watchlist"
 msgstr "想看清單"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:217
+#: src/components/smart-lists/rule-builder.tsx:224
 msgid "weeks"
 msgstr "週"
 
@@ -2888,7 +2896,7 @@ msgid "Will be created as “{0}.md”, from the title."
 msgstr "將依標題建立為「{0}.md」。"
 
 #. Date rule operator: no later than N days/weeks/months/years from now
-#: src/components/smart-lists/rule-builder.tsx:199
+#: src/components/smart-lists/rule-builder.tsx:206
 msgid "within the next"
 msgstr "未來"
 
@@ -2897,7 +2905,7 @@ msgid "YAML"
 msgstr "YAML"
 
 #. Duration unit in a date rule
-#: src/components/smart-lists/rule-builder.tsx:219
+#: src/components/smart-lists/rule-builder.tsx:226
 msgid "years"
 msgstr "年"
 

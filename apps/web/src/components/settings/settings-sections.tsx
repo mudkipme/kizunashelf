@@ -130,7 +130,7 @@ export function HomeSectionForm({
   const allTagsData = useQuery(allTagsQuery()).data?.tags;
   const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
   const fieldMetas = useMemo(
-    () => ruleFieldMetas(selectedType ? [selectedType] : [], tagsField, allTags, t),
+    () => ruleFieldMetas(selectedType, tagsField, allTags, t),
     [selectedType, tagsField, allTags, t],
   );
   const criteria = useMemo(

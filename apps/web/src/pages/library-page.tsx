@@ -91,15 +91,15 @@ export function LibraryPage() {
 
   const selectedTypeConfig = config.data?.types.find((type) => type.id === selectedType);
   const configTypes = config.data?.types;
-  const scopeTypeConfigs = useMemo(
-    () => (isGlobalType ? (configTypes ?? []) : selectedTypeConfig ? [selectedTypeConfig] : []),
-    [isGlobalType, configTypes, selectedTypeConfig],
-  );
+  // Frontmatter properties belong to one type's schema — both the criteria and
+  // the sort key. "All types" therefore browses with only the built-ins (file
+  // name, updated, tags).
+  const scopeTypeConfig = isGlobalType ? undefined : selectedTypeConfig;
   const allTagsData = useQuery(allTagsQuery()).data?.tags;
   const allTags = useMemo(() => allTagsData ?? [], [allTagsData]);
   const fieldMetas = useMemo(
-    () => ruleFieldMetas(scopeTypeConfigs, config.data?.tagsField ?? undefined, allTags, t),
-    [scopeTypeConfigs, config.data?.tagsField, allTags, t],
+    () => ruleFieldMetas(scopeTypeConfig, config.data?.tagsField ?? undefined, allTags, t),
+    [scopeTypeConfig, config.data?.tagsField, allTags, t],
   );
   const fieldLabels = useMemo(() => fieldLabelsByType(configTypes), [configTypes]);
   // Covers show for "all types" and for any concrete type that declares an
@@ -267,7 +267,7 @@ export function LibraryPage() {
               </Button>
               <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
               <SortPicker
-                typeConfigs={scopeTypeConfigs}
+                typeConfig={scopeTypeConfig}
                 sort={sort}
                 unsortedLabel={hasQuery ? t`Relevance` : undefined}
                 onChange={(next) =>
@@ -311,7 +311,15 @@ export function LibraryPage() {
             </div>
 
             {filtersOpen ? (
-              <div className="border-b px-3 py-2">
+              <div className="flex flex-col gap-2 border-b px-3 py-2">
+                {isGlobalType ? (
+                  <p className="text-xs text-muted-foreground">
+                    <Trans>
+                      Pick a type to filter on its own fields — across all types only the
+                      properties every entry has can be matched.
+                    </Trans>
+                  </p>
+                ) : null}
                 <RuleBuilder
                   fieldMetas={fieldMetas}
                   value={criteria}
