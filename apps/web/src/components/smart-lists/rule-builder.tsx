@@ -154,6 +154,11 @@ const builderWords = {
     comment: "Rule-builder field for the note file's last-modified time",
     message: "Updated",
   }),
+  anyLink: msg({
+    comment:
+      "Rule-builder field standing for a link from anywhere in the note, rather than from one relation field",
+    message: "Any link",
+  }),
   is: msg({ comment: "Rule operator: field equals the value", message: "is" }),
   isNot: msg({ comment: "Rule operator: field does not equal the value", message: "is not" }),
   isEmpty: msg({ comment: "Rule operator: field has no value", message: "is empty" }),
@@ -324,10 +329,12 @@ function ruleFromEditor(
       return { kind: "startsWith", field, negated: false, values: [inputs.text] };
     case "endsWith":
       return { kind: "endsWith", field, negated: false, values: [inputs.text] };
+    // A relation meta's key scopes the link to that field; the synthetic
+    // "any link" meta (empty key) keeps the file-wide form.
     case "linksTo":
-      return { kind: "linksTo", negated: false, values: inputs.values.slice(0, 1) };
+      return { kind: "linksTo", field: field || undefined, negated: false, values: inputs.values.slice(0, 1) };
     case "notLinksTo":
-      return { kind: "linksTo", negated: true, values: inputs.values.slice(0, 1) };
+      return { kind: "linksTo", field: field || undefined, negated: true, values: inputs.values.slice(0, 1) };
     case "hasAny":
       return { kind: "hasTag", negated: false, values: inputs.values };
     case "notHasAny":
@@ -348,7 +355,11 @@ const emptyInputs = { values: [], text: "", number: "", date: "", amount: "30", 
 /// Derives a row's editable state back from a rule, or `null` when the rule is
 /// outside the builder's vocabulary — those rows render read-only and are
 /// preserved verbatim on save.
-function editorFromRule(rule: SmartFilterRule, metas: RuleFieldMeta[]): EditorState | null {
+function editorFromRule(
+  rule: SmartFilterRule,
+  metas: RuleFieldMeta[],
+  t: (descriptor: MessageDescriptor) => string,
+): EditorState | null {
   if (rule.kind === "unsupported" || rule.kind === "inFolder") return null;
   const findMeta = (kinds: RuleFieldMeta["kind"][]): RuleFieldMeta | null => {
     const meta = metas.find((meta) => meta.key === rule.field);
@@ -371,12 +382,17 @@ function editorFromRule(rule: SmartFilterRule, metas: RuleFieldMeta[]): EditorSt
         : null;
     }
     case "linksTo": {
-      // Any relation field's picker works; the file stores only the target.
-      const meta = metas.find((meta) => meta.kind === "relation") ?? {
-        key: "",
-        label: "",
-        kind: "relation" as const,
-      };
+      // A scoped rule edits under its own relation field (so its target picker
+      // searches the right type); a field-less one is the file-wide form, which
+      // keeps its own synthetic meta so editing the target can't silently
+      // narrow it to a field.
+      const meta = rule.field
+        ? (metas.find((meta) => meta.key === rule.field && meta.kind === "relation") ?? {
+            key: rule.field,
+            label: rule.field,
+            kind: "relation" as const,
+          })
+        : { key: "", label: t(builderWords.anyLink), kind: "relation" as const };
       return { meta, op: rule.negated ? "notLinksTo" : "linksTo", inputs: { ...emptyInputs, values: rule.values ?? [] } };
     }
     case "startsWith":
@@ -669,7 +685,7 @@ function RuleRow({
   onChange: (next: SmartFilterRule | null) => void;
 }) {
   const { t } = useLingui();
-  const editor = useMemo(() => editorFromRule(rule, fieldMetas), [rule, fieldMetas]);
+  const editor = useMemo(() => editorFromRule(rule, fieldMetas, t), [rule, fieldMetas, t]);
 
   if (!editor) {
     // Outside the builder's vocabulary (hand-written syntax) — shown, kept on
@@ -709,7 +725,9 @@ function RuleRow({
           if (next) onChange(defaultRuleFor(next));
         }}
       >
-        {/* A hand-written field missing from the schema still shows itself. */}
+        {/* A field the schema doesn't declare — hand-written, or the synthetic
+            "any link" scope — still shows itself. Picking a real field replaces
+            the rule, so the switch is deliberately one-way. */}
         {fieldMetas.some((candidate) => candidate.key === meta.key) ? null : (
           <option value={meta.key}>{meta.label}</option>
         )}

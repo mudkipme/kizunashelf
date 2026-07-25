@@ -1,25 +1,39 @@
 +++
 title = "Browsing the library"
-description = "Covers, filters, facets, search with relevance ranking — the shelf view over your Markdown."
+description = "Covers, criteria, search with relevance ranking — the shelf view over your Markdown."
 weight = 3
 +++
 
 The Library page is the shelf itself: every entity of a type, with covers, titles in your language, and status badges — all derived live from the files.
 
-{{ screenshot(caption="The library grid with filters and search.") }}
+{{ screenshot(caption="The library grid with criteria and search.") }}
 
-## Filtering
+## Browsing is an unsaved smart list
 
-Filters are built from your schema, not a fixed list:
+The Library page and a [smart list](@/features/lists.md) are the same thing: a type scope, a set of criteria, and a sort. The only difference is that a smart list has a name and a file. So browsing gives you the *full* rule vocabulary rather than a reduced version of it, and **Save as smart list** writes down exactly what you are looking at — no translation step that could quietly change the results.
 
-- **Status** — the options of the type's `enumRole: status` field become a facet.
-- **Tags** — the built-in, vault-wide [tags field](@/reference/home-tags-daily-notes.md#tags) is filterable everywhere, when the vault has opted in by setting `tags.field`.
-- **Relations** — filter by linked entities (e.g. every anime in one franchise), with autocomplete suggestions.
-- Enum fields and other declared facets follow the same pattern: declare a field, get a filter.
+The whole browse state lives in the URL (`type`, `criteria`, `sort`, `direction`, `view`, `q`), so a view you have built survives a reload, works with the back button, and can be pasted to another device.
+
+## Criteria
+
+Criteria are built from your schema, not a fixed list of facets. Open **Filter** and add rules:
+
+- **Enum fields** (status among them) match by equality — declare a field, get a filter.
+- **List fields** and the built-in, vault-wide [tags field](@/reference/home-tags-daily-notes.md#tags) match by membership, any-of or all-of.
+- **Relations** match by linked entity, with autocomplete over the target type — either scoped to one field ("studio links to X") or file-wide ("links to X anywhere").
+- **Dates** compare against a day or a relative window ("in the last 30 days", "within the next 2 weeks"), **numbers** against a threshold, and any field can be tested for emptiness.
+
+Rules combine with `all` / `any` / `none`, plus one level of subgroups — enough for "watching, rated 8+, and either SF or Drama". A rule's meaning is value-driven: a comparison is a date comparison because the right-hand side is a date, never because of what the field is called.
 
 ## Search
 
-The header search covers the whole library with an autosuggest dropdown, and matches across **all** of an entity's titles — original, English, Chinese, whatever the `titles` map holds — not just the displayed one. Results rank by relevance (title matches over body mentions); list views can also sort by `title`, any date/season field (`date:<field>`), relation count, or path.
+The header search covers the whole library with an autosuggest dropdown, and matches across **all** of an entity's titles — original, English, Chinese, whatever the `titles` map holds — not just the displayed one. It composes with criteria: searching while filtered narrows within the filter.
+
+While you are searching, results rank by relevance (title matches over body mentions) unless you pick a sort yourself. A search is a way of looking at a list rather than part of one, so it is not saved with **Save as smart list**.
+
+## Sorting
+
+Sorting uses the same property references as smart lists: the title (`file.name`), the file's update time (`file.mtime`), or any orderable schema field — dates, ratings, and progress (`note.<field>`). Date fields sort by their normalized key, so fuzzy values like `2024 Spring` order correctly, and entities missing the field always sort last.
 
 ## Titles follow your language
 

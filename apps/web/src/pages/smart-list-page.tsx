@@ -16,20 +16,25 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
-import { allTagsQuery, configQuery, queryKeys, smartListQuery, smartListResultsQuery } from "@/api/queries";
-import { fetchSmartListPreview, removeSmartList, saveSmartList } from "@/api/smart-lists";
-import { todayLocal } from "@/lib/date";
-import { EntityGridItem } from "@/components/assets/entity-grid-item";
-import { EntityListItem } from "@/components/assets/entity-list-item";
-import { PaginationBar } from "@/components/assets/pagination-bar";
+import {
+  allTagsQuery,
+  configQuery,
+  queryKeys,
+  smartListPreviewQuery,
+  smartListQuery,
+  smartListResultsQuery,
+} from "@/api/queries";
+import { removeSmartList, saveSmartList } from "@/api/smart-lists";
+import { EntityResults } from "@/components/assets/entity-results";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
+import { CriteriaSummary } from "@/components/smart-lists/criteria-summary";
 import {
   RuleBuilder,
   pruneIncompleteRules,
   ruleFieldMetas,
 } from "@/components/smart-lists/rule-builder";
-import { formatRule } from "@/components/smart-lists/rule-format";
+import { SortPicker } from "@/components/smart-lists/sort-picker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,10 +63,9 @@ import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useCapabilities } from "@/lib/capabilities";
 import { pageSize } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
-import { fieldDisplayLabel, fieldLabelsByType, typeHasCoverField } from "@/lib/type-config";
+import { fieldLabelsByType, typeHasCoverField } from "@/lib/type-config";
 import type {
   SmartFilterGroup,
-  SmartFilterRule,
   SmartListDetail,
   SmartListView,
   TypeConfig,
@@ -116,24 +120,16 @@ export function SmartListPage() {
   });
   const debouncedDraft = useDebouncedValue(draft, 350);
   const previewResults = useQuery({
-    queryKey: ["smartListPreview", id, debouncedDraft, activeViewIndex, page, language] as const,
-    queryFn: ({ signal }) =>
-      fetchSmartListPreview(
-        {
-          scope: debouncedDraft?.scope,
-          filters: pruneIncompleteRules(debouncedDraft?.filters ?? { conjunction: "all", rules: [] }),
-          sort: debouncedDraft?.views[activeViewIndex]?.sort ?? [],
-          limit: debouncedDraft?.views[activeViewIndex]?.limit ?? undefined,
-          page,
-          pageSize,
-          titleLanguage: language,
-          // `today()` criteria in the draft resolve against the client's local date.
-          today: todayLocal(),
-        },
-        { signal },
-      ),
+    ...smartListPreviewQuery({
+      scope: debouncedDraft?.scope,
+      filters: pruneIncompleteRules(debouncedDraft?.filters ?? { conjunction: "all", rules: [] }),
+      sort: debouncedDraft?.views[activeViewIndex]?.sort ?? [],
+      limit: debouncedDraft?.views[activeViewIndex]?.limit ?? undefined,
+      page,
+      pageSize,
+      titleLanguage: language,
+    }),
     enabled: editing && debouncedDraft !== null,
-    placeholderData: (previous) => previous,
   });
   const results = editing ? previewResults : savedResults;
 
@@ -340,52 +336,36 @@ export function SmartListPage() {
                 onChange={setDraft}
               />
             ) : (
-              <CriteriaSummary detail={data} />
+              <CriteriaSummary
+                group={data.filters}
+                empty={
+                  data.scope ? (
+                    <Trans>No further criteria — every entity of this type matches.</Trans>
+                  ) : (
+                    <Trans>No criteria — everything in the library matches.</Trans>
+                  )
+                }
+              />
             )}
 
             {(data.warnings?.length ?? 0) > 0 ? (
               <WarningsBanner warnings={data.warnings ?? []} />
             ) : null}
 
-            <section className="flex min-h-0 flex-col overflow-hidden rounded-md border">
-              <div className="min-h-0 flex-1 overflow-auto">
-                {activeView?.layout === "grid" ? (
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 p-3">
-                    {entities.map((entity) => (
-                      <EntityGridItem
-                        key={entity.id}
-                        entity={entity}
-                        labelsByType={fieldLabels}
-                        showCover={showCover}
-                        showType={showType}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  entities.map((entity) => (
-                    <EntityListItem
-                      key={entity.id}
-                      entity={entity}
-                      labelsByType={fieldLabels}
-                      showCover={showCover}
-                      showType={showType}
-                    />
-                  ))
-                )}
-                {!results.isFetching && entities.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">
-                    <Trans>No entries match the criteria</Trans>
-                  </div>
-                ) : null}
-              </div>
-              <PaginationBar
-                page={results.data?.page ?? page}
-                totalPages={totalPages}
-                total={total}
-                pageSize={pageSize}
-                onPageChange={(next) => setParam("page", next > 1 ? String(next) : undefined)}
-              />
-            </section>
+            <EntityResults
+              className="rounded-md border"
+              entities={entities}
+              layout={activeView?.layout ?? "list"}
+              labelsByType={fieldLabels}
+              showCover={showCover}
+              showType={showType}
+              loading={results.isFetching}
+              page={results.data?.page ?? page}
+              totalPages={totalPages}
+              total={total}
+              empty={<Trans>No entries match the criteria</Trans>}
+              onPageChange={(next) => setParam("page", next > 1 ? String(next) : undefined)}
+            />
           </>
         )}
       </PageContainer>
@@ -445,23 +425,6 @@ function EditPanel({
   const { t } = useLingui();
   const activeView = draft.views[activeViewIndex] as SmartListView | undefined;
   const sortSpec = activeView?.sort?.[0];
-  const sortOptions = useMemo(() => {
-    const options: { value: string; label: string }[] = [
-      { value: "file.name", label: t`Title` },
-      { value: "file.mtime", label: t`Update time` },
-    ];
-    const seen = new Set<string>();
-    for (const typeConfig of scopeTypeConfigs) {
-      for (const field of typeConfig.fields ?? []) {
-        if (seen.has(field.field)) continue;
-        if (["date", "rating", "progress", "totalProgress"].includes(field.fieldType)) {
-          seen.add(field.field);
-          options.push({ value: `note.${field.field}`, label: fieldDisplayLabel(field) });
-        }
-      }
-    }
-    return options;
-  }, [scopeTypeConfigs, t]);
 
   const updateActiveView = (patch: Partial<SmartListView>) => {
     if (!activeView) return;
@@ -502,49 +465,12 @@ function EditPanel({
                 Sort {activeView.name} by
               </Trans>
             </label>
-            <Select
-              value={sortSpec?.property ?? "file.name"}
+            <SortPicker
+              typeConfigs={scopeTypeConfigs}
+              sort={sortSpec}
               disabled={disabled}
-              aria-label={t`Sort`}
-              className="w-fit min-w-0"
-              onChange={(event) =>
-                updateActiveView({
-                  sort: [
-                    { property: event.target.value, direction: sortSpec?.direction ?? "asc" },
-                  ],
-                })
-              }
-            >
-              {sortOptions.some((option) => option.value === (sortSpec?.property ?? "file.name"))
-                ? null
-                : sortSpec
-                  ? <option value={sortSpec.property}>{sortSpec.property}</option>
-                  : null}
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={sortSpec?.direction ?? "asc"}
-              disabled={disabled}
-              aria-label={t`Direction`}
-              className="w-fit min-w-0"
-              onChange={(event) =>
-                updateActiveView({
-                  sort: [
-                    {
-                      property: sortSpec?.property ?? "file.name",
-                      direction: event.target.value === "desc" ? "desc" : "asc",
-                    },
-                  ],
-                })
-              }
-            >
-              <option value="asc">{t`Ascending`}</option>
-              <option value="desc">{t`Descending`}</option>
-            </Select>
+              onChange={(sort) => updateActiveView({ sort: sort ? [sort] : [] })}
+            />
             <Input
               type="number"
               min={1}
@@ -694,71 +620,3 @@ function WarningsBanner({ warnings }: { warnings: string[] }) {
   );
 }
 
-/// Read-only rendering of the list's criteria. Rules render as compact chips;
-/// nested groups as bordered clusters with their own conjunction.
-function CriteriaSummary({ detail }: { detail: SmartListDetail }) {
-  const group = detail.filters;
-  const rules = group.rules ?? [];
-  const empty = rules.length === 0 && (group.groups?.length ?? 0) === 0;
-  if (empty) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        {detail.scope ? (
-          <Trans>No further criteria — every entity of this type matches.</Trans>
-        ) : (
-          <Trans>No criteria — everything in the library matches.</Trans>
-        )}
-      </p>
-    );
-  }
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 text-xs">
-      <ConjunctionLabel conjunction={group.conjunction} />
-      {rules.map((rule, index) => (
-        <RuleChip key={index} rule={rule} />
-      ))}
-      {(group.groups ?? []).map((subgroup, index) => (
-        <span
-          key={index}
-          className="flex flex-wrap items-center gap-1.5 rounded-md border border-dashed px-1.5 py-1"
-        >
-          <ConjunctionLabel conjunction={subgroup.conjunction} />
-          {(subgroup.rules ?? []).map((rule, ruleIndex) => (
-            <RuleChip key={ruleIndex} rule={rule} />
-          ))}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function ConjunctionLabel({ conjunction }: { conjunction: SmartFilterGroup["conjunction"] }) {
-  return (
-    <span className="font-medium text-muted-foreground">
-      {conjunction === "any" ? (
-        <Trans comment="Prefix before a group of filter-criteria chips: at least one must match">
-          any of
-        </Trans>
-      ) : conjunction === "none" ? (
-        <Trans comment="Prefix before a group of filter-criteria chips: none may match">
-          none of
-        </Trans>
-      ) : (
-        <Trans comment="Prefix before a group of filter-criteria chips: all must match">
-          all of
-        </Trans>
-      )}
-    </span>
-  );
-}
-
-function RuleChip({ rule }: { rule: SmartFilterRule }) {
-  const { t } = useLingui();
-  const label = formatRule(rule, t);
-  const ignored = rule.kind === "unsupported";
-  return (
-    <Badge variant="outline" className={ignored ? "text-muted-foreground line-through" : undefined}>
-      {label}
-    </Badge>
-  );
-}

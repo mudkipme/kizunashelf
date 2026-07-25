@@ -986,6 +986,8 @@ pub struct SmartRelativeDate {
 /// - `isEmpty` — `field` (`negated: true` reads as "has a value").
 /// - `hasTag` — `values` (any listed tag).
 /// - `linksTo` — `values[0]`: an entity basename/path the note must link to.
+///   An optional `field` scopes it to one relation field ("studio links to X"
+///   rather than "links to X anywhere").
 /// - `inFolder` — `values[0]`: a vault-relative folder.
 /// - `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.
 ///
@@ -1151,6 +1153,12 @@ pub struct SmartListPreviewRequest {
     pub page_size: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title_language: Option<String>,
+    /// Free-text search within the criteria's matches (titles, summary, path).
+    /// With no explicit `sort`, matches are ranked by relevance — this is how
+    /// the library's browse-and-search works, since browsing *is* an unsaved
+    /// smart list.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub q: Option<String>,
     /// Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`
     /// date criteria are judged against the user's day rather than the host's
     /// clock. Falls back to the host's local date.

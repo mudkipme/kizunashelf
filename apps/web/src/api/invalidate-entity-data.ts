@@ -4,8 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 // Query keys whose data can change when a single entity is created, edited,
 // renamed, or deleted. Anything derived from the entity set (home shelves,
 // upcoming, lists — a rename rewrites wikilinks inside list files — smart-list
-// results, calendar, analytics, cleanup queues, stats) is refetched; unrelated
-// caches (config, capabilities, provider catalog) are left untouched.
+// results and previews (the library browser is one), calendar, analytics,
+// cleanup queues, stats) is refetched; unrelated caches (config, capabilities,
+// provider catalog) are left untouched.
 const ENTITY_DATA_KEYS = [
   "entity",
   "entityDates",
@@ -15,6 +16,7 @@ const ENTITY_DATA_KEYS = [
   "lists",
   "list",
   "smartListResults",
+  "smartListPreview",
   "calendar",
   "activity",
   "analytics",

@@ -993,14 +993,6 @@
           },
           {
             "in": "query",
-            "name": "filters",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
             "name": "pageSize",
             "schema": {
               "type": "number",
@@ -3559,6 +3551,16 @@
           },
           {
             "in": "query",
+            "name": "q",
+            "description": "Free-text search within the list's matches (titles, summary, path),\nranked by relevance when the view declares no sort of its own.",
+            "schema": {
+              "description": "Free-text search within the list's matches (titles, summary, path),\nranked by relevance when the view declares no sort of its own.",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
             "name": "today",
             "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`\ndate criteria are judged against the user's day rather than the host's\nclock. Falls back to the host's local date.",
             "schema": {
@@ -3858,7 +3860,7 @@
         ]
       },
       "SmartFilterRule": {
-        "description": "One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/\n  `date` (ISO `YYYY-MM-DD`)/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` / `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename/path the note must link to.\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` / `file.mtime`.",
+        "description": "One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/\n  `date` (ISO `YYYY-MM-DD`)/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` / `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` / `file.mtime`.",
         "type": "object",
         "properties": {
           "kind": {
@@ -7004,12 +7006,6 @@
               "null"
             ]
           },
-          "filters": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "pageSize": {
             "type": [
               "number",
@@ -9410,6 +9406,13 @@
               "null"
             ]
           },
+          "q": {
+            "description": "Free-text search within the criteria's matches (titles, summary, path).\nWith no explicit `sort`, matches are ranked by relevance — this is how\nthe library's browse-and-search works, since browsing *is* an unsaved\nsmart list.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "today": {
             "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`\ndate criteria are judged against the user's day rather than the host's\nclock. Falls back to the host's local date.",
             "type": [
@@ -9496,6 +9499,13 @@
             "format": "double"
           },
           "titleLanguage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "q": {
+            "description": "Free-text search within the list's matches (titles, summary, path),\nranked by relevance when the view declares no sort of its own.",
             "type": [
               "string",
               "null"

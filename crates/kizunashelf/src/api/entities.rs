@@ -7,8 +7,7 @@ use super::state::{get_library, AppState};
 use crate::calendar::{build_entity_dates, EntityDatesResponse};
 use crate::contract::{EntityDetailResponse, EntityListResponse};
 use crate::entities::{
-    build_entity_list, entity_detail_related_entities, entity_detail_relations,
-    parse_entity_field_filters, EntityListParams,
+    build_entity_list, entity_detail_related_entities, entity_detail_relations, EntityListParams,
 };
 use crate::library::load_entity;
 use crate::relations::SortDirection;
@@ -33,7 +32,6 @@ pub(crate) struct EntitiesQuery {
     title_language: Option<String>,
     q: Option<String>,
     relation: Option<String>,
-    filters: Option<String>,
     #[serde(rename = "pageSize")]
     page_size: Option<f64>,
     page: Option<f64>,
@@ -44,8 +42,6 @@ pub(crate) async fn entities(
     Query(query): Query<EntitiesQuery>,
 ) -> ApiResult<EntityListResponse> {
     let library = get_library(&state).await?;
-    let field_filters = parse_entity_field_filters(query.filters.as_deref())
-        .map_err(|message| ApiError::bad_request(&message))?;
     let direction = if query.direction.as_deref() == Some("desc") {
         SortDirection::Desc
     } else {
@@ -54,7 +50,6 @@ pub(crate) async fn entities(
     let params = EntityListParams {
         entity_type: query.entity_type.as_deref(),
         canonical_status: query.canonical_status,
-        field_filters,
         query: query.q.as_deref(),
         relation: query.relation.as_deref(),
         sort: query.sort.as_deref().unwrap_or("type"),

@@ -4,7 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { criteriaRuleCount } from "@/components/smart-lists/home-criteria";
+import { criteriaRuleCount } from "@/components/smart-lists/criteria-url";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

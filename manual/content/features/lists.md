@@ -14,14 +14,16 @@ A **list** is a hand-curated page of entities — a ranking, a "favorites of 202
 
 ## Smart lists
 
-A **smart list** is computed: you define criteria, and its items are whatever currently matches. Rules cover comparisons (`eq`/`ne`/`gt`/`gte`/`lt`/`lte` — dates, numbers, and relative windows like "in the last 30 days"), text (`contains`, `startsWith`, `endsWith`), presence (`isEmpty`, negatable), tags (`hasTag` — matches only when the vault's [tags feature](@/reference/home-tags-daily-notes.md#tags) is enabled), links (`linksTo`), and folders (`inFolder`), combined with `all`/`any`/`none` conjunctions and one level of subgroups.
+A **smart list** is computed: you define criteria, and its items are whatever currently matches. Rules cover comparisons (`eq`/`ne`/`gt`/`gte`/`lt`/`lte` — dates, numbers, and relative windows like "in the last 30 days"), text (`contains`, `startsWith`, `endsWith`), presence (`isEmpty`, negatable), tags (`hasTag` — matches only when the vault's [tags feature](@/reference/home-tags-daily-notes.md#tags) is enabled), links (`linksTo`, optionally scoped to one relation field), and folders (`inFolder`), combined with `all`/`any`/`none` conjunctions and one level of subgroups.
 
 Like everything else, a rule's meaning is value-driven: a comparison is a date comparison because the right-hand side is a date — never because of the field's name.
 
 {{ screenshot(caption="The smart-list rule builder.") }}
 
+## Browsing and smart lists are the same thing
+
+[Browsing the library](@/features/browse.md) is a smart list you haven't named: the same rule builder, the same evaluator, the same sort keys. **Save as smart list** on the Library page therefore writes down precisely what you were looking at, and opening a saved list shows precisely what browsing showed. The same criteria model also powers [Home page sections](@/features/home.md), so a section's "See all" links straight into the browser with its criteria intact — the shelf you land on is the section, not an approximation of it.
+
 ## The Obsidian bridge
 
 Smart lists are stored as **`.base` files using a subset of the Obsidian Bases format** — open the same file in Obsidian and it shows the exact same items. That's the files-over-apps promise applied to queries: your saved views aren't locked in either.
-
-The same criteria model powers [Home page sections](@/features/home.md), so a home section you like can become a smart list and vice versa.

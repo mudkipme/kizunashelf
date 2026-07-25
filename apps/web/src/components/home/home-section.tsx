@@ -2,6 +2,8 @@ import { Trans } from "@lingui/react/macro";
 
 import { HomeEntityCard } from "@/components/home/home-entity-card";
 import { SectionHeader } from "@/components/home/section-header";
+import { criteriaParam, encodeCriteria } from "@/components/smart-lists/criteria-url";
+import { defaultSort } from "@/lib/constants";
 import type { HomeSectionResponse } from "@/types/api";
 
 export function HomeSection({
@@ -35,45 +37,27 @@ export function HomeSection({
   );
 }
 
+/// The section's own definition as a browse URL. A section and the library
+/// browser speak the same criteria model and run through the same evaluator, so
+/// this is an exact link: "See all" shows precisely the section's matches, just
+/// unpaged and unlimited.
 function libraryHref(section: HomeSectionResponse) {
   const params = new URLSearchParams({
     type: section.type,
-    sort: section.sort,
+    sort: sortPropertyFor(section.sort),
     direction: section.direction,
   });
-  // Best-effort projection of the section's criteria onto the library page's
-  // URL filters: equality and membership rules carry over (including an
-  // "any of" subgroup of equalities on one field, which the library ORs);
-  // richer rules (dates, numbers, negations) have no URL form and are left
-  // off — the link then shows a superset of the section.
-  const criteria = section.criteria;
-  const append = (field: string | null | undefined, values: (string | undefined)[]) => {
-    const key = field?.trim();
-    if (!key) return;
-    for (const value of values) {
-      if (value?.trim()) params.append(`filter:${key}`, value);
-    }
-  };
-  if (criteria?.conjunction === "all" || !criteria) {
-    for (const rule of criteria?.rules ?? []) {
-      if (rule.negated) continue;
-      if (rule.kind === "compare" && rule.op === "eq" && rule.value) {
-        append(rule.field, [rule.value]);
-      } else if (rule.kind === "contains" && rule.mode !== "all") {
-        append(rule.field, rule.values ?? []);
-      }
-    }
-    for (const group of criteria?.groups ?? []) {
-      if (group.conjunction !== "any") continue;
-      const rules = group.rules ?? [];
-      const fields = new Set(rules.map((rule) => rule.field));
-      const allEq = rules.every(
-        (rule) => rule.kind === "compare" && rule.op === "eq" && rule.value && !rule.negated,
-      );
-      if (fields.size === 1 && allEq) {
-        append(rules[0]?.field, rules.map((rule) => rule.value ?? undefined));
-      }
-    }
-  }
+  const criteria = encodeCriteria(section.criteria ?? undefined);
+  if (criteria) params.set(criteriaParam, criteria);
   return `/library?${params}`;
+}
+
+/// A section declares its sort in vault config, in the entity-list vocabulary
+/// (`title`, `recentlyUpdated`, `date:<field>`); browsing sorts by Bases
+/// property reference. Anything without a property form (`relationCount`)
+/// falls back to the title order.
+function sortPropertyFor(sort: string) {
+  if (sort === "recentlyUpdated") return "file.mtime";
+  if (sort.startsWith("date:")) return `note.${sort.slice("date:".length)}`;
+  return defaultSort;
 }

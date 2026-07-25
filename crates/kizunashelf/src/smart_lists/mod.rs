@@ -50,7 +50,7 @@ pub use model::{
     SmartList, SmartView, SortProperty, ViewLayout, ViewSort,
 };
 pub use print::print_atom;
-pub use results::smart_list_records;
+pub use results::{smart_list_records, ResultOptions};
 
 /// File extension of a smart list. Smart lists live in the same directory as
 /// static lists ([`crate::lists::LISTS_DIR`]); the extension is the kind.

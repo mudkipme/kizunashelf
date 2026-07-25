@@ -51,6 +51,9 @@ pub(crate) struct SmartListResultsQuery {
     page: Option<f64>,
     page_size: Option<f64>,
     title_language: Option<String>,
+    /// Free-text search within the list's matches (titles, summary, path),
+    /// ranked by relevance when the view declares no sort of its own.
+    q: Option<String>,
     /// Today's date (`YYYY-MM-DD`), the client's **local** date, so `today()`
     /// date criteria are judged against the user's day rather than the host's
     /// clock. Falls back to the host's local date.
@@ -207,8 +210,15 @@ pub(crate) async fn smart_list_results(
         None => list.views.first(),
     };
     let ctx = eval_context(&library, query.today.as_deref());
-    let records =
-        smart_lists::smart_list_records(&list, view, &ctx, query.title_language.as_deref());
+    let records = smart_lists::smart_list_records(
+        &list,
+        view,
+        &ctx,
+        &smart_lists::ResultOptions {
+            title_language: query.title_language.as_deref(),
+            query: query.q.as_deref(),
+        },
+    );
     Ok(Json(paginate(
         records,
         query.page.unwrap_or(1.0),
@@ -244,7 +254,10 @@ pub(crate) async fn preview_smart_list(
         &list,
         Some(&view),
         &ctx,
-        request.title_language.as_deref(),
+        &smart_lists::ResultOptions {
+            title_language: request.title_language.as_deref(),
+            query: request.q.as_deref(),
+        },
     );
     Ok(Json(paginate(
         records,
@@ -650,6 +663,16 @@ fn field_to_core(field: Option<&str>) -> Result<FieldRef, ApiError> {
     })
 }
 
+/// The relation field a `linksTo` rule is scoped to, or `None` for the
+/// file-wide form. Only a frontmatter key can hold links, so the two `file.*`
+/// properties fall back to file-wide rather than erroring.
+fn link_scope_to_core(field: Option<&str>) -> Option<String> {
+    field
+        .map(str::trim)
+        .filter(|field| !field.is_empty() && *field != "file.name" && *field != "file.mtime")
+        .map(|field| field.strip_prefix("note.").unwrap_or(field).to_string())
+}
+
 fn op_to_contract(op: CompareOp) -> SmartCompareOp {
     match op {
         CompareOp::Eq => SmartCompareOp::Eq,
@@ -688,8 +711,9 @@ fn atom_to_rule(atom: &FilterAtom) -> SmartFilterRule {
             values: tags.clone(),
             ..base
         },
-        AtomKind::HasLink { target } => SmartFilterRule {
+        AtomKind::HasLink { field, target } => SmartFilterRule {
             kind: SmartFilterRuleKind::LinksTo,
+            field: field.clone(),
             values: vec![target.clone()],
             ..base
         },
@@ -860,6 +884,7 @@ fn rule_to_node(rule: &SmartFilterRule) -> Result<FilterNode, ApiError> {
             }
         }
         SmartFilterRuleKind::LinksTo => AtomKind::HasLink {
+            field: link_scope_to_core(rule.field.as_deref()),
             target: first_value()
                 .ok_or_else(|| ApiError::bad_request("Link rule needs a target"))?,
         },

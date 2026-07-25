@@ -88,8 +88,17 @@ pub enum AtomKind {
     InFolder { folder: String },
     /// `file.hasTag("a", "b")` — any listed tag (nested `a/b` tags included).
     HasTag { tags: Vec<String> },
-    /// `file.hasLink("Name")` — an outgoing wikilink/relation to the target.
-    HasLink { target: String },
+    /// An outgoing wikilink/relation to the target. `field: None` is the
+    /// file-wide `file.hasLink("Name")`; `Some(key)` scopes it to one
+    /// frontmatter relation field, `note.key.contains(link("Name"))` — Bases'
+    /// own way of asking whether a property holds a link.
+    ///
+    /// Either way the match runs through the resolved relation graph rather
+    /// than raw frontmatter text, so aliases, paths, and ids all resolve.
+    HasLink {
+        field: Option<String>,
+        target: String,
+    },
     /// `note.field <op> <literal>` — value-driven comparison.
     Compare {
         field: FieldRef,

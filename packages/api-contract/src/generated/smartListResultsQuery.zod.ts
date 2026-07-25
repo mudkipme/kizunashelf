@@ -11,6 +11,7 @@ export const SmartListResultsQuery = zod.object({
   "page": zod.number().nullish(),
   "pageSize": zod.number().nullish(),
   "titleLanguage": zod.string().nullish(),
+  "q": zod.string().nullish().describe('Free-text search within the list\'s matches (titles, summary, path),\nranked by relevance when the view declares no sort of its own.'),
   "today": zod.string().nullish().describe('Today\'s date (`YYYY-MM-DD`), the client\'s \*\*local\*\* date, so `today()`\ndate criteria are judged against the user\'s day rather than the host\'s\nclock. Falls back to the host\'s local date.')
 })
 

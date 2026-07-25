@@ -121,7 +121,10 @@ export function formatRule(
     case "hasTag":
       return `${not}${(rule.values ?? []).map((tag) => `#${tag}`).join(" ")}`;
     case "linksTo":
-      return `${not}${t(ruleWords.linksTo)} ${values}`;
+      // A scoped rule reads "studio links to X"; the file-wide one just "links to X".
+      return field
+        ? `${not}${field} ${t(ruleWords.linksTo)} ${values}`
+        : `${not}${t(ruleWords.linksTo)} ${values}`;
     case "inFolder":
       return `${not}${t(ruleWords.inFolder)} ${values}`;
     case "unsupported":

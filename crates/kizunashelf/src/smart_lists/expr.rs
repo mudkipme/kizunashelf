@@ -347,6 +347,7 @@ fn classify_call(callee: &Expr, args: &[Expr]) -> Option<(AtomKind, bool)> {
                 folder: single_string_arg(args)?,
             },
             "hasLink" => AtomKind::HasLink {
+                field: None,
                 target: single_string_arg(args)?,
             },
             _ => return None,
@@ -354,6 +355,23 @@ fn classify_call(callee: &Expr, args: &[Expr]) -> Option<(AtomKind, bool)> {
         return Some((kind, false));
     }
     let field = field_ref(receiver)?;
+    // `note.studio.contains(link("Name"))` — Bases' link-membership test on a
+    // property. It reads as a scoped link rule (matched through the relation
+    // graph) rather than as text membership. Only a frontmatter property can
+    // hold links, so `file.name.contains(link(…))` stays opaque, as does a
+    // mixture of link and string arguments.
+    if let Some(target) = single_link_arg(args) {
+        return match (method.as_str(), field) {
+            ("contains" | "containsAny" | "containsAll", FieldRef::Note(name)) => Some((
+                AtomKind::HasLink {
+                    field: Some(name),
+                    target,
+                },
+                false,
+            )),
+            _ => None,
+        };
+    }
     let kind = match method.as_str() {
         "contains" => AtomKind::Contains {
             field,
@@ -387,6 +405,21 @@ fn classify_call(callee: &Expr, args: &[Expr]) -> Option<(AtomKind, bool)> {
         _ => return None,
     };
     Some((kind, false))
+}
+
+/// The target of a lone `link("Name")` argument, or `None` when the arguments
+/// aren't exactly that — one link literal and nothing else.
+fn single_link_arg(args: &[Expr]) -> Option<String> {
+    let [Expr::Call(callee, link_args)] = args else {
+        return None;
+    };
+    if !matches!(callee.as_ref(), Expr::Ident(name) if name == "link") {
+        return None;
+    }
+    match link_args.as_slice() {
+        [Expr::Str(target)] => Some(target.clone()),
+        _ => None,
+    }
 }
 
 fn string_args(args: &[Expr]) -> Option<Vec<String>> {

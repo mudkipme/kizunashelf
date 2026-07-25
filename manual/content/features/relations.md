@@ -20,4 +20,4 @@ The index stores **both directions**: the detail page shows outgoing relations (
 
 Renaming an entity from KizunaShelf rewrites inbound `[[wikilinks]]` across type folders, daily notes, and list pages, so the network survives renames. (Matching normalizes Unicode NFC/NFD, so *Pokémon* and *ポケモン* filenames are safe across macOS/iOS and other platforms.)
 
-Relations also power [library filtering](@/features/browse.md#filtering) ("everything linked to this franchise") and the relation columns in [smart lists](@/features/lists.md).
+Relations also power [browse criteria](@/features/browse.md#criteria) ("everything linked to this franchise", either from one field or from anywhere in the note) and the relation columns in [smart lists](@/features/lists.md).

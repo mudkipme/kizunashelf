@@ -286,11 +286,16 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         "anime:Steins;Gate 0 (Anime)"
     );
 
-    // Relation-field filter: entities whose `franchise` relation points to Steins;Gate.
-    let franchise_filter =
-        urlencoding::encode(r#"[{"field":"franchise","values":["Steins;Gate"]}]"#);
+    // Criteria-shaped browsing lives on the smart-list evaluator (the library
+    // browser is an unsaved smart list), so these are the same schema-driven
+    // questions the entity list's `filters` param used to answer.
+    // A field-scoped link rule: entities whose `franchise` relation points to
+    // Steins;Gate.
     let franchise_filtered = server
-        .ok_json(&format!("/api/entities?filters={franchise_filter}"))
+        .preview(
+            None,
+            json!([{ "kind": "linksTo", "field": "franchise", "values": ["Steins;Gate"] }]),
+        )
         .await;
     assert_eq!(franchise_filtered["total"], 2);
     assert!(has_entity_title(
@@ -302,11 +307,26 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         "Robotics;Notes"
     ));
 
-    let status_filters =
-        urlencoding::encode(r#"[{"field":"status","values":["Watching","Playing"]}]"#);
-    let status_filtered = server
-        .ok_json(&format!("/api/entities?filters={status_filters}"))
-        .await;
+    // An enum field, any-of: one rule per value under an "any" subgroup.
+    let (status, status_filtered) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-lists/preview",
+        Some(json!({
+            "filters": {
+                "conjunction": "all",
+                "groups": [{
+                    "conjunction": "any",
+                    "rules": [
+                        { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" },
+                        { "kind": "compare", "field": "status", "op": "eq", "value": "Playing" },
+                    ],
+                }],
+            }
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{status_filtered}");
     assert_eq!(status_filtered["total"], 2);
     assert!(has_entity_title(
         &status_filtered["items"],
@@ -317,24 +337,29 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         "Robotics;Notes"
     ));
 
-    let genre_filters = urlencoding::encode(r#"[{"field":"genres","values":["Strategy","RPG"]}]"#);
+    // A list field matches by membership, any-of.
     let genre_filtered = server
-        .ok_json(&format!("/api/entities?type=games&filters={genre_filters}"))
+        .preview(
+            Some("games"),
+            json!([{ "kind": "contains", "field": "genres", "mode": "any", "values": ["Strategy", "RPG"] }]),
+        )
         .await;
     assert_eq!(genre_filtered["total"], 1);
     assert_eq!(genre_filtered["items"][0]["id"], "games:Robotics;Notes");
 
-    let missing_genre_filters = urlencoding::encode(r#"[{"field":"genres","values":["RPG"]}]"#);
     let missing_genre_filtered = server
-        .ok_json(&format!(
-            "/api/entities?type=games&filters={missing_genre_filters}"
-        ))
+        .preview(
+            Some("games"),
+            json!([{ "kind": "contains", "field": "genres", "mode": "any", "values": ["RPG"] }]),
+        )
         .await;
     assert_eq!(missing_genre_filtered["total"], 0);
 
-    let favorite_filters = urlencoding::encode(r#"[{"field":"favorite","values":["true"]}]"#);
     let favorite_filtered = server
-        .ok_json(&format!("/api/entities?filters={favorite_filters}"))
+        .preview(
+            None,
+            json!([{ "kind": "compare", "field": "favorite", "op": "eq", "boolean": true }]),
+        )
         .await;
     assert_eq!(favorite_filtered["total"], 1);
     assert_eq!(
@@ -342,9 +367,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         "anime:Steins;Gate 0 (Anime)"
     );
 
-    let not_favorite_filters = urlencoding::encode(r#"[{"field":"favorite","values":["false"]}]"#);
     let not_favorite_filtered = server
-        .ok_json(&format!("/api/entities?filters={not_favorite_filters}"))
+        .preview(
+            None,
+            json!([{ "kind": "compare", "field": "favorite", "op": "eq", "boolean": false }]),
+        )
         .await;
     assert_eq!(not_favorite_filtered["total"], 1);
     assert_eq!(
@@ -2354,6 +2381,25 @@ impl TestServer {
         request_json(&self.app, Method::GET, path, None).await
     }
 
+    /// Evaluates an unsaved smart-list definition — how criteria-shaped browsing
+    /// is answered (the library browser is an unsaved smart list). `rules` are
+    /// AND-ed; `scope` is a type id or `None` for the whole library.
+    async fn preview(&self, scope: Option<&str>, rules: Value) -> Value {
+        let mut body = json!({ "filters": { "conjunction": "all", "rules": rules } });
+        if let Some(scope) = scope {
+            body["scope"] = json!(scope);
+        }
+        let (status, value) = request_json(
+            &self.app,
+            Method::POST,
+            "/api/smart-lists/preview",
+            Some(body),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "preview: {value}");
+        value
+    }
+
     /// The response status alone, for rejections whose body isn't JSON (e.g. a
     /// missing required query parameter, rejected by the extractor).
     async fn status(&self, path: &str) -> StatusCode {
@@ -4204,40 +4250,39 @@ async fn tags_surface_on_summary_filter_and_vocabulary() {
     assert_eq!(tags.0, StatusCode::OK, "{}", tags.1);
     assert_eq!(tags.1["tags"], json!(["action", "drama", "rpg"]));
 
-    // Filter by a single tag via the shared `filters` param:
-    // [{"field":"tags","values":["action"]}]
-    let one = request_json(
-        &app,
-        Method::GET,
-        "/api/entities?type=anime&filters=%5B%7B%22field%22%3A%22tags%22%2C%22values%22%3A%5B%22action%22%5D%7D%5D",
-        None,
-    )
-    .await;
-    assert_eq!(one.0, StatusCode::OK, "{}", one.1);
-    let one_titles: Vec<_> = one.1["items"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|e| e["title"].as_str().unwrap())
-        .collect();
-    assert_eq!(one_titles, ["Alpha"]);
+    // Tags narrow a browse through the smart-list `hasTag` rule — the built-in
+    // tags field is matched against the normalized tag list, not frontmatter.
+    let titles = async |rules: Value| -> Vec<String> {
+        let (status, value) = request_json(
+            &app,
+            Method::POST,
+            "/api/smart-lists/preview",
+            Some(json!({
+                "scope": "anime",
+                "filters": { "conjunction": "all", "rules": rules },
+            })),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "{value}");
+        let mut titles: Vec<String> = value["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|entity| entity["title"].as_str().unwrap().to_string())
+            .collect();
+        titles.sort();
+        titles
+    };
 
-    // ANY/OR semantics: action OR drama → Alpha + Beta.
-    let many = request_json(
-        &app,
-        Method::GET,
-        "/api/entities?type=anime&filters=%5B%7B%22field%22%3A%22tags%22%2C%22values%22%3A%5B%22action%22%2C%22drama%22%5D%7D%5D",
-        None,
-    )
-    .await;
-    let mut many_titles: Vec<_> = many.1["items"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|e| e["title"].as_str().unwrap())
-        .collect();
-    many_titles.sort();
-    assert_eq!(many_titles, ["Alpha", "Beta"]);
+    assert_eq!(
+        titles(json!([{ "kind": "hasTag", "values": ["action"] }])).await,
+        ["Alpha"]
+    );
+    // ANY/OR semantics within one rule: action OR drama → Alpha + Beta.
+    assert_eq!(
+        titles(json!([{ "kind": "hasTag", "values": ["action", "drama"] }])).await,
+        ["Alpha", "Beta"]
+    );
 }
 
 #[tokio::test]
@@ -4330,16 +4375,23 @@ async fn tags_field_name_is_configurable() {
         .unwrap();
     assert_eq!(alpha["tags"], json!(["action", "rpg"]));
 
-    // The vocabulary + filter use the configured field too.
+    // The vocabulary + the `hasTag` rule use the configured field too.
     let tags = request_json(&app, Method::GET, "/api/tags", None).await;
     assert_eq!(tags.1["tags"], json!(["action", "rpg"]));
     let filtered = request_json(
         &app,
-        Method::GET,
-        "/api/entities?type=anime&filters=%5B%7B%22field%22%3A%22labels%22%2C%22values%22%3A%5B%22rpg%22%5D%7D%5D",
-        None,
+        Method::POST,
+        "/api/smart-lists/preview",
+        Some(json!({
+            "scope": "anime",
+            "filters": {
+                "conjunction": "all",
+                "rules": [{ "kind": "hasTag", "values": ["rpg"] }],
+            },
+        })),
     )
     .await;
+    assert_eq!(filtered.0, StatusCode::OK, "{}", filtered.1);
     let titles: Vec<_> = filtered.1["items"]
         .as_array()
         .unwrap()

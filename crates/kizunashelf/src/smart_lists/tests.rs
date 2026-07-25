@@ -146,6 +146,8 @@ fn parses_the_supported_expression_profile() {
         r#"file.hasTag("favorites")"#,
         r#"file.inFolder("Media/Anime")"#,
         r#"file.hasLink("Kyoto Animation")"#,
+        r#"note.studio.contains(link("Kyoto Animation"))"#,
+        r#"groups.contains(link("AZALEA"))"#,
         r#"file.name.contains("2026")"#,
         r#"note.started >= date("2026-01-01")"#,
         r#"note.started >= today() - "90d""#,
@@ -237,9 +239,24 @@ fn printed_atoms_reparse_to_the_same_atom() {
         ),
         FilterAtom::new(
             AtomKind::HasLink {
+                field: None,
                 target: "He said \"hi\"".to_string(),
             },
             false,
+        ),
+        FilterAtom::new(
+            AtomKind::HasLink {
+                field: Some("studio".to_string()),
+                target: "Kyoto Animation".to_string(),
+            },
+            false,
+        ),
+        FilterAtom::new(
+            AtomKind::HasLink {
+                field: Some("制作".to_string()),
+                target: "京都アニメーション".to_string(),
+            },
+            true,
         ),
         FilterAtom::new(
             AtomKind::InFolder {
@@ -451,6 +468,50 @@ fn has_link_matches_through_the_relation_graph() {
         ),
         Some(false)
     );
+}
+
+#[test]
+fn scoped_has_link_matches_only_its_own_relation_field() {
+    let source = record("anime:a", "Alpha", json!({}));
+    let studio = record("anime:kyoani", "Kyoto Animation", json!({}));
+    let relations = vec![Relation {
+        source_id: "anime:a".to_string(),
+        target_id: Some("anime:kyoani".to_string()),
+        target_title: "Kyoto Animation".to_string(),
+        target_type: Some("anime".to_string()),
+        field: "studio".to_string(),
+        direction: RelationDirection::Out,
+    }];
+    let library = library(vec![source, studio], relations);
+    let ctx = fixed_ctx(&library);
+    for (expression, expected) in [
+        (r#"note.studio.contains(link("Kyoto Animation"))"#, true),
+        (r#"studio.contains(link("Kyoto Animation"))"#, true), // bare shorthand
+        (r#"note.studio.containsAny(link("Kyoto Animation"))"#, true),
+        (r#"note.studio.contains(link("Someone Else"))"#, false),
+        // Same target, wrong field — the whole point of the scoped form.
+        (r#"note.related.contains(link("Kyoto Animation"))"#, false),
+        (r#"!note.related.contains(link("Kyoto Animation"))"#, true),
+    ] {
+        assert_eq!(
+            eval_expr(expression, &library.records[0], &ctx),
+            Some(expected),
+            "{expression}"
+        );
+    }
+    // Only a frontmatter property can hold links, and only a lone link literal
+    // reads as a link rule — anything else stays opaque.
+    for unsupported in [
+        r#"file.name.contains(link("Kyoto Animation"))"#,
+        r#"note.studio.contains(link("A"), link("B"))"#,
+        r#"note.studio.contains(link("A"), "B")"#,
+        r#"note.studio.startsWith(link("A"))"#,
+    ] {
+        assert!(
+            parse_expression(unsupported).is_none(),
+            "should reject: {unsupported}"
+        );
+    }
 }
 
 #[test]
@@ -732,13 +793,13 @@ views:
         Vec::new(),
     );
     let ctx = fixed_ctx(&library);
-    let records = smart_list_records(&list, list.views.first(), &ctx, None);
+    let records = smart_list_records(&list, list.views.first(), &ctx, &ResultOptions::default());
     let ids: Vec<&str> = records.iter().map(|r| r.summary.id.as_str()).collect();
     // Top 2 by rating desc among "watching": Beta (9), Eps (7).
     assert_eq!(ids, ["anime:b", "anime:e"]);
 
     // Without the view: unsorted-by-rating default (title asc), no limit.
-    let all = smart_list_records(&list, None, &ctx, None);
+    let all = smart_list_records(&list, None, &ctx, &ResultOptions::default());
     let ids: Vec<&str> = all.iter().map(|r| r.summary.id.as_str()).collect();
     assert_eq!(ids, ["anime:a", "anime:b", "anime:d", "anime:e"]);
 }
@@ -764,9 +825,95 @@ views:
         Vec::new(),
     );
     let ctx = fixed_ctx(&library);
-    let records = smart_list_records(&list, list.views.first(), &ctx, None);
+    let records = smart_list_records(&list, list.views.first(), &ctx, &ResultOptions::default());
     assert_eq!(records.len(), 1);
     assert_eq!(records[0].summary.id, "anime:a");
+}
+
+#[test]
+fn search_narrows_the_matches_and_ranks_them_by_relevance() {
+    let raw = r#"filters:
+  and:
+    - status == "watching"
+views:
+  - type: table
+    name: List
+"#;
+    let list = parse_smart_list(raw).unwrap();
+    let library = library(
+        vec![
+            record("anime:a", "Hero Academy", json!({"status": "watching"})),
+            record("anime:b", "Hero", json!({"status": "watching"})),
+            record("anime:c", "My Hero", json!({"status": "watching"})),
+            // Matches the query but not the criteria.
+            record("anime:d", "Hero Tales", json!({"status": "done"})),
+            record("anime:e", "Something Else", json!({"status": "watching"})),
+        ],
+        Vec::new(),
+    );
+    let ctx = fixed_ctx(&library);
+    let search = |query: &str| {
+        smart_list_records(
+            &list,
+            list.views.first(),
+            &ctx,
+            &ResultOptions {
+                query: Some(query),
+                ..Default::default()
+            },
+        )
+        .iter()
+        .map(|record| record.summary.id.clone())
+        .collect::<Vec<_>>()
+    };
+    // Criteria ∩ query, best match first: exact, then prefix, then word-start.
+    assert_eq!(search("hero"), ["anime:b", "anime:a", "anime:c"]);
+    // A blank query is no query at all — the view's default title order stands.
+    assert_eq!(
+        smart_list_records(
+            &list,
+            list.views.first(),
+            &ctx,
+            &ResultOptions {
+                query: Some("   "),
+                ..Default::default()
+            }
+        )
+        .len(),
+        4
+    );
+}
+
+#[test]
+fn an_explicit_view_sort_wins_over_relevance() {
+    let raw = r#"views:
+  - type: table
+    name: List
+    sort:
+      - property: note.rating
+        direction: DESC
+"#;
+    let list = parse_smart_list(raw).unwrap();
+    let library = library(
+        vec![
+            record("anime:a", "Hero", json!({"rating": 5})),
+            record("anime:b", "My Hero Academia", json!({"rating": 9})),
+        ],
+        Vec::new(),
+    );
+    let ctx = fixed_ctx(&library);
+    let records = smart_list_records(
+        &list,
+        list.views.first(),
+        &ctx,
+        &ResultOptions {
+            query: Some("hero"),
+            ..Default::default()
+        },
+    );
+    let ids: Vec<&str> = records.iter().map(|r| r.summary.id.as_str()).collect();
+    // "Hero" is the better match, but the view sorts by rating.
+    assert_eq!(ids, ["anime:b", "anime:a"]);
 }
 
 #[test]
@@ -788,7 +935,7 @@ fn date_fields_sort_by_their_normalized_key() {
         Vec::new(),
     );
     let ctx = fixed_ctx(&library);
-    let records = smart_list_records(&list, list.views.first(), &ctx, None);
+    let records = smart_list_records(&list, list.views.first(), &ctx, &ResultOptions::default());
     let ids: Vec<&str> = records.iter().map(|r| r.summary.id.as_str()).collect();
     assert_eq!(ids, ["anime:a", "anime:b", "anime:c"]);
 }

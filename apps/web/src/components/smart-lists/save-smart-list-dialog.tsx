@@ -22,17 +22,23 @@ import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import type { SmartFilterGroup, SmartListView } from "@/types/api";
 
 /// Names and saves a smart list from an already-built definition — the "save
-/// the current library view as a smart list" flow. Creation is two calls
-/// (create the file, then write the criteria into it) because create only
-/// takes a name and scope.
+/// what I'm browsing" flow. Browsing already *is* an unsaved smart list, so the
+/// definition is written through verbatim; only the name is new. Creation is
+/// two calls (create the file, then write the criteria into it) because create
+/// only takes a name and scope.
 export function SaveSmartListDialog({
   open,
   onOpenChange,
   definition,
+  searchActive = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   definition: { scope?: string; filters: SmartFilterGroup; views: SmartListView[] };
+  /// Whether a text search is narrowing what's on screen. A search is a way of
+  /// looking at a list, not part of it, so it isn't saved — say so rather than
+  /// let the saved list surprise them.
+  searchActive?: boolean;
 }) {
   const { t } = useLingui();
   const navigate = useNavigate();
@@ -77,7 +83,14 @@ export function SaveSmartListDialog({
             <Trans>Save as smart list</Trans>
           </DialogTitle>
           <DialogDescription>
-            <Trans>Saves the current type, filters, and sort as a smart list.</Trans>
+            {searchActive ? (
+              <Trans>
+                Saves the current type, criteria, and sort as a smart list. Your search isn't part
+                of it.
+              </Trans>
+            ) : (
+              <Trans>Saves the current type, criteria, and sort as a smart list.</Trans>
+            )}
           </DialogDescription>
         </DialogHeader>
         <form

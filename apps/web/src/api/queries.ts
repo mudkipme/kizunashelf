@@ -19,6 +19,7 @@ import {
   type GetSmartListResultsParams,
   type GetStatsParams,
   type GetUpcomingParams,
+  type SmartListPreviewRequest,
 } from "@kizunashelf/api-contract";
 import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
 
@@ -26,7 +27,7 @@ import { apiFetch } from "@/api/client";
 import { todayLocal } from "@/lib/date";
 import { getProviderCatalog } from "@/api/external";
 import { fetchList, fetchLists } from "@/api/lists";
-import { fetchSmartList, fetchSmartListResults } from "@/api/smart-lists";
+import { fetchSmartList, fetchSmartListPreview, fetchSmartListResults } from "@/api/smart-lists";
 import { getLanguages, getRawSettingsConfig, getSettingsConfig, getTypePresets } from "@/api/settings";
 
 export const queryKeys = {
@@ -48,6 +49,8 @@ export const queryKeys = {
   smartList: (id: string) => ["smartList", id] as const,
   smartListResults: (id: string, params: GetSmartListResultsParams) =>
     ["smartListResults", id, params] as const,
+  smartListPreview: (request: SmartListPreviewRequest) =>
+    ["smartListPreview", request] as const,
   providerCatalog: ["providerCatalog"] as const,
   settingsConfig: ["settingsConfig"] as const,
   rawSettingsConfig: ["rawSettingsConfig"] as const,
@@ -195,6 +198,20 @@ export function smartListResultsQuery(id: string, params: GetSmartListResultsPar
     queryFn: ({ signal }) => fetchSmartListResults(id, merged, { signal }),
     // Hold the current results visible while a view/page change loads, like
     // the library page.
+    placeholderData: keepPreviousData,
+  });
+}
+
+/// Results of an *unsaved* smart-list definition: the smart-list editor's live
+/// preview, and the library browser (which is nothing but an unsaved smart
+/// list). `today()` criteria resolve against the client's local date, folded
+/// into the request so it also keys the cache for day-rollover refetch.
+export function smartListPreviewQuery(request: SmartListPreviewRequest) {
+  const merged = { ...request, today: todayLocal() };
+  return queryOptions({
+    queryKey: queryKeys.smartListPreview(merged),
+    queryFn: ({ signal }) => fetchSmartListPreview(merged, { signal }),
+    // Hold the current results visible while a page/criteria change loads.
     placeholderData: keepPreviousData,
   });
 }

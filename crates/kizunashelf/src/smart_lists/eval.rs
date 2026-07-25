@@ -123,7 +123,7 @@ fn eval_atom(kind: &AtomKind, record: &EntityRecord, ctx: &EvalContext) -> bool 
                 .iter()
                 .any(|tag| tag == wanted || tag.starts_with(&format!("{wanted}/")))
         }),
-        AtomKind::HasLink { target } => eval_has_link(target, record, ctx),
+        AtomKind::HasLink { field, target } => eval_has_link(field.as_deref(), target, record, ctx),
         AtomKind::Compare { field, op, value } => eval_compare(field, *op, value, record, ctx),
         AtomKind::Contains {
             field,
@@ -158,8 +158,14 @@ fn eval_atom(kind: &AtomKind, record: &EntityRecord, ctx: &EvalContext) -> bool 
 /// An outgoing wikilink/relation to `target` — matched through the resolved
 /// relation graph (so frontmatter relations *and* body links count), by the
 /// resolved entity when the target names one, else by the raw link text.
-/// NFC-normalized, like all wikilink matching.
-fn eval_has_link(target: &str, record: &EntityRecord, ctx: &EvalContext) -> bool {
+/// NFC-normalized, like all wikilink matching. `field` narrows the walk to one
+/// frontmatter relation field; `None` accepts a link from anywhere in the note.
+fn eval_has_link(
+    field: Option<&str>,
+    target: &str,
+    record: &EntityRecord,
+    ctx: &EvalContext,
+) -> bool {
     let wanted = normalize_wikilink_target(target);
     let resolved_id =
         find_target(target, None, &ctx.basename_index).map(|resolved| resolved.summary.id.clone());
@@ -167,6 +173,7 @@ fn eval_has_link(target: &str, record: &EntityRecord, ctx: &EvalContext) -> bool
         .relations_from(&record.summary.id)
         .any(|relation| {
             relation.direction == crate::types::RelationDirection::Out
+                && field.is_none_or(|field| relation.field == field)
                 && ((resolved_id.is_some() && relation.target_id == resolved_id)
                     || normalize_wikilink_target(&relation.target_title) == wanted)
         })

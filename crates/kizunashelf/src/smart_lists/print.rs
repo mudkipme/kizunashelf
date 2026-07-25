@@ -102,7 +102,14 @@ pub fn print_atom(kind: &AtomKind, negated: bool) -> String {
     let body = match kind {
         AtomKind::InFolder { folder } => format!("file.inFolder({})", escape_string(folder)),
         AtomKind::HasTag { tags } => format!("file.hasTag({})", print_string_args(tags)),
-        AtomKind::HasLink { target } => format!("file.hasLink({})", escape_string(target)),
+        AtomKind::HasLink { field, target } => match field {
+            Some(field) => format!(
+                "{}.contains(link({}))",
+                print_field(&FieldRef::Note(field.clone())),
+                escape_string(target)
+            ),
+            None => format!("file.hasLink({})", escape_string(target)),
+        },
         AtomKind::Compare { field, op, value } => format!(
             "{} {} {}",
             print_field(field),

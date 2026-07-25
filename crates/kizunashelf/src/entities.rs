@@ -11,22 +11,17 @@ use crate::relations::{
     SortDirection,
 };
 use crate::types::{
-    CanonicalStatus, EntityRecord, EntitySummary, FieldType, Library, Relation, RelationDirection,
+    CanonicalStatus, EntityRecord, EntitySummary, Library, Relation, RelationDirection,
 };
-use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 
-/// One parsed `filters` entry: a field and the set of values that match it.
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct EntityFieldFilter {
-    field: String,
-    values: Vec<String>,
-}
-
 /// The normalized inputs to [`build_entity_list`], parsed from the HTTP query by
-/// the handler so the builder itself is transport-agnostic. Borrows from the
-/// request where it can; `field_filters` is owned because it's parsed from JSON.
+/// the handler so the builder itself is transport-agnostic.
+///
+/// Deliberately coarse: this endpoint is the *lookup* surface (autocomplete,
+/// relation pickers, status shelves, list membership). Criteria-shaped browsing
+/// goes through [`crate::smart_lists`] instead, so the vault has exactly one
+/// filter engine rather than a weaker duplicate here.
 pub struct EntityListParams<'a> {
     /// `None` or `"all"` lists every type; otherwise restricts to that type id.
     pub entity_type: Option<&'a str>,
@@ -35,7 +30,6 @@ pub struct EntityListParams<'a> {
     /// `entity_type: None` into cross-type shelves ("everything ongoing").
     /// Entities with no status or an unmapped value never match.
     pub canonical_status: Option<CanonicalStatus>,
-    pub field_filters: Vec<EntityFieldFilter>,
     /// Free-text search across titles/summary/basename/path (case-insensitive).
     pub query: Option<&'a str>,
     /// Restricts to entities that link to this target (title or id).
@@ -86,10 +80,6 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
                 .and_then(|status| status.canonical)
                 == Some(canonical)
         });
-    }
-    if !params.field_filters.is_empty() {
-        entities
-            .retain(|entity| entity_matches_field_filters(entity, library, &params.field_filters));
     }
     // Free-text search both filters and scores: each surviving entity keeps its
     // best relevance tier (by id) so the `relevance` sort can rank exact/prefix
@@ -181,164 +171,15 @@ pub fn build_entity_list(library: &Library, params: &EntityListParams) -> Entity
     }
 }
 
-/// Parses the `filters` query value (a JSON array) into normalized
-/// [`EntityFieldFilter`]s, trimming and dropping entries with no field or no
-/// values. Returns `Err` with a human-readable message on malformed JSON; the
-/// handler maps that to a `400`.
-pub fn parse_entity_field_filters(filters: Option<&str>) -> Result<Vec<EntityFieldFilter>, String> {
-    let Some(filters) = filters.map(str::trim).filter(|filters| !filters.is_empty()) else {
-        return Ok(Vec::new());
-    };
-    serde_json::from_str::<Vec<EntityFieldFilter>>(filters)
-        .map(|filters| {
-            filters
-                .into_iter()
-                .filter_map(|filter| {
-                    let field = filter.field.trim().to_string();
-                    let values = filter
-                        .values
-                        .into_iter()
-                        .map(|value| value.trim().to_string())
-                        .filter(|value| !value.is_empty())
-                        .collect::<Vec<_>>();
-                    (!field.is_empty() && !values.is_empty())
-                        .then_some(EntityFieldFilter { field, values })
-                })
-                .collect()
-        })
-        .map_err(|_| "Invalid entity filters".to_string())
-}
-
-fn entity_matches_field_filters(
-    entity: &EntityRecord,
-    library: &Library,
-    filters: &[EntityFieldFilter],
-) -> bool {
-    filters.iter().all(|filter| {
-        // The built-in tags field (when enabled) matches against the normalized
-        // tag list (any selected tag → match), independent of the schema field
-        // machinery.
-        if library.config.tags_field() == Some(filter.field.as_str()) {
-            return filter
-                .values
-                .iter()
-                .any(|wanted| entity.summary.tags.iter().any(|tag| tag == wanted));
-        }
-        let Some(field_type) = field_type_for_entity_filter(entity, library, &filter.field) else {
-            return false;
-        };
-        // Relation fields aren't matched against frontmatter — the wikilinks are
-        // already resolved into the relation graph, so match there by the target.
-        if field_type == FieldType::Relation {
-            return relation_field_matches(entity, library, filter);
-        }
-        let Some(value) = entity.frontmatter.get(&filter.field) else {
-            return false;
-        };
-        field_value_matches_filter(value, field_type, &filter.values)
-    })
-}
-
-/// Whether `entity` has an outgoing relation in `filter.field` to any of the
-/// wanted targets. A wanted value matches the target by its resolved basename or
-/// id, or by the raw wikilink text (so a hand-written `[[Title]]` link still
-/// matches). OR within the values, like the other multi-value filters.
-fn relation_field_matches(
-    entity: &EntityRecord,
-    library: &Library,
-    filter: &EntityFieldFilter,
-) -> bool {
-    library.relations_from(&entity.summary.id).any(|relation| {
-        relation.direction == RelationDirection::Out
-            && relation.field == filter.field
-            && filter
-                .values
-                .iter()
-                .any(|wanted| relation_target_matches(library, relation, wanted))
-    })
-}
-
-fn relation_target_matches(library: &Library, relation: &Relation, wanted: &str) -> bool {
-    if relation.target_title == wanted {
-        return true;
-    }
-    relation
-        .target_id
-        .as_deref()
-        .and_then(|id| library.record_by_id(id))
-        .is_some_and(|target| target.summary.basename == wanted || target.summary.id == wanted)
-}
-
-fn field_type_for_entity_filter(
-    entity: &EntityRecord,
-    library: &Library,
-    field: &str,
-) -> Option<FieldType> {
-    library
-        .config
-        .types
-        .iter()
-        .find(|type_config| type_config.id == entity.summary.entity_type)
-        .and_then(|type_config| {
-            type_config
-                .fields
-                .iter()
-                .find(|field_config| field_config.field == field)
-        })
-        .map(|field_config| field_config.field_type)
-        .filter(|field_type| {
-            matches!(
-                field_type,
-                FieldType::Enum | FieldType::EnumList | FieldType::Bool | FieldType::Relation
-            )
-        })
-}
-
-fn field_value_matches_filter(
-    value: &serde_json::Value,
-    field_type: FieldType,
-    expected: &[String],
-) -> bool {
-    match field_type {
-        FieldType::Enum => frontmatter_scalar_matches_any(value, expected),
-        FieldType::EnumList => match value {
-            serde_json::Value::Array(items) => items
-                .iter()
-                .any(|item| frontmatter_scalar_matches_any(item, expected)),
-            _ => false,
-        },
-        FieldType::Bool => match value {
-            serde_json::Value::Bool(value) => {
-                let value = if *value { "true" } else { "false" };
-                expected.iter().any(|item| item == value)
-            }
-            _ => false,
-        },
-        _ => false,
-    }
-}
-
-fn frontmatter_scalar_matches_any(value: &serde_json::Value, expected: &[String]) -> bool {
-    match value {
-        serde_json::Value::String(value) => expected.iter().any(|item| item == value),
-        serde_json::Value::Bool(value) => {
-            let value = if *value { "true" } else { "false" };
-            expected.iter().any(|item| item == value)
-        }
-        serde_json::Value::Number(value) => {
-            let value = value.to_string();
-            expected.iter().any(|item| item == &value)
-        }
-        _ => false,
-    }
-}
-
 /// Relevance score of an entity against a lowercased, non-empty query, or `None`
 /// when nothing matches (the entity is filtered out). Higher is more relevant.
 /// *Primary* fields — the canonical title, every localized title, and the
 /// basename — always dominate *secondary* fields (summary, path), so a title
 /// match outranks an entity that merely has the query in its file path.
-fn entity_match_score(entity: &EntityRecord, query: &str) -> Option<u32> {
+///
+/// Shared with the smart-list pipeline (`smart_lists::results`) so browsing a
+/// saved list and browsing the library rank a search identically.
+pub(crate) fn entity_match_score(entity: &EntityRecord, query: &str) -> Option<u32> {
     let primary = std::iter::once(entity.summary.title.as_str())
         .chain(entity.summary.titles.values().map(String::as_str))
         .chain(std::iter::once(entity.summary.basename.as_str()))
@@ -554,7 +395,7 @@ pub fn entity_detail_related_entities(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{EntityTypeConfig, FieldConfig, KizunaConfig, ResolvedStatus};
+    use crate::types::{EntityTypeConfig, FieldConfig, FieldType, KizunaConfig, ResolvedStatus};
     use serde_json::json;
     use std::collections::BTreeMap;
 
@@ -638,291 +479,12 @@ mod tests {
         }
     }
 
-    fn filter(field: &str, values: &[&str]) -> EntityFieldFilter {
-        EntityFieldFilter {
-            field: field.to_string(),
-            values: values.iter().map(|value| value.to_string()).collect(),
-        }
-    }
-
-    // --- parse_entity_field_filters ------------------------------------------
-
-    // `EntityFieldFilter` doesn't derive `Debug`, so unwrap the Result by hand.
-    fn parsed(input: Option<&str>) -> Vec<EntityFieldFilter> {
-        match parse_entity_field_filters(input) {
-            Ok(filters) => filters,
-            Err(error) => panic!("expected Ok, got: {error}"),
-        }
-    }
-
-    #[test]
-    fn parse_entity_field_filters_empty_input_is_no_filters() {
-        assert!(parsed(None).is_empty());
-        assert!(parsed(Some("   ")).is_empty());
-    }
-
-    #[test]
-    fn parse_entity_field_filters_parses_trims_and_drops_empties() {
-        let filters = parsed(Some(r#"[{"field":" status ","values":[" Watching ",""]}]"#));
-        assert_eq!(filters.len(), 1);
-        assert_eq!(filters[0].field, "status");
-        assert_eq!(filters[0].values, vec!["Watching".to_string()]);
-    }
-
-    #[test]
-    fn parse_entity_field_filters_drops_filters_with_no_field_or_no_values() {
-        assert!(parsed(Some(
-            r#"[{"field":"","values":["x"]},{"field":"f","values":[]}]"#
-        ))
-        .is_empty());
-    }
-
-    #[test]
-    fn parse_entity_field_filters_rejects_invalid_json() {
-        let result = parse_entity_field_filters(Some("not json"));
-        assert_eq!(result.err().as_deref(), Some("Invalid entity filters"));
-    }
-
-    // --- value matching -------------------------------------------------------
-
-    #[test]
-    fn field_value_matches_filter_by_field_type() {
-        // Enum: scalar string membership.
-        assert!(field_value_matches_filter(
-            &json!("Watching"),
-            FieldType::Enum,
-            &["Watching".to_string()]
-        ));
-        assert!(!field_value_matches_filter(
-            &json!("Watching"),
-            FieldType::Enum,
-            &["Completed".to_string()]
-        ));
-        // EnumList: any array member matches.
-        assert!(field_value_matches_filter(
-            &json!(["SF", "Space"]),
-            FieldType::EnumList,
-            &["Space".to_string()]
-        ));
-        assert!(!field_value_matches_filter(
-            &json!("SF"),
-            FieldType::EnumList,
-            &["SF".to_string()]
-        )); // not an array
-            // Bool: only a real boolean, rendered as "true"/"false".
-        assert!(field_value_matches_filter(
-            &json!(true),
-            FieldType::Bool,
-            &["true".to_string()]
-        ));
-        assert!(!field_value_matches_filter(
-            &json!(true),
-            FieldType::Bool,
-            &["false".to_string()]
-        ));
-        assert!(!field_value_matches_filter(
-            &json!("true"),
-            FieldType::Bool,
-            &["true".to_string()]
-        )); // string, not bool
-            // Non-filterable field types never match.
-        assert!(!field_value_matches_filter(
-            &json!("x"),
-            FieldType::Text,
-            &["x".to_string()]
-        ));
-    }
-
-    #[test]
-    fn frontmatter_scalar_matches_any_covers_string_bool_number() {
-        assert!(frontmatter_scalar_matches_any(
-            &json!("a"),
-            &["a".to_string()]
-        ));
-        assert!(frontmatter_scalar_matches_any(
-            &json!(false),
-            &["false".to_string()]
-        ));
-        assert!(frontmatter_scalar_matches_any(
-            &json!(5),
-            &["5".to_string()]
-        ));
-        assert!(!frontmatter_scalar_matches_any(
-            &json!(["a"]),
-            &["a".to_string()]
-        )); // arrays don't match here
-    }
-
-    // --- schema-driven field eligibility + matching --------------------------
-
-    #[test]
-    fn field_type_for_entity_filter_only_returns_filterable_types() {
-        let entity = record("anime:a", "Alpha", json!({}));
-        let library = Library::new(
-            config(),
-            vec![record("anime:a", "Alpha", json!({}))],
-            Vec::new(),
-            Vec::new(),
-            "gen".to_string(),
-        );
-        assert_eq!(
-            field_type_for_entity_filter(&entity, &library, "status"),
-            Some(FieldType::Enum)
-        );
-        assert_eq!(
-            field_type_for_entity_filter(&entity, &library, "genres"),
-            Some(FieldType::EnumList)
-        );
-        assert_eq!(
-            field_type_for_entity_filter(&entity, &library, "favorite"),
-            Some(FieldType::Bool)
-        );
-        assert_eq!(
-            field_type_for_entity_filter(&entity, &library, "franchise"),
-            Some(FieldType::Relation)
-        );
-        assert_eq!(
-            field_type_for_entity_filter(&entity, &library, "notes"),
-            None
-        ); // Text isn't filterable
-        assert_eq!(
-            field_type_for_entity_filter(&entity, &library, "missing"),
-            None
-        );
-    }
-
-    #[test]
-    fn entity_matches_field_filters_requires_all_filters() {
-        let entity = record(
-            "anime:a",
-            "Alpha",
-            json!({"status": "Watching", "genres": ["SF", "Space"], "favorite": true, "notes": "blah"}),
-        );
-        let library = Library::new(
-            config(),
-            vec![record("anime:a", "Alpha", json!({}))],
-            Vec::new(),
-            Vec::new(),
-            "gen".to_string(),
-        );
-
-        assert!(entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("status", &["Watching"])]
-        ));
-        assert!(!entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("status", &["Completed"])]
-        ));
-        assert!(entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("genres", &["Space"])]
-        ));
-        assert!(entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("favorite", &["true"])]
-        ));
-        // All filters must hold (AND).
-        assert!(entity_matches_field_filters(
-            &entity,
-            &library,
-            &[
-                filter("status", &["Watching"]),
-                filter("favorite", &["true"])
-            ]
-        ));
-        assert!(!entity_matches_field_filters(
-            &entity,
-            &library,
-            &[
-                filter("status", &["Watching"]),
-                filter("favorite", &["false"])
-            ]
-        ));
-        // A non-filterable or unknown field makes the entity fail the filter.
-        assert!(!entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("notes", &["blah"])]
-        ));
-        assert!(!entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("missing", &["x"])]
-        ));
-    }
-
-    #[test]
-    fn relation_field_filter_matches_outgoing_target() {
-        let entity = record("anime:a", "Alpha", json!({}));
-        let library = Library::new(
-            config(),
-            vec![
-                record("anime:a", "Alpha", json!({})),
-                record("anime:saga", "Saga", json!({})),
-            ],
-            vec![relation(
-                "anime:a",
-                "anime:saga",
-                "franchise",
-                RelationDirection::Out,
-            )],
-            Vec::new(),
-            "gen".to_string(),
-        );
-
-        // Matches by the target's id and by its basename (what the UI sends).
-        assert!(entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("franchise", &["anime:saga"])]
-        ));
-        assert!(entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("franchise", &["Saga"])]
-        ));
-        // No match for an unrelated target.
-        assert!(!entity_matches_field_filters(
-            &entity,
-            &library,
-            &[filter("franchise", &["anime:other"])]
-        ));
-
-        // Only outgoing relations count — an incoming link doesn't match.
-        let incoming = Library::new(
-            config(),
-            vec![
-                record("anime:a", "Alpha", json!({})),
-                record("anime:saga", "Saga", json!({})),
-            ],
-            vec![relation(
-                "anime:a",
-                "anime:saga",
-                "franchise",
-                RelationDirection::In,
-            )],
-            Vec::new(),
-            "gen".to_string(),
-        );
-        assert!(!entity_matches_field_filters(
-            &entity,
-            &incoming,
-            &[filter("franchise", &["anime:saga"])]
-        ));
-    }
-
     // --- build_entity_list ----------------------------------------------------
 
     fn params<'a>() -> EntityListParams<'a> {
         EntityListParams {
             entity_type: None,
             canonical_status: None,
-            field_filters: Vec::new(),
             query: None,
             relation: None,
             sort: "title",

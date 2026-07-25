@@ -1,26 +1,40 @@
-//! A smart list's results: filter through the evaluator, sort by the view's
-//! keys (schema-aware date keys, absent-last), truncate to its limit.
+//! A smart list's results: filter through the evaluator, narrow by an optional
+//! free-text search, sort by the view's keys (schema-aware date keys,
+//! absent-last), truncate to its limit.
 
 use super::eval::{json_scalar_string, note_value, record_matches, EvalContext};
 use super::model::{SmartList, SmartView, SortProperty, ViewSort};
 use crate::dates::parsed_date_sort_key;
+use crate::entities::entity_match_score;
 use crate::library::compare_string_for_title_language;
 use crate::relations::SortDirection;
 use crate::types::EntityRecord;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 // ---------------------------------------------------------------------------
-// Results: filter → sort → limit
+// Results: filter → search → sort → limit
 // ---------------------------------------------------------------------------
+
+/// What a caller wants beyond the criteria themselves.
+#[derive(Default)]
+pub struct ResultOptions<'a> {
+    pub title_language: Option<&'a str>,
+    /// Free-text search over titles/summary/basename/path, applied *after* the
+    /// criteria. With no explicit view sort, matches then rank by match quality
+    /// — the same relevance ordering the entity list uses.
+    pub query: Option<&'a str>,
+}
 
 /// The records a smart list view resolves to: global filters AND the view's
-/// own filters, sorted by the view's sort (title-ish `file.name` ascending when
-/// unset), truncated to the view's `limit`. Pagination is the caller's.
+/// own filters AND the search query, sorted by the view's sort (relevance when
+/// searching without one, else `file.name` ascending), truncated to the view's
+/// `limit`. Pagination is the caller's.
 pub fn smart_list_records<'a>(
     list: &SmartList,
     view: Option<&SmartView>,
     ctx: &EvalContext<'a>,
-    title_language: Option<&str>,
+    options: &ResultOptions,
 ) -> Vec<&'a EntityRecord> {
     let mut records: Vec<&EntityRecord> = ctx
         .library
@@ -34,15 +48,42 @@ pub fn smart_list_records<'a>(
         })
         .collect();
 
-    let default_sort = [ViewSort {
-        property: SortProperty::FileName,
-        direction: SortDirection::Asc,
-    }];
-    let sort: &[ViewSort] = match view {
-        Some(view) if !view.sort.is_empty() => &view.sort,
-        _ => &default_sort,
-    };
-    sort_smart_records(&mut records, sort, ctx, title_language);
+    // Searching both narrows and scores, so an unsorted view can rank matches.
+    let scores = options
+        .query
+        .map(str::trim)
+        .filter(|query| !query.is_empty())
+        .map(|query| {
+            let query = query.to_lowercase();
+            let mut scores = HashMap::new();
+            records.retain(|record| match entity_match_score(record, &query) {
+                Some(score) => {
+                    scores.insert(record.summary.id.as_str(), score);
+                    true
+                }
+                None => false,
+            });
+            scores
+        });
+
+    let explicit_sort = view
+        .filter(|view| !view.sort.is_empty())
+        .map(|view| view.sort.as_slice());
+    match (explicit_sort, &scores) {
+        (Some(sort), _) => sort_smart_records(&mut records, sort, ctx, options.title_language),
+        (None, Some(scores)) => {
+            sort_smart_records_by_relevance(&mut records, scores, options.title_language)
+        }
+        (None, None) => sort_smart_records(
+            &mut records,
+            &[ViewSort {
+                property: SortProperty::FileName,
+                direction: SortDirection::Asc,
+            }],
+            ctx,
+            options.title_language,
+        ),
+    }
 
     if let Some(limit) = view.and_then(|view| view.limit) {
         records.truncate(limit as usize);
@@ -58,24 +99,52 @@ enum SortValue {
     Text(String),
 }
 
+/// `None`/blank/`"default"` mean "no per-language title" — the record's own
+/// canonical title is then the sort key.
+fn explicit_language(title_language: Option<&str>) -> Option<&str> {
+    title_language
+        .map(str::trim)
+        .filter(|language| !language.is_empty() && *language != "default")
+}
+
 fn sort_smart_records(
     records: &mut [&EntityRecord],
     sort: &[ViewSort],
     ctx: &EvalContext,
     title_language: Option<&str>,
 ) {
-    let explicit_language = title_language
-        .map(str::trim)
-        .filter(|language| !language.is_empty() && *language != "default");
+    let language = explicit_language(title_language);
     records.sort_by(|a, b| {
         for key in sort {
-            let ordering = compare_by_sort_key(a, b, key, ctx, explicit_language);
+            let ordering = compare_by_sort_key(a, b, key, ctx, language);
             if ordering != Ordering::Equal {
                 return ordering;
             }
         }
         // Stable final tie-break so pagination is deterministic.
-        compare_title(a, b, explicit_language)
+        compare_title(a, b, language)
+    });
+}
+
+/// Best-match-first by search score, tie-broken by the collated title. There is
+/// no direction here — relevance is always highest-score-first, as in the
+/// entity list's `relevance` sort.
+fn sort_smart_records_by_relevance(
+    records: &mut [&EntityRecord],
+    scores: &HashMap<&str, u32>,
+    title_language: Option<&str>,
+) {
+    let language = explicit_language(title_language);
+    records.sort_by(|a, b| {
+        let score = |record: &EntityRecord| {
+            scores
+                .get(record.summary.id.as_str())
+                .copied()
+                .unwrap_or_default()
+        };
+        score(b)
+            .cmp(&score(a))
+            .then_with(|| compare_title(a, b, language))
     });
 }
 

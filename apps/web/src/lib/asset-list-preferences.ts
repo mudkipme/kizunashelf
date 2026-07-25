@@ -40,7 +40,11 @@ export const useAssetListPreferencesStore = create<AssetListPreferencesState>()(
       },
     }),
     {
-      name: "kizunashelf.assetListPreferences.v2",
+      // Bumped from v2, which remembered sorts in the old browse vocabulary:
+      // browsing now sorts by Bases property reference, so those entries are
+      // simply left behind rather than migrated. A preference is a convenience,
+      // not data worth carrying forward.
+      name: "kizunashelf.assetListPreferences.v3",
       partialize: (state) => ({ byType: state.byType }),
     },
   ),
@@ -74,12 +78,12 @@ export function preferencesFromSearchParams(params: URLSearchParams): AssetListP
 }
 
 function normalizePreferences(preferences: Partial<AssetListPreferences> | undefined): AssetListPreferences {
-  const sort = preferences?.sort ?? defaults.sort;
+  // Any Bases property reference is a valid sort key — which fields a type
+  // declares is schema data, so the store doesn't second-guess it.
+  const sort = preferences?.sort?.trim();
 
   return {
-    sort: sort.startsWith("date:") || sort === "relationCount" || sort === "recentlyUpdated"
-      ? sort
-      : defaults.sort,
+    sort: sort || defaults.sort,
     direction: preferences?.direction === "desc" ? "desc" : defaults.direction,
     view: preferences?.view === "grid" ? "grid" : defaults.view,
   };
