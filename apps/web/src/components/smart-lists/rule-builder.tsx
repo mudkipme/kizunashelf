@@ -1092,6 +1092,9 @@ function RelationTargetPicker({
       ariaLabel={t`Link target`}
       disabled={disabled}
       allowCustomValue
+      // Sized like the builder's other value pickers so the target sits on the
+      // rule's row; the default is full width, which wraps it onto its own line.
+      className="min-h-8 w-64 px-2 py-1 text-xs"
       inputValue={inputValue}
       onInputValueChange={setInputValue}
       loading={loading}
