@@ -1054,7 +1054,7 @@ msgstr "Entity type"
 msgid "Enum options"
 msgstr "Enum options"
 
-#: src/components/home/coming-up-section.tsx:177
+#: src/components/home/coming-up-section.tsx:176
 msgid "Episode"
 msgstr "Episode"
 
@@ -1279,15 +1279,15 @@ msgstr "Importing…"
 msgid "in"
 msgstr "in"
 
-#: src/components/home/coming-up-section.tsx:159
+#: src/components/home/coming-up-section.tsx:158
 msgid "in {days, plural, one {# day} other {# days}}"
 msgstr "in {days, plural, one {# day} other {# days}}"
 
-#: src/components/home/coming-up-section.tsx:165
+#: src/components/home/coming-up-section.tsx:164
 msgid "in {months} mo"
 msgstr "in {months} mo"
 
-#: src/components/home/coming-up-section.tsx:162
+#: src/components/home/coming-up-section.tsx:161
 msgid "in {weeks} wk"
 msgstr "in {weeks} wk"
 
@@ -1422,7 +1422,7 @@ msgstr "lang {0}"
 msgid "Language"
 msgstr "Language"
 
-#: src/components/home/coming-up-section.tsx:204
+#: src/components/home/coming-up-section.tsx:203
 msgid "Later"
 msgstr "Later"
 
@@ -2415,6 +2415,10 @@ msgstr "Sections"
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 msgstr "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 
+#: src/components/home/section-header.tsx:37
+msgid "See all"
+msgstr "See all"
+
 #: src/components/layout/header-search.tsx:108
 msgid "See all results"
 msgstr "See all results"
@@ -2684,7 +2688,7 @@ msgstr "The same rules as smart lists; the section shows entities that match."
 msgid "These existing types can link to what you're adding."
 msgstr "These existing types can link to what you're adding."
 
-#: src/components/home/coming-up-section.tsx:203
+#: src/components/home/coming-up-section.tsx:202
 msgid "This month"
 msgstr "This month"
 
@@ -2706,7 +2710,7 @@ msgstr "This page doesn’t exist or may have moved."
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "This smart list changed on disk. Reload the page and redo your edits."
 
-#: src/components/home/coming-up-section.tsx:202
+#: src/components/home/coming-up-section.tsx:201
 msgid "This week"
 msgstr "This week"
 
@@ -2725,7 +2729,7 @@ msgstr "Title language"
 msgid "Title, or paste a provider URL"
 msgstr "Title, or paste a provider URL"
 
-#: src/components/home/coming-up-section.tsx:157
+#: src/components/home/coming-up-section.tsx:156
 #: src/pages/calendar-page.tsx:100
 msgid "Today"
 msgstr "Today"
@@ -2734,7 +2738,7 @@ msgstr "Today"
 msgid "Todo"
 msgstr "Todo"
 
-#: src/components/home/coming-up-section.tsx:158
+#: src/components/home/coming-up-section.tsx:157
 msgid "Tomorrow"
 msgstr "Tomorrow"
 
@@ -2889,14 +2893,6 @@ msgstr "Vault rescanned"
 #: src/components/settings/vault-switcher.tsx:74
 msgid "Vaults"
 msgstr "Vaults"
-
-#: src/components/home/section-header.tsx:39
-msgid "View"
-msgstr "View"
-
-#: src/components/home/coming-up-section.tsx:67
-msgid "View all"
-msgstr "View all"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:109
 msgid "Watching now"

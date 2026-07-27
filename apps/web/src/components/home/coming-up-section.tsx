@@ -64,7 +64,6 @@ export function ComingUpSection() {
         title={t`Coming up`}
         count={total}
         viewHref="/activity?mode=up-next"
-        viewLabel={t`View all`}
       />
       <div className="flex flex-col gap-4">
         {groups.map((group) =>

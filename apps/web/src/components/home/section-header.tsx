@@ -5,20 +5,18 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 /// The shared header for Home shelves — the "Coming up" widget and each configured
-/// section use it, so their titles, counts, and "View" actions line up even though
+/// section use it, so their titles, counts, and "See all" actions line up even though
 /// their bodies (compact agenda rows vs. poster grids) look deliberately different.
 export function SectionHeader({
   title,
   count,
   subtitle,
   viewHref,
-  viewLabel,
 }: {
   title: string;
   count?: number;
   subtitle?: string;
   viewHref?: string;
-  viewLabel?: string;
 }) {
   const { t } = useLingui();
   return (
@@ -36,7 +34,7 @@ export function SectionHeader({
           className="-mr-2 ml-auto shrink-0 text-muted-foreground"
         >
           <Link to={viewHref}>
-            {viewLabel ?? t`View`}
+            {t`See all`}
             <ArrowRightIcon />
           </Link>
         </Button>

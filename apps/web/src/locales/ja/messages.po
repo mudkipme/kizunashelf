@@ -1054,7 +1054,7 @@ msgstr "アイテムのタイプ"
 msgid "Enum options"
 msgstr "列挙オプション"
 
-#: src/components/home/coming-up-section.tsx:177
+#: src/components/home/coming-up-section.tsx:176
 msgid "Episode"
 msgstr "エピソード"
 
@@ -1279,15 +1279,15 @@ msgstr "インポート中…"
 msgid "in"
 msgstr "フォルダ:"
 
-#: src/components/home/coming-up-section.tsx:159
+#: src/components/home/coming-up-section.tsx:158
 msgid "in {days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 日後}}"
 
-#: src/components/home/coming-up-section.tsx:165
+#: src/components/home/coming-up-section.tsx:164
 msgid "in {months} mo"
 msgstr "{months} か月後"
 
-#: src/components/home/coming-up-section.tsx:162
+#: src/components/home/coming-up-section.tsx:161
 msgid "in {weeks} wk"
 msgstr "{weeks} 週間後"
 
@@ -1422,7 +1422,7 @@ msgstr "言語 {0}"
 msgid "Language"
 msgstr "言語"
 
-#: src/components/home/coming-up-section.tsx:204
+#: src/components/home/coming-up-section.tsx:203
 msgid "Later"
 msgstr "後で"
 
@@ -2415,6 +2415,10 @@ msgstr "セクション"
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 msgstr "セクションはライブラリの設定可能な棚です。設定で追加するか、そのままライブラリに移動してください。"
 
+#: src/components/home/section-header.tsx:37
+msgid "See all"
+msgstr "すべて表示"
+
 #: src/components/layout/header-search.tsx:108
 msgid "See all results"
 msgstr "すべての結果を表示"
@@ -2684,7 +2688,7 @@ msgstr "スマートリストと同じルールです。セクションには一
 msgid "These existing types can link to what you're adding."
 msgstr "これらの既存のタイプは、追加するものにリンクできます。"
 
-#: src/components/home/coming-up-section.tsx:203
+#: src/components/home/coming-up-section.tsx:202
 msgid "This month"
 msgstr "今月"
 
@@ -2706,7 +2710,7 @@ msgstr "このページは存在しないか、移動された可能性があり
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "このスマートリストはディスク上で変更されました。ページを再読み込みして編集をやり直してください。"
 
-#: src/components/home/coming-up-section.tsx:202
+#: src/components/home/coming-up-section.tsx:201
 msgid "This week"
 msgstr "今週"
 
@@ -2725,7 +2729,7 @@ msgstr "タイトルの言語"
 msgid "Title, or paste a provider URL"
 msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 
-#: src/components/home/coming-up-section.tsx:157
+#: src/components/home/coming-up-section.tsx:156
 #: src/pages/calendar-page.tsx:100
 msgid "Today"
 msgstr "今日"
@@ -2734,7 +2738,7 @@ msgstr "今日"
 msgid "Todo"
 msgstr "未対応"
 
-#: src/components/home/coming-up-section.tsx:158
+#: src/components/home/coming-up-section.tsx:157
 msgid "Tomorrow"
 msgstr "明日"
 
@@ -2889,14 +2893,6 @@ msgstr "保管庫を再スキャンしました"
 #: src/components/settings/vault-switcher.tsx:74
 msgid "Vaults"
 msgstr "保管庫"
-
-#: src/components/home/section-header.tsx:39
-msgid "View"
-msgstr "表示"
-
-#: src/components/home/coming-up-section.tsx:67
-msgid "View all"
-msgstr "すべて表示"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:109
 msgid "Watching now"

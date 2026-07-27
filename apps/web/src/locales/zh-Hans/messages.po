@@ -1054,7 +1054,7 @@ msgstr "条目类型"
 msgid "Enum options"
 msgstr "枚举选项"
 
-#: src/components/home/coming-up-section.tsx:177
+#: src/components/home/coming-up-section.tsx:176
 msgid "Episode"
 msgstr "剧集"
 
@@ -1279,15 +1279,15 @@ msgstr "正在导入…"
 msgid "in"
 msgstr "位于:"
 
-#: src/components/home/coming-up-section.tsx:159
+#: src/components/home/coming-up-section.tsx:158
 msgid "in {days, plural, one {# day} other {# days}}"
 msgstr "{days, plural, other {# 天后}}"
 
-#: src/components/home/coming-up-section.tsx:165
+#: src/components/home/coming-up-section.tsx:164
 msgid "in {months} mo"
 msgstr "{months} 个月后"
 
-#: src/components/home/coming-up-section.tsx:162
+#: src/components/home/coming-up-section.tsx:161
 msgid "in {weeks} wk"
 msgstr "{weeks} 周后"
 
@@ -1422,7 +1422,7 @@ msgstr "语言 {0}"
 msgid "Language"
 msgstr "语言"
 
-#: src/components/home/coming-up-section.tsx:204
+#: src/components/home/coming-up-section.tsx:203
 msgid "Later"
 msgstr "稍后"
 
@@ -2415,6 +2415,10 @@ msgstr "板块"
 msgid "Sections are configurable shelves of your library. Add one in Settings, or jump straight into your Library."
 msgstr "板块是库中可配置的书架。在设置中添加一个，或直接进入你的库。"
 
+#: src/components/home/section-header.tsx:37
+msgid "See all"
+msgstr "查看全部"
+
 #: src/components/layout/header-search.tsx:108
 msgid "See all results"
 msgstr "查看全部结果"
@@ -2684,7 +2688,7 @@ msgstr "与智能列表相同的规则；该版块显示符合条件的条目。
 msgid "These existing types can link to what you're adding."
 msgstr "这些现有类型可以关联到你正在添加的内容。"
 
-#: src/components/home/coming-up-section.tsx:203
+#: src/components/home/coming-up-section.tsx:202
 msgid "This month"
 msgstr "本月"
 
@@ -2706,7 +2710,7 @@ msgstr "此页面不存在或可能已被移动。"
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "此智能列表已在磁盘上被修改。请重新加载页面并重新编辑。"
 
-#: src/components/home/coming-up-section.tsx:202
+#: src/components/home/coming-up-section.tsx:201
 msgid "This week"
 msgstr "本周"
 
@@ -2725,7 +2729,7 @@ msgstr "标题语言"
 msgid "Title, or paste a provider URL"
 msgstr "标题，或粘贴数据源 URL"
 
-#: src/components/home/coming-up-section.tsx:157
+#: src/components/home/coming-up-section.tsx:156
 #: src/pages/calendar-page.tsx:100
 msgid "Today"
 msgstr "今天"
@@ -2734,7 +2738,7 @@ msgstr "今天"
 msgid "Todo"
 msgstr "待办"
 
-#: src/components/home/coming-up-section.tsx:158
+#: src/components/home/coming-up-section.tsx:157
 msgid "Tomorrow"
 msgstr "明天"
 
@@ -2889,14 +2893,6 @@ msgstr "已重新扫描保管库"
 #: src/components/settings/vault-switcher.tsx:74
 msgid "Vaults"
 msgstr "保管库"
-
-#: src/components/home/section-header.tsx:39
-msgid "View"
-msgstr "视图"
-
-#: src/components/home/coming-up-section.tsx:67
-msgid "View all"
-msgstr "查看全部"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:109
 msgid "Watching now"
