@@ -97,6 +97,7 @@ fn calendar_days_length_matches_the_month() {
 fn item(date: &str, title: &str, sources: &[CalendarEntrySource]) -> ActivityItem {
     ActivityItem {
         date: date.to_string(),
+        date_text: None,
         entity: summary("anime", "Anime", title),
         entries: sources
             .iter()
@@ -290,6 +291,7 @@ fn episode_calendar_entries_place_cached_dates_in_the_month() {
         month: 2,
         entity_type: None,
         source: CalendarSource::All,
+        season: None,
     };
 
     let entries = episode_calendar_entries(&library, &options);
@@ -438,6 +440,7 @@ async fn build_calendar_merges_same_entity_same_day_into_one_item() {
             month: 2,
             entity_type: None,
             source: CalendarSource::All,
+            season: None,
         },
     )
     .await
@@ -1528,4 +1531,229 @@ async fn recent_excludes_a_future_completed_stamp_time_travel() {
     entity.dates = vec![date_value("aired", "2024-07-01")];
     let response = recent(&library_of(record(entity)), "2024-06-15").await;
     assert!(response.items.is_empty());
+}
+
+// --- season planning fields ------------------------------------------------
+//
+// A season names a stretch of time, so it can't be stamped on a day the way a
+// date is. The forward-looking feeds anchor it instead: up next reads it as
+// "starts on", catch up as "runs until", and the season already underway
+// answers both. Today is 2024-06-15 throughout, i.e. inside 2024 Spring
+// (April–June).
+
+fn season_field(name: &str, role: Option<DateRole>) -> FieldConfig {
+    FieldConfig {
+        field_type: FieldType::Season,
+        ..date_field(name, role)
+    }
+}
+
+fn season_library(role: DateRole, records: Vec<EntityRecord>) -> Library {
+    let mut config = activity_config(None);
+    config.types[0]
+        .fields
+        .push(season_field("season", Some(role)));
+    Library::new(config, records, Vec::new(), Vec::new(), String::new())
+}
+
+fn season_record(basename: &str, value: &str, status: CanonicalStatus) -> EntityRecord {
+    let mut entity = with_status(summary("anime", "Anime", basename), status);
+    entity.dates = vec![date_value("season", value)];
+    record(entity)
+}
+
+#[tokio::test]
+async fn the_running_season_is_both_up_next_and_catch_up() {
+    // It has started (so it's available to catch up on) and hasn't ended (so
+    // it's still ahead) — both readings are true at once, and both anchor to
+    // today rather than to a day outside the feed's window.
+    let library = season_library(
+        DateRole::Planning,
+        vec![season_record(
+            "Spring Show",
+            "2024 Spring",
+            CanonicalStatus::Planning,
+        )],
+    );
+
+    let up = up_next(&library, "2024-06-15").await;
+    let catch = catch_up(&library, "2024-06-15").await;
+
+    assert_eq!(up.items.len(), 1);
+    assert_eq!(up.items[0].date, "2024-06-15");
+    assert_eq!(up.items[0].date_text.as_deref(), Some("2024 Spring"));
+    assert_eq!(
+        up.items[0].entries[0].role,
+        Some(DateRole::Planning),
+        "a season keeps the role its schema gives it"
+    );
+    assert_eq!(catch.items.len(), 1);
+    assert_eq!(catch.items[0].date, "2024-06-15");
+    assert_eq!(catch.items[0].date_text.as_deref(), Some("2024 Spring"));
+}
+
+#[tokio::test]
+async fn future_seasons_are_up_next_only_ordered_by_their_first_day() {
+    let library = season_library(
+        DateRole::Planning,
+        vec![
+            season_record("Winter Show", "2025 Winter", CanonicalStatus::Planning),
+            season_record("Autumn Show", "2024 Autumn", CanonicalStatus::Planning),
+        ],
+    );
+
+    let up = up_next(&library, "2024-06-15").await;
+    let catch = catch_up(&library, "2024-06-15").await;
+
+    let dates: Vec<&str> = up.items.iter().map(|item| item.date.as_str()).collect();
+    assert_eq!(dates, ["2024-10-01", "2025-01-01"]);
+    assert!(catch.items.is_empty(), "nothing to catch up on yet");
+}
+
+#[tokio::test]
+async fn past_seasons_are_catch_up_only_ordered_by_their_last_day() {
+    let library = season_library(
+        DateRole::Planning,
+        vec![
+            season_record("Autumn Show", "2023 Autumn", CanonicalStatus::Planning),
+            season_record("Winter Show", "2024年冬", CanonicalStatus::Planning),
+        ],
+    );
+
+    let up = up_next(&library, "2024-06-15").await;
+    let catch = catch_up(&library, "2024-06-15").await;
+
+    // Newest first, and the Japanese-written value anchors like any other.
+    let dates: Vec<&str> = catch.items.iter().map(|item| item.date.as_str()).collect();
+    assert_eq!(dates, ["2024-03-31", "2023-12-31"]);
+    assert_eq!(catch.items[0].date_text.as_deref(), Some("2024年冬"));
+    assert!(up.items.is_empty(), "a finished season is not ahead of you");
+}
+
+#[tokio::test]
+async fn a_season_answers_the_status_question_exactly_as_a_date_does() {
+    let running = "2024 Spring";
+    for status in [
+        CanonicalStatus::Completed,
+        CanonicalStatus::Dropped,
+        CanonicalStatus::Paused,
+    ] {
+        let library = season_library(
+            DateRole::Planning,
+            vec![season_record("Show", running, status)],
+        );
+        assert!(
+            up_next(&library, "2024-06-15").await.items.is_empty(),
+            "{status:?} is fulfilled, abandoned or deferred — never up next"
+        );
+        assert!(
+            catch_up(&library, "2024-06-15").await.items.is_empty(),
+            "{status:?} is not still on your list"
+        );
+    }
+
+    // Ongoing: the plan is spent, but you haven't finished — so neither feed
+    // nags, matching a planning *date* on the same entity.
+    let library = season_library(
+        DateRole::Planning,
+        vec![season_record("Show", running, CanonicalStatus::Ongoing)],
+    );
+    assert!(up_next(&library, "2024-06-15").await.items.is_empty());
+    assert!(catch_up(&library, "2024-06-15").await.items.is_empty());
+}
+
+#[tokio::test]
+async fn seasons_stay_out_of_recent_and_off_the_calendar() {
+    // Recent is a record of what happened and a season is a plan; the calendar
+    // places days, and a season isn't one. Both are unchanged by this feature.
+    let library = season_library(
+        DateRole::Planning,
+        vec![season_record(
+            "Spring Show",
+            "2024 Spring",
+            CanonicalStatus::Planning,
+        )],
+    );
+
+    assert!(recent(&library, "2024-06-15").await.items.is_empty());
+
+    let vfs = InMemoryVfs::new();
+    let calendar = build_calendar(
+        &library,
+        &vfs,
+        CalendarBuildOptions {
+            year: 2024,
+            month: 4,
+            entity_type: None,
+            source: CalendarSource::All,
+            season: None,
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(calendar.totals.entries, 0, "no square holds a season");
+}
+
+#[tokio::test]
+async fn only_planning_seasons_anchor() {
+    // `started`/`completed` seasons have no settled meaning for these feeds yet,
+    // so they keep the exact-date behaviour: out of both.
+    for role in [DateRole::Started, DateRole::Completed, DateRole::Event] {
+        let library = season_library(
+            role,
+            vec![season_record(
+                "Show",
+                "2024 Autumn",
+                CanonicalStatus::Planning,
+            )],
+        );
+        assert!(
+            up_next(&library, "2024-06-15").await.items.is_empty(),
+            "{role:?}"
+        );
+        assert!(
+            catch_up(&library, "2024-06-15").await.items.is_empty(),
+            "{role:?}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn an_item_that_also_carries_a_real_date_keeps_showing_its_day() {
+    // The season anchors to 2024-10-01, where this entity's planning date
+    // already sits — so the day is a fact about the item, not an invention, and
+    // the item shows it.
+    let mut rec = season_record("Autumn Show", "2024 Autumn", CanonicalStatus::Planning);
+    rec.summary.dates.push(date_value("planned", "2024-10-01"));
+    let library = season_library(DateRole::Planning, vec![rec]);
+
+    let up = up_next(&library, "2024-06-15").await;
+
+    assert_eq!(up.items.len(), 1);
+    assert_eq!(up.items[0].date, "2024-10-01");
+    assert_eq!(up.items[0].entries.len(), 2);
+    assert_eq!(up.items[0].date_text, None);
+}
+
+#[tokio::test]
+async fn a_season_field_holding_an_exact_date_still_reads_as_its_season() {
+    // The schema says this field is a season, so that's what it means — the same
+    // reading the smart-list filters give it.
+    let library = season_library(
+        DateRole::Planning,
+        vec![season_record(
+            "Show",
+            "2024-11-20",
+            CanonicalStatus::Planning,
+        )],
+    );
+
+    let up = up_next(&library, "2024-06-15").await;
+
+    assert_eq!(up.items.len(), 1);
+    assert_eq!(
+        up.items[0].date, "2024-10-01",
+        "autumn's first day, not the 20th"
+    );
+    assert_eq!(up.items[0].date_text.as_deref(), Some("2024-11-20"));
 }

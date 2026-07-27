@@ -164,9 +164,9 @@ export function ActivityPage() {
         ) : (
           <div className="flex flex-col gap-6">
             {days.map((day) => (
-              <section key={day.date} className="flex flex-col gap-2">
+              <section key={day.key} className="flex flex-col gap-2">
                 <h2 className="sticky top-0 z-10 bg-background/90 py-1 text-sm font-medium text-muted-foreground backdrop-blur">
-                  {formatDayHeading(day.date, formatDay)}
+                  {day.date ? formatDayHeading(day.date, formatDay) : day.key}
                 </h2>
                 <div className="flex flex-col gap-2">
                   {day.items.map((item) => (
@@ -327,14 +327,20 @@ function ActivityEntryRow({
   );
 }
 
-function groupByDay(items: ActivityItem[]): { date: string; items: ActivityItem[] }[] {
-  const days: { date: string; items: ActivityItem[] }[] = [];
+/// Groups the feed into the headings it shows. Normally that's the day, but an
+/// item whose date is only an anchor for something fuzzy — a season — heads
+/// under that text instead, so `2026 Spring` never reads as April 1st. Such an
+/// item shares its anchor day with real dates, so the two form separate groups
+/// and a group is keyed rather than merely adjacent.
+function groupByDay(items: ActivityItem[]): { key: string; date: string | null; items: ActivityItem[] }[] {
+  const days = new Map<string, { key: string; date: string | null; items: ActivityItem[] }>();
   for (const item of items) {
-    const last = days[days.length - 1];
-    if (last && last.date === item.date) last.items.push(item);
-    else days.push({ date: item.date, items: [item] });
+    const key = item.dateText ?? item.date;
+    const group = days.get(key);
+    if (group) group.items.push(item);
+    else days.set(key, { key, date: item.dateText ? null : item.date, items: [item] });
   }
-  return days;
+  return [...days.values()];
 }
 
 function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {

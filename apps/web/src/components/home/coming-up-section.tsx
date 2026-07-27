@@ -18,7 +18,11 @@ import type { ActivityItem } from "@/types/api";
 
 type FieldLabels = ReadonlyMap<string, ReadonlyMap<string, string>>;
 
-type Translate = ReturnType<typeof useLingui>["t"];
+/// These helpers run outside a component, where the `t` macro has no binding to
+/// transform — a `` t`…` `` here would call the runtime function as a template
+/// tag and render nothing. `msg` descriptors compile anywhere, so they take the
+/// i18n instance and resolve the descriptor themselves.
+type Translate = ReturnType<typeof useLingui>["i18n"];
 
 /// The number of upcoming items to surface on Home — the soonest first, since the
 /// endpoint returns them ascending. Deeper browsing is the Activity "Up next" mode.
@@ -99,7 +103,7 @@ function ComingUpCard({
   labels: FieldLabels;
   hasCover: boolean;
 }) {
-  const { t } = useLingui();
+  const { i18n } = useLingui();
   const language = useTitleLanguage();
   const formatDate = useIsoDateFormat();
   const days = daysUntil(item.date, today);
@@ -127,11 +131,15 @@ function ComingUpCard({
           language={language}
           className="truncate text-sm font-medium"
         />
-        <span className="truncate text-xs text-muted-foreground">{sourceLabel(item, labels, t)}</span>
+        <span className="truncate text-xs text-muted-foreground">{sourceLabel(item, labels, i18n)}</span>
       </div>
       <div className="shrink-0 text-right">
-        <div className="text-xs font-medium">{countdown(days, t)}</div>
-        <div className="text-[11px] tabular-nums text-muted-foreground">{formatDate(item.date)}</div>
+        <div className="text-xs font-medium">{countdown(days, i18n)}</div>
+        {/* A season is anchored to a day so it can be ordered, but it names a
+            period — show the period, never the anchor. */}
+        <div className="text-[11px] tabular-nums text-muted-foreground">
+          {item.dateText ?? formatDate(item.date)}
+        </div>
       </div>
     </Link>
   );
@@ -145,28 +153,29 @@ function daysUntil(date: string, today: string): number {
   return Math.round((target - now) / 86_400_000);
 }
 
-function countdown(days: number, t: Translate): string {
-  if (days <= 0) return t`Today`;
-  if (days === 1) return t`Tomorrow`;
-  if (days <= 7) return t`in ${plural(days, { one: "# day", other: "# days" })}`;
+function countdown(days: number, i18n: Translate): string {
+  if (days <= 0) return i18n._(msg`Today`);
+  if (days === 1) return i18n._(msg`Tomorrow`);
+  if (days <= 7) return i18n._(msg`in ${plural(days, { one: "# day", other: "# days" })}`);
   if (days <= 30) {
     const weeks = Math.round(days / 7);
-    return t`in ${weeks} wk`;
+    return i18n._(msg`in ${weeks} wk`);
   }
   const months = Math.round(days / 30);
-  return t`in ${months} mo`;
+  return i18n._(msg`in ${months} mo`);
 }
 
 /// The human label for what's happening on this date — the date field's schema
 /// label ("Release date") or the episodes airing ("Episodes 12").
-function sourceLabel(item: ActivityItem, labels: FieldLabels, t: Translate): string {
+function sourceLabel(item: ActivityItem, labels: FieldLabels, i18n: Translate): string {
   const entry = item.entries[0];
   if (!entry) return "";
   if (entry.source === "episode") {
     const keys = (entry.episodes ?? []).map((episode) => episode.key || episode.title).filter(Boolean);
-    const heading = entry.heading || t`Episode`;
-    const keyList = keys.join(", ");
-    return keys.length ? t`${heading} ${keyList}` : heading;
+    // The heading is schema config and the keys are data, so the only app copy
+    // here is the fallback for a type that names no section.
+    const heading = entry.heading || i18n._(msg`Episode`);
+    return keys.length ? `${heading} ${keys.join(", ")}` : heading;
   }
   if (entry.source === "taxonomy" && entry.dateField) {
     return entityFieldLabel(labels, item.entity.type, entry.dateField);

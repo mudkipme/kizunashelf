@@ -16,6 +16,30 @@ pub struct CalendarBuildOptions {
     pub month: u32,
     pub entity_type: Option<String>,
     pub source: CalendarSource,
+    /// How `season`-valued planning fields join this build, or `None` to leave
+    /// them out. The calendar view leaves them out: a season names a stretch of
+    /// time, not a day on a grid, so pinning `2026 Spring` to a square would
+    /// invent a precision the value doesn't have. The forward-looking activity
+    /// modes set it, because *there* a season genuinely is something to act on.
+    pub season: Option<SeasonAnchorOptions>,
+}
+
+/// Where in its span a season sits when the feed has to order it against real
+/// dates, and the day that ordering is relative to.
+#[derive(Clone, Debug)]
+pub struct SeasonAnchorOptions {
+    pub anchor: SeasonAnchor,
+    /// Today (`YYYY-MM-DD`), the client's local day.
+    pub today: String,
+}
+
+/// Which end of a season's span anchors it. Up next reads a season forwards (it
+/// starts on…), catch up backwards (it runs until…) — the two ends a planned
+/// season is worth surfacing at.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SeasonAnchor {
+    UpNext,
+    CatchUp,
 }
 
 /// Which slice of activity to show. `All` is the full reverse-chronological feed;
@@ -88,6 +112,12 @@ pub struct CalendarEntry {
     /// to (its number, title, and whether the date is its air or completion).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub episode: Option<CalendarEpisode>,
+    /// Set when [`Self::date`] is an anchor derived from a season rather than a
+    /// date the entity records. The mode filter reads it to skip the day-level
+    /// tests (the anchor already encodes them) and clients read the item's
+    /// `dateText` to show the season instead of the anchor.
+    #[serde(default)]
+    pub season: bool,
 }
 
 /// Identifies whether a calendar entry came from taxonomy metadata, a daily
@@ -179,6 +209,13 @@ pub struct EntityDatesTotals {
 #[serde(rename_all = "camelCase")]
 pub struct ActivityItem {
     pub date: String,
+    /// What to show in place of [`Self::date`], when the item sits on that date
+    /// only because something fuzzy had to be ordered against real ones — a
+    /// `season` planning field, which is anchored to a day but names a period
+    /// (`2026 Spring`). Set only when *every* entry reads that same way, so an
+    /// item that also carries a real date still shows its day.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date_text: Option<String>,
     pub entity: EntitySummary,
     pub entries: Vec<ActivityEntry>,
 }

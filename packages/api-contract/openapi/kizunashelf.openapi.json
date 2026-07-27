@@ -5994,6 +5994,13 @@
           "date": {
             "type": "string"
           },
+          "dateText": {
+            "description": "What to show in place of [`Self::date`], when the item sits on that date\nonly because something fuzzy had to be ordered against real ones — a\n`season` planning field, which is anchored to a day but names a period\n(`2026 Spring`). Set only when *every* entry reads that same way, so an\nitem that also carries a real date still shows its day.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "entity": {
             "$ref": "#/components/schemas/EntitySummary"
           },

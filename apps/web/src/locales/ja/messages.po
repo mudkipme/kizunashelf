@@ -220,10 +220,6 @@ msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 編集操作は利用できません。"
 
-#: src/components/home/coming-up-section.tsx:151
-msgid "{days, plural, one {# day} other {# days}}"
-msgstr "{days, plural, other {# 日}}"
-
 #: src/pages/quick-capture-page.tsx:167
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
 msgstr "{failedCovers, plural, other {追加しました。ただし # 件のカバー画像をダウンロードできませんでした（URL は保持）。}}"
@@ -659,7 +655,7 @@ msgstr "閉じる"
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
-#: src/components/home/coming-up-section.tsx:60
+#: src/components/home/coming-up-section.tsx:64
 msgid "Coming up"
 msgstr "近日公開"
 
@@ -1058,6 +1054,10 @@ msgstr "アイテムのタイプ"
 msgid "Enum options"
 msgstr "列挙オプション"
 
+#: src/components/home/coming-up-section.tsx:177
+msgid "Episode"
+msgstr "エピソード"
+
 #: src/pages/activity-page.tsx:304
 #: src/pages/import-wizard-page.tsx:746
 msgid "Episodes"
@@ -1279,6 +1279,18 @@ msgstr "インポート中…"
 msgid "in"
 msgstr "フォルダ:"
 
+#: src/components/home/coming-up-section.tsx:159
+msgid "in {days, plural, one {# day} other {# days}}"
+msgstr "{days, plural, other {# 日後}}"
+
+#: src/components/home/coming-up-section.tsx:165
+msgid "in {months} mo"
+msgstr "{months} か月後"
+
+#: src/components/home/coming-up-section.tsx:162
+msgid "in {weeks} wk"
+msgstr "{weeks} 週間後"
+
 #: src/pages/import-wizard-page.tsx:684
 #: src/pages/import-wizard-page.tsx:688
 #: src/pages/quick-capture-page.tsx:343
@@ -1410,7 +1422,7 @@ msgstr "言語 {0}"
 msgid "Language"
 msgstr "言語"
 
-#: src/components/home/coming-up-section.tsx:195
+#: src/components/home/coming-up-section.tsx:204
 msgid "Later"
 msgstr "後で"
 
@@ -2672,7 +2684,7 @@ msgstr "スマートリストと同じルールです。セクションには一
 msgid "These existing types can link to what you're adding."
 msgstr "これらの既存のタイプは、追加するものにリンクできます。"
 
-#: src/components/home/coming-up-section.tsx:194
+#: src/components/home/coming-up-section.tsx:203
 msgid "This month"
 msgstr "今月"
 
@@ -2694,7 +2706,7 @@ msgstr "このページは存在しないか、移動された可能性があり
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "このスマートリストはディスク上で変更されました。ページを再読み込みして編集をやり直してください。"
 
-#: src/components/home/coming-up-section.tsx:193
+#: src/components/home/coming-up-section.tsx:202
 msgid "This week"
 msgstr "今週"
 
@@ -2713,6 +2725,7 @@ msgstr "タイトルの言語"
 msgid "Title, or paste a provider URL"
 msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 
+#: src/components/home/coming-up-section.tsx:157
 #: src/pages/calendar-page.tsx:100
 msgid "Today"
 msgstr "今日"
@@ -2720,6 +2733,10 @@ msgstr "今日"
 #: src/pages/list-detail-page.tsx:648
 msgid "Todo"
 msgstr "未対応"
+
+#: src/components/home/coming-up-section.tsx:158
+msgid "Tomorrow"
+msgstr "明日"
 
 #. placeholder {0}: field.totalProgressField
 #: src/components/settings/settings-field-descriptors.ts:70
@@ -2877,7 +2894,7 @@ msgstr "保管庫"
 msgid "View"
 msgstr "表示"
 
-#: src/components/home/coming-up-section.tsx:63
+#: src/components/home/coming-up-section.tsx:67
 msgid "View all"
 msgstr "すべて表示"
 

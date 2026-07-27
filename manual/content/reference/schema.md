@@ -150,7 +150,7 @@ Use stable ids:
 Prefer semantic fields:
 
 - Use `fieldType: title` for every title-like field, even original titles.
-- Use `fieldType: date` or `season` plus `dateRole` for anything you want in calendar/planning views.
+- Use `fieldType: date` or `season` plus `dateRole` for anything you want on the calendar or in the activity feed.
 - Use `fieldType: relation` for entity links that should appear in relation views.
 
 Use display names for UI:

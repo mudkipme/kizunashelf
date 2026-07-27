@@ -131,7 +131,7 @@ fn field_type_meaning(field_type: &FieldType) -> &'static str {
 fn date_role_meaning(role: &DateRole) -> &'static str {
     match role {
         DateRole::Planning => "Future, release, airing, publish, or schedule date.",
-        DateRole::Started => "The date you started the entity (began watching, reading, or playing). Drives the \"Just Started\" planning list.",
+        DateRole::Started => "The date you started the entity (began watching, reading, or playing). It's the field a `started` log entry stamps, and it reads as a record: it shows in the activity feed's *Recent*, never as something upcoming.",
         DateRole::Completed => "Finished, watched, read, played, or completed date.",
         DateRole::Event => "A date the entity *happens on* and you attend (a concert, exhibition, or release event), rather than a release you consume. Whether it reads as *upcoming* or *attended* is derived from the entity's status, not a separate role.",
     }

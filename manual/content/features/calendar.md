@@ -4,11 +4,13 @@ description = "What's coming up, what you just did, and what you should catch up
 weight = 7
 +++
 
-Dates aren't just display fields in KizunaShelf: every field with a [date role](@/reference/field-types.md#date-roles-daterole) feeds the calendar, the planning views, and the activity feed. Together they answer three questions.
+Dates aren't just display fields in KizunaShelf: every field with a [date role](@/reference/field-types.md#date-roles-daterole) feeds two surfaces — the **calendar**, a month grid, and the **activity feed**, one dated stream you read through four modes. Between them they answer three questions.
 
 ## What's coming up?
 
-Fields with `dateRole: planning` (release dates, airing seasons, publish dates) and `dateRole: event` (concerts and exhibitions you attend) land on the **calendar**. Exact dates get day-level entries; seasons and years still count for planning views. Episode items' 📅 airing dates appear too, so an airing show shows its next episode — not just its premiere.
+Fields with `dateRole: planning` (release dates, airing seasons, publish dates) and `dateRole: event` (concerts and exhibitions you attend) land on the **calendar**. The grid places days, so only exact dates get squares — a season names a stretch of time, and it counts in the feed's forward modes [below](#what-should-i-catch-up-on) instead. Episode items' 📅 airing dates appear too, so an airing show shows its next episode — not just its premiere.
+
+The same upcoming data drives Home's **Coming up** panel, and on iOS the Home Screen **widget** and release **notifications** — see [iOS features](@/features/ios.md).
 
 {{ screenshot(caption="The calendar: releases, airing episodes, and your own plans on one surface.") }}
 
@@ -22,14 +24,17 @@ The **activity feed** is the read-only merge of everything dated that happened a
 
 each linked back to its entity and its day. Years from now it won't just say *that* you loved something — it says **when** it became part of your life.
 
+That's the feed's **Recent** mode, and **All** is the same merge with nothing filtered out. The two modes below read the same data facing forward.
+
 {{ screenshot(caption="The activity feed: a dated record of watching, playing, and reading.") }}
 
 ## What should I catch up on?
 
-The planning views slice the same data forward:
+The feed's other two modes slice the same data forward:
 
-- **Up next** — `planning` entities whose date has arrived, and `ongoing` things with unwatched items. `paused` and `dropped` entities are deliberately kept out (no nagging); see [canonical statuses](@/reference/field-types.md#canonical-statuses-statusvalues).
-- **Catch up** — aired-but-unwatched episode items across the library, so a season you fell behind on surfaces episode-by-episode.
-- **Just started** — entities with a recent `started` date, for picking back up what you began.
+- **Up next** — what's still ahead: `planning` dates from today on, and scheduled episodes you haven't watched. `completed` and `dropped` entities are done with, and `paused` ones are deliberately deferred, so none of them nag; see [canonical statuses](@/reference/field-types.md#canonical-statuses-statusvalues).
+- **Catch up** — its mirror: what has become available while you weren't looking. A `planning` date that has passed on something still marked `planning` (released, still on your list), and an `ongoing` entity's aired-but-unwatched episodes, one item per missed air date — so a show you fell behind on surfaces episode-by-episode.
 
-On iOS, the same "coming up" data drives the Home Screen **widget** and release **notifications** — see [iOS features](@/features/ios.md).
+A `season` field with `dateRole: planning` counts in both, as the period it names rather than as a day. A season that hasn't ended yet is up next, ordered by when it starts; one that has already begun is something to catch up on, ordered by when it ends. The season currently running answers both questions, so it appears in each list — and either way it reads `2026 Spring`, never the day the feed ordered it by. Seasons in other roles keep their exact-date behaviour.
+
+Both modes are ordinary views over your dated fields, so nothing is stored to make them work: change a status or check off an episode and the next read reflects it.

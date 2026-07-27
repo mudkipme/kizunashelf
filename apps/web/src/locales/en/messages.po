@@ -220,10 +220,6 @@ msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 
-#: src/components/home/coming-up-section.tsx:151
-msgid "{days, plural, one {# day} other {# days}}"
-msgstr "{days, plural, one {# day} other {# days}}"
-
 #: src/pages/quick-capture-page.tsx:167
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
 msgstr "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
@@ -659,7 +655,7 @@ msgstr "Close"
 msgid "Close navigation"
 msgstr "Close navigation"
 
-#: src/components/home/coming-up-section.tsx:60
+#: src/components/home/coming-up-section.tsx:64
 msgid "Coming up"
 msgstr "Coming up"
 
@@ -1058,6 +1054,10 @@ msgstr "Entity type"
 msgid "Enum options"
 msgstr "Enum options"
 
+#: src/components/home/coming-up-section.tsx:177
+msgid "Episode"
+msgstr "Episode"
+
 #: src/pages/activity-page.tsx:304
 #: src/pages/import-wizard-page.tsx:746
 msgid "Episodes"
@@ -1279,6 +1279,18 @@ msgstr "Importing…"
 msgid "in"
 msgstr "in"
 
+#: src/components/home/coming-up-section.tsx:159
+msgid "in {days, plural, one {# day} other {# days}}"
+msgstr "in {days, plural, one {# day} other {# days}}"
+
+#: src/components/home/coming-up-section.tsx:165
+msgid "in {months} mo"
+msgstr "in {months} mo"
+
+#: src/components/home/coming-up-section.tsx:162
+msgid "in {weeks} wk"
+msgstr "in {weeks} wk"
+
 #: src/pages/import-wizard-page.tsx:684
 #: src/pages/import-wizard-page.tsx:688
 #: src/pages/quick-capture-page.tsx:343
@@ -1410,7 +1422,7 @@ msgstr "lang {0}"
 msgid "Language"
 msgstr "Language"
 
-#: src/components/home/coming-up-section.tsx:195
+#: src/components/home/coming-up-section.tsx:204
 msgid "Later"
 msgstr "Later"
 
@@ -2672,7 +2684,7 @@ msgstr "The same rules as smart lists; the section shows entities that match."
 msgid "These existing types can link to what you're adding."
 msgstr "These existing types can link to what you're adding."
 
-#: src/components/home/coming-up-section.tsx:194
+#: src/components/home/coming-up-section.tsx:203
 msgid "This month"
 msgstr "This month"
 
@@ -2694,7 +2706,7 @@ msgstr "This page doesn’t exist or may have moved."
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "This smart list changed on disk. Reload the page and redo your edits."
 
-#: src/components/home/coming-up-section.tsx:193
+#: src/components/home/coming-up-section.tsx:202
 msgid "This week"
 msgstr "This week"
 
@@ -2713,6 +2725,7 @@ msgstr "Title language"
 msgid "Title, or paste a provider URL"
 msgstr "Title, or paste a provider URL"
 
+#: src/components/home/coming-up-section.tsx:157
 #: src/pages/calendar-page.tsx:100
 msgid "Today"
 msgstr "Today"
@@ -2720,6 +2733,10 @@ msgstr "Today"
 #: src/pages/list-detail-page.tsx:648
 msgid "Todo"
 msgstr "Todo"
+
+#: src/components/home/coming-up-section.tsx:158
+msgid "Tomorrow"
+msgstr "Tomorrow"
 
 #. placeholder {0}: field.totalProgressField
 #: src/components/settings/settings-field-descriptors.ts:70
@@ -2877,7 +2894,7 @@ msgstr "Vaults"
 msgid "View"
 msgstr "View"
 
-#: src/components/home/coming-up-section.tsx:63
+#: src/components/home/coming-up-section.tsx:67
 msgid "View all"
 msgstr "View all"
 

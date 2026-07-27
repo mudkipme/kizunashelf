@@ -8,7 +8,7 @@ use crate::daily_notes::{
     daily_note_candidates, daily_note_files, normalize_wikilink_target, read_daily_note_contents,
     strip_frontmatter, DailyNoteFile, PendingDailyNote,
 };
-use crate::dates::{is_in_month, normalize_date, parse_exact_date};
+use crate::dates::{is_in_month, normalize_date, parse_exact_date, season_span};
 use crate::library::{
     compare_string, parse_daily_note_source_id, wikilink_regex, DAILY_NOTE_RELATION_FIELD,
 };
@@ -233,6 +233,22 @@ pub async fn build_activity(
     })
 }
 
+/// How this activity mode reads a season, or `None` for the modes that don't.
+/// "Recent" is a record of what happened, and a season is a plan — the same
+/// reason a planning *date* stays out of it. "All" is the calendar's merge,
+/// which has no fuzzy dates to place.
+fn season_anchor_options(options: &ActivityBuildOptions) -> Option<SeasonAnchorOptions> {
+    let anchor = match options.mode {
+        ActivityMode::UpNext => SeasonAnchor::UpNext,
+        ActivityMode::CatchUp => SeasonAnchor::CatchUp,
+        ActivityMode::All | ActivityMode::Recent => return None,
+    };
+    Some(SeasonAnchorOptions {
+        anchor,
+        today: options.today.clone(),
+    })
+}
+
 /// The set of `YYYY-MM` months that have any activity, newest first. Fully
 /// cache-driven, no VFS I/O: taxonomy/episode dates from the resident
 /// summaries/records, and daily-note months from the resident (index-cached)
@@ -240,6 +256,7 @@ pub async fn build_activity(
 /// bodies, never to discover which months exist.
 fn active_activity_months(library: &Library, options: &ActivityBuildOptions) -> Vec<String> {
     let mut months: HashSet<String> = HashSet::new();
+    let season = season_anchor_options(options);
     if options.source != CalendarSource::DailyNote {
         for record in &library.records {
             let entity = &record.summary;
@@ -250,7 +267,16 @@ fn active_activity_months(library: &Library, options: &ActivityBuildOptions) -> 
             {
                 continue;
             }
-            for item in metadata_date_entries(library, entity) {
+            // Both projections of a date field, so the discovery matches what
+            // the page's month build will actually emit.
+            let seasons = season
+                .as_ref()
+                .map(|season| season_anchor_entries(library, entity, season))
+                .unwrap_or_default();
+            for item in metadata_date_entries(library, entity)
+                .iter()
+                .chain(&seasons)
+            {
                 if let Some(month) = item.date.as_deref().and_then(month_key) {
                     months.insert(month);
                 }
@@ -299,6 +325,7 @@ async fn month_activity_entries(
         month,
         entity_type: options.entity_type.clone(),
         source: options.source,
+        season: season_anchor_options(options),
     };
     collect_calendar_entries(library, vfs, &build, daily_ctx).await
 }
@@ -328,12 +355,14 @@ fn group_activity_items(
         .into_iter()
         .filter_map(|key| {
             let (entity, grouped) = groups.remove(&key)?;
-            let entries = fold_activity_entries(library, &entity, &key.0, grouped, options);
+            let (entries, date_text) =
+                fold_activity_entries(library, &entity, &key.0, grouped, options);
             if entries.is_empty() {
                 return None;
             }
             Some(ActivityItem {
                 date: key.0,
+                date_text,
                 entity,
                 entries,
             })
@@ -345,14 +374,16 @@ fn group_activity_items(
 /// applying the mode filter: date-field stamps (role resolved from the schema),
 /// episode dates aggregated per air/completion role, and the daily-note mention.
 /// Ordered taxonomy → episode → daily-note, matching the calendar's per-source
-/// ranking.
+/// ranking. Also returns the item's display text: `Some` only when every kept
+/// entry is a season anchor and they name the same season (see
+/// [`ActivityItem::date_text`]).
 fn fold_activity_entries(
     library: &Library,
     entity: &EntitySummary,
     date: &str,
     entries: Vec<CalendarEntry>,
     options: &ActivityBuildOptions,
-) -> Vec<ActivityEntry> {
+) -> (Vec<ActivityEntry>, Option<String>) {
     let mode = options.mode;
     let today = options.today.as_str();
 
@@ -417,6 +448,8 @@ fn fold_activity_entries(
         });
 
     let mut out = Vec::new();
+    // The season values behind the kept anchors, for the item's display text.
+    let mut season_texts: Vec<String> = Vec::new();
 
     let mut date_fields: Vec<&CalendarEntry> = entries
         .iter()
@@ -433,46 +466,66 @@ fn fold_activity_entries(
             .date_field
             .as_deref()
             .and_then(|field| date_field_role(library, &entity.entity_type, field));
-        let keep = match mode {
-            ActivityMode::All => true,
-            ActivityMode::Recent => match role {
-                // Planning is an intention, not a record — except as a proxy when
-                // the entity is completed with no explicit completed-role stamp.
-                Some(DateRole::Planning) => planning_is_proxy_record && date <= today,
-                // Started/completed are records: shown once past-or-today. A
-                // *future* record is contradictory (time travel) — kept out of
-                // "recent" (a cleanup queue surfaces it instead).
-                _ => date <= today,
-            },
-            ActivityMode::UpNext => match role {
-                // Forward-only: a planning date is "up next" only when it's today or
-                // later and the intention isn't spent (already ongoing) or blocked
-                // (completed/dropped/paused). A *past* planning date never nags.
-                Some(DateRole::Planning) => {
-                    date >= today
-                        && !up_next_blocked
+        // A season entry's date is an anchor, not a stamp, so the day-level
+        // tests below don't apply — `season_anchor_date` has already decided
+        // which side of today the season falls on. What's left is the status
+        // question, and there a planned season answers exactly as a planned
+        // date does.
+        let keep = if entry.season {
+            match mode {
+                ActivityMode::UpNext => {
+                    !up_next_blocked
                         && !started_or_completed_today
                         && status != Some(CanonicalStatus::Ongoing)
                 }
-                // An event is "up next" until it's attended: today-or-future and
-                // not yet completed/dropped. A past event is missed, not upcoming.
-                Some(DateRole::Event) => date >= today && !up_next_blocked,
-                // Started/completed stamps are records, never "up next".
-                _ => false,
-            },
-            ActivityMode::CatchUp => match role {
-                // "Catch up": a planning date that has already passed while the
-                // entity is *still* planning — released/aired, still on your list.
-                // Strictly past (today belongs to "up next"); other roles never
-                // qualify.
-                Some(DateRole::Planning) => {
-                    date < today && status == Some(CanonicalStatus::Planning)
-                }
-                _ => false,
-            },
+                ActivityMode::CatchUp => status == Some(CanonicalStatus::Planning),
+                ActivityMode::All | ActivityMode::Recent => false,
+            }
+        } else {
+            match mode {
+                ActivityMode::All => true,
+                ActivityMode::Recent => match role {
+                    // Planning is an intention, not a record — except as a proxy when
+                    // the entity is completed with no explicit completed-role stamp.
+                    Some(DateRole::Planning) => planning_is_proxy_record && date <= today,
+                    // Started/completed are records: shown once past-or-today. A
+                    // *future* record is contradictory (time travel) — kept out of
+                    // "recent" (a cleanup queue surfaces it instead).
+                    _ => date <= today,
+                },
+                ActivityMode::UpNext => match role {
+                    // Forward-only: a planning date is "up next" only when it's today or
+                    // later and the intention isn't spent (already ongoing) or blocked
+                    // (completed/dropped/paused). A *past* planning date never nags.
+                    Some(DateRole::Planning) => {
+                        date >= today
+                            && !up_next_blocked
+                            && !started_or_completed_today
+                            && status != Some(CanonicalStatus::Ongoing)
+                    }
+                    // An event is "up next" until it's attended: today-or-future and
+                    // not yet completed/dropped. A past event is missed, not upcoming.
+                    Some(DateRole::Event) => date >= today && !up_next_blocked,
+                    // Started/completed stamps are records, never "up next".
+                    _ => false,
+                },
+                ActivityMode::CatchUp => match role {
+                    // "Catch up": a planning date that has already passed while the
+                    // entity is *still* planning — released/aired, still on your list.
+                    // Strictly past (today belongs to "up next"); other roles never
+                    // qualify.
+                    Some(DateRole::Planning) => {
+                        date < today && status == Some(CanonicalStatus::Planning)
+                    }
+                    _ => false,
+                },
+            }
         };
         if !keep {
             continue;
+        }
+        if entry.season {
+            season_texts.extend(entry.raw_date.clone());
         }
         let mut activity = activity_entry(CalendarEntrySource::Taxonomy);
         activity.role = role;
@@ -561,7 +614,13 @@ fn fold_activity_entries(
         }
     }
 
-    out
+    let date_text = season_texts
+        .first()
+        .filter(|first| {
+            season_texts.len() == out.len() && season_texts.iter().all(|text| &text == first)
+        })
+        .cloned();
+    (out, date_text)
 }
 
 fn compare_activity_items(
@@ -654,7 +713,24 @@ fn taxonomy_calendar_entries(
         {
             continue;
         }
-        for item in metadata_date_entries(library, entity) {
+        // Season planning fields are read as their season when the build asks
+        // for it, so they're taken off the exact-date path first — a field is
+        // one thing or the other, never both.
+        let seasons = options
+            .season
+            .as_ref()
+            .map(|season| season_anchor_entries(library, entity, season))
+            .unwrap_or_default();
+        let dates = metadata_date_entries(library, entity)
+            .into_iter()
+            .filter(|item| {
+                options.season.is_none()
+                    || !is_season_planning_field(library, &entity.entity_type, &item.field)
+            });
+        for (item, season) in dates
+            .map(|item| (item, false))
+            .chain(seasons.into_iter().map(|item| (item, true)))
+        {
             if item
                 .date
                 .as_ref()
@@ -674,6 +750,7 @@ fn taxonomy_calendar_entries(
                     note_path: None,
                     snippets: None,
                     episode: None,
+                    season,
                 });
             }
         }
@@ -744,8 +821,84 @@ fn episode_calendar_entries(
                     role: item.role,
                     heading: heading.clone(),
                 }),
+                season: false,
             });
         }
+    }
+    entries
+}
+
+/// The day a `season` planning field anchors to for one activity mode, or `None`
+/// when the season is on the wrong side of today.
+///
+/// A season is a period, so which end matters depends on the question. "Up next"
+/// asks what's still to come: any season that hasn't ended yet, ordered by when
+/// it starts. "Catch up" asks what has become available: any season that has
+/// already begun, ordered by when it ends. The current season answers both — it
+/// has started *and* hasn't ended — so it legitimately appears in each list.
+///
+/// The anchor is clamped to today, because both feeds page by month in one
+/// direction only: the running season's real start is behind up next's window
+/// and its real end is beyond catch up's. Clamping keeps it reachable without
+/// disturbing the order the caller asked for — a season already underway sorts
+/// against *now*, which is still ahead of every future season and behind every
+/// finished one.
+fn season_anchor_date(value: &str, options: &SeasonAnchorOptions) -> Option<String> {
+    let (start, end) = season_span(value)?;
+    let today = options.today.as_str();
+    match options.anchor {
+        SeasonAnchor::UpNext => (end.as_str() >= today).then(|| start.max(today.to_string())),
+        SeasonAnchor::CatchUp => (start.as_str() <= today).then(|| end.min(today.to_string())),
+    }
+}
+
+/// Whether a date field is one this module reads as a season rather than as a
+/// day: the schema declares it `season`, and gives it the planning role. Other
+/// roles keep their exact-date behaviour — a season-shaped `started` value has
+/// no settled meaning yet, so it stays out rather than guessing one.
+///
+/// Which *field* this is never enters into it; as everywhere, the type's schema
+/// decides, so the same key can be a season in one type and a date in another.
+fn is_season_planning_field(library: &Library, entity_type: &str, field: &str) -> bool {
+    library
+        .config
+        .type_config(entity_type)
+        .and_then(|config| config.fields.iter().find(|item| item.field == field))
+        .is_some_and(|config| {
+            config.field_type == FieldType::Season && config.date_role == Some(DateRole::Planning)
+        })
+}
+
+/// The anchored season entries for one entity: one per `(season planning field,
+/// value)` whose season falls on the mode's side of today. These stand in for
+/// the field's exact-date entry, which [`metadata_date_entries`] can't produce
+/// for `2026 Spring` anyway — and which would be the wrong reading even for a
+/// season field that happens to hold `2026-04-16`.
+fn season_anchor_entries(
+    library: &Library,
+    entity: &EntitySummary,
+    options: &SeasonAnchorOptions,
+) -> Vec<EntityDateMetadataEntry> {
+    let mut seen = Vec::<String>::new();
+    let mut entries = Vec::new();
+    for item in &entity.dates {
+        if !is_season_planning_field(library, &entity.entity_type, &item.field) {
+            continue;
+        }
+        let key = format!("{}\0{}", item.field, item.value);
+        if seen.contains(&key) {
+            continue;
+        }
+        seen.push(key);
+        let Some(date) = season_anchor_date(&item.value, options) else {
+            continue;
+        };
+        entries.push(EntityDateMetadataEntry {
+            id: format!("season:{}:{}", item.field, entries.len()),
+            field: item.field.clone(),
+            value: item.value.clone(),
+            date: Some(date),
+        });
     }
     entries
 }
@@ -1039,6 +1192,7 @@ fn daily_note_entries_from_files(
                     note_path: Some(file.relative_path.clone()),
                     snippets: Some(Vec::new()),
                     episode: None,
+                    season: false,
                 });
                 if let Some(snippets) = &mut entry.snippets {
                     push_mention_snippet(snippets, &block);

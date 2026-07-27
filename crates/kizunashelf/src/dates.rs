@@ -88,9 +88,23 @@ pub fn date_sort_key(value: Option<&str>) -> Option<String> {
 /// `None` when the value doesn't resolve to a year *and* a season — a bare
 /// `2024`, or free text — so callers can fall back to comparing raw strings.
 pub fn season_key(value: &str) -> Option<String> {
+    season_span(value).map(|(start, _)| start)
+}
+
+/// The stretch of days a season value covers: its first and last day, inclusive
+/// — `2024 Spring` → (`2024-04-01`, `2024-06-30`). A season names a period
+/// rather than a moment, so callers that need it *on* the calendar (the activity
+/// feed's ordering) pick an end of the span rather than a single date.
+///
+/// `None` on the same values as [`season_key`]: no year *and* season, no span.
+pub fn season_span(value: &str) -> Option<(String, String)> {
     let parsed = parse_entity_date(Some(value))?;
-    let month = season_start_month(parsed.season_key.as_deref()?)?;
-    normalize_date(parsed.year, month, 1)
+    let season = parsed.season_key.as_deref()?;
+    let (end_month, end_day) = season_end_date(season)?;
+    Some((
+        normalize_date(parsed.year, season_start_month(season)?, 1)?,
+        normalize_date(parsed.year, end_month, end_day)?,
+    ))
 }
 
 pub fn season_compare_value(season: &str) -> i32 {

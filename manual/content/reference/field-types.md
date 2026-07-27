@@ -36,7 +36,7 @@ Set on `date` and `season` fields; see [Dates and Calendar Design](@/reference/t
 | `dateRole` | Meaning |
 | --- | --- |
 | `planning` | Future, release, airing, publish, or schedule date. |
-| `started` | The date you started the entity (began watching, reading, or playing). Drives the "Just Started" planning list. |
+| `started` | The date you started the entity (began watching, reading, or playing). It's the field a `started` log entry stamps, and it reads as a record: it shows in the activity feed's *Recent*, never as something upcoming. |
 | `completed` | Finished, watched, read, played, or completed date. |
 | `event` | A date the entity *happens on* and you attend (a concert, exhibition, or release event), rather than a release you consume. Whether it reads as *upcoming* or *attended* is derived from the entity's status, not a separate role. |
 

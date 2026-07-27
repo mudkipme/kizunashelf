@@ -296,6 +296,8 @@ pub(crate) async fn calendar(
                 month,
                 entity_type: query.entity_type.filter(|item| item != "all"),
                 source,
+                // The grid places days, and a season isn't one.
+                season: None,
             },
         )
         .await?,

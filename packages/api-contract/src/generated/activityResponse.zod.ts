@@ -25,6 +25,7 @@ export const ActivityResponse = zod.object({
   "cursor": zod.string().nullish().describe('The next cursor (`YYYY-MM`) to load the following page, or `None` at the\nend of the feed.'),
   "items": zod.array(zod.object({
   "date": zod.string(),
+  "dateText": zod.string().nullish().describe('What to show in place of [`Self::date`], when the item sits on that date\nonly because something fuzzy had to be ordered against real ones — a\n`season` planning field, which is anchored to a day but names a period\n(`2026 Spring`). Set only when \*every\* entry reads that same way, so an\nitem that also carries a real date still shows its day.'),
   "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),
