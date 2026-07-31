@@ -8,6 +8,7 @@ use crate::contract::{ExternalCandidate, ExternalProviderFieldOption, ExternalPr
 use crate::secrets::SECRET_BGG_API_TOKEN;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
+use quick_xml::XmlVersion;
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
@@ -344,7 +345,9 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                     // Entity references (`&amp;`) split one logical text node into
                     // several Text events, so accumulate fragments rather than
                     // overwriting; trimming happens once the field is consumed.
-                    if let Ok(decoded) = text.xml_content() {
+                    // BGG's API declares `<?xml version="1.0"?>`, so decode with
+                    // 1.0 end-of-line rules rather than 1.1's wider set.
+                    if let Ok(decoded) = text.xml10_content() {
                         let Some(slot) = text_slot(item, target) else {
                             continue;
                         };
@@ -431,7 +434,10 @@ fn attributes(element: &quick_xml::events::BytesStart) -> Vec<(String, String)> 
         .filter_map(Result::ok)
         .filter_map(|attr| {
             let key = String::from_utf8_lossy(attr.key.local_name().as_ref()).to_string();
-            let value = attr.unescape_value().ok()?.to_string();
+            let value = attr
+                .normalized_value(XmlVersion::Implicit1_0)
+                .ok()?
+                .to_string();
             Some((key, value))
         })
         .collect()
