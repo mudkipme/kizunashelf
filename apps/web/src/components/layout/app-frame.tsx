@@ -26,7 +26,6 @@ import { toast } from "sonner";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { LanguageSelect } from "@/components/layout/language-select";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { refreshLibrary } from "@/api/settings";
 import { statsQuery } from "@/api/queries";
@@ -168,9 +167,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <RescanButton />
           <LanguageSelect />
           <ThemeModeSelect />
-          <Badge variant="secondary" className="hidden sm:inline-flex">
-            v{__APP_VERSION__}
-          </Badge>
         </div>
       </header>
 
