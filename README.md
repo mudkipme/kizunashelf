@@ -113,3 +113,7 @@ For desktop development and builds:
 pnpm dev:desktop
 pnpm build:desktop
 ```
+
+## License
+
+KizunaShelf is licensed under the [Mozilla Public License 2.0](LICENSE). You can use it, self-host it, and build on it; modifications to MPL-covered files must be shared under the same license, while larger works that merely combine with it can carry their own terms.

@@ -2,6 +2,7 @@
   "name": "@kizunashelf/desktop",
   "version": "1.0.0",
   "private": true,
+  "license": "MPL-2.0",
   "type": "module",
   "scripts": {
     "tauri": "tauri"
