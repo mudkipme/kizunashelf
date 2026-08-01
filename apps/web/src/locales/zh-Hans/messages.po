@@ -306,7 +306,7 @@ msgstr "已存在以此标题命名的文件，因此保存为「{0}」。"
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名列表已存在，或文件已在磁盘上被修改。"
 
-#: src/components/layout/app-frame.tsx:132
+#: src/components/layout/app-frame.tsx:131
 msgid "A shelf for everything you love"
 msgstr "安放你所爱之物的书架"
 
@@ -324,7 +324,7 @@ msgid "Actions"
 msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:107
-#: src/components/layout/app-frame.tsx:355
+#: src/components/layout/app-frame.tsx:351
 #: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
@@ -539,7 +539,7 @@ msgstr "资源根目录"
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
-#: src/components/layout/app-frame.tsx:122
+#: src/components/layout/app-frame.tsx:121
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:174
@@ -579,7 +579,7 @@ msgstr "浏览库"
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "内置标签将使用英文，标题仍使用该语言。"
 
-#: src/components/layout/app-frame.tsx:352
+#: src/components/layout/app-frame.tsx:348
 #: src/pages/calendar-page.tsx:90
 msgid "Calendar"
 msgstr "日历"
@@ -650,8 +650,8 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/layout/app-frame.tsx:296
-#: src/components/layout/app-frame.tsx:309
+#: src/components/layout/app-frame.tsx:292
+#: src/components/layout/app-frame.tsx:305
 msgid "Close navigation"
 msgstr "关闭导航"
 
@@ -1181,7 +1181,7 @@ msgstr "游戏"
 msgid "Give your list a name."
 msgstr "为你的列表命名。"
 
-#: src/components/layout/app-frame.tsx:121
+#: src/components/layout/app-frame.tsx:120
 msgid "Go back"
 msgstr "返回"
 
@@ -1218,7 +1218,7 @@ msgstr "不含以下任何"
 msgid "Heading"
 msgstr "标题"
 
-#: src/components/layout/app-frame.tsx:341
+#: src/components/layout/app-frame.tsx:337
 #: src/components/settings/settings-editor.tsx:115
 #: src/components/settings/settings-editor.tsx:300
 #: src/pages/home-page.tsx:30
@@ -1243,7 +1243,7 @@ msgstr "图标"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:385
+#: src/components/layout/app-frame.tsx:381
 #: src/pages/import-wizard-page.tsx:225
 msgid "Import"
 msgstr "导入"
@@ -1430,7 +1430,7 @@ msgstr "稍后"
 msgid "less"
 msgstr "收起"
 
-#: src/components/layout/app-frame.tsx:349
+#: src/components/layout/app-frame.tsx:345
 msgid "Library"
 msgstr "库"
 
@@ -1509,7 +1509,7 @@ msgstr "未找到列表"
 msgid "List style"
 msgstr "列表样式"
 
-#: src/components/layout/app-frame.tsx:358
+#: src/components/layout/app-frame.tsx:354
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "列表"
@@ -1530,7 +1530,7 @@ msgstr "正在加载活动…"
 msgid "Loading built-in types…"
 msgstr "正在加载内置类型…"
 
-#: src/components/layout/app-frame.tsx:378
+#: src/components/layout/app-frame.tsx:374
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
@@ -1679,7 +1679,7 @@ msgstr "我的保管库"
 msgid "Name"
 msgstr "名称"
 
-#: src/components/layout/app-frame.tsx:301
+#: src/components/layout/app-frame.tsx:297
 msgid "Navigation"
 msgstr "导航"
 
@@ -1991,7 +1991,7 @@ msgstr "打开现有保管库"
 msgid "Open folder"
 msgstr "打开文件夹"
 
-#: src/components/layout/app-frame.tsx:142
+#: src/components/layout/app-frame.tsx:141
 msgid "Open navigation"
 msgstr "打开导航"
 
@@ -2266,12 +2266,12 @@ msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
-#: src/components/layout/app-frame.tsx:235
-#: src/components/layout/app-frame.tsx:236
+#: src/components/layout/app-frame.tsx:231
+#: src/components/layout/app-frame.tsx:232
 msgid "Rescan vault"
 msgstr "重新扫描保管库"
 
-#: src/components/layout/app-frame.tsx:391
+#: src/components/layout/app-frame.tsx:387
 #: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "检查"
@@ -2344,7 +2344,7 @@ msgstr "范围"
 msgid "Search"
 msgstr "搜索"
 
-#: src/components/layout/app-frame.tsx:59
+#: src/components/layout/app-frame.tsx:58
 msgid "Search {activeTypeLabel}"
 msgstr "搜索 {activeTypeLabel}"
 
@@ -2352,8 +2352,8 @@ msgstr "搜索 {activeTypeLabel}"
 msgid "Search entities…"
 msgstr "搜索条目…"
 
-#: src/components/layout/app-frame.tsx:60
-#: src/components/layout/app-frame.tsx:162
+#: src/components/layout/app-frame.tsx:59
+#: src/components/layout/app-frame.tsx:161
 #: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "搜索库"
@@ -2455,7 +2455,7 @@ msgstr "选择类型"
 msgid "Selected Metadata"
 msgstr "所选元数据"
 
-#: src/components/layout/app-frame.tsx:394
+#: src/components/layout/app-frame.tsx:390
 #: src/components/settings/settings-editor.tsx:168
 msgid "Settings"
 msgstr "设置"
@@ -2573,7 +2573,7 @@ msgstr "正在启动…"
 msgid "starts with"
 msgstr "开头为:"
 
-#: src/components/layout/app-frame.tsx:388
+#: src/components/layout/app-frame.tsx:384
 #: src/pages/statistics-page.tsx:42
 msgid "Statistics"
 msgstr "统计"
@@ -2886,7 +2886,7 @@ msgstr "保管库路径或 URL"
 msgid "Vault removed"
 msgstr "已移除保管库"
 
-#: src/components/layout/app-frame.tsx:224
+#: src/components/layout/app-frame.tsx:220
 msgid "Vault rescanned"
 msgstr "已重新扫描保管库"
 

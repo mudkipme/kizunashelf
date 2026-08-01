@@ -306,7 +306,7 @@ msgstr "A file named for this title already existed, so it was saved as “{0}�
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "A list with this name already exists, or the file changed on disk."
 
-#: src/components/layout/app-frame.tsx:132
+#: src/components/layout/app-frame.tsx:131
 msgid "A shelf for everything you love"
 msgstr "A shelf for everything you love"
 
@@ -324,7 +324,7 @@ msgid "Actions"
 msgstr "Actions"
 
 #: src/components/assets/quick-log-dialog.tsx:107
-#: src/components/layout/app-frame.tsx:355
+#: src/components/layout/app-frame.tsx:351
 #: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
@@ -539,7 +539,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:122
+#: src/components/layout/app-frame.tsx:121
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:174
@@ -579,7 +579,7 @@ msgstr "Browse library"
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "Built-in labels will be in English. Titles still use this language."
 
-#: src/components/layout/app-frame.tsx:352
+#: src/components/layout/app-frame.tsx:348
 #: src/pages/calendar-page.tsx:90
 msgid "Calendar"
 msgstr "Calendar"
@@ -650,8 +650,8 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:296
-#: src/components/layout/app-frame.tsx:309
+#: src/components/layout/app-frame.tsx:292
+#: src/components/layout/app-frame.tsx:305
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -1181,7 +1181,7 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:121
+#: src/components/layout/app-frame.tsx:120
 msgid "Go back"
 msgstr "Go back"
 
@@ -1218,7 +1218,7 @@ msgstr "has none of"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:341
+#: src/components/layout/app-frame.tsx:337
 #: src/components/settings/settings-editor.tsx:115
 #: src/components/settings/settings-editor.tsx:300
 #: src/pages/home-page.tsx:30
@@ -1243,7 +1243,7 @@ msgstr "Icon"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:385
+#: src/components/layout/app-frame.tsx:381
 #: src/pages/import-wizard-page.tsx:225
 msgid "Import"
 msgstr "Import"
@@ -1430,7 +1430,7 @@ msgstr "Later"
 msgid "less"
 msgstr "less"
 
-#: src/components/layout/app-frame.tsx:349
+#: src/components/layout/app-frame.tsx:345
 msgid "Library"
 msgstr "Library"
 
@@ -1509,7 +1509,7 @@ msgstr "List not found"
 msgid "List style"
 msgstr "List style"
 
-#: src/components/layout/app-frame.tsx:358
+#: src/components/layout/app-frame.tsx:354
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "Lists"
@@ -1530,7 +1530,7 @@ msgstr "Loading activity…"
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
-#: src/components/layout/app-frame.tsx:378
+#: src/components/layout/app-frame.tsx:374
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1679,7 +1679,7 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:301
+#: src/components/layout/app-frame.tsx:297
 msgid "Navigation"
 msgstr "Navigation"
 
@@ -1991,7 +1991,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:142
+#: src/components/layout/app-frame.tsx:141
 msgid "Open navigation"
 msgstr "Open navigation"
 
@@ -2266,12 +2266,12 @@ msgstr "Required — enter a file name here or fill in the title below."
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
-#: src/components/layout/app-frame.tsx:235
-#: src/components/layout/app-frame.tsx:236
+#: src/components/layout/app-frame.tsx:231
+#: src/components/layout/app-frame.tsx:232
 msgid "Rescan vault"
 msgstr "Rescan vault"
 
-#: src/components/layout/app-frame.tsx:391
+#: src/components/layout/app-frame.tsx:387
 #: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "Review"
@@ -2344,7 +2344,7 @@ msgstr "Scope"
 msgid "Search"
 msgstr "Search"
 
-#: src/components/layout/app-frame.tsx:59
+#: src/components/layout/app-frame.tsx:58
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
 
@@ -2352,8 +2352,8 @@ msgstr "Search {activeTypeLabel}"
 msgid "Search entities…"
 msgstr "Search entities…"
 
-#: src/components/layout/app-frame.tsx:60
-#: src/components/layout/app-frame.tsx:162
+#: src/components/layout/app-frame.tsx:59
+#: src/components/layout/app-frame.tsx:161
 #: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "Search library"
@@ -2455,7 +2455,7 @@ msgstr "Select type"
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
-#: src/components/layout/app-frame.tsx:394
+#: src/components/layout/app-frame.tsx:390
 #: src/components/settings/settings-editor.tsx:168
 msgid "Settings"
 msgstr "Settings"
@@ -2573,7 +2573,7 @@ msgstr "Starting…"
 msgid "starts with"
 msgstr "starts with"
 
-#: src/components/layout/app-frame.tsx:388
+#: src/components/layout/app-frame.tsx:384
 #: src/pages/statistics-page.tsx:42
 msgid "Statistics"
 msgstr "Statistics"
@@ -2886,7 +2886,7 @@ msgstr "Vault path or URL"
 msgid "Vault removed"
 msgstr "Vault removed"
 
-#: src/components/layout/app-frame.tsx:224
+#: src/components/layout/app-frame.tsx:220
 msgid "Vault rescanned"
 msgstr "Vault rescanned"
 
