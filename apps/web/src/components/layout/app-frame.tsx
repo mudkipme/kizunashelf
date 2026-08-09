@@ -29,6 +29,8 @@ import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Button } from "@/components/ui/button";
 import { refreshLibrary } from "@/api/settings";
 import { statsQuery } from "@/api/queries";
+import { useMacTitlebarInset } from "@/hooks/use-mac-titlebar-inset";
+import { isDesktopRuntime, isMacDesktopRuntime, setWindowTitle } from "@/lib/desktop";
 import { cn } from "@/lib/utils";
 import { allTypes } from "@/lib/constants";
 import type { StatsResponse } from "@/types/api";
@@ -37,6 +39,12 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const { t } = useLingui();
   const navigate = useNavigate();
   const location = useLocation();
+  // In the desktop shell the native title bar already carries the app identity,
+  // so the in-app brand collapses to the icon and the window title becomes
+  // contextual instead of repeating "KizunaShelf" twice in the same corner.
+  const desktop = isDesktopRuntime();
+  const macDesktop = isMacDesktopRuntime();
+  const macTitlebarInset = useMacTitlebarInset();
   // Drive the sidebar counts from the shared React Query cache so they stay in
   // sync with mutations (which invalidate the `stats` key) instead of going
   // stale behind a one-shot store fetch.
@@ -71,6 +79,12 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     setMobileSearchOpen(false);
     setCanGoBack(location.pathname !== "/" && hasAppBackStack());
   }, [location.key, location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!desktop) return;
+    const label = windowTitleLabel(location.pathname, t);
+    void setWindowTitle(label ? `${label} — KizunaShelf` : "KizunaShelf");
+  }, [desktop, location.pathname, t]);
 
   useEffect(() => {
     if (!mobileSidebarOpen) return;
@@ -108,100 +122,148 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     navigate(-1);
   }
 
-  return (
-    <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] text-foreground">
-      <header className="flex min-h-14 shrink-0 items-center gap-2 border-b bg-card/85 px-3 py-2 sm:gap-3 sm:px-4">
-        {canGoBack ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={goBack}
-            aria-label={t`Go back`}
-            title={t`Back`}
-          >
-            <ArrowLeftIcon />
-          </Button>
-        ) : null}
-        <Link to="/" className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none">
-          <AppLogo />
+  const headerBar = (
+    <header
+      data-tauri-drag-region={macDesktop || undefined}
+      className="flex min-h-14 shrink-0 items-center gap-2 border-b bg-card/85 px-3 py-2 sm:gap-3 sm:px-4"
+    >
+      {canGoBack ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={goBack}
+          aria-label={t`Go back`}
+          title={t`Back`}
+        >
+          <ArrowLeftIcon />
+        </Button>
+      ) : null}
+      {/* The wordmark is redundant only where a native title bar already
+          says "KizunaShelf" (Windows/Linux desktop); the macOS overlay hides
+          the native title, so there the header keeps the full brand. */}
+      <Link
+        to="/"
+        className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none"
+        aria-label={desktop && !macDesktop ? "KizunaShelf" : undefined}
+        title={desktop && !macDesktop ? "KizunaShelf" : undefined}
+      >
+        <AppLogo />
+        {desktop && !macDesktop ? null : (
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">KizunaShelf</span>
             <span className="hidden text-xs leading-4 text-muted-foreground sm:block">
               <Trans>A shelf for everything you love</Trans>
             </span>
           </span>
-        </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          onClick={() => setMobileSidebarOpen(true)}
-          aria-label={t`Open navigation`}
-          aria-expanded={mobileSidebarOpen}
-        >
-          <MenuIcon />
-        </Button>
-        <HeaderSearch
-          search={search}
-          onSearchChange={setSearch}
-          onSubmit={submitSearch}
-          onSelectEntity={selectSearchEntity}
-          type={activeType || allTypes}
-          className="ml-auto hidden min-w-0 items-center gap-2 sm:flex sm:max-w-sm"
-          placeholder={searchPlaceholder}
+        )}
+      </Link>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={() => setMobileSidebarOpen(true)}
+        aria-label={t`Open navigation`}
+        aria-expanded={mobileSidebarOpen}
+      >
+        <MenuIcon />
+      </Button>
+      <HeaderSearch
+        search={search}
+        onSearchChange={setSearch}
+        onSubmit={submitSearch}
+        onSelectEntity={selectSearchEntity}
+        type={activeType || allTypes}
+        className="ml-auto hidden min-w-0 items-center gap-2 sm:flex sm:max-w-sm"
+        placeholder={searchPlaceholder}
+      />
+      <Button
+        type="button"
+        variant={mobileSearchOpen || search.trim() ? "secondary" : "ghost"}
+        size="icon"
+        className="sm:hidden"
+        onClick={() => setMobileSearchOpen((open) => !open)}
+        aria-label={t`Search library`}
+        aria-expanded={mobileSearchOpen}
+      >
+        <SearchIcon />
+      </Button>
+      <div className="ml-auto flex items-center gap-2 sm:ml-0">
+        <RescanButton />
+        <LanguageSelect />
+        <ThemeModeSelect />
+      </div>
+    </header>
+  );
+
+  const mobileSearchBar = mobileSearchOpen ? (
+    <div className="shrink-0 border-b bg-card/85 px-3 py-2 sm:hidden">
+      <HeaderSearch
+        search={search}
+        onSearchChange={setSearch}
+        onSubmit={submitSearch}
+        onSelectEntity={selectSearchEntity}
+        type={activeType || allTypes}
+        className="flex min-w-0 items-center gap-2"
+        placeholder={searchPlaceholder}
+        autoFocus
+      />
+    </div>
+  ) : null;
+
+  const errorBar = error ? (
+    <div className="shrink-0 border-b bg-destructive/10 px-4 py-2 text-sm text-destructive">
+      {error}
+    </div>
+  ) : null;
+
+  const mobileSidebar = (
+    <MobileSidebar
+      open={mobileSidebarOpen}
+      stats={stats}
+      activeType={activeType}
+      pathname={location.pathname}
+      onClose={() => setMobileSidebarOpen(false)}
+    />
+  );
+
+  // macOS overlay title bar: the sidebar owns the top-left corner, so the
+  // native traffic lights sit (at their default position) over an empty,
+  // draggable strip above it instead of crowding the header's leading
+  // controls — the Finder/Obsidian arrangement. The header spans only the
+  // content column. Other platforms keep the full-width header under their
+  // native title bar.
+  if (macDesktop) {
+    return (
+      <main className="grid h-dvh min-h-0 grid-cols-1 overflow-hidden bg-background text-foreground md:grid-cols-[224px_minmax(0,1fr)]">
+        <AppSidebar
+          stats={stats}
+          activeType={activeType}
+          pathname={location.pathname}
+          titlebarInset={macTitlebarInset}
         />
-        <Button
-          type="button"
-          variant={mobileSearchOpen || search.trim() ? "secondary" : "ghost"}
-          size="icon"
-          className="sm:hidden"
-          onClick={() => setMobileSearchOpen((open) => !open)}
-          aria-label={t`Search library`}
-          aria-expanded={mobileSearchOpen}
-        >
-          <SearchIcon />
-        </Button>
-        <div className="ml-auto flex items-center gap-2 sm:ml-0">
-          <RescanButton />
-          <LanguageSelect />
-          <ThemeModeSelect />
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
+          {headerBar}
+          {mobileSearchBar}
+          {errorBar}
+          <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">{children}</div>
         </div>
-      </header>
+        {mobileSidebar}
+      </main>
+    );
+  }
 
-      {mobileSearchOpen ? (
-        <div className="shrink-0 border-b bg-card/85 px-3 py-2 sm:hidden">
-          <HeaderSearch
-            search={search}
-            onSearchChange={setSearch}
-            onSubmit={submitSearch}
-            onSelectEntity={selectSearchEntity}
-            type={activeType || allTypes}
-            className="flex min-w-0 items-center gap-2"
-            placeholder={searchPlaceholder}
-            autoFocus
-          />
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="shrink-0 border-b bg-destructive/10 px-4 py-2 text-sm text-destructive">
-          {error}
-        </div>
-      ) : null}
-
+  return (
+    <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] text-foreground">
+      {headerBar}
+      {mobileSearchBar}
+      {errorBar}
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-[224px_minmax(0,1fr)]">
         <AppSidebar stats={stats} activeType={activeType} pathname={location.pathname} />
         <div className="min-h-0 min-w-0 overflow-auto overscroll-contain">{children}</div>
       </div>
-      <MobileSidebar
-        open={mobileSidebarOpen}
-        stats={stats}
-        activeType={activeType}
-        pathname={location.pathname}
-        onClose={() => setMobileSidebarOpen(false)}
-      />
+      {mobileSidebar}
     </main>
   );
 }
@@ -240,6 +302,21 @@ function hasAppBackStack() {
   return Number(window.history.state?.idx ?? 0) > 0;
 }
 
+/** Window-title label for the nav destinations, mirrored into the native title
+ * bar on desktop ("Library — KizunaShelf"). Reuses the sidebar msgids, so no
+ * new translations. Detail routes fall back to the bare app name. */
+function windowTitleLabel(pathname: string, t: ReturnType<typeof useLingui>["t"]) {
+  if (pathname === "/library") return t`Library`;
+  if (pathname === "/calendar") return t`Calendar`;
+  if (pathname === "/activity") return t`Activity`;
+  if (pathname === "/lists" || pathname.startsWith("/lists/")) return t`Lists`;
+  if (pathname === "/entities/import") return t`Import`;
+  if (pathname === "/statistics") return t`Statistics`;
+  if (pathname === "/review" || pathname.startsWith("/review/")) return t`Review`;
+  if (pathname === "/settings") return t`Settings`;
+  return null;
+}
+
 function AppLogo() {
   return (
     <span className="relative size-8 shrink-0 overflow-hidden rounded-md" aria-hidden="true">
@@ -253,14 +330,19 @@ function AppSidebar({
   stats,
   activeType,
   pathname,
+  titlebarInset,
 }: {
   stats?: StatsResponse;
   activeType: string;
   pathname: string;
+  /** Reserve a draggable strip at the top for the macOS traffic lights
+   * (overlay title bar); collapses in fullscreen, where macOS hides them. */
+  titlebarInset?: boolean;
 }) {
   return (
-    <aside className="hidden min-h-0 border-r bg-card/35 md:block">
-      <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto overscroll-contain p-3">
+    <aside className="hidden min-h-0 border-r bg-card/35 md:flex md:flex-col">
+      {titlebarInset ? <div data-tauri-drag-region className="h-9 shrink-0" /> : null}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain p-3">
         <SidebarContent stats={stats} activeType={activeType} pathname={pathname} />
       </div>
     </aside>

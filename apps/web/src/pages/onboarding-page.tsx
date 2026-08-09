@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -19,8 +19,10 @@ import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
-import { isDesktopRuntime } from "@/lib/desktop";
+import { useMacTitlebarInset } from "@/hooks/use-mac-titlebar-inset";
+import { isDesktopRuntime, setWindowTitle } from "@/lib/desktop";
 import { useLanguagePreference } from "@/lib/language";
+import { cn } from "@/lib/utils";
 import type { UserLanguage, VaultConfig } from "@/types/api";
 
 /**
@@ -40,6 +42,13 @@ export function OnboardingPage() {
   const presets = useQuery(typePresetsQuery(language));
   const languages = useQuery(languagesQuery());
   const desktop = isDesktopRuntime();
+  const macTitlebarInset = useMacTitlebarInset();
+
+  // Contextual window titles are set by AppFrame; onboarding renders outside
+  // it, so reset the native title lest a stale "Settings — …" linger here.
+  useEffect(() => {
+    if (desktop) void setWindowTitle("KizunaShelf");
+  }, [desktop]);
 
   // `null` = the wizard; a config = the advanced full-schema editor seeded with it.
   const [advancedSeed, setAdvancedSeed] = useState<VaultConfig | null>(null);
@@ -92,7 +101,18 @@ export function OnboardingPage() {
   }
 
   return (
-    <main className="h-dvh overflow-auto overscroll-contain bg-background text-foreground">
+    <main
+      className={cn(
+        "h-dvh overflow-auto overscroll-contain bg-background text-foreground",
+        macTitlebarInset && "pt-9",
+      )}
+    >
+      {macTitlebarInset ? (
+        // Stand-in title bar: onboarding has no header for the macOS overlay
+        // traffic lights to sit on, so a fixed strip keeps their zone clear
+        // of content and draggable.
+        <div data-tauri-drag-region className="fixed inset-x-0 top-0 z-50 h-9" />
+      ) : null}
       <PageContainer>{body}</PageContainer>
     </main>
   );

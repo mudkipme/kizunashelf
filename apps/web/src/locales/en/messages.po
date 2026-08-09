@@ -306,7 +306,7 @@ msgstr "A file named for this title already existed, so it was saved as “{0}�
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "A list with this name already exists, or the file changed on disk."
 
-#: src/components/layout/app-frame.tsx:131
+#: src/components/layout/app-frame.tsx:156
 msgid "A shelf for everything you love"
 msgstr "A shelf for everything you love"
 
@@ -324,7 +324,7 @@ msgid "Actions"
 msgstr "Actions"
 
 #: src/components/assets/quick-log-dialog.tsx:107
-#: src/components/layout/app-frame.tsx:351
+#: src/components/layout/app-frame.tsx:433
 #: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
@@ -443,7 +443,7 @@ msgstr "Adding…"
 msgid "adds new section"
 msgstr "adds new section"
 
-#: src/pages/onboarding-page.tsx:207
+#: src/pages/onboarding-page.tsx:227
 msgid "Advanced: edit full schema"
 msgstr "Advanced: edit full schema"
 
@@ -539,7 +539,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:121
+#: src/components/layout/app-frame.tsx:137
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:174
@@ -579,7 +579,7 @@ msgstr "Browse library"
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "Built-in labels will be in English. Titles still use this language."
 
-#: src/components/layout/app-frame.tsx:348
+#: src/components/layout/app-frame.tsx:430
 #: src/pages/calendar-page.tsx:90
 msgid "Calendar"
 msgstr "Calendar"
@@ -650,8 +650,8 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:292
-#: src/components/layout/app-frame.tsx:305
+#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:387
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -756,19 +756,19 @@ msgstr "Create new vault"
 
 #: src/components/settings/settings-editor.tsx:179
 #: src/components/settings/vault-switcher.tsx:166
-#: src/pages/onboarding-page.tsx:215
+#: src/pages/onboarding-page.tsx:235
 msgid "Create vault"
 msgstr "Create vault"
 
 #. placeholder {0}: selected.size
-#: src/pages/onboarding-page.tsx:214
+#: src/pages/onboarding-page.tsx:234
 msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:130
 #: src/pages/entity-page.tsx:624
 #: src/pages/lists-page.tsx:234
-#: src/pages/onboarding-page.tsx:212
+#: src/pages/onboarding-page.tsx:232
 msgid "Creating…"
 msgstr "Creating…"
 
@@ -1181,7 +1181,7 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:120
+#: src/components/layout/app-frame.tsx:136
 msgid "Go back"
 msgstr "Go back"
 
@@ -1218,7 +1218,7 @@ msgstr "has none of"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:337
+#: src/components/layout/app-frame.tsx:419
 #: src/components/settings/settings-editor.tsx:115
 #: src/components/settings/settings-editor.tsx:300
 #: src/pages/home-page.tsx:30
@@ -1243,7 +1243,7 @@ msgstr "Icon"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:381
+#: src/components/layout/app-frame.tsx:463
 #: src/pages/import-wizard-page.tsx:225
 msgid "Import"
 msgstr "Import"
@@ -1430,7 +1430,7 @@ msgstr "Later"
 msgid "less"
 msgstr "less"
 
-#: src/components/layout/app-frame.tsx:345
+#: src/components/layout/app-frame.tsx:427
 msgid "Library"
 msgstr "Library"
 
@@ -1509,7 +1509,7 @@ msgstr "List not found"
 msgid "List style"
 msgstr "List style"
 
-#: src/components/layout/app-frame.tsx:354
+#: src/components/layout/app-frame.tsx:436
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "Lists"
@@ -1530,7 +1530,7 @@ msgstr "Loading activity…"
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
-#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:456
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1545,7 +1545,7 @@ msgstr "Loading taxonomy"
 #: src/pages/list-detail-page.tsx:383
 #: src/pages/list-detail-page.tsx:888
 #: src/pages/lists-page.tsx:55
-#: src/pages/onboarding-page.tsx:60
+#: src/pages/onboarding-page.tsx:69
 #: src/pages/review-page.tsx:146
 #: src/pages/settings-page.tsx:96
 #: src/pages/smart-list-page.tsx:230
@@ -1679,7 +1679,7 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:297
+#: src/components/layout/app-frame.tsx:379
 msgid "Navigation"
 msgstr "Navigation"
 
@@ -1991,7 +1991,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:141
+#: src/components/layout/app-frame.tsx:167
 msgid "Open navigation"
 msgstr "Open navigation"
 
@@ -2045,7 +2045,7 @@ msgstr "Paused"
 msgid "Pick a date"
 msgstr "Pick a date"
 
-#: src/pages/onboarding-page.tsx:190
+#: src/pages/onboarding-page.tsx:210
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 
@@ -2266,12 +2266,12 @@ msgstr "Required — enter a file name here or fill in the title below."
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
-#: src/components/layout/app-frame.tsx:231
-#: src/components/layout/app-frame.tsx:232
+#: src/components/layout/app-frame.tsx:293
+#: src/components/layout/app-frame.tsx:294
 msgid "Rescan vault"
 msgstr "Rescan vault"
 
-#: src/components/layout/app-frame.tsx:387
+#: src/components/layout/app-frame.tsx:469
 #: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "Review"
@@ -2344,7 +2344,7 @@ msgstr "Scope"
 msgid "Search"
 msgstr "Search"
 
-#: src/components/layout/app-frame.tsx:58
+#: src/components/layout/app-frame.tsx:66
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
 
@@ -2352,8 +2352,8 @@ msgstr "Search {activeTypeLabel}"
 msgid "Search entities…"
 msgstr "Search entities…"
 
-#: src/components/layout/app-frame.tsx:59
-#: src/components/layout/app-frame.tsx:161
+#: src/components/layout/app-frame.tsx:67
+#: src/components/layout/app-frame.tsx:187
 #: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "Search library"
@@ -2455,7 +2455,7 @@ msgstr "Select type"
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
-#: src/components/layout/app-frame.tsx:390
+#: src/components/layout/app-frame.tsx:472
 #: src/components/settings/settings-editor.tsx:168
 msgid "Settings"
 msgstr "Settings"
@@ -2573,7 +2573,7 @@ msgstr "Starting…"
 msgid "starts with"
 msgstr "starts with"
 
-#: src/components/layout/app-frame.tsx:384
+#: src/components/layout/app-frame.tsx:466
 #: src/pages/statistics-page.tsx:42
 msgid "Statistics"
 msgstr "Statistics"
@@ -2870,7 +2870,7 @@ msgid "Vault added"
 msgstr "Vault added"
 
 #: src/components/settings/vault-switcher.tsx:163
-#: src/pages/onboarding-page.tsx:165
+#: src/pages/onboarding-page.tsx:185
 msgid "Vault created"
 msgstr "Vault created"
 
@@ -2886,7 +2886,7 @@ msgstr "Vault path or URL"
 msgid "Vault removed"
 msgstr "Vault removed"
 
-#: src/components/layout/app-frame.tsx:220
+#: src/components/layout/app-frame.tsx:282
 msgid "Vault rescanned"
 msgstr "Vault rescanned"
 
@@ -2908,7 +2908,7 @@ msgstr "Watchlist"
 msgid "weeks"
 msgstr "weeks"
 
-#: src/pages/onboarding-page.tsx:187
+#: src/pages/onboarding-page.tsx:207
 msgid "What do you want to track?"
 msgstr "What do you want to track?"
 

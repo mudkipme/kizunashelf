@@ -8,6 +8,26 @@ export function isDesktopRuntime() {
   return typeof window !== "undefined" && window.__TAURI_INTERNALS__ != null;
 }
 
+/** True in the desktop shell on macOS, where the window uses the overlay title
+ * bar (`titleBarStyle: Overlay`) and the header must clear the native traffic
+ * lights. WKWebView reports `navigator.platform` as `MacIntel` on all Macs. */
+export function isMacDesktopRuntime() {
+  return isDesktopRuntime() && navigator.platform.startsWith("Mac");
+}
+
+/** Mirror the current page into the native window title (taskbar, window
+ * switcher, Mission Control). No-op outside the desktop shell; failures are
+ * cosmetic and intentionally swallowed. */
+export async function setWindowTitle(title: string) {
+  if (!isDesktopRuntime()) return;
+  try {
+    const module = await import("@tauri-apps/api/window");
+    await module.getCurrentWindow().setTitle(title);
+  } catch {
+    // A title update is never worth surfacing an error for.
+  }
+}
+
 export async function selectDirectory(initial?: string) {
   if (!isDesktopRuntime()) return undefined;
   const module = await import("@tauri-apps/plugin-dialog");

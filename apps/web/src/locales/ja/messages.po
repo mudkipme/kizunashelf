@@ -306,7 +306,7 @@ msgstr "このタイトルと同名のファイルがすでに存在したため
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名のリストが既に存在するか、ファイルがディスク上で変更されています。"
 
-#: src/components/layout/app-frame.tsx:131
+#: src/components/layout/app-frame.tsx:156
 msgid "A shelf for everything you love"
 msgstr "君が愛するすべてのための本棚"
 
@@ -324,7 +324,7 @@ msgid "Actions"
 msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:107
-#: src/components/layout/app-frame.tsx:351
+#: src/components/layout/app-frame.tsx:433
 #: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
@@ -443,7 +443,7 @@ msgstr "追加中…"
 msgid "adds new section"
 msgstr "新しいセクションを追加"
 
-#: src/pages/onboarding-page.tsx:207
+#: src/pages/onboarding-page.tsx:227
 msgid "Advanced: edit full schema"
 msgstr "詳細設定: スキーマ全体を編集"
 
@@ -539,7 +539,7 @@ msgstr "アセットのルート"
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
-#: src/components/layout/app-frame.tsx:121
+#: src/components/layout/app-frame.tsx:137
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
 #: src/components/settings/settings-editor.tsx:174
@@ -579,7 +579,7 @@ msgstr "ライブラリを閲覧"
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "組み込みラベルは英語になりますが、タイトルはこの言語になります。"
 
-#: src/components/layout/app-frame.tsx:348
+#: src/components/layout/app-frame.tsx:430
 #: src/pages/calendar-page.tsx:90
 msgid "Calendar"
 msgstr "カレンダー"
@@ -650,8 +650,8 @@ msgstr "すべてクリア"
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/layout/app-frame.tsx:292
-#: src/components/layout/app-frame.tsx:305
+#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:387
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
@@ -756,19 +756,19 @@ msgstr "新しい保管庫を作成"
 
 #: src/components/settings/settings-editor.tsx:179
 #: src/components/settings/vault-switcher.tsx:166
-#: src/pages/onboarding-page.tsx:215
+#: src/pages/onboarding-page.tsx:235
 msgid "Create vault"
 msgstr "保管庫を作成"
 
 #. placeholder {0}: selected.size
-#: src/pages/onboarding-page.tsx:214
+#: src/pages/onboarding-page.tsx:234
 msgid "Create vault ({0})"
 msgstr "保管庫を作成（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:130
 #: src/pages/entity-page.tsx:624
 #: src/pages/lists-page.tsx:234
-#: src/pages/onboarding-page.tsx:212
+#: src/pages/onboarding-page.tsx:232
 msgid "Creating…"
 msgstr "作成中…"
 
@@ -1181,7 +1181,7 @@ msgstr "ゲーム"
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
-#: src/components/layout/app-frame.tsx:120
+#: src/components/layout/app-frame.tsx:136
 msgid "Go back"
 msgstr "戻る"
 
@@ -1218,7 +1218,7 @@ msgstr "が次のいずれも含まない"
 msgid "Heading"
 msgstr "見出し"
 
-#: src/components/layout/app-frame.tsx:337
+#: src/components/layout/app-frame.tsx:419
 #: src/components/settings/settings-editor.tsx:115
 #: src/components/settings/settings-editor.tsx:300
 #: src/pages/home-page.tsx:30
@@ -1243,7 +1243,7 @@ msgstr "アイコン"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:381
+#: src/components/layout/app-frame.tsx:463
 #: src/pages/import-wizard-page.tsx:225
 msgid "Import"
 msgstr "インポート"
@@ -1430,7 +1430,7 @@ msgstr "後で"
 msgid "less"
 msgstr "折りたたむ"
 
-#: src/components/layout/app-frame.tsx:345
+#: src/components/layout/app-frame.tsx:427
 msgid "Library"
 msgstr "ライブラリ"
 
@@ -1509,7 +1509,7 @@ msgstr "リストが見つかりません"
 msgid "List style"
 msgstr "リストのスタイル"
 
-#: src/components/layout/app-frame.tsx:354
+#: src/components/layout/app-frame.tsx:436
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "リスト"
@@ -1530,7 +1530,7 @@ msgstr "アクティビティを読み込み中…"
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
-#: src/components/layout/app-frame.tsx:374
+#: src/components/layout/app-frame.tsx:456
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
@@ -1545,7 +1545,7 @@ msgstr "分類を読み込み中"
 #: src/pages/list-detail-page.tsx:383
 #: src/pages/list-detail-page.tsx:888
 #: src/pages/lists-page.tsx:55
-#: src/pages/onboarding-page.tsx:60
+#: src/pages/onboarding-page.tsx:69
 #: src/pages/review-page.tsx:146
 #: src/pages/settings-page.tsx:96
 #: src/pages/smart-list-page.tsx:230
@@ -1679,7 +1679,7 @@ msgstr "マイ保管庫"
 msgid "Name"
 msgstr "名前"
 
-#: src/components/layout/app-frame.tsx:297
+#: src/components/layout/app-frame.tsx:379
 msgid "Navigation"
 msgstr "ナビゲーション"
 
@@ -1991,7 +1991,7 @@ msgstr "既存の保管庫を開く"
 msgid "Open folder"
 msgstr "フォルダーを開く"
 
-#: src/components/layout/app-frame.tsx:141
+#: src/components/layout/app-frame.tsx:167
 msgid "Open navigation"
 msgstr "ナビゲーションを開く"
 
@@ -2045,7 +2045,7 @@ msgstr "中断"
 msgid "Pick a date"
 msgstr "日付を選択"
 
-#: src/pages/onboarding-page.tsx:190
+#: src/pages/onboarding-page.tsx:210
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "いくつか選んでください — いつでも追加できます。ライブラリは自分が所有するフォルダー内のプレーンな Markdown ファイルで、このアプリがなくても読めます。"
 
@@ -2266,12 +2266,12 @@ msgstr "必須 — ここにファイル名を入力するか、下のタイト�
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
-#: src/components/layout/app-frame.tsx:231
-#: src/components/layout/app-frame.tsx:232
+#: src/components/layout/app-frame.tsx:293
+#: src/components/layout/app-frame.tsx:294
 msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
 
-#: src/components/layout/app-frame.tsx:387
+#: src/components/layout/app-frame.tsx:469
 #: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "レビュー"
@@ -2344,7 +2344,7 @@ msgstr "範囲"
 msgid "Search"
 msgstr "検索"
 
-#: src/components/layout/app-frame.tsx:58
+#: src/components/layout/app-frame.tsx:66
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
 
@@ -2352,8 +2352,8 @@ msgstr "{activeTypeLabel} を検索"
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
-#: src/components/layout/app-frame.tsx:59
-#: src/components/layout/app-frame.tsx:161
+#: src/components/layout/app-frame.tsx:67
+#: src/components/layout/app-frame.tsx:187
 #: src/components/layout/header-search.tsx:149
 msgid "Search library"
 msgstr "ライブラリを検索"
@@ -2455,7 +2455,7 @@ msgstr "タイプを選択"
 msgid "Selected Metadata"
 msgstr "選択したメタデータ"
 
-#: src/components/layout/app-frame.tsx:390
+#: src/components/layout/app-frame.tsx:472
 #: src/components/settings/settings-editor.tsx:168
 msgid "Settings"
 msgstr "設定"
@@ -2573,7 +2573,7 @@ msgstr "開始中…"
 msgid "starts with"
 msgstr "が次で始まる:"
 
-#: src/components/layout/app-frame.tsx:384
+#: src/components/layout/app-frame.tsx:466
 #: src/pages/statistics-page.tsx:42
 msgid "Statistics"
 msgstr "統計"
@@ -2870,7 +2870,7 @@ msgid "Vault added"
 msgstr "保管庫を追加しました"
 
 #: src/components/settings/vault-switcher.tsx:163
-#: src/pages/onboarding-page.tsx:165
+#: src/pages/onboarding-page.tsx:185
 msgid "Vault created"
 msgstr "保管庫を作成しました"
 
@@ -2886,7 +2886,7 @@ msgstr "保管庫のパスまたは URL"
 msgid "Vault removed"
 msgstr "保管庫を削除しました"
 
-#: src/components/layout/app-frame.tsx:220
+#: src/components/layout/app-frame.tsx:282
 msgid "Vault rescanned"
 msgstr "保管庫を再スキャンしました"
 
@@ -2908,7 +2908,7 @@ msgstr "ウォッチリスト"
 msgid "weeks"
 msgstr "週間"
 
-#: src/pages/onboarding-page.tsx:187
+#: src/pages/onboarding-page.tsx:207
 msgid "What do you want to track?"
 msgstr "何をトラッキングしますか？"
 

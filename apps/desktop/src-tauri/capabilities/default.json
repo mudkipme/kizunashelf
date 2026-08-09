@@ -3,5 +3,10 @@
   "identifier": "default",
   "description": "Default permissions for the KizunaShelf desktop window.",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:allow-open"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-title",
+    "core:window:allow-start-dragging",
+    "dialog:allow-open"
+  ]
 }
