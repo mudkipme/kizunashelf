@@ -24,13 +24,21 @@ jobs:
           path: |
             ~/.rustup
             ~/.cargo/bin
-          key: ${{ runner.os }}-rust-toolchain-v1
+          key: ${{ runner.os }}-rust-toolchain-v2
 
+      # Trust the binary, not `cache-hit`: a cache restored into the wrong
+      # location (workspace/HOME drift between runners) still reports a hit.
       - name: Install Rust toolchain
-        if: steps.rust-toolchain.outputs.cache-hit != 'true'
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-            | sh -s -- -y --profile minimal --component rustfmt --component clippy
+          if [ -x "$HOME/.cargo/bin/cargo" ]; then
+            echo "cargo present at $HOME/.cargo/bin/cargo"
+          else
+            echo "cargo missing after restore (cache-hit=${{ steps.rust-toolchain.outputs.cache-hit }})"
+            echo "HOME=$HOME  GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+            ls -la "$HOME/.cargo/bin" /root/.cargo/bin /github/home/.cargo/bin 2>&1 || true
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --profile minimal --component rustfmt --component clippy
+          fi
 
       - name: Add cargo to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
@@ -39,6 +47,7 @@ jobs:
         uses: https://github.com/Swatinem/rust-cache@v2
         with:
           shared-key: check
+          cache-bin: false
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
@@ -77,13 +86,21 @@ jobs:
           path: |
             ~/.rustup
             ~/.cargo/bin
-          key: ${{ runner.os }}-rust-toolchain-v1
+          key: ${{ runner.os }}-rust-toolchain-v2
 
+      # Trust the binary, not `cache-hit`: a cache restored into the wrong
+      # location (workspace/HOME drift between runners) still reports a hit.
       - name: Install Rust toolchain
-        if: steps.rust-toolchain.outputs.cache-hit != 'true'
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-            | sh -s -- -y --profile minimal --component rustfmt --component clippy
+          if [ -x "$HOME/.cargo/bin/cargo" ]; then
+            echo "cargo present at $HOME/.cargo/bin/cargo"
+          else
+            echo "cargo missing after restore (cache-hit=${{ steps.rust-toolchain.outputs.cache-hit }})"
+            echo "HOME=$HOME  GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+            ls -la "$HOME/.cargo/bin" /root/.cargo/bin /github/home/.cargo/bin 2>&1 || true
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --profile minimal --component rustfmt --component clippy
+          fi
 
       - name: Add cargo to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
@@ -106,6 +123,7 @@ jobs:
         uses: https://github.com/Swatinem/rust-cache@v2
         with:
           shared-key: desktop
+          cache-bin: false
 
       - name: Typecheck the desktop crate
         run: cargo check -p kizunashelf-desktop
