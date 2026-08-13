@@ -1,7 +1,8 @@
 use super::{
-    cached_or_fetch_token, external_client, field_option, non_empty_string_or_integer,
-    provider_error, send_limited, send_with_token_retry, string_list, type_option, CredentialSpec,
-    ExternalProvider, ProviderResponseExt, ProviderSearchConfig,
+    cached_or_fetch_token, external_client, field_option, insert_str, named_list,
+    non_empty_string_or_integer, provider_error, send_limited, send_with_token_retry, string_list,
+    type_option, url_type_allowed, CredentialSpec, ExternalProvider, ProviderResponseExt,
+    ProviderSearchConfig,
 };
 use crate::api::state::{unix_seconds_now, AppState, CachedAccessToken};
 use crate::api::ApiError;
@@ -99,34 +100,99 @@ fn thetvdb_login(state: &AppState) -> Option<Map<String, Value>> {
     Some(login)
 }
 
-/// A TheTVDB series reference parsed from a stored ref value.
-enum SeriesRef {
-    /// A numeric series id (the `…/dereferrer/series/{id}` URL we store, or a bare id).
+/// Which kind of record a TheTVDB link names. Only the two kinds a library entity
+/// can be; people/companies are parsed as `None` and fall back to a text search.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum RecordKind {
+    Series,
+    Movie,
+}
+
+impl RecordKind {
+    /// The path segment on both the site (`thetvdb.com/movies/{slug}`) and the
+    /// API (`/v4/movies/{id}`) — they agree for these two kinds.
+    fn path(self) -> &'static str {
+        match self {
+            RecordKind::Series => "series",
+            RecordKind::Movie => "movies",
+        }
+    }
+
+    /// The singular form a search result's `type` and a field's `externalTypes`
+    /// use (`movie`, not `movies`), which is also the `/dereferrer/{kind}/{id}`
+    /// segment.
+    fn record_type(self) -> &'static str {
+        match self {
+            RecordKind::Series => "series",
+            RecordKind::Movie => "movie",
+        }
+    }
+
+    fn from_record_type(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "series" => Some(RecordKind::Series),
+            "movie" | "movies" => Some(RecordKind::Movie),
+            _ => None,
+        }
+    }
+}
+
+/// How a TheTVDB link addresses its record.
+enum RecordLocator {
+    /// A numeric id (the `…/dereferrer/{kind}/{id}` form, or a bare id).
     Id(String),
-    /// A URL slug (the human `thetvdb.com/series/{slug}` form) — resolved to an id.
+    /// A URL slug (the human `thetvdb.com/{kind}/{slug}` form) — resolved to an id.
     Slug(String),
 }
 
-/// Parses a stored TheTVDB ref into an id or a slug. `None` for movie links or
-/// anything without a series segment (movies have no episodes).
-fn thetvdb_series_ref(ref_value: &str) -> Option<SeriesRef> {
-    let trimmed = ref_value.trim().trim_end_matches('/');
-    if !trimmed.is_empty() && trimmed.chars().all(|c| c.is_ascii_digit()) {
-        return Some(SeriesRef::Id(trimmed.to_string()));
-    }
-    // The dereferrer form carries a numeric id.
-    if let Some((_, rest)) = trimmed.split_once("dereferrer/series/") {
-        let id: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-        return (!id.is_empty()).then_some(SeriesRef::Id(id));
-    }
-    // The human URL carries a slug (e.g. `series/answer-me-1988`).
-    let (_, rest) = trimmed.split_once("series/")?;
-    let slug = rest
-        .split(['/', '?', '#'])
+/// Parses a TheTVDB link (or a stored ref) into the exact record it names.
+/// `None` when it names something else (a person, a company, a list) or carries
+/// no record segment — those degrade to a text search.
+fn thetvdb_record_ref(value: &str) -> Option<(RecordKind, RecordLocator)> {
+    let trimmed = value.trim().trim_end_matches('/');
+    // Stored refs are usually full URLs, but a hand-written `series/{slug}` is
+    // just as unambiguous, so the host is optional.
+    let path = trimmed
+        .split_once("thetvdb.com/")
+        .map(|(_, rest)| rest)
+        .unwrap_or(trimmed);
+    let mut parts = path
+        .split(['?', '#'])
         .next()
         .unwrap_or_default()
-        .trim();
-    (!slug.is_empty()).then(|| SeriesRef::Slug(slug.to_string()))
+        .split('/')
+        .map(str::trim)
+        .filter(|part| !part.is_empty());
+    let mut segment = parts.next()?;
+    if segment.eq_ignore_ascii_case("dereferrer") {
+        segment = parts.next()?;
+    }
+    let kind = RecordKind::from_record_type(segment)?;
+    let locator = parts.next()?;
+    if locator.is_empty() {
+        return None;
+    }
+    Some((
+        kind,
+        if locator.chars().all(|c| c.is_ascii_digit()) {
+            RecordLocator::Id(locator.to_string())
+        } else {
+            RecordLocator::Slug(locator.to_string())
+        },
+    ))
+}
+
+/// Parses a stored TheTVDB ref into a series id or slug. `None` for movie links
+/// or anything without a series segment (movies have no episodes).
+fn thetvdb_series_ref(ref_value: &str) -> Option<RecordLocator> {
+    let trimmed = ref_value.trim().trim_end_matches('/');
+    if !trimmed.is_empty() && trimmed.chars().all(|c| c.is_ascii_digit()) {
+        return Some(RecordLocator::Id(trimmed.to_string()));
+    }
+    match thetvdb_record_ref(trimmed)? {
+        (RecordKind::Series, locator) => Some(locator),
+        (RecordKind::Movie, _) => None,
+    }
 }
 
 /// A bearer GET against the TheTVDB v4 API returning the parsed JSON.
@@ -204,8 +270,8 @@ async fn fetch_thetvdb_episodes(
     let token = thetvdb_access_token(state, client, &login, false).await?;
 
     let series_id = match series_ref {
-        SeriesRef::Id(id) => id,
-        SeriesRef::Slug(slug) => {
+        RecordLocator::Id(id) => id,
+        RecordLocator::Slug(slug) => {
             let value = thetvdb_get(
                 client,
                 &token,
@@ -298,6 +364,20 @@ async fn search_thetvdb(
     // The viewer's language picks which entry of a result's `translations` map is
     // the display title (see `thetvdb_candidate`).
     let language = provider_config.language.as_deref();
+
+    // A TheTVDB link is exact-match intent, so fetch the record it names instead
+    // of degrading it to a text search. The search endpoint takes free text only:
+    // it would match the id or slug as a *word* and happily rank another work
+    // first (`…/dereferrer/series/5239` scoring the movie `pu-239` above the one
+    // asked for), which then became the record that got added.
+    if let Some((kind, locator)) = thetvdb_record_ref(q).filter(|_| q.contains("thetvdb.com/")) {
+        if !url_type_allowed(provider_config, kind.record_type()) {
+            return Ok(Vec::new());
+        }
+        let record =
+            resolve_thetvdb_record(state, client, &login, &token, kind, &locator, language).await?;
+        return Ok(record.into_iter().collect());
+    }
     let mut items = Vec::new();
     let mut seen = BTreeSet::new();
     for type_filter in type_filters {
@@ -368,6 +448,200 @@ fn thetvdb_search_request<'a>(
     } else {
         request
     }
+}
+
+/// A bearer GET that mints a fresh token and retries once on a `401`, for the
+/// record lookups that run outside the search endpoint's own retry.
+async fn thetvdb_get_with_retry(
+    state: &AppState,
+    client: &reqwest::Client,
+    login: &Map<String, Value>,
+    token: &str,
+    url: &str,
+) -> Result<Value, ApiError> {
+    send_with_token_retry(
+        state,
+        "thetvdb",
+        token,
+        |token| client.get(url).bearer_auth(token),
+        || thetvdb_access_token(state, client, login, true),
+    )
+    .await?
+    .error_for_status_body()
+    .await?
+    .json::<Value>()
+    .await
+    .map_err(provider_error)
+}
+
+/// Fetches the one record a TheTVDB link names. A slug is resolved to an id
+/// first (the extended endpoints are id-only), then the extended record — with
+/// translations, and without the character/artwork/trailer bulk — is reshaped
+/// into the search-result form [`thetvdb_candidate`] maps, so a link and a
+/// search hit for the same work produce the same candidate.
+async fn resolve_thetvdb_record(
+    state: &AppState,
+    client: &reqwest::Client,
+    login: &Map<String, Value>,
+    token: &str,
+    kind: RecordKind,
+    locator: &RecordLocator,
+    language: Option<&str>,
+) -> Result<Option<ExternalCandidate>, ApiError> {
+    let path = kind.path();
+    let id = match locator {
+        RecordLocator::Id(id) => id.clone(),
+        RecordLocator::Slug(slug) => {
+            let value = thetvdb_get_with_retry(
+                state,
+                client,
+                login,
+                token,
+                &format!("https://api4.thetvdb.com/v4/{path}/slug/{slug}"),
+            )
+            .await?;
+            value
+                .pointer("/data/id")
+                .and_then(non_empty_string_or_integer)
+                .ok_or_else(|| ApiError::bad_request("TheTVDB record not found"))?
+        }
+    };
+    let value = thetvdb_get_with_retry(
+        state,
+        client,
+        login,
+        token,
+        &format!("https://api4.thetvdb.com/v4/{path}/{id}/extended?meta=translations&short=true"),
+    )
+    .await?;
+    let Some(record) = value.get("data").filter(|data| data.is_object()) else {
+        return Ok(None);
+    };
+    Ok(thetvdb_candidate(
+        &thetvdb_record_item(kind, record),
+        language,
+    ))
+}
+
+/// Reshapes an extended series/movie record into the search-result shape.
+/// The two endpoints name the same data differently (`image` vs `image_url`,
+/// object lists vs string lists, a translation *list* vs a language map), so
+/// this is where they converge — one mapping in [`thetvdb_candidate`] then
+/// serves both.
+fn thetvdb_record_item(kind: RecordKind, record: &Value) -> Value {
+    let mut item = Map::new();
+    if let Some(id) = record.get("id").and_then(non_empty_string_or_integer) {
+        item.insert("tvdb_id".to_string(), Value::String(id));
+    }
+    item.insert(
+        "type".to_string(),
+        Value::String(kind.record_type().to_string()),
+    );
+    insert_str(&mut item, "name", record.get("name"));
+    insert_str(&mut item, "slug", record.get("slug"));
+    insert_str(&mut item, "image_url", record.get("image"));
+    insert_str(
+        &mut item,
+        "primary_language",
+        record.get("originalLanguage"),
+    );
+    insert_str(&mut item, "country", record.get("originalCountry"));
+    insert_str(&mut item, "year", record.get("year"));
+    // Series air on a date; a movie's is its first release.
+    let first_air_time = match kind {
+        RecordKind::Series => record
+            .get("firstAired")
+            .and_then(non_empty_string_or_integer),
+        RecordKind::Movie => record
+            .pointer("/first_release/date")
+            .and_then(non_empty_string_or_integer)
+            .or_else(|| {
+                record
+                    .pointer("/releases/0/date")
+                    .and_then(non_empty_string_or_integer)
+            }),
+    };
+    if let Some(first_air_time) = first_air_time {
+        item.insert("first_air_time".to_string(), Value::String(first_air_time));
+    }
+    // `status`/`network` are `{ name }` objects here; `thetvdb_candidate` reads
+    // either form.
+    if let Some(status) = record.get("status") {
+        item.insert("status".to_string(), status.clone());
+    }
+    if let Some(network) = record
+        .get("originalNetwork")
+        .or_else(|| record.get("latestNetwork"))
+        .filter(|value| !value.is_null())
+    {
+        item.insert("network".to_string(), network.clone());
+    }
+    for (key, source) in [
+        ("genres", "genres"),
+        ("studios", "studios"),
+        ("aliases", "aliases"),
+    ] {
+        if let Some(values) = named_list(record.get(source)) {
+            item.insert(key.to_string(), values);
+        }
+    }
+    if let Some(remote_ids) = record.get("remoteIds") {
+        item.insert("remote_ids".to_string(), remote_ids.clone());
+    }
+    // `translations` is a list of per-language records here and a language map in
+    // search results; fold it into the map form. The record's own (primary)
+    // language doubles as the default overview, which movies carry nowhere else.
+    for (key, source, text_key) in [
+        ("translations", "/translations/nameTranslations", "name"),
+        (
+            "overviews",
+            "/translations/overviewTranslations",
+            "overview",
+        ),
+    ] {
+        let Some(translations) = record.pointer(source).and_then(Value::as_array) else {
+            continue;
+        };
+        let mut map = Map::new();
+        let mut primary = None;
+        for translation in translations {
+            let (Some(language), Some(text)) = (
+                translation.get("language").and_then(Value::as_str),
+                translation
+                    .get(text_key)
+                    .and_then(Value::as_str)
+                    .map(str::trim)
+                    .filter(|text| !text.is_empty()),
+            ) else {
+                continue;
+            };
+            if translation.get("isPrimary").and_then(Value::as_bool) == Some(true) {
+                primary = Some(text.to_string());
+            }
+            map.insert(language.to_string(), Value::String(text.to_string()));
+        }
+        if key == "overviews" {
+            let default = primary.or_else(|| {
+                record
+                    .get("originalLanguage")
+                    .and_then(Value::as_str)
+                    .and_then(|language| map.get(language))
+                    .or_else(|| map.get("eng"))
+                    .and_then(Value::as_str)
+                    .map(str::to_string)
+            });
+            insert_str(&mut item, "overview", default.map(Value::String).as_ref());
+        }
+        if !map.is_empty() {
+            item.insert(key.to_string(), Value::Object(map));
+        }
+    }
+    // A series carries a default-language overview directly; keep it when the
+    // translation list didn't supply one.
+    if !item.contains_key("overview") {
+        insert_str(&mut item, "overview", record.get("overview"));
+    }
+    Value::Object(item)
 }
 
 fn thetvdb_query(q: &str) -> String {
@@ -503,6 +777,21 @@ fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
             .map(str::to_string)
     };
     let title = localized(translations).unwrap_or_else(|| name.clone());
+    // The candidate URL is what gets stored as the external ref *and* what
+    // re-resolves the record later, so it has to name this exact record: the
+    // human `{kind}/{slug}` form when the result carries both (it always does),
+    // else the id dereferrer for the record's own kind. Assuming `series` here —
+    // as this did — points a movie's ref at an unrelated series.
+    let kind = item
+        .get("type")
+        .or_else(|| item.get("primary_type"))
+        .and_then(Value::as_str)
+        .and_then(RecordKind::from_record_type);
+    let slug = item
+        .get("slug")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|slug| !slug.is_empty());
     let url = item
         .get("url")
         .and_then(Value::as_str)
@@ -513,7 +802,16 @@ fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
                 format!("https://thetvdb.com{value}")
             }
         })
-        .unwrap_or_else(|| format!("https://thetvdb.com/dereferrer/series/{source_id}"));
+        .or_else(|| {
+            let kind = kind?;
+            Some(format!("https://thetvdb.com/{}/{}", kind.path(), slug?))
+        })
+        .unwrap_or_else(|| {
+            format!(
+                "https://thetvdb.com/dereferrer/{}/{source_id}",
+                kind.unwrap_or(RecordKind::Series).record_type()
+            )
+        });
     let cover_url = item
         .get("image_url")
         .or_else(|| item.get("thumbnail"))
@@ -648,26 +946,57 @@ fn string_or_named(value: &Value) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{thetvdb_candidate, thetvdb_series_ref, SeriesRef};
+    use super::{
+        thetvdb_candidate, thetvdb_record_item, thetvdb_record_ref, thetvdb_series_ref, RecordKind,
+        RecordLocator,
+    };
     use serde_json::{json, Value};
 
     #[test]
     fn series_ref_parses_id_dereferrer_and_slug() {
         assert!(matches!(
             thetvdb_series_ref("https://thetvdb.com/dereferrer/series/289882"),
-            Some(SeriesRef::Id(id)) if id == "289882"
+            Some(RecordLocator::Id(id)) if id == "289882"
         ));
         assert!(matches!(
             thetvdb_series_ref("289882"),
-            Some(SeriesRef::Id(id)) if id == "289882"
+            Some(RecordLocator::Id(id)) if id == "289882"
         ));
         // The human URL is a slug, resolved to an id at fetch time.
         assert!(matches!(
             thetvdb_series_ref("https://thetvdb.com/series/answer-me-1988"),
-            Some(SeriesRef::Slug(slug)) if slug == "answer-me-1988"
+            Some(RecordLocator::Slug(slug)) if slug == "answer-me-1988"
         ));
         // A movie link has no series segment.
         assert!(thetvdb_series_ref("https://thetvdb.com/dereferrer/movie/100").is_none());
+        assert!(thetvdb_series_ref("https://thetvdb.com/movies/pu-239").is_none());
+    }
+
+    #[test]
+    fn record_ref_parses_both_kinds_by_slug_and_id() {
+        assert!(matches!(
+            thetvdb_record_ref("https://thetvdb.com/movies/pu-239"),
+            Some((RecordKind::Movie, RecordLocator::Slug(slug))) if slug == "pu-239"
+        ));
+        assert!(matches!(
+            thetvdb_record_ref("https://thetvdb.com/dereferrer/movie/5239"),
+            Some((RecordKind::Movie, RecordLocator::Id(id))) if id == "5239"
+        ));
+        // Trailing segments and query/fragment noise don't change the record.
+        assert!(matches!(
+            thetvdb_record_ref("https://thetvdb.com/series/answer-me-1988/episodes/official?tab=1"),
+            Some((RecordKind::Series, RecordLocator::Slug(slug))) if slug == "answer-me-1988"
+        ));
+        // A numeric segment is an id, not a slug.
+        assert!(matches!(
+            thetvdb_record_ref("https://thetvdb.com/series/289882/"),
+            Some((RecordKind::Series, RecordLocator::Id(id))) if id == "289882"
+        ));
+        // Kinds we can't turn into an entity, and links naming no record at all,
+        // fall back to a text search.
+        assert!(thetvdb_record_ref("https://thetvdb.com/people/1234-someone").is_none());
+        assert!(thetvdb_record_ref("https://thetvdb.com/movies").is_none());
+        assert!(thetvdb_record_ref("Evangelion 3.0+1.0").is_none());
     }
 
     #[test]
@@ -788,5 +1117,94 @@ mod tests {
             zh.titles.get("en"),
             Some(&"Frieren: Beyond Journey's End".to_string())
         );
+    }
+
+    #[test]
+    fn candidate_url_names_the_records_own_kind_and_slug() {
+        // A movie's ref must not claim to be a series: the URL is stored as the
+        // external ref and is what re-resolves the record at quick-add time.
+        let movie = thetvdb_candidate(
+            &json!({ "tvdb_id": 5239, "name": "Evangelion", "type": "movie", "slug": "evangelion" }),
+            None,
+        )
+        .unwrap();
+        assert_eq!(movie.url, "https://thetvdb.com/movies/evangelion");
+
+        let series = thetvdb_candidate(
+            &json!({ "tvdb_id": 289882, "name": "Answer Me 1988", "type": "series", "slug": "answer-me-1988" }),
+            None,
+        )
+        .unwrap();
+        assert_eq!(series.url, "https://thetvdb.com/series/answer-me-1988");
+
+        // Without a slug, the dereferrer form still carries the right kind.
+        let slugless = thetvdb_candidate(
+            &json!({ "tvdb_id": 5239, "name": "Evangelion", "type": "movie" }),
+            None,
+        )
+        .unwrap();
+        assert_eq!(slugless.url, "https://thetvdb.com/dereferrer/movie/5239");
+    }
+
+    #[test]
+    fn extended_movie_record_maps_like_a_search_hit() {
+        let record = json!({
+            "id": 5239,
+            "name": "Evangelion: 3.0+1.0 Thrice Upon a Time",
+            "slug": "evangelion-3-0-1-0-thrice-upon-a-time",
+            "image": "https://artworks.thetvdb.com/banners/movies/5239/poster.jpg",
+            "originalLanguage": "jpn",
+            "originalCountry": "jpn",
+            "year": "2021",
+            "first_release": { "country": "jpn", "date": "2021-03-08" },
+            "status": { "id": 5, "name": "Released" },
+            "genres": [{ "id": 1, "name": "Anime" }, { "id": 2, "name": "Science Fiction" }],
+            "studios": [{ "id": 9, "name": "Studio Khara" }],
+            "remoteIds": [{ "id": "tt2458948", "sourceName": "IMDB" }],
+            "translations": {
+                "nameTranslations": [
+                    { "language": "jpn", "name": "シン・エヴァンゲリオン劇場版", "isPrimary": true },
+                    { "language": "eng", "name": "Evangelion: 3.0+1.0 Thrice Upon a Time" }
+                ],
+                "overviewTranslations": [
+                    { "language": "jpn", "overview": "終劇。", "isPrimary": true },
+                    { "language": "eng", "overview": "The final Rebuild film." }
+                ]
+            }
+        });
+        let candidate =
+            thetvdb_candidate(&thetvdb_record_item(RecordKind::Movie, &record), Some("en"))
+                .unwrap();
+
+        assert_eq!(candidate.source_id, "5239");
+        assert_eq!(
+            candidate.url,
+            "https://thetvdb.com/movies/evangelion-3-0-1-0-thrice-upon-a-time"
+        );
+        assert_eq!(candidate.title, "Evangelion: 3.0+1.0 Thrice Upon a Time");
+        assert_eq!(
+            candidate.titles.get("ja").map(String::as_str),
+            Some("シン・エヴァンゲリオン劇場版")
+        );
+        assert_eq!(candidate.brief.as_deref(), Some("The final Rebuild film."));
+        assert_eq!(
+            candidate.cover_url.as_deref(),
+            Some("https://artworks.thetvdb.com/banners/movies/5239/poster.jpg")
+        );
+        let metadata = &candidate.metadata;
+        assert_eq!(metadata.get("first_air_time"), Some(&json!("2021-03-08")));
+        assert_eq!(metadata.get("status"), Some(&json!("Released")));
+        assert_eq!(metadata.get("primary_language"), Some(&json!("jpn")));
+        assert_eq!(
+            metadata.get("genres"),
+            Some(&json!(["Anime", "Science Fiction"]))
+        );
+        assert_eq!(metadata.get("studios"), Some(&json!(["Studio Khara"])));
+        assert_eq!(metadata.get("imdb_code"), Some(&json!("tt2458948")));
+        // A movie carries no top-level overview; the primary translation is the
+        // default a viewer without a translation falls back to.
+        let ja = thetvdb_candidate(&thetvdb_record_item(RecordKind::Movie, &record), Some("de"))
+            .unwrap();
+        assert_eq!(ja.brief.as_deref(), Some("終劇。"));
     }
 }

@@ -1000,6 +1000,15 @@ fn merge_enriched_candidate(
     search: ExternalCandidate,
     mut detail: ExternalCandidate,
 ) -> ExternalCandidate {
+    // Enrichment is a metadata refresh, never a substitution. A provider that
+    // answers the re-resolve with a *different* record — a fuzzy fallback for an
+    // id or URL it could not look up exactly — would otherwise silently swap the
+    // work the user picked for whatever its search ranked first. Identity is the
+    // source id; when it doesn't survive the round trip, keep the (thinner)
+    // search result the user actually chose.
+    if normalize_external_ref(&search.source_id) != normalize_external_ref(&detail.source_id) {
+        return search;
+    }
     // The detail response is authoritative for metadata, but a language-less
     // review/apply request must not erase localized titles already returned to
     // the client by the original search request.
@@ -2166,6 +2175,28 @@ mod tests {
             merged.metadata.get("genres"),
             Some(&Value::String("Drama".to_string()))
         );
+    }
+
+    #[test]
+    fn enrichment_never_substitutes_a_different_work() {
+        // The re-resolve answering with another record (a provider falling back
+        // to its top search hit for an id it couldn't look up) must not swap the
+        // work the user picked — the chosen candidate is kept as-is.
+        let mut search = candidate("thetvdb", "5239", "https://thetvdb.com/movies/evangelion");
+        search.title = "Evangelion: 3.0+1.0 Thrice Upon a Time".to_string();
+
+        let mut detail = candidate("thetvdb", "36088", "https://thetvdb.com/movies/pu-239");
+        detail.brief = Some("A different film entirely.".to_string());
+        detail
+            .metadata
+            .insert("name".to_string(), Value::String("Pu-239".to_string()));
+
+        let merged = merge_enriched_candidate(search, detail);
+        assert_eq!(merged.source_id, "5239");
+        assert_eq!(merged.url, "https://thetvdb.com/movies/evangelion");
+        assert_eq!(merged.title, "Evangelion: 3.0+1.0 Thrice Upon a Time");
+        assert_eq!(merged.brief, None);
+        assert!(!merged.metadata.contains_key("name"));
     }
 
     #[test]
