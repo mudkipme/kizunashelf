@@ -40,6 +40,7 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_TOKEN_CACHE` | Path for the provider OAuth token cache. Defaults to `<tmp>/.kizunashelf.tokens.json` (outside the vault). |
 | `KIZUNASHELF_WEB_DIST` | Alternate web build path. |
 | `KIZUNASHELF_SERVE_WEB` | Set to `false` to serve only the API. |
+| `KIZUNASHELF_AUTH_PASSWORD_HASH` | Optional Argon2id password hash. When set, all web UI, API, and asset requests require a login. Unset by default. |
 | `KIZUNASHELF_ALLOW_PRIVATE_ASSET_HOSTS` | Set to `true` to let asset downloads reach private/loopback/link-local addresses (e.g. a LAN image host). Off by default; the SSRF guard blocks them (the `198.18.0.0/15` benchmarking range is always allowed). |
 | `KIZUNASHELF_TRAKT_CLIENT_ID` | Trakt client id (its `trakt-api-key`) for [importing](@/reference/external.md#quick-capture-and-import) a Trakt profile. |
 | `KIZUNASHELF_STEAM_API_KEY` | Steam Web API key for importing a Steam library (`GetOwnedGames`). Distinct from the keyless store API the Steam search provider uses. |
@@ -67,18 +68,47 @@ A web instance serves exactly one vault. To host more than one, run multiple ins
 
 ## Authentication
 
-**KizunaShelf has no built-in authentication for now.** The web server does not implement user accounts, logins, or sessions, so anyone who can reach the port can use it. Two consequences:
+KizunaShelf provides optional single-user password authentication for the web runtime. Desktop and iOS do not use it. Authentication is disabled when `KIZUNASHELF_AUTH_PASSWORD_HASH` is unset.
 
-- **Do not expose the port directly to the internet.** Keep it bound to loopback (`HOST=127.0.0.1`, the default) or to a private network, and put an authenticating layer in front of it.
-- **Writes default off for non-loopback hosts.** When `HOST` is not loopback, content and Settings writes are disabled unless you explicitly opt in (see above). This limits mutation, but read-only access still exposes the contents of the vault and is not a substitute for authentication.
+### Generate the password hash
 
-To require a login, run KizunaShelf behind a **reverse proxy that handles authentication** and only forward authenticated requests to the app. Any existing solution works — for example:
+Generate an Argon2id hash interactively. The command prompts twice without echoing the password, then prints the hash:
+
+```bash
+cargo run -p kizunashelf --bin kizunashelf-api -- hash-password
+```
+
+With the published container image, run the same helper without mounting a vault:
+
+```bash
+docker run --rm -it ghcr.io/mudkipme/kizunashelf:latest kizunashelf-api hash-password
+```
+
+Pass the printed value to the server. Keep the single quotes: Argon2 hashes contain `$` characters that the shell would otherwise expand.
+
+```bash
+docker run -p 8787:8787 \
+  -v /path/to/vault:/vault \
+  -e 'KIZUNASHELF_AUTH_PASSWORD_HASH=$argon2id$v=19$m=19456,t=2,p=1$…' \
+  ghcr.io/mudkipme/kizunashelf:latest
+```
+
+Successful login creates a secure, HTTP-only, same-site cookie. Sessions last at most 30 days and are held only in server memory, so restarting KizunaShelf signs every browser out. To end the current session manually, open `/_auth/logout` on your KizunaShelf host.
+
+### Deployment boundary
+
+- **Continue to use HTTPS.** The session cookie is deliberately marked `Secure`; terminate TLS at a reverse proxy and forward to KizunaShelf over a private or loopback connection.
+- **Do not expose the application port directly to the internet.** Keep it bound to loopback (`HOST=127.0.0.1`, the default) or to a private container network. Authentication limits application access but does not provide TLS or network hardening.
+- **Writes still default off for non-loopback hosts.** Set the write flags explicitly when the authenticated deployment should allow changes.
+- The existing diagnostic-rich `/api/health` endpoint is authenticated too. When built-in authentication is enabled, an unauthenticated `GET /healthz` returns an empty `204 No Content` response for container and proxy health checks without exposing vault diagnostics.
+
+For deployments that already have centralized identity, leave `KIZUNASHELF_AUTH_PASSWORD_HASH` unset and put KizunaShelf behind a reverse proxy that handles authentication. Any existing forward-auth solution works—for example:
 
 - **[Authentik](https://goauthentik.io/)** — full identity provider with forward-auth/proxy support.
 - **[Authelia](https://www.authelia.com/)** — authentication and authorization server designed to sit in front of a reverse proxy (Nginx, Traefik, Caddy).
 - **[Tinyauth](https://tinyauth.app/)** — a lightweight option when you just want a simple login in front of the app.
 
-A typical setup is: reverse proxy (Nginx / Traefik / Caddy) terminates TLS, delegates authentication to one of the above via forward-auth, and proxies the authenticated request to KizunaShelf on `127.0.0.1:8787`. KizunaShelf itself stays bound to loopback and never sees an unauthenticated request.
+A typical setup is: reverse proxy (Nginx / Traefik / Caddy) terminates TLS, delegates authentication to one of the above via forward-auth, and proxies the authenticated request to KizunaShelf on `127.0.0.1:8787`.
 
 ## Related pages
 

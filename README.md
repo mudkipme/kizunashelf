@@ -105,7 +105,7 @@ The generated web contract lives in `packages/api-contract`. See [ARCHITECTURE.m
 
 ## Production and desktop builds
 
-For the production web app — including Docker, configuration, multiple instances, and authentication — see the [self-hosting guide](manual/content/start/self-hosting.md). KizunaShelf has no built-in authentication, so an internet-facing deployment must sit behind an authenticating reverse proxy.
+For the production web app — including Docker, configuration, multiple instances, and optional single-user password authentication — see the [self-hosting guide](manual/content/start/self-hosting.md). Internet-facing deployments still need HTTPS and a reverse proxy; authentication does not replace that network boundary.
 
 For desktop development and builds:
 

@@ -1,7 +1,11 @@
 use anyhow::Result;
-use kizunashelf::api::{router_native, ApiOptions};
+use argon2::password_hash::{PasswordHasher, SaltString};
+use argon2::Argon2;
+use kizunashelf::api::{protect_web_router, router_native, ApiOptions, WebAuth};
 use kizunashelf::secrets::NativeSecretStore;
 use kizunashelf::types::AppConfig;
+use rand_core::OsRng;
+use std::io::{self, Write};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -14,6 +18,10 @@ use std::time::Duration;
 /// mounted vault would be redundant. For multiple vaults, run multiple instances.
 #[tokio::main]
 async fn main() -> Result<()> {
+    if std::env::args().nth(1).as_deref() == Some("hash-password") {
+        return hash_password_interactive();
+    }
+
     let vault_root =
         std::env::var("KIZUNASHELF_VAULT_ROOT").unwrap_or_else(|_| "/vault".to_string());
     let port = std::env::var("PORT")
@@ -78,7 +86,17 @@ async fn main() -> Result<()> {
         // read/delete surface is unreachable here.
         host_asset_ingest: false,
     };
-    let app = router_native(options, app_config, secret_store);
+    let mut app = router_native(options, app_config, secret_store);
+    match std::env::var("KIZUNASHELF_AUTH_PASSWORD_HASH") {
+        Ok(password_hash) => {
+            app = protect_web_router(app, WebAuth::new(password_hash)?);
+            println!("KizunaShelf password authentication enabled");
+        }
+        Err(std::env::VarError::NotPresent) => {}
+        Err(std::env::VarError::NotUnicode(_)) => {
+            anyhow::bail!("KIZUNASHELF_AUTH_PASSWORD_HASH must be valid UTF-8");
+        }
+    }
 
     let address: SocketAddr = format!("{host}:{port}").parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;
@@ -87,6 +105,27 @@ async fn main() -> Result<()> {
         .with_graceful_shutdown(shutdown_signal())
         .await?;
     println!("KizunaShelf shut down");
+    Ok(())
+}
+
+fn hash_password_interactive() -> Result<()> {
+    let password = rpassword::prompt_password("Password: ")?;
+    if password.is_empty() {
+        anyhow::bail!("password must not be empty");
+    }
+    if password.len() > 1024 {
+        anyhow::bail!("password must be at most 1024 bytes");
+    }
+    let confirmation = rpassword::prompt_password("Confirm password: ")?;
+    if password != confirmation {
+        anyhow::bail!("passwords do not match");
+    }
+
+    let salt = SaltString::generate(&mut OsRng);
+    let hash = Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|error| anyhow::anyhow!("failed to hash password: {error}"))?;
+    writeln!(io::stdout().lock(), "{hash}")?;
     Ok(())
 }
 
