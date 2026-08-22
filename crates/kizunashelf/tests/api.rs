@@ -99,6 +99,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let capabilities = server.ok_json("/api/capabilities").await;
     assert_eq!(capabilities["settingsWritable"], true);
     assert_eq!(capabilities["contentWritable"], true);
+    assert_eq!(capabilities["vaultWatchEnabled"], true);
     assert_eq!(capabilities["externalSearchEnabled"], true);
     assert_eq!(capabilities["externalApplyEnabled"], true);
 
@@ -447,6 +448,31 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
         .await;
     assert_eq!(status, StatusCode::NOT_FOUND);
     assert_eq!(missing["error"], "Entity not found");
+}
+
+#[tokio::test]
+async fn vault_changes_long_poll_wakes_after_an_external_edit() {
+    let server = TestServer::new();
+    // Loading the library starts the native watcher before the external write.
+    server.ok_json("/api/health").await;
+    let app = server.app.clone();
+    let waiter = tokio::spawn(async move {
+        request_json(&app, Method::GET, "/api/vault/changes?after=0", None).await
+    });
+    tokio::task::yield_now().await;
+
+    write_file(
+        &server.vault.join("Taxonomy/Anime/External Edit.md"),
+        "---\ntitle: External Edit\n---\n",
+    );
+    let response = tokio::time::timeout(Duration::from_secs(5), waiter)
+        .await
+        .expect("long poll woke after the watcher debounce")
+        .unwrap();
+    assert_eq!(response.0, StatusCode::OK, "{}", response.1);
+    assert_eq!(response.1["supported"], true);
+    assert_eq!(response.1["changed"], true);
+    assert!(response.1["generation"].as_u64().unwrap() > 0);
 }
 
 #[tokio::test]
@@ -1953,6 +1979,32 @@ async fn raw_settings_config_round_trips_yaml_verbatim() {
 
     let read_back = request_json(&app, Method::GET, "/api/settings/config/raw", None).await;
     assert_eq!(read_back.1["content"], yaml);
+}
+
+#[tokio::test]
+async fn config_writes_reject_an_external_edit_after_loading() {
+    let server = TestServer::new();
+    let loaded = request_json(&server.app, Method::GET, "/api/settings/config/raw", None).await;
+    let revision = loaded.1["revision"].as_str().unwrap();
+    let externally_edited = format!(
+        "{}\n# edited in Obsidian\n",
+        loaded.1["content"].as_str().unwrap()
+    );
+    let config_path = server.vault.join("KizunaShelf/config.yaml");
+    write_file(&config_path, &externally_edited);
+
+    let stale = request_json(
+        &server.app,
+        Method::PUT,
+        "/api/settings/config/raw",
+        Some(json!({
+            "content": loaded.1["content"],
+            "revision": revision,
+        })),
+    )
+    .await;
+    assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
+    assert_eq!(fs::read_to_string(config_path).unwrap(), externally_edited);
 }
 
 #[tokio::test]

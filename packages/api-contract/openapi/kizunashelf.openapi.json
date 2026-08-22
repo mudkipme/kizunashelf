@@ -86,6 +86,38 @@
         }
       }
     },
+    "/api/vault/changes": {
+      "get": {
+        "operationId": "getVaultChanges",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "description": "Generation returned by the previous long poll. Defaults to zero for a\nnewly mounted client.",
+            "schema": {
+              "description": "Generation returned by the previous long poll. Defaults to zero for a\nnewly mounted client.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "default": 0
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result of waiting for the native vault watcher to advance. The request is a\nbounded long poll: `changed = false` is a normal keepalive timeout, not an\nerror. Clients pass the returned generation into their next request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultChangesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/config": {
       "get": {
         "operationId": "getConfig",
@@ -3696,6 +3728,10 @@
           "contentWritable": {
             "type": "boolean"
           },
+          "vaultWatchEnabled": {
+            "description": "Whether this runtime can observe external vault filesystem changes.\nNative web/desktop VFSes support it; the injected iOS VFS does not.",
+            "type": "boolean"
+          },
           "externalSearchEnabled": {
             "type": "boolean"
           },
@@ -3709,9 +3745,44 @@
         "required": [
           "settingsWritable",
           "contentWritable",
+          "vaultWatchEnabled",
           "externalSearchEnabled",
           "externalApplyEnabled",
           "assetDownloadEnabled"
+        ]
+      },
+      "VaultChangesQuery": {
+        "type": "object",
+        "properties": {
+          "after": {
+            "description": "Generation returned by the previous long poll. Defaults to zero for a\nnewly mounted client.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "default": 0
+          }
+        }
+      },
+      "VaultChangesResponse": {
+        "description": "Result of waiting for the native vault watcher to advance. The request is a\nbounded long poll: `changed = false` is a normal keepalive timeout, not an\nerror. Clients pass the returned generation into their next request.",
+        "type": "object",
+        "properties": {
+          "supported": {
+            "type": "boolean"
+          },
+          "generation": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "supported",
+          "generation",
+          "changed"
         ]
       },
       "ConfigResponse": {
@@ -4438,6 +4509,13 @@
             "description": "Whether the vault config file exists on disk.\n`false` means the VFS definitively returned `NotFound`; malformed and\ntemporarily unreadable files are never reported as missing.",
             "type": "boolean"
           },
+          "revision": {
+            "description": "Content revision of the raw config file, used to guard schema writes.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "vault": {
             "anyOf": [
               {
@@ -4615,6 +4693,13 @@
                 "type": "null"
               }
             ]
+          },
+          "revision": {
+            "description": "Revision returned with the loaded settings. Optional only for first-time\nvault creation and backwards-compatible clients.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -4629,6 +4714,12 @@
           "vaultExists": {
             "description": "Whether the vault config file exists on disk.",
             "type": "boolean"
+          },
+          "revision": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "content": {
             "description": "The raw YAML text of the config file, verbatim (empty when it doesn't\nexist yet).",
@@ -4647,6 +4738,12 @@
         "properties": {
           "content": {
             "type": "string"
+          },
+          "revision": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [

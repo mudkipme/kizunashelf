@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,6 +50,7 @@ import { MarkdownView } from "@/components/assets/markdown-view";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
+import { Alert } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -142,6 +143,7 @@ export function ListDetailPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [externalChange, setExternalChange] = useState(false);
   // Monotonic counter for fresh React keys on locally-created sections/items, so
   // dnd-kit identities stay stable across edits without colliding with `srv-*`.
   const keyCounter = useRef(0);
@@ -150,46 +152,68 @@ export function ListDetailPage() {
   // arrives (initial load, or after our own save/add), so a background refetch
   // never clobbers in-progress edits.
   const loadedRevision = useRef<string | null>(null);
+  const loadedSnapshot = useRef<{
+    description: string;
+    trailing: string;
+    sections: string;
+  } | null>(null);
 
   const data = list.data;
-  useEffect(() => {
-    if (!data || loadedRevision.current === data.revision) return;
-    loadedRevision.current = data.revision;
+  const snapshot = loadedSnapshot.current;
+  const dirty = Boolean(
+    snapshot &&
+      (description !== snapshot.description ||
+        trailing !== snapshot.trailing ||
+        sectionsSignature(sections) !== snapshot.sections),
+  );
+  const seedFromServer = useCallback((source: NonNullable<typeof data>) => {
+    loadedRevision.current = source.revision;
+    loadedSnapshot.current = {
+      description: source.description,
+      trailing: source.trailing,
+      sections: sectionsSignature(serverSections(source.sections)),
+    };
     setSections(
-      data.sections.map((section, sectionIndex) => ({
+      source.sections.map((section, sectionIndex) => ({
         key: `srv-${sectionIndex}`,
         heading: section.heading ?? null,
         marker: section.marker,
-        items: section.items.map((item, itemIndex) => ({ ...item, key: `srv-${sectionIndex}-${itemIndex}` })),
+        items: section.items.map((item, itemIndex) => ({
+          ...item,
+          key: `srv-${sectionIndex}-${itemIndex}`,
+        })),
       })),
     );
-    setDescription(data.description);
-    setTrailing(data.trailing);
-  }, [data]);
+    setDescription(source.description);
+    setTrailing(source.trailing);
+    setExternalChange(false);
+  }, []);
+  useEffect(() => {
+    if (!data || loadedRevision.current === data.revision) return;
+    if (loadedRevision.current !== null && dirty) {
+      setExternalChange(true);
+      return;
+    }
+    seedFromServer(data);
+  }, [data, dirty, seedFromServer]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const dirty = Boolean(
-    data &&
-      (description !== data.description ||
-        trailing !== data.trailing ||
-        sectionsSignature(sections) !== sectionsSignature(serverSections(data.sections))),
-  );
-
-
   // The global mutation-error handler surfaces the message (with a friendly 409
-  // notice); here we only keep the recovery — reload the latest on a conflict so
-  // the stale edit state is replaced and the user can retry.
+  // notice); preserve the draft and offer an explicit reload on conflict.
   function recoverFromConflict(actionError: unknown) {
-    if (isConflictError(actionError)) void list.refetch();
+    if (isConflictError(actionError)) {
+      setExternalChange(true);
+      void list.refetch();
+    }
   }
 
   function listPayload(secs: EditableSection[] = sections) {
     return {
-      revision: data?.revision ?? "",
+      revision: loadedRevision.current ?? data?.revision ?? "",
       description,
       trailing,
       sections: secs.map((section) => ({
@@ -202,7 +226,8 @@ export function ListDetailPage() {
 
   const save = useMutation({
     mutationFn: () => saveList(id, listPayload()),
-    onSuccess: async () => {
+    onSuccess: async (detail) => {
+      seedFromServer(detail);
       await invalidateLists(id);
     },
     onError: recoverFromConflict,
@@ -216,6 +241,11 @@ export function ListDetailPage() {
     mutationFn: (payload: ReturnType<typeof listPayload>) => saveList(id, payload),
     onSuccess: (detail) => {
       loadedRevision.current = detail.revision;
+      loadedSnapshot.current = {
+        description: detail.description,
+        trailing: detail.trailing,
+        sections: sectionsSignature(serverSections(detail.sections)),
+      };
       // Adopt the saved detail in place (no refetch of this list) so a live
       // toggle stays put; only the index needs the fresh counts.
       queryClient.setQueryData(queryKeys.list(id), detail);
@@ -227,6 +257,9 @@ export function ListDetailPage() {
     (payload: ReturnType<typeof listPayload>) => autoSave.mutate(payload),
     500,
   );
+  useEffect(() => {
+    if (externalChange) cancelAutoSave();
+  }, [cancelAutoSave, externalChange]);
 
   function scheduleAutoSave() {
     queueAutoSave(listPayload(sectionsRef.current));
@@ -369,7 +402,7 @@ export function ListDetailPage() {
     onError: recoverFromConflict,
   });
 
-  const busy = save.isPending || remove.isPending || rename.isPending;
+  const busy = save.isPending || autoSave.isPending || remove.isPending || rename.isPending;
   const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0);
   const existingIds = new Set(
     sections.flatMap((section) => section.items.map((item) => item.entity?.id)).filter(Boolean) as string[],
@@ -395,7 +428,7 @@ export function ListDetailPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={!contentWritable || busy}
+                disabled={!contentWritable || externalChange || busy}
                 onClick={() => setRenameOpen(true)}
               >
                 <FilePenLineIcon data-icon="inline-start" />
@@ -405,7 +438,7 @@ export function ListDetailPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={!contentWritable || busy}
+                disabled={!contentWritable || externalChange || busy}
                 onClick={() => setDeleteOpen(true)}
               >
                 <Trash2Icon data-icon="inline-start" />
@@ -414,7 +447,7 @@ export function ListDetailPage() {
               <Button
                 type="button"
                 size="sm"
-                disabled={!contentWritable || !dirty || busy}
+                disabled={!contentWritable || externalChange || !dirty || busy}
                 onClick={() => {
                   cancelAutoSave();
                   save.mutate();
@@ -425,11 +458,33 @@ export function ListDetailPage() {
               </Button>
             </header>
 
+            {externalChange ? (
+              <Alert className="flex flex-wrap items-center justify-between gap-3">
+                <span className="min-w-0">
+                  <Trans comment="Warning banner in the static-list editor after another app changes its Markdown file; the local draft has been preserved">
+                    This list changed on disk. Your unsaved edits are still here.
+                  </Trans>
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    cancelAutoSave();
+                    if (data) seedFromServer(data);
+                  }}
+                  disabled={busy}
+                >
+                  <Trans>Reload latest version</Trans>
+                </Button>
+              </Alert>
+            ) : null}
+
             <MarkdownField
               label={t`Description`}
               value={description}
               placeholder={t`Describe this list (appears above the items)…`}
-              disabled={!contentWritable}
+              disabled={!contentWritable || externalChange}
               onChange={setDescription}
             />
 
@@ -440,11 +495,11 @@ export function ListDetailPage() {
                     Items <span className="text-muted-foreground">({totalItems})</span>
                   </Trans>
                 </h2>
-                <Button type="button" variant="outline" size="sm" disabled={!contentWritable} onClick={addSection}>
+                <Button type="button" variant="outline" size="sm" disabled={!contentWritable || externalChange} onClick={addSection}>
                   <FolderPlusIcon data-icon="inline-start" />
                   <Trans>Add section</Trans>
                 </Button>
-                <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setAddOpen(true)}>
+                <Button type="button" size="sm" disabled={!contentWritable || externalChange} onClick={() => setAddOpen(true)}>
                   <PlusIcon data-icon="inline-start" />
                   <Trans>Add items</Trans>
                 </Button>
@@ -469,7 +524,7 @@ export function ListDetailPage() {
                         key={section.key}
                         section={section}
                         language={language}
-                        disabled={!contentWritable}
+                        disabled={!contentWritable || externalChange}
                         onHeadingChange={(heading) => updateSection(section.key, { heading })}
                         onMarkerChange={(marker) => updateSection(section.key, { marker })}
                         onRemoveSection={() => removeSection(section.key)}
@@ -486,7 +541,7 @@ export function ListDetailPage() {
               label={t`Notes`}
               value={trailing}
               placeholder={t`Notes shown below the items…`}
-              disabled={!contentWritable}
+              disabled={!contentWritable || externalChange}
               onChange={setTrailing}
             />
 
@@ -494,7 +549,7 @@ export function ListDetailPage() {
               open={addOpen}
               onOpenChange={setAddOpen}
               existingIds={existingIds}
-              disabled={!contentWritable}
+              disabled={!contentWritable || externalChange}
               onAdd={addEntity}
             />
             <RenameListDialog
@@ -502,7 +557,7 @@ export function ListDetailPage() {
               onOpenChange={setRenameOpen}
               currentName={data.name}
               saving={rename.isPending}
-              disabled={!contentWritable}
+              disabled={!contentWritable || externalChange}
               onRename={(value) => {
                 cancelAutoSave();
                 rename.mutate(value);

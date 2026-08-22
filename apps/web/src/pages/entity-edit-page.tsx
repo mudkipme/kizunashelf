@@ -51,6 +51,11 @@ export function EntityEditPage() {
   // Tracks which entity the local draft was seeded from, so a background refetch
   // of the same entity doesn't clobber in-progress edits.
   const seededEntityIdRef = useRef<string | undefined>(undefined);
+  // The optimistic-concurrency revision belongs to the draft, not the latest
+  // query response. If Obsidian changes the entity while this draft is dirty,
+  // saving must submit the old revision and receive a 409 instead of silently
+  // overwriting the external edit.
+  const seededRevisionRef = useRef<string | undefined>(undefined);
   // Snapshot of the seeded draft, for dirty detection (Back/Cancel confirmation
   // and the tab-close warning).
   const seededSnapshotRef = useRef<{ frontmatter: string; body: string } | null>(null);
@@ -65,10 +70,12 @@ export function EntityEditPage() {
   );
   const seedDraft = useCallback((source: NonNullable<typeof entity>) => {
     seededEntityIdRef.current = source.id;
+    seededRevisionRef.current = source.revision;
     const seeded = normalizeFrontmatter(source.frontmatter);
     seededSnapshotRef.current = { frontmatter: JSON.stringify(seeded), body: source.body };
     setFrontmatter(seeded);
     setBody(source.body);
+    setConflict(false);
   }, []);
 
   const snapshot = seededSnapshotRef.current;
@@ -82,12 +89,16 @@ export function EntityEditPage() {
 
   useEffect(() => {
     if (!entity) return;
-    // Seed only when this is a different entity than the one already loaded.
-    // Refetches of the same entity (window focus, cache invalidation) keep the
-    // user's edits instead of resetting the form underneath them.
-    if (seededEntityIdRef.current === entity.id) return;
-    seedDraft(entity);
-  }, [entity, seedDraft]);
+    if (seededEntityIdRef.current !== entity.id) {
+      seedDraft(entity);
+      return;
+    }
+    if (seededRevisionRef.current === entity.revision) return;
+    // Clean forms adopt an external edit immediately. Dirty forms keep their
+    // draft and surface the existing reload/conflict recovery instead.
+    if (dirty) setConflict(true);
+    else seedDraft(entity);
+  }, [dirty, entity, seedDraft]);
 
   // Reloads the latest server version, replacing the local draft. Used to
   // recover from a 409 conflict after the entity changed on disk.
@@ -109,7 +120,7 @@ export function EntityEditPage() {
         // The draft goes to the core verbatim; it serializes against the schema
         // and deletes keys the draft no longer carries (cleared fields).
         const result = await saveEntity(entity.id, {
-          revision: entity.revision,
+          revision: seededRevisionRef.current ?? entity.revision,
           frontmatterDraft: frontmatter,
           body,
         });

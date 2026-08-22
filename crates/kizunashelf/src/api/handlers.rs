@@ -1,4 +1,5 @@
 use super::error::{ApiError, ApiResult};
+use super::mutations::check_revision;
 use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{
     build_activity, build_calendar, ActivityBuildOptions, ActivityMode, ActivityResponse,
@@ -8,16 +9,19 @@ use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
     HomeSectionResponse, LanguagesResponse, RawConfigResponse, ResolveTypePresetsRequest,
     ResolveTypePresetsResponse, SaveRawConfigRequest, SaveSettingsRequest, SettingsConfigResponse,
-    TypePresetsResponse,
+    TypePresetsResponse, VaultChangesResponse,
 };
 use crate::dates::clamp_number;
 use crate::entities::sort_entities_for_entity_list;
+use crate::library::file_revision;
 use crate::relations::{sort_records_by_modified, SortDirection};
 use crate::types::{EntityRecord, HomeSectionConfig, Library};
+use crate::vfs::Vfs;
 use axum::extract::{Query, State};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use std::time::Duration;
 
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct TypePresetsQuery {
@@ -25,6 +29,14 @@ pub(crate) struct TypePresetsQuery {
     /// `zh-Hant`) — picks the language of the preset display text (labels,
     /// descriptions, category headers). English when absent or untranslated.
     language: Option<String>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+pub(crate) struct VaultChangesQuery {
+    /// Generation returned by the previous long poll. Defaults to zero for a
+    /// newly mounted client.
+    #[serde(default)]
+    after: u64,
 }
 
 /// The built-in **type presets** for the onboarding / settings type picker.
@@ -84,10 +96,27 @@ pub(crate) async fn capabilities(State(state): State<AppState>) -> ApiResult<Cap
     Ok(Json(CapabilitiesResponse {
         settings_writable: state.options.settings_writable,
         content_writable,
+        vault_watch_enabled: state.vault_watch_enabled(),
         external_search_enabled: true,
         external_apply_enabled: content_writable,
         asset_download_enabled: content_writable,
     }))
+}
+
+/// Bounded long poll over the VFS watcher. Twenty-five seconds stays below
+/// common reverse-proxy idle timeouts while still avoiding periodic vault scans.
+pub(crate) async fn vault_changes(
+    State(state): State<AppState>,
+    Query(query): Query<VaultChangesQuery>,
+) -> Json<VaultChangesResponse> {
+    let (supported, generation, changed) = state
+        .wait_for_vault_change(query.after, Duration::from_secs(25))
+        .await;
+    Json(VaultChangesResponse {
+        supported,
+        generation,
+        changed,
+    })
 }
 
 pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
@@ -121,6 +150,10 @@ async fn settings_config_response(
     let inspection = crate::library::inspect_vault_config_via_vfs(vfs, &app)
         .await
         .map_err(ApiError::from)?;
+    let raw = crate::library::read_raw_vault_config_via_vfs(vfs)
+        .await
+        .map_err(ApiError::from)?;
+    let revision = raw.as_deref().map(file_revision);
     let (vault_exists, vault, error) = match inspection {
         VaultConfigInspection::Missing => (false, None, None),
         VaultConfigInspection::Ready(vault) => (true, Some(*vault), None),
@@ -130,6 +163,7 @@ async fn settings_config_response(
         app: Some(app),
         vault_config_path: Some(crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string()),
         vault_exists,
+        revision,
         vault,
         error,
     }))
@@ -142,7 +176,7 @@ pub(crate) async fn save_settings_config(
     if !state.options.settings_writable {
         return Err(ApiError::forbidden("Settings writes are disabled"));
     }
-    let SaveSettingsRequest { vault } = request;
+    let SaveSettingsRequest { vault, revision } = request;
 
     // The vault root is owned by the runtime (env vars / the native vault switcher
     // / @AppStorage); the schema editor saves the vault config (the schema) only
@@ -151,6 +185,8 @@ pub(crate) async fn save_settings_config(
     let vfs = state.vault_vfs(&app.vault_root);
     if let Some(vault) = &vault {
         let merged = crate::types::KizunaConfig::from_parts(app.clone(), vault.clone());
+        let _mutation = state.content_mutation_lock().await;
+        check_config_revision(vfs.as_ref(), revision.as_deref()).await?;
         crate::library::ensure_config_directories_via_vfs(&merged, vfs.as_ref())
             .await
             .map_err(|error| ApiError::bad_request(&error.to_string()))?;
@@ -171,9 +207,11 @@ pub(crate) async fn raw_settings_config(
     let content = crate::library::read_raw_vault_config_via_vfs(vfs.as_ref())
         .await
         .map_err(ApiError::from)?;
+    let revision = content.as_deref().map(file_revision);
     Ok(Json(RawConfigResponse {
         vault_config_path: crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string(),
         vault_exists: content.is_some(),
+        revision,
         content: content.unwrap_or_default(),
     }))
 }
@@ -189,7 +227,7 @@ pub(crate) async fn save_raw_settings_config(
     if !state.options.settings_writable {
         return Err(ApiError::forbidden("Settings writes are disabled"));
     }
-    let SaveRawConfigRequest { content } = request;
+    let SaveRawConfigRequest { content, revision } = request;
 
     let app = state.app_config();
     let vfs = state.vault_vfs(&app.vault_root);
@@ -198,6 +236,8 @@ pub(crate) async fn save_raw_settings_config(
     let vault = crate::library::parse_vault_config_strict(&content)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let merged = crate::types::KizunaConfig::from_parts(app, vault);
+    let _mutation = state.content_mutation_lock().await;
+    check_config_revision(vfs.as_ref(), revision.as_deref()).await?;
     crate::library::ensure_config_directories_via_vfs(&merged, vfs.as_ref())
         .await
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
@@ -209,11 +249,24 @@ pub(crate) async fn save_raw_settings_config(
     let saved = crate::library::read_raw_vault_config_via_vfs(vfs.as_ref())
         .await
         .map_err(ApiError::from)?;
+    let saved_revision = saved.as_deref().map(file_revision);
     Ok(Json(RawConfigResponse {
         vault_config_path: crate::library::VAULT_CONFIG_RELATIVE_PATH.to_string(),
         vault_exists: saved.is_some(),
+        revision: saved_revision,
         content: saved.unwrap_or(content),
     }))
+}
+
+async fn check_config_revision(vfs: &dyn Vfs, expected: Option<&str>) -> Result<(), ApiError> {
+    let Some(expected) = expected else {
+        return Ok(());
+    };
+    let latest = crate::library::read_raw_vault_config_via_vfs(vfs)
+        .await
+        .map_err(ApiError::from)?;
+    let actual = latest.as_deref().map(file_revision).unwrap_or_default();
+    check_revision(expected, &actual)
 }
 
 #[derive(Deserialize, JsonSchema)]

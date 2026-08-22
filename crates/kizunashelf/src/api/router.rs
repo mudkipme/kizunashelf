@@ -12,7 +12,7 @@ use super::external::{
 use super::handlers::{
     activity, calendar, capabilities, config, health, home, languages, raw_settings_config,
     refresh, resolve_type_presets, save_raw_settings_config, save_settings_config, settings_config,
-    type_presets, upcoming,
+    type_presets, upcoming, vault_changes,
 };
 use super::import::{
     cancel_import_job, commit_import_job, create_import_job, get_import_job, list_import_jobs,
@@ -41,6 +41,7 @@ use crate::contract::{
     ImportSourceCatalogResponse, LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse,
     PathSuggestionsResponse, QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse,
     SettingsConfigResponse, SmartListDetail, StatsResponse, TagsResponse, TypePresetsResponse,
+    VaultChangesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -153,6 +154,13 @@ fn api_router() -> ApiRouter<AppState> {
                 op.id("getCapabilities")
                     .response::<200, Json<CapabilitiesResponse>>()
                     .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/vault/changes",
+            get_with(vault_changes, |op| {
+                op.id("getVaultChanges")
+                    .response::<200, Json<VaultChangesResponse>>()
             }),
         )
         .api_route(

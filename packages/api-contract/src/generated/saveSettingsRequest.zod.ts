@@ -137,7 +137,8 @@ export const SaveSettingsRequest = zod.object({
   "relationType": zod.string().nullish()
 }))
 }))
-}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/KizunaShelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional().describe('The vault config (the schema) to write. The vault root and write mode are\nowned by the runtime (env vars \/ the native vault switcher \/ `@AppStorage`),\nso they are never sent here. Omitting `vault` is a no-op.')
+}).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>\/KizunaShelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional().describe('The vault config (the schema) to write. The vault root and write mode are\nowned by the runtime (env vars \/ the native vault switcher \/ `@AppStorage`),\nso they are never sent here. Omitting `vault` is a no-op.'),
+  "revision": zod.string().nullish().describe('Revision returned with the loaded settings. Optional only for first-time\nvault creation and backwards-compatible clients.')
 })
 
 export type SaveSettingsRequest = zod.input<typeof SaveSettingsRequest>;

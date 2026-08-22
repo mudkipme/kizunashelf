@@ -10,6 +10,7 @@ import {
 
 import { settingsConfigQuery } from "@/api/queries";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { VaultChangeSync } from "@/components/vault-change-sync";
 import { isDesktopRuntime } from "@/lib/desktop";
 import { activateUiLocale } from "@/lib/i18n";
 import { useUiLocale } from "@/lib/language";
@@ -148,7 +149,12 @@ function ConfigGate() {
     return <Navigate to="/" replace />;
   }
 
-  return <AppRoutes />;
+  return (
+    <>
+      <VaultChangeSync key={settings.data?.app?.vaultRoot ?? "vault"} />
+      <AppRoutes />
+    </>
+  );
 }
 
 function AppRoutes() {

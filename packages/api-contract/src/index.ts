@@ -50,6 +50,8 @@ export * from "./generated/assetUploadRequest.zod.js";
 export * from "./generated/assetUploadResponse.zod.js";
 export * from "./generated/calendarResponse.zod.js";
 export * from "./generated/capabilitiesResponse.zod.js";
+export * from "./generated/getVaultChangesParams.zod.js";
+export * from "./generated/vaultChangesResponse.zod.js";
 export * from "./generated/cleanupQueueSummary.zod.js";
 export * from "./generated/cleanupQueuesResponse.zod.js";
 export * from "./generated/cleanupUnresolvedRelation.zod.js";

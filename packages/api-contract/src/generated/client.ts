@@ -192,6 +192,10 @@ import type {
   GetUpcomingParams
 } from './getUpcomingParams.zod';
 
+import type {
+  GetVaultChangesParams
+} from './getVaultChangesParams.zod';
+
 import {
   HealthResponse
 } from './healthResponse.zod';
@@ -324,6 +328,10 @@ import type {
   UpdateSmartListRequest
 } from './updateSmartListRequest.zod';
 
+import {
+  VaultChangesResponse
+} from './vaultChangesResponse.zod';
+
 export const getGetHealthUrl = () => {
 
 
@@ -406,6 +414,42 @@ export const getCapabilities = async ( options?: RequestInit, fetchFn?: typeof g
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? CapabilitiesResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetVaultChangesUrl = (params?: GetVaultChangesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/vault/changes?${stringifiedParams}` : `/api/vault/changes`
+}
+
+export const getVaultChanges = async (params?: GetVaultChangesParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<VaultChangesResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetVaultChangesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? VaultChangesResponse.parse(parsedBody) : parsedBody
   return data
 }
 

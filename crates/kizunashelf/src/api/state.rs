@@ -206,8 +206,8 @@ pub(crate) struct AppState {
     vault_watch_started: Arc<Mutex<bool>>,
     /// Aborts the watcher when the router (or desktop's active vault) is dropped.
     vault_watch_task: Arc<VaultWatchTask>,
-    /// Monotonic external-change generation. A later API endpoint will expose
-    /// the accompanying watch channel; for now it is populated at the core seam.
+    /// Monotonic external-change generation exposed through the vault-changes
+    /// long-poll endpoint, with the watch channel waking connected clients.
     vault_change_generation: Arc<AtomicU64>,
     vault_changes: tokio::sync::watch::Sender<u64>,
     /// Process-resident per-file index cache, used when no persistent
@@ -390,19 +390,19 @@ impl AppState {
     /// Starts the optional VFS watcher once, from an async request context. A
     /// backend that does not support watching (iOS and the in-memory test VFS)
     /// remains a no-op. Failure is non-fatal: TTL/manual refresh still work.
-    async fn ensure_vault_watch(&self) {
+    async fn ensure_vault_watch(&self) -> bool {
         if !self.vault_fs.supports_watch() {
-            return;
+            return false;
         }
         let mut started = self.vault_watch_started.lock().await;
         if *started {
-            return;
+            return true;
         }
         let watch = match self.vault_fs.watch() {
             Ok(watch) => watch,
             Err(error) => {
                 eprintln!("KizunaShelf could not watch the vault: {error}");
-                return;
+                return false;
             }
         };
         let cache = Arc::clone(&self.cache);
@@ -413,6 +413,35 @@ impl AppState {
             consume_vault_changes(watch, cache, cache_generation, change_generation, changes).await;
         }));
         *started = true;
+        true
+    }
+
+    pub(crate) fn vault_watch_enabled(&self) -> bool {
+        self.vault_fs.supports_watch()
+    }
+
+    /// Waits until the native watcher generation differs from the client's
+    /// cursor, or until `timeout` elapses. A cursor greater than the current
+    /// generation means the router/vault was replaced, so it also returns as a
+    /// change immediately and lets the client reset to the new generation.
+    pub(crate) async fn wait_for_vault_change(
+        &self,
+        after: u64,
+        timeout: Duration,
+    ) -> (bool, u64, bool) {
+        if !self.ensure_vault_watch().await {
+            return (false, 0, false);
+        }
+        let mut receiver = self.vault_changes.subscribe();
+        let current = *receiver.borrow_and_update();
+        if current != after {
+            return (true, current, true);
+        }
+        let changed = tokio::time::timeout(timeout, receiver.changed())
+            .await
+            .is_ok_and(|result| result.is_ok());
+        let generation = *receiver.borrow_and_update();
+        (true, generation, changed && generation != after)
     }
 
     pub(crate) fn asset_jobs(&self) -> &Arc<Mutex<HashMap<String, AssetJobRecord>>> {

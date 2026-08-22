@@ -30,9 +30,23 @@ pub struct ErrorResponse {
 pub struct CapabilitiesResponse {
     pub settings_writable: bool,
     pub content_writable: bool,
+    /// Whether this runtime can observe external vault filesystem changes.
+    /// Native web/desktop VFSes support it; the injected iOS VFS does not.
+    pub vault_watch_enabled: bool,
     pub external_search_enabled: bool,
     pub external_apply_enabled: bool,
     pub asset_download_enabled: bool,
+}
+
+/// Result of waiting for the native vault watcher to advance. The request is a
+/// bounded long poll: `changed = false` is a normal keepalive timeout, not an
+/// error. Clients pass the returned generation into their next request.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct VaultChangesResponse {
+    pub supported: bool,
+    pub generation: u64,
+    pub changed: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -49,6 +63,9 @@ pub struct SettingsConfigResponse {
     /// `false` means the VFS definitively returned `NotFound`; malformed and
     /// temporarily unreadable files are never reported as missing.
     pub vault_exists: bool,
+    /// Content revision of the raw config file, used to guard schema writes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vault: Option<VaultConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -65,6 +82,10 @@ pub struct SaveSettingsRequest {
     /// so they are never sent here. Omitting `vault` is a no-op.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vault: Option<VaultConfig>,
+    /// Revision returned with the loaded settings. Optional only for first-time
+    /// vault creation and backwards-compatible clients.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
 }
 
 /// The raw YAML text of the vault config (`KizunaShelf/config.yaml`), for the
@@ -76,6 +97,8 @@ pub struct RawConfigResponse {
     pub vault_config_path: String,
     /// Whether the vault config file exists on disk.
     pub vault_exists: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
     /// The raw YAML text of the config file, verbatim (empty when it doesn't
     /// exist yet).
     pub content: String,
@@ -88,6 +111,8 @@ pub struct RawConfigResponse {
 #[serde(rename_all = "camelCase")]
 pub struct SaveRawConfigRequest {
     pub content: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

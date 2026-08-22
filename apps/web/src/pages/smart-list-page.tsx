@@ -35,6 +35,7 @@ import {
   ruleFieldMetas,
 } from "@/components/smart-lists/rule-builder";
 import { SortPicker } from "@/components/smart-lists/sort-picker";
+import { Alert } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,7 +97,9 @@ export function SmartListPage() {
   // Editing works on a draft copy; `null` = read mode. The draft feeds the
   // preview endpoint so results track the rules live, before anything is saved.
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [draftRevision, setDraftRevision] = useState<string | null>(null);
   const editing = draft !== null;
+  const externalChange = Boolean(editing && data && draftRevision !== data.revision);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -176,17 +179,19 @@ export function SmartListPage() {
   const save = useMutation({
     mutationFn: (draftToSave: Draft) =>
       saveSmartList(id, {
-        revision: data?.revision ?? "",
+        revision: draftRevision ?? data?.revision ?? "",
         scope: draftToSave.scope,
         filters: pruneIncompleteRules(draftToSave.filters),
         views: draftToSave.views,
       }),
     onSuccess: async () => {
       setDraft(null);
+      setDraftRevision(null);
       await invalidate();
       toast.success(t`Smart list saved`);
     },
     onError: (error) => {
+      if (isConflictError(error)) void detail.refetch();
       toast.error(
         isConflictError(error)
           ? t`This smart list changed on disk. Reload the page and redo your edits.`
@@ -207,6 +212,17 @@ export function SmartListPage() {
 
   const startEditing = () => {
     if (!data) return;
+    setDraftRevision(data.revision);
+    setDraft({
+      scope: data.scope ?? undefined,
+      filters: structuredClone(data.filters),
+      views: structuredClone(data.views),
+    });
+  };
+
+  const reloadLatest = () => {
+    if (!data) return;
+    setDraftRevision(data.revision);
     setDraft({
       scope: data.scope ?? undefined,
       filters: structuredClone(data.filters),
@@ -249,7 +265,10 @@ export function SmartListPage() {
                     variant="outline"
                     size="sm"
                     disabled={save.isPending}
-                    onClick={() => setDraft(null)}
+                    onClick={() => {
+                      setDraft(null);
+                      setDraftRevision(null);
+                    }}
                   >
                     <XIcon data-icon="inline-start" />
                     <Trans>Cancel</Trans>
@@ -257,7 +276,7 @@ export function SmartListPage() {
                   <Button
                     type="button"
                     size="sm"
-                    disabled={save.isPending}
+                    disabled={save.isPending || externalChange}
                     onClick={() => draft && save.mutate(draft)}
                   >
                     <CheckIcon data-icon="inline-start" />
@@ -323,6 +342,19 @@ export function SmartListPage() {
               ) : null}
             </header>
 
+            {externalChange ? (
+              <Alert className="flex flex-wrap items-center justify-between gap-3">
+                <span className="min-w-0">
+                  <Trans comment="Warning banner in the smart-list editor after another app changes its .base file; the local draft has been preserved">
+                    This smart list changed on disk. Your unsaved edits are still here.
+                  </Trans>
+                </span>
+                <Button type="button" variant="outline" size="sm" onClick={reloadLatest}>
+                  <Trans>Reload latest version</Trans>
+                </Button>
+              </Alert>
+            ) : null}
+
             {editing && draft ? (
               <EditPanel
                 draft={draft}
@@ -330,7 +362,7 @@ export function SmartListPage() {
                 fieldMetas={fieldMetas}
                 scopeConfig={scopeConfig}
                 activeViewIndex={activeViewIndex}
-                disabled={save.isPending}
+                disabled={save.isPending || externalChange}
                 onChange={setDraft}
               />
             ) : (
@@ -625,4 +657,3 @@ function WarningsBanner({ warnings }: { warnings: string[] }) {
     </div>
   );
 }
-

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { SaveIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { errorMessage } from "@/api/client";
+import { errorMessage, isConflictError } from "@/api/client";
 import { saveSettingsConfig } from "@/api/settings";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ type SettingsEditorProps = {
   vaultConfigPath?: string;
   initialApp?: AppConfig | null;
   initialVault?: VaultConfig | null;
+  initialRevision?: string | null;
   providerCatalog?: ExternalProviderCatalog;
   /** Title-language options from the core (`GET /api/languages`). */
   languages?: Language[];
@@ -54,6 +55,7 @@ export function SettingsEditor({
   vaultConfigPath,
   initialApp,
   initialVault,
+  initialRevision,
   providerCatalog,
   languages = [],
   onboarding = false,
@@ -73,6 +75,7 @@ export function SettingsEditor({
   // per-keystroke serialization, and untouched-dialog open/close keeps the same
   // reference (not dirty).
   const [baselineConfig, setBaselineConfig] = useState(config);
+  const [externalChange, setExternalChange] = useState(false);
   const [saving, setSaving] = useState(false);
   const taxonomyBase = joinPath(vaultRoot, config.taxonomyRoot);
   // The server only reports vaultConfigPath once a vault root is saved; during
@@ -128,18 +131,32 @@ export function SettingsEditor({
   // arrives. Re-seeding on every prop identity change (e.g. a background refetch
   // on window focus) would silently discard the user's in-progress schema edits.
   const seededRef = useRef(false);
-  useEffect(() => {
-    if (seededRef.current) return;
-    if (initialVault === undefined) return;
-    seededRef.current = true;
-    const seeded = normalizeVaultConfig(initialVault ?? undefined);
+  const seenServerSignatureRef = useRef<string | undefined>(undefined);
+  const loadedRevisionRef = useRef<string | undefined>(undefined);
+  const dirty = config !== baselineConfig;
+  const seedConfig = useCallback((source: VaultConfig | null | undefined, revision?: string | null) => {
+    const seeded = normalizeVaultConfig(source ?? undefined);
     setConfig(seeded);
     setBaselineConfig(seeded);
-  }, [initialVault]);
+    loadedRevisionRef.current = revision ?? undefined;
+    seededRef.current = true;
+    setExternalChange(false);
+  }, []);
+  useEffect(() => {
+    if (initialVault === undefined && initialRevision == null) return;
+    const signature = initialRevision ?? JSON.stringify(initialVault ?? null);
+    if (seenServerSignatureRef.current === signature) return;
+    seenServerSignatureRef.current = signature;
+    if (!seededRef.current) {
+      seedConfig(initialVault, initialRevision);
+      return;
+    }
+    if (dirty) setExternalChange(true);
+    else seedConfig(initialVault, initialRevision);
+  }, [dirty, initialRevision, initialVault, seedConfig]);
 
   // Dirty once any edit replaces the config object; resets when the baseline is
   // re-pointed at the current draft on seed/save.
-  const dirty = config !== baselineConfig;
   useEffect(() => {
     onDirtyChange?.(dirty);
     return () => onDirtyChange?.(false);
@@ -148,12 +165,14 @@ export function SettingsEditor({
   async function save() {
     setSaving(true);
     try {
-      await saveSettingsConfig(cleanVaultConfig(config, providerCatalog));
-      setBaselineConfig(config);
+      const request = cleanVaultConfig(config, providerCatalog);
+      const response = await saveSettingsConfig({ ...request, revision: loadedRevisionRef.current });
+      seedConfig(response.vault, response.revision);
       toast.success(t`Settings saved`);
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onSaved?.();
     } catch (error) {
+      if (isConflictError(error)) setExternalChange(true);
       toast.error(errorMessage(error));
     } finally {
       setSaving(false);
@@ -174,7 +193,7 @@ export function SettingsEditor({
               <Trans>Back</Trans>
             </Button>
           ) : null}
-          <Button type="button" onClick={save} disabled={saving || !settingsWritable}>
+          <Button type="button" onClick={save} disabled={saving || externalChange || !settingsWritable}>
             <SaveIcon data-icon="inline-start" />
             {saving ? t`Saving…` : onboarding ? t`Create vault` : t`Save`}
           </Button>
@@ -191,11 +210,29 @@ export function SettingsEditor({
         </Alert>
       ) : null}
 
+      {externalChange ? (
+        <Alert className="flex flex-wrap items-center justify-between gap-3">
+          <span className="min-w-0">
+            <Trans comment="Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved">
+              The vault schema changed on disk. Your unsaved edits are still here.
+            </Trans>
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => seedConfig(initialVault, initialRevision)}
+          >
+            <Trans>Reload latest version</Trans>
+          </Button>
+        </Alert>
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
         <SettingsOverview items={overviewItems} />
 
         {/* A disabled fieldset makes the whole schema form read-only natively. */}
-        <fieldset disabled={!settingsWritable} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+        <fieldset disabled={!settingsWritable || externalChange} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
           <SettingsSection
             id="vault"
             title={t`Vault`}

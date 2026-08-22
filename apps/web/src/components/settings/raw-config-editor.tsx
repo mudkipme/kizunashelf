@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { SaveIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { errorMessage } from "@/api/client";
+import { errorMessage, isConflictError } from "@/api/client";
 import { rawSettingsConfigQuery } from "@/api/queries";
 import { saveRawSettingsConfig } from "@/api/settings";
 import { Alert } from "@/components/ui/alert";
@@ -31,6 +31,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
   const [content, setContent] = useState("");
   // The last saved/loaded text; the editor is "dirty" when `content` differs.
   const [baseline, setBaseline] = useState("");
+  const [externalChange, setExternalChange] = useState(false);
   const [saving, setSaving] = useState(false);
   // Save failures here are the server's strict YAML validation output — often
   // multi-line (which field, what was wrong). That needs a persistent, full-width
@@ -40,17 +41,31 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
   // Seed the editable text from the loaded file exactly once, so a background
   // refetch (e.g. on window focus) never discards in-progress edits.
   const seededRef = useRef(false);
-  useEffect(() => {
-    if (seededRef.current) return;
-    if (raw.data === undefined) return;
+  const seenServerSignatureRef = useRef<string | undefined>(undefined);
+  const loadedRevisionRef = useRef<string | undefined>(undefined);
+  const dirty = seededRef.current && content !== baseline;
+  const seedContent = useCallback((next: string, revision?: string | null) => {
+    setContent(next);
+    setBaseline(next);
+    loadedRevisionRef.current = revision ?? undefined;
     seededRef.current = true;
-    setContent(raw.data.content);
-    setBaseline(raw.data.content);
-  }, [raw.data]);
+    setExternalChange(false);
+  }, []);
+  useEffect(() => {
+    if (raw.data === undefined) return;
+    const signature = raw.data.revision ?? raw.data.content;
+    if (seenServerSignatureRef.current === signature) return;
+    seenServerSignatureRef.current = signature;
+    if (!seededRef.current) {
+      seedContent(raw.data.content, raw.data.revision);
+      return;
+    }
+    if (dirty) setExternalChange(true);
+    else seedContent(raw.data.content, raw.data.revision);
+  }, [dirty, raw.data, seedContent]);
 
   // Dirty only once the seeded text is actually edited — not on mount, and not
   // after the seed echoes the loaded file back into both `content` and `baseline`.
-  const dirty = seededRef.current && content !== baseline;
   useEffect(() => {
     onDirtyChange?.(dirty);
     return () => onDirtyChange?.(false);
@@ -60,13 +75,13 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
     setSaving(true);
     setError(undefined);
     try {
-      const response = await saveRawSettingsConfig({ content });
+      const response = await saveRawSettingsConfig({ content, revision: loadedRevisionRef.current });
       // Echo back exactly what the server stored, and reset the dirty baseline.
-      setContent(response.content);
-      setBaseline(response.content);
+      seedContent(response.content, response.revision);
       toast.success(t`Settings saved`);
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
     } catch (saveError) {
+      if (isConflictError(saveError)) setExternalChange(true);
       setError(errorMessage(saveError));
     } finally {
       setSaving(false);
@@ -85,7 +100,11 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
           {path ? <p className="mt-1 truncate text-xs text-muted-foreground">{path}</p> : null}
         </div>
         <div className="flex items-center gap-2">
-          <Button type="button" onClick={save} disabled={saving || !settingsWritable || raw.isPending}>
+          <Button
+            type="button"
+            onClick={save}
+            disabled={saving || externalChange || !settingsWritable || raw.isPending}
+          >
             <SaveIcon data-icon="inline-start" />
             {saving ? t`Saving…` : t`Save`}
           </Button>
@@ -104,6 +123,24 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
 
       {error ? <Alert className="whitespace-pre-wrap">{error}</Alert> : null}
 
+      {externalChange ? (
+        <Alert className="flex flex-wrap items-center justify-between gap-3">
+          <span className="min-w-0">
+            <Trans comment="Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved">
+              config.yaml changed on disk. Your unsaved edits are still here.
+            </Trans>
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => raw.data && seedContent(raw.data.content, raw.data.revision)}
+          >
+            <Trans>Reload latest version</Trans>
+          </Button>
+        </Alert>
+      ) : null}
+
       {raw.isPending ? (
         <Placeholder>
           <Trans>Loading…</Trans>
@@ -113,7 +150,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
           className="min-h-[60vh] font-mono text-xs"
           value={content}
           onChange={(event) => setContent(event.target.value)}
-          disabled={!settingsWritable}
+          disabled={!settingsWritable || externalChange}
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"

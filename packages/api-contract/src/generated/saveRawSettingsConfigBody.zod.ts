@@ -7,7 +7,8 @@
 import { z as zod } from 'zod';
 
 export const SaveRawSettingsConfigBody = zod.object({
-  "content": zod.string()
+  "content": zod.string(),
+  "revision": zod.string().nullish()
 }).describe('Raw YAML text to validate and write verbatim to the vault config. The text is\nstrictly parsed first: type errors, missing required fields, invalid enum\nvalues, and any unknown field are rejected (`400`) rather than dropped.')
 
 export type SaveRawSettingsConfigBody = zod.input<typeof SaveRawSettingsConfigBody>;

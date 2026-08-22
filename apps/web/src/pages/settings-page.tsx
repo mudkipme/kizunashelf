@@ -100,6 +100,7 @@ export function SettingsPage() {
             vaultConfigPath={settings.data.vaultConfigPath ?? undefined}
             initialApp={settings.data.app}
             initialVault={settings.data.vault}
+            initialRevision={settings.data.revision}
             providerCatalog={providerCatalog.data}
             languages={languages.data?.languages ?? []}
             settingsWritable={settingsWritable}

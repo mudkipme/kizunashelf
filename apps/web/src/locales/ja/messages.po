@@ -94,8 +94,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 件が要レビュー}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:105
-#: src/components/settings/settings-editor.tsx:232
+#: src/components/settings/settings-editor.tsx:108
+#: src/components/settings/settings-editor.tsx:269
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 件のパス}}"
 
@@ -116,8 +116,8 @@ msgstr "{0, plural, other {# 件のルール}}"
 
 #. placeholder {0}: (config.home.sections ?? []).length
 #. placeholder {0}: list.sectionCount
-#: src/components/settings/settings-editor.tsx:117
-#: src/components/settings/settings-editor.tsx:305
+#: src/components/settings/settings-editor.tsx:120
+#: src/components/settings/settings-editor.tsx:342
 #: src/pages/lists-page.tsx:92
 msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, other {# 件のセクション}}"
@@ -150,8 +150,8 @@ msgstr "{0, plural, other {合計 # 件}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:134
-#: src/components/settings/settings-editor.tsx:123
-#: src/components/settings/settings-editor.tsx:340
+#: src/components/settings/settings-editor.tsx:126
+#: src/components/settings/settings-editor.tsx:377
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 件のタイプ}}"
 
@@ -212,7 +212,7 @@ msgstr "{0} 件スキップ"
 msgid "{ariaLabel} new property"
 msgstr "{ariaLabel} の新しいプロパティ"
 
-#: src/components/settings/settings-editor.tsx:342
+#: src/components/settings/settings-editor.tsx:379
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
 
@@ -247,11 +247,11 @@ msgstr "{total, plural, other {# 件}}"
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
 
-#: src/pages/smart-list-page.tsx:243
+#: src/pages/smart-list-page.tsx:259
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 件が一致}}"
 
-#: src/components/settings/settings-editor.tsx:341
+#: src/components/settings/settings-editor.tsx:378
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 件のフィールド}}"
 
@@ -302,7 +302,7 @@ msgstr "📅 予定"
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "このタイトルと同名のファイルがすでに存在したため、「{0}」として保存しました。"
 
-#: src/pages/smart-list-page.tsx:547
+#: src/pages/smart-list-page.tsx:579
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名のリストが既に存在するか、ファイルがディスク上で変更されています。"
 
@@ -314,7 +314,7 @@ msgstr "君が愛するすべてのための本棚"
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "同名のタイプがすでに存在するため、代わりに {assignedIds} を使用しました。追加後に名前を変更できます。"
 
-#: src/components/settings/settings-editor.tsx:266
+#: src/components/settings/settings-editor.tsx:303
 msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 msgstr "すべてのエントリに付けられる共通のラベルリストです。専用のエディタ・フィルタ・ルールに対応します。オプトイン方式: リストを保持するフロントマターのキー名を指定すると有効になります。"
 
@@ -337,7 +337,7 @@ msgstr "アクティビティ"
 #: src/pages/home-page.tsx:46
 #: src/pages/library-page.tsx:369
 #: src/pages/library-page.tsx:374
-#: src/pages/list-detail-page.tsx:922
+#: src/pages/list-detail-page.tsx:977
 msgid "Add"
 msgstr "追加"
 
@@ -385,8 +385,8 @@ msgstr "フィールドを追加"
 msgid "Add group"
 msgstr "グループを追加"
 
-#: src/pages/list-detail-page.tsx:449
-#: src/pages/list-detail-page.tsx:876
+#: src/pages/list-detail-page.tsx:504
+#: src/pages/list-detail-page.tsx:931
 msgid "Add items"
 msgstr "アイテムを追加"
 
@@ -407,7 +407,7 @@ msgstr "ルールを追加"
 msgid "Add season"
 msgstr "シーズンを追加"
 
-#: src/pages/list-detail-page.tsx:445
+#: src/pages/list-detail-page.tsx:500
 msgid "Add section"
 msgstr "セクションを追加"
 
@@ -421,7 +421,7 @@ msgid "Add year"
 msgstr "年を追加"
 
 #: src/components/settings/preset-picker.tsx:343
-#: src/pages/list-detail-page.tsx:911
+#: src/pages/list-detail-page.tsx:966
 msgid "Added"
 msgstr "追加済み"
 
@@ -477,7 +477,7 @@ msgstr "すべてのソース"
 #: src/pages/calendar-page.tsx:131
 #: src/pages/lists-page.tsx:217
 #: src/pages/review-page.tsx:170
-#: src/pages/smart-list-page.tsx:452
+#: src/pages/smart-list-page.tsx:484
 msgid "All types"
 msgstr "すべてのタイプ"
 
@@ -530,20 +530,20 @@ msgstr "適用中…"
 msgid "Ascending"
 msgstr "昇順"
 
-#: src/components/settings/settings-editor.tsx:217
+#: src/components/settings/settings-editor.tsx:254
 msgid "Asset root"
 msgstr "アセットのルート"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:207
+#: src/components/settings/settings-editor.tsx:244
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
 #: src/components/layout/app-frame.tsx:137
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:79
-#: src/components/settings/settings-editor.tsx:174
-#: src/pages/entity-edit-page.tsx:161
+#: src/components/settings/settings-editor.tsx:193
+#: src/pages/entity-edit-page.tsx:172
 msgid "Back"
 msgstr "戻る"
 
@@ -595,12 +595,12 @@ msgstr "カレンダー"
 #: src/pages/entity-page.tsx:696
 #: src/pages/import-wizard-page.tsx:274
 #: src/pages/import-wizard-page.tsx:308
-#: src/pages/list-detail-page.tsx:526
-#: src/pages/list-detail-page.tsx:997
+#: src/pages/list-detail-page.tsx:581
+#: src/pages/list-detail-page.tsx:1052
 #: src/pages/lists-page.tsx:230
-#: src/pages/smart-list-page.tsx:255
-#: src/pages/smart-list-page.tsx:392
-#: src/pages/smart-list-page.tsx:590
+#: src/pages/smart-list-page.tsx:274
+#: src/pages/smart-list-page.tsx:424
+#: src/pages/smart-list-page.tsx:622
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -613,7 +613,7 @@ msgstr "追いつく"
 msgid "Change completion date"
 msgstr "完了日を変更"
 
-#: src/pages/list-detail-page.tsx:973
+#: src/pages/list-detail-page.tsx:1028
 msgid "Changes the list's name."
 msgstr "リストの名前を変更します。"
 
@@ -668,6 +668,11 @@ msgstr "近日公開"
 msgid "Completed"
 msgstr "完了"
 
+#. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
+#: src/components/settings/raw-config-editor.tsx:129
+msgid "config.yaml changed on disk. Your unsaved edits are still here."
+msgstr "config.yaml がディスク上で変更されました。未保存の編集内容はそのまま残っています。"
+
 #: src/components/settings/settings-dialogs.tsx:506
 msgid "Configure a section shown on the home page: its source type, filters, and ordering."
 msgstr "ホームページに表示するセクションを設定します: ソースタイプ、フィルター、並び順。"
@@ -684,7 +689,7 @@ msgstr "このフィールドの読み取り、導出、表示方法を設定し
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "新しいフィールドを設定し、「完了」を選択して追加します。戻ると破棄されます。"
 
-#: src/components/settings/settings-editor.tsx:168
+#: src/components/settings/settings-editor.tsx:187
 msgid "Configure Vault"
 msgstr "保管庫を設定"
 
@@ -754,7 +759,7 @@ msgstr "作成して追加"
 msgid "Create new vault"
 msgstr "新しい保管庫を作成"
 
-#: src/components/settings/settings-editor.tsx:179
+#: src/components/settings/settings-editor.tsx:198
 #: src/components/settings/vault-switcher.tsx:166
 #: src/pages/onboarding-page.tsx:235
 msgid "Create vault"
@@ -793,7 +798,7 @@ msgstr "カスタムフィールド"
 msgid "Custom field name"
 msgstr "カスタムフィールド名"
 
-#: src/components/settings/settings-editor.tsx:258
+#: src/components/settings/settings-editor.tsx:295
 msgid "Daily note indexing is disabled."
 msgstr "デイリーノートのインデックス作成は無効です。"
 
@@ -801,8 +806,8 @@ msgstr "デイリーノートのインデックス作成は無効です。"
 msgid "Daily note mentions"
 msgstr "デイリーノートでの言及"
 
-#: src/components/settings/settings-editor.tsx:103
-#: src/components/settings/settings-editor.tsx:227
+#: src/components/settings/settings-editor.tsx:106
+#: src/components/settings/settings-editor.tsx:264
 #: src/pages/activity-page.tsx:30
 #: src/pages/statistics-page.tsx:33
 msgid "Daily Notes"
@@ -870,14 +875,14 @@ msgid "Default line format"
 msgstr "デフォルトの行フォーマット"
 
 #: src/pages/entity-page.tsx:466
-#: src/pages/list-detail-page.tsx:412
-#: src/pages/list-detail-page.tsx:626
-#: src/pages/smart-list-page.tsx:297
-#: src/pages/smart-list-page.tsx:395
+#: src/pages/list-detail-page.tsx:445
+#: src/pages/list-detail-page.tsx:681
+#: src/pages/smart-list-page.tsx:316
+#: src/pages/smart-list-page.tsx:427
 msgid "Delete"
 msgstr "削除"
 
-#: src/pages/smart-list-page.tsx:381
+#: src/pages/smart-list-page.tsx:413
 msgid "Delete this smart list?"
 msgstr "このスマートリストを削除しますか？"
 
@@ -886,11 +891,11 @@ msgstr "このスマートリストを削除しますか？"
 msgid "Descending"
 msgstr "降順"
 
-#: src/pages/list-detail-page.tsx:431
+#: src/pages/list-detail-page.tsx:486
 msgid "Describe this list (appears above the items)…"
 msgstr "このリストの説明（アイテムの上に表示されます）…"
 
-#: src/pages/list-detail-page.tsx:429
+#: src/pages/list-detail-page.tsx:484
 msgid "Description"
 msgstr "説明"
 
@@ -911,13 +916,13 @@ msgstr "方向"
 msgid "Disable"
 msgstr "無効にする"
 
-#: src/pages/entity-edit-page.tsx:233
-#: src/pages/settings-page.tsx:144
+#: src/pages/entity-edit-page.tsx:244
+#: src/pages/settings-page.tsx:145
 msgid "Discard"
 msgstr "破棄"
 
-#: src/pages/entity-edit-page.tsx:215
-#: src/pages/settings-page.tsx:120
+#: src/pages/entity-edit-page.tsx:226
+#: src/pages/settings-page.tsx:121
 msgid "Discard unsaved changes?"
 msgstr "保存していない変更を破棄しますか？"
 
@@ -938,7 +943,7 @@ msgstr "にリンクしていない"
 #: src/components/settings/settings-dialogs.tsx:316
 #: src/components/settings/settings-dialogs.tsx:353
 #: src/pages/entity-page.tsx:632
-#: src/pages/list-detail-page.tsx:933
+#: src/pages/list-detail-page.tsx:988
 msgid "Done"
 msgstr "完了"
 
@@ -958,11 +963,11 @@ msgstr "リモートのカバー画像をダウンロード"
 msgid "Download scope"
 msgstr "ダウンロード範囲"
 
-#: src/pages/list-detail-page.tsx:666
+#: src/pages/list-detail-page.tsx:721
 msgid "Drag items here"
 msgstr "ここにアイテムをドラッグ"
 
-#: src/pages/list-detail-page.tsx:729
+#: src/pages/list-detail-page.tsx:784
 msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
@@ -976,24 +981,24 @@ msgid "Duplicate Filenames"
 msgstr "重複したファイル名"
 
 #: src/pages/entity-page.tsx:439
-#: src/pages/list-detail-page.tsx:820
+#: src/pages/list-detail-page.tsx:875
 msgid "Edit"
 msgstr "編集"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:150
+#: src/pages/entity-edit-page.tsx:161
 msgid "Edit {0}"
 msgstr "{0} を編集"
 
-#: src/components/settings/raw-config-editor.tsx:83
+#: src/components/settings/raw-config-editor.tsx:98
 msgid "Edit config.yaml"
 msgstr "config.yaml を編集"
 
-#: src/pages/smart-list-page.tsx:277
+#: src/pages/smart-list-page.tsx:296
 msgid "Edit criteria"
 msgstr "条件を編集"
 
-#: src/pages/entity-edit-page.tsx:150
+#: src/pages/entity-edit-page.tsx:161
 msgid "Edit entity"
 msgstr "アイテムを編集"
 
@@ -1040,7 +1045,7 @@ msgstr "アイテム"
 msgid "Entity name"
 msgstr "アイテム名"
 
-#: src/pages/entity-edit-page.tsx:206
+#: src/pages/entity-edit-page.tsx:217
 #: src/pages/entity-page.tsx:390
 msgid "Entity not found"
 msgstr "アイテムが見つかりません"
@@ -1169,7 +1174,7 @@ msgstr "フォーム"
 msgid "Frontmatter"
 msgstr "フロントマター"
 
-#: src/components/settings/settings-editor.tsx:285
+#: src/components/settings/settings-editor.tsx:322
 msgid "Frontmatter key"
 msgstr "フロントマターのキー"
 
@@ -1219,8 +1224,8 @@ msgid "Heading"
 msgstr "見出し"
 
 #: src/components/layout/app-frame.tsx:419
-#: src/components/settings/settings-editor.tsx:115
-#: src/components/settings/settings-editor.tsx:300
+#: src/components/settings/settings-editor.tsx:118
+#: src/components/settings/settings-editor.tsx:337
 #: src/pages/home-page.tsx:30
 msgid "Home"
 msgstr "ホーム"
@@ -1230,7 +1235,7 @@ msgstr "ホーム"
 msgid "Home section"
 msgstr "ホームセクション"
 
-#: src/components/settings/settings-editor.tsx:329
+#: src/components/settings/settings-editor.tsx:366
 msgid "Home sections are disabled."
 msgstr "ホームセクションは無効です。"
 
@@ -1386,7 +1391,7 @@ msgstr "アイテム"
 msgid "Items {0}"
 msgstr "アイテム {0}"
 
-#: src/pages/list-detail-page.tsx:439
+#: src/pages/list-detail-page.tsx:494
 msgid "Items <0>({totalItems})</0>"
 msgstr "アイテム <0>({totalItems})</0>"
 
@@ -1394,8 +1399,8 @@ msgstr "アイテム <0>({totalItems})</0>"
 msgid "Japanese"
 msgstr "日本語"
 
-#: src/pages/entity-edit-page.tsx:225
-#: src/pages/settings-page.tsx:136
+#: src/pages/entity-edit-page.tsx:236
+#: src/pages/settings-page.tsx:137
 msgid "Keep editing"
 msgstr "編集を続ける"
 
@@ -1447,7 +1452,7 @@ msgid "Light theme. Switch to dark theme."
 msgstr "ライトテーマ。ダークテーマに切り替えます。"
 
 #: src/components/settings/settings-sections.tsx:186
-#: src/pages/smart-list-page.tsx:478
+#: src/pages/smart-list-page.tsx:510
 msgid "Limit"
 msgstr "上限"
 
@@ -1497,15 +1502,15 @@ msgstr "リスト"
 msgid "List created"
 msgstr "リストを作成しました"
 
-#: src/pages/list-detail-page.tsx:365
+#: src/pages/list-detail-page.tsx:398
 msgid "List deleted"
 msgstr "リストを削除しました"
 
-#: src/pages/list-detail-page.tsx:387
+#: src/pages/list-detail-page.tsx:420
 msgid "List not found"
 msgstr "リストが見つかりません"
 
-#: src/pages/list-detail-page.tsx:632
+#: src/pages/list-detail-page.tsx:687
 msgid "List style"
 msgstr "リストのスタイル"
 
@@ -1535,20 +1540,20 @@ msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
 #: src/components/assets/episode-sync-dialog.tsx:273
-#: src/components/settings/raw-config-editor.tsx:109
+#: src/components/settings/raw-config-editor.tsx:146
 #: src/pages/activity-page.tsx:195
-#: src/pages/entity-edit-page.tsx:185
+#: src/pages/entity-edit-page.tsx:196
 #: src/pages/entity-page.tsx:280
 #: src/pages/entity-page.tsx:571
 #: src/pages/home-page.tsx:54
 #: src/pages/import-wizard-page.tsx:258
-#: src/pages/list-detail-page.tsx:383
-#: src/pages/list-detail-page.tsx:888
+#: src/pages/list-detail-page.tsx:416
+#: src/pages/list-detail-page.tsx:943
 #: src/pages/lists-page.tsx:55
 #: src/pages/onboarding-page.tsx:69
 #: src/pages/review-page.tsx:146
 #: src/pages/settings-page.tsx:96
-#: src/pages/smart-list-page.tsx:230
+#: src/pages/smart-list-page.tsx:246
 #: src/pages/statistics-page.tsx:48
 msgid "Loading…"
 msgstr "読み込み中…"
@@ -1587,11 +1592,11 @@ msgstr "リストを管理"
 msgid "Map each option to a status"
 msgstr "各オプションをステータスに割り当て"
 
-#: src/pages/list-detail-page.tsx:744
+#: src/pages/list-detail-page.tsx:799
 msgid "Mark as done"
 msgstr "完了にする"
 
-#: src/pages/list-detail-page.tsx:744
+#: src/pages/list-detail-page.tsx:799
 msgid "Mark as not done"
 msgstr "未完了にする"
 
@@ -1618,7 +1623,7 @@ msgstr "一致モード"
 
 #: src/components/assets/entity-dates.tsx:21
 #: src/pages/entity-create-page.tsx:143
-#: src/pages/entity-edit-page.tsx:189
+#: src/pages/entity-edit-page.tsx:200
 msgid "Metadata"
 msgstr "メタデータ"
 
@@ -1647,12 +1652,12 @@ msgstr "{label}を下へ移動"
 msgid "Move {label} up"
 msgstr "{label}を上へ移動"
 
-#: src/pages/list-detail-page.tsx:515
+#: src/pages/list-detail-page.tsx:570
 msgid "Move list to trash?"
 msgstr "リストをゴミ箱に移動しますか？"
 
 #: src/pages/entity-page.tsx:494
-#: src/pages/list-detail-page.tsx:535
+#: src/pages/list-detail-page.tsx:590
 msgid "Move to Trash"
 msgstr "ゴミ箱に移動"
 
@@ -1673,9 +1678,9 @@ msgid "My Vault"
 msgstr "マイ保管庫"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:105
-#: src/pages/list-detail-page.tsx:985
+#: src/pages/list-detail-page.tsx:1040
 #: src/pages/lists-page.tsx:200
-#: src/pages/smart-list-page.tsx:573
+#: src/pages/smart-list-page.tsx:605
 msgid "Name"
 msgstr "名前"
 
@@ -1697,7 +1702,7 @@ msgstr "新しいフィールド"
 msgid "New list"
 msgstr "新しいリスト"
 
-#: src/pages/list-detail-page.tsx:308
+#: src/pages/list-detail-page.tsx:341
 msgid "New section"
 msgstr "新しいセクション"
 
@@ -1738,7 +1743,7 @@ msgstr "このタイプのスキーマに一致する候補フィールドまた
 msgid "No candidates loaded"
 msgstr "候補が読み込まれていません"
 
-#: src/pages/smart-list-page.tsx:343
+#: src/pages/smart-list-page.tsx:375
 msgid "No criteria — everything in the library matches."
 msgstr "条件がありません — ライブラリのすべてが一致します。"
 
@@ -1768,7 +1773,7 @@ msgstr "アイテムのタイプが設定されていません。"
 msgid "No entries"
 msgstr "エントリなし"
 
-#: src/pages/smart-list-page.tsx:364
+#: src/pages/smart-list-page.tsx:396
 msgid "No entries match the criteria"
 msgstr "条件に一致する項目がありません"
 
@@ -1788,7 +1793,7 @@ msgstr "フィールドが設定されていません。"
 msgid "No folder selected"
 msgstr "フォルダーが選択されていません"
 
-#: src/pages/smart-list-page.tsx:341
+#: src/pages/smart-list-page.tsx:373
 msgid "No further criteria — every entity of this type matches."
 msgstr "追加の条件はありません — このタイプのすべてのアイテムが一致します。"
 
@@ -1805,11 +1810,11 @@ msgstr "まだホームセクションはありません"
 msgid "No items yet — sync from a provider or add a list under the <0>{0}</0> heading."
 msgstr "まだアイテムがありません — プロバイダーから同期するか、<0>{0}</0> 見出しの下にリストを追加してください。"
 
-#: src/pages/list-detail-page.tsx:455
+#: src/pages/list-detail-page.tsx:510
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "まだアイテムがありません。「アイテムを追加」でこのリストにアイテムを入れるか、「セクションを追加」でグループ化してください。"
 
-#: src/pages/smart-list-page.tsx:476
+#: src/pages/smart-list-page.tsx:508
 msgid "No limit"
 msgstr "制限なし"
 
@@ -1837,7 +1842,7 @@ msgstr "一致なし"
 msgid "No matches found."
 msgstr "一致するものが見つかりませんでした。"
 
-#: src/pages/list-detail-page.tsx:892
+#: src/pages/list-detail-page.tsx:947
 msgid "No matching entities."
 msgstr "一致するアイテムがありません。"
 
@@ -1919,12 +1924,12 @@ msgstr "ノート"
 
 #: src/components/assets/entity-detail.tsx:227
 #: src/components/entities/metadata-editor.tsx:168
-#: src/pages/list-detail-page.tsx:486
+#: src/pages/list-detail-page.tsx:541
 #: src/pages/statistics-page.tsx:32
 msgid "Notes"
 msgstr "ノート"
 
-#: src/pages/list-detail-page.tsx:488
+#: src/pages/list-detail-page.tsx:543
 msgid "Notes shown below the items…"
 msgstr "アイテムの下に表示されるノート…"
 
@@ -1941,15 +1946,15 @@ msgstr "このタイプに記録するものがありません。"
 msgid "of the following match:"
 msgstr "以下の条件:"
 
-#: src/components/settings/settings-editor.tsx:233
-#: src/components/settings/settings-editor.tsx:269
+#: src/components/settings/settings-editor.tsx:270
 #: src/components/settings/settings-editor.tsx:306
+#: src/components/settings/settings-editor.tsx:343
 msgid "off"
 msgstr "オフ"
 
-#: src/components/settings/settings-editor.tsx:106
-#: src/components/settings/settings-editor.tsx:111
-#: src/components/settings/settings-editor.tsx:118
+#: src/components/settings/settings-editor.tsx:109
+#: src/components/settings/settings-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:121
 msgid "Off"
 msgstr "オフ"
 
@@ -1958,11 +1963,11 @@ msgstr "オフ"
 msgid "older than"
 msgstr "が次より古い"
 
-#: src/components/settings/settings-editor.tsx:269
+#: src/components/settings/settings-editor.tsx:306
 msgid "on"
 msgstr "オン"
 
-#: src/components/settings/settings-editor.tsx:111
+#: src/components/settings/settings-editor.tsx:114
 msgid "On"
 msgstr "オン"
 
@@ -2003,7 +2008,7 @@ msgstr "保管庫を開くか作成して始めましょう。"
 msgid "Operator"
 msgstr "演算子"
 
-#: src/pages/list-detail-page.tsx:644
+#: src/pages/list-detail-page.tsx:699
 msgid "Ordered"
 msgstr "順序あり"
 
@@ -2015,7 +2020,7 @@ msgstr "オリジナル"
 msgid "Original (filename is the title)"
 msgstr "オリジナル（ファイル名がタイトル）"
 
-#: src/components/settings/settings-editor.tsx:370
+#: src/components/settings/settings-editor.tsx:407
 msgid "Overview"
 msgstr "概要"
 
@@ -2049,7 +2054,7 @@ msgstr "日付を選択"
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "いくつか選んでください — いつでも追加できます。ライブラリは自分が所有するフォルダー内のプレーンな Markdown ファイルで、このアプリがなくても読めます。"
 
-#: src/pages/smart-list-page.tsx:491
+#: src/pages/smart-list-page.tsx:523
 msgid "Pick a scope to filter on that type's own fields — across all types only the properties every entry has can be matched."
 msgstr "範囲となるタイプを選ぶと、そのタイプ固有のフィールドで絞り込めます。すべてのタイプでは、どのエントリーも持つプロパティしか条件にできません。"
 
@@ -2071,7 +2076,7 @@ msgstr "計画中"
 msgid "Prev"
 msgstr "前へ"
 
-#: src/pages/list-detail-page.tsx:820
+#: src/pages/list-detail-page.tsx:875
 msgid "Preview"
 msgstr "プレビュー"
 
@@ -2153,7 +2158,11 @@ msgstr "関連度"
 msgid "Reload"
 msgstr "再読み込み"
 
-#: src/pages/entity-edit-page.tsx:178
+#: src/components/settings/raw-config-editor.tsx:139
+#: src/components/settings/settings-editor.tsx:226
+#: src/pages/entity-edit-page.tsx:189
+#: src/pages/list-detail-page.tsx:478
+#: src/pages/smart-list-page.tsx:353
 msgid "Reload latest version"
 msgstr "最新バージョンを再読み込み"
 
@@ -2193,7 +2202,7 @@ msgstr "アイコンを削除"
 msgid "Remove image"
 msgstr "画像を削除"
 
-#: src/pages/list-detail-page.tsx:788
+#: src/pages/list-detail-page.tsx:843
 msgid "Remove item"
 msgstr "アイテムを削除"
 
@@ -2213,19 +2222,19 @@ msgstr "タイプを削除"
 #: src/pages/entity-page.tsx:443
 #: src/pages/entity-page.tsx:667
 #: src/pages/entity-page.tsx:703
-#: src/pages/list-detail-page.tsx:402
-#: src/pages/list-detail-page.tsx:622
-#: src/pages/list-detail-page.tsx:1001
-#: src/pages/smart-list-page.tsx:287
-#: src/pages/smart-list-page.tsx:597
+#: src/pages/list-detail-page.tsx:435
+#: src/pages/list-detail-page.tsx:677
+#: src/pages/list-detail-page.tsx:1056
+#: src/pages/smart-list-page.tsx:306
+#: src/pages/smart-list-page.tsx:629
 msgid "Rename"
 msgstr "名前を変更"
 
-#: src/pages/list-detail-page.tsx:970
+#: src/pages/list-detail-page.tsx:1025
 msgid "Rename list"
 msgstr "リストの名前を変更"
 
-#: src/pages/smart-list-page.tsx:558
+#: src/pages/smart-list-page.tsx:590
 msgid "Rename smart list"
 msgstr "スマートリストの名前を変更"
 
@@ -2242,13 +2251,13 @@ msgstr "名前を変更しました — {updated, plural, other {# 件のリン�
 msgid "renamed to “{0}”"
 msgstr "「{0}」に名前を変更しました"
 
-#: src/pages/smart-list-page.tsx:561
+#: src/pages/smart-list-page.tsx:593
 msgid "Renames the .base file in your vault."
 msgstr "保管庫内の .base ファイルの名前を変更します。"
 
 #: src/pages/entity-page.tsx:703
-#: src/pages/list-detail-page.tsx:1001
-#: src/pages/smart-list-page.tsx:597
+#: src/pages/list-detail-page.tsx:1056
+#: src/pages/smart-list-page.tsx:629
 msgid "Renaming…"
 msgstr "名前を変更中…"
 
@@ -2285,10 +2294,10 @@ msgid "Running…"
 msgstr "実行中…"
 
 #: src/components/entities/metadata-editor.tsx:130
-#: src/components/settings/raw-config-editor.tsx:90
-#: src/components/settings/settings-editor.tsx:179
-#: src/pages/list-detail-page.tsx:424
-#: src/pages/smart-list-page.tsx:264
+#: src/components/settings/raw-config-editor.tsx:109
+#: src/components/settings/settings-editor.tsx:198
+#: src/pages/list-detail-page.tsx:457
+#: src/pages/smart-list-page.tsx:283
 msgid "Save"
 msgstr "保存"
 
@@ -2306,7 +2315,7 @@ msgstr "認証情報を保存"
 msgid "Saved"
 msgstr "保存しました"
 
-#: src/components/settings/raw-config-editor.tsx:124
+#: src/components/settings/raw-config-editor.tsx:161
 msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
 msgstr "そのまま保存されます。ファイル全体は保存時に検証され、不明なフィールドや不正な値は拒否されます。"
 
@@ -2320,21 +2329,21 @@ msgstr "現在のタイプ・条件・並び順をスマートリストとして
 
 #: src/components/entities/metadata-editor.tsx:130
 #: src/components/settings/provider-credentials.tsx:83
-#: src/components/settings/raw-config-editor.tsx:90
-#: src/components/settings/settings-editor.tsx:179
-#: src/pages/list-detail-page.tsx:424
-#: src/pages/smart-list-page.tsx:264
+#: src/components/settings/raw-config-editor.tsx:109
+#: src/components/settings/settings-editor.tsx:198
+#: src/pages/list-detail-page.tsx:457
+#: src/pages/smart-list-page.tsx:283
 msgid "Saving…"
 msgstr "保存中…"
 
-#: src/components/settings/raw-config-editor.tsx:97
-#: src/components/settings/settings-editor.tsx:186
+#: src/components/settings/raw-config-editor.tsx:116
+#: src/components/settings/settings-editor.tsx:205
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "このインスタンスではスキーマ編集が無効です（読み取り専用）。有効にするには <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> を設定してください。"
 
 #: src/pages/lists-page.tsx:211
-#: src/pages/smart-list-page.tsx:441
-#: src/pages/smart-list-page.tsx:446
+#: src/pages/smart-list-page.tsx:473
+#: src/pages/smart-list-page.tsx:478
 msgid "Scope"
 msgstr "範囲"
 
@@ -2348,7 +2357,7 @@ msgstr "検索"
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
 
-#: src/pages/list-detail-page.tsx:882
+#: src/pages/list-detail-page.tsx:937
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
@@ -2394,12 +2403,12 @@ msgstr "シーズンの言語"
 msgid "Section"
 msgstr "セクション"
 
-#: src/pages/list-detail-page.tsx:612
+#: src/pages/list-detail-page.tsx:667
 msgid "Section actions"
 msgstr "セクションの操作"
 
-#: src/pages/list-detail-page.tsx:585
-#: src/pages/list-detail-page.tsx:587
+#: src/pages/list-detail-page.tsx:640
+#: src/pages/list-detail-page.tsx:642
 msgid "Section heading"
 msgstr "セクションの見出し"
 
@@ -2456,12 +2465,12 @@ msgid "Selected Metadata"
 msgstr "選択したメタデータ"
 
 #: src/components/layout/app-frame.tsx:472
-#: src/components/settings/settings-editor.tsx:168
+#: src/components/settings/settings-editor.tsx:187
 msgid "Settings"
 msgstr "設定"
 
-#: src/components/settings/raw-config-editor.tsx:67
-#: src/components/settings/settings-editor.tsx:153
+#: src/components/settings/raw-config-editor.tsx:81
+#: src/components/settings/settings-editor.tsx:171
 msgid "Settings saved"
 msgstr "設定を保存しました"
 
@@ -2492,19 +2501,19 @@ msgstr "スマートリスト"
 msgid "Smart list created"
 msgstr "スマートリストを作成しました"
 
-#: src/pages/smart-list-page.tsx:201
+#: src/pages/smart-list-page.tsx:206
 msgid "Smart list deleted"
 msgstr "スマートリストを削除しました"
 
-#: src/pages/smart-list-page.tsx:234
+#: src/pages/smart-list-page.tsx:250
 msgid "Smart list not found"
 msgstr "スマートリストが見つかりません"
 
-#: src/pages/smart-list-page.tsx:539
+#: src/pages/smart-list-page.tsx:571
 msgid "Smart list renamed"
 msgstr "スマートリストの名前を変更しました"
 
-#: src/pages/smart-list-page.tsx:187
+#: src/pages/smart-list-page.tsx:191
 msgid "Smart list saved"
 msgstr "スマートリストを保存しました"
 
@@ -2516,7 +2525,7 @@ msgstr "一部の画像をダウンロードできませんでした"
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "一部の画像をダウンロードできませんでした: {reasons}"
 
-#: src/pages/smart-list-page.tsx:615
+#: src/pages/smart-list-page.tsx:647
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "このファイルの一部の構文はサポートされていないため無視されます:"
 
@@ -2533,7 +2542,7 @@ msgstr "並び替え"
 
 #. Label before the sort-key picker of the active smart-list view
 #. placeholder {0}: activeView.name
-#: src/pages/smart-list-page.tsx:462
+#: src/pages/smart-list-page.tsx:494
 msgid "Sort {0} by"
 msgstr "{0} の並び順"
 
@@ -2594,11 +2603,11 @@ msgstr "ステータスの不一致"
 msgid "Status, score & dates"
 msgstr "ステータス、評価、日付"
 
-#: src/components/settings/settings-editor.tsx:204
+#: src/components/settings/settings-editor.tsx:241
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault."
 msgstr "保管庫内の {vaultPath} に保存されます。分類、アセット、デイリーノート、ホーム、タイプは保管庫と同期されます。"
 
-#: src/components/settings/settings-editor.tsx:205
+#: src/components/settings/settings-editor.tsx:242
 msgid "Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault."
 msgstr "保管庫内に保存されます。分類、アセット、デイリーノート、ホーム、タイプは保管庫と同期されます。"
 
@@ -2636,13 +2645,13 @@ msgstr "システムテーマ。ライトテーマに切り替えます。"
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:86
-#: src/components/settings/settings-editor.tsx:110
-#: src/components/settings/settings-editor.tsx:265
+#: src/components/settings/settings-editor.tsx:113
+#: src/components/settings/settings-editor.tsx:302
 #: src/components/smart-lists/rule-builder.tsx:193
 msgid "Tags"
 msgstr "タグ"
 
-#: src/components/settings/settings-editor.tsx:293
+#: src/components/settings/settings-editor.tsx:330
 msgid "Tags are disabled."
 msgstr "タグは無効です。"
 
@@ -2655,16 +2664,16 @@ msgstr "分類 {0}"
 msgid "Taxonomy dates"
 msgstr "分類の日付"
 
-#: src/components/settings/settings-editor.tsx:211
+#: src/components/settings/settings-editor.tsx:248
 msgid "Taxonomy root"
 msgstr "分類のルート"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:99
+#: src/components/settings/settings-editor.tsx:102
 msgid "taxonomy: {0}"
 msgstr "分類: {0}"
 
-#: src/pages/smart-list-page.tsx:384
+#: src/pages/smart-list-page.tsx:416
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base ファイルは保管庫のゴミ箱フォルダに移動します。一致するアイテムには影響しません。"
 
@@ -2684,9 +2693,19 @@ msgstr "ページで予期しないエラーが発生しました。もう一度
 msgid "The same rules as smart lists; the section shows entities that match."
 msgstr "スマートリストと同じルールです。セクションには一致するアイテムが表示されます。"
 
+#. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
+#: src/components/settings/settings-editor.tsx:216
+msgid "The vault schema changed on disk. Your unsaved edits are still here."
+msgstr "保管庫のスキーマがディスク上で変更されました。未保存の編集内容はそのまま残っています。"
+
 #: src/components/settings/preset-picker.tsx:145
 msgid "These existing types can link to what you're adding."
 msgstr "これらの既存のタイプは、追加するものにリンクできます。"
+
+#. Warning banner in the static-list editor after another app changes its Markdown file; the local draft has been preserved
+#: src/pages/list-detail-page.tsx:464
+msgid "This list changed on disk. Your unsaved edits are still here."
+msgstr "このリストはディスク上で変更されました。未保存の編集内容はそのまま残っています。"
 
 #: src/components/home/coming-up-section.tsx:202
 msgid "This month"
@@ -2698,7 +2717,7 @@ msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "{0} をゴミ箱に移動します。必要になったら後で復元できます。"
 
 #. placeholder {0}: data.name
-#: src/pages/list-detail-page.tsx:518
+#: src/pages/list-detail-page.tsx:573
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 msgstr "<0>{0}</0> をゴミ箱に移動します。含まれるアイテムはそのままです。"
 
@@ -2706,9 +2725,14 @@ msgstr "<0>{0}</0> をゴミ箱に移動します。含まれるアイテムは�
 msgid "This page doesn’t exist or may have moved."
 msgstr "このページは存在しないか、移動された可能性があります。"
 
-#: src/pages/smart-list-page.tsx:192
+#: src/pages/smart-list-page.tsx:197
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "このスマートリストはディスク上で変更されました。ページを再読み込みして編集をやり直してください。"
+
+#. Warning banner in the smart-list editor after another app changes its .base file; the local draft has been preserved
+#: src/pages/smart-list-page.tsx:348
+msgid "This smart list changed on disk. Your unsaved edits are still here."
+msgstr "このスマートリストはディスク上で変更されました。未保存の編集内容はそのまま残っています。"
 
 #: src/components/home/coming-up-section.tsx:201
 msgid "This week"
@@ -2734,7 +2758,7 @@ msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 msgid "Today"
 msgstr "今日"
 
-#: src/pages/list-detail-page.tsx:648
+#: src/pages/list-detail-page.tsx:703
 msgid "Todo"
 msgstr "未対応"
 
@@ -2776,8 +2800,8 @@ msgid "Type Distribution"
 msgstr "タイプの分布"
 
 #: src/components/settings/settings-dialogs.tsx:202
-#: src/components/settings/settings-editor.tsx:122
-#: src/components/settings/settings-editor.tsx:336
+#: src/components/settings/settings-editor.tsx:125
+#: src/components/settings/settings-editor.tsx:373
 msgid "Types"
 msgstr "タイプ"
 
@@ -2785,7 +2809,7 @@ msgstr "タイプ"
 msgid "UI in English"
 msgstr "UI を英語で表示"
 
-#: src/pages/list-detail-page.tsx:579
+#: src/pages/list-detail-page.tsx:634
 msgid "Ungrouped"
 msgstr "グループなし"
 
@@ -2805,7 +2829,7 @@ msgstr "未マッピング"
 msgid "Unmatched"
 msgstr "未マッチ"
 
-#: src/pages/list-detail-page.tsx:640
+#: src/pages/list-detail-page.tsx:695
 msgid "Unordered"
 msgstr "順序なし"
 
@@ -2813,7 +2837,7 @@ msgstr "順序なし"
 msgid "Unresolved"
 msgstr "未解決"
 
-#: src/pages/list-detail-page.tsx:773
+#: src/pages/list-detail-page.tsx:828
 msgid "Unresolved link"
 msgstr "未解決のリンク"
 
@@ -2821,7 +2845,7 @@ msgstr "未解決のリンク"
 msgid "Unresolved Relations"
 msgstr "未解決の関連"
 
-#: src/pages/list-detail-page.tsx:600
+#: src/pages/list-detail-page.tsx:655
 msgid "Untitled section"
 msgstr "無題のセクション"
 
@@ -2860,8 +2884,8 @@ msgstr "値"
 msgid "Values"
 msgstr "値"
 
-#: src/components/settings/settings-editor.tsx:98
-#: src/components/settings/settings-editor.tsx:201
+#: src/components/settings/settings-editor.tsx:101
+#: src/components/settings/settings-editor.tsx:238
 msgid "Vault"
 msgstr "保管庫"
 
@@ -2956,15 +2980,15 @@ msgstr "はい"
 msgid "You can still open entities already in your library."
 msgstr "すでにライブラリにあるアイテムは引き続き開けます。"
 
-#: src/pages/settings-page.tsx:124
+#: src/pages/settings-page.tsx:125
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "フォームエディターに保存していない変更があります。エディターを切り替えると破棄されます。"
 
-#: src/pages/settings-page.tsx:128
+#: src/pages/settings-page.tsx:129
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "YAML エディターに保存していない変更があります。エディターを切り替えると破棄されます。"
 
 #. Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes
-#: src/pages/entity-edit-page.tsx:218
+#: src/pages/entity-edit-page.tsx:229
 msgid "You have unsaved edits to this entity. Leaving will discard them."
 msgstr "このアイテムに保存していない編集があります。ページを離れると破棄されます。"
