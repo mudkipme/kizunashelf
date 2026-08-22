@@ -224,3 +224,15 @@ impl Vfs for InMemoryVfs {
             .ok_or(VfsError::NotFound)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn watching_is_explicitly_unsupported() {
+        let vfs = InMemoryVfs::new();
+        assert!(!vfs.supports_watch());
+        assert!(matches!(vfs.watch(), Err(VfsError::Unsupported(_))));
+    }
+}

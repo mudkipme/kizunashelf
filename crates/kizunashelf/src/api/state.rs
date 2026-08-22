@@ -9,7 +9,7 @@ use crate::library::{
 };
 use crate::secrets::{SecretStore, SECRET_PROVIDER_TOKENS};
 use crate::types::{AppConfig, KizunaConfig, Library};
-use crate::vfs::{NativeVfs, Vfs};
+use crate::vfs::{NativeVfs, Vfs, VfsChange, VfsChangeKind, VfsWatch};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -21,6 +21,47 @@ use tokio::sync::Mutex;
 
 /// Maximum number of finished asset-download jobs kept in memory.
 const MAX_RETAINED_JOBS: usize = 20;
+
+/// Coalesces the create/write/rename bursts emitted by editors that save through
+/// a temporary file. This bounds refresh latency while avoiding several cache
+/// invalidations for one logical save.
+const VAULT_WATCH_DEBOUNCE: Duration = Duration::from_millis(250);
+
+/// Owns the detached watcher task without creating a reference cycle back to
+/// [`AppState`]. The final router-state clone aborts the task on drop, which also
+/// drops its [`VfsWatch`] guard and releases the native OS watch handles. This is
+/// particularly important on desktop, where switching vaults replaces a router.
+struct VaultWatchTask {
+    handle: std::sync::Mutex<Option<tokio::task::JoinHandle<()>>>,
+}
+
+impl VaultWatchTask {
+    fn new() -> Self {
+        Self {
+            handle: std::sync::Mutex::new(None),
+        }
+    }
+
+    fn set(&self, handle: tokio::task::JoinHandle<()>) {
+        *self
+            .handle
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = Some(handle);
+    }
+}
+
+impl Drop for VaultWatchTask {
+    fn drop(&mut self) {
+        if let Some(handle) = self
+            .handle
+            .get_mut()
+            .unwrap_or_else(|error| error.into_inner())
+            .take()
+        {
+            handle.abort();
+        }
+    }
+}
 
 /// A value memoized on the library's `content_revision`, with a single-flight
 /// build lock. Several endpoints derive an expensive whole-library view
@@ -140,9 +181,13 @@ pub struct ApiOptions {
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub(crate) options: ApiOptions,
-    /// Injected vault filesystem (iOS). When `None`, a [`NativeVfs`] is built per
-    /// load from the configured vault root (desktop/web).
-    vault_fs: Option<Arc<dyn Vfs>>,
+    /// One stable vault filesystem for the router's lifetime. Web/desktop own a
+    /// [`NativeVfs`]; iOS injects its Swift-backed VFS. Keeping a stable instance
+    /// gives the native watcher the same lifecycle as the active router/vault.
+    vault_fs: Arc<dyn Vfs>,
+    /// Native runtimes interpret `AppConfig::vault_root` as a real host path;
+    /// injected runtimes such as iOS may use it only as a display label.
+    native_vault: bool,
     /// Inline app config (the vault root + write mode). Every runtime owns this
     /// server-side and passes it in: env vars (web), the native vault switcher
     /// (desktop), or `@AppStorage` (iOS). There is no app config file.
@@ -156,6 +201,15 @@ pub(crate) struct AppState {
     /// the load, so a write landing mid-reload cannot be hidden by that older
     /// reload storing stale state afterward.
     cache_generation: Arc<AtomicU64>,
+    /// Serializes lazy watcher startup. The first library request runs inside a
+    /// Tokio runtime in both Axum and Tauri, unlike synchronous router creation.
+    vault_watch_started: Arc<Mutex<bool>>,
+    /// Aborts the watcher when the router (or desktop's active vault) is dropped.
+    vault_watch_task: Arc<VaultWatchTask>,
+    /// Monotonic external-change generation. A later API endpoint will expose
+    /// the accompanying watch channel; for now it is populated at the core seam.
+    vault_change_generation: Arc<AtomicU64>,
+    vault_changes: tokio::sync::watch::Sender<u64>,
     /// Process-resident per-file index cache, used when no persistent
     /// `index_cache_dir` is configured (e.g. the web server default) so a changed
     /// reload re-parses only changed files instead of the whole vault. Lost on
@@ -249,12 +303,31 @@ pub(super) fn base_http_client() -> reqwest::ClientBuilder {
 }
 
 impl AppState {
-    /// Builds state with an inline app config, an optional injected vault
-    /// filesystem (iOS) or a [`NativeVfs`] derived from the vault root
-    /// (web/desktop), and a secret store. See ../kizunashelf-ios/docs/ios-port-plan.md §5/§7.
+    /// Builds state with an injected VFS (iOS) and inline app config.
     pub(crate) fn with_vault(
         options: ApiOptions,
-        vault_fs: Option<Arc<dyn Vfs>>,
+        vault_fs: Arc<dyn Vfs>,
+        app_config: AppConfig,
+        secret_store: Arc<dyn SecretStore>,
+    ) -> Self {
+        Self::new(options, vault_fs, false, app_config, secret_store)
+    }
+
+    /// Native web/desktop constructor. The VFS is created once here rather than
+    /// afresh for every request so its watch subscription follows router lifetime.
+    pub(crate) fn with_native_vault(
+        options: ApiOptions,
+        app_config: AppConfig,
+        secret_store: Arc<dyn SecretStore>,
+    ) -> Self {
+        let vault_fs: Arc<dyn Vfs> = Arc::new(NativeVfs::new(&app_config.vault_root));
+        Self::new(options, vault_fs, true, app_config, secret_store)
+    }
+
+    fn new(
+        options: ApiOptions,
+        vault_fs: Arc<dyn Vfs>,
+        native_vault: bool,
         app_config: AppConfig,
         secret_store: Arc<dyn SecretStore>,
     ) -> Self {
@@ -266,14 +339,20 @@ impl AppState {
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
+        let (vault_changes, _) = tokio::sync::watch::channel(0);
         Self {
             options,
             vault_fs,
+            native_vault,
             app_config,
             secret_store,
             cache: Arc::new(Mutex::new(None)),
             index_cache_memory: Arc::new(std::sync::Mutex::new(MemoryIndexCache::default())),
             cache_generation: Arc::new(AtomicU64::new(0)),
+            vault_watch_started: Arc::new(Mutex::new(false)),
+            vault_watch_task: Arc::new(VaultWatchTask::new()),
+            vault_change_generation: Arc::new(AtomicU64::new(0)),
+            vault_changes,
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
             content_mutation: Arc::new(Mutex::new(())),
@@ -297,15 +376,43 @@ impl AppState {
         &self.http_client
     }
 
-    /// Returns the vault filesystem for the given vault root. This is the single
-    /// injection seam for the iOS port: desktop/web use [`NativeVfs`]; iOS will
-    /// return a Swift-backed VFS (security-scoped bookmark + `NSFileCoordinator`).
-    /// See ../kizunashelf-ios/docs/ios-port-plan.md §5.
+    /// Returns the router's stable vault filesystem. The parameter remains at
+    /// call sites as a useful assertion that native requests did not drift to a
+    /// different configured root without rebuilding the router.
     pub(crate) fn vault_vfs(&self, vault_root: &str) -> Arc<dyn Vfs> {
-        match &self.vault_fs {
-            Some(vfs) => Arc::clone(vfs),
-            None => Arc::new(NativeVfs::new(vault_root)),
+        debug_assert!(
+            !self.native_vault || vault_root == self.app_config.vault_root,
+            "native router requested a VFS for a different vault root"
+        );
+        Arc::clone(&self.vault_fs)
+    }
+
+    /// Starts the optional VFS watcher once, from an async request context. A
+    /// backend that does not support watching (iOS and the in-memory test VFS)
+    /// remains a no-op. Failure is non-fatal: TTL/manual refresh still work.
+    async fn ensure_vault_watch(&self) {
+        if !self.vault_fs.supports_watch() {
+            return;
         }
+        let mut started = self.vault_watch_started.lock().await;
+        if *started {
+            return;
+        }
+        let watch = match self.vault_fs.watch() {
+            Ok(watch) => watch,
+            Err(error) => {
+                eprintln!("KizunaShelf could not watch the vault: {error}");
+                return;
+            }
+        };
+        let cache = Arc::clone(&self.cache);
+        let cache_generation = Arc::clone(&self.cache_generation);
+        let change_generation = Arc::clone(&self.vault_change_generation);
+        let changes = self.vault_changes.clone();
+        self.vault_watch_task.set(tokio::spawn(async move {
+            consume_vault_changes(watch, cache, cache_generation, change_generation, changes).await;
+        }));
+        *started = true;
     }
 
     pub(crate) fn asset_jobs(&self) -> &Arc<Mutex<HashMap<String, AssetJobRecord>>> {
@@ -426,9 +533,7 @@ impl AppState {
     }
 
     pub(crate) async fn invalidate_cache(&self) {
-        let mut cache = self.cache.lock().await;
-        self.cache_generation.fetch_add(1, Ordering::AcqRel);
-        *cache = None;
+        invalidate_library_cache(&self.cache, &self.cache_generation).await;
     }
 
     /// Acquires the router-wide vault-content mutation lock. Callers hold this
@@ -596,6 +701,7 @@ fn cached_token_from_disk(token: DiskCachedAccessToken) -> Option<CachedAccessTo
 }
 
 pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
+    state.ensure_vault_watch().await;
     let generation = state.cache_generation.load(Ordering::Acquire);
     {
         let cache = state.cache.lock().await;
@@ -667,7 +773,7 @@ async fn load_library(state: &AppState) -> Result<Library> {
     let app = state.app_config.clone();
     // Desktop derives the vault filesystem from the (absolute) vault root; iOS
     // injects one and the root is just a display label.
-    if state.vault_fs.is_none() && app.vault_root.trim().is_empty() {
+    if state.native_vault && app.vault_root.trim().is_empty() {
         anyhow::bail!("config does not set a vault root; run onboarding to create one");
     }
     let vfs = state.vault_vfs(&app.vault_root);
@@ -677,6 +783,62 @@ async fn load_library(state: &AppState) -> Result<Library> {
         Some(cache) => read_library_cached(config, vfs, cache).await,
         None => read_library(config, vfs).await,
     }
+}
+
+async fn invalidate_library_cache(
+    cache: &Mutex<Option<CachedLibrary>>,
+    cache_generation: &AtomicU64,
+) {
+    let mut cache = cache.lock().await;
+    cache_generation.fetch_add(1, Ordering::AcqRel);
+    *cache = None;
+}
+
+async fn consume_vault_changes(
+    mut watch: VfsWatch,
+    cache: Arc<Mutex<Option<CachedLibrary>>>,
+    cache_generation: Arc<AtomicU64>,
+    change_generation: Arc<AtomicU64>,
+    changes: tokio::sync::watch::Sender<u64>,
+) {
+    while let Some(first) = watch.recv().await {
+        let mut relevant = change_affects_library(&first);
+        let debounce = tokio::time::sleep(VAULT_WATCH_DEBOUNCE);
+        tokio::pin!(debounce);
+        loop {
+            tokio::select! {
+                _ = &mut debounce => break,
+                next = watch.recv() => match next {
+                    Some(change) => relevant |= change_affects_library(&change),
+                    None => break,
+                },
+            }
+        }
+        if !relevant {
+            continue;
+        }
+        // Publish only after invalidation, so a listener awakened by this
+        // generation can never refetch the just-invalidated old cache entry.
+        invalidate_library_cache(&cache, &cache_generation).await;
+        let generation = change_generation.fetch_add(1, Ordering::AcqRel) + 1;
+        changes.send_replace(generation);
+    }
+}
+
+/// Obsidian updates its private workspace state frequently; those files are not
+/// KizunaShelf inputs. Everything else remains conservative, including unknown
+/// paths and directories, because a directory rename may move an entire entity
+/// subtree without producing one event per child on every native backend.
+fn change_affects_library(change: &VfsChange) -> bool {
+    if change.kind == VfsChangeKind::Rescan || change.paths.is_empty() {
+        return true;
+    }
+    change.paths.iter().any(|path| {
+        path != ".obsidian"
+            && !path.starts_with(".obsidian/")
+            && path != ".git"
+            && !path.starts_with(".git/")
+    })
 }
 
 /// Builds the index-cache context. The schema fingerprint comes from the raw
@@ -751,7 +913,7 @@ mod tests {
                 index_cache_dir: None,
                 index_cache_identity: None,
             },
-            Some(vfs as Arc<dyn Vfs>),
+            vfs as Arc<dyn Vfs>,
             AppConfig {
                 vault_root: "test-vault".to_string(),
                 content_writable: Some(true),
@@ -796,6 +958,75 @@ types:
             generation: stale_generation,
             listing_fingerprint: None,
         });
+
+        let after = get_library(&state).await.unwrap();
+        assert_eq!(after.records[0].frontmatter["title"], "After");
+    }
+
+    #[cfg(not(target_os = "ios"))]
+    #[tokio::test]
+    async fn native_watch_invalidates_a_long_lived_library_cache() {
+        let temp = tempfile::tempdir().unwrap();
+        let config_dir = temp.path().join("KizunaShelf");
+        let entity_dir = temp.path().join("Taxonomy/Notes");
+        tokio::fs::create_dir_all(&config_dir).await.unwrap();
+        tokio::fs::create_dir_all(&entity_dir).await.unwrap();
+        tokio::fs::write(
+            config_dir.join("config.yaml"),
+            r#"taxonomyRoot: Taxonomy
+types:
+  - id: note
+    label: Note
+    path: Notes
+    fields:
+      - field: title
+        fieldType: title
+"#,
+        )
+        .await
+        .unwrap();
+        let entity_path = entity_dir.join("Example.md");
+        tokio::fs::write(&entity_path, "---\ntitle: Before\n---\n")
+            .await
+            .unwrap();
+
+        let state = AppState::with_native_vault(
+            ApiOptions {
+                config_path: PathBuf::new(),
+                cache_ttl: Duration::from_secs(60 * 60),
+                web_dist_path: None,
+                settings_writable: true,
+                content_writable: true,
+                host_asset_ingest: false,
+                index_cache_dir: None,
+                index_cache_identity: None,
+            },
+            AppConfig {
+                vault_root: temp.path().to_string_lossy().to_string(),
+                content_writable: Some(true),
+            },
+            Arc::new(NativeSecretStore::with_token_path(
+                temp.path().join("tokens.json"),
+            )),
+        );
+        let before = get_library(&state).await.unwrap();
+        assert_eq!(before.records[0].frontmatter["title"], "Before");
+        let mut changes = state.vault_changes.subscribe();
+
+        // Bypass the VFS to model Obsidian or another editor changing the vault.
+        tokio::fs::write(&entity_path, "---\ntitle: After\n---\n")
+            .await
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                changes.changed().await.expect("watch channel remains open");
+                if *changes.borrow_and_update() > 0 {
+                    break;
+                }
+            }
+        })
+        .await
+        .expect("external edit advanced the vault change generation");
 
         let after = get_library(&state).await.unwrap();
         assert_eq!(after.records[0].frontmatter["title"], "After");

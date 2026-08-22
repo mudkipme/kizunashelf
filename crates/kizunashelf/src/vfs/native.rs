@@ -1,13 +1,21 @@
 //! `tokio::fs`-backed [`Vfs`] rooted at an absolute vault path. Used by the
-//! desktop app and the web/api server; behavior is identical to the pre-VFS
-//! direct `fs` calls, with containment enforced by [`normalize_relative`].
+//! desktop app and the web/api server; native runtimes also expose recursive
+//! change notifications through `notify`. File operations keep containment
+//! enforced by [`normalize_relative`].
 
 use super::{normalize_relative, DirEntry, Metadata, Vfs, VfsError, VfsResult};
+#[cfg(not(target_os = "ios"))]
+use super::{VfsChange, VfsChangeKind, VfsWatch};
 use async_trait::async_trait;
 use std::io::ErrorKind;
 use std::path::PathBuf;
 use std::time::UNIX_EPOCH;
 use tokio::fs;
+
+#[cfg(not(target_os = "ios"))]
+use notify::event::{ModifyKind, RenameMode};
+#[cfg(not(target_os = "ios"))]
+use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 
 /// A vault filesystem rooted at an absolute path.
 pub struct NativeVfs {
@@ -24,6 +32,17 @@ impl NativeVfs {
     fn resolve(&self, path: &str) -> VfsResult<PathBuf> {
         let normalized = normalize_relative(path)?;
         Ok(self.root.join(normalized))
+    }
+
+    #[cfg(not(target_os = "ios"))]
+    fn watch_root(&self) -> VfsResult<PathBuf> {
+        if self.root.is_absolute() {
+            Ok(self.root.clone())
+        } else {
+            std::env::current_dir()
+                .map(|current| current.join(&self.root))
+                .map_err(map_io)
+        }
     }
 }
 
@@ -119,5 +138,110 @@ impl Vfs for NativeVfs {
     async fn remove_file(&self, path: &str) -> VfsResult<()> {
         let path = self.resolve(path)?;
         fs::remove_file(&path).await.map_err(map_io)
+    }
+
+    #[cfg(not(target_os = "ios"))]
+    fn supports_watch(&self) -> bool {
+        true
+    }
+
+    #[cfg(not(target_os = "ios"))]
+    fn watch(&self) -> VfsResult<VfsWatch> {
+        let root = self.watch_root()?;
+        let callback_root = root.clone();
+        let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
+        let mut watcher: RecommendedWatcher =
+            notify::recommended_watcher(move |result: notify::Result<Event>| {
+                let change = match result {
+                    Ok(event) => event_to_vfs_change(&callback_root, event),
+                    // An error can mean native events were lost. Keep the stream
+                    // alive and ask the consumer for a conservative rescan.
+                    Err(_) => Some(VfsChange {
+                        paths: Vec::new(),
+                        kind: VfsChangeKind::Rescan,
+                    }),
+                };
+                if let Some(change) = change {
+                    let _ = sender.send(change);
+                }
+            })
+            .map_err(|error| VfsError::Other(format!("failed to create vault watcher: {error}")))?;
+        watcher
+            .watch(&root, RecursiveMode::Recursive)
+            .map_err(|error| VfsError::Other(format!("failed to watch vault: {error}")))?;
+        Ok(VfsWatch::new(receiver, watcher))
+    }
+}
+
+#[cfg(not(target_os = "ios"))]
+fn event_to_vfs_change(root: &std::path::Path, event: Event) -> Option<VfsChange> {
+    let kind = match event.kind {
+        EventKind::Access(_) => return None,
+        EventKind::Create(_) => VfsChangeKind::Create,
+        EventKind::Remove(_) => VfsChangeKind::Remove,
+        EventKind::Modify(ModifyKind::Name(
+            RenameMode::Any
+            | RenameMode::Both
+            | RenameMode::From
+            | RenameMode::To
+            | RenameMode::Other,
+        )) => VfsChangeKind::Rename,
+        EventKind::Modify(_) => VfsChangeKind::Modify,
+        EventKind::Any | EventKind::Other => VfsChangeKind::Rescan,
+    };
+    let mut paths: Vec<String> = event
+        .paths
+        .into_iter()
+        .filter_map(|path| {
+            path.strip_prefix(root)
+                .ok()
+                .map(std::path::Path::to_path_buf)
+        })
+        .filter_map(|path| normalize_relative(&path.to_string_lossy()).ok())
+        .collect();
+    paths.sort();
+    paths.dedup();
+    if paths.is_empty() && kind != VfsChangeKind::Rescan {
+        return None;
+    }
+    Some(VfsChange { paths, kind })
+}
+
+#[cfg(all(test, not(target_os = "ios")))]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn watch_reports_normalized_vault_relative_changes() {
+        let temp = tempfile::tempdir().unwrap();
+        let vfs = NativeVfs::new(temp.path());
+        vfs.create_dir_all("Taxonomy/Notes").await.unwrap();
+        assert!(vfs.supports_watch());
+        let mut watch = vfs.watch().unwrap();
+
+        vfs.write("Taxonomy/Notes/Example.md", b"example")
+            .await
+            .unwrap();
+
+        let changed = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let change = watch.recv().await.expect("watch remains open");
+                if change
+                    .paths
+                    .iter()
+                    .any(|path| path == "Taxonomy/Notes/Example.md")
+                {
+                    break change;
+                }
+            }
+        })
+        .await
+        .expect("native watcher delivered a file event");
+
+        assert!(matches!(
+            changed.kind,
+            VfsChangeKind::Create | VfsChangeKind::Modify | VfsChangeKind::Rename
+        ));
     }
 }

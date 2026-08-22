@@ -67,7 +67,7 @@ pub fn router_with_vault(
 ) -> Router {
     build_router(AppState::with_vault(
         options,
-        Some(vault_fs),
+        vault_fs,
         app_config,
         secret_store,
     ))
@@ -85,9 +85,8 @@ pub fn router_native(
     app_config: AppConfig,
     secret_store: Arc<dyn SecretStore>,
 ) -> Router {
-    build_router(AppState::with_vault(
+    build_router(AppState::with_native_vault(
         options,
-        None,
         app_config,
         secret_store,
     ))

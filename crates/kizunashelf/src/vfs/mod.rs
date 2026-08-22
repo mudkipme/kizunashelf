@@ -27,15 +27,19 @@ pub use memory::InMemoryVfs;
 
 use async_trait::async_trait;
 use std::fmt;
+use tokio::sync::mpsc;
 
 pub type VfsResult<T> = Result<T, VfsError>;
 
 /// Error surface of the VFS. Maps the `std::io::ErrorKind`s the core actually
-/// branches on (`NotFound`, `AlreadyExists`) plus a catch-all.
+/// branches on (`NotFound`, `AlreadyExists`), optional-capability support, and a
+/// catch-all.
 #[derive(Debug)]
 pub enum VfsError {
     NotFound,
     AlreadyExists,
+    /// The backend does not implement an optional VFS capability.
+    Unsupported(String),
     /// The relative path was absolute or escaped the vault root.
     InvalidPath(String),
     Other(String),
@@ -52,6 +56,9 @@ impl fmt::Display for VfsError {
         match self {
             VfsError::NotFound => write!(f, "not found"),
             VfsError::AlreadyExists => write!(f, "already exists"),
+            VfsError::Unsupported(capability) => {
+                write!(f, "unsupported VFS capability: {capability}")
+            }
             VfsError::InvalidPath(path) => write!(f, "invalid vault path: {path}"),
             VfsError::Other(message) => write!(f, "{message}"),
         }
@@ -89,6 +96,52 @@ pub struct Metadata {
     pub modified_unix_nanos: u128,
 }
 
+/// Kind of change reported by a [`Vfs`] watch subscription. Backends may report
+/// [`Rescan`](VfsChangeKind::Rescan) when their native event stream overflows or
+/// cannot describe a change precisely; consumers must then assume anything in
+/// the vault may have changed.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VfsChangeKind {
+    Create,
+    Modify,
+    Remove,
+    Rename,
+    Rescan,
+}
+
+/// One filesystem notification. Paths use the same normalized, vault-relative
+/// representation as every other VFS operation. A rescan event may have no
+/// paths.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VfsChange {
+    pub paths: Vec<String>,
+    pub kind: VfsChangeKind,
+}
+
+/// Active VFS watch subscription. The private guard owns the backend watcher;
+/// dropping this value stops event delivery and releases native watch handles.
+pub struct VfsWatch {
+    events: mpsc::UnboundedReceiver<VfsChange>,
+    _guard: Box<dyn Send>,
+}
+
+impl VfsWatch {
+    pub(crate) fn new(
+        events: mpsc::UnboundedReceiver<VfsChange>,
+        guard: impl Send + 'static,
+    ) -> Self {
+        Self {
+            events,
+            _guard: Box::new(guard),
+        }
+    }
+
+    /// Waits for the next change, returning `None` if the backend watcher stops.
+    pub async fn recv(&mut self) -> Option<VfsChange> {
+        self.events.recv().await
+    }
+}
+
 /// Vault filesystem. Implementations operate on vault-relative, forward-slash
 /// paths (the empty string denotes the vault root).
 #[async_trait]
@@ -105,6 +158,18 @@ pub trait Vfs: Send + Sync {
     async fn metadata(&self, path: &str) -> VfsResult<Metadata>;
     async fn rename(&self, from: &str, to: &str) -> VfsResult<()>;
     async fn remove_file(&self, path: &str) -> VfsResult<()>;
+
+    /// Whether this backend can subscribe to external vault changes. Watching is
+    /// optional: the Swift-backed iOS VFS deliberately keeps the default `false`.
+    fn supports_watch(&self) -> bool {
+        false
+    }
+
+    /// Starts a recursive watch of the vault root. The default keeps backends
+    /// source-compatible while making unsupported runtimes explicit.
+    fn watch(&self) -> VfsResult<VfsWatch> {
+        Err(VfsError::Unsupported("filesystem watching".to_string()))
+    }
 
     /// Batch-reads many files in one call, returning `(path, contents)` for each
     /// that was read successfully (missing files are skipped; order is not
