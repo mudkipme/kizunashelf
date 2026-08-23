@@ -1,10 +1,10 @@
 //! `tokio::fs`-backed [`Vfs`] rooted at an absolute vault path. Used by the
-//! desktop app and the web/api server; native runtimes also expose recursive
-//! change notifications through `notify`. File operations keep containment
-//! enforced by [`normalize_relative`].
+//! desktop app and the web/api server. With the `native-vfs-watch` feature,
+//! native runtimes also expose recursive change notifications through `notify`.
+//! File operations keep containment enforced by [`normalize_relative`].
 
 use super::{normalize_relative, DirEntry, Metadata, Vfs, VfsError, VfsResult};
-#[cfg(not(target_os = "ios"))]
+#[cfg(feature = "native-vfs-watch")]
 use super::{VfsChange, VfsChangeKind, VfsWatch};
 use async_trait::async_trait;
 use std::io::ErrorKind;
@@ -12,9 +12,9 @@ use std::path::PathBuf;
 use std::time::UNIX_EPOCH;
 use tokio::fs;
 
-#[cfg(not(target_os = "ios"))]
+#[cfg(feature = "native-vfs-watch")]
 use notify::event::{ModifyKind, RenameMode};
-#[cfg(not(target_os = "ios"))]
+#[cfg(feature = "native-vfs-watch")]
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 
 /// A vault filesystem rooted at an absolute path.
@@ -34,7 +34,7 @@ impl NativeVfs {
         Ok(self.root.join(normalized))
     }
 
-    #[cfg(not(target_os = "ios"))]
+    #[cfg(feature = "native-vfs-watch")]
     fn watch_root(&self) -> VfsResult<PathBuf> {
         if self.root.is_absolute() {
             Ok(self.root.clone())
@@ -140,12 +140,12 @@ impl Vfs for NativeVfs {
         fs::remove_file(&path).await.map_err(map_io)
     }
 
-    #[cfg(not(target_os = "ios"))]
+    #[cfg(feature = "native-vfs-watch")]
     fn supports_watch(&self) -> bool {
         true
     }
 
-    #[cfg(not(target_os = "ios"))]
+    #[cfg(feature = "native-vfs-watch")]
     fn watch(&self) -> VfsResult<VfsWatch> {
         let root = self.watch_root()?;
         let callback_root = root.clone();
@@ -173,7 +173,7 @@ impl Vfs for NativeVfs {
     }
 }
 
-#[cfg(not(target_os = "ios"))]
+#[cfg(feature = "native-vfs-watch")]
 fn event_to_vfs_change(root: &std::path::Path, event: Event) -> Option<VfsChange> {
     let kind = match event.kind {
         EventKind::Access(_) => return None,
@@ -207,7 +207,7 @@ fn event_to_vfs_change(root: &std::path::Path, event: Event) -> Option<VfsChange
     Some(VfsChange { paths, kind })
 }
 
-#[cfg(all(test, not(target_os = "ios")))]
+#[cfg(all(test, feature = "native-vfs-watch"))]
 mod tests {
     use super::*;
     use std::time::Duration;

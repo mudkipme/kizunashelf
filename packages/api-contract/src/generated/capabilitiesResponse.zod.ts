@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 export const CapabilitiesResponse = zod.object({
   "settingsWritable": zod.boolean(),
   "contentWritable": zod.boolean(),
-  "vaultWatchEnabled": zod.boolean().describe('Whether this runtime can observe external vault filesystem changes.\nNative web\/desktop VFSes support it; the injected iOS VFS does not.'),
+  "vaultWatchEnabled": zod.boolean().describe('Whether this runtime can observe external vault filesystem changes.\nNative web\/desktop VFSes support it; injected mobile VFSes do not.'),
   "externalSearchEnabled": zod.boolean(),
   "externalApplyEnabled": zod.boolean(),
   "assetDownloadEnabled": zod.boolean()

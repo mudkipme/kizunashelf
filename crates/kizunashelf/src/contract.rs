@@ -31,7 +31,7 @@ pub struct CapabilitiesResponse {
     pub settings_writable: bool,
     pub content_writable: bool,
     /// Whether this runtime can observe external vault filesystem changes.
-    /// Native web/desktop VFSes support it; the injected iOS VFS does not.
+    /// Native web/desktop VFSes support it; injected mobile VFSes do not.
     pub vault_watch_enabled: bool,
     pub external_search_enabled: bool,
     pub external_apply_enabled: bool,

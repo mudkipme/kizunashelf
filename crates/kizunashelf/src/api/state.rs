@@ -388,8 +388,8 @@ impl AppState {
     }
 
     /// Starts the optional VFS watcher once, from an async request context. A
-    /// backend that does not support watching (iOS and the in-memory test VFS)
-    /// remains a no-op. Failure is non-fatal: TTL/manual refresh still work.
+    /// backend that does not support watching (injected mobile and in-memory
+    /// VFSes) remains a no-op. Failure is non-fatal: TTL/manual refresh still works.
     async fn ensure_vault_watch(&self) -> bool {
         if !self.vault_fs.supports_watch() {
             return false;
@@ -992,7 +992,7 @@ types:
         assert_eq!(after.records[0].frontmatter["title"], "After");
     }
 
-    #[cfg(not(target_os = "ios"))]
+    #[cfg(feature = "native-vfs-watch")]
     #[tokio::test]
     async fn native_watch_invalidates_a_long_lived_library_cache() {
         let temp = tempfile::tempdir().unwrap();

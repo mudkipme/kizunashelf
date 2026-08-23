@@ -99,7 +99,10 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     let capabilities = server.ok_json("/api/capabilities").await;
     assert_eq!(capabilities["settingsWritable"], true);
     assert_eq!(capabilities["contentWritable"], true);
-    assert_eq!(capabilities["vaultWatchEnabled"], true);
+    assert_eq!(
+        capabilities["vaultWatchEnabled"],
+        cfg!(feature = "native-vfs-watch")
+    );
     assert_eq!(capabilities["externalSearchEnabled"], true);
     assert_eq!(capabilities["externalApplyEnabled"], true);
 
@@ -451,6 +454,7 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
 }
 
 #[tokio::test]
+#[cfg(feature = "native-vfs-watch")]
 async fn vault_changes_long_poll_wakes_after_an_external_edit() {
     let server = TestServer::new();
     // Loading the library starts the native watcher before the external write.
@@ -473,6 +477,17 @@ async fn vault_changes_long_poll_wakes_after_an_external_edit() {
     assert_eq!(response.1["supported"], true);
     assert_eq!(response.1["changed"], true);
     assert!(response.1["generation"].as_u64().unwrap() > 0);
+}
+
+#[tokio::test]
+#[cfg(not(feature = "native-vfs-watch"))]
+async fn vault_changes_reports_unsupported_without_native_watch() {
+    let server = TestServer::new();
+    let response = request_json(&server.app, Method::GET, "/api/vault/changes?after=0", None).await;
+    assert_eq!(response.0, StatusCode::OK, "{}", response.1);
+    assert_eq!(response.1["supported"], false);
+    assert_eq!(response.1["changed"], false);
+    assert_eq!(response.1["generation"], 0);
 }
 
 #[tokio::test]

@@ -126,6 +126,9 @@ pub struct VfsWatch {
 }
 
 impl VfsWatch {
+    // Only a backend built with native watch support constructs subscriptions.
+    // Keep the type and `recv` in the cross-platform contract for injected VFSes.
+    #[cfg(feature = "native-vfs-watch")]
     pub(crate) fn new(
         events: mpsc::UnboundedReceiver<VfsChange>,
         guard: impl Send + 'static,
@@ -160,7 +163,7 @@ pub trait Vfs: Send + Sync {
     async fn remove_file(&self, path: &str) -> VfsResult<()>;
 
     /// Whether this backend can subscribe to external vault changes. Watching is
-    /// optional: the Swift-backed iOS VFS deliberately keeps the default `false`.
+    /// optional: injected mobile VFSes deliberately keep the default `false`.
     fn supports_watch(&self) -> bool {
         false
     }

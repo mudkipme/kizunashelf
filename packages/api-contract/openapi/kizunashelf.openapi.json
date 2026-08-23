@@ -3729,7 +3729,7 @@
             "type": "boolean"
           },
           "vaultWatchEnabled": {
-            "description": "Whether this runtime can observe external vault filesystem changes.\nNative web/desktop VFSes support it; the injected iOS VFS does not.",
+            "description": "Whether this runtime can observe external vault filesystem changes.\nNative web/desktop VFSes support it; injected mobile VFSes do not.",
             "type": "boolean"
           },
           "externalSearchEnabled": {
