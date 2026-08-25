@@ -14,6 +14,9 @@ export default defineConfig({
     {
       path: "<rootDir>/src/locales/{locale}/messages",
       include: ["src"],
+      // Vitest stores PNGs below directories ending in `.test.tsx`; without
+      // this exclusion Lingui mistakes those directories for source files.
+      exclude: ["**/__screenshots__/**"],
     },
   ],
 });
