@@ -38,6 +38,7 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_CACHE_TTL_MS` | In-memory library cache TTL. Defaults to `10000`. |
 | `KIZUNASHELF_INDEX_CACHE_DIR` | Optional host directory for the persistent, disposable library index cache. Keep it outside the vault; unset means the incremental index lives only in memory and is lost on restart. |
 | `KIZUNASHELF_TOKEN_CACHE` | Path for the provider OAuth token cache. Defaults to `<tmp>/.kizunashelf.tokens.json` (outside the vault). |
+| `RUST_LOG` | Log verbosity. Defaults to `info`. Set `RUST_LOG=kizunashelf=debug` for per-request access logs and cache decisions — see [Logs](#logs). |
 | `KIZUNASHELF_WEB_DIST` | Alternate web build path. |
 | `KIZUNASHELF_SERVE_WEB` | Set to `false` to serve only the API. |
 | `KIZUNASHELF_AUTH_PASSWORD_HASH` | Optional Argon2id password hash. When set, all web UI, API, and asset requests require a login. Unset by default. |
@@ -57,6 +58,26 @@ Two optional host paths stay deliberately outside the vault:
 - `KIZUNASHELF_INDEX_CACHE_DIR` stores a disposable parsed-file index that speeds cold starts for large vaults. It can be placed on a persistent container volume, but it is always safe to delete.
 
 Neither path should be synchronized as part of the vault, and provider credentials should continue to enter the container as secrets or environment variables rather than files inside the vault.
+
+### Logs
+
+The server writes plain-text logs to stdout, so `docker logs` (or your compose/systemd unit's journal) is where they land. Colour codes are emitted only when stdout is a terminal, so captured logs stay clean.
+
+At the default `info` level it stays quiet, reporting only what an operator needs to see:
+
+- every library load from the vault, with how long it took and how many entities, relations, and diagnostics it produced — the number to watch if cold starts feel slow;
+- every failed request, with the reason the client was given and the method and path that produced it;
+- requests rejected before reaching a handler (a malformed query, a method a route does not accept), which indicate a client/server mismatch.
+
+Routine misses — a request for an entity or asset that does not exist — are not warnings and stay at `debug`, along with an access log line per request and the library cache's reuse decisions. Turn those on with `RUST_LOG=kizunashelf=debug`:
+
+```
+INFO  request{method=GET path=/api/health}: reloaded the library from the vault entities=2 relations=0 diagnostics=0 elapsed_ms=26
+WARN  request{method=POST path=/api/entities}: request rejected status=409 Entity file already exists
+DEBUG request{method=GET path=/api/health}: vault listing unchanged; reusing the cached library
+```
+
+Nothing is written into the vault, and no log file is created or rotated by KizunaShelf itself — collecting and retaining the output is your container runtime's job.
 
 ### Health check
 

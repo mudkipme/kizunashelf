@@ -5,6 +5,7 @@ use super::assets::{
 };
 use super::entities::{entities, entity_dates, entity_detail};
 use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
+use super::error::ApiErrorLogged;
 use super::external::{
     apply_external_candidate, external_provider_catalog, external_search, quick_add_entity,
     review_external_candidate,
@@ -49,12 +50,16 @@ use crate::vfs::Vfs;
 use aide::axum::routing::{delete_with, get_with, post_with};
 use aide::axum::ApiRouter;
 use aide::openapi::{Info, OpenApi};
+use axum::extract::Request;
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
+use axum::middleware::{self, Next};
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
 use std::sync::Arc;
+use std::time::Instant;
 use tower_http::services::{ServeDir, ServeFile};
+use tracing::Instrument;
 
 /// Builds the router with an injected vault filesystem and inline app config —
 /// the iOS entry point. The vault config and entities are read through `vault_fs`
@@ -100,7 +105,11 @@ fn build_router(state: AppState) -> Router {
     let app = api_router()
         .with_state(state)
         .finish_api(&mut api)
-        .route("/api/{*path}", get(api_not_found));
+        .route("/api/{*path}", get(api_not_found))
+        // Applied before the static-file fallback below, so it traces the API
+        // routes only: a missing web asset is the browser's business, not a
+        // server fault worth a log line.
+        .layer(middleware::from_fn(trace_requests));
 
     if let Some(web_dist_path) = web_dist_path {
         app.fallback_service(
@@ -697,6 +706,52 @@ fn api_router() -> ApiRouter<AppState> {
             }),
         )
 }
+/// The one place a request is traced, for all three runtimes. It opens the span
+/// every other event in the request is nested under (so an `ApiError` failure
+/// says which request produced it), times the round trip, and logs the failures
+/// [`ApiError`] never sees.
+///
+/// That last part matters: every failure the app *decides* on logs its own
+/// message on the way out, but a request axum rejects before a handler runs — a
+/// query that didn't deserialize, a method the route doesn't take — builds no
+/// `ApiError` at all, and would otherwise vanish without a trace. Those are
+/// contract mismatches between a client and this router, which is exactly the
+/// sort of thing that should not fail silently.
+///
+/// Access logging sits at `DEBUG`: a catalog rendering a page of covers produces
+/// a burst of asset requests that would drown the events worth reading at `INFO`.
+async fn trace_requests(request: Request, next: Next) -> Response {
+    let span = tracing::info_span!(
+        "request",
+        method = %request.method(),
+        path = %request.uri().path(),
+    );
+    async move {
+        let started = Instant::now();
+        let response = next.run(request).await;
+        let status = response.status();
+        let elapsed_ms = started.elapsed().as_millis();
+
+        let handled = response.extensions().get::<ApiErrorLogged>().is_some();
+        if !handled && (status.is_client_error() || status.is_server_error()) {
+            if status == StatusCode::NOT_FOUND {
+                tracing::debug!(elapsed_ms, "no route matched");
+            } else {
+                tracing::warn!(
+                    status = status.as_u16(),
+                    elapsed_ms,
+                    "request rejected before reaching a handler",
+                );
+            }
+        } else {
+            tracing::debug!(status = status.as_u16(), elapsed_ms, "handled");
+        }
+        response
+    }
+    .instrument(span)
+    .await
+}
+
 async fn api_not_found() -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,

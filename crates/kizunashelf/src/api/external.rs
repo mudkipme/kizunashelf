@@ -1595,7 +1595,7 @@ fn provider_error(error: reqwest::Error) -> ApiError {
         detail.push_str(&format!(": {inner}"));
         source = inner.source();
     }
-    eprintln!("{detail}");
+    tracing::warn!(detail, "external provider request failed");
     // Upstream failures are not the caller's fault: surface them as gateway
     // errors so clients can distinguish a flaky provider from a bad request.
     if error.is_timeout() {
@@ -1632,7 +1632,11 @@ fn provider_status_error(status: reqwest::StatusCode, body: &str) -> ApiError {
             message.push('…');
         }
     }
-    eprintln!("{message}");
+    tracing::warn!(
+        status = status.as_u16(),
+        message,
+        "external provider returned an error"
+    );
     ApiError::bad_gateway(&message)
 }
 

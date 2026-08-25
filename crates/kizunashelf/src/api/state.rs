@@ -401,7 +401,7 @@ impl AppState {
         let watch = match self.vault_fs.watch() {
             Ok(watch) => watch,
             Err(error) => {
-                eprintln!("KizunaShelf could not watch the vault: {error}");
+                tracing::warn!(%error, "could not watch the vault for external changes");
                 return false;
             }
         };
@@ -769,6 +769,7 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
     if let Some((library, fingerprint)) = previous {
         let vfs = state.vault_vfs(&library.config.vault_root);
         if compute_listing_fingerprint(&library.config, vfs.as_ref()).await == Some(fingerprint) {
+            tracing::debug!("vault listing unchanged; reusing the cached library");
             let mut cache = state.cache.lock().await;
             *cache = Some(CachedLibrary {
                 library: Arc::clone(&library),
@@ -780,7 +781,18 @@ pub(crate) async fn get_library(state: &AppState) -> Result<Arc<Library>> {
         }
     }
 
+    // The dominant cost in the whole app, and the one an operator most needs a
+    // number for: "is my vault slow to index, and is the index cache helping?"
+    // is unanswerable without timing the reload that actually reads the vault.
+    let load_started = Instant::now();
     let library = Arc::new(load_library(state).await?);
+    tracing::info!(
+        entities = library.records.len(),
+        relations = library.relations.len(),
+        diagnostics = library.diagnostics.len(),
+        elapsed_ms = load_started.elapsed().as_millis(),
+        "reloaded the library from the vault",
+    );
     let listing_fingerprint = {
         let vfs = state.vault_vfs(&library.config.vault_root);
         compute_listing_fingerprint(&library.config, vfs.as_ref()).await
@@ -850,8 +862,13 @@ async fn consume_vault_changes(
         // generation can never refetch the just-invalidated old cache entry.
         invalidate_library_cache(&cache, &cache_generation).await;
         let generation = change_generation.fetch_add(1, Ordering::AcqRel) + 1;
+        tracing::debug!(generation, "external vault change invalidated the library");
         changes.send_replace(generation);
     }
+    // The stream only ends when the watcher itself stops, which leaves the vault
+    // silently un-watched: clients stop being woken and fall back to the cache
+    // TTL. Worth a line, since nothing else in the system reports it.
+    tracing::warn!("the vault watcher stopped; external changes will no longer be detected");
 }
 
 /// Obsidian updates its private workspace state frequently; those files are not

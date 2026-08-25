@@ -80,6 +80,8 @@ Two seams make this portability possible. Both are traits injected into `AppStat
 
 Per-runtime config sourcing is documented in `manual/content/reference/config.md`. Don't add an app-config *file* in core; `AppConfig` is always passed inline.
 
+**Logging follows the same shape**: the core only ever *emits* `tracing` events and never installs a subscriber, so each host decides where they go (the web binary writes to stdout filtered by `RUST_LOG`; the desktop shell writes to stderr; iOS can forward to `OSLog`). With no subscriber installed — tests, an embedding host that wants silence — every event compiles to a no-op. Two chokepoints carry almost all of it, so instrumenting a new handler is usually unnecessary: `trace_requests` (`api/router.rs`) opens the per-request span everything else nests under and logs failures axum rejected before a handler ran, and `ApiError::into_response` logs every failure the app itself decides on, with the message the client is about to see. Prefer adding a field to those over sprinkling events through handlers, and keep `println!`/`eprintln!` out of the core — they bypass the host's filtering and, on iOS, go nowhere.
+
 ## The API contract: one source, two clients
 
 The OpenAPI spec is **code-first and generated** — never hand-written. `aide` + `schemars` build it from the actual route registrations and the `#[derive(JsonSchema)]` types in `src/contract.rs` (`kizunashelf::api::openapi()`). The `kizunashelf-schema` bin emits two forms:

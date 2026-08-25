@@ -5,11 +5,12 @@ use kizunashelf::api::{protect_web_router, router_native, ApiOptions, WebAuth};
 use kizunashelf::secrets::NativeSecretStore;
 use kizunashelf::types::AppConfig;
 use rand_core::OsRng;
-use std::io::{self, Write};
+use std::io::{self, IsTerminal, Write};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
+use tracing_subscriber::EnvFilter;
 
 /// Self-hosted web server. Single-vault by design: the vault directory is mounted
 /// and pointed at by `KIZUNASHELF_VAULT_ROOT` (the schema still lives inside it at
@@ -21,6 +22,7 @@ async fn main() -> Result<()> {
     if std::env::args().nth(1).as_deref() == Some("hash-password") {
         return hash_password_interactive();
     }
+    init_tracing();
 
     let vault_root =
         std::env::var("KIZUNASHELF_VAULT_ROOT").unwrap_or_else(|_| "/vault".to_string());
@@ -90,7 +92,7 @@ async fn main() -> Result<()> {
     match std::env::var("KIZUNASHELF_AUTH_PASSWORD_HASH") {
         Ok(password_hash) => {
             app = protect_web_router(app, WebAuth::new(password_hash)?);
-            println!("KizunaShelf password authentication enabled");
+            tracing::info!("password authentication enabled");
         }
         Err(std::env::VarError::NotPresent) => {}
         Err(std::env::VarError::NotUnicode(_)) => {
@@ -100,12 +102,32 @@ async fn main() -> Result<()> {
 
     let address: SocketAddr = format!("{host}:{port}").parse()?;
     let listener = tokio::net::TcpListener::bind(address).await?;
-    println!("KizunaShelf listening on http://{}", listener.local_addr()?);
+    // Kept clickable in a terminal, as the previous plain `println!` was.
+    let url = format!("http://{}", listener.local_addr()?);
+    tracing::info!(
+        %url,
+        content_writable,
+        settings_writable,
+        "KizunaShelf listening",
+    );
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
-    println!("KizunaShelf shut down");
+    tracing::info!("KizunaShelf shut down");
     Ok(())
+}
+
+/// Sends the core's `tracing` events to stdout. Filtering is the standard
+/// `RUST_LOG` (`info` when unset), so a container can be turned up to
+/// `RUST_LOG=kizunashelf=debug` without a rebuild. ANSI is decided by whether
+/// stdout is a terminal, so `docker logs` stays free of escape codes.
+fn init_tracing() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .with_ansi(io::stdout().is_terminal())
+        .init();
 }
 
 fn hash_password_interactive() -> Result<()> {

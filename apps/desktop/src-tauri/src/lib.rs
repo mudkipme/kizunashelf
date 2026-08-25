@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Manager, State};
+use tracing_subscriber::EnvFilter;
 
 mod secret_store;
 mod vaults;
@@ -255,6 +256,7 @@ fn asset_error_response() -> Response<Vec<u8>> {
 }
 
 pub fn run() {
+    init_tracing();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .register_asynchronous_uri_scheme_protocol(ASSET_SCHEME, |ctx, request, responder| {
@@ -306,4 +308,17 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("failed to run KizunaShelf desktop app");
+}
+
+/// Sends the core's `tracing` events to stderr, filtered by the standard
+/// `RUST_LOG` (`info` when unset). `try_init` rather than `init` so a second
+/// call — or a host that already installed a subscriber — is a no-op instead of
+/// a panic on startup.
+fn init_tracing() {
+    let _ = tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .with_writer(std::io::stderr)
+        .try_init();
 }

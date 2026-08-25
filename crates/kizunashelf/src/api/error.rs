@@ -79,15 +79,49 @@ impl From<serde_json::Error> for ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        (
+        // Every API failure in all three runtimes funnels through here, and the
+        // client only ever sees `message` (verbatim, in a toast). So this is the
+        // one place an operator can learn that a request failed at all — without
+        // it, a 500 leaves no trace anywhere on the server.
+        //
+        // A 5xx is ours to fix; a 4xx is the caller's, so it stays a warning.
+        // 404 is demoted to debug because it is routine traffic, not a fault: a
+        // grid of entities with missing covers would otherwise log one warning
+        // per image.
+        if self.status.is_server_error() {
+            tracing::error!(
+                status = self.status.as_u16(),
+                message = %self.message,
+                "request failed",
+            );
+        } else if self.status == StatusCode::NOT_FOUND {
+            tracing::debug!(message = %self.message, "request not found");
+        } else {
+            tracing::warn!(
+                status = self.status.as_u16(),
+                message = %self.message,
+                "request rejected",
+            );
+        }
+        let mut response = (
             self.status,
             Json(ErrorResponse {
                 error: self.message,
             }),
         )
-            .into_response()
+            .into_response();
+        response.extensions_mut().insert(ApiErrorLogged);
+        response
     }
 }
+
+/// Marks a response as one that already logged its own reason above. The
+/// router's fallback logging ([`super::router::log_unlogged_failures`]) uses it
+/// to tell those apart from a request axum rejected *before* any handler ran — a
+/// malformed query, a method the route doesn't take — which never builds an
+/// `ApiError` and would otherwise leave no trace at all.
+#[derive(Clone, Copy)]
+pub(super) struct ApiErrorLogged;
 
 impl OperationOutput for ApiError {
     type Inner = ErrorResponse;

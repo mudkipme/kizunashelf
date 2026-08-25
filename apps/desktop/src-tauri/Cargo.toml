@@ -18,6 +18,10 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 tauri = { version = "2.11.2", features = [] }
 tauri-plugin-dialog = "2.7.1"
+# The desktop shell installs the subscriber for the core's events; without one
+# they are dropped. It writes to stderr, so a bundled app shows them only when
+# launched from a terminal — which is what diagnosing a report means anyway.
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 
 # Native OS secret managers for provider credentials + the token cache:
 # macOS Keychain, Windows Credential Manager, and the Linux Secret Service
