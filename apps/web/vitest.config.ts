@@ -1,17 +1,59 @@
+import { lingui, linguiTransformerBabelPreset } from "@lingui/vite-plugin";
+import { playwright } from "@vitest/browser-playwright";
+import babel from "@rolldown/plugin-babel";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vitest/config";
 
-// Vitest is configured standalone (not via the app's vite.config) so unit tests
-// don't pull in the React/Tailwind plugins. We only re-declare the `@` alias the
-// source uses, so importing app modules resolves.
+const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
+
+// Two suites, split by file extension so each gets only the machinery it needs.
+//
+// `unit` (*.test.ts) covers the pure helpers — rule models, title-language
+// derivation, pagination — in plain Node with no plugins at all, which keeps it
+// near-instant.
+//
+// `ui` (*.test.tsx) renders components in a real Chromium via Vitest's browser
+// mode. This app leans on base-ui/radix comboboxes, popovers and dnd-kit, whose
+// behavior is positioning, focus management and pointer events — exactly what a
+// DOM emulator approximates rather than reproduces. Running them for real means
+// the tests exercise the same code path a user does, and needs no shims for
+// ResizeObserver, scrollIntoView or pointer capture.
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-    },
-  },
   test: {
-    environment: "node",
-    include: ["src/**/*.test.ts"],
+    projects: [
+      {
+        resolve: { alias },
+        test: {
+          name: "unit",
+          environment: "node",
+          include: ["src/**/*.test.ts"],
+        },
+      },
+      {
+        // The same transform chain as the app build: the Lingui macros used by
+        // every component are compiled by their own Babel pass, since the
+        // oxc-based React plugin has no Babel hook.
+        plugins: [
+          react(),
+          lingui(),
+          babel({ presets: [linguiTransformerBabelPreset()] }),
+          tailwindcss(),
+        ],
+        resolve: { alias },
+        test: {
+          name: "ui",
+          include: ["src/**/*.test.tsx"],
+          setupFiles: ["./src/test/setup.ts"],
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            headless: true,
+            instances: [{ browser: "chromium" }],
+          },
+        },
+      },
+    ],
   },
 });

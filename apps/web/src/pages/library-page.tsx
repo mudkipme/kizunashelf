@@ -22,11 +22,9 @@ import {
   encodeCriteria,
   hasCriteria,
 } from "@/components/smart-lists/criteria-url";
-import {
-  RuleBuilder,
-  pruneIncompleteRules,
-  ruleFieldMetas,
-} from "@/components/smart-lists/rule-builder";
+import { RuleBuilder } from "@/components/smart-lists/rule-builder";
+import { ruleFieldMetas } from "@/components/smart-lists/rule-field-meta";
+import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
 import { SaveSmartListDialog } from "@/components/smart-lists/save-smart-list-dialog";
 import { SortPicker } from "@/components/smart-lists/sort-picker";
 import { Button } from "@/components/ui/button";

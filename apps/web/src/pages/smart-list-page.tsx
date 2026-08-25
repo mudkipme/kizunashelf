@@ -29,11 +29,9 @@ import { EntityResults } from "@/components/assets/entity-results";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { CriteriaSummary } from "@/components/smart-lists/criteria-summary";
-import {
-  RuleBuilder,
-  pruneIncompleteRules,
-  ruleFieldMetas,
-} from "@/components/smart-lists/rule-builder";
+import { RuleBuilder } from "@/components/smart-lists/rule-builder";
+import { ruleFieldMetas } from "@/components/smart-lists/rule-field-meta";
+import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
 import { SortPicker } from "@/components/smart-lists/sort-picker";
 import { Alert } from "@/components/ui/alert";
 import {

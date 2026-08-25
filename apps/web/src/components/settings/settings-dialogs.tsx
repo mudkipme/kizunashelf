@@ -33,12 +33,10 @@ import {
   defaultField,
   defaultHomeSection,
 } from "./settings-model";
-import {
-  EntityTypeForm,
-  FieldForm,
-  HomeSectionForm,
-  TitleLanguagesContext,
-} from "./settings-sections";
+import { EntityTypeForm } from "./settings-entity-type";
+import { FieldForm } from "./settings-field-form";
+import { HomeSectionForm } from "./settings-home-section";
+import { TitleLanguagesContext } from "./settings-shared";
 
 // ----------------------------------------------------------------------------
 // Shared dialog chrome

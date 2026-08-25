@@ -6,49 +6,43 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
-  useDroppable,
   useSensor,
   useSensors,
-  type DragEndEvent,
-  type DragOverEvent,
+   DragEndEvent,
+   DragOverEvent,
 } from "@dnd-kit/core";
 import {
-  SortableContext,
   arrayMove,
   sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
-  CheckIcon,
   EyeIcon,
   FilePenLineIcon,
   FolderPlusIcon,
-  GripVerticalIcon,
   ListIcon,
-  ListOrderedIcon,
-  MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
   SaveIcon,
-  SquareCheckIcon,
-  SquareIcon,
   Trash2Icon,
-  XIcon,
 } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
 import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addItemToList, removeList, saveList } from "@/api/lists";
 import { useDebouncedCallback } from "@/hooks/use-debounce";
-import { entitiesQuery, listQuery, queryKeys } from "@/api/queries";
-import { EntityCover } from "@/components/assets/entity-cover";
+import { listQuery, queryKeys } from "@/api/queries";
 import { MarkdownView } from "@/components/assets/markdown-view";
-import { EntityTitle } from "@/components/entities/entity-title";
 import { AppFrame } from "@/components/layout/app-frame";
+import { AddItemsDialog } from "@/components/lists/add-items-dialog";
+import {
+  sectionsSignature,
+  serverSections,
+  type EditableSection,
+} from "@/components/lists/list-sections";
+import { RenameListDialog } from "@/components/lists/rename-list-dialog";
+import { SectionBlock } from "@/components/lists/section-block";
 import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import {
@@ -61,65 +55,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Textarea } from "@/components/ui/textarea";
-import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
-import { cn } from "@/lib/utils";
-import type { ListItem, ListMarker, ListSection } from "@/types/api";
-
-type EditableItem = ListItem & { key: string };
-type EditableSection = {
-  key: string;
-  heading: string | null;
-  marker: ListMarker;
-  items: EditableItem[];
-};
-
-// A stable-ish signature of the editable sections, for dirty-tracking and for
-// comparing local edits against the server's last-loaded state. Only the parts
-// that round-trip to Markdown matter (heading, marker, item order + task state).
-function sectionsSignature(
-  sections: Array<{ heading: string | null; marker: ListMarker; items: Array<{ text: string; checked?: boolean | null }> }>,
-) {
-  return JSON.stringify(
-    sections.map((section) => ({
-      heading: section.heading,
-      marker: section.marker,
-      items: section.items.map((item) => ({ text: item.text, checked: item.checked ?? null })),
-    })),
-  );
-}
-
-function serverSections(sections: ListSection[]) {
-  return sections.map((section) => ({
-    heading: section.heading ?? null,
-    marker: section.marker,
-    items: section.items,
-  }));
-}
 
 export function ListDetailPage() {
   const { t } = useLingui();
@@ -599,255 +539,6 @@ export function ListDetailPage() {
   );
 }
 
-function SectionBlock({
-  section,
-  language,
-  disabled,
-  onHeadingChange,
-  onMarkerChange,
-  onRemoveSection,
-  onRemoveItem,
-  onToggleItem,
-}: {
-  section: EditableSection;
-  language: string;
-  disabled: boolean;
-  onHeadingChange: (heading: string) => void;
-  onMarkerChange: (marker: ListMarker) => void;
-  onRemoveSection: () => void;
-  onRemoveItem: (itemKey: string) => void;
-  onToggleItem: (itemKey: string) => void;
-}) {
-  const { t } = useLingui();
-  // Each section is a drop target in its own right, so items can be dragged into
-  // an empty one (where there are no item rows to drop onto).
-  const { setNodeRef, isOver } = useDroppable({ id: section.key });
-  const ungrouped = section.heading === null;
-  // The heading reads as plain text until the user picks "Rename" from the menu.
-  const [renaming, setRenaming] = useState(false);
-
-  return (
-    <div className="rounded-md border bg-muted/30 p-2">
-      <div className="mb-2 flex items-center gap-2">
-        {ungrouped ? (
-          <span className="mr-auto px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            <Trans>Ungrouped</Trans>
-          </span>
-        ) : renaming ? (
-          <Input
-            autoFocus
-            value={section.heading ?? ""}
-            placeholder={t`Section heading`}
-            disabled={disabled}
-            aria-label={t`Section heading`}
-            className="mr-auto h-7 max-w-xs text-sm font-medium"
-            onChange={(event) => onHeadingChange(event.target.value)}
-            onBlur={() => setRenaming(false)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === "Escape") {
-                event.preventDefault();
-                setRenaming(false);
-              }
-            }}
-          />
-        ) : (
-          <h3 className="mr-auto truncate px-1 text-sm font-semibold">
-            {section.heading || t`Untitled section`}
-          </h3>
-        )}
-        <span className="text-xs tabular-nums text-muted-foreground">{section.items.length}</span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              disabled={disabled}
-              aria-label={t`Section actions`}
-            >
-              <MoreHorizontalIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            {ungrouped ? null : (
-              <>
-                <DropdownMenuItem onSelect={() => setRenaming(true)}>
-                  <FilePenLineIcon />
-                  <Trans>Rename</Trans>
-                </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" onSelect={onRemoveSection}>
-                  <Trash2Icon />
-                  <Trans>Delete</Trans>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            <DropdownMenuLabel>
-              <Trans>List style</Trans>
-            </DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={section.marker}
-              onValueChange={(value) => onMarkerChange(value as ListMarker)}
-            >
-              <DropdownMenuRadioItem value="unordered">
-                <ListIcon />
-                <Trans>Unordered</Trans>
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="ordered">
-                <ListOrderedIcon />
-                <Trans>Ordered</Trans>
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="todo">
-                <SquareCheckIcon />
-                <Trans>Todo</Trans>
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <SortableContext items={section.items.map((item) => item.key)} strategy={verticalListSortingStrategy}>
-        <ol
-          ref={setNodeRef}
-          className={cn(
-            "flex min-h-10 flex-col gap-2 rounded-md transition-colors",
-            isOver && "bg-accent/40",
-            section.items.length === 0 &&
-              "items-center justify-center border border-dashed p-3 text-center text-xs text-muted-foreground",
-          )}
-        >
-          {section.items.length === 0 ? (
-            <span className="pointer-events-none">
-              <Trans>Drag items here</Trans>
-            </span>
-          ) : (
-            section.items.map((item, index) => (
-              <SortableRow
-                key={item.key}
-                item={item}
-                index={index}
-                marker={section.marker}
-                language={language}
-                disabled={disabled}
-                onRemove={() => onRemoveItem(item.key)}
-                onToggle={() => onToggleItem(item.key)}
-              />
-            ))
-          )}
-        </ol>
-      </SortableContext>
-    </div>
-  );
-}
-
-function SortableRow({
-  item,
-  index,
-  marker,
-  language,
-  disabled,
-  onRemove,
-  onToggle,
-}: {
-  item: EditableItem;
-  index: number;
-  marker: ListMarker;
-  language: string;
-  disabled: boolean;
-  onRemove: () => void;
-  onToggle: () => void;
-}) {
-  const { t } = useLingui();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.key });
-  const style = { transform: CSS.Transform.toString(transform), transition };
-  const checked = item.checked ?? false;
-
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "group flex items-center gap-2 rounded-md border bg-card p-2",
-        isDragging && "opacity-60 shadow-sm",
-        // A checked-off task reads as "done": dimmed and struck through.
-        marker === "todo" && checked && "opacity-60",
-      )}
-    >
-      <button
-        type="button"
-        className={cn(
-          "flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground transition-opacity hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
-          // Keep rows reading as content; the grip surfaces on hover/focus.
-          "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
-          disabled && "hidden",
-        )}
-        aria-label={t`Drag to reorder`}
-        disabled={disabled}
-        {...attributes}
-        {...listeners}
-      >
-        <GripVerticalIcon className="size-4" />
-      </button>
-      {/* Marker column: a checkbox for todo, the position for ordered, and nothing
-          for unordered (the card itself already separates rows). */}
-      {marker === "todo" ? (
-        <button
-          type="button"
-          className="flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-          role="checkbox"
-          aria-checked={checked}
-          aria-label={checked ? t`Mark as not done` : t`Mark as done`}
-          disabled={disabled}
-          onClick={onToggle}
-        >
-          {checked ? <SquareCheckIcon className="size-4 text-primary" /> : <SquareIcon className="size-4" />}
-        </button>
-      ) : marker === "ordered" ? (
-        <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">{index + 1}.</span>
-      ) : null}
-      {item.entity ? (
-        <Link
-          to={`/entities/${encodeURIComponent(item.entity.id)}`}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded hover:bg-accent/40"
-        >
-          <EntityCover entity={item.entity} />
-          <span className="min-w-0">
-            <EntityTitle
-              as="span"
-              entity={item.entity}
-              language={language}
-              className={cn("block truncate text-sm font-medium", marker === "todo" && checked && "line-through")}
-            />
-            <span className="block truncate text-xs text-muted-foreground">{item.entity.typeLabel}</span>
-          </span>
-        </Link>
-      ) : (
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className={cn("truncate text-sm", marker === "todo" && checked && "line-through")}>{item.text}</span>
-          <span className="text-xs text-muted-foreground">
-            <Trans>Unresolved link</Trans>
-          </span>
-        </span>
-      )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className={cn(
-          "shrink-0 text-muted-foreground transition-opacity",
-          "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
-          disabled && "hidden",
-        )}
-        onClick={onRemove}
-        disabled={disabled}
-        aria-label={t`Remove item`}
-      >
-        <Trash2Icon />
-      </Button>
-    </li>
-  );
-}
-
 function MarkdownField({
   label,
   value,
@@ -888,176 +579,5 @@ function MarkdownField({
         />
       )}
     </section>
-  );
-}
-
-function AddItemsDialog({
-  open,
-  onOpenChange,
-  existingIds,
-  disabled,
-  onAdd,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  existingIds: Set<string>;
-  disabled: boolean;
-  onAdd: (entityId: string) => Promise<void>;
-}) {
-  const { t } = useLingui();
-  const language = useTitleLanguage();
-  const [query, setQuery] = useState("");
-  const [pendingId, setPendingId] = useState<string>();
-  const search = useQuery({
-    ...entitiesQuery({ q: query.trim() || undefined, pageSize: 20, titleLanguage: language }),
-    enabled: open,
-  });
-  const results = search.data?.items ?? [];
-
-  async function add(entityId: string) {
-    setPendingId(entityId);
-    try {
-      await onAdd(entityId);
-    } finally {
-      setPendingId(undefined);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>Add items</Trans>
-          </DialogTitle>
-        </DialogHeader>
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t`Search entities…`}
-          autoFocus
-        />
-        <div className="flex min-h-0 flex-col gap-1 overflow-auto max-sm:flex-1 sm:max-h-80">
-          {search.isPending ? (
-            <p className="p-3 text-center text-sm text-muted-foreground">
-              <Trans>Loading…</Trans>
-            </p>
-          ) : results.length === 0 ? (
-            <p className="p-3 text-center text-sm text-muted-foreground">
-              <Trans>No matching entities.</Trans>
-            </p>
-          ) : (
-            results.map((entity) => {
-              const added = existingIds.has(entity.id);
-              return (
-                <div key={entity.id} className="flex items-center gap-2 rounded-md p-1">
-                  <EntityCover entity={entity} />
-                  <span className="min-w-0 flex-1">
-                    <EntityTitle
-                      as="span"
-                      entity={entity}
-                      language={language}
-                      className="block truncate text-sm font-medium"
-                    />
-                    <span className="block truncate text-xs text-muted-foreground">{entity.typeLabel}</span>
-                  </span>
-                  {added ? (
-                    <Badge variant="outline">
-                      <Trans>Added</Trans>
-                    </Badge>
-                  ) : (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={disabled || pendingId === entity.id}
-                      onClick={() => void add(entity.id)}
-                    >
-                      <PlusIcon data-icon="inline-start" />
-                      <Trans>Add</Trans>
-                    </Button>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            <CheckIcon data-icon="inline-start" />
-            <Trans>Done</Trans>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function RenameListDialog({
-  open,
-  onOpenChange,
-  currentName,
-  saving,
-  disabled,
-  onRename,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentName: string;
-  saving: boolean;
-  disabled: boolean;
-  onRename: (name: string) => void;
-}) {
-  const [name, setName] = useState(currentName);
-  useEffect(() => {
-    if (open) setName(currentName);
-  }, [open, currentName]);
-
-  const normalized = normalizeBasename(name);
-  const validationError = name.trim() ? basenameValidationError(normalized) : undefined;
-  const unchanged = normalized === currentName;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>Rename list</Trans>
-          </DialogTitle>
-          <DialogDescription>
-            <Trans>Changes the list's name.</Trans>
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!name.trim() || validationError || unchanged) return;
-            onRename(normalized);
-          }}
-          className="flex flex-col gap-2"
-        >
-          <label className="text-sm font-medium">
-            <Trans>Name</Trans>
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              disabled={disabled || saving}
-              aria-invalid={Boolean(validationError)}
-            />
-          </label>
-          {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
-          <DialogFooter className="mt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              <XIcon data-icon="inline-start" />
-              <Trans>Cancel</Trans>
-            </Button>
-            <Button type="submit" disabled={disabled || saving || Boolean(validationError) || unchanged || !name.trim()}>
-              <CheckIcon data-icon="inline-start" />
-              {saving ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }

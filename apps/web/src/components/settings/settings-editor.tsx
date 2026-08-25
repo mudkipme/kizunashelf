@@ -32,7 +32,7 @@ import {
   normalizeVaultConfig,
 } from "./settings-model";
 import { HomeBlock, TypesSection } from "./settings-dialogs";
-import { DailyNotesEditor } from "./settings-sections";
+import { DailyNotesEditor } from "./settings-daily-notes";
 
 type SettingsEditorProps = {
   vaultConfigPath?: string;
