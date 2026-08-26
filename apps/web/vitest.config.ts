@@ -42,6 +42,14 @@ export default defineConfig({
           tailwindcss(),
         ],
         resolve: { alias },
+        // Pre-bundled up front. Vite otherwise discovers these mid-run the
+        // first time a test imports them and reloads the page to swap them in,
+        // which aborts whatever test file was mid-import — a cold-cache flake
+        // that only ever shows up in CI. These are the ones no app entry pulls
+        // in early enough for the initial scan to find.
+        optimizeDeps: {
+          include: ["react-dom/client", "@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+        },
         test: {
           name: "ui",
           include: ["src/**/*.test.tsx"],
