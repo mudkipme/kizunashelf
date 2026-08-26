@@ -20,3 +20,5 @@ CLAUDE.md
 docs/*-plan.md
 skills-lock.json
 manual/public/
+__screenshots__/
+.vitest-attachments/
