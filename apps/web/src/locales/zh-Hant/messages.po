@@ -255,6 +255,14 @@ msgstr "{total, plural, other {# 項符合}}"
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 個欄位}}"
 
+#: src/components/layout/command-palette.tsx:296
+msgid "↑↓ to move"
+msgstr ""
+
+#: src/components/layout/command-palette.tsx:299
+msgid "↵ to open"
+msgstr ""
+
 #. Numeric rule operator
 #: src/components/smart-lists/rule-field-meta.ts:108
 msgid "<"
@@ -306,7 +314,7 @@ msgstr "已存在以此標題命名的檔案，因此改儲存為「{0}」。"
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名清單已存在，或檔案已在磁碟上被修改。"
 
-#: src/components/layout/app-frame.tsx:156
+#: src/components/layout/app-frame.tsx:172
 msgid "A shelf for everything you love"
 msgstr "安放你所愛之物的書架"
 
@@ -318,13 +326,14 @@ msgstr "已存在同名類型，因此改用 {assignedIds}。新增後可再重�
 msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 msgstr "所有條目通用的標籤清單，具有專屬編輯器、篩選器與規則支援。選擇性啟用：指定保存標籤清單的前置中繼資料鍵即可啟用。"
 
+#: src/components/layout/command-palette.tsx:191
 #: src/pages/entity-page.tsx:429
 #: src/pages/entity-page.tsx:432
 msgid "Actions"
 msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:107
-#: src/components/layout/app-frame.tsx:433
+#: src/components/layout/nav-destinations.ts:41
 #: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
@@ -539,7 +548,7 @@ msgstr "資產根目錄"
 msgid "assets: {0}"
 msgstr "資產：{0}"
 
-#: src/components/layout/app-frame.tsx:137
+#: src/components/layout/app-frame.tsx:153
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -579,7 +588,7 @@ msgstr "瀏覽庫"
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "內建標籤將使用英文，標題仍使用該語言。"
 
-#: src/components/layout/app-frame.tsx:430
+#: src/components/layout/nav-destinations.ts:40
 #: src/pages/calendar-page.tsx:90
 msgid "Calendar"
 msgstr "日曆"
@@ -650,14 +659,18 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "關閉"
 
-#: src/components/layout/app-frame.tsx:374
-#: src/components/layout/app-frame.tsx:387
+#: src/components/layout/app-frame.tsx:372
+#: src/components/layout/app-frame.tsx:385
 msgid "Close navigation"
 msgstr "關閉導覽"
 
 #: src/components/home/coming-up-section.tsx:64
 msgid "Coming up"
 msgstr "即將登場"
+
+#: src/components/layout/command-palette.tsx:237
+msgid "Command palette"
+msgstr ""
 
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/import/import-labels.ts:34
@@ -1037,6 +1050,7 @@ msgstr "結尾為:"
 msgid "English"
 msgstr "英文"
 
+#: src/components/layout/command-palette.tsx:188
 #: src/pages/statistics-page.tsx:55
 msgid "Entities"
 msgstr "項目"
@@ -1067,6 +1081,10 @@ msgstr "劇集"
 #: src/pages/activity-page.tsx:304
 msgid "Episodes"
 msgstr "劇集"
+
+#: src/components/layout/command-palette.tsx:302
+msgid "esc to close"
+msgstr ""
 
 #: src/components/settings/settings-field-form.tsx:194
 #: src/pages/activity-page.tsx:50
@@ -1186,9 +1204,13 @@ msgstr "遊戲"
 msgid "Give your list a name."
 msgstr "為你的清單命名。"
 
-#: src/components/layout/app-frame.tsx:136
+#: src/components/layout/app-frame.tsx:152
 msgid "Go back"
 msgstr "返回"
+
+#: src/components/layout/command-palette.tsx:190
+msgid "Go to"
+msgstr ""
 
 #: src/pages/import-wizard-page.tsx:279
 msgid "Go to library"
@@ -1223,7 +1245,7 @@ msgstr "不含以下任何"
 msgid "Heading"
 msgstr "標題"
 
-#: src/components/layout/app-frame.tsx:419
+#: src/components/layout/nav-destinations.ts:38
 #: src/components/settings/settings-editor.tsx:118
 #: src/components/settings/settings-editor.tsx:337
 #: src/pages/home-page.tsx:30
@@ -1248,7 +1270,7 @@ msgstr "圖示"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:463
+#: src/components/layout/nav-destinations.ts:43
 #: src/pages/import-wizard-page.tsx:191
 msgid "Import"
 msgstr "匯入"
@@ -1435,7 +1457,7 @@ msgstr "稍後"
 msgid "less"
 msgstr "收合"
 
-#: src/components/layout/app-frame.tsx:427
+#: src/components/layout/nav-destinations.ts:39
 msgid "Library"
 msgstr "庫"
 
@@ -1514,7 +1536,7 @@ msgstr "找不到清單"
 msgid "List style"
 msgstr "清單樣式"
 
-#: src/components/layout/app-frame.tsx:436
+#: src/components/layout/nav-destinations.ts:42
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "清單"
@@ -1684,13 +1706,17 @@ msgstr "我的保管庫"
 msgid "Name"
 msgstr "名稱"
 
-#: src/components/layout/app-frame.tsx:379
+#: src/components/layout/app-frame.tsx:377
 msgid "Navigation"
 msgstr "導覽"
 
 #: src/components/import/import-labels.ts:50
 msgid "Needs review"
 msgstr "待檢查"
+
+#: src/components/layout/command-palette.tsx:145
+msgid "New entity"
+msgstr ""
 
 #: src/components/settings/settings-dialogs.tsx:304
 msgid "New field"
@@ -1834,7 +1860,8 @@ msgstr "無 Markdown 內文版塊。"
 msgid "No matched provider"
 msgstr "無比對到的資料來源"
 
-#: src/components/layout/header-search.tsx:188
+#: src/components/layout/command-palette.tsx:268
+#: src/components/layout/header-search.tsx:208
 msgid "No matches"
 msgstr "無相符項目"
 
@@ -1996,7 +2023,7 @@ msgstr "開啟現有保管庫"
 msgid "Open folder"
 msgstr "開啟資料夾"
 
-#: src/components/layout/app-frame.tsx:167
+#: src/components/layout/app-frame.tsx:183
 msgid "Open navigation"
 msgstr "開啟導覽"
 
@@ -2275,12 +2302,17 @@ msgstr "必填 — 在此輸入檔名，或填寫下方的標題。"
 msgid "Required — enter a file name."
 msgstr "必填 — 請輸入檔名。"
 
-#: src/components/layout/app-frame.tsx:293
-#: src/components/layout/app-frame.tsx:294
+#: src/components/layout/app-frame.tsx:306
+#: src/components/layout/app-frame.tsx:307
+#: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "重新掃描保管庫"
 
-#: src/components/layout/app-frame.tsx:469
+#: src/components/layout/command-palette.tsx:263
+msgid "Results"
+msgstr ""
+
+#: src/components/layout/nav-destinations.ts:45
 #: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "檢查"
@@ -2353,17 +2385,25 @@ msgstr "範圍"
 msgid "Search"
 msgstr "搜尋"
 
-#: src/components/layout/app-frame.tsx:66
+#: src/components/layout/app-frame.tsx:61
 msgid "Search {activeTypeLabel}"
 msgstr "搜尋 {activeTypeLabel}"
+
+#: src/components/layout/command-palette.tsx:247
+msgid "Search entities, pages and commands"
+msgstr ""
+
+#: src/components/layout/command-palette.tsx:249
+msgid "Search entities, pages and commands…"
+msgstr ""
 
 #: src/components/lists/add-items-dialog.tsx:67
 msgid "Search entities…"
 msgstr "搜尋項目…"
 
-#: src/components/layout/app-frame.tsx:67
-#: src/components/layout/app-frame.tsx:187
-#: src/components/layout/header-search.tsx:149
+#: src/components/layout/app-frame.tsx:62
+#: src/components/layout/app-frame.tsx:205
+#: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "搜尋庫"
 
@@ -2428,11 +2468,11 @@ msgstr "版塊是你庫中可設定的書架。在設定中新增一個，或直
 msgid "See all"
 msgstr "查看全部"
 
-#: src/components/layout/header-search.tsx:108
+#: src/components/layout/header-search.tsx:117
 msgid "See all results"
 msgstr "查看全部結果"
 
-#: src/components/layout/header-search.tsx:165
+#: src/components/layout/header-search.tsx:185
 msgid "See all results for “{query}”"
 msgstr "查看「{query}」的全部結果"
 
@@ -2464,7 +2504,7 @@ msgstr "選擇類型"
 msgid "Selected Metadata"
 msgstr "已選取的中繼資料"
 
-#: src/components/layout/app-frame.tsx:472
+#: src/components/layout/nav-destinations.ts:46
 #: src/components/settings/settings-editor.tsx:187
 msgid "Settings"
 msgstr "設定"
@@ -2582,7 +2622,7 @@ msgstr "開始中…"
 msgid "starts with"
 msgstr "開頭為:"
 
-#: src/components/layout/app-frame.tsx:466
+#: src/components/layout/nav-destinations.ts:44
 #: src/pages/statistics-page.tsx:42
 msgid "Statistics"
 msgstr "統計"
@@ -2910,7 +2950,7 @@ msgstr "保管庫路徑或 URL"
 msgid "Vault removed"
 msgstr "已移除保管庫"
 
-#: src/components/layout/app-frame.tsx:282
+#: src/hooks/use-rescan-library.ts:23
 msgid "Vault rescanned"
 msgstr "已重新掃描保管庫"
 

@@ -255,6 +255,14 @@ msgstr "{total, plural, other {# 件が一致}}"
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 件のフィールド}}"
 
+#: src/components/layout/command-palette.tsx:296
+msgid "↑↓ to move"
+msgstr ""
+
+#: src/components/layout/command-palette.tsx:299
+msgid "↵ to open"
+msgstr ""
+
 #. Numeric rule operator
 #: src/components/smart-lists/rule-field-meta.ts:108
 msgid "<"
@@ -306,7 +314,7 @@ msgstr "このタイトルと同名のファイルがすでに存在したため
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名のリストが既に存在するか、ファイルがディスク上で変更されています。"
 
-#: src/components/layout/app-frame.tsx:156
+#: src/components/layout/app-frame.tsx:172
 msgid "A shelf for everything you love"
 msgstr "君が愛するすべてのための本棚"
 
@@ -318,13 +326,14 @@ msgstr "同名のタイプがすでに存在するため、代わりに {assigne
 msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 msgstr "すべてのエントリに付けられる共通のラベルリストです。専用のエディタ・フィルタ・ルールに対応します。オプトイン方式: リストを保持するフロントマターのキー名を指定すると有効になります。"
 
+#: src/components/layout/command-palette.tsx:191
 #: src/pages/entity-page.tsx:429
 #: src/pages/entity-page.tsx:432
 msgid "Actions"
 msgstr "操作"
 
 #: src/components/assets/quick-log-dialog.tsx:107
-#: src/components/layout/app-frame.tsx:433
+#: src/components/layout/nav-destinations.ts:41
 #: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
@@ -539,7 +548,7 @@ msgstr "アセットのルート"
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
-#: src/components/layout/app-frame.tsx:137
+#: src/components/layout/app-frame.tsx:153
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -579,7 +588,7 @@ msgstr "ライブラリを閲覧"
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "組み込みラベルは英語になりますが、タイトルはこの言語になります。"
 
-#: src/components/layout/app-frame.tsx:430
+#: src/components/layout/nav-destinations.ts:40
 #: src/pages/calendar-page.tsx:90
 msgid "Calendar"
 msgstr "カレンダー"
@@ -650,14 +659,18 @@ msgstr "すべてクリア"
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/layout/app-frame.tsx:374
-#: src/components/layout/app-frame.tsx:387
+#: src/components/layout/app-frame.tsx:372
+#: src/components/layout/app-frame.tsx:385
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
 #: src/components/home/coming-up-section.tsx:64
 msgid "Coming up"
 msgstr "近日公開"
+
+#: src/components/layout/command-palette.tsx:237
+msgid "Command palette"
+msgstr ""
 
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/import/import-labels.ts:34
@@ -1037,6 +1050,7 @@ msgstr "が次で終わる:"
 msgid "English"
 msgstr "英語"
 
+#: src/components/layout/command-palette.tsx:188
 #: src/pages/statistics-page.tsx:55
 msgid "Entities"
 msgstr "アイテム"
@@ -1067,6 +1081,10 @@ msgstr "エピソード"
 #: src/pages/activity-page.tsx:304
 msgid "Episodes"
 msgstr "エピソード"
+
+#: src/components/layout/command-palette.tsx:302
+msgid "esc to close"
+msgstr ""
 
 #: src/components/settings/settings-field-form.tsx:194
 #: src/pages/activity-page.tsx:50
@@ -1186,9 +1204,13 @@ msgstr "ゲーム"
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
-#: src/components/layout/app-frame.tsx:136
+#: src/components/layout/app-frame.tsx:152
 msgid "Go back"
 msgstr "戻る"
+
+#: src/components/layout/command-palette.tsx:190
+msgid "Go to"
+msgstr ""
 
 #: src/pages/import-wizard-page.tsx:279
 msgid "Go to library"
@@ -1223,7 +1245,7 @@ msgstr "が次のいずれも含まない"
 msgid "Heading"
 msgstr "見出し"
 
-#: src/components/layout/app-frame.tsx:419
+#: src/components/layout/nav-destinations.ts:38
 #: src/components/settings/settings-editor.tsx:118
 #: src/components/settings/settings-editor.tsx:337
 #: src/pages/home-page.tsx:30
@@ -1248,7 +1270,7 @@ msgstr "アイコン"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:463
+#: src/components/layout/nav-destinations.ts:43
 #: src/pages/import-wizard-page.tsx:191
 msgid "Import"
 msgstr "インポート"
@@ -1435,7 +1457,7 @@ msgstr "後で"
 msgid "less"
 msgstr "折りたたむ"
 
-#: src/components/layout/app-frame.tsx:427
+#: src/components/layout/nav-destinations.ts:39
 msgid "Library"
 msgstr "ライブラリ"
 
@@ -1514,7 +1536,7 @@ msgstr "リストが見つかりません"
 msgid "List style"
 msgstr "リストのスタイル"
 
-#: src/components/layout/app-frame.tsx:436
+#: src/components/layout/nav-destinations.ts:42
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "リスト"
@@ -1684,13 +1706,17 @@ msgstr "マイ保管庫"
 msgid "Name"
 msgstr "名前"
 
-#: src/components/layout/app-frame.tsx:379
+#: src/components/layout/app-frame.tsx:377
 msgid "Navigation"
 msgstr "ナビゲーション"
 
 #: src/components/import/import-labels.ts:50
 msgid "Needs review"
 msgstr "要レビュー"
+
+#: src/components/layout/command-palette.tsx:145
+msgid "New entity"
+msgstr ""
 
 #: src/components/settings/settings-dialogs.tsx:304
 msgid "New field"
@@ -1834,7 +1860,8 @@ msgstr "Markdown 本文セクションがありません。"
 msgid "No matched provider"
 msgstr "一致するプロバイダーがありません"
 
-#: src/components/layout/header-search.tsx:188
+#: src/components/layout/command-palette.tsx:268
+#: src/components/layout/header-search.tsx:208
 msgid "No matches"
 msgstr "一致なし"
 
@@ -1996,7 +2023,7 @@ msgstr "既存の保管庫を開く"
 msgid "Open folder"
 msgstr "フォルダーを開く"
 
-#: src/components/layout/app-frame.tsx:167
+#: src/components/layout/app-frame.tsx:183
 msgid "Open navigation"
 msgstr "ナビゲーションを開く"
 
@@ -2275,12 +2302,17 @@ msgstr "必須 — ここにファイル名を入力するか、下のタイト�
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
-#: src/components/layout/app-frame.tsx:293
-#: src/components/layout/app-frame.tsx:294
+#: src/components/layout/app-frame.tsx:306
+#: src/components/layout/app-frame.tsx:307
+#: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
 
-#: src/components/layout/app-frame.tsx:469
+#: src/components/layout/command-palette.tsx:263
+msgid "Results"
+msgstr ""
+
+#: src/components/layout/nav-destinations.ts:45
 #: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "レビュー"
@@ -2353,17 +2385,25 @@ msgstr "範囲"
 msgid "Search"
 msgstr "検索"
 
-#: src/components/layout/app-frame.tsx:66
+#: src/components/layout/app-frame.tsx:61
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
+
+#: src/components/layout/command-palette.tsx:247
+msgid "Search entities, pages and commands"
+msgstr ""
+
+#: src/components/layout/command-palette.tsx:249
+msgid "Search entities, pages and commands…"
+msgstr ""
 
 #: src/components/lists/add-items-dialog.tsx:67
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
-#: src/components/layout/app-frame.tsx:67
-#: src/components/layout/app-frame.tsx:187
-#: src/components/layout/header-search.tsx:149
+#: src/components/layout/app-frame.tsx:62
+#: src/components/layout/app-frame.tsx:205
+#: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "ライブラリを検索"
 
@@ -2428,11 +2468,11 @@ msgstr "セクションはライブラリの設定可能な棚です。設定で
 msgid "See all"
 msgstr "すべて表示"
 
-#: src/components/layout/header-search.tsx:108
+#: src/components/layout/header-search.tsx:117
 msgid "See all results"
 msgstr "すべての結果を表示"
 
-#: src/components/layout/header-search.tsx:165
+#: src/components/layout/header-search.tsx:185
 msgid "See all results for “{query}”"
 msgstr "「{query}」のすべての結果を表示"
 
@@ -2464,7 +2504,7 @@ msgstr "タイプを選択"
 msgid "Selected Metadata"
 msgstr "選択したメタデータ"
 
-#: src/components/layout/app-frame.tsx:472
+#: src/components/layout/nav-destinations.ts:46
 #: src/components/settings/settings-editor.tsx:187
 msgid "Settings"
 msgstr "設定"
@@ -2582,7 +2622,7 @@ msgstr "開始中…"
 msgid "starts with"
 msgstr "が次で始まる:"
 
-#: src/components/layout/app-frame.tsx:466
+#: src/components/layout/nav-destinations.ts:44
 #: src/pages/statistics-page.tsx:42
 msgid "Statistics"
 msgstr "統計"
@@ -2910,7 +2950,7 @@ msgstr "保管庫のパスまたは URL"
 msgid "Vault removed"
 msgstr "保管庫を削除しました"
 
-#: src/components/layout/app-frame.tsx:282
+#: src/hooks/use-rescan-library.ts:23
 msgid "Vault rescanned"
 msgstr "保管庫を再スキャンしました"
 

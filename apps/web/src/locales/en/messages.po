@@ -255,6 +255,14 @@ msgstr "{total, plural, one {# match} other {# matches}}"
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, one {# field} other {# fields}}"
 
+#: src/components/layout/command-palette.tsx:296
+msgid "↑↓ to move"
+msgstr "↑↓ to move"
+
+#: src/components/layout/command-palette.tsx:299
+msgid "↵ to open"
+msgstr "↵ to open"
+
 #. Numeric rule operator
 #: src/components/smart-lists/rule-field-meta.ts:108
 msgid "<"
@@ -306,7 +314,7 @@ msgstr "A file named for this title already existed, so it was saved as “{0}�
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "A list with this name already exists, or the file changed on disk."
 
-#: src/components/layout/app-frame.tsx:156
+#: src/components/layout/app-frame.tsx:172
 msgid "A shelf for everything you love"
 msgstr "A shelf for everything you love"
 
@@ -318,13 +326,14 @@ msgstr "A type with the same name already exists, so {assignedIds} was used inst
 msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 msgstr "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 
+#: src/components/layout/command-palette.tsx:191
 #: src/pages/entity-page.tsx:429
 #: src/pages/entity-page.tsx:432
 msgid "Actions"
 msgstr "Actions"
 
 #: src/components/assets/quick-log-dialog.tsx:107
-#: src/components/layout/app-frame.tsx:433
+#: src/components/layout/nav-destinations.ts:41
 #: src/pages/activity-page.tsx:114
 #: src/pages/statistics-page.tsx:84
 msgid "Activity"
@@ -539,7 +548,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:137
+#: src/components/layout/app-frame.tsx:153
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -579,7 +588,7 @@ msgstr "Browse library"
 msgid "Built-in labels will be in English. Titles still use this language."
 msgstr "Built-in labels will be in English. Titles still use this language."
 
-#: src/components/layout/app-frame.tsx:430
+#: src/components/layout/nav-destinations.ts:40
 #: src/pages/calendar-page.tsx:90
 msgid "Calendar"
 msgstr "Calendar"
@@ -650,14 +659,18 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:374
-#: src/components/layout/app-frame.tsx:387
+#: src/components/layout/app-frame.tsx:372
+#: src/components/layout/app-frame.tsx:385
 msgid "Close navigation"
 msgstr "Close navigation"
 
 #: src/components/home/coming-up-section.tsx:64
 msgid "Coming up"
 msgstr "Coming up"
+
+#: src/components/layout/command-palette.tsx:237
+msgid "Command palette"
+msgstr "Command palette"
 
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/import/import-labels.ts:34
@@ -1037,6 +1050,7 @@ msgstr "ends with"
 msgid "English"
 msgstr "English"
 
+#: src/components/layout/command-palette.tsx:188
 #: src/pages/statistics-page.tsx:55
 msgid "Entities"
 msgstr "Entities"
@@ -1067,6 +1081,10 @@ msgstr "Episode"
 #: src/pages/activity-page.tsx:304
 msgid "Episodes"
 msgstr "Episodes"
+
+#: src/components/layout/command-palette.tsx:302
+msgid "esc to close"
+msgstr "esc to close"
 
 #: src/components/settings/settings-field-form.tsx:194
 #: src/pages/activity-page.tsx:50
@@ -1186,9 +1204,13 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:136
+#: src/components/layout/app-frame.tsx:152
 msgid "Go back"
 msgstr "Go back"
+
+#: src/components/layout/command-palette.tsx:190
+msgid "Go to"
+msgstr "Go to"
 
 #: src/pages/import-wizard-page.tsx:279
 msgid "Go to library"
@@ -1223,7 +1245,7 @@ msgstr "has none of"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:419
+#: src/components/layout/nav-destinations.ts:38
 #: src/components/settings/settings-editor.tsx:118
 #: src/components/settings/settings-editor.tsx:337
 #: src/pages/home-page.tsx:30
@@ -1248,7 +1270,7 @@ msgstr "Icon"
 msgid "ID"
 msgstr "ID"
 
-#: src/components/layout/app-frame.tsx:463
+#: src/components/layout/nav-destinations.ts:43
 #: src/pages/import-wizard-page.tsx:191
 msgid "Import"
 msgstr "Import"
@@ -1435,7 +1457,7 @@ msgstr "Later"
 msgid "less"
 msgstr "less"
 
-#: src/components/layout/app-frame.tsx:427
+#: src/components/layout/nav-destinations.ts:39
 msgid "Library"
 msgstr "Library"
 
@@ -1514,7 +1536,7 @@ msgstr "List not found"
 msgid "List style"
 msgstr "List style"
 
-#: src/components/layout/app-frame.tsx:436
+#: src/components/layout/nav-destinations.ts:42
 #: src/pages/lists-page.tsx:44
 msgid "Lists"
 msgstr "Lists"
@@ -1684,13 +1706,17 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:379
+#: src/components/layout/app-frame.tsx:377
 msgid "Navigation"
 msgstr "Navigation"
 
 #: src/components/import/import-labels.ts:50
 msgid "Needs review"
 msgstr "Needs review"
+
+#: src/components/layout/command-palette.tsx:145
+msgid "New entity"
+msgstr "New entity"
 
 #: src/components/settings/settings-dialogs.tsx:304
 msgid "New field"
@@ -1834,7 +1860,8 @@ msgstr "No markdown body sections."
 msgid "No matched provider"
 msgstr "No matched provider"
 
-#: src/components/layout/header-search.tsx:188
+#: src/components/layout/command-palette.tsx:268
+#: src/components/layout/header-search.tsx:208
 msgid "No matches"
 msgstr "No matches"
 
@@ -1996,7 +2023,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:167
+#: src/components/layout/app-frame.tsx:183
 msgid "Open navigation"
 msgstr "Open navigation"
 
@@ -2275,12 +2302,17 @@ msgstr "Required — enter a file name here or fill in the title below."
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
-#: src/components/layout/app-frame.tsx:293
-#: src/components/layout/app-frame.tsx:294
+#: src/components/layout/app-frame.tsx:306
+#: src/components/layout/app-frame.tsx:307
+#: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "Rescan vault"
 
-#: src/components/layout/app-frame.tsx:469
+#: src/components/layout/command-palette.tsx:263
+msgid "Results"
+msgstr "Results"
+
+#: src/components/layout/nav-destinations.ts:45
 #: src/pages/review-page.tsx:139
 msgid "Review"
 msgstr "Review"
@@ -2353,17 +2385,25 @@ msgstr "Scope"
 msgid "Search"
 msgstr "Search"
 
-#: src/components/layout/app-frame.tsx:66
+#: src/components/layout/app-frame.tsx:61
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
+
+#: src/components/layout/command-palette.tsx:247
+msgid "Search entities, pages and commands"
+msgstr "Search entities, pages and commands"
+
+#: src/components/layout/command-palette.tsx:249
+msgid "Search entities, pages and commands…"
+msgstr "Search entities, pages and commands…"
 
 #: src/components/lists/add-items-dialog.tsx:67
 msgid "Search entities…"
 msgstr "Search entities…"
 
-#: src/components/layout/app-frame.tsx:67
-#: src/components/layout/app-frame.tsx:187
-#: src/components/layout/header-search.tsx:149
+#: src/components/layout/app-frame.tsx:62
+#: src/components/layout/app-frame.tsx:205
+#: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "Search library"
 
@@ -2428,11 +2468,11 @@ msgstr "Sections are configurable shelves of your library. Add one in Settings, 
 msgid "See all"
 msgstr "See all"
 
-#: src/components/layout/header-search.tsx:108
+#: src/components/layout/header-search.tsx:117
 msgid "See all results"
 msgstr "See all results"
 
-#: src/components/layout/header-search.tsx:165
+#: src/components/layout/header-search.tsx:185
 msgid "See all results for “{query}”"
 msgstr "See all results for “{query}”"
 
@@ -2464,7 +2504,7 @@ msgstr "Select type"
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
-#: src/components/layout/app-frame.tsx:472
+#: src/components/layout/nav-destinations.ts:46
 #: src/components/settings/settings-editor.tsx:187
 msgid "Settings"
 msgstr "Settings"
@@ -2582,7 +2622,7 @@ msgstr "Starting…"
 msgid "starts with"
 msgstr "starts with"
 
-#: src/components/layout/app-frame.tsx:466
+#: src/components/layout/nav-destinations.ts:44
 #: src/pages/statistics-page.tsx:42
 msgid "Statistics"
 msgstr "Statistics"
@@ -2910,7 +2950,7 @@ msgstr "Vault path or URL"
 msgid "Vault removed"
 msgstr "Vault removed"
 
-#: src/components/layout/app-frame.tsx:282
+#: src/hooks/use-rescan-library.ts:23
 msgid "Vault rescanned"
 msgstr "Vault rescanned"
 

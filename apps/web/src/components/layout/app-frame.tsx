@@ -1,42 +1,35 @@
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  ActivityIcon,
   ArrowLeftIcon,
-  BarChart3Icon,
-  CalendarDaysIcon,
-  ClipboardCheckIcon,
-  DatabaseIcon,
-  DownloadIcon,
-  HomeIcon,
-  ListIcon,
   type LucideIcon,
   MenuIcon,
   RefreshCwIcon,
   SearchIcon,
-  SettingsIcon,
   TablePropertiesIcon,
   XIcon,
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { toast } from "sonner";
 
+import { CommandPalette } from "@/components/layout/command-palette";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { LanguageSelect } from "@/components/layout/language-select";
+import { destinationForPath, navDestinations } from "@/components/layout/nav-destinations";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Button } from "@/components/ui/button";
-import { refreshLibrary } from "@/api/settings";
 import { statsQuery } from "@/api/queries";
+import { useAppShortcuts } from "@/hooks/use-app-shortcuts";
 import { useMacTitlebarInset } from "@/hooks/use-mac-titlebar-inset";
+import { useRescanLibrary } from "@/hooks/use-rescan-library";
 import { isDesktopRuntime, isMacDesktopRuntime, setWindowTitle } from "@/lib/desktop";
 import { cn } from "@/lib/utils";
 import { allTypes } from "@/lib/constants";
 import type { StatsResponse } from "@/types/api";
 
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const navigate = useNavigate();
   const location = useLocation();
   // In the desktop shell the native title bar already carries the app identity,
@@ -53,6 +46,8 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const activeType = useMemo(() => {
     if (location.pathname !== "/library") return "";
     return new URLSearchParams(location.search).get("type") ?? allTypes;
@@ -82,9 +77,30 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
 
   useEffect(() => {
     if (!desktop) return;
-    const label = windowTitleLabel(location.pathname, t);
+    const destination = destinationForPath(location.pathname);
+    const label = destination ? i18n._(destination.label) : null;
     void setWindowTitle(label ? `${label} — KizunaShelf` : "KizunaShelf");
-  }, [desktop, location.pathname, t]);
+  }, [desktop, location.pathname, i18n]);
+
+  // Below `sm` the header search is not rendered at all, so the shortcut opens
+  // the sheet that holds it — which autofocuses its own field.
+  const focusSearch = useCallback(() => {
+    const input = searchInputRef.current;
+    if (!input || input.offsetParent === null) {
+      setMobileSearchOpen(true);
+      return;
+    }
+    input.focus();
+    // Selecting the existing query means the next keystroke replaces it, the
+    // way re-invoking find does in a native app.
+    input.select();
+  }, []);
+
+  useAppShortcuts({
+    paletteOpen,
+    onTogglePalette: useCallback(() => setPaletteOpen((open) => !open), []),
+    onFocusSearch: focusSearch,
+  });
 
   useEffect(() => {
     if (!mobileSidebarOpen) return;
@@ -177,6 +193,8 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         type={activeType || allTypes}
         className="ml-auto hidden min-w-0 items-center gap-2 sm:flex sm:max-w-sm"
         placeholder={searchPlaceholder}
+        inputRef={searchInputRef}
+        showShortcutHint
       />
       <Button
         type="button"
@@ -218,6 +236,10 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     </div>
   ) : null;
 
+  const palette = (
+    <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} stats={stats} />
+  );
+
   const mobileSidebar = (
     <MobileSidebar
       open={mobileSidebarOpen}
@@ -250,6 +272,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">{children}</div>
         </div>
         {mobileSidebar}
+        {palette}
       </main>
     );
   }
@@ -264,24 +287,14 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         <div className="min-h-0 min-w-0 overflow-auto overscroll-contain">{children}</div>
       </div>
       {mobileSidebar}
+      {palette}
     </main>
   );
 }
 
-// Manual "I edited the vault outside the app" reindex. The library reloads on a
-// TTL poll on its own, so this exists to skip the wait after editing frontmatter
-// in Obsidian. On success we invalidate the whole cache so every view repulls
-// the fresh index; failures surface through the global mutation-error toast.
 function RescanButton() {
   const { t } = useLingui();
-  const queryClient = useQueryClient();
-  const rescan = useMutation({
-    mutationFn: () => refreshLibrary(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries();
-      toast.success(t`Vault rescanned`);
-    },
-  });
+  const rescan = useRescanLibrary();
   return (
     <Button
       type="button"
@@ -300,21 +313,6 @@ function RescanButton() {
 
 function hasAppBackStack() {
   return Number(window.history.state?.idx ?? 0) > 0;
-}
-
-/** Window-title label for the nav destinations, mirrored into the native title
- * bar on desktop ("Library — KizunaShelf"). Reuses the sidebar msgids, so no
- * new translations. Detail routes fall back to the bare app name. */
-function windowTitleLabel(pathname: string, t: ReturnType<typeof useLingui>["t"]) {
-  if (pathname === "/library") return t`Library`;
-  if (pathname === "/calendar") return t`Calendar`;
-  if (pathname === "/activity") return t`Activity`;
-  if (pathname === "/lists" || pathname.startsWith("/lists/")) return t`Lists`;
-  if (pathname === "/entities/import") return t`Import`;
-  if (pathname === "/statistics") return t`Statistics`;
-  if (pathname === "/review" || pathname.startsWith("/review/")) return t`Review`;
-  if (pathname === "/settings") return t`Settings`;
-  return null;
 }
 
 function AppLogo() {
@@ -412,30 +410,32 @@ function SidebarContent({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  return (
-    <>
-      <section className="flex flex-col gap-1">
-        <SidebarNavLink to="/" icon={HomeIcon} end onNavigate={onNavigate}>
-          <Trans>Home</Trans>
-        </SidebarNavLink>
+  const { i18n } = useLingui();
+  const destinations = (group: "primary" | "secondary") =>
+    navDestinations
+      .filter((destination) => destination.group === group)
+      .map((destination) => (
         <SidebarNavLink
-          to="/library"
-          icon={DatabaseIcon}
-          active={pathname === "/library" && activeType === allTypes}
+          key={destination.to}
+          to={destination.to}
+          icon={destination.icon}
+          end={destination.end}
+          // Library is the one destination a route can be "on" without being
+          // the active nav item: a type filter belongs to that type's row.
+          active={
+            destination.to === "/library"
+              ? pathname === "/library" && activeType === allTypes
+              : undefined
+          }
           onNavigate={onNavigate}
         >
-          <Trans>Library</Trans>
+          {i18n._(destination.label)}
         </SidebarNavLink>
-        <SidebarNavLink to="/calendar" icon={CalendarDaysIcon} onNavigate={onNavigate}>
-          <Trans>Calendar</Trans>
-        </SidebarNavLink>
-        <SidebarNavLink to="/activity" icon={ActivityIcon} onNavigate={onNavigate}>
-          <Trans>Activity</Trans>
-        </SidebarNavLink>
-        <SidebarNavLink to="/lists" icon={ListIcon} onNavigate={onNavigate}>
-          <Trans>Lists</Trans>
-        </SidebarNavLink>
-      </section>
+      ));
+
+  return (
+    <>
+      <section className="flex flex-col gap-1">{destinations("primary")}</section>
 
       <section className="flex flex-col gap-1">
         {stats?.byType.map((type) => (
@@ -458,20 +458,7 @@ function SidebarContent({
         ) : null}
       </section>
 
-      <section className="mt-auto flex flex-col gap-1">
-        <SidebarNavLink to="/entities/import" icon={DownloadIcon} onNavigate={onNavigate}>
-          <Trans>Import</Trans>
-        </SidebarNavLink>
-        <SidebarNavLink to="/statistics" icon={BarChart3Icon} onNavigate={onNavigate}>
-          <Trans>Statistics</Trans>
-        </SidebarNavLink>
-        <SidebarNavLink to="/review" icon={ClipboardCheckIcon} onNavigate={onNavigate}>
-          <Trans>Review</Trans>
-        </SidebarNavLink>
-        <SidebarNavLink to="/settings" icon={SettingsIcon} onNavigate={onNavigate}>
-          <Trans>Settings</Trans>
-        </SidebarNavLink>
-      </section>
+      <section className="mt-auto flex flex-col gap-1">{destinations("secondary")}</section>
     </>
   );
 }

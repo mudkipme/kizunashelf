@@ -3,24 +3,10 @@ import { page } from "vitest/browser";
 
 import { AppFrame } from "@/components/layout/app-frame";
 import { render } from "@/test/render";
-import type { StatsResponse } from "@/types/api";
+import { stubApi } from "@/test/api-stub";
 
-const stats: StatsResponse = {
-  generatedAt: "2026-01-01T00:00:00Z",
-  total: 2,
-  relations: 0,
-  byType: [{ id: "anime", label: "Anime", count: 2 }],
-  byCanonicalStatus: { planning: 0, ongoing: 1, paused: 0, completed: 1, dropped: 0 },
-  dateFields: [],
-};
-
-// The shell fetches its sidebar counts on mount. Served from here so the test
-// depends on the contract rather than on whatever the runner's dev server
-// happens to do with an unproxied `/api` path.
 beforeEach(() => {
-  vi.stubGlobal("fetch", async () =>
-    new Response(JSON.stringify(stats), { headers: { "content-type": "application/json" } }),
-  );
+  stubApi();
 });
 afterEach(() => {
   vi.unstubAllGlobals();
