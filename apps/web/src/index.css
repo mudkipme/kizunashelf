@@ -14,13 +14,24 @@
   --color-popover-foreground: hsl(0 0% 4%);
   --color-card: hsl(0 0% 100%);
   --color-card-foreground: hsl(0 0% 4%);
+  /* The surface the app's chrome sits on — sidebar, toolbar, navigation sheet.
+     A native window separates chrome from content by *tone*, not just by a
+     hairline: Finder, Mail, VS Code and Obsidian all put the sidebar on a
+     visibly different surface. It moves away from `background` in both themes
+     (down in light, up in dark), which is the macOS direction. */
+  --color-chrome: hsl(0 0% 96%);
   --color-border: hsl(0 0% 90%);
   --color-input: hsl(0 0% 90%);
   --color-primary: hsl(0 0% 9%);
   --color-primary-foreground: hsl(0 0% 98%);
-  --color-secondary: hsl(0 0% 96%);
+  /* Kept in lockstep with `--color-accent`, as it was before: a filled
+     secondary button sits in the toolbar, so it has to read on chrome too. */
+  --color-secondary: hsl(0 0% 92%);
   --color-secondary-foreground: hsl(0 0% 9%);
-  --color-accent: hsl(0 0% 96%);
+  /* Deliberately a step darker than `--color-chrome`, and darker than the old
+     96%: hover and selection have to read on the chrome surface as well as on
+     content, and 4% against white was a very faint hover to begin with. */
+  --color-accent: hsl(0 0% 92%);
   --color-accent-foreground: hsl(0 0% 9%);
   --color-destructive: hsl(0 72% 51%);
   --color-ring: hsl(0 0% 64%);
@@ -41,6 +52,7 @@
   --color-popover-foreground: hsl(0 0% 98%);
   --color-card: hsl(0 0% 7%);
   --color-card-foreground: hsl(0 0% 98%);
+  --color-chrome: hsl(0 0% 9%);
   --color-border: hsl(0 0% 15%);
   --color-input: hsl(0 0% 18%);
   --color-primary: hsl(0 0% 98%);

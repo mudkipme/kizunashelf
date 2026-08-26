@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { AppFrame } from "@/components/layout/app-frame";
+import { useThemeStore } from "@/lib/theme";
 import { render } from "@/test/render";
 import { stubApi } from "@/test/api-stub";
 
@@ -10,6 +11,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.unstubAllGlobals();
+  useThemeStore.getState().setMode("system");
 });
 
 /**
@@ -62,6 +64,30 @@ describe("AppFrame chrome", () => {
     expect(styleOf("aside.app-chrome a").getPropertyValue("cursor")).toBe("default");
     expect(styleOf('[data-slot="button"]').getPropertyValue("cursor")).toBe("default");
   });
+
+  // What a native window separates by tone, this app separated only by a
+  // hairline: `--color-card` and `--color-background` held the same value in
+  // light mode, so the sidebar was literally white on white. The risk in fixing
+  // that is a *new* collision — a selected row or a filled button whose token
+  // happens to equal the chrome it now sits on, which is exactly what happened
+  // to `--color-accent` on the first attempt. Both themes are pinned, one test
+  // each so the render between them is torn down.
+  for (const mode of ["light", "dark"] as const) {
+    it(`keeps chrome, content and selection distinct in ${mode}`, async () => {
+      useThemeStore.getState().setMode(mode);
+      await page.viewport(1280, 800);
+      const screen = await render(<AppFrame>{null}</AppFrame>);
+      const home = screen.getByRole("link", { name: "Home" });
+      await expect.element(home).toBeVisible();
+
+      const content = styleOf("main").backgroundColor;
+      const chrome = styleOf("aside.app-chrome").backgroundColor;
+      const selected = getComputedStyle(home.element()).backgroundColor;
+
+      expect(chrome, "the sidebar must not match content").not.toBe(content);
+      expect(selected, "selection must not match the sidebar").not.toBe(chrome);
+    });
+  }
 
   it("does not let an image start a drag", async () => {
     await render(<AppFrame>{null}</AppFrame>);
