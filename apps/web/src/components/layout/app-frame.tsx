@@ -125,7 +125,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const headerBar = (
     <header
       data-tauri-drag-region={macDesktop || undefined}
-      className="flex min-h-14 shrink-0 items-center gap-2 border-b bg-card/85 px-3 py-2 sm:gap-3 sm:px-4"
+      className="app-chrome flex min-h-14 shrink-0 items-center gap-2 border-b bg-card/85 px-3 py-2 sm:gap-3 sm:px-4"
     >
       {canGoBack ? (
         <Button
@@ -340,7 +340,7 @@ function AppSidebar({
   titlebarInset?: boolean;
 }) {
   return (
-    <aside className="hidden min-h-0 border-r bg-card/35 md:flex md:flex-col">
+    <aside className="app-chrome hidden min-h-0 border-r bg-card/35 md:flex md:flex-col">
       {titlebarInset ? <div data-tauri-drag-region className="h-9 shrink-0" /> : null}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain p-3">
         <SidebarContent stats={stats} activeType={activeType} pathname={pathname} />
@@ -377,7 +377,7 @@ function MobileSidebar({
         role="dialog"
         aria-modal="true"
         aria-label={t`Navigation`}
-        className="relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-card shadow-lg"
+        className="app-chrome relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-card shadow-lg"
       >
         <header className="flex min-h-14 items-center gap-3 border-b px-3">
           <AppLogo />

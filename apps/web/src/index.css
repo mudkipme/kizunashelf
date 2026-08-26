@@ -94,3 +94,48 @@ input {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
+
+/* Native chrome is not a document.
+ *
+ * These four rules remove the tells that give a desktop window away as a web
+ * page: a blue drag-selection sweeping across a toolbar, a hyperlink hand over
+ * a sidebar row, and a translucent HTML5 ghost when a cover image is dragged.
+ *
+ * Selection is switched off per region (`.app-chrome`) rather than globally
+ * with content opting back in. A blanket rule would have to except every place
+ * data is rendered, and this app renders data inside `<label>` — the
+ * external-match dialog puts an incoming synopsis in one — so the safe default
+ * is the other way round: nothing loses selection unless it is named chrome. */
+.app-chrome,
+[data-slot="button"],
+[role="menuitem"],
+[role="menuitemradio"],
+[role="menuitemcheckbox"],
+[role="option"],
+kbd {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Text the user typed is selectable wherever it sits — a field inside a piece
+   of chrome (the header search) still has to be editable and copyable. */
+input,
+textarea,
+[contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* The hand cursor means "hyperlink". Chrome rows and controls are neither, and
+   both macOS and Windows keep the arrow over them; links in content keep the
+   hand. The `link` button variant is drawn as a hyperlink, so it keeps it too. */
+.app-chrome a,
+[data-slot="button"]:not([data-variant="link"]) {
+  cursor: default;
+}
+
+/* Dragging a cover otherwise starts a native HTML5 drag: nothing in the app
+   accepts the drop, so it ends in a ghost image snapping back. */
+img {
+  -webkit-user-drag: none;
+}
