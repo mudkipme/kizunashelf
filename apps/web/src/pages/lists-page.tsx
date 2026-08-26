@@ -38,12 +38,7 @@ export function ListsPage() {
   return (
     <AppFrame error={lists.error ? errorMessage(lists.error) : undefined}>
       <PageContainer>
-        <header className="flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-lg font-semibold">
-              <Trans>Lists</Trans>
-            </h1>
-          </div>
+        <header className="flex items-center justify-end gap-2">
           <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setCreateOpen(true)}>
             <PlusIcon data-icon="inline-start" />
             <Trans>New list</Trans>

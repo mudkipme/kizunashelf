@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -28,6 +29,27 @@ export const useThemeStore = create<ThemeState>()(
     },
   ),
 );
+
+/**
+ * Applies the stored preference and, while it is `system`, keeps following the
+ * OS as it changes — a Mac flipping to dark at sunset should take the app with
+ * it without a reload.
+ *
+ * Mounted by the shell rather than by whichever control happens to be on
+ * screen: this listener used to live inside the toolbar's theme button, so
+ * moving that button anywhere would have silently ended OS-theme following.
+ */
+export function useSystemThemeSync() {
+  const mode = useThemeStore((state) => state.mode);
+  useEffect(() => {
+    applyThemeMode(mode);
+    if (mode !== "system") return;
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => applyThemeMode("system");
+    query.addEventListener("change", handleChange);
+    return () => query.removeEventListener("change", handleChange);
+  }, [mode]);
+}
 
 export function initializeTheme() {
   applyThemeMode(readStoredThemeMode());

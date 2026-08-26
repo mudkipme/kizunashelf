@@ -133,12 +133,10 @@ export function ReviewPage() {
       }
     >
       <PageContainer width="wide">
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold">
-              {activeQueue ? i18n._(activeQueue.label) : t`Review`}
-            </h1>
-          </div>
+        <header className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="min-w-0 truncate text-base font-semibold">
+            {activeQueue ? i18n._(activeQueue.label) : null}
+          </h1>
           {activeSummary ? <ProgressPill summary={activeSummary} /> : null}
         </header>
 

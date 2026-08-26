@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
+  ArrowRightIcon,
   type LucideIcon,
   MenuIcon,
   PanelLeftCloseIcon,
@@ -17,17 +18,16 @@ import { Trans, useLingui } from "@lingui/react/macro";
 
 import { CommandPalette } from "@/components/layout/command-palette";
 import { HeaderSearch } from "@/components/layout/header-search";
-import { LanguageSelect } from "@/components/layout/language-select";
 import { destinationForPath, navDestinations } from "@/components/layout/nav-destinations";
 import { SidebarResizer } from "@/components/layout/sidebar-resizer";
-import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Button } from "@/components/ui/button";
 import { statsQuery } from "@/api/queries";
 import { useAppShortcuts } from "@/hooks/use-app-shortcuts";
+import { useHistoryPosition } from "@/hooks/use-history-position";
 import { useMacTitlebarInset } from "@/hooks/use-mac-titlebar-inset";
 import { useRescanLibrary } from "@/hooks/use-rescan-library";
 import { isDesktopRuntime, isMacDesktopRuntime, setWindowTitle } from "@/lib/desktop";
-import { formatChord, sidebarChord } from "@/lib/shortcuts";
+import { backChord, formatChord, forwardChord, sidebarChord } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/lib/sidebar";
 import { allTypes } from "@/lib/constants";
@@ -50,9 +50,9 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const [search, setSearch] = useState("");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [canGoBack, setCanGoBack] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const { canGoBack, canGoForward } = useHistoryPosition();
   const sidebarWidth = useSidebarStore((state) => state.width);
   const sidebarCollapsed = useSidebarStore((state) => state.collapsed);
   const setSidebarWidth = useSidebarStore((state) => state.setWidth);
@@ -87,14 +87,17 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   useEffect(() => {
     setMobileSidebarOpen(false);
     setMobileSearchOpen(false);
-    setCanGoBack(location.pathname !== "/" && hasAppBackStack());
   }, [location.key, location.pathname, location.search]);
 
+  // With the destination name gone from the page itself, the title bar and the
+  // browser tab are what still say where you are — which also covers the case
+  // where the sidebar is collapsed.
   useEffect(() => {
-    if (!desktop) return;
     const destination = destinationForPath(location.pathname);
     const label = destination ? i18n._(destination.label) : null;
-    void setWindowTitle(label ? `${label} — KizunaShelf` : "KizunaShelf");
+    const title = label ? `${label} — KizunaShelf` : "KizunaShelf";
+    document.title = title;
+    if (desktop) void setWindowTitle(title);
   }, [desktop, location.pathname, i18n]);
 
   // Below `sm` the header search is not rendered at all, so the shortcut opens
@@ -149,11 +152,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     [navigate],
   );
 
-  function goBack() {
-    if (!canGoBack) return;
-    navigate(-1);
-  }
-
   const headerBar = (
     <header
       data-tauri-drag-region={macDesktop || undefined}
@@ -189,18 +187,28 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
       >
         <MenuIcon />
       </Button>
-      {canGoBack ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={goBack}
-          aria-label={t`Go back`}
-          title={t`Back`}
-        >
-          <ArrowLeftIcon />
-        </Button>
-      ) : null}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={() => navigate(-1)}
+        disabled={!canGoBack}
+        aria-label={t`Go back`}
+        title={`${t`Back`} ${formatChord(backChord)}`}
+      >
+        <ArrowLeftIcon />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={() => navigate(1)}
+        disabled={!canGoForward}
+        aria-label={t`Go forward`}
+        title={`${t`Forward`} ${formatChord(forwardChord)}`}
+      >
+        <ArrowRightIcon />
+      </Button>
       {/* Below `md` the sidebar that normally carries the brand is not
           rendered, so the header carries it there and only there. */}
       <Link to="/" className="flex min-w-0 items-center gap-2 md:hidden" aria-label="KizunaShelf">
@@ -233,8 +241,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
       </Button>
       <div className="ml-auto flex items-center gap-2 sm:ml-0">
         <RescanButton />
-        <LanguageSelect />
-        <ThemeModeSelect />
       </div>
     </header>
   );
@@ -323,10 +329,6 @@ function RescanButton() {
       <RefreshCwIcon className={cn(rescan.isPending && "animate-spin")} />
     </Button>
   );
-}
-
-function hasAppBackStack() {
-  return Number(window.history.state?.idx ?? 0) > 0;
 }
 
 function AppLogo() {

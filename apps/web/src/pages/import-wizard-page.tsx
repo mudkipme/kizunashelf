@@ -185,12 +185,7 @@ export function ImportWizardPage() {
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       <PageContainer>
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">
-              <Trans>Import</Trans>
-            </h1>
-          </div>
+        <header className="flex flex-wrap items-center justify-end gap-2">
           {jobId ? (
             <Button variant="outline" onClick={resetToConfigure}>
               <Trans>Start over</Trans>

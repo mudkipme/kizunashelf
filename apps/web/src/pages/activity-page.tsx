@@ -110,8 +110,7 @@ export function ActivityPage() {
   return (
     <AppFrame error={feed.error ? errorMessage(feed.error) : undefined}>
       <PageContainer>
-        <header className="flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-semibold"><Trans>Activity</Trans></h1>
+        <header className="flex flex-wrap items-center gap-2">
           <div className="flex flex-wrap gap-1">
             {modes.map((item) => (
               <Button

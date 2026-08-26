@@ -13,6 +13,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { VaultChangeSync } from "@/components/vault-change-sync";
 import { isDesktopRuntime } from "@/lib/desktop";
 import { activateUiLocale } from "@/lib/i18n";
+import { useSystemThemeSync } from "@/lib/theme";
 import { useUiLocale } from "@/lib/language";
 
 // Pages are lazy-loaded so each route ships as its own chunk; heavy
@@ -84,6 +85,7 @@ export default function App() {
 // the declared language, so a zh-Hant UI must not render under `lang="en"`).
 function LocaleSync() {
   const uiLocale = useUiLocale();
+  useSystemThemeSync();
   useEffect(() => {
     document.documentElement.lang = uiLocale;
     void activateUiLocale(uiLocale);

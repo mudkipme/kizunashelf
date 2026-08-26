@@ -37,12 +37,6 @@ export function StatisticsPage() {
   return (
     <AppFrame error={error ? errorMessage(error) : undefined}>
       <PageContainer width="wide">
-        <header className="flex flex-wrap items-end justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold"><Trans>Statistics</Trans></h1>
-          </div>
-        </header>
-
         {loading ? (
           <Placeholder>
             <Trans>Loading…</Trans>

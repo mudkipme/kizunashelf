@@ -25,10 +25,7 @@ export function HomePage() {
   return (
     <AppFrame error={error ? errorMessage(error) : undefined}>
       <div className="flex min-h-full flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">{t`Home`}</h1>
-          </div>
+        <header className="flex flex-wrap items-center justify-end gap-2 border-b px-4 py-2">
           <Button
             type="button"
             disabled={!capabilities.contentWritable}

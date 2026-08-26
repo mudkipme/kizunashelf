@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -83,14 +83,7 @@ export function CalendarPage() {
   return (
     <AppFrame error={calendar.error ? errorMessage(calendar.error) : undefined}>
       <PageContainer width="wide">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="flex items-center gap-2 text-base font-semibold">
-              <CalendarDaysIcon />
-              <Trans>Calendar</Trans>
-            </h1>
-          </div>
-
+        <header className="flex flex-wrap items-center justify-end gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => moveMonth(-1)}>
               <ChevronLeftIcon data-icon="inline-start" />
