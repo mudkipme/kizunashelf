@@ -11,6 +11,7 @@ import {
   paletteChord,
   searchChord,
   settingsChord,
+  sidebarChord,
 } from "@/lib/shortcuts";
 
 /**
@@ -28,16 +29,18 @@ export function useAppShortcuts({
   paletteOpen,
   onTogglePalette,
   onFocusSearch,
+  onToggleSidebar,
 }: {
   paletteOpen: boolean;
   onTogglePalette: () => void;
   onFocusSearch: () => void;
+  onToggleSidebar: () => void;
 }) {
   const navigate = useNavigate();
   // Held in a ref so the listener is bound once instead of being torn down and
   // re-added on every render of the shell.
-  const handlers = useRef({ paletteOpen, onTogglePalette, onFocusSearch });
-  handlers.current = { paletteOpen, onTogglePalette, onFocusSearch };
+  const handlers = useRef({ paletteOpen, onTogglePalette, onFocusSearch, onToggleSidebar });
+  handlers.current = { paletteOpen, onTogglePalette, onFocusSearch, onToggleSidebar };
 
   useEffect(() => {
     function handle(event: KeyboardEvent) {
@@ -57,6 +60,11 @@ export function useAppShortcuts({
       if (matchesChord(event, searchChord)) {
         event.preventDefault();
         handlers.current.onFocusSearch();
+        return;
+      }
+      if (matchesChord(event, sidebarChord)) {
+        event.preventDefault();
+        handlers.current.onToggleSidebar();
         return;
       }
       if (matchesChord(event, settingsChord)) {

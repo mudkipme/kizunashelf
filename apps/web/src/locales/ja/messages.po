@@ -314,10 +314,6 @@ msgstr "このタイトルと同名のファイルがすでに存在したため
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名のリストが既に存在するか、ファイルがディスク上で変更されています。"
 
-#: src/components/layout/app-frame.tsx:172
-msgid "A shelf for everything you love"
-msgstr "君が愛するすべてのための本棚"
-
 #: src/components/settings/preset-picker.tsx:377
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "同名のタイプがすでに存在するため、代わりに {assignedIds} を使用しました。追加後に名前を変更できます。"
@@ -548,7 +544,7 @@ msgstr "アセットのルート"
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
-#: src/components/layout/app-frame.tsx:153
+#: src/components/layout/app-frame.tsx:199
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -659,8 +655,8 @@ msgstr "すべてクリア"
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/layout/app-frame.tsx:372
-#: src/components/layout/app-frame.tsx:385
+#: src/components/layout/app-frame.tsx:409
+#: src/components/layout/app-frame.tsx:420
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
@@ -1204,7 +1200,7 @@ msgstr "ゲーム"
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
-#: src/components/layout/app-frame.tsx:152
+#: src/components/layout/app-frame.tsx:198
 msgid "Go back"
 msgstr "戻る"
 
@@ -1244,6 +1240,10 @@ msgstr "が次のいずれも含まない"
 #: src/components/settings/settings-entity-type.tsx:320
 msgid "Heading"
 msgstr "見出し"
+
+#: src/components/layout/app-frame.tsx:175
+msgid "Hide sidebar"
+msgstr ""
 
 #: src/components/layout/nav-destinations.ts:38
 #: src/components/settings/settings-editor.tsx:118
@@ -1557,7 +1557,7 @@ msgstr "アクティビティを読み込み中…"
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
-#: src/components/layout/app-frame.tsx:456
+#: src/components/layout/app-frame.tsx:491
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
@@ -1706,7 +1706,7 @@ msgstr "マイ保管庫"
 msgid "Name"
 msgstr "名前"
 
-#: src/components/layout/app-frame.tsx:377
+#: src/components/layout/app-frame.tsx:414
 msgid "Navigation"
 msgstr "ナビゲーション"
 
@@ -2023,7 +2023,7 @@ msgstr "既存の保管庫を開く"
 msgid "Open folder"
 msgstr "フォルダーを開く"
 
-#: src/components/layout/app-frame.tsx:183
+#: src/components/layout/app-frame.tsx:187
 msgid "Open navigation"
 msgstr "ナビゲーションを開く"
 
@@ -2302,11 +2302,15 @@ msgstr "必須 — ここにファイル名を入力するか、下のタイト�
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
-#: src/components/layout/app-frame.tsx:306
-#: src/components/layout/app-frame.tsx:307
+#: src/components/layout/app-frame.tsx:320
+#: src/components/layout/app-frame.tsx:321
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
+
+#: src/components/layout/sidebar-resizer.tsx:55
+msgid "Resize sidebar"
+msgstr ""
 
 #: src/components/layout/command-palette.tsx:263
 msgid "Results"
@@ -2385,7 +2389,7 @@ msgstr "範囲"
 msgid "Search"
 msgstr "検索"
 
-#: src/components/layout/app-frame.tsx:61
+#: src/components/layout/app-frame.tsx:76
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
 
@@ -2401,8 +2405,8 @@ msgstr ""
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
-#: src/components/layout/app-frame.tsx:62
-#: src/components/layout/app-frame.tsx:205
+#: src/components/layout/app-frame.tsx:77
+#: src/components/layout/app-frame.tsx:229
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "ライブラリを検索"
@@ -2517,6 +2521,10 @@ msgstr "設定を保存しました"
 #: src/components/import/plan-review.tsx:164
 msgid "Show all"
 msgstr "すべて表示"
+
+#: src/components/layout/app-frame.tsx:175
+msgid "Show sidebar"
+msgstr ""
 
 #. placeholder {0}: health.diagnosticCount
 #: src/pages/review-page.tsx:284

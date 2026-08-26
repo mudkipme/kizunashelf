@@ -314,10 +314,6 @@ msgstr "已存在以此标题命名的文件，因此保存为「{0}」。"
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "同名列表已存在，或文件已在磁盘上被修改。"
 
-#: src/components/layout/app-frame.tsx:172
-msgid "A shelf for everything you love"
-msgstr "安放你所爱之物的书架"
-
 #: src/components/settings/preset-picker.tsx:377
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "已存在同名类型，因此改用了 {assignedIds}。添加后可重命名。"
@@ -548,7 +544,7 @@ msgstr "资源根目录"
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
-#: src/components/layout/app-frame.tsx:153
+#: src/components/layout/app-frame.tsx:199
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -659,8 +655,8 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/layout/app-frame.tsx:372
-#: src/components/layout/app-frame.tsx:385
+#: src/components/layout/app-frame.tsx:409
+#: src/components/layout/app-frame.tsx:420
 msgid "Close navigation"
 msgstr "关闭导航"
 
@@ -1204,7 +1200,7 @@ msgstr "游戏"
 msgid "Give your list a name."
 msgstr "为你的列表命名。"
 
-#: src/components/layout/app-frame.tsx:152
+#: src/components/layout/app-frame.tsx:198
 msgid "Go back"
 msgstr "返回"
 
@@ -1244,6 +1240,10 @@ msgstr "不含以下任何"
 #: src/components/settings/settings-entity-type.tsx:320
 msgid "Heading"
 msgstr "标题"
+
+#: src/components/layout/app-frame.tsx:175
+msgid "Hide sidebar"
+msgstr ""
 
 #: src/components/layout/nav-destinations.ts:38
 #: src/components/settings/settings-editor.tsx:118
@@ -1557,7 +1557,7 @@ msgstr "正在加载活动…"
 msgid "Loading built-in types…"
 msgstr "正在加载内置类型…"
 
-#: src/components/layout/app-frame.tsx:456
+#: src/components/layout/app-frame.tsx:491
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
@@ -1706,7 +1706,7 @@ msgstr "我的保管库"
 msgid "Name"
 msgstr "名称"
 
-#: src/components/layout/app-frame.tsx:377
+#: src/components/layout/app-frame.tsx:414
 msgid "Navigation"
 msgstr "导航"
 
@@ -2023,7 +2023,7 @@ msgstr "打开现有保管库"
 msgid "Open folder"
 msgstr "打开文件夹"
 
-#: src/components/layout/app-frame.tsx:183
+#: src/components/layout/app-frame.tsx:187
 msgid "Open navigation"
 msgstr "打开导航"
 
@@ -2302,11 +2302,15 @@ msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
-#: src/components/layout/app-frame.tsx:306
-#: src/components/layout/app-frame.tsx:307
+#: src/components/layout/app-frame.tsx:320
+#: src/components/layout/app-frame.tsx:321
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "重新扫描保管库"
+
+#: src/components/layout/sidebar-resizer.tsx:55
+msgid "Resize sidebar"
+msgstr ""
 
 #: src/components/layout/command-palette.tsx:263
 msgid "Results"
@@ -2385,7 +2389,7 @@ msgstr "范围"
 msgid "Search"
 msgstr "搜索"
 
-#: src/components/layout/app-frame.tsx:61
+#: src/components/layout/app-frame.tsx:76
 msgid "Search {activeTypeLabel}"
 msgstr "搜索 {activeTypeLabel}"
 
@@ -2401,8 +2405,8 @@ msgstr ""
 msgid "Search entities…"
 msgstr "搜索条目…"
 
-#: src/components/layout/app-frame.tsx:62
-#: src/components/layout/app-frame.tsx:205
+#: src/components/layout/app-frame.tsx:77
+#: src/components/layout/app-frame.tsx:229
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "搜索库"
@@ -2517,6 +2521,10 @@ msgstr "设置已保存"
 #: src/components/import/plan-review.tsx:164
 msgid "Show all"
 msgstr "显示全部"
+
+#: src/components/layout/app-frame.tsx:175
+msgid "Show sidebar"
+msgstr ""
 
 #. placeholder {0}: health.diagnosticCount
 #: src/pages/review-page.tsx:284

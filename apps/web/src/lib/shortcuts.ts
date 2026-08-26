@@ -83,6 +83,8 @@ function displayKey(key: string) {
 export const paletteChord: Chord = { key: "k", mod: true };
 /** Focus the library search field. */
 export const searchChord: Chord = { key: "f", mod: true };
+/** Show or hide the sidebar. */
+export const sidebarChord: Chord = { key: "\\", mod: true };
 /** Open settings. */
 export const settingsChord: Chord = { key: ",", mod: true };
 /** Step back and forward through the in-app history. */

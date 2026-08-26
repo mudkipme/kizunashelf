@@ -5,6 +5,8 @@ import {
   ArrowLeftIcon,
   type LucideIcon,
   MenuIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   RefreshCwIcon,
   SearchIcon,
   TablePropertiesIcon,
@@ -17,6 +19,7 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { LanguageSelect } from "@/components/layout/language-select";
 import { destinationForPath, navDestinations } from "@/components/layout/nav-destinations";
+import { SidebarResizer } from "@/components/layout/sidebar-resizer";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Button } from "@/components/ui/button";
 import { statsQuery } from "@/api/queries";
@@ -24,7 +27,9 @@ import { useAppShortcuts } from "@/hooks/use-app-shortcuts";
 import { useMacTitlebarInset } from "@/hooks/use-mac-titlebar-inset";
 import { useRescanLibrary } from "@/hooks/use-rescan-library";
 import { isDesktopRuntime, isMacDesktopRuntime, setWindowTitle } from "@/lib/desktop";
+import { formatChord, sidebarChord } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
+import { useSidebarStore } from "@/lib/sidebar";
 import { allTypes } from "@/lib/constants";
 import type { StatsResponse } from "@/types/api";
 
@@ -48,6 +53,16 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const [canGoBack, setCanGoBack] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const sidebarWidth = useSidebarStore((state) => state.width);
+  const sidebarCollapsed = useSidebarStore((state) => state.collapsed);
+  const setSidebarWidth = useSidebarStore((state) => state.setWidth);
+  const resetSidebarWidth = useSidebarStore((state) => state.reset);
+  const toggleSidebar = useSidebarStore((state) => state.toggle);
+  // Windows and Linux draw "KizunaShelf" in their own title bar, so an in-app
+  // wordmark there would be the second one on screen. macOS hides the native
+  // title (`hiddenTitle`) and a browser only puts it in the tab, so both of
+  // those need the app to say its own name exactly once.
+  const showWordmark = !(desktop && !macDesktop);
   const activeType = useMemo(() => {
     if (location.pathname !== "/library") return "";
     return new URLSearchParams(location.search).get("type") ?? allTypes;
@@ -100,6 +115,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     paletteOpen,
     onTogglePalette: useCallback(() => setPaletteOpen((open) => !open), []),
     onFocusSearch: focusSearch,
+    onToggleSidebar: toggleSidebar,
   });
 
   useEffect(() => {
@@ -141,8 +157,38 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const headerBar = (
     <header
       data-tauri-drag-region={macDesktop || undefined}
-      className="app-chrome flex min-h-14 shrink-0 items-center gap-2 border-b bg-chrome px-3 py-2 sm:gap-3 sm:px-4"
+      className={cn(
+        "app-chrome flex min-h-14 shrink-0 items-center gap-2 border-b bg-chrome px-3 py-2 sm:gap-3 sm:px-4",
+        // Collapsed, there is no sidebar to the header's left, so on macOS the
+        // traffic lights would land on top of its leading control.
+        macTitlebarInset && sidebarCollapsed && "pl-20",
+      )}
     >
+      {/* Wide enough for a persistent sidebar: collapse it. Narrower: the
+          sidebar is a sheet, so the same corner opens that instead. */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="hidden md:inline-flex"
+        onClick={toggleSidebar}
+        aria-label={sidebarCollapsed ? t`Show sidebar` : t`Hide sidebar`}
+        aria-expanded={!sidebarCollapsed}
+        title={formatChord(sidebarChord)}
+      >
+        {sidebarCollapsed ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={() => setMobileSidebarOpen(true)}
+        aria-label={t`Open navigation`}
+        aria-expanded={mobileSidebarOpen}
+      >
+        <MenuIcon />
+      </Button>
       {canGoBack ? (
         <Button
           type="button"
@@ -155,36 +201,14 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
           <ArrowLeftIcon />
         </Button>
       ) : null}
-      {/* The wordmark is redundant only where a native title bar already
-          says "KizunaShelf" (Windows/Linux desktop); the macOS overlay hides
-          the native title, so there the header keeps the full brand. */}
-      <Link
-        to="/"
-        className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none"
-        aria-label={desktop && !macDesktop ? "KizunaShelf" : undefined}
-        title={desktop && !macDesktop ? "KizunaShelf" : undefined}
-      >
+      {/* Below `md` the sidebar that normally carries the brand is not
+          rendered, so the header carries it there and only there. */}
+      <Link to="/" className="flex min-w-0 items-center gap-2 md:hidden" aria-label="KizunaShelf">
         <AppLogo />
-        {desktop && !macDesktop ? null : (
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold">KizunaShelf</span>
-            <span className="hidden text-xs leading-4 text-muted-foreground sm:block">
-              <Trans>A shelf for everything you love</Trans>
-            </span>
-          </span>
-        )}
+        {showWordmark ? (
+          <span className="truncate text-sm font-semibold">KizunaShelf</span>
+        ) : null}
       </Link>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="md:hidden"
-        onClick={() => setMobileSidebarOpen(true)}
-        aria-label={t`Open navigation`}
-        aria-expanded={mobileSidebarOpen}
-      >
-        <MenuIcon />
-      </Button>
       <HeaderSearch
         search={search}
         onSearchChange={setSearch}
@@ -250,41 +274,31 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     />
   );
 
-  // macOS overlay title bar: the sidebar owns the top-left corner, so the
-  // native traffic lights sit (at their default position) over an empty,
-  // draggable strip above it instead of crowding the header's leading
-  // controls — the Finder/Obsidian arrangement. The header spans only the
-  // content column. Other platforms keep the full-width header under their
-  // native title bar.
-  if (macDesktop) {
-    return (
-      <main className="grid h-dvh min-h-0 grid-cols-1 overflow-hidden bg-background text-foreground md:grid-cols-[224px_minmax(0,1fr)]">
+  // One layout everywhere: the sidebar runs the full height of the window and
+  // the header spans only the content column beside it. That arrangement came
+  // from macOS — where the overlay title bar leaves the native traffic lights
+  // sitting over a draggable strip at the top of the sidebar — but it is the
+  // Finder/Obsidian/VS Code shape on every platform, and having one of them
+  // rather than two is what keeps the brand from appearing twice.
+  return (
+    <main className="flex h-dvh min-h-0 overflow-hidden bg-background pt-[env(safe-area-inset-top)] text-foreground">
+      {sidebarCollapsed ? null : (
         <AppSidebar
           stats={stats}
           activeType={activeType}
           pathname={location.pathname}
           titlebarInset={macTitlebarInset}
+          showWordmark={showWordmark}
+          width={sidebarWidth}
+          onWidth={setSidebarWidth}
+          onResetWidth={resetSidebarWidth}
         />
-        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
-          {headerBar}
-          {mobileSearchBar}
-          {errorBar}
-          <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">{children}</div>
-        </div>
-        {mobileSidebar}
-        {palette}
-      </main>
-    );
-  }
-
-  return (
-    <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] text-foreground">
-      {headerBar}
-      {mobileSearchBar}
-      {errorBar}
-      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-[224px_minmax(0,1fr)]">
-        <AppSidebar stats={stats} activeType={activeType} pathname={location.pathname} />
-        <div className="min-h-0 min-w-0 overflow-auto overscroll-contain">{children}</div>
+      )}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        {headerBar}
+        {mobileSearchBar}
+        {errorBar}
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">{children}</div>
       </div>
       {mobileSidebar}
       {palette}
@@ -329,6 +343,10 @@ function AppSidebar({
   activeType,
   pathname,
   titlebarInset,
+  showWordmark,
+  width,
+  onWidth,
+  onResetWidth,
 }: {
   stats?: StatsResponse;
   activeType: string;
@@ -336,13 +354,32 @@ function AppSidebar({
   /** Reserve a draggable strip at the top for the macOS traffic lights
    * (overlay title bar); collapses in fullscreen, where macOS hides them. */
   titlebarInset?: boolean;
+  showWordmark: boolean;
+  width: number;
+  onWidth: (width: number) => void;
+  onResetWidth: () => void;
 }) {
   return (
-    <aside className="app-chrome hidden min-h-0 border-r bg-chrome md:flex md:flex-col">
+    <aside
+      style={{ width }}
+      className="app-chrome relative hidden min-h-0 shrink-0 border-r bg-chrome md:flex md:flex-col"
+    >
       {titlebarInset ? <div data-tauri-drag-region className="h-9 shrink-0" /> : null}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain p-3">
+      {/* Matches the header's height so the two columns start level. No border
+          of its own: the sidebar reads as one continuous surface, the way a
+          native source list does. */}
+      <div className="flex min-h-14 shrink-0 items-center px-3">
+        <Link to="/" className="flex min-w-0 items-center gap-2" aria-label="KizunaShelf">
+          <AppLogo />
+          {showWordmark ? (
+            <span className="truncate text-sm font-semibold">KizunaShelf</span>
+          ) : null}
+        </Link>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain p-3 pt-0">
         <SidebarContent stats={stats} activeType={activeType} pathname={pathname} />
       </div>
+      <SidebarResizer width={width} onWidth={onWidth} onReset={onResetWidth} />
     </aside>
   );
 }
@@ -379,9 +416,7 @@ function MobileSidebar({
       >
         <header className="flex min-h-14 items-center gap-3 border-b px-3">
           <AppLogo />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold">KizunaShelf</div>
-          </div>
+          <div className="min-w-0 flex-1" />
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label={t`Close navigation`}>
             <XIcon />
           </Button>
