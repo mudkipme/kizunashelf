@@ -516,10 +516,6 @@ msgstr "any of"
 msgid "Anything worth remembering"
 msgstr "Anything worth remembering"
 
-#: src/components/settings/settings-appearance.tsx:48
-msgid "Appearance"
-msgstr "Appearance"
-
 #: src/components/settings/settings-dialogs.tsx:379
 #: src/components/settings/settings-dialogs.tsx:511
 msgid "Apply"
@@ -547,7 +543,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:197
+#: src/components/layout/app-frame.tsx:201
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -657,8 +653,8 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:411
-#: src/components/layout/app-frame.tsx:422
+#: src/components/layout/app-frame.tsx:415
+#: src/components/layout/app-frame.tsx:430
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -833,9 +829,13 @@ msgstr "Daily Notes {0}"
 msgid "Daily-note logging"
 msgstr "Daily-note logging"
 
-#: src/components/settings/settings-appearance.tsx:23
+#: src/components/layout/theme-mode-select.tsx:12
 msgid "Dark theme"
 msgstr "Dark theme"
+
+#: src/components/layout/theme-mode-select.tsx:20
+msgid "Dark theme. Switch to system theme."
+msgstr "Dark theme. Switch to system theme."
 
 #: src/pages/activity-page.tsx:275
 msgid "date"
@@ -924,12 +924,12 @@ msgid "Disable"
 msgstr "Disable"
 
 #: src/pages/entity-edit-page.tsx:244
-#: src/pages/settings-page.tsx:148
+#: src/pages/settings-page.tsx:145
 msgid "Discard"
 msgstr "Discard"
 
 #: src/pages/entity-edit-page.tsx:226
-#: src/pages/settings-page.tsx:124
+#: src/pages/settings-page.tsx:121
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -1178,11 +1178,11 @@ msgstr "Filter by type"
 msgid "For example, an episode number."
 msgstr "For example, an episode number."
 
-#: src/pages/settings-page.tsx:83
+#: src/pages/settings-page.tsx:80
 msgid "Form"
 msgstr "Form"
 
-#: src/components/layout/app-frame.tsx:208
+#: src/components/layout/app-frame.tsx:212
 msgid "Forward"
 msgstr "Forward"
 
@@ -1202,11 +1202,11 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:196
+#: src/components/layout/app-frame.tsx:200
 msgid "Go back"
 msgstr "Go back"
 
-#: src/components/layout/app-frame.tsx:207
+#: src/components/layout/app-frame.tsx:211
 msgid "Go forward"
 msgstr "Go forward"
 
@@ -1247,7 +1247,7 @@ msgstr "has none of"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:173
+#: src/components/layout/app-frame.tsx:174
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
@@ -1426,7 +1426,7 @@ msgid "Japanese"
 msgstr "Japanese"
 
 #: src/pages/entity-edit-page.tsx:236
-#: src/pages/settings-page.tsx:140
+#: src/pages/settings-page.tsx:137
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -1447,8 +1447,9 @@ msgstr "Label"
 msgid "lang {0}"
 msgstr "lang {0}"
 
+#: src/components/layout/language-select.tsx:52
+#: src/components/layout/language-select.tsx:53
 #: src/components/settings/preset-picker.tsx:453
-#: src/components/settings/settings-appearance.tsx:65
 msgid "Language"
 msgstr "Language"
 
@@ -1468,9 +1469,13 @@ msgstr "Library"
 msgid "Library Issues"
 msgstr "Library Issues"
 
-#: src/components/settings/settings-appearance.tsx:22
+#: src/components/layout/theme-mode-select.tsx:11
 msgid "Light theme"
 msgstr "Light theme"
+
+#: src/components/layout/theme-mode-select.tsx:19
+msgid "Light theme. Switch to dark theme."
+msgstr "Light theme. Switch to dark theme."
 
 #: src/components/settings/settings-home-section.tsx:85
 #: src/pages/smart-list-page.tsx:508
@@ -1555,7 +1560,7 @@ msgstr "Loading activity…"
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
-#: src/components/layout/app-frame.tsx:493
+#: src/components/layout/app-frame.tsx:501
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1572,7 +1577,7 @@ msgstr "Loading taxonomy"
 #: src/pages/lists-page.tsx:50
 #: src/pages/onboarding-page.tsx:69
 #: src/pages/review-page.tsx:144
-#: src/pages/settings-page.tsx:99
+#: src/pages/settings-page.tsx:96
 #: src/pages/smart-list-page.tsx:244
 #: src/pages/statistics-page.tsx:42
 msgid "Loading…"
@@ -1704,7 +1709,7 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:416
+#: src/components/layout/app-frame.tsx:420
 msgid "Navigation"
 msgstr "Navigation"
 
@@ -2021,7 +2026,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:185
+#: src/components/layout/app-frame.tsx:186
 msgid "Open navigation"
 msgstr "Open navigation"
 
@@ -2300,8 +2305,8 @@ msgstr "Required — enter a file name here or fill in the title below."
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
+#: src/components/layout/app-frame.tsx:325
 #: src/components/layout/app-frame.tsx:326
-#: src/components/layout/app-frame.tsx:327
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "Rescan vault"
@@ -2386,7 +2391,7 @@ msgstr "Scope"
 msgid "Search"
 msgstr "Search"
 
-#: src/components/layout/app-frame.tsx:76
+#: src/components/layout/app-frame.tsx:77
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
 
@@ -2402,8 +2407,8 @@ msgstr "Search entities, pages and commands…"
 msgid "Search entities…"
 msgstr "Search entities…"
 
-#: src/components/layout/app-frame.tsx:77
-#: src/components/layout/app-frame.tsx:237
+#: src/components/layout/app-frame.tsx:78
+#: src/components/layout/app-frame.tsx:233
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "Search library"
@@ -2519,7 +2524,7 @@ msgstr "Settings saved"
 msgid "Show all"
 msgstr "Show all"
 
-#: src/components/layout/app-frame.tsx:173
+#: src/components/layout/app-frame.tsx:174
 msgid "Show sidebar"
 msgstr "Show sidebar"
 
@@ -2659,10 +2664,6 @@ msgstr "Stored in the vault. Taxonomy, assets, daily notes, home, and types — 
 msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
 msgstr "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
 
-#: src/components/settings/settings-appearance.tsx:49
-msgid "Stored on this device, not in the vault."
-msgstr "Stored on this device, not in the vault."
-
 #: src/components/settings/settings-entity-type.tsx:280
 msgid "Summary"
 msgstr "Summary"
@@ -2683,9 +2684,13 @@ msgstr "Sync"
 msgid "Sync from a provider"
 msgstr "Sync from a provider"
 
-#: src/components/settings/settings-appearance.tsx:21
+#: src/components/layout/theme-mode-select.tsx:10
 msgid "System theme"
 msgstr "System theme"
+
+#: src/components/layout/theme-mode-select.tsx:18
+msgid "System theme. Switch to light theme."
+msgstr "System theme. Switch to light theme."
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:86
@@ -2741,10 +2746,6 @@ msgstr "The same rules as smart lists; the section shows entities that match."
 #: src/components/settings/settings-editor.tsx:216
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "The vault schema changed on disk. Your unsaved edits are still here."
-
-#: src/components/settings/settings-appearance.tsx:52
-msgid "Theme"
-msgstr "Theme"
 
 #: src/components/settings/preset-picker.tsx:145
 msgid "These existing types can link to what you're adding."
@@ -2853,7 +2854,7 @@ msgstr "Type Distribution"
 msgid "Types"
 msgstr "Types"
 
-#: src/components/settings/settings-appearance.tsx:81
+#: src/components/layout/language-select.tsx:66
 msgid "UI in English"
 msgstr "UI in English"
 
@@ -2999,7 +3000,7 @@ msgstr "Will be created as “{0}.md”, from the title."
 msgid "within the next"
 msgstr "within the next"
 
-#: src/pages/settings-page.tsx:91
+#: src/pages/settings-page.tsx:88
 msgid "YAML"
 msgstr "YAML"
 
@@ -3028,11 +3029,11 @@ msgstr "Yes"
 msgid "You can still open entities already in your library."
 msgstr "You can still open entities already in your library."
 
-#: src/pages/settings-page.tsx:128
+#: src/pages/settings-page.tsx:125
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the form editor. Switching editors will discard them."
 
-#: src/pages/settings-page.tsx:132
+#: src/pages/settings-page.tsx:129
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the YAML editor. Switching editors will discard them."
 

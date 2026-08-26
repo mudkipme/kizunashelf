@@ -6,7 +6,6 @@ import { errorMessage } from "@/api/client";
 import { languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
-import { AppearanceSettings } from "@/components/settings/settings-appearance";
 import { ProviderCredentials } from "@/components/settings/provider-credentials";
 import { RawConfigEditor } from "@/components/settings/raw-config-editor";
 import { SettingsEditor } from "@/components/settings/settings-editor";
@@ -62,8 +61,6 @@ export function SettingsPage() {
   return (
     <AppFrame error={(error ? errorMessage(error) : undefined) ?? settings.data?.error ?? undefined}>
       <PageContainer width="wide">
-        <AppearanceSettings />
-
         {/* Desktop manages vaults + credentials natively (multi-vault, OS keychain). */}
         {desktop ? (
           <>

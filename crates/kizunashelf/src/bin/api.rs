@@ -5,6 +5,7 @@ use kizunashelf::api::{protect_web_router, router_native, ApiOptions, WebAuth};
 use kizunashelf::secrets::NativeSecretStore;
 use kizunashelf::types::AppConfig;
 use rand_core::OsRng;
+use std::future::IntoFuture;
 use std::io::{self, IsTerminal, Write};
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -114,12 +115,41 @@ async fn main() -> Result<()> {
     // The login throttle needs it to tell one client from another; without it
     // every attempt lands in one shared bucket and any visitor can lock the
     // owner out. See `ClientAddr` in `api/web_auth.rs`.
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .with_graceful_shutdown(shutdown_signal())
-    .await?;
+    let service = app.into_make_service_with_connect_info::<SocketAddr>();
+
+    // Draining is bounded, not open-ended. A graceful shutdown waits for every
+    // in-flight request, and `/api/vault/changes` is a 25-second long-poll that
+    // each open browser tab keeps one of — so with the app open anywhere, an
+    // unbounded drain outlives a container runtime's stop timeout (10s for
+    // Docker and Podman) and the process is SIGKILLed instead, which reports as
+    // a failed unit. Five seconds is longer than any real request here and
+    // comfortably inside that window.
+    let (drain, mut draining) = tokio::sync::watch::channel(false);
+    // `IntoFuture`, not `Future`, so it has to be converted before it can be
+    // polled alongside the drain timer.
+    let server = axum::serve(listener, service)
+        .with_graceful_shutdown(async move {
+            let _ = draining.changed().await;
+        })
+        .into_future();
+    tokio::pin!(server);
+    tokio::select! {
+        result = &mut server => result?,
+        () = async {
+            shutdown_signal().await;
+            tracing::info!("draining in-flight requests");
+            let _ = drain.send(true);
+            tokio::time::sleep(DRAIN_GRACE).await;
+        } => {
+            // Dropping the server here closes the listener and the connections
+            // still open on it. Nothing is lost that was not already going to be
+            // lost to the SIGKILL this replaces.
+            tracing::warn!(
+                seconds = DRAIN_GRACE.as_secs(),
+                "requests still in flight after the drain window; exiting anyway",
+            );
+        }
+    }
     tracing::info!("KizunaShelf shut down");
     Ok(())
 }
@@ -157,6 +187,10 @@ fn hash_password_interactive() -> Result<()> {
     writeln!(io::stdout().lock(), "{hash}")?;
     Ok(())
 }
+
+/// How long a shutdown waits for in-flight requests before closing the listener
+/// regardless. Must stay well under a container runtime's stop timeout.
+const DRAIN_GRACE: Duration = Duration::from_secs(5);
 
 /// Resolves when the process is asked to stop: SIGINT (Ctrl-C, local runs) or
 /// SIGTERM (`docker stop` / container restart). Installing an explicit handler

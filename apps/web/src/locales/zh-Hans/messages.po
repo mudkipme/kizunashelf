@@ -516,10 +516,6 @@ msgstr "任一满足"
 msgid "Anything worth remembering"
 msgstr "任何值得记录的内容"
 
-#: src/components/settings/settings-appearance.tsx:48
-msgid "Appearance"
-msgstr ""
-
 #: src/components/settings/settings-dialogs.tsx:379
 #: src/components/settings/settings-dialogs.tsx:511
 msgid "Apply"
@@ -547,7 +543,7 @@ msgstr "资源根目录"
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
-#: src/components/layout/app-frame.tsx:197
+#: src/components/layout/app-frame.tsx:201
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -657,8 +653,8 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/layout/app-frame.tsx:411
-#: src/components/layout/app-frame.tsx:422
+#: src/components/layout/app-frame.tsx:415
+#: src/components/layout/app-frame.tsx:430
 msgid "Close navigation"
 msgstr "关闭导航"
 
@@ -833,9 +829,13 @@ msgstr "每日笔记 {0}"
 msgid "Daily-note logging"
 msgstr "每日笔记记录"
 
-#: src/components/settings/settings-appearance.tsx:23
+#: src/components/layout/theme-mode-select.tsx:12
 msgid "Dark theme"
 msgstr "深色主题"
+
+#: src/components/layout/theme-mode-select.tsx:20
+msgid "Dark theme. Switch to system theme."
+msgstr "深色主题。切换到跟随系统。"
 
 #: src/pages/activity-page.tsx:275
 msgid "date"
@@ -924,12 +924,12 @@ msgid "Disable"
 msgstr "禁用"
 
 #: src/pages/entity-edit-page.tsx:244
-#: src/pages/settings-page.tsx:148
+#: src/pages/settings-page.tsx:145
 msgid "Discard"
 msgstr "丢弃"
 
 #: src/pages/entity-edit-page.tsx:226
-#: src/pages/settings-page.tsx:124
+#: src/pages/settings-page.tsx:121
 msgid "Discard unsaved changes?"
 msgstr "丢弃未保存的更改？"
 
@@ -1178,11 +1178,11 @@ msgstr "按类型筛选"
 msgid "For example, an episode number."
 msgstr "例如：集数。"
 
-#: src/pages/settings-page.tsx:83
+#: src/pages/settings-page.tsx:80
 msgid "Form"
 msgstr "表单"
 
-#: src/components/layout/app-frame.tsx:208
+#: src/components/layout/app-frame.tsx:212
 msgid "Forward"
 msgstr ""
 
@@ -1202,11 +1202,11 @@ msgstr "游戏"
 msgid "Give your list a name."
 msgstr "为你的列表命名。"
 
-#: src/components/layout/app-frame.tsx:196
+#: src/components/layout/app-frame.tsx:200
 msgid "Go back"
 msgstr "返回"
 
-#: src/components/layout/app-frame.tsx:207
+#: src/components/layout/app-frame.tsx:211
 msgid "Go forward"
 msgstr ""
 
@@ -1247,7 +1247,7 @@ msgstr "不含以下任何"
 msgid "Heading"
 msgstr "标题"
 
-#: src/components/layout/app-frame.tsx:173
+#: src/components/layout/app-frame.tsx:174
 msgid "Hide sidebar"
 msgstr ""
 
@@ -1426,7 +1426,7 @@ msgid "Japanese"
 msgstr "日语"
 
 #: src/pages/entity-edit-page.tsx:236
-#: src/pages/settings-page.tsx:140
+#: src/pages/settings-page.tsx:137
 msgid "Keep editing"
 msgstr "继续编辑"
 
@@ -1447,8 +1447,9 @@ msgstr "标签"
 msgid "lang {0}"
 msgstr "语言 {0}"
 
+#: src/components/layout/language-select.tsx:52
+#: src/components/layout/language-select.tsx:53
 #: src/components/settings/preset-picker.tsx:453
-#: src/components/settings/settings-appearance.tsx:65
 msgid "Language"
 msgstr "语言"
 
@@ -1468,9 +1469,13 @@ msgstr "库"
 msgid "Library Issues"
 msgstr "库问题"
 
-#: src/components/settings/settings-appearance.tsx:22
+#: src/components/layout/theme-mode-select.tsx:11
 msgid "Light theme"
 msgstr "浅色主题"
+
+#: src/components/layout/theme-mode-select.tsx:19
+msgid "Light theme. Switch to dark theme."
+msgstr "浅色主题。切换到深色主题。"
 
 #: src/components/settings/settings-home-section.tsx:85
 #: src/pages/smart-list-page.tsx:508
@@ -1555,7 +1560,7 @@ msgstr "正在加载活动…"
 msgid "Loading built-in types…"
 msgstr "正在加载内置类型…"
 
-#: src/components/layout/app-frame.tsx:493
+#: src/components/layout/app-frame.tsx:501
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
@@ -1572,7 +1577,7 @@ msgstr "正在加载分类"
 #: src/pages/lists-page.tsx:50
 #: src/pages/onboarding-page.tsx:69
 #: src/pages/review-page.tsx:144
-#: src/pages/settings-page.tsx:99
+#: src/pages/settings-page.tsx:96
 #: src/pages/smart-list-page.tsx:244
 #: src/pages/statistics-page.tsx:42
 msgid "Loading…"
@@ -1704,7 +1709,7 @@ msgstr "我的保管库"
 msgid "Name"
 msgstr "名称"
 
-#: src/components/layout/app-frame.tsx:416
+#: src/components/layout/app-frame.tsx:420
 msgid "Navigation"
 msgstr "导航"
 
@@ -2021,7 +2026,7 @@ msgstr "打开现有保管库"
 msgid "Open folder"
 msgstr "打开文件夹"
 
-#: src/components/layout/app-frame.tsx:185
+#: src/components/layout/app-frame.tsx:186
 msgid "Open navigation"
 msgstr "打开导航"
 
@@ -2300,8 +2305,8 @@ msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
+#: src/components/layout/app-frame.tsx:325
 #: src/components/layout/app-frame.tsx:326
-#: src/components/layout/app-frame.tsx:327
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "重新扫描保管库"
@@ -2386,7 +2391,7 @@ msgstr "范围"
 msgid "Search"
 msgstr "搜索"
 
-#: src/components/layout/app-frame.tsx:76
+#: src/components/layout/app-frame.tsx:77
 msgid "Search {activeTypeLabel}"
 msgstr "搜索 {activeTypeLabel}"
 
@@ -2402,8 +2407,8 @@ msgstr ""
 msgid "Search entities…"
 msgstr "搜索条目…"
 
-#: src/components/layout/app-frame.tsx:77
-#: src/components/layout/app-frame.tsx:237
+#: src/components/layout/app-frame.tsx:78
+#: src/components/layout/app-frame.tsx:233
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "搜索库"
@@ -2519,7 +2524,7 @@ msgstr "设置已保存"
 msgid "Show all"
 msgstr "显示全部"
 
-#: src/components/layout/app-frame.tsx:173
+#: src/components/layout/app-frame.tsx:174
 msgid "Show sidebar"
 msgstr ""
 
@@ -2659,10 +2664,6 @@ msgstr "存储在保管库中。分类、资源、每日笔记、主页和类型
 msgid "Stored in your system keychain. Providers listed here require credentials; others (e.g. Bangumi, Google Books) need none."
 msgstr "存储在你的系统密钥链中。此处列出的数据源需要凭据；其他数据源（例如 Bangumi、Google Books）无需凭据。"
 
-#: src/components/settings/settings-appearance.tsx:49
-msgid "Stored on this device, not in the vault."
-msgstr ""
-
 #: src/components/settings/settings-entity-type.tsx:280
 msgid "Summary"
 msgstr "摘要"
@@ -2683,9 +2684,13 @@ msgstr "同步"
 msgid "Sync from a provider"
 msgstr "从数据源同步"
 
-#: src/components/settings/settings-appearance.tsx:21
+#: src/components/layout/theme-mode-select.tsx:10
 msgid "System theme"
 msgstr "跟随系统主题"
+
+#: src/components/layout/theme-mode-select.tsx:18
+msgid "System theme. Switch to light theme."
+msgstr "跟随系统主题。切换到浅色主题。"
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:86
@@ -2741,10 +2746,6 @@ msgstr "与智能列表相同的规则；该版块显示符合条件的条目。
 #: src/components/settings/settings-editor.tsx:216
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "保管库 schema 已在磁盘上更改。你未保存的编辑仍保留在这里。"
-
-#: src/components/settings/settings-appearance.tsx:52
-msgid "Theme"
-msgstr ""
 
 #: src/components/settings/preset-picker.tsx:145
 msgid "These existing types can link to what you're adding."
@@ -2853,7 +2854,7 @@ msgstr "类型分布"
 msgid "Types"
 msgstr "类型"
 
-#: src/components/settings/settings-appearance.tsx:81
+#: src/components/layout/language-select.tsx:66
 msgid "UI in English"
 msgstr "英文界面"
 
@@ -2999,7 +3000,7 @@ msgstr "将根据标题创建为“{0}.md”。"
 msgid "within the next"
 msgstr "未来"
 
-#: src/pages/settings-page.tsx:91
+#: src/pages/settings-page.tsx:88
 msgid "YAML"
 msgstr "YAML"
 
@@ -3028,11 +3029,11 @@ msgstr "是"
 msgid "You can still open entities already in your library."
 msgstr "你仍可以打开库中已有的条目。"
 
-#: src/pages/settings-page.tsx:128
+#: src/pages/settings-page.tsx:125
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "表单编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 
-#: src/pages/settings-page.tsx:132
+#: src/pages/settings-page.tsx:129
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "YAML 编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 

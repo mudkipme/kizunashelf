@@ -5,7 +5,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   type LucideIcon,
-  MenuIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RefreshCwIcon,
@@ -18,8 +17,10 @@ import { Trans, useLingui } from "@lingui/react/macro";
 
 import { CommandPalette } from "@/components/layout/command-palette";
 import { HeaderSearch } from "@/components/layout/header-search";
+import { LanguageSelect } from "@/components/layout/language-select";
 import { destinationForPath, navDestinations } from "@/components/layout/nav-destinations";
 import { SidebarResizer } from "@/components/layout/sidebar-resizer";
+import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Button } from "@/components/ui/button";
 import { statsQuery } from "@/api/queries";
 import { useAppShortcuts } from "@/hooks/use-app-shortcuts";
@@ -155,13 +156,20 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const headerBar = (
     <header
       data-tauri-drag-region={macDesktop || undefined}
-      className={cn(
-        "app-chrome flex min-h-(--toolbar-height) shrink-0 items-center gap-2 border-b bg-chrome px-2 py-1.5 sm:gap-3 sm:px-3",
-        // Collapsed, there is no sidebar to the header's left, so on macOS the
-        // traffic lights would land on top of its leading control.
-        macTitlebarInset && sidebarCollapsed && "pl-20",
-      )}
+      className="app-chrome flex min-h-(--toolbar-height) shrink-0 items-center gap-2 border-b bg-chrome px-2 py-1.5 sm:gap-3 sm:px-3"
     >
+      {/* Reserve the macOS traffic lights' corner. Collapsed, the sidebar is no
+          longer there to own the top-left, so the lights land on whatever the
+          header puts first.
+          A spacer rather than padding on the header itself: `pl-*` loses to the
+          `sm:px-*` already on that element, because Tailwind emits breakpoint
+          variants after base utilities — so the padding version silently did
+          nothing at every width this window can actually be. Being an element
+          also lets the strip carry the drag region, which is what the corner
+          should do. */}
+      {macTitlebarInset && sidebarCollapsed ? (
+        <div data-tauri-drag-region aria-hidden="true" className="w-20 shrink-0 self-stretch" />
+      ) : null}
       {/* Wide enough for a persistent sidebar: collapse it. Narrower: the
           sidebar is a sheet, so the same corner opens that instead. */}
       <Button
@@ -185,8 +193,11 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         aria-label={t`Open navigation`}
         aria-expanded={mobileSidebarOpen}
       >
-        <MenuIcon />
+        <AppLogo className="size-5" />
       </Button>
+      {/* Present at every width: added to a home screen (the manifest declares
+          `display: standalone`) there is no browser chrome to go back with, and
+          nothing else on the page can move history. */}
       <Button
         type="button"
         variant="ghost"
@@ -209,14 +220,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
       >
         <ArrowRightIcon />
       </Button>
-      {/* Below `md` the sidebar that normally carries the brand is not
-          rendered, so the header carries it there and only there. */}
-      <Link to="/" className="flex min-w-0 items-center gap-2 md:hidden" aria-label="KizunaShelf">
-        <AppLogo />
-        {showWordmark ? (
-          <span className="truncate text-sm font-semibold">KizunaShelf</span>
-        ) : null}
-      </Link>
       <HeaderSearch
         search={search}
         onSearchChange={setSearch}
@@ -241,6 +244,8 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
       </Button>
       <div className="ml-auto flex items-center gap-2 sm:ml-0">
         <RescanButton />
+        <LanguageSelect />
+        <ThemeModeSelect />
       </div>
     </header>
   );
@@ -273,6 +278,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const mobileSidebar = (
     <MobileSidebar
       open={mobileSidebarOpen}
+      showWordmark={showWordmark}
       stats={stats}
       activeType={activeType}
       pathname={location.pathname}
@@ -331,9 +337,12 @@ function RescanButton() {
   );
 }
 
-function AppLogo() {
+function AppLogo({ className }: { className?: string }) {
   return (
-    <span className="relative size-8 shrink-0 overflow-hidden rounded-md" aria-hidden="true">
+    <span
+      className={cn("relative size-8 shrink-0 overflow-hidden rounded-md", className)}
+      aria-hidden="true"
+    >
       <img src="/icon.png" alt="" className="size-full dark:hidden" />
       <img src="/icon-dark.png" alt="" className="hidden size-full dark:block" />
     </span>
@@ -388,12 +397,14 @@ function AppSidebar({
 
 function MobileSidebar({
   open,
+  showWordmark,
   stats,
   activeType,
   pathname,
   onClose,
 }: {
   open: boolean;
+  showWordmark: boolean;
   stats?: StatsResponse;
   activeType: string;
   pathname: string;
@@ -416,9 +427,13 @@ function MobileSidebar({
         aria-label={t`Navigation`}
         className="app-chrome relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-chrome shadow-lg"
       >
-        <header className="flex min-h-(--toolbar-height) items-center gap-3 border-b px-3">
+        <header className="flex min-h-(--toolbar-height) items-center gap-2 border-b px-3">
           <AppLogo />
-          <div className="min-w-0 flex-1" />
+          <div className="min-w-0 flex-1">
+            {showWordmark ? (
+              <span className="block truncate text-sm font-semibold">KizunaShelf</span>
+            ) : null}
+          </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label={t`Close navigation`}>
             <XIcon />
           </Button>
@@ -524,6 +539,7 @@ function SidebarNavLink({
       className={({ isActive }) =>
         cn(
           "flex h-(--control-height) min-w-0 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+          "[&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
           (active ?? isActive) && "bg-accent text-foreground",
         )
       }

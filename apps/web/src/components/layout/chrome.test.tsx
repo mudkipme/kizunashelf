@@ -79,8 +79,6 @@ describe("toolbar", () => {
       button.getAttribute("aria-label"),
     );
 
-    // Theme and language moved to Settings — they are preferences, not actions,
-    // and every icon left in the toolbar is noise above the content.
     expect(labels).toEqual([
       "Hide sidebar",
       "Open navigation",
@@ -89,7 +87,34 @@ describe("toolbar", () => {
       // The narrow-viewport search toggle; hidden from the sm breakpoint up.
       "Search library",
       "Rescan vault",
+      "Language",
+      "System theme. Switch to light theme.",
     ]);
+  });
+
+  it("fills the narrow bar instead of leaving a gap at its end", async () => {
+    // The trailing group is what holds the bar's right edge. When it held only
+    // the rescan button — which is itself hidden on a phone — it rendered
+    // empty, and every control bunched up against the left with dead space
+    // beside it.
+    await page.viewport(390, 720);
+    const screen = await shell();
+    await expect.element(screen.getByRole("button", { name: "Open navigation" })).toBeVisible();
+
+    await expect.element(screen.getByRole("button", { name: "Language" })).toBeVisible();
+    const header = document.querySelector("header.app-chrome") as HTMLElement;
+    const trailing = header.lastElementChild as HTMLElement;
+    expect([...trailing.children].filter((child) => child.checkVisibility())).not.toHaveLength(0);
+
+    // Added to a home screen the app runs with no browser chrome, so these are
+    // the only way to move through history — they have to survive the narrowest
+    // width, which is what taking the brand out of the bar paid for.
+    await expect.element(screen.getByRole("button", { name: "Go back" })).toBeVisible();
+    await expect.element(screen.getByRole("button", { name: "Go forward" })).toBeVisible();
+
+    // Nothing spills out of the bar at the narrowest width worth supporting.
+    await page.viewport(320, 640);
+    await expect.poll(() => header.scrollWidth <= header.clientWidth).toBe(true);
   });
 
   it("still names the destination once the page stops repeating it", async () => {

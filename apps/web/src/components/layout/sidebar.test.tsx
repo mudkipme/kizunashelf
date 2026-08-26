@@ -12,7 +12,7 @@ import {
   useSidebarStore,
 } from "@/lib/sidebar";
 import { render } from "@/test/render";
-import { stubApi } from "@/test/api-stub";
+import { stubApi, testStats } from "@/test/api-stub";
 
 const mod = isAppleKeyboard() ? "Meta" : "Control";
 
@@ -139,6 +139,38 @@ describe("sidebar", () => {
     await expect.element(handle).toHaveAttribute("aria-valuemin", String(SIDEBAR_MIN_WIDTH));
     await expect.element(handle).toHaveAttribute("aria-valuemax", String(SIDEBAR_MAX_WIDTH));
   });
+
+  it("indents every row's label alike, whatever kind of glyph it carries", async () => {
+    // Lucide icons carry a 24px intrinsic size. `Button` normalises that, a
+    // `NavLink` does not — so an icon row pushed its label 8px further right
+    // than an emoji row, and a 24px glyph crowded a 28px row beside 13px text.
+    stubApi({
+      stats: {
+        ...testStats,
+        byType: [
+          { id: "anime", label: "Anime", count: 2 },
+          { id: "manga", label: "Manga", icon: "📚", count: 7 },
+        ],
+      },
+    });
+    await page.viewport(1280, 800);
+    const screen = await render(<AppFrame>{null}</AppFrame>);
+    await expect.element(screen.getByRole("link", { name: /Manga/ })).toBeVisible();
+
+    // Nav rows only — the brand link above them carries a larger mark.
+    const rows = [...(sidebar()?.querySelectorAll("section a") ?? [])];
+    for (const row of rows) {
+      expect(row.firstElementChild!.getBoundingClientRect().height).toBe(16);
+    }
+
+    const labelLeft = (text: string) =>
+      rows
+        // `includes`, not `startsWith`: an emoji row leads with its glyph.
+        .find((row) => row.textContent?.includes(text))!
+        .querySelector("span:nth-child(2)")!
+        .getBoundingClientRect().left;
+    expect(labelLeft("Manga")).toBe(labelLeft("Anime"));
+  });
 });
 
 describe("app name", () => {
@@ -154,14 +186,19 @@ describe("app name", () => {
     expect(sidebar()?.contains(visibleAppNames()[0])).toBe(true);
   });
 
-  it("appears exactly once when the sidebar is a sheet instead", async () => {
-    // Below `md` the sidebar is not rendered at all, so the header carries the
-    // brand there — and only there.
+  it("comes from the navigation sheet where there is no sidebar", async () => {
     await page.viewport(600, 800);
     const screen = await render(<AppFrame>{null}</AppFrame>);
-    await expect.element(screen.getByRole("button", { name: "Open navigation" })).toBeVisible();
+    const openNavigation = screen.getByRole("button", { name: "Open navigation" });
+    await expect.element(openNavigation).toBeVisible();
 
+    // The bar carries no brand at all: that width belongs to the history
+    // controls, which an installed app has no browser chrome to replace.
     expect(sidebar()?.checkVisibility()).not.toBe(true);
+    expect(visibleAppNames()).toHaveLength(0);
+
+    await openNavigation.click();
+    await expect.element(screen.getByRole("dialog")).toBeVisible();
     expect(visibleAppNames()).toHaveLength(1);
   });
 });
