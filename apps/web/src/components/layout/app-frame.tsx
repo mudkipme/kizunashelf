@@ -158,7 +158,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     <header
       data-tauri-drag-region={macDesktop || undefined}
       className={cn(
-        "app-chrome flex min-h-14 shrink-0 items-center gap-2 border-b bg-chrome px-3 py-2 sm:gap-3 sm:px-4",
+        "app-chrome flex min-h-(--toolbar-height) shrink-0 items-center gap-2 border-b bg-chrome px-2 py-1.5 sm:gap-3 sm:px-3",
         // Collapsed, there is no sidebar to the header's left, so on macOS the
         // traffic lights would land on top of its leading control.
         macTitlebarInset && sidebarCollapsed && "pl-20",
@@ -368,7 +368,7 @@ function AppSidebar({
       {/* Matches the header's height so the two columns start level. No border
           of its own: the sidebar reads as one continuous surface, the way a
           native source list does. */}
-      <div className="flex min-h-14 shrink-0 items-center px-3">
+      <div className="flex min-h-(--toolbar-height) shrink-0 items-center px-3">
         <Link to="/" className="flex min-w-0 items-center gap-2" aria-label="KizunaShelf">
           <AppLogo />
           {showWordmark ? (
@@ -414,7 +414,7 @@ function MobileSidebar({
         aria-label={t`Navigation`}
         className="app-chrome relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-chrome shadow-lg"
       >
-        <header className="flex min-h-14 items-center gap-3 border-b px-3">
+        <header className="flex min-h-(--toolbar-height) items-center gap-3 border-b px-3">
           <AppLogo />
           <div className="min-w-0 flex-1" />
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label={t`Close navigation`}>
@@ -521,7 +521,7 @@ function SidebarNavLink({
       end={end}
       className={({ isActive }) =>
         cn(
-          "flex h-8 min-w-0 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+          "flex h-(--control-height) min-w-0 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
           (active ?? isActive) && "bg-accent text-foreground",
         )
       }

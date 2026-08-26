@@ -65,7 +65,10 @@ export function AssetDownloadPanel() {
 
   return (
     <section className="rounded-md border p-3">
-      <div className="flex flex-wrap items-end gap-2">
+      {/* Centred, not bottom-aligned: this row pairs a plain heading with a
+          control group, so there is no stacked label whose input needs to line
+          up with the controls beside it. */}
+      <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold">
             <Trans>Download remote covers</Trans>

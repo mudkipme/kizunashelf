@@ -57,7 +57,7 @@ export function HomeSectionForm({
               // Criteria reference the type's fields, so a type switch resets them.
               onChange({ ...section, type: event.target.value, criteria: null })
             }
-            className="h-9 w-full text-base md:text-sm"
+            className="w-full"
           >
             {types.map((type) => (
               <option key={type.id} value={type.id}>
@@ -87,7 +87,7 @@ export function HomeSectionForm({
           <Select
             value={currentSort}
             onChange={(event) => onChange({ ...section, sort: event.target.value })}
-            className="h-9 w-full text-base md:text-sm"
+            className="w-full"
           >
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -106,7 +106,7 @@ export function HomeSectionForm({
                 direction: event.target.value ? (event.target.value as "asc" | "desc") : null,
               })
             }
-            className="h-9 w-full text-base md:text-sm"
+            className="w-full"
           >
             <option value="">{t`Default`}</option>
             <option value="asc">{t`Ascending`}</option>

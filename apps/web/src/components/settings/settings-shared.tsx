@@ -32,7 +32,7 @@ export function LanguageSelect({
     <Select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 w-full text-base md:text-sm"
+      className="w-full"
     >
       <option value="">{t`None`}</option>
       {languages.map((language) => (

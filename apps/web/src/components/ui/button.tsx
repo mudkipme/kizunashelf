@@ -17,15 +17,17 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
+      // Heights come from `--control-height*` (see index.css), which is also
+      // what restores touch sizes on a coarse pointer.
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "h-(--control-height) px-3 has-[>svg]:px-2.5",
+        xs: "h-(--control-height-xs) gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-(--control-height-sm) gap-1.5 rounded-md px-2.5 has-[>svg]:px-2",
+        lg: "h-(--control-height-lg) rounded-md px-5 has-[>svg]:px-3.5",
+        icon: "size-(--control-height)",
+        "icon-xs": "size-(--control-height-xs) rounded-md [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-(--control-height-sm)",
+        "icon-lg": "size-(--control-height-lg)",
       },
     },
     defaultVariants: {

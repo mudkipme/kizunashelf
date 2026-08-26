@@ -48,7 +48,7 @@ export function EmojiField({
               // 100%-wide trigger plus the remove button overflows the row and
               // horizontally scrolls the page on mobile. A zero basis grows to
               // exactly the space the remove button leaves.
-              className="h-9 min-w-0 flex-1 justify-start px-3 font-normal"
+              className="min-w-0 flex-1 justify-start px-3 font-normal"
               aria-label={t`Choose icon`}
             >
               {value ? (

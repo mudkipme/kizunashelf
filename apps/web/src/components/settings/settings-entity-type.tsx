@@ -113,7 +113,7 @@ export function EntityTypeForm({
                     },
                   })
                 }
-                className="h-9 w-full text-base md:text-sm"
+                className="w-full"
               >
                 <option value="">{t`None`}</option>
                 <option value="original">{t`Original (filename is the title)`}</option>
@@ -325,7 +325,7 @@ function BodySectionEditor({
           <Select
             value={section.kind}
             onChange={(event) => onChange(changeBodySectionKind(section, event.target.value as BodySectionKind))}
-            className="h-9 w-full text-base md:text-sm"
+            className="w-full"
           >
             <option value="external">{t`External metadata`}</option>
             <option value="episodes">{t`Item list`}</option>
@@ -341,7 +341,7 @@ function BodySectionEditor({
           <Select
             value={section.tracking ?? "checklist"}
             onChange={(event) => onChange({ ...section, tracking: event.target.value as BodySectionTracking })}
-            className="h-9 w-full text-base md:text-sm"
+            className="w-full"
           >
             {EPISODE_TRACKING_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

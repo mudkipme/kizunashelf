@@ -455,7 +455,7 @@ export function SeedLanguagePicker({
         <Select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-9 text-base md:text-sm"
+          className="w-full"
         >
           {options.map((item) => (
             <option key={item.code} value={item.code}>

@@ -121,7 +121,7 @@ export function ExternalMatchDialog({
               <Input value={query} onChange={(event) => onQueryChange(event.target.value)} />
             </label>
             <Select
-              className="h-9 md:w-44"
+              className="md:w-44"
               value={provider}
               onChange={(event) => onProviderChange(event.target.value)}
               aria-label={t`Provider`}

@@ -61,7 +61,7 @@ export function MarkdownView({ markdown, relations }: { markdown: string; relati
   const transformed = transformWikilinks(markdown, relations);
 
   return (
-    <div className="flex flex-col gap-4 text-sm leading-7 text-foreground">
+    <div className="flex flex-col gap-4 text-prose text-foreground">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{

@@ -168,7 +168,7 @@ export function NumberStepper({
       </Button>
       {isOutput ? (
         <output
-          className="border-input bg-muted text-foreground flex h-9 min-w-0 items-center justify-center rounded-md border px-3 text-center text-sm tabular-nums"
+          className="border-input bg-muted text-foreground flex h-(--control-height) min-w-0 items-center justify-center rounded-md border px-3 text-center text-sm tabular-nums"
           aria-label={ariaLabel}
         >
           {value || "0"}

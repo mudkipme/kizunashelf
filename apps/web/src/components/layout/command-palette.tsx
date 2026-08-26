@@ -361,7 +361,7 @@ function PaletteRow({
           ) : null}
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
           {item.chord ? (
-            <kbd className="shrink-0 rounded border px-1.5 py-0.5 text-[0.6875rem] text-muted-foreground">
+            <kbd className="shrink-0 rounded border px-1.5 py-0.5 text-xs text-muted-foreground">
               {item.chord}
             </kbd>
           ) : null}

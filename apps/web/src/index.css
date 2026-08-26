@@ -6,6 +6,25 @@
 
 @theme {
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
+  /* An application's type scale, not a web page's: 13px for interface text and
+     11px for captions is what macOS and VS Code use, against the 14/12 a
+     comfortable web layout defaults to.
+     `--text-base` deliberately stays 16px. Every field in this app is written
+     `text-base md:text-sm` because iOS Safari zooms the viewport when a focused
+     input is under 16px, so the mobile size has to stay put while the desktop
+     one tightens. */
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.125rem;
+
+  /* Prose is a different register from interface text and does not follow it
+     down. Entity bodies, summaries and note fields are read a paragraph at a
+     time, so they keep a comfortable size and leading — the same split VS Code
+     makes between its 13px chrome and its editor. */
+  --text-prose: 0.875rem;
+  --text-prose--line-height: 1.5rem;
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(0 0% 4%);
   --color-muted: hsl(0 0% 96%);
@@ -40,6 +59,29 @@
 
 :root {
   color-scheme: light;
+
+  /* The one place density is decided. Controls are sized from these rather
+     than from literal `h-*` classes, so the scale cannot drift apart across
+     components — and so the touch restore below is a single rule instead of a
+     `pointer-coarse:` variant repeated on every control in the app. */
+  --control-height-xs: 1.5rem;
+  --control-height-sm: 1.625rem;
+  --control-height: 1.75rem;
+  --control-height-lg: 2rem;
+  --toolbar-height: 2.75rem;
+}
+
+/* A finger cannot reliably hit a 28px target, so where the primary pointer is
+   coarse every control grows back to a touch size. The dense scale is a
+   desktop affordance; this is not a smaller app on a phone. */
+@media (pointer: coarse) {
+  :root {
+    --control-height-xs: 2rem;
+    --control-height-sm: 2.25rem;
+    --control-height: 2.5rem;
+    --control-height-lg: 2.75rem;
+    --toolbar-height: 3.5rem;
+  }
 }
 
 .dark {

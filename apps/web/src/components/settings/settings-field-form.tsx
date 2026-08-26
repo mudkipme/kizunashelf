@@ -60,7 +60,7 @@ export function FieldForm({
         <Select
           value={field.fieldType}
           onChange={(event) => onChange({ ...field, fieldType: event.target.value as FieldType })}
-          className="h-9 w-full text-base md:text-sm"
+          className="w-full"
         >
           {fieldTypeOptions.map((option) => (
             <option key={option} value={option}>
@@ -132,7 +132,7 @@ function FieldOptionEditor({
             onChange={(event) =>
               onChange({ ...field, titleRole: (event.target.value || null) as FieldConfig["titleRole"] })
             }
-            className="h-9 w-full text-base md:text-sm"
+            className="w-full"
           >
             <option value="">{t`None`}</option>
             <option value="original">{t`Original`}</option>
@@ -185,7 +185,7 @@ function FieldOptionEditor({
           onChange={(event) =>
             onChange({ ...field, dateRole: (event.target.value || null) as FieldConfig["dateRole"] })
           }
-          className="h-9 w-full text-base md:text-sm"
+          className="w-full"
         >
           <option value="">{t`None`}</option>
           <option value="planning">{t`Planning`}</option>
@@ -207,7 +207,7 @@ function FieldOptionEditor({
         <Select
           value={field.seasonLanguage ?? "zh"}
           onChange={(event) => onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })}
-          className="h-9 w-full text-base md:text-sm"
+          className="w-full"
         >
           <option value="zh">{t`Chinese`}</option>
           <option value="ja">{t`Japanese`}</option>
@@ -230,7 +230,7 @@ function FieldOptionEditor({
                 externalTypes: externalTypesForSource(providerCatalog, event.target.value),
               })
             }
-            className="h-9 w-full text-base md:text-sm"
+            className="w-full"
           >
             <option value="">{t`None`}</option>
             {externalSourceOptions(providerCatalog).map((option) => (
@@ -328,7 +328,7 @@ function StatusRoleEditor({
               statusValues: event.target.value === "status" ? field.statusValues : undefined,
             })
           }
-          className="h-9 w-full text-base md:text-sm"
+          className="w-full"
         >
           <option value="">{t`Regular enum`}</option>
           <option value="status">{t`Status field`}</option>
@@ -348,7 +348,7 @@ function StatusRoleEditor({
                   onChange={(event) =>
                     setOptionCanonical(option, (event.target.value || undefined) as CanonicalStatus | undefined)
                   }
-                  className="h-9 w-40 text-base md:text-sm"
+                  className="w-40"
                 >
                   <option value="">{t`Unmapped`}</option>
                   {STATUS_CANONICALS.map(({ value, label }) => (

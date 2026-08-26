@@ -64,7 +64,7 @@ export function EntityGridItem({
           className="line-clamp-2 text-sm font-medium leading-5"
         />
         {entity.summary ? (
-          <div className="line-clamp-3 text-xs leading-5 text-muted-foreground">{entity.summary}</div>
+          <div className="line-clamp-3 text-sm leading-5 text-muted-foreground">{entity.summary}</div>
         ) : null}
         <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="min-w-0">
