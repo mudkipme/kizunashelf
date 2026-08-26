@@ -17,7 +17,14 @@ kizunashelf = { path = "../../../crates/kizunashelf", features = ["system-proxy"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 tauri = { version = "2.11.2", features = [] }
+# The shell's own events, alongside the core's. Facade only; the subscriber
+# below is what decides where they go.
+tracing = "0.1.44"
 tauri-plugin-dialog = "2.7.1"
+# Remembers the window's size, position and maximized/fullscreen state across
+# launches, into the OS config dir. Desktop-only by nature: iOS and the web
+# server have no window to remember.
+tauri-plugin-window-state = "2.4.1"
 # The desktop shell installs the subscriber for the core's events; without one
 # they are dropped. It writes to stderr, so a bundled app shows them only when
 # launched from a terminal — which is what diagnosing a report means anyway.

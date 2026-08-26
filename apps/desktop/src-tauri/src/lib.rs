@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Manager, State};
+use tauri_plugin_window_state::StateFlags;
 use tracing_subscriber::EnvFilter;
 
 mod secret_store;
@@ -259,6 +260,26 @@ pub fn run() {
     init_tracing();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                // Geometry only, and deliberately not the whole default set.
+                //
+                // `VISIBLE` is left out because this app has one window and no
+                // tray icon: a run that happened to save "hidden" would start
+                // the app with nothing on screen and no way to get it back.
+                // Visibility is decided unconditionally in `setup` below.
+                //
+                // `DECORATIONS` is left out because the frame is a config
+                // decision — `titleBarStyle: Overlay` on macOS — and a value
+                // captured by an older build should not be able to override it.
+                .with_state_flags(
+                    StateFlags::SIZE
+                        | StateFlags::POSITION
+                        | StateFlags::MAXIMIZED
+                        | StateFlags::FULLSCREEN,
+                )
+                .build(),
+        )
         .register_asynchronous_uri_scheme_protocol(ASSET_SCHEME, |ctx, request, responder| {
             let app = ctx.app_handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -266,6 +287,23 @@ pub fn run() {
             });
         })
         .setup(|app| {
+            // The window is created hidden (`"visible": false`) so the restore
+            // above lands before anything is painted; left visible it would
+            // appear at the configured default size and then visibly jump to
+            // the remembered one. Tauri builds the config windows before
+            // running this hook, so the geometry is already settled here.
+            //
+            // Shown before anything fallible: no `?` below may leave the user
+            // looking at a running app with no window. Iterating rather than
+            // naming the window keeps that promise if a second one is ever
+            // added, and makes a failure loud — silence here is a black screen
+            // with nothing to go on.
+            for (label, window) in app.webview_windows() {
+                if let Err(error) = window.show() {
+                    tracing::error!(%label, %error, "could not show the window");
+                }
+            }
+
             let vaults_path = app.path().app_data_dir()?.join("vaults.json");
             // The OS cache dir (XDG_CACHE_HOME / ~/.cache on Linux, ~/Library/Caches
             // on macOS, %LOCALAPPDATA% on Windows), resolved the same way as the app
