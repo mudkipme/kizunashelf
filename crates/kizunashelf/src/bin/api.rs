@@ -110,9 +110,16 @@ async fn main() -> Result<()> {
         settings_writable,
         "KizunaShelf listening",
     );
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    // `with_connect_info` puts the peer address in each request's extensions.
+    // The login throttle needs it to tell one client from another; without it
+    // every attempt lands in one shared bucket and any visitor can lock the
+    // owner out. See `ClientAddr` in `api/web_auth.rs`.
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await?;
     tracing::info!("KizunaShelf shut down");
     Ok(())
 }

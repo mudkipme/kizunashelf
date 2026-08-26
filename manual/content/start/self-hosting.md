@@ -116,6 +116,14 @@ docker run -p 8787:8787 \
 
 Successful login creates a secure, HTTP-only, same-site cookie. Sessions last at most 30 days and are held only in server memory, so restarting KizunaShelf signs every browser out. To end the current session manually, open `/_auth/logout` on your KizunaShelf host.
 
+### Login throttling and your proxy
+
+Failed logins are limited to five per minute **per client**, after which that client gets `429 Too Many Requests` until the minute is up. Other clients are unaffected — a single-password deployment has exactly one legitimate user, and a shared counter would let anyone who can reach the login form lock that user out by guessing badly on purpose.
+
+Telling clients apart needs the real client address, and behind a reverse proxy every request arrives from the proxy. So when the connection comes from **loopback, a private network (RFC 1918 / ULA), a link-local address, or the carrier-grade-NAT range Tailscale uses**, KizunaShelf reads the client from `X-Forwarded-For` (falling back to `X-Real-IP`), walking past any further hops that are themselves inside that boundary. A request arriving straight from a public address is charged to that address whatever its headers claim, so the headers cannot be used to shed identity and out-run the throttle.
+
+**What this means for your proxy config:** if it does not set `X-Forwarded-For` or `X-Real-IP`, every visitor shares one bucket and the limit is effectively global again. Nginx needs `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`; Caddy and Traefik set it by default. IPv6 clients are counted per `/64`, since one machine is routinely handed that whole range.
+
 ### Deployment boundary
 
 - **Continue to use HTTPS.** The session cookie is deliberately marked `Secure`; terminate TLS at a reverse proxy and forward to KizunaShelf over a private or loopback connection.

@@ -7,11 +7,12 @@
 use argon2::password_hash::{PasswordHash, PasswordVerifier};
 use argon2::Argon2;
 use axum::body::Body;
-use axum::extract::{Form, Request, State};
+use axum::extract::{ConnectInfo, Form, FromRequestParts, Request, State};
 use axum::http::header::{
     ACCEPT, CACHE_CONTROL, CONTENT_SECURITY_POLICY, COOKIE, REFERRER_POLICY, RETRY_AFTER,
     SET_COOKIE, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS,
 };
+use axum::http::request::Parts;
 use axum::http::{HeaderMap, HeaderValue, Method, StatusCode};
 use axum::middleware::{self, Next};
 use axum::response::{Html, IntoResponse, Redirect, Response};
@@ -23,14 +24,33 @@ use rand_core::{OsRng, RngCore};
 use serde::Deserialize;
 use serde_json::json;
 use std::collections::{HashMap, VecDeque};
+use std::convert::Infallible;
+use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+use tokio::sync::Semaphore;
 
 const COOKIE_NAME: &str = "__Host-kizunashelf";
 const SESSION_LIFETIME: Duration = Duration::from_secs(30 * 24 * 60 * 60);
 const LOGIN_WINDOW: Duration = Duration::from_secs(60);
 const MAX_LOGIN_ATTEMPTS: usize = 5;
 const MAX_PASSWORD_BYTES: usize = 1024;
+/// How many client buckets the throttle will hold at once.
+///
+/// Entries expire with the window, so this only binds under a source-rotating
+/// flood. When it is reached the least recently seen bucket is dropped, which
+/// can only ever *relax* the throttle for whoever owned it — never lock anyone
+/// out. That is the safe direction: an attacker who can rotate addresses is
+/// already past an address-keyed throttle, while the owner must never be.
+const MAX_TRACKED_CLIENTS: usize = 4096;
+/// How many password verifications may run at once.
+///
+/// Argon2id is memory-hard on purpose — roughly 19 MiB and a core per check.
+/// The throttle above caps a *single* client's rate but no longer caps the
+/// total, so without this a spread-out attacker could turn the login form into
+/// a memory-exhaustion lever. Waiting for a permit costs a real login
+/// milliseconds and never becomes a lockout.
+const MAX_CONCURRENT_VERIFICATIONS: usize = 4;
 
 #[derive(Clone)]
 pub struct WebAuth {
@@ -40,7 +60,10 @@ pub struct WebAuth {
 struct WebAuthInner {
     password_hash: String,
     sessions: Mutex<HashMap<String, Instant>>,
-    login_attempts: Mutex<VecDeque<Instant>>,
+    /// Recent attempts per client. Keyed by [`ClientAddr`], whose `None` is the
+    /// shared bucket for requests whose origin could not be established.
+    login_attempts: Mutex<HashMap<ClientAddr, VecDeque<Instant>>>,
+    verifications: Semaphore,
 }
 
 impl WebAuth {
@@ -55,43 +78,68 @@ impl WebAuth {
             inner: Arc::new(WebAuthInner {
                 password_hash: password_hash.trim().to_string(),
                 sessions: Mutex::new(HashMap::new()),
-                login_attempts: Mutex::new(VecDeque::new()),
+                login_attempts: Mutex::new(HashMap::new()),
+                verifications: Semaphore::new(MAX_CONCURRENT_VERIFICATIONS),
             }),
         })
     }
 
-    fn reserve_login_attempt(&self) -> bool {
+    /// Charges one login attempt to `client`, or reports that its allowance for
+    /// the current window is spent.
+    ///
+    /// Per client, not per server: a single-password deployment has exactly one
+    /// legitimate user, so a shared counter let anyone who could reach the login
+    /// form lock that user out for a minute at a time by guessing badly on
+    /// purpose.
+    fn reserve_login_attempt(&self, client: ClientAddr) -> bool {
         let now = Instant::now();
-        let mut attempts = self
+        let mut clients = self
             .inner
             .login_attempts
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
-        while attempts
-            .front()
-            .is_some_and(|attempt| now.duration_since(*attempt) >= LOGIN_WINDOW)
-        {
-            attempts.pop_front();
-        }
+
+        // Sweep every bucket, not just this client's: expiry is what keeps the
+        // map proportional to "clients that tried in the last minute" rather
+        // than to every address ever seen.
+        clients.retain(|_, attempts| {
+            while attempts
+                .front()
+                .is_some_and(|attempt| now.duration_since(*attempt) >= LOGIN_WINDOW)
+            {
+                attempts.pop_front();
+            }
+            !attempts.is_empty()
+        });
+
+        let attempts = clients.entry(client).or_default();
         if attempts.len() >= MAX_LOGIN_ATTEMPTS {
             return false;
         }
         attempts.push_back(now);
+
+        if clients.len() > MAX_TRACKED_CLIENTS {
+            evict_least_recent(&mut clients, client);
+        }
         true
     }
 
-    fn clear_login_attempts(&self) {
+    fn clear_login_attempts(&self, client: ClientAddr) {
         self.inner
             .login_attempts
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
-            .clear();
+            .remove(&client);
     }
 
     async fn verify(&self, password: String) -> bool {
         if password.is_empty() || password.len() > MAX_PASSWORD_BYTES {
             return false;
         }
+        // See `MAX_CONCURRENT_VERIFICATIONS`. A closed semaphore is not
+        // reachable (nothing closes it); were it ever to be, running unbounded
+        // is the safer failure than refusing every login.
+        let _permit = self.inner.verifications.acquire().await.ok();
         let password_hash = self.inner.password_hash.clone();
         tokio::task::spawn_blocking(move || {
             PasswordHash::new(&password_hash).is_ok_and(|parsed| {
@@ -168,8 +216,12 @@ async fn login_page(State(auth): State<WebAuth>, headers: HeaderMap) -> Response
     login_html(StatusCode::OK, None)
 }
 
-async fn login(State(auth): State<WebAuth>, Form(form): Form<LoginForm>) -> Response {
-    if !auth.reserve_login_attempt() {
+async fn login(
+    State(auth): State<WebAuth>,
+    client: ClientAddr,
+    Form(form): Form<LoginForm>,
+) -> Response {
+    if !auth.reserve_login_attempt(client) {
         let mut response = login_html(
             StatusCode::TOO_MANY_REQUESTS,
             Some("Too many attempts. Try again in a minute."),
@@ -183,7 +235,7 @@ async fn login(State(auth): State<WebAuth>, Form(form): Form<LoginForm>) -> Resp
         return login_html(StatusCode::UNAUTHORIZED, Some("The password is incorrect."));
     }
 
-    auth.clear_login_attempts();
+    auth.clear_login_attempts(client);
     let token = auth.create_session();
     let mut response = Redirect::to("/").into_response();
     let Ok(cookie) = HeaderValue::from_str(&session_cookie(&token)) else {
@@ -260,6 +312,164 @@ async fn require_authentication(
         .into_response();
     no_store(&mut response);
     response
+}
+
+/// The address a login attempt is charged to.
+///
+/// `None` means the origin could not be established — no peer address was
+/// recorded, because the host served the router without
+/// `into_make_service_with_connect_info`. Those requests share one bucket,
+/// which is the pre-existing global behavior and the only safe fallback: the
+/// alternative is an unthrottled login form.
+///
+/// Extraction cannot fail, so a misconfigured host degrades to that shared
+/// bucket instead of turning every login into a 500.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
+struct ClientAddr(Option<IpAddr>);
+
+impl<S: Send + Sync> FromRequestParts<S> for ClientAddr {
+    type Rejection = Infallible;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let peer = parts
+            .extensions
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|ConnectInfo(address)| address.ip());
+        Ok(Self(client_ip(peer, &parts.headers)))
+    }
+}
+
+/// Resolves the client an attempt belongs to, from the socket peer and the
+/// headers a proxy may have added.
+///
+/// The documented deployment puts KizunaShelf behind a reverse proxy on
+/// loopback or a private network, so the peer address alone would be the same
+/// for every visitor and the throttle would still be effectively global. The
+/// forwarded headers are therefore honored — but only when the connection
+/// itself came from inside that boundary. A request arriving straight from a
+/// public address is charged to that address no matter what it claims, so the
+/// headers cannot be used to shed identity and out-run the throttle.
+fn client_ip(peer: Option<IpAddr>, headers: &HeaderMap) -> Option<IpAddr> {
+    let peer = peer?;
+    let client = if is_inside_deployment(peer) {
+        forwarded_client(headers).unwrap_or(peer)
+    } else {
+        peer
+    };
+    Some(throttle_bucket(client))
+}
+
+/// The client address reported by a proxy we have decided to believe.
+fn forwarded_client(headers: &HeaderMap) -> Option<IpAddr> {
+    if let Some(chain) = headers
+        .get("x-forwarded-for")
+        .and_then(|value| value.to_str().ok())
+    {
+        // Right to left: the rightmost entry was appended by the nearest proxy
+        // and is the least forgeable, since anything a client sends arrives to
+        // its left. Entries that are themselves inside the deployment are
+        // further proxies in the chain, so keep walking past them.
+        let mut innermost = None;
+        for entry in chain.rsplit(',') {
+            let Some(address) = parse_forwarded_ip(entry) else {
+                break;
+            };
+            if !is_inside_deployment(address) {
+                return Some(address);
+            }
+            innermost = Some(address);
+        }
+        // An entirely private chain is a LAN-only deployment; the leftmost
+        // entry still tells LAN clients apart, which is the whole point.
+        if innermost.is_some() {
+            return innermost;
+        }
+    }
+    // nginx's `proxy_set_header X-Real-IP` is common enough that ignoring it
+    // would silently leave those deployments on one shared bucket.
+    headers
+        .get("x-real-ip")
+        .and_then(|value| value.to_str().ok())
+        .and_then(parse_forwarded_ip)
+}
+
+fn parse_forwarded_ip(value: &str) -> Option<IpAddr> {
+    let value = value.trim();
+    if let Ok(address) = value.parse::<IpAddr>() {
+        return Some(address);
+    }
+    // Some proxies append the source port: `203.0.113.7:54321`, `[2001:db8::1]:443`.
+    if let Ok(address) = value.parse::<SocketAddr>() {
+        return Some(address.ip());
+    }
+    value
+        .strip_prefix('[')?
+        .split(']')
+        .next()?
+        .parse::<IpAddr>()
+        .ok()
+}
+
+/// Whether an address can only belong to something already inside the
+/// deployment boundary — the reverse proxy, a container network, a LAN or
+/// tailnet peer. Reaching the app from one of these already implies more access
+/// than spoofing a header would grant.
+fn is_inside_deployment(address: IpAddr) -> bool {
+    match normalize_mapped(address) {
+        IpAddr::V4(v4) => {
+            v4.is_loopback()
+                || v4.is_private()
+                || v4.is_link_local()
+                // 100.64.0.0/10, carrier-grade NAT — also what Tailscale hands
+                // out, which is a common way to reach a self-hosted app.
+                || (v4.octets()[0] == 100 && (64..128).contains(&v4.octets()[1]))
+        }
+        IpAddr::V6(v6) => {
+            let leading = v6.segments()[0];
+            // `is_unique_local` and `is_unicast_link_local` are still unstable,
+            // so the prefixes are matched directly: fc00::/7 and fe80::/10.
+            v6.is_loopback() || (leading & 0xfe00) == 0xfc00 || (leading & 0xffc0) == 0xfe80
+        }
+    }
+}
+
+/// The address collapsed to the unit a throttle should count.
+///
+/// A single machine is routinely handed an entire IPv6 /64, so counting full
+/// addresses would let one host present a fresh identity for every attempt.
+fn throttle_bucket(address: IpAddr) -> IpAddr {
+    match normalize_mapped(address) {
+        IpAddr::V4(v4) => IpAddr::V4(v4),
+        IpAddr::V6(v6) => {
+            let [a, b, c, d, ..] = v6.segments();
+            IpAddr::V6(Ipv6Addr::new(a, b, c, d, 0, 0, 0, 0))
+        }
+    }
+}
+
+/// A dual-stack listener reports IPv4 peers as `::ffff:a.b.c.d`; classify and
+/// bucket those as the IPv4 addresses they are.
+fn normalize_mapped(address: IpAddr) -> IpAddr {
+    match address {
+        IpAddr::V6(v6) => v6.to_ipv4_mapped().map_or(address, IpAddr::V4),
+        other => other,
+    }
+}
+
+/// Drops the bucket whose most recent attempt is oldest, never `keep`.
+///
+/// Only ever relaxes the throttle for the dropped client, so it cannot be used
+/// to lock anyone out — and resetting a bucket this way costs an attacker more
+/// than simply waiting out the window.
+fn evict_least_recent(clients: &mut HashMap<ClientAddr, VecDeque<Instant>>, keep: ClientAddr) {
+    let victim = clients
+        .iter()
+        .filter(|(client, _)| **client != keep)
+        .min_by_key(|(_, attempts)| attempts.back().copied())
+        .map(|(client, _)| *client);
+    if let Some(victim) = victim {
+        clients.remove(&victim);
+    }
 }
 
 fn accepts_html(headers: &HeaderMap) -> bool {
@@ -532,8 +742,159 @@ mod tests {
         assert!(response.headers().get(SET_COOKIE).is_none());
     }
 
+    /// A login POST from `peer`, optionally carrying proxy headers.
+    fn login_request(peer: &str, headers: &[(&str, &str)], password: &str) -> HttpRequest<Body> {
+        let mut builder = HttpRequest::post("/_auth/login")
+            .header(CONTENT_TYPE, "application/x-www-form-urlencoded");
+        for (name, value) in headers {
+            builder = builder.header(*name, *value);
+        }
+        let mut request = builder
+            .body(Body::from(format!("password={password}")))
+            .unwrap();
+        request
+            .extensions_mut()
+            .insert(ConnectInfo(peer.parse::<SocketAddr>().unwrap()));
+        request
+    }
+
+    async fn spend_allowance(app: &Router, peer: &str, headers: &[(&str, &str)]) {
+        for _ in 0..MAX_LOGIN_ATTEMPTS {
+            let response = app
+                .clone()
+                .oneshot(login_request(peer, headers, "wrong"))
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        }
+    }
+
     #[tokio::test]
     async fn throttles_repeated_login_attempts() {
+        let app = app();
+        spend_allowance(&app, "203.0.113.7:40000", &[]).await;
+
+        let throttled = app
+            .oneshot(login_request(
+                "203.0.113.7:40001",
+                &[],
+                "correct+horse+battery+staple",
+            ))
+            .await
+            .unwrap();
+        assert_eq!(throttled.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(throttled.headers().get(RETRY_AFTER).unwrap(), "60");
+    }
+
+    #[tokio::test]
+    async fn throttling_one_client_leaves_every_other_client_alone() {
+        let app = app();
+        spend_allowance(&app, "203.0.113.7:40000", &[]).await;
+
+        // The single legitimate user of a single-password deployment must not be
+        // lockable out by anyone who can reach the form.
+        let other = app
+            .clone()
+            .oneshot(login_request(
+                "198.51.100.4:40000",
+                &[],
+                "correct+horse+battery+staple",
+            ))
+            .await
+            .unwrap();
+        assert_eq!(other.status(), StatusCode::SEE_OTHER);
+        assert!(other.headers().get(SET_COOKIE).is_some());
+
+        // ...and the client that spent its allowance is still throttled.
+        let throttled = app
+            .oneshot(login_request("203.0.113.7:40000", &[], "wrong"))
+            .await
+            .unwrap();
+        assert_eq!(throttled.status(), StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    #[tokio::test]
+    async fn charges_the_forwarded_client_when_the_peer_is_inside_the_deployment() {
+        let app = app();
+        let proxy = "127.0.0.1:40000";
+        spend_allowance(&app, proxy, &[("x-forwarded-for", "203.0.113.7")]).await;
+
+        // Same proxy, different visitor: the documented deployment puts every
+        // request behind one loopback peer, so without this the throttle would
+        // still be global in practice.
+        let other = app
+            .clone()
+            .oneshot(login_request(
+                proxy,
+                &[("x-forwarded-for", "198.51.100.4")],
+                "wrong",
+            ))
+            .await
+            .unwrap();
+        assert_eq!(other.status(), StatusCode::UNAUTHORIZED);
+
+        let throttled = app
+            .oneshot(login_request(
+                proxy,
+                &[("x-forwarded-for", "203.0.113.7")],
+                "wrong",
+            ))
+            .await
+            .unwrap();
+        assert_eq!(throttled.status(), StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    #[tokio::test]
+    async fn a_public_peer_cannot_shed_its_identity_with_a_forwarded_header() {
+        let app = app();
+        spend_allowance(
+            &app,
+            "203.0.113.7:40000",
+            &[("x-forwarded-for", "10.0.0.1")],
+        )
+        .await;
+
+        // Rotating the header buys nothing: the connection did not come from
+        // inside the deployment, so it is charged to the address it came from.
+        let throttled = app
+            .oneshot(login_request(
+                "203.0.113.7:40000",
+                &[("x-forwarded-for", "192.0.2.99")],
+                "wrong",
+            ))
+            .await
+            .unwrap();
+        assert_eq!(throttled.status(), StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    #[tokio::test]
+    async fn a_successful_login_only_clears_its_own_client() {
+        let app = app();
+        spend_allowance(&app, "203.0.113.7:40000", &[]).await;
+
+        let success = app
+            .clone()
+            .oneshot(login_request(
+                "198.51.100.4:40000",
+                &[],
+                "correct+horse+battery+staple",
+            ))
+            .await
+            .unwrap();
+        assert_eq!(success.status(), StatusCode::SEE_OTHER);
+
+        let still_throttled = app
+            .oneshot(login_request("203.0.113.7:40000", &[], "wrong"))
+            .await
+            .unwrap();
+        assert_eq!(still_throttled.status(), StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    #[tokio::test]
+    async fn requests_with_no_recorded_peer_share_one_bucket() {
+        // A host that serves the router without `into_make_service_with_connect_info`
+        // has no way to tell clients apart. Falling back to the old shared
+        // counter keeps the form throttled at all, which beats leaving it open.
         let app = app();
         for _ in 0..MAX_LOGIN_ATTEMPTS {
             let response = app
@@ -553,12 +914,134 @@ mod tests {
             .oneshot(
                 HttpRequest::post("/_auth/login")
                     .header(CONTENT_TYPE, "application/x-www-form-urlencoded")
-                    .body(Body::from("password=correct+horse+battery+staple"))
+                    .body(Body::from("password=wrong"))
                     .unwrap(),
             )
             .await
             .unwrap();
         assert_eq!(throttled.status(), StatusCode::TOO_MANY_REQUESTS);
-        assert_eq!(throttled.headers().get(RETRY_AFTER).unwrap(), "60");
+    }
+
+    fn ip(value: &str) -> IpAddr {
+        value.parse().unwrap()
+    }
+
+    fn headers(entries: &[(&str, &str)]) -> HeaderMap {
+        let mut map = HeaderMap::new();
+        for (name, value) in entries {
+            map.insert(
+                axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap(),
+                HeaderValue::from_str(value).unwrap(),
+            );
+        }
+        map
+    }
+
+    #[test]
+    fn resolves_the_client_behind_a_trusted_proxy() {
+        let from_proxy = |value: &str| {
+            client_ip(
+                Some(ip("127.0.0.1")),
+                &headers(&[("x-forwarded-for", value)]),
+            )
+        };
+
+        assert_eq!(from_proxy("203.0.113.7"), Some(ip("203.0.113.7")));
+        // Chained proxies: walk past the hops that are themselves inside the
+        // deployment to the outermost address that is not.
+        assert_eq!(
+            from_proxy("203.0.113.7, 10.0.0.5, 172.17.0.2"),
+            Some(ip("203.0.113.7"))
+        );
+        // A LAN-only deployment has no public entry at all; the innermost one
+        // still tells LAN clients apart.
+        assert_eq!(from_proxy("192.168.1.50"), Some(ip("192.168.1.50")));
+        // Some proxies append the source port.
+        assert_eq!(from_proxy("203.0.113.7:54321"), Some(ip("203.0.113.7")));
+        assert_eq!(from_proxy("[2001:db8::1]:443"), Some(ip("2001:db8::")));
+
+        // nginx's X-Real-IP, when no forwarded chain was set.
+        assert_eq!(
+            client_ip(
+                Some(ip("127.0.0.1")),
+                &headers(&[("x-real-ip", "203.0.113.7")])
+            ),
+            Some(ip("203.0.113.7"))
+        );
+    }
+
+    #[test]
+    fn does_not_believe_a_forwarded_header_from_outside() {
+        assert_eq!(
+            client_ip(
+                Some(ip("203.0.113.7")),
+                &headers(&[("x-forwarded-for", "10.0.0.1")])
+            ),
+            Some(ip("203.0.113.7"))
+        );
+    }
+
+    #[test]
+    fn falls_back_to_the_peer_when_the_chain_is_unusable() {
+        let peer = Some(ip("127.0.0.1"));
+        // An unparseable nearest entry means the closest proxy wrote something
+        // we do not understand; entries further left are more attacker-
+        // controlled, so they are not read instead.
+        assert_eq!(
+            client_ip(
+                peer,
+                &headers(&[("x-forwarded-for", "203.0.113.7, unknown")])
+            ),
+            peer
+        );
+        assert_eq!(client_ip(peer, &HeaderMap::new()), peer);
+        assert_eq!(
+            client_ip(None, &headers(&[("x-forwarded-for", "203.0.113.7")])),
+            None
+        );
+    }
+
+    #[test]
+    fn buckets_ipv6_clients_by_prefix() {
+        // One machine is routinely handed a whole /64, so counting full
+        // addresses would let it present a fresh identity per attempt.
+        assert_eq!(throttle_bucket(ip("2001:db8:1:2::1")), ip("2001:db8:1:2::"));
+        assert_eq!(
+            throttle_bucket(ip("2001:db8:1:2:ffff::9")),
+            throttle_bucket(ip("2001:db8:1:2::1"))
+        );
+        assert_ne!(
+            throttle_bucket(ip("2001:db8:1:3::1")),
+            throttle_bucket(ip("2001:db8:1:2::1"))
+        );
+        // A dual-stack listener reports IPv4 peers as `::ffff:a.b.c.d`.
+        assert_eq!(throttle_bucket(ip("::ffff:203.0.113.7")), ip("203.0.113.7"));
+        assert!(is_inside_deployment(ip("::ffff:127.0.0.1")));
+    }
+
+    #[test]
+    fn classifies_the_deployment_boundary() {
+        for inside in [
+            "127.0.0.1",
+            "10.1.2.3",
+            "192.168.0.4",
+            "172.16.0.1",
+            "169.254.1.1",
+            "100.100.1.1",
+            "::1",
+            "fd00::1",
+            "fe80::1",
+        ] {
+            assert!(
+                is_inside_deployment(ip(inside)),
+                "{inside} should be inside"
+            );
+        }
+        for outside in ["203.0.113.7", "8.8.8.8", "100.128.0.1", "2001:db8::1"] {
+            assert!(
+                !is_inside_deployment(ip(outside)),
+                "{outside} should be outside"
+            );
+        }
     }
 }
