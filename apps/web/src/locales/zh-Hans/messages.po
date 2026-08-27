@@ -543,7 +543,7 @@ msgstr "资源根目录"
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
-#: src/components/layout/app-frame.tsx:201
+#: src/components/layout/app-frame.tsx:209
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -653,8 +653,8 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/layout/app-frame.tsx:415
-#: src/components/layout/app-frame.tsx:430
+#: src/components/layout/app-frame.tsx:442
+#: src/components/layout/app-frame.tsx:457
 msgid "Close navigation"
 msgstr "关闭导航"
 
@@ -1182,7 +1182,7 @@ msgstr "例如：集数。"
 msgid "Form"
 msgstr "表单"
 
-#: src/components/layout/app-frame.tsx:212
+#: src/components/layout/app-frame.tsx:220
 msgid "Forward"
 msgstr ""
 
@@ -1202,11 +1202,11 @@ msgstr "游戏"
 msgid "Give your list a name."
 msgstr "为你的列表命名。"
 
-#: src/components/layout/app-frame.tsx:200
+#: src/components/layout/app-frame.tsx:208
 msgid "Go back"
 msgstr "返回"
 
-#: src/components/layout/app-frame.tsx:211
+#: src/components/layout/app-frame.tsx:219
 msgid "Go forward"
 msgstr ""
 
@@ -1247,7 +1247,7 @@ msgstr "不含以下任何"
 msgid "Heading"
 msgstr "标题"
 
-#: src/components/layout/app-frame.tsx:174
+#: src/components/layout/app-frame.tsx:182
 msgid "Hide sidebar"
 msgstr ""
 
@@ -1560,7 +1560,7 @@ msgstr "正在加载活动…"
 msgid "Loading built-in types…"
 msgstr "正在加载内置类型…"
 
-#: src/components/layout/app-frame.tsx:501
+#: src/components/layout/app-frame.tsx:544
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
@@ -1709,7 +1709,7 @@ msgstr "我的保管库"
 msgid "Name"
 msgstr "名称"
 
-#: src/components/layout/app-frame.tsx:420
+#: src/components/layout/app-frame.tsx:447
 msgid "Navigation"
 msgstr "导航"
 
@@ -2026,7 +2026,7 @@ msgstr "打开现有保管库"
 msgid "Open folder"
 msgstr "打开文件夹"
 
-#: src/components/layout/app-frame.tsx:186
+#: src/components/layout/app-frame.tsx:194
 msgid "Open navigation"
 msgstr "打开导航"
 
@@ -2305,8 +2305,8 @@ msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
-#: src/components/layout/app-frame.tsx:325
-#: src/components/layout/app-frame.tsx:326
+#: src/components/layout/app-frame.tsx:352
+#: src/components/layout/app-frame.tsx:353
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "重新扫描保管库"
@@ -2391,7 +2391,7 @@ msgstr "范围"
 msgid "Search"
 msgstr "搜索"
 
-#: src/components/layout/app-frame.tsx:77
+#: src/components/layout/app-frame.tsx:78
 msgid "Search {activeTypeLabel}"
 msgstr "搜索 {activeTypeLabel}"
 
@@ -2407,8 +2407,8 @@ msgstr ""
 msgid "Search entities…"
 msgstr "搜索条目…"
 
-#: src/components/layout/app-frame.tsx:78
-#: src/components/layout/app-frame.tsx:233
+#: src/components/layout/app-frame.tsx:79
+#: src/components/layout/app-frame.tsx:241
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "搜索库"
@@ -2524,7 +2524,7 @@ msgstr "设置已保存"
 msgid "Show all"
 msgstr "显示全部"
 
-#: src/components/layout/app-frame.tsx:174
+#: src/components/layout/app-frame.tsx:182
 msgid "Show sidebar"
 msgstr ""
 

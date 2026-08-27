@@ -543,7 +543,7 @@ msgstr "アセットのルート"
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
-#: src/components/layout/app-frame.tsx:201
+#: src/components/layout/app-frame.tsx:209
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -653,8 +653,8 @@ msgstr "すべてクリア"
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/layout/app-frame.tsx:415
-#: src/components/layout/app-frame.tsx:430
+#: src/components/layout/app-frame.tsx:442
+#: src/components/layout/app-frame.tsx:457
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
@@ -1182,7 +1182,7 @@ msgstr "例：エピソード番号"
 msgid "Form"
 msgstr "フォーム"
 
-#: src/components/layout/app-frame.tsx:212
+#: src/components/layout/app-frame.tsx:220
 msgid "Forward"
 msgstr ""
 
@@ -1202,11 +1202,11 @@ msgstr "ゲーム"
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
-#: src/components/layout/app-frame.tsx:200
+#: src/components/layout/app-frame.tsx:208
 msgid "Go back"
 msgstr "戻る"
 
-#: src/components/layout/app-frame.tsx:211
+#: src/components/layout/app-frame.tsx:219
 msgid "Go forward"
 msgstr ""
 
@@ -1247,7 +1247,7 @@ msgstr "が次のいずれも含まない"
 msgid "Heading"
 msgstr "見出し"
 
-#: src/components/layout/app-frame.tsx:174
+#: src/components/layout/app-frame.tsx:182
 msgid "Hide sidebar"
 msgstr ""
 
@@ -1560,7 +1560,7 @@ msgstr "アクティビティを読み込み中…"
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
-#: src/components/layout/app-frame.tsx:501
+#: src/components/layout/app-frame.tsx:544
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
@@ -1709,7 +1709,7 @@ msgstr "マイ保管庫"
 msgid "Name"
 msgstr "名前"
 
-#: src/components/layout/app-frame.tsx:420
+#: src/components/layout/app-frame.tsx:447
 msgid "Navigation"
 msgstr "ナビゲーション"
 
@@ -2026,7 +2026,7 @@ msgstr "既存の保管庫を開く"
 msgid "Open folder"
 msgstr "フォルダーを開く"
 
-#: src/components/layout/app-frame.tsx:186
+#: src/components/layout/app-frame.tsx:194
 msgid "Open navigation"
 msgstr "ナビゲーションを開く"
 
@@ -2305,8 +2305,8 @@ msgstr "必須 — ここにファイル名を入力するか、下のタイト�
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
-#: src/components/layout/app-frame.tsx:325
-#: src/components/layout/app-frame.tsx:326
+#: src/components/layout/app-frame.tsx:352
+#: src/components/layout/app-frame.tsx:353
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
@@ -2391,7 +2391,7 @@ msgstr "範囲"
 msgid "Search"
 msgstr "検索"
 
-#: src/components/layout/app-frame.tsx:77
+#: src/components/layout/app-frame.tsx:78
 msgid "Search {activeTypeLabel}"
 msgstr "{activeTypeLabel} を検索"
 
@@ -2407,8 +2407,8 @@ msgstr ""
 msgid "Search entities…"
 msgstr "アイテムを検索…"
 
-#: src/components/layout/app-frame.tsx:78
-#: src/components/layout/app-frame.tsx:233
+#: src/components/layout/app-frame.tsx:79
+#: src/components/layout/app-frame.tsx:241
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "ライブラリを検索"
@@ -2524,7 +2524,7 @@ msgstr "設定を保存しました"
 msgid "Show all"
 msgstr "すべて表示"
 
-#: src/components/layout/app-frame.tsx:174
+#: src/components/layout/app-frame.tsx:182
 msgid "Show sidebar"
 msgstr ""
 

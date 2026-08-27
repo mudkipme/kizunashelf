@@ -10,6 +10,7 @@ import {
 
 import { settingsConfigQuery } from "@/api/queries";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AppShellFallback } from "@/components/layout/app-frame";
 import { VaultChangeSync } from "@/components/vault-change-sync";
 import { isDesktopRuntime } from "@/lib/desktop";
 import { activateUiLocale } from "@/lib/i18n";
@@ -129,11 +130,7 @@ function ConfigGate() {
       return pathname === "/onboarding" ? <AppRoutes /> : <Navigate to="/onboarding" replace />;
     }
   } else if (settings.isPending) {
-    return (
-      <main className="h-dvh overflow-auto bg-background p-8 text-center text-sm text-muted-foreground">
-        Loading
-      </main>
-    );
+    return <AppShellFallback />;
   } else if (settings.error) {
     // On the web a settings error is a real server error → settings page.
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;
@@ -186,12 +183,16 @@ function AppRoutes() {
   );
 }
 
-// Shown while a lazily-loaded page chunk is fetched. Mirrors the ConfigGate
-// loading state so the transition reads as one continuous "Loading".
+// Shown while a lazily-loaded page chunk is fetched. The same shell the
+// ConfigGate shows, so arriving on a route through either path is one
+// continuous frame rather than two different loading screens.
 function RouteFallback() {
-  return (
-    <main className="h-dvh overflow-auto bg-background p-8 text-center text-sm text-muted-foreground">
-      Loading
-    </main>
-  );
+  const location = useLocation();
+  // Onboarding is the one page that renders outside the app frame — it has no
+  // vault to put in a sidebar yet — so showing chrome here would flash a
+  // sidebar the page itself then takes away.
+  if (location.pathname === "/onboarding") {
+    return <main className="h-dvh bg-background" />;
+  }
+  return <AppShellFallback />;
 }

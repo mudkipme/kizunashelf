@@ -22,6 +22,7 @@ import { destinationForPath, navDestinations } from "@/components/layout/nav-des
 import { SidebarResizer } from "@/components/layout/sidebar-resizer";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { statsQuery } from "@/api/queries";
 import { useAppShortcuts } from "@/hooks/use-app-shortcuts";
 import { useHistoryPosition } from "@/hooks/use-history-position";
@@ -318,6 +319,25 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   );
 }
 
+/**
+ * The app's own loading state: the real chrome with an empty content column.
+ *
+ * Shown while the first settings request is in flight and while a lazy route
+ * chunk downloads. Rendering the frame rather than a "Loading" screen means the
+ * sidebar and toolbar are already in their final position when the page
+ * arrives — only the content column changes — and the sidebar's stats request
+ * starts in parallel with the settings one instead of after it.
+ */
+export function AppShellFallback() {
+  return (
+    <AppFrame>
+      <div className="flex min-h-full items-center justify-center p-8">
+        <AppLogo className="size-10 animate-pulse opacity-70" />
+      </div>
+    </AppFrame>
+  );
+}
+
 function RescanButton() {
   const { t } = useLingui();
   const rescan = useRescanLibrary();
@@ -503,15 +523,33 @@ function SidebarContent({
             <span className="ml-auto tabular-nums text-muted-foreground">{type.count}</span>
           </SidebarNavLink>
         ))}
-        {!stats ? (
-          <div className="px-2 py-1 text-xs text-muted-foreground">
-            <Trans>Loading taxonomy</Trans>
-          </div>
-        ) : null}
+        {!stats ? <SidebarTypesSkeleton /> : null}
       </section>
 
       <section className="mt-auto flex flex-col gap-1">{destinations("secondary")}</section>
     </>
+  );
+}
+
+// Stand-in rows for the vault's types while `stats` loads. Placeholders rather
+// than a "loading" line because the types are the tallest part of the sidebar:
+// text there would let the sections below it jump once the real rows land.
+// Widths vary so the block reads as a list of names, not a progress bar.
+const SKELETON_TYPE_WIDTHS = ["w-20", "w-14", "w-24", "w-16"];
+
+function SidebarTypesSkeleton() {
+  return (
+    <div role="status" className="flex flex-col gap-1">
+      <span className="sr-only">
+        <Trans>Loading taxonomy</Trans>
+      </span>
+      {SKELETON_TYPE_WIDTHS.map((width) => (
+        <div key={width} className="flex h-(--control-height) items-center gap-2 px-2">
+          <Skeleton className="size-4 rounded-sm" />
+          <Skeleton className={cn("h-3", width)} />
+        </div>
+      ))}
+    </div>
   );
 }
 
