@@ -353,9 +353,8 @@ export function EntityPage() {
               actions={
                 <div className="flex items-center gap-2">
                   {/* Edit is the page's main verb, so it sits in the toolbar
-                      rather than three items down a ⋯ menu. It stays in the menu
-                      too — that list is also where the disabled-writes reason is
-                      explained. */}
+                      and only there — a duplicate in the ⋯ menu would just be a
+                      second way to press the button already on screen. */}
                   <Button
                     type="button"
                     size="sm"
@@ -377,7 +376,6 @@ export function EntityPage() {
                     contentWritable={contentWritable}
                     saving={saving}
                     showDownloadCover={canDownloadCover}
-                    onEdit={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
                     onRename={() => setRenameOpen(true)}
                     onManageLists={() => setManageListsOpen(true)}
                     onMatch={() => external.setOpen(true)}
@@ -421,7 +419,6 @@ function EntityActions({
   contentWritable,
   saving,
   showDownloadCover,
-  onEdit,
   onRename,
   onManageLists,
   onMatch,
@@ -432,7 +429,6 @@ function EntityActions({
   contentWritable: boolean;
   saving: boolean;
   showDownloadCover: boolean;
-  onEdit: () => void;
   onRename: () => void;
   onManageLists: () => void;
   onMatch: () => void;
@@ -455,10 +451,6 @@ function EntityActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuItem onSelect={onEdit} disabled={!contentWritable}>
-            <PencilIcon />
-            <Trans>Edit</Trans>
-          </DropdownMenuItem>
           <DropdownMenuItem onSelect={onRename} disabled={!contentWritable || saving}>
             <FilePenLineIcon />
             <Trans>Rename</Trans>
