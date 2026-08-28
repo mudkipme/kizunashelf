@@ -37,6 +37,14 @@ import type {
 /// bleeding into the page), where a border reads as one more UI box.
 const COVER_EDGE = "ring-1 ring-black/5 dark:ring-white/10";
 
+/// How wide the detail content column is allowed to get, and the fact that it
+/// centres. A pane on a large window is far wider than anything on this page
+/// reads well at — prose worst of all, but a label/value row whose two halves
+/// end up a hand apart is no better. `3xl` (48rem) is wide enough for the
+/// details table to keep a pair together and for the cover grid to hold a row.
+/// One constant, applied once, so no section can drift to a width of its own.
+const CONTENT_MEASURE = "mx-auto w-full max-w-3xl";
+
 /**
  * The entity detail page's body: a toolbar, a hero, and two panes.
  *
@@ -136,118 +144,115 @@ export function EntityDetail({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-auto overscroll-contain lg:flex-row lg:overflow-hidden">
+          {/* The pane takes the whole width — it owns the scrollbar and the
+              hairline beside it — and only the content inside is bounded. */}
           <div className="min-w-0 flex-1 px-4 py-4 lg:overflow-auto lg:overscroll-contain">
-            <header className="mb-8 flex min-w-0 items-start gap-4">
-              {showCover ? <HeroCover entity={entity} /> : null}
-              <div className="min-w-0 flex-1">
-                <h1
-                  className="text-2xl font-semibold leading-tight tracking-tight"
-                  lang={titleLang}
+            <div className={CONTENT_MEASURE}>
+              <header className="mb-8 flex min-w-0 items-start gap-4">
+                {showCover ? <HeroCover entity={entity} /> : null}
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-2xl font-semibold leading-tight tracking-tight" lang={titleLang}>
+                    {displayTitle}
+                  </h1>
+                  {subtitleTitles.length > 0 ? (
+                    <dl className="mt-2 flex flex-col gap-0.5 text-xs">
+                      {subtitleTitles.map((item) => (
+                        <div key={item.key} className="flex min-w-0 gap-2">
+                          <dt className="shrink-0 text-muted-foreground">{item.label}</dt>
+                          {/* Wrap the full alternate title on mobile; truncate to
+                              one line only once there's room beside the cover. */}
+                          <dd className="min-w-0 break-words sm:truncate">{item.title}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
+                  {tags.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      {tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </header>
+
+              {hasDetails ? (
+                <DetailSection title={t`Details`}>
+                  <FrontmatterPanel
+                    entity={entity}
+                    relationGroups={relationGroups}
+                    typeConfig={typeConfig}
+                  />
+                </DetailSection>
+              ) : null}
+
+              {episodes ? (
+                <DetailSection
+                  title={episodes.heading}
+                  action={
+                    <EpisodeSyncButton
+                      episodes={episodes}
+                      disabled={!contentWritable || !onToggleEpisode}
+                      entityId={entity.id}
+                      revision={entity.revision}
+                    />
+                  }
                 >
-                  {displayTitle}
-                </h1>
-                {subtitleTitles.length > 0 ? (
-                  <dl className="mt-2 flex flex-col gap-0.5 text-xs">
-                    {subtitleTitles.map((item) => (
-                      <div key={item.key} className="flex min-w-0 gap-2">
-                        <dt className="shrink-0 text-muted-foreground">{item.label}</dt>
-                        {/* Wrap the full alternate title on mobile; truncate to
-                            one line only once there's room beside the cover. */}
-                        <dd className="min-w-0 break-words sm:truncate">{item.title}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                ) : null}
-                {tags.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </header>
-
-            {hasDetails ? (
-              <DetailSection title={t`Details`}>
-                <FrontmatterPanel
-                  entity={entity}
-                  relationGroups={relationGroups}
-                  typeConfig={typeConfig}
-                />
-              </DetailSection>
-            ) : null}
-
-            {episodes ? (
-              <DetailSection
-                title={episodes.heading}
-                action={
-                  <EpisodeSyncButton
+                  {/* Prose the user wrote around the list in the Markdown source —
+                      rendered read-only here since the body view drops the section. */}
+                  {episodes.description.trim() ? (
+                    <MarkdownView markdown={episodes.description} relations={relations} />
+                  ) : null}
+                  <EntityEpisodesPanel
                     episodes={episodes}
                     disabled={!contentWritable || !onToggleEpisode}
-                    entityId={entity.id}
-                    revision={entity.revision}
+                    saving={episodesSaving}
+                    onToggle={(group, key, index, watched) =>
+                      onToggleEpisode?.(group, key, index, watched)
+                    }
+                    onSetDate={(group, key, index, date) =>
+                      onSetEpisodeDate?.(group, key, index, date)
+                    }
+                    relations={relations}
                   />
-                }
-              >
-                {/* Prose the user wrote around the list in the Markdown source —
-                    rendered read-only here since the body view drops the section. */}
-                {episodes.description.trim() ? (
-                  <MarkdownView markdown={episodes.description} relations={relations} />
-                ) : null}
-                <EntityEpisodesPanel
-                  episodes={episodes}
-                  disabled={!contentWritable || !onToggleEpisode}
-                  saving={episodesSaving}
-                  onToggle={(group, key, index, watched) =>
-                    onToggleEpisode?.(group, key, index, watched)
-                  }
-                  onSetDate={(group, key, index, date) =>
-                    onSetEpisodeDate?.(group, key, index, date)
-                  }
-                  relations={relations}
-                />
-                {episodes.trailing.trim() ? (
-                  <MarkdownView markdown={episodes.trailing} relations={relations} />
-                ) : null}
-              </DetailSection>
-            ) : null}
+                  {episodes.trailing.trim() ? (
+                    <MarkdownView markdown={episodes.trailing} relations={relations} />
+                  ) : null}
+                </DetailSection>
+              ) : null}
 
-            {hasConnections ? (
-              <DetailSection title={t`Connections`}>
-                <div className="flex flex-col gap-5">
-                  <RelationDirectionSection
-                    title={t`Links to`}
-                    groups={outgoingGroups}
-                    entityId={entity.id}
-                    relatedById={relatedById}
-                    coverTypes={coverTypes}
-                  />
-                  <RelationDirectionSection
-                    title={t`Linked from`}
-                    groups={incomingGroups}
-                    entityId={entity.id}
-                    relatedById={relatedById}
-                    coverTypes={coverTypes}
-                  />
-                </div>
-              </DetailSection>
-            ) : null}
+              {hasConnections ? (
+                <DetailSection title={t`Connections`}>
+                  <div className="flex flex-col gap-5">
+                    <RelationDirectionSection
+                      title={t`Links to`}
+                      groups={outgoingGroups}
+                      entityId={entity.id}
+                      relatedById={relatedById}
+                      coverTypes={coverTypes}
+                    />
+                    <RelationDirectionSection
+                      title={t`Linked from`}
+                      groups={incomingGroups}
+                      entityId={entity.id}
+                      relatedById={relatedById}
+                      coverTypes={coverTypes}
+                    />
+                  </div>
+                </DetailSection>
+              ) : null}
 
-            {(notesBody ?? entity.body).trim() ? (
-              <DetailSection title={t`Notes`}>
-                {/* Prose is read a line at a time; the pane can be far wider
-                    than a comfortable measure on a large window. */}
-                <div className="max-w-[68ch]">
+              {(notesBody ?? entity.body).trim() ? (
+                <DetailSection title={t`Notes`}>
                   <MarkdownView markdown={notesBody ?? entity.body} relations={relations} />
-                </div>
-              </DetailSection>
-            ) : null}
+                </DetailSection>
+              ) : null}
+            </div>
           </div>
 
           {showAside ? (

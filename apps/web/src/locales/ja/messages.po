@@ -703,7 +703,7 @@ msgstr "接続済み"
 msgid "Connection Fields"
 msgstr "接続フィールド"
 
-#: src/components/assets/entity-detail.tsx:222
+#: src/components/assets/entity-detail.tsx:230
 #: src/pages/statistics-page.tsx:50
 msgid "Connections"
 msgstr "接続"
@@ -845,7 +845,7 @@ msgstr "日付: {0}"
 msgid "Dated"
 msgstr "日付あり"
 
-#: src/components/assets/entity-detail.tsx:285
+#: src/components/assets/entity-detail.tsx:290
 msgid "Dates"
 msgstr "日付"
 
@@ -891,7 +891,7 @@ msgstr "説明"
 msgid "Deselect group"
 msgstr "グループの選択を解除"
 
-#: src/components/assets/entity-detail.tsx:177
+#: src/components/assets/entity-detail.tsx:185
 msgid "Details"
 msgstr "詳細"
 
@@ -1473,11 +1473,11 @@ msgstr "リンク先"
 msgid "Link your new types"
 msgstr "新しいタイプをリンク"
 
-#: src/components/assets/entity-detail.tsx:232
+#: src/components/assets/entity-detail.tsx:240
 msgid "Linked from"
 msgstr "リンク元"
 
-#: src/components/assets/entity-detail.tsx:256
+#: src/components/assets/entity-detail.tsx:261
 msgid "Links"
 msgstr "リンク"
 
@@ -1488,7 +1488,7 @@ msgstr "リンク"
 msgid "links to"
 msgstr "リンク先:"
 
-#: src/components/assets/entity-detail.tsx:225
+#: src/components/assets/entity-detail.tsx:233
 msgid "Links to"
 msgstr "リンク先"
 
@@ -1926,7 +1926,7 @@ msgstr "ノート <0>(任意)</0>"
 msgid "notes"
 msgstr "ノート"
 
-#: src/components/assets/entity-detail.tsx:243
+#: src/components/assets/entity-detail.tsx:251
 #: src/components/entities/metadata-editor.tsx:168
 #: src/pages/list-detail-page.tsx:481
 #: src/pages/statistics-page.tsx:32

@@ -703,7 +703,7 @@ msgstr "已连接"
 msgid "Connection Fields"
 msgstr "连接字段"
 
-#: src/components/assets/entity-detail.tsx:222
+#: src/components/assets/entity-detail.tsx:230
 #: src/pages/statistics-page.tsx:50
 msgid "Connections"
 msgstr "连接"
@@ -845,7 +845,7 @@ msgstr "日期：{0}"
 msgid "Dated"
 msgstr "有日期"
 
-#: src/components/assets/entity-detail.tsx:285
+#: src/components/assets/entity-detail.tsx:290
 msgid "Dates"
 msgstr "日期"
 
@@ -891,7 +891,7 @@ msgstr "描述"
 msgid "Deselect group"
 msgstr "取消选择分组"
 
-#: src/components/assets/entity-detail.tsx:177
+#: src/components/assets/entity-detail.tsx:185
 msgid "Details"
 msgstr "详情"
 
@@ -1473,11 +1473,11 @@ msgstr "链接目标"
 msgid "Link your new types"
 msgstr "关联你的新类型"
 
-#: src/components/assets/entity-detail.tsx:232
+#: src/components/assets/entity-detail.tsx:240
 msgid "Linked from"
 msgstr "被以下引用"
 
-#: src/components/assets/entity-detail.tsx:256
+#: src/components/assets/entity-detail.tsx:261
 msgid "Links"
 msgstr "关联"
 
@@ -1488,7 +1488,7 @@ msgstr "关联"
 msgid "links to"
 msgstr "链接到:"
 
-#: src/components/assets/entity-detail.tsx:225
+#: src/components/assets/entity-detail.tsx:233
 msgid "Links to"
 msgstr "关联到"
 
@@ -1926,7 +1926,7 @@ msgstr "笔记 <0>（可选）</0>"
 msgid "notes"
 msgstr "笔记"
 
-#: src/components/assets/entity-detail.tsx:243
+#: src/components/assets/entity-detail.tsx:251
 #: src/components/entities/metadata-editor.tsx:168
 #: src/pages/list-detail-page.tsx:481
 #: src/pages/statistics-page.tsx:32
