@@ -345,7 +345,7 @@ msgstr "アクティビティ"
 msgid "Add"
 msgstr "追加"
 
-#: src/components/ui/multi-value-combobox.tsx:151
+#: src/components/ui/multi-value-combobox.tsx:158
 msgid "Add \"{item}\""
 msgstr "「{item}」を追加"
 
@@ -371,7 +371,7 @@ msgstr "組み込みタイプを追加"
 msgid "Add custom type"
 msgstr "カスタムタイプを追加"
 
-#: src/pages/entity-create-page.tsx:88
+#: src/pages/entity-create-page.tsx:108
 #: src/pages/home-page.tsx:32
 #: src/pages/library-page.tsx:361
 msgid "Add entity"
@@ -381,7 +381,7 @@ msgstr "アイテムを追加"
 msgid "Add enum options above to map them to statuses."
 msgstr "上に列挙オプションを追加してステータスに割り当てます。"
 
-#: src/components/entities/metadata-editor.tsx:162
+#: src/components/entities/metadata-editor.tsx:149
 msgid "Add Field"
 msgstr "フィールドを追加"
 
@@ -542,7 +542,6 @@ msgstr "アセット: {0}"
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
-#: src/pages/entity-edit-page.tsx:172
 msgid "Back"
 msgstr "戻る"
 
@@ -585,11 +584,11 @@ msgstr "カレンダー"
 #: src/components/assets/asset-download-panel.tsx:103
 #: src/components/assets/episode-sync-dialog.tsx:330
 #: src/components/assets/quick-log-dialog.tsx:156
-#: src/components/entities/metadata-editor.tsx:125
 #: src/components/lists/rename-list-dialog.tsx:76
 #: src/components/settings/settings-dialogs.tsx:376
 #: src/components/settings/settings-dialogs.tsx:508
 #: src/components/smart-lists/save-smart-list-dialog.tsx:123
+#: src/pages/entity-edit-page.tsx:169
 #: src/pages/entity-page.tsx:504
 #: src/pages/entity-page.tsx:709
 #: src/pages/import-wizard-page.tsx:235
@@ -703,7 +702,7 @@ msgstr "接続済み"
 msgid "Connection Fields"
 msgstr "接続フィールド"
 
-#: src/components/assets/entity-detail.tsx:230
+#: src/components/assets/entity-detail.tsx:223
 #: src/pages/statistics-page.tsx:50
 msgid "Connections"
 msgstr "接続"
@@ -744,7 +743,7 @@ msgid "Could not read this CSV file."
 msgstr "この CSV ファイルを読み込めませんでした。"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:130
-#: src/pages/entity-create-page.tsx:153
+#: src/pages/entity-create-page.tsx:101
 #: src/pages/lists-page.tsx:229
 msgid "Create"
 msgstr "作成"
@@ -792,11 +791,11 @@ msgstr "CSV エクスポート"
 msgid "Current: {0}"
 msgstr "現在: {0}"
 
-#: src/components/entities/metadata-editor.tsx:152
+#: src/components/entities/metadata-editor.tsx:133
 msgid "Custom field"
 msgstr "カスタムフィールド"
 
-#: src/components/entities/metadata-editor.tsx:215
+#: src/components/entities/metadata-editor.tsx:203
 msgid "Custom field name"
 msgstr "カスタムフィールド名"
 
@@ -845,7 +844,7 @@ msgstr "日付: {0}"
 msgid "Dated"
 msgstr "日付あり"
 
-#: src/components/assets/entity-detail.tsx:290
+#: src/components/assets/entity-detail.tsx:283
 msgid "Dates"
 msgstr "日付"
 
@@ -891,7 +890,7 @@ msgstr "説明"
 msgid "Deselect group"
 msgstr "グループの選択を解除"
 
-#: src/components/assets/entity-detail.tsx:185
+#: src/components/assets/entity-detail.tsx:178
 msgid "Details"
 msgstr "詳細"
 
@@ -904,12 +903,12 @@ msgstr "方向"
 msgid "Disable"
 msgstr "無効にする"
 
-#: src/pages/entity-edit-page.tsx:244
+#: src/pages/entity-edit-page.tsx:255
 #: src/pages/settings-page.tsx:145
 msgid "Discard"
 msgstr "破棄"
 
-#: src/pages/entity-edit-page.tsx:226
+#: src/pages/entity-edit-page.tsx:237
 #: src/pages/settings-page.tsx:121
 msgid "Discard unsaved changes?"
 msgstr "保存していない変更を破棄しますか？"
@@ -974,7 +973,7 @@ msgid "Edit"
 msgstr "編集"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:161
+#: src/pages/entity-edit-page.tsx:186
 msgid "Edit {0}"
 msgstr "{0} を編集"
 
@@ -986,7 +985,7 @@ msgstr "config.yaml を編集"
 msgid "Edit criteria"
 msgstr "条件を編集"
 
-#: src/pages/entity-edit-page.tsx:161
+#: src/pages/entity-edit-page.tsx:186
 msgid "Edit entity"
 msgstr "アイテムを編集"
 
@@ -1034,7 +1033,7 @@ msgstr "アイテム"
 msgid "Entity name"
 msgstr "アイテム名"
 
-#: src/pages/entity-edit-page.tsx:217
+#: src/pages/entity-edit-page.tsx:226
 #: src/pages/entity-page.tsx:408
 msgid "Entity not found"
 msgstr "アイテムが見つかりません"
@@ -1116,13 +1115,14 @@ msgstr "フィールド"
 msgid "Fields"
 msgstr "フィールド"
 
+#: src/pages/entity-create-page.tsx:113
 #: src/pages/review-page.tsx:268
 msgid "File"
 msgstr "ファイル"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:65
-#: src/pages/entity-create-page.tsx:108
+#: src/pages/entity-create-page.tsx:129
 msgid "File name"
 msgstr "ファイル名"
 
@@ -1398,7 +1398,7 @@ msgstr "アイテム <0>({totalItems})</0>"
 msgid "Japanese"
 msgstr "日本語"
 
-#: src/pages/entity-edit-page.tsx:236
+#: src/pages/entity-edit-page.tsx:247
 #: src/pages/settings-page.tsx:137
 msgid "Keep editing"
 msgstr "編集を続ける"
@@ -1472,11 +1472,11 @@ msgstr "リンク先"
 msgid "Link your new types"
 msgstr "新しいタイプをリンク"
 
-#: src/components/assets/entity-detail.tsx:240
+#: src/components/assets/entity-detail.tsx:233
 msgid "Linked from"
 msgstr "リンク元"
 
-#: src/components/assets/entity-detail.tsx:261
+#: src/components/assets/entity-detail.tsx:254
 msgid "Links"
 msgstr "リンク"
 
@@ -1487,7 +1487,7 @@ msgstr "リンク"
 msgid "links to"
 msgstr "リンク先:"
 
-#: src/components/assets/entity-detail.tsx:233
+#: src/components/assets/entity-detail.tsx:226
 msgid "Links to"
 msgstr "リンク先"
 
@@ -1541,7 +1541,7 @@ msgstr "分類を読み込み中"
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:146
 #: src/pages/activity-page.tsx:175
-#: src/pages/entity-edit-page.tsx:196
+#: src/pages/entity-edit-page.tsx:210
 #: src/pages/entity-page.tsx:284
 #: src/pages/entity-page.tsx:584
 #: src/pages/home-page.tsx:51
@@ -1620,8 +1620,7 @@ msgid "Match mode"
 msgstr "一致モード"
 
 #: src/components/assets/entity-dates.tsx:27
-#: src/pages/entity-create-page.tsx:143
-#: src/pages/entity-edit-page.tsx:200
+#: src/components/entities/metadata-editor.tsx:111
 msgid "Metadata"
 msgstr "メタデータ"
 
@@ -1925,8 +1924,9 @@ msgstr "ノート <0>(任意)</0>"
 msgid "notes"
 msgstr "ノート"
 
-#: src/components/assets/entity-detail.tsx:251
-#: src/components/entities/metadata-editor.tsx:168
+#: src/components/assets/entity-detail.tsx:244
+#: src/components/entities/metadata-editor.tsx:154
+#: src/components/entities/metadata-editor.tsx:161
 #: src/pages/list-detail-page.tsx:481
 #: src/pages/statistics-page.tsx:32
 msgid "Notes"
@@ -2163,7 +2163,7 @@ msgstr "再読み込み"
 
 #: src/components/settings/raw-config-editor.tsx:139
 #: src/components/settings/settings-editor.tsx:226
-#: src/pages/entity-edit-page.tsx:189
+#: src/pages/entity-edit-page.tsx:203
 #: src/pages/list-detail-page.tsx:418
 #: src/pages/smart-list-page.tsx:351
 msgid "Reload latest version"
@@ -2171,7 +2171,7 @@ msgstr "最新バージョンを再読み込み"
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
-#: src/components/entities/metadata-editor.tsx:224
+#: src/components/entities/metadata-editor.tsx:219
 #: src/components/settings/vault-switcher.tsx:107
 msgid "Remove {0}"
 msgstr "{0} を削除"
@@ -2269,12 +2269,12 @@ msgid "replaces existing section"
 msgstr "既存のセクションを置き換え"
 
 #. Hint below the empty file-name field on the entity create page; the Create button stays disabled until a file name or a title is entered
-#: src/pages/entity-create-page.tsx:128
+#: src/pages/entity-create-page.tsx:150
 msgid "Required — enter a file name here or fill in the title below."
 msgstr "必須 — ここにファイル名を入力するか、下のタイトルを入力してください。"
 
 #. Hint below the empty file-name field on the entity create page for a type with no title field; the Create button stays disabled until a file name is entered
-#: src/pages/entity-create-page.tsx:132
+#: src/pages/entity-create-page.tsx:154
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
@@ -2304,9 +2304,9 @@ msgstr "完全なメタデータマッチングに対応した、堅牢ですぐ
 msgid "Running…"
 msgstr "実行中…"
 
-#: src/components/entities/metadata-editor.tsx:130
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/components/settings/settings-editor.tsx:198
+#: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:397
 #: src/pages/smart-list-page.tsx:281
 msgid "Save"
@@ -2338,10 +2338,11 @@ msgstr "現在のタイプ・条件・並び順をスマートリストとして
 msgid "Saves the current type, criteria, and sort as a smart list. Your search isn't part of it."
 msgstr "現在のタイプ・条件・並び順をスマートリストとして保存します。検索語は含まれません。"
 
-#: src/components/entities/metadata-editor.tsx:130
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/components/settings/settings-editor.tsx:198
+#: src/pages/entity-create-page.tsx:101
+#: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:397
 #: src/pages/smart-list-page.tsx:281
 msgid "Saving…"
@@ -2403,7 +2404,7 @@ msgid "Search results come from third-party providers and are not affiliated wit
 msgstr "検索結果はサードパーティのプロバイダーによるもので、KizunaShelf とは提携していません。"
 
 #: src/components/entities/external-match-dialog.tsx:145
-#: src/components/ui/multi-value-combobox.tsx:146
+#: src/components/ui/multi-value-combobox.tsx:153
 #: src/pages/quick-capture-page.tsx:309
 msgid "Searching…"
 msgstr "検索中…"
@@ -2666,7 +2667,7 @@ msgid "System theme. Switch to light theme."
 msgstr "システムテーマ。ライトテーマに切り替えます。"
 
 #. Field name for the built-in tags field in the rule builder
-#: src/components/entities/metadata-editor.tsx:86
+#: src/components/entities/metadata-editor.tsx:81
 #: src/components/settings/settings-editor.tsx:113
 #: src/components/settings/settings-editor.tsx:302
 #: src/components/smart-lists/rule-field-meta.ts:64
@@ -2754,7 +2755,7 @@ msgstr "今週"
 #: src/components/settings/settings-home-section.tsx:40
 #: src/components/settings/settings-home-section.tsx:52
 #: src/components/smart-lists/sort-picker.tsx:40
-#: src/pages/entity-create-page.tsx:113
+#: src/pages/entity-create-page.tsx:135
 msgid "Title"
 msgstr "タイトル"
 
@@ -2798,7 +2799,7 @@ msgstr "もう一度試す"
 
 #: src/components/settings/settings-field-form.tsx:59
 #: src/components/settings/settings-home-section.tsx:53
-#: src/pages/entity-create-page.tsx:98
+#: src/pages/entity-create-page.tsx:117
 #: src/pages/library-page.tsx:244
 #: src/pages/quick-capture-page.tsx:223
 msgid "Type"
@@ -2955,7 +2956,7 @@ msgstr "オンにすると、エピソードにチェックを入れるか「記
 
 #. Hint below the empty file-name field on the entity create page; the placeholder is the file name derived from the entity's title field
 #. placeholder {0}: filename.basename
-#: src/pages/entity-create-page.tsx:121
+#: src/pages/entity-create-page.tsx:143
 msgid "Will be created as “{0}.md”, from the title."
 msgstr "タイトルから「{0}.md」として作成されます。"
 
@@ -3002,6 +3003,6 @@ msgid "You have unsaved changes in the YAML editor. Switching editors will disca
 msgstr "YAML エディターに保存していない変更があります。エディターを切り替えると破棄されます。"
 
 #. Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes
-#: src/pages/entity-edit-page.tsx:229
+#: src/pages/entity-edit-page.tsx:240
 msgid "You have unsaved edits to this entity. Leaving will discard them."
 msgstr "このアイテムに保存していない編集があります。ページを離れると破棄されます。"

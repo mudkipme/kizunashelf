@@ -345,7 +345,7 @@ msgstr "活动"
 msgid "Add"
 msgstr "添加"
 
-#: src/components/ui/multi-value-combobox.tsx:151
+#: src/components/ui/multi-value-combobox.tsx:158
 msgid "Add \"{item}\""
 msgstr "添加「{item}」"
 
@@ -371,7 +371,7 @@ msgstr "添加内置类型"
 msgid "Add custom type"
 msgstr "添加自定义类型"
 
-#: src/pages/entity-create-page.tsx:88
+#: src/pages/entity-create-page.tsx:108
 #: src/pages/home-page.tsx:32
 #: src/pages/library-page.tsx:361
 msgid "Add entity"
@@ -381,7 +381,7 @@ msgstr "添加条目"
 msgid "Add enum options above to map them to statuses."
 msgstr "在上方添加枚举选项以将其映射到状态。"
 
-#: src/components/entities/metadata-editor.tsx:162
+#: src/components/entities/metadata-editor.tsx:149
 msgid "Add Field"
 msgstr "添加字段"
 
@@ -542,7 +542,6 @@ msgstr "资源：{0}"
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
-#: src/pages/entity-edit-page.tsx:172
 msgid "Back"
 msgstr "返回"
 
@@ -585,11 +584,11 @@ msgstr "日历"
 #: src/components/assets/asset-download-panel.tsx:103
 #: src/components/assets/episode-sync-dialog.tsx:330
 #: src/components/assets/quick-log-dialog.tsx:156
-#: src/components/entities/metadata-editor.tsx:125
 #: src/components/lists/rename-list-dialog.tsx:76
 #: src/components/settings/settings-dialogs.tsx:376
 #: src/components/settings/settings-dialogs.tsx:508
 #: src/components/smart-lists/save-smart-list-dialog.tsx:123
+#: src/pages/entity-edit-page.tsx:169
 #: src/pages/entity-page.tsx:504
 #: src/pages/entity-page.tsx:709
 #: src/pages/import-wizard-page.tsx:235
@@ -703,7 +702,7 @@ msgstr "已连接"
 msgid "Connection Fields"
 msgstr "连接字段"
 
-#: src/components/assets/entity-detail.tsx:230
+#: src/components/assets/entity-detail.tsx:223
 #: src/pages/statistics-page.tsx:50
 msgid "Connections"
 msgstr "连接"
@@ -744,7 +743,7 @@ msgid "Could not read this CSV file."
 msgstr "无法读取此 CSV 文件。"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:130
-#: src/pages/entity-create-page.tsx:153
+#: src/pages/entity-create-page.tsx:101
 #: src/pages/lists-page.tsx:229
 msgid "Create"
 msgstr "创建"
@@ -792,11 +791,11 @@ msgstr "CSV 导出"
 msgid "Current: {0}"
 msgstr "当前：{0}"
 
-#: src/components/entities/metadata-editor.tsx:152
+#: src/components/entities/metadata-editor.tsx:133
 msgid "Custom field"
 msgstr "自定义字段"
 
-#: src/components/entities/metadata-editor.tsx:215
+#: src/components/entities/metadata-editor.tsx:203
 msgid "Custom field name"
 msgstr "自定义字段名"
 
@@ -845,7 +844,7 @@ msgstr "日期：{0}"
 msgid "Dated"
 msgstr "有日期"
 
-#: src/components/assets/entity-detail.tsx:290
+#: src/components/assets/entity-detail.tsx:283
 msgid "Dates"
 msgstr "日期"
 
@@ -891,7 +890,7 @@ msgstr "描述"
 msgid "Deselect group"
 msgstr "取消选择分组"
 
-#: src/components/assets/entity-detail.tsx:185
+#: src/components/assets/entity-detail.tsx:178
 msgid "Details"
 msgstr "详情"
 
@@ -904,12 +903,12 @@ msgstr "方向"
 msgid "Disable"
 msgstr "禁用"
 
-#: src/pages/entity-edit-page.tsx:244
+#: src/pages/entity-edit-page.tsx:255
 #: src/pages/settings-page.tsx:145
 msgid "Discard"
 msgstr "丢弃"
 
-#: src/pages/entity-edit-page.tsx:226
+#: src/pages/entity-edit-page.tsx:237
 #: src/pages/settings-page.tsx:121
 msgid "Discard unsaved changes?"
 msgstr "丢弃未保存的更改？"
@@ -974,7 +973,7 @@ msgid "Edit"
 msgstr "编辑"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:161
+#: src/pages/entity-edit-page.tsx:186
 msgid "Edit {0}"
 msgstr "编辑 {0}"
 
@@ -986,7 +985,7 @@ msgstr "编辑 config.yaml"
 msgid "Edit criteria"
 msgstr "编辑条件"
 
-#: src/pages/entity-edit-page.tsx:161
+#: src/pages/entity-edit-page.tsx:186
 msgid "Edit entity"
 msgstr "编辑条目"
 
@@ -1034,7 +1033,7 @@ msgstr "条目"
 msgid "Entity name"
 msgstr "条目名称"
 
-#: src/pages/entity-edit-page.tsx:217
+#: src/pages/entity-edit-page.tsx:226
 #: src/pages/entity-page.tsx:408
 msgid "Entity not found"
 msgstr "未找到条目"
@@ -1116,13 +1115,14 @@ msgstr "字段"
 msgid "Fields"
 msgstr "字段"
 
+#: src/pages/entity-create-page.tsx:113
 #: src/pages/review-page.tsx:268
 msgid "File"
 msgstr "文件"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:65
-#: src/pages/entity-create-page.tsx:108
+#: src/pages/entity-create-page.tsx:129
 msgid "File name"
 msgstr "文件名"
 
@@ -1398,7 +1398,7 @@ msgstr "项目 <0>（{totalItems}）</0>"
 msgid "Japanese"
 msgstr "日语"
 
-#: src/pages/entity-edit-page.tsx:236
+#: src/pages/entity-edit-page.tsx:247
 #: src/pages/settings-page.tsx:137
 msgid "Keep editing"
 msgstr "继续编辑"
@@ -1472,11 +1472,11 @@ msgstr "链接目标"
 msgid "Link your new types"
 msgstr "关联你的新类型"
 
-#: src/components/assets/entity-detail.tsx:240
+#: src/components/assets/entity-detail.tsx:233
 msgid "Linked from"
 msgstr "被以下引用"
 
-#: src/components/assets/entity-detail.tsx:261
+#: src/components/assets/entity-detail.tsx:254
 msgid "Links"
 msgstr "关联"
 
@@ -1487,7 +1487,7 @@ msgstr "关联"
 msgid "links to"
 msgstr "链接到:"
 
-#: src/components/assets/entity-detail.tsx:233
+#: src/components/assets/entity-detail.tsx:226
 msgid "Links to"
 msgstr "关联到"
 
@@ -1541,7 +1541,7 @@ msgstr "正在加载分类"
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:146
 #: src/pages/activity-page.tsx:175
-#: src/pages/entity-edit-page.tsx:196
+#: src/pages/entity-edit-page.tsx:210
 #: src/pages/entity-page.tsx:284
 #: src/pages/entity-page.tsx:584
 #: src/pages/home-page.tsx:51
@@ -1620,8 +1620,7 @@ msgid "Match mode"
 msgstr "匹配方式"
 
 #: src/components/assets/entity-dates.tsx:27
-#: src/pages/entity-create-page.tsx:143
-#: src/pages/entity-edit-page.tsx:200
+#: src/components/entities/metadata-editor.tsx:111
 msgid "Metadata"
 msgstr "元数据"
 
@@ -1925,8 +1924,9 @@ msgstr "笔记 <0>（可选）</0>"
 msgid "notes"
 msgstr "笔记"
 
-#: src/components/assets/entity-detail.tsx:251
-#: src/components/entities/metadata-editor.tsx:168
+#: src/components/assets/entity-detail.tsx:244
+#: src/components/entities/metadata-editor.tsx:154
+#: src/components/entities/metadata-editor.tsx:161
 #: src/pages/list-detail-page.tsx:481
 #: src/pages/statistics-page.tsx:32
 msgid "Notes"
@@ -2163,7 +2163,7 @@ msgstr "重新加载"
 
 #: src/components/settings/raw-config-editor.tsx:139
 #: src/components/settings/settings-editor.tsx:226
-#: src/pages/entity-edit-page.tsx:189
+#: src/pages/entity-edit-page.tsx:203
 #: src/pages/list-detail-page.tsx:418
 #: src/pages/smart-list-page.tsx:351
 msgid "Reload latest version"
@@ -2171,7 +2171,7 @@ msgstr "重新加载最新版本"
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
-#: src/components/entities/metadata-editor.tsx:224
+#: src/components/entities/metadata-editor.tsx:219
 #: src/components/settings/vault-switcher.tsx:107
 msgid "Remove {0}"
 msgstr "移除 {0}"
@@ -2269,12 +2269,12 @@ msgid "replaces existing section"
 msgstr "替换现有板块"
 
 #. Hint below the empty file-name field on the entity create page; the Create button stays disabled until a file name or a title is entered
-#: src/pages/entity-create-page.tsx:128
+#: src/pages/entity-create-page.tsx:150
 msgid "Required — enter a file name here or fill in the title below."
 msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 
 #. Hint below the empty file-name field on the entity create page for a type with no title field; the Create button stays disabled until a file name is entered
-#: src/pages/entity-create-page.tsx:132
+#: src/pages/entity-create-page.tsx:154
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
@@ -2304,9 +2304,9 @@ msgstr "功能完善、开箱即用的类型，具备完整的元数据匹配。
 msgid "Running…"
 msgstr "运行中…"
 
-#: src/components/entities/metadata-editor.tsx:130
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/components/settings/settings-editor.tsx:198
+#: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:397
 #: src/pages/smart-list-page.tsx:281
 msgid "Save"
@@ -2338,10 +2338,11 @@ msgstr "将当前类型、条件和排序保存为智能列表。"
 msgid "Saves the current type, criteria, and sort as a smart list. Your search isn't part of it."
 msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不会被保存。"
 
-#: src/components/entities/metadata-editor.tsx:130
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:109
 #: src/components/settings/settings-editor.tsx:198
+#: src/pages/entity-create-page.tsx:101
+#: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:397
 #: src/pages/smart-list-page.tsx:281
 msgid "Saving…"
@@ -2403,7 +2404,7 @@ msgid "Search results come from third-party providers and are not affiliated wit
 msgstr "搜索结果来自第三方数据源，与 KizunaShelf 无关联。"
 
 #: src/components/entities/external-match-dialog.tsx:145
-#: src/components/ui/multi-value-combobox.tsx:146
+#: src/components/ui/multi-value-combobox.tsx:153
 #: src/pages/quick-capture-page.tsx:309
 msgid "Searching…"
 msgstr "正在搜索…"
@@ -2666,7 +2667,7 @@ msgid "System theme. Switch to light theme."
 msgstr "跟随系统主题。切换到浅色主题。"
 
 #. Field name for the built-in tags field in the rule builder
-#: src/components/entities/metadata-editor.tsx:86
+#: src/components/entities/metadata-editor.tsx:81
 #: src/components/settings/settings-editor.tsx:113
 #: src/components/settings/settings-editor.tsx:302
 #: src/components/smart-lists/rule-field-meta.ts:64
@@ -2754,7 +2755,7 @@ msgstr "本周"
 #: src/components/settings/settings-home-section.tsx:40
 #: src/components/settings/settings-home-section.tsx:52
 #: src/components/smart-lists/sort-picker.tsx:40
-#: src/pages/entity-create-page.tsx:113
+#: src/pages/entity-create-page.tsx:135
 msgid "Title"
 msgstr "标题"
 
@@ -2798,7 +2799,7 @@ msgstr "重试"
 
 #: src/components/settings/settings-field-form.tsx:59
 #: src/components/settings/settings-home-section.tsx:53
-#: src/pages/entity-create-page.tsx:98
+#: src/pages/entity-create-page.tsx:117
 #: src/pages/library-page.tsx:244
 #: src/pages/quick-capture-page.tsx:223
 msgid "Type"
@@ -2955,7 +2956,7 @@ msgstr "开启后，勾选剧集或点击「记录」按钮会在每日笔记中
 
 #. Hint below the empty file-name field on the entity create page; the placeholder is the file name derived from the entity's title field
 #. placeholder {0}: filename.basename
-#: src/pages/entity-create-page.tsx:121
+#: src/pages/entity-create-page.tsx:143
 msgid "Will be created as “{0}.md”, from the title."
 msgstr "将根据标题创建为“{0}.md”。"
 
@@ -3002,6 +3003,6 @@ msgid "You have unsaved changes in the YAML editor. Switching editors will disca
 msgstr "YAML 编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 
 #. Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes
-#: src/pages/entity-edit-page.tsx:229
+#: src/pages/entity-edit-page.tsx:240
 msgid "You have unsaved edits to this entity. Leaving will discard them."
 msgstr "此条目有未保存的编辑。离开将丢弃这些更改。"

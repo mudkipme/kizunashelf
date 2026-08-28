@@ -12,6 +12,7 @@ import { FrontmatterPanel, useVisibleFrontmatterEntries } from "@/components/ass
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { StatusBadge } from "@/components/entities/status-badge";
+import { CONTENT_MEASURE } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
 import { relationKey } from "@/lib/relations";
@@ -36,14 +37,6 @@ import type {
 /// the image reads as the edge of a photograph (and keeps pale artwork from
 /// bleeding into the page), where a border reads as one more UI box.
 const COVER_EDGE = "ring-1 ring-black/5 dark:ring-white/10";
-
-/// How wide the detail content column is allowed to get, and the fact that it
-/// centres. A pane on a large window is far wider than anything on this page
-/// reads well at — prose worst of all, but a label/value row whose two halves
-/// end up a hand apart is no better. `3xl` (48rem) is wide enough for the
-/// details table to keep a pair together and for the cover grid to hold a row.
-/// One constant, applied once, so no section can drift to a width of its own.
-const CONTENT_MEASURE = "mx-auto w-full max-w-3xl";
 
 /**
  * The entity detail page's body: a toolbar, a hero, and two panes.

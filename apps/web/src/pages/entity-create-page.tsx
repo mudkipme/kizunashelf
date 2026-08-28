@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
+import { CheckIcon } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -10,8 +11,10 @@ import { useRelationSearch } from "@/api/use-relation-search";
 import { configQuery } from "@/api/queries";
 import { type FrontmatterDraft, MetadataEditor } from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
-import { PageContainer } from "@/components/layout/page-container";
+import { CONTENT_MEASURE } from "@/components/layout/page-container";
+import { DetailSection } from "@/components/assets/detail-section";
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useEntityMutation } from "@/hooks/use-entity-mutation";
@@ -81,21 +84,38 @@ export function EntityCreatePage() {
 
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
-      <PageContainer>
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">
+      {/* Same shell as the edit page — the toolbar carries the one verb, the
+          column below it carries the form. */}
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="flex min-h-(--toolbar-height) shrink-0 flex-wrap items-center gap-2 border-b px-3 py-1.5">
+          <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+            {selectedType?.path}
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            onClick={create}
+            disabled={creating || !contentWritable || !filename.canCreate}
+          >
+            <CheckIcon data-icon="inline-start" />
+            {creating ? <Trans>Saving…</Trans> : <Trans>Create</Trans>}
+          </Button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto overscroll-contain px-4 py-4">
+          <div className={CONTENT_MEASURE}>
+            <h1 className="mb-8 text-2xl font-semibold leading-tight tracking-tight">
               <Trans>Add entity</Trans>
             </h1>
-          </div>
-        </header>
 
-        {!contentWritable ? <Alert>{CONTENT_WRITES_DISABLED}</Alert> : null}
+            {!contentWritable ? <Alert className="mb-6">{CONTENT_WRITES_DISABLED}</Alert> : null}
 
-        <section className="rounded-md border p-4">
-          <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              <Trans>Type</Trans>
+            <DetailSection title={t`File`}>
+          <div className="grid gap-x-6 gap-y-4 md:grid-cols-[220px_minmax(0,1fr)]">
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              <span className="text-xs font-medium text-muted-foreground">
+                <Trans>Type</Trans>
+              </span>
               <Select value={typeId} onChange={(event) => setTypeId(event.target.value)} disabled={!contentWritable}>
                 {config.data?.types.map((type) => (
                   <option key={type.id} value={type.id}>
@@ -104,8 +124,10 @@ export function EntityCreatePage() {
                 ))}
               </Select>
             </label>
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              <Trans>File name</Trans>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              <span className="text-xs font-medium text-muted-foreground">
+                <Trans>File name</Trans>
+              </span>
               <Input
                 value={basename}
                 onChange={(event) => setBasename(event.target.value)}
@@ -137,25 +159,21 @@ export function EntityCreatePage() {
               ) : null}
             </label>
           </div>
-        </section>
+            </DetailSection>
 
-        <MetadataEditor
-          title={t`Metadata`}
-          path={selectedType?.path}
-          typeConfig={selectedType}
-          frontmatter={frontmatter}
-          bodyText={body}
-          saving={creating}
-          disabled={!contentWritable}
-          saveDisabled={!filename.canCreate}
-          relationSuggestions={[]}
-          onRelationSearch={searchRelations}
-          saveLabel={t`Create`}
-          onFrontmatterChange={setFrontmatter}
-          onBodyChange={setBody}
-          onSave={create}
-        />
-      </PageContainer>
+            <MetadataEditor
+              typeConfig={selectedType}
+              frontmatter={frontmatter}
+              bodyText={body}
+              disabled={!contentWritable}
+              relationSuggestions={[]}
+              onRelationSearch={searchRelations}
+              onFrontmatterChange={setFrontmatter}
+              onBodyChange={setBody}
+            />
+          </div>
+        </div>
+      </div>
     </AppFrame>
   );
 }

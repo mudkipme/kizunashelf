@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { CheckIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 
 import { allTagsQuery, configQuery } from "@/api/queries";
+import { DetailSection } from "@/components/assets/detail-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,44 +29,38 @@ export type {
 export { normalizeFrontmatter } from "./frontmatter-utils";
 export { NumberStepper } from "./metadata-scalar-inputs";
 
+/**
+ * The frontmatter form: the schema's fields, any hand-added ones, and the body.
+ *
+ * It is only the form — no card around it, no header, no save button. The page
+ * that hosts it owns the toolbar those belong in, which is what keeps the edit
+ * and create pages reading like the detail page rather than like a document
+ * with a form pasted into it. Each field is a label over its control; the
+ * control's own border is the only one on the page, because a text field has to
+ * look like a text field.
+ */
 export function MetadataEditor({
-  title,
-  path,
   entityId,
   typeConfig,
   frontmatter,
   bodyText,
-  saving,
   disabled = false,
-  saveDisabled = false,
   relationSuggestions = [],
   onRelationSearch,
-  saveLabel,
   onFrontmatterChange,
   onBodyChange,
-  onSave,
-  onCancel,
 }: {
-  title: string;
-  path?: string;
   /** The entity's id, present only when editing an existing entity. Enables the
    * image-field upload control (uploads place assets under the entity's dir). */
   entityId?: string;
   typeConfig?: TypeConfig;
   frontmatter: FrontmatterDraft;
   bodyText: string;
-  saving: boolean;
   disabled?: boolean;
-  /** Disables only the save/create button (not the fields), e.g. while the
-   * form is missing something required. */
-  saveDisabled?: boolean;
   relationSuggestions?: EntitySummary[];
   onRelationSearch?: RelationSuggestionSearch;
-  saveLabel?: string;
   onFrontmatterChange: (value: FrontmatterDraft) => void;
   onBodyChange: (value: string) => void;
-  onSave: () => void;
-  onCancel?: () => void;
 }) {
   const { t } = useLingui();
   const [newFieldName, setNewFieldName] = useState("");
@@ -112,70 +107,61 @@ export function MetadataEditor({
   }
 
   return (
-    <section className="rounded-md border p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold">{title}</h2>
-          {path ? <p className="mt-1 truncate text-xs text-muted-foreground">{path}</p> : null}
+    <>
+      <DetailSection title={t`Metadata`}>
+        <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">
+          {fieldSpecs.map((field) => (
+            <EditableFieldRow
+              key={field.key}
+              field={field}
+              value={frontmatter[field.key]}
+              disabled={disabled}
+              entityId={entityId}
+              onChange={(value) => updateField(field.key, value)}
+              onRemove={field.configured ? undefined : () => updateField(field.key, undefined)}
+              onRename={field.configured ? undefined : (key) => renameField(field.key, key)}
+            />
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          {onCancel ? (
-            <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
-              <XIcon data-icon="inline-start" />
-              <Trans>Cancel</Trans>
-            </Button>
-          ) : null}
-          <Button type="button" size="sm" onClick={onSave} disabled={saving || disabled || saveDisabled}>
-            <CheckIcon data-icon="inline-start" />
-            {saving ? <Trans>Saving…</Trans> : (saveLabel ?? <Trans>Save</Trans>)}
+
+        {/* Adding a key the schema doesn't declare is a different act from
+            filling one in, so it sits apart — by space, below the grid, rather
+            than inside a dashed box of its own. */}
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <label className="flex min-w-48 flex-1 flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              <Trans>Custom field</Trans>
+            </span>
+            <Input
+              value={newFieldName}
+              onChange={(event) => setNewFieldName(event.target.value)}
+              placeholder="field_name"
+              disabled={disabled}
+            />
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addCustomField}
+            disabled={disabled || !newFieldName.trim()}
+          >
+            <PlusIcon data-icon="inline-start" />
+            <Trans>Add Field</Trans>
           </Button>
         </div>
-      </div>
+      </DetailSection>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {fieldSpecs.map((field) => (
-          <EditableFieldRow
-            key={field.key}
-            field={field}
-            value={frontmatter[field.key]}
-            disabled={disabled}
-            entityId={entityId}
-            onChange={(value) => updateField(field.key, value)}
-            onRemove={field.configured ? undefined : () => updateField(field.key, undefined)}
-            onRename={field.configured ? undefined : (key) => renameField(field.key, key)}
-          />
-        ))}
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-dashed p-3">
-        <label className="min-w-48 flex-1 text-sm font-medium">
-          <Trans>Custom field</Trans>
-          <Input
-            value={newFieldName}
-            onChange={(event) => setNewFieldName(event.target.value)}
-            placeholder="field_name"
-            disabled={disabled}
-          />
-        </label>
-        <Button type="button" variant="outline" onClick={addCustomField} disabled={disabled || !newFieldName.trim()}>
-          <PlusIcon data-icon="inline-start" />
-          <Trans>Add Field</Trans>
-        </Button>
-      </div>
-
-      <div className="mt-4">
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          <Trans>Notes</Trans>
-          <Textarea
-            className="min-h-72 font-mono text-xs"
-            value={bodyText}
-            onChange={(event) => onBodyChange(event.target.value)}
-            disabled={disabled}
-            spellCheck={false}
-          />
-        </label>
-      </div>
-    </section>
+      <DetailSection title={t`Notes`}>
+        <Textarea
+          className="min-h-72 font-mono text-xs"
+          value={bodyText}
+          onChange={(event) => onBodyChange(event.target.value)}
+          disabled={disabled}
+          spellCheck={false}
+          aria-label={t`Notes`}
+        />
+      </DetailSection>
+    </>
   );
 }
 
@@ -204,24 +190,35 @@ function EditableFieldRow({
   }, [field.key]);
 
   return (
-    <div className="min-w-0 rounded-md border p-3">
-      <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
+    <div className="flex min-w-0 flex-col gap-1.5">
+      {/* The label row keeps a control's height whether or not it holds one, so
+          a renameable field and a schema one line their inputs up. */}
+      <div className="flex min-h-(--control-height-sm) min-w-0 items-center justify-between gap-2">
         {onRename ? (
           <Input
             value={keyDraft}
             onChange={(event) => setKeyDraft(event.target.value)}
             onBlur={() => onRename(keyDraft)}
-            className="h-8 min-w-0 font-mono text-xs"
+            className="h-(--control-height-sm) min-w-0 font-mono text-xs"
             aria-label={t`Custom field name`}
             disabled={disabled}
           />
         ) : (
-          <div className="min-w-0">
-            <div className="truncate text-sm font-medium">{field.label}</div>
-          </div>
+          // The same label treatment the detail page gives a field, so the two
+          // views of one entity read as the same page in two modes.
+          <span className="min-w-0 truncate text-xs font-medium text-muted-foreground">
+            {field.label}
+          </span>
         )}
         {onRemove ? (
-          <Button type="button" variant="ghost" size="icon" onClick={onRemove} aria-label={t`Remove ${field.key}`} disabled={disabled}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onRemove}
+            aria-label={t`Remove ${field.key}`}
+            disabled={disabled}
+          >
             <Trash2Icon />
           </Button>
         ) : null}

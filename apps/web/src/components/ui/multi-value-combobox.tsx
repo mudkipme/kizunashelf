@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
 
 import {
@@ -57,6 +57,13 @@ export function MultiValueCombobox({
   onChange: (values: string[]) => void;
 }) {
   const { t } = useLingui();
+  // The popup anchors to the chips box, not to the bare caret input inside it.
+  // Left to itself the positioner takes the input as the anchor — and that input
+  // is only the sliver of space after the last chip, so the list opened partway
+  // across the field, at whatever width the caret happened to have, and moved
+  // every time a chip was added. Anchoring here also feeds `--anchor-width` the
+  // field's real width, which is what `data-chips` sizes the popup from.
+  const chipsRef = useRef<HTMLDivElement>(null);
   const [uncontrolledInputValue, setUncontrolledInputValue] = useState("");
   const currentInputValue = inputValue ?? uncontrolledInputValue;
   const selectedValues = useMemo(
@@ -129,7 +136,7 @@ export function MultiValueCombobox({
       filter={null}
       disabled={disabled}
     >
-      <ComboboxChips className={cn("w-full", className)}>
+      <ComboboxChips ref={chipsRef} className={cn("w-full", className)}>
         <ComboboxValue>
           {selectedValues.map((item) => (
             <ComboboxChip key={item}>{formatChipLabel?.(item) ?? labels.get(item) ?? item}</ComboboxChip>
@@ -142,7 +149,7 @@ export function MultiValueCombobox({
           disabled={disabled}
         />
       </ComboboxChips>
-      <ComboboxContent>
+      <ComboboxContent anchor={chipsRef}>
         <ComboboxEmpty>{loading ? t`Searching…` : error ? error : emptyText}</ComboboxEmpty>
         <ComboboxList>
           {(item) => (

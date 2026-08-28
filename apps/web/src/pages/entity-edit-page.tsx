@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -15,7 +15,7 @@ import {
   normalizeFrontmatter,
 } from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
-import { PageContainer } from "@/components/layout/page-container";
+import { CONTENT_MEASURE } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -154,70 +154,81 @@ export function EntityEditPage() {
 
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
-      <PageContainer>
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">
+      {/* The same shape as the detail page: a toolbar that stays put, and one
+          scrolling column beneath it. Cancel is the only way back — the old
+          header carried a "Back" button that called the very same handler. */}
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="flex min-h-(--toolbar-height) shrink-0 flex-wrap items-center gap-2 border-b px-3 py-1.5">
+          {/* What is being edited, kept on screen while the form scrolls. */}
+          <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+            {entity?.path}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={cancel} disabled={saving}>
+              <XIcon data-icon="inline-start" />
+              <Trans>Cancel</Trans>
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={save}
+              disabled={saving || !contentWritable || !entity}
+            >
+              <CheckIcon data-icon="inline-start" />
+              {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+            </Button>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto overscroll-contain px-4 py-4">
+          <div className={CONTENT_MEASURE}>
+            <h1 className="mb-8 text-2xl font-semibold leading-tight tracking-tight">
               {entity ? t`Edit ${entityTitle(entity, language)}` : t`Edit entity`}
             </h1>
+
+            {!contentWritable ? (
+              <Alert className="mb-6">{CONTENT_WRITES_DISABLED}</Alert>
+            ) : null}
+
+            {conflict ? (
+              <Alert className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <span className="min-w-0">{ENTITY_EDIT_CONFLICT_MESSAGE}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void reloadLatest()}
+                  disabled={saving}
+                >
+                  <Trans>Reload latest version</Trans>
+                </Button>
+              </Alert>
+            ) : null}
+
+            {loading ? (
+              <Placeholder>
+                <Trans>Loading…</Trans>
+              </Placeholder>
+            ) : entity ? (
+              <MetadataEditor
+                entityId={entity.id}
+                typeConfig={typeConfig}
+                frontmatter={frontmatter}
+                bodyText={body}
+                disabled={!contentWritable}
+                relationSuggestions={[]}
+                onRelationSearch={searchRelations}
+                onFrontmatterChange={setFrontmatter}
+                onBodyChange={setBody}
+              />
+            ) : (
+              <Placeholder>
+                <Trans>Entity not found</Trans>
+              </Placeholder>
+            )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={cancel}
-              disabled={saving}
-            >
-              <ArrowLeftIcon data-icon="inline-start" />
-              <Trans>Back</Trans>
-            </Button>
-          </div>
-        </header>
-
-        {!contentWritable ? <Alert>{CONTENT_WRITES_DISABLED}</Alert> : null}
-
-        {conflict ? (
-          <Alert className="flex flex-wrap items-center justify-between gap-3">
-            <span className="min-w-0">{ENTITY_EDIT_CONFLICT_MESSAGE}</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void reloadLatest()}
-              disabled={saving}
-            >
-              <Trans>Reload latest version</Trans>
-            </Button>
-          </Alert>
-        ) : null}
-
-        {loading ? (
-          <Placeholder>
-            <Trans>Loading…</Trans>
-          </Placeholder>
-        ) : entity ? (
-          <MetadataEditor
-            title={t`Metadata`}
-            path={entity.path}
-            entityId={entity.id}
-            typeConfig={typeConfig}
-            frontmatter={frontmatter}
-            bodyText={body}
-            saving={saving}
-            disabled={!contentWritable}
-            relationSuggestions={[]}
-            onRelationSearch={searchRelations}
-            onFrontmatterChange={setFrontmatter}
-            onBodyChange={setBody}
-            onSave={save}
-            onCancel={cancel}
-          />
-        ) : (
-          <Placeholder>
-            <Trans>Entity not found</Trans>
-          </Placeholder>
-        )}
-      </PageContainer>
+        </div>
+      </div>
 
       <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <AlertDialogContent>
