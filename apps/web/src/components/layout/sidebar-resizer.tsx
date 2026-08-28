@@ -18,10 +18,15 @@ const KEYBOARD_STEP_COARSE = 64;
 export function SidebarResizer({
   width,
   onWidth,
+  onResizingChange,
   onReset,
 }: {
   width: number;
   onWidth: (width: number) => void;
+  /** Reports whether a pointer drag is in progress, so the sidebar can drop the
+   * width easing it collapses with — see `resizing` in `AppFrame`. Keyboard
+   * resizing deliberately does not report: a stepped move reads better eased. */
+  onResizingChange?: (resizing: boolean) => void;
   /** Restores the default width — the escape hatch from an awkward drag. */
   onReset: () => void;
 }) {
@@ -64,6 +69,7 @@ export function SidebarResizer({
         if (event.button !== 0) return;
         event.preventDefault();
         drag.current = { startX: event.clientX, startWidth: width };
+        onResizingChange?.(true);
         // Capture so the drag survives the pointer outrunning this thin strip,
         // which at speed it always does.
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -74,10 +80,12 @@ export function SidebarResizer({
       }}
       onPointerUp={(event) => {
         drag.current = null;
+        onResizingChange?.(false);
         event.currentTarget.releasePointerCapture(event.pointerId);
       }}
       onPointerCancel={() => {
         drag.current = null;
+        onResizingChange?.(false);
       }}
       // Sits astride the border so the grab target is comfortably wider than
       // the hairline it appears to move.

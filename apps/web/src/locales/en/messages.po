@@ -538,7 +538,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:209
+#: src/components/layout/app-frame.tsx:223
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -648,8 +648,8 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:442
-#: src/components/layout/app-frame.tsx:457
+#: src/components/layout/app-frame.tsx:489
+#: src/components/layout/app-frame.tsx:510
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -1161,7 +1161,7 @@ msgstr "For example, an episode number."
 msgid "Form"
 msgstr "Form"
 
-#: src/components/layout/app-frame.tsx:220
+#: src/components/layout/app-frame.tsx:234
 msgid "Forward"
 msgstr "Forward"
 
@@ -1181,11 +1181,11 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:208
+#: src/components/layout/app-frame.tsx:222
 msgid "Go back"
 msgstr "Go back"
 
-#: src/components/layout/app-frame.tsx:219
+#: src/components/layout/app-frame.tsx:233
 msgid "Go forward"
 msgstr "Go forward"
 
@@ -1226,7 +1226,7 @@ msgstr "has none of"
 msgid "Heading"
 msgstr "Heading"
 
-#: src/components/layout/app-frame.tsx:182
+#: src/components/layout/app-frame.tsx:196
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
@@ -1534,7 +1534,7 @@ msgstr "Loading activity…"
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
-#: src/components/layout/app-frame.tsx:544
+#: src/components/layout/app-frame.tsx:597
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1683,7 +1683,7 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:447
+#: src/components/layout/app-frame.tsx:494
 msgid "Navigation"
 msgstr "Navigation"
 
@@ -2000,7 +2000,7 @@ msgstr "Open existing vault"
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/components/layout/app-frame.tsx:194
+#: src/components/layout/app-frame.tsx:208
 msgid "Open navigation"
 msgstr "Open navigation"
 
@@ -2279,13 +2279,13 @@ msgstr "Required — enter a file name here or fill in the title below."
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
-#: src/components/layout/app-frame.tsx:352
-#: src/components/layout/app-frame.tsx:353
+#: src/components/layout/app-frame.tsx:367
+#: src/components/layout/app-frame.tsx:368
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "Rescan vault"
 
-#: src/components/layout/sidebar-resizer.tsx:55
+#: src/components/layout/sidebar-resizer.tsx:60
 msgid "Resize sidebar"
 msgstr "Resize sidebar"
 
@@ -2365,7 +2365,7 @@ msgstr "Scope"
 msgid "Search"
 msgstr "Search"
 
-#: src/components/layout/app-frame.tsx:78
+#: src/components/layout/app-frame.tsx:92
 msgid "Search {activeTypeLabel}"
 msgstr "Search {activeTypeLabel}"
 
@@ -2381,8 +2381,8 @@ msgstr "Search entities, pages and commands…"
 msgid "Search entities…"
 msgstr "Search entities…"
 
-#: src/components/layout/app-frame.tsx:79
-#: src/components/layout/app-frame.tsx:241
+#: src/components/layout/app-frame.tsx:93
+#: src/components/layout/app-frame.tsx:255
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "Search library"
@@ -2498,7 +2498,7 @@ msgstr "Settings saved"
 msgid "Show all"
 msgstr "Show all"
 
-#: src/components/layout/app-frame.tsx:182
+#: src/components/layout/app-frame.tsx:196
 msgid "Show sidebar"
 msgstr "Show sidebar"
 

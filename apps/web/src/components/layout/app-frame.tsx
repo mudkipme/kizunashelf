@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { statsQuery } from "@/api/queries";
 import { useAppShortcuts } from "@/hooks/use-app-shortcuts";
 import { useHistoryPosition } from "@/hooks/use-history-position";
+import { useTransitionPresence } from "@/hooks/use-transition-presence";
 import { useMacTitlebarInset } from "@/hooks/use-mac-titlebar-inset";
 import { useRescanLibrary } from "@/hooks/use-rescan-library";
 import { isDesktopRuntime, isMacDesktopRuntime, setWindowTitle } from "@/lib/desktop";
@@ -34,6 +35,15 @@ import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/lib/sidebar";
 import { allTypes } from "@/lib/constants";
 import type { StatsResponse } from "@/types/api";
+
+/// How long the sidebar takes to open and close, in milliseconds.
+///
+/// Kept in step with the `duration-200` on the two panels by hand — the width
+/// and transform animations are CSS, but the *unmount* that follows the exit is
+/// JS, and it has to wait exactly as long. Short on purpose: this is a panel
+/// being moved out of the way, not an effect, and anything slower gets in the
+/// way of a control you hit repeatedly.
+const SIDEBAR_TRANSITION_MS = 200;
 
 export function AppFrame({ error, children }: { error?: string; children: ReactNode }) {
   const { t, i18n } = useLingui();
@@ -53,6 +63,10 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // A width transition is right for the collapse but wrong for a drag: it would
+  // ease toward every intermediate width and leave the edge trailing the
+  // pointer. The handle says when it is being dragged so the easing can go.
+  const [resizing, setResizing] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { canGoBack, canGoForward } = useHistoryPosition();
   const sidebarWidth = useSidebarStore((state) => state.width);
@@ -295,18 +309,19 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   // rather than two is what keeps the brand from appearing twice.
   return (
     <main className="flex h-dvh min-h-0 overflow-hidden bg-background pt-[env(safe-area-inset-top)] text-foreground">
-      {sidebarCollapsed ? null : (
-        <AppSidebar
-          stats={stats}
-          activeType={activeType}
-          pathname={location.pathname}
-          titlebarInset={macTitlebarInset}
-          showWordmark={showWordmark}
-          width={sidebarWidth}
-          onWidth={setSidebarWidth}
-          onResetWidth={resetSidebarWidth}
-        />
-      )}
+      <AppSidebar
+        collapsed={sidebarCollapsed}
+        resizing={resizing}
+        stats={stats}
+        activeType={activeType}
+        pathname={location.pathname}
+        titlebarInset={macTitlebarInset}
+        showWordmark={showWordmark}
+        width={sidebarWidth}
+        onWidth={setSidebarWidth}
+        onResizingChange={setResizing}
+        onResetWidth={resetSidebarWidth}
+      />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {headerBar}
         {mobileSearchBar}
@@ -370,6 +385,8 @@ function AppLogo({ className }: { className?: string }) {
 }
 
 function AppSidebar({
+  collapsed,
+  resizing,
   stats,
   activeType,
   pathname,
@@ -377,8 +394,12 @@ function AppSidebar({
   showWordmark,
   width,
   onWidth,
+  onResizingChange,
   onResetWidth,
 }: {
+  collapsed: boolean;
+  /** True while the handle is being dragged — see `resizing` in `AppFrame`. */
+  resizing: boolean;
   stats?: StatsResponse;
   activeType: string;
   pathname: string;
@@ -388,12 +409,27 @@ function AppSidebar({
   showWordmark: boolean;
   width: number;
   onWidth: (width: number) => void;
+  onResizingChange: (resizing: boolean) => void;
   onResetWidth: () => void;
 }) {
+  const { mounted, shown } = useTransitionPresence(!collapsed, SIDEBAR_TRANSITION_MS);
+  // Collapsed *and* settled: gone from the DOM, so nothing here is focusable or
+  // countable while it is closed.
+  if (!mounted) return null;
+
   return (
+    // It slides out to the left rather than narrowing: the column keeps its
+    // width the whole way and a negative margin pulls it past the window edge
+    // (`main` clips), so nothing inside re-wraps on the way past and the content
+    // column still takes the freed space a frame at a time. Animating `width`
+    // instead would reflow every label — and, with `border-box`, would need the
+    // column to be a pixel narrower than the sidebar to avoid clipping itself.
     <aside
-      style={{ width }}
-      className="app-chrome relative hidden min-h-0 shrink-0 border-r bg-chrome md:flex md:flex-col"
+      style={{ width, marginLeft: shown ? 0 : -width }}
+      className={cn(
+        "app-chrome relative hidden min-h-0 shrink-0 border-r bg-chrome md:flex md:flex-col",
+        !resizing && "transition-[margin] duration-200 ease-out motion-reduce:transition-none",
+      )}
     >
       {titlebarInset ? <div data-tauri-drag-region className="h-9 shrink-0" /> : null}
       {/* Matches the header's height so the two columns start level. No border
@@ -410,7 +446,12 @@ function AppSidebar({
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain p-3 pt-0">
         <SidebarContent stats={stats} activeType={activeType} pathname={pathname} />
       </div>
-      <SidebarResizer width={width} onWidth={onWidth} onReset={onResetWidth} />
+      <SidebarResizer
+        width={width}
+        onWidth={onWidth}
+        onResizingChange={onResizingChange}
+        onReset={onResetWidth}
+      />
     </aside>
   );
 }
@@ -431,13 +472,19 @@ function MobileSidebar({
   onClose: () => void;
 }) {
   const { t } = useLingui();
-  if (!open) return null;
+  const { mounted, shown } = useTransitionPresence(open, SIDEBAR_TRANSITION_MS);
+  if (!mounted) return null;
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
+      {/* The scrim fades while the sheet slides — together they read as one
+          surface arriving, which a hard cut to a dimmed screen never does. */}
       <button
         type="button"
-        className="absolute inset-0 bg-background/70"
+        className={cn(
+          "absolute inset-0 bg-background/70 transition-opacity duration-200 ease-out motion-reduce:transition-none",
+          shown ? "opacity-100" : "opacity-0",
+        )}
         onClick={onClose}
         aria-label={t`Close navigation`}
       />
@@ -445,7 +492,13 @@ function MobileSidebar({
         role="dialog"
         aria-modal="true"
         aria-label={t`Navigation`}
-        className="app-chrome relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-chrome shadow-lg"
+        className={cn(
+          "app-chrome relative flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col border-r bg-chrome shadow-lg",
+          "transition-transform duration-200 ease-out motion-reduce:transition-none",
+          // In from the edge it belongs to, which is also the edge the control
+          // that opened it sits on.
+          shown ? "translate-x-0" : "-translate-x-full",
+        )}
       >
         <header className="flex min-h-(--toolbar-height) items-center gap-2 border-b px-3">
           <AppLogo />
