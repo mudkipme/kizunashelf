@@ -38,7 +38,6 @@ import { QuickLogDialog } from "@/components/assets/quick-log-dialog";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
-import { PageContainer } from "@/components/layout/page-container";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -274,11 +273,17 @@ export function EntityPage() {
 
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
-      <PageContainer width="wide">
+      {/* Full-bleed, like Library and Home: the window is the frame, so the page
+          doesn't draw a second one inside it. `EntityDetail` owns the toolbar
+          and the two scrolling panes, so the shell only has to hand it the
+          height and stay out of the way. */}
+      <div className="h-full min-h-full overflow-hidden">
         {loading ? (
-          <Placeholder>
-            <Trans>Loading…</Trans>
-          </Placeholder>
+          <div className="p-4">
+            <Placeholder>
+              <Trans>Loading…</Trans>
+            </Placeholder>
+          </div>
         ) : entity ? (
           <>
             <RenameDialog
@@ -347,6 +352,20 @@ export function EntityPage() {
               onSetEpisodeDate={setEpisodeDate}
               actions={
                 <div className="flex items-center gap-2">
+                  {/* Edit is the page's main verb, so it sits in the toolbar
+                      rather than three items down a ⋯ menu. It stays in the menu
+                      too — that list is also where the disabled-writes reason is
+                      explained. */}
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!contentWritable}
+                    title={!contentWritable ? CONTENT_WRITES_DISABLED : undefined}
+                    onClick={() => navigate(`/entities/${encodeURIComponent(entity.id)}/edit`)}
+                  >
+                    <PencilIcon data-icon="inline-start" />
+                    <Trans>Edit</Trans>
+                  </Button>
                   {canLog ? (
                     <Button type="button" variant="outline" size="sm" onClick={() => setLogOpen(true)}>
                       <NotebookPenIcon data-icon="inline-start" />
@@ -386,11 +405,13 @@ export function EntityPage() {
             />
           </>
         ) : (
-          <Placeholder>
-            <Trans>Entity not found</Trans>
-          </Placeholder>
+          <div className="p-4">
+            <Placeholder>
+              <Trans>Entity not found</Trans>
+            </Placeholder>
+          </div>
         )}
-      </PageContainer>
+      </div>
     </AppFrame>
   );
 }

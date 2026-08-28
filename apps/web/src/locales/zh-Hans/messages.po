@@ -71,7 +71,7 @@ msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, other {# 个问题}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:591
+#: src/pages/entity-page.tsx:612
 #: src/pages/lists-page.tsx:83
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, other {# 项}}"
@@ -171,7 +171,7 @@ msgid "{0, plural, one {Add # type} other {Add # types}}"
 msgstr "{0, plural, other {添加 # 个类型}}"
 
 #. placeholder {0}: dates.totals.snippets
-#: src/components/assets/entity-dates.tsx:43
+#: src/components/assets/entity-dates.tsx:53
 msgid "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)}}"
 msgstr "{0, plural, other {每日笔记（# 个片段）}}"
 
@@ -216,7 +216,7 @@ msgstr "{ariaLabel} 新建属性"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 
-#: src/pages/entity-page.tsx:472
+#: src/pages/entity-page.tsx:493
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} 编辑操作不可用。"
 
@@ -323,8 +323,8 @@ msgid "A universal label list every entity can have, with its own editor, filter
 msgstr "所有条目通用的标签列表，带有专属编辑器、筛选器和规则支持。按需启用：指定保存标签列表的前置元数据键即可启用。"
 
 #: src/components/layout/command-palette.tsx:191
-#: src/pages/entity-page.tsx:429
-#: src/pages/entity-page.tsx:432
+#: src/pages/entity-page.tsx:450
+#: src/pages/entity-page.tsx:453
 msgid "Actions"
 msgstr "操作"
 
@@ -555,7 +555,7 @@ msgstr "返回"
 msgid "Back to home"
 msgstr "返回首页"
 
-#: src/pages/entity-page.tsx:678
+#: src/pages/entity-page.tsx:699
 msgid "Basename"
 msgstr "基础文件名"
 
@@ -595,8 +595,8 @@ msgstr "日历"
 #: src/components/settings/settings-dialogs.tsx:376
 #: src/components/settings/settings-dialogs.tsx:508
 #: src/components/smart-lists/save-smart-list-dialog.tsx:123
-#: src/pages/entity-page.tsx:491
-#: src/pages/entity-page.tsx:696
+#: src/pages/entity-page.tsx:512
+#: src/pages/entity-page.tsx:717
 #: src/pages/import-wizard-page.tsx:235
 #: src/pages/import-wizard-page.tsx:269
 #: src/pages/list-detail-page.tsx:521
@@ -708,7 +708,7 @@ msgstr "已连接"
 msgid "Connection Fields"
 msgstr "连接字段"
 
-#: src/components/assets/entity-detail.tsx:206
+#: src/components/assets/entity-detail.tsx:222
 #: src/pages/statistics-page.tsx:50
 msgid "Connections"
 msgstr "连接"
@@ -758,7 +758,7 @@ msgstr "创建"
 msgid "Create “{query}” manually →"
 msgstr "手动创建「{query}」 →"
 
-#: src/pages/entity-page.tsx:624
+#: src/pages/entity-page.tsx:645
 msgid "Create & add"
 msgstr "创建并添加"
 
@@ -778,7 +778,7 @@ msgid "Create vault ({0})"
 msgstr "创建保管库（{0}）"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:130
-#: src/pages/entity-page.tsx:624
+#: src/pages/entity-page.tsx:645
 #: src/pages/lists-page.tsx:229
 #: src/pages/onboarding-page.tsx:232
 msgid "Creating…"
@@ -860,7 +860,7 @@ msgstr "日期：{0}"
 msgid "Dated"
 msgstr "有日期"
 
-#: src/components/assets/entity-detail.tsx:255
+#: src/components/assets/entity-detail.tsx:285
 msgid "Dates"
 msgstr "日期"
 
@@ -882,7 +882,7 @@ msgid "Default line format"
 msgstr "默认行格式"
 
 #: src/components/lists/section-block.tsx:121
-#: src/pages/entity-page.tsx:466
+#: src/pages/entity-page.tsx:487
 #: src/pages/list-detail-page.tsx:385
 #: src/pages/smart-list-page.tsx:314
 #: src/pages/smart-list-page.tsx:425
@@ -910,7 +910,7 @@ msgstr "描述"
 msgid "Deselect group"
 msgstr "取消选择分组"
 
-#: src/components/assets/entity-detail.tsx:168
+#: src/components/assets/entity-detail.tsx:177
 msgid "Details"
 msgstr "详情"
 
@@ -950,11 +950,11 @@ msgstr "未链接到"
 #: src/components/lists/add-items-dialog.tsx:118
 #: src/components/settings/settings-dialogs.tsx:314
 #: src/components/settings/settings-dialogs.tsx:351
-#: src/pages/entity-page.tsx:632
+#: src/pages/entity-page.tsx:653
 msgid "Done"
 msgstr "完成"
 
-#: src/pages/entity-page.tsx:456
+#: src/pages/entity-page.tsx:477
 msgid "Download cover"
 msgstr "下载封面"
 
@@ -987,7 +987,8 @@ msgstr "弃坑"
 msgid "Duplicate Filenames"
 msgstr "重复的文件名"
 
-#: src/pages/entity-page.tsx:439
+#: src/pages/entity-page.tsx:367
+#: src/pages/entity-page.tsx:460
 #: src/pages/list-detail-page.tsx:566
 msgid "Edit"
 msgstr "编辑"
@@ -1014,8 +1015,8 @@ msgid "Edit this type's basics, providers, filename, and fields. Changes apply t
 msgstr "编辑此类型的基础信息、数据源、文件名和字段。更改会应用于草稿，并随 schema 的其余部分一起保存。"
 
 #: src/components/assets/frontmatter-panel.tsx:127
-#: src/components/assets/frontmatter-panel.tsx:217
-#: src/components/assets/frontmatter-panel.tsx:239
+#: src/components/assets/frontmatter-panel.tsx:224
+#: src/components/assets/frontmatter-panel.tsx:246
 #: src/components/entities/metadata-inputs.tsx:68
 #: src/components/entities/metadata-inputs.tsx:121
 msgid "Empty"
@@ -1025,7 +1026,7 @@ msgstr "空"
 msgid "Empty list"
 msgstr "空列表"
 
-#: src/components/assets/frontmatter-panel.tsx:189
+#: src/components/assets/frontmatter-panel.tsx:191
 msgid "Empty object"
 msgstr "空对象"
 
@@ -1054,7 +1055,7 @@ msgid "Entity name"
 msgstr "条目名称"
 
 #: src/pages/entity-edit-page.tsx:217
-#: src/pages/entity-page.tsx:390
+#: src/pages/entity-page.tsx:410
 msgid "Entity not found"
 msgstr "未找到条目"
 
@@ -1400,7 +1401,7 @@ msgid "is yes"
 msgstr "为是"
 
 #. placeholder {0}: index + 1
-#: src/components/assets/frontmatter-panel.tsx:176
+#: src/components/assets/frontmatter-panel.tsx:178
 msgid "Item {0}"
 msgstr "第 {0} 项"
 
@@ -1483,7 +1484,7 @@ msgid "Limit"
 msgstr "上限"
 
 #. placeholder {0}: snippet.line
-#: src/components/assets/entity-dates.tsx:67
+#: src/components/assets/entity-dates.tsx:86
 msgid "line {0}"
 msgstr "第 {0} 行"
 
@@ -1499,11 +1500,11 @@ msgstr "链接目标"
 msgid "Link your new types"
 msgstr "关联你的新类型"
 
-#: src/components/assets/entity-detail.tsx:216
+#: src/components/assets/entity-detail.tsx:232
 msgid "Linked from"
 msgstr "被以下引用"
 
-#: src/components/assets/entity-detail.tsx:237
+#: src/components/assets/entity-detail.tsx:256
 msgid "Links"
 msgstr "关联"
 
@@ -1514,7 +1515,7 @@ msgstr "关联"
 msgid "links to"
 msgstr "链接到:"
 
-#: src/components/assets/entity-detail.tsx:209
+#: src/components/assets/entity-detail.tsx:225
 msgid "Links to"
 msgstr "关联到"
 
@@ -1523,7 +1524,7 @@ msgstr "关联到"
 msgid "List"
 msgstr "列表"
 
-#: src/pages/entity-page.tsx:552
+#: src/pages/entity-page.tsx:573
 #: src/pages/lists-page.tsx:142
 msgid "List created"
 msgstr "列表已创建"
@@ -1569,8 +1570,8 @@ msgstr "正在加载分类"
 #: src/components/settings/raw-config-editor.tsx:146
 #: src/pages/activity-page.tsx:194
 #: src/pages/entity-edit-page.tsx:196
-#: src/pages/entity-page.tsx:280
-#: src/pages/entity-page.tsx:571
+#: src/pages/entity-page.tsx:284
+#: src/pages/entity-page.tsx:592
 #: src/pages/home-page.tsx:51
 #: src/pages/import-wizard-page.tsx:219
 #: src/pages/list-detail-page.tsx:356
@@ -1584,7 +1585,7 @@ msgid "Loading…"
 msgstr "正在加载…"
 
 #: src/components/assets/quick-log-dialog.tsx:160
-#: src/pages/entity-page.tsx:353
+#: src/pages/entity-page.tsx:372
 msgid "Log"
 msgstr "记录"
 
@@ -1608,8 +1609,8 @@ msgstr "记录默认值 — 记录行写入的标题下方，以及后备的行�
 msgid "Logging…"
 msgstr "正在记录…"
 
-#: src/pages/entity-page.tsx:447
-#: src/pages/entity-page.tsx:565
+#: src/pages/entity-page.tsx:468
+#: src/pages/entity-page.tsx:586
 msgid "Manage lists"
 msgstr "管理列表"
 
@@ -1638,7 +1639,7 @@ msgstr "Markdown 正文板块"
 msgid "Marks as {0}"
 msgstr "标记为 {0}"
 
-#: src/pages/entity-page.tsx:451
+#: src/pages/entity-page.tsx:472
 msgid "Match"
 msgstr "匹配"
 
@@ -1646,7 +1647,7 @@ msgstr "匹配"
 msgid "Match mode"
 msgstr "匹配方式"
 
-#: src/components/assets/entity-dates.tsx:21
+#: src/components/assets/entity-dates.tsx:27
 #: src/pages/entity-create-page.tsx:143
 #: src/pages/entity-edit-page.tsx:200
 msgid "Metadata"
@@ -1681,16 +1682,16 @@ msgstr "将 {label} 上移"
 msgid "Move list to trash?"
 msgstr "将列表移到回收站？"
 
-#: src/pages/entity-page.tsx:494
+#: src/pages/entity-page.tsx:515
 #: src/pages/list-detail-page.tsx:530
 msgid "Move to Trash"
 msgstr "移到回收站"
 
-#: src/pages/entity-page.tsx:481
+#: src/pages/entity-page.tsx:502
 msgid "Move to trash?"
 msgstr "移到回收站？"
 
-#: src/pages/entity-page.tsx:234
+#: src/pages/entity-page.tsx:233
 msgid "Moved to trash"
 msgstr "已移到回收站"
 
@@ -1725,7 +1726,7 @@ msgstr ""
 msgid "New field"
 msgstr "新字段"
 
-#: src/pages/entity-page.tsx:612
+#: src/pages/entity-page.tsx:633
 #: src/pages/lists-page.tsx:44
 #: src/pages/lists-page.tsx:162
 msgid "New list"
@@ -1753,7 +1754,7 @@ msgid "no"
 msgstr "否"
 
 #: src/components/assets/frontmatter-panel.tsx:135
-#: src/components/assets/frontmatter-panel.tsx:240
+#: src/components/assets/frontmatter-panel.tsx:247
 #: src/components/entities/metadata-inputs.tsx:123
 msgid "No"
 msgstr "否"
@@ -1847,7 +1848,7 @@ msgstr "暂无项目。使用「添加项目」将条目加入此列表，或使
 msgid "No limit"
 msgstr "无限制"
 
-#: src/pages/entity-page.tsx:575
+#: src/pages/entity-page.tsx:596
 msgid "No lists yet. Create one below."
 msgstr "暂无列表。在下方创建一个。"
 
@@ -1952,7 +1953,7 @@ msgstr "笔记 <0>（可选）</0>"
 msgid "notes"
 msgstr "笔记"
 
-#: src/components/assets/entity-detail.tsx:227
+#: src/components/assets/entity-detail.tsx:243
 #: src/components/entities/metadata-editor.tsx:168
 #: src/pages/list-detail-page.tsx:481
 #: src/pages/statistics-page.tsx:32
@@ -2251,9 +2252,9 @@ msgstr "移除类型"
 
 #: src/components/lists/rename-list-dialog.tsx:80
 #: src/components/lists/section-block.tsx:117
-#: src/pages/entity-page.tsx:443
-#: src/pages/entity-page.tsx:667
-#: src/pages/entity-page.tsx:703
+#: src/pages/entity-page.tsx:464
+#: src/pages/entity-page.tsx:688
+#: src/pages/entity-page.tsx:724
 #: src/pages/list-detail-page.tsx:375
 #: src/pages/smart-list-page.tsx:304
 #: src/pages/smart-list-page.tsx:627
@@ -2268,11 +2269,11 @@ msgstr "重命名列表"
 msgid "Rename smart list"
 msgstr "重命名智能列表"
 
-#: src/pages/entity-page.tsx:185
+#: src/pages/entity-page.tsx:184
 msgid "Renamed"
 msgstr "已重命名"
 
-#: src/pages/entity-page.tsx:184
+#: src/pages/entity-page.tsx:183
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "已重命名 — 更新了 {updated, plural, other {# 个关联}}"
 
@@ -2286,7 +2287,7 @@ msgid "Renames the .base file in your vault."
 msgstr "重命名保管库中的 .base 文件。"
 
 #: src/components/lists/rename-list-dialog.tsx:80
-#: src/pages/entity-page.tsx:703
+#: src/pages/entity-page.tsx:724
 #: src/pages/smart-list-page.tsx:627
 msgid "Renaming…"
 msgstr "正在重命名…"
@@ -2567,11 +2568,11 @@ msgstr "已重命名智能列表"
 msgid "Smart list saved"
 msgstr "已保存智能列表"
 
-#: src/pages/entity-page.tsx:223
+#: src/pages/entity-page.tsx:222
 msgid "Some images could not be downloaded"
 msgstr "部分图片无法下载"
 
-#: src/pages/entity-page.tsx:223
+#: src/pages/entity-page.tsx:222
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "部分图片无法下载：{reasons}"
 
@@ -2761,7 +2762,7 @@ msgid "This month"
 msgstr "本月"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:484
+#: src/pages/entity-page.tsx:505
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "这会将 {0} 移到回收站。如需要，之后可以恢复。"
 
@@ -2971,7 +2972,7 @@ msgstr "保管库"
 msgid "Watching now"
 msgstr "在看"
 
-#: src/pages/entity-page.tsx:618
+#: src/pages/entity-page.tsx:639
 #: src/pages/lists-page.tsx:199
 msgid "Watchlist"
 msgstr "想看清单"
@@ -3020,7 +3021,7 @@ msgid "yes"
 msgstr "是"
 
 #: src/components/assets/frontmatter-panel.tsx:135
-#: src/components/assets/frontmatter-panel.tsx:240
+#: src/components/assets/frontmatter-panel.tsx:247
 #: src/components/entities/metadata-inputs.tsx:122
 msgid "Yes"
 msgstr "是"

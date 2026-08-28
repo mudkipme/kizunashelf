@@ -41,24 +41,24 @@ export function FrontmatterPanel({
   // here — return nothing rather than an empty shell if it ever does.
   if (entries.length === 0) return null;
 
+  // No box, no row rules: a label column of one weight against a value column of
+  // another is the whole structure an inspector needs, and it is what macOS's
+  // Get Info and Xcode's inspectors do. Alignment across rows comes from the
+  // shared grid — rows go `display: contents` at `sm` so every label sits on the
+  // same track; below `sm` each row is its own stacked block instead.
   return (
-    <div className="overflow-hidden rounded-md border">
-      <dl className="divide-y">
-        {entries.map(([key, value]) => (
-          <div
-            key={key}
-            className="grid min-w-0 gap-2 px-3 py-2 sm:grid-cols-[minmax(8rem,13rem)_minmax(0,1fr)]"
-          >
-            <dt className="min-w-0 truncate text-xs font-medium text-muted-foreground">
-              {fieldLabelForKey(typeConfig, key)}
-            </dt>
-            <dd className="min-w-0 text-sm">
-              <FrontmatterValueView value={value} depth={0} fieldType={fieldTypes.get(key)} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    <dl className="grid gap-y-3 sm:grid-cols-[minmax(8rem,13rem)_minmax(0,1fr)] sm:gap-x-6 sm:gap-y-2">
+      {entries.map(([key, value]) => (
+        <div key={key} className="grid min-w-0 gap-y-0.5 sm:contents">
+          <dt className="min-w-0 truncate text-xs font-medium text-muted-foreground">
+            {fieldLabelForKey(typeConfig, key)}
+          </dt>
+          <dd className="min-w-0 text-sm">
+            <FrontmatterValueView value={value} depth={0} fieldType={fieldTypes.get(key)} />
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -168,10 +168,12 @@ function FrontmatterValueView({
       );
     }
 
+    // A fill, not a stroke: each item needs to read as one unit, and a tint does
+    // that without adding four more lines to a page that already nests.
     return (
       <div className="flex min-w-0 flex-col gap-2">
         {value.map((item, index) => (
-          <div key={index} className="min-w-0 rounded-md border bg-muted/35 px-2 py-2">
+          <div key={index} className="min-w-0 rounded-md bg-muted/60 px-2.5 py-2">
             <div className="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
               <Trans>Item {index + 1}</Trans>
             </div>
@@ -190,22 +192,27 @@ function FrontmatterValueView({
       </span>
     );
 
+  // Nesting is shown with a single rule down the left and an indent — one line
+  // instead of a box's four, and the one that actually encodes "this belongs to
+  // the row above". A top-level object skips it *where the label column already
+  // says the same thing*, which is only from `sm` up; stacked on mobile there is
+  // no column to lean on, so the rule comes back.
   return (
-    <div className={cn("min-w-0 overflow-hidden rounded-md border", depth > 0 && "bg-background")}>
-      <dl className="divide-y">
-        {entries.map(([key, item]) => (
-          <div
-            key={key}
-            className="grid min-w-0 gap-1 px-2 py-2 sm:grid-cols-[minmax(7rem,11rem)_minmax(0,1fr)]"
-          >
-            <dt className="min-w-0 truncate text-xs text-muted-foreground">{formatKey(key)}</dt>
-            <dd className="min-w-0">
-              <FrontmatterValueView value={item} depth={depth + 1} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    <dl
+      className={cn(
+        "grid min-w-0 gap-y-1.5 sm:grid-cols-[minmax(6rem,10rem)_minmax(0,1fr)] sm:gap-x-4 sm:gap-y-1",
+        depth > 0 ? "border-l pl-3" : "max-sm:border-l max-sm:pl-3",
+      )}
+    >
+      {entries.map(([key, item]) => (
+        <div key={key} className="grid min-w-0 gap-y-0.5 sm:contents">
+          <dt className="min-w-0 truncate text-xs text-muted-foreground">{formatKey(key)}</dt>
+          <dd className="min-w-0">
+            <FrontmatterValueView value={item} depth={depth + 1} />
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
