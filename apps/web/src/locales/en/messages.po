@@ -41,7 +41,7 @@ msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, one {# created} other {# created}}"
 
 #. placeholder {0}: selectedDay.items.length
-#: src/pages/calendar-page.tsx:172
+#: src/pages/calendar-page.tsx:154
 msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, one {# entry} other {# entries}}"
 
@@ -293,7 +293,7 @@ msgstr "≤"
 msgid "≥"
 msgstr "≥"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:278
 msgid "✅ Completed"
 msgstr "✅ Completed"
 
@@ -301,7 +301,7 @@ msgstr "✅ Completed"
 msgid "✨ Pairs well with your picks"
 msgstr "✨ Pairs well with your picks"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:278
 msgid "📅 Scheduled"
 msgstr "📅 Scheduled"
 
@@ -452,7 +452,7 @@ msgid "Advanced: edit full schema"
 msgstr "Advanced: edit full schema"
 
 #: src/components/smart-lists/rule-subgroup.tsx:101
-#: src/pages/activity-page.tsx:41
+#: src/pages/activity-page.tsx:35
 msgid "All"
 msgstr "All"
 
@@ -470,15 +470,10 @@ msgstr "all of"
 msgid "All providers"
 msgstr "All providers"
 
-#: src/pages/activity-page.tsx:28
-#: src/pages/calendar-page.tsx:119
-msgid "All sources"
-msgstr "All sources"
-
 #: src/components/analytics/activity-heatmap.tsx:88
 #: src/components/assets/asset-download-panel.tsx:84
-#: src/pages/activity-page.tsx:133
-#: src/pages/calendar-page.tsx:124
+#: src/pages/activity-page.tsx:125
+#: src/pages/calendar-page.tsx:107
 #: src/pages/lists-page.tsx:212
 #: src/pages/review-page.tsx:168
 #: src/pages/smart-list-page.tsx:482
@@ -607,7 +602,7 @@ msgstr "Calendar"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/pages/activity-page.tsx:40
+#: src/pages/activity-page.tsx:34
 msgid "Catch up"
 msgstr "Catch up"
 
@@ -671,7 +666,7 @@ msgstr "Command palette"
 #: src/components/settings/settings-field-form.tsx:151
 #: src/components/settings/settings-field-form.tsx:193
 #: src/components/settings/settings-field-form.tsx:272
-#: src/pages/activity-page.tsx:48
+#: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "Completed"
 
@@ -809,21 +804,11 @@ msgstr "Custom field name"
 msgid "Daily note indexing is disabled."
 msgstr "Daily note indexing is disabled."
 
-#: src/pages/calendar-page.tsx:121
-msgid "Daily note mentions"
-msgstr "Daily note mentions"
-
 #: src/components/settings/settings-editor.tsx:106
 #: src/components/settings/settings-editor.tsx:264
-#: src/pages/activity-page.tsx:30
 #: src/pages/statistics-page.tsx:33
 msgid "Daily Notes"
 msgstr "Daily Notes"
-
-#. placeholder {0}: calendar.data.totals.dailyNotes
-#: src/pages/calendar-page.tsx:113
-msgid "Daily Notes {0}"
-msgstr "Daily Notes {0}"
 
 #: src/components/settings/settings-entity-type.tsx:125
 msgid "Daily-note logging"
@@ -837,13 +822,13 @@ msgstr "Dark theme"
 msgid "Dark theme. Switch to system theme."
 msgstr "Dark theme. Switch to system theme."
 
-#: src/pages/activity-page.tsx:275
+#: src/pages/activity-page.tsx:256
 msgid "date"
 msgstr "date"
 
 #: src/components/assets/quick-log-dialog.tsx:129
 #: src/components/smart-lists/rule-value-input.tsx:71
-#: src/pages/activity-page.tsx:274
+#: src/pages/activity-page.tsx:255
 msgid "Date"
 msgstr "Date"
 
@@ -863,10 +848,6 @@ msgstr "Dated"
 #: src/components/assets/entity-detail.tsx:285
 msgid "Dates"
 msgstr "Dates"
-
-#: src/pages/activity-page.tsx:29
-msgid "Dates & episodes"
-msgstr "Dates & episodes"
 
 #. Duration unit in a date rule
 #: src/components/smart-lists/rule-field-meta.ts:140
@@ -1073,7 +1054,7 @@ msgid "Episode"
 msgstr "Episode"
 
 #: src/components/import/import-status.tsx:24
-#: src/pages/activity-page.tsx:303
+#: src/pages/activity-page.tsx:284
 msgid "Episodes"
 msgstr "Episodes"
 
@@ -1082,7 +1063,7 @@ msgid "esc to close"
 msgstr "esc to close"
 
 #: src/components/settings/settings-field-form.tsx:194
-#: src/pages/activity-page.tsx:50
+#: src/pages/activity-page.tsx:44
 msgid "Event"
 msgstr "Event"
 
@@ -1166,12 +1147,9 @@ msgstr "Files the library could not parse cleanly."
 msgid "Filter"
 msgstr "Filter"
 
-#: src/pages/activity-page.tsx:143
-msgid "Filter by source"
-msgstr "Filter by source"
-
 #: src/components/analytics/activity-heatmap.tsx:86
-#: src/pages/activity-page.tsx:131
+#: src/pages/activity-page.tsx:123
+#: src/pages/calendar-page.tsx:104
 msgid "Filter by type"
 msgstr "Filter by type"
 
@@ -1413,11 +1391,6 @@ msgstr "Item list"
 msgid "Items"
 msgstr "Items"
 
-#. placeholder {0}: calendar.data.totals.episodes
-#: src/pages/calendar-page.tsx:110
-msgid "Items {0}"
-msgstr "Items {0}"
-
 #: src/pages/list-detail-page.tsx:434
 msgid "Items <0>({totalItems})</0>"
 msgstr "Items <0>({totalItems})</0>"
@@ -1545,7 +1518,7 @@ msgstr "List style"
 msgid "Lists"
 msgstr "Lists"
 
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:175
 msgid "Load more"
 msgstr "Load more"
 
@@ -1553,7 +1526,7 @@ msgstr "Load more"
 msgid "Loading"
 msgstr "Loading"
 
-#: src/pages/activity-page.tsx:155
+#: src/pages/activity-page.tsx:136
 msgid "Loading activity…"
 msgstr "Loading activity…"
 
@@ -1568,7 +1541,7 @@ msgstr "Loading taxonomy"
 #: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:146
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:175
 #: src/pages/entity-edit-page.tsx:196
 #: src/pages/entity-page.tsx:284
 #: src/pages/entity-page.tsx:592
@@ -1653,7 +1626,7 @@ msgstr "Match mode"
 msgid "Metadata"
 msgstr "Metadata"
 
-#: src/pages/activity-page.tsx:289
+#: src/pages/activity-page.tsx:270
 msgid "Missed?"
 msgstr "Missed?"
 
@@ -1744,7 +1717,7 @@ msgstr "New-note template"
 msgid "New: {newValue}"
 msgstr "New: {newValue}"
 
-#: src/pages/calendar-page.tsx:96
+#: src/pages/calendar-page.tsx:97
 msgid "Next"
 msgstr "Next"
 
@@ -1759,7 +1732,7 @@ msgstr "no"
 msgid "No"
 msgstr "No"
 
-#: src/pages/activity-page.tsx:158
+#: src/pages/activity-page.tsx:139
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 
@@ -1781,7 +1754,7 @@ msgstr "No criteria — everything in the library matches."
 msgid "No date"
 msgstr "No date"
 
-#: src/pages/calendar-page.tsx:168
+#: src/pages/calendar-page.tsx:150
 msgid "No date selected"
 msgstr "No date selected"
 
@@ -1797,8 +1770,8 @@ msgstr "No entity type maps {unmatchedLabels}. Add an external-reference field f
 msgid "No entity types configured."
 msgstr "No entity types configured."
 
-#: src/pages/calendar-page.tsx:173
-#: src/pages/calendar-page.tsx:188
+#: src/pages/calendar-page.tsx:155
+#: src/pages/calendar-page.tsx:170
 #: src/pages/library-page.tsx:388
 msgid "No entries"
 msgstr "No entries"
@@ -2093,7 +2066,7 @@ msgstr "Pick a scope to filter on that type's own fields — across all types on
 msgid "Pick a type to filter on its own fields — across all types only the properties every entry has can be matched."
 msgstr "Pick a type to filter on its own fields — across all types only the properties every entry has can be matched."
 
-#: src/pages/activity-page.tsx:49
+#: src/pages/activity-page.tsx:43
 msgid "Planned"
 msgstr "Planned"
 
@@ -2103,7 +2076,7 @@ msgstr "Planned"
 msgid "Planning"
 msgstr "Planning"
 
-#: src/pages/calendar-page.tsx:90
+#: src/pages/calendar-page.tsx:91
 msgid "Prev"
 msgstr "Prev"
 
@@ -2160,7 +2133,7 @@ msgstr "Quick Capture"
 msgid "Real"
 msgstr "Real"
 
-#: src/pages/activity-page.tsx:38
+#: src/pages/activity-page.tsx:32
 msgid "Recent"
 msgstr "Recent"
 
@@ -2618,7 +2591,7 @@ msgstr "Start over"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 #: src/components/settings/settings-field-form.tsx:192
-#: src/pages/activity-page.tsx:47
+#: src/pages/activity-page.tsx:41
 msgid "Started"
 msgstr "Started"
 
@@ -2704,15 +2677,6 @@ msgstr "Tags"
 #: src/components/settings/settings-editor.tsx:330
 msgid "Tags are disabled."
 msgstr "Tags are disabled."
-
-#. placeholder {0}: calendar.data.totals.taxonomy
-#: src/pages/calendar-page.tsx:107
-msgid "Taxonomy {0}"
-msgstr "Taxonomy {0}"
-
-#: src/pages/calendar-page.tsx:120
-msgid "Taxonomy dates"
-msgstr "Taxonomy dates"
 
 #: src/components/settings/settings-editor.tsx:248
 msgid "Taxonomy root"
@@ -2804,7 +2768,7 @@ msgid "Title, or paste a provider URL"
 msgstr "Title, or paste a provider URL"
 
 #: src/components/home/coming-up-section.tsx:156
-#: src/pages/calendar-page.tsx:93
+#: src/pages/calendar-page.tsx:94
 msgid "Today"
 msgstr "Today"
 
@@ -2899,7 +2863,7 @@ msgstr "Unresolved Relations"
 msgid "Untitled section"
 msgstr "Untitled section"
 
-#: src/pages/activity-page.tsx:39
+#: src/pages/activity-page.tsx:33
 msgid "Up next"
 msgstr "Up next"
 

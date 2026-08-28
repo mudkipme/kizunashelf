@@ -9,8 +9,7 @@ import { z as zod } from 'zod';
 export const CalendarQuery = zod.object({
   "year": zod.number().nullish(),
   "month": zod.number().nullish(),
-  "type": zod.string().nullish(),
-  "source": zod.string().nullish()
+  "type": zod.string().nullish()
 })
 
 export type CalendarQuery = zod.input<typeof CalendarQuery>;

@@ -3,7 +3,7 @@ mod types;
 
 pub use types::*;
 
-use crate::contract::{CalendarFilters, CalendarResponse, CalendarTotals};
+use crate::contract::{CalendarFilters, CalendarResponse};
 use crate::daily_notes::{
     daily_note_candidates, daily_note_files, normalize_wikilink_target, read_daily_note_contents,
     strip_frontmatter, DailyNoteFile, PendingDailyNote,
@@ -57,27 +57,13 @@ pub async fn build_calendar(
     let items = group_activity_items(library, entries, &calendar_activity_options(&options));
     let days = calendar_days(options.year, options.month, &items);
 
-    let totals = CalendarTotals {
-        entries: days.iter().map(|day| day.items.len()).sum(),
-        taxonomy: days.iter().map(|day| day.counts.taxonomy).sum(),
-        daily_notes: days.iter().map(|day| day.counts.daily_notes).sum(),
-        episodes: days.iter().map(|day| day.counts.episodes).sum(),
-        days_with_entries: days.iter().filter(|day| !day.items.is_empty()).count(),
-    };
     Ok(CalendarResponse {
         generated_at: library.generated_at.clone(),
         year: options.year,
         month: options.month,
         filters: CalendarFilters {
             entity_type: options.entity_type.clone(),
-            source: match options.source {
-                CalendarSource::All => "all",
-                CalendarSource::Taxonomy => "taxonomy",
-                CalendarSource::DailyNote => "daily-note",
-            }
-            .to_string(),
         },
-        totals,
         days,
     })
 }
@@ -92,7 +78,7 @@ fn calendar_activity_options(options: &CalendarBuildOptions) -> ActivityBuildOpt
         months: 1,
         min_items: None,
         entity_type: options.entity_type.clone(),
-        source: options.source,
+        include_daily_notes: options.include_daily_notes,
         mode: ActivityMode::All,
         today: String::new(),
     }
@@ -109,12 +95,10 @@ async fn collect_calendar_entries(
     daily_ctx: Option<&DailyNoteFeedContext>,
 ) -> Result<Vec<CalendarEntry>> {
     let mut entries = Vec::new();
-    if options.source != CalendarSource::DailyNote {
-        entries.extend(taxonomy_calendar_entries(library, options));
-        // Episodes are entity-derived, so they ride with the taxonomy side.
-        entries.extend(episode_calendar_entries(library, options));
-    }
-    if options.source != CalendarSource::Taxonomy {
+    entries.extend(taxonomy_calendar_entries(library, options));
+    // Episodes are entity-derived, so they ride with the taxonomy side.
+    entries.extend(episode_calendar_entries(library, options));
+    if options.include_daily_notes {
         entries.extend(daily_note_calendar_entries(library, vfs, options, daily_ctx).await?);
     }
     Ok(entries)
@@ -170,7 +154,7 @@ pub async fn build_activity(
     // index once. Both are invariant across months, but the per-month builder used
     // to re-walk every note and re-index every entity each month — the dominant
     // cost of a multi-month page. Skipped entirely for a taxonomy-only feed.
-    let daily_ctx = if options.source != CalendarSource::Taxonomy {
+    let daily_ctx = if options.include_daily_notes {
         Some(DailyNoteFeedContext::build(library, vfs).await?)
     } else {
         None
@@ -257,38 +241,36 @@ fn season_anchor_options(options: &ActivityBuildOptions) -> Option<SeasonAnchorO
 fn active_activity_months(library: &Library, options: &ActivityBuildOptions) -> Vec<String> {
     let mut months: HashSet<String> = HashSet::new();
     let season = season_anchor_options(options);
-    if options.source != CalendarSource::DailyNote {
-        for record in &library.records {
-            let entity = &record.summary;
-            if options
-                .entity_type
-                .as_ref()
-                .is_some_and(|entity_type| entity.entity_type != *entity_type)
-            {
-                continue;
+    for record in &library.records {
+        let entity = &record.summary;
+        if options
+            .entity_type
+            .as_ref()
+            .is_some_and(|entity_type| entity.entity_type != *entity_type)
+        {
+            continue;
+        }
+        // Both projections of a date field, so the discovery matches what
+        // the page's month build will actually emit.
+        let seasons = season
+            .as_ref()
+            .map(|season| season_anchor_entries(library, entity, season))
+            .unwrap_or_default();
+        for item in metadata_date_entries(library, entity)
+            .iter()
+            .chain(&seasons)
+        {
+            if let Some(month) = item.date.as_deref().and_then(month_key) {
+                months.insert(month);
             }
-            // Both projections of a date field, so the discovery matches what
-            // the page's month build will actually emit.
-            let seasons = season
-                .as_ref()
-                .map(|season| season_anchor_entries(library, entity, season))
-                .unwrap_or_default();
-            for item in metadata_date_entries(library, entity)
-                .iter()
-                .chain(&seasons)
-            {
-                if let Some(month) = item.date.as_deref().and_then(month_key) {
-                    months.insert(month);
-                }
-            }
-            for item in &record.episode_dates {
-                if let Some(month) = month_key(&item.date) {
-                    months.insert(month);
-                }
+        }
+        for item in &record.episode_dates {
+            if let Some(month) = month_key(&item.date) {
+                months.insert(month);
             }
         }
     }
-    if options.source != CalendarSource::Taxonomy {
+    if options.include_daily_notes {
         // Daily-note months come from the resident relation graph (a relation per
         // mention, cached at index time), not a VFS walk — so this also skips
         // months whose notes mention nothing. A note can mention any type, so the
@@ -324,7 +306,7 @@ async fn month_activity_entries(
         year,
         month,
         entity_type: options.entity_type.clone(),
-        source: options.source,
+        include_daily_notes: options.include_daily_notes,
         season: season_anchor_options(options),
     };
     collect_calendar_entries(library, vfs, &build, daily_ctx).await

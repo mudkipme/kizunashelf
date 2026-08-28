@@ -41,7 +41,7 @@ msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {# 件作成}}"
 
 #. placeholder {0}: selectedDay.items.length
-#: src/pages/calendar-page.tsx:172
+#: src/pages/calendar-page.tsx:154
 msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, other {# 件}}"
 
@@ -293,7 +293,7 @@ msgstr "≤"
 msgid "≥"
 msgstr "≥"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:278
 msgid "✅ Completed"
 msgstr "✅ 完了"
 
@@ -301,7 +301,7 @@ msgstr "✅ 完了"
 msgid "✨ Pairs well with your picks"
 msgstr "✨ お気に入りとの相性が良い作品"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:278
 msgid "📅 Scheduled"
 msgstr "📅 予定"
 
@@ -452,7 +452,7 @@ msgid "Advanced: edit full schema"
 msgstr "詳細設定: スキーマ全体を編集"
 
 #: src/components/smart-lists/rule-subgroup.tsx:101
-#: src/pages/activity-page.tsx:41
+#: src/pages/activity-page.tsx:35
 msgid "All"
 msgstr "すべて"
 
@@ -470,15 +470,10 @@ msgstr "すべてが一致"
 msgid "All providers"
 msgstr "すべてのプロバイダー"
 
-#: src/pages/activity-page.tsx:28
-#: src/pages/calendar-page.tsx:119
-msgid "All sources"
-msgstr "すべてのソース"
-
 #: src/components/analytics/activity-heatmap.tsx:88
 #: src/components/assets/asset-download-panel.tsx:84
-#: src/pages/activity-page.tsx:133
-#: src/pages/calendar-page.tsx:124
+#: src/pages/activity-page.tsx:125
+#: src/pages/calendar-page.tsx:107
 #: src/pages/lists-page.tsx:212
 #: src/pages/review-page.tsx:168
 #: src/pages/smart-list-page.tsx:482
@@ -607,7 +602,7 @@ msgstr "カレンダー"
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: src/pages/activity-page.tsx:40
+#: src/pages/activity-page.tsx:34
 msgid "Catch up"
 msgstr "追いつく"
 
@@ -671,7 +666,7 @@ msgstr ""
 #: src/components/settings/settings-field-form.tsx:151
 #: src/components/settings/settings-field-form.tsx:193
 #: src/components/settings/settings-field-form.tsx:272
-#: src/pages/activity-page.tsx:48
+#: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "完了"
 
@@ -809,21 +804,11 @@ msgstr "カスタムフィールド名"
 msgid "Daily note indexing is disabled."
 msgstr "デイリーノートのインデックス作成は無効です。"
 
-#: src/pages/calendar-page.tsx:121
-msgid "Daily note mentions"
-msgstr "デイリーノートでの言及"
-
 #: src/components/settings/settings-editor.tsx:106
 #: src/components/settings/settings-editor.tsx:264
-#: src/pages/activity-page.tsx:30
 #: src/pages/statistics-page.tsx:33
 msgid "Daily Notes"
 msgstr "デイリーノート"
-
-#. placeholder {0}: calendar.data.totals.dailyNotes
-#: src/pages/calendar-page.tsx:113
-msgid "Daily Notes {0}"
-msgstr "デイリーノート {0}"
 
 #: src/components/settings/settings-entity-type.tsx:125
 msgid "Daily-note logging"
@@ -837,13 +822,13 @@ msgstr "ダークテーマ"
 msgid "Dark theme. Switch to system theme."
 msgstr "ダークテーマ。システムテーマに切り替えます。"
 
-#: src/pages/activity-page.tsx:275
+#: src/pages/activity-page.tsx:256
 msgid "date"
 msgstr "日付"
 
 #: src/components/assets/quick-log-dialog.tsx:129
 #: src/components/smart-lists/rule-value-input.tsx:71
-#: src/pages/activity-page.tsx:274
+#: src/pages/activity-page.tsx:255
 msgid "Date"
 msgstr "日付"
 
@@ -863,10 +848,6 @@ msgstr "日付あり"
 #: src/components/assets/entity-detail.tsx:285
 msgid "Dates"
 msgstr "日付"
-
-#: src/pages/activity-page.tsx:29
-msgid "Dates & episodes"
-msgstr "日付とエピソード"
 
 #. Duration unit in a date rule
 #: src/components/smart-lists/rule-field-meta.ts:140
@@ -1073,7 +1054,7 @@ msgid "Episode"
 msgstr "エピソード"
 
 #: src/components/import/import-status.tsx:24
-#: src/pages/activity-page.tsx:303
+#: src/pages/activity-page.tsx:284
 msgid "Episodes"
 msgstr "エピソード"
 
@@ -1082,7 +1063,7 @@ msgid "esc to close"
 msgstr ""
 
 #: src/components/settings/settings-field-form.tsx:194
-#: src/pages/activity-page.tsx:50
+#: src/pages/activity-page.tsx:44
 msgid "Event"
 msgstr "イベント"
 
@@ -1166,12 +1147,9 @@ msgstr "ライブラリが正常に解析できなかったファイルです。
 msgid "Filter"
 msgstr "絞り込み"
 
-#: src/pages/activity-page.tsx:143
-msgid "Filter by source"
-msgstr "ソースで絞り込む"
-
 #: src/components/analytics/activity-heatmap.tsx:86
-#: src/pages/activity-page.tsx:131
+#: src/pages/activity-page.tsx:123
+#: src/pages/calendar-page.tsx:104
 msgid "Filter by type"
 msgstr "タイプで絞り込む"
 
@@ -1413,11 +1391,6 @@ msgstr "アイテムリスト"
 msgid "Items"
 msgstr "アイテム"
 
-#. placeholder {0}: calendar.data.totals.episodes
-#: src/pages/calendar-page.tsx:110
-msgid "Items {0}"
-msgstr "アイテム {0}"
-
 #: src/pages/list-detail-page.tsx:434
 msgid "Items <0>({totalItems})</0>"
 msgstr "アイテム <0>({totalItems})</0>"
@@ -1545,7 +1518,7 @@ msgstr "リストのスタイル"
 msgid "Lists"
 msgstr "リスト"
 
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:175
 msgid "Load more"
 msgstr "さらに読み込む"
 
@@ -1553,7 +1526,7 @@ msgstr "さらに読み込む"
 msgid "Loading"
 msgstr "読み込み中"
 
-#: src/pages/activity-page.tsx:155
+#: src/pages/activity-page.tsx:136
 msgid "Loading activity…"
 msgstr "アクティビティを読み込み中…"
 
@@ -1568,7 +1541,7 @@ msgstr "分類を読み込み中"
 #: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:146
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:175
 #: src/pages/entity-edit-page.tsx:196
 #: src/pages/entity-page.tsx:284
 #: src/pages/entity-page.tsx:592
@@ -1653,7 +1626,7 @@ msgstr "一致モード"
 msgid "Metadata"
 msgstr "メタデータ"
 
-#: src/pages/activity-page.tsx:289
+#: src/pages/activity-page.tsx:270
 msgid "Missed?"
 msgstr "見逃した？"
 
@@ -1744,7 +1717,7 @@ msgstr "新規ノートのテンプレート"
 msgid "New: {newValue}"
 msgstr "新規: {newValue}"
 
-#: src/pages/calendar-page.tsx:96
+#: src/pages/calendar-page.tsx:97
 msgid "Next"
 msgstr "次へ"
 
@@ -1759,7 +1732,7 @@ msgstr "いいえ"
 msgid "No"
 msgstr "いいえ"
 
-#: src/pages/activity-page.tsx:158
+#: src/pages/activity-page.tsx:139
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "まだアクティビティはありません。日付付きアイテム、エピソードの放送日・完了日、デイリーノートでの言及がここに表示されます。"
 
@@ -1781,7 +1754,7 @@ msgstr "条件がありません — ライブラリのすべてが一致しま�
 msgid "No date"
 msgstr "日付なし"
 
-#: src/pages/calendar-page.tsx:168
+#: src/pages/calendar-page.tsx:150
 msgid "No date selected"
 msgstr "日付が選択されていません"
 
@@ -1797,8 +1770,8 @@ msgstr "{unmatchedLabels} に対応するアイテムのタイプがありませ
 msgid "No entity types configured."
 msgstr "アイテムのタイプが設定されていません。"
 
-#: src/pages/calendar-page.tsx:173
-#: src/pages/calendar-page.tsx:188
+#: src/pages/calendar-page.tsx:155
+#: src/pages/calendar-page.tsx:170
 #: src/pages/library-page.tsx:388
 msgid "No entries"
 msgstr "エントリなし"
@@ -2093,7 +2066,7 @@ msgstr "範囲となるタイプを選ぶと、そのタイプ固有のフィー
 msgid "Pick a type to filter on its own fields — across all types only the properties every entry has can be matched."
 msgstr "タイプを選ぶと、そのタイプ固有のフィールドで絞り込めます。すべてのタイプでは、どのエントリーも持つプロパティしか条件にできません。"
 
-#: src/pages/activity-page.tsx:49
+#: src/pages/activity-page.tsx:43
 msgid "Planned"
 msgstr "予定"
 
@@ -2103,7 +2076,7 @@ msgstr "予定"
 msgid "Planning"
 msgstr "計画中"
 
-#: src/pages/calendar-page.tsx:90
+#: src/pages/calendar-page.tsx:91
 msgid "Prev"
 msgstr "前へ"
 
@@ -2160,7 +2133,7 @@ msgstr "クイックキャプチャ"
 msgid "Real"
 msgstr "実際"
 
-#: src/pages/activity-page.tsx:38
+#: src/pages/activity-page.tsx:32
 msgid "Recent"
 msgstr "最近"
 
@@ -2618,7 +2591,7 @@ msgstr "最初からやり直す"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 #: src/components/settings/settings-field-form.tsx:192
-#: src/pages/activity-page.tsx:47
+#: src/pages/activity-page.tsx:41
 msgid "Started"
 msgstr "開始済み"
 
@@ -2704,15 +2677,6 @@ msgstr "タグ"
 #: src/components/settings/settings-editor.tsx:330
 msgid "Tags are disabled."
 msgstr "タグは無効です。"
-
-#. placeholder {0}: calendar.data.totals.taxonomy
-#: src/pages/calendar-page.tsx:107
-msgid "Taxonomy {0}"
-msgstr "分類 {0}"
-
-#: src/pages/calendar-page.tsx:120
-msgid "Taxonomy dates"
-msgstr "分類の日付"
 
 #: src/components/settings/settings-editor.tsx:248
 msgid "Taxonomy root"
@@ -2804,7 +2768,7 @@ msgid "Title, or paste a provider URL"
 msgstr "タイトル、またはプロバイダーの URL を貼り付け"
 
 #: src/components/home/coming-up-section.tsx:156
-#: src/pages/calendar-page.tsx:93
+#: src/pages/calendar-page.tsx:94
 msgid "Today"
 msgstr "今日"
 
@@ -2899,7 +2863,7 @@ msgstr "未解決の関連"
 msgid "Untitled section"
 msgstr "無題のセクション"
 
-#: src/pages/activity-page.tsx:39
+#: src/pages/activity-page.tsx:33
 msgid "Up next"
 msgstr "次に見る"
 

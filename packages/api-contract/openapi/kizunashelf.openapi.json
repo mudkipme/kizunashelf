@@ -604,14 +604,6 @@
               "type": "string"
             },
             "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "source",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
           }
         ],
         "responses": {
@@ -676,14 +668,6 @@
           {
             "in": "query",
             "name": "type",
-            "schema": {
-              "type": "string"
-            },
-            "style": "form"
-          },
-          {
-            "in": "query",
-            "name": "source",
             "schema": {
               "type": "string"
             },
@@ -5961,12 +5945,6 @@
               "string",
               "null"
             ]
-          },
-          "source": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         }
       },
@@ -5988,9 +5966,6 @@
           "filters": {
             "$ref": "#/components/schemas/CalendarFilters"
           },
-          "totals": {
-            "$ref": "#/components/schemas/CalendarTotals"
-          },
           "days": {
             "type": "array",
             "items": {
@@ -6003,7 +5978,6 @@
           "year",
           "month",
           "filters",
-          "totals",
           "days"
         ]
       },
@@ -6015,51 +5989,8 @@
               "string",
               "null"
             ]
-          },
-          "source": {
-            "type": "string"
           }
-        },
-        "required": [
-          "source"
-        ]
-      },
-      "CalendarTotals": {
-        "type": "object",
-        "properties": {
-          "entries": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "taxonomy": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "dailyNotes": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "episodes": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          },
-          "daysWithEntries": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "entries",
-          "taxonomy",
-          "dailyNotes",
-          "episodes",
-          "daysWithEntries"
-        ]
+        }
       },
       "CalendarDay": {
         "description": "One day in the month grid. Its `items` are already collapsed per entity — the\nsame `(date, entity)` merge the activity feed uses ([`ActivityItem`]) — so a\nsingle entity that has a dated field, an aired episode, and a daily-note\nmention on this day is one item with three entries, not three items.",
@@ -6303,12 +6234,6 @@
             "format": "double"
           },
           "type": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "source": {
             "type": [
               "string",
               "null"

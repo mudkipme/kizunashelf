@@ -1938,17 +1938,6 @@ pub struct CalendarFilters {
     #[serde(rename = "type")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entity_type: Option<String>,
-    pub source: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarTotals {
-    pub entries: usize,
-    pub taxonomy: usize,
-    pub daily_notes: usize,
-    pub episodes: usize,
-    pub days_with_entries: usize,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -1958,7 +1947,6 @@ pub struct CalendarResponse {
     pub year: i32,
     pub month: u32,
     pub filters: CalendarFilters,
-    pub totals: CalendarTotals,
     pub days: Vec<CalendarDay>,
 }
 

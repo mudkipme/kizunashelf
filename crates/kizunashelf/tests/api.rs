@@ -1367,13 +1367,25 @@ async fn external_apply_is_forbidden_in_read_only_mode() {
 async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
     let server = TestServer::new();
 
-    let calendar = server
-        .ok_json("/api/calendar?year=2025&month=4&source=all")
-        .await;
-    assert_eq!(calendar["totals"]["entries"], 4);
-    assert_eq!(calendar["totals"]["taxonomy"], 2);
-    assert_eq!(calendar["totals"]["dailyNotes"], 2);
-    assert_eq!(calendar["totals"]["daysWithEntries"], 3);
+    let calendar = server.ok_json("/api/calendar?year=2025&month=4").await;
+    let days = calendar["days"].as_array().unwrap();
+    // Every source a date can come from lands on the same grid — there is no
+    // filter that narrows it, so the month holds taxonomy dates and daily-note
+    // mentions together.
+    assert_eq!(
+        days.iter()
+            .filter(|day| !day["items"].as_array().unwrap().is_empty())
+            .count(),
+        3
+    );
+    let sum = |key: &str| -> i64 {
+        days.iter()
+            .map(|day| day["counts"][key].as_i64().unwrap_or_default())
+            .sum()
+    };
+    assert_eq!(sum("total"), 4);
+    assert_eq!(sum("taxonomy"), 2);
+    assert_eq!(sum("dailyNotes"), 2);
 
     let april_21 = calendar["days"]
         .as_array()
@@ -1388,19 +1400,23 @@ async fn calendar_endpoints_include_metadata_and_daily_notes_from_temp_vault() {
     ));
     assert!(has_entity_title(&april_21["items"], "Robotics;Notes"));
 
-    let taxonomy_only = server
-        .ok_json("/api/calendar?year=2025&month=4&source=taxonomy&type=anime")
+    // The type filter is the one filter left, and it narrows every source at once.
+    let anime_only = server
+        .ok_json("/api/calendar?year=2025&month=4&type=anime")
         .await;
-    assert_eq!(taxonomy_only["filters"]["type"], "anime");
-    assert_eq!(taxonomy_only["totals"]["entries"], 1);
-    assert_eq!(taxonomy_only["totals"]["dailyNotes"], 0);
+    assert_eq!(anime_only["filters"]["type"], "anime");
+    assert!(anime_only["days"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|day| day["items"].as_array().unwrap())
+        .all(|item| item["entity"]["type"] == "anime"));
 
-    let daily_note_only = server
-        .ok_json("/api/calendar?year=2025&month=4&source=daily-note&type=games")
+    let games_only = server
+        .ok_json("/api/calendar?year=2025&month=4&type=games")
         .await;
-    assert_eq!(daily_note_only["totals"]["entries"], 1);
     assert_eq!(
-        daily_note_only["days"][20]["items"][0]["entries"][0]["notePath"],
+        games_only["days"][20]["items"][0]["entries"][0]["notePath"],
         "Daily Notes/2025-04-21.md"
     );
 

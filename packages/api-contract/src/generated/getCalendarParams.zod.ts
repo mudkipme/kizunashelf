@@ -9,8 +9,7 @@ import { z as zod } from 'zod';
 export const GetCalendarParams = zod.object({
   "year": zod.number().optional(),
   "month": zod.number().optional(),
-  "type": zod.string().optional(),
-  "source": zod.string().optional()
+  "type": zod.string().optional()
 })
 
 export type GetCalendarParams = zod.input<typeof GetCalendarParams>;

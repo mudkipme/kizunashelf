@@ -24,12 +24,6 @@ import type { ActivityEntry, ActivityItem } from "@/types/api";
 
 type FieldLabels = ReadonlyMap<string, ReadonlyMap<string, string>>;
 
-const sources = [
-  { value: "all", label: msg`All sources` },
-  { value: "taxonomy", label: msg`Dates & episodes` },
-  { value: "daily-note", label: msg`Daily Notes` },
-] as const;
-
 // Recent leads — it's the everyday "what happened" view; Up next is already
 // surfaced on Home; Catch up is the reverse-chron backlog ("released, still on
 // my list" plans + ongoing entities' aired-but-unwatched episodes); All is the
@@ -60,7 +54,6 @@ export function ActivityPage() {
   });
   const [searchParams, setSearchParams] = useSearchParams();
   const type = searchParams.get("type") ?? "all";
-  const source = readSource(searchParams.get("source"));
   const mode = readMode(searchParams.get("mode"));
 
   const config = useQuery(configQuery());
@@ -72,7 +65,6 @@ export function ActivityPage() {
       // server's UTC clock.
       today: todayLocal(),
       ...(type !== "all" ? { type } : {}),
-      ...(source !== "all" ? { source } : {}),
       // Always sent: the API defaults to "all", but the page defaults to "recent".
       mode,
     }),
@@ -134,17 +126,6 @@ export function ActivityPage() {
               {config.data?.types.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.label}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={source}
-              onChange={(event) => setParam("source", event.target.value)}
-              aria-label={t`Filter by source`}
-            >
-              {sources.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {i18n._(item.label)}
                 </option>
               ))}
             </Select>
@@ -340,10 +321,6 @@ function groupByDay(items: ActivityItem[]): { key: string; date: string | null; 
     else days.set(key, { key, date: item.dateText ? null : item.date, items: [item] });
   }
   return [...days.values()];
-}
-
-function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
-  return value === "taxonomy" || value === "daily-note" ? value : "all";
 }
 
 function readMode(value: string | null): "all" | "recent" | "up-next" | "catch-up" {

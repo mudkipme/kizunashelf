@@ -290,7 +290,7 @@ fn episode_calendar_entries_place_cached_dates_in_the_month() {
         year: 2024,
         month: 2,
         entity_type: None,
-        source: CalendarSource::All,
+        include_daily_notes: true,
         season: None,
     };
 
@@ -356,7 +356,7 @@ fn activity_options_mode(
         months,
         min_items: None,
         entity_type: None,
-        source: CalendarSource::All,
+        include_daily_notes: true,
         mode,
         today: today.to_string(),
     }
@@ -370,7 +370,7 @@ fn activity_options_items(cursor: Option<&str>, limit: u32) -> ActivityBuildOpti
         months: 1,
         min_items: Some(limit),
         entity_type: None,
-        source: CalendarSource::All,
+        include_daily_notes: true,
         mode: ActivityMode::All,
         today: "2024-06-15".to_string(),
     }
@@ -439,7 +439,7 @@ async fn build_calendar_merges_same_entity_same_day_into_one_item() {
             year: 2024,
             month: 2,
             entity_type: None,
-            source: CalendarSource::All,
+            include_daily_notes: true,
             season: None,
         },
     )
@@ -464,12 +464,18 @@ async fn build_calendar_merges_same_entity_same_day_into_one_item() {
     assert!(sources.contains(&CalendarEntrySource::Taxonomy));
     assert!(sources.contains(&CalendarEntrySource::Episode));
     assert!(sources.contains(&CalendarEntrySource::DailyNote));
-    // Totals count merged cards, and per-source facets across them.
-    assert_eq!(response.totals.entries, 1);
-    assert_eq!(response.totals.days_with_entries, 1);
-    assert_eq!(response.totals.taxonomy, 1);
-    assert_eq!(response.totals.episodes, 1);
-    assert_eq!(response.totals.daily_notes, 1);
+    // The day's counts hold the per-source facets across its merged cards.
+    assert_eq!(day.counts.taxonomy, 1);
+    assert_eq!(day.counts.episodes, 1);
+    assert_eq!(day.counts.daily_notes, 1);
+    assert_eq!(
+        response
+            .days
+            .iter()
+            .filter(|day| !day.items.is_empty())
+            .count(),
+        1
+    );
 }
 
 #[tokio::test]
@@ -1685,13 +1691,16 @@ async fn seasons_stay_out_of_recent_and_off_the_calendar() {
             year: 2024,
             month: 4,
             entity_type: None,
-            source: CalendarSource::All,
+            include_daily_notes: true,
             season: None,
         },
     )
     .await
     .unwrap();
-    assert_eq!(calendar.totals.entries, 0, "no square holds a season");
+    assert!(
+        calendar.days.iter().all(|day| day.items.is_empty()),
+        "no square holds a season"
+    );
 }
 
 #[tokio::test]

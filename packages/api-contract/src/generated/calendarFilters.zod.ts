@@ -7,8 +7,7 @@
 import { z as zod } from 'zod';
 
 export const CalendarFilters = zod.object({
-  "type": zod.string().nullish(),
-  "source": zod.string()
+  "type": zod.string().nullish()
 })
 
 export type CalendarFilters = zod.input<typeof CalendarFilters>;

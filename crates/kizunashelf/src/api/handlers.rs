@@ -3,7 +3,7 @@ use super::mutations::check_revision;
 use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{
     build_activity, build_calendar, ActivityBuildOptions, ActivityMode, ActivityResponse,
-    CalendarBuildOptions, CalendarSource, UpcomingResponse,
+    CalendarBuildOptions, UpcomingResponse,
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
@@ -311,7 +311,6 @@ pub(crate) struct CalendarQuery {
     month: Option<f64>,
     #[serde(rename = "type")]
     entity_type: Option<String>,
-    source: Option<String>,
 }
 
 pub(crate) async fn calendar(
@@ -334,11 +333,6 @@ pub(crate) async fn calendar(
         1,
         12,
     ) as u32;
-    let source = match query.source.as_deref() {
-        Some("taxonomy") => CalendarSource::Taxonomy,
-        Some("daily-note") => CalendarSource::DailyNote,
-        _ => CalendarSource::All,
-    };
     let vfs = state.vault_vfs(&library.config.vault_root);
     Ok(Json(
         build_calendar(
@@ -348,7 +342,7 @@ pub(crate) async fn calendar(
                 year,
                 month,
                 entity_type: query.entity_type.filter(|item| item != "all"),
-                source,
+                include_daily_notes: true,
                 // The grid places days, and a season isn't one.
                 season: None,
             },
@@ -371,7 +365,6 @@ pub(crate) struct ActivityQuery {
     limit: Option<f64>,
     #[serde(rename = "type")]
     entity_type: Option<String>,
-    source: Option<String>,
     /// `all` (default), `recent`, `up-next`, or `catch-up` (passed but unconsumed:
     /// planning dates still in `planning` status, and `ongoing` entities'
     /// aired-but-unwatched episodes, one item per missed air date).
@@ -384,11 +377,6 @@ pub(crate) async fn activity(
 ) -> ApiResult<ActivityResponse> {
     let library = get_library(&state).await?;
     let limit = clamp_number(query.limit.unwrap_or(20.0), 1, 100) as u32;
-    let source = match query.source.as_deref() {
-        Some("taxonomy") => CalendarSource::Taxonomy,
-        Some("daily-note") => CalendarSource::DailyNote,
-        _ => CalendarSource::All,
-    };
     let mode = match query.mode.as_deref() {
         Some("recent") => ActivityMode::Recent,
         Some("up-next") => ActivityMode::UpNext,
@@ -412,7 +400,7 @@ pub(crate) async fn activity(
                 months: 1,
                 min_items: Some(limit),
                 entity_type: query.entity_type.filter(|item| item != "all"),
-                source,
+                include_daily_notes: true,
                 mode,
                 today,
             },
@@ -463,8 +451,9 @@ pub(crate) async fn upcoming(
             // The homepage widget keeps its month horizon, not an item target.
             min_items: None,
             entity_type: query.entity_type.filter(|item| item != "all"),
-            // Date fields + scheduled episodes, never daily-note mentions.
-            source: CalendarSource::Taxonomy,
+            // Date fields + scheduled episodes, never daily-note mentions: a
+            // mention in a journal is a record of something, not something ahead.
+            include_daily_notes: false,
             mode: ActivityMode::UpNext,
             today,
         },

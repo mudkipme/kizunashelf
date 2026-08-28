@@ -2,20 +2,17 @@ use crate::types::{DateRole, EntitySummary, EpisodeDateRole};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub enum CalendarSource {
-    All,
-    Taxonomy,
-    DailyNote,
-}
-
 #[derive(Clone, Debug)]
 pub struct CalendarBuildOptions {
     pub year: i32,
     pub month: u32,
     pub entity_type: Option<String>,
-    pub source: CalendarSource,
+    /// Whether daily-note mentions join the dated entries this build collects.
+    /// Every user-facing surface says `true`: the calendar grid and the activity
+    /// feed both show everything a date can come from, and there is no filter to
+    /// narrow that any more. `/upcoming` says `false` — a past mention in a
+    /// journal is not something still ahead of you.
+    pub include_daily_notes: bool,
     /// How `season`-valued planning fields join this build, or `None` to leave
     /// them out. The calendar view leaves them out: a season names a stretch of
     /// time, not a day on a grid, so pinning `2026 Spring` to a square would
@@ -78,7 +75,8 @@ pub struct ActivityBuildOptions {
     /// back to the month count in [`Self::months`].
     pub min_items: Option<u32>,
     pub entity_type: Option<String>,
-    pub source: CalendarSource,
+    /// See [`CalendarBuildOptions::include_daily_notes`].
+    pub include_daily_notes: bool,
     pub mode: ActivityMode,
     /// Today's date (`YYYY-MM-DD`) — the reference point for the mode filters.
     pub today: String,

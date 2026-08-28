@@ -41,7 +41,7 @@ msgid "{0, plural, one {# created} other {# created}}"
 msgstr "{0, plural, other {已建立 # 件}}"
 
 #. placeholder {0}: selectedDay.items.length
-#: src/pages/calendar-page.tsx:172
+#: src/pages/calendar-page.tsx:154
 msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, other {# 件}}"
 
@@ -293,7 +293,7 @@ msgstr "≤"
 msgid "≥"
 msgstr "≥"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:278
 msgid "✅ Completed"
 msgstr "✅ 已完成"
 
@@ -301,7 +301,7 @@ msgstr "✅ 已完成"
 msgid "✨ Pairs well with your picks"
 msgstr "✨ 與你的選擇很搭"
 
-#: src/pages/activity-page.tsx:297
+#: src/pages/activity-page.tsx:278
 msgid "📅 Scheduled"
 msgstr "📅 已排程"
 
@@ -452,7 +452,7 @@ msgid "Advanced: edit full schema"
 msgstr "進階：編輯完整結構描述"
 
 #: src/components/smart-lists/rule-subgroup.tsx:101
-#: src/pages/activity-page.tsx:41
+#: src/pages/activity-page.tsx:35
 msgid "All"
 msgstr "全部"
 
@@ -470,15 +470,10 @@ msgstr "全部符合"
 msgid "All providers"
 msgstr "所有資料來源"
 
-#: src/pages/activity-page.tsx:28
-#: src/pages/calendar-page.tsx:119
-msgid "All sources"
-msgstr "所有來源"
-
 #: src/components/analytics/activity-heatmap.tsx:88
 #: src/components/assets/asset-download-panel.tsx:84
-#: src/pages/activity-page.tsx:133
-#: src/pages/calendar-page.tsx:124
+#: src/pages/activity-page.tsx:125
+#: src/pages/calendar-page.tsx:107
 #: src/pages/lists-page.tsx:212
 #: src/pages/review-page.tsx:168
 #: src/pages/smart-list-page.tsx:482
@@ -607,7 +602,7 @@ msgstr "日曆"
 msgid "Cancel"
 msgstr "取消"
 
-#: src/pages/activity-page.tsx:40
+#: src/pages/activity-page.tsx:34
 msgid "Catch up"
 msgstr "補進度"
 
@@ -671,7 +666,7 @@ msgstr ""
 #: src/components/settings/settings-field-form.tsx:151
 #: src/components/settings/settings-field-form.tsx:193
 #: src/components/settings/settings-field-form.tsx:272
-#: src/pages/activity-page.tsx:48
+#: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "已完成"
 
@@ -809,21 +804,11 @@ msgstr "自訂欄位名稱"
 msgid "Daily note indexing is disabled."
 msgstr "每日筆記索引已停用。"
 
-#: src/pages/calendar-page.tsx:121
-msgid "Daily note mentions"
-msgstr "每日筆記提及"
-
 #: src/components/settings/settings-editor.tsx:106
 #: src/components/settings/settings-editor.tsx:264
-#: src/pages/activity-page.tsx:30
 #: src/pages/statistics-page.tsx:33
 msgid "Daily Notes"
 msgstr "每日筆記"
-
-#. placeholder {0}: calendar.data.totals.dailyNotes
-#: src/pages/calendar-page.tsx:113
-msgid "Daily Notes {0}"
-msgstr "每日筆記 {0}"
 
 #: src/components/settings/settings-entity-type.tsx:125
 msgid "Daily-note logging"
@@ -837,13 +822,13 @@ msgstr "深色主題"
 msgid "Dark theme. Switch to system theme."
 msgstr "深色主題。切換為系統主題。"
 
-#: src/pages/activity-page.tsx:275
+#: src/pages/activity-page.tsx:256
 msgid "date"
 msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:129
 #: src/components/smart-lists/rule-value-input.tsx:71
-#: src/pages/activity-page.tsx:274
+#: src/pages/activity-page.tsx:255
 msgid "Date"
 msgstr "日期"
 
@@ -863,10 +848,6 @@ msgstr "有日期"
 #: src/components/assets/entity-detail.tsx:285
 msgid "Dates"
 msgstr "日期"
-
-#: src/pages/activity-page.tsx:29
-msgid "Dates & episodes"
-msgstr "日期與劇集"
 
 #. Duration unit in a date rule
 #: src/components/smart-lists/rule-field-meta.ts:140
@@ -1073,7 +1054,7 @@ msgid "Episode"
 msgstr "劇集"
 
 #: src/components/import/import-status.tsx:24
-#: src/pages/activity-page.tsx:303
+#: src/pages/activity-page.tsx:284
 msgid "Episodes"
 msgstr "劇集"
 
@@ -1082,7 +1063,7 @@ msgid "esc to close"
 msgstr ""
 
 #: src/components/settings/settings-field-form.tsx:194
-#: src/pages/activity-page.tsx:50
+#: src/pages/activity-page.tsx:44
 msgid "Event"
 msgstr "事件"
 
@@ -1166,12 +1147,9 @@ msgstr "庫無法正常解析的檔案。"
 msgid "Filter"
 msgstr "篩選"
 
-#: src/pages/activity-page.tsx:143
-msgid "Filter by source"
-msgstr "依來源篩選"
-
 #: src/components/analytics/activity-heatmap.tsx:86
-#: src/pages/activity-page.tsx:131
+#: src/pages/activity-page.tsx:123
+#: src/pages/calendar-page.tsx:104
 msgid "Filter by type"
 msgstr "依類型篩選"
 
@@ -1413,11 +1391,6 @@ msgstr "項目清單"
 msgid "Items"
 msgstr "項目"
 
-#. placeholder {0}: calendar.data.totals.episodes
-#: src/pages/calendar-page.tsx:110
-msgid "Items {0}"
-msgstr "項目 {0}"
-
 #: src/pages/list-detail-page.tsx:434
 msgid "Items <0>({totalItems})</0>"
 msgstr "項目 <0>({totalItems})</0>"
@@ -1545,7 +1518,7 @@ msgstr "清單樣式"
 msgid "Lists"
 msgstr "清單"
 
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:175
 msgid "Load more"
 msgstr "載入更多"
 
@@ -1553,7 +1526,7 @@ msgstr "載入更多"
 msgid "Loading"
 msgstr "載入中"
 
-#: src/pages/activity-page.tsx:155
+#: src/pages/activity-page.tsx:136
 msgid "Loading activity…"
 msgstr "正在載入活動…"
 
@@ -1568,7 +1541,7 @@ msgstr "正在載入分類"
 #: src/components/assets/episode-sync-dialog.tsx:273
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:146
-#: src/pages/activity-page.tsx:194
+#: src/pages/activity-page.tsx:175
 #: src/pages/entity-edit-page.tsx:196
 #: src/pages/entity-page.tsx:284
 #: src/pages/entity-page.tsx:592
@@ -1653,7 +1626,7 @@ msgstr "符合方式"
 msgid "Metadata"
 msgstr "中繼資料"
 
-#: src/pages/activity-page.tsx:289
+#: src/pages/activity-page.tsx:270
 msgid "Missed?"
 msgstr "錯過了？"
 
@@ -1744,7 +1717,7 @@ msgstr "新筆記範本"
 msgid "New: {newValue}"
 msgstr "新：{newValue}"
 
-#: src/pages/calendar-page.tsx:96
+#: src/pages/calendar-page.tsx:97
 msgid "Next"
 msgstr "下一步"
 
@@ -1759,7 +1732,7 @@ msgstr "否"
 msgid "No"
 msgstr "否"
 
-#: src/pages/activity-page.tsx:158
+#: src/pages/activity-page.tsx:139
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "尚無活動。有日期的項目、劇集播出／完成日期，以及每日筆記提及都會顯示在這裡。"
 
@@ -1781,7 +1754,7 @@ msgstr "沒有條件 — 符合庫中的所有內容。"
 msgid "No date"
 msgstr "無日期"
 
-#: src/pages/calendar-page.tsx:168
+#: src/pages/calendar-page.tsx:150
 msgid "No date selected"
 msgstr "未選取日期"
 
@@ -1797,8 +1770,8 @@ msgstr "沒有項目類型對應 {unmatchedLabels}。請在設定中為其新增
 msgid "No entity types configured."
 msgstr "未設定任何項目類型。"
 
-#: src/pages/calendar-page.tsx:173
-#: src/pages/calendar-page.tsx:188
+#: src/pages/calendar-page.tsx:155
+#: src/pages/calendar-page.tsx:170
 #: src/pages/library-page.tsx:388
 msgid "No entries"
 msgstr "無項目"
@@ -2093,7 +2066,7 @@ msgstr "選擇範圍類型後即可依該類型自有的欄位篩選；在所有
 msgid "Pick a type to filter on its own fields — across all types only the properties every entry has can be matched."
 msgstr "選擇類型後即可依該類型自有的欄位篩選；在所有類型下只能比對每個項目都具備的屬性。"
 
-#: src/pages/activity-page.tsx:49
+#: src/pages/activity-page.tsx:43
 msgid "Planned"
 msgstr "計劃中"
 
@@ -2103,7 +2076,7 @@ msgstr "計劃中"
 msgid "Planning"
 msgstr "計劃中"
 
-#: src/pages/calendar-page.tsx:90
+#: src/pages/calendar-page.tsx:91
 msgid "Prev"
 msgstr "上一步"
 
@@ -2160,7 +2133,7 @@ msgstr "快速擷取"
 msgid "Real"
 msgstr "實際"
 
-#: src/pages/activity-page.tsx:38
+#: src/pages/activity-page.tsx:32
 msgid "Recent"
 msgstr "最近"
 
@@ -2618,7 +2591,7 @@ msgstr "重新開始"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 #: src/components/settings/settings-field-form.tsx:192
-#: src/pages/activity-page.tsx:47
+#: src/pages/activity-page.tsx:41
 msgid "Started"
 msgstr "已開始"
 
@@ -2704,15 +2677,6 @@ msgstr "標籤"
 #: src/components/settings/settings-editor.tsx:330
 msgid "Tags are disabled."
 msgstr "標籤已停用。"
-
-#. placeholder {0}: calendar.data.totals.taxonomy
-#: src/pages/calendar-page.tsx:107
-msgid "Taxonomy {0}"
-msgstr "分類 {0}"
-
-#: src/pages/calendar-page.tsx:120
-msgid "Taxonomy dates"
-msgstr "分類日期"
 
 #: src/components/settings/settings-editor.tsx:248
 msgid "Taxonomy root"
@@ -2804,7 +2768,7 @@ msgid "Title, or paste a provider URL"
 msgstr "標題，或貼上資料來源 URL"
 
 #: src/components/home/coming-up-section.tsx:156
-#: src/pages/calendar-page.tsx:93
+#: src/pages/calendar-page.tsx:94
 msgid "Today"
 msgstr "今天"
 
@@ -2899,7 +2863,7 @@ msgstr "未解析的關聯"
 msgid "Untitled section"
 msgstr "未命名版塊"
 
-#: src/pages/activity-page.tsx:39
+#: src/pages/activity-page.tsx:33
 msgid "Up next"
 msgstr "接下來"
 

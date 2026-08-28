@@ -8,16 +8,6 @@ import { z as zod } from 'zod';
 
 export const calendarResponseMonthMin = 0;
 
-export const calendarResponseTotalsEntriesMin = 0;
-
-export const calendarResponseTotalsTaxonomyMin = 0;
-
-export const calendarResponseTotalsDailyNotesMin = 0;
-
-export const calendarResponseTotalsEpisodesMin = 0;
-
-export const calendarResponseTotalsDaysWithEntriesMin = 0;
-
 export const calendarResponseDaysItemItemsItemEntityDatesItemParsedOneMonthMin = 0;
 
 export const calendarResponseDaysItemItemsItemEntityDatesItemParsedOneDayMin = 0;
@@ -45,15 +35,7 @@ export const CalendarResponse = zod.object({
   "year": zod.int(),
   "month": zod.int().min(calendarResponseMonthMin),
   "filters": zod.object({
-  "type": zod.string().nullish(),
-  "source": zod.string()
-}),
-  "totals": zod.object({
-  "entries": zod.int().min(calendarResponseTotalsEntriesMin),
-  "taxonomy": zod.int().min(calendarResponseTotalsTaxonomyMin),
-  "dailyNotes": zod.int().min(calendarResponseTotalsDailyNotesMin),
-  "episodes": zod.int().min(calendarResponseTotalsEpisodesMin),
-  "daysWithEntries": zod.int().min(calendarResponseTotalsDaysWithEntriesMin)
+  "type": zod.string().nullish()
 }),
   "days": zod.array(zod.object({
   "date": zod.string(),

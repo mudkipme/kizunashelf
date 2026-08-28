@@ -11,7 +11,6 @@ import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { ActivityCard } from "@/pages/activity-page";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useDateFormat, useIsoDateFormat } from "@/lib/locale";
@@ -25,12 +24,10 @@ export function CalendarPage() {
   const year = readYear(searchParams.get("year"), now.getFullYear());
   const month = readMonth(searchParams.get("month"), now.getMonth() + 1);
   const selectedDate = searchParams.get("date") ?? todayInMonth(year, month, now);
-  const source = readSource(searchParams.get("source"));
   const type = searchParams.get("type") ?? "all";
   const calendarParams = {
     year,
     month,
-    source,
     ...(type !== "all" ? { type } : {}),
   };
   const config = useQuery(configQuery());
@@ -83,7 +80,11 @@ export function CalendarPage() {
   return (
     <AppFrame error={calendar.error ? errorMessage(calendar.error) : undefined}>
       <PageContainer width="wide">
-        <header className="flex flex-wrap items-center justify-end gap-2">
+        {/* One row: which month you're looking at, how you move between months,
+            and the only filter left. The month title leads it — it's the answer
+            to "where am I", not a caption for a separate band below. */}
+        <header className="flex flex-wrap items-center gap-2">
+          <h1 className="text-sm font-medium">{formatMonthTitle(new Date(year, month - 1, 1))}</h1>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => moveMonth(-1)}>
               <ChevronLeftIcon data-icon="inline-start" />
@@ -97,39 +98,20 @@ export function CalendarPage() {
               <ChevronRightIcon data-icon="inline-end" />
             </Button>
           </div>
+          <Select
+            value={type}
+            onChange={(event) => setParam("type", event.target.value, "all")}
+            aria-label={t`Filter by type`}
+            className="ml-auto max-w-56"
+          >
+            <option value="all">{t`All types`}</option>
+            {(config.data?.types ?? []).map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </Select>
         </header>
-
-        <section className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2">
-          <div className="text-sm font-medium">{formatMonthTitle(new Date(year, month - 1, 1))}</div>
-          {calendar.data ? (
-            <div className="flex flex-wrap gap-1">
-              <Badge variant="outline">
-                <Trans>Taxonomy {calendar.data.totals.taxonomy}</Trans>
-              </Badge>
-              <Badge variant="outline">
-                <Trans>Items {calendar.data.totals.episodes}</Trans>
-              </Badge>
-              <Badge variant="outline">
-                <Trans>Daily Notes {calendar.data.totals.dailyNotes}</Trans>
-              </Badge>
-            </div>
-          ) : null}
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <Select value={source} onChange={(event) => setParam("source", event.target.value, "all")}>
-              <option value="all">{t`All sources`}</option>
-              <option value="taxonomy">{t`Taxonomy dates`}</option>
-              <option value="daily-note">{t`Daily note mentions`}</option>
-            </Select>
-            <Select value={type} onChange={(event) => setParam("type", event.target.value, "all")}>
-              <option value="all">{t`All types`}</option>
-              {(config.data?.types ?? []).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </section>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
           <section className="overflow-hidden rounded-md border">
@@ -204,10 +186,6 @@ function readYear(value: string | null, fallback: number) {
 function readMonth(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= 12 ? parsed : fallback;
-}
-
-function readSource(value: string | null): "all" | "taxonomy" | "daily-note" {
-  return value === "taxonomy" || value === "daily-note" ? value : "all";
 }
 
 function todayInMonth(year: number, month: number, date: Date) {
