@@ -570,7 +570,7 @@ function MarkdownField({
         value.trim() ? <MarkdownView markdown={value} relations={[]} /> : null
       ) : (
         <Textarea
-          className="min-h-24 font-mono text-xs"
+          className="min-h-24 font-mono text-code"
           value={value}
           placeholder={placeholder}
           onChange={(event) => onChange(event.target.value)}

@@ -252,7 +252,7 @@ export function CommandPalette({
               setActiveIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            className="h-12 w-full bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
+            className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground pointer-coarse:text-base"
           />
         </div>
 

@@ -136,7 +136,7 @@ function ComingUpCard({
         <div className="text-xs font-medium">{countdown(days, i18n)}</div>
         {/* A season is anchored to a day so it can be ordered, but it names a
             period — show the period, never the anchor. */}
-        <div className="text-[11px] tabular-nums text-muted-foreground">
+        <div className="text-xs tabular-nums text-muted-foreground">
           {item.dateText ?? formatDate(item.date)}
         </div>
       </div>

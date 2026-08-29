@@ -350,7 +350,7 @@ function PresetCard({
       {(preset.providers?.length ?? 0) > 0 ? (
         <div className="mt-1 flex flex-wrap gap-1">
           {preset.providers.map((provider) => (
-            <Badge key={provider.id} variant="outline" className="text-[10px]">
+            <Badge key={provider.id} variant="outline" className="text-xs">
               {provider.label}
             </Badge>
           ))}

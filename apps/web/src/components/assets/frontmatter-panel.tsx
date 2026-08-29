@@ -174,7 +174,7 @@ function FrontmatterValueView({
       <div className="flex min-w-0 flex-col gap-2">
         {value.map((item, index) => (
           <div key={index} className="min-w-0 rounded-md bg-muted/60 px-2.5 py-2">
-            <div className="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
+            <div className="mb-1 text-xs font-medium uppercase text-muted-foreground">
               <Trans>Item {index + 1}</Trans>
             </div>
             <FrontmatterValueView value={item} depth={depth + 1} />

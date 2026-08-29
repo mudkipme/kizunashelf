@@ -153,7 +153,7 @@ export function MetadataEditor({
 
       <DetailSection title={t`Notes`}>
         <Textarea
-          className="min-h-72 font-mono text-xs"
+          className="min-h-72 font-mono text-code"
           value={bodyText}
           onChange={(event) => onBodyChange(event.target.value)}
           disabled={disabled}
@@ -199,7 +199,7 @@ function EditableFieldRow({
             value={keyDraft}
             onChange={(event) => setKeyDraft(event.target.value)}
             onBlur={() => onRename(keyDraft)}
-            className="h-(--control-height-sm) min-w-0 font-mono text-xs"
+            className="h-(--control-height-sm) min-w-0 font-mono text-code"
             aria-label={t`Custom field name`}
             disabled={disabled}
           />

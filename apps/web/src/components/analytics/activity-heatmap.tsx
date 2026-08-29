@@ -95,7 +95,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="w-10 shrink-0" />
           <div className="grid flex-1 grid-cols-12 gap-1 sm:w-[360px] sm:flex-none">
             {monthInitials.map((month, index) => (
@@ -143,7 +143,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
         })}
       </div>
 
-      <div className="flex items-center justify-end gap-1 text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
         <span><Trans>less</Trans></span>
         {CELL_LEVELS.map((level, index) => (
           <span key={index} className={cn("size-3 rounded-sm", level)} />

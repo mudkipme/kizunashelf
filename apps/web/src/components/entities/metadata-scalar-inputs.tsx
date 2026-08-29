@@ -75,7 +75,7 @@ export function ObjectValueInput({
           <Input
             value={key}
             onChange={(event) => renameKey(key, event.target.value)}
-            className="font-mono text-xs"
+            className="font-mono text-code"
             disabled={disabled}
             aria-label={`${ariaLabel} key`}
           />
@@ -108,7 +108,7 @@ export function ObjectValueInput({
           value={newKey}
           onChange={(event) => setNewKey(event.target.value)}
           placeholder={t`property`}
-          className="font-mono text-xs"
+          className="font-mono text-code"
           disabled={disabled}
           aria-label={t`${ariaLabel} new property`}
         />

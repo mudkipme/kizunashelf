@@ -147,7 +147,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
         </Placeholder>
       ) : (
         <Textarea
-          className="min-h-[60vh] font-mono text-xs"
+          className="min-h-[60vh] font-mono text-code"
           value={content}
           onChange={(event) => setContent(event.target.value)}
           disabled={!settingsWritable || externalChange}

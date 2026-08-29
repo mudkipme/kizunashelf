@@ -88,7 +88,7 @@ function ComboboxRawInput({ className, ...props }: ComboboxPrimitive.Input.Props
     <ComboboxPrimitive.Input
       data-slot="combobox-raw-input"
       className={cn(
-        "flex h-(--control-height) w-full rounded-md border border-input bg-background px-2.5 py-1 text-base shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "flex h-(--control-height) w-full rounded-md border border-input bg-background px-2.5 py-1 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:text-base",
         className,
       )}
       {...props}
@@ -176,7 +176,7 @@ function ComboboxLabel({ className, ...props }: ComboboxPrimitive.GroupLabel.Pro
     <ComboboxPrimitive.GroupLabel
       data-slot="combobox-label"
       className={cn(
-        "px-2 py-1 text-xs text-muted-foreground pointer-coarse:px-3 pointer-coarse:py-2 pointer-coarse:text-sm",
+        "px-2 py-1 text-xs text-muted-foreground pointer-coarse:px-3 pointer-coarse:py-2",
         className,
       )}
       {...props}
@@ -262,7 +262,10 @@ function ComboboxChipsInput({ className, ...props }: ComboboxPrimitive.Input.Pro
   return (
     <ComboboxPrimitive.Input
       data-slot="combobox-chip-input"
-      className={cn("min-w-16 flex-1 outline-none", className)}
+      // Carries the zoom guard itself rather than inheriting `text-sm` from
+      // `ComboboxChips`: the guard has to reach the caret, and putting it on the
+      // container would drag the chips up with it.
+      className={cn("min-w-16 flex-1 text-sm outline-none pointer-coarse:text-base", className)}
       {...props}
     />
   );

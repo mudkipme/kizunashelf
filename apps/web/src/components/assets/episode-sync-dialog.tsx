@@ -457,7 +457,7 @@ function ItemRow({
           <span className="shrink-0 tabular-nums text-xs text-muted-foreground">📅 {formatDate(item.date)}</span>
         ) : null}
         {tracked ? (
-          <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <Trans>in list</Trans>
           </span>
         ) : null}

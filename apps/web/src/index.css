@@ -9,11 +9,14 @@
 
   /* An application's type scale, not a web page's: 13px for interface text and
      11px for captions is what macOS and VS Code use, against the 14/12 a
-     comfortable web layout defaults to.
-     `--text-base` deliberately stays 16px. Every field in this app is written
-     `text-base md:text-sm` because iOS Safari zooms the viewport when a focused
-     input is under 16px, so the mobile size has to stay put while the desktop
-     one tightens. */
+     comfortable web layout defaults to. This is the *desktop* scale; the touch
+     one is further down, next to the control heights it belongs with.
+     `--text-base` is the size a focused field has to reach, because iOS Safari
+     zooms the viewport when one is under 16px. Every field in the app is
+     written `<its size> pointer-coarse:text-base`, so touch gets the size that
+     clears 16px and nothing else moves. Written in that direction on purpose:
+     a device that reports neither `fine` nor `coarse` — no pointer at all —
+     then falls back to the desktop size rather than to oversized fields. */
   --text-xs: 0.6875rem;
   --text-xs--line-height: 1rem;
   --text-sm: 0.8125rem;
@@ -25,6 +28,13 @@
      makes between its 13px chrome and its editor. */
   --text-prose: 0.875rem;
   --text-prose--line-height: 1.5rem;
+
+  /* Monospace fields — the body/notes editors, the raw config, a frontmatter
+     key being renamed. Their own register again: dense enough that a wall of
+     YAML stays scannable, and a token rather than a literal `text-xs` so the
+     touch scale can lift them clear of the zoom floor with everything else. */
+  --text-code: 0.6875rem;
+  --text-code--line-height: 1rem;
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(0 0% 4%);
   --color-muted: hsl(0 0% 96%);
@@ -71,9 +81,25 @@
   --toolbar-height: 2.75rem;
 }
 
-/* A finger cannot reliably hit a 28px target, so where the primary pointer is
-   coarse every control grows back to a touch size. The dense scale is a
-   desktop affordance; this is not a smaller app on a phone. */
+/* Touch density.
+ *
+ * A finger cannot reliably hit a 28px target, and 13px interface text read at
+ * arm's length on a phone is a footnote, not body copy. The dense scale is a
+ * desktop affordance; this is not a smaller app on a phone, so both the control
+ * heights and the type scale grow back here.
+ *
+ * Keyed to the pointer, not to the viewport width, which is the reason this is
+ * one rule instead of a `pointer-coarse:` variant repeated on every control in
+ * the app. A width query cannot tell a phone from a narrow desktop window, and
+ * the desktop window is the case that must not change: the Tauri app is
+ * resizable, and dragging it narrow should not swap the type scale under you.
+ * The trade-off is that a desktop browser's responsive mode shows the desktop
+ * sizes unless it also emulates touch.
+ *
+ * The values are iOS's: 15px is Subheadline, 17px Body, 12px Caption 1. Type
+ * moves about 2px, controls about 8px, so the ratio of text to the box around
+ * it loosens rather than scaling uniformly — which is what makes a control
+ * tappable instead of merely bigger. */
 @media (pointer: coarse) {
   :root {
     --control-height-xs: 2rem;
@@ -81,6 +107,17 @@
     --control-height: 2.5rem;
     --control-height-lg: 2.75rem;
     --toolbar-height: 3.5rem;
+
+    --text-xs: 0.75rem;
+    --text-xs--line-height: 1.125rem;
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: 1.375rem;
+    --text-base: 1.0625rem;
+    --text-base--line-height: 1.5rem;
+    --text-prose: 1rem;
+    --text-prose--line-height: 1.625rem;
+    --text-code: 1rem;
+    --text-code--line-height: 1.5rem;
   }
 }
 
