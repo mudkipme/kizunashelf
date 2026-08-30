@@ -1715,9 +1715,10 @@ msgstr "新建笔记模板"
 msgid "New: {newValue}"
 msgstr "新：{newValue}"
 
+#. Calendar navigation button for the next month
 #: src/pages/calendar-page.tsx:97
 msgid "Next"
-msgstr "下一步"
+msgstr "下个月"
 
 #. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = no'
 #: src/components/smart-lists/rule-format.ts:36
@@ -2075,9 +2076,10 @@ msgstr "计划中"
 msgid "Planning"
 msgstr "计划中"
 
+#. Calendar navigation button for the previous month
 #: src/pages/calendar-page.tsx:91
 msgid "Prev"
-msgstr "上一步"
+msgstr "上个月"
 
 #: src/pages/list-detail-page.tsx:566
 msgid "Preview"

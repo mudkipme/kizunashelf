@@ -1715,9 +1715,10 @@ msgstr "新規ノートのテンプレート"
 msgid "New: {newValue}"
 msgstr "新規: {newValue}"
 
+#. Calendar navigation button for the next month
 #: src/pages/calendar-page.tsx:97
 msgid "Next"
-msgstr "次へ"
+msgstr "次月"
 
 #. Value of a boolean field in a filter-criteria chip, e.g. 'favorite = no'
 #: src/components/smart-lists/rule-format.ts:36
@@ -2075,9 +2076,10 @@ msgstr "予定"
 msgid "Planning"
 msgstr "計画中"
 
+#. Calendar navigation button for the previous month
 #: src/pages/calendar-page.tsx:91
 msgid "Prev"
-msgstr "前へ"
+msgstr "前月"
 
 #: src/pages/list-detail-page.tsx:566
 msgid "Preview"

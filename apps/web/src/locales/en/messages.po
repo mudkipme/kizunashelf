@@ -1715,6 +1715,7 @@ msgstr "New-note template"
 msgid "New: {newValue}"
 msgstr "New: {newValue}"
 
+#. Calendar navigation button for the next month
 #: src/pages/calendar-page.tsx:97
 msgid "Next"
 msgstr "Next"
@@ -2075,6 +2076,7 @@ msgstr "Planned"
 msgid "Planning"
 msgstr "Planning"
 
+#. Calendar navigation button for the previous month
 #: src/pages/calendar-page.tsx:91
 msgid "Prev"
 msgstr "Prev"

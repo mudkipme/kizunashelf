@@ -88,13 +88,13 @@ export function CalendarPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => moveMonth(-1)}>
               <ChevronLeftIcon data-icon="inline-start" />
-              <Trans>Prev</Trans>
+              <Trans comment="Calendar navigation button for the previous month">Prev</Trans>
             </Button>
             <Button variant="outline" size="sm" onClick={goToday}>
               <Trans>Today</Trans>
             </Button>
             <Button variant="outline" size="sm" onClick={() => moveMonth(1)}>
-              <Trans>Next</Trans>
+              <Trans comment="Calendar navigation button for the next month">Next</Trans>
               <ChevronRightIcon data-icon="inline-end" />
             </Button>
           </div>
@@ -199,4 +199,3 @@ function monthGridDays(days: CalendarDay[], year: number, month: number) {
   const offset = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
   return [...Array.from<undefined>({ length: offset }), ...days];
 }
-
