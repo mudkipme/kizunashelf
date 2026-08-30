@@ -1,0 +1,57 @@
+/* Site-wide theming for the manual. The landing page brings its own complete
+ * stylesheet (`home.css`); this file dresses Infima for the docs pages in the
+ * same palette and display face, so the two read as one product. */
+
+@import "./fonts.css";
+
+:root {
+  --ifm-color-primary: #de4a2b;
+  --ifm-color-primary-dark: #c94326;
+  --ifm-color-primary-darker: #be3f24;
+  --ifm-color-primary-darkest: #9d341e;
+  --ifm-color-primary-light: #e35e42;
+  --ifm-color-primary-lighter: #e5684d;
+  --ifm-color-primary-lightest: #ea8770;
+
+  --ifm-heading-font-family: 'Bookman', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --ifm-font-family-monospace: 'JBMono', 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+  --ifm-heading-font-weight: 600;
+  --ifm-code-font-size: 90%;
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #ff8a70;
+  --ifm-color-primary-dark: #ff7454;
+  --ifm-color-primary-darker: #ff6946;
+  --ifm-color-primary-darkest: #ff4619;
+  --ifm-color-primary-light: #ffa08c;
+  --ifm-color-primary-lighter: #ffab9a;
+  --ifm-color-primary-lightest: #ffcdc2;
+
+  --ifm-background-color: #0a0a0a;
+  --ifm-background-surface-color: #121212;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.12);
+}
+
+/* Headings carry the display face and the landing page's tighter rhythm. */
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* The wordmark icon in the navbar is a rounded app icon, not a flat logo. */
+.navbar__logo img {
+  border-radius: 6px;
+}
+
+/* The generated reference pages carry wide tables (every provider, every preset
+   field). Let them scroll inside the column instead of stretching the page. */
+.markdown table {
+  display: block;
+  overflow-x: auto;
+}

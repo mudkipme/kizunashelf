@@ -87,6 +87,8 @@ jobs:
           pnpm docs:generate
           git diff --exit-code -- manual/content/reference
 
+      # Builds the app *and* the manual (Docusaurus), whose build fails on a
+      # broken internal link or anchor.
       - run: pnpm build
 
   desktop-check:

@@ -1,6 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "manual"
 allowBuilds:
+  # @swc/core backs @docusaurus/faster, the manual's Rust-based bundler.
+  "@swc/core": true
   esbuild: true
+  # core-js's postinstall only prints a funding banner — nothing to build.
+  core-js: false
 storeDir: .pnpm-store

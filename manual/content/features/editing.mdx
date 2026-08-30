@@ -1,0 +1,26 @@
+---
+title: "Editing & Matching"
+description: "Edit frontmatter through the schema-driven form, by applying matched provider metadata, or in any external editor."
+sidebar_position: 2
+---
+
+## Editing in KizunaShelf
+
+The detail page lets you edit frontmatter through the same schema-driven form used for [Manual Add](./adding.mdx#manual-add): every declared field receives an editor appropriate to its `fieldType`, while undeclared frontmatter is displayed as additional properties without being altered. There is also a text area for the main body of the Markdown file, allowing you to add or edit sections like episode, chapter, or track lists, summaries, or personal notes.
+
+<Screenshot caption="The detail page's schema-driven frontmatter editor." />
+
+## Matching External Metadata
+
+If the entity type has an `externalRef` field, the entity can be connected to a [provider](../reference/providers.md) to add or update its metadata:
+
+1. **Match** — Search the entity type's providers (or paste a URL or ID) from the detail page and select the correct candidate. The match is stored in the entity's `externalRef` field as a standard URL.
+2. **Apply selected metadata** — Choose which mapped values to write. Fields and body sections declared in `externalFields` are populated from the matched provider, while everything else remains untouched. An external body section replaces only its own heading, preserving the rest of the body content.
+
+<Screenshot caption="Matching an entity and choosing which metadata to apply." />
+
+A stored match also unlocks [episode/track list sync](./episodes.mdx#syncing-from-a-provider) and helps detect duplicates in [Quick Capture](./adding.mdx) and [Batch import](./import.mdx).
+
+## Editing Outside KizunaShelf
+
+You can open the same file in Obsidian, a text editor, or a terminal and make changes directly. KizunaShelf re-reads the file upon rescanning and preserves any unrecognized elements, such as custom fields, unmapped status values, or handwritten body content. See [Using KizunaShelf with Obsidian](../guides/obsidian.md).

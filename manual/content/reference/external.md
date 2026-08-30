@@ -1,8 +1,8 @@
-+++
-title = "External metadata & import"
-description = "Provider wiring, body sections, episode tracking and sync, Quick Capture, and library import."
-weight = 5
-+++
+---
+title: "External metadata & import"
+description: "Provider wiring, body sections, episode tracking and sync, Quick Capture, and library import."
+sidebar_position: 5
+---
 
 ## External Metadata
 
@@ -14,9 +14,9 @@ External metadata support has two pieces:
 
 Each provider exposes one `search` entry point that either resolves a pasted URL/id it recognizes or runs a free-text query. Providers that only resolve URLs/ids (no catalog search API) return nothing for free-text and resolve when handed their URL/id — the catalog's `searchSupported` flag tells clients which is which. The provider list, each provider's fields/types, and its credential requirements all live in the Rust core and are exposed via `/api/external/providers`; clients render from that rather than hard-coding.
 
-The full provider catalog — every provider with its `externalRef` id, searchability, episode/track sync support, credentials (including each credential's exact `KIZUNASHELF_*` env var), `externalTypes` values, and mappable fields — is the [External providers](@/reference/providers.md) page, generated directly from the app so it always matches the version you're running.
+The full provider catalog — every provider with its `externalRef` id, searchability, episode/track sync support, credentials (including each credential's exact `KIZUNASHELF_*` env var), `externalTypes` values, and mappable fields — is the [External providers](./providers.md) page, generated directly from the app so it always matches the version you're running.
 
-Credentials are supplied per runtime: the web app reads them from `KIZUNASHELF_*` environment variables (listed per provider on the [External providers](@/reference/providers.md) page; the var name is `KIZUNASHELF_<UPPER_KEY>` for each catalog credential key); the desktop and iOS apps store them in the OS keychain (entered under Settings → Provider Credentials, which renders its fields from the provider catalog). Credential caveats worth knowing:
+Credentials are supplied per runtime: the web app reads them from `KIZUNASHELF_*` environment variables (listed per provider on the [External providers](./providers.md) page; the var name is `KIZUNASHELF_<UPPER_KEY>` for each catalog credential key); the desktop and iOS apps store them in the OS keychain (entered under Settings → Provider Credentials, which renders its fields from the provider catalog). Credential caveats worth knowing:
 
 - **Discogs** accepts a personal access token **or** an app consumer key + secret (either works; the token wins when both are set). The personal token grants access to *its owner's* account — prefer the consumer pair for anything shared.
 - **Hardcover**'s token is a personal account token (the full `Bearer …` value) — it can read and mutate its owner's Hardcover data, so it's per-user only, never bundled or distributed.
@@ -115,7 +115,7 @@ An `episodes` body section is the built-in episode tracker. The section's body i
 
 Multiple seasons can live as sub-headings in **one** entity, or as **separate** entities linked by relations — the engine mirrors whatever the files contain and never merges or splits them. The list is plain Markdown: edit it directly in Obsidian, or toggle items on the detail page.
 
-**Syncing from a provider.** When an entity links an `externalRef` to a source that exposes a list, the detail page's episodes panel offers a **Sync** action that pulls the provider's list into a checkable preview and merges the ticked items in — new items are added and ticked existing ones have their title updated, while your watched ticks and hand-added entries are always kept. Which providers can supply a list is the *Episode/track sync* column of the [External providers](@/reference/providers.md) table; series providers map episodes, music providers map tracks (grouped by disc), and Comic Vine maps a volume's issues. The provider must be configured (credentials set, if it needs any) and linked on the entity; when more than one such source is linked, the dialog lets you choose which to sync from.
+**Syncing from a provider.** When an entity links an `externalRef` to a source that exposes a list, the detail page's episodes panel offers a **Sync** action that pulls the provider's list into a checkable preview and merges the ticked items in — new items are added and ticked existing ones have their title updated, while your watched ticks and hand-added entries are always kept. Which providers can supply a list is the *Episode/track sync* column of the [External providers](./providers.md) table; series providers map episodes, music providers map tracks (grouped by disc), and Comic Vine maps a volume's issues. The provider must be configured (credentials set, if it needs any) and linked on the entity; when more than one such source is linked, the dialog lets you choose which to sync from.
 
 ## Quick Capture and Import
 
@@ -145,6 +145,6 @@ Only **public profiles** are supported. Each source resolves its items to one of
 
 Import credentials are supplied like provider credentials — `KIZUNASHELF_*` env vars on web, the OS keychain on desktop/iOS (keys `trakt_client_id`, `steam_api_key`). A source with a missing required credential is shown but disabled, with the reason.
 
-**Your data maps through schema roles, not field names.** For each imported item, the source's status is translated to a canonical (`planning`/`ongoing`/`paused`/`completed`/`dropped`) and written to the type's [`enumRole: status`](@/reference/titles-dates-status.md#status) field via its `statusValues`; the score goes to the first [`rating`](@/reference/field-types.md) field (normalized to 0–10); started/finished dates go to the [`dateRole`](@/reference/titles-dates-status.md#dates-and-calendar-design) `started`/`completed` fields; notes become an unmanaged `## Notes` body section; and watched progress ticks the first *N* items of the [episodes](#episodes-tracks-chapters) section. A role you haven't wired is simply skipped. Which of these run is controlled by per-import toggles (import user data, import episodes, mark progress).
+**Your data maps through schema roles, not field names.** For each imported item, the source's status is translated to a canonical (`planning`/`ongoing`/`paused`/`completed`/`dropped`) and written to the type's [`enumRole: status`](./titles-dates-status.md#status) field via its `statusValues`; the score goes to the first [`rating`](./field-types.md) field (normalized to 0–10); started/finished dates go to the [`dateRole`](./titles-dates-status.md#dates-and-calendar-design) `started`/`completed` fields; notes become an unmanaged `## Notes` body section; and watched progress ticks the first *N* items of the [episodes](#episodes--tracks--chapters) section. A role you haven't wired is simply skipped. Which of these run is controlled by per-import toggles (import user data, import episodes, mark progress).
 
 Import does **not** download covers — imported image fields keep their remote URLs. Fetch the local copies afterward with the batch cover downloader (the *Download remote covers* panel on the Review page), which runs one job over a type or the whole library.

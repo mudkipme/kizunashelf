@@ -1,8 +1,8 @@
-+++
-title = "Titles, dates & status"
-description = "Title resolution and the language preference, date roles and seasons, and the canonical status model."
-weight = 3
-+++
+---
+title: "Titles, dates & status"
+description: "Title resolution and the language preference, date roles and seasons, and the canonical status model."
+sidebar_position: 3
+---
 
 ## Title Design
 
@@ -93,7 +93,7 @@ Use `dateRole` to tell KizunaShelf what kind of date a field represents:
   dateRole: completed
 ```
 
-The roles — `planning`, `started`, `completed`, and `event` (a date you *attend* rather than a release you consume; whether it reads as upcoming or attended is derived from the entity's [status](#status)) — are enumerated with their exact meanings in [Date roles](@/reference/field-types.md#date-roles-daterole).
+The roles — `planning`, `started`, `completed`, and `event` (a date you *attend* rather than a release you consume; whether it reads as upcoming or attended is derived from the entity's [status](#status)) — are enumerated with their exact meanings in [Date roles](./field-types.md#date-roles-daterole).
 
 `fieldType: season` can also use `dateRole`. It is useful when a collection uses seasons instead of exact dates.
 
@@ -105,7 +105,7 @@ The roles — `planning`, `started`, `completed`, and `event` (a date you *atten
   seasonLanguage: zh
 ```
 
-`seasonLanguage` selects the season label language — `zh`, `ja`, or `en` (see [Season languages](@/reference/field-types.md#season-languages-seasonlanguage)).
+`seasonLanguage` selects the season label language — `zh`, `ja`, or `en` (see [Season languages](./field-types.md#season-languages-seasonlanguage)).
 
 Exact dates such as `2025-04-20` are normalized for calendar links. Broader values such as seasons and years are still useful for planning/timeline views.
 
@@ -128,7 +128,7 @@ On its own, `enumRole: status` just tells KizunaShelf "this is the status field"
     dropped:   [抛弃]
 ```
 
-The five canonicals and their exact meanings are enumerated in [Canonical statuses](@/reference/field-types.md#canonical-statuses-statusvalues) — in short: `planning` (intend to), `ongoing`, `paused` (deferred, a log resumes it), `completed`, and `dropped` (abandoned, a log never auto-resumes it; past records still appear in the activity feed).
+The five canonicals and their exact meanings are enumerated in [Canonical statuses](./field-types.md#canonical-statuses-statusvalues) — in short: `planning` (intend to), `ongoing`, `paused` (deferred, a log resumes it), `completed`, and `dropped` (abandoned, a log never auto-resumes it; past records still appear in the activity feed).
 
 Notes:
 

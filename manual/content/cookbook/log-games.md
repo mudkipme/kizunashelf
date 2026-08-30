@@ -1,8 +1,8 @@
-+++
-title = "Logging games"
-description = "Playtime, platforms, franchises, and importing a Steam library."
-weight = 4
-+++
+---
+title: "Logging games"
+description: "Playtime, platforms, franchises, and importing a Steam library."
+sidebar_position: 4
+---
 
 <!-- TODO: full recipe. Outline:
      1. Type definition from the Games preset, annotated.
@@ -11,4 +11,4 @@ weight = 4
      4. External metadata — Steam batch import; provider wiring for covers.
      5. Best practices — franchise relations, editions/DLC, backlog statuses. -->
 
-*This recipe is being written. Start from the **Games** type preset, and see [Batch import](@/features/import.md) for importing a Steam library.*
+*This recipe is being written. Start from the **Games** type preset, and see [Batch import](../features/import.mdx) for importing a Steam library.*

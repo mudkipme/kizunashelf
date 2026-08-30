@@ -1,8 +1,8 @@
-+++
-title = "Defining your own type"
-description = "From a folder of Markdown to a fully-wired entity type: fields, roles, titles, relations, external refs."
-weight = 1
-+++
+---
+title: "Defining your own type"
+description: "From a folder of Markdown to a fully-wired entity type: fields, roles, titles, relations, external refs."
+sidebar_position: 1
+---
 
 <!-- TODO: the full walkthrough. Outline:
      1. When to define a type by hand vs starting from a preset.
@@ -17,4 +17,4 @@ weight = 1
      8. Editing safely — the Form vs raw YAML editor, validation, what happens to
         existing files when the schema changes (nothing is rewritten until you edit). -->
 
-*This guide is being written. The [Schema reference](@/reference/config.md) already documents every option, and the Settings editor validates as you go — a safe way to experiment.*
+*This guide is being written. The [Schema reference](../reference/config.md) already documents every option, and the Settings editor validates as you go — a safe way to experiment.*

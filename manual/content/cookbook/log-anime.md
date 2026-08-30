@@ -1,8 +1,8 @@
-+++
-title = "Logging anime"
-description = "Seasons, episode check-ins, airing calendar, and Japanese/English titles."
-weight = 1
-+++
+---
+title: "Logging anime"
+description: "Seasons, episode check-ins, airing calendar, and Japanese/English titles."
+sidebar_position: 1
+---
 
 <!-- TODO: full recipe. Outline (write from the Anime preset in presets.rs so docs and preset agree):
      1. The type definition — YAML from the resolved Anime preset, annotated.

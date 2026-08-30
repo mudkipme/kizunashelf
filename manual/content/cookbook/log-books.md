@@ -1,8 +1,8 @@
-+++
-title = "Logging books & manga"
-description = "Reading progress, chapters/volumes, authors as related entities."
-weight = 3
-+++
+---
+title: "Logging books & manga"
+description: "Reading progress, chapters/volumes, authors as related entities."
+sidebar_position: 3
+---
 
 <!-- TODO: full recipe. Outline:
      1. Type definition from the Books / Manga presets, annotated.

@@ -1,8 +1,8 @@
-+++
-title = "Syncing Your Vault"
-description = "KizunaShelf does not sync files directly. Because a vault is simply a folder, you can sync it using any tool you already use."
-weight = 3
-+++
+---
+title: "Syncing Your Vault"
+description: "KizunaShelf does not sync files directly. Because a vault is simply a folder, you can sync it using any tool you already use."
+sidebar_position: 3
+---
 
 **KizunaShelf does not sync anything itself.** Following the *files over apps* principle, a vault is simply a folder containing Markdown files, frontmatter, links, notes, downloaded assets, and a schema located at `KizunaShelf/config.yaml`. To access a vault across multiple devices, sync that folder using your preferred sync tool. KizunaShelf simply reads whatever files are present on disk.
 

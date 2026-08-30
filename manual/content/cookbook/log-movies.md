@@ -1,8 +1,8 @@
-+++
-title = "Logging movies & TV"
-description = "Watch dates, rewatches, ratings, and franchise relations."
-weight = 2
-+++
+---
+title: "Logging movies & TV"
+description: "Watch dates, rewatches, ratings, and franchise relations."
+sidebar_position: 2
+---
 
 <!-- TODO: full recipe. Outline:
      1. Type definition from the Movies / TV presets, annotated.
@@ -13,4 +13,4 @@ weight = 2
      5. Best practices — logging rewatches, relating films to a franchise entity,
         movies vs TV as separate types. -->
 
-*This recipe is being written. Start from the **Movies** or **TV** type presets, and see [Batch import](@/features/import.md) for bringing in an existing Trakt or IMDb history.*
+*This recipe is being written. Start from the **Movies** or **TV** type presets, and see [Batch import](../features/import.mdx) for bringing in an existing Trakt or IMDb history.*

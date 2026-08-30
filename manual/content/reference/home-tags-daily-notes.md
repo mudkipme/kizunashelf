@@ -1,8 +1,8 @@
-+++
-title = "Home, tags & daily notes"
-description = "Home dashboard sections and criteria, the built-in tags field, and daily notes with logging."
-weight = 6
-+++
+---
+title: "Home, tags & daily notes"
+description: "Home dashboard sections and criteria, the built-in tags field, and daily notes with logging."
+sidebar_position: 6
+---
 
 ## Home Page
 
@@ -133,7 +133,7 @@ The default date format matches filenames like:
 
 The Log action appends a line to the day's daily note. The *shape* of that line is schema-driven, configured in two places:
 
-- **`dailyNotes.log`** — global defaults: `section` (the heading to write under, as raw heading text — no `#`, default h2, the same convention as [`bodySections`](@/reference/external.md#bodysections)) and `lineFormat` (the line template).
+- **`dailyNotes.log`** — global defaults: `section` (the heading to write under, as raw heading text — no `#`, default h2, the same convention as [`bodySections`](./external.md#bodysections)) and `lineFormat` (the line template).
 - **`types[].log`** — per-type override, and the **opt-in**: a type is loggable *only if* it declares a `log` block. Same `section` / `lineFormat` keys. The type's hashtag is written as a **literal inside `lineFormat`** (e.g. `- {title} {note} #Anime`), never a separate field — so it's explicit, never inferred from the type name.
 
 > Logging is **independent of the episode checklist.** Checking an episode (`/episodes/watch`) only stamps that episode's `✅` completion date; it never writes a daily-note line, and logging never reads or ticks episodes. The two show up together only in the read-only activity feed, which aggregates both.

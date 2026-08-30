@@ -1,8 +1,8 @@
-+++
-title = "Schema-Driven by design"
-description = "Field names are yours; meaning comes from the schema. The one concept everything else builds on."
-weight = 1
-+++
+---
+title: "Schema-Driven by design"
+description: "Field names are yours; meaning comes from the schema. The one concept everything else builds on."
+sidebar_position: 1
+---
 
 To help you get started quickly, KizunaShelf includes built-in presets for common media types like movies, anime, TV shows, video games, podcasts, and music albums.
 
@@ -49,10 +49,10 @@ The schema is stored in a single file inside the vault:
 <vaultRoot>/KizunaShelf/config.yaml
 ```
 
-Because it lives *inside* the vault, it syncs with the vault automatically: every device pointing at the folder shares the exact same schema. It uses a **visible** folder on purpose, as most Obsidian sync methods skip hidden dot-folders. See [Syncing your vault](@/guides/syncing.md).
+Because it lives *inside* the vault, it syncs with the vault automatically: every device pointing at the folder shares the exact same schema. It uses a **visible** folder on purpose, as most Obsidian sync methods skip hidden dot-folders. See [Syncing your vault](../guides/syncing.md).
 
 ## Where to go from here
 
-- [Anatomy of an entity](@/concepts/anatomy-of-an-entity.md): An annotated example file line by line.
-- [Defining your own type](@/guides/defining-a-type.md): A step-by-step walkthrough.
-- [Schema reference](@/reference/config.md): A complete reference of every available option.
+- [Anatomy of an entity](./anatomy-of-an-entity.md): An annotated example file line by line.
+- [Defining your own type](../guides/defining-a-type.md): A step-by-step walkthrough.
+- [Schema reference](../reference/config.md): A complete reference of every available option.

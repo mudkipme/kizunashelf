@@ -1,0 +1,59 @@
+.figure {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.desktopSlot {
+  flex: 2 1 20rem;
+  min-width: 16rem;
+}
+
+.iosSlot {
+  flex: 1 1 9rem;
+  min-width: 8rem;
+  max-width: 14rem;
+}
+
+.desktopImage,
+.iosImage {
+  width: 100%;
+  border: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.desktopImage {
+  border-radius: 0.5rem;
+}
+
+.iosImage {
+  border-radius: 0.75rem;
+}
+
+.desktopPlaceholder,
+.iosPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px dashed var(--ifm-color-emphasis-400);
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.85rem;
+}
+
+.desktopPlaceholder {
+  aspect-ratio: 16 / 10;
+  border-radius: 0.5rem;
+}
+
+.iosPlaceholder {
+  aspect-ratio: 9 / 19;
+  border-radius: 0.75rem;
+}
+
+.caption {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+}

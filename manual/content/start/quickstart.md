@@ -1,8 +1,8 @@
-+++
-title = "Quickstart"
-description = "Create your first vault on desktop, iOS, or self-hosted web."
-weight = 1
-+++
+---
+title: "Quickstart"
+description: "Create your first vault on desktop, iOS, or self-hosted web."
+sidebar_position: 1
+---
 
 A **vault** is simply a folder of Markdown files accompanied by a schema file at `KizunaShelf/config.yaml`. This guide walks you through setting up a working library on your platform of choice.
 
@@ -31,10 +31,10 @@ docker run -p 8787:8787 -v /path/to/vault:/vault ghcr.io/mudkipme/kizunashelf:la
 
 The published image binds beyond loopback, so writes default to off — add `-e KIZUNASHELF_CONTENT_WRITABLE=true -e KIZUNASHELF_SETTINGS_WRITABLE=true` to let onboarding write the schema and the app edit your library.
 
-Open the app in your browser. If the vault does not contain `KizunaShelf/config.yaml` yet, onboarding will launch the preset picker. See [Self-hosting](@/start/self-hosting.md) for the complete deployment guide, including write modes and setting up authentication.
+Open the app in your browser. If the vault does not contain `KizunaShelf/config.yaml` yet, onboarding will launch the preset picker. See [Self-hosting](./self-hosting.md) for the complete deployment guide, including write modes and setting up authentication.
 
 ## Next steps
 
-- Read [Schema-driven by design](@/concepts/schema-driven.md): explaining how the system works under the hood.
+- Read [Schema-driven by design](../concepts/schema-driven.md): explaining how the system works under the hood.
 - Add your first entries with **Quick Capture**: search an external provider and create an entity in a single action.
-- Browse the [Cookbook](@/cookbook/_index.md) for recipes tailored to the media types you track most.
+- Browse the [Cookbook](../cookbook/index.md) for recipes tailored to the media types you track most.

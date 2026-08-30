@@ -1,8 +1,8 @@
-+++
-title = "Using KizunaShelf with Obsidian"
-description = "One vault, two apps: wikilinks, daily notes, and what KizunaShelf will and won't touch."
-weight = 2
-+++
+---
+title: "Using KizunaShelf with Obsidian"
+description: "One vault, two apps: wikilinks, daily notes, and what KizunaShelf will and won't touch."
+sidebar_position: 2
+---
 
 <!-- TODO: full guide. Outline:
      1. The shared-vault model — KizunaShelf opens an Obsidian vault as-is; entities

@@ -46,7 +46,7 @@ apps/
 packages/
   api-contract/           orval-generated TS client + Zod validators (from the OpenAPI spec)
 scripts/build-ios.sh      builds KizunaFFI.xcframework + the collapsed iOS openapi.json
-manual/                   the user manual (Zola site); content/reference/ is the schema reference (config.md is the entry page)
+manual/                   the user manual + landing page (Docusaurus site); content/reference/ is the schema reference (config.md is the entry page)
 ```
 
 The native iOS app lives in a **separate repo at `../kizunashelf-ios`** and embeds this core in-process. Its internals (UniFFI bridge, managed/security-scoped vault FS, Keychain, background downloads, widgets, reminders, Spotlight, sharing, and App Intents) are documented in `../kizunashelf-ios/ARCHITECTURE.md` — read that for iOS work. This document covers the core and the cross-cutting seams.
@@ -131,6 +131,7 @@ pnpm install
 KIZUNASHELF_VAULT_ROOT=/path/to/vault pnpm dev   # Rust API + Vite (proxies /api → :8787)
 pnpm dev:api          # core API only         pnpm dev:web        # web only
 pnpm dev:desktop      # Tauri desktop
+pnpm docs:dev         # the manual + landing page (Docusaurus)
 
 pnpm test             # cargo test -p kizunashelf  (the test suite; uses InMemoryVfs)
 pnpm typecheck        # tsc across packages + cargo check -p kizunashelf
@@ -138,6 +139,7 @@ pnpm lint             # oxlint (web)
 pnpm contract:generate  # regenerate the OpenAPI spec + TS client (run after API changes)
 pnpm i18n:extract       # re-extract the web UI-string catalogs (run after UI string changes)
 pnpm docs:generate      # regenerate the manual's reference pages from the Rust source (run after schema/provider/preset changes)
+pnpm docs:build         # build the manual (link/anchor check); also part of `pnpm build`
 pnpm build
 ```
 
@@ -151,6 +153,7 @@ pnpm lint && pnpm typecheck
 pnpm contract:generate   # then ensure git diff is clean (CI fails otherwise)
 pnpm i18n:extract        # same deal — CI diffs apps/web/src/locales after extract
 pnpm docs:generate       # same deal — CI diffs manual/content/reference after generating
+pnpm build               # includes the manual's build, which fails on a broken doc link/anchor
 ```
 
 ## Conventions & gotchas
@@ -163,6 +166,6 @@ pnpm docs:generate       # same deal — CI diffs manual/content/reference after
 
 ## Further reading
 
-- `manual/content/reference/` — the full schema/config reference (types, fields, roles, per-runtime config, provider credentials), split into per-topic pages with `config.md` as the entry/overview page. The authority for what the schema means. It lives in the user manual (`manual/`, a Zola site — see `manual/README.md`).
+- `manual/content/reference/` — the full schema/config reference (types, fields, roles, per-runtime config, provider credentials), split into per-topic pages with `config.md` as the entry/overview page. The authority for what the schema means. It lives in the user manual (`manual/`, a Docusaurus site — see `manual/README.md`).
 - `../kizunashelf-ios/ARCHITECTURE.md` — the iOS app's architecture and the regenerate-bindings workflow.
 - `README.md` — product overview and quick start.

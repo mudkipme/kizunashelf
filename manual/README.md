@@ -1,18 +1,21 @@
 # KizunaShelf Manual
 
-The user manual, built with [Zola](https://www.getzola.org/) (0.22+) and the [Goyo](https://github.com/hahwul/goyo) documentation theme (`themes/goyo`, a **git submodule** — run `git submodule update --init` after a fresh clone, and give any CI/deploy job submodule access).
+The user manual and the product landing page, built with [Docusaurus](https://docusaurus.io/) 3.
 
 ```bash
-cd manual
-zola serve          # live preview at http://127.0.0.1:1111
-zola build          # emits public/ (gitignored)
+pnpm docs:dev       # live preview at http://localhost:3000 (or: pnpm --filter @kizunashelf/manual start)
+pnpm docs:build     # emits manual/build/ (gitignored); fails on any broken internal link or anchor
 ```
+
+The site is a normal pnpm workspace project, so a plain `pnpm install` at the repo root sets it up, and the root `pnpm build` builds it along with everything else — which is how CI link-checks the manual.
 
 ## Structure
 
-- `content/_index.md` — the root renders `templates/home.html`. It's a fully standalone HTML page (inline CSS, no JS, no Goyo markup or styles — site templates shadow the theme, and this one extends nothing), with its assets in `static/assets/` (fonts + webp images; favicons and og-image are shared with the manual's `static/icons/` and `static/images/`). The header nav and a hero button link to `/introduction/`, and Goyo's own header wordmark links back to `/`.
-- `introduction/` → `start/` → `concepts/` → `features/` → `cookbook/` → `guides/` → `reference/` → `faq/`, ordered by section `weight`. Sidebar, search (⌘K), and the dark/light toggle all come from the theme.
-- `features/` has one page per feature (adding, editing, import, log activity, episodes, browse, relations, calendar & activity, lists, home, statistics, covers, schema, iOS). Screenshot placeholders use the `{{ screenshot(caption="…") }}` shortcode (`templates/shortcodes/screenshot.html`) — pass `desktop=`/`ios=` image paths to replace a placeholder with a real capture, or `platforms="ios"` for a single frame.
+- **`src/pages/index.tsx` — the landing page at `/`.** It is deliberately standalone: it renders *without* the Docusaurus `<Layout>` (no navbar, no footer, no sidebar) and brings its own complete stylesheet, `src/css/home.css`. Its assets live in `static/assets/` (fonts + webp images; favicons and og-image are shared with `static/icons/` and `static/images/`). The header nav and a hero button link to `/introduction/`, and the manual's navbar wordmark links back to `/`.
+  - Every rule in `home.css` is scoped under `body.home-page` (the class is set from the page's `<Head>`). That is load-bearing twice over: it outranks Infima's bare element selectors, which are loaded on every route, and it stops the landing-page styles from leaking into docs pages after a client-side navigation.
+  - Light/dark keys off Docusaurus's own `data-theme` attribute on `<html>`, so the theme toggle in the manual carries over to the landing page.
+- **`content/` — the docs.** Served at the site root (`routeBasePath: "/"`), so pages live at `/introduction/`, `/reference/config/`, and so on. Order: `introduction` → `start/` → `concepts/` → `features/` → `cookbook/` → `guides/` → `reference/` → `faq` → `privacy`, from each page's `sidebar_position` and each section's `_category_.json`. Sidebar, search (⌘K, via `@easyops-cn/docusaurus-search-local`), and the dark/light toggle come from the theme.
+- `features/` has one page per feature (adding, editing, import, log activity, episodes, browse, relations, calendar & activity, lists, home, statistics, covers, schema, iOS). Screenshot placeholders use `<Screenshot caption="…" />` (`src/components/Screenshot.tsx`, registered globally in `src/theme/MDXComponents.tsx`) — pass `desktop=`/`ios=` image paths to replace a placeholder with a real capture, or `platforms="ios"` for a single frame.
 - **Terminology is standardized** in `concepts/terminology.md` — notably *entity* (never entry/item/record) for one thing in the library, *item* only for checklist/list items, *match* (not sync) for provider metadata. Follow it in every page.
 - Stub pages carry a `<!-- TODO -->` outline at the top describing what to write.
 - **Generated pages** — `reference/field-types.md`, `reference/providers.md`, and `reference/presets.md` are emitted from the Rust source by the `kizunashelf-docs` bin (`pnpm docs:generate` at the repo root) and carry a GENERATED banner; CI regenerates and diffs `manual/content/reference`, so edit the Rust source (types.rs / the provider registry / presets.rs / bin/docs.rs), never these files.
@@ -21,10 +24,11 @@ zola build          # emits public/ (gitignored)
 
 - One long line per paragraph — no hard-wrapping prose.
 - Page titles live in front matter; don't start the body with an `# h1`.
-- Internal links use Zola's `@/path/page.md#anchor` form so broken links fail the build. Zola slugifies `A / B / C` headings with single dashes (`a-b-c`), unlike GitHub's double.
-- Goyo resolves `icon = "<name>"` (e.g. the nav's `book`) against its bundled Font Awesome 6 SVG set; to use a name it doesn't bundle, drop `<name>.svg` (FA6 free, solid) into `static/icons/` (site `static/` merges over the theme's).
+- Internal links are **relative file paths** including the extension — `./schema.md`, `../reference/schema.md#status`. Docusaurus resolves them to URLs and fails the build on a broken link or a broken anchor, so a bad link can't ship.
+- **`.md` vs `.mdx`**: `markdown.format` is `detect`, so plain `.md` pages are parsed as CommonMark (which is why their `<!-- TODO -->` and GENERATED banners stay invisible comments). A page that uses a component — today that means `<Screenshot />` — must be `.mdx`, and in MDX an HTML comment has to be written `{/* … */}`.
+- Heading anchors are generated by github-slugger, the same slugs GitHub produces: punctuation is dropped rather than turned into a dash (`What's coming up?` → `#whats-coming-up`), and a separator like ` / ` or ` & ` leaves a double dash (`Episodes / tracks / chapters` → `#episodes--tracks--chapters`). Pin an anchor with `## Heading {#custom-id}` when you need a stable one.
 
-## Planned (see also TODO comments in the pages)
+## Planned
 
-- Translations (ja / zh-Hans / zh-Hant) once the English manual is done — the earlier translated intros and their `[languages.*]` / `nav_*` / lang-alias config were removed on this branch (`git log -- 'manual/content/_index.*.md'` recovers them); the old zh-Hant intro was a script conversion that needed a native review anyway.
-- CI job: `zola build` (link check runs as part of the build) + deploy, with submodule checkout.
+- Translations (ja / zh-Hans / zh-Hant) once the English manual is done, via [Docusaurus i18n](https://docusaurus.io/docs/i18n/introduction) (`i18n.locales` in `docusaurus.config.ts`, currently `["en"]`). The earlier translated intros and their config were removed on an older branch (`git log -- 'manual/content/_index.*.md'` recovers them); the old zh-Hant intro was a script conversion that needed a native review anyway.
+- CI job: deploy `manual/build/` (the build itself already runs in CI as part of `pnpm build`).

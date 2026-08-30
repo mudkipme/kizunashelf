@@ -1,12 +1,12 @@
-+++
-title = "Anatomy of an Entity"
-description = "An annotated Markdown file showing how schema roles drive each part of the UI."
-weight = 2
-+++
+---
+title: "Anatomy of an Entity"
+description: "An annotated Markdown file showing how schema roles drive each part of the UI."
+sidebar_position: 2
+---
 
 An entity is represented by a single Markdown file. This page breaks down a sample file line by line to show how each schema role assigns meaning to the data and how that meaning drives the UI.
 
-The file below lives in a vault using the schema from the [Complete Example](@/reference/config.md#complete-example) in the reference: an `anime` type stored under `Taxonomy/Anime/`, with English as the vault's primary title language.
+The file below lives in a vault using the schema from the [Complete Example](../reference/config.md#complete-example) in the reference: an `anime` type stored under `Taxonomy/Anime/`, with English as the vault's primary title language.
 
 ## The file
 
@@ -80,7 +80,7 @@ These fields build the entity's title map. **The field names themselves carry no
 * When the language preference is English, the main title is **Steins;Gate 0 (Anime)** (derived from the filename).
 * When the language preference is neither English nor Chinese, it falls back to the `titleRole: original` field: **シュタインズ・ゲート ゼロ**.
 
-The resolution order is always *language preference → original → other titles*, and every title remains fully searchable and is displayed in the entity detail page. See [Title Design](@/reference/titles-dates-status.md#title-design).
+The resolution order is always *language preference → original → other titles*, and every title remains fully searchable and is displayed in the entity detail page. See [Title Design](../reference/titles-dates-status.md#title-design).
 
 ### `cover_url: Assets/Anime/Steins;Gate 0 (Anime)/cover_url.jpg`
 
@@ -94,7 +94,7 @@ Schema: `fieldType: enum` with `enumRole: status` and a `statusValues` mapping (
 2. `enumRole: status` marks it as *the lifecycle status* field for this type.
 3. `statusValues` assigns canonical meaning to values: `Watched` maps to `completed`, allowing this entry to appear in the recent activity list. Unmapped values, such as a manually entered `Finished`, are preserved and displayed, but carry no canonical meaning until explicitly mapped.
 
-See [Status](@/reference/titles-dates-status.md#status).
+See [Status](../reference/titles-dates-status.md#status).
 
 ### `season: Spring 2018`
 
@@ -121,7 +121,7 @@ Schema: `fieldType: relation` with `relationType: franchise`. This uses standard
 
 ### `tags: ["sci-fi", "time-traveling"]`
 
-Tags are vault-wide, shared across all entity types, and filterable everywhere — but only when the vault opts in by setting `tags.field` in the config (this vault sets it to `tags`). Without that, a `tags` key is just an ordinary frontmatter field. See [Tags](@/reference/home-tags-daily-notes.md#tags).
+Tags are vault-wide, shared across all entity types, and filterable everywhere — but only when the vault opts in by setting `tags.field` in the config (this vault sets it to `tags`). Without that, a `tags` key is just an ordinary frontmatter field. See [Tags](../reference/home-tags-daily-notes.md#tags).
 
 ## The body
 

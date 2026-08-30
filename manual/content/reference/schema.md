@@ -1,10 +1,10 @@
-+++
-title = "Types & fields"
-description = "The vault config document: top-level keys, entity types, filename config, and field definitions."
-weight = 2
-+++
+---
+title: "Types & fields"
+description: "The vault config document: top-level keys, entity types, filename config, and field definitions."
+sidebar_position: 2
+---
 
-This page documents the vault config document itself — the top-level keys of `KizunaShelf/config.yaml`, the `types` array, and the `fields` that give frontmatter keys their meaning. For the concept behind the model — Markdown first, names are yours, roles carry meaning — see [Schema-Driven by design](@/concepts/schema-driven.md). How each role *behaves* is covered by the sibling pages: [Titles, dates & status](@/reference/titles-dates-status.md), [External metadata & import](@/reference/external.md), and [Home, tags & daily notes](@/reference/home-tags-daily-notes.md).
+This page documents the vault config document itself — the top-level keys of `KizunaShelf/config.yaml`, the `types` array, and the `fields` that give frontmatter keys their meaning. For the concept behind the model — Markdown first, names are yours, roles carry meaning — see [Schema-Driven by design](../concepts/schema-driven.md). How each role *behaves* is covered by the sibling pages: [Titles, dates & status](./titles-dates-status.md), [External metadata & import](./external.md), and [Home, tags & daily notes](./home-tags-daily-notes.md).
 
 ## Top-Level Schema
 
@@ -23,7 +23,7 @@ types: [...]
 | `taxonomyRoot` | yes | string | Path inside `vaultRoot` that contains typed entity folders. Must be relative. |
 | `assetRoot` | no | string | Vault-relative directory where downloaded assets are stored. Defaults to `Assets`. |
 | `dailyNotes` | no | object | Daily note paths and date extraction settings. |
-| `tags` | no | object | Opt-in built-in tags field — tags exist only when `tags.field` is set (see [Tags](@/reference/home-tags-daily-notes.md#tags)). |
+| `tags` | no | object | Opt-in built-in tags field — tags exist only when `tags.field` is set (see [Tags](./home-tags-daily-notes.md#tags)). |
 | `home` | no | object | Home dashboard sections. |
 | `types` | yes | array | Entity type definitions. |
 
@@ -65,8 +65,8 @@ types:
 | `path` | yes | string | Folder under `taxonomyRoot` that contains this type's Markdown files. |
 | `externalPriority` | no | string[] | Preferred external metadata providers for match/search workflows. |
 | `filename` | no | object | How the Markdown filename participates in titles. |
-| `bodySections` | no | array | Declared body sections by heading: external-metadata mappings and the built-in episodes list. See [bodySections](@/reference/external.md#bodysections). |
-| `log` | no | object | Daily-note logging config for this type (`section`, `lineFormat`). **Its presence opts the type into logging.** See [Daily-note logging](@/reference/home-tags-daily-notes.md#daily-note-logging). |
+| `bodySections` | no | array | Declared body sections by heading: external-metadata mappings and the built-in episodes list. See [bodySections](./external.md#bodysections). |
+| `log` | no | object | Daily-note logging config for this type (`section`, `lineFormat`). **Its presence opts the type into logging.** See [Daily-note logging](./home-tags-daily-notes.md#daily-note-logging). |
 | `fields` | no | array | Frontmatter field definitions. |
 
 ### Filename Config
@@ -105,8 +105,8 @@ fields:
 | `titleRole` | no | enum | `title` | Special title role. Currently only `original` — the title used as the language-agnostic fallback for `entity.title`. |
 | `externalFields` | no | array | most fields | Maps external provider metadata fields into this frontmatter field. |
 | `enumOptions` | no | string[] | `enum`, `enumList` | Allowed or suggested values in editors and filters. |
-| `enumRole` | no | enum | `enum` | Semantic role of the enum field. Currently only `status` — marks the one field that represents the entity's lifecycle status. See [Status](@/reference/titles-dates-status.md#status). |
-| `statusValues` | no | object | `enum` (with `enumRole: status`) | Maps each canonical status (`planning`, `ongoing`, `paused`, `completed`, `dropped`) to the user option strings that mean it. See [Status](@/reference/titles-dates-status.md#status). |
+| `enumRole` | no | enum | `enum` | Semantic role of the enum field. Currently only `status` — marks the one field that represents the entity's lifecycle status. See [Status](./titles-dates-status.md#status). |
+| `statusValues` | no | object | `enum` (with `enumRole: status`) | Maps each canonical status (`planning`, `ongoing`, `paused`, `completed`, `dropped`) to the user option strings that mean it. See [Status](./titles-dates-status.md#status). |
 | `totalProgressField` | no | string | `progress` | Field that stores the total count for progress. |
 | `dateRole` | no | enum | `date`, `season` | Whether the date is for planning, started, or completion. |
 | `seasonLanguage` | no | enum | `season` | Season display/parser language: `zh`, `ja`, or `en`. |
@@ -116,7 +116,7 @@ fields:
 
 ### Field Types
 
-Every `fieldType` — and every role enum's value set (`dateRole`, `titleRole`, `enumRole`, canonical statuses, `seasonLanguage`) — is enumerated with its meaning in [Field types & roles](@/reference/field-types.md), generated directly from the app so it always matches the version you're running.
+Every `fieldType` — and every role enum's value set (`dateRole`, `titleRole`, `enumRole`, canonical statuses, `seasonLanguage`) — is enumerated with its meaning in [Field types & roles](./field-types.md), generated directly from the app so it always matches the version you're running.
 
 ### Relation fields
 
@@ -138,7 +138,7 @@ related:
 - "[[Steins;Gate 0 (Anime)]]"
 ```
 
-`relationType` restricts matching to a target entity type; if omitted, KizunaShelf can match any entity basename. Configured relations are indexed in **both directions** (outgoing and incoming), and body and daily-note wikilinks are indexed alongside them — see [Relations](@/features/relations.md) for how that plays out in the app.
+`relationType` restricts matching to a target entity type; if omitted, KizunaShelf can match any entity basename. Configured relations are indexed in **both directions** (outgoing and incoming), and body and daily-note wikilinks are indexed alongside them — see [Relations](../features/relations.mdx) for how that plays out in the app.
 
 ## Design Guidelines
 

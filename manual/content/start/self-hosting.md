@@ -1,10 +1,10 @@
-+++
-title = "Self-hosting"
-description = "Run the web app as one process serving one vault: Docker, configuration, and authentication."
-weight = 2
-+++
+---
+title: "Self-hosting"
+description: "Run the web app as one process serving one vault: Docker, configuration, and authentication."
+sidebar_position: 2
+---
 
-KizunaShelf can run as a self-hosted web app: one process serves the API and the web UI, pointed at a single vault. This guide covers running, configuring, and securing that deployment — every environment variable is in [Configuration](#configuration) below. For the vault schema itself, see the [reference](@/reference/config.md).
+KizunaShelf can run as a self-hosted web app: one process serves the API and the web UI, pointed at a single vault. This guide covers running, configuring, and securing that deployment — every environment variable is in [Configuration](#configuration) below. For the vault schema itself, see the [reference](../reference/config.md).
 
 ## Run with Docker
 
@@ -43,10 +43,10 @@ The self-hosted web server is configured entirely through environment variables 
 | `KIZUNASHELF_SERVE_WEB` | Set to `false` to serve only the API. |
 | `KIZUNASHELF_AUTH_PASSWORD_HASH` | Optional Argon2id password hash. When set, all web UI, API, and asset requests require a login. Unset by default. |
 | `KIZUNASHELF_ALLOW_PRIVATE_ASSET_HOSTS` | Set to `true` to let asset downloads reach private/loopback/link-local addresses (e.g. a LAN image host). Off by default; the SSRF guard blocks them (the `198.18.0.0/15` benchmarking range is always allowed). |
-| `KIZUNASHELF_TRAKT_CLIENT_ID` | Trakt client id (its `trakt-api-key`) for [importing](@/reference/external.md#quick-capture-and-import) a Trakt profile. |
+| `KIZUNASHELF_TRAKT_CLIENT_ID` | Trakt client id (its `trakt-api-key`) for [importing](../reference/external.md#quick-capture-and-import) a Trakt profile. |
 | `KIZUNASHELF_STEAM_API_KEY` | Steam Web API key for importing a Steam library (`GetOwnedGames`). Distinct from the keyless store API the Steam search provider uses. |
 
-**Search-provider credentials** (IGDB, TheTVDB, TMDB, Discogs, MyAnimeList, BGG, Comic Vine, Hardcover, Google Books, …) are also plain environment variables, listed per provider — with each credential's exact env var — on the generated [External providers](@/reference/providers.md) page. Each is derived mechanically from the credential key a provider (or [import source](@/reference/external.md#quick-capture-and-import)) declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. Only the web runtime reads these variables — the desktop and iOS apps store credentials in the OS keychain instead.
+**Search-provider credentials** (IGDB, TheTVDB, TMDB, Discogs, MyAnimeList, BGG, Comic Vine, Hardcover, Google Books, …) are also plain environment variables, listed per provider — with each credential's exact env var — on the generated [External providers](../reference/providers.md) page. Each is derived mechanically from the credential key a provider (or [import source](../reference/external.md#quick-capture-and-import)) declares in its catalog (`KIZUNASHELF_<UPPER_KEY>`), so a new credentialed provider needs no change here. Only the web runtime reads these variables — the desktop and iOS apps store credentials in the OS keychain instead.
 
 ### Persistent data and caches
 
@@ -141,5 +141,5 @@ A typical setup is: reverse proxy (Nginx / Traefik / Caddy) terminates TLS, dele
 
 ## Related pages
 
-- [Configuration overview](@/reference/config.md) — the vault schema: what it is, where it lives, and the map of the reference.
-- [Syncing your vault](@/guides/syncing.md) — how to sync a vault across devices.
+- [Configuration overview](../reference/config.md) — the vault schema: what it is, where it lives, and the map of the reference.
+- [Syncing your vault](../guides/syncing.md) — how to sync a vault across devices.

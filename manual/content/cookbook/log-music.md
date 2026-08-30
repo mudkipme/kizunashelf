@@ -1,8 +1,8 @@
-+++
-title = "Logging music"
-description = "Albums, track lists, artists, and live events."
-weight = 5
-+++
+---
+title: "Logging music"
+description: "Albums, track lists, artists, and live events."
+sidebar_position: 5
+---
 
 <!-- TODO: full recipe. Outline:
      1. Type definition from the Music preset, annotated.

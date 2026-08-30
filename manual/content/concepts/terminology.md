@@ -1,8 +1,8 @@
-+++
-title = "Terminology"
-description = "The standard names for things, used consistently across the manual and the app."
-weight = 3
-+++
+---
+title: "Terminology"
+description: "The standard names for things, used consistently across the manual and the app."
+sidebar_position: 3
+---
 
 These are the name of concepts building KizunaShelf.
 
@@ -20,7 +20,7 @@ These are the name of concepts building KizunaShelf.
 | **relation** | A `[[wikilink]]` connecting two entities, read in both directions. |
 | **item** | One entry *inside* a checklist, list, or queue: an episode, a track, an issue, a list-page line, an import-queue row. |
 | **daily note** | A dated Markdown note (Obsidian-style); mentions and log lines live here. |
-| **provider** | An external metadata source (Bangumi, TMDB, …) from the [provider catalog](@/reference/providers.md). |
+| **provider** | An external metadata source (Bangumi, TMDB, …) from the [provider catalog](../reference/providers.md). |
 | **match** | Connecting an entity to a provider result and applying mapped metadata. |
 | **Quick Capture** | The search-a-provider-and-create-in-one-action flow. |
 | **Log activity** | The one-line write-to-today's-daily-note action, the *Log* button on an entity. |
