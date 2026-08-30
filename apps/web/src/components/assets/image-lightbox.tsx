@@ -34,21 +34,26 @@ const LightboxContext = createContext<LightboxApi | null>(null);
  */
 export function LightboxProvider({ children }: { children: ReactNode }) {
   // The registry order mirrors mount order, which matches document order for the
-  // detail page (cover first, then the notes images top-to-bottom). Held in a
-  // ref so registration never re-renders the provider; `openId` (state) drives
-  // the only render that needs the snapshot.
-  const entries = useRef<Registration[]>([]);
+  // detail page (cover first, then the notes images top-to-bottom). It is state
+  // rather than a ref because the slide list is render output: an image that
+  // mounts while the gallery is already open still has to reach the overlay.
+  // Registering re-renders this component alone — `children` arrives as an
+  // unchanged element and `api` is stable, so neither the subtree below nor its
+  // context consumers re-render along with it.
+  const [entries, setEntries] = useState<Registration[]>([]);
   const nextId = useRef(0);
   const [openId, setOpenId] = useState<string | null>(null);
 
   const register = useCallback((src: string) => {
+    // Minted outside the updater so it can be returned synchronously, which
+    // keeps the updater itself pure and safe to re-run.
     const id = `lb-${nextId.current++}`;
-    entries.current.push({ id, src });
+    setEntries((current) => [...current, { id, src }]);
     return id;
   }, []);
 
   const unregister = useCallback((id: string) => {
-    entries.current = entries.current.filter((entry) => entry.id !== id);
+    setEntries((current) => current.filter((entry) => entry.id !== id));
     setOpenId((current) => (current === id ? null : current));
   }, []);
 
@@ -63,8 +68,10 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     [register, unregister, open],
   );
 
-  const slides = entries.current.map((entry) => ({ src: entry.src }));
-  const index = openId ? entries.current.findIndex((entry) => entry.id === openId) : -1;
+  // Memoised so an `openId` change hands the open overlay the same slide array
+  // it already has, rather than a fresh one mid-gallery.
+  const slides = useMemo(() => entries.map((entry) => ({ src: entry.src })), [entries]);
+  const index = openId ? entries.findIndex((entry) => entry.id === openId) : -1;
   const isOpen = index >= 0;
 
   return (
