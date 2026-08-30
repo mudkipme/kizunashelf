@@ -538,7 +538,7 @@ msgstr "資產根目錄"
 msgid "assets: {0}"
 msgstr "資產：{0}"
 
-#: src/components/layout/app-frame.tsx:223
+#: src/components/layout/app-frame.tsx:227
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -647,8 +647,8 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "關閉"
 
-#: src/components/layout/app-frame.tsx:489
-#: src/components/layout/app-frame.tsx:510
+#: src/components/layout/app-frame.tsx:493
+#: src/components/layout/app-frame.tsx:514
 msgid "Close navigation"
 msgstr "關閉導覽"
 
@@ -1160,7 +1160,7 @@ msgstr "例如：集數。"
 msgid "Form"
 msgstr "表單"
 
-#: src/components/layout/app-frame.tsx:234
+#: src/components/layout/app-frame.tsx:238
 msgid "Forward"
 msgstr ""
 
@@ -1180,11 +1180,11 @@ msgstr "遊戲"
 msgid "Give your list a name."
 msgstr "為你的清單命名。"
 
-#: src/components/layout/app-frame.tsx:222
+#: src/components/layout/app-frame.tsx:226
 msgid "Go back"
 msgstr "返回"
 
-#: src/components/layout/app-frame.tsx:233
+#: src/components/layout/app-frame.tsx:237
 msgid "Go forward"
 msgstr ""
 
@@ -1533,7 +1533,7 @@ msgstr "正在載入活動…"
 msgid "Loading built-in types…"
 msgstr "正在載入內建類型…"
 
-#: src/components/layout/app-frame.tsx:597
+#: src/components/layout/app-frame.tsx:601
 msgid "Loading taxonomy"
 msgstr "正在載入分類"
 
@@ -1681,7 +1681,7 @@ msgstr "我的保管庫"
 msgid "Name"
 msgstr "名稱"
 
-#: src/components/layout/app-frame.tsx:494
+#: src/components/layout/app-frame.tsx:498
 msgid "Navigation"
 msgstr "導覽"
 
@@ -2278,8 +2278,8 @@ msgstr "必填 — 在此輸入檔名，或填寫下方的標題。"
 msgid "Required — enter a file name."
 msgstr "必填 — 請輸入檔名。"
 
-#: src/components/layout/app-frame.tsx:367
-#: src/components/layout/app-frame.tsx:368
+#: src/components/layout/app-frame.tsx:371
+#: src/components/layout/app-frame.tsx:372
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "重新掃描保管庫"
@@ -2382,7 +2382,7 @@ msgid "Search entities…"
 msgstr "搜尋項目…"
 
 #: src/components/layout/app-frame.tsx:93
-#: src/components/layout/app-frame.tsx:255
+#: src/components/layout/app-frame.tsx:259
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "搜尋庫"

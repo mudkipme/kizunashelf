@@ -538,7 +538,7 @@ msgstr "アセットのルート"
 msgid "assets: {0}"
 msgstr "アセット: {0}"
 
-#: src/components/layout/app-frame.tsx:223
+#: src/components/layout/app-frame.tsx:227
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -647,8 +647,8 @@ msgstr "すべてクリア"
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/layout/app-frame.tsx:489
-#: src/components/layout/app-frame.tsx:510
+#: src/components/layout/app-frame.tsx:493
+#: src/components/layout/app-frame.tsx:514
 msgid "Close navigation"
 msgstr "ナビゲーションを閉じる"
 
@@ -1160,7 +1160,7 @@ msgstr "例：エピソード番号"
 msgid "Form"
 msgstr "フォーム"
 
-#: src/components/layout/app-frame.tsx:234
+#: src/components/layout/app-frame.tsx:238
 msgid "Forward"
 msgstr ""
 
@@ -1180,11 +1180,11 @@ msgstr "ゲーム"
 msgid "Give your list a name."
 msgstr "リストに名前を付けます。"
 
-#: src/components/layout/app-frame.tsx:222
+#: src/components/layout/app-frame.tsx:226
 msgid "Go back"
 msgstr "戻る"
 
-#: src/components/layout/app-frame.tsx:233
+#: src/components/layout/app-frame.tsx:237
 msgid "Go forward"
 msgstr ""
 
@@ -1533,7 +1533,7 @@ msgstr "アクティビティを読み込み中…"
 msgid "Loading built-in types…"
 msgstr "組み込みタイプを読み込み中…"
 
-#: src/components/layout/app-frame.tsx:597
+#: src/components/layout/app-frame.tsx:601
 msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
@@ -1681,7 +1681,7 @@ msgstr "マイ保管庫"
 msgid "Name"
 msgstr "名前"
 
-#: src/components/layout/app-frame.tsx:494
+#: src/components/layout/app-frame.tsx:498
 msgid "Navigation"
 msgstr "ナビゲーション"
 
@@ -2278,8 +2278,8 @@ msgstr "必須 — ここにファイル名を入力するか、下のタイト�
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
-#: src/components/layout/app-frame.tsx:367
-#: src/components/layout/app-frame.tsx:368
+#: src/components/layout/app-frame.tsx:371
+#: src/components/layout/app-frame.tsx:372
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "保管庫を再スキャン"
@@ -2382,7 +2382,7 @@ msgid "Search entities…"
 msgstr "アイテムを検索…"
 
 #: src/components/layout/app-frame.tsx:93
-#: src/components/layout/app-frame.tsx:255
+#: src/components/layout/app-frame.tsx:259
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "ライブラリを検索"

@@ -208,7 +208,11 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         aria-label={t`Open navigation`}
         aria-expanded={mobileSidebarOpen}
       >
-        <AppLogo className="size-5" />
+        {/* Matches the sidebar mark it stands in for: at a touch size the
+            button is 2.5rem, so the sidebar's size-8 mark fits with the same
+            inset. A fine pointer below `md` gets a 1.75rem button, which only
+            the smaller mark fits inside. */}
+        <AppLogo className="size-5 pointer-coarse:size-8" />
       </Button>
       {/* Present at every width: added to a home screen (the manifest declares
           `display: standalone`) there is no browser chrome to go back with, and

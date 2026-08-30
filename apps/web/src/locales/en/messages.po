@@ -538,7 +538,7 @@ msgstr "Asset root"
 msgid "assets: {0}"
 msgstr "assets: {0}"
 
-#: src/components/layout/app-frame.tsx:223
+#: src/components/layout/app-frame.tsx:227
 #: src/components/settings/preset-picker.tsx:190
 #: src/components/settings/settings-dialogs.tsx:77
 #: src/components/settings/settings-editor.tsx:193
@@ -647,8 +647,8 @@ msgstr "Clear all"
 msgid "Close"
 msgstr "Close"
 
-#: src/components/layout/app-frame.tsx:489
-#: src/components/layout/app-frame.tsx:510
+#: src/components/layout/app-frame.tsx:493
+#: src/components/layout/app-frame.tsx:514
 msgid "Close navigation"
 msgstr "Close navigation"
 
@@ -1160,7 +1160,7 @@ msgstr "For example, an episode number."
 msgid "Form"
 msgstr "Form"
 
-#: src/components/layout/app-frame.tsx:234
+#: src/components/layout/app-frame.tsx:238
 msgid "Forward"
 msgstr "Forward"
 
@@ -1180,11 +1180,11 @@ msgstr "Game"
 msgid "Give your list a name."
 msgstr "Give your list a name."
 
-#: src/components/layout/app-frame.tsx:222
+#: src/components/layout/app-frame.tsx:226
 msgid "Go back"
 msgstr "Go back"
 
-#: src/components/layout/app-frame.tsx:233
+#: src/components/layout/app-frame.tsx:237
 msgid "Go forward"
 msgstr "Go forward"
 
@@ -1533,7 +1533,7 @@ msgstr "Loading activity…"
 msgid "Loading built-in types…"
 msgstr "Loading built-in types…"
 
-#: src/components/layout/app-frame.tsx:597
+#: src/components/layout/app-frame.tsx:601
 msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
@@ -1681,7 +1681,7 @@ msgstr "My Vault"
 msgid "Name"
 msgstr "Name"
 
-#: src/components/layout/app-frame.tsx:494
+#: src/components/layout/app-frame.tsx:498
 msgid "Navigation"
 msgstr "Navigation"
 
@@ -2278,8 +2278,8 @@ msgstr "Required — enter a file name here or fill in the title below."
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
-#: src/components/layout/app-frame.tsx:367
-#: src/components/layout/app-frame.tsx:368
+#: src/components/layout/app-frame.tsx:371
+#: src/components/layout/app-frame.tsx:372
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "Rescan vault"
@@ -2382,7 +2382,7 @@ msgid "Search entities…"
 msgstr "Search entities…"
 
 #: src/components/layout/app-frame.tsx:93
-#: src/components/layout/app-frame.tsx:255
+#: src/components/layout/app-frame.tsx:259
 #: src/components/layout/header-search.tsx:159
 msgid "Search library"
 msgstr "Search library"
