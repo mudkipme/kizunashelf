@@ -29,7 +29,7 @@ export default defineConfig({
         // we deliberately group ONLY the broadly-shared shell deps here. A
         // catch-all node_modules group would pull the page-only libs back into
         // an eager chunk and undo the route splitting.
-        advancedChunks: {
+        codeSplitting: {
           groups: [
             {
               name: "react-vendor",

@@ -4,8 +4,8 @@
 //! and iOS therefore keep driving the shared router directly, and these host
 //! routes do not become part of the generated OpenAPI contract.
 
-use argon2::password_hash::{PasswordHash, PasswordVerifier};
-use argon2::Argon2;
+use argon2::password_hash::phc::PasswordHash;
+use argon2::{Argon2, PasswordVerifier};
 use axum::body::Body;
 use axum::extract::{ConnectInfo, Form, FromRequestParts, Request, State};
 use axum::http::header::{
@@ -20,7 +20,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
-use rand_core::{OsRng, RngCore};
+use getrandom::fill;
 use serde::Deserialize;
 use serde_json::json;
 use std::collections::{HashMap, VecDeque};
@@ -154,7 +154,7 @@ impl WebAuth {
 
     fn create_session(&self) -> String {
         let mut bytes = [0_u8; 32];
-        OsRng.fill_bytes(&mut bytes);
+        fill(&mut bytes).expect("OS RNG unavailable");
         let token = URL_SAFE_NO_PAD.encode(bytes);
         self.inner
             .sessions
@@ -574,7 +574,7 @@ fn no_store(response: &mut Response<Body>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use argon2::password_hash::{PasswordHasher, SaltString};
+    use argon2::PasswordHasher;
     use axum::body::to_bytes;
     use axum::http::header::{CONTENT_TYPE, LOCATION};
     use axum::http::Request as HttpRequest;
@@ -582,9 +582,8 @@ mod tests {
     use tower::ServiceExt;
 
     fn test_auth() -> WebAuth {
-        let salt = SaltString::encode_b64(b"test salt for auth").unwrap();
         let hash = Argon2::default()
-            .hash_password(b"correct horse battery staple", &salt)
+            .hash_password_with_salt(b"correct horse battery staple", b"test salt for auth")
             .unwrap()
             .to_string();
         WebAuth::new(hash).unwrap()

@@ -6,21 +6,21 @@ license.workspace = true
 build = "build.rs"
 
 [build-dependencies]
-tauri-build = { version = "2.6.2", features = [] }
+tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
-anyhow = "1.0.99"
-axum = "0.8.7"
+anyhow = "1.0.104"
+axum = "0.8.9"
 # `system-proxy` makes reqwest read the OS system proxy on macOS/Windows (env-var
 # proxies work regardless). Desktop-only so the Docker/web build stays lean.
 kizunashelf = { path = "../../../crates/kizunashelf", features = ["system-proxy"] }
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.145"
-tauri = { version = "2.11.2", features = [] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+tauri = { version = "2.11.5", features = [] }
 # The shell's own events, alongside the core's. Facade only; the subscriber
 # below is what decides where they go.
 tracing = "0.1.44"
-tauri-plugin-dialog = "2.7.1"
+tauri-plugin-dialog = "2.7.2"
 # Remembers the window's size, position and maximized/fullscreen state across
 # launches, into the OS config dir. Desktop-only by nature: iOS and the web
 # server have no window to remember.
@@ -28,16 +28,10 @@ tauri-plugin-window-state = "2.4.1"
 # The desktop shell installs the subscriber for the core's events; without one
 # they are dropped. It writes to stderr, so a bundled app shows them only when
 # launched from a terminal — which is what diagnosing a report means anyway.
-tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 # Native OS secret managers for provider credentials + the token cache:
 # macOS Keychain, Windows Credential Manager, and the Linux Secret Service
-# (gnome-keyring / KWallet via D-Bus).
-[target.'cfg(target_os = "macos")'.dependencies]
-keyring = { version = "3", features = ["apple-native"] }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-keyring = { version = "3", features = ["windows-native"] }
-
-[target.'cfg(target_os = "linux")'.dependencies]
-keyring = { version = "3", features = ["sync-secret-service", "crypto-rust"] }
+# (gnome-keyring / KWallet via D-Bus). keyring 4's default `v1` facade picks the
+# platform-native store on each OS.
+keyring = "4"

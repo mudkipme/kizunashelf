@@ -4,7 +4,7 @@
   "private": true,
   "license": "MPL-2.0",
   "type": "module",
-  "packageManager": "pnpm@11.6.0",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "dev": "concurrently -k -n api,web \"pnpm dev:api\" \"pnpm dev:web\"",
     "dev:api": "cargo run -p kizunashelf --bin kizunashelf-api",
@@ -25,9 +25,9 @@
     "serve": "cargo run -p kizunashelf --bin kizunashelf-api"
   },
   "devDependencies": {
-    "concurrently": "^10.0.4",
-    "orval": "^8.23.0",
-    "oxlint": "^1.76.0",
+    "concurrently": "^10.0.5",
+    "orval": "^8.27.0",
+    "oxlint": "^1.80.0",
     "typescript": "^7.0.2"
   }
 }

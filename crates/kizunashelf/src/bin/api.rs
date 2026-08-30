@@ -1,10 +1,8 @@
 use anyhow::Result;
-use argon2::password_hash::{PasswordHasher, SaltString};
-use argon2::Argon2;
+use argon2::{Argon2, PasswordHasher};
 use kizunashelf::api::{protect_web_router, router_native, ApiOptions, WebAuth};
 use kizunashelf::secrets::NativeSecretStore;
 use kizunashelf::types::AppConfig;
-use rand_core::OsRng;
 use std::future::IntoFuture;
 use std::io::{self, IsTerminal, Write};
 use std::net::SocketAddr;
@@ -180,9 +178,8 @@ fn hash_password_interactive() -> Result<()> {
         anyhow::bail!("passwords do not match");
     }
 
-    let salt = SaltString::generate(&mut OsRng);
     let hash = Argon2::default()
-        .hash_password(password.as_bytes(), &salt)
+        .hash_password(password.as_bytes())
         .map_err(|error| anyhow::anyhow!("failed to hash password: {error}"))?;
     writeln!(io::stdout().lock(), "{hash}")?;
     Ok(())

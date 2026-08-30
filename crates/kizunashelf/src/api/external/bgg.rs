@@ -251,7 +251,7 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                 let name = element.local_name();
                 let tag = name.as_ref();
                 match tag {
-                    b"item" => {
+                    "item" => {
                         let mut item = BggItem::default();
                         for (key, value) in attributes(&element) {
                             match key.as_str() {
@@ -262,7 +262,7 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                         }
                         current = Some(item);
                     }
-                    b"name" => {
+                    "name" => {
                         if let Some(item) = current.as_mut() {
                             let attrs = attributes(&element);
                             let name_type = attrs
@@ -277,28 +277,26 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                             }
                         }
                     }
-                    b"yearpublished" => {
+                    "yearpublished" => {
                         set_value(&mut current, &element, |item, v| item.year = Some(v))
                     }
-                    b"minplayers" => {
+                    "minplayers" => {
                         set_value(&mut current, &element, |item, v| item.min_players = Some(v))
                     }
-                    b"maxplayers" => {
+                    "maxplayers" => {
                         set_value(&mut current, &element, |item, v| item.max_players = Some(v))
                     }
-                    b"playingtime" => set_value(&mut current, &element, |item, v| {
+                    "playingtime" => set_value(&mut current, &element, |item, v| {
                         item.playing_time = Some(v)
                     }),
-                    b"minage" => {
-                        set_value(&mut current, &element, |item, v| item.min_age = Some(v))
-                    }
-                    b"average" => set_value(&mut current, &element, |item, v| {
+                    "minage" => set_value(&mut current, &element, |item, v| item.min_age = Some(v)),
+                    "average" => set_value(&mut current, &element, |item, v| {
                         item.rating_average = Some(v)
                     }),
-                    b"usersrated" => {
+                    "usersrated" => {
                         set_value(&mut current, &element, |item, v| item.users_rated = Some(v))
                     }
-                    b"rank" => {
+                    "rank" => {
                         // Several rank rows; keep the overall "boardgame" rank only.
                         if let Some(item) = current.as_mut() {
                             let attrs = attributes(&element);
@@ -318,7 +316,7 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                             }
                         }
                     }
-                    b"link" => {
+                    "link" => {
                         if let Some(item) = current.as_mut() {
                             let attrs = attributes(&element);
                             let link_type = attrs
@@ -334,9 +332,9 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                             }
                         }
                     }
-                    b"image" => text_target = Some("image"),
-                    b"thumbnail" => text_target = Some("thumbnail"),
-                    b"description" => text_target = Some("description"),
+                    "image" => text_target = Some("image"),
+                    "thumbnail" => text_target = Some("thumbnail"),
+                    "description" => text_target = Some("description"),
                     _ => {}
                 }
             }
@@ -347,12 +345,11 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                     // overwriting; trimming happens once the field is consumed.
                     // BGG's API declares `<?xml version="1.0"?>`, so decode with
                     // 1.0 end-of-line rules rather than 1.1's wider set.
-                    if let Ok(decoded) = text.xml10_content() {
-                        let Some(slot) = text_slot(item, target) else {
-                            continue;
-                        };
-                        slot.get_or_insert_with(String::new).push_str(&decoded);
-                    }
+                    let decoded = text.xml10_content();
+                    let Some(slot) = text_slot(item, target) else {
+                        continue;
+                    };
+                    slot.get_or_insert_with(String::new).push_str(&decoded);
                 }
             }
             // quick-xml emits entity references (`&amp;`, `&#10;`) as their own
@@ -361,17 +358,15 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
                 if let (Some(target), Some(item)) = (text_target, current.as_mut()) {
                     let resolved = match entity.resolve_char_ref() {
                         Ok(Some(character)) => Some(character.to_string()),
-                        _ => entity.decode().ok().and_then(|name| {
-                            match name.as_ref() {
-                                "amp" => Some("&"),
-                                "lt" => Some("<"),
-                                "gt" => Some(">"),
-                                "quot" => Some("\""),
-                                "apos" => Some("'"),
-                                _ => None,
-                            }
-                            .map(str::to_string)
-                        }),
+                        _ => match entity.as_ref() {
+                            "amp" => Some("&"),
+                            "lt" => Some("<"),
+                            "gt" => Some(">"),
+                            "quot" => Some("\""),
+                            "apos" => Some("'"),
+                            _ => None,
+                        }
+                        .map(str::to_string),
                     };
                     if let Some(resolved) = resolved {
                         let Some(slot) = text_slot(item, target) else {
@@ -384,12 +379,12 @@ fn parse_bgg_items(xml: &str) -> Vec<BggItem> {
             Ok(Event::End(element)) => {
                 let name = element.local_name();
                 match name.as_ref() {
-                    b"item" => {
+                    "item" => {
                         if let Some(item) = current.take() {
                             items.push(item);
                         }
                     }
-                    b"image" | b"thumbnail" | b"description" => text_target = None,
+                    "image" | "thumbnail" | "description" => text_target = None,
                     _ => {}
                 }
             }
@@ -433,7 +428,7 @@ fn attributes(element: &quick_xml::events::BytesStart) -> Vec<(String, String)> 
         .attributes()
         .filter_map(Result::ok)
         .filter_map(|attr| {
-            let key = String::from_utf8_lossy(attr.key.local_name().as_ref()).to_string();
+            let key = attr.key.local_name().as_ref().to_string();
             let value = attr
                 .normalized_value(XmlVersion::Implicit1_0)
                 .ok()?
