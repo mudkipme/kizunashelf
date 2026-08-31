@@ -115,10 +115,7 @@ pub(super) async fn build_entity_detail(
         .type_config(&summary.entity_type)
         .and_then(crate::episodes::episode_section);
     let episodes = section.map(|section| crate::episodes::parse_episodes(&entity.body, section));
-    let notes_body = match section {
-        Some(section) => crate::markdown::remove_section(&entity.body, &section.heading),
-        None => entity.body.clone(),
-    };
+    let notes_body = crate::episodes::notes_body(&entity.body, section);
     Ok(EntityDetailResponse {
         entity,
         relations,

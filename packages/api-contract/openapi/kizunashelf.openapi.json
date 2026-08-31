@@ -1630,6 +1630,95 @@
         }
       }
     },
+    "/api/entities/{id}/tasks/toggle": {
+      "post": {
+        "operationId": "toggleTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Checks/unchecks one Markdown task item (`- [ ]`) written in the entity's body.\nAddressed in the coordinate space the clients render — `notesBody`, i.e. the\nbody minus sections that have their own UI.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/episodes/fetch": {
       "post": {
         "operationId": "fetchEpisodes",
@@ -7693,6 +7782,39 @@
           "key",
           "index",
           "watched",
+          "date"
+        ]
+      },
+      "ToggleTaskRequest": {
+        "description": "Checks/unchecks one Markdown task item (`- [ ]`) written in the entity's body.\nAddressed in the coordinate space the clients render — `notesBody`, i.e. the\nbody minus sections that have their own UI.",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "line": {
+            "description": "The task item's 1-based line number within `notesBody`.",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "text": {
+            "description": "That line's source text, exactly as it appears in `notesBody`. Verified\nagainst the located line, so a locator that has drifted fails with a 404\ninstead of silently toggling a different item.",
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "date": {
+            "description": "The completion date (`YYYY-MM-DD`) to stamp when checking — **required**, the\nclient's local date, so the `✅` matches the user's day rather than a UTC\nserver clock. Ignored when unchecking.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "line",
+          "text",
+          "done",
           "date"
         ]
       },

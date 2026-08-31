@@ -308,6 +308,10 @@ import type {
   ToggleEpisodeRequest
 } from './toggleEpisodeRequest.zod';
 
+import type {
+  ToggleTaskRequest
+} from './toggleTaskRequest.zod';
+
 import {
   TypePresetsResponse
 } from './typePresetsResponse.zod';
@@ -1389,6 +1393,42 @@ const res = await (fetchFn ?? fetch)(getToggleEpisodeUrl(id),
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(toggleEpisodeRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityDetailResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getToggleTaskUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/tasks/toggle`
+}
+
+export const toggleTask = async (id: string,
+    toggleTaskRequest: ToggleTaskRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityDetailResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+const res = await (fetchFn ?? fetch)(getToggleTaskUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(toggleTaskRequest)
   }
 )
 

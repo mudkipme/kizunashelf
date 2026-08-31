@@ -61,12 +61,14 @@ export function EntityDetail({
   episodes,
   episodesSaving = false,
   notesBody,
+  tasksSaving = false,
   contentWritable = true,
   labelsByType,
   typeLabels,
   coverTypes,
   onToggleEpisode,
   onSetEpisodeDate,
+  onToggleTask,
   actions,
 }: {
   entity: Entity;
@@ -80,6 +82,8 @@ export function EntityDetail({
   /// The body to render in "Notes" — `entity.body` with the episodes section
   /// stripped (it has its own panel). Falls back to `entity.body` while loading.
   notesBody?: string;
+  /// A notes task-item write is in flight; its checkboxes go inert until it lands.
+  tasksSaving?: boolean;
   contentWritable?: boolean;
   /// Field labels by type id, used to resolve "Linked from" field names against
   /// the *source* entity's type (the field lives on the linking type, not this one).
@@ -92,6 +96,9 @@ export function EntityDetail({
   /// render as a cover grid; others fall back to text chips (no cover to show).
   coverTypes?: ReadonlySet<string>;
   onToggleEpisode?: (group: string, key: string, index: number, watched: boolean) => void;
+  /// Checks/unchecks a `- [ ]` item the user wrote in the notes, located by its
+  /// line in `notesBody` and that line's source text.
+  onToggleTask?: (line: number, text: string, done: boolean) => void;
   /// Sets a checked episode's `✅` completion date (clicking the date on its row).
   onSetEpisodeDate?: (group: string, key: string, index: number, date: string) => void;
   /// The page's verbs, rendered at the right of the toolbar.
@@ -242,7 +249,21 @@ export function EntityDetail({
 
               {(notesBody ?? entity.body).trim() ? (
                 <DetailSection title={t`Notes`}>
-                  <MarkdownView markdown={notesBody ?? entity.body} relations={relations} />
+                  {/* Checkboxes are addressed by their line in `notesBody`, so
+                      they only go live once that (rather than the raw body
+                      fallback) is what's on screen. */}
+                  <MarkdownView
+                    markdown={notesBody ?? entity.body}
+                    relations={relations}
+                    tasks={
+                      onToggleTask && notesBody != null
+                        ? {
+                            onToggle: onToggleTask,
+                            disabled: !contentWritable || tasksSaving,
+                          }
+                        : undefined
+                    }
+                  />
                 </DetailSection>
               ) : null}
             </div>

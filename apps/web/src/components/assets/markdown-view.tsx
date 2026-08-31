@@ -1,3 +1,6 @@
+import { useLingui } from "@lingui/react/macro";
+import { CheckIcon } from "lucide-react";
+import { createContext, useContext, useMemo } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
@@ -5,9 +8,13 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 
 import { AssetImage } from "@/components/assets/asset-image";
+import { cn } from "@/lib/utils";
 import type { Relation } from "@/types/api";
 
-const wikilinkPattern = /\[\[([^\]|#]+)(#[^\]|]+)?(?:\|([^\]]+))?\]\]/g;
+// Every class is newline-free, so `transformWikilinks` can only ever rewrite
+// *within* a line. That is load-bearing: a rendered task item is addressed back
+// to the Markdown source by line number, so the transform must not move lines.
+const wikilinkPattern = /\[\[([^\]|#\n]+)(#[^\]|\n]+)?(?:\|([^\]\n]+))?\]\]/g;
 
 const linkClassName = "font-medium text-primary underline-offset-4 hover:underline";
 
@@ -57,14 +64,99 @@ export function InlineMarkdown({ markdown, relations }: { markdown: string; rela
   );
 }
 
-export function MarkdownView({ markdown, relations }: { markdown: string; relations: Relation[] }) {
+/**
+ * Makes the `- [ ]` checkboxes in a rendered body live.
+ *
+ * A task item is addressed back to the Markdown source the way the core expects:
+ * its 1-based line number plus that line's source text. Nothing about the item is
+ * parsed here — the source line goes to the server verbatim and the core owns
+ * both the locator check and the `✅` stamp.
+ */
+export type TaskToggle = {
+  onToggle: (line: number, text: string, done: boolean) => void;
+  /// Checkboxes stay visible but inert (read-only vault, or a write in flight).
+  disabled?: boolean;
+};
+
+/// The task item currently being rendered. `li` publishes its source line (the
+/// only node in the tree that carries a position); the synthetic checkbox
+/// `input` remark-gfm nests inside it reads that line back out.
+const TaskLineContext = createContext<number | null>(null);
+
+/// A live replacement for remark-gfm's disabled checkbox `input`. Inline and
+/// baseline-nudged so it sits in the run of text exactly where the `- [ ]` was,
+/// and styled like the episode-row checkbox so the two read as one control.
+function TaskCheckbox({
+  checked,
+  tasks,
+}: {
+  checked: boolean;
+  tasks: TaskToggle & { lineText: (line: number) => string | undefined };
+}) {
+  const { t } = useLingui();
+  const line = useContext(TaskLineContext);
+  const text = line == null ? undefined : tasks.lineText(line);
+  const disabled = tasks.disabled || line == null || text == null;
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      // The item's own text sits beside the box rather than inside it, so the
+      // control needs a name of its own.
+      aria-label={t`Task`}
+      disabled={disabled}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (line == null || text == null) return;
+        tasks.onToggle(line, text, !checked);
+      }}
+      className={cn(
+        "inline-flex size-4 shrink-0 items-center justify-center rounded border align-[-0.2em] transition-colors",
+        checked ? "border-primary bg-primary text-primary-foreground" : "border-input",
+        disabled ? "cursor-default" : "cursor-pointer hover:border-primary",
+      )}
+    >
+      {checked ? <CheckIcon className="size-3" /> : null}
+    </button>
+  );
+}
+
+export function MarkdownView({
+  markdown,
+  relations,
+  tasks,
+}: {
+  markdown: string;
+  relations: Relation[];
+  /// Opt-in: makes `- [ ]` items in this body clickable. Omitted (list
+  /// descriptions, the episodes section's prose) they render as plain checkboxes.
+  tasks?: TaskToggle;
+}) {
   const transformed = transformWikilinks(markdown, relations);
+  // The *untransformed* source lines — what the server has on disk. Wikilink
+  // rewriting stays within a line, so a node's line number indexes both.
+  const sourceLines = useMemo(() => markdown.split("\n"), [markdown]);
+  const taskProps = tasks
+    ? {
+        ...tasks,
+        lineText: (line: number) => sourceLines[line - 1]?.replace(/\r$/, ""),
+      }
+    : undefined;
 
   return (
     <div className="flex flex-col gap-4 text-prose text-foreground">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
+          input({ node, ...props }) {
+            const properties = node?.properties;
+            if (!taskProps || properties?.type !== "checkbox") {
+              return <input {...props} />;
+            }
+            return <TaskCheckbox checked={properties.checked === true} tasks={taskProps} />;
+          },
           a({ href, children }) {
             return <MarkdownLink href={href}>{children}</MarkdownLink>;
           },
@@ -104,8 +196,17 @@ export function MarkdownView({ markdown, relations }: { markdown: string; relati
           ol({ children }) {
             return <ol className="ml-5 list-decimal">{children}</ol>;
           },
-          li({ children }) {
-            return <li className="pl-1">{children}</li>;
+          li({ node, children }) {
+            const className = node?.properties?.className;
+            const isTask = Array.isArray(className) && className.includes("task-list-item");
+            if (!isTask) return <li className="pl-1">{children}</li>;
+            // No bullet beside a checkbox (github-markdown-css does the same).
+            // The list indent itself stays, so nesting still reads as nesting.
+            return (
+              <TaskLineContext.Provider value={node?.position?.start.line ?? null}>
+                <li className="list-none pl-1">{children}</li>
+              </TaskLineContext.Provider>
+            );
           },
           blockquote({ children }) {
             return <blockquote className="border-l-2 pl-4 text-muted-foreground">{children}</blockquote>;

@@ -137,6 +137,8 @@ A `bodySections` entry with `kind: episodes` and `tracking: checklist` turns thi
 
 Because this heading is not declared in the schema, KizunaShelf leaves it completely untouched. Undeclared frontmatter behaves the same way: it is preserved and displayed as extra properties without being overwritten or removed. Your files are never trimmed to fit only what the schema defines.
 
+The one thing the app *does* offer here is interaction: any `- [ ]` task list you write in the body is clickable on the detail page, and ticking one stamps a ✅ completion date on that line and nothing else. See [Ticking tasks in your notes](../features/editing.mdx#ticking-tasks-in-your-notes).
+
 ## Daily notes
 
 Referencing an entity's wikilink in daily notes—such as adding `- [[Steins;Gate 0 (Anime)]] ep 20` in `Daily Notes/2023-07-06.md` (manually or via the Log action), connects that date to the entity and displays the entry in its activity history.

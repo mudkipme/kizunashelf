@@ -31,6 +31,7 @@ use super::smart_lists::{
 };
 use super::state::{ApiOptions, AppState};
 use super::tags::tags;
+use super::tasks::toggle_task;
 use crate::calendar::{ActivityResponse, EntityDatesResponse, UpcomingResponse};
 use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
@@ -400,6 +401,18 @@ fn api_router() -> ApiRouter<AppState> {
             "/api/entities/{id}/episodes/watch",
             post_with(toggle_episode, |op| {
                 op.id("toggleEpisode")
+                    .response::<200, Json<EntityDetailResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/tasks/toggle",
+            post_with(toggle_task, |op| {
+                op.id("toggleTask")
                     .response::<200, Json<EntityDetailResponse>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()

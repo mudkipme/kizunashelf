@@ -4560,6 +4560,103 @@ async fn episodes_detail_progress_update_and_revision_guard() {
 }
 
 #[tokio::test]
+async fn body_tasks_toggle_stamps_done_date_and_skips_the_episodes_section() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [{
+                "id": "anime", "label": "Anime", "path": "Anime",
+                "filename": { "titleLanguage": "zh" },
+                "bodySections": [
+                    { "heading": "Episodes", "kind": "episodes", "tracking": "checklist" }
+                ],
+                "fields": [
+                    { "field": "title", "fieldType": "title", "displayName": "Title", "titleLanguage": "zh" }
+                ]
+            }]
+        }),
+    );
+    // Notes on both sides of the episodes section, and a blank line after the
+    // frontmatter: the read path trims that leading whitespace off `entity.body`
+    // while the write path keeps it, so a line the client counted only resolves
+    // if the two coordinate spaces are reconciled.
+    write_file(
+        &vault.join("Taxonomy/Anime/Show.md"),
+        "---\ntitle: Show\n---\n\n## Notes\n\n- [ ] rewatch with subs\n\n## Episodes\n\n- [ ] 1 · Pilot\n\n## More\n\n- [ ] read the manga\n",
+    );
+    let app = inline_router(&vault, true, true);
+
+    let detail = request_json(&app, Method::GET, "/api/entities/anime%3AShow", None).await;
+    assert_eq!(detail.0, StatusCode::OK, "{}", detail.1);
+    // The notes view drops the episodes section and closes the gap, so the two
+    // checkboxes the client renders sit on its lines 3 and 7 — the coordinate
+    // space the toggle addresses.
+    let notes = detail.1["notesBody"].as_str().unwrap().to_string();
+    assert_eq!(
+        notes,
+        "## Notes\n\n- [ ] rewatch with subs\n\n## More\n\n- [ ] read the manga"
+    );
+    let revision = detail.1["entity"]["revision"].as_str().unwrap().to_string();
+
+    let body = json!({
+        "revision": revision, "line": 7, "text": "- [ ] read the manga",
+        "done": true, "date": "2024-08-20",
+    });
+    let updated = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/tasks/toggle",
+        Some(body.clone()),
+    )
+    .await;
+    assert_eq!(updated.0, StatusCode::OK, "{}", updated.1);
+    assert_eq!(
+        updated.1["notesBody"],
+        "## Notes\n\n- [ ] rewatch with subs\n\n## More\n\n- [x] read the manga ✅ 2024-08-20"
+    );
+    // Only that line changed: the episodes checkbox between the two notes
+    // sections is untouched, and so is the blank line after the frontmatter.
+    assert_eq!(updated.1["episodes"]["watched"], 0);
+    assert_eq!(updated.1["episodes"]["total"], 1);
+    let raw = std::fs::read_to_string(vault.join("Taxonomy/Anime/Show.md")).unwrap();
+    assert_eq!(
+        raw,
+        "---\ntitle: Show\n---\n\n## Notes\n\n- [ ] rewatch with subs\n\n## Episodes\n\n- [ ] 1 · Pilot\n\n## More\n\n- [x] read the manga ✅ 2024-08-20\n"
+    );
+
+    // The stale revision is now rejected.
+    let stale = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/tasks/toggle",
+        Some(body),
+    )
+    .await;
+    assert_eq!(stale.0, StatusCode::CONFLICT, "{}", stale.1);
+
+    // A locator whose text no longer matches is refused rather than toggling a
+    // neighbour.
+    let revision = updated.1["entity"]["revision"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let drifted = request_json(
+        &app,
+        Method::POST,
+        "/api/entities/anime%3AShow/tasks/toggle",
+        Some(json!({
+            "revision": revision, "line": 3, "text": "- [ ] read the manga",
+            "done": true, "date": "2024-08-20",
+        })),
+    )
+    .await;
+    assert_eq!(drifted.0, StatusCode::NOT_FOUND, "{}", drifted.1);
+}
+
+#[tokio::test]
 async fn episodes_import_merges_and_fetch_lists_sources() {
     let temp = TempDir::new().unwrap();
     let vault = temp.path().join("vault");

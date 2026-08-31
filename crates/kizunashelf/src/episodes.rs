@@ -7,8 +7,11 @@
 //! render from structured data instead of re-implementing it. No Markdown crate —
 //! it composes [`crate::markdown`] (heading sections) with a list-item regex.
 
+use crate::body_tasks::{
+    done_date_regex, due_date_regex, emoji_suffix, strip_emoji_date, DONE_EMOJI, DUE_EMOJI,
+};
 use crate::contract::{EntityEpisodes, Episode, EpisodeGroup};
-use crate::markdown::{find_section, headings, splice_section, FenceState};
+use crate::markdown::{find_section, headings, remove_section, splice_section, FenceState};
 use crate::types::{
     BodySection, BodySectionKind, EntityTypeConfig, EpisodeDate, EpisodeDateRole, EpisodeProgress,
     EpisodeTracking,
@@ -22,6 +25,18 @@ pub fn episode_section(type_config: &EntityTypeConfig) -> Option<&BodySection> {
         .body_sections
         .iter()
         .find(|section| section.kind == BodySectionKind::Episodes)
+}
+
+/// The body to render in the generic "Notes" view: `body` with the episodes
+/// section dropped, so a section that has its own UI isn't shown twice. This is
+/// also the coordinate space body-task toggles are addressed in, so the detail
+/// response and [`crate::body_tasks::set_task_done`] must derive it identically —
+/// hence the one function.
+pub fn notes_body(body: &str, section: Option<&BodySection>) -> String {
+    match section {
+        Some(section) => remove_section(body, &section.heading),
+        None => body.to_string(),
+    }
 }
 
 /// `tracking` resolved with its default (`checklist`).
@@ -47,43 +62,15 @@ fn key_regex() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"^(?:#|[eE][pP]?[ \t]*)?(\d+(?:\.\d+)?)").unwrap())
 }
 
-/// The Obsidian Tasks date suffixes we round-trip: `📅` (due/air date) and `✅`
-/// (completion date). We emit them at the end, but accept them anywhere.
-fn due_date_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"📅\s*(\d{4}-\d{2}-\d{2})").unwrap())
-}
-
-fn done_date_regex() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"✅\s*(\d{4}-\d{2}-\d{2})").unwrap())
-}
-
 /// Strips the `📅` and `✅` date suffixes out of an item's content, returning
 /// `(content_without_dates, due_date, done_date)` so the dates survive the
-/// round-trip as structured data instead of leaking into the title.
+/// round-trip as structured data instead of leaking into the title. The suffix
+/// syntax itself lives in [`crate::body_tasks`], shared with the generic body
+/// task items so the two can't drift.
 fn extract_dates(content: &str) -> (String, Option<String>, Option<String>) {
     let (content, due) = strip_emoji_date(content, due_date_regex());
     let (content, done) = strip_emoji_date(&content, done_date_regex());
     (content, due, done)
-}
-
-fn strip_emoji_date(content: &str, regex: &Regex) -> (String, Option<String>) {
-    let Some(captures) = regex.captures(content) else {
-        return (content.to_string(), None);
-    };
-    let date = captures.get(1).map(|m| m.as_str().to_string());
-    let whole = captures.get(0).unwrap();
-    let mut without = String::with_capacity(content.len());
-    without.push_str(content[..whole.start()].trim_end());
-    let tail = content[whole.end()..].trim_start();
-    if !tail.is_empty() {
-        if !without.is_empty() {
-            without.push(' ');
-        }
-        without.push_str(tail);
-    }
-    (without, date)
 }
 
 struct ParsedItem<'a> {
@@ -494,16 +481,9 @@ fn render_item(episode: &Episode, tracking: EpisodeTracking) -> String {
     // air/release date) then done (`✅`, the completion date).
     format!(
         "- {checkbox}{label}{}{}",
-        emoji_suffix("📅", episode.date.as_deref()),
-        emoji_suffix("✅", episode.done.as_deref()),
+        emoji_suffix(DUE_EMOJI, episode.date.as_deref()),
+        emoji_suffix(DONE_EMOJI, episode.done.as_deref()),
     )
-}
-
-fn emoji_suffix(emoji: &str, date: Option<&str>) -> String {
-    match date.map(str::trim) {
-        Some(date) if !date.is_empty() => format!(" {emoji} {date}"),
-        _ => String::new(),
-    }
 }
 
 /// Renders `groups` back into `body`'s episodes section (replacing only that

@@ -604,6 +604,26 @@ pub struct ToggleEpisodeRequest {
     pub date: String,
 }
 
+/// Checks/unchecks one Markdown task item (`- [ ]`) written in the entity's body.
+/// Addressed in the coordinate space the clients render — `notesBody`, i.e. the
+/// body minus sections that have their own UI.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ToggleTaskRequest {
+    pub revision: String,
+    /// The task item's 1-based line number within `notesBody`.
+    pub line: u32,
+    /// That line's source text, exactly as it appears in `notesBody`. Verified
+    /// against the located line, so a locator that has drifted fails with a 404
+    /// instead of silently toggling a different item.
+    pub text: String,
+    pub done: bool,
+    /// The completion date (`YYYY-MM-DD`) to stamp when checking — **required**, the
+    /// client's local date, so the `✅` matches the user's day rather than a UTC
+    /// server clock. Ignored when unchecking.
+    pub date: String,
+}
+
 /// Imports provider episodes (the chosen subset, already grouped/flattened by the
 /// client) by merging them into the entity's existing episodes.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

@@ -1,5 +1,6 @@
 pub mod analytics;
 pub mod api;
+pub mod body_tasks;
 pub mod calendar;
 pub mod contract;
 pub mod daily_notes;

@@ -15,6 +15,7 @@ mod router;
 mod smart_lists;
 mod state;
 mod tags;
+mod tasks;
 pub mod tunnel;
 #[cfg(not(target_os = "ios"))]
 mod web_auth;

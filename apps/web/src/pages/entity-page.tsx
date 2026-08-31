@@ -71,6 +71,7 @@ import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { setEpisodeWatched } from "@/api/episodes";
+import { setTaskDone } from "@/api/tasks";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
@@ -96,6 +97,7 @@ export function EntityPage() {
   const [manageListsOpen, setManageListsOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [episodesSaving, setEpisodesSaving] = useState(false);
+  const [tasksSaving, setTasksSaving] = useState(false);
 
   const loading =
     detail.isPending ||
@@ -271,6 +273,29 @@ export function EntityPage() {
     void persistEpisode({ group, key, index, watched: true, date });
   }
 
+  // Checks/unchecks a `- [ ]` the user wrote in the notes. The item is located by
+  // its line in `notesBody` plus that line's source text (the core verifies the
+  // pair before writing), and the ✅ is stamped with the user's local date.
+  async function toggleNoteTask(line: number, text: string, done: boolean) {
+    if (!entity) return;
+    setTasksSaving(true);
+    try {
+      const response = await setTaskDone(entity.id, {
+        revision: entity.revision,
+        line,
+        text,
+        done,
+        date: todayLocal(),
+      });
+      queryClient.setQueryData(queryKeys.entity(entity.id), response);
+      void invalidateEntityData();
+    } catch (error) {
+      reportEntityError(error, { onConflict: refetchOnConflict });
+    } finally {
+      setTasksSaving(false);
+    }
+  }
+
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
       {/* Full-bleed, like Library and Home: the window is the frame, so the page
@@ -344,12 +369,14 @@ export function EntityPage() {
               episodes={detail.data?.episodes ?? undefined}
               episodesSaving={episodesSaving}
               notesBody={detail.data?.notesBody}
+              tasksSaving={tasksSaving}
               contentWritable={contentWritable}
               labelsByType={labelsByType}
               typeLabels={typeLabels}
               coverTypes={coverTypes}
               onToggleEpisode={toggleEpisodeWatched}
               onSetEpisodeDate={setEpisodeDate}
+              onToggleTask={(line, text, done) => void toggleNoteTask(line, text, done)}
               actions={
                 <div className="flex items-center gap-2">
                   {/* Edit is the page's main verb, so it sits in the toolbar
