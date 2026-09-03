@@ -34,7 +34,7 @@ export function HomeEntityCard({
           as="div"
           entity={entity}
           language={language}
-          className="line-clamp-2 text-sm font-medium leading-5"
+          className="line-clamp-2 text-sm leading-5 font-medium"
         />
         <div className="mt-auto flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <span className="min-w-0 truncate">

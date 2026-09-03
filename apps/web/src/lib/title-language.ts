@@ -64,5 +64,5 @@ export function isIso639TitleLanguage(value: string | null | undefined) {
 }
 
 export function iso639TitleLanguage(value: string | null | undefined) {
-  return isIso639TitleLanguage(value) ? value ?? undefined : undefined;
+  return isIso639TitleLanguage(value) ? (value ?? undefined) : undefined;
 }

@@ -1,9 +1,9 @@
-import { useState } from "react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { PencilLineIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
@@ -98,13 +98,17 @@ export function QuickLogDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle><Trans>Log activity</Trans></DialogTitle>
+          <DialogTitle>
+            <Trans>Log activity</Trans>
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-col gap-4 max-sm:flex-1 max-sm:overflow-auto">
           {kinds.length > 1 ? (
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium"><Trans>Activity</Trans></span>
+              <span className="text-sm font-medium">
+                <Trans>Activity</Trans>
+              </span>
               <div className="flex gap-1 rounded-lg bg-muted p-1">
                 {kinds.map((option) => (
                   <button
@@ -131,7 +135,9 @@ export function QuickLogDialog({
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm font-medium">
-            <Trans>Note <span className="font-normal text-muted-foreground">(optional)</span></Trans>
+            <Trans>
+              Note <span className="font-normal text-muted-foreground">(optional)</span>
+            </Trans>
             <Input
               value={note}
               placeholder={t`Anything worth remembering`}
@@ -151,11 +157,20 @@ export function QuickLogDialog({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
             <XIcon data-icon="inline-start" />
             <Trans>Cancel</Trans>
           </Button>
-          <Button type="button" onClick={() => void submit()} disabled={saving || Boolean(preventReason)}>
+          <Button
+            type="button"
+            onClick={() => void submit()}
+            disabled={saving || Boolean(preventReason)}
+          >
             <PencilLineIcon data-icon="inline-start" />
             {saving ? t`Logging…` : t`Log`}
           </Button>
@@ -190,25 +205,34 @@ function LogPreview({
   return (
     <div className="flex flex-col gap-1 rounded-md bg-muted p-2 text-xs">
       {data.line ? (
-        <code className="break-words font-mono text-foreground">{data.line}</code>
+        <code className="font-mono break-words text-foreground">{data.line}</code>
       ) : (
-        <span className="text-muted-foreground"><Trans>Nothing to log for this type.</Trans></span>
+        <span className="text-muted-foreground">
+          <Trans>Nothing to log for this type.</Trans>
+        </span>
       )}
       {data.notePath ? (
         <span className="text-muted-foreground">
           → {data.notePath}
-          {data.lineAlreadyPresent ? t` (already logged)` : data.noteWillBeCreated ? t` (new note)` : ""}
+          {data.lineAlreadyPresent
+            ? t` (already logged)`
+            : data.noteWillBeCreated
+              ? t` (new note)`
+              : ""}
         </span>
       ) : null}
       {data.willStampDate ? (
         <span className="text-muted-foreground">
           <Trans>
-            Stamps {fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field} = {data.willStampDate.value}
+            Stamps {fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field} ={" "}
+            {data.willStampDate.value}
           </Trans>
         </span>
       ) : null}
       {data.willFlipStatus ? (
-        <span className="text-muted-foreground"><Trans>Marks as {data.willFlipStatus.value}</Trans></span>
+        <span className="text-muted-foreground">
+          <Trans>Marks as {data.willFlipStatus.value}</Trans>
+        </span>
       ) : null}
     </div>
   );

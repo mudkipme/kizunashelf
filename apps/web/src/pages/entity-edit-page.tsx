@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { saveEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
-import { useRelationSearch } from "@/api/use-relation-search";
 import { configQuery, entityQuery } from "@/api/queries";
+import { useRelationSearch } from "@/api/use-relation-search";
 import {
   type FrontmatterDraft,
   MetadataEditor,
@@ -182,13 +182,11 @@ export function EntityEditPage() {
 
         <div className="min-h-0 flex-1 overflow-auto overscroll-contain px-4 py-4">
           <div className={CONTENT_MEASURE}>
-            <h1 className="mb-8 text-2xl font-semibold leading-tight tracking-tight">
+            <h1 className="mb-8 text-2xl leading-tight font-semibold tracking-tight">
               {entity ? t`Edit ${entityTitle(entity, language)}` : t`Edit entity`}
             </h1>
 
-            {!contentWritable ? (
-              <Alert className="mb-6">{CONTENT_WRITES_DISABLED}</Alert>
-            ) : null}
+            {!contentWritable ? <Alert className="mb-6">{CONTENT_WRITES_DISABLED}</Alert> : null}
 
             {conflict ? (
               <Alert className="mb-6 flex flex-wrap items-center justify-between gap-3">

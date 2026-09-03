@@ -23,7 +23,9 @@ function typeConfig(fields: FieldConfig[]): TypeConfig {
 
 describe("matchFieldPreviewEntries", () => {
   it("decorates each core-mapped field with its schema label", () => {
-    const tc = typeConfig([field({ field: "name_jp", fieldType: "title", displayName: "Japanese title" })]);
+    const tc = typeConfig([
+      field({ field: "name_jp", fieldType: "title", displayName: "Japanese title" }),
+    ]);
     const entries = matchFieldPreviewEntries(
       [fieldValue({ field: "name_jp", value: "シュタインズ・ゲート ゼロ", externalField: "name" })],
       tc,
@@ -39,7 +41,10 @@ describe("matchFieldPreviewEntries", () => {
   });
 
   it("falls back to the field name when the schema has no matching field", () => {
-    const entries = matchFieldPreviewEntries([fieldValue({ field: "mystery", value: "x" })], typeConfig([]));
+    const entries = matchFieldPreviewEntries(
+      [fieldValue({ field: "mystery", value: "x" })],
+      typeConfig([]),
+    );
     expect(entries[0].label).toBe("mystery");
   });
 });

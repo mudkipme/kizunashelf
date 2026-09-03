@@ -13,15 +13,17 @@
   --ifm-color-primary-lighter: #e5684d;
   --ifm-color-primary-lightest: #ea8770;
 
-  --ifm-heading-font-family: 'Bookman', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-  --ifm-font-family-monospace: 'JBMono', 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+  --ifm-heading-font-family:
+    "Bookman", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --ifm-font-family-monospace:
+    "JBMono", "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
   --ifm-heading-font-weight: 600;
   --ifm-code-font-size: 90%;
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --ifm-color-primary: #ff8a70;
   --ifm-color-primary-dark: #ff7454;
   --ifm-color-primary-darker: #ff6946;

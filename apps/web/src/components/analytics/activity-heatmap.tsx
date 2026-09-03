@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Select } from "@/components/ui/select";
@@ -12,7 +12,13 @@ const MONTH_INDEXES = Array.from({ length: 12 }, (_, index) => index);
 // Discrete intensity levels (index 0 = empty). Listed as literals so Tailwind's
 // JIT keeps these classes in the build. Empty stays neutral; activity ramps
 // through emerald (the app's "active" accent, GitHub-contributions style).
-const CELL_LEVELS = ["bg-muted", "bg-emerald-500/30", "bg-emerald-500/55", "bg-emerald-500/80", "bg-emerald-500"];
+const CELL_LEVELS = [
+  "bg-muted",
+  "bg-emerald-500/30",
+  "bg-emerald-500/55",
+  "bg-emerald-500/80",
+  "bg-emerald-500",
+];
 
 function cellLevel(count: number, max: number) {
   if (count <= 0) return 0;
@@ -67,7 +73,11 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
   const maxTotal = Math.max(1, ...rows.map((row) => row.total));
 
   if (activity.years.length === 0) {
-    return <p className="text-xs text-muted-foreground"><Trans>No dated entities yet.</Trans></p>;
+    return (
+      <p className="text-xs text-muted-foreground">
+        <Trans>No dated entities yet.</Trans>
+      </p>
+    );
   }
 
   // A cell opens that month in the calendar, carrying the active type filter.
@@ -134,7 +144,7 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
                 <div className="h-2 flex-1 rounded-sm bg-muted">
                   <div className="h-2 rounded-sm bg-emerald-500" style={{ width: barWidth }} />
                 </div>
-                <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                <span className="w-8 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
                   {formatNumber(row.total)}
                 </span>
               </div>
@@ -144,11 +154,15 @@ export function ActivityHeatmap({ activity }: { activity: AnalyticsActivity }) {
       </div>
 
       <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
-        <span><Trans>less</Trans></span>
+        <span>
+          <Trans>less</Trans>
+        </span>
         {CELL_LEVELS.map((level, index) => (
           <span key={index} className={cn("size-3 rounded-sm", level)} />
         ))}
-        <span><Trans>more</Trans></span>
+        <span>
+          <Trans>more</Trans>
+        </span>
       </div>
     </div>
   );

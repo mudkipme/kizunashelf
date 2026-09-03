@@ -1,7 +1,7 @@
 import { i18n } from "@lingui/core";
 
-import type { TypeConfig } from "@/types/api";
 import { iso639TitleLanguage } from "@/lib/title-language";
+import type { TypeConfig } from "@/types/api";
 
 // The untyped body-wikilink pseudo-field ("body") reads as "Notes", matching the
 // detail page's Notes section. Localized against the active catalog by message
@@ -23,7 +23,10 @@ export function configFields(typeConfig?: TypeConfig): FieldConfig[] {
   return typeConfig?.fields ?? [];
 }
 
-export function fieldsByType(typeConfig: TypeConfig | undefined, fieldType: FieldType): FieldConfig[] {
+export function fieldsByType(
+  typeConfig: TypeConfig | undefined,
+  fieldType: FieldType,
+): FieldConfig[] {
   return configFields(typeConfig).filter((field) => field.fieldType === fieldType);
 }
 
@@ -59,7 +62,10 @@ export function typeSupportsQuickCapture(
   return typeExternalRefs(typeConfig).some((ref) => known.has(ref));
 }
 
-export function fieldNamesByType(typeConfig: TypeConfig | undefined, fieldType: FieldType): string[] {
+export function fieldNamesByType(
+  typeConfig: TypeConfig | undefined,
+  fieldType: FieldType,
+): string[] {
   return fieldsByType(typeConfig, fieldType).map((field) => field.field);
 }
 
@@ -92,7 +98,9 @@ export function titleFieldLabelForLanguage(typeConfig: TypeConfig | undefined, l
 
 export function titleLabelForKey(typeConfig: TypeConfig | undefined, key: string) {
   const field = configFields(typeConfig).find((item) => item.field === key);
-  return titleFieldLabelForLanguage(typeConfig, key) ?? (field ? fieldDisplayLabel(field) : undefined);
+  return (
+    titleFieldLabelForLanguage(typeConfig, key) ?? (field ? fieldDisplayLabel(field) : undefined)
+  );
 }
 
 export function fieldLabelsByType(typeConfigs: TypeConfig[] | undefined) {
@@ -150,7 +158,10 @@ export function entityFieldLabel(
   return field;
 }
 
-export function dateRoleFields(typeConfig: TypeConfig | undefined, dateRole: DateRole): FieldConfig[] {
+export function dateRoleFields(
+  typeConfig: TypeConfig | undefined,
+  dateRole: DateRole,
+): FieldConfig[] {
   return configFields(typeConfig).filter(
     (field) => isDateFieldType(field.fieldType) && field.dateRole === dateRole,
   );
@@ -209,8 +220,10 @@ export function fieldTypeLabel(fieldType: FieldType) {
 
 export function configuredFieldLabel(field: FieldConfig) {
   if (field.displayName?.trim()) return field.displayName.trim();
-  if (field.fieldType === "title" && field.titleRole === "original") return `Original title: ${field.field}`;
-  if (field.fieldType === "title" && field.titleLanguage) return `${field.titleLanguage} title: ${field.field}`;
+  if (field.fieldType === "title" && field.titleRole === "original")
+    return `Original title: ${field.field}`;
+  if (field.fieldType === "title" && field.titleLanguage)
+    return `${field.titleLanguage} title: ${field.field}`;
   if (field.fieldType === "date") {
     const role =
       field.dateRole === "completed"

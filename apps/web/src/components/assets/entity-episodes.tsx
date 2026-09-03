@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { CheckIcon, RefreshCwIcon } from "lucide-react";
+import { useState } from "react";
 
 import { EpisodeSyncDialog } from "@/components/assets/episode-sync-dialog";
 import { InlineMarkdown } from "@/components/assets/markdown-view";
@@ -97,9 +97,12 @@ export function EntityEpisodesPanel({
       {checklist ? (
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${percent}%` }} />
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${percent}%` }}
+            />
           </div>
-          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
             {episodes.watched}/{episodes.total}
           </span>
         </div>
@@ -109,7 +112,7 @@ export function EntityEpisodesPanel({
         {episodes.groups.map((group, groupIndex) => (
           <div key={groupIndex} className="flex flex-col gap-1">
             {group.label ? (
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {group.label}
               </h4>
             ) : null}
@@ -122,7 +125,7 @@ export function EntityEpisodesPanel({
                   "—"
                 );
                 const keyLabel = item.key ? (
-                  <span className="shrink-0 tabular-nums text-muted-foreground">{item.key}</span>
+                  <span className="shrink-0 text-muted-foreground tabular-nums">{item.key}</span>
                 ) : null;
                 // A checked episode's ✅ date is editable: the overlaid transparent
                 // date input opens the native picker on click; `stopPropagation`
@@ -170,7 +173,7 @@ export function EntityEpisodesPanel({
                   item.date || item.done ? (
                     <span
                       className={cn(
-                        "shrink-0 space-x-2 tabular-nums text-xs text-muted-foreground",
+                        "shrink-0 space-x-2 text-xs text-muted-foreground tabular-nums",
                         bothDates && "max-sm:mt-0.5 max-sm:basis-full max-sm:pl-6",
                       )}
                     >
@@ -185,7 +188,10 @@ export function EntityEpisodesPanel({
                 // clickable while the row toggles.
                 if (!checklist) {
                   return (
-                    <li key={itemIndex} className="flex items-start gap-2 px-2 py-1.5 text-sm max-sm:flex-wrap">
+                    <li
+                      key={itemIndex}
+                      className="flex items-start gap-2 px-2 py-1.5 text-sm max-sm:flex-wrap"
+                    >
                       <span className="mt-0.5 text-xs text-muted-foreground">•</span>
                       {keyLabel}
                       <span className="min-w-0 flex-1">{title}</span>
@@ -220,13 +226,20 @@ export function EntityEpisodesPanel({
                       <span
                         className={cn(
                           "flex size-4 shrink-0 items-center justify-center rounded border",
-                          item.watched ? "border-primary bg-primary text-primary-foreground" : "border-input",
+                          item.watched
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-input",
                         )}
                       >
                         {item.watched ? <CheckIcon className="size-3" /> : null}
                       </span>
                       {keyLabel}
-                      <span className={cn("min-w-0 flex-1 truncate", item.watched && "text-muted-foreground")}>
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1 truncate",
+                          item.watched && "text-muted-foreground",
+                        )}
+                      >
                         {title}
                       </span>
                       {dateLabel}

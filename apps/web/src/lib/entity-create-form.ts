@@ -1,4 +1,8 @@
-import { basenameValidationError, deriveBasenameFromTitle, normalizeBasename } from "@/lib/basename";
+import {
+  basenameValidationError,
+  deriveBasenameFromTitle,
+  normalizeBasename,
+} from "@/lib/basename";
 import { type FieldConfig, fieldsByType } from "@/lib/type-config";
 import type { TypeConfig } from "@/types/api";
 

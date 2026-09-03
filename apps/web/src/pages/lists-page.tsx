@@ -1,15 +1,15 @@
-import { useState } from "react";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ListIcon, PlusIcon, SparklesIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addList } from "@/api/lists";
-import { addSmartList } from "@/api/smart-lists";
 import { configQuery, listsQuery } from "@/api/queries";
+import { addSmartList } from "@/api/smart-lists";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,12 @@ export function ListsPage() {
     <AppFrame error={lists.error ? errorMessage(lists.error) : undefined}>
       <PageContainer>
         <header className="flex items-center justify-end gap-2">
-          <Button type="button" size="sm" disabled={!contentWritable} onClick={() => setCreateOpen(true)}>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!contentWritable}
+            onClick={() => setCreateOpen(true)}
+          >
             <PlusIcon data-icon="inline-start" />
             <Trans>New list</Trans>
           </Button>
@@ -120,7 +125,9 @@ function CreateListDialog({
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"static" | "smart">("static");
   const [scope, setScope] = useState("");
-  const validationError = name.trim() ? basenameValidationError(normalizeBasename(name)) : undefined;
+  const validationError = name.trim()
+    ? basenameValidationError(normalizeBasename(name))
+    : undefined;
 
   const reset = () => {
     setName("");
@@ -220,11 +227,19 @@ function CreateListDialog({
           ) : null}
           {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
           <DialogFooter className="mt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={create.isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={create.isPending}
+            >
               <XIcon data-icon="inline-start" />
               <Trans>Cancel</Trans>
             </Button>
-            <Button type="submit" disabled={!name.trim() || Boolean(validationError) || create.isPending}>
+            <Button
+              type="submit"
+              disabled={!name.trim() || Boolean(validationError) || create.isPending}
+            >
               <CheckIcon data-icon="inline-start" />
               {create.isPending ? <Trans>Creating…</Trans> : <Trans>Create</Trans>}
             </Button>

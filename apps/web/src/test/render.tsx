@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
 import { I18nProvider } from "@lingui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { render as renderComponent } from "vitest-browser-react";
 

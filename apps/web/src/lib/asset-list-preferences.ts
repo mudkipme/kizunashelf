@@ -77,7 +77,9 @@ export function preferencesFromSearchParams(params: URLSearchParams): AssetListP
   });
 }
 
-function normalizePreferences(preferences: Partial<AssetListPreferences> | undefined): AssetListPreferences {
+function normalizePreferences(
+  preferences: Partial<AssetListPreferences> | undefined,
+): AssetListPreferences {
   // Any Bases property reference is a valid sort key — which fields a type
   // declares is schema data, so the store doesn't second-guess it.
   const sort = preferences?.sort?.trim();

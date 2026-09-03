@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
 import { plural } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
@@ -70,10 +70,7 @@ export function PresetPickerDialog({
   const [pending, setPending] = useState<ResolvedPlan | null>(null);
   const [acceptedBackfills, setAcceptedBackfills] = useState<Set<number>>(() => new Set());
 
-  const existingIds = useMemo(
-    () => new Set(currentTypes.map((type) => type.id)),
-    [currentTypes],
-  );
+  const existingIds = useMemo(() => new Set(currentTypes.map((type) => type.id)), [currentTypes]);
 
   const catalog = presets.data;
 
@@ -200,11 +197,7 @@ export function PresetPickerDialog({
                 value={language}
                 onChange={setLanguage}
               />
-              <Button
-                type="button"
-                onClick={resolve}
-                disabled={selected.size === 0 || resolving}
-              >
+              <Button type="button" onClick={resolve} disabled={selected.size === 0 || resolving}>
                 {resolving
                   ? t`Adding…`
                   : selected.size > 0
@@ -235,7 +228,9 @@ export function PresetGallery({
   existingIds,
   onToggle,
 }: {
-  catalog: { presets: TypePresetSummary[]; categories: { id: string; label: string }[] } | undefined;
+  catalog:
+    | { presets: TypePresetSummary[]; categories: { id: string; label: string }[] }
+    | undefined;
   selected: Set<string>;
   existingIds: Set<string>;
   onToggle: (id: string) => void;
@@ -263,7 +258,7 @@ export function PresetGallery({
         if (items.length === 0) return null;
         return (
           <section key={category.id} className="flex flex-col gap-2">
-            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               {category.label}
             </h3>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -452,11 +447,7 @@ export function SeedLanguagePicker({
         <span className="text-muted-foreground">
           <Trans>Language</Trans>
         </span>
-        <Select
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="w-full"
-        >
+        <Select value={value} onChange={(event) => onChange(event.target.value)} className="w-full">
           {options.map((item) => (
             <option key={item.code} value={item.code}>
               {item.label}

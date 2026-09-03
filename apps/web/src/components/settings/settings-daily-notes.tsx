@@ -4,10 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 
 import type { DailyNotesConfig } from "@/types/api";
 
-import {
-  StringListEditor,
-  TextField,
-} from "./settings-controls";
+import { StringListEditor, TextField } from "./settings-controls";
 
 export function DailyNotesEditor({
   config,
@@ -47,8 +44,8 @@ export function DailyNotesEditor({
       <div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
         <div className="text-xs text-muted-foreground">
           <Trans>
-            Logging defaults — the heading log lines are written under, and the fallback line format.
-            Each type can override these and adds its own tag.
+            Logging defaults — the heading log lines are written under, and the fallback line
+            format. Each type can override these and adds its own tag.
           </Trans>
         </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">

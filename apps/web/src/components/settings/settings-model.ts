@@ -1,9 +1,9 @@
+import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
 import {
   externalFieldOptionsForSource,
   externalTypeOptionsForSource,
   externalSourceOptions,
 } from "@/lib/external-metadata";
-import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
 import { isIso639TitleLanguage } from "@/lib/title-language";
 import type {
   BodySection,
@@ -178,7 +178,10 @@ function cleanFilename(filename: FilenameConfig | null | undefined): FilenameCon
   };
 }
 
-function cleanExternalFieldMappings(values: ExternalFieldMapping[], providerCatalog?: ExternalProviderCatalog) {
+function cleanExternalFieldMappings(
+  values: ExternalFieldMapping[],
+  providerCatalog?: ExternalProviderCatalog,
+) {
   const cleaned = values
     .map((value) => ({
       source: value.source.trim(),
@@ -240,7 +243,11 @@ function cleanBodySections(
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
-function cleanExternalTypes(providerCatalog: ExternalProviderCatalog | undefined, source: string | null | undefined, values: string[]) {
+function cleanExternalTypes(
+  providerCatalog: ExternalProviderCatalog | undefined,
+  source: string | null | undefined,
+  values: string[],
+) {
   const cleaned = values.map((value) => value.trim()).filter(Boolean);
   // Without a catalog, keep the (deduped) values rather than dropping them all.
   if (providerCatalog === undefined) {
@@ -270,7 +277,10 @@ function cleanStatusValues(values: StatusValues | null | undefined): StatusValue
   return hasAny ? clean : undefined;
 }
 
-function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalog): FieldConfig | undefined {
+function cleanField(
+  field: FieldConfig,
+  providerCatalog?: ExternalProviderCatalog,
+): FieldConfig | undefined {
   const key = field.field.trim();
   if (!key) return undefined;
   return {
@@ -303,7 +313,8 @@ function cleanField(field: FieldConfig, providerCatalog?: ExternalProviderCatalo
         ? field.dateRole || undefined
         : undefined,
     seasonLanguage: field.fieldType === "season" ? field.seasonLanguage || "zh" : undefined,
-    externalRef: field.fieldType === "externalRef" ? emptyToUndefined(field.externalRef) : undefined,
+    externalRef:
+      field.fieldType === "externalRef" ? emptyToUndefined(field.externalRef) : undefined,
     externalTypes:
       field.fieldType === "externalRef"
         ? cleanExternalTypes(providerCatalog, field.externalRef, field.externalTypes ?? [])
@@ -430,15 +441,15 @@ export function externalRefProviderPriority(fields: FieldConfig[], values: strin
   const available = new Set(configured);
   const ordered = values
     .map((value) => value.trim())
-    .filter(
-      (source, index, items) =>
-        available.has(source) && items.indexOf(source) === index,
-    );
+    .filter((source, index, items) => available.has(source) && items.indexOf(source) === index);
   const seen = new Set(ordered);
   return [...ordered, ...configured.filter((source) => !seen.has(source))];
 }
 
-function cleanExternalPriority(providerCatalog: ExternalProviderCatalog | undefined, values: string[]) {
+function cleanExternalPriority(
+  providerCatalog: ExternalProviderCatalog | undefined,
+  values: string[],
+) {
   const deduped = values
     .map((value) => value.trim().toLowerCase())
     .filter((value, index, items) => Boolean(value) && items.indexOf(value) === index);

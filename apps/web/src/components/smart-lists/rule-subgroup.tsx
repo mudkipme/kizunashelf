@@ -9,11 +9,7 @@ import type { RuleFieldMeta } from "@/components/smart-lists/rule-field-meta";
 import { RuleRow } from "@/components/smart-lists/rule-row";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import type {
-  SmartFilterConjunction,
-  SmartFilterRule,
-  SmartFilterSubgroup,
-} from "@/types/api";
+import type { SmartFilterConjunction, SmartFilterRule, SmartFilterSubgroup } from "@/types/api";
 
 export function SubgroupBox({
   group,

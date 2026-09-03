@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { render } from "@/test/render";
 import { stubApi } from "@/test/api-stub";
+import { render } from "@/test/render";
 
 beforeEach(() => stubApi());
 afterEach(() => vi.unstubAllGlobals());
@@ -24,10 +24,17 @@ function coarseRootTokens() {
         rule instanceof CSSMediaRule && rule.conditionText.includes("pointer: coarse"),
     )
     .flatMap((rule) => [...rule.cssRules])
-    .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && rule.selectorText === ":root")
-    .flatMap((rule) => [...rule.style].map((name) => [name, rule.style.getPropertyValue(name).trim()]));
+    .filter(
+      (rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && rule.selectorText === ":root",
+    )
+    .flatMap((rule) =>
+      [...rule.style].map((name) => [name, rule.style.getPropertyValue(name).trim()]),
+    );
   return Object.fromEntries(
-    entries.map(([name, value]) => [name, Number.parseFloat(value) * (value.endsWith("rem") ? 16 : 1)]),
+    entries.map(([name, value]) => [
+      name,
+      Number.parseFloat(value) * (value.endsWith("rem") ? 16 : 1),
+    ]),
   ) as Record<string, number>;
 }
 
@@ -54,8 +61,7 @@ describe("density", () => {
     );
     await expect.element(screen.getByTestId("ui")).toBeVisible();
 
-    const size = (id: string) =>
-      px(getComputedStyle(screen.getByTestId(id).element()).fontSize);
+    const size = (id: string) => px(getComputedStyle(screen.getByTestId(id).element()).fontSize);
 
     expect(size("ui")).toBe(13);
     expect(size("caption")).toBe(11);
@@ -97,7 +103,9 @@ describe("density", () => {
     expect(height(nav.element())).toBe(control);
     // The toolbar's own field is on the same token, so the chrome and the
     // content it frames cannot end up on different scales.
-    expect(height(screen.getByRole("combobox", { name: "Search library" }).element())).toBe(control);
+    expect(height(screen.getByRole("combobox", { name: "Search library" }).element())).toBe(
+      control,
+    );
   });
 
   it("restores touch-sized controls and type where the pointer is coarse", () => {

@@ -1,4 +1,4 @@
-const FORBIDDEN_BASENAME_CHARS = new Set(['\\', "/", ":", "*", "?", '"', "<", ">", "|"]);
+const FORBIDDEN_BASENAME_CHARS = new Set(["\\", "/", ":", "*", "?", '"', "<", ">", "|"]);
 
 // Windows reserves these device names regardless of extension, so `CON.md`
 // (and `CON.anything.md`) is refused by the OS. Matched against the stem before

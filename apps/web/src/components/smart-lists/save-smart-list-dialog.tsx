@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -44,7 +44,9 @@ export function SaveSmartListDialog({
   const navigate = useNavigate();
   const invalidateLists = useInvalidateLists();
   const [name, setName] = useState("");
-  const validationError = name.trim() ? basenameValidationError(normalizeBasename(name)) : undefined;
+  const validationError = name.trim()
+    ? basenameValidationError(normalizeBasename(name))
+    : undefined;
 
   const create = useMutation({
     mutationFn: async () => {

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -25,10 +25,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
-import type {
-  ImportJob,
-  ImportPlanBucket,
-} from "@/types/api";
+import type { ImportJob, ImportPlanBucket } from "@/types/api";
 
 export function ImportWizardPage() {
   const { t } = useLingui();
@@ -195,7 +192,8 @@ export function ImportWizardPage() {
 
         {!contentWritable ? (
           <Alert>
-            {CONTENT_WRITES_DISABLED} <Trans>Importing creates files, so it is unavailable here.</Trans>
+            {CONTENT_WRITES_DISABLED}{" "}
+            <Trans>Importing creates files, so it is unavailable here.</Trans>
           </Alert>
         ) : !jobId ? (
           <ConfigureStep
@@ -231,7 +229,12 @@ export function ImportWizardPage() {
           <section className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
             <Trans>Fetching your library from {source?.label ?? sourceId}…</Trans>
             <div className="mt-3">
-              <Button variant="outline" size="sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => cancel.mutate()}
+                disabled={cancel.isPending}
+              >
                 <Trans>Cancel</Trans>
               </Button>
             </div>
@@ -240,7 +243,9 @@ export function ImportWizardPage() {
           <>
             <PlanReview
               plan={plan}
-              onBucketType={(bucket, type) => setBucketTypes((prev) => ({ ...prev, [bucket]: type }))}
+              onBucketType={(bucket, type) =>
+                setBucketTypes((prev) => ({ ...prev, [bucket]: type }))
+              }
               effectiveType={effectiveType}
               skip={skip}
               onToggleSkip={onToggleSkip}
@@ -264,7 +269,12 @@ export function ImportWizardPage() {
           <>
             <JobProgress job={job.data} />
             {status === "committing" ? (
-              <Button variant="outline" size="sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => cancel.mutate()}
+                disabled={cancel.isPending}
+              >
                 <XIcon data-icon="inline-start" />
                 <Trans>Cancel</Trans>
               </Button>

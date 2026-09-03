@@ -18,15 +18,8 @@ import {
 } from "./frontmatter-utils";
 import { ImageFieldInput } from "./metadata-image-input";
 import { MultiValueInput, SeasonListInput } from "./metadata-list-inputs";
-import {
-  DatePickerInput,
-  NumberStepper,
-  ObjectValueInput,
-} from "./metadata-scalar-inputs";
-import type {
-  EditableFieldSpec,
-  FrontmatterValue,
-} from "./metadata-types";
+import { DatePickerInput, NumberStepper, ObjectValueInput } from "./metadata-scalar-inputs";
+import type { EditableFieldSpec, FrontmatterValue } from "./metadata-types";
 
 export function FieldValueInput({
   field,
@@ -113,7 +106,9 @@ export function FieldValueInput({
     return (
       <Select
         value={value === true ? "true" : value === false ? "false" : ""}
-        onChange={(event) => onChange(event.target.value === "" ? null : event.target.value === "true")}
+        onChange={(event) =>
+          onChange(event.target.value === "" ? null : event.target.value === "true")
+        }
         className="w-full"
         aria-label={field.label}
         disabled={disabled}
@@ -131,7 +126,9 @@ export function FieldValueInput({
     return (
       <MultiValueInput
         values={listDisplayValues(value, relation)}
-        options={relation ? field.relationOptions : field.options.map((option) => ({ value: option }))}
+        options={
+          relation ? field.relationOptions : field.options.map((option) => ({ value: option }))
+        }
         loadOptions={relation ? field.loadRelationOptions : undefined}
         placeholder={
           relation

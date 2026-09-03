@@ -1,8 +1,9 @@
+import { fileURLToPath, URL } from "node:url";
+
 import { lingui, linguiTransformerBabelPreset } from "@lingui/vite-plugin";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 
 export default defineConfig({
@@ -49,6 +50,6 @@ export default defineConfig({
     proxy: {
       "/api": "http://localhost:8787",
     },
-    allowedHosts: ["porygon-z.lan"]
+    allowedHosts: ["porygon-z.lan"],
   },
 });

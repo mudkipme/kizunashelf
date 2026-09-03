@@ -37,7 +37,9 @@ export function ExternalFieldMappingsEditor({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground"><Trans>External field mappings</Trans></span>
+        <span className="text-xs font-medium text-muted-foreground">
+          <Trans>External field mappings</Trans>
+        </span>
         <Button
           type="button"
           variant="outline"
@@ -58,7 +60,8 @@ export function ExternalFieldMappingsEditor({
                 value={value.source}
                 onChange={(event) => {
                   const source = event.target.value;
-                  const firstField = externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
+                  const firstField =
+                    externalFieldOptionsForSource(providerCatalog, source)[0]?.field ?? "";
                   list.update(index, { source, field: firstField });
                 }}
                 aria-label={t`Provider`}
@@ -88,7 +91,11 @@ export function ExternalFieldMappingsEditor({
             </div>
           );
         })}
-        {values.length === 0 ? <EmptyConfigLine><Trans>No external mappings.</Trans></EmptyConfigLine> : null}
+        {values.length === 0 ? (
+          <EmptyConfigLine>
+            <Trans>No external mappings.</Trans>
+          </EmptyConfigLine>
+        ) : null}
       </div>
     </div>
   );
@@ -109,7 +116,9 @@ export function ExternalTypesEditor({
   const options = externalTypeOptionsForSource(providerCatalog, source);
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-muted-foreground"><Trans>External types</Trans></span>
+      <span className="text-xs font-medium text-muted-foreground">
+        <Trans>External types</Trans>
+      </span>
       {options.length > 0 ? (
         <MultiValueCombobox
           values={values}
@@ -119,7 +128,9 @@ export function ExternalTypesEditor({
           onChange={onChange}
         />
       ) : (
-        <EmptyConfigLine><Trans>No type options.</Trans></EmptyConfigLine>
+        <EmptyConfigLine>
+          <Trans>No type options.</Trans>
+        </EmptyConfigLine>
       )}
     </div>
   );

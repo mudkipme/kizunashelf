@@ -21,7 +21,10 @@ export function StatisticsPage() {
   const loading = analytics.isPending;
   const error = analytics.error;
   const data = analytics.data;
-  const maxTypeCount = Math.max(1, ...(data?.distributions.byType.map((item) => item.count) ?? [1]));
+  const maxTypeCount = Math.max(
+    1,
+    ...(data?.distributions.byType.map((item) => item.count) ?? [1]),
+  );
 
   // The relation-source distribution includes two synthetic "fields": body
   // wikilinks and daily-note backlinks. Show them as the detail page's "Notes"

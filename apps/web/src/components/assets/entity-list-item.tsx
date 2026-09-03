@@ -1,8 +1,8 @@
 import { Plural } from "@lingui/react/macro";
 import { Link } from "react-router-dom";
 
-import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityCover } from "@/components/assets/entity-cover";
+import { EntityDateList } from "@/components/assets/entity-date-list";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,11 @@ export function EntityListItem({
       {showCover ? <EntityCover entity={entity} /> : null}
       <span className="min-w-0">
         <span className="flex flex-wrap items-center gap-2">
-          <EntityTitle entity={entity} language={language} className="truncate text-sm font-medium" />
+          <EntityTitle
+            entity={entity}
+            language={language}
+            className="truncate text-sm font-medium"
+          />
           {showType ? <Badge variant="outline">{entity.typeLabel}</Badge> : null}
           <StatusBadge status={entity.status} />
         </span>

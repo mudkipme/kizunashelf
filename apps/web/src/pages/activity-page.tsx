@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useRef } from "react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
 import { activityFeedQuery, configQuery } from "@/api/queries";
 import { AssetImage } from "@/components/assets/asset-image";
 import { CoverFallback } from "@/components/assets/cover-fallback";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
@@ -18,7 +19,6 @@ import { Select } from "@/components/ui/select";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
 import { useDateFormat, useIsoDateFormat } from "@/lib/locale";
-import { EntityTitle } from "@/components/entities/entity-title";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityEntry, ActivityItem } from "@/types/api";
 
@@ -133,7 +133,9 @@ export function ActivityPage() {
         </header>
 
         {feed.isPending ? (
-          <p className="text-sm text-muted-foreground"><Trans>Loading activity…</Trans></p>
+          <p className="text-sm text-muted-foreground">
+            <Trans>Loading activity…</Trans>
+          </p>
         ) : days.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             <Trans>
@@ -210,7 +212,7 @@ export function ActivityCard({
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Badge variant="outline">{item.entity.typeLabel}</Badge>
           <StatusBadge status={item.entity.status} />
-          <Link to={href} className="min-w-0 break-words text-sm font-medium hover:underline">
+          <Link to={href} className="min-w-0 text-sm font-medium break-words hover:underline">
             <EntityTitle entity={item.entity} language={language} />
           </Link>
         </div>
@@ -291,16 +293,13 @@ function ActivityEntryRow({
   return (
     <div className="flex flex-col gap-2">
       {snippets.map((snippet) => (
-        <figure
-          key={`${snippet.line}-${snippet.text}`}
-          className="rounded-md bg-muted p-2"
-        >
+        <figure key={`${snippet.line}-${snippet.text}`} className="rounded-md bg-muted p-2">
           {snippet.heading ? (
             <figcaption className="mb-1 text-xs font-medium text-muted-foreground">
               {snippet.heading}
             </figcaption>
           ) : null}
-          <blockquote className="break-words text-sm leading-6">{snippet.text}</blockquote>
+          <blockquote className="text-sm leading-6 break-words">{snippet.text}</blockquote>
         </figure>
       ))}
     </div>
@@ -312,7 +311,9 @@ function ActivityEntryRow({
 /// under that text instead, so `2026 Spring` never reads as April 1st. Such an
 /// item shares its anchor day with real dates, so the two form separate groups
 /// and a group is keyed rather than merely adjacent.
-function groupByDay(items: ActivityItem[]): { key: string; date: string | null; items: ActivityItem[] }[] {
+function groupByDay(
+  items: ActivityItem[],
+): { key: string; date: string | null; items: ActivityItem[] }[] {
   const days = new Map<string, { key: string; date: string | null; items: ActivityItem[] }>();
   for (const item of items) {
     const key = item.dateText ?? item.date;

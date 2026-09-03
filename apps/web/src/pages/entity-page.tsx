@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import { plural } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,14 +16,16 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { applyMatch, downloadAssets, removeEntity, saveEntity } from "@/api/entities";
-import { addItemToList, addList, removeItemFromList } from "@/api/lists";
+import { setEpisodeWatched } from "@/api/episodes";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { useInvalidateLists } from "@/api/invalidate-lists";
+import { addItemToList, addList, removeItemFromList } from "@/api/lists";
 import {
   configQuery,
   entityDatesQuery,
@@ -33,6 +34,7 @@ import {
   providerCatalogQuery,
   queryKeys,
 } from "@/api/queries";
+import { setTaskDone } from "@/api/tasks";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { QuickLogDialog } from "@/components/assets/quick-log-dialog";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
@@ -70,13 +72,16 @@ import { reportEntityError, useEntityMutation } from "@/hooks/use-entity-mutatio
 import { isRemoteAsset } from "@/lib/asset-src";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
-import { setEpisodeWatched } from "@/api/episodes";
-import { setTaskDone } from "@/api/tasks";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
 import { groupRelations } from "@/lib/relations";
-import { coverTypeIds, entityFieldLabel, fieldLabelsByType, typeLabelsById } from "@/lib/type-config";
 import { entityTitle } from "@/lib/title-language";
+import {
+  coverTypeIds,
+  entityFieldLabel,
+  fieldLabelsByType,
+  typeLabelsById,
+} from "@/lib/type-config";
 import type { Entity } from "@/types/api";
 
 export function EntityPage() {
@@ -141,10 +146,7 @@ export function EntityPage() {
     externalRefs: entity?.externalRefs,
     assetDownloadEnabled: capabilities.assetDownloadEnabled,
   });
-  const relationGroups = useMemo(
-    () => groupRelations(detail.data?.relations ?? []),
-    [detail.data],
-  );
+  const relationGroups = useMemo(() => groupRelations(detail.data?.relations ?? []), [detail.data]);
   const labelsByType = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const typeLabels = useMemo(() => typeLabelsById(config.data?.types), [config.data]);
   // Type ids that declare a cover field — their connections render as a cover grid.
@@ -172,21 +174,24 @@ export function EntityPage() {
       setRenameOpen(false);
       return;
     }
-    await run(async () => {
-      const result = await saveEntity(entity.id, {
-        revision: entity.revision,
-        renameTo: nextBasename,
-      });
-      setRenameOpen(false);
-      await invalidateEntityData();
-      const updated = result.updatedLinks?.links ?? 0;
-      toast.success(
-        updated > 0
-          ? t`Renamed — updated ${plural(updated, { one: "# link", other: "# links" })}`
-          : t`Renamed`,
-      );
-      navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
-    }, { onConflict: refetchOnConflict });
+    await run(
+      async () => {
+        const result = await saveEntity(entity.id, {
+          revision: entity.revision,
+          renameTo: nextBasename,
+        });
+        setRenameOpen(false);
+        await invalidateEntityData();
+        const updated = result.updatedLinks?.links ?? 0;
+        toast.success(
+          updated > 0
+            ? t`Renamed — updated ${plural(updated, { one: "# link", other: "# links" })}`
+            : t`Renamed`,
+        );
+        navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
+      },
+      { onConflict: refetchOnConflict },
+    );
   }
 
   // The core re-resolves the candidate and applies the selected fields/body
@@ -196,45 +201,56 @@ export function EntityPage() {
   async function applyCandidate() {
     if (!entity || !external.candidateForApply) return;
     const candidate = external.candidateForApply;
-    await run(async () => {
-      const result = await applyMatch(entity.id, {
-        revision: entity.revision,
-        candidate,
-        fields: [...external.selectedFields],
-        sections: [...external.selectedBodySections],
-      });
-      external.setOpen(false);
-      await external.maybeDownloadCover(result.entity);
-      await invalidateEntityData();
-    }, { onConflict: refetchOnConflict });
+    await run(
+      async () => {
+        const result = await applyMatch(entity.id, {
+          revision: entity.revision,
+          candidate,
+          fields: [...external.selectedFields],
+          sections: [...external.selectedBodySections],
+        });
+        external.setOpen(false);
+        await external.maybeDownloadCover(result.entity);
+        await invalidateEntityData();
+      },
+      { onConflict: refetchOnConflict },
+    );
   }
 
   async function downloadCover() {
     if (!entity) return;
-    await run(async () => {
-      const result = await downloadAssets(entity.id, { revision: entity.revision });
-      await invalidateEntityData();
-      const failures = result.results.filter((item) => item.status === "failed");
-      if (failures.length > 0) {
-        const reasons = failures
-          .map((item) => item.message)
-          .filter(Boolean)
-          .join("; ");
-        toast.error(
-          reasons ? t`Some images could not be downloaded: ${reasons}` : t`Some images could not be downloaded`,
-        );
-      }
-    }, { onConflict: refetchOnConflict });
+    await run(
+      async () => {
+        const result = await downloadAssets(entity.id, { revision: entity.revision });
+        await invalidateEntityData();
+        const failures = result.results.filter((item) => item.status === "failed");
+        if (failures.length > 0) {
+          const reasons = failures
+            .map((item) => item.message)
+            .filter(Boolean)
+            .join("; ");
+          toast.error(
+            reasons
+              ? t`Some images could not be downloaded: ${reasons}`
+              : t`Some images could not be downloaded`,
+          );
+        }
+      },
+      { onConflict: refetchOnConflict },
+    );
   }
 
   async function deleteCurrentEntity() {
     if (!entity) return;
-    await run(async () => {
-      await removeEntity(entity.id, { revision: entity.revision });
-      await invalidateEntityData();
-      toast.success(t`Moved to trash`);
-      navigate("/library");
-    }, { onConflict: refetchOnConflict });
+    await run(
+      async () => {
+        await removeEntity(entity.id, { revision: entity.revision });
+        await invalidateEntityData();
+        toast.success(t`Moved to trash`);
+        navigate("/library");
+      },
+      { onConflict: refetchOnConflict },
+    );
   }
 
   // Writes one episode through `/episodes/watch` (group + key, index as the fallback
@@ -393,7 +409,12 @@ export function EntityPage() {
                     <Trans>Edit</Trans>
                   </Button>
                   {canLog ? (
-                    <Button type="button" variant="outline" size="sm" onClick={() => setLogOpen(true)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLogOpen(true)}
+                    >
                       <NotebookPenIcon data-icon="inline-start" />
                       <Trans>Log</Trans>
                     </Button>
@@ -506,7 +527,7 @@ function EntityActions({
             <Trans>Delete</Trans>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel className="font-normal break-all text-xs text-muted-foreground">
+          <DropdownMenuLabel className="text-xs font-normal break-all text-muted-foreground">
             {contentWritable
               ? entity.path
               : t`${CONTENT_WRITES_DISABLED} Editing actions are unavailable.`}
@@ -522,7 +543,8 @@ function EntityActions({
             </AlertDialogTitle>
             <AlertDialogDescription>
               <Trans>
-                This moves {entityTitle(entity, language)} to the Trash. You can restore it later if you need it.
+                This moves {entityTitle(entity, language)} to the Trash. You can restore it later if
+                you need it.
               </Trans>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -563,7 +585,9 @@ function ManageListsDialog({
     if (open) setNewName("");
   }, [open]);
 
-  const newNameError = newName.trim() ? basenameValidationError(normalizeBasename(newName)) : undefined;
+  const newNameError = newName.trim()
+    ? basenameValidationError(normalizeBasename(newName))
+    : undefined;
   // Smart lists derive membership from their filters, so they can't be joined/left by hand.
   const items = (lists.data?.items ?? []).filter((list) => list.kind === "static");
 
@@ -659,7 +683,10 @@ function ManageListsDialog({
               disabled={!contentWritable || creating}
               aria-invalid={Boolean(newNameError)}
             />
-            <Button type="submit" disabled={!contentWritable || creating || !newName.trim() || Boolean(newNameError)}>
+            <Button
+              type="submit"
+              disabled={!contentWritable || creating || !newName.trim() || Boolean(newNameError)}
+            >
               <PlusIcon data-icon="inline-start" />
               {creating ? <Trans>Creating…</Trans> : <Trans>Create & add</Trans>}
             </Button>

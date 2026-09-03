@@ -1,6 +1,6 @@
+import { EntityTitle } from "@/components/entities/entity-title";
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
-import { EntityTitle } from "@/components/entities/entity-title";
 import { cn } from "@/lib/utils";
 import type { CalendarDay } from "@/types/api";
 
@@ -25,7 +25,7 @@ export function CalendarDayCell({
       type="button"
       onClick={() => onSelect(day.date)}
       className={cn(
-        "flex aspect-square min-w-0 flex-col gap-2 border-b border-r p-2 text-left hover:bg-accent sm:aspect-auto sm:min-h-28",
+        "flex aspect-square min-w-0 flex-col gap-2 border-r border-b p-2 text-left hover:bg-accent sm:aspect-auto sm:min-h-28",
         selected && "bg-accent",
       )}
     >
@@ -33,7 +33,7 @@ export function CalendarDayCell({
           (taller) count badge is present — `items-center` dropped badged numbers
           a couple px below their badge-less neighbors. */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-medium leading-5">{dayNumber}</span>
+        <span className="text-xs leading-5 font-medium">{dayNumber}</span>
         {items.length > 0 ? <Badge variant="secondary">{items.length}</Badge> : null}
       </div>
 

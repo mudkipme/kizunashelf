@@ -1,10 +1,10 @@
-import { useCallback } from "react";
 import { getEntities } from "@kizunashelf/api-contract";
+import { useCallback } from "react";
 
 import { apiFetch } from "@/api/client";
+import type { RelationSuggestionSearch } from "@/components/entities/metadata-types";
 import { relevanceSort } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
-import type { RelationSuggestionSearch } from "@/components/entities/metadata-types";
 
 /**
  * Shared relation lookup used by the entity create/edit pages to back the

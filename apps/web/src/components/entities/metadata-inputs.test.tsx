@@ -11,7 +11,9 @@ import { render } from "@/test/render";
  * ever started guessing meaning from a field's name instead of its declared
  * `kind`, these are the tests that would catch it.
  */
-function spec(overrides: Partial<EditableFieldSpec> & Pick<EditableFieldSpec, "kind">): EditableFieldSpec {
+function spec(
+  overrides: Partial<EditableFieldSpec> & Pick<EditableFieldSpec, "kind">,
+): EditableFieldSpec {
   return {
     key: "field",
     label: "Field",
@@ -51,7 +53,12 @@ describe("FieldValueInput dispatch", () => {
     const onChange = vi.fn();
     const screen = await render(
       <Controlled
-        field={spec({ kind: "select", key: "notes", label: "Notes", options: ["Watching", "Done"] })}
+        field={spec({
+          kind: "select",
+          key: "notes",
+          label: "Notes",
+          options: ["Watching", "Done"],
+        })}
         onChange={onChange}
       />,
     );
@@ -59,11 +66,12 @@ describe("FieldValueInput dispatch", () => {
     const select = screen.getByRole("combobox", { name: "Notes" });
     // The empty choice comes first: a configured field may legitimately have no
     // value, and clearing it must not require deleting text.
-    expect(select.getByRole("option").elements().map((option) => option.textContent)).toEqual([
-      "Empty",
-      "Watching",
-      "Done",
-    ]);
+    expect(
+      select
+        .getByRole("option")
+        .elements()
+        .map((option) => option.textContent),
+    ).toEqual(["Empty", "Watching", "Done"]);
 
     await select.selectOptions("Done");
     expect(onChange).toHaveBeenLastCalledWith("Done");
@@ -80,15 +88,21 @@ describe("FieldValueInput dispatch", () => {
 
     const select = screen.getByRole("combobox", { name: "Status" });
     await expect.element(select).toHaveValue("Rewatching");
-    expect(select.getByRole("option").elements().map((option) => option.textContent)).toContain(
-      "Rewatching",
-    );
+    expect(
+      select
+        .getByRole("option")
+        .elements()
+        .map((option) => option.textContent),
+    ).toContain("Rewatching");
   });
 
   it("renders a text input for a `text` field, even one named like a status", async () => {
     const onChange = vi.fn();
     const screen = await render(
-      <Controlled field={spec({ kind: "text", key: "status", label: "Status" })} onChange={onChange} />,
+      <Controlled
+        field={spec({ kind: "text", key: "status", label: "Status" })}
+        onChange={onChange}
+      />,
     );
 
     const input = screen.getByRole("textbox", { name: "Status" });
@@ -124,7 +138,10 @@ describe("FieldValueInput dispatch", () => {
   it("renders a date field as a calendar popover, storing the ISO value", async () => {
     const onChange = vi.fn();
     const screen = await render(
-      <Controlled field={spec({ kind: "date", key: "aired", label: "Aired" })} onChange={onChange} />,
+      <Controlled
+        field={spec({ kind: "date", key: "aired", label: "Aired" })}
+        onChange={onChange}
+      />,
     );
 
     // Empty until picked — the trigger says so rather than showing a stale date.
@@ -150,11 +167,12 @@ describe("FieldValueInput dispatch", () => {
     // A checkbox could not express "not set", which is distinct from "no" in
     // frontmatter — an absent key versus an explicit `false`.
     const select = screen.getByRole("combobox", { name: "Favorite" });
-    expect(select.getByRole("option").elements().map((option) => option.textContent)).toEqual([
-      "Empty",
-      "Yes",
-      "No",
-    ]);
+    expect(
+      select
+        .getByRole("option")
+        .elements()
+        .map((option) => option.textContent),
+    ).toEqual(["Empty", "Yes", "No"]);
 
     await select.selectOptions("Yes");
     expect(onChange).toHaveBeenLastCalledWith(true);

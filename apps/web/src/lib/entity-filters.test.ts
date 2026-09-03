@@ -118,11 +118,15 @@ describe("compareEntitiesByTypeThenTitle", () => {
     const a = summary({ typeLabel: "Anime", title: "Alpha", titles: { ja: "ベータ" } });
     const b = summary({ typeLabel: "Anime", title: "Beta", titles: { ja: "アルファ" } });
     expect(
-      [a, b].sort((x, y) => compareEntitiesByTypeThenTitle(x, y, "ja")).map((entity) => entity.title),
+      [a, b]
+        .sort((x, y) => compareEntitiesByTypeThenTitle(x, y, "ja"))
+        .map((entity) => entity.title),
     ).toEqual(["Beta", "Alpha"]);
     // A language with no title falls back to the canonical title.
     expect(
-      [a, b].sort((x, y) => compareEntitiesByTypeThenTitle(x, y, "en")).map((entity) => entity.title),
+      [a, b]
+        .sort((x, y) => compareEntitiesByTypeThenTitle(x, y, "en"))
+        .map((entity) => entity.title),
     ).toEqual(["Alpha", "Beta"]);
   });
 });

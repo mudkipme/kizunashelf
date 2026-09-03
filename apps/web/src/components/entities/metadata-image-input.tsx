@@ -5,10 +5,10 @@
 //! value. Uploading stages the returned vault path into the draft; nothing is
 //! written until the normal Save.
 
-import type { DragEvent } from "react";
-import { useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { ImageIcon, Loader2Icon, UploadIcon, XIcon } from "lucide-react";
+import type { DragEvent } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { uploadAsset } from "@/api/entities";
@@ -109,14 +109,23 @@ export function ImageFieldInput({
         ? values.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {values.map((item, index) => (
-                <div key={`${item}-${index}`} className="group relative size-16 overflow-hidden rounded-md border">
-                  <AssetImage src={item} alt="" className="size-full object-cover" fallback={<ImageThumbFallback />} lightbox />
+                <div
+                  key={`${item}-${index}`}
+                  className="group relative size-16 overflow-hidden rounded-md border"
+                >
+                  <AssetImage
+                    src={item}
+                    alt=""
+                    className="size-full object-cover"
+                    fallback={<ImageThumbFallback />}
+                    lightbox
+                  />
                   {!disabled ? (
                     <button
                       type="button"
                       onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
                       aria-label={t`Remove image`}
-                      className="bg-background text-muted-foreground absolute right-0.5 top-0.5 rounded-full border p-0.5 opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
+                      className="absolute top-0.5 right-0.5 rounded-full border bg-background p-0.5 text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
                     >
                       <XIcon className="size-3" />
                     </button>
@@ -127,7 +136,13 @@ export function ImageFieldInput({
           )
         : single && (
             <div className="size-24 overflow-hidden rounded-md border">
-              <AssetImage src={single} alt="" className="size-full object-cover" fallback={<ImageThumbFallback />} lightbox />
+              <AssetImage
+                src={single}
+                alt=""
+                className="size-full object-cover"
+                fallback={<ImageThumbFallback />}
+                lightbox
+              />
             </div>
           )}
 
@@ -160,7 +175,7 @@ export function ImageFieldInput({
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={cn(
-            "text-muted-foreground flex items-center justify-between gap-2 rounded-md border border-dashed px-3 py-2 text-xs transition-colors",
+            "flex items-center justify-between gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground transition-colors",
             dragging && "border-primary bg-primary/5",
           )}
         >
@@ -178,7 +193,13 @@ export function ImageFieldInput({
               event.target.value = "";
             }}
           />
-          <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => inputRef.current?.click()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
             {uploading ? (
               <Loader2Icon data-icon="inline-start" className="animate-spin" />
             ) : (
@@ -194,7 +215,7 @@ export function ImageFieldInput({
 
 function ImageThumbFallback() {
   return (
-    <div className="bg-muted text-muted-foreground flex size-full items-center justify-center">
+    <div className="flex size-full items-center justify-center bg-muted text-muted-foreground">
       <ImageIcon className="size-5" />
     </div>
   );

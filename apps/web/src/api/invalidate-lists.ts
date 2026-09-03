@@ -1,5 +1,5 @@
-import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 import { queryKeys } from "@/api/queries";
 
@@ -17,9 +17,7 @@ export function useInvalidateLists() {
     (listId?: string) =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
-        ...(listId
-          ? [queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) })]
-          : []),
+        ...(listId ? [queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) })] : []),
       ]),
     [queryClient],
   );

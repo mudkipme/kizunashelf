@@ -25,8 +25,7 @@ export const unitSymbols: Record<string, string> = {
 // name and a value into a compact phrase like `genres contains comedy`.
 const ruleWords = {
   not: msg({
-    comment:
-      "Negation prefix in a filter-criteria chip, e.g. 'not genres contains comedy'",
+    comment: "Negation prefix in a filter-criteria chip, e.g. 'not genres contains comedy'",
     message: "not",
   }),
   yes: msg({

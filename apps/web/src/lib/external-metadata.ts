@@ -28,7 +28,9 @@ export type ExternalSourceOption = {
   label: string;
 };
 
-export function externalSourceOptions(catalog: ExternalProviderCatalog | undefined): ExternalSourceOption[] {
+export function externalSourceOptions(
+  catalog: ExternalProviderCatalog | undefined,
+): ExternalSourceOption[] {
   return (catalog?.providers ?? []).map((provider) => ({
     source: provider.id,
     label: provider.label,
@@ -59,7 +61,8 @@ export function externalProviderPriority(
 ) {
   const supported = new Set<string>();
   for (const field of configFields(typeConfig)) {
-    if (field.fieldType === "externalRef") addKnownSource(catalog, supported, field.externalRef ?? "");
+    if (field.fieldType === "externalRef")
+      addKnownSource(catalog, supported, field.externalRef ?? "");
   }
   for (const source of externalSectionSources(typeConfig)) {
     addKnownSource(catalog, supported, source);
@@ -71,7 +74,8 @@ export function externalProviderPriority(
   }
 
   for (const field of configFields(typeConfig)) {
-    if (field.fieldType === "externalRef") addKnownSupportedSource(priority, supported, field.externalRef ?? "");
+    if (field.fieldType === "externalRef")
+      addKnownSupportedSource(priority, supported, field.externalRef ?? "");
   }
   for (const source of externalSectionSources(typeConfig)) {
     addKnownSupportedSource(priority, supported, source);
@@ -115,7 +119,9 @@ export function matchFieldPatch(
 }
 
 function fieldLabels(typeConfig: TypeConfig | undefined): Map<string, string> {
-  return new Map(configFields(typeConfig).map((field) => [field.field, configuredFieldLabel(field)]));
+  return new Map(
+    configFields(typeConfig).map((field) => [field.field, configuredFieldLabel(field)]),
+  );
 }
 
 /// Every external-source id referenced by a type's external body sections.

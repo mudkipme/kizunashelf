@@ -19,7 +19,11 @@ export type EditableSection = {
 // comparing local edits against the server's last-loaded state. Only the parts
 // that round-trip to Markdown matter (heading, marker, item order + task state).
 export function sectionsSignature(
-  sections: Array<{ heading: string | null; marker: ListMarker; items: Array<{ text: string; checked?: boolean | null }> }>,
+  sections: Array<{
+    heading: string | null;
+    marker: ListMarker;
+    items: Array<{ text: string; checked?: boolean | null }>;
+  }>,
 ) {
   return JSON.stringify(
     sections.map((section) => ({

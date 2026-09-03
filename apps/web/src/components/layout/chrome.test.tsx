@@ -1,11 +1,11 @@
+import { useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { useLocation } from "react-router-dom";
 
 import { AppFrame } from "@/components/layout/app-frame";
 import { isAppleKeyboard } from "@/lib/shortcuts";
-import { render } from "@/test/render";
 import { stubApi } from "@/test/api-stub";
+import { render } from "@/test/render";
 
 const mod = isAppleKeyboard() ? "Meta" : "Control";
 const chord = (key: string) => `{${mod}>}${key.replace(/[[{]/g, "$&$&")}{/${mod}}`;

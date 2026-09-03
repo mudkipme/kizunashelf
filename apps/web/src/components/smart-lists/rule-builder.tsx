@@ -13,11 +13,7 @@ import type { RuleFieldMeta } from "@/components/smart-lists/rule-field-meta";
 import { RuleRow } from "@/components/smart-lists/rule-row";
 import { ConjunctionSelect, SubgroupBox } from "@/components/smart-lists/rule-subgroup";
 import { Button } from "@/components/ui/button";
-import type {
-  SmartFilterGroup,
-  SmartFilterRule,
-  SmartFilterSubgroup,
-} from "@/types/api";
+import type { SmartFilterGroup, SmartFilterRule, SmartFilterSubgroup } from "@/types/api";
 
 export function RuleBuilder({
   fieldMetas,
@@ -38,7 +34,9 @@ export function RuleBuilder({
     onChange({ ...value, rules: next });
   };
   const replaceGroup = (index: number, group: SmartFilterSubgroup | null) => {
-    const next = groups.flatMap((existing, i) => (i === index ? (group ? [group] : []) : [existing]));
+    const next = groups.flatMap((existing, i) =>
+      i === index ? (group ? [group] : []) : [existing],
+    );
     onChange({ ...value, groups: next });
   };
 

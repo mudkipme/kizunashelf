@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { isAbortError } from "@/api/client";
 import { waitForVaultChange } from "@/api/vault-changes";

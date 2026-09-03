@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="input-group"
       role="group"
       className={cn(
-        "group/input-group relative flex h-(--control-height) min-w-0 items-center rounded-md border border-input shadow-xs outline-none transition-[color,box-shadow] has-[>textarea]:h-auto",
+        "group/input-group relative flex h-(--control-height) min-w-0 items-center rounded-md border border-input shadow-xs transition-[color,box-shadow] outline-none has-[>textarea]:h-auto",
         "has-[>[data-align=inline-start]]:[&>input]:pl-2",
         "has-[>[data-align=inline-end]]:[&>input]:pr-2",
         "has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3",

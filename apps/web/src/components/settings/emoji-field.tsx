@@ -1,7 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { SmilePlusIcon, XIcon } from "lucide-react";
 import type { EmojiClickData } from "emoji-picker-react";
+import { SmilePlusIcon, XIcon } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -97,9 +97,7 @@ export function EmojiField({
 // the UI even when the user forces a theme against their OS preference. The
 // resolved theme lives as a `dark` class on <html> (see lib/theme.ts).
 function useIsDarkTheme() {
-  const [isDark, setIsDark] = useState(() =>
-    document.documentElement.classList.contains("dark"),
-  );
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   useEffect(() => {
     const root = document.documentElement;
     const update = () => setIsDark(root.classList.contains("dark"));

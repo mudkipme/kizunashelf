@@ -42,7 +42,9 @@ export function seasonValueOptions(language: SeasonLanguage, today = new Date())
 /// when the operator was just switched from "is any of", and then the year each
 /// season falls in is the sensible carry-over.
 export function yearsFrom(values: string[]): string[] {
-  const years = values.map((value) => /(?:19|20)\d{2}/.exec(value)?.[0]).filter((year) => year !== undefined);
+  const years = values
+    .map((value) => /(?:19|20)\d{2}/.exec(value)?.[0])
+    .filter((year) => year !== undefined);
   return [...new Set(years)];
 }
 
@@ -51,7 +53,9 @@ export function yearsFrom(values: string[]): string[] {
 /// (and we) read as list membership on a multi-season field, so it would miss
 /// those notes entirely.
 export function seasonsOfYear(year: string, language: SeasonLanguage): string[] {
-  return seasonOptions(language).map((season) => formatSeasonValue({ kind: "season", year, season: season.key }, language));
+  return seasonOptions(language).map((season) =>
+    formatSeasonValue({ kind: "season", year, season: season.key }, language),
+  );
 }
 
 /// The years a set of season values covers, but only when the values are
@@ -67,7 +71,9 @@ export function wholeYearsOf(values: string[], language: SeasonLanguage): string
     seasons.add(parsed.season);
     byYear.set(parsed.year, seasons);
   }
-  const complete = [...byYear.values()].every((seasons) => seasons.size === seasonOptions(language).length);
+  const complete = [...byYear.values()].every(
+    (seasons) => seasons.size === seasonOptions(language).length,
+  );
   if (!complete || byYear.size === 0) return undefined;
   return [...byYear.keys()];
 }

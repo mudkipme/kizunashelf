@@ -44,7 +44,13 @@ function MarkdownLink({ href, children }: { href?: string; children?: ReactNode 
  * basic inline Markdown support. Unlike {@link MarkdownView} it produces inline
  * content — the paragraph wrapper is collapsed — so it can sit inside a list row.
  */
-export function InlineMarkdown({ markdown, relations }: { markdown: string; relations: Relation[] }) {
+export function InlineMarkdown({
+  markdown,
+  relations,
+}: {
+  markdown: string;
+  relations: Relation[];
+}) {
   const transformed = transformWikilinks(markdown, relations);
 
   return (
@@ -169,23 +175,21 @@ export function MarkdownView({
                 alt={text}
                 lightbox
                 className="my-1 max-h-96 max-w-full rounded-md border object-contain"
-                fallback={
-                  <span className="text-xs text-muted-foreground">{text || "image"}</span>
-                }
+                fallback={<span className="text-xs text-muted-foreground">{text || "image"}</span>}
               />
             );
           },
           h1({ children }) {
-            return <h1 className="text-xl font-semibold leading-8">{children}</h1>;
+            return <h1 className="text-xl leading-8 font-semibold">{children}</h1>;
           },
           h2({ children }) {
-            return <h2 className="border-b pb-1 text-lg font-semibold leading-8">{children}</h2>;
+            return <h2 className="border-b pb-1 text-lg leading-8 font-semibold">{children}</h2>;
           },
           h3({ children }) {
-            return <h3 className="text-base font-semibold leading-7">{children}</h3>;
+            return <h3 className="text-base leading-7 font-semibold">{children}</h3>;
           },
           h4({ children }) {
-            return <h4 className="text-sm font-semibold leading-7">{children}</h4>;
+            return <h4 className="text-sm leading-7 font-semibold">{children}</h4>;
           },
           p({ children }) {
             return <p>{children}</p>;
@@ -209,7 +213,9 @@ export function MarkdownView({
             );
           },
           blockquote({ children }) {
-            return <blockquote className="border-l-2 pl-4 text-muted-foreground">{children}</blockquote>;
+            return (
+              <blockquote className="border-l-2 pl-4 text-muted-foreground">{children}</blockquote>
+            );
           },
           code({ children, className }) {
             const inline = !className;
@@ -220,7 +226,11 @@ export function MarkdownView({
             return <code className={className}>{children}</code>;
           },
           pre({ children }) {
-            return <pre className="overflow-auto rounded-md bg-muted p-3 text-xs leading-5">{children}</pre>;
+            return (
+              <pre className="overflow-auto rounded-md bg-muted p-3 text-xs leading-5">
+                {children}
+              </pre>
+            );
           },
           table({ children }) {
             return (
@@ -249,15 +259,18 @@ function transformWikilinks(markdown: string, relations: Relation[]) {
     if (relation.targetId) targetByTitle.set(relation.targetTitle, relation.targetId);
   }
 
-  return markdown.replace(wikilinkPattern, (_, title: string, heading: string | undefined, alias: string | undefined) => {
-    const targetId = targetByTitle.get(title);
-    const label = alias || title;
+  return markdown.replace(
+    wikilinkPattern,
+    (_, title: string, heading: string | undefined, alias: string | undefined) => {
+      const targetId = targetByTitle.get(title);
+      const label = alias || title;
 
-    if (!targetId) return label;
+      if (!targetId) return label;
 
-    const anchor = heading ? `#${slugifyObsidianHeading(heading.slice(1))}` : "";
-    return `[${escapeMarkdownLabel(label)}](/entities/${encodeURIComponent(targetId)}${anchor})`;
-  });
+      const anchor = heading ? `#${slugifyObsidianHeading(heading.slice(1))}` : "";
+      return `[${escapeMarkdownLabel(label)}](/entities/${encodeURIComponent(targetId)}${anchor})`;
+    },
+  );
 }
 
 function escapeMarkdownLabel(value: string) {

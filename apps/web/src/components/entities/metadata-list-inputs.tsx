@@ -3,8 +3,8 @@
 //! name) and the season-list editor, whose rows are (year, season) pairs written
 //! back in the field's own season language.
 
-import { useEffect, useState } from "react";
 import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,9 +52,13 @@ export function MultiValueInput({
   const [remoteOptions, setRemoteOptions] = useState<MultiValueOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [optionsError, setOptionsError] = useState<string>();
-  const selectedValues = uniqueStrings(values.map((value) => normalizeListItem(value, wikilinks)).filter(Boolean));
+  const selectedValues = uniqueStrings(
+    values.map((value) => normalizeListItem(value, wikilinks)).filter(Boolean),
+  );
   const normalizedOptions = uniqueOptions([...options, ...remoteOptions], wikilinks);
-  const labels = new Map(normalizedOptions.map((option) => [option.value, option.label || option.value]));
+  const labels = new Map(
+    normalizedOptions.map((option) => [option.value, option.label || option.value]),
+  );
 
   const { schedule: scheduleOptionsLoad, cancel: cancelOptionsLoad } =
     useDebouncedAbortableCallback(
@@ -92,7 +96,9 @@ export function MultiValueInput({
 
   function updateValues(nextValues: string[]) {
     if (disabled) return;
-    onChange(uniqueStrings(nextValues.map((value) => normalizeListItem(value, wikilinks)).filter(Boolean)));
+    onChange(
+      uniqueStrings(nextValues.map((value) => normalizeListItem(value, wikilinks)).filter(Boolean)),
+    );
     setInputValue("");
   }
 
@@ -170,7 +176,9 @@ export function SeasonListInput({
               />
               <Select
                 value={row.season}
-                onChange={(event) => updateRow(index, { ...row, season: event.target.value as SeasonKey })}
+                onChange={(event) =>
+                  updateRow(index, { ...row, season: event.target.value as SeasonKey })
+                }
                 className="min-w-32 flex-1"
                 aria-label={`${ariaLabel} season`}
                 disabled={disabled}
@@ -199,7 +207,12 @@ export function SeasonListInput({
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => updateRows([...rows, { kind: "season", year: String(new Date().getFullYear()), season: "spring" }])}
+        onClick={() =>
+          updateRows([
+            ...rows,
+            { kind: "season", year: String(new Date().getFullYear()), season: "spring" },
+          ])
+        }
         disabled={disabled}
       >
         <PlusIcon data-icon="inline-start" />

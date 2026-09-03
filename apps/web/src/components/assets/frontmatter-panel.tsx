@@ -1,11 +1,10 @@
 import { Trans } from "@lingui/react/macro";
+import { useQuery } from "@tanstack/react-query";
 import { ExternalLinkIcon } from "lucide-react";
 
+import { configQuery } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars, ratingNumber } from "@/components/ui/rating-stars";
-import { useQuery } from "@tanstack/react-query";
-
-import { configQuery } from "@/api/queries";
 import { configFields, fieldsByType, fieldLabelForKey, type FieldType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type { Entity, Relation, TypeConfig } from "@/types/api";
@@ -35,7 +34,9 @@ export function FrontmatterPanel({
   typeConfig?: TypeConfig;
 }) {
   const entries = useVisibleFrontmatterEntries(entity, relationGroups, typeConfig);
-  const fieldTypes = new Map(configFields(typeConfig).map((field) => [field.field, field.fieldType]));
+  const fieldTypes = new Map(
+    configFields(typeConfig).map((field) => [field.field, field.fieldType]),
+  );
 
   // The parent gates this section on the same entries, so empty shouldn't reach
   // here — return nothing rather than an empty shell if it ever does.
@@ -143,7 +144,8 @@ function FrontmatterValueView({
   }
 
   if (typeof value === "string") {
-    if (fieldType === "rating" && ratingNumber(value) !== undefined) return <RatingStars value={value} />;
+    if (fieldType === "rating" && ratingNumber(value) !== undefined)
+      return <RatingStars value={value} />;
     return <StringValue value={value} />;
   }
 
@@ -160,7 +162,11 @@ function FrontmatterValueView({
       return (
         <div className="flex min-w-0 flex-wrap gap-1">
           {value.map((item, index) => (
-            <Badge key={index} variant="outline" className="max-w-full whitespace-normal break-words">
+            <Badge
+              key={index}
+              variant="outline"
+              className="max-w-full break-words whitespace-normal"
+            >
               <PrimitiveInlineValue value={item} />
             </Badge>
           ))}
@@ -174,7 +180,7 @@ function FrontmatterValueView({
       <div className="flex min-w-0 flex-col gap-2">
         {value.map((item, index) => (
           <div key={index} className="min-w-0 rounded-md bg-muted/60 px-2.5 py-2">
-            <div className="mb-1 text-xs font-medium uppercase text-muted-foreground">
+            <div className="mb-1 text-xs font-medium text-muted-foreground uppercase">
               <Trans>Item {index + 1}</Trans>
             </div>
             <FrontmatterValueView value={item} depth={depth + 1} />

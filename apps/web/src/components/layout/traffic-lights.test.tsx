@@ -3,8 +3,8 @@ import { page } from "vitest/browser";
 
 import { AppFrame } from "@/components/layout/app-frame";
 import { SIDEBAR_DEFAULT_WIDTH, useSidebarStore } from "@/lib/sidebar";
-import { render } from "@/test/render";
 import { stubApi } from "@/test/api-stub";
+import { render } from "@/test/render";
 
 // The only macOS-specific input the header reads. Forced on so the branch that
 // reserves the traffic lights' corner can be exercised off a Mac.

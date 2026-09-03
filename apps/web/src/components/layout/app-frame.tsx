@@ -1,5 +1,4 @@
-import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
@@ -12,9 +11,11 @@ import {
   TablePropertiesIcon,
   XIcon,
 } from "lucide-react";
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Trans, useLingui } from "@lingui/react/macro";
 
+import { statsQuery } from "@/api/queries";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { HeaderSearch } from "@/components/layout/header-search";
 import { LanguageSelect } from "@/components/layout/language-select";
@@ -23,17 +24,16 @@ import { SidebarResizer } from "@/components/layout/sidebar-resizer";
 import { ThemeModeSelect } from "@/components/layout/theme-mode-select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { statsQuery } from "@/api/queries";
 import { useAppShortcuts } from "@/hooks/use-app-shortcuts";
 import { useHistoryPosition } from "@/hooks/use-history-position";
-import { useTransitionPresence } from "@/hooks/use-transition-presence";
 import { useMacTitlebarInset } from "@/hooks/use-mac-titlebar-inset";
 import { useRescanLibrary } from "@/hooks/use-rescan-library";
+import { useTransitionPresence } from "@/hooks/use-transition-presence";
+import { allTypes } from "@/lib/constants";
 import { isDesktopRuntime, isMacDesktopRuntime, setWindowTitle } from "@/lib/desktop";
 import { backChord, formatChord, forwardChord, sidebarChord } from "@/lib/shortcuts";
-import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/lib/sidebar";
-import { allTypes } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { StatsResponse } from "@/types/api";
 
 /// How long the sidebar takes to open and close, in milliseconds.
@@ -290,9 +290,7 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     </div>
   ) : null;
 
-  const palette = (
-    <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} stats={stats} />
-  );
+  const palette = <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} stats={stats} />;
 
   const mobileSidebar = (
     <MobileSidebar
@@ -511,7 +509,13 @@ function MobileSidebar({
               <span className="block truncate text-sm font-semibold">KizunaShelf</span>
             ) : null}
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label={t`Close navigation`}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label={t`Close navigation`}
+          >
             <XIcon />
           </Button>
         </header>
@@ -577,7 +581,7 @@ function SidebarContent({
             onNavigate={onNavigate}
           >
             <span className="truncate">{type.label}</span>
-            <span className="ml-auto tabular-nums text-muted-foreground">{type.count}</span>
+            <span className="ml-auto text-muted-foreground tabular-nums">{type.count}</span>
           </SidebarNavLink>
         ))}
         {!stats ? <SidebarTypesSkeleton /> : null}
@@ -634,14 +638,17 @@ function SidebarNavLink({
       className={({ isActive }) =>
         cn(
           "flex h-(--control-height) min-w-0 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-          "[&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
+          "[&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
           (active ?? isActive) && "bg-accent text-foreground",
         )
       }
       onClick={onNavigate}
     >
       {emoji ? (
-        <span className="flex size-4 shrink-0 items-center justify-center text-sm leading-none" aria-hidden="true">
+        <span
+          className="flex size-4 shrink-0 items-center justify-center text-sm leading-none"
+          aria-hidden="true"
+        >
           {emoji}
         </span>
       ) : Icon ? (

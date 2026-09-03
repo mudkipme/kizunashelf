@@ -10,17 +10,29 @@ export function OptionToggles({
   onChange,
 }: {
   options: { importUserData: boolean; importEpisodes: boolean; markProgress: boolean };
-  onChange: (next: { importUserData: boolean; importEpisodes: boolean; markProgress: boolean }) => void;
+  onChange: (next: {
+    importUserData: boolean;
+    importEpisodes: boolean;
+    markProgress: boolean;
+  }) => void;
 }) {
   const toggle = (key: keyof typeof options) => onChange({ ...options, [key]: !options[key] });
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
       <label className="flex items-center gap-1.5">
-        <input type="checkbox" checked={options.importUserData} onChange={() => toggle("importUserData")} />
+        <input
+          type="checkbox"
+          checked={options.importUserData}
+          onChange={() => toggle("importUserData")}
+        />
         <Trans>Status, score & dates</Trans>
       </label>
       <label className="flex items-center gap-1.5">
-        <input type="checkbox" checked={options.importEpisodes} onChange={() => toggle("importEpisodes")} />
+        <input
+          type="checkbox"
+          checked={options.importEpisodes}
+          onChange={() => toggle("importEpisodes")}
+        />
         <Trans>Episodes</Trans>
       </label>
       <label className="flex items-center gap-1.5">
@@ -43,7 +55,7 @@ export function JobProgress({ job }: { job: ImportJob }) {
   return (
     <section className="rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span className="capitalize text-foreground">
+        <span className="text-foreground capitalize">
           {done ? <Trans>Import complete</Trans> : <Trans>Importing…</Trans>}
         </span>
         <span className="tabular-nums">

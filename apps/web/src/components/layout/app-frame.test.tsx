@@ -3,8 +3,8 @@ import { page } from "vitest/browser";
 
 import { AppFrame } from "@/components/layout/app-frame";
 import { useThemeStore } from "@/lib/theme";
-import { render } from "@/test/render";
 import { stubApi } from "@/test/api-stub";
+import { render } from "@/test/render";
 
 beforeEach(() => {
   stubApi();

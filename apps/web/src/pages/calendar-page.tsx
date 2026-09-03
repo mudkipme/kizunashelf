@@ -1,8 +1,8 @@
-import { useMemo } from "react";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -10,11 +10,11 @@ import { calendarQuery, configQuery } from "@/api/queries";
 import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
-import { ActivityCard } from "@/pages/activity-page";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useDateFormat, useIsoDateFormat } from "@/lib/locale";
 import { coverTypeIds, fieldLabelsByType } from "@/lib/type-config";
+import { ActivityCard } from "@/pages/activity-page";
 import type { CalendarDay } from "@/types/api";
 
 export function CalendarPage() {
@@ -52,7 +52,12 @@ export function CalendarPage() {
   const fieldLabels = useMemo(() => fieldLabelsByType(config.data?.types), [config.data]);
   const coverTypes = useMemo(() => coverTypeIds(config.data?.types), [config.data]);
 
-  function setParam(key: string, value: string, defaultValue?: string, options?: { replace?: boolean }) {
+  function setParam(
+    key: string,
+    value: string,
+    defaultValue?: string,
+    options?: { replace?: boolean },
+  ) {
     const next = new URLSearchParams(searchParams);
     if (defaultValue !== undefined && value === defaultValue) next.delete(key);
     else next.set(key, value);
@@ -137,7 +142,7 @@ export function CalendarPage() {
                   // day cells are only aspect-square tall.
                   <div
                     key={`blank-${index}`}
-                    className="aspect-square border-b border-r bg-muted/30 sm:aspect-auto sm:min-h-28"
+                    className="aspect-square border-r border-b bg-muted/30 sm:aspect-auto sm:min-h-28"
                   />
                 ),
               )}

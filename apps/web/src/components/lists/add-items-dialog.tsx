@@ -1,10 +1,10 @@
 //! The "add entities to this list" picker: a debounced entity search whose
 //! results can be added one at a time without closing the dialog.
 
-import { useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, PlusIcon } from "lucide-react";
+import { useState } from "react";
 
 import { entitiesQuery } from "@/api/queries";
 import { EntityCover } from "@/components/assets/entity-cover";
@@ -89,7 +89,9 @@ export function AddItemsDialog({
                       language={language}
                       className="block truncate text-sm font-medium"
                     />
-                    <span className="block truncate text-xs text-muted-foreground">{entity.typeLabel}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {entity.typeLabel}
+                    </span>
                   </span>
                   {added ? (
                     <Badge variant="outline">

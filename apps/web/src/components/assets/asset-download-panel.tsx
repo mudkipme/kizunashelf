@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { errorMessage } from "@/api/client";
 import { fetchAssetJob, startAssetJob, stopAssetJob } from "@/api/entities";
@@ -31,7 +31,8 @@ export function AssetDownloadPanel() {
     queryKey: ["assetJob", jobId],
     queryFn: () => fetchAssetJob(jobId as string),
     enabled: Boolean(jobId),
-    refetchInterval: (query) => (isRunning(query.state.data as AssetDownloadJob | undefined) ? 1000 : false),
+    refetchInterval: (query) =>
+      isRunning(query.state.data as AssetDownloadJob | undefined) ? 1000 : false,
   });
 
   const status = job.data?.status;
@@ -88,7 +89,11 @@ export function AssetDownloadPanel() {
               </option>
             ))}
           </Select>
-          <Button type="button" onClick={() => start.mutate()} disabled={running || start.isPending}>
+          <Button
+            type="button"
+            onClick={() => start.mutate()}
+            disabled={running || start.isPending}
+          >
             <DownloadIcon data-icon="inline-start" />
             {running ? <Trans>Running…</Trans> : <Trans>Start</Trans>}
           </Button>

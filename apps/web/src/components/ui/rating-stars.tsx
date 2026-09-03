@@ -11,7 +11,11 @@ export function RatingStars({ value, className }: { value: unknown; className?: 
   const label = `${formatRating(rating)} out of ${max}`;
 
   return (
-    <span className={cn("inline-flex items-center gap-0.5 align-middle", className)} aria-label={label} title={label}>
+    <span
+      className={cn("inline-flex items-center gap-0.5 align-middle", className)}
+      aria-label={label}
+      title={label}
+    >
       {Array.from({ length: max }, (_, index) => (
         <StarIcon
           key={index}
@@ -27,7 +31,8 @@ export function RatingStars({ value, className }: { value: unknown; className?: 
 }
 
 export function ratingNumber(value: unknown): number | undefined {
-  const number = typeof value === "number" ? value : typeof value === "string" ? Number(value.trim()) : NaN;
+  const number =
+    typeof value === "number" ? value : typeof value === "string" ? Number(value.trim()) : NaN;
   return Number.isFinite(number) ? number : undefined;
 }
 

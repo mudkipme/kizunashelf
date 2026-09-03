@@ -10,10 +10,8 @@
 //! list; here the list is four sources at once, one of them asynchronous, and
 //! the keyboard has to move across group boundaries as if they were not there.
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import {
   FilePlus2Icon,
   type LucideIcon,
@@ -21,6 +19,8 @@ import {
   SearchIcon,
   TablePropertiesIcon,
 } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { entitiesQuery } from "@/api/queries";
 import { EntityCover } from "@/components/assets/entity-cover";

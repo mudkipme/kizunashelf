@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { errorMessage } from "@/api/client";
 import { languagesQuery, providerCatalogQuery, settingsConfigQuery } from "@/api/queries";
@@ -40,7 +40,10 @@ export function SettingsPage() {
   const [dirty, setDirty] = useState(false);
   const [pendingMode, setPendingMode] = useState<EditorMode | null>(null);
   const loading =
-    settings.isPending || providerCatalog.isPending || capabilities.isPending || languages.isPending;
+    settings.isPending ||
+    providerCatalog.isPending ||
+    capabilities.isPending ||
+    languages.isPending;
   const error = settings.error ?? providerCatalog.error ?? capabilities.error ?? languages.error;
   const desktop = isDesktopRuntime();
   const settingsWritable = capabilities.settingsWritable;
@@ -59,7 +62,9 @@ export function SettingsPage() {
   }
 
   return (
-    <AppFrame error={(error ? errorMessage(error) : undefined) ?? settings.data?.error ?? undefined}>
+    <AppFrame
+      error={(error ? errorMessage(error) : undefined) ?? settings.data?.error ?? undefined}
+    >
       <PageContainer width="wide">
         {/* Desktop manages vaults + credentials natively (multi-vault, OS keychain). */}
         {desktop ? (

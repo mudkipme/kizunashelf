@@ -26,9 +26,13 @@ describe("basenameValidationError", () => {
   });
 
   it("rejects a trailing .md (the caller stores the basename only)", () => {
-    expect(basenameValidationError("Steins;Gate 0 (Anime).md")).toBe("Enter the basename without .md.");
+    expect(basenameValidationError("Steins;Gate 0 (Anime).md")).toBe(
+      "Enter the basename without .md.",
+    );
     // Case-insensitive on the extension.
-    expect(basenameValidationError("Steins;Gate 0 (Anime).MD")).toBe("Enter the basename without .md.");
+    expect(basenameValidationError("Steins;Gate 0 (Anime).MD")).toBe(
+      "Enter the basename without .md.",
+    );
   });
 
   it("rejects forbidden filesystem characters and control chars", () => {

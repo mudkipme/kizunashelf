@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
@@ -127,9 +127,16 @@ export function useExternalMatch({
     let cancelled = false;
     void (async () => {
       try {
-        const result = await searchSources({ provider: "all", q: "", type: entityType, pageSize: 1 });
+        const result = await searchSources({
+          provider: "all",
+          q: "",
+          type: entityType,
+          pageSize: 1,
+        });
         if (!cancelled) {
-          setProviderEnabled(Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])));
+          setProviderEnabled(
+            Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])),
+          );
         }
       } catch {
         // Leave the picker unfiltered on failure rather than blocking matching.
@@ -206,7 +213,9 @@ export function useExternalMatch({
           pageSize: 8,
           language,
         });
-        setProviderEnabled(Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])));
+        setProviderEnabled(
+          Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])),
+        );
         setCandidates(result.items);
         if (result.items.length === 0) setEmptyMessage(t`No external matches`);
       } catch (error) {
@@ -215,7 +224,17 @@ export function useExternalMatch({
         setSearching(false);
       }
     },
-    [provider, query, defaultQuery, entityType, externalSearchEnabled, providerOptions, resetSelection, language, t],
+    [
+      provider,
+      query,
+      defaultQuery,
+      entityType,
+      externalSearchEnabled,
+      providerOptions,
+      resetSelection,
+      language,
+      t,
+    ],
   );
 
   const refreshFromExternalRef = useCallback(
@@ -248,7 +267,9 @@ export function useExternalMatch({
             new Set(result.fields.filter((field) => field.selected).map((field) => field.field)),
           );
           setSelectedBodySections(
-            new Set(result.sections.filter((section) => section.selected).map((section) => section.key)),
+            new Set(
+              result.sections.filter((section) => section.selected).map((section) => section.key),
+            ),
           );
         } catch (error) {
           if (token !== reviewToken.current) return;
@@ -261,19 +282,24 @@ export function useExternalMatch({
 
   // Locked/replace-vs-append flags for the dialog, straight from the review.
   const fieldLocks = useMemo(
-    () => new Set((review?.fields ?? []).filter((field) => field.locked).map((field) => field.field)),
+    () =>
+      new Set((review?.fields ?? []).filter((field) => field.locked).map((field) => field.field)),
     [review],
   );
   const sectionLocks = useMemo(
     () =>
-      new Set((review?.sections ?? []).filter((section) => section.locked).map((section) => section.key)),
+      new Set(
+        (review?.sections ?? []).filter((section) => section.locked).map((section) => section.key),
+      ),
     [review],
   );
   const sectionModes = useMemo(
     () =>
       review
         ? Object.fromEntries(
-            review.sections.map((section) => [section.key, section.exists ? "replace" : "append"] as const),
+            review.sections.map(
+              (section) => [section.key, section.exists ? "replace" : "append"] as const,
+            ),
           )
         : undefined,
     [review],

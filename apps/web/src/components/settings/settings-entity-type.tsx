@@ -54,78 +54,90 @@ export function EntityTypeForm({
 }) {
   const { t } = useLingui();
   return (
-      <div className="flex flex-col gap-4">
-        <ConfigSubsection title={t`Basics`}>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-            <TextField label={t`ID`} value={config.id} onChange={(id) => onChange({ ...config, id })} />
-            <TextField label={t`Label`} value={config.label} onChange={(label) => onChange({ ...config, label })} />
-            <EmojiField label={t`Icon`} value={config.icon ?? ""} onChange={(icon) => onChange({ ...config, icon })} />
-            <PathField
-              label={t`Path`}
-              value={config.path}
-              base={taxonomyBase}
-              suggestionBase={taxonomyRoot}
-              onChange={(path) => onChange({ ...config, path })}
+    <div className="flex flex-col gap-4">
+      <ConfigSubsection title={t`Basics`}>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+          <TextField
+            label={t`ID`}
+            value={config.id}
+            onChange={(id) => onChange({ ...config, id })}
+          />
+          <TextField
+            label={t`Label`}
+            value={config.label}
+            onChange={(label) => onChange({ ...config, label })}
+          />
+          <EmojiField
+            label={t`Icon`}
+            value={config.icon ?? ""}
+            onChange={(icon) => onChange({ ...config, icon })}
+          />
+          <PathField
+            label={t`Path`}
+            value={config.path}
+            base={taxonomyBase}
+            suggestionBase={taxonomyRoot}
+            onChange={(path) => onChange({ ...config, path })}
+          />
+        </div>
+      </ConfigSubsection>
+
+      <ConfigSubsection title={t`Providers`}>
+        <ExternalPriorityEditor
+          providerCatalog={providerCatalog}
+          fields={config.fields}
+          values={config.externalPriority ?? []}
+          onChange={(externalPriority) => onChange({ ...config, externalPriority })}
+        />
+        <BodySectionsEditor
+          providerCatalog={providerCatalog}
+          values={config.bodySections ?? []}
+          onChange={(bodySections) => onChange({ ...config, bodySections })}
+        />
+      </ConfigSubsection>
+
+      <ConfigSubsection title={t`Filename`}>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <Field label={t`Filename title language`}>
+            <LanguageSelect
+              value={config.filename?.titleLanguage ?? ""}
+              languages={languages}
+              onChange={(titleLanguage) =>
+                onChange({
+                  ...config,
+                  filename: {
+                    titleLanguage: titleLanguage || undefined,
+                    titleRole: config.filename?.titleRole ?? undefined,
+                  },
+                })
+              }
             />
-          </div>
-        </ConfigSubsection>
+          </Field>
+          <Field label={t`Filename title — used as`}>
+            <Select
+              value={config.filename?.titleRole ?? ""}
+              onChange={(event) =>
+                onChange({
+                  ...config,
+                  filename: {
+                    titleLanguage: config.filename?.titleLanguage,
+                    titleRole: event.target.value === "original" ? "original" : undefined,
+                  },
+                })
+              }
+              className="w-full"
+            >
+              <option value="">{t`None`}</option>
+              <option value="original">{t`Original (filename is the title)`}</option>
+            </Select>
+          </Field>
+        </div>
+      </ConfigSubsection>
 
-        <ConfigSubsection title={t`Providers`}>
-          <ExternalPriorityEditor
-            providerCatalog={providerCatalog}
-            fields={config.fields}
-            values={config.externalPriority ?? []}
-            onChange={(externalPriority) => onChange({ ...config, externalPriority })}
-          />
-          <BodySectionsEditor
-            providerCatalog={providerCatalog}
-            values={config.bodySections ?? []}
-            onChange={(bodySections) => onChange({ ...config, bodySections })}
-          />
-        </ConfigSubsection>
-
-        <ConfigSubsection title={t`Filename`}>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <Field label={t`Filename title language`}>
-              <LanguageSelect
-                value={config.filename?.titleLanguage ?? ""}
-                languages={languages}
-                onChange={(titleLanguage) =>
-                  onChange({
-                    ...config,
-                    filename: {
-                      titleLanguage: titleLanguage || undefined,
-                      titleRole: config.filename?.titleRole ?? undefined,
-                    },
-                  })
-                }
-              />
-            </Field>
-            <Field label={t`Filename title — used as`}>
-              <Select
-                value={config.filename?.titleRole ?? ""}
-                onChange={(event) =>
-                  onChange({
-                    ...config,
-                    filename: {
-                      titleLanguage: config.filename?.titleLanguage,
-                      titleRole: event.target.value === "original" ? "original" : undefined,
-                    },
-                  })
-                }
-                className="w-full"
-              >
-                <option value="">{t`None`}</option>
-                <option value="original">{t`Original (filename is the title)`}</option>
-              </Select>
-            </Field>
-          </div>
-        </ConfigSubsection>
-
-        <ConfigSubsection title={t`Daily-note logging`}>
-          <TypeLogEditor config={config} onChange={onChange} />
-        </ConfigSubsection>
-      </div>
+      <ConfigSubsection title={t`Daily-note logging`}>
+        <TypeLogEditor config={config} onChange={onChange} />
+      </ConfigSubsection>
+    </div>
   );
 }
 
@@ -146,11 +158,13 @@ function TypeLogEditor({
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-xs font-medium text-muted-foreground"><Trans>Log to daily note</Trans></div>
+          <div className="text-xs font-medium text-muted-foreground">
+            <Trans>Log to daily note</Trans>
+          </div>
           <div className="text-xs text-muted-foreground">
             <Trans>
-              When on, checking an episode or the Log button writes a line to the daily note. The title
-              is auto-linked as a wikilink — just add your tag to the line format.
+              When on, checking an episode or the Log button writes a line to the daily note. The
+              title is auto-linked as a wikilink — just add your tag to the line format.
             </Trans>
           </div>
         </div>
@@ -204,7 +218,9 @@ function ExternalPriorityEditor({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-muted-foreground"><Trans>Provider priority</Trans></span>
+      <span className="text-xs font-medium text-muted-foreground">
+        <Trans>Provider priority</Trans>
+      </span>
       <div className="flex flex-col gap-2">
         {ordered.map((source, index) => {
           const label = externalSourceLabel(providerCatalog, source);
@@ -235,7 +251,9 @@ function ExternalPriorityEditor({
           );
         })}
         {ordered.length === 0 ? (
-          <EmptyConfigLine><Trans>Add an External ref field with a provider to configure priority.</Trans></EmptyConfigLine>
+          <EmptyConfigLine>
+            <Trans>Add an External ref field with a provider to configure priority.</Trans>
+          </EmptyConfigLine>
         ) : null}
       </div>
     </div>
@@ -272,7 +290,9 @@ function BodySectionsEditor({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground"><Trans>Markdown body sections</Trans></span>
+        <span className="text-xs font-medium text-muted-foreground">
+          <Trans>Markdown body sections</Trans>
+        </span>
         <Button
           type="button"
           variant="outline"
@@ -295,7 +315,11 @@ function BodySectionsEditor({
             onRemove={() => list.remove(index)}
           />
         ))}
-        {values.length === 0 ? <EmptyConfigLine><Trans>No markdown body sections.</Trans></EmptyConfigLine> : null}
+        {values.length === 0 ? (
+          <EmptyConfigLine>
+            <Trans>No markdown body sections.</Trans>
+          </EmptyConfigLine>
+        ) : null}
       </div>
     </div>
   );
@@ -324,7 +348,9 @@ function BodySectionEditor({
         <Field label={t`Kind`}>
           <Select
             value={section.kind}
-            onChange={(event) => onChange(changeBodySectionKind(section, event.target.value as BodySectionKind))}
+            onChange={(event) =>
+              onChange(changeBodySectionKind(section, event.target.value as BodySectionKind))
+            }
             className="w-full"
           >
             <option value="external">{t`External metadata`}</option>
@@ -340,7 +366,9 @@ function BodySectionEditor({
         <Field label={t`Tracking`}>
           <Select
             value={section.tracking ?? "checklist"}
-            onChange={(event) => onChange({ ...section, tracking: event.target.value as BodySectionTracking })}
+            onChange={(event) =>
+              onChange({ ...section, tracking: event.target.value as BodySectionTracking })
+            }
             className="w-full"
           >
             {EPISODE_TRACKING_OPTIONS.map((option) => (

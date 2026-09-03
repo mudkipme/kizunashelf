@@ -86,11 +86,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
         controller={{ closeOnBackdropClick: true }}
         carousel={{ finite: true }}
         // Hide the prev/next chrome when there's nothing to navigate to.
-        render={
-          slides.length <= 1
-            ? { buttonPrev: () => null, buttonNext: () => null }
-            : undefined
-        }
+        render={slides.length <= 1 ? { buttonPrev: () => null, buttonNext: () => null } : undefined}
       />
     </LightboxContext.Provider>
   );

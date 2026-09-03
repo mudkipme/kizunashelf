@@ -5,8 +5,8 @@
 //! affordance would put the sidebar width out of reach for anyone navigating
 //! by keyboard.
 
-import { useRef } from "react";
 import { useLingui } from "@lingui/react/macro";
+import { useRef } from "react";
 
 import { SIDEBAR_MAX_WIDTH, SIDEBAR_MIN_WIDTH } from "@/lib/sidebar";
 import { cn } from "@/lib/utils";

@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
+import type { ReactNode } from "react";
 
 import { formatRule } from "@/components/smart-lists/rule-format";
 import { Badge } from "@/components/ui/badge";

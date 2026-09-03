@@ -1,9 +1,10 @@
+import { fileURLToPath, URL } from "node:url";
+
 import { lingui, linguiTransformerBabelPreset } from "@lingui/vite-plugin";
-import { playwright } from "@vitest/browser-playwright";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { fileURLToPath, URL } from "node:url";
+import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
 const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };

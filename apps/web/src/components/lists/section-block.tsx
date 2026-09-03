@@ -3,11 +3,10 @@
 //! Reordering is drag-and-drop *and* keyboard-driven (dnd-kit's keyboard
 //! sensor), so a row is reachable without a pointer.
 
-import { useState } from "react";
-import { Trans, useLingui } from "@lingui/react/macro";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   FilePenLineIcon,
   GripVerticalIcon,
@@ -18,12 +17,12 @@ import {
   SquareIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { EntityCover } from "@/components/assets/entity-cover";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { ListMarker } from "@/types/api";
 
@@ -70,7 +70,7 @@ export function SectionBlock({
     <div className="rounded-md border bg-muted/30 p-2">
       <div className="mb-2 flex items-center gap-2">
         {ungrouped ? (
-          <span className="mr-auto px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="mr-auto px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
             <Trans>Ungrouped</Trans>
           </span>
         ) : renaming ? (
@@ -95,7 +95,7 @@ export function SectionBlock({
             {section.heading || t`Untitled section`}
           </h3>
         )}
-        <span className="text-xs tabular-nums text-muted-foreground">{section.items.length}</span>
+        <span className="text-xs text-muted-foreground tabular-nums">{section.items.length}</span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -146,7 +146,10 @@ export function SectionBlock({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SortableContext items={section.items.map((item) => item.key)} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={section.items.map((item) => item.key)}
+        strategy={verticalListSortingStrategy}
+      >
         <ol
           ref={setNodeRef}
           className={cn(
@@ -198,7 +201,9 @@ function SortableRow({
   onToggle: () => void;
 }) {
   const { t } = useLingui();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.key });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.key,
+  });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const checked = item.checked ?? false;
 
@@ -240,10 +245,16 @@ function SortableRow({
           disabled={disabled}
           onClick={onToggle}
         >
-          {checked ? <SquareCheckIcon className="size-4 text-primary" /> : <SquareIcon className="size-4" />}
+          {checked ? (
+            <SquareCheckIcon className="size-4 text-primary" />
+          ) : (
+            <SquareIcon className="size-4" />
+          )}
         </button>
       ) : marker === "ordered" ? (
-        <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">{index + 1}.</span>
+        <span className="w-5 shrink-0 text-center text-xs text-muted-foreground tabular-nums">
+          {index + 1}.
+        </span>
       ) : null}
       {item.entity ? (
         <Link
@@ -256,14 +267,21 @@ function SortableRow({
               as="span"
               entity={item.entity}
               language={language}
-              className={cn("block truncate text-sm font-medium", marker === "todo" && checked && "line-through")}
+              className={cn(
+                "block truncate text-sm font-medium",
+                marker === "todo" && checked && "line-through",
+              )}
             />
-            <span className="block truncate text-xs text-muted-foreground">{item.entity.typeLabel}</span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {item.entity.typeLabel}
+            </span>
           </span>
         </Link>
       ) : (
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className={cn("truncate text-sm", marker === "todo" && checked && "line-through")}>{item.text}</span>
+          <span className={cn("truncate text-sm", marker === "todo" && checked && "line-through")}>
+            {item.text}
+          </span>
           <span className="text-xs text-muted-foreground">
             <Trans>Unresolved link</Trans>
           </span>

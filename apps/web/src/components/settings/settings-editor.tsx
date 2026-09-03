@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { SaveIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
@@ -9,12 +9,7 @@ import { saveSettingsConfig } from "@/api/settings";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type {
-  AppConfig,
-  ExternalProviderCatalog,
-  Language,
-  VaultConfig,
-} from "@/types/api";
+import type { AppConfig, ExternalProviderCatalog, Language, VaultConfig } from "@/types/api";
 
 import {
   EmptyConfigLine,
@@ -23,6 +18,8 @@ import {
   SettingsSection,
   TextField,
 } from "./settings-controls";
+import { DailyNotesEditor } from "./settings-daily-notes";
+import { HomeBlock, TypesSection } from "./settings-dialogs";
 import {
   cleanVaultConfig,
   defaultDailyNotes,
@@ -31,8 +28,6 @@ import {
   joinPath,
   normalizeVaultConfig,
 } from "./settings-model";
-import { HomeBlock, TypesSection } from "./settings-dialogs";
-import { DailyNotesEditor } from "./settings-daily-notes";
 
 type SettingsEditorProps = {
   vaultConfigPath?: string;
@@ -69,7 +64,9 @@ export function SettingsEditor({
   // by the runtime (env / native switcher / @AppStorage) and is read-only here —
   // used for path display and the desktop "Browse" base, never edited or saved.
   const vaultRoot = initialApp?.vaultRoot ?? "";
-  const [config, setConfig] = useState<VaultConfig>(() => normalizeVaultConfig(initialVault ?? undefined));
+  const [config, setConfig] = useState<VaultConfig>(() =>
+    normalizeVaultConfig(initialVault ?? undefined),
+  );
   // The last saved/loaded schema object. Every edit replaces `config` with a new
   // object (immutable updates), so dirtiness is a cheap reference check — no
   // per-keystroke serialization, and untouched-dialog open/close keeps the same
@@ -134,14 +131,17 @@ export function SettingsEditor({
   const seenServerSignatureRef = useRef<string | undefined>(undefined);
   const loadedRevisionRef = useRef<string | undefined>(undefined);
   const dirty = config !== baselineConfig;
-  const seedConfig = useCallback((source: VaultConfig | null | undefined, revision?: string | null) => {
-    const seeded = normalizeVaultConfig(source ?? undefined);
-    setConfig(seeded);
-    setBaselineConfig(seeded);
-    loadedRevisionRef.current = revision ?? undefined;
-    seededRef.current = true;
-    setExternalChange(false);
-  }, []);
+  const seedConfig = useCallback(
+    (source: VaultConfig | null | undefined, revision?: string | null) => {
+      const seeded = normalizeVaultConfig(source ?? undefined);
+      setConfig(seeded);
+      setBaselineConfig(seeded);
+      loadedRevisionRef.current = revision ?? undefined;
+      seededRef.current = true;
+      setExternalChange(false);
+    },
+    [],
+  );
   useEffect(() => {
     if (initialVault === undefined && initialRevision == null) return;
     const signature = initialRevision ?? JSON.stringify(initialVault ?? null);
@@ -166,7 +166,10 @@ export function SettingsEditor({
     setSaving(true);
     try {
       const request = cleanVaultConfig(config, providerCatalog);
-      const response = await saveSettingsConfig({ ...request, revision: loadedRevisionRef.current });
+      const response = await saveSettingsConfig({
+        ...request,
+        revision: loadedRevisionRef.current,
+      });
       seedConfig(response.vault, response.revision);
       toast.success(t`Settings saved`);
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
@@ -193,7 +196,11 @@ export function SettingsEditor({
               <Trans>Back</Trans>
             </Button>
           ) : null}
-          <Button type="button" onClick={save} disabled={saving || externalChange || !settingsWritable}>
+          <Button
+            type="button"
+            onClick={save}
+            disabled={saving || externalChange || !settingsWritable}
+          >
             <SaveIcon data-icon="inline-start" />
             {saving ? t`Saving…` : onboarding ? t`Create vault` : t`Save`}
           </Button>
@@ -232,7 +239,10 @@ export function SettingsEditor({
         <SettingsOverview items={overviewItems} />
 
         {/* A disabled fieldset makes the whole schema form read-only natively. */}
-        <fieldset disabled={!settingsWritable || externalChange} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+        <fieldset
+          disabled={!settingsWritable || externalChange}
+          className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0"
+        >
           <SettingsSection
             id="vault"
             title={t`Vault`}
@@ -266,7 +276,12 @@ export function SettingsEditor({
               <SummaryBadges
                 items={
                   config.dailyNotes
-                    ? [plural((config.dailyNotes.paths ?? []).length, { one: "# path", other: "# paths" })]
+                    ? [
+                        plural((config.dailyNotes.paths ?? []).length, {
+                          one: "# path",
+                          other: "# paths",
+                        }),
+                      ]
                     : [t`off`]
                 }
               />
@@ -302,9 +317,7 @@ export function SettingsEditor({
             title={t`Tags`}
             description={t`A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list.`}
             summary={
-              <SummaryBadges
-                items={[config.tags ? config.tags.field?.trim() || t`on` : t`off`]}
-              />
+              <SummaryBadges items={[config.tags ? config.tags.field?.trim() || t`on` : t`off`]} />
             }
             action={
               <OptionalToggle
@@ -322,7 +335,9 @@ export function SettingsEditor({
                   label={t`Frontmatter key`}
                   value={config.tags.field ?? ""}
                   placeholder="tags"
-                  onChange={(value) => setConfig((current) => ({ ...current, tags: { field: value } }))}
+                  onChange={(value) =>
+                    setConfig((current) => ({ ...current, tags: { field: value } }))
+                  }
                 />
               </div>
             ) : (
@@ -339,7 +354,12 @@ export function SettingsEditor({
               <SummaryBadges
                 items={
                   config.home
-                    ? [plural((config.home.sections ?? []).length, { one: "# section", other: "# sections" })]
+                    ? [
+                        plural((config.home.sections ?? []).length, {
+                          one: "# section",
+                          other: "# sections",
+                        }),
+                      ]
                     : [t`off`]
                 }
               />
@@ -408,7 +428,12 @@ function SettingsOverview({
       </div>
       <div className="mt-1 flex flex-col gap-1">
         {items.map((item) => (
-          <Button key={item.id} asChild variant="ghost" className="h-auto justify-between px-2 py-2">
+          <Button
+            key={item.id}
+            asChild
+            variant="ghost"
+            className="h-auto justify-between px-2 py-2"
+          >
             <a href={`#${item.id}`} className="min-w-0">
               <span className="truncate text-sm">{item.title}</span>
               <span className="ml-2 shrink-0 text-xs text-muted-foreground">{item.detail}</span>

@@ -1,21 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
-import { languagesQuery, providerCatalogQuery, settingsConfigQuery, typePresetsQuery } from "@/api/queries";
+import {
+  languagesQuery,
+  providerCatalogQuery,
+  settingsConfigQuery,
+  typePresetsQuery,
+} from "@/api/queries";
 import { resolveTypePresets, saveSettingsConfig } from "@/api/settings";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   defaultSeedLanguage,
   PresetGallery,
   SeedLanguagePicker,
 } from "@/components/settings/preset-picker";
-import { cleanVaultConfig, defaultDailyNotes, defaultVaultConfig } from "@/components/settings/settings-model";
 import { SettingsEditor } from "@/components/settings/settings-editor";
+import {
+  cleanVaultConfig,
+  defaultDailyNotes,
+  defaultVaultConfig,
+} from "@/components/settings/settings-model";
 import { VaultSwitcher } from "@/components/settings/vault-switcher";
-import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
@@ -63,7 +72,12 @@ export function OnboardingPage() {
   if (desktop && settings.error) {
     // Desktop replies 503 (query error) until a vault is open.
     body = <VaultSwitcher onboarding onChanged={refresh} />;
-  } else if (settings.isPending || providerCatalog.isPending || presets.isPending || languages.isPending) {
+  } else if (
+    settings.isPending ||
+    providerCatalog.isPending ||
+    presets.isPending ||
+    languages.isPending
+  ) {
     body = (
       <Placeholder>
         <Trans>Loading…</Trans>
@@ -136,9 +150,7 @@ function OnboardingWizard({
   // the app's own language preference is the natural default.
   const preference = useLanguagePreference();
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const [language, setLanguage] = useState(() =>
-    defaultSeedLanguage(userLanguages, preference),
-  );
+  const [language, setLanguage] = useState(() => defaultSeedLanguage(userLanguages, preference));
   const [creating, setCreating] = useState(false);
   const noExisting = useMemo(() => new Set<string>(), []);
 
@@ -214,7 +226,12 @@ function OnboardingWizard({
         </p>
       </header>
 
-      <PresetGallery catalog={presetCatalog} selected={selected} existingIds={noExisting} onToggle={toggle} />
+      <PresetGallery
+        catalog={presetCatalog}
+        selected={selected}
+        existingIds={noExisting}
+        onToggle={toggle}
+      />
 
       <div className="sticky bottom-0 flex flex-col gap-3 border-t bg-background/95 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">

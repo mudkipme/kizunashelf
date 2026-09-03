@@ -2,8 +2,8 @@
 //! down to nested field editors, and the subsection heading used throughout the
 //! type/field dialogs.
 
-import { createContext, type ReactNode } from "react";
 import { useLingui } from "@lingui/react/macro";
+import { createContext, type ReactNode } from "react";
 
 import { Select } from "@/components/ui/select";
 import { titleLanguageLabel } from "@/lib/title-language";
@@ -29,11 +29,7 @@ export function LanguageSelect({
 }) {
   const { t, i18n } = useLingui();
   return (
-    <Select
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="w-full"
-    >
+    <Select value={value} onChange={(event) => onChange(event.target.value)} className="w-full">
       <option value="">{t`None`}</option>
       {languages.map((language) => (
         <option key={language.code} value={language.code}>
@@ -48,7 +44,7 @@ export function LanguageSelect({
 export function ConfigSubsection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <h4 className="text-xs font-semibold uppercase text-muted-foreground">{title}</h4>
+      <h4 className="text-xs font-semibold text-muted-foreground uppercase">{title}</h4>
       {children}
     </div>
   );

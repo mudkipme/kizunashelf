@@ -8,7 +8,10 @@ import { CoverFallback } from "@/components/assets/cover-fallback";
 import { DetailSection } from "@/components/assets/detail-section";
 import { EntityDates } from "@/components/assets/entity-dates";
 import { EntityEpisodesPanel, EpisodeSyncButton } from "@/components/assets/entity-episodes";
-import { FrontmatterPanel, useVisibleFrontmatterEntries } from "@/components/assets/frontmatter-panel";
+import {
+  FrontmatterPanel,
+  useVisibleFrontmatterEntries,
+} from "@/components/assets/frontmatter-panel";
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { StatusBadge } from "@/components/entities/status-badge";
@@ -16,13 +19,13 @@ import { CONTENT_MEASURE } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { useTitleLanguage } from "@/lib/language";
 import { relationKey } from "@/lib/relations";
+import { entityTitle, entityTitleParts, titleLanguageLabel } from "@/lib/title-language";
 import {
   entityFieldLabel,
   fieldLabelForKey,
   titleLabelForKey,
   typeHasCoverField,
 } from "@/lib/type-config";
-import { entityTitle, entityTitleParts, titleLanguageLabel } from "@/lib/title-language";
 import { cn } from "@/lib/utils";
 import type {
   Entity,
@@ -110,7 +113,8 @@ export function EntityDetail({
   // Stamp `lang` on the title only when it differs from the viewer's language,
   // so a foreign-language title (e.g. a Japanese original in a Chinese UI) gets
   // the right Han glyphs; a same-language title inherits the document `lang`.
-  const titleLang = displayTitleLang && displayTitleLang !== language ? displayTitleLang : undefined;
+  const titleLang =
+    displayTitleLang && displayTitleLang !== language ? displayTitleLang : undefined;
   const relatedById = new Map(relatedEntities.map((item) => [item.id, item]));
   const subtitleTitles = entitySubtitleTitles(entity, displayTitle, typeConfig);
   // "Links to" groups by field; the untyped `body` field is further split by
@@ -151,7 +155,10 @@ export function EntityDetail({
               <header className="mb-8 flex min-w-0 items-start gap-4">
                 {showCover ? <HeroCover entity={entity} /> : null}
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-2xl font-semibold leading-tight tracking-tight" lang={titleLang}>
+                  <h1
+                    className="text-2xl leading-tight font-semibold tracking-tight"
+                    lang={titleLang}
+                  >
                     {displayTitle}
                   </h1>
                   {subtitleTitles.length > 0 ? (
@@ -270,7 +277,7 @@ export function EntityDetail({
           </div>
 
           {showAside ? (
-            <aside className="shrink-0 border-t px-4 py-4 lg:w-80 lg:overflow-auto lg:overscroll-contain lg:border-l lg:border-t-0">
+            <aside className="shrink-0 border-t px-4 py-4 lg:w-80 lg:overflow-auto lg:overscroll-contain lg:border-t-0 lg:border-l">
               {hasLinks ? (
                 <DetailSection title={t`Links`}>
                   {/* Negative margin so the hover fill bleeds to the pane's
@@ -327,7 +334,12 @@ function HeroCover({ entity }: { entity: Entity }) {
       src={entity.image}
       lightbox
       className={cn("max-h-44 w-auto max-w-32 shrink-0 rounded-md object-contain", COVER_EDGE)}
-      fallback={<CoverFallback type={entity.type} className={cn("size-28 shrink-0 rounded-md", COVER_EDGE)} />}
+      fallback={
+        <CoverFallback
+          type={entity.type}
+          className={cn("size-28 shrink-0 rounded-md", COVER_EDGE)}
+        />
+      }
     />
   );
 }
@@ -477,7 +489,7 @@ function RelationDirectionSection({
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline gap-2 text-xs font-medium">
         <span>{title}</span>
-        <span className="tabular-nums text-muted-foreground">{total}</span>
+        <span className="text-muted-foreground tabular-nums">{total}</span>
       </div>
       <div className="flex flex-col gap-4">
         {groups.map((group) => (
@@ -554,7 +566,7 @@ function RelationGridItem({
       <Link
         to={`/entities/${encodeURIComponent(otherId)}`}
         title={label}
-        className="flex flex-col gap-1 rounded-md text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex flex-col gap-1 rounded-md text-left transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         {card}
       </Link>
@@ -596,7 +608,7 @@ function RelationChip({
         to={`/entities/${encodeURIComponent(otherId)}`}
         className={cn(
           RELATION_CHIP,
-          "hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         )}
       >
         {label}

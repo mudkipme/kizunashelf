@@ -23,7 +23,7 @@ export function DetailSection({
   return (
     <section className="mb-8 flex flex-col gap-3 last:mb-0">
       <div className="flex min-h-(--control-height-sm) items-center justify-between gap-2">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           {title}
         </h2>
         {action}

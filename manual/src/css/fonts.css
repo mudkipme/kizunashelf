@@ -1,10 +1,52 @@
 /* The self-hosted brand faces (`static/assets/fonts/`), shared by the landing
  * page and the manual: Bookman for display headings, JetBrains Mono for code,
  * Century Schoolbook for the landing page's body prose. */
-@font-face { font-family: 'Bookman'; src: url('/assets/fonts/bookman-demi.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Bookman'; src: url('/assets/fonts/bookman-light.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Bookman'; src: url('/assets/fonts/bookman-lightitalic.woff2') format('woff2'); font-weight: 300; font-style: italic; font-display: swap; }
-@font-face { font-family: 'Schoolbook'; src: url('/assets/fonts/c059-roman.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Schoolbook'; src: url('/assets/fonts/c059-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-@font-face { font-family: 'Schoolbook'; src: url('/assets/fonts/c059-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: 'JBMono'; src: url('/assets/fonts/jbmono.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face {
+  font-family: "Bookman";
+  src: url("/assets/fonts/bookman-demi.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bookman";
+  src: url("/assets/fonts/bookman-light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bookman";
+  src: url("/assets/fonts/bookman-lightitalic.woff2") format("woff2");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Schoolbook";
+  src: url("/assets/fonts/c059-roman.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Schoolbook";
+  src: url("/assets/fonts/c059-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Schoolbook";
+  src: url("/assets/fonts/c059-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JBMono";
+  src: url("/assets/fonts/jbmono.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

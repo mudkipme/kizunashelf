@@ -111,13 +111,12 @@ describe("FieldForm", () => {
     // A date's "Used as" is the date-role vocabulary, not the enum one — same
     // label, entirely different meaning, chosen by the declared type.
     const role = screen.getByRole("combobox", { name: "Used as" });
-    expect(role.getByRole("option").elements().map((option) => option.textContent)).toEqual([
-      "None",
-      "Planning",
-      "Started",
-      "Completed",
-      "Event",
-    ]);
+    expect(
+      role
+        .getByRole("option")
+        .elements()
+        .map((option) => option.textContent),
+    ).toEqual(["None", "Planning", "Started", "Completed", "Event"]);
   });
 
   it("gives a season field both a date role and the language its names are written in", async () => {
@@ -200,7 +199,13 @@ describe("FieldForm", () => {
           fieldType: "enum",
           enumRole: "status",
           enumOptions: ["Watching"],
-          statusValues: { planning: [], ongoing: ["Watching"], paused: [], completed: [], dropped: [] },
+          statusValues: {
+            planning: [],
+            ongoing: ["Watching"],
+            paused: [],
+            completed: [],
+            dropped: [],
+          },
         }}
         onChange={onChange}
       />,
@@ -238,11 +243,11 @@ describe("FieldForm", () => {
     await expect.element(language).toHaveValue("xx");
     // Preserved as its own option rather than snapping to "None" — editing an
     // unrelated part of the field must not silently rewrite this one.
-    expect(language.getByRole("option").elements().map((option) => option.textContent)).toEqual([
-      "None",
-      "English (en)",
-      "Japanese (ja)",
-      "xx",
-    ]);
+    expect(
+      language
+        .getByRole("option")
+        .elements()
+        .map((option) => option.textContent),
+    ).toEqual(["None", "English (en)", "Japanese (ja)", "xx"]);
   });
 });

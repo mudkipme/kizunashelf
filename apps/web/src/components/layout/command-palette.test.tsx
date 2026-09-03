@@ -1,12 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
-import { vi } from "vitest";
 import { useLocation } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { vi } from "vitest";
+import { page, userEvent } from "vitest/browser";
 
 import { AppFrame } from "@/components/layout/app-frame";
 import { formatChord, isAppleKeyboard, searchChord } from "@/lib/shortcuts";
-import { render } from "@/test/render";
 import { stubApi, testEntity } from "@/test/api-stub";
+import { render } from "@/test/render";
 
 // The chords are written `mod+…`, so the tests press whatever this host's `mod`
 // is. That keeps the suite honest on a Mac and on CI both.
@@ -76,7 +76,12 @@ describe("command palette", () => {
 
     await userEvent.keyboard("calen");
     await expect
-      .poll(() => screen.getByRole("option").elements().map((option) => option.textContent))
+      .poll(() =>
+        screen
+          .getByRole("option")
+          .elements()
+          .map((option) => option.textContent),
+      )
       .toEqual(["Calendar"]);
 
     await userEvent.keyboard("{Enter}");

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { Grid2X2Icon, ListIcon, PlusIcon, SlidersHorizontalIcon, SparklesIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -30,19 +30,24 @@ import { SortPicker } from "@/components/smart-lists/sort-picker";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { allTypes, defaultDirection, defaultSort, defaultView, pageSize } from "@/lib/constants";
-import { fieldLabelsByType, typeExternalRefs, typeHasCoverField, typeSupportsQuickCapture } from "@/lib/type-config";
-import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useDebouncedValue } from "@/hooks/use-debounce";
-import { useTitleLanguage } from "@/lib/language";
-import { useNumberFormat } from "@/lib/locale";
-import type { SmartFilterGroup, SmartListView, SmartSortSpec } from "@/types/api";
 import {
   applyPreferencesToSearchParams,
   preferencesFromSearchParams,
   readAssetListPreferences,
   writeAssetListPreferences,
 } from "@/lib/asset-list-preferences";
+import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { allTypes, defaultDirection, defaultSort, defaultView, pageSize } from "@/lib/constants";
+import { useTitleLanguage } from "@/lib/language";
+import { useNumberFormat } from "@/lib/locale";
+import {
+  fieldLabelsByType,
+  typeExternalRefs,
+  typeHasCoverField,
+  typeSupportsQuickCapture,
+} from "@/lib/type-config";
+import type { SmartFilterGroup, SmartListView, SmartSortSpec } from "@/types/api";
 
 /// The library browser: a smart list you haven't named yet. Its whole state —
 /// type scope, criteria, sort, layout, search — lives in the URL and is
@@ -240,7 +245,7 @@ export function LibraryPage() {
               <Select
                 value={selectedType}
                 onChange={(event) => selectType(event.target.value)}
-                className="min-w-0 max-w-56 flex-1 md:hidden"
+                className="max-w-56 min-w-0 flex-1 md:hidden"
                 aria-label={t`Type`}
               >
                 <option value={allTypes}>
@@ -313,16 +318,12 @@ export function LibraryPage() {
                 {isGlobalType ? (
                   <p className="text-xs text-muted-foreground">
                     <Trans>
-                      Pick a type to filter on its own fields — across all types only the
-                      properties every entry has can be matched.
+                      Pick a type to filter on its own fields — across all types only the properties
+                      every entry has can be matched.
                     </Trans>
                   </p>
                 ) : null}
-                <RuleBuilder
-                  fieldMetas={fieldMetas}
-                  value={criteria}
-                  onChange={setCriteria}
-                />
+                <RuleBuilder fieldMetas={fieldMetas} value={criteria} onChange={setCriteria} />
               </div>
             ) : hasCriteria(criteria) ? (
               <div className="border-b px-3 py-2">

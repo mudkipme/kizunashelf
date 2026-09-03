@@ -22,7 +22,10 @@ export function useDateFormat(options: Intl.DateTimeFormatOptions): (date: Date)
   // Key the memo on the options' shape, not identity — callers pass inline objects.
   const optionsKey = JSON.stringify(options);
   return useMemo(() => {
-    const format = new Intl.DateTimeFormat(locale, JSON.parse(optionsKey) as Intl.DateTimeFormatOptions);
+    const format = new Intl.DateTimeFormat(
+      locale,
+      JSON.parse(optionsKey) as Intl.DateTimeFormatOptions,
+    );
     return (date: Date) => format.format(date);
   }, [locale, optionsKey]);
 }

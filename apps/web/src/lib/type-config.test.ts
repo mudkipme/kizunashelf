@@ -117,7 +117,11 @@ describe("typeExternalRefs", () => {
   it("collects sources from external body sections", () => {
     const config = type({
       bodySections: [
-        { heading: "Info", kind: "external", externalFields: [{ source: "TMDB", field: "overview" }] },
+        {
+          heading: "Info",
+          kind: "external",
+          externalFields: [{ source: "TMDB", field: "overview" }],
+        },
         { heading: "Episodes", kind: "episodes" },
       ],
     } as Partial<TypeConfig>);

@@ -1,9 +1,9 @@
 //! One rule of a criteria group: the field picker, the operator picker, and the
 //! value editor those two choose between.
 
-import { useMemo } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { XIcon } from "lucide-react";
+import { useMemo } from "react";
 
 import {
   defaultRuleFor,

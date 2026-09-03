@@ -4,19 +4,15 @@
 //! (`PLAN_WINDOW`) and each row is memoized — the wizard's per-item toggles
 //! would otherwise re-render every row on every click.
 
-import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { plural } from "@lingui/core/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import type {
-  ImportJob,
-  ImportPlanBucket,
-  ImportPlanItem,
-} from "@/types/api";
+import type { ImportJob, ImportPlanBucket, ImportPlanItem } from "@/types/api";
 
 import { bucketLabel, reviewReasonLabel, statusLabel } from "./import-labels";
 
@@ -78,7 +74,10 @@ export function PlanReview({
   const ambiguous = plan.buckets.filter((bucket) => bucket.candidateTypes.length > 1);
   const unmatched = plan.buckets.filter((bucket) => bucket.candidateTypes.length === 0);
   const unmatchedLabels = unmatched
-    .map((bucket) => `${providerLabels.get(bucket.provider) ?? bucket.provider} ${bucketLabel(i18n, bucket.provider, bucket.bucket)}`)
+    .map(
+      (bucket) =>
+        `${providerLabels.get(bucket.provider) ?? bucket.provider} ${bucketLabel(i18n, bucket.provider, bucket.bucket)}`,
+    )
     .join(", ");
 
   return (
@@ -91,7 +90,10 @@ export function PlanReview({
           <Plural value={counts.willCreate} one="# to create" other="# to create" />
         </span>
         {counts.exists > 0 ? (
-          <span>· <Plural value={counts.exists} one="# already in library" other="# already in library" /></span>
+          <span>
+            ·{" "}
+            <Plural value={counts.exists} one="# already in library" other="# already in library" />
+          </span>
         ) : null}
         {counts.needsReview > 0 ? (
           <span className="text-amber-700 dark:text-amber-400">
@@ -133,8 +135,8 @@ export function PlanReview({
       {unmatched.length > 0 ? (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
           <Trans>
-            No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to
-            import these.
+            No entity type maps {unmatchedLabels}. Add an external-reference field for it in
+            Settings to import these.
           </Trans>
         </div>
       ) : null}

@@ -39,9 +39,7 @@ function Controlled({
 
 describe("MultiValueCombobox", () => {
   it("picks an option from the list and shows it as a chip", async () => {
-    const screen = await render(
-      <Controlled options={[{ value: "anime" }, { value: "manga" }]} />,
-    );
+    const screen = await render(<Controlled options={[{ value: "anime" }, { value: "manga" }]} />);
 
     await screen.getByRole("combobox", { name: "Tags" }).click();
     await screen.getByRole("option", { name: "manga" }).click();
@@ -60,7 +58,12 @@ describe("MultiValueCombobox", () => {
 
     // Matching is substring, not prefix: "manga" matches on its middle.
     await expect
-      .poll(() => screen.getByRole("option").elements().map((option) => option.textContent))
+      .poll(() =>
+        screen
+          .getByRole("option")
+          .elements()
+          .map((option) => option.textContent),
+      )
       .toEqual(["anime", "manga"]);
   });
 

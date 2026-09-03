@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ImportSourceCatalogItem } from "@/types/api";
 
-
 export function ConfigureStep({
   sources,
   sourceId,
@@ -56,7 +55,11 @@ export function ConfigureStep({
                 >
                   <span className="font-medium">{item.label}</span>
                   <span className="text-xs text-muted-foreground">
-                    {item.input === "csv" ? <Trans>CSV export</Trans> : <Trans>Public profile</Trans>}
+                    {item.input === "csv" ? (
+                      <Trans>CSV export</Trans>
+                    ) : (
+                      <Trans>Public profile</Trans>
+                    )}
                   </span>
                   {disabled && item.unavailableReason ? (
                     <span className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
@@ -73,11 +76,7 @@ export function ConfigureStep({
       {source ? (
         <div className="flex flex-col gap-2">
           {source.input === "csv" ? (
-            <CsvFileInput
-              key={source.id}
-              label={source.inputLabel}
-              onCsvText={onCsvText}
-            />
+            <CsvFileInput key={source.id} label={source.inputLabel} onCsvText={onCsvText} />
           ) : (
             <label className="flex max-w-sm flex-col gap-1 text-sm font-medium">
               {source.inputLabel}
@@ -91,9 +90,13 @@ export function ConfigureStep({
           )}
           <p className="text-xs text-muted-foreground">
             {source.input === "csv" ? (
-              <Trans>The file is read in your browser. Nothing is written until you review the plan.</Trans>
+              <Trans>
+                The file is read in your browser. Nothing is written until you review the plan.
+              </Trans>
             ) : (
-              <Trans>Only public profiles are supported. Nothing is written until you review the plan.</Trans>
+              <Trans>
+                Only public profiles are supported. Nothing is written until you review the plan.
+              </Trans>
             )}
           </p>
           <div>

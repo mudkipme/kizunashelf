@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { CheckIcon, FolderOpenIcon, FolderPlusIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,9 @@ export function VaultSwitcher({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    listVaults().then(setVaults).catch((reason) => toast.error(message(reason, t`Something went wrong`)));
+    listVaults()
+      .then(setVaults)
+      .catch((reason) => toast.error(message(reason, t`Something went wrong`)));
     // Mount-only vault load; `t` is only read in the error path, so re-running on
     // a locale change (which would refetch) is not wanted.
     // eslint-disable-next-line react-hooks/exhaustive-deps

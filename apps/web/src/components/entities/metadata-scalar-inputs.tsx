@@ -2,10 +2,10 @@
 //! frontmatter, the +/- stepper used by progress and rating fields, and the date
 //! picker.
 
-import type { KeyboardEvent } from "react";
-import { useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { CalendarIcon, MinusIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import type { KeyboardEvent } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -71,7 +71,10 @@ export function ObjectValueInput({
   return (
     <div className="flex flex-col gap-2" aria-label={ariaLabel}>
       {entries.map(([key, item]) => (
-        <div key={key} className="grid min-w-0 grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_auto] gap-2">
+        <div
+          key={key}
+          className="grid min-w-0 grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_auto] gap-2"
+        >
           <Input
             value={key}
             onChange={(event) => renameKey(key, event.target.value)}
@@ -112,7 +115,12 @@ export function ObjectValueInput({
           disabled={disabled}
           aria-label={t`${ariaLabel} new property`}
         />
-        <Button type="button" variant="outline" onClick={addKey} disabled={disabled || !newKey.trim()}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addKey}
+          disabled={disabled || !newKey.trim()}
+        >
           <PlusIcon data-icon="inline-start" />
           <Trans>Add</Trans>
         </Button>
@@ -168,7 +176,7 @@ export function NumberStepper({
       </Button>
       {isOutput ? (
         <output
-          className="border-input bg-muted text-foreground flex h-(--control-height) min-w-0 items-center justify-center rounded-md border px-3 text-center text-sm tabular-nums"
+          className="flex h-(--control-height) min-w-0 items-center justify-center rounded-md border border-input bg-muted px-3 text-center text-sm text-foreground tabular-nums"
           aria-label={ariaLabel}
         >
           {value || "0"}

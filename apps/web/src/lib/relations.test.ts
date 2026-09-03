@@ -36,12 +36,20 @@ describe("relationKey", () => {
   it("builds a stable key from the relation's identity, with a blank for an unresolved target", () => {
     expect(
       relationKey(
-        relation({ sourceId: "anime:a", field: "related", targetTitle: "Beta", direction: "out", targetId: "anime:b" }),
+        relation({
+          sourceId: "anime:a",
+          field: "related",
+          targetTitle: "Beta",
+          direction: "out",
+          targetId: "anime:b",
+        }),
       ),
     ).toBe("anime:a-related-Beta-out-anime:b");
     // An unresolved target (no targetId) yields a trailing empty segment.
-    expect(relationKey(relation({ sourceId: "anime:a", field: "related", targetTitle: "Ghost", direction: "out" }))).toBe(
-      "anime:a-related-Ghost-out-",
-    );
+    expect(
+      relationKey(
+        relation({ sourceId: "anime:a", field: "related", targetTitle: "Ghost", direction: "out" }),
+      ),
+    ).toBe("anime:a-related-Ghost-out-");
   });
 });

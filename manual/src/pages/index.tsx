@@ -120,10 +120,10 @@ export default function Home(): ReactNode {
               </h1>
               <p className="lede">
                 KizunaShelf is a personal library for everything you watch, play, read, and love. It
-                works like a media tracker, but you shape it: you decide what kinds of things live on
-                your shelf, what details they carry, and how they connect. Underneath, it&rsquo;s all
-                plain Markdown files in a folder you own. KizunaShelf helps you browse them like a
-                living shelf, without locking them into one app.
+                works like a media tracker, but you shape it: you decide what kinds of things live
+                on your shelf, what details they carry, and how they connect. Underneath, it&rsquo;s
+                all plain Markdown files in a folder you own. KizunaShelf helps you browse them like
+                a living shelf, without locking them into one app.
               </p>
               <div className="hero-ctas">
                 <a className="btn primary" href="https://testflight.apple.com/join/hE7k3sWd">
@@ -157,14 +157,14 @@ export default function Home(): ReactNode {
             </div>
             <p>
               KizunaShelf begins with the familiar things waiting on a media shelf: shows, movies,
-              books, games, anime, and albums. But it does not decide what a &ldquo;thing&rdquo; must
-              be. You define the types in your library, their titles, covers, statuses, dates,
+              books, games, anime, and albums. But it does not decide what a &ldquo;thing&rdquo;
+              must be. You define the types in your library, their titles, covers, statuses, dates,
               ratings, progress, and relationships.
             </p>
             <p>
-              If your world needs goods, cards, voice actors, live events, or trains, shoes, museums,
-              coffee beans, or something nobody else would think to model, KizunaShelf gives you the
-              grammar to describe it.
+              If your world needs goods, cards, voice actors, live events, or trains, shoes,
+              museums, coffee beans, or something nobody else would think to model, KizunaShelf
+              gives you the grammar to describe it.
             </p>
 
             <div className="bookshelf" aria-hidden="true">
@@ -206,8 +206,7 @@ export default function Home(): ReactNode {
                 <span className="dim">---</span>
                 {"\n"}
                 <span className="k">title_original</span>
-                <span className="dim">:</span>{" "}
-                <span className="v">バンドリ！ゆめ∞みた</span>
+                <span className="dim">:</span> <span className="v">バンドリ！ゆめ∞みた</span>
                 {"\n"}
                 <span className="k">status</span>
                 <span className="dim">:</span> <span className="v">Watching</span>
@@ -216,8 +215,7 @@ export default function Home(): ReactNode {
                 <span className="dim">:</span> <span className="v">Summer 2026</span>
                 {"\n"}
                 <span className="k">franchise</span>
-                <span className="dim">:</span>{" "}
-                <span className="wl">{'["[[BanG Dream!]]"]'}</span>
+                <span className="dim">:</span> <span className="wl">{'["[[BanG Dream!]]"]'}</span>
                 {"\n"}
                 <span className="k">anilist</span>
                 <span className="dim">:</span>{" "}
@@ -317,18 +315,15 @@ export default function Home(): ReactNode {
                 Sight
                 {"\n"}
                 <span className="dim">-</span> <span className="v">13:00</span> Odaiba Statue of
-                Liberty 🗽
-                {"\n"}
+                Liberty 🗽{"\n"}
                 <span className="dim">-</span> <span className="v">14:30</span>{" "}
-                <span className="wl">[[Nijigasaki The Movie Part 2]]</span> 🌈
-                {"\n  "}
+                <span className="wl">[[Nijigasaki The Movie Part 2]]</span> 🌈{"\n  "}
                 <span className="dim">
                   {"— The stage at Umeda Sky Building\n    is wonderful!"}
                 </span>
                 {"\n"}
                 <span className="dim">-</span> <span className="v">17:00</span>{" "}
-                <span className="wl">[[Poppin&apos;Party New Year LIVE]]</span> 🎸
-                {"\n  "}
+                <span className="wl">[[Poppin&apos;Party New Year LIVE]]</span> 🎸{"\n  "}
                 <span className="dim">
                   {"— "}
                   <span className="wl">[[FIRE BIRD]]</span>
@@ -345,8 +340,8 @@ export default function Home(): ReactNode {
                 Time gives that map a history. Releases and plans appear on a calendar. Mentions in
                 daily notes connect an ordinary day back to the things you care about. Episode
                 check-ins become dated activity, while a quick log can write a line to your daily
-                note in a format you choose. The activity feed gathers those moments into a record of
-                what you watched, played and read; and when they became part of your life.
+                note in a format you choose. The activity feed gathers those moments into a record
+                of what you watched, played and read; and when they became part of your life.
               </p>
             </div>
           </div>

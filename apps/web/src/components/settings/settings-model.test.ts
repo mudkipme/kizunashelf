@@ -172,7 +172,12 @@ describe("normalizeVaultConfig", () => {
       vault({ types: [type({ fields: [field({ field: "title", fieldType: "title" })] })] }),
     );
     const [entityType] = result.types;
-    expect(entityType).toMatchObject({ icon: "", externalPriority: [], filename: null, bodySections: [] });
+    expect(entityType).toMatchObject({
+      icon: "",
+      externalPriority: [],
+      filename: null,
+      bodySections: [],
+    });
     expect(entityType.fields[0]).toMatchObject({
       field: "title",
       fieldType: "title",
@@ -340,14 +345,20 @@ describe("cleanVaultConfig", () => {
   });
 
   it("derives externalPriority from externalRef fields when no catalog is available", () => {
-    const cleaned = cleanedVault(vault({ types: [type({
-      externalPriority: ["igdb", "stale", "igdb"],
-      fields: [
-        field({ field: "bangumi", fieldType: "externalRef", externalRef: "bangumi" }),
-        field({ field: "igdb", fieldType: "externalRef", externalRef: "igdb" }),
-        field({ field: "igdb_alt", fieldType: "externalRef", externalRef: "igdb" }),
-      ],
-    })] }));
+    const cleaned = cleanedVault(
+      vault({
+        types: [
+          type({
+            externalPriority: ["igdb", "stale", "igdb"],
+            fields: [
+              field({ field: "bangumi", fieldType: "externalRef", externalRef: "bangumi" }),
+              field({ field: "igdb", fieldType: "externalRef", externalRef: "igdb" }),
+              field({ field: "igdb_alt", fieldType: "externalRef", externalRef: "igdb" }),
+            ],
+          }),
+        ],
+      }),
+    );
     expect(cleaned.types[0].externalPriority).toEqual(["igdb", "bangumi"]);
   });
 
@@ -357,8 +368,10 @@ describe("cleanVaultConfig", () => {
       field({ field: "bgm", fieldType: "externalRef", externalRef: "bangumi" }),
       field({ field: "mal_alt", fieldType: "externalRef", externalRef: "myanimelist" }),
     ];
-    expect(externalRefProviderPriority(fields, ["bangumi", "stale"]))
-      .toEqual(["bangumi", "myanimelist"]);
+    expect(externalRefProviderPriority(fields, ["bangumi", "stale"])).toEqual([
+      "bangumi",
+      "myanimelist",
+    ]);
   });
 
   // The "preserve unknown values" invariant: when the provider catalog is
@@ -381,12 +394,16 @@ describe("cleanVaultConfig", () => {
 
     it("keeps the mapping as-is when no catalog is provided", () => {
       const cleaned = cleanedVault(config);
-      expect(cleaned.types[0].fields[0].externalFields).toEqual([{ source: "bangumi", field: "name" }]);
+      expect(cleaned.types[0].fields[0].externalFields).toEqual([
+        { source: "bangumi", field: "name" },
+      ]);
     });
 
     it("keeps a mapping the catalog recognizes", () => {
       const cleaned = cleanedVault(config, catalogWith("bangumi"));
-      expect(cleaned.types[0].fields[0].externalFields).toEqual([{ source: "bangumi", field: "name" }]);
+      expect(cleaned.types[0].fields[0].externalFields).toEqual([
+        { source: "bangumi", field: "name" },
+      ]);
     });
 
     it("drops a mapping the catalog does not recognize", () => {

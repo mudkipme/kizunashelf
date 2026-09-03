@@ -9,11 +9,7 @@
 import type { MessageDescriptor } from "@lingui/core";
 
 import { builderWords, type RuleFieldMeta } from "@/components/smart-lists/rule-field-meta";
-import {
-  seasonsOfYear,
-  wholeYearsOf,
-  yearsFrom,
-} from "@/components/smart-lists/season-values";
+import { seasonsOfYear, wholeYearsOf, yearsFrom } from "@/components/smart-lists/season-values";
 import type { SmartFilterRule } from "@/types/api";
 
 /// The single-value and multi-value sides of a season row, each filled from the
@@ -28,14 +24,23 @@ function carriedSeasonInputs(inputs: { values: string[]; text: string }) {
 export function ruleFromEditor(
   meta: RuleFieldMeta,
   op: string,
-  editorInputs: { values: string[]; text: string; number: string; date: string; amount: string; unit: string },
+  editorInputs: {
+    values: string[];
+    text: string;
+    number: string;
+    date: string;
+    amount: string;
+    unit: string;
+  },
 ): SmartFilterRule {
   const field = meta.key;
   // A season rule holds one value or several depending on its operator, so the
   // two sides carry into each other: switching "is Spring 2024" to "is any of"
   // keeps that season picked rather than emptying the row.
   const inputs =
-    meta.kind === "season" ? { ...editorInputs, ...carriedSeasonInputs(editorInputs) } : editorInputs;
+    meta.kind === "season"
+      ? { ...editorInputs, ...carriedSeasonInputs(editorInputs) }
+      : editorInputs;
   const compare = (extra: Partial<SmartFilterRule>): SmartFilterRule => ({
     kind: "compare",
     field,
@@ -122,9 +127,19 @@ export function ruleFromEditor(
     // A relation meta's key scopes the link to that field; the synthetic
     // "any link" meta (empty key) keeps the file-wide form.
     case "linksTo":
-      return { kind: "linksTo", field: field || undefined, negated: false, values: inputs.values.slice(0, 1) };
+      return {
+        kind: "linksTo",
+        field: field || undefined,
+        negated: false,
+        values: inputs.values.slice(0, 1),
+      };
     case "notLinksTo":
-      return { kind: "linksTo", field: field || undefined, negated: true, values: inputs.values.slice(0, 1) };
+      return {
+        kind: "linksTo",
+        field: field || undefined,
+        negated: true,
+        values: inputs.values.slice(0, 1),
+      };
     case "hasAny":
       return { kind: "hasTag", negated: false, values: inputs.values };
     case "notHasAny":
@@ -137,7 +152,14 @@ export function ruleFromEditor(
 export type EditorState = {
   meta: RuleFieldMeta;
   op: string;
-  inputs: { values: string[]; text: string; number: string; date: string; amount: string; unit: string };
+  inputs: {
+    values: string[];
+    text: string;
+    number: string;
+    date: string;
+    amount: string;
+    unit: string;
+  };
 };
 
 const emptyInputs = { values: [], text: "", number: "", date: "", amount: "30", unit: "days" };
@@ -172,7 +194,11 @@ export function editorFromRule(
     case "hasTag": {
       const meta = metas.find((meta) => meta.kind === "tags");
       return meta
-        ? { meta, op: rule.negated ? "notHasAny" : "hasAny", inputs: { ...emptyInputs, values: rule.values ?? [] } }
+        ? {
+            meta,
+            op: rule.negated ? "notHasAny" : "hasAny",
+            inputs: { ...emptyInputs, values: rule.values ?? [] },
+          }
         : null;
     }
     case "linksTo": {
@@ -187,7 +213,11 @@ export function editorFromRule(
             kind: "relation" as const,
           })
         : { key: "", label: t(builderWords.anyLink), kind: "relation" as const };
-      return { meta, op: rule.negated ? "notLinksTo" : "linksTo", inputs: { ...emptyInputs, values: rule.values ?? [] } };
+      return {
+        meta,
+        op: rule.negated ? "notLinksTo" : "linksTo",
+        inputs: { ...emptyInputs, values: rule.values ?? [] },
+      };
     }
     case "startsWith":
       return rule.negated
@@ -235,7 +265,9 @@ export function editorFromRule(
         return state(findMeta(["bool"]), truthy ? "isTrue" : "isFalse", {});
       }
       if (rule.number !== undefined && rule.number !== null) {
-        return state(findMeta(["number", "text"]), rule.op ?? "eq", { number: String(rule.number) });
+        return state(findMeta(["number", "text"]), rule.op ?? "eq", {
+          number: String(rule.number),
+        });
       }
       if (rule.relative) {
         const meta = findMeta(["date", "mtime", "number"]);

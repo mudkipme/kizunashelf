@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from "react";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { useState, type ReactNode } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { criteriaRuleCount } from "@/components/smart-lists/criteria-url";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,16 +26,11 @@ import type {
 
 import { PresetPickerDialog } from "./preset-picker";
 import { EmptyConfigLine } from "./settings-controls";
-import { fieldConfigSummary } from "./settings-field-descriptors";
-import {
-  arrayEditor,
-  defaultEntityType,
-  defaultField,
-  defaultHomeSection,
-} from "./settings-model";
 import { EntityTypeForm } from "./settings-entity-type";
+import { fieldConfigSummary } from "./settings-field-descriptors";
 import { FieldForm } from "./settings-field-form";
 import { HomeSectionForm } from "./settings-home-section";
+import { arrayEditor, defaultEntityType, defaultField, defaultHomeSection } from "./settings-model";
 import { TitleLanguagesContext } from "./settings-shared";
 
 // ----------------------------------------------------------------------------
@@ -74,7 +69,14 @@ function DialogShell({
         <DialogHeader className="space-y-0 border-b px-4 py-3 pr-12 text-left">
           <div className="flex min-w-0 items-center gap-2">
             {onBack ? (
-              <Button type="button" variant="ghost" size="icon" className="-ml-2 shrink-0" onClick={onBack} aria-label={t`Back`}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="-ml-2 shrink-0"
+                onClick={onBack}
+                aria-label={t`Back`}
+              >
                 <ChevronLeftIcon />
               </Button>
             ) : null}
@@ -140,7 +142,17 @@ function EditableRow({
 }
 
 /// A section header with a title, count, and an "Add" button.
-function ListHeader({ title, count, addLabel, onAdd }: { title: string; count: number; addLabel: string; onAdd: () => void }) {
+function ListHeader({
+  title,
+  count,
+  addLabel,
+  onAdd,
+}: {
+  title: string;
+  count: number;
+  addLabel: string;
+  onAdd: () => void;
+}) {
   return (
     <div className="flex items-center justify-between gap-2">
       <h3 className="text-sm font-medium">
@@ -162,7 +174,9 @@ function typeProviderCount(type: EntityTypeConfig) {
   return new Set([
     ...(type.externalPriority ?? []),
     ...(type.bodySections ?? []).flatMap((section) =>
-      section.kind === "external" ? (section.externalFields ?? []).map((field) => field.source) : [],
+      section.kind === "external"
+        ? (section.externalFields ?? []).map((field) => field.source)
+        : [],
     ),
     ...type.fields
       .filter((field) => field.fieldType === "externalRef")
@@ -190,7 +204,8 @@ export function TypesSection({
   // `null` = closed; `"new"` = adding; a number = editing that index.
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [picking, setPicking] = useState(false);
-  const initial = editing === "new" ? defaultEntityType() : editing === null ? null : types[editing];
+  const initial =
+    editing === "new" ? defaultEntityType() : editing === null ? null : types[editing];
   const typeList = arrayEditor(types, onChange);
 
   return (
@@ -391,7 +406,12 @@ function TypeEditorDialog({
       />
       <Separator className="my-4" />
       <div className="flex flex-col gap-2">
-        <ListHeader title={t`Fields`} count={fields.length} addLabel={t`Field`} onAdd={() => setNewField(defaultField())} />
+        <ListHeader
+          title={t`Fields`}
+          count={fields.length}
+          addLabel={t`Field`}
+          onAdd={() => setNewField(defaultField())}
+        />
         {fields.length === 0 ? (
           <EmptyConfigLine>
             <Trans>No fields configured.</Trans>
@@ -434,12 +454,21 @@ export function HomeBlock({
   const sections = config.sections ?? [];
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const initial =
-    editing === "new" ? defaultHomeSection(types[0]?.id) : editing === null ? null : sections[editing];
+    editing === "new"
+      ? defaultHomeSection(types[0]?.id)
+      : editing === null
+        ? null
+        : sections[editing];
   const sectionList = arrayEditor(sections, (next) => onChange({ ...config, sections: next }));
 
   return (
     <div className="flex flex-col gap-3">
-      <ListHeader title={t`Sections`} count={sections.length} addLabel={t`Section`} onAdd={() => setEditing("new")} />
+      <ListHeader
+        title={t`Sections`}
+        count={sections.length}
+        addLabel={t`Section`}
+        onAdd={() => setEditing("new")}
+      />
       {sections.length === 0 ? (
         <EmptyConfigLine>
           <Trans>No home sections configured.</Trans>
@@ -451,9 +480,16 @@ export function HomeBlock({
               key={index}
               title={section.title || section.id || t`Home section`}
               badges={[
-                ...(section.type ? [types.find((type) => type.id === section.type)?.label || section.type] : []),
+                ...(section.type
+                  ? [types.find((type) => type.id === section.type)?.label || section.type]
+                  : []),
                 ...(section.criteria && criteriaRuleCount(section.criteria) > 0
-                  ? [plural(criteriaRuleCount(section.criteria), { one: "# rule", other: "# rules" })]
+                  ? [
+                      plural(criteriaRuleCount(section.criteria), {
+                        one: "# rule",
+                        other: "# rules",
+                      }),
+                    ]
                   : []),
               ]}
               onEdit={() => setEditing(index)}

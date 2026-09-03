@@ -1,18 +1,18 @@
-import { useMemo } from "react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg, plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 
 import { configQuery, upcomingQuery } from "@/api/queries";
 import { AssetImage } from "@/components/assets/asset-image";
 import { CoverFallback } from "@/components/assets/cover-fallback";
+import { EntityTitle } from "@/components/entities/entity-title";
 import { SectionHeader } from "@/components/home/section-header";
 import { todayLocal } from "@/lib/date";
 import { useTitleLanguage } from "@/lib/language";
 import { useIsoDateFormat } from "@/lib/locale";
-import { EntityTitle } from "@/components/entities/entity-title";
 import { coverTypeIds, entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import type { ActivityItem } from "@/types/api";
 
@@ -60,16 +60,12 @@ export function ComingUpSection() {
 
   return (
     <section className="rounded-xl border bg-muted/30 p-4">
-      <SectionHeader
-        title={t`Coming up`}
-        count={total}
-        viewHref="/activity?mode=up-next"
-      />
+      <SectionHeader title={t`Coming up`} count={total} viewHref="/activity?mode=up-next" />
       <div className="flex flex-col gap-4">
         {groups.map((group) =>
           group.items.length ? (
             <div key={group.id} className="flex flex-col gap-1.5">
-              <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {i18n._(group.label)}
               </h3>
               <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
@@ -130,13 +126,15 @@ function ComingUpCard({
           language={language}
           className="truncate text-sm font-medium"
         />
-        <span className="truncate text-xs text-muted-foreground">{sourceLabel(item, labels, i18n)}</span>
+        <span className="truncate text-xs text-muted-foreground">
+          {sourceLabel(item, labels, i18n)}
+        </span>
       </div>
       <div className="shrink-0 text-right">
         <div className="text-xs font-medium">{countdown(days, i18n)}</div>
         {/* A season is anchored to a day so it can be ordered, but it names a
             period — show the period, never the anchor. */}
-        <div className="text-xs tabular-nums text-muted-foreground">
+        <div className="text-xs text-muted-foreground tabular-nums">
           {item.dateText ?? formatDate(item.date)}
         </div>
       </div>
@@ -170,7 +168,9 @@ function sourceLabel(item: ActivityItem, labels: FieldLabels, i18n: Translate): 
   const entry = item.entries[0];
   if (!entry) return "";
   if (entry.source === "episode") {
-    const keys = (entry.episodes ?? []).map((episode) => episode.key || episode.title).filter(Boolean);
+    const keys = (entry.episodes ?? [])
+      .map((episode) => episode.key || episode.title)
+      .filter(Boolean);
     // The heading is schema config and the keys are data, so the only app copy
     // here is the fallback for a type that names no section.
     const heading = entry.heading || i18n._(msg`Episode`);

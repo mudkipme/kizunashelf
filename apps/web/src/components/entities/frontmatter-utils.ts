@@ -41,11 +41,15 @@ export function numberOrString(value: string) {
   return Number.isFinite(number) && String(number) === value ? number : value;
 }
 
-export function isFrontmatterObject(value: FrontmatterValue | undefined): value is FrontmatterObject {
+export function isFrontmatterObject(
+  value: FrontmatterValue | undefined,
+): value is FrontmatterObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function isScalarFrontmatterValue(value: FrontmatterValue | undefined): value is null | boolean | number | string {
+export function isScalarFrontmatterValue(
+  value: FrontmatterValue | undefined,
+): value is null | boolean | number | string {
   return value === null || ["boolean", "number", "string"].includes(typeof value);
 }
 
@@ -78,7 +82,11 @@ export function uniqueStrings(values: string[]) {
 }
 
 export function listDisplayValues(value: FrontmatterValue | undefined, wikilinks: boolean) {
-  const values = Array.isArray(value) ? value : value === null || value === undefined || value === "" ? [] : [value];
+  const values = Array.isArray(value)
+    ? value
+    : value === null || value === undefined || value === ""
+      ? []
+      : [value];
   return values
     .map(valueToText)
     .map((item) => (wikilinks ? stripWikilink(item) : item))
@@ -95,19 +103,25 @@ export function parseSeasonValue(value: string): SeasonRow {
   // latter for `ja`, so it must round-trip.
   if (value.includes("冬") || normalized.includes("winter")) season = "winter";
   else if (value.includes("夏") || normalized.includes("summer")) season = "summer";
-  else if (value.includes("秋") || normalized.includes("autumn") || normalized.includes("fall")) season = "autumn";
+  else if (value.includes("秋") || normalized.includes("autumn") || normalized.includes("fall"))
+    season = "autumn";
   else if (value.includes("春") || normalized.includes("spring")) season = "spring";
   if (!year || !season) return { kind: "raw", value };
   return { kind: "season", year, season };
 }
 
-export function formatSeasonValue(row: Extract<SeasonRow, { kind: "season" }>, language: SeasonLanguage) {
+export function formatSeasonValue(
+  row: Extract<SeasonRow, { kind: "season" }>,
+  language: SeasonLanguage,
+) {
   const year = row.year.trim();
   if (language === "en") {
-    const label = seasonOptions(language).find((season) => season.key === row.season)?.label ?? "Spring";
+    const label =
+      seasonOptions(language).find((season) => season.key === row.season)?.label ?? "Spring";
     return `${label} ${year}`;
   }
-  const label = seasonOptions(language).find((season) => season.key === row.season)?.label ?? "春季";
+  const label =
+    seasonOptions(language).find((season) => season.key === row.season)?.label ?? "春季";
   return `${year}年${label}`;
 }
 

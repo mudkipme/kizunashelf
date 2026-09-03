@@ -5,16 +5,13 @@
 //! Which options appear is driven entirely by the declared `fieldType`, never by
 //! the field's name.
 
-import { useContext } from "react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { useContext } from "react";
 
 import { Select } from "@/components/ui/select";
-import {
-  externalSourceOptions,
-  externalTypesForSource,
-} from "@/lib/external-metadata";
+import { externalSourceOptions, externalTypesForSource } from "@/lib/external-metadata";
 import { fieldTypeLabel } from "@/lib/type-config";
 import type {
   CanonicalStatus,
@@ -24,20 +21,13 @@ import type {
   SeasonLanguage,
 } from "@/types/api";
 
-import {
-  Field,
-  StringListEditor,
-  TextField,
-} from "./settings-controls";
+import { Field, StringListEditor, TextField } from "./settings-controls";
+import { ExternalFieldMappingsEditor, ExternalTypesEditor } from "./settings-external-mappings";
 import {
   fieldOptionKeys,
   fieldTypeOptions,
   type FieldOptionKey,
 } from "./settings-field-descriptors";
-import {
-  ExternalFieldMappingsEditor,
-  ExternalTypesEditor,
-} from "./settings-external-mappings";
 import { LanguageSelect, TitleLanguagesContext } from "./settings-shared";
 
 /// The editor body for a single field. Rendered inside the type dialog's
@@ -55,7 +45,11 @@ export function FieldForm({
   const { t } = useLingui();
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-      <TextField label={t`Field`} value={field.field} onChange={(value) => onChange({ ...field, field: value })} />
+      <TextField
+        label={t`Field`}
+        value={field.field}
+        onChange={(value) => onChange({ ...field, field: value })}
+      />
       <Field label={t`Type`}>
         <Select
           value={field.fieldType}
@@ -123,14 +117,19 @@ function FieldOptionEditor({
           <LanguageSelect
             value={field.titleLanguage ?? ""}
             languages={titleLanguages}
-            onChange={(titleLanguage) => onChange({ ...field, titleLanguage: titleLanguage || undefined })}
+            onChange={(titleLanguage) =>
+              onChange({ ...field, titleLanguage: titleLanguage || undefined })
+            }
           />
         </Field>
         <Field label={t`Used as`}>
           <Select
             value={field.titleRole ?? ""}
             onChange={(event) =>
-              onChange({ ...field, titleRole: (event.target.value || null) as FieldConfig["titleRole"] })
+              onChange({
+                ...field,
+                titleRole: (event.target.value || null) as FieldConfig["titleRole"],
+              })
             }
             className="w-full"
           >
@@ -183,7 +182,10 @@ function FieldOptionEditor({
         <Select
           value={field.dateRole ?? ""}
           onChange={(event) =>
-            onChange({ ...field, dateRole: (event.target.value || null) as FieldConfig["dateRole"] })
+            onChange({
+              ...field,
+              dateRole: (event.target.value || null) as FieldConfig["dateRole"],
+            })
           }
           className="w-full"
         >
@@ -206,7 +208,9 @@ function FieldOptionEditor({
       <Field label={t`Season language`}>
         <Select
           value={field.seasonLanguage ?? "zh"}
-          onChange={(event) => onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })}
+          onChange={(event) =>
+            onChange({ ...field, seasonLanguage: event.target.value as SeasonLanguage })
+          }
           className="w-full"
         >
           <option value="zh">{t`Chinese`}</option>
@@ -316,7 +320,7 @@ function StatusRoleEditor({
   };
 
   return (
-    <div className="lg:col-span-3 flex flex-col gap-2">
+    <div className="flex flex-col gap-2 lg:col-span-3">
       <Field label={t`Used as`}>
         <Select
           value={field.enumRole ?? ""}
@@ -346,7 +350,10 @@ function StatusRoleEditor({
                 <Select
                   value={canonicalOf.get(option) ?? ""}
                   onChange={(event) =>
-                    setOptionCanonical(option, (event.target.value || undefined) as CanonicalStatus | undefined)
+                    setOptionCanonical(
+                      option,
+                      (event.target.value || undefined) as CanonicalStatus | undefined,
+                    )
                   }
                   className="w-40"
                 >

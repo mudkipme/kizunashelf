@@ -61,10 +61,12 @@ export function EntityGridItem({
           as="div"
           entity={entity}
           language={language}
-          className="line-clamp-2 text-sm font-medium leading-5"
+          className="line-clamp-2 text-sm leading-5 font-medium"
         />
         {entity.summary ? (
-          <div className="line-clamp-3 text-sm leading-5 text-muted-foreground">{entity.summary}</div>
+          <div className="line-clamp-3 text-sm leading-5 text-muted-foreground">
+            {entity.summary}
+          </div>
         ) : null}
         <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="min-w-0">

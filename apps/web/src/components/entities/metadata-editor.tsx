@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { allTagsQuery, configQuery } from "@/api/queries";
 import { DetailSection } from "@/components/assets/detail-section";
@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTitleLanguage } from "@/lib/language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
-import { FieldValueInput } from "./metadata-inputs";
 import { editableFieldSpecs } from "./metadata-field-specs";
+import { FieldValueInput } from "./metadata-inputs";
 import type {
   EditableFieldSpec,
   FrontmatterDraft,
@@ -80,7 +80,16 @@ export function MetadataEditor({
         tagsFieldName,
         t`Tags`,
       ),
-    [typeConfig, frontmatter, relationSuggestions, onRelationSearch, language, allTags, tagsFieldName, t],
+    [
+      typeConfig,
+      frontmatter,
+      relationSuggestions,
+      onRelationSearch,
+      language,
+      allTags,
+      tagsFieldName,
+      t,
+    ],
   );
 
   function updateField(key: string, value: FrontmatterValue | undefined) {

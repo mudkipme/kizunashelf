@@ -26,7 +26,9 @@ function item(overrides: Partial<ImportPlanItem> & Pick<ImportPlanItem, "index">
   };
 }
 
-function bucket(overrides: Partial<ImportPlanBucket> & Pick<ImportPlanBucket, "bucket">): ImportPlanBucket {
+function bucket(
+  overrides: Partial<ImportPlanBucket> & Pick<ImportPlanBucket, "bucket">,
+): ImportPlanBucket {
   return { provider: "anilist", candidateTypes: [], ...overrides };
 }
 
@@ -53,7 +55,9 @@ function Controlled({
         setTypes((prev) => ({ ...prev, [bucketKey]: type }));
         onBucketType(bucketKey, type);
       }}
-      effectiveType={(planBucket) => types[planBucket.bucket] ?? planBucket.selectedType ?? planBucket.candidateTypes[0]}
+      effectiveType={(planBucket) =>
+        types[planBucket.bucket] ?? planBucket.selectedType ?? planBucket.candidateTypes[0]
+      }
       skip={skip}
       onToggleSkip={(index) => {
         setSkip((prev) => {
@@ -79,7 +83,11 @@ describe("PlanReview", () => {
           items: [
             item({ index: 0 }),
             item({ index: 1 }),
-            item({ index: 2, state: "exists", existing: { id: "anime/Frieren", title: "Frieren" } }),
+            item({
+              index: 2,
+              state: "exists",
+              existing: { id: "anime/Frieren", title: "Frieren" },
+            }),
             item({ index: 3, state: "needsReview", reviewReason: "noTypeMatch" }),
           ],
         }}
@@ -114,10 +122,12 @@ describe("PlanReview", () => {
 
     const picker = screen.getByRole("combobox", { name: "AniList · anime" });
     expect(screen.getByRole("combobox").elements()).toHaveLength(1);
-    expect(picker.getByRole("option").elements().map((option) => option.textContent)).toEqual([
-      "Anime",
-      "TV series",
-    ]);
+    expect(
+      picker
+        .getByRole("option")
+        .elements()
+        .map((option) => option.textContent),
+    ).toEqual(["Anime", "TV series"]);
 
     await picker.selectOptions("TV series");
     // The bucket key travels, not the provider-qualified label the user read.
@@ -150,7 +160,12 @@ describe("PlanReview", () => {
           items: [
             item({ index: 7, title: "Frieren" }),
             item({ index: 3, title: "Vinland Saga", state: "exists" }),
-            item({ index: 5, title: "Mushishi", state: "needsReview", reviewReason: "noSupportedId" }),
+            item({
+              index: 5,
+              title: "Mushishi",
+              state: "needsReview",
+              reviewReason: "noSupportedId",
+            }),
           ],
         }}
       />,
@@ -178,7 +193,12 @@ describe("PlanReview", () => {
         plan={{
           buckets: [],
           items: [
-            item({ index: 0, title: "Frieren", state: "exists", existing: { id: "anime/Frieren", title: "Frieren" } }),
+            item({
+              index: 0,
+              title: "Frieren",
+              state: "exists",
+              existing: { id: "anime/Frieren", title: "Frieren" },
+            }),
             // Matched by dedup but with no resolved entity to point at: the
             // badge still shows, just without a dead link.
             item({ index: 1, title: "Mushishi", state: "exists" }),
@@ -260,7 +280,9 @@ describe("PlanReview", () => {
  * Clipping to a short scroll container restores the constraint a real page has.
  */
 function Scrolled({ count }: { count: number }) {
-  const items = Array.from({ length: count }, (_, index) => item({ index, title: `Item ${index}` }));
+  const items = Array.from({ length: count }, (_, index) =>
+    item({ index, title: `Item ${index}` }),
+  );
   return (
     <div data-testid="viewport" style={{ height: "300px", overflowY: "auto" }}>
       <Controlled plan={{ buckets: [], items }} />

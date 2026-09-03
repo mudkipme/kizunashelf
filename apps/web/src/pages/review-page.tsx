@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon, SearchIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "@/api/client";
@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Select } from "@/components/ui/select";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 import {
   allEntityFilter,
   compareEntitiesByTypeThenTitle,
@@ -25,7 +26,6 @@ import {
   entityMatchesQuery,
   entityTypeOptions,
 } from "@/lib/entity-filters";
-import { useDebouncedCallback } from "@/hooks/use-debounce";
 import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
 import { useNumberFormat } from "@/lib/locale";
 import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
@@ -141,7 +141,9 @@ export function ReviewPage() {
         </header>
 
         {cleanup.isPending ? (
-          <Placeholder><Trans>Loading…</Trans></Placeholder>
+          <Placeholder>
+            <Trans>Loading…</Trans>
+          </Placeholder>
         ) : null}
 
         {cleanup.data && (!activeQueue || assetQueueIds.has(activeQueue.id)) ? (
@@ -164,7 +166,10 @@ export function ReviewPage() {
                     placeholder={t`Search queue`}
                   />
                 </div>
-                <Select value={selectedType} onChange={(event) => setFilter("type", event.target.value)}>
+                <Select
+                  value={selectedType}
+                  onChange={(event) => setFilter("type", event.target.value)}
+                >
                   <option value={allEntityFilter}>{t`All types`}</option>
                   {typeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -172,7 +177,10 @@ export function ReviewPage() {
                     </option>
                   ))}
                 </Select>
-                <Select value={selectedDate} onChange={(event) => setFilter("date", event.target.value)}>
+                <Select
+                  value={selectedDate}
+                  onChange={(event) => setFilter("date", event.target.value)}
+                >
                   <option value={allEntityFilter}>{t`All dates`}</option>
                   <option value="dated">{t`Has date`}</option>
                   <option value="undated">{t`No date`}</option>
@@ -188,7 +196,11 @@ export function ReviewPage() {
                   <Plural value={filteredItems.length} one="# shown" other="# shown" />
                 </Badge>
                 <span>
-                  <Plural value={items.length} one="# total queue item" other="# total queue items" />
+                  <Plural
+                    value={items.length}
+                    one="# total queue item"
+                    other="# total queue items"
+                  />
                 </span>
               </div>
             </section>
@@ -237,7 +249,9 @@ function LibraryIssuesPanel({ health }: { health: HealthResponse }) {
     <section className="rounded-md border">
       <header className="flex items-start justify-between gap-3 border-b px-3 py-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold"><Trans>Library Issues</Trans></h2>
+          <h2 className="text-sm font-semibold">
+            <Trans>Library Issues</Trans>
+          </h2>
           <p className="mt-1 text-xs text-muted-foreground">
             <Trans>Files the library could not parse cleanly.</Trans>
           </p>
@@ -260,7 +274,7 @@ function LibraryIssuesPanel({ health }: { health: HealthResponse }) {
                 className="min-w-0 px-3 py-3"
               >
                 <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                  <code className="min-w-0 break-all text-xs font-medium">{diagnostic.path}</code>
+                  <code className="min-w-0 text-xs font-medium break-all">{diagnostic.path}</code>
                   <Badge variant="outline">
                     {diagnostic.kind === "frontmatter" ? (
                       <Trans>Frontmatter</Trans>
@@ -271,7 +285,7 @@ function LibraryIssuesPanel({ health }: { health: HealthResponse }) {
                     )}
                   </Badge>
                 </div>
-                <p className="mt-1 break-words text-xs text-muted-foreground">
+                <p className="mt-1 text-xs break-words text-muted-foreground">
                   {diagnostic.message}
                 </p>
               </div>
@@ -358,7 +372,9 @@ function UnresolvedRelationRow({
           <Badge variant="outline">
             {entityFieldLabel(labelsByType, item.source.type, item.relation.field)}
           </Badge>
-          {item.relation.targetType ? <Badge variant="secondary">{item.relation.targetType}</Badge> : null}
+          {item.relation.targetType ? (
+            <Badge variant="secondary">{item.relation.targetType}</Badge>
+          ) : null}
           <span className="min-w-0 truncate text-sm font-medium">{item.relation.targetTitle}</span>
         </div>
         <div className="mt-1">
@@ -386,12 +402,19 @@ function EntitySummaryCell({
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Link
           to={`/entities/${encodeURIComponent(entity.id)}`}
-          className={cn("min-w-0 truncate font-medium hover:underline", compact ? "text-xs" : "text-sm")}
+          className={cn(
+            "min-w-0 truncate font-medium hover:underline",
+            compact ? "text-xs" : "text-sm",
+          )}
         >
           <EntityTitle entity={entity} language={language} />
         </Link>
         <Badge variant="outline">{entity.typeLabel}</Badge>
-        {showBasename ? <Badge variant="secondary" className="font-mono">{entity.basename}</Badge> : null}
+        {showBasename ? (
+          <Badge variant="secondary" className="font-mono">
+            {entity.basename}
+          </Badge>
+        ) : null}
       </div>
       <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <EntityDateList entity={entity} compact labelsByType={labelsByType} />
@@ -408,7 +431,9 @@ function ProgressPill({ summary }: { summary: CleanupQueueSummary }) {
   return (
     <div className="min-w-48 rounded-md border px-3 py-2">
       <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-muted-foreground"><Trans>Progress</Trans></span>
+        <span className="text-muted-foreground">
+          <Trans>Progress</Trans>
+        </span>
         <span className="tabular-nums">
           {formatNumber(completeCount(summary))} / {formatNumber(summary.total)}
         </span>
@@ -419,7 +444,8 @@ function ProgressPill({ summary }: { summary: CleanupQueueSummary }) {
 }
 
 function ProgressBar({ summary }: { summary: CleanupQueueSummary }) {
-  const percent = summary.total > 0 ? Math.round((completeCount(summary) / summary.total) * 100) : 100;
+  const percent =
+    summary.total > 0 ? Math.round((completeCount(summary) / summary.total) * 100) : 100;
   return (
     <div className="mt-2 h-2 rounded-sm bg-muted">
       <div className="h-2 rounded-sm bg-emerald-500" style={{ width: `${percent}%` }} />
@@ -470,7 +496,9 @@ function compareItems(a: FilterableItem, b: FilterableItem, language: string, qu
   // by basename first — this keeps each cluster of collisions adjacent, then
   // orders within a cluster by type/title.
   if (queueId === "duplicate-filename") {
-    const byName = a.entity.basename.localeCompare(b.entity.basename, undefined, { sensitivity: "base" });
+    const byName = a.entity.basename.localeCompare(b.entity.basename, undefined, {
+      sensitivity: "base",
+    });
     if (byName !== 0) return byName;
   }
   return compareEntitiesByTypeThenTitle(a.entity, b.entity, language);

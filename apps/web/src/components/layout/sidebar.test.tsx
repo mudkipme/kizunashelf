@@ -11,8 +11,8 @@ import {
   sidebarStorageKey,
   useSidebarStore,
 } from "@/lib/sidebar";
-import { render } from "@/test/render";
 import { stubApi, testStats } from "@/test/api-stub";
+import { render } from "@/test/render";
 
 const mod = isAppleKeyboard() ? "Meta" : "Control";
 

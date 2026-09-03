@@ -23,9 +23,11 @@ export function SectionHeader({
     <div className="mb-3 flex min-h-8 items-center gap-x-2">
       <h2 className="truncate text-base font-semibold tracking-tight">{title}</h2>
       {count != null ? (
-        <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{count}</span>
+        <span className="shrink-0 text-sm text-muted-foreground tabular-nums">{count}</span>
       ) : null}
-      {subtitle ? <span className="truncate text-xs text-muted-foreground">· {subtitle}</span> : null}
+      {subtitle ? (
+        <span className="truncate text-xs text-muted-foreground">· {subtitle}</span>
+      ) : null}
       {viewHref ? (
         <Button
           asChild

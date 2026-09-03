@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
-import { userEvent } from "vitest/browser";
 import {
   DndContext,
   KeyboardSensor,
@@ -11,9 +8,12 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useState } from "react";
+import { describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
-import { SectionBlock } from "@/components/lists/section-block";
 import type { EditableItem, EditableSection } from "@/components/lists/list-sections";
+import { SectionBlock } from "@/components/lists/section-block";
 import { render } from "@/test/render";
 import type { EntitySummary } from "@/types/api";
 
@@ -107,7 +107,12 @@ describe("SectionBlock", () => {
 
     // The ungrouped block is not a `## heading` in the Markdown — it is the
     // items above the first one — so there is nothing to rename or delete.
-    expect(screen.getByRole("menuitem").elements().map((entry) => entry.textContent)).toEqual([]);
+    expect(
+      screen
+        .getByRole("menuitem")
+        .elements()
+        .map((entry) => entry.textContent),
+    ).toEqual([]);
     await expect.element(screen.getByRole("menuitemradio", { name: "Unordered" })).toBeVisible();
   });
 
@@ -134,7 +139,10 @@ describe("SectionBlock", () => {
   it("changes the list style from the section menu", async () => {
     const onMarkerChange = vi.fn();
     const screen = await render(
-      <Harness initial={section({ items: [item("[[Frieren]]")] })} onMarkerChange={onMarkerChange} />,
+      <Harness
+        initial={section({ items: [item("[[Frieren]]")] })}
+        onMarkerChange={onMarkerChange}
+      />,
     );
 
     await screen.getByRole("button", { name: "Section actions" }).click();
@@ -161,7 +169,10 @@ describe("SectionBlock", () => {
     const onToggleItem = vi.fn();
     const screen = await render(
       <Harness
-        initial={section({ marker: "todo", items: [item("Watch ep 1"), item("Watch ep 2", { checked: true })] })}
+        initial={section({
+          marker: "todo",
+          items: [item("Watch ep 1"), item("Watch ep 2", { checked: true })],
+        })}
         onToggleItem={onToggleItem}
       />,
     );
@@ -182,7 +193,9 @@ describe("SectionBlock", () => {
       <Harness
         initial={section({
           items: [
-            item("[[Frieren]] — rewatch", { entity: entity({ id: "anime/Frieren", title: "Frieren" }) }),
+            item("[[Frieren]] — rewatch", {
+              entity: entity({ id: "anime/Frieren", title: "Frieren" }),
+            }),
             // A wikilink to a note the index does not know about: kept
             // verbatim, since the file is the source of truth and the link may
             // simply not exist yet.
@@ -223,7 +236,10 @@ describe("SectionBlock", () => {
   it("reorders with the keyboard alone", async () => {
     const onDragEnd = vi.fn();
     const screen = await render(
-      <Harness initial={section({ items: [item("first"), item("second")] })} onDragEnd={onDragEnd} />,
+      <Harness
+        initial={section({ items: [item("first"), item("second")] })}
+        onDragEnd={onDragEnd}
+      />,
     );
 
     // The grip is a real button so it is tab-reachable, and dnd-kit's keyboard
@@ -242,9 +258,7 @@ describe("SectionBlock", () => {
   });
 
   it("hides the editing affordances when the list cannot be written", async () => {
-    const screen = await render(
-      <Harness initial={section({ items: [item("first")] })} disabled />,
-    );
+    const screen = await render(<Harness initial={section({ items: [item("first")] })} disabled />);
 
     // Read-only mode is a real deployment: the controls leave the page (and the
     // accessibility tree with it) rather than sitting there and failing.

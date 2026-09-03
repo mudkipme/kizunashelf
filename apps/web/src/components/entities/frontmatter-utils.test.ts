@@ -86,12 +86,36 @@ describe("listDisplayValues", () => {
 
 describe("season values", () => {
   it("parses the Chinese 季-suffixed, Japanese bare-kanji, and English shapes", () => {
-    expect(parseSeasonValue("2023年春季")).toEqual({ kind: "season", year: "2023", season: "spring" });
-    expect(parseSeasonValue("2020年秋季")).toEqual({ kind: "season", year: "2020", season: "autumn" });
-    expect(parseSeasonValue("2023年春")).toEqual({ kind: "season", year: "2023", season: "spring" });
-    expect(parseSeasonValue("2022年冬")).toEqual({ kind: "season", year: "2022", season: "winter" });
-    expect(parseSeasonValue("Winter 2021")).toEqual({ kind: "season", year: "2021", season: "winter" });
-    expect(parseSeasonValue("Fall 1999")).toEqual({ kind: "season", year: "1999", season: "autumn" });
+    expect(parseSeasonValue("2023年春季")).toEqual({
+      kind: "season",
+      year: "2023",
+      season: "spring",
+    });
+    expect(parseSeasonValue("2020年秋季")).toEqual({
+      kind: "season",
+      year: "2020",
+      season: "autumn",
+    });
+    expect(parseSeasonValue("2023年春")).toEqual({
+      kind: "season",
+      year: "2023",
+      season: "spring",
+    });
+    expect(parseSeasonValue("2022年冬")).toEqual({
+      kind: "season",
+      year: "2022",
+      season: "winter",
+    });
+    expect(parseSeasonValue("Winter 2021")).toEqual({
+      kind: "season",
+      year: "2021",
+      season: "winter",
+    });
+    expect(parseSeasonValue("Fall 1999")).toEqual({
+      kind: "season",
+      year: "1999",
+      season: "autumn",
+    });
   });
 
   it("falls back to raw when a year or season is missing", () => {

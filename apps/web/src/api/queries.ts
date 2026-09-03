@@ -24,11 +24,16 @@ import {
 import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
-import { todayLocal } from "@/lib/date";
 import { getProviderCatalog } from "@/api/external";
 import { fetchList, fetchLists } from "@/api/lists";
+import {
+  getLanguages,
+  getRawSettingsConfig,
+  getSettingsConfig,
+  getTypePresets,
+} from "@/api/settings";
 import { fetchSmartList, fetchSmartListPreview, fetchSmartListResults } from "@/api/smart-lists";
-import { getLanguages, getRawSettingsConfig, getSettingsConfig, getTypePresets } from "@/api/settings";
+import { todayLocal } from "@/lib/date";
 
 export const queryKeys = {
   activity: (params: Omit<GetActivityParams, "cursor">) => ["activity", params] as const,
@@ -49,8 +54,7 @@ export const queryKeys = {
   smartList: (id: string) => ["smartList", id] as const,
   smartListResults: (id: string, params: GetSmartListResultsParams) =>
     ["smartListResults", id, params] as const,
-  smartListPreview: (request: SmartListPreviewRequest) =>
-    ["smartListPreview", request] as const,
+  smartListPreview: (request: SmartListPreviewRequest) => ["smartListPreview", request] as const,
   providerCatalog: ["providerCatalog"] as const,
   settingsConfig: ["settingsConfig"] as const,
   rawSettingsConfig: ["rawSettingsConfig"] as const,

@@ -61,7 +61,10 @@ export type RuleFieldMeta = {
 };
 
 export const builderWords = {
-  tags: msg({ comment: "Field name for the built-in tags field in the rule builder", message: "Tags" }),
+  tags: msg({
+    comment: "Field name for the built-in tags field in the rule builder",
+    message: "Tags",
+  }),
   fileName: msg({
     comment: "Rule-builder field for the note's file name (its title)",
     message: "File name",
@@ -127,7 +130,10 @@ export const builderWords = {
   contains: msg({ comment: "Text rule operator: substring match", message: "contains" }),
   startsWith: msg({ comment: "Text rule operator", message: "starts with" }),
   endsWith: msg({ comment: "Text rule operator", message: "ends with" }),
-  linksTo: msg({ comment: "Relation rule operator: note links to the entity", message: "links to" }),
+  linksTo: msg({
+    comment: "Relation rule operator: note links to the entity",
+    message: "links to",
+  }),
   notLinksTo: msg({
     comment: "Relation rule operator: note does not link to the entity",
     message: "does not link to",

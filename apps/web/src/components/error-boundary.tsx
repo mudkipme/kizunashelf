@@ -1,5 +1,5 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Trans } from "@lingui/react/macro";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -57,7 +57,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <p className="mt-2 text-sm text-muted-foreground">
             <Trans>The page hit an unexpected error. You can try again, or reload the app.</Trans>
           </p>
-          <p className="mt-2 break-words text-xs text-muted-foreground/80">{this.state.error.message}</p>
+          <p className="mt-2 text-xs break-words text-muted-foreground/80">
+            {this.state.error.message}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={() => this.setState({ error: null })}>

@@ -75,7 +75,9 @@ export function fieldConfigSummary(field: FieldConfig): string[] {
   }
   if (options.has("externalRef") && field.externalRef) summary.push(field.externalRef);
   if (options.has("externalRef") && field.externalTypes?.length) {
-    summary.push(plural(field.externalTypes.length, { one: "# external type", other: "# external types" }));
+    summary.push(
+      plural(field.externalTypes.length, { one: "# external type", other: "# external types" }),
+    );
   }
   if (options.has("relationType") && field.relationType) summary.push(field.relationType);
 

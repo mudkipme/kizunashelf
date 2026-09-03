@@ -3,8 +3,8 @@
 //! multi-value combobox, an entity search, or nothing at all for the operators
 //! that take no value.
 
-import { useEffect, useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
+import { useEffect, useRef, useState } from "react";
 
 import { isAbortError } from "@/api/client";
 import { useRelationSearch } from "@/api/use-relation-search";
@@ -192,27 +192,24 @@ function RelationTargetPicker({
 
   const relationType = meta.relationType;
   const { schedule: scheduleRelationSearch, cancel: cancelRelationSearch } =
-    useDebouncedAbortableCallback(
-      (signal, targetType: string, query: string) => {
-        setLoading(true);
-        onRelationSearch({ relationType: targetType, query, signal })
-          .then((items) => {
-            if (signal.aborted) return;
-            setOptions(
-              items
-                .map((item) => ({ value: item.basename, label: entityTitle(item, language) }))
-                .filter((option) => option.value),
-            );
-          })
-          .catch((caught) => {
-            if (!isAbortError(caught) && !signal.aborted) setOptions([]);
-          })
-          .finally(() => {
-            if (!signal.aborted) setLoading(false);
-          });
-      },
-      200,
-    );
+    useDebouncedAbortableCallback((signal, targetType: string, query: string) => {
+      setLoading(true);
+      onRelationSearch({ relationType: targetType, query, signal })
+        .then((items) => {
+          if (signal.aborted) return;
+          setOptions(
+            items
+              .map((item) => ({ value: item.basename, label: entityTitle(item, language) }))
+              .filter((option) => option.value),
+          );
+        })
+        .catch((caught) => {
+          if (!isAbortError(caught) && !signal.aborted) setOptions([]);
+        })
+        .finally(() => {
+          if (!signal.aborted) setLoading(false);
+        });
+    }, 200);
 
   useEffect(() => {
     if (!open || !relationType) {

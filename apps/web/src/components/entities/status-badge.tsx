@@ -7,16 +7,13 @@ import type { CanonicalStatus, ResolvedStatus } from "@/types/api";
 /// Tuned to sit quietly against the app's muted surfaces in both themes. An
 /// unmapped value (no canonical) falls back to a neutral outline.
 const CANONICAL_CLASS: Record<CanonicalStatus, string> = {
-  planning:
-    "border-transparent bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+  planning: "border-transparent bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
   ongoing:
     "border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  paused:
-    "border-transparent bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  paused: "border-transparent bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   completed:
     "border-transparent bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
-  dropped:
-    "border-transparent bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+  dropped: "border-transparent bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
 };
 
 const DOT_CLASS: Record<CanonicalStatus, string> = {

@@ -1,6 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Trans, useLingui } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
   KeyboardSensor,
@@ -8,13 +5,12 @@ import {
   closestCorners,
   useSensor,
   useSensors,
-   DragEndEvent,
-   DragOverEvent,
+  DragEndEvent,
+  DragOverEvent,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { Trans, useLingui } from "@lingui/react/macro";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EyeIcon,
   FilePenLineIcon,
@@ -25,16 +21,17 @@ import {
   SaveIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
 import { useInvalidateLists } from "@/api/invalidate-lists";
 import { addItemToList, removeList, saveList } from "@/api/lists";
-import { useDebouncedCallback } from "@/hooks/use-debounce";
 import { listQuery, queryKeys } from "@/api/queries";
 import { MarkdownView } from "@/components/assets/markdown-view";
 import { AppFrame } from "@/components/layout/app-frame";
+import { PageContainer } from "@/components/layout/page-container";
 import { AddItemsDialog } from "@/components/lists/add-items-dialog";
 import {
   sectionsSignature,
@@ -43,7 +40,6 @@ import {
 } from "@/components/lists/list-sections";
 import { RenameListDialog } from "@/components/lists/rename-list-dialog";
 import { SectionBlock } from "@/components/lists/section-block";
-import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -58,6 +54,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Textarea } from "@/components/ui/textarea";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 import { useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
 
@@ -102,9 +99,9 @@ export function ListDetailPage() {
   const snapshot = loadedSnapshot.current;
   const dirty = Boolean(
     snapshot &&
-      (description !== snapshot.description ||
-        trailing !== snapshot.trailing ||
-        sectionsSignature(sections) !== snapshot.sections),
+    (description !== snapshot.description ||
+      trailing !== snapshot.trailing ||
+      sectionsSignature(sections) !== snapshot.sections),
   );
   const seedFromServer = useCallback((source: NonNullable<typeof data>) => {
     loadedRevision.current = source.revision;
@@ -292,21 +289,31 @@ export function ListDetailPage() {
       if (target.items.length === 0) return rest;
       const ungroupedIndex = rest.findIndex((section) => section.heading === null);
       if (ungroupedIndex === -1) {
-        return [{ key: nextKey("sec"), heading: null, marker: "unordered", items: target.items }, ...rest];
+        return [
+          { key: nextKey("sec"), heading: null, marker: "unordered", items: target.items },
+          ...rest,
+        ];
       }
       return rest.map((section, index) =>
-        index === ungroupedIndex ? { ...section, items: [...section.items, ...target.items] } : section,
+        index === ungroupedIndex
+          ? { ...section, items: [...section.items, ...target.items] }
+          : section,
       );
     });
   }
 
   function updateSection(key: string, patch: Partial<EditableSection>) {
-    setSections((current) => current.map((section) => (section.key === key ? { ...section, ...patch } : section)));
+    setSections((current) =>
+      current.map((section) => (section.key === key ? { ...section, ...patch } : section)),
+    );
   }
 
   function removeItem(itemKey: string) {
     setSections((current) =>
-      current.map((section) => ({ ...section, items: section.items.filter((item) => item.key !== itemKey) })),
+      current.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => item.key !== itemKey),
+      })),
     );
   }
 
@@ -345,7 +352,9 @@ export function ListDetailPage() {
   const busy = save.isPending || autoSave.isPending || remove.isPending || rename.isPending;
   const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0);
   const existingIds = new Set(
-    sections.flatMap((section) => section.items.map((item) => item.entity?.id)).filter(Boolean) as string[],
+    sections
+      .flatMap((section) => section.items.map((item) => item.entity?.id))
+      .filter(Boolean) as string[],
   );
 
   return (
@@ -435,11 +444,22 @@ export function ListDetailPage() {
                     Items <span className="text-muted-foreground">({totalItems})</span>
                   </Trans>
                 </h2>
-                <Button type="button" variant="outline" size="sm" disabled={!contentWritable || externalChange} onClick={addSection}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!contentWritable || externalChange}
+                  onClick={addSection}
+                >
                   <FolderPlusIcon data-icon="inline-start" />
                   <Trans>Add section</Trans>
                 </Button>
-                <Button type="button" size="sm" disabled={!contentWritable || externalChange} onClick={() => setAddOpen(true)}>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!contentWritable || externalChange}
+                  onClick={() => setAddOpen(true)}
+                >
                   <PlusIcon data-icon="inline-start" />
                   <Trans>Add items</Trans>
                 </Button>
@@ -448,7 +468,8 @@ export function ListDetailPage() {
               {sections.length === 0 ? (
                 <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
                   <Trans>
-                    No items yet. Use “Add items” to put entities on this list, or “Add section” to group them.
+                    No items yet. Use “Add items” to put entities on this list, or “Add section” to
+                    group them.
                   </Trans>
                 </div>
               ) : (
@@ -511,8 +532,8 @@ export function ListDetailPage() {
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     <Trans>
-                      This moves <strong>{data.name}</strong> to the Trash. The items it contains are
-                      untouched.
+                      This moves <strong>{data.name}</strong> to the Trash. The items it contains
+                      are untouched.
                     </Trans>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -561,13 +582,20 @@ function MarkdownField({
     <section className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <h2 className="mr-auto text-sm font-medium">{label}</h2>
-        <Button type="button" variant="ghost" size="sm" onClick={() => setPreview((current) => !current)}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setPreview((current) => !current)}
+        >
           {preview ? <PencilIcon data-icon="inline-start" /> : <EyeIcon data-icon="inline-start" />}
           {preview ? <Trans>Edit</Trans> : <Trans>Preview</Trans>}
         </Button>
       </div>
       {preview ? (
-        value.trim() ? <MarkdownView markdown={value} relations={[]} /> : null
+        value.trim() ? (
+          <MarkdownView markdown={value} relations={[]} />
+        ) : null
       ) : (
         <Textarea
           className="min-h-24 font-mono text-code"

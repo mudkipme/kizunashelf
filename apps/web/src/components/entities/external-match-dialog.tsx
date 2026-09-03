@@ -1,6 +1,6 @@
-import { memo } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { SearchIcon, WandSparklesIcon } from "lucide-react";
+import { memo } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,7 +111,9 @@ export function ExternalMatchDialog({
         className="top-0 left-0 flex h-dvh max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 sm:top-[50%] sm:left-[50%] sm:h-[min(760px,calc(100dvh-2rem))] sm:w-[min(1100px,calc(100vw-2rem))] sm:max-w-none sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-md sm:border"
       >
         <DialogHeader className="border-b px-4 py-4 pr-12 sm:px-6">
-          <DialogTitle><Trans>External Match</Trans></DialogTitle>
+          <DialogTitle>
+            <Trans>External Match</Trans>
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6">
@@ -127,7 +129,9 @@ export function ExternalMatchDialog({
               aria-label={t`Provider`}
               disabled={!externalSearchEnabled}
             >
-              {providerOptions.length === 0 ? <option value="all">{t`No supported providers`}</option> : null}
+              {providerOptions.length === 0 ? (
+                <option value="all">{t`No supported providers`}</option>
+              ) : null}
               {providerOptions.length > 1 ? <option value="all">{t`All providers`}</option> : null}
               {providerOptions.map((providerOption) => (
                 <option key={providerOption} value={providerOption}>
@@ -251,7 +255,9 @@ const CandidateList = memo(function CandidateList({
             onClick={() => onChooseCandidate(match)}
           >
             <div className="flex min-w-0 items-center gap-2">
-              <Badge variant="secondary">{externalSourceLabel(providerCatalog, candidate.provider)}</Badge>
+              <Badge variant="secondary">
+                {externalSourceLabel(providerCatalog, candidate.provider)}
+              </Badge>
               <span className="min-w-0 truncate text-sm font-medium">{candidate.title}</span>
             </div>
             {candidate.brief ? (
@@ -311,7 +317,9 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
 
   return (
     <div className="rounded-md border p-3">
-      <h3 className="text-sm font-semibold"><Trans>Selected Metadata</Trans></h3>
+      <h3 className="text-sm font-semibold">
+        <Trans>Selected Metadata</Trans>
+      </h3>
       {selectedCandidate ? (
         <div className="mt-3 flex flex-col gap-2">
           {metadataEntries.map((entry) => {
@@ -337,11 +345,11 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
                     {entry.externalField ?? t`external ref`}
                   </span>
                   {currentValues ? (
-                    <span className="block break-words text-xs text-muted-foreground">
+                    <span className="block text-xs break-words text-muted-foreground">
                       <Trans>Current: {formatMetadataValue(currentValues[entry.field])}</Trans>
                     </span>
                   ) : null}
-                  <span className="block break-words text-xs text-muted-foreground">
+                  <span className="block text-xs break-words text-muted-foreground">
                     {currentValues ? <Trans>New: {newValue}</Trans> : newValue}
                   </span>
                 </span>
@@ -355,37 +363,39 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
           ) : null}
           {bodyEntries.length > 0 ? (
             <div className="mt-3 border-t pt-3">
-              <h4 className="text-xs font-semibold uppercase text-muted-foreground"><Trans>Body Sections</Trans></h4>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase">
+                <Trans>Body Sections</Trans>
+              </h4>
               <div className="mt-2 flex flex-col gap-2">
                 {bodyEntries.map((entry) => {
                   const locked = sectionLocks?.has(entry.key) ?? false;
                   return (
-                  <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedBodySections.has(entry.key)}
-                      onChange={() => toggleBodySection(entry.key)}
-                      className="mt-1"
-                      disabled={!contentWritable || locked}
-                    />
-                    <span className="min-w-0">
-                      <span className="block font-medium">{entry.heading}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {entry.externalField}
-                        {sectionModes?.[entry.key] ? (
-                          <>
-                            {" · "}
-                            {sectionModes[entry.key] === "replace"
-                              ? t`replaces existing section`
-                              : t`adds new section`}
-                          </>
-                        ) : null}
+                    <label key={entry.key} className="flex min-w-0 items-start gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedBodySections.has(entry.key)}
+                        onChange={() => toggleBodySection(entry.key)}
+                        className="mt-1"
+                        disabled={!contentWritable || locked}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-medium">{entry.heading}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {entry.externalField}
+                          {sectionModes?.[entry.key] ? (
+                            <>
+                              {" · "}
+                              {sectionModes[entry.key] === "replace"
+                                ? t`replaces existing section`
+                                : t`adds new section`}
+                            </>
+                          ) : null}
+                        </span>
+                        <span className="block text-xs break-words text-muted-foreground">
+                          {entry.hasValue ? entry.markdown : t`No value returned`}
+                        </span>
                       </span>
-                      <span className="block break-words text-xs text-muted-foreground">
-                        {entry.hasValue ? entry.markdown : t`No value returned`}
-                      </span>
-                    </span>
-                  </label>
+                    </label>
                   );
                 })}
               </div>
@@ -393,7 +403,9 @@ const SelectedMetadataPanel = memo(function SelectedMetadataPanel({
           ) : null}
         </div>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground"><Trans>Choose a candidate to compare fields.</Trans></p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          <Trans>Choose a candidate to compare fields.</Trans>
+        </p>
       )}
     </div>
   );

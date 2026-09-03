@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
-import { useEffect, useId, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { FolderOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { getPathSuggestions } from "@/api/settings";
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,7 @@ import { arrayEditor, relativeToBase } from "./settings-model";
 /// recognize, so hand-edited config (an unknown type, sort key, field, or title
 /// language) stays selectable instead of being silently dropped. Render it last
 /// inside a `<Select>`, after the known options. Empty values are skipped.
-export function UnknownValueOption({
-  value,
-  known,
-}: {
-  value: string;
-  known: readonly string[];
-}) {
+export function UnknownValueOption({ value, known }: { value: string; known: readonly string[] }) {
   if (!value || known.includes(value)) return null;
   return <option value={value}>{value}</option>;
 }
@@ -89,13 +83,14 @@ export function StringListEditor({
                 onChange={(event) => list.update(index, event.target.value)}
               />
             )}
-            <IconButton
-              label={t`Remove ${label}`}
-              onClick={() => list.remove(index)}
-            />
+            <IconButton label={t`Remove ${label}`} onClick={() => list.remove(index)} />
           </div>
         ))}
-        {values.length === 0 ? <EmptyConfigLine><Trans>No values.</Trans></EmptyConfigLine> : null}
+        {values.length === 0 ? (
+          <EmptyConfigLine>
+            <Trans>No values.</Trans>
+          </EmptyConfigLine>
+        ) : null}
       </div>
     </div>
   );
@@ -129,19 +124,16 @@ export function PathField({
   const desktop = isDesktopRuntime();
 
   const { schedule: scheduleSuggestions, cancel: cancelSuggestions } =
-    useDebouncedAbortableCallback(
-      (signal, prefix: string, relativeBase: string | undefined) => {
-        // The prefix is relative to `relativeBase`; suggestions come back in
-        // that same coordinate system.
-        void getPathSuggestions(prefix, relativeBase, { signal }).then(
-          (result) => setSuggestions(result.suggestions),
-          () => {
-            if (!signal.aborted) setSuggestions([]);
-          },
-        );
-      },
-      120,
-    );
+    useDebouncedAbortableCallback((signal, prefix: string, relativeBase: string | undefined) => {
+      // The prefix is relative to `relativeBase`; suggestions come back in
+      // that same coordinate system.
+      void getPathSuggestions(prefix, relativeBase, { signal }).then(
+        (result) => setSuggestions(result.suggestions),
+        () => {
+          if (!signal.aborted) setSuggestions([]);
+        },
+      );
+    }, 120);
 
   useEffect(() => {
     scheduleSuggestions(value, suggestionBase);
@@ -168,7 +160,13 @@ export function PathField({
         ))}
       </datalist>
       {desktop ? (
-        <Button type="button" variant="outline" size="icon" onClick={browse} aria-label={t`Select folder`}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={browse}
+          aria-label={t`Select folder`}
+        >
           <FolderOpenIcon />
         </Button>
       ) : null}
@@ -215,7 +213,9 @@ export function NumberField({
       <Input
         type="number"
         value={value ?? ""}
-        onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
+        onChange={(event) =>
+          onChange(event.target.value === "" ? null : Number(event.target.value))
+        }
       />
     </Field>
   );
@@ -287,5 +287,9 @@ export function IconButton({ label, onClick }: { label: string; onClick: () => v
 }
 
 export function EmptyConfigLine({ children }: { children: ReactNode }) {
-  return <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">{children}</div>;
+  return (
+    <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+      {children}
+    </div>
+  );
 }

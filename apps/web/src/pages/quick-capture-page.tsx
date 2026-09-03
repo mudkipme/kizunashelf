@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PlusIcon, SearchIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -16,12 +16,12 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useLanguagePreference } from "@/lib/language";
 import { useQuickCaptureTypeStore } from "@/lib/quick-capture-preferences";
 import { typeSupportsQuickCapture } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
-import { useDebouncedCallback } from "@/hooks/use-debounce";
 import type { ExternalMatch } from "@/types/api";
 
 const ALL = "all";
@@ -106,7 +106,15 @@ export function QuickCapturePage() {
     if (typeId && searchableTypes.some((type) => type.id === typeId)) return;
     const fallback = searchableTypes.find((type) => type.id === lastType) ?? searchableTypes[0];
     setTypeId(fallback.id);
-  }, [config.data, providerCatalog.data, searchableTypes, typeId, lastType, navigate, requestedType]);
+  }, [
+    config.data,
+    providerCatalog.data,
+    searchableTypes,
+    typeId,
+    lastType,
+    navigate,
+    requestedType,
+  ]);
 
   // Remember every validated selection (picked here or arrived via `?type=`), so
   // type-less entry points (home, the all-types library view) reuse it.
@@ -132,7 +140,11 @@ export function QuickCapturePage() {
   // A provider chosen for one type may not exist under the next; reset to All so
   // the search doesn't silently return nothing.
   useEffect(() => {
-    if (provider !== ALL && providerProbe.isSuccess && !enabledProviders.some((item) => item.id === provider)) {
+    if (
+      provider !== ALL &&
+      providerProbe.isSuccess &&
+      !enabledProviders.some((item) => item.id === provider)
+    ) {
       setProvider(ALL);
     }
   }, [provider, enabledProviders, providerProbe.isSuccess]);
@@ -160,7 +172,11 @@ export function QuickCapturePage() {
     const key = matchKey(match);
     setAddingKey(key);
     try {
-      const result = await quickAddEntity({ type: match.entityType, candidate: match.candidate, language });
+      const result = await quickAddEntity({
+        type: match.entityType,
+        candidate: match.candidate,
+        language,
+      });
       const failedCovers = (result.cover ?? []).filter((item) => item.status === "failed").length;
       if (failedCovers > 0) {
         toast.warning(
@@ -181,7 +197,9 @@ export function QuickCapturePage() {
         );
       }
       if (result.basenameAdjusted) {
-        toast.info(t`A file named for this title already existed, so it was saved as “${result.entity.basename}”.`);
+        toast.info(
+          t`A file named for this title already existed, so it was saved as “${result.entity.basename}”.`,
+        );
       }
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
@@ -193,7 +211,9 @@ export function QuickCapturePage() {
 
   const queryError = config.error ?? capabilities.error ?? providerProbe.error;
   const manualHref = `/entities/new/manual${
-    typeId || query ? `?${new URLSearchParams({ ...(typeId ? { type: typeId } : {}), ...(query ? { title: query } : {}) })}` : ""
+    typeId || query
+      ? `?${new URLSearchParams({ ...(typeId ? { type: typeId } : {}), ...(query ? { title: query } : {}) })}`
+      : ""
   }`;
 
   return (
@@ -215,7 +235,8 @@ export function QuickCapturePage() {
 
         {!contentWritable ? (
           <Alert>
-            {CONTENT_WRITES_DISABLED} <Trans>You can still open entities already in your library.</Trans>
+            {CONTENT_WRITES_DISABLED}{" "}
+            <Trans>You can still open entities already in your library.</Trans>
           </Alert>
         ) : null}
 
@@ -246,7 +267,7 @@ export function QuickCapturePage() {
               <Trans>Search</Trans>
               <div className="relative">
                 <SearchIcon
-                  className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground"
                   aria-hidden
                 />
                 <Input
@@ -344,15 +365,21 @@ export function QuickCapturePage() {
                             </span>
                           ) : null}
                         </div>
-                        {match.candidate.originalTitle && match.candidate.originalTitle !== match.candidate.title ? (
-                          <p className="truncate text-xs text-muted-foreground">{match.candidate.originalTitle}</p>
+                        {match.candidate.originalTitle &&
+                        match.candidate.originalTitle !== match.candidate.title ? (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {match.candidate.originalTitle}
+                          </p>
                         ) : null}
                         {match.candidate.brief ? (
-                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{match.candidate.brief}</p>
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                            {match.candidate.brief}
+                          </p>
                         ) : null}
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                           <span className="rounded border px-1.5 py-0.5">
-                            {providerLabels.get(match.candidate.provider) ?? match.candidate.provider}
+                            {providerLabels.get(match.candidate.provider) ??
+                              match.candidate.provider}
                           </span>
                           {addingKey === key ? (
                             <span>
@@ -370,7 +397,10 @@ export function QuickCapturePage() {
 
           {searchEnabled && (results.data?.items.length ?? 0) > 0 ? (
             <p className="text-center text-xs text-muted-foreground">
-              <Trans>Search results come from third-party providers and are not affiliated with KizunaShelf.</Trans>
+              <Trans>
+                Search results come from third-party providers and are not affiliated with
+                KizunaShelf.
+              </Trans>
             </p>
           ) : null}
 

@@ -1,9 +1,9 @@
 //! Renaming a list, which renames its Markdown file — so the new name goes
 //! through the same basename validation a file gets everywhere else.
 
-import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { CheckIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -71,11 +71,19 @@ export function RenameListDialog({
           </label>
           {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
           <DialogFooter className="mt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
               <XIcon data-icon="inline-start" />
               <Trans>Cancel</Trans>
             </Button>
-            <Button type="submit" disabled={disabled || saving || Boolean(validationError) || unchanged || !name.trim()}>
+            <Button
+              type="submit"
+              disabled={disabled || saving || Boolean(validationError) || unchanged || !name.trim()}
+            >
               <CheckIcon data-icon="inline-start" />
               {saving ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
             </Button>

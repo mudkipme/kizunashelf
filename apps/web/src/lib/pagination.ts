@@ -2,7 +2,9 @@ export function visiblePages(page: number, totalPages: number): Array<number | "
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
 
   const pages = new Set([1, totalPages, page - 1, page, page + 1]);
-  const ordered = [...pages].filter((item) => item >= 1 && item <= totalPages).sort((a, b) => a - b);
+  const ordered = [...pages]
+    .filter((item) => item >= 1 && item <= totalPages)
+    .sort((a, b) => a - b);
   const result: Array<number | "ellipsis"> = [];
 
   for (const item of ordered) {

@@ -13,7 +13,13 @@ import type { EntityDatesResponse, TypeConfig } from "@/types/api";
  * gaps carry it, and the only fill left is the one on a quoted snippet — which
  * is quoted text, not a container.
  */
-export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse; typeConfig?: TypeConfig }) {
+export function EntityDates({
+  dates,
+  typeConfig,
+}: {
+  dates?: EntityDatesResponse;
+  typeConfig?: TypeConfig;
+}) {
   const formatDate = useIsoDateFormat();
   // The parent gates this section on the same emptiness check, so this is a
   // defensive guard rather than a visible empty state.
@@ -28,7 +34,10 @@ export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse
           </div>
           <dl className="flex flex-col gap-1">
             {dates.metadata.map((item) => (
-              <div key={item.id} className="flex min-w-0 items-baseline justify-between gap-3 text-xs">
+              <div
+                key={item.id}
+                className="flex min-w-0 items-baseline justify-between gap-3 text-xs"
+              >
                 <dt className="min-w-0 truncate text-muted-foreground">
                   {fieldLabelForKey(typeConfig, item.field)}
                 </dt>
@@ -81,7 +90,9 @@ export function EntityDates({ dates, typeConfig }: { dates?: EntityDatesResponse
                           {snippet.heading}
                         </figcaption>
                       ) : null}
-                      <blockquote className="break-words text-xs leading-5">{snippet.text}</blockquote>
+                      <blockquote className="text-xs leading-5 break-words">
+                        {snippet.text}
+                      </blockquote>
                       <div className="mt-1 text-xs text-muted-foreground">
                         <Trans>line {snippet.line}</Trans>
                       </div>

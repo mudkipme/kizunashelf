@@ -62,7 +62,7 @@ export function LanguageSelect() {
               <span className="flex items-baseline gap-2">
                 {item.label}
                 {!isUiSupported(item.code) && (
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-xs text-muted-foreground">
                     <Trans>UI in English</Trans>
                   </span>
                 )}

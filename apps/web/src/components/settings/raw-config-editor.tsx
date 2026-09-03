@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { SaveIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { SaveIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
@@ -75,7 +75,10 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
     setSaving(true);
     setError(undefined);
     try {
-      const response = await saveRawSettingsConfig({ content, revision: loadedRevisionRef.current });
+      const response = await saveRawSettingsConfig({
+        content,
+        revision: loadedRevisionRef.current,
+      });
       // Echo back exactly what the server stored, and reset the dirty baseline.
       seedContent(response.content, response.revision);
       toast.success(t`Settings saved`);

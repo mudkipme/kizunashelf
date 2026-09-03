@@ -1,5 +1,5 @@
-import { useMemo } from "react";
 import { useLingui } from "@lingui/react/macro";
+import { useMemo } from "react";
 
 import { Select } from "@/components/ui/select";
 import { defaultSort } from "@/lib/constants";
@@ -89,9 +89,7 @@ export function SortPicker({
         aria-label={t`Sort`}
         className={className ?? "w-fit min-w-0"}
         onChange={(event) =>
-          onChange(
-            event.target.value ? { property: event.target.value, direction } : undefined,
-          )
+          onChange(event.target.value ? { property: event.target.value, direction } : undefined)
         }
       >
         {unsortedLabel ? <option value="">{unsortedLabel}</option> : null}

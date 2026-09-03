@@ -22,14 +22,16 @@ export function BarList({ items, max }: { items: BarListItem[]; max?: number }) 
           <>
             <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
               <span className="min-w-0 truncate font-medium">{item.name}</span>
-              <span className="shrink-0 tabular-nums text-muted-foreground">
+              <span className="shrink-0 text-muted-foreground tabular-nums">
                 {formatNumber(item.count)}
               </span>
             </div>
             <div className="mt-1 h-2 rounded-sm bg-muted">
               <div className="h-2 rounded-sm bg-primary" style={{ width }} />
             </div>
-            {item.meta ? <div className="mt-1 truncate text-xs text-muted-foreground">{item.meta}</div> : null}
+            {item.meta ? (
+              <div className="mt-1 truncate text-xs text-muted-foreground">{item.meta}</div>
+            ) : null}
           </>
         );
 

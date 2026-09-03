@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,6 +11,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -63,12 +63,7 @@ import { useCapabilities } from "@/lib/capabilities";
 import { pageSize } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
 import { fieldLabelsByType, typeHasCoverField } from "@/lib/type-config";
-import type {
-  SmartFilterGroup,
-  SmartListDetail,
-  SmartListView,
-  TypeConfig,
-} from "@/types/api";
+import type { SmartFilterGroup, SmartListDetail, SmartListView, TypeConfig } from "@/types/api";
 
 type Draft = {
   scope?: string;
@@ -475,9 +470,7 @@ function EditPanel({
           disabled={disabled}
           aria-label={t`Scope`}
           className="w-fit min-w-0"
-          onChange={(event) =>
-            onChange({ ...draft, scope: event.target.value || undefined })
-          }
+          onChange={(event) => onChange({ ...draft, scope: event.target.value || undefined })}
         >
           <option value="">{t`All types`}</option>
           {typeConfigs.map((type) => (
@@ -519,8 +512,8 @@ function EditPanel({
       {draft.scope ? null : (
         <p className="text-xs text-muted-foreground">
           <Trans>
-            Pick a scope to filter on that type's own fields — across all types only the
-            properties every entry has can be matched.
+            Pick a scope to filter on that type's own fields — across all types only the properties
+            every entry has can be matched.
           </Trans>
         </p>
       )}
@@ -552,7 +545,9 @@ function RenameSmartListDialog({
   useEffect(() => {
     if (open) setName(detail?.name ?? "");
   }, [open, detail?.name]);
-  const validationError = name.trim() ? basenameValidationError(normalizeBasename(name)) : undefined;
+  const validationError = name.trim()
+    ? basenameValidationError(normalizeBasename(name))
+    : undefined;
 
   const rename = useMutation({
     // A rename is a save that carries `renameTo` and echoes the current

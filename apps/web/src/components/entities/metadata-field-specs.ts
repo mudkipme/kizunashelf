@@ -1,10 +1,10 @@
+import { entityTitle } from "@/lib/title-language";
 import {
   configFields,
   configuredFieldLabel,
   isListFieldType,
   type FieldConfig,
 } from "@/lib/type-config";
-import { entityTitle } from "@/lib/title-language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
 import { currentOptions, parseDateValue } from "./frontmatter-utils";
@@ -139,7 +139,11 @@ function optionsForConfiguredField(field: FieldConfig, value: FrontmatterValue |
   return [...options];
 }
 
-function relationOptionsForField(field: FieldConfig, suggestions: EntitySummary[], language: string) {
+function relationOptionsForField(
+  field: FieldConfig,
+  suggestions: EntitySummary[],
+  language: string,
+) {
   const relationType = normalizeRelationType(field.relationType);
   return suggestions
     .filter((item) => !relationType || entityMatchesRelationType(item, relationType))
@@ -151,14 +155,22 @@ function relationOptionsForField(field: FieldConfig, suggestions: EntitySummary[
 }
 
 function entityMatchesRelationType(item: EntitySummary, relationType: string) {
-  return normalizeRelationType(item.type) === relationType || normalizeRelationType(item.typeLabel) === relationType;
+  return (
+    normalizeRelationType(item.type) === relationType ||
+    normalizeRelationType(item.typeLabel) === relationType
+  );
 }
 
 function normalizeRelationType(value: string | null | undefined) {
-  return (value ?? "").trim().toLowerCase().replace(/[\s_-]+/g, "");
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
 }
 
-function normalizeSeasonLanguage(language: FieldConfig["seasonLanguage"] | undefined): SeasonLanguage {
+function normalizeSeasonLanguage(
+  language: FieldConfig["seasonLanguage"] | undefined,
+): SeasonLanguage {
   return language === "en" || language === "ja" ? language : "zh";
 }
 

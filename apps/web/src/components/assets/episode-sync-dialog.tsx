@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,14 +8,13 @@ import {
   RefreshCwIcon,
   XIcon,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { fetchEpisodeSources, syncEpisodes } from "@/api/episodes";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { queryKeys } from "@/api/queries";
-import { useLanguagePreference } from "@/lib/language";
-import { useIsoDateFormat } from "@/lib/locale";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +24,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
+import { useLanguagePreference } from "@/lib/language";
+import { useIsoDateFormat } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 import type {
   EntityEpisodes,
@@ -209,7 +209,11 @@ export function EpisodeSyncDialog({
     setImporting(true);
     try {
       // Ticked items are deliberate writes: overwrite matched titles, add new ones.
-      const detail = await syncEpisodes(entityId, { revision, groups: payloadGroups, overwrite: true });
+      const detail = await syncEpisodes(entityId, {
+        revision,
+        groups: payloadGroups,
+        overwrite: true,
+      });
       queryClient.setQueryData(queryKeys.entity(entityId), detail);
       // Shared helper, so the derived-view key list can't drift per call site.
       void invalidateEntityData();
@@ -273,7 +277,9 @@ export function EpisodeSyncDialog({
               <Trans>Loading…</Trans>
             </p>
           ) : sources.error ? (
-            <p className="p-3 text-center text-sm text-destructive">{errorMessage(sources.error)}</p>
+            <p className="p-3 text-center text-sm text-destructive">
+              {errorMessage(sources.error)}
+            </p>
           ) : noSources ? (
             <p className="p-3 text-center text-sm text-muted-foreground">
               <Trans>No provider with a list is linked on this entity.</Trans>
@@ -315,7 +321,9 @@ export function EpisodeSyncDialog({
             <span
               className={cn(
                 "flex size-4 items-center justify-center rounded border",
-                groupBySeason ? "border-primary bg-primary text-primary-foreground" : "border-input",
+                groupBySeason
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-input",
               )}
             >
               {groupBySeason ? <CheckIcon className="size-3" /> : null}
@@ -325,7 +333,12 @@ export function EpisodeSyncDialog({
         ) : null}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={importing}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={importing}
+          >
             <XIcon data-icon="inline-start" />
             <Trans>Cancel</Trans>
           </Button>
@@ -334,7 +347,11 @@ export function EpisodeSyncDialog({
             onClick={() => void apply()}
             disabled={importing || noSources || incoming === 0}
           >
-            {importing ? <RefreshCwIcon data-icon="inline-start" className="animate-spin" /> : <DownloadIcon data-icon="inline-start" />}
+            {importing ? (
+              <RefreshCwIcon data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <DownloadIcon data-icon="inline-start" />
+            )}
             {importing
               ? t`Importing…`
               : already > 0
@@ -380,7 +397,9 @@ function ProviderGroup({
           <span
             className={cn(
               "flex size-4 shrink-0 items-center justify-center rounded border",
-              state === "none" ? "border-input" : "border-primary bg-primary text-primary-foreground",
+              state === "none"
+                ? "border-input"
+                : "border-primary bg-primary text-primary-foreground",
             )}
           >
             {state === "all" ? <CheckIcon className="size-3" /> : null}
@@ -394,12 +413,15 @@ function ProviderGroup({
           className="flex min-w-0 flex-1 items-center gap-1.5 py-2 text-left"
         >
           <ChevronRightIcon
-            className={cn("size-4 shrink-0 text-muted-foreground transition-transform", expanded && "rotate-90")}
+            className={cn(
+              "size-4 shrink-0 text-muted-foreground transition-transform",
+              expanded && "rotate-90",
+            )}
           />
           <span className="min-w-0 flex-1 truncate text-sm font-medium">
             {group.label || t`Items`}
           </span>
-          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
             {chosen}/{group.items.length}
           </span>
         </button>
@@ -450,14 +472,16 @@ function ItemRow({
           {checked ? <CheckIcon className="size-3" /> : null}
         </span>
         {item.key ? (
-          <span className="shrink-0 tabular-nums text-xs text-muted-foreground">{item.key}</span>
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{item.key}</span>
         ) : null}
         <span className="min-w-0 flex-1 truncate">{item.title || "—"}</span>
         {item.date ? (
-          <span className="shrink-0 tabular-nums text-xs text-muted-foreground">📅 {formatDate(item.date)}</span>
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+            📅 {formatDate(item.date)}
+          </span>
         ) : null}
         {tracked ? (
-          <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="shrink-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
             <Trans>in list</Trans>
           </span>
         ) : null}
@@ -471,7 +495,8 @@ function ItemRow({
 function previewCounts(episodes: EntityEpisodes, payloadGroups: EpisodeGroup[]) {
   const existing = new Set<string>();
   for (const group of episodes.groups) {
-    for (const item of group.items) existing.add(`${group.label.trim().toLowerCase()}|${item.key.trim()}`);
+    for (const item of group.items)
+      existing.add(`${group.label.trim().toLowerCase()}|${item.key.trim()}`);
   }
   let incoming = 0;
   let already = 0;

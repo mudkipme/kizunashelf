@@ -1,12 +1,6 @@
-import { lazy, Suspense, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { settingsConfigQuery } from "@/api/queries";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -14,8 +8,8 @@ import { AppShellFallback } from "@/components/layout/app-frame";
 import { VaultChangeSync } from "@/components/vault-change-sync";
 import { isDesktopRuntime } from "@/lib/desktop";
 import { activateUiLocale } from "@/lib/i18n";
-import { useSystemThemeSync } from "@/lib/theme";
 import { useUiLocale } from "@/lib/language";
+import { useSystemThemeSync } from "@/lib/theme";
 
 // Pages are lazy-loaded so each route ships as its own chunk; heavy
 // page-specific deps (markdown, lightbox, day-picker, dnd-kit) then only load
@@ -41,18 +35,14 @@ const EntityEditPage = lazy(() =>
 const EntityPage = lazy(() =>
   import("@/pages/entity-page").then((m) => ({ default: m.EntityPage })),
 );
-const HomePage = lazy(() =>
-  import("@/pages/home-page").then((m) => ({ default: m.HomePage })),
-);
+const HomePage = lazy(() => import("@/pages/home-page").then((m) => ({ default: m.HomePage })));
 const LibraryPage = lazy(() =>
   import("@/pages/library-page").then((m) => ({ default: m.LibraryPage })),
 );
 const ListDetailPage = lazy(() =>
   import("@/pages/list-detail-page").then((m) => ({ default: m.ListDetailPage })),
 );
-const ListsPage = lazy(() =>
-  import("@/pages/lists-page").then((m) => ({ default: m.ListsPage })),
-);
+const ListsPage = lazy(() => import("@/pages/lists-page").then((m) => ({ default: m.ListsPage })));
 const NotFoundPage = lazy(() =>
   import("@/pages/not-found-page").then((m) => ({ default: m.NotFoundPage })),
 );
@@ -160,23 +150,23 @@ function AppRoutes() {
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/library" element={<LibraryPage />} />
-      <Route path="/calendar" element={<CalendarPage />} />
-      <Route path="/activity" element={<ActivityPage />} />
-      <Route path="/review" element={<ReviewPage />} />
-      <Route path="/review/:queueId" element={<ReviewPage />} />
-      <Route path="/statistics" element={<StatisticsPage />} />
-      <Route path="/lists" element={<ListsPage />} />
-      <Route path="/lists/smart/:id" element={<SmartListPage />} />
-      <Route path="/lists/:id" element={<ListDetailPage />} />
-      <Route path="/entities/new" element={<QuickCapturePage />} />
-      <Route path="/entities/new/manual" element={<EntityCreatePage />} />
-      <Route path="/entities/import" element={<ImportWizardPage />} />
-      <Route path="/entities/:id/edit" element={<EntityEditPage />} />
-      <Route path="/entities/:id" element={<EntityPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/library" element={<LibraryPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/activity" element={<ActivityPage />} />
+        <Route path="/review" element={<ReviewPage />} />
+        <Route path="/review/:queueId" element={<ReviewPage />} />
+        <Route path="/statistics" element={<StatisticsPage />} />
+        <Route path="/lists" element={<ListsPage />} />
+        <Route path="/lists/smart/:id" element={<SmartListPage />} />
+        <Route path="/lists/:id" element={<ListDetailPage />} />
+        <Route path="/entities/new" element={<QuickCapturePage />} />
+        <Route path="/entities/new/manual" element={<EntityCreatePage />} />
+        <Route path="/entities/import" element={<ImportWizardPage />} />
+        <Route path="/entities/:id/edit" element={<EntityEditPage />} />
+        <Route path="/entities/:id" element={<EntityPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>

@@ -10,10 +10,7 @@ import { cn } from "@/lib/utils";
 export function Placeholder({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn(
-        "rounded-md border p-8 text-center text-sm text-muted-foreground",
-        className,
-      )}
+      className={cn("rounded-md border p-8 text-center text-sm text-muted-foreground", className)}
       {...props}
     />
   );

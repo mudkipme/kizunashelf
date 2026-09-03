@@ -1,6 +1,6 @@
+import { useLingui } from "@lingui/react/macro";
 import type { KeyboardEvent } from "react";
 import { useMemo, useRef, useState } from "react";
-import { useLingui } from "@lingui/react/macro";
 
 import {
   Combobox,
@@ -84,12 +84,14 @@ export function MultiValueCombobox({
       ),
     [normalizeValue, options, selectedValues],
   );
-  const labels = useMemo(() => new Map(normalizedOptions.map((option) => [option.value, option.label || option.value])), [
-    normalizedOptions,
-  ]);
-  const details = useMemo(() => new Map(normalizedOptions.map((option) => [option.value, option.detail])), [
-    normalizedOptions,
-  ]);
+  const labels = useMemo(
+    () => new Map(normalizedOptions.map((option) => [option.value, option.label || option.value])),
+    [normalizedOptions],
+  );
+  const details = useMemo(
+    () => new Map(normalizedOptions.map((option) => [option.value, option.detail])),
+    [normalizedOptions],
+  );
   const query = currentInputValue.trim().toLowerCase();
   const customValue = normalizeValue(currentInputValue);
   const optionValues = normalizedOptions.map((option) => option.value);
@@ -97,10 +99,15 @@ export function MultiValueCombobox({
     .filter((option) => !query || optionMatchesQuery(option, query))
     .map((option) => option.value);
   const customItem =
-    allowCustomValue && customValue && !selectedValues.includes(customValue) && !optionValues.includes(customValue)
+    allowCustomValue &&
+    customValue &&
+    !selectedValues.includes(customValue) &&
+    !optionValues.includes(customValue)
       ? customValue
       : undefined;
-  const items = uniqueStrings([customItem, ...matchingOptions].filter((item): item is string => Boolean(item)));
+  const items = uniqueStrings(
+    [customItem, ...matchingOptions].filter((item): item is string => Boolean(item)),
+  );
 
   function setCurrentInputValue(value: string) {
     if (inputValue === undefined) setUncontrolledInputValue(value);
@@ -114,7 +121,8 @@ export function MultiValueCombobox({
   }
 
   function commitInput() {
-    if (!allowCustomValue || disabled || !customValue || selectedValues.includes(customValue)) return;
+    if (!allowCustomValue || disabled || !customValue || selectedValues.includes(customValue))
+      return;
     updateValues([...selectedValues, customValue]);
   }
 
@@ -139,7 +147,9 @@ export function MultiValueCombobox({
       <ComboboxChips ref={chipsRef} className={cn("w-full", className)}>
         <ComboboxValue>
           {selectedValues.map((item) => (
-            <ComboboxChip key={item}>{formatChipLabel?.(item) ?? labels.get(item) ?? item}</ComboboxChip>
+            <ComboboxChip key={item}>
+              {formatChipLabel?.(item) ?? labels.get(item) ?? item}
+            </ComboboxChip>
           ))}
         </ComboboxValue>
         <ComboboxChipsInput
@@ -157,7 +167,9 @@ export function MultiValueCombobox({
               <span className="min-w-0 flex-1 truncate">
                 {customItem && item === customItem ? t`Add "${item}"` : (labels.get(item) ?? item)}
               </span>
-              {details.get(item) ? <span className="truncate text-xs text-muted-foreground">{details.get(item)}</span> : null}
+              {details.get(item) ? (
+                <span className="truncate text-xs text-muted-foreground">{details.get(item)}</span>
+              ) : null}
             </ComboboxItem>
           )}
         </ComboboxList>

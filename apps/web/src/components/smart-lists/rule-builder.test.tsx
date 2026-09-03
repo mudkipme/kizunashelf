@@ -27,9 +27,7 @@ const typeConfig = {
 };
 
 function fieldMetas() {
-  return ruleFieldMetas(typeConfig, "tags", ["anime", "manga"], (descriptor) =>
-    i18n._(descriptor),
-  );
+  return ruleFieldMetas(typeConfig, "tags", ["anime", "manga"], (descriptor) => i18n._(descriptor));
 }
 
 /**
@@ -71,7 +69,16 @@ describe("RuleBuilder", () => {
     // first option is preselected rather than leaving an empty rule behind.
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        rules: [{ kind: "compare", field: "status", negated: false, values: [], op: "eq", value: "Watching" }],
+        rules: [
+          {
+            kind: "compare",
+            field: "status",
+            negated: false,
+            values: [],
+            op: "eq",
+            value: "Watching",
+          },
+        ],
       }),
     );
     await expect.element(screen.getByRole("combobox", { name: "Field" })).toHaveValue("status");
@@ -82,7 +89,16 @@ describe("RuleBuilder", () => {
       <ControlledRuleBuilder
         initial={{
           conjunction: "all",
-          rules: [{ kind: "compare", field: "status", negated: false, values: [], op: "eq", value: "Watching" }],
+          rules: [
+            {
+              kind: "compare",
+              field: "status",
+              negated: false,
+              values: [],
+              op: "eq",
+              value: "Watching",
+            },
+          ],
           groups: [],
         }}
       />,
@@ -93,12 +109,12 @@ describe("RuleBuilder", () => {
 
     // An enum gets equality and emptiness and nothing else — in particular
     // none of the substring operators a `text` field would offer.
-    expect(operator.getByRole("option").elements().map((option) => option.textContent)).toEqual([
-      "is",
-      "is not",
-      "is empty",
-      "has a value",
-    ]);
+    expect(
+      operator
+        .getByRole("option")
+        .elements()
+        .map((option) => option.textContent),
+    ).toEqual(["is", "is not", "is empty", "has a value"]);
   });
 
   it("rewrites the rule shape when the operator changes", async () => {
@@ -107,7 +123,16 @@ describe("RuleBuilder", () => {
       <ControlledRuleBuilder
         initial={{
           conjunction: "all",
-          rules: [{ kind: "compare", field: "status", negated: false, values: [], op: "eq", value: "Watching" }],
+          rules: [
+            {
+              kind: "compare",
+              field: "status",
+              negated: false,
+              values: [],
+              op: "eq",
+              value: "Watching",
+            },
+          ],
           groups: [],
         }}
         onChange={onChange}
@@ -131,7 +156,16 @@ describe("RuleBuilder", () => {
       <ControlledRuleBuilder
         initial={{
           conjunction: "all",
-          rules: [{ kind: "compare", field: "status", negated: false, values: [], op: "eq", value: "Watching" }],
+          rules: [
+            {
+              kind: "compare",
+              field: "status",
+              negated: false,
+              values: [],
+              op: "eq",
+              value: "Watching",
+            },
+          ],
           groups: [],
         }}
         onChange={onChange}
@@ -193,7 +227,16 @@ describe("RuleBuilder", () => {
           groups: [
             {
               conjunction: "any",
-              rules: [{ kind: "compare", field: "status", negated: false, values: [], op: "eq", value: "Watching" }],
+              rules: [
+                {
+                  kind: "compare",
+                  field: "status",
+                  negated: false,
+                  values: [],
+                  op: "eq",
+                  value: "Watching",
+                },
+              ],
             },
           ],
         }}
@@ -225,7 +268,11 @@ describe("RuleBuilder", () => {
 
   it("edits a season rule spanning whole years as a 'year is' rule", async () => {
     const seasonMetas = ruleFieldMetas(
-      { fields: [{ field: "season", fieldType: "season", displayName: "Season", seasonLanguage: "en" }] },
+      {
+        fields: [
+          { field: "season", fieldType: "season", displayName: "Season", seasonLanguage: "en" },
+        ],
+      },
       undefined,
       [],
       (descriptor) => i18n._(descriptor),

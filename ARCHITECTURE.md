@@ -136,6 +136,7 @@ pnpm docs:dev         # the manual + landing page (Docusaurus)
 pnpm test             # cargo test -p kizunashelf  (the test suite; uses InMemoryVfs)
 pnpm typecheck        # tsc across packages + cargo check -p kizunashelf
 pnpm lint             # oxlint (web)
+pnpm format           # oxfmt (JS/TS/CSS/JSON); `pnpm format:check` is what CI runs
 pnpm contract:generate  # regenerate the OpenAPI spec + TS client (run after API changes)
 pnpm i18n:extract       # re-extract the web UI-string catalogs (run after UI string changes)
 pnpm docs:generate      # regenerate the manual's reference pages from the Rust source (run after schema/provider/preset changes)
@@ -149,6 +150,7 @@ Before pushing, match what CI runs (`.forgejo/workflows/ci.yml`):
 cargo fmt                                          # CI does `cargo fmt --check`
 cargo clippy -p kizunashelf --all-targets -- -D warnings
 cargo test -p kizunashelf
+pnpm format              # CI does `pnpm format:check`
 pnpm lint && pnpm typecheck
 pnpm contract:generate   # then ensure git diff is clean (CI fails otherwise)
 pnpm i18n:extract        # same deal — CI diffs apps/web/src/locales after extract
@@ -158,6 +160,7 @@ pnpm build               # includes the manual's build, which fails on a broken 
 
 ## Conventions & gotchas
 
+- **Formatting is oxfmt's job, not yours.** `.oxfmtrc.json` (100 columns, sorted imports, sorted Tailwind classes) covers JS/TS/CSS/JSON; `pnpm format` writes, and CI runs `pnpm format:check`. It deliberately skips what another tool owns: Markdown (hand-written prose *and* the Rust-generated `manual/content/reference`), TOML (`cargo fmt`'s and Cargo's), the orval output in `packages/api-contract/src/generated`, the generated OpenAPI spec, and Tauri's `src-tauri/gen`. Rust stays on `cargo fmt`. Reformatting the web app moves the `#:` source references in `apps/web/src/locales/*.po`, so run `pnpm i18n:extract` after a format pass that touches UI files.
 - **Match the surrounding style.** The core favors small total functions, `Option` over panics, and explicit `ApiError` constructors (`bad_request`, `conflict`, `forbidden`, `bad_gateway`, …). Don't `unwrap`/`panic` on the request path.
 - **No direct filesystem access to the vault.** All vault file operations go through the `Vfs` trait — no `std::fs`/`tokio::fs` for vault content, or the iOS build breaks silently. Reach for `state.vault_vfs(...)`.
 - **Writes go through the library, atomically.** Entity/asset writes use temp-file + rename (`write_entity_raw`, `write_asset_file`); mutations are revision-guarded (409 on a stale revision, re-checked against freshly read content). Keep both properties when touching write paths.

@@ -36,21 +36,29 @@ describe("matchesChord", () => {
     const chord = { key: "1", mod: true };
     // ⇧⌘1 is a different chord, and on many layouts it does not even produce
     // "1" — matching it here would fire navigation on a Shift-digit symbol.
-    expect(matchesChord(press({ key: "1", metaKey: true, shiftKey: true }), chord, true)).toBe(false);
+    expect(matchesChord(press({ key: "1", metaKey: true, shiftKey: true }), chord, true)).toBe(
+      false,
+    );
     expect(matchesChord(press({ key: "1", metaKey: true, altKey: true }), chord, true)).toBe(false);
     // ⌃⌘1 holds the non-primary modifier too, so it is not ⌘1.
-    expect(matchesChord(press({ key: "1", metaKey: true, ctrlKey: true }), chord, true)).toBe(false);
+    expect(matchesChord(press({ key: "1", metaKey: true, ctrlKey: true }), chord, true)).toBe(
+      false,
+    );
     expect(matchesChord(press({ key: "1", metaKey: true }), chord, true)).toBe(true);
   });
 
   it("requires Shift when the chord asks for it", () => {
     const chord = { key: "p", mod: true, shift: true };
-    expect(matchesChord(press({ key: "P", metaKey: true, shiftKey: true }), chord, true)).toBe(true);
+    expect(matchesChord(press({ key: "P", metaKey: true, shiftKey: true }), chord, true)).toBe(
+      true,
+    );
     expect(matchesChord(press({ key: "p", metaKey: true }), chord, true)).toBe(false);
   });
 
   it("ignores the case the layout reports", () => {
-    expect(matchesChord(press({ key: "K", metaKey: true }), { key: "k", mod: true }, true)).toBe(true);
+    expect(matchesChord(press({ key: "K", metaKey: true }), { key: "k", mod: true }, true)).toBe(
+      true,
+    );
   });
 
   it("does not fire an unmodified chord's key when the modifier is held", () => {
