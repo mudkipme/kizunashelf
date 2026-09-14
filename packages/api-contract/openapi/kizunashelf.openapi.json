@@ -439,10 +439,18 @@
         "parameters": [
           {
             "in": "query",
-            "name": "today",
-            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nhome-section criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
+            "name": "titleLanguage",
             "schema": {
-              "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nhome-section criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nsmart-list criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
+            "schema": {
+              "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nsmart-list criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
               "type": "string"
             },
             "style": "form"
@@ -3346,6 +3354,197 @@
         }
       }
     },
+    "/api/smart-list-suggestions": {
+      "get": {
+        "operationId": "getSmartListSuggestions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "language",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartListSuggestionsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSuggestedSmartLists",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSuggestedSmartListsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSuggestedSmartListsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/smart-lists/{id}/home": {
+      "post": {
+        "operationId": "setSmartListHome",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "description": "Changes only Home visibility, preserving the list's rules and views.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSmartListHomeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A smart list's full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartListDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/smart-lists/preview": {
       "post": {
         "operationId": "previewSmartList",
@@ -3879,16 +4078,6 @@
               "null"
             ]
           },
-          "home": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/HomeConfig"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "types": {
             "type": "array",
             "items": {
@@ -3901,289 +4090,6 @@
           "vaultRoot",
           "assetRoot",
           "types"
-        ]
-      },
-      "HomeConfig": {
-        "description": "The home page: just its sections. The page *title* is deliberately not\nconfig — every client renders a localized \"Home\" (app copy, not user data).",
-        "type": "object",
-        "properties": {
-          "sections": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionConfig"
-            }
-          }
-        }
-      },
-      "HomeSectionConfig": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "criteria": {
-            "description": "Smart-list-grade criteria (see [`crate::contract::SmartFilterGroup`]) —\nthe same rule model and evaluator as `.base` smart lists, stored\nstructurally here because the vault config is strict-parsed YAML, not a\nBases file. Absent means every entry of the type matches.",
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartFilterGroup"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "limit": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "uint32",
-            "minimum": 0
-          },
-          "sort": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "direction": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SortDirection"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "type"
-        ]
-      },
-      "SmartFilterGroup": {
-        "description": "A smart list's criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is *not* in here — it rides separately as\n`scope` on the detail/requests and the server maintains its\n`file.inFolder(...)` atom.",
-        "type": "object",
-        "properties": {
-          "conjunction": {
-            "$ref": "#/components/schemas/SmartFilterConjunction"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SmartFilterRule"
-            },
-            "default": []
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SmartFilterSubgroup"
-            }
-          }
-        },
-        "required": [
-          "conjunction"
-        ]
-      },
-      "SmartFilterConjunction": {
-        "description": "How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`/`or`/`not`).",
-        "type": "string",
-        "enum": [
-          "all",
-          "any",
-          "none"
-        ]
-      },
-      "SmartFilterRule": {
-        "description": "One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/\n  `date` (ISO `YYYY-MM-DD`)/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` / `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` / `file.mtime`.",
-        "type": "object",
-        "properties": {
-          "kind": {
-            "$ref": "#/components/schemas/SmartFilterRuleKind"
-          },
-          "field": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "negated": {
-            "description": "Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).",
-            "type": "boolean",
-            "default": false
-          },
-          "op": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartCompareOp"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "mode": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartContainsMode"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "value": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "number": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
-          },
-          "boolean": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "date": {
-            "description": "An absolute date literal, ISO `YYYY-MM-DD`.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "relative": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartRelativeDate"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raw": {
-            "description": "`kind = unsupported`: the construct's raw YAML, round-tripped verbatim.",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "kind"
-        ]
-      },
-      "SmartFilterRuleKind": {
-        "description": "The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can't model, carried as raw YAML.",
-        "type": "string",
-        "enum": [
-          "compare",
-          "contains",
-          "startsWith",
-          "endsWith",
-          "isEmpty",
-          "hasTag",
-          "linksTo",
-          "inFolder",
-          "unsupported"
-        ]
-      },
-      "SmartCompareOp": {
-        "type": "string",
-        "enum": [
-          "eq",
-          "ne",
-          "gt",
-          "gte",
-          "lt",
-          "lte"
-        ]
-      },
-      "SmartContainsMode": {
-        "type": "string",
-        "enum": [
-          "any",
-          "all"
-        ]
-      },
-      "SmartRelativeDate": {
-        "description": "A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.",
-        "type": "object",
-        "properties": {
-          "amount": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
-          },
-          "unit": {
-            "$ref": "#/components/schemas/SmartDurationUnit"
-          },
-          "future": {
-            "type": "boolean",
-            "default": false
-          }
-        },
-        "required": [
-          "amount",
-          "unit"
-        ]
-      },
-      "SmartDurationUnit": {
-        "description": "The calendar unit of a relative-date rule (\"in the last N …\").",
-        "type": "string",
-        "enum": [
-          "days",
-          "weeks",
-          "months",
-          "years"
-        ]
-      },
-      "SmartFilterSubgroup": {
-        "description": "A nested rule group — one level deep only (see the module note above).",
-        "type": "object",
-        "properties": {
-          "conjunction": {
-            "$ref": "#/components/schemas/SmartFilterConjunction"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SmartFilterRule"
-            },
-            "default": []
-          }
-        },
-        "required": [
-          "conjunction"
-        ]
-      },
-      "SortDirection": {
-        "type": "string",
-        "enum": [
-          "asc",
-          "desc"
         ]
       },
       "EntityTypeConfig": {
@@ -4630,7 +4536,7 @@
         ]
       },
       "VaultConfig": {
-        "description": "Vault-level configuration. Describes the vault's content schema (taxonomy,\nassets, entity types, home dashboard, daily notes). Stored inside the vault\nat `<vaultRoot>/KizunaShelf/config.yaml` so it travels with the vault and is\nsynced by the vault's own syncing method.",
+        "description": "Vault-level configuration. Describes the vault's content schema (taxonomy,\nassets, entity types, daily notes). Stored inside the vault\nat `<vaultRoot>/KizunaShelf/config.yaml` so it travels with the vault and is\nsynced by the vault's own syncing method.",
         "type": "object",
         "properties": {
           "taxonomyRoot": {
@@ -4640,16 +4546,6 @@
             "type": [
               "string",
               "null"
-            ]
-          },
-          "home": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/HomeConfig"
-              },
-              {
-                "type": "null"
-              }
             ]
           },
           "dailyNotes": {
@@ -5029,13 +4925,6 @@
               "$ref": "#/components/schemas/TypePresetBackfill"
             }
           },
-          "homeSections": {
-            "description": "Home sections (one per added type) the client can offer to add to Home.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HomeSectionConfig"
-            }
-          },
           "collisions": {
             "description": "Presets whose id/path collided with an existing type and were suffixed, so\nthe UI can surface a rename.",
             "type": "array",
@@ -5163,8 +5052,14 @@
       "HomeQuery": {
         "type": "object",
         "properties": {
+          "titleLanguage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "today": {
-            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nhome-section criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
+            "description": "Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative\nsmart-list criteria (`today() - \"30d\"`) are judged against the user's day\nrather than the host's clock. Falls back to the host's local date.",
             "type": [
               "string",
               "null"
@@ -5178,54 +5073,33 @@
           "generatedAt": {
             "type": "string"
           },
-          "sections": {
+          "lists": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/HomeSectionResponse"
+              "$ref": "#/components/schemas/HomeListResponse"
             }
           }
         },
         "required": [
           "generatedAt",
-          "sections"
+          "lists"
         ]
       },
-      "HomeSectionResponse": {
+      "HomeListResponse": {
         "type": "object",
         "properties": {
           "id": {
+            "description": "The pinned smart list; clients open its first supported view.",
             "type": "string"
           },
-          "title": {
+          "name": {
             "type": "string"
           },
-          "type": {
-            "type": "string"
-          },
-          "typeLabel": {
-            "type": "string"
-          },
-          "criteria": {
-            "description": "The section's criteria, echoed from the config when defined.",
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SmartFilterGroup"
-              },
-              {
-                "type": "null"
-              }
+          "view": {
+            "type": [
+              "string",
+              "null"
             ]
-          },
-          "limit": {
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
-          },
-          "sort": {
-            "type": "string"
-          },
-          "direction": {
-            "type": "string"
           },
           "total": {
             "type": "integer",
@@ -5241,12 +5115,7 @@
         },
         "required": [
           "id",
-          "title",
-          "type",
-          "typeLabel",
-          "limit",
-          "sort",
-          "direction",
+          "name",
           "total",
           "items"
         ]
@@ -9388,6 +9257,9 @@
         "description": "A smart list's full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.",
         "type": "object",
         "properties": {
+          "showOnHome": {
+            "type": "boolean"
+          },
           "id": {
             "type": "string"
           },
@@ -9424,12 +9296,223 @@
           }
         },
         "required": [
+          "showOnHome",
           "id",
           "name",
           "path",
           "filters",
           "views",
           "revision"
+        ]
+      },
+      "SmartFilterGroup": {
+        "description": "A smart list's criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is *not* in here — it rides separately as\n`scope` on the detail/requests and the server maintains its\n`file.inFolder(...)` atom.",
+        "type": "object",
+        "properties": {
+          "conjunction": {
+            "$ref": "#/components/schemas/SmartFilterConjunction"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterRule"
+            },
+            "default": []
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterSubgroup"
+            }
+          }
+        },
+        "required": [
+          "conjunction"
+        ]
+      },
+      "SmartFilterConjunction": {
+        "description": "How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`/`or`/`not`).",
+        "type": "string",
+        "enum": [
+          "all",
+          "any",
+          "none"
+        ]
+      },
+      "SmartFilterRule": {
+        "description": "One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`/`number`/`boolean`/\n  `date` (ISO `YYYY-MM-DD`)/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` / `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` / `file.mtime`.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/SmartFilterRuleKind"
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "negated": {
+            "description": "Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).",
+            "type": "boolean",
+            "default": false
+          },
+          "op": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartCompareOp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartContainsMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "boolean": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "date": {
+            "description": "An absolute date literal, ISO `YYYY-MM-DD`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "relative": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmartRelativeDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw": {
+            "description": "`kind = unsupported`: the construct's raw YAML, round-tripped verbatim.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "SmartFilterRuleKind": {
+        "description": "The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can't model, carried as raw YAML.",
+        "type": "string",
+        "enum": [
+          "compare",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "isEmpty",
+          "hasTag",
+          "linksTo",
+          "inFolder",
+          "unsupported"
+        ]
+      },
+      "SmartCompareOp": {
+        "type": "string",
+        "enum": [
+          "eq",
+          "ne",
+          "gt",
+          "gte",
+          "lt",
+          "lte"
+        ]
+      },
+      "SmartContainsMode": {
+        "type": "string",
+        "enum": [
+          "any",
+          "all"
+        ]
+      },
+      "SmartRelativeDate": {
+        "description": "A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.",
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "unit": {
+            "$ref": "#/components/schemas/SmartDurationUnit"
+          },
+          "future": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "amount",
+          "unit"
+        ]
+      },
+      "SmartDurationUnit": {
+        "description": "The calendar unit of a relative-date rule (\"in the last N …\").",
+        "type": "string",
+        "enum": [
+          "days",
+          "weeks",
+          "months",
+          "years"
+        ]
+      },
+      "SmartFilterSubgroup": {
+        "description": "A nested rule group — one level deep only (see the module note above).",
+        "type": "object",
+        "properties": {
+          "conjunction": {
+            "$ref": "#/components/schemas/SmartFilterConjunction"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartFilterRule"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "conjunction"
         ]
       },
       "SmartListView": {
@@ -9503,6 +9586,129 @@
           "direction"
         ]
       },
+      "SortDirection": {
+        "type": "string",
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "SmartListSuggestionsQuery": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SmartListSuggestionsResponse": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartListSuggestion"
+            }
+          }
+        },
+        "required": [
+          "suggestions"
+        ]
+      },
+      "SmartListSuggestion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "existingListId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "showOnHome": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "showOnHome"
+        ]
+      },
+      "CreateSuggestedSmartListsRequest": {
+        "type": "object",
+        "properties": {
+          "suggestionIds": {
+            "description": "Omitted creates all suggestions; an empty array creates none.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateSuggestedSmartListsResponse": {
+        "type": "object",
+        "properties": {
+          "lists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartListDetail"
+            }
+          }
+        },
+        "required": [
+          "lists"
+        ]
+      },
+      "SmartListPath": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "SetSmartListHomeRequest": {
+        "description": "Changes only Home visibility, preserving the list's rules and views.",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "showOnHome": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "revision",
+          "showOnHome"
+        ]
+      },
       "SmartListPreviewRequest": {
         "description": "Evaluates an unsaved smart-list definition — the live preview while the\nrule builder is open. Returns the standard entity page shape.",
         "type": "object",
@@ -9572,17 +9778,6 @@
             ]
           }
         }
-      },
-      "SmartListPath": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id"
-        ]
       },
       "UpdateSmartListRequest": {
         "description": "Full rewrite of a smart list's criteria and views. Constructs the editor\ndoesn't model (`unsupported` rules, non-table/cards views, unknown YAML\nkeys) are preserved server-side.",

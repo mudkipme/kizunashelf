@@ -8,7 +8,7 @@ sidebar_position: 10
 
 The built-in presets offered during onboarding and by **Settings → add a built-in type**, generated directly from the app — so this page always matches the version you're running. Everything a preset seeds is ordinary schema you can edit afterwards; nothing is special-cased.
 
-The tables below show each preset resolved with **English** as the picker language. Your own language choice stamps the title/filename/season languages and selects the seeded text (labels, folder names, status options, home section titles) — the preset name is shown here in all four preset languages.
+The tables below show each preset resolved with **English** as the picker language. Your own language choice stamps the title/filename/season languages and selects the seeded text (labels, folder names, status options, suggested list names) — the preset name is shown here in all four preset languages.
 
 ## Watch
 
@@ -21,7 +21,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Body section** "Summary": external: `anilist.synopsis`, `myanimelist.synopsis`, `tmdb.overview`, `thetvdb.overview`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Anime`
-- **Home section**: "Watching Anime", sorted by `date:season`
+- **Suggested smart list**: "Watching Anime", sorted by `note.season`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -52,7 +52,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`, `neodb.description`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Drama`
-- **Home section**: "Watching TV & Drama", sorted by `date:season`
+- **Suggested smart list**: "Watching TV & Drama", sorted by `note.season`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -80,7 +80,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`, `neodb.description`
 - **Daily-note log**: `- {title} {note} #Movie`
-- **Home section**: "Watching Movies", sorted by `date:release_date`
+- **Suggested smart list**: "Watching Movies", sorted by `note.release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -107,7 +107,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `igdb.summary`, `steam.description`, `neodb.description`
 - **Daily-note log**: `- {title} {note} #Game`
-- **Home section**: "Playing Games", sorted by `date:release_date`
+- **Suggested smart list**: "Playing Games", sorted by `note.release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -135,7 +135,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `bgg.description`
 - **Daily-note log**: `- {title} {note} #BoardGame`
-- **Home section**: "Playing Board Games", sorted by `date:release_date`
+- **Suggested smart list**: "Playing Board Games", sorted by `note.release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -160,7 +160,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `neodb.description`, `openlibrary.description`, `googlebooks.description`, `hardcover.synopsis`
 - **Daily-note log**: `- {title} {note} #Book`
-- **Home section**: "Reading Books", sorted by `date:release_date`
+- **Suggested smart list**: "Reading Books", sorted by `note.release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -192,7 +192,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Body section** "Summary": external: `mangaupdates.synopsis`, `anilist.synopsis`, `myanimelist.synopsis`, `comicvine.description`
 - **Body section** "Chapters": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Manga`
-- **Home section**: "Reading Manga & Comics", sorted by `date:release_date`
+- **Suggested smart list**: "Reading Manga & Comics", sorted by `note.release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -226,7 +226,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Body section** "Summary": external: `neodb.description`
 - **Body section** "Tracks": episodes, tracking `none`
 - **Daily-note log**: `- {title} {note} #Music`
-- **Home section**: "Listening to Music Albums", sorted by `date:release_date`
+- **Suggested smart list**: "Listening to Music Albums", sorted by `note.release_date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -257,7 +257,7 @@ The tables below show each preset resolved with **English** as the picker langua
 - **Body section** "Summary": external: `neodb.description`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Podcast`
-- **Home section**: "Listening to Podcasts", sorted by `recentlyUpdated`
+- **Suggested smart list**: "Listening to Podcasts", sorted by `file.mtime`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -329,7 +329,7 @@ The tables below show each preset resolved with **English** as the picker langua
 
 - **Filename**: titleLanguage `en`
 - **Daily-note log**: `- {title} {note} #Event`
-- **Home section**: "Upcoming Events", sorted by `date:date`
+- **Suggested smart list**: "Upcoming Events", sorted by `note.date`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |

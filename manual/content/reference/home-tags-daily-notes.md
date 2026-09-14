@@ -1,79 +1,25 @@
 ---
 title: "Home, tags & daily notes"
-description: "Home dashboard sections and criteria, the built-in tags field, and daily notes with logging."
+description: "Home smart-list metadata, the built-in tags field, and daily notes with logging."
 sidebar_position: 6
 ---
 
 ## Home Page
 
-The `home` section defines dashboard sections. (The page *title* is not configurable — every client renders a localized "Home".)
+Home displays pinned [smart lists](../features/lists.mdx). It has no entry in `config.yaml`. To pin a list, use **Add to Home** in its detail view, or set this metadata in its `.base` file:
 
 ```yaml
-home:
-  sections:
-  - id: recent-anime
-    title: Recent Anime
-    type: anime
-    limit: 12
-    sort: date:season
-    direction: desc
-    criteria:
-      conjunction: all
-      rules:
-      - kind: compare
-        field: status
-        op: eq
-        value: Watching
+kizunashelf:
+  showOnHome: true
 ```
 
-| Key | Required | Type | Description |
-| --- | --- | --- | --- |
-| `title` | no | string | Home page title. Defaults to `Home`. |
-| `sections` | no | array | Ordered list of home sections. |
+`showOnHome` defaults to false. Other metadata in the file is preserved when toggling it. Suggested lists also carry a `kizunashelf.suggestion` identifier so the app can reuse them after renames or edits; it is managed by the app.
 
-Each section:
+Rows follow filename order. Each uses the first supported view's filters, sort, and limit, with a Home preview of up to 12 items. **See all** opens that list and view. Removing a list from Home keeps its file and criteria.
 
-| Key | Required | Type | Description |
-| --- | --- | --- | --- |
-| `id` | yes | string | Stable section id. |
-| `title` | yes | string | Section heading. |
-| `type` | yes | string | Entity type id to show. |
-| `criteria` | no | object | Smart-list-grade criteria (see below). Absent means every entry of the type matches. |
-| `limit` | no | number | Maximum items. Defaults to 12 and is clamped by the server. |
-| `sort` | no | string | Sort key. Defaults to `title`. |
-| `direction` | no | `asc` or `desc` | Sort direction. Defaults to `asc`. |
+Onboarding creates suggestions from the schema's status and date roles. **Add suggested lists** on Home makes the same suggestions available afterward without resetting existing lists. See [Home & smart lists](../features/home.mdx).
 
-Criteria semantics — the same rule model and evaluation engine as smart lists (`.base` files), stored structurally because the vault config is strict-parsed YAML rather than a Bases file:
-
-```yaml
-criteria:
-  conjunction: all        # all | any | none
-  rules:
-  - kind: compare         # compare | contains | startsWith | endsWith |
-    field: status         #   isEmpty | hasTag | linksTo | inFolder
-    op: eq                # eq | ne | gt | gte | lt | lte
-    value: Watching       # or: number, boolean, date (YYYY-MM-DD), relative
-  - kind: compare
-    field: complete_date
-    op: gte
-    relative: { amount: 30, unit: days }   # "in the last 30 days"
-  groups:                 # one nesting level of subgroups
-  - conjunction: any
-    rules:
-    - { kind: compare, field: rating, op: gte, number: 8 }
-    - { kind: hasTag, values: [favorites] }
-```
-
-Rule kinds mirror the smart-list rule builder: `contains` matches list fields by membership and string fields by substring; `isEmpty` with `negated: true` reads as "has a value"; `hasTag` matches the built-in [tags](#tags) field (and matches nothing while tags are disabled); `linksTo` matches an outgoing wikilink/relation to the named entity. Field meaning is value-driven, exactly like Bases — a comparison is a date comparison because the right-hand side is a date, never because of the field's name.
-
-Common sort keys:
-
-| Sort | Meaning |
-| --- | --- |
-| `title` | Sort by entity title. |
-| `date:<field>` | Sort by a configured date/season field. |
-| `relationCount` | Sort by number of related entities. |
-| `path` | Sort by Markdown path. |
+Obsolete `home` config blocks are ignored when loading older test vaults. No sections are migrated. The structured settings editor omits that block when saving; the strict raw YAML editor requires you to remove it.
 
 ## Tags
 

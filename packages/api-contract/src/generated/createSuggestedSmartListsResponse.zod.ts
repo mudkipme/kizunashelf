@@ -6,30 +6,31 @@
  */
 import * as zod from 'zod';
 
-export const smartListDetailFiltersRulesItemNegatedDefault = false;
-export const smartListDetailFiltersRulesItemRelativeOneAmountMin = 0;
+export const createSuggestedSmartListsResponseListsItemFiltersRulesItemNegatedDefault = false;
+export const createSuggestedSmartListsResponseListsItemFiltersRulesItemRelativeOneAmountMin = 0;
 
-export const smartListDetailFiltersRulesItemRelativeOneFutureDefault = false;
-export const smartListDetailFiltersRulesDefault = [];
-export const smartListDetailFiltersGroupsItemRulesItemNegatedDefault = false;
-export const smartListDetailFiltersGroupsItemRulesItemRelativeOneAmountMin = 0;
+export const createSuggestedSmartListsResponseListsItemFiltersRulesItemRelativeOneFutureDefault = false;
+export const createSuggestedSmartListsResponseListsItemFiltersRulesDefault = [];
+export const createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesItemNegatedDefault = false;
+export const createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesItemRelativeOneAmountMin = 0;
 
-export const smartListDetailFiltersGroupsItemRulesItemRelativeOneFutureDefault = false;
-export const smartListDetailFiltersGroupsItemRulesDefault = [];
-export const smartListDetailViewsItemFiltersOneRulesItemNegatedDefault = false;
-export const smartListDetailViewsItemFiltersOneRulesItemRelativeOneAmountMin = 0;
+export const createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesItemRelativeOneFutureDefault = false;
+export const createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesDefault = [];
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesItemNegatedDefault = false;
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesItemRelativeOneAmountMin = 0;
 
-export const smartListDetailViewsItemFiltersOneRulesItemRelativeOneFutureDefault = false;
-export const smartListDetailViewsItemFiltersOneRulesDefault = [];
-export const smartListDetailViewsItemFiltersOneGroupsItemRulesItemNegatedDefault = false;
-export const smartListDetailViewsItemFiltersOneGroupsItemRulesItemRelativeOneAmountMin = 0;
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesItemRelativeOneFutureDefault = false;
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesDefault = [];
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesItemNegatedDefault = false;
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesItemRelativeOneAmountMin = 0;
 
-export const smartListDetailViewsItemFiltersOneGroupsItemRulesItemRelativeOneFutureDefault = false;
-export const smartListDetailViewsItemFiltersOneGroupsItemRulesDefault = [];
-export const smartListDetailViewsItemLimitMin = 0;
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesItemRelativeOneFutureDefault = false;
+export const createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesDefault = [];
+export const createSuggestedSmartListsResponseListsItemViewsItemLimitMin = 0;
 
 
-export const SmartListDetail = zod.object({
+export const CreateSuggestedSmartListsResponse = zod.object({
+  "lists": zod.array(zod.object({
   "showOnHome": zod.boolean(),
   "id": zod.string(),
   "name": zod.string(),
@@ -40,7 +41,7 @@ export const SmartListDetail = zod.object({
   "rules": zod.array(zod.object({
   "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
   "field": zod.string().nullish(),
-  "negated": zod.boolean().default(smartListDetailFiltersRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
+  "negated": zod.boolean().default(createSuggestedSmartListsResponseListsItemFiltersRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
   "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
   "values": zod.array(zod.string()).optional(),
   "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
@@ -49,18 +50,18 @@ export const SmartListDetail = zod.object({
   "boolean": zod.boolean().nullish(),
   "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
   "relative": zod.union([zod.object({
-  "amount": zod.int().min(smartListDetailFiltersRulesItemRelativeOneAmountMin),
+  "amount": zod.int().min(createSuggestedSmartListsResponseListsItemFiltersRulesItemRelativeOneAmountMin),
   "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
-  "future": zod.boolean().default(smartListDetailFiltersRulesItemRelativeOneFutureDefault)
+  "future": zod.boolean().default(createSuggestedSmartListsResponseListsItemFiltersRulesItemRelativeOneFutureDefault)
 }).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
   "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
-}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(smartListDetailFiltersRulesDefault),
+}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(createSuggestedSmartListsResponseListsItemFiltersRulesDefault),
   "groups": zod.array(zod.object({
   "conjunction": zod.enum(['all', 'any', 'none']).describe('How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`\/`or`\/`not`).'),
   "rules": zod.array(zod.object({
   "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
   "field": zod.string().nullish(),
-  "negated": zod.boolean().default(smartListDetailFiltersGroupsItemRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
+  "negated": zod.boolean().default(createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
   "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
   "values": zod.array(zod.string()).optional(),
   "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
@@ -69,12 +70,12 @@ export const SmartListDetail = zod.object({
   "boolean": zod.boolean().nullish(),
   "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
   "relative": zod.union([zod.object({
-  "amount": zod.int().min(smartListDetailFiltersGroupsItemRulesItemRelativeOneAmountMin),
+  "amount": zod.int().min(createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesItemRelativeOneAmountMin),
   "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
-  "future": zod.boolean().default(smartListDetailFiltersGroupsItemRulesItemRelativeOneFutureDefault)
+  "future": zod.boolean().default(createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesItemRelativeOneFutureDefault)
 }).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
   "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
-}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(smartListDetailFiltersGroupsItemRulesDefault)
+}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(createSuggestedSmartListsResponseListsItemFiltersGroupsItemRulesDefault)
 }).describe('A nested rule group — one level deep only (see the module note above).')).optional()
 }).describe('A smart list\'s criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is \*not\* in here — it rides separately as\n`scope` on the detail\/requests and the server maintains its\n`file.inFolder(...)` atom.'),
   "views": zod.array(zod.object({
@@ -85,7 +86,7 @@ export const SmartListDetail = zod.object({
   "rules": zod.array(zod.object({
   "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
   "field": zod.string().nullish(),
-  "negated": zod.boolean().default(smartListDetailViewsItemFiltersOneRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
+  "negated": zod.boolean().default(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
   "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
   "values": zod.array(zod.string()).optional(),
   "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
@@ -94,18 +95,18 @@ export const SmartListDetail = zod.object({
   "boolean": zod.boolean().nullish(),
   "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
   "relative": zod.union([zod.object({
-  "amount": zod.int().min(smartListDetailViewsItemFiltersOneRulesItemRelativeOneAmountMin),
+  "amount": zod.int().min(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesItemRelativeOneAmountMin),
   "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
-  "future": zod.boolean().default(smartListDetailViewsItemFiltersOneRulesItemRelativeOneFutureDefault)
+  "future": zod.boolean().default(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesItemRelativeOneFutureDefault)
 }).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
   "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
-}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(smartListDetailViewsItemFiltersOneRulesDefault),
+}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneRulesDefault),
   "groups": zod.array(zod.object({
   "conjunction": zod.enum(['all', 'any', 'none']).describe('How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`\/`or`\/`not`).'),
   "rules": zod.array(zod.object({
   "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
   "field": zod.string().nullish(),
-  "negated": zod.boolean().default(smartListDetailViewsItemFiltersOneGroupsItemRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
+  "negated": zod.boolean().default(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
   "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
   "values": zod.array(zod.string()).optional(),
   "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
@@ -114,24 +115,25 @@ export const SmartListDetail = zod.object({
   "boolean": zod.boolean().nullish(),
   "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
   "relative": zod.union([zod.object({
-  "amount": zod.int().min(smartListDetailViewsItemFiltersOneGroupsItemRulesItemRelativeOneAmountMin),
+  "amount": zod.int().min(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesItemRelativeOneAmountMin),
   "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
-  "future": zod.boolean().default(smartListDetailViewsItemFiltersOneGroupsItemRulesItemRelativeOneFutureDefault)
+  "future": zod.boolean().default(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesItemRelativeOneFutureDefault)
 }).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
   "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
-}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(smartListDetailViewsItemFiltersOneGroupsItemRulesDefault)
+}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(createSuggestedSmartListsResponseListsItemViewsItemFiltersOneGroupsItemRulesDefault)
 }).describe('A nested rule group — one level deep only (see the module note above).')).optional()
 }).describe('A smart list\'s criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is \*not\* in here — it rides separately as\n`scope` on the detail\/requests and the server maintains its\n`file.inFolder(...)` atom.'),zod.null()]).optional(),
   "sort": zod.array(zod.object({
   "property": zod.string(),
   "direction": zod.enum(['asc', 'desc'])
 }).describe('One sort key of a smart-list view. `property` is a Bases property\nreference: `note.<field>`, `file.name`, or `file.mtime`.')).optional(),
-  "limit": zod.int().min(smartListDetailViewsItemLimitMin).nullish(),
+  "limit": zod.int().min(createSuggestedSmartListsResponseListsItemViewsItemLimitMin).nullish(),
   "image": zod.string().nullish().describe('Cards image property reference (grid views), e.g. `note.cover`.')
 }).describe('One view of a smart list — a named tab with its own layout, extra filters\n(AND-ed with the global criteria), sort, and result limit.')),
   "warnings": zod.array(zod.string()).optional(),
   "revision": zod.string()
-}).describe('A smart list\'s full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.')
+}).describe('A smart list\'s full editable state. `warnings` lists every construct in\nthe underlying `.base` file that the app ignores (unsupported filters,\nviews, sorts) — all of it preserved on save.'))
+})
 
-export type SmartListDetail = zod.input<typeof SmartListDetail>;
-export type SmartListDetailOutput = zod.output<typeof SmartListDetail>;
+export type CreateSuggestedSmartListsResponse = zod.input<typeof CreateSuggestedSmartListsResponse>;
+export type CreateSuggestedSmartListsResponseOutput = zod.output<typeof CreateSuggestedSmartListsResponse>;

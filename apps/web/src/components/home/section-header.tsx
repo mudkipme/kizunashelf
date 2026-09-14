@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 
-/// The shared header for Home shelves — the "Coming up" widget and each configured
-/// section use it, so their titles, counts, and "See all" actions line up even though
+/// The shared header for Home shelves — the "Coming up" widget and each pinned
+/// smart list use it, so their titles, counts, and "See all" actions line up even though
 /// their bodies (compact agenda rows vs. poster grids) look deliberately different.
 export function SectionHeader({
   title,

@@ -300,41 +300,11 @@ pub enum SeasonLanguage {
     En,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct HomeSectionConfig {
-    pub id: String,
-    pub title: String,
-    #[serde(rename = "type")]
-    pub entity_type: String,
-    /// Smart-list-grade criteria (see [`crate::contract::SmartFilterGroup`]) —
-    /// the same rule model and evaluator as `.base` smart lists, stored
-    /// structurally here because the vault config is strict-parsed YAML, not a
-    /// Bases file. Absent means every entry of the type matches.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub criteria: Option<crate::contract::SmartFilterGroup>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub limit: Option<u32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub sort: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub direction: Option<SortDirection>,
-}
-
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum SortDirection {
     Asc,
     Desc,
-}
-
-/// The home page: just its sections. The page *title* is deliberately not
-/// config — every client renders a localized "Home" (app copy, not user data).
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct HomeConfig {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub sections: Vec<HomeSectionConfig>,
 }
 
 /// Configuration for the built-in **tags** field — a universal, cross-type label
@@ -422,7 +392,7 @@ pub struct AppConfig {
 }
 
 /// Vault-level configuration. Describes the vault's content schema (taxonomy,
-/// assets, entity types, home dashboard, daily notes). Stored inside the vault
+/// assets, entity types, daily notes). Stored inside the vault
 /// at `<vaultRoot>/KizunaShelf/config.yaml` so it travels with the vault and is
 /// synced by the vault's own syncing method.
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -431,8 +401,6 @@ pub struct VaultConfig {
     pub taxonomy_root: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub asset_root: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub home: Option<HomeConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub daily_notes: Option<DailyNotesConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -453,8 +421,6 @@ pub struct KizunaConfig {
     pub asset_root: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_writable: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub home: Option<HomeConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub daily_notes: Option<DailyNotesConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -551,7 +517,6 @@ impl KizunaConfig {
             content_writable: app.content_writable,
             taxonomy_root: vault.taxonomy_root,
             asset_root: vault.asset_root,
-            home: vault.home,
             daily_notes: vault.daily_notes,
             tags: vault.tags,
             types: vault.types,
@@ -568,7 +533,6 @@ impl KizunaConfig {
             VaultConfig {
                 taxonomy_root: self.taxonomy_root,
                 asset_root: self.asset_root,
-                home: self.home,
                 daily_notes: self.daily_notes,
                 tags: self.tags,
                 types: self.types,
@@ -942,7 +906,6 @@ mod log_config_tests {
             taxonomy_root: "Taxonomy".to_string(),
             asset_root: None,
             content_writable: None,
-            home: None,
             daily_notes: Some(DailyNotesConfig {
                 paths: Vec::new(),
                 date_format: None,

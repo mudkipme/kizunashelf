@@ -7,15 +7,12 @@ use crate::calendar::{
 };
 use crate::contract::{
     CalendarResponse, CapabilitiesResponse, ConfigResponse, HealthResponse, HomeResponse,
-    HomeSectionResponse, LanguagesResponse, RawConfigResponse, ResolveTypePresetsRequest,
-    ResolveTypePresetsResponse, SaveRawConfigRequest, SaveSettingsRequest, SettingsConfigResponse,
-    TypePresetsResponse, VaultChangesResponse,
+    LanguagesResponse, RawConfigResponse, ResolveTypePresetsRequest, ResolveTypePresetsResponse,
+    SaveRawConfigRequest, SaveSettingsRequest, SettingsConfigResponse, TypePresetsResponse,
+    VaultChangesResponse,
 };
 use crate::dates::clamp_number;
-use crate::entities::sort_entities_for_entity_list;
 use crate::library::file_revision;
-use crate::relations::{sort_records_by_modified, SortDirection};
-use crate::types::{EntityRecord, HomeSectionConfig, Library};
 use crate::vfs::Vfs;
 use axum::extract::{Query, State};
 use axum::Json;
@@ -126,7 +123,6 @@ pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigRes
         vault_root: library.config.vault_root.clone(),
         asset_root: library.config.resolved_asset_root().to_string(),
         tags_field: library.config.tags_field().map(str::to_string),
-        home: library.config.home.clone(),
         types: library.config.types.clone(),
     }))
 }
@@ -270,9 +266,11 @@ async fn check_config_revision(vfs: &dyn Vfs, expected: Option<&str>) -> Result<
 }
 
 #[derive(Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct HomeQuery {
+    title_language: Option<String>,
     /// Today's date (`YYYY-MM-DD`), the client's **local** date, so date-relative
-    /// home-section criteria (`today() - "30d"`) are judged against the user's day
+    /// smart-list criteria (`today() - "30d"`) are judged against the user's day
     /// rather than the host's clock. Falls back to the host's local date.
     today: Option<String>,
 }
@@ -282,27 +280,15 @@ pub(crate) async fn home(
     Query(query): Query<HomeQuery>,
 ) -> ApiResult<HomeResponse> {
     let library = get_library(&state).await?;
-    // One evaluation context for every criteria-driven section — the same
-    // engine smart lists run on, so home sections can't drift from them.
-    let ctx = crate::smart_lists::EvalContext::new(
-        &library,
-        chrono::Utc::now(),
-        super::smart_lists::resolve_today(query.today.as_deref()),
-    );
-    let sections = library
-        .config
-        .home
-        .as_ref()
-        .map(|home| home.sections.as_slice())
-        .unwrap_or_default()
-        .iter()
-        .map(|section| build_home_section(&library, section, &ctx))
-        .collect::<Vec<_>>();
-
-    Ok(Json(HomeResponse {
-        generated_at: library.generated_at.clone(),
-        sections,
-    }))
+    Ok(Json(
+        super::smart_lists::home_lists(
+            &state,
+            &library,
+            query.today.as_deref(),
+            query.title_language.as_deref(),
+        )
+        .await?,
+    ))
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -463,78 +449,4 @@ pub(crate) async fn upcoming(
         generated_at: activity.generated_at,
         items: activity.items,
     }))
-}
-
-fn build_home_section(
-    library: &Library,
-    section: &HomeSectionConfig,
-    ctx: &crate::smart_lists::EvalContext,
-) -> HomeSectionResponse {
-    let entity_type = library
-        .config
-        .types
-        .iter()
-        .find(|item| item.id == section.entity_type);
-    let limit = clamp_number(section.limit.unwrap_or(12) as f64, 1, 48) as u32;
-    let direction = if section.direction == Some(crate::types::SortDirection::Desc) {
-        SortDirection::Desc
-    } else {
-        SortDirection::Asc
-    };
-    let sort = section.sort.as_deref().unwrap_or("title");
-    // The section's criteria — the smart-list rule model. Absent criteria (or
-    // structurally invalid rules, possible only in hand-edited config) degrade
-    // to "no constraint" rather than failing the whole home page.
-    let criteria_node = section.criteria.as_ref().map(|criteria| {
-        super::smart_lists::group_to_node(criteria, None)
-            .unwrap_or_else(|_| crate::smart_lists::FilterNode::empty())
-    });
-    let matched: Vec<&EntityRecord> = library
-        .records
-        .iter()
-        .filter(|entity| entity.summary.entity_type == section.entity_type)
-        .filter(|entity| match &criteria_node {
-            Some(node) => crate::smart_lists::record_matches(node, entity, ctx),
-            None => true,
-        })
-        .collect();
-    // "recentlyUpdated" sorts on the file mtime, resident only on the record, so
-    // it sorts records before mapping to summaries (mirrors `build_entity_list`).
-    let filtered = if sort == "recentlyUpdated" {
-        sort_records_by_modified(matched, direction, None)
-            .into_iter()
-            .map(|entity| entity.summary.clone())
-            .collect::<Vec<_>>()
-    } else {
-        let summaries = matched
-            .into_iter()
-            .map(|entity| entity.summary.clone())
-            .collect::<Vec<_>>();
-        sort_entities_for_entity_list(summaries, sort, direction, None)
-    };
-    let total = filtered.len();
-    let items = filtered
-        .into_iter()
-        .take(limit as usize)
-        .collect::<Vec<_>>();
-
-    HomeSectionResponse {
-        id: section.id.clone(),
-        title: section.title.clone(),
-        entity_type: section.entity_type.clone(),
-        type_label: entity_type
-            .map(|entity_type| entity_type.label.clone())
-            .unwrap_or_else(|| section.entity_type.clone()),
-        criteria: section.criteria.clone(),
-        limit,
-        sort: sort.to_string(),
-        direction: if direction == SortDirection::Desc {
-            "desc"
-        } else {
-            "asc"
-        }
-        .to_string(),
-        total,
-        items,
-    }
 }

@@ -596,7 +596,6 @@ mod log_write_tests {
             taxonomy_root: "Taxonomy".to_string(),
             asset_root: None,
             content_writable: None,
-            home: None,
             daily_notes: Some(DailyNotesConfig {
                 paths: vec!["Journal".to_string()],
                 date_format: None,

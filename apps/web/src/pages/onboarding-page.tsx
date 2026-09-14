@@ -12,6 +12,7 @@ import {
   typePresetsQuery,
 } from "@/api/queries";
 import { resolveTypePresets, saveSettingsConfig } from "@/api/settings";
+import { addSuggestedSmartLists } from "@/api/smart-lists";
 import { PageContainer } from "@/components/layout/page-container";
 import {
   defaultSeedLanguage,
@@ -164,11 +165,11 @@ function OnboardingWizard({
   }
 
   // Build the vault config from the current selection: taxonomy/asset defaults,
-  // daily notes on, the resolved types, and a home section per type.
+  // daily notes on, and the resolved types.
   async function buildConfig(): Promise<VaultConfig> {
     const base = defaultVaultConfig();
     if (selected.size === 0) {
-      return { ...base, types: [], home: { sections: [] } };
+      return { ...base, types: [] };
     }
     // Catalog order, not Set (click) order — the created types follow the
     // order the picker displayed.
@@ -184,7 +185,6 @@ function OnboardingWizard({
       taxonomyRoot: base.taxonomyRoot,
       assetRoot: base.assetRoot,
       dailyNotes: defaultDailyNotes(),
-      home: { sections: resolved.homeSections ?? [] },
       types: resolved.types ?? [],
     };
   }
@@ -194,6 +194,11 @@ function OnboardingWizard({
     try {
       const vault = await buildConfig();
       await saveSettingsConfig(cleanVaultConfig(vault, providerCatalog));
+      try {
+        await addSuggestedSmartLists(language);
+      } catch {
+        toast.warning(t`Couldn't add suggested lists. You can retry from Home.`);
+      }
       toast.success(t`Vault created`);
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onCreated();
@@ -219,10 +224,7 @@ function OnboardingWizard({
           <Trans>What do you want to track?</Trans>
         </h1>
         <p className="text-sm text-muted-foreground">
-          <Trans>
-            Pick a few — you can add more anytime. Your library is plain Markdown files in a folder
-            you own, readable even without this app.
-          </Trans>
+          <Trans>Choose what to track. You can add more later.</Trans>
         </p>
       </header>
 

@@ -52,8 +52,7 @@ import type { SmartFilterGroup, SmartListView, SmartSortSpec } from "@/types/api
 /// The library browser: a smart list you haven't named yet. Its whole state —
 /// type scope, criteria, sort, layout, search — lives in the URL and is
 /// evaluated by the same endpoint the smart-list editor previews with, so
-/// "Save as smart list" is a rename, not a conversion, and a Home section can
-/// link here with its criteria intact.
+/// "Save as smart list" preserves the criteria and view you are browsing.
 export function LibraryPage() {
   const { t } = useLingui();
   const formatNumber = useNumberFormat();

@@ -3,7 +3,6 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { criteriaRuleCount } from "@/components/smart-lists/criteria-url";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,22 +14,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import type {
-  EntityTypeConfig,
-  ExternalProviderCatalog,
-  FieldConfig,
-  HomeConfig,
-  HomeSectionConfig,
-  Language,
-} from "@/types/api";
+import type { EntityTypeConfig, ExternalProviderCatalog, FieldConfig, Language } from "@/types/api";
 
 import { PresetPickerDialog } from "./preset-picker";
 import { EmptyConfigLine } from "./settings-controls";
 import { EntityTypeForm } from "./settings-entity-type";
 import { fieldConfigSummary } from "./settings-field-descriptors";
 import { FieldForm } from "./settings-field-form";
-import { HomeSectionForm } from "./settings-home-section";
-import { arrayEditor, defaultEntityType, defaultField, defaultHomeSection } from "./settings-model";
+import { arrayEditor, defaultEntityType, defaultField } from "./settings-model";
 import { TitleLanguagesContext } from "./settings-shared";
 
 // ----------------------------------------------------------------------------
@@ -96,7 +87,7 @@ function DialogShell({
   );
 }
 
-/// A clickable list row used for types, home sections, and fields. The whole row
+/// A clickable list row used for types and fields. The whole row
 /// opens the editor; a trailing trash button removes the item.
 function EditableRow({
   title,
@@ -435,124 +426,6 @@ function TypeEditorDialog({
           </div>
         )}
       </div>
-    </DialogShell>
-  );
-}
-
-// ----------------------------------------------------------------------------
-// Home
-// ----------------------------------------------------------------------------
-
-export function HomeBlock({
-  config,
-  types,
-  tagsField,
-  onChange,
-}: {
-  config: HomeConfig;
-  types: EntityTypeConfig[];
-  tagsField: string | undefined;
-  onChange: (config: HomeConfig) => void;
-}) {
-  const { t } = useLingui();
-  const sections = config.sections ?? [];
-  const [editing, setEditing] = useState<number | "new" | null>(null);
-  const initial =
-    editing === "new"
-      ? defaultHomeSection(types[0]?.id)
-      : editing === null
-        ? null
-        : sections[editing];
-  const sectionList = arrayEditor(sections, (next) => onChange({ ...config, sections: next }));
-
-  return (
-    <div className="flex flex-col gap-3">
-      <ListHeader
-        title={t`Sections`}
-        count={sections.length}
-        addLabel={t`Section`}
-        onAdd={() => setEditing("new")}
-      />
-      {sections.length === 0 ? (
-        <EmptyConfigLine>
-          <Trans>No home sections configured.</Trans>
-        </EmptyConfigLine>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {sections.map((section, index) => (
-            <EditableRow
-              key={index}
-              title={section.title || section.id || t`Home section`}
-              badges={[
-                ...(section.type
-                  ? [types.find((type) => type.id === section.type)?.label || section.type]
-                  : []),
-                ...(section.criteria && criteriaRuleCount(section.criteria) > 0
-                  ? [
-                      plural(criteriaRuleCount(section.criteria), {
-                        one: "# rule",
-                        other: "# rules",
-                      }),
-                    ]
-                  : []),
-              ]}
-              onEdit={() => setEditing(index)}
-              onRemove={() => sectionList.remove(index)}
-              removeLabel={t`Remove section`}
-            />
-          ))}
-        </div>
-      )}
-
-      {initial ? (
-        <HomeSectionDialog
-          initial={initial}
-          types={types}
-          tagsField={tagsField}
-          onClose={() => setEditing(null)}
-          onApply={(value) => {
-            if (editing === "new") sectionList.append(value);
-            else sectionList.update(editing as number, value);
-            setEditing(null);
-          }}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function HomeSectionDialog({
-  initial,
-  types,
-  tagsField,
-  onClose,
-  onApply,
-}: {
-  initial: HomeSectionConfig;
-  types: EntityTypeConfig[];
-  tagsField: string | undefined;
-  onClose: () => void;
-  onApply: (value: HomeSectionConfig) => void;
-}) {
-  const { t } = useLingui();
-  const [draft, setDraft] = useState(initial);
-  return (
-    <DialogShell
-      open
-      onOpenChange={(next) => !next && onClose()}
-      title={draft.title || draft.id || t`Home section`}
-      footer={
-        <>
-          <Button type="button" variant="outline" onClick={onClose}>
-            <Trans>Cancel</Trans>
-          </Button>
-          <Button type="button" onClick={() => onApply(draft)}>
-            <Trans>Apply</Trans>
-          </Button>
-        </>
-      }
-    >
-      <HomeSectionForm section={draft} types={types} tagsField={tagsField} onChange={setDraft} />
     </DialogShell>
   );
 }

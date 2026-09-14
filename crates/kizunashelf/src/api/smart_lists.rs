@@ -10,7 +10,9 @@
 //! ([`FilterNode`]) — the core stays contract-free, like `crate::lists`.
 
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, move_to_trash, sanitize_basename, write_entity_raw};
+use super::mutations::{
+    check_revision, derive_basename, move_to_trash, sanitize_basename, write_entity_raw,
+};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CreateSmartListRequest, DeleteListResponse, EntityListResponse, ListKind, ListSummary,
@@ -81,6 +83,7 @@ pub(crate) async fn create_smart_list(
     Json(request): Json<CreateSmartListRequest>,
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
     let basename = sanitize_basename(&request.name)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let scope_folder = resolve_scope(&library.config, request.scope.as_deref())?;
@@ -110,6 +113,7 @@ pub(crate) async fn update_smart_list(
     Json(request): Json<UpdateSmartListRequest>,
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
     let source_path = smart_list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
@@ -152,6 +156,8 @@ pub(crate) async fn update_smart_list(
     };
 
     let new_raw = render_smart_list(&doc);
+    let latest = read_smart_list_raw(vfs.as_ref(), &source_path).await?;
+    check_revision(&request.revision, &file_revision(&latest))?;
     write_entity_raw(vfs.as_ref(), &target_path, &new_raw).await?;
     if target_path != source_path {
         vfs.remove_file(&source_path).await.map_err(|err| {
@@ -173,6 +179,7 @@ pub(crate) async fn delete_smart_list(
     AxumPath(path_param): AxumPath<SmartListPath>,
 ) -> ApiResult<DeleteListResponse> {
     let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
     let path = smart_list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     if !vfs
@@ -264,6 +271,224 @@ pub(crate) async fn preview_smart_list(
         request.page.unwrap_or(1.0),
         request.page_size.unwrap_or(40.0),
     )))
+}
+
+#[derive(Deserialize, JsonSchema)]
+pub(crate) struct SmartListSuggestionsQuery {
+    language: Option<String>,
+}
+
+/// A Home toggle edits only metadata, never a stale copy of the criteria.
+pub(crate) async fn set_smart_list_home(
+    State(state): State<AppState>,
+    AxumPath(path_param): AxumPath<SmartListPath>,
+    Json(request): Json<crate::contract::SetSmartListHomeRequest>,
+) -> ApiResult<SmartListDetail> {
+    let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
+    let path = smart_list_path(&path_param.id)?;
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let raw = read_smart_list_raw(vfs.as_ref(), &path).await?;
+    check_revision(&request.revision, &file_revision(&raw))?;
+    let mut doc = parse_list_raw(&path, &raw)?.doc;
+    smart_lists::set_home_visibility(&mut doc, request.show_on_home)
+        .map_err(|error| ApiError::bad_request(&error))?;
+    let latest = read_smart_list_raw(vfs.as_ref(), &path).await?;
+    check_revision(&request.revision, &file_revision(&latest))?;
+    let raw = render_smart_list(&doc);
+    write_entity_raw(vfs.as_ref(), &path, &raw).await?;
+    let list = parse_list_raw(&path, &raw)?;
+    Ok(Json(detail_from_list(&path, &list, &raw, &library.config)))
+}
+
+/// Used by Home and onboarding; suggestions derive from the live schema, so
+/// users can recreate them after setup without re-adding types or resetting files.
+pub(crate) async fn smart_list_suggestions(
+    State(state): State<AppState>,
+    Query(query): Query<SmartListSuggestionsQuery>,
+) -> ApiResult<crate::contract::SmartListSuggestionsResponse> {
+    let library = get_library(&state).await?;
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let files = read_smart_list_files(vfs.as_ref()).await?;
+    let suggestions =
+        crate::presets::suggested_lists(&library.config.types, query.language.as_deref())
+            .into_iter()
+            .map(|suggestion| {
+                let existing = files.iter().find(|(_, _, list)| {
+                    smart_lists::suggestion_id(list) == Some(suggestion.id.as_str())
+                });
+                crate::contract::SmartListSuggestion {
+                    id: suggestion.id,
+                    name: existing
+                        .map(|(path, _, _)| smart_list_id(path))
+                        .unwrap_or(suggestion.title),
+                    entity_type: suggestion.entity_type,
+                    existing_list_id: existing.map(|(path, _, _)| smart_list_id(path)),
+                    show_on_home: existing
+                        .is_some_and(|(_, _, list)| smart_lists::shows_on_home(list)),
+                }
+            })
+            .collect();
+    Ok(Json(crate::contract::SmartListSuggestionsResponse {
+        suggestions,
+    }))
+}
+
+pub(crate) async fn create_suggested_smart_lists(
+    State(state): State<AppState>,
+    Json(request): Json<crate::contract::CreateSuggestedSmartListsRequest>,
+) -> ApiResult<crate::contract::CreateSuggestedSmartListsResponse> {
+    let library = require_content_writes(&state).await?;
+    let _mutation = state.content_mutation_lock().await;
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let files = read_smart_list_files(vfs.as_ref()).await?;
+    let suggestions =
+        crate::presets::suggested_lists(&library.config.types, request.language.as_deref());
+    if request.suggestion_ids.as_ref().is_some_and(|ids| {
+        ids.iter()
+            .any(|id| !suggestions.iter().any(|suggestion| &suggestion.id == id))
+    }) {
+        return Err(ApiError::bad_request(
+            "Unknown smart list suggestion; refresh and try again",
+        ));
+    }
+    let mut lists = Vec::new();
+    for suggestion in suggestions.iter().filter(|suggestion| {
+        request
+            .suggestion_ids
+            .as_ref()
+            .is_none_or(|ids| ids.contains(&suggestion.id))
+    }) {
+        if let Some((path, raw, list)) = files
+            .iter()
+            .find(|(_, _, list)| smart_lists::suggestion_id(list) == Some(suggestion.id.as_str()))
+        {
+            // Reuse even a renamed/edited suggestion. Only Home membership changes.
+            if smart_lists::shows_on_home(list) {
+                lists.push(detail_from_list(path, list, raw, &library.config));
+                continue;
+            }
+            let mut doc = list.doc.clone();
+            smart_lists::set_home_visibility(&mut doc, true)
+                .map_err(|error| ApiError::bad_request(&error))?;
+            let latest = read_smart_list_raw(vfs.as_ref(), path).await?;
+            check_revision(&file_revision(raw), &file_revision(&latest))?;
+            let raw = render_smart_list(&doc);
+            write_entity_raw(vfs.as_ref(), path, &raw).await?;
+            let list = parse_list_raw(path, &raw)?;
+            lists.push(detail_from_list(path, &list, &raw, &library.config));
+            continue;
+        }
+        let basename = derive_basename(&suggestion.title)
+            .or_else(|| derive_basename(&suggestion.id))
+            .ok_or_else(|| ApiError::bad_request("Cannot derive a filename for this suggestion"))?;
+        let mut path = format!("{LISTS_DIR}/{basename}.{SMART_LIST_EXTENSION}");
+        let mut suffix = 2;
+        // A same-named hand-authored list is never replaced.
+        while vfs
+            .exists(&path)
+            .await
+            .map_err(|error| anyhow::anyhow!(error))?
+        {
+            path = format!("{LISTS_DIR}/{basename} {suffix}.{SMART_LIST_EXTENSION}");
+            suffix += 1;
+        }
+        let scope = resolve_scope(&library.config, Some(&suggestion.entity_type))?;
+        let image = cover_property(&library.config, &suggestion.entity_type);
+        let mut doc = default_smart_list_doc(scope.as_deref(), image.as_deref());
+        let filters = group_to_node(
+            &suggestion.criteria.clone().unwrap_or_default(),
+            scope.as_deref(),
+        )?;
+        set_global_filters(&mut doc, &filters);
+        let initial = parse_list_raw(&path, &render_smart_list(&doc))?;
+        let views = initial
+            .views
+            .iter()
+            .map(|view| {
+                let mut view = view_to_contract(view);
+                view.sort = vec![suggestion.sort.clone()];
+                contract_view_to_spec(&view, image.as_deref())
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        apply_views(&mut doc, &views);
+        let mut metadata = serde_yaml::Mapping::new();
+        metadata.insert("suggestion".into(), suggestion.id.clone().into());
+        doc.insert("kizunashelf".into(), serde_yaml::Value::Mapping(metadata));
+        smart_lists::set_home_visibility(&mut doc, true)
+            .map_err(|error| ApiError::bad_request(&error))?;
+        let raw = render_smart_list(&doc);
+        write_entity_raw(vfs.as_ref(), &path, &raw).await?;
+        let list = parse_list_raw(&path, &raw)?;
+        lists.push(detail_from_list(&path, &list, &raw, &library.config));
+    }
+    Ok(Json(crate::contract::CreateSuggestedSmartListsResponse {
+        lists,
+    }))
+}
+
+async fn read_smart_list_files(
+    vfs: &dyn Vfs,
+) -> Result<Vec<(String, String, SmartList)>, ApiError> {
+    let listing = match smart_list_file_listing(vfs).await {
+        Ok(listing) => listing,
+        Err(error) if error.is_not_found() => return Ok(Vec::new()),
+        Err(error) => return Err(anyhow::anyhow!(error).into()),
+    };
+    let files = vfs
+        .read_files(&listing.paths)
+        .await
+        .map_err(|error| anyhow::anyhow!(error))?;
+    Ok(files
+        .into_iter()
+        .filter_map(|(path, bytes)| {
+            let raw = String::from_utf8(bytes).ok()?;
+            let list = parse_smart_list(&raw).ok()?;
+            Some((path, raw, list))
+        })
+        .collect())
+}
+
+pub(crate) async fn home_lists(
+    state: &AppState,
+    library: &Library,
+    today: Option<&str>,
+    language: Option<&str>,
+) -> Result<crate::contract::HomeResponse, ApiError> {
+    let vfs = state.vault_vfs(&library.config.vault_root);
+    let files = read_smart_list_files(vfs.as_ref()).await?;
+    let ctx = EvalContext::new(library, chrono::Utc::now(), resolve_today(today));
+    let lists = files
+        .iter()
+        .filter(|(_, _, list)| smart_lists::shows_on_home(list))
+        .map(|(path, _, list)| {
+            let view = list.views.first();
+            let records = smart_lists::smart_list_records(
+                list,
+                view,
+                &ctx,
+                &smart_lists::ResultOptions {
+                    title_language: language,
+                    query: None,
+                },
+            );
+            crate::contract::HomeListResponse {
+                id: smart_list_id(path),
+                name: smart_list_id(path),
+                view: view.map(|view| view.name.clone()),
+                total: records.len(),
+                items: records
+                    .into_iter()
+                    .take(12)
+                    .map(|record| record.summary.clone())
+                    .collect(),
+            }
+        })
+        .collect();
+    Ok(crate::contract::HomeResponse {
+        generated_at: library.generated_at.clone(),
+        lists,
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -554,6 +779,7 @@ fn detail_from_list(
     let scope = scope_from_filters(&list.filters, config);
     let id = smart_list_id(path);
     SmartListDetail {
+        show_on_home: smart_lists::shows_on_home(list),
         name: id.clone(),
         id,
         path: path.to_string(),

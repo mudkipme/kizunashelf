@@ -7,15 +7,18 @@ import { Link } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { configQuery, homeQuery } from "@/api/queries";
 import { ComingUpSection } from "@/components/home/coming-up-section";
-import { HomeSection } from "@/components/home/home-section";
+import { HomeSmartList } from "@/components/home/home-smart-list";
 import { AppFrame } from "@/components/layout/app-frame";
+import { SuggestedListsButton } from "@/components/smart-lists/suggested-lists-dialog";
 import { Button } from "@/components/ui/button";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
+import { useTitleLanguage } from "@/lib/language";
 import { fieldLabelsByType } from "@/lib/type-config";
 
 export function HomePage() {
   const { t } = useLingui();
-  const home = useQuery(homeQuery());
+  const language = useTitleLanguage();
+  const home = useQuery(homeQuery(language));
   const config = useQuery(configQuery());
   const capabilities = useCapabilities();
   const loading = home.isPending || config.isPending || capabilities.isPending;
@@ -26,6 +29,7 @@ export function HomePage() {
     <AppFrame error={error ? errorMessage(error) : undefined}>
       <div className="flex min-h-full flex-col">
         <header className="flex flex-wrap items-center justify-end gap-2 border-b px-4 py-2">
+          <SuggestedListsButton disabled={!capabilities.contentWritable} />
           <Button
             type="button"
             disabled={!capabilities.contentWritable}
@@ -53,22 +57,19 @@ export function HomePage() {
         ) : (
           <div className="flex flex-1 flex-col gap-6 p-4">
             <ComingUpSection />
-            {home.data?.sections.length ? (
-              home.data.sections.map((section) => (
-                <HomeSection key={section.id} section={section} labelsByType={labelsByType} />
+            {home.data?.lists.length ? (
+              home.data.lists.map((section) => (
+                <HomeSmartList key={section.id} section={section} labelsByType={labelsByType} />
               ))
             ) : (
               <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
                 <LayoutGridIcon className="size-8 text-muted-foreground" aria-hidden />
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   <p className="text-sm font-medium">
-                    <Trans>No Home sections yet</Trans>
+                    <Trans>No smart lists on Home yet</Trans>
                   </p>
                   <p className="mx-auto max-w-sm px-4 text-xs text-muted-foreground">
-                    <Trans>
-                      Sections are configurable shelves of your library. Add one in Settings, or
-                      jump straight into your Library.
-                    </Trans>
+                    <Trans>Add suggested lists, or open a smart list and choose Add to Home.</Trans>
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
@@ -78,8 +79,8 @@ export function HomePage() {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm">
-                    <Link to="/settings">
-                      <Trans>Configure Home</Trans>
+                    <Link to="/lists">
+                      <Trans>Browse lists</Trans>
                     </Link>
                   </Button>
                 </div>

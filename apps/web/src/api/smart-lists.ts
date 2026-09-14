@@ -1,5 +1,8 @@
 import {
   createSmartList,
+  getSmartListSuggestions,
+  createSuggestedSmartLists,
+  setSmartListHome,
   deleteSmartList,
   getSmartList,
   getSmartListResults,
@@ -39,4 +42,16 @@ export function removeSmartList(id: string) {
 
 export function fetchSmartListPreview(request: SmartListPreviewRequest, init?: RequestInit) {
   return previewSmartList(request, init, apiFetch);
+}
+
+export function fetchSmartListSuggestions(language: string, init?: RequestInit) {
+  return getSmartListSuggestions({ language }, init, apiFetch);
+}
+
+export function addSuggestedSmartLists(language: string, suggestionIds?: string[]) {
+  return createSuggestedSmartLists({ language, suggestionIds }, undefined, apiFetch);
+}
+
+export function setHomeVisibility(id: string, revision: string, showOnHome: boolean) {
+  return setSmartListHome(id, { revision, showOnHome }, undefined, apiFetch);
 }

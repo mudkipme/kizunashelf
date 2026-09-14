@@ -116,7 +116,6 @@ function vault(extra: Partial<VaultConfig>): VaultConfig {
     taxonomyRoot: "Taxonomy",
     assetRoot: "Assets",
     dailyNotes: null,
-    home: null,
     types: [],
     ...extra,
   } as VaultConfig;
@@ -150,12 +149,9 @@ describe("normalizeVaultConfig", () => {
     expect(normalizeVaultConfig()).toEqual(defaultVaultConfig());
   });
 
-  it("preserves disabled (null) daily notes and home for an existing config", () => {
-    const result = normalizeVaultConfig(
-      vault({ taxonomyRoot: "T", dailyNotes: null, home: null, types: [] }),
-    );
+  it("preserves disabled (null) daily notes for an existing config", () => {
+    const result = normalizeVaultConfig(vault({ taxonomyRoot: "T", dailyNotes: null, types: [] }));
     expect(result.dailyNotes).toBeNull();
-    expect(result.home).toBeNull();
     expect(result.types).toEqual([]);
     expect(result.taxonomyRoot).toBe("T");
   });
@@ -194,10 +190,9 @@ describe("normalizeVaultConfig", () => {
 
 describe("cleanVaultConfig", () => {
   it("strips empty optionals to undefined", () => {
-    const cleaned = cleanedVault(vault({ assetRoot: "", dailyNotes: null, home: null, types: [] }));
+    const cleaned = cleanedVault(vault({ assetRoot: "", dailyNotes: null, types: [] }));
     expect(cleaned.assetRoot).toBeUndefined();
     expect(cleaned.dailyNotes).toBeUndefined();
-    expect(cleaned.home).toBeUndefined();
     expect(cleaned.types).toEqual([]);
   });
 

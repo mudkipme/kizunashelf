@@ -200,7 +200,7 @@ export type Relation = EntityDetailResponse["relations"][number];
 export type CalendarDay = CalendarResponse["days"][number];
 export type CleanupQueueSummary = CleanupQueuesResponse["queues"][number];
 export type CleanupUnresolvedRelation = CleanupQueuesResponse["unresolvedRelations"][number];
-export type HomeSectionResponse = HomeResponse["sections"][number];
+export type HomeListResponse = HomeResponse["lists"][number];
 export type TypeConfig = ConfigResponse["types"][number];
 export type AnalyticsActivity = AnalyticsResponse["activity"];
 export type AnalyticsActivityType = AnalyticsResponse["activity"]["types"][number];
@@ -214,3 +214,11 @@ export type ActivityEpisodeRef = NonNullable<ActivityEntry["episodes"]>[number];
 // snippets ride on each entry's daily-note source. `CalendarEntry` is gone —
 // the calendar no longer exposes a flat per-source entry.
 export type CalendarSnippet = NonNullable<ActivityEntry["snippets"]>[number];
+
+export * from "./generated/smartListSuggestion.zod.js";
+
+export * from "./generated/smartListSuggestionsResponse.zod.js";
+
+export * from "./generated/createSuggestedSmartListsRequest.zod.js";
+
+export * from "./generated/setSmartListHomeRequest.zod.js";

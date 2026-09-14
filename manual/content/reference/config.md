@@ -16,7 +16,7 @@ KizunaShelf is schema-driven — the model itself (Markdown first, names are you
 | [Types & fields](./schema.md) | The config.yaml document: top-level keys, entity types, filename config, field definitions, and design guidelines. |
 | [Titles, dates & status](./titles-dates-status.md) | Title resolution, the language preference, date roles, seasons, and the canonical status model. |
 | [External metadata & import](./external.md) | Provider wiring (`externalRef`, `externalFields`, `bodySections`), episode tracking and sync, Quick Capture, and library import. |
-| [Home, tags & daily notes](./home-tags-daily-notes.md) | Home dashboard sections, the built-in tags field, daily notes and logging. |
+| [Home, tags & daily notes](./home-tags-daily-notes.md) | Home smart-list metadata, the built-in tags field, daily notes and logging. |
 | [Field types & roles](./field-types.md) | Every `fieldType` and role enum (generated from the app). |
 | [External providers](./providers.md) | Every provider, its credentials, types, and mappable fields (generated from the app). |
 | [Type presets](./presets.md) | Every built-in type preset (generated from the app). |
@@ -29,7 +29,7 @@ On **desktop**, onboarding instead opens a native vault chooser: open an existin
 
 Onboarding is a **type-preset picker**. Choose a title language, then pick the built-in types you want — movies, TV, anime, manga, games, books, music, and more (the full catalog, with every preset's fields and provider wiring, is the generated [Type presets](./presets.md) page). Each preset is one fully-wired type: its title/cover/date/status/progress fields and external-provider mappings are already set (the presets reuse the same provider catalog as external matching, so they never drift). You can add or drop types and refine any field in the structured editor — the same editor Settings uses — before saving.
 
-Click `Create Vault`. KizunaShelf resolves the chosen presets (stamping your language onto title fields and keeping only the relations whose target type you also picked), writes `KizunaShelf/config.yaml` into the vault, reloads the in-memory library, and opens the normal app. Everything a preset sets is ordinary schema you can edit later; nothing is special-cased.
+Click `Create Vault`. KizunaShelf resolves the chosen presets (stamping your language onto title fields and keeping only the relations whose target type you also picked), writes `KizunaShelf/config.yaml` into the vault, reloads the in-memory library, creates suggested smart lists pinned to Home, and opens the normal app. You can recreate suggestions later using **Add suggested lists** on Home. Everything a preset sets is ordinary schema you can edit later; nothing is special-cased.
 
 ## Where the Vault Config Lives
 
@@ -51,7 +51,6 @@ Web/desktop offers both a structured **Form** and a raw **YAML** editor. The raw
 
 - Vault: `taxonomyRoot`, `assetRoot`
 - Daily notes: `paths`, `dateFormat`
-- Home: section `id`, `title`, `type`, `limit`, `sort`, `direction`, and criteria
 - Types: `id`, `label`, `icon`, `path`, `filename`, `externalPriority`, `fields`
 - Type fields: ordered field entries with `field`, `fieldType` (every type is listed in [Field types & roles](./field-types.md)), optional display metadata, enum options, date roles, title language, external source, and relation type
 
@@ -72,22 +71,6 @@ dailyNotes:
   paths:
   - Daily Notes
   dateFormat: YYYY-MM-DD
-
-home:
-  sections:
-  - id: watching
-    title: Watching
-    type: anime
-    limit: 12
-    sort: date:season
-    direction: desc
-    criteria:
-      conjunction: all
-      rules:
-      - kind: compare
-        field: status
-        op: eq
-        value: Watching
 
 types:
 - id: anime

@@ -40,7 +40,8 @@ mod tests;
 
 pub use document::{
     apply_views, default_smart_list_doc, filter_node_to_yaml, parse_smart_list,
-    parse_sort_property, print_sort_property, render_smart_list, set_global_filters, ViewSpec,
+    parse_sort_property, print_sort_property, render_smart_list, set_global_filters,
+    set_home_visibility, shows_on_home, suggestion_id, ViewSpec,
 };
 pub use eval::{eval_node, record_matches, EvalContext};
 pub use expr::{parse_duration, parse_expression};

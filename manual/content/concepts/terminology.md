@@ -26,4 +26,4 @@ These are the name of concepts building KizunaShelf.
 | **Log activity** | The one-line write-to-today's-daily-note action, the *Log* button on an entity. |
 | **activity** | The dated record of what happened: episode check-offs, completion dates, daily-note mentions, logs. |
 | **smart list** | A saved `.base` file of criteria whose items are computed, partly compatible with Obsidian Bases. |
-| **home section** | One configured row of the Home page. |
+| **Home row** | A preview of a pinned smart list’s first supported view. |

@@ -1,4 +1,3 @@
-import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
 import {
   externalFieldOptionsForSource,
   externalTypeOptionsForSource,
@@ -13,8 +12,6 @@ import type {
   ExternalProviderCatalog,
   FieldConfig,
   FilenameConfig,
-  HomeConfig,
-  HomeSectionConfig,
   SaveSettingsRequest,
   StatusValues,
   VaultConfig,
@@ -25,7 +22,7 @@ export function normalizeVaultConfig(vault?: VaultConfig): VaultConfig {
   return {
     // When the vault config is missing entirely (e.g. a fresh vault), seed the
     // defaults so the editor has something to fill in; when it exists, respect
-    // its values including disabled (null) daily notes / home.
+    // its values including disabled (null) daily notes.
     taxonomyRoot: vault?.taxonomyRoot ?? base.taxonomyRoot,
     assetRoot: vault?.assetRoot ?? base.assetRoot,
     dailyNotes: vault
@@ -33,9 +30,8 @@ export function normalizeVaultConfig(vault?: VaultConfig): VaultConfig {
         ? normalizeDailyNotes(vault.dailyNotes)
         : null
       : base.dailyNotes,
-    home: vault ? (vault.home ? normalizeHome(vault.home) : null) : base.home,
     // Tags are opt-in: the block's presence is the switch, mirroring dailyNotes
-    // and home. A fresh vault starts with tags off.
+    // notes. A fresh vault starts with tags off.
     tags: vault?.tags ? { field: vault.tags.field ?? "" } : null,
     types: vault ? (vault.types ?? []).map(normalizeEntityType) : base.types,
   };
@@ -49,12 +45,6 @@ function normalizeDailyNotes(config: DailyNotesConfig): DailyNotesConfig {
     // The global log default is always an object in the editor (so its fields
     // render); it's dropped on save when both parts are blank.
     log: { section: config.log?.section ?? "", lineFormat: config.log?.lineFormat ?? "" },
-  };
-}
-
-function normalizeHome(config: HomeConfig): HomeConfig {
-  return {
-    sections: config.sections ?? [],
   };
 }
 
@@ -119,21 +109,6 @@ export function cleanVaultConfig(
             log: cleanLog(config.dailyNotes.log, false),
           }
         : undefined,
-      home: config.home
-        ? {
-            sections: (config.home.sections ?? []).map((section) => ({
-              id: section.id,
-              title: section.title,
-              type: section.type,
-              criteria: cleanHomeSectionCriteria(section.criteria),
-              limit: section.limit ?? undefined,
-              sort: emptyToUndefined(section.sort),
-              direction: section.direction ?? undefined,
-            })),
-          }
-        : undefined,
-      // The core treats a blank `tags.field` as disabled, so an enabled block
-      // with an empty key saves as no block at all rather than a broken one.
       tags: config.tags?.field?.trim() ? { field: config.tags.field.trim() } : undefined,
       types: config.types.map((typeConfig) => ({
         id: typeConfig.id,
@@ -153,16 +128,6 @@ export function cleanVaultConfig(
       })),
     },
   };
-}
-
-/// Smart-list criteria on a home section: still-being-filled rules are
-/// dropped (mirroring the smart-list save path), and a criteria group left
-/// with nothing in it isn't written at all.
-function cleanHomeSectionCriteria(criteria: HomeSectionConfig["criteria"]) {
-  if (!criteria) return undefined;
-  const pruned = pruneIncompleteRules(criteria);
-  const empty = (pruned.rules?.length ?? 0) === 0 && (pruned.groups?.length ?? 0) === 0;
-  return empty ? undefined : pruned;
 }
 
 function cleanFilename(filename: FilenameConfig | null | undefined): FilenameConfig | undefined {
@@ -328,7 +293,6 @@ export function defaultVaultConfig(): VaultConfig {
     taxonomyRoot: "Taxonomy",
     assetRoot: "Assets",
     dailyNotes: defaultDailyNotes(),
-    home: defaultHome(),
     // Tags are opt-in — a fresh vault starts without them.
     tags: null,
     types: [defaultEntityType()],
@@ -342,25 +306,10 @@ export function defaultDailyNotes(): DailyNotesConfig {
   };
 }
 
-export function defaultHome(): HomeConfig {
-  return { sections: [] };
-}
-
 /// Seed for enabling the opt-in tags feature: the conventional Obsidian key.
 /// Purely a starting value for the input — the user can rename it freely.
 export function defaultTags(): NonNullable<VaultConfig["tags"]> {
   return { field: "tags" };
-}
-
-export function defaultHomeSection(type = ""): HomeSectionConfig {
-  return {
-    id: "section",
-    title: "Section",
-    type,
-    limit: 12,
-    sort: "title",
-    direction: "asc",
-  };
 }
 
 export function defaultEntityType(): EntityTypeConfig {

@@ -26,7 +26,8 @@ use super::log::log_activity;
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
 use super::smart_lists::{
-    create_smart_list, delete_smart_list, get_smart_list, preview_smart_list, smart_list_results,
+    create_smart_list, create_suggested_smart_lists, delete_smart_list, get_smart_list,
+    preview_smart_list, set_smart_list_home, smart_list_results, smart_list_suggestions,
     update_smart_list,
 };
 use super::state::{ApiOptions, AppState};
@@ -36,13 +37,14 @@ use crate::calendar::{ActivityResponse, EntityDatesResponse, UpcomingResponse};
 use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
     AssetDownloadResponse, AssetIngestResponse, AssetUploadResponse, CalendarResponse,
-    CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse, DeleteEntityResponse,
-    DeleteListResponse, EntityDetailResponse, EntityListResponse, EntityMutationResponse,
-    EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse, ExternalReviewResponse,
-    ExternalSearchResponse, HealthResponse, HomeResponse, ImportJob, ImportJobListResponse,
-    ImportSourceCatalogResponse, LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse,
-    PathSuggestionsResponse, QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse,
-    SettingsConfigResponse, SmartListDetail, StatsResponse, TagsResponse, TypePresetsResponse,
+    CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse, CreateSuggestedSmartListsResponse,
+    DeleteEntityResponse, DeleteListResponse, EntityDetailResponse, EntityListResponse,
+    EntityMutationResponse, EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse,
+    ExternalReviewResponse, ExternalSearchResponse, HealthResponse, HomeResponse, ImportJob,
+    ImportJobListResponse, ImportSourceCatalogResponse, LanguagesResponse, ListDetail,
+    ListsResponse, LogActivityResponse, PathSuggestionsResponse, QuickAddResponse,
+    RawConfigResponse, ResolveTypePresetsResponse, SettingsConfigResponse, SmartListDetail,
+    SmartListSuggestionsResponse, StatsResponse, TagsResponse, TypePresetsResponse,
     VaultChangesResponse,
 };
 use crate::secrets::SecretStore;
@@ -668,6 +670,34 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<200, Json<SmartListDetail>>()
                     .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/smart-list-suggestions",
+            get_with(smart_list_suggestions, |op| {
+                op.id("getSmartListSuggestions")
+                    .response::<200, Json<SmartListSuggestionsResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .post_with(create_suggested_smart_lists, |op| {
+                op.id("createSuggestedSmartLists")
+                    .response::<200, Json<CreateSuggestedSmartListsResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/smart-lists/{id}/home",
+            post_with(set_smart_list_home, |op| {
+                op.id("setSmartListHome")
+                    .response::<200, Json<SmartListDetail>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
                     .response::<409, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),

@@ -17,7 +17,6 @@ fn ambiguous_daily_note_wikilinks_do_not_prefer_franchise_type() {
             taxonomy_root: "Taxonomy".to_string(),
             asset_root: None,
             content_writable: None,
-            home: None,
             daily_notes: None,
             tags: None,
             types: vec![
@@ -202,7 +201,6 @@ fn metadata_date_entries_only_includes_schema_date_fields_with_a_role() {
         taxonomy_root: "Taxonomy".to_string(),
         asset_root: None,
         content_writable: None,
-        home: None,
         daily_notes: None,
         tags: None,
         types: vec![EntityTypeConfig {
@@ -276,7 +274,6 @@ fn episode_calendar_entries_place_cached_dates_in_the_month() {
             taxonomy_root: "Taxonomy".to_string(),
             asset_root: None,
             content_writable: None,
-            home: None,
             daily_notes: None,
             tags: None,
             types: vec![anime_type],
@@ -329,7 +326,6 @@ fn activity_config(daily_paths: Option<Vec<String>>) -> KizunaConfig {
         taxonomy_root: "Taxonomy".to_string(),
         asset_root: None,
         content_writable: None,
-        home: None,
         daily_notes: daily_paths.map(|paths| crate::types::DailyNotesConfig {
             paths,
             date_format: None,
@@ -1433,7 +1429,6 @@ fn event_config() -> KizunaConfig {
         taxonomy_root: "Taxonomy".to_string(),
         asset_root: None,
         content_writable: None,
-        home: None,
         daily_notes: None,
         tags: None,
         types: vec![concert],

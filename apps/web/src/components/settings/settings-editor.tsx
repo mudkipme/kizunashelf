@@ -6,9 +6,11 @@ import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
 import { saveSettingsConfig } from "@/api/settings";
+import { addSuggestedSmartLists } from "@/api/smart-lists";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLanguagePreference } from "@/lib/language";
 import type { AppConfig, ExternalProviderCatalog, Language, VaultConfig } from "@/types/api";
 
 import {
@@ -19,11 +21,10 @@ import {
   TextField,
 } from "./settings-controls";
 import { DailyNotesEditor } from "./settings-daily-notes";
-import { HomeBlock, TypesSection } from "./settings-dialogs";
+import { TypesSection } from "./settings-dialogs";
 import {
   cleanVaultConfig,
   defaultDailyNotes,
-  defaultHome,
   defaultTags,
   joinPath,
   normalizeVaultConfig,
@@ -60,6 +61,7 @@ export function SettingsEditor({
   onSaved,
 }: SettingsEditorProps) {
   const { t } = useLingui();
+  const language = useLanguagePreference();
   // The editor edits the vault config (the schema) only. The vault root is owned
   // by the runtime (env / native switcher / @AppStorage) and is read-only here —
   // used for path display and the desktop "Browse" base, never edited or saved.
@@ -109,13 +111,6 @@ export function SettingsEditor({
       id: "tags",
       title: t`Tags`,
       detail: config.tags ? config.tags.field?.trim() || t`On` : t`Off`,
-    },
-    {
-      id: "home",
-      title: t`Home`,
-      detail: config.home
-        ? plural((config.home.sections ?? []).length, { one: "# section", other: "# sections" })
-        : t`Off`,
     },
     {
       id: "types",
@@ -171,6 +166,14 @@ export function SettingsEditor({
         revision: loadedRevisionRef.current,
       });
       seedConfig(response.vault, response.revision);
+      if (onboarding) {
+        try {
+          await addSuggestedSmartLists(language);
+        } catch {
+          toast.warning(t`Couldn't add suggested lists. You can retry from Home.`);
+        }
+      }
+
       toast.success(t`Settings saved`);
       window.dispatchEvent(new Event("kizunashelf-config-saved"));
       onSaved?.();
@@ -248,8 +251,8 @@ export function SettingsEditor({
             title={t`Vault`}
             description={
               vaultPath
-                ? t`Stored in the vault at ${vaultPath}. Taxonomy, assets, daily notes, home, and types — synced with the vault.`
-                : t`Stored in the vault. Taxonomy, assets, daily notes, home, and types — synced with the vault.`
+                ? t`Stored in the vault at ${vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault.`
+                : t`Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault.`
             }
             summary={<SummaryBadges items={[t`assets: ${config.assetRoot || "Assets"}`]} />}
           >
@@ -343,47 +346,6 @@ export function SettingsEditor({
             ) : (
               <EmptyConfigLine>
                 <Trans>Tags are disabled.</Trans>
-              </EmptyConfigLine>
-            )}
-          </SettingsSection>
-
-          <SettingsSection
-            id="home"
-            title={t`Home`}
-            summary={
-              <SummaryBadges
-                items={
-                  config.home
-                    ? [
-                        plural((config.home.sections ?? []).length, {
-                          one: "# section",
-                          other: "# sections",
-                        }),
-                      ]
-                    : [t`off`]
-                }
-              />
-            }
-            action={
-              <OptionalToggle
-                enabled={Boolean(config.home)}
-                onEnable={() =>
-                  setConfig((current) => ({ ...current, home: current.home ?? defaultHome() }))
-                }
-                onDisable={() => setConfig((current) => ({ ...current, home: null }))}
-              />
-            }
-          >
-            {config.home ? (
-              <HomeBlock
-                config={config.home}
-                types={config.types}
-                tagsField={config.tags?.field?.trim() || undefined}
-                onChange={(home) => setConfig((current) => ({ ...current, home }))}
-              />
-            ) : (
-              <EmptyConfigLine>
-                <Trans>Home sections are disabled.</Trans>
               </EmptyConfigLine>
             )}
           </SettingsSection>

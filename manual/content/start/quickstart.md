@@ -31,7 +31,7 @@ docker run -p 8787:8787 -v /path/to/vault:/vault ghcr.io/mudkipme/kizunashelf:la
 
 The published image binds beyond loopback, so writes default to off — add `-e KIZUNASHELF_CONTENT_WRITABLE=true -e KIZUNASHELF_SETTINGS_WRITABLE=true` to let onboarding write the schema and the app edit your library.
 
-Open the app in your browser. If the vault does not contain `KizunaShelf/config.yaml` yet, onboarding will launch the preset picker. See [Self-hosting](./self-hosting.md) for the complete deployment guide, including write modes and setting up authentication.
+Open the app in your browser. If the vault does not contain `KizunaShelf/config.yaml` yet, onboarding will launch the preset picker and create suggested smart lists pinned to Home. Existing vaults can add the same suggestions with **Add suggested lists** on Home. See [Self-hosting](./self-hosting.md) for the complete deployment guide, including write modes and setting up authentication.
 
 ## Next steps
 

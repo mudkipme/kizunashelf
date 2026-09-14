@@ -58,7 +58,8 @@ export type {
   QuickAddResponse,
   HomeResponse,
   HealthResponse,
-  HomeSectionResponse,
+  HomeListResponse,
+  SmartListSuggestion,
   EpisodeSource,
   EpisodeSyncResponse,
   Language,
@@ -163,6 +164,4 @@ export type StatusValues = NonNullable<FieldConfig["statusValues"]>;
 export type DateRole = NonNullable<FieldConfig["dateRole"]>;
 export type SeasonLanguage = NonNullable<FieldConfig["seasonLanguage"]>;
 export type TitleRole = NonNullable<FieldConfig["titleRole"]>;
-export type HomeConfig = NonNullable<VaultConfig["home"]>;
-export type HomeSectionConfig = NonNullable<HomeConfig["sections"]>[number];
 export type DailyNotesConfig = NonNullable<VaultConfig["dailyNotes"]>;

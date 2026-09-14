@@ -7,7 +7,8 @@
 import * as zod from 'zod';
 
 export const GetHomeParams = zod.object({
-  "today": zod.string().optional().describe('Today\'s date (`YYYY-MM-DD`), the client\'s \*\*local\*\* date, so date-relative\nhome-section criteria (`today() - \"30d\"`) are judged against the user\'s day\nrather than the host\'s clock. Falls back to the host\'s local date.')
+  "titleLanguage": zod.string().optional(),
+  "today": zod.string().optional().describe('Today\'s date (`YYYY-MM-DD`), the client\'s \*\*local\*\* date, so date-relative\nsmart-list criteria (`today() - \"30d\"`) are judged against the user\'s day\nrather than the host\'s clock. Falls back to the host\'s local date.')
 })
 
 export type GetHomeParams = zod.input<typeof GetHomeParams>;

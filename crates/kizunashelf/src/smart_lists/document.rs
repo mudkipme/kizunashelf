@@ -53,6 +53,40 @@ pub fn render_smart_list(doc: &Mapping) -> String {
     serde_yaml::to_string(&Value::Mapping(doc.clone())).unwrap_or_default()
 }
 
+/// Home membership travels with the list, including a rename of its file.
+pub fn shows_on_home(list: &SmartList) -> bool {
+    list.doc
+        .get("kizunashelf")
+        .and_then(Value::as_mapping)
+        .and_then(|metadata| metadata.get("showOnHome"))
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+}
+
+pub fn suggestion_id(list: &SmartList) -> Option<&str> {
+    list.doc
+        .get("kizunashelf")
+        .and_then(Value::as_mapping)
+        .and_then(|metadata| metadata.get("suggestion"))
+        .and_then(Value::as_str)
+}
+
+/// Change only the requested app metadata; preserve all other YAML keys.
+pub fn set_home_visibility(doc: &mut Mapping, visible: bool) -> Result<(), String> {
+    let key = Value::String("kizunashelf".to_string());
+    let metadata = doc
+        .entry(key)
+        .or_insert_with(|| Value::Mapping(Mapping::new()));
+    let metadata = metadata
+        .as_mapping_mut()
+        .ok_or("kizunashelf metadata must be a YAML mapping")?;
+    metadata.insert(
+        Value::String("showOnHome".to_string()),
+        Value::Bool(visible),
+    );
+    Ok(())
+}
+
 /// Parses one `filters` value: a group mapping (`and:`/`or:`/`not:` over a
 /// sequence) or a single expression string. Anything else is opaque.
 fn parse_filter_value(value: &Value, warnings: &mut Vec<String>) -> FilterNode {

@@ -50,8 +50,8 @@ use crate::contract::{
 use crate::languages::primary_language;
 use crate::types::{
     BodySection, BodySectionKind, CanonicalStatus, DateRole, EntityTypeConfig, EnumRole,
-    EpisodeTracking, ExternalFieldMapping, FieldConfig, FieldType, FilenameConfig,
-    HomeSectionConfig, SeasonLanguage, SortDirection, StatusValues, TitleRole, TypeLogConfig,
+    EpisodeTracking, ExternalFieldMapping, FieldConfig, FieldType, FilenameConfig, SeasonLanguage,
+    SortDirection, StatusValues, TitleRole, TypeLogConfig,
 };
 use std::collections::HashSet;
 
@@ -140,7 +140,6 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
     // 2. Build the new types: set the assigned id/path, stamp language, and keep
     //    only relation fields whose target is present (existing or co-selected).
     let mut types = Vec::new();
-    let mut home_sections = Vec::new();
     for (preset, id, path) in &plan {
         let mut config = preset.config.clone();
         config.id = id.clone();
@@ -175,15 +174,6 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
             field.relation_type = None;
             true
         });
-        // One default shelf per type, so a multi-type vault's home doesn't
-        // start out bloated: upcoming events, otherwise an "in progress" shelf
-        // when the status role maps an ongoing value, otherwise "recent".
-        if let Some(section) = upcoming_event_home_section_for(&config, ctx.locale)
-            .or_else(|| ongoing_home_section_for(&config, preset.ongoing_shelf))
-            .or_else(|| recent_home_section_for(&config, ctx.locale))
-        {
-            home_sections.push(section);
-        }
         types.push(config);
     }
 
@@ -231,8 +221,51 @@ pub fn resolve_presets(request: &ResolveTypePresetsRequest) -> ResolveTypePreset
     ResolveTypePresetsResponse {
         types,
         backfills,
-        home_sections,
         collisions,
+    }
+}
+
+/// A proposed ordinary smart list, derived from the live schema's roles.
+#[derive(Clone, Debug)]
+pub struct SuggestedList {
+    pub id: String,
+    pub title: String,
+    pub entity_type: String,
+    pub criteria: Option<SmartFilterGroup>,
+    pub sort: crate::contract::SmartSortSpec,
+}
+
+pub fn suggested_lists(types: &[EntityTypeConfig], language: Option<&str>) -> Vec<SuggestedList> {
+    let ctx = BuildCtx::new(language);
+    let presets = built_presets(&ctx);
+    let fallback = l(
+        "In progress: {label}",
+        "進行中：{label}",
+        "进行中：{label}",
+        "進行中：{label}",
+    );
+    types
+        .iter()
+        .filter_map(|config| {
+            let template = presets
+                .iter()
+                .find(|preset| preset.config.id == config.id)
+                .and_then(|preset| preset.ongoing_shelf)
+                .unwrap_or(fallback.get(ctx.locale));
+            upcoming_event_list_for(config, ctx.locale)
+                .or_else(|| ongoing_list_for(config, Some(template)))
+                .or_else(|| recent_list_for(config, ctx.locale))
+        })
+        .collect()
+}
+
+fn suggested_sort(field: Option<&str>, direction: SortDirection) -> crate::contract::SmartSortSpec {
+    let property = field
+        .map(|field| crate::smart_lists::SortProperty::Note(field.to_string()))
+        .unwrap_or(crate::smart_lists::SortProperty::FileMtime);
+    crate::contract::SmartSortSpec {
+        property: crate::smart_lists::print_sort_property(&property),
+        direction,
     }
 }
 
@@ -1243,7 +1276,7 @@ const VOICE_BY_REL: RelationSpec = RelationSpec {
 };
 
 /// A status vocabulary: the enum options (with their canonical-status mapping)
-/// plus the title template for the default in-progress home shelf.
+/// plus the title template for the default in-progress smart list.
 struct StatusVocab {
     /// `(canonical, label)` — the first label for a canonical is the write
     /// target for a log flip.
@@ -2018,10 +2051,7 @@ fn status_field(vocab: &StatusVocab, locale: SeedLocale) -> FieldConfig {
 /// The default upcoming shelf for a type with an event date and a status role
 /// that maps at least one planning value. Events are sorted soonest-first and
 /// exclude past dates, so the initial Home highlights what is actually ahead.
-fn upcoming_event_home_section_for(
-    config: &EntityTypeConfig,
-    locale: SeedLocale,
-) -> Option<HomeSectionConfig> {
+fn upcoming_event_list_for(config: &EntityTypeConfig, locale: SeedLocale) -> Option<SuggestedList> {
     let event = config
         .fields
         .iter()
@@ -2049,18 +2079,16 @@ fn upcoming_event_home_section_for(
         ..Default::default()
     };
     let criteria = status_criteria(&status.field, planning, vec![date_rule]);
-    Some(HomeSectionConfig {
+    Some(SuggestedList {
         id: format!("upcoming-{}", config.id),
         title: UPCOMING_SHELF.get(locale).replace("{label}", &config.label),
         entity_type: config.id.clone(),
         criteria: Some(criteria),
-        limit: Some(12),
-        sort: Some(format!("date:{}", event.field)),
-        direction: Some(SortDirection::Asc),
+        sort: suggested_sort(Some(&event.field), SortDirection::Asc),
     })
 }
 
-/// The default "in progress" home section ("Watching Anime", "Playing Games")
+/// The default "in progress" suggested smart list ("Watching Anime", "Playing Games")
 /// for a type whose status **role** maps at least one ongoing value. The
 /// *criteria* — field name and matched values — derive entirely from the role's
 /// `statusValues` mapping, never from field or option names. Only the shelf
@@ -2068,10 +2096,10 @@ fn upcoming_event_home_section_for(
 /// pattern), because natural titles can't be composed from a label across
 /// languages. Types with no ongoing status (events: planned/attended) get no
 /// such shelf.
-fn ongoing_home_section_for(
+fn ongoing_list_for(
     config: &EntityTypeConfig,
     shelf_template: Option<&str>,
-) -> Option<HomeSectionConfig> {
+) -> Option<SuggestedList> {
     let template = shelf_template?;
     let status = config
         .fields
@@ -2090,16 +2118,13 @@ fn ongoing_home_section_for(
         .fields
         .iter()
         .find(|field| field.date_role == Some(DateRole::Planning))
-        .map(|field| format!("date:{}", field.field))
-        .unwrap_or_else(|| "recentlyUpdated".to_string());
-    Some(HomeSectionConfig {
+        .map(|field| field.field.as_str());
+    Some(SuggestedList {
         id: format!("ongoing-{}", config.id),
         title: template.replace("{label}", &config.label),
         entity_type: config.id.clone(),
         criteria: Some(criteria),
-        limit: Some(12),
-        sort: Some(sort),
-        direction: Some(SortDirection::Desc),
+        sort: suggested_sort(sort, SortDirection::Desc),
     })
 }
 
@@ -2139,15 +2164,12 @@ fn status_criteria(
     }
 }
 
-/// A default "Recent {label}" home section for a type — but **only** when the type
+/// A default "Recent {label}" suggested smart list for a type — but **only** when the type
 /// has a release/completion date to sort by. A chronological shelf is meaningless
 /// for types with no such date (people, franchises) or whose only date is an
 /// attendance date (events have their dedicated upcoming shelf), so those do not
 /// fall back to a title-sorted "recent" shelf that isn't really recent.
-fn recent_home_section_for(
-    config: &EntityTypeConfig,
-    locale: SeedLocale,
-) -> Option<HomeSectionConfig> {
+fn recent_list_for(config: &EntityTypeConfig, locale: SeedLocale) -> Option<SuggestedList> {
     let date_field = config
         .fields
         .iter()
@@ -2158,14 +2180,12 @@ fn recent_home_section_for(
                 .iter()
                 .find(|field| field.date_role == Some(DateRole::Completed))
         })?;
-    Some(HomeSectionConfig {
+    Some(SuggestedList {
         id: format!("recent-{}", config.id),
         title: RECENT_SHELF.get(locale).replace("{label}", &config.label),
         entity_type: config.id.clone(),
         criteria: None,
-        limit: Some(12),
-        sort: Some(format!("date:{}", date_field.field)),
-        direction: Some(SortDirection::Desc),
+        sort: suggested_sort(Some(&date_field.field), SortDirection::Desc),
     })
 }
 
@@ -2654,7 +2674,10 @@ mod tests {
         assert!(status.enum_options.contains(&"看過".to_string()));
         let values = status.status_values.as_ref().unwrap();
         assert_eq!(values.ongoing, vec!["在看".to_string()]);
-        assert_eq!(result.home_sections[0].title, "在看的動畫");
+        assert_eq!(
+            suggested_lists(&result.types, Some("zh-Hant"))[0].title,
+            "在看的動畫"
+        );
         let log = anime.log.as_ref().unwrap();
         assert_eq!(log.line_format.as_deref(), Some("- {title} {note} #動畫"));
 
@@ -2670,7 +2693,10 @@ mod tests {
         assert_eq!(games.label, "ゲーム");
         let status = find_field(games, "status").unwrap();
         assert!(status.enum_options.contains(&"プレイ中".to_string()));
-        assert_eq!(ja.home_sections[0].title, "プレイ中のゲーム");
+        assert_eq!(
+            suggested_lists(&ja.types, Some("ja"))[0].title,
+            "プレイ中のゲーム"
+        );
     }
 
     #[test]
@@ -2680,7 +2706,10 @@ mod tests {
         // English. Absent language → English throughout.
         let ko = resolve(vec![], &["anime"], Some("ko"));
         assert_eq!(ko.types[0].label, "Anime");
-        assert_eq!(ko.home_sections[0].title, "Watching Anime");
+        assert_eq!(
+            suggested_lists(&ko.types, Some("ko"))[0].title,
+            "Watching Anime"
+        );
         let title = find_field(&ko.types[0], "title").unwrap();
         assert_eq!(title.title_language.as_deref(), Some("ko"));
 
@@ -3116,23 +3145,24 @@ mod tests {
     }
 
     #[test]
-    fn one_default_home_shelf_per_type_preferring_ongoing() {
+    fn one_suggested_list_per_type_preferring_ongoing() {
         // Anime has an ongoing shelf, Event has an upcoming shelf, and the
         // date-less Franchise type has no default shelf.
         let result = resolve(vec![], &["anime", "franchise", "event"], None);
-        assert_eq!(result.home_sections.len(), 2);
-        let ongoing = &result.home_sections[0];
+        let suggestions = suggested_lists(&result.types, None);
+        assert_eq!(suggestions.len(), 2);
+        let ongoing = &suggestions[0];
         assert_eq!(ongoing.id, "ongoing-anime");
         assert_eq!(ongoing.entity_type, "anime");
         assert_eq!(ongoing.title, "Watching Anime");
-        assert_eq!(ongoing.sort.as_deref(), Some("date:season"));
+        assert_eq!(ongoing.sort.property.as_str(), "note.season");
 
-        let upcoming = &result.home_sections[1];
+        let upcoming = &suggestions[1];
         assert_eq!(upcoming.id, "upcoming-event");
         assert_eq!(upcoming.entity_type, "event");
         assert_eq!(upcoming.title, "Upcoming Events");
-        assert_eq!(upcoming.sort.as_deref(), Some("date:date"));
-        assert_eq!(upcoming.direction, Some(SortDirection::Asc));
+        assert_eq!(upcoming.sort.property.as_str(), "note.date");
+        assert_eq!(upcoming.sort.direction, SortDirection::Asc);
         let criteria = upcoming.criteria.as_ref().expect("upcoming criteria");
         assert!(criteria.rules.iter().any(|rule| {
             rule.field.as_deref() == Some("status") && rule.value.as_deref() == Some("Planned")
@@ -3158,21 +3188,21 @@ mod tests {
         // yields exactly three shelves — all in-progress ones, no "Recent"
         // duplicates bloating the default home.
         let result = resolve(vec![], &["anime", "games", "movie"], None);
-        assert_eq!(result.home_sections.len(), 3);
-        assert!(result
-            .home_sections
+        let suggestions = suggested_lists(&result.types, None);
+        assert_eq!(suggestions.len(), 3);
+        assert!(suggestions
             .iter()
             .all(|section| section.id.starts_with("ongoing-")));
     }
 
     #[test]
-    fn ongoing_home_section_criteria_derive_from_the_status_role() {
+    fn ongoing_list_criteria_derive_from_the_status_role() {
         // The criteria come from the status role's ongoing mapping: field name
         // and value are the mapped data, nothing hardcoded. Only the shelf
         // *title* comes from the vocabulary's per-language template.
         let result = resolve(vec![], &["games"], None);
-        let ongoing = result
-            .home_sections
+        let suggestions = suggested_lists(&result.types, None);
+        let ongoing = suggestions
             .iter()
             .find(|section| section.id == "ongoing-games")
             .expect("ongoing shelf");
@@ -3182,6 +3212,30 @@ mod tests {
         let rule = &criteria.rules[0];
         assert_eq!(rule.field.as_deref(), Some("status"));
         assert_eq!(rule.value.as_deref(), Some("Playing"));
+    }
+
+    #[test]
+    fn suggestions_follow_custom_roles_and_values() {
+        let mut config = resolve(vec![], &["anime"], None).types.remove(0);
+        config.id = "custom".to_string();
+        config.label = "Stories / tales".to_string();
+        for field in &mut config.fields {
+            if field.enum_role == Some(EnumRole::Status) {
+                field.field = "進捗".to_string();
+                field.status_values.as_mut().unwrap().ongoing = vec!["Doing".to_string()];
+            }
+            if field.date_role == Some(DateRole::Planning) {
+                field.field = "when".to_string();
+            }
+        }
+        let suggestions = suggested_lists(&[config], None);
+        assert_eq!(suggestions.len(), 1);
+        let suggestion = &suggestions[0];
+        assert_eq!(suggestion.title, "In progress: Stories / tales");
+        assert_eq!(suggestion.sort.property, "note.when");
+        let rule = &suggestion.criteria.as_ref().unwrap().rules[0];
+        assert_eq!(rule.field.as_deref(), Some("進捗"));
+        assert_eq!(rule.value.as_deref(), Some("Doing"));
     }
 
     #[test]

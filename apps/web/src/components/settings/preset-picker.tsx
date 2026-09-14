@@ -43,8 +43,7 @@ const SEED_TEXT_LANGUAGES = new Set(["en", "ja", "zh-Hans", "zh-Hant"]);
  * proposed) and returns the merged `types` array. Presets already present in the
  * schema (matched by id) show as "Added" and can't be re-added.
  *
- * Home sections are intentionally out of scope here — the settings editor owns
- * Home separately, and onboarding (which builds the whole vault) wires them.
+ * Suggested smart lists can be added from Home after the schema is saved.
  */
 export function PresetPickerDialog({
   currentTypes,

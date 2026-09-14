@@ -6,76 +6,11 @@
  */
 import * as zod from 'zod';
 
-export const configResponseHomeOneSectionsItemCriteriaOneRulesItemNegatedDefault = false;
-export const configResponseHomeOneSectionsItemCriteriaOneRulesItemRelativeOneAmountMin = 0;
-
-export const configResponseHomeOneSectionsItemCriteriaOneRulesItemRelativeOneFutureDefault = false;
-export const configResponseHomeOneSectionsItemCriteriaOneRulesDefault = [];
-export const configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesItemNegatedDefault = false;
-export const configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesItemRelativeOneAmountMin = 0;
-
-export const configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesItemRelativeOneFutureDefault = false;
-export const configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesDefault = [];
-export const configResponseHomeOneSectionsItemLimitMin = 0;
-
-
 export const ConfigResponse = zod.object({
   "taxonomyRoot": zod.string(),
   "vaultRoot": zod.string().describe('Absolute vault root, used by the desktop runtime to resolve local assets\ndirectly from disk (the web runtime uses the `\/api\/assets` route instead).'),
   "assetRoot": zod.string().describe('Vault-relative directory where downloaded assets are stored.'),
   "tagsField": zod.string().nullish().describe('The resolved frontmatter key for the built-in tags field (configured via\n`tags.field`), or absent when the tags feature is disabled — it is opt-in,\nenabled only by setting `tags.field`. Clients use this for the tag editor,\nthe Library tag filter, and to hide tags from the generic \"Details\" view —\nand hide the tag UI entirely when it is absent.'),
-  "home": zod.union([zod.object({
-  "sections": zod.array(zod.object({
-  "id": zod.string(),
-  "title": zod.string(),
-  "type": zod.string(),
-  "criteria": zod.union([zod.object({
-  "conjunction": zod.enum(['all', 'any', 'none']).describe('How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`\/`or`\/`not`).'),
-  "rules": zod.array(zod.object({
-  "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
-  "field": zod.string().nullish(),
-  "negated": zod.boolean().default(configResponseHomeOneSectionsItemCriteriaOneRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
-  "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
-  "values": zod.array(zod.string()).optional(),
-  "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
-  "value": zod.string().nullish(),
-  "number": zod.number().nullish(),
-  "boolean": zod.boolean().nullish(),
-  "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
-  "relative": zod.union([zod.object({
-  "amount": zod.int().min(configResponseHomeOneSectionsItemCriteriaOneRulesItemRelativeOneAmountMin),
-  "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
-  "future": zod.boolean().default(configResponseHomeOneSectionsItemCriteriaOneRulesItemRelativeOneFutureDefault)
-}).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
-  "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
-}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(configResponseHomeOneSectionsItemCriteriaOneRulesDefault),
-  "groups": zod.array(zod.object({
-  "conjunction": zod.enum(['all', 'any', 'none']).describe('How a smart-list filter group combines its members: every rule must match,\nany rule may match, or no rule may match (Bases `and`\/`or`\/`not`).'),
-  "rules": zod.array(zod.object({
-  "kind": zod.enum(['compare', 'contains', 'startsWith', 'endsWith', 'isEmpty', 'hasTag', 'linksTo', 'inFolder', 'unsupported']).describe('The editable smart-list rule shapes. `unsupported` is the read-mostly\nescape hatch: a construct the editor can\'t model, carried as raw YAML.'),
-  "field": zod.string().nullish(),
-  "negated": zod.boolean().default(configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesItemNegatedDefault).describe('Logical negation of the rule (supported on every kind but `compare`,\nwhere the operator itself expresses it).'),
-  "op": zod.union([zod.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),zod.null()]).optional(),
-  "values": zod.array(zod.string()).optional(),
-  "mode": zod.union([zod.enum(['any', 'all']),zod.null()]).optional(),
-  "value": zod.string().nullish(),
-  "number": zod.number().nullish(),
-  "boolean": zod.boolean().nullish(),
-  "date": zod.string().nullish().describe('An absolute date literal, ISO `YYYY-MM-DD`.'),
-  "relative": zod.union([zod.object({
-  "amount": zod.int().min(configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesItemRelativeOneAmountMin),
-  "unit": zod.enum(['days', 'weeks', 'months', 'years']).describe('The calendar unit of a relative-date rule (\"in the last N …\").'),
-  "future": zod.boolean().default(configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesItemRelativeOneFutureDefault)
-}).describe('A date relative to today: `amount`×`unit` into the past (default) or the\nfuture (`future: true`) — \"started in the last 90 days\", \"airing in the\nnext 2 weeks\". On `file.mtime` rules it is relative to `now()` instead.'),zod.null()]).optional(),
-  "raw": zod.string().nullish().describe('`kind = unsupported`: the construct\'s raw YAML, round-tripped verbatim.')
-}).describe('One smart-list criterion. Which of the optional members apply depends on\n`kind`:\n\n- `compare` — `field`, `op`, and exactly one of `value`\/`number`\/`boolean`\/\n  `date` (ISO `YYYY-MM-DD`)\/`relative`.\n- `contains` — `field`, `values` (with `mode`, default any-of).\n- `startsWith` \/ `endsWith` — `field`, `values[0]`.\n- `isEmpty` — `field` (`negated: true` reads as \"has a value\").\n- `hasTag` — `values` (any listed tag).\n- `linksTo` — `values[0]`: an entity basename\/path the note must link to.\n  An optional `field` scopes it to one relation field (\"studio links to X\"\n  rather than \"links to X anywhere\").\n- `inFolder` — `values[0]`: a vault-relative folder.\n- `unsupported` — `raw` only; preserved verbatim, ignored by evaluation.\n\n`field` is a frontmatter key, or the special `file.name` \/ `file.mtime`.')).default(configResponseHomeOneSectionsItemCriteriaOneGroupsItemRulesDefault)
-}).describe('A nested rule group — one level deep only (see the module note above).')).optional()
-}).describe('A smart list\'s criteria: a conjunction over rules and (one level of)\nsubgroups. The type scope is \*not\* in here — it rides separately as\n`scope` on the detail\/requests and the server maintains its\n`file.inFolder(...)` atom.'),zod.null()]).optional().describe('Smart-list-grade criteria (see [`crate::contract::SmartFilterGroup`]) —\nthe same rule model and evaluator as `.base` smart lists, stored\nstructurally here because the vault config is strict-parsed YAML, not a\nBases file. Absent means every entry of the type matches.'),
-  "limit": zod.int().min(configResponseHomeOneSectionsItemLimitMin).nullish(),
-  "sort": zod.string().nullish(),
-  "direction": zod.union([zod.enum(['asc', 'desc']),zod.null()]).optional()
-})).optional()
-}).describe('The home page: just its sections. The page \*title\* is deliberately not\nconfig — every client renders a localized \"Home\" (app copy, not user data).'),zod.null()]).optional(),
   "types": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),

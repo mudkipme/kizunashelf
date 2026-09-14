@@ -16,10 +16,10 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage, isConflictError } from "@/api/client";
+import { invalidateSmartListData } from "@/api/invalidate-smart-list-data";
 import {
   allTagsQuery,
   configQuery,
-  queryKeys,
   smartListPreviewQuery,
   smartListQuery,
   smartListResultsQuery,
@@ -30,6 +30,7 @@ import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { RenameDialog } from "@/components/rename-dialog";
 import { CriteriaSummary } from "@/components/smart-lists/criteria-summary";
+import { HomeToggle } from "@/components/smart-lists/home-toggle";
 import { RuleBuilder } from "@/components/smart-lists/rule-builder";
 import { ruleFieldMetas } from "@/components/smart-lists/rule-field-meta";
 import { pruneIncompleteRules } from "@/components/smart-lists/rule-model";
@@ -153,13 +154,7 @@ export function SmartListPage() {
     );
   };
 
-  const invalidate = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.smartList(id) }),
-      queryClient.invalidateQueries({ queryKey: ["smartListResults", id] }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.lists }),
-    ]);
-  };
+  const invalidate = () => invalidateSmartListData(queryClient);
 
   const save = useMutation({
     mutationFn: (draftToSave: Draft) =>
@@ -189,7 +184,7 @@ export function SmartListPage() {
     mutationFn: () => removeSmartList(id),
     onSuccess: async () => {
       toast.success(t`Smart list deleted`);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+      await invalidateSmartListData(queryClient);
       navigate("/lists");
     },
     onError: (error) => toast.error(errorMessage(error)),
@@ -280,6 +275,7 @@ export function SmartListPage() {
                     <PencilIcon data-icon="inline-start" />
                     <Trans>Edit criteria</Trans>
                   </Button>
+                  <HomeToggle list={data} disabled={!contentWritable} />
                   <Button
                     type="button"
                     variant="outline"
@@ -547,7 +543,7 @@ function RenameSmartListDialog({
     onSuccess: async (updated) => {
       toast.success(t`Smart list renamed`);
       onOpenChange(false);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.lists });
+      await invalidateSmartListData(queryClient);
       navigate(`/lists/smart/${encodeURIComponent(updated.id)}`, { replace: true });
     },
     onError: (error) => {

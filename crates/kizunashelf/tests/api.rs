@@ -183,16 +183,11 @@ async fn system_and_entity_endpoints_read_a_temp_vault() {
     assert_eq!(config["types"][0]["fields"][6]["seasonLanguage"], "zh");
 
     let home = server.ok_json("/api/home").await;
-    assert_eq!(home["sections"][0]["title"], "Recent Anime");
-    assert_eq!(home["sections"][0]["total"], 1);
-    // Resolved title now falls back to the `original`-role title when no viewer
-    // language is matched (the core no longer has a `defaultTitle`).
     assert_eq!(
-        home["sections"][0]["items"][0]["title"],
-        "シュタインズ・ゲート ゼロ"
+        home["lists"],
+        json!([]),
+        "retired Home config is ignored safely"
     );
-    assert_eq!(home["sections"][2]["title"], "Completed Anime");
-    assert_eq!(home["sections"][2]["total"], 0);
 
     let stats = server.ok_json("/api/stats").await;
     assert_eq!(stats["total"], 4);
@@ -543,8 +538,7 @@ async fn type_preset_endpoints_list_and_resolve() {
     assert_eq!(title["titleLanguage"], "en");
     // Only anime has a release/season date → one Home shelf; franchise (no date
     // field) is left out of the default Home.
-    assert_eq!(resolved["homeSections"].as_array().unwrap().len(), 1);
-    assert_eq!(resolved["homeSections"][0]["type"], "anime");
+    assert!(resolved.get("homeSections").is_none());
     assert!(resolved
         .get("backfills")
         .and_then(Value::as_array)
@@ -1839,8 +1833,7 @@ async fn settings_save_and_read_vault_config() {
     let read_back = request_json(&app, Method::GET, "/api/settings/config", None).await;
     assert_eq!(read_back.0, StatusCode::OK);
     assert_eq!(read_back.1["vaultExists"], true);
-    // The home block round-trips (its page title is app copy, not config).
-    assert!(read_back.1["vault"]["home"].is_object());
+    assert!(read_back.1["vault"].get("home").is_none());
 }
 
 #[tokio::test]
@@ -1887,94 +1880,186 @@ async fn settings_config_reports_invalid_paths_as_existing_config_errors() {
 }
 
 #[tokio::test]
-async fn home_sections_evaluate_smart_list_criteria() {
+async fn home_uses_the_pinned_smart_lists_first_view_and_preserves_its_document() {
     let server = TestServer::new();
-    let app = &server.app;
-
-    // Add a criteria-driven section next to the fixture sections: the
-    // smart-list rule model, stored structurally in the vault config.
-    let settings = request_json(app, Method::GET, "/api/settings/config", None).await;
-    assert_eq!(settings.0, StatusCode::OK, "{}", settings.1);
-    let mut vault_config = settings.1["vault"].clone();
-    vault_config["home"]["sections"]
-        .as_array_mut()
-        .unwrap()
-        .push(json!({
-            "id": "watching-favorites",
-            "title": "Watching Favorites",
-            "type": "anime",
-            "criteria": {
-                "conjunction": "all",
-                "rules": [
-                    { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" },
-                    { "kind": "compare", "field": "favorite", "op": "eq", "boolean": true }
-                ]
-            },
-            "limit": 4
-        }));
-    let saved = request_json(
-        app,
-        Method::PUT,
-        "/api/settings/config",
-        Some(vault_settings_body(&vault_config)),
+    let dir = server.vault.join("KizunaShelf/Lists");
+    fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("Pinned.base");
+    fs::write(
+        &path,
+        r#"
+filters:
+  and:
+    - file.inFolder("Taxonomy/Anime")
+views:
+  - type: table
+    name: Favorites
+    filters: note.favorite == true
+    sort:
+      - property: file.name
+        direction: desc
+    limit: 1
+    columnSize: {note.title: 200}
+  - type: cards
+    name: Everything
+kizunashelf:
+  custom: keep-me
+"#,
+    )
+    .unwrap();
+    fs::write(dir.join("Broken.base"), "views: [broken").unwrap();
+    assert_eq!(server.ok_json("/api/home").await["lists"], json!([]));
+    let detail = server.ok_json("/api/smart-lists/Pinned").await;
+    let pinned = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-lists/Pinned/home",
+        Some(json!({"revision": detail["revision"], "showOnHome": true})),
     )
     .await;
-    assert_eq!(saved.0, StatusCode::OK, "{}", saved.1);
-
-    // The criteria survive the strict config round-trip…
-    let read_back = request_json(app, Method::GET, "/api/settings/config", None).await;
-    let section = &read_back.1["vault"]["home"]["sections"][3];
-    assert_eq!(section["criteria"]["rules"].as_array().unwrap().len(), 2);
-
-    // …and the section evaluates through the smart-list engine: Steins;Gate 0 (Anime)
-    // is Watching + favorite. The fixture sections keep working beside it.
-    let home = request_json(app, Method::GET, "/api/home", None).await;
-    assert_eq!(home.0, StatusCode::OK, "{}", home.1);
-    let sections = home.1["sections"].as_array().unwrap();
-    let section = sections
-        .iter()
-        .find(|section| section["id"] == "watching-favorites")
-        .expect("criteria section present");
-    assert_eq!(section["total"], 1);
-    assert_eq!(section["items"][0]["id"], "anime:Steins;Gate 0 (Anime)");
-    assert_eq!(
-        section["criteria"]["rules"][0]["value"], "Watching",
-        "criteria echoed on the response"
-    );
-    assert_eq!(
-        sections
-            .iter()
-            .find(|section| section["id"] == "recent-anime")
-            .map(|section| &section["total"]),
-        Some(&json!(1)),
-        "existing criteria section unchanged"
-    );
-
-    // A none-conjunction excludes: no anime that is Watching → only non-watching.
-    let mut vault_config = read_back.1["vault"].clone();
-    vault_config["home"]["sections"][3]["criteria"] = json!({
-        "conjunction": "none",
-        "rules": [
-            { "kind": "compare", "field": "status", "op": "eq", "value": "Watching" }
-        ]
-    });
-    let saved = request_json(
-        app,
-        Method::PUT,
-        "/api/settings/config",
-        Some(vault_settings_body(&vault_config)),
+    assert_eq!(pinned.0, StatusCode::OK, "{}", pinned.1);
+    assert_eq!(pinned.1["showOnHome"], true);
+    assert_eq!(pinned.1["filters"], detail["filters"]);
+    assert_eq!(pinned.1["views"], detail["views"]);
+    let home = server.ok_json("/api/home").await;
+    let results = server
+        .ok_json("/api/smart-lists/Pinned/results?view=Favorites")
+        .await;
+    assert_eq!(home["lists"][0]["items"], results["items"]);
+    assert_eq!(home["lists"][0]["total"], results["total"]);
+    assert_eq!(home["lists"][0]["view"], "Favorites");
+    let stale = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-lists/Pinned/home",
+        Some(json!({"revision": detail["revision"], "showOnHome": false})),
     )
     .await;
-    assert_eq!(saved.0, StatusCode::OK, "{}", saved.1);
-    let home = request_json(app, Method::GET, "/api/home", None).await;
-    let section = home.1["sections"]
+    assert_eq!(stale.0, StatusCode::CONFLICT);
+    let unpinned = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-lists/Pinned/home",
+        Some(json!({"revision": pinned.1["revision"], "showOnHome": false})),
+    )
+    .await;
+    assert_eq!(unpinned.0, StatusCode::OK);
+    assert_eq!(server.ok_json("/api/home").await["lists"], json!([]));
+    let doc: serde_yaml::Value = serde_yaml::from_str(&fs::read_to_string(path).unwrap()).unwrap();
+    assert_eq!(doc["kizunashelf"]["custom"].as_str(), Some("keep-me"));
+    assert_eq!(
+        doc["views"][0]["columnSize"]["note.title"].as_u64(),
+        Some(200)
+    );
+}
+
+#[tokio::test]
+async fn suggested_lists_are_repeatable_and_keep_renames_and_edits() {
+    let server = TestServer::new();
+    let suggestions = server
+        .ok_json("/api/smart-list-suggestions?language=en")
+        .await;
+    let suggestion = suggestions["suggestions"]
         .as_array()
         .unwrap()
         .iter()
-        .find(|section| section["id"] == "watching-favorites")
-        .expect("criteria section present");
-    // The fixture vault's only anime is Watching, so none-of matches nothing.
-    assert_eq!(section["total"], 0);
+        .find(|item| item["type"] == "anime")
+        .unwrap();
+    let dir = server.vault.join("KizunaShelf/Lists");
+    fs::create_dir_all(&dir).unwrap();
+    let collision = dir.join(format!("{}.base", suggestion["name"].as_str().unwrap()));
+    fs::write(&collision, "filters: note.custom == true\n").unwrap();
+    let request = json!({"suggestionIds": [suggestion["id"]], "language": "en"});
+    let created = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-list-suggestions",
+        Some(request.clone()),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+    assert_eq!(created.1["lists"].as_array().unwrap().len(), 1);
+    let list = &created.1["lists"][0];
+    assert!(list["name"].as_str().unwrap().ends_with(" 2"));
+    assert_eq!(
+        fs::read_to_string(&collision).unwrap(),
+        "filters: note.custom == true\n"
+    );
+    assert!(
+        list["views"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|view| view["limit"].is_null()),
+        "suggested lists are not capped to Home's preview size"
+    );
+    let original = server.vault.join(list["path"].as_str().unwrap());
+    let renamed = dir.join("My List.base");
+    let raw = fs::read_to_string(&original)
+        .unwrap()
+        .replace("showOnHome: true", "showOnHome: false");
+    fs::write(&renamed, format!("{raw}\ncustom: keep-me\n")).unwrap();
+    fs::remove_file(original).unwrap();
+    let regenerated = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-list-suggestions",
+        Some(request.clone()),
+    )
+    .await;
+    assert_eq!(regenerated.0, StatusCode::OK, "{}", regenerated.1);
+    assert_eq!(regenerated.1["lists"][0]["name"], "My List");
+    assert_eq!(regenerated.1["lists"][0]["showOnHome"], true);
+    assert_eq!(regenerated.1["lists"][0]["filters"], list["filters"]);
+    let saved = fs::read_to_string(&renamed).unwrap();
+    assert!(saved.contains("custom: keep-me"));
+    let repeated = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-list-suggestions",
+        Some(request.clone()),
+    )
+    .await;
+    assert_eq!(repeated.0, StatusCode::OK);
+    assert_eq!(
+        fs::read_to_string(&renamed).unwrap(),
+        saved,
+        "no-op recreation never rewrites edits"
+    );
+    assert_eq!(fs::read_dir(&dir).unwrap().count(), 2);
+    fs::remove_file(renamed).unwrap();
+    let recreated = request_json(
+        &server.app,
+        Method::POST,
+        "/api/smart-list-suggestions",
+        Some(request),
+    )
+    .await;
+    assert_eq!(recreated.0, StatusCode::OK);
+    assert_eq!(fs::read_dir(&dir).unwrap().count(), 2);
+}
+
+#[tokio::test]
+async fn home_and_suggestions_work_with_no_lists_and_block_read_only_writes() {
+    let server = TestServer::new();
+    // The old home block is still in this test vault. It is ignored on load,
+    // rather than making an otherwise valid vault inaccessible.
+    assert_eq!(server.ok_json("/api/home").await["lists"], json!([]));
+    let settings = server.ok_json("/api/settings/config").await;
+    assert!(settings["vaultExists"].as_bool().unwrap());
+    assert!(settings["error"].is_null());
+    assert!(settings["vault"].get("home").is_none());
+    let readonly = inline_router(&server.vault, true, false);
+    for (url, body) in [
+        ("/api/smart-list-suggestions", json!({"language":"en"})),
+        (
+            "/api/smart-lists/Any/home",
+            json!({"revision":"old","showOnHome":true}),
+        ),
+    ] {
+        let response = request_json(&readonly, Method::POST, url, Some(body)).await;
+        assert_eq!(response.0, StatusCode::FORBIDDEN);
+    }
 }
 
 #[tokio::test]
@@ -2016,6 +2101,12 @@ async fn config_writes_reject_an_external_edit_after_loading() {
     let server = TestServer::new();
     let loaded = request_json(&server.app, Method::GET, "/api/settings/config/raw", None).await;
     let revision = loaded.1["revision"].as_str().unwrap();
+    // The fixture retains an obsolete Home block to exercise old-vault loading.
+    // Submit valid current YAML so this test isolates the stale revision guard.
+    let mut submitted: serde_yaml::Mapping =
+        serde_yaml::from_str(loaded.1["content"].as_str().unwrap()).unwrap();
+    submitted.remove(serde_yaml::Value::String("home".into()));
+    let submitted = serde_yaml::to_string(&submitted).unwrap();
     let externally_edited = format!(
         "{}\n# edited in Obsidian\n",
         loaded.1["content"].as_str().unwrap()
@@ -2028,7 +2119,7 @@ async fn config_writes_reject_an_external_edit_after_loading() {
         Method::PUT,
         "/api/settings/config/raw",
         Some(json!({
-            "content": loaded.1["content"],
+            "content": submitted,
             "revision": revision,
         })),
     )

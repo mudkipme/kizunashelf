@@ -244,13 +244,13 @@ export function smartListPreviewQuery(request: SmartListPreviewRequest) {
   });
 }
 
-export function homeQuery() {
-  // Date-relative home sections (`today() - "30d"`) resolve against the client's
+export function homeQuery(titleLanguage?: string) {
+  // Date-relative smart lists (`today() - "30d"`) resolve against the client's
   // local date, keyed so the page refetches when the day rolls over.
   const today = todayLocal();
   return queryOptions({
-    queryKey: [...queryKeys.home, today] as const,
-    queryFn: ({ signal }) => getHome({ today }, { signal }, apiFetch),
+    queryKey: [...queryKeys.home, today, titleLanguage] as const,
+    queryFn: ({ signal }) => getHome({ today, titleLanguage }, { signal }, apiFetch),
   });
 }
 

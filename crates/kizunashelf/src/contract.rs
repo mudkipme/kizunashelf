@@ -2,7 +2,7 @@ use crate::calendar::{ActivityResponse, CalendarDay, EntityDatesResponse, Upcomi
 use crate::relations::Count;
 use crate::types::{
     AppConfig, CanonicalStatus, Entity, EntitySummary, EntityTypeConfig, EpisodeTracking,
-    HomeConfig, KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
+    KizunaConfig, LibraryDiagnostic, Relation, VaultConfig,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -137,8 +137,6 @@ pub struct ConfigResponse {
     /// and hide the tag UI entirely when it is absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tags_field: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub home: Option<HomeConfig>,
     pub types: Vec<EntityTypeConfig>,
 }
 
@@ -309,9 +307,6 @@ pub struct ResolveTypePresetsResponse {
     /// the client applies the ones the user accepts.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub backfills: Vec<TypePresetBackfill>,
-    /// Home sections (one per added type) the client can offer to add to Home.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub home_sections: Vec<crate::types::HomeSectionConfig>,
     /// Presets whose id/path collided with an existing type and were suffixed, so
     /// the UI can surface a rename.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -384,18 +379,12 @@ pub struct LanguagesResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct HomeSectionResponse {
+pub struct HomeListResponse {
+    /// The pinned smart list; clients open its first supported view.
     pub id: String,
-    pub title: String,
-    #[serde(rename = "type")]
-    pub entity_type: String,
-    pub type_label: String,
-    /// The section's criteria, echoed from the config when defined.
+    pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub criteria: Option<SmartFilterGroup>,
-    pub limit: u32,
-    pub sort: String,
-    pub direction: String,
+    pub view: Option<String>,
     pub total: usize,
     pub items: Vec<EntitySummary>,
 }
@@ -404,7 +393,7 @@ pub struct HomeSectionResponse {
 #[serde(rename_all = "camelCase")]
 pub struct HomeResponse {
     pub generated_at: String,
-    pub sections: Vec<HomeSectionResponse>,
+    pub lists: Vec<HomeListResponse>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -1138,6 +1127,7 @@ pub struct SmartListView {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SmartListDetail {
+    pub show_on_home: bool,
     pub id: String,
     pub name: String,
     pub path: String,
@@ -1177,6 +1167,48 @@ pub struct UpdateSmartListRequest {
     pub views: Vec<SmartListView>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rename_to: Option<String>,
+}
+
+/// Changes only Home visibility, preserving the list's rules and views.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SetSmartListHomeRequest {
+    pub revision: String,
+    pub show_on_home: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartListSuggestion {
+    pub id: String,
+    pub name: String,
+    #[serde(rename = "type")]
+    pub entity_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub existing_list_id: Option<String>,
+    pub show_on_home: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SmartListSuggestionsResponse {
+    pub suggestions: Vec<SmartListSuggestion>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSuggestedSmartListsRequest {
+    /// Omitted creates all suggestions; an empty array creates none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub suggestion_ids: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSuggestedSmartListsResponse {
+    pub lists: Vec<SmartListDetail>,
 }
 
 /// Evaluates an unsaved smart-list definition — the live preview while the

@@ -84,7 +84,7 @@ The resolution order is always *language preference → original → other title
 
 ### `cover_url: Assets/Anime/Steins;Gate 0 (Anime)/cover_url.jpg`
 
-Schema: `fieldType: image`. This field supplies the cover image for the library grid, detail page, and home sections. The app identifies this field because the schema classifies it as an image, not because of its key name. When external matching downloads a cover, it writes to this field, and the file is saved under the vault's configured `assetRoot`.
+Schema: `fieldType: image`. This field supplies the cover image for the library grid, detail page, and Home smart lists. The app identifies this field because the schema classifies it as an image, not because of its key name. When external matching downloads a cover, it writes to this field, and the file is saved under the vault's configured `assetRoot`.
 
 ### `status: Watched`
 
@@ -102,7 +102,7 @@ Schema: `fieldType: season` with `dateRole: planning` and `seasonLanguage: en`. 
 
 ### `complete_date: 2023-07-08`
 
-Schema: `fieldType: date` with `dateRole: completed`. This date appears in calendars, activity histories, and smart lists or home sections (e.g., "Finished in 2023").
+Schema: `fieldType: date` with `dateRole: completed`. This date appears in calendars, activity histories, and smart lists, including those pinned to Home (e.g., "Finished in 2023").
 
 ### The external references
 

@@ -18,8 +18,8 @@ use kizunashelf::contract::{ResolveTypePresetsRequest, TypePresetSummary};
 use kizunashelf::presets::{resolve_presets, type_presets_response};
 use kizunashelf::secrets::credential_env_var;
 use kizunashelf::types::{
-    CanonicalStatus, DateRole, EntityTypeConfig, EnumRole, FieldConfig, FieldType,
-    HomeSectionConfig, SeasonLanguage, TitleRole,
+    CanonicalStatus, DateRole, EntityTypeConfig, EnumRole, FieldConfig, FieldType, SeasonLanguage,
+    TitleRole,
 };
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -441,8 +441,8 @@ fn presets_page() -> Result<String> {
         .zip(resolved.types.iter())
         .map(|(id, config)| (id.as_str(), config))
         .collect();
-    let home_sections: BTreeMap<&str, &HomeSectionConfig> = resolved
-        .home_sections
+    let suggestions = kizunashelf::presets::suggested_lists(&resolved.types, Some("en"));
+    let suggested_lists: BTreeMap<&str, &kizunashelf::presets::SuggestedList> = suggestions
         .iter()
         .map(|section| (section.entity_type.as_str(), section))
         .collect();
@@ -459,7 +459,7 @@ fn presets_page() -> Result<String> {
     let _ = writeln!(out);
     let _ = writeln!(out, "The built-in presets offered during onboarding and by **Settings → add a built-in type**, generated directly from the app — so this page always matches the version you're running. Everything a preset seeds is ordinary schema you can edit afterwards; nothing is special-cased.");
     let _ = writeln!(out);
-    let _ = writeln!(out, "The tables below show each preset resolved with **English** as the picker language. Your own language choice stamps the title/filename/season languages and selects the seeded text (labels, folder names, status options, home section titles) — the preset name is shown here in all four preset languages.");
+    let _ = writeln!(out, "The tables below show each preset resolved with **English** as the picker language. Your own language choice stamps the title/filename/season languages and selects the seeded text (labels, folder names, status options, suggested list names) — the preset name is shown here in all four preset languages.");
     let _ = writeln!(out);
 
     for category in &en.categories {
@@ -480,7 +480,7 @@ fn presets_page() -> Result<String> {
                 &ja,
                 &zh_hans,
                 &zh_hant,
-                &home_sections,
+                &suggested_lists,
             );
         }
     }
@@ -495,7 +495,7 @@ fn write_preset(
     ja: &BTreeMap<String, TypePresetSummary>,
     zh_hans: &BTreeMap<String, TypePresetSummary>,
     zh_hant: &BTreeMap<String, TypePresetSummary>,
-    home_sections: &BTreeMap<&str, &HomeSectionConfig>,
+    suggested_lists: &BTreeMap<&str, &kizunashelf::presets::SuggestedList>,
 ) {
     let _ = writeln!(out, "### {}", cell(&summary.label));
     let _ = writeln!(out);
@@ -571,15 +571,11 @@ fn write_preset(
             let _ = writeln!(out, "- **Daily-note log**: {}", parts.join(", "));
         }
     }
-    if let Some(section) = home_sections.get(config.id.as_str()) {
-        let sort = section
-            .sort
-            .as_deref()
-            .map(|sort| format!(", sorted by `{sort}`"))
-            .unwrap_or_default();
+    if let Some(section) = suggested_lists.get(config.id.as_str()) {
+        let sort = format!(", sorted by `{}`", section.sort.property);
         let _ = writeln!(
             out,
-            "- **Home section**: \"{}\"{sort}",
+            "- **Suggested smart list**: \"{}\"{sort}",
             cell(&section.title)
         );
     }

@@ -14,7 +14,6 @@ The vault config lives at `<vaultRoot>/KizunaShelf/config.yaml`:
 taxonomyRoot: Taxonomy
 assetRoot: Assets
 dailyNotes: ...
-home: ...
 types: [...]
 ```
 
@@ -24,7 +23,6 @@ types: [...]
 | `assetRoot` | no | string | Vault-relative directory where downloaded assets are stored. Defaults to `Assets`. |
 | `dailyNotes` | no | object | Daily note paths and date extraction settings. |
 | `tags` | no | object | Opt-in built-in tags field — tags exist only when `tags.field` is set (see [Tags](./home-tags-daily-notes.md#tags)). |
-| `home` | no | object | Home dashboard sections. |
 | `types` | yes | array | Entity type definitions. |
 
 Path fields under the vault must be relative and cannot contain parent directory components (`..`). This is intentional: the app should not index or create files outside `vaultRoot`.

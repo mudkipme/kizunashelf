@@ -6,27 +6,25 @@
  */
 import * as zod from 'zod';
 
-export const homeResponseListsItemTotalMin = 0;
+export const homeListResponseTotalMin = 0;
 
-export const homeResponseListsItemItemsItemDatesItemParsedOneMonthMin = 0;
+export const homeListResponseItemsItemDatesItemParsedOneMonthMin = 0;
 
-export const homeResponseListsItemItemsItemDatesItemParsedOneDayMin = 0;
+export const homeListResponseItemsItemDatesItemParsedOneDayMin = 0;
 
-export const homeResponseListsItemItemsItemTagsDefault = [];
-export const homeResponseListsItemItemsItemEpisodeProgressOneWatchedMin = 0;
+export const homeListResponseItemsItemTagsDefault = [];
+export const homeListResponseItemsItemEpisodeProgressOneWatchedMin = 0;
 
-export const homeResponseListsItemItemsItemEpisodeProgressOneTotalMin = 0;
+export const homeListResponseItemsItemEpisodeProgressOneTotalMin = 0;
 
-export const homeResponseListsItemItemsItemRelationCountMin = 0;
+export const homeListResponseItemsItemRelationCountMin = 0;
 
 
-export const HomeResponse = zod.object({
-  "generatedAt": zod.string(),
-  "lists": zod.array(zod.object({
+export const HomeListResponse = zod.object({
   "id": zod.string().describe('The pinned smart list; clients open its first supported view.'),
   "name": zod.string(),
   "view": zod.string().nullish(),
-  "total": zod.int().min(homeResponseListsItemTotalMin),
+  "total": zod.int().min(homeListResponseTotalMin),
   "items": zod.array(zod.object({
   "id": zod.string(),
   "type": zod.string(),
@@ -38,8 +36,8 @@ export const HomeResponse = zod.object({
   "value": zod.string(),
   "parsed": zod.union([zod.object({
   "year": zod.int(),
-  "month": zod.int().min(homeResponseListsItemItemsItemDatesItemParsedOneMonthMin).nullish(),
-  "day": zod.int().min(homeResponseListsItemItemsItemDatesItemParsedOneDayMin).nullish(),
+  "month": zod.int().min(homeListResponseItemsItemDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.int().min(homeListResponseItemsItemDatesItemParsedOneDayMin).nullish(),
   "season": zod.string().nullish(),
   "seasonKey": zod.string().nullish()
 }),zod.null()]).optional(),
@@ -50,20 +48,19 @@ export const HomeResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
-  "tags": zod.array(zod.string()).default(homeResponseListsItemItemsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "tags": zod.array(zod.string()).default(homeListResponseItemsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "episodeProgress": zod.union([zod.object({
-  "watched": zod.int().min(homeResponseListsItemItemsItemEpisodeProgressOneWatchedMin),
-  "total": zod.int().min(homeResponseListsItemItemsItemEpisodeProgressOneTotalMin)
+  "watched": zod.int().min(homeListResponseItemsItemEpisodeProgressOneWatchedMin),
+  "total": zod.int().min(homeListResponseItemsItemEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "status": zod.union([zod.object({
   "field": zod.string(),
   "value": zod.string(),
   "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
 }).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
-  "relationCount": zod.int().min(homeResponseListsItemItemsItemRelationCountMin)
-}))
+  "relationCount": zod.int().min(homeListResponseItemsItemRelationCountMin)
 }))
 })
 
-export type HomeResponse = zod.input<typeof HomeResponse>;
-export type HomeResponseOutput = zod.output<typeof HomeResponse>;
+export type HomeListResponse = zod.input<typeof HomeListResponse>;
+export type HomeListResponseOutput = zod.output<typeof HomeListResponse>;

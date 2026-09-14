@@ -1,33 +1,27 @@
 ---
-title: "Configuring the Home page"
-description: "Ordered sections over your library, driven by smart-list-grade criteria in the vault config."
+title: "Home & smart lists"
+description: "Pin smart lists to Home and recreate suggestions from your schema."
 sidebar_position: 9
 ---
 
-The Home page is a stack of **sections** you define — *Watching*, *Coming this season*, *Recently finished*, *Highly rated backlog* — each an ordered, filtered slice of one type.
+Home previews the [smart lists](./lists.mdx) you pin to it. Each row uses the list's first supported view, including its criteria, sorting, and view limit. Home shows up to 12 items per list; **See all** opens that saved list and view.
 
-<Screenshot caption="A configured Home page: each section is one entry in the vault config." />
+## Add a list to Home
 
-Sections live in the vault config's `home` block, so your Home page travels with the vault and looks the same on every device:
+Open a smart list in **Lists** and choose **Add to Home** (in the list's menu on iOS). Choose **Remove from Home** to hide its preview while keeping the list. Renaming or editing a pinned list also updates Home.
 
-```yaml
-home:
-  sections:
-  - id: watching
-    title: Watching
-    type: anime
-    limit: 12
-    sort: date:season
-    direction: desc
-    criteria:
-      conjunction: all
-      rules:
-      - kind: compare
-        field: status
-        op: eq
-        value: Watching
-```
+To turn a library filter into a Home row, choose **Save as smart list** in the Library, then open the saved list and choose **Add to Home**.
 
-Each section declares its `type`, an optional `criteria` block (the same rule model as [smart lists](./lists.mdx#smart-lists) — omit it and every entity of the type matches), a `sort` key (`title`, `date:<field>`, `relationCount`, `path`), a direction, and a `limit`.
+## Suggested lists
 
-Edit sections in **Settings** (the structured form or raw YAML), or in the file directly. [Type presets](../reference/presets.md) seed a sensible section per type — the *Watching Anime* section you get out of the box is just like the one above, yours to reshape. Full option reference: [Home Page](../reference/home-tags-daily-notes.md#home-page).
+Onboarding creates and pins suggestions after saving your schema, such as *Watching Anime* or *Upcoming Events*. Suggestions use your configured status and date roles, so they work with customized field names and status values too. Types with no suitable status or date roles have no suggestion.
+
+Choose **Add suggested lists** on Home whenever you want to add missing suggestions, including after adding types in Settings. Select the ones you want. Lists already on Home are marked; existing suggestions are reused even if you renamed them or changed their criteria. Deleted suggestions can be recreated. A same-named list you created yourself is kept separately.
+
+If setup cannot create the suggested files, your schema is still saved. You can retry from Home.
+
+## Stored in your vault
+
+Home membership is stored in each `.base` file under `KizunaShelf/Lists/`, so it syncs with the list. Rows are ordered by filename. See the [Home metadata reference](../reference/home-tags-daily-notes.md#home-page) for the file format.
+
+Older test vaults may still contain a `home` block in `config.yaml`. It is ignored when opening the vault; those sections are not migrated. Use **Add suggested lists** or pin your own lists to populate Home. Saving through the structured schema editor removes the obsolete block; remove it manually before saving with the strict YAML editor.

@@ -93,6 +93,14 @@ import type {
 } from './createSmartListRequest.zod';
 
 import type {
+  CreateSuggestedSmartListsRequest
+} from './createSuggestedSmartListsRequest.zod';
+
+import {
+  CreateSuggestedSmartListsResponse
+} from './createSuggestedSmartListsResponse.zod';
+
+import type {
   DeleteEntityRequest
 } from './deleteEntityRequest.zod';
 
@@ -179,6 +187,10 @@ import type {
 import type {
   GetSmartListResultsParams
 } from './getSmartListResultsParams.zod';
+
+import type {
+  GetSmartListSuggestionsParams
+} from './getSmartListSuggestionsParams.zod';
 
 import type {
   GetStatsParams
@@ -284,6 +296,10 @@ import type {
   SearchExternalSourcesParams
 } from './searchExternalSourcesParams.zod';
 
+import type {
+  SetSmartListHomeRequest
+} from './setSmartListHomeRequest.zod';
+
 import {
   SettingsConfigResponse
 } from './settingsConfigResponse.zod';
@@ -295,6 +311,10 @@ import {
 import type {
   SmartListPreviewRequest
 } from './smartListPreviewRequest.zod';
+
+import {
+  SmartListSuggestionsResponse
+} from './smartListSuggestionsResponse.zod';
 
 import {
   StatsResponse
@@ -2295,6 +2315,113 @@ const res = await (fetchFn ?? fetch)(getCreateSmartListUrl(),
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(createSmartListRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SmartListDetail.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getGetSmartListSuggestionsUrl = (params?: GetSmartListSuggestionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/smart-list-suggestions?${stringifiedParams}` : `/api/smart-list-suggestions`
+}
+
+export const getSmartListSuggestions = async (params?: GetSmartListSuggestionsParams, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SmartListSuggestionsResponse> => {
+
+  const res = await (fetchFn ?? fetch)(getGetSmartListSuggestionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SmartListSuggestionsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getCreateSuggestedSmartListsUrl = () => {
+
+
+
+
+  return `/api/smart-list-suggestions`
+}
+
+export const createSuggestedSmartLists = async (createSuggestedSmartListsRequest: CreateSuggestedSmartListsRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<CreateSuggestedSmartListsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+const res = await (fetchFn ?? fetch)(getCreateSuggestedSmartListsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createSuggestedSmartListsRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? CreateSuggestedSmartListsResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getSetSmartListHomeUrl = (id: string,) => {
+
+
+
+
+  return `/api/smart-lists/${encodeURIComponent(String(id))}/home`
+}
+
+export const setSmartListHome = async (id: string,
+    setSmartListHomeRequest: SetSmartListHomeRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SmartListDetail> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+const res = await (fetchFn ?? fetch)(getSetSmartListHomeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setSmartListHomeRequest)
   }
 )
 
