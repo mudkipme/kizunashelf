@@ -38,8 +38,8 @@ import {
   serverSections,
   type EditableSection,
 } from "@/components/lists/list-sections";
-import { RenameListDialog } from "@/components/lists/rename-list-dialog";
 import { SectionBlock } from "@/components/lists/section-block";
+import { RenameDialog } from "@/components/rename-dialog";
 import { Alert } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -513,7 +513,8 @@ export function ListDetailPage() {
               disabled={!contentWritable || externalChange}
               onAdd={addEntity}
             />
-            <RenameListDialog
+            <RenameDialog
+              title={t`Rename list`}
               open={renameOpen}
               onOpenChange={setRenameOpen}
               currentName={data.name}

@@ -200,7 +200,6 @@ fn build_router(
         ApiOptions {
             // Desktop has no app config file; the app config is inline and the
             // frontend is served by Tauri (not this in-process router).
-            config_path: PathBuf::new(),
             cache_ttl,
             web_dist_path: None,
             settings_writable: true,

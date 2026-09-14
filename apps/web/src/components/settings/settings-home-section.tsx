@@ -80,9 +80,6 @@ export function HomeSectionForm({
             <div className="text-sm font-medium">
               <Trans>Criteria</Trans>
             </div>
-            <div className="text-xs text-muted-foreground">
-              <Trans>The same rules as smart lists; the section shows entities that match.</Trans>
-            </div>
           </div>
           <RuleBuilder
             fieldMetas={fieldMetas}

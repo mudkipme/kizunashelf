@@ -19,11 +19,13 @@ import {
   type GetSmartListResultsParams,
   type GetStatsParams,
   type GetUpcomingParams,
+  type SearchExternalSourcesParams,
   type SmartListPreviewRequest,
 } from "@kizunashelf/api-contract";
 import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
+import { searchSources } from "@/api/entities";
 import { getProviderCatalog } from "@/api/external";
 import { fetchList, fetchLists } from "@/api/lists";
 import {
@@ -46,6 +48,8 @@ export const queryKeys = {
   entities: (params: GetEntitiesParams) => ["entities", params] as const,
   entity: (id: string) => ["entity", id] as const,
   entityDates: (id: string) => ["entityDates", id] as const,
+  externalSearch: (params: SearchExternalSourcesParams) => ["externalSearch", params] as const,
+  externalProviders: (type: string) => ["externalProviders", type] as const,
   home: ["home"] as const,
   health: ["health"] as const,
   languages: ["languages"] as const,
@@ -62,6 +66,26 @@ export const queryKeys = {
   tags: ["tags"] as const,
   typePresets: (language?: string) => ["typePresets", language ?? "en"] as const,
 };
+
+// Both capture and matching use the same cancellable, contract-typed search.
+// Keep results scoped to their query: old candidates must not remain actionable
+// after changing the type, provider, language, or search text.
+export function externalSearchQuery(params: SearchExternalSourcesParams) {
+  return queryOptions({
+    queryKey: queryKeys.externalSearch(params),
+    queryFn: ({ signal }) => searchSources(params, { signal }),
+  });
+}
+
+// An empty search only reports availability; it makes no provider network calls.
+export function externalProvidersQuery(type: string) {
+  return queryOptions({
+    queryKey: queryKeys.externalProviders(type),
+    queryFn: ({ signal }) => searchSources({ type, provider: "all", q: "" }, { signal }),
+    enabled: Boolean(type),
+    staleTime: 60_000,
+  });
+}
 
 // The vault's whole tag vocabulary, cached client-side (it changes rarely and is
 // read by the tag editor combobox + the Library tag filter). The server memoizes

@@ -317,10 +317,7 @@ export function LibraryPage() {
               <div className="flex flex-col gap-2 border-b px-3 py-2">
                 {isGlobalType ? (
                   <p className="text-xs text-muted-foreground">
-                    <Trans>
-                      Pick a type to filter on its own fields — across all types only the properties
-                      every entry has can be matched.
-                    </Trans>
+                    <Trans>Choose a type to filter by its fields.</Trans>
                   </p>
                 ) : null}
                 <RuleBuilder fieldMetas={fieldMetas} value={criteria} onChange={setCriteria} />
@@ -359,7 +356,7 @@ export function LibraryPage() {
                   variant="outline"
                   size="sm"
                   disabled={!contentWritable}
-                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Add entity`}
+                  title={!contentWritable ? CONTENT_WRITES_DISABLED : t`Add`}
                   asChild={contentWritable}
                 >
                   {!contentWritable ? (

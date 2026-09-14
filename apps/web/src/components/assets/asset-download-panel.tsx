@@ -1,10 +1,11 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { DownloadIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { errorMessage } from "@/api/client";
 import { fetchAssetJob, startAssetJob, stopAssetJob } from "@/api/entities";
+import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { configQuery } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,14 +23,14 @@ export function AssetDownloadPanel() {
   const { t } = useLingui();
   const capabilities = useCapabilities();
   const config = useQuery(configQuery());
-  const queryClient = useQueryClient();
+  const invalidateEntityData = useInvalidateEntityData();
   const [selectedType, setSelectedType] = useState(ALL_TYPES);
   const [jobId, setJobId] = useState<string>();
   const [error, setError] = useState<string>();
 
   const job = useQuery({
     queryKey: ["assetJob", jobId],
-    queryFn: () => fetchAssetJob(jobId as string),
+    queryFn: ({ signal }) => fetchAssetJob(jobId as string, { signal }),
     enabled: Boolean(jobId),
     refetchInterval: (query) =>
       isRunning(query.state.data as AssetDownloadJob | undefined) ? 1000 : false,
@@ -38,11 +39,9 @@ export function AssetDownloadPanel() {
   const status = job.data?.status;
   useEffect(() => {
     if (status === "completed" || status === "cancelled") {
-      void queryClient.invalidateQueries({ queryKey: ["cleanupQueues"] });
-      void queryClient.invalidateQueries({ queryKey: ["entities"] });
-      void queryClient.invalidateQueries({ queryKey: ["stats"] });
+      void invalidateEntityData();
     }
-  }, [status, queryClient]);
+  }, [status, invalidateEntityData]);
 
   const start = useMutation({
     mutationFn: () =>

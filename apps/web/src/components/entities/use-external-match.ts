@@ -1,9 +1,11 @@
 import { useLingui } from "@lingui/react/macro";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
-import { downloadAssets, reviewMatch, searchSources } from "@/api/entities";
+import { downloadAssets, reviewMatch } from "@/api/entities";
+import { externalProvidersQuery, externalSearchQuery } from "@/api/queries";
 import { isRemoteAsset } from "@/lib/asset-src";
 import {
   externalProviderPriority,
@@ -56,8 +58,32 @@ export function useExternalMatch({
   // The full preference (possibly zh-Hans/zh-Hant): providers that distinguish
   // the scripts localize candidate metadata with it.
   const language = useLanguagePreference();
-  const [candidates, setCandidates] = useState<ExternalMatch[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [request, setRequest] = useState<{
+    entityId?: string;
+    params: Parameters<typeof externalSearchQuery>[0];
+  }>();
+  const activeRequest =
+    open &&
+    request?.entityId === entityId &&
+    request?.params.type === entityType &&
+    request?.params.language === language
+      ? request
+      : undefined;
+  const results = useQuery({
+    ...externalSearchQuery(activeRequest?.params ?? { type: "", q: "" }),
+    enabled: Boolean(activeRequest),
+  });
+  const { refetch: refetchResults } = results;
+  const candidates = results.data?.items ?? [];
+  const searching = Boolean(activeRequest) && results.isFetching;
+  const emptyMessage = searching
+    ? t`Searching…`
+    : activeRequest
+      ? t`No external matches`
+      : t`Search for a match`;
+  useEffect(() => {
+    if (results.error) toast.error(errorMessage(results.error));
+  }, [results.error]);
   const [selectedCandidate, setSelectedCandidate] = useState<ExternalMatch>();
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [selectedBodySections, setSelectedBodySections] = useState<Set<string>>(new Set());
@@ -66,7 +92,6 @@ export function useExternalMatch({
   // dialog then renders everything unlocked/unbadged rather than guessing.
   const [review, setReview] = useState<ExternalReviewResponse>();
   const reviewToken = useRef(0);
-  const [emptyMessage, setEmptyMessage] = useState(t`No candidates loaded`);
   const [downloadAfterApply, setDownloadAfterApply] = useState(false);
 
   // Providers configured for this type by the schema (credential-independent).
@@ -74,14 +99,17 @@ export function useExternalMatch({
     () => externalProviderPriority(providerCatalog, typeConfig),
     [providerCatalog, typeConfig],
   );
-  // Per-provider credential availability from the search-response summaries
-  // (empty until loaded). Mirrors iOS: providers whose credentials aren't
-  // configured are hidden from the picker rather than offered and failing.
-  const [providerEnabled, setProviderEnabled] = useState<Record<string, boolean>>({});
+  const availability = useQuery({
+    ...externalProvidersQuery(entityType ?? ""),
+    enabled: open && Boolean(entityType) && schemaProviderOptions.length > 0,
+  });
   const providerOptions = useMemo(() => {
-    if (Object.keys(providerEnabled).length === 0) return schemaProviderOptions;
-    return schemaProviderOptions.filter((id) => providerEnabled[id] !== false);
-  }, [schemaProviderOptions, providerEnabled]);
+    const summaries = availability.data?.providers;
+    if (!summaries) return schemaProviderOptions;
+    return schemaProviderOptions.filter((id) =>
+      summaries.some((item) => item.id === id && item.enabled),
+    );
+  }, [schemaProviderOptions, availability.data]);
   // Whether the type has any external source configured at all — gates whether
   // the match feature is offered (independent of credentials).
   const externalSearchEnabled = schemaProviderOptions.length > 0;
@@ -118,34 +146,6 @@ export function useExternalMatch({
         : [],
     [externalRefs, providerOptions, typeConfig],
   );
-
-  // When the match UI opens, load provider availability. An empty query returns
-  // the provider summaries (with `enabled`) without hitting any external API, so
-  // the picker can hide providers whose credentials aren't configured.
-  useEffect(() => {
-    if (!open || !entityType || schemaProviderOptions.length === 0) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await searchSources({
-          provider: "all",
-          q: "",
-          type: entityType,
-          pageSize: 1,
-        });
-        if (!cancelled) {
-          setProviderEnabled(
-            Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])),
-          );
-        }
-      } catch {
-        // Leave the picker unfiltered on failure rather than blocking matching.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, entityType, schemaProviderOptions.length]);
 
   useEffect(() => {
     if (providerOptions.length === 0) {
@@ -195,45 +195,82 @@ export function useExternalMatch({
     setReview(undefined);
   }, []);
 
+  // Dropping the active query detaches its observer and aborts the request.
+  // Review tokens also expire on close, entity changes, and unmount.
+  useEffect(() => {
+    setRequest(undefined);
+    resetSelection();
+    return () => {
+      reviewToken.current += 1;
+    };
+  }, [entityId, entityType, language, resetSelection]);
+
+  const changeOpen = useCallback(
+    (next: boolean) => {
+      setOpen(next);
+      if (!next) {
+        setRequest(undefined);
+        resetSelection();
+      }
+    },
+    [resetSelection],
+  );
+
+  const changeQuery = useCallback(
+    (next: string) => {
+      setQuery(next);
+      setRequest(undefined);
+      resetSelection();
+    },
+    [resetSelection],
+  );
+
+  const changeProvider = useCallback(
+    (next: string) => {
+      setProvider(next);
+      setRequest(undefined);
+      resetSelection();
+    },
+    [resetSelection],
+  );
+
   const search = useCallback(
-    async (providerOverride?: string, queryOverride?: string) => {
+    (providerOverride?: string, queryOverride?: string) => {
       const selectedProvider = providerOverride ?? provider;
       const selectedQuery = (queryOverride ?? query).trim() || defaultQuery?.trim() || "";
       if (!selectedQuery || !entityType || !externalSearchEnabled) return;
       if (selectedProvider !== "all" && !providerOptions.includes(selectedProvider)) return;
-
-      setSearching(true);
-      setEmptyMessage(t`No candidates loaded`);
       resetSelection();
-      try {
-        const result = await searchSources({
-          provider: selectedProvider,
-          q: selectedQuery,
-          type: entityType,
-          pageSize: 8,
-          language,
+      if (
+        activeRequest?.params.provider === selectedProvider &&
+        activeRequest.params.q === selectedQuery
+      ) {
+        void refetchResults();
+      } else {
+        setRequest({
+          entityId,
+          params: {
+            provider: selectedProvider,
+            q: selectedQuery,
+            type: entityType,
+            pageSize: 8,
+            language,
+          },
         });
-        setProviderEnabled(
-          Object.fromEntries(result.providers.map((item) => [item.id, item.enabled])),
-        );
-        setCandidates(result.items);
-        if (result.items.length === 0) setEmptyMessage(t`No external matches`);
-      } catch (error) {
-        toast.error(errorMessage(error));
-      } finally {
-        setSearching(false);
       }
     },
     [
       provider,
       query,
       defaultQuery,
+      entityId,
       entityType,
       externalSearchEnabled,
       providerOptions,
       resetSelection,
       language,
-      t,
+      activeRequest,
+      refetchResults,
     ],
   );
 
@@ -307,12 +344,13 @@ export function useExternalMatch({
 
   return {
     open,
-    setOpen,
+    setOpen: changeOpen,
     query,
-    setQuery,
+    setQuery: changeQuery,
     provider,
-    setProvider,
+    setProvider: changeProvider,
     candidates,
+    providers: results.data?.providers ?? [],
     searching,
     selectedCandidate,
     candidateForApply,

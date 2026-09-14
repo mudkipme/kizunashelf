@@ -11,7 +11,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -28,6 +28,7 @@ import { removeSmartList, saveSmartList } from "@/api/smart-lists";
 import { EntityResults } from "@/components/assets/entity-results";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
+import { RenameDialog } from "@/components/rename-dialog";
 import { CriteriaSummary } from "@/components/smart-lists/criteria-summary";
 import { RuleBuilder } from "@/components/smart-lists/rule-builder";
 import { ruleFieldMetas } from "@/components/smart-lists/rule-field-meta";
@@ -46,19 +47,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Placeholder } from "@/components/ui/placeholder";
 import { Select } from "@/components/ui/select";
 import { useDebouncedValue } from "@/hooks/use-debounce";
-import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 import { useCapabilities } from "@/lib/capabilities";
 import { pageSize } from "@/lib/constants";
 import { useTitleLanguage } from "@/lib/language";
@@ -398,6 +390,7 @@ export function SmartListPage() {
         onOpenChange={setRenameOpen}
         detail={data}
         listId={id}
+        disabled={!contentWritable || externalChange || editing}
       />
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
@@ -511,10 +504,7 @@ function EditPanel({
       </div>
       {draft.scope ? null : (
         <p className="text-xs text-muted-foreground">
-          <Trans>
-            Pick a scope to filter on that type's own fields — across all types only the properties
-            every entry has can be matched.
-          </Trans>
+          <Trans>Choose a type to filter by its fields.</Trans>
         </p>
       )}
       <RuleBuilder
@@ -532,33 +522,27 @@ function RenameSmartListDialog({
   onOpenChange,
   detail,
   listId,
+  disabled,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   detail: SmartListDetail | undefined;
   listId: string;
+  disabled: boolean;
 }) {
   const { t } = useLingui();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [name, setName] = useState("");
-  useEffect(() => {
-    if (open) setName(detail?.name ?? "");
-  }, [open, detail?.name]);
-  const validationError = name.trim()
-    ? basenameValidationError(normalizeBasename(name))
-    : undefined;
-
   const rename = useMutation({
     // A rename is a save that carries `renameTo` and echoes the current
     // criteria back unchanged (unsupported rules round-trip via `raw`).
-    mutationFn: () =>
+    mutationFn: (name: string) =>
       saveSmartList(listId, {
         revision: detail?.revision ?? "",
         scope: detail?.scope ?? undefined,
         filters: detail?.filters ?? { conjunction: "all", rules: [] },
         views: detail?.views ?? [],
-        renameTo: normalizeBasename(name),
+        renameTo: name,
       }),
     onSuccess: async (updated) => {
       toast.success(t`Smart list renamed`);
@@ -576,55 +560,15 @@ function RenameSmartListDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>Rename smart list</Trans>
-          </DialogTitle>
-          <DialogDescription>
-            <Trans>Renames the .base file in your vault.</Trans>
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!name.trim() || validationError) return;
-            rename.mutate();
-          }}
-          className="flex flex-col gap-2"
-        >
-          <label className="text-sm font-medium">
-            <Trans>Name</Trans>
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              autoFocus
-              aria-invalid={Boolean(validationError)}
-            />
-          </label>
-          {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
-          <DialogFooter className="mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={rename.isPending}
-            >
-              <XIcon data-icon="inline-start" />
-              <Trans>Cancel</Trans>
-            </Button>
-            <Button
-              type="submit"
-              disabled={!name.trim() || Boolean(validationError) || rename.isPending}
-            >
-              <CheckIcon data-icon="inline-start" />
-              {rename.isPending ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <RenameDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t`Rename smart list`}
+      currentName={detail?.name ?? ""}
+      saving={rename.isPending}
+      disabled={disabled || !detail}
+      onRename={(name) => rename.mutate(name)}
+    />
   );
 }
 

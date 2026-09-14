@@ -152,7 +152,6 @@ pub(crate) struct AssetJobRecord {
 
 #[derive(Clone)]
 pub struct ApiOptions {
-    pub config_path: PathBuf,
     pub cache_ttl: Duration,
     pub web_dist_path: Option<PathBuf>,
     pub settings_writable: bool,
@@ -950,7 +949,6 @@ mod tests {
     fn test_state(vfs: Arc<InMemoryVfs>) -> AppState {
         AppState::with_vault(
             ApiOptions {
-                config_path: PathBuf::new(),
                 cache_ttl: Duration::from_secs(60 * 60),
                 web_dist_path: None,
                 settings_writable: true,
@@ -1038,7 +1036,6 @@ types:
 
         let state = AppState::with_native_vault(
             ApiOptions {
-                config_path: PathBuf::new(),
                 cache_ttl: Duration::from_secs(60 * 60),
                 web_dist_path: None,
                 settings_writable: true,

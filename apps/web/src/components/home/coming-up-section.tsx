@@ -60,7 +60,7 @@ export function ComingUpSection() {
 
   return (
     <section className="rounded-xl border bg-muted/30 p-4">
-      <SectionHeader title={t`Coming up`} count={total} viewHref="/activity?mode=up-next" />
+      <SectionHeader title={t`Up next`} count={total} viewHref="/activity?mode=up-next" />
       <div className="flex flex-col gap-4">
         {groups.map((group) =>
           group.items.length ? (

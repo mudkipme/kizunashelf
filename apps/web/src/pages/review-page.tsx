@@ -27,7 +27,6 @@ import {
   entityTypeOptions,
 } from "@/lib/entity-filters";
 import { useLanguagePreference, useTitleLanguage } from "@/lib/language";
-import { useNumberFormat } from "@/lib/locale";
 import { entityFieldLabel, fieldLabelsByType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type {
@@ -137,7 +136,11 @@ export function ReviewPage() {
           <h1 className="min-w-0 truncate text-base font-semibold">
             {activeQueue ? i18n._(activeQueue.label) : null}
           </h1>
-          {activeSummary ? <ProgressPill summary={activeSummary} /> : null}
+          {activeSummary ? (
+            <span className="text-xs text-muted-foreground">
+              <Plural value={activeSummary.remaining} one="# remaining" other="# remaining" />
+            </span>
+          ) : null}
         </header>
 
         {cleanup.isPending ? (
@@ -191,18 +194,13 @@ export function ReviewPage() {
                   ))}
                 </Select>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary">
-                  <Plural value={filteredItems.length} one="# shown" other="# shown" />
-                </Badge>
-                <span>
-                  <Plural
-                    value={items.length}
-                    one="# total queue item"
-                    other="# total queue items"
-                  />
-                </span>
-              </div>
+              {filteredItems.length !== items.length ? (
+                <p className="text-xs text-muted-foreground">
+                  <Trans>
+                    {filteredItems.length} of {items.length} shown
+                  </Trans>
+                </p>
+              ) : null}
             </section>
 
             {filteredItems.length === 0 ? (
@@ -211,10 +209,6 @@ export function ReviewPage() {
               </Placeholder>
             ) : (
               <section className="rounded-md border">
-                <header className="flex items-center gap-2 border-b px-3 py-2">
-                  <h2 className="text-sm font-semibold">{i18n._(activeQueue.label)}</h2>
-                  <Badge variant="secondary">{filteredItems.length}</Badge>
-                </header>
                 <div>
                   {filteredItems.map((item) =>
                     item.kind === "entity" ? (
@@ -315,7 +309,7 @@ function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
           <Link
             key={definition.id}
             to={`/review/${definition.id}`}
-            className="flex min-h-36 flex-col gap-3 rounded-md border p-3 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+            className="flex flex-col gap-3 rounded-md border p-3 transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -325,15 +319,6 @@ function ReviewOverview({ summaries }: { summaries: CleanupQueueSummary[] }) {
                 </p>
               </div>
               <ArrowRightIcon className="text-muted-foreground" />
-            </div>
-            <ProgressBar summary={summary} />
-            <div className="mt-auto flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary">
-                <Plural value={completeCount(summary)} one="# complete" other="# complete" />
-              </Badge>
-              <Badge variant="outline">
-                <Plural value={summary.total} one="# total" other="# total" />
-              </Badge>
             </div>
           </Link>
         );
@@ -424,37 +409,6 @@ function EntitySummaryCell({
       ) : null}
     </div>
   );
-}
-
-function ProgressPill({ summary }: { summary: CleanupQueueSummary }) {
-  const formatNumber = useNumberFormat();
-  return (
-    <div className="min-w-48 rounded-md border px-3 py-2">
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-muted-foreground">
-          <Trans>Progress</Trans>
-        </span>
-        <span className="tabular-nums">
-          {formatNumber(completeCount(summary))} / {formatNumber(summary.total)}
-        </span>
-      </div>
-      <ProgressBar summary={summary} />
-    </div>
-  );
-}
-
-function ProgressBar({ summary }: { summary: CleanupQueueSummary }) {
-  const percent =
-    summary.total > 0 ? Math.round((completeCount(summary) / summary.total) * 100) : 100;
-  return (
-    <div className="mt-2 h-2 rounded-sm bg-muted">
-      <div className="h-2 rounded-sm bg-emerald-500" style={{ width: `${percent}%` }} />
-    </div>
-  );
-}
-
-function completeCount(summary: CleanupQueueSummary) {
-  return Math.max(0, summary.total - summary.remaining);
 }
 
 function queueItems(data: CleanupQueuesResponse, queue: QueueDefinition): FilterableItem[] {

@@ -29,7 +29,7 @@ export function HomePage() {
           <Button
             type="button"
             disabled={!capabilities.contentWritable}
-            title={!capabilities.contentWritable ? CONTENT_WRITES_DISABLED : t`Add entity`}
+            title={!capabilities.contentWritable ? CONTENT_WRITES_DISABLED : t`Add`}
             asChild={capabilities.contentWritable}
           >
             {!capabilities.contentWritable ? (

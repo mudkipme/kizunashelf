@@ -142,7 +142,7 @@ export function CommandPalette({
     () => [
       {
         id: "action:new",
-        label: t`New entity`,
+        label: t`Add`,
         icon: FilePlus2Icon,
         run: () => go("/entities/new"),
       },

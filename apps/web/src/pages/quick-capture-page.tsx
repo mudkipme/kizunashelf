@@ -1,15 +1,21 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PlusIcon, SearchIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
-import { quickAddEntity, searchSources } from "@/api/entities";
+import { quickAddEntity } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
-import { configQuery, providerCatalogQuery } from "@/api/queries";
+import {
+  configQuery,
+  externalProvidersQuery,
+  externalSearchQuery,
+  providerCatalogQuery,
+} from "@/api/queries";
+import { ExternalSearchErrors } from "@/components/entities/external-search-errors";
 import { AppFrame } from "@/components/layout/app-frame";
 import { PageContainer } from "@/components/layout/page-container";
 import { Alert } from "@/components/ui/alert";
@@ -126,12 +132,7 @@ export function QuickCapturePage() {
   // Empty-query probes return per-provider `enabled` summaries without hitting
   // any provider network; scoped to the selected type, so the dropdown lists
   // only the providers that type's `externalRef` fields map to.
-  const providerProbe = useQuery({
-    queryKey: ["externalSearch", "probe", typeId],
-    queryFn: ({ signal }) => searchSources({ type: typeId ?? "", q: "" }, { signal }),
-    enabled: Boolean(typeId),
-    staleTime: 60_000,
-  });
+  const providerProbe = useQuery(externalProvidersQuery(typeId ?? ""));
   const enabledProviders = useMemo(
     () => (providerProbe.data?.providers ?? []).filter((item) => item.enabled),
     [providerProbe.data],
@@ -149,19 +150,19 @@ export function QuickCapturePage() {
     }
   }, [provider, enabledProviders, providerProbe.isSuccess]);
 
-  const searchEnabled = query.length >= MIN_QUERY_LENGTH && Boolean(typeId);
+  const hasQuery = rawQuery.trim().length >= MIN_QUERY_LENGTH && Boolean(typeId);
+  const debouncing = query !== rawQuery.trim();
+  const searchEnabled = hasQuery && !debouncing;
   const results = useQuery({
-    queryKey: ["externalSearch", "results", { query, typeId, provider, language }],
-    queryFn: ({ signal }) =>
-      searchSources({ type: typeId ?? "", provider, q: query, pageSize: 15, language }, { signal }),
+    ...externalSearchQuery({
+      type: typeId ?? "",
+      provider,
+      q: searchEnabled ? query : "",
+      pageSize: 15,
+      language,
+    }),
     enabled: searchEnabled,
-    placeholderData: keepPreviousData,
   });
-
-  const providerErrors = useMemo(
-    () => (results.data?.providers ?? []).filter((item) => item.error),
-    [results.data],
-  );
 
   async function add(match: ExternalMatch) {
     if (!contentWritable) return;
@@ -222,7 +223,7 @@ export function QuickCapturePage() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">
-              <Trans>Quick Capture</Trans>
+              <Trans>Add</Trans>
             </h1>
           </div>
           <Button asChild variant="outline">
@@ -308,27 +309,19 @@ export function QuickCapturePage() {
           </Alert>
         ) : null}
 
-        {providerErrors.length > 0 ? (
-          <ul className="flex flex-col gap-1 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
-            {providerErrors.map((item) => (
-              <li key={item.id}>
-                {/* item.error is the provider's own (server) failure text — HTTP
-                    status + body — surfaced verbatim, like other ApiError messages. */}
-                <span className="font-medium">{item.label}</span>: {item.error}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <ExternalSearchErrors providers={results.data?.providers ?? []} />
 
         <section className="flex flex-col gap-2">
-          {!searchEnabled ? (
+          {!hasQuery ? (
             <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
               <Trans>Type at least {MIN_QUERY_LENGTH} characters to search.</Trans>
             </p>
-          ) : results.isPending ? (
+          ) : debouncing || results.isPending ? (
             <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
               <Trans>Searching…</Trans>
             </p>
+          ) : results.error ? (
+            <Alert>{errorMessage(results.error)}</Alert>
           ) : (results.data?.items.length ?? 0) === 0 ? (
             <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
               <Trans>No matches found.</Trans>

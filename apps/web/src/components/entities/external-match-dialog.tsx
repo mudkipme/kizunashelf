@@ -2,6 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { SearchIcon, WandSparklesIcon } from "lucide-react";
 import { memo } from "react";
 
+import { ExternalSearchErrors } from "@/components/entities/external-search-errors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +20,7 @@ import {
   type ExternalMetadataPreviewEntry,
 } from "@/lib/external-metadata";
 import { cn } from "@/lib/utils";
-import type { ExternalMatch, ExternalProviderCatalog } from "@/types/api";
+import type { ExternalMatch, ExternalProviderCatalog, ExternalProviderSummary } from "@/types/api";
 
 type ExternalRefAction = {
   field: string;
@@ -39,6 +40,7 @@ type ExternalMatchDialogProps = {
   selectedBodySections: Set<string>;
   providerCatalog?: ExternalProviderCatalog;
   providerOptions: string[];
+  providers?: ExternalProviderSummary[];
   externalSearchEnabled: boolean;
   currentValues?: Record<string, unknown>;
   // Locked checkboxes and replace-vs-append badges, from the core's review of
@@ -78,6 +80,7 @@ export function ExternalMatchDialog({
   selectedBodySections,
   providerCatalog,
   providerOptions,
+  providers = [],
   externalSearchEnabled,
   currentValues,
   fieldLocks,
@@ -150,6 +153,8 @@ export function ExternalMatchDialog({
             </Button>
           </div>
 
+          <ExternalSearchErrors providers={providers} />
+
           {existingExternalRefs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {existingExternalRefs.map((ref) => (
@@ -173,7 +178,7 @@ export function ExternalMatchDialog({
               candidates={candidates}
               selectedCandidate={selectedCandidate}
               providerCatalog={providerCatalog}
-              emptyMessage={emptyMessage ?? t`No candidates loaded`}
+              emptyMessage={emptyMessage ?? t`Search for a match`}
               onChooseCandidate={onChooseCandidate}
             />
 

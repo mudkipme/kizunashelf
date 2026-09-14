@@ -5,8 +5,8 @@ import { useCallback } from "react";
 // renamed, or deleted. Anything derived from the entity set (home shelves,
 // upcoming, lists — a rename rewrites wikilinks inside list files — smart-list
 // results and previews (the library browser is one), calendar, analytics,
-// cleanup queues, stats) is refetched; unrelated caches (config, capabilities,
-// provider catalog) are left untouched.
+// cleanup queues, stats, tags, diagnostics, external-search membership) is
+// refetched; config, capabilities, and provider availability are left untouched.
 const ENTITY_DATA_KEYS = [
   "entity",
   "entityDates",
@@ -22,6 +22,9 @@ const ENTITY_DATA_KEYS = [
   "analytics",
   "cleanupQueues",
   "stats",
+  "tags",
+  "health",
+  "externalSearch",
 ] as const;
 
 /**

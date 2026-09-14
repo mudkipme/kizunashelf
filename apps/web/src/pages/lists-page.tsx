@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -163,14 +162,11 @@ function CreateListDialog({
         if (!next) reset();
       }}
     >
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>
             <Trans>New list</Trans>
           </DialogTitle>
-          <DialogDescription>
-            <Trans>Give your list a name.</Trans>
-          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(event) => {

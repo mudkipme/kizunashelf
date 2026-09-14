@@ -74,8 +74,6 @@ async fn main() -> Result<()> {
         .ok()
         .map(PathBuf::from);
     let options = ApiOptions {
-        // No app config file in the web runtime; the app config is inline.
-        config_path: PathBuf::new(),
         cache_ttl: Duration::from_millis(cache_ttl),
         web_dist_path,
         settings_writable,

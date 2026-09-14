@@ -1,15 +1,11 @@
-//! Renaming a list, which renames its Markdown file — so the new name goes
-//! through the same basename validation a file gets everywhere else.
-
-import { Trans } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { CheckIcon, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -17,10 +13,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { basenameValidationError, normalizeBasename } from "@/lib/basename";
 
-export function RenameListDialog({
+export function RenameDialog({
   open,
   onOpenChange,
   currentName,
+  title,
+  label,
   saving,
   disabled,
   onRename,
@@ -28,10 +26,14 @@ export function RenameListDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentName: string;
+  title: string;
+  label?: string;
   saving: boolean;
   disabled: boolean;
   onRename: (name: string) => void;
 }) {
+  const { t } = useLingui();
+  const errorId = useId();
   const [name, setName] = useState(currentName);
   useEffect(() => {
     if (open) setName(currentName);
@@ -40,36 +42,43 @@ export function RenameListDialog({
   const normalized = normalizeBasename(name);
   const validationError = name.trim() ? basenameValidationError(normalized) : undefined;
   const unchanged = normalized === currentName;
+  const cannotSubmit = disabled || saving || Boolean(validationError) || unchanged || !name.trim();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!saving) onOpenChange(next);
+      }}
+    >
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>
-            <Trans>Rename list</Trans>
-          </DialogTitle>
-          <DialogDescription>
-            <Trans>Changes the list's name.</Trans>
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (!name.trim() || validationError || unchanged) return;
+            if (cannotSubmit) return;
             onRename(normalized);
           }}
           className="flex flex-col gap-2"
         >
           <label className="text-sm font-medium">
-            <Trans>Name</Trans>
+            {label ?? t`Name`}
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
               disabled={disabled || saving}
               aria-invalid={Boolean(validationError)}
+              aria-describedby={validationError ? errorId : undefined}
+              autoFocus
             />
           </label>
-          {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
+          {validationError ? (
+            <p id={errorId} className="text-xs text-destructive">
+              {validationError}
+            </p>
+          ) : null}
           <DialogFooter className="mt-2">
             <Button
               type="button"
@@ -80,10 +89,7 @@ export function RenameListDialog({
               <XIcon data-icon="inline-start" />
               <Trans>Cancel</Trans>
             </Button>
-            <Button
-              type="submit"
-              disabled={disabled || saving || Boolean(validationError) || unchanged || !name.trim()}
-            >
+            <Button type="submit" disabled={cannotSubmit}>
               <CheckIcon data-icon="inline-start" />
               {saving ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
             </Button>

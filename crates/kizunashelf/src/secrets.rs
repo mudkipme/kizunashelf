@@ -13,7 +13,7 @@
 //! tiny local file). The iOS implementation is a Swift-backed FFI callback.
 
 use anyhow::Result;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// The cached provider tokens, as one JSON blob (a `provider -> token` map).
 pub const SECRET_PROVIDER_TOKENS: &str = "provider_tokens";
@@ -60,17 +60,6 @@ pub struct NativeSecretStore {
 }
 
 impl NativeSecretStore {
-    /// Legacy helper for callers that want a token cache derived from a host
-    /// config path. Modern runtimes usually pass an explicit path with
-    /// [`Self::with_token_path`].
-    pub fn new(config_path: &Path) -> Self {
-        let token_path = config_path
-            .parent()
-            .map(|parent| parent.join(".kizunashelf.tokens.json"))
-            .unwrap_or_else(|| PathBuf::from(".kizunashelf.tokens.json"));
-        Self { token_path }
-    }
-
     /// Builds a store with an explicit token-cache path. Used by the env-only web
     /// runtime, which has no app config file to anchor the cache beside.
     pub fn with_token_path(token_path: PathBuf) -> Self {
@@ -122,7 +111,7 @@ mod tests {
     #[test]
     fn token_cache_round_trips_to_a_file() {
         let temp = TempDir::new().unwrap();
-        let store = NativeSecretStore::new(&temp.path().join("kizunashelf.yaml"));
+        let store = NativeSecretStore::with_token_path(temp.path().join("tokens.json"));
 
         assert!(store.get(SECRET_PROVIDER_TOKENS).is_none());
         store
@@ -137,7 +126,7 @@ mod tests {
     #[test]
     fn credential_keys_are_read_only_in_env_store() {
         let temp = TempDir::new().unwrap();
-        let store = NativeSecretStore::new(&temp.path().join("kizunashelf.yaml"));
+        let store = NativeSecretStore::with_token_path(temp.path().join("tokens.json"));
 
         // No env var set -> None, and setting a credential key is a no-op:
         // credentials come from env vars only in this store.

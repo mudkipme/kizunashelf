@@ -30,11 +30,6 @@ msgstr "(daily-notes default)"
 msgid "{0, plural, one {# already in library} other {# already in library}}"
 msgstr "{0, plural, one {# already in library} other {# already in library}}"
 
-#. placeholder {0}: completeCount(summary)
-#: src/pages/review-page.tsx:332
-msgid "{0, plural, one {# complete} other {# complete}}"
-msgstr "{0, plural, one {# complete} other {# complete}}"
-
 #. placeholder {0}: job.created
 #: src/components/import/import-status.tsx:67
 msgid "{0, plural, one {# created} other {# created}}"
@@ -56,7 +51,7 @@ msgid "{0, plural, one {# failed} other {# failed}}"
 msgstr "{0, plural, one {# failed} other {# failed}}"
 
 #. placeholder {0}: type.fields.length
-#: src/components/settings/settings-dialogs.tsx:238
+#: src/components/settings/settings-dialogs.tsx:243
 msgid "{0, plural, one {# field} other {# fields}}"
 msgstr "{0, plural, one {# field} other {# fields}}"
 
@@ -66,13 +61,13 @@ msgid "{0, plural, one {# found} other {# found}}"
 msgstr "{0, plural, one {# found} other {# found}}"
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:260
+#: src/pages/review-page.tsx:254
 msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, one {# issue} other {# issues}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:655
-#: src/pages/lists-page.tsx:88
+#: src/pages/entity-page.tsx:642
+#: src/pages/lists-page.tsx:87
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
 
@@ -100,17 +95,19 @@ msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, one {# path} other {# paths}}"
 
 #. placeholder {0}: typeProviderCount(type)
-#: src/components/settings/settings-dialogs.tsx:239
+#: src/components/settings/settings-dialogs.tsx:244
 msgid "{0, plural, one {# provider} other {# providers}}"
 msgstr "{0, plural, one {# provider} other {# providers}}"
 
+#. placeholder {0}: activeSummary.remaining
 #. placeholder {0}: summary.remaining
-#: src/pages/review-page.tsx:324
+#: src/pages/review-page.tsx:141
+#: src/pages/review-page.tsx:318
 msgid "{0, plural, one {# remaining} other {# remaining}}"
 msgstr "{0, plural, one {# remaining} other {# remaining}}"
 
 #. placeholder {0}: criteriaRuleCount(section.criteria)
-#: src/components/settings/settings-dialogs.tsx:488
+#: src/components/settings/settings-dialogs.tsx:492
 msgid "{0, plural, one {# rule} other {# rules}}"
 msgstr "{0, plural, one {# rule} other {# rules}}"
 
@@ -118,14 +115,9 @@ msgstr "{0, plural, one {# rule} other {# rules}}"
 #. placeholder {0}: list.sectionCount
 #: src/components/settings/settings-editor.tsx:117
 #: src/components/settings/settings-editor.tsx:358
-#: src/pages/lists-page.tsx:92
+#: src/pages/lists-page.tsx:91
 msgid "{0, plural, one {# section} other {# sections}}"
 msgstr "{0, plural, one {# section} other {# sections}}"
-
-#. placeholder {0}: filteredItems.length
-#: src/pages/review-page.tsx:196
-msgid "{0, plural, one {# shown} other {# shown}}"
-msgstr "{0, plural, one {# shown} other {# shown}}"
 
 #. placeholder {0}: job.skipped
 #: src/components/import/import-status.tsx:71
@@ -136,16 +128,6 @@ msgstr "{0, plural, one {# skipped} other {# skipped}}"
 #: src/components/import/plan-review.tsx:90
 msgid "{0, plural, one {# to create} other {# to create}}"
 msgstr "{0, plural, one {# to create} other {# to create}}"
-
-#. placeholder {0}: items.length
-#: src/pages/review-page.tsx:199
-msgid "{0, plural, one {# total queue item} other {# total queue items}}"
-msgstr "{0, plural, one {# total queue item} other {# total queue items}}"
-
-#. placeholder {0}: summary.total
-#: src/pages/review-page.tsx:335
-msgid "{0, plural, one {# total} other {# total}}"
-msgstr "{0, plural, one {# total} other {# total}}"
 
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
@@ -176,24 +158,24 @@ msgid "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)
 msgstr "{0, plural, one {Daily Notes (# snippet)} other {Daily Notes (# snippets)}}"
 
 #. placeholder {0}: result.episodes.imported
-#: src/pages/quick-capture-page.tsx:193
+#: src/pages/quick-capture-page.tsx:194
 msgid "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
 msgstr "{0, plural, one {Imported # episode.} other {Imported # episodes.}}"
 
 #. placeholder {0}: job.processed
 #. placeholder {1}: job.total
-#: src/components/assets/asset-download-panel.tsx:127
+#: src/components/assets/asset-download-panel.tsx:126
 #: src/components/import/import-status.tsx:62
 msgid "{0} / {1} processed"
 msgstr "{0} / {1} processed"
 
 #. placeholder {0}: job.downloaded
-#: src/components/assets/asset-download-panel.tsx:132
+#: src/components/assets/asset-download-panel.tsx:131
 msgid "{0} downloaded"
 msgstr "{0} downloaded"
 
 #. placeholder {0}: job.failed
-#: src/components/assets/asset-download-panel.tsx:136
+#: src/components/assets/asset-download-panel.tsx:135
 msgid "{0} failed"
 msgstr "{0} failed"
 
@@ -203,8 +185,14 @@ msgstr "{0} failed"
 msgid "{0} of {1} selected"
 msgstr "{0} of {1} selected"
 
+#. placeholder {0}: filteredItems.length
+#. placeholder {1}: items.length
+#: src/pages/review-page.tsx:199
+msgid "{0} of {1} shown"
+msgstr "{0} of {1} shown"
+
 #. placeholder {0}: job.skipped
-#: src/components/assets/asset-download-panel.tsx:141
+#: src/components/assets/asset-download-panel.tsx:140
 msgid "{0} skipped"
 msgstr "{0} skipped"
 
@@ -216,11 +204,11 @@ msgstr "{ariaLabel} new property"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 
-#: src/pages/entity-page.tsx:533
+#: src/pages/entity-page.tsx:520
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 
-#: src/pages/quick-capture-page.tsx:183
+#: src/pages/quick-capture-page.tsx:184
 msgid "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
 msgstr "{failedCovers, plural, one {Added, but # cover couldn't be downloaded (URL kept).} other {Added, but # covers couldn't be downloaded (URL kept).}}"
 
@@ -238,16 +226,16 @@ msgstr "{monthLabel}: {0} — open in calendar"
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
-#: src/pages/library-page.tsx:342
+#: src/pages/library-page.tsx:339
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, one {# entry} other {# entries}}"
 
 #. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:337
+#: src/pages/library-page.tsx:334
 msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 msgstr "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 
-#: src/pages/smart-list-page.tsx:252
+#: src/pages/smart-list-page.tsx:244
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, one {# match} other {# matches}}"
 
@@ -306,11 +294,11 @@ msgid "📅 Scheduled"
 msgstr "📅 Scheduled"
 
 #. placeholder {0}: result.entity.basename
-#: src/pages/quick-capture-page.tsx:201
+#: src/pages/quick-capture-page.tsx:202
 msgid "A file named for this title already existed, so it was saved as “{0}”."
 msgstr "A file named for this title already existed, so it was saved as “{0}”."
 
-#: src/pages/smart-list-page.tsx:572
+#: src/pages/smart-list-page.tsx:556
 msgid "A list with this name already exists, or the file changed on disk."
 msgstr "A list with this name already exists, or the file changed on disk."
 
@@ -323,8 +311,8 @@ msgid "A universal label list every entity can have, with its own editor, filter
 msgstr "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 
 #: src/components/layout/command-palette.tsx:191
-#: src/pages/entity-page.tsx:494
-#: src/pages/entity-page.tsx:497
+#: src/pages/entity-page.tsx:481
+#: src/pages/entity-page.tsx:484
 msgid "Actions"
 msgstr "Actions"
 
@@ -335,13 +323,17 @@ msgid "Activity"
 msgstr "Activity"
 
 #: src/components/entities/metadata-scalar-inputs.tsx:125
+#: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
 #: src/components/settings/settings-controls.tsx:65
 #: src/components/settings/settings-external-mappings.tsx:51
+#: src/pages/home-page.tsx:32
 #: src/pages/home-page.tsx:38
 #: src/pages/home-page.tsx:43
-#: src/pages/library-page.tsx:368
-#: src/pages/library-page.tsx:373
+#: src/pages/library-page.tsx:359
+#: src/pages/library-page.tsx:365
+#: src/pages/library-page.tsx:370
+#: src/pages/quick-capture-page.tsx:226
 msgid "Add"
 msgstr "Add"
 
@@ -359,7 +351,7 @@ msgstr "Add a <0>{0}</0> link to <1>{1}</1>"
 msgid "Add an External ref field with a provider to configure priority."
 msgstr "Add an External ref field with a provider to configure priority."
 
-#: src/components/settings/settings-dialogs.tsx:220
+#: src/components/settings/settings-dialogs.tsx:225
 msgid "Add built-in type"
 msgstr "Add built-in type"
 
@@ -367,15 +359,9 @@ msgstr "Add built-in type"
 msgid "Add built-in types"
 msgstr "Add built-in types"
 
-#: src/components/settings/settings-dialogs.tsx:223
+#: src/components/settings/settings-dialogs.tsx:228
 msgid "Add custom type"
 msgstr "Add custom type"
-
-#: src/pages/entity-create-page.tsx:110
-#: src/pages/home-page.tsx:32
-#: src/pages/library-page.tsx:362
-msgid "Add entity"
-msgstr "Add entity"
 
 #: src/components/settings/settings-field-form.tsx:372
 msgid "Add enum options above to map them to statuses."
@@ -394,7 +380,8 @@ msgstr "Add group"
 msgid "Add items"
 msgstr "Add items"
 
-#: src/pages/quick-capture-page.tsx:231
+#: src/pages/entity-create-page.tsx:110
+#: src/pages/quick-capture-page.tsx:232
 msgid "Add manually"
 msgstr "Add manually"
 
@@ -434,16 +421,16 @@ msgid "Added {added} — {renamed}"
 msgstr "Added {added} — {renamed}"
 
 #. placeholder {0}: result.episodes.error
-#: src/pages/quick-capture-page.tsx:190
+#: src/pages/quick-capture-page.tsx:191
 msgid "Added, but episode import failed: {0}"
 msgstr "Added, but episode import failed: {0}"
 
 #: src/components/settings/preset-picker.tsx:202
-#: src/pages/quick-capture-page.tsx:386
+#: src/pages/quick-capture-page.tsx:379
 msgid "Adding…"
 msgstr "Adding…"
 
-#: src/components/entities/external-match-dialog.tsx:390
+#: src/components/entities/external-match-dialog.tsx:395
 msgid "adds new section"
 msgstr "adds new section"
 
@@ -456,7 +443,7 @@ msgstr "Advanced: edit full schema"
 msgid "All"
 msgstr "All"
 
-#: src/pages/review-page.tsx:184
+#: src/pages/review-page.tsx:187
 msgid "All dates"
 msgstr "All dates"
 
@@ -465,18 +452,18 @@ msgstr "All dates"
 msgid "all of"
 msgstr "all of"
 
-#: src/components/entities/external-match-dialog.tsx:135
-#: src/pages/quick-capture-page.tsx:291
+#: src/components/entities/external-match-dialog.tsx:138
+#: src/pages/quick-capture-page.tsx:292
 msgid "All providers"
 msgstr "All providers"
 
 #: src/components/analytics/activity-heatmap.tsx:98
-#: src/components/assets/asset-download-panel.tsx:85
+#: src/components/assets/asset-download-panel.tsx:84
 #: src/pages/activity-page.tsx:125
 #: src/pages/calendar-page.tsx:112
-#: src/pages/lists-page.tsx:219
-#: src/pages/review-page.tsx:173
-#: src/pages/smart-list-page.tsx:475
+#: src/pages/lists-page.tsx:215
+#: src/pages/review-page.tsx:176
+#: src/pages/smart-list-page.tsx:468
 msgid "All types"
 msgstr "All types"
 
@@ -511,20 +498,20 @@ msgstr "any of"
 msgid "Anything worth remembering"
 msgstr "Anything worth remembering"
 
-#: src/components/settings/settings-dialogs.tsx:394
-#: src/components/settings/settings-dialogs.tsx:547
+#: src/components/settings/settings-dialogs.tsx:398
+#: src/components/settings/settings-dialogs.tsx:550
 msgid "Apply"
 msgstr "Apply"
 
-#: src/components/entities/external-match-dialog.tsx:217
+#: src/components/entities/external-match-dialog.tsx:222
 msgid "Apply Selected"
 msgstr "Apply Selected"
 
-#: src/components/entities/external-match-dialog.tsx:217
+#: src/components/entities/external-match-dialog.tsx:222
 msgid "Applying…"
 msgstr "Applying…"
 
-#: src/components/settings/settings-home-section.tsx:128
+#: src/components/settings/settings-home-section.tsx:125
 #: src/components/smart-lists/sort-picker.tsx:115
 msgid "Ascending"
 msgstr "Ascending"
@@ -540,7 +527,7 @@ msgstr "assets: {0}"
 
 #: src/components/layout/app-frame.tsx:227
 #: src/components/settings/preset-picker.tsx:187
-#: src/components/settings/settings-dialogs.tsx:78
+#: src/components/settings/settings-dialogs.tsx:81
 #: src/components/settings/settings-editor.tsx:196
 msgid "Back"
 msgstr "Back"
@@ -549,15 +536,11 @@ msgstr "Back"
 msgid "Back to home"
 msgstr "Back to home"
 
-#: src/pages/entity-page.tsx:745
-msgid "Basename"
-msgstr "Basename"
-
 #: src/components/settings/settings-entity-type.tsx:58
 msgid "Basics"
 msgstr "Basics"
 
-#: src/components/entities/external-match-dialog.tsx:367
+#: src/components/entities/external-match-dialog.tsx:372
 msgid "Body Sections"
 msgstr "Body Sections"
 
@@ -565,7 +548,7 @@ msgstr "Body Sections"
 msgid "Book"
 msgstr "Book"
 
-#: src/pages/review-page.tsx:53
+#: src/pages/review-page.tsx:52
 msgid "Broken Assets"
 msgstr "Broken Assets"
 
@@ -581,23 +564,21 @@ msgstr "Built-in labels will be in English. Titles still use this language."
 msgid "Calendar"
 msgstr "Calendar"
 
-#: src/components/assets/asset-download-panel.tsx:108
+#: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
 #: src/components/assets/quick-log-dialog.tsx:167
-#: src/components/lists/rename-list-dialog.tsx:81
-#: src/components/settings/settings-dialogs.tsx:391
-#: src/components/settings/settings-dialogs.tsx:544
+#: src/components/rename-dialog.tsx:90
+#: src/components/settings/settings-dialogs.tsx:395
+#: src/components/settings/settings-dialogs.tsx:547
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/pages/entity-edit-page.tsx:169
-#: src/pages/entity-page.tsx:553
-#: src/pages/entity-page.tsx:763
+#: src/pages/entity-page.tsx:540
 #: src/pages/import-wizard-page.tsx:238
 #: src/pages/import-wizard-page.tsx:279
-#: src/pages/list-detail-page.tsx:542
-#: src/pages/lists-page.tsx:237
-#: src/pages/smart-list-page.tsx:267
-#: src/pages/smart-list-page.tsx:417
-#: src/pages/smart-list-page.tsx:615
+#: src/pages/list-detail-page.tsx:543
+#: src/pages/lists-page.tsx:233
+#: src/pages/smart-list-page.tsx:259
+#: src/pages/smart-list-page.tsx:410
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -610,9 +591,9 @@ msgstr "Catch up"
 msgid "Change completion date"
 msgstr "Change completion date"
 
-#: src/components/lists/rename-list-dialog.tsx:52
-msgid "Changes the list's name."
-msgstr "Changes the list's name."
+#: src/components/settings/settings-dialogs.tsx:391
+msgid "Changes save with the rest of the schema."
+msgstr "Changes save with the rest of the schema."
 
 #: src/components/settings/settings-entity-type.tsx:266
 msgid "Checklist (per-item checkboxes)"
@@ -622,13 +603,18 @@ msgstr "Checklist (per-item checkboxes)"
 msgid "Chinese"
 msgstr "Chinese"
 
-#: src/components/entities/external-match-dialog.tsx:407
+#: src/components/entities/external-match-dialog.tsx:412
 msgid "Choose a candidate to compare fields."
 msgstr "Choose a candidate to compare fields."
 
 #: src/components/import/plan-review.tsx:108
 msgid "Choose a type"
 msgstr "Choose a type"
+
+#: src/pages/library-page.tsx:320
+#: src/pages/smart-list-page.tsx:507
+msgid "Choose a type to filter by its fields."
+msgstr "Choose a type to filter by its fields."
 
 #: src/components/settings/emoji-field.tsx:59
 msgid "Choose an emoji"
@@ -652,10 +638,6 @@ msgstr "Close"
 msgid "Close navigation"
 msgstr "Close navigation"
 
-#: src/components/home/coming-up-section.tsx:63
-msgid "Coming up"
-msgstr "Coming up"
-
 #: src/components/layout/command-palette.tsx:237
 msgid "Command palette"
 msgstr "Command palette"
@@ -674,19 +656,11 @@ msgstr "Completed"
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml changed on disk. Your unsaved edits are still here."
 
-#: src/components/settings/settings-dialogs.tsx:540
-msgid "Configure a section shown on the home page: its source type, filters, and ordering."
-msgstr "Configure a section shown on the home page: its source type, filters, and ordering."
-
 #: src/pages/home-page.tsx:82
 msgid "Configure Home"
 msgstr "Configure Home"
 
-#: src/components/settings/settings-dialogs.tsx:350
-msgid "Configure how this field is read, derived, and displayed."
-msgstr "Configure how this field is read, derived, and displayed."
-
-#: src/components/settings/settings-dialogs.tsx:320
+#: src/components/settings/settings-dialogs.tsx:325
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "Configure the new field, then choose Done to add it. Going back discards it."
 
@@ -744,15 +718,15 @@ msgstr "Could not read this CSV file."
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
 #: src/pages/entity-create-page.tsx:103
-#: src/pages/lists-page.tsx:244
+#: src/pages/lists-page.tsx:240
 msgid "Create"
 msgstr "Create"
 
-#: src/pages/quick-capture-page.tsx:412
+#: src/pages/quick-capture-page.tsx:405
 msgid "Create “{query}” manually →"
 msgstr "Create “{query}” manually →"
 
-#: src/pages/entity-page.tsx:691
+#: src/pages/entity-page.tsx:678
 msgid "Create & add"
 msgstr "Create & add"
 
@@ -772,8 +746,8 @@ msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-page.tsx:691
-#: src/pages/lists-page.tsx:244
+#: src/pages/entity-page.tsx:678
+#: src/pages/lists-page.tsx:240
 #: src/pages/onboarding-page.tsx:249
 msgid "Creating…"
 msgstr "Creating…"
@@ -787,7 +761,7 @@ msgid "CSV export"
 msgstr "CSV export"
 
 #. placeholder {0}: formatMetadataValue(currentValues[entry.field])
-#: src/components/entities/external-match-dialog.tsx:349
+#: src/components/entities/external-match-dialog.tsx:354
 msgid "Current: {0}"
 msgstr "Current: {0}"
 
@@ -853,7 +827,7 @@ msgstr "Dates"
 msgid "days"
 msgstr "days"
 
-#: src/components/settings/settings-home-section.tsx:127
+#: src/components/settings/settings-home-section.tsx:124
 msgid "Default"
 msgstr "Default"
 
@@ -862,18 +836,18 @@ msgid "Default line format"
 msgstr "Default line format"
 
 #: src/components/lists/section-block.tsx:121
-#: src/pages/entity-page.tsx:527
+#: src/pages/entity-page.tsx:514
 #: src/pages/list-detail-page.tsx:394
-#: src/pages/smart-list-page.tsx:309
-#: src/pages/smart-list-page.tsx:420
+#: src/pages/smart-list-page.tsx:301
+#: src/pages/smart-list-page.tsx:413
 msgid "Delete"
 msgstr "Delete"
 
-#: src/pages/smart-list-page.tsx:406
+#: src/pages/smart-list-page.tsx:399
 msgid "Delete this smart list?"
 msgstr "Delete this smart list?"
 
-#: src/components/settings/settings-home-section.tsx:129
+#: src/components/settings/settings-home-section.tsx:126
 #: src/components/smart-lists/sort-picker.tsx:116
 msgid "Descending"
 msgstr "Descending"
@@ -894,7 +868,7 @@ msgstr "Deselect group"
 msgid "Details"
 msgstr "Details"
 
-#: src/components/settings/settings-home-section.tsx:116
+#: src/components/settings/settings-home-section.tsx:113
 #: src/components/smart-lists/sort-picker.tsx:106
 msgid "Direction"
 msgstr "Direction"
@@ -928,25 +902,25 @@ msgid "does not link to"
 msgstr "does not link to"
 
 #: src/components/lists/add-items-dialog.tsx:120
-#: src/components/settings/settings-dialogs.tsx:329
-#: src/components/settings/settings-dialogs.tsx:366
-#: src/pages/entity-page.tsx:699
+#: src/components/settings/settings-dialogs.tsx:334
+#: src/components/settings/settings-dialogs.tsx:370
+#: src/pages/entity-page.tsx:686
 msgid "Done"
 msgstr "Done"
 
-#: src/pages/entity-page.tsx:517
+#: src/pages/entity-page.tsx:504
 msgid "Download cover"
 msgstr "Download cover"
 
-#: src/components/entities/external-match-dialog.tsx:206
+#: src/components/entities/external-match-dialog.tsx:211
 msgid "Download cover locally"
 msgstr "Download cover locally"
 
-#: src/components/assets/asset-download-panel.tsx:75
+#: src/components/assets/asset-download-panel.tsx:74
 msgid "Download remote covers"
 msgstr "Download remote covers"
 
-#: src/components/assets/asset-download-panel.tsx:83
+#: src/components/assets/asset-download-panel.tsx:82
 msgid "Download scope"
 msgstr "Download scope"
 
@@ -963,12 +937,12 @@ msgstr "Drag to reorder"
 msgid "Dropped"
 msgstr "Dropped"
 
-#: src/pages/review-page.tsx:58
+#: src/pages/review-page.tsx:57
 msgid "Duplicate Filenames"
 msgstr "Duplicate Filenames"
 
-#: src/pages/entity-page.tsx:409
-#: src/pages/list-detail-page.tsx:592
+#: src/pages/entity-page.tsx:396
+#: src/pages/list-detail-page.tsx:593
 msgid "Edit"
 msgstr "Edit"
 
@@ -981,17 +955,13 @@ msgstr "Edit {0}"
 msgid "Edit config.yaml"
 msgstr "Edit config.yaml"
 
-#: src/pages/smart-list-page.tsx:289
+#: src/pages/smart-list-page.tsx:281
 msgid "Edit criteria"
 msgstr "Edit criteria"
 
 #: src/pages/entity-edit-page.tsx:186
 msgid "Edit entity"
 msgstr "Edit entity"
-
-#: src/components/settings/settings-dialogs.tsx:387
-msgid "Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema."
-msgstr "Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema."
 
 #: src/components/assets/frontmatter-panel.tsx:128
 #: src/components/assets/frontmatter-panel.tsx:230
@@ -1034,12 +1004,12 @@ msgid "Entity name"
 msgstr "Entity name"
 
 #: src/pages/entity-edit-page.tsx:224
-#: src/pages/entity-page.tsx:456
+#: src/pages/entity-page.tsx:443
 msgid "Entity not found"
 msgstr "Entity not found"
 
-#: src/components/settings/settings-dialogs.tsx:236
-#: src/components/settings/settings-dialogs.tsx:386
+#: src/components/settings/settings-dialogs.tsx:241
+#: src/components/settings/settings-dialogs.tsx:390
 msgid "Entity type"
 msgstr "Entity type"
 
@@ -1073,7 +1043,7 @@ msgstr "External field"
 msgid "External field mappings"
 msgstr "External field mappings"
 
-#: src/components/entities/external-match-dialog.tsx:115
+#: src/components/entities/external-match-dialog.tsx:118
 msgid "External Match"
 msgstr "External Match"
 
@@ -1081,7 +1051,7 @@ msgstr "External Match"
 msgid "External metadata"
 msgstr "External metadata"
 
-#: src/components/entities/external-match-dialog.tsx:345
+#: src/components/entities/external-match-dialog.tsx:350
 msgid "external ref"
 msgstr "external ref"
 
@@ -1103,26 +1073,27 @@ msgstr "Fetching episodes…"
 msgid "Fetching your library from {0}…"
 msgstr "Fetching your library from {0}…"
 
-#: src/components/settings/settings-dialogs.tsx:349
-#: src/components/settings/settings-dialogs.tsx:412
-#: src/components/settings/settings-dialogs.tsx:424
+#: src/components/settings/settings-dialogs.tsx:354
+#: src/components/settings/settings-dialogs.tsx:416
+#: src/components/settings/settings-dialogs.tsx:428
 #: src/components/settings/settings-field-form.tsx:49
 #: src/components/smart-lists/rule-row.tsx:66
 msgid "Field"
 msgstr "Field"
 
-#: src/components/settings/settings-dialogs.tsx:410
+#: src/components/settings/settings-dialogs.tsx:414
 msgid "Fields"
 msgstr "Fields"
 
 #: src/pages/entity-create-page.tsx:115
-#: src/pages/review-page.tsx:282
+#: src/pages/review-page.tsx:276
 msgid "File"
 msgstr "File"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:68
 #: src/pages/entity-create-page.tsx:135
+#: src/pages/entity-page.tsx:323
 msgid "File name"
 msgstr "File name"
 
@@ -1138,7 +1109,7 @@ msgstr "Filename title — used as"
 msgid "Filename title language"
 msgstr "Filename title language"
 
-#: src/pages/review-page.tsx:256
+#: src/pages/review-page.tsx:250
 msgid "Files the library could not parse cleanly."
 msgstr "Files the library could not parse cleanly."
 
@@ -1164,7 +1135,7 @@ msgstr "Form"
 msgid "Forward"
 msgstr "Forward"
 
-#: src/pages/review-page.tsx:280
+#: src/pages/review-page.tsx:274
 msgid "Frontmatter"
 msgstr "Frontmatter"
 
@@ -1175,10 +1146,6 @@ msgstr "Frontmatter key"
 #: src/components/import/import-labels.ts:22
 msgid "Game"
 msgstr "Game"
-
-#: src/pages/lists-page.tsx:172
-msgid "Give your list a name."
-msgstr "Give your list a name."
 
 #: src/components/layout/app-frame.tsx:226
 msgid "Go back"
@@ -1212,7 +1179,7 @@ msgstr "has a value"
 msgid "has any of"
 msgstr "has any of"
 
-#: src/pages/review-page.tsx:185
+#: src/pages/review-page.tsx:188
 msgid "Has date"
 msgstr "Has date"
 
@@ -1235,8 +1202,8 @@ msgstr "Hide sidebar"
 msgid "Home"
 msgstr "Home"
 
-#: src/components/settings/settings-dialogs.tsx:481
-#: src/components/settings/settings-dialogs.tsx:539
+#: src/components/settings/settings-dialogs.tsx:485
+#: src/components/settings/settings-dialogs.tsx:543
 msgid "Home section"
 msgstr "Home section"
 
@@ -1302,7 +1269,7 @@ msgstr "in {weeks} wk"
 
 #: src/components/import/plan-review.tsx:241
 #: src/components/import/plan-review.tsx:245
-#: src/pages/quick-capture-page.tsx:364
+#: src/pages/quick-capture-page.tsx:357
 msgid "In library ✓"
 msgstr "In library ✓"
 
@@ -1438,7 +1405,7 @@ msgstr "less"
 msgid "Library"
 msgstr "Library"
 
-#: src/pages/review-page.tsx:253
+#: src/pages/review-page.tsx:247
 msgid "Library Issues"
 msgstr "Library Issues"
 
@@ -1450,8 +1417,8 @@ msgstr "Light theme"
 msgid "Light theme. Switch to dark theme."
 msgstr "Light theme. Switch to dark theme."
 
-#: src/components/settings/settings-home-section.tsx:95
-#: src/pages/smart-list-page.tsx:501
+#: src/components/settings/settings-home-section.tsx:92
+#: src/pages/smart-list-page.tsx:494
 msgid "Limit"
 msgstr "Limit"
 
@@ -1492,12 +1459,12 @@ msgid "Links to"
 msgstr "Links to"
 
 #: src/pages/library-page.tsx:310
-#: src/pages/lists-page.tsx:190
+#: src/pages/lists-page.tsx:186
 msgid "List"
 msgstr "List"
 
-#: src/pages/entity-page.tsx:616
-#: src/pages/lists-page.tsx:149
+#: src/pages/entity-page.tsx:603
+#: src/pages/lists-page.tsx:148
 msgid "List created"
 msgstr "List created"
 
@@ -1542,22 +1509,22 @@ msgstr "Loading taxonomy"
 #: src/components/settings/raw-config-editor.tsx:149
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:208
-#: src/pages/entity-page.tsx:325
-#: src/pages/entity-page.tsx:635
+#: src/pages/entity-page.tsx:314
+#: src/pages/entity-page.tsx:622
 #: src/pages/home-page.tsx:51
 #: src/pages/import-wizard-page.tsx:217
 #: src/pages/list-detail-page.tsx:365
-#: src/pages/lists-page.tsx:55
+#: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:83
-#: src/pages/review-page.tsx:145
+#: src/pages/review-page.tsx:148
 #: src/pages/settings-page.tsx:101
-#: src/pages/smart-list-page.tsx:239
+#: src/pages/smart-list-page.tsx:231
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
 msgstr "Loading…"
 
 #: src/components/assets/quick-log-dialog.tsx:175
-#: src/pages/entity-page.tsx:419
+#: src/pages/entity-page.tsx:406
 msgid "Log"
 msgstr "Log"
 
@@ -1581,8 +1548,8 @@ msgstr "Logging defaults — the heading log lines are written under, and the fa
 msgid "Logging…"
 msgstr "Logging…"
 
-#: src/pages/entity-page.tsx:508
-#: src/pages/entity-page.tsx:629
+#: src/pages/entity-page.tsx:495
+#: src/pages/entity-page.tsx:616
 msgid "Manage lists"
 msgstr "Manage lists"
 
@@ -1611,7 +1578,7 @@ msgstr "Markdown body sections"
 msgid "Marks as {0}"
 msgstr "Marks as {0}"
 
-#: src/pages/entity-page.tsx:512
+#: src/pages/entity-page.tsx:499
 msgid "Match"
 msgstr "Match"
 
@@ -1628,7 +1595,7 @@ msgstr "Metadata"
 msgid "Missed?"
 msgstr "Missed?"
 
-#: src/pages/review-page.tsx:52
+#: src/pages/review-page.tsx:51
 msgid "Missing Cover"
 msgstr "Missing Cover"
 
@@ -1649,20 +1616,20 @@ msgstr "Move {label} down"
 msgid "Move {label} up"
 msgstr "Move {label} up"
 
-#: src/pages/list-detail-page.tsx:531
+#: src/pages/list-detail-page.tsx:532
 msgid "Move list to trash?"
 msgstr "Move list to trash?"
 
-#: src/pages/entity-page.tsx:556
-#: src/pages/list-detail-page.tsx:551
+#: src/pages/entity-page.tsx:543
+#: src/pages/list-detail-page.tsx:552
 msgid "Move to Trash"
 msgstr "Move to Trash"
 
-#: src/pages/entity-page.tsx:542
+#: src/pages/entity-page.tsx:529
 msgid "Move to trash?"
 msgstr "Move to trash?"
 
-#: src/pages/entity-page.tsx:249
+#: src/pages/entity-page.tsx:238
 msgid "Moved to trash"
 msgstr "Moved to trash"
 
@@ -1674,10 +1641,9 @@ msgstr "Music"
 msgid "My Vault"
 msgstr "My Vault"
 
-#: src/components/lists/rename-list-dialog.tsx:64
+#: src/components/rename-dialog.tsx:67
 #: src/components/smart-lists/save-smart-list-dialog.tsx:107
-#: src/pages/lists-page.tsx:202
-#: src/pages/smart-list-page.tsx:598
+#: src/pages/lists-page.tsx:198
 msgid "Name"
 msgstr "Name"
 
@@ -1689,17 +1655,13 @@ msgstr "Navigation"
 msgid "Needs review"
 msgstr "Needs review"
 
-#: src/components/layout/command-palette.tsx:145
-msgid "New entity"
-msgstr "New entity"
-
-#: src/components/settings/settings-dialogs.tsx:319
+#: src/components/settings/settings-dialogs.tsx:324
 msgid "New field"
 msgstr "New field"
 
-#: src/pages/entity-page.tsx:676
-#: src/pages/lists-page.tsx:49
-#: src/pages/lists-page.tsx:169
+#: src/pages/entity-page.tsx:663
+#: src/pages/lists-page.tsx:48
+#: src/pages/lists-page.tsx:168
 msgid "New list"
 msgstr "New list"
 
@@ -1711,7 +1673,7 @@ msgstr "New section"
 msgid "New-note template"
 msgstr "New-note template"
 
-#: src/components/entities/external-match-dialog.tsx:353
+#: src/components/entities/external-match-dialog.tsx:358
 msgid "New: {newValue}"
 msgstr "New: {newValue}"
 
@@ -1735,21 +1697,15 @@ msgstr "No"
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 msgstr "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
 
-#: src/components/entities/external-match-dialog.tsx:361
+#: src/components/entities/external-match-dialog.tsx:366
 msgid "No candidate fields or body sections match this type schema."
 msgstr "No candidate fields or body sections match this type schema."
 
-#: src/components/entities/external-match-dialog.tsx:176
-#: src/components/entities/use-external-match.ts:69
-#: src/components/entities/use-external-match.ts:206
-msgid "No candidates loaded"
-msgstr "No candidates loaded"
-
-#: src/pages/smart-list-page.tsx:368
+#: src/pages/smart-list-page.tsx:360
 msgid "No criteria — everything in the library matches."
 msgstr "No criteria — everything in the library matches."
 
-#: src/pages/review-page.tsx:186
+#: src/pages/review-page.tsx:189
 msgid "No date"
 msgstr "No date"
 
@@ -1765,17 +1721,17 @@ msgstr "No dated entities yet."
 msgid "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 msgstr "No entity type maps {unmatchedLabels}. Add an external-reference field for it in Settings to import these."
 
-#: src/components/settings/settings-dialogs.tsx:229
+#: src/components/settings/settings-dialogs.tsx:234
 msgid "No entity types configured."
 msgstr "No entity types configured."
 
 #: src/pages/calendar-page.tsx:160
 #: src/pages/calendar-page.tsx:175
-#: src/pages/library-page.tsx:389
+#: src/pages/library-page.tsx:386
 msgid "No entries"
 msgstr "No entries"
 
-#: src/pages/smart-list-page.tsx:389
+#: src/pages/smart-list-page.tsx:381
 msgid "No entries match the criteria"
 msgstr "No entries match the criteria"
 
@@ -1783,11 +1739,11 @@ msgstr "No entries match the criteria"
 msgid "No external mappings."
 msgstr "No external mappings."
 
-#: src/components/entities/use-external-match.ts:220
+#: src/components/entities/use-external-match.ts:82
 msgid "No external matches"
 msgstr "No external matches"
 
-#: src/components/settings/settings-dialogs.tsx:417
+#: src/components/settings/settings-dialogs.tsx:421
 msgid "No fields configured."
 msgstr "No fields configured."
 
@@ -1795,11 +1751,11 @@ msgstr "No fields configured."
 msgid "No folder selected"
 msgstr "No folder selected"
 
-#: src/pages/smart-list-page.tsx:366
+#: src/pages/smart-list-page.tsx:358
 msgid "No further criteria — every entity of this type matches."
 msgstr "No further criteria — every entity of this type matches."
 
-#: src/components/settings/settings-dialogs.tsx:474
+#: src/components/settings/settings-dialogs.tsx:478
 msgid "No home sections configured."
 msgstr "No home sections configured."
 
@@ -1816,15 +1772,15 @@ msgstr "No items yet — sync from a provider or add a list under the <0>{0}</0>
 msgid "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 msgstr "No items yet. Use “Add items” to put entities on this list, or “Add section” to group them."
 
-#: src/pages/smart-list-page.tsx:499
+#: src/pages/smart-list-page.tsx:492
 msgid "No limit"
 msgstr "No limit"
 
-#: src/pages/entity-page.tsx:639
+#: src/pages/entity-page.tsx:626
 msgid "No lists yet. Create one below."
 msgstr "No lists yet. Create one below."
 
-#: src/pages/lists-page.tsx:59
+#: src/pages/lists-page.tsx:58
 msgid "No lists yet. Create one to start collecting entities."
 msgstr "No lists yet. Create one to start collecting entities."
 
@@ -1841,7 +1797,7 @@ msgstr "No matched provider"
 msgid "No matches"
 msgstr "No matches"
 
-#: src/pages/quick-capture-page.tsx:334
+#: src/pages/quick-capture-page.tsx:327
 msgid "No matches found."
 msgstr "No matches found."
 
@@ -1853,7 +1809,7 @@ msgstr "No matching entities."
 msgid "No matching type"
 msgstr "No matching type"
 
-#: src/pages/review-page.tsx:266
+#: src/pages/review-page.tsx:260
 msgid "No parsing issues found."
 msgstr "No parsing issues found."
 
@@ -1865,15 +1821,15 @@ msgstr "no provider"
 msgid "No provider with a list is linked on this entity."
 msgstr "No provider with a list is linked on this entity."
 
-#: src/pages/review-page.tsx:210
+#: src/pages/review-page.tsx:208
 msgid "No queue items match the current filters"
 msgstr "No queue items match the current filters"
 
-#: src/pages/quick-capture-page.tsx:304
+#: src/pages/quick-capture-page.tsx:305
 msgid "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 msgstr "No search provider is enabled for this type — check its provider credentials in Settings, or add the entity manually."
 
-#: src/components/entities/external-match-dialog.tsx:133
+#: src/components/entities/external-match-dialog.tsx:136
 msgid "No supported providers"
 msgstr "No supported providers"
 
@@ -1881,8 +1837,8 @@ msgstr "No supported providers"
 msgid "No type options."
 msgstr "No type options."
 
-#: src/components/entities/external-match-dialog.tsx:328
-#: src/components/entities/external-match-dialog.tsx:395
+#: src/components/entities/external-match-dialog.tsx:333
+#: src/components/entities/external-match-dialog.tsx:400
 msgid "No value returned"
 msgstr "No value returned"
 
@@ -2058,14 +2014,6 @@ msgstr "Pick a date"
 msgid "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 msgstr "Pick a few — you can add more anytime. Your library is plain Markdown files in a folder you own, readable even without this app."
 
-#: src/pages/smart-list-page.tsx:514
-msgid "Pick a scope to filter on that type's own fields — across all types only the properties every entry has can be matched."
-msgstr "Pick a scope to filter on that type's own fields — across all types only the properties every entry has can be matched."
-
-#: src/pages/library-page.tsx:320
-msgid "Pick a type to filter on its own fields — across all types only the properties every entry has can be matched."
-msgstr "Pick a type to filter on its own fields — across all types only the properties every entry has can be matched."
-
 #: src/pages/activity-page.tsx:43
 msgid "Planned"
 msgstr "Planned"
@@ -2081,7 +2029,7 @@ msgstr "Planning"
 msgid "Prev"
 msgstr "Prev"
 
-#: src/pages/list-detail-page.tsx:592
+#: src/pages/list-detail-page.tsx:593
 msgid "Preview"
 msgstr "Preview"
 
@@ -2090,7 +2038,6 @@ msgid "Previewing…"
 msgstr "Previewing…"
 
 #: src/components/assets/quick-log-dialog.tsx:28
-#: src/pages/review-page.tsx:435
 msgid "Progress"
 msgstr "Progress"
 
@@ -2099,10 +2046,10 @@ msgid "property"
 msgstr "property"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
-#: src/components/entities/external-match-dialog.tsx:129
+#: src/components/entities/external-match-dialog.tsx:132
 #: src/components/settings/settings-external-mappings.tsx:67
 #: src/components/settings/settings-field-form.tsx:227
-#: src/pages/quick-capture-page.tsx:289
+#: src/pages/quick-capture-page.tsx:290
 msgid "Provider"
 msgstr "Provider"
 
@@ -2126,10 +2073,6 @@ msgstr "Providers"
 msgid "Public profile"
 msgstr "Public profile"
 
-#: src/pages/quick-capture-page.tsx:225
-msgid "Quick Capture"
-msgstr "Quick Capture"
-
 #: src/components/import/import-labels.ts:23
 msgid "Real"
 msgstr "Real"
@@ -2139,7 +2082,7 @@ msgid "Recent"
 msgstr "Recent"
 
 #. placeholder {0}: externalSourceLabel(providerCatalog, ref.provider)
-#: src/components/entities/external-match-dialog.tsx:165
+#: src/components/entities/external-match-dialog.tsx:170
 msgid "Refresh {0}"
 msgstr "Refresh {0}"
 
@@ -2167,7 +2110,7 @@ msgstr "Reload"
 #: src/components/settings/settings-editor.tsx:233
 #: src/pages/entity-edit-page.tsx:201
 #: src/pages/list-detail-page.tsx:427
-#: src/pages/smart-list-page.tsx:346
+#: src/pages/smart-list-page.tsx:338
 msgid "Reload latest version"
 msgstr "Reload latest version"
 
@@ -2190,8 +2133,8 @@ msgstr "Remove body section"
 msgid "Remove external field mapping"
 msgstr "Remove external field mapping"
 
-#: src/components/settings/settings-dialogs.tsx:363
-#: src/components/settings/settings-dialogs.tsx:428
+#: src/components/settings/settings-dialogs.tsx:367
+#: src/components/settings/settings-dialogs.tsx:432
 msgid "Remove field"
 msgstr "Remove field"
 
@@ -2216,38 +2159,36 @@ msgstr "Remove item"
 msgid "Remove rule"
 msgstr "Remove rule"
 
-#: src/components/settings/settings-dialogs.tsx:497
+#: src/components/settings/settings-dialogs.tsx:501
 msgid "Remove section"
 msgstr "Remove section"
 
-#: src/components/settings/settings-dialogs.tsx:244
+#: src/components/settings/settings-dialogs.tsx:249
 msgid "Remove type"
 msgstr "Remove type"
 
-#: src/components/lists/rename-list-dialog.tsx:88
 #: src/components/lists/section-block.tsx:117
-#: src/pages/entity-page.tsx:504
-#: src/pages/entity-page.tsx:734
-#: src/pages/entity-page.tsx:770
+#: src/components/rename-dialog.tsx:94
+#: src/pages/entity-page.tsx:322
+#: src/pages/entity-page.tsx:491
 #: src/pages/list-detail-page.tsx:384
-#: src/pages/smart-list-page.tsx:299
-#: src/pages/smart-list-page.tsx:622
+#: src/pages/smart-list-page.tsx:291
 msgid "Rename"
 msgstr "Rename"
 
-#: src/components/lists/rename-list-dialog.tsx:49
+#: src/pages/list-detail-page.tsx:517
 msgid "Rename list"
 msgstr "Rename list"
 
-#: src/pages/smart-list-page.tsx:583
+#: src/pages/smart-list-page.tsx:566
 msgid "Rename smart list"
 msgstr "Rename smart list"
 
-#: src/pages/entity-page.tsx:189
+#: src/pages/entity-page.tsx:178
 msgid "Renamed"
 msgstr "Renamed"
 
-#: src/pages/entity-page.tsx:188
+#: src/pages/entity-page.tsx:177
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
 
@@ -2256,17 +2197,11 @@ msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgid "renamed to “{0}”"
 msgstr "renamed to “{0}”"
 
-#: src/pages/smart-list-page.tsx:586
-msgid "Renames the .base file in your vault."
-msgstr "Renames the .base file in your vault."
-
-#: src/components/lists/rename-list-dialog.tsx:88
-#: src/pages/entity-page.tsx:770
-#: src/pages/smart-list-page.tsx:622
+#: src/components/rename-dialog.tsx:94
 msgid "Renaming…"
 msgstr "Renaming…"
 
-#: src/components/entities/external-match-dialog.tsx:389
+#: src/components/entities/external-match-dialog.tsx:394
 msgid "replaces existing section"
 msgstr "replaces existing section"
 
@@ -2302,7 +2237,7 @@ msgstr "Review"
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
 msgstr "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
 
-#: src/components/assets/asset-download-panel.tsx:98
+#: src/components/assets/asset-download-panel.tsx:97
 msgid "Running…"
 msgstr "Running…"
 
@@ -2310,13 +2245,13 @@ msgstr "Running…"
 #: src/components/settings/settings-editor.tsx:205
 #: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:406
-#: src/pages/smart-list-page.tsx:276
+#: src/pages/smart-list-page.tsx:268
 msgid "Save"
 msgstr "Save"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:85
-#: src/pages/library-page.tsx:351
-#: src/pages/library-page.tsx:355
+#: src/pages/library-page.tsx:348
+#: src/pages/library-page.tsx:352
 msgid "Save as smart list"
 msgstr "Save as smart list"
 
@@ -2346,7 +2281,7 @@ msgstr "Saves the current type, criteria, and sort as a smart list. Your search 
 #: src/pages/entity-create-page.tsx:103
 #: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:406
-#: src/pages/smart-list-page.tsx:276
+#: src/pages/smart-list-page.tsx:268
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -2355,15 +2290,15 @@ msgstr "Saving…"
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 
-#: src/pages/lists-page.tsx:213
-#: src/pages/smart-list-page.tsx:466
-#: src/pages/smart-list-page.tsx:471
+#: src/pages/lists-page.tsx:209
+#: src/pages/smart-list-page.tsx:459
+#: src/pages/smart-list-page.tsx:464
 msgid "Scope"
 msgstr "Scope"
 
-#: src/components/entities/external-match-dialog.tsx:122
-#: src/components/entities/external-match-dialog.tsx:149
-#: src/pages/quick-capture-page.tsx:267
+#: src/components/entities/external-match-dialog.tsx:125
+#: src/components/entities/external-match-dialog.tsx:152
+#: src/pages/quick-capture-page.tsx:268
 msgid "Search"
 msgstr "Search"
 
@@ -2383,6 +2318,11 @@ msgstr "Search entities, pages and commands…"
 msgid "Search entities…"
 msgstr "Search entities…"
 
+#: src/components/entities/external-match-dialog.tsx:181
+#: src/components/entities/use-external-match.ts:83
+msgid "Search for a match"
+msgstr "Search for a match"
+
 #: src/components/layout/app-frame.tsx:93
 #: src/components/layout/app-frame.tsx:259
 #: src/components/layout/header-search.tsx:159
@@ -2397,17 +2337,18 @@ msgstr "Search or add {relationType}"
 msgid "Search or add relation"
 msgstr "Search or add relation"
 
-#: src/pages/review-page.tsx:166
+#: src/pages/review-page.tsx:169
 msgid "Search queue"
 msgstr "Search queue"
 
-#: src/pages/quick-capture-page.tsx:400
+#: src/pages/quick-capture-page.tsx:393
 msgid "Search results come from third-party providers and are not affiliated with KizunaShelf."
 msgstr "Search results come from third-party providers and are not affiliated with KizunaShelf."
 
-#: src/components/entities/external-match-dialog.tsx:149
+#: src/components/entities/external-match-dialog.tsx:152
+#: src/components/entities/use-external-match.ts:80
 #: src/components/ui/multi-value-combobox.tsx:163
-#: src/pages/quick-capture-page.tsx:330
+#: src/pages/quick-capture-page.tsx:321
 msgid "Searching…"
 msgstr "Searching…"
 
@@ -2420,7 +2361,7 @@ msgstr "season {0}"
 msgid "Season language"
 msgstr "Season language"
 
-#: src/components/settings/settings-dialogs.tsx:469
+#: src/components/settings/settings-dialogs.tsx:473
 #: src/components/settings/settings-entity-type.tsx:303
 msgid "Section"
 msgstr "Section"
@@ -2438,7 +2379,7 @@ msgstr "Section heading"
 msgid "Section override"
 msgstr "Section override"
 
-#: src/components/settings/settings-dialogs.tsx:467
+#: src/components/settings/settings-dialogs.tsx:471
 msgid "Sections"
 msgstr "Sections"
 
@@ -2482,7 +2423,7 @@ msgstr "Select parent folder"
 msgid "Select type"
 msgstr "Select type"
 
-#: src/components/entities/external-match-dialog.tsx:321
+#: src/components/entities/external-match-dialog.tsx:326
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
@@ -2505,7 +2446,7 @@ msgid "Show sidebar"
 msgstr "Show sidebar"
 
 #. placeholder {0}: health.diagnosticCount
-#: src/pages/review-page.tsx:296
+#: src/pages/review-page.tsx:290
 msgid "Showing {shownCount} of {0} issues."
 msgstr "Showing {shownCount} of {0} issues."
 
@@ -2514,44 +2455,44 @@ msgid "Showing {visibleCount} of {total}"
 msgstr "Showing {visibleCount} of {total}"
 
 #. Badge on a list card marking a smart list (criteria-driven, updates automatically)
-#: src/pages/lists-page.tsx:97
+#: src/pages/lists-page.tsx:96
 msgid "Smart"
 msgstr "Smart"
 
-#: src/pages/lists-page.tsx:198
+#: src/pages/lists-page.tsx:194
 msgid "Smart list"
 msgstr "Smart list"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:65
-#: src/pages/lists-page.tsx:149
+#: src/pages/lists-page.tsx:148
 msgid "Smart list created"
 msgstr "Smart list created"
 
-#: src/pages/smart-list-page.tsx:199
+#: src/pages/smart-list-page.tsx:191
 msgid "Smart list deleted"
 msgstr "Smart list deleted"
 
-#: src/pages/smart-list-page.tsx:243
+#: src/pages/smart-list-page.tsx:235
 msgid "Smart list not found"
 msgstr "Smart list not found"
 
-#: src/pages/smart-list-page.tsx:564
+#: src/pages/smart-list-page.tsx:548
 msgid "Smart list renamed"
 msgstr "Smart list renamed"
 
-#: src/pages/smart-list-page.tsx:184
+#: src/pages/smart-list-page.tsx:176
 msgid "Smart list saved"
 msgstr "Smart list saved"
 
-#: src/pages/entity-page.tsx:235
+#: src/pages/entity-page.tsx:224
 msgid "Some images could not be downloaded"
 msgstr "Some images could not be downloaded"
 
-#: src/pages/entity-page.tsx:234
+#: src/pages/entity-page.tsx:223
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "Some images could not be downloaded: {reasons}"
 
-#: src/pages/smart-list-page.tsx:640
+#: src/pages/smart-list-page.tsx:584
 msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "Some of this file's syntax isn't supported here and is ignored:"
 
@@ -2561,14 +2502,14 @@ msgstr "Some of this file's syntax isn't supported here and is ignored:"
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: src/components/settings/settings-home-section.tsx:99
+#: src/components/settings/settings-home-section.tsx:96
 #: src/components/smart-lists/sort-picker.tsx:89
 msgid "Sort"
 msgstr "Sort"
 
 #. Label before the sort-key picker of the active smart-list view
 #. placeholder {0}: activeView.name
-#: src/pages/smart-list-page.tsx:485
+#: src/pages/smart-list-page.tsx:478
 msgid "Sort {0} by"
 msgstr "Sort {0} by"
 
@@ -2582,7 +2523,7 @@ msgstr "Source"
 msgid "Stamps {0} = {1}"
 msgstr "Stamps {0} = {1}"
 
-#: src/components/assets/asset-download-panel.tsx:98
+#: src/components/assets/asset-download-panel.tsx:97
 msgid "Start"
 msgstr "Start"
 
@@ -2620,7 +2561,7 @@ msgstr "status"
 msgid "Status field"
 msgstr "Status field"
 
-#: src/pages/review-page.tsx:57
+#: src/pages/review-page.tsx:56
 msgid "Status Mismatch"
 msgstr "Status Mismatch"
 
@@ -2693,7 +2634,7 @@ msgstr "Taxonomy root"
 msgid "taxonomy: {0}"
 msgstr "taxonomy: {0}"
 
-#: src/pages/smart-list-page.tsx:409
+#: src/pages/smart-list-page.tsx:402
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 
@@ -2708,10 +2649,6 @@ msgstr "The import failed."
 #: src/components/error-boundary.tsx:58
 msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "The page hit an unexpected error. You can try again, or reload the app."
-
-#: src/components/settings/settings-home-section.tsx:84
-msgid "The same rules as smart lists; the section shows entities that match."
-msgstr "The same rules as smart lists; the section shows entities that match."
 
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
 #: src/components/settings/settings-editor.tsx:223
@@ -2732,12 +2669,12 @@ msgid "This month"
 msgstr "This month"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:545
+#: src/pages/entity-page.tsx:532
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "This moves {0} to the Trash. You can restore it later if you need it."
 
 #. placeholder {0}: data.name
-#: src/pages/list-detail-page.tsx:534
+#: src/pages/list-detail-page.tsx:535
 msgid "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched."
 
@@ -2745,12 +2682,12 @@ msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched.
 msgid "This page doesn’t exist or may have moved."
 msgstr "This page doesn’t exist or may have moved."
 
-#: src/pages/smart-list-page.tsx:190
+#: src/pages/smart-list-page.tsx:182
 msgid "This smart list changed on disk. Reload the page and redo your edits."
 msgstr "This smart list changed on disk. Reload the page and redo your edits."
 
 #. Warning banner in the smart-list editor after another app changes its .base file; the local draft has been preserved
-#: src/pages/smart-list-page.tsx:341
+#: src/pages/smart-list-page.tsx:333
 msgid "This smart list changed on disk. Your unsaved edits are still here."
 msgstr "This smart list changed on disk. Your unsaved edits are still here."
 
@@ -2769,7 +2706,7 @@ msgstr "Title"
 msgid "Title language"
 msgstr "Title language"
 
-#: src/pages/quick-capture-page.tsx:282
+#: src/pages/quick-capture-page.tsx:283
 msgid "Title, or paste a provider URL"
 msgstr "Title, or paste a provider URL"
 
@@ -2807,11 +2744,11 @@ msgstr "Try again"
 #: src/components/settings/settings-home-section.tsx:60
 #: src/pages/entity-create-page.tsx:119
 #: src/pages/library-page.tsx:249
-#: src/pages/quick-capture-page.tsx:244
+#: src/pages/quick-capture-page.tsx:245
 msgid "Type"
 msgstr "Type"
 
-#: src/pages/quick-capture-page.tsx:326
+#: src/pages/quick-capture-page.tsx:317
 msgid "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgstr "Type at least {MIN_QUERY_LENGTH} characters to search."
 
@@ -2819,7 +2756,7 @@ msgstr "Type at least {MIN_QUERY_LENGTH} characters to search."
 msgid "Type Distribution"
 msgstr "Type Distribution"
 
-#: src/components/settings/settings-dialogs.tsx:215
+#: src/components/settings/settings-dialogs.tsx:220
 #: src/components/settings/settings-editor.tsx:122
 #: src/components/settings/settings-editor.tsx:393
 msgid "Types"
@@ -2837,7 +2774,7 @@ msgstr "Ungrouped"
 msgid "Unit"
 msgstr "Unit"
 
-#: src/pages/review-page.tsx:55
+#: src/pages/review-page.tsx:54
 msgid "Unlinked entities"
 msgstr "Unlinked entities"
 
@@ -2845,7 +2782,7 @@ msgstr "Unlinked entities"
 msgid "Unmapped"
 msgstr "Unmapped"
 
-#: src/pages/review-page.tsx:54
+#: src/pages/review-page.tsx:53
 msgid "Unmatched"
 msgstr "Unmatched"
 
@@ -2861,7 +2798,7 @@ msgstr "Unresolved"
 msgid "Unresolved link"
 msgstr "Unresolved link"
 
-#: src/pages/review-page.tsx:56
+#: src/pages/review-page.tsx:55
 msgid "Unresolved Relations"
 msgstr "Unresolved Relations"
 
@@ -2869,6 +2806,7 @@ msgstr "Unresolved Relations"
 msgid "Untitled section"
 msgstr "Untitled section"
 
+#: src/components/home/coming-up-section.tsx:63
 #: src/pages/activity-page.tsx:33
 msgid "Up next"
 msgstr "Up next"
@@ -2942,8 +2880,8 @@ msgstr "Vaults"
 msgid "Watching now"
 msgstr "Watching now"
 
-#: src/pages/entity-page.tsx:682
-#: src/pages/lists-page.tsx:206
+#: src/pages/entity-page.tsx:669
+#: src/pages/lists-page.tsx:202
 msgid "Watchlist"
 msgstr "Watchlist"
 
@@ -2996,7 +2934,7 @@ msgstr "yes"
 msgid "Yes"
 msgstr "Yes"
 
-#: src/pages/quick-capture-page.tsx:239
+#: src/pages/quick-capture-page.tsx:240
 msgid "You can still open entities already in your library."
 msgstr "You can still open entities already in your library."
 

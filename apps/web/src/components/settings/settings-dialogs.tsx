@@ -51,7 +51,7 @@ function DialogShell({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
-  description: string;
+  description?: string;
   onBack?: () => void;
   footer: ReactNode;
   children: ReactNode;
@@ -65,7 +65,10 @@ function DialogShell({
         full-screen sheet on phones (`max-sm:` resets the base card positioning),
         reverting to a centered `max-w-2xl` card at `sm`+.
       */}
-      <DialogContent className="flex flex-col gap-0 overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-2xl">
+      <DialogContent
+        {...(!description ? { "aria-describedby": undefined } : {})}
+        className="flex flex-col gap-0 overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-2xl"
+      >
         <DialogHeader className="space-y-0 border-b px-4 py-3 pr-12 text-left">
           <div className="flex min-w-0 items-center gap-2">
             {onBack ? (
@@ -82,7 +85,9 @@ function DialogShell({
             ) : null}
             <DialogTitle className="min-w-0 truncate">{title}</DialogTitle>
           </div>
-          <DialogDescription className="mt-1">{description}</DialogDescription>
+          {description ? (
+            <DialogDescription className="mt-1">{description}</DialogDescription>
+          ) : null}
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
         <DialogFooter className="border-t px-4 py-3">{footer}</DialogFooter>
@@ -347,7 +352,6 @@ function TypeEditorDialog({
         onOpenChange={(next) => !next && onClose()}
         onBack={() => setFieldIndex(null)}
         title={field.displayName || field.field || t`Field`}
-        description={t`Configure how this field is read, derived, and displayed.`}
         footer={
           <>
             <Button
@@ -384,7 +388,7 @@ function TypeEditorDialog({
       open
       onOpenChange={(next) => !next && onClose()}
       title={draft.label || draft.id || t`Entity type`}
-      description={t`Edit this type's basics, providers, filename, and fields. Changes apply to the draft and save with the rest of the schema.`}
+      description={t`Changes save with the rest of the schema.`}
       footer={
         <>
           <Button type="button" variant="outline" onClick={onClose}>
@@ -537,7 +541,6 @@ function HomeSectionDialog({
       open
       onOpenChange={(next) => !next && onClose()}
       title={draft.title || draft.id || t`Home section`}
-      description={t`Configure a section shown on the home page: its source type, filters, and ordering.`}
       footer={
         <>
           <Button type="button" variant="outline" onClick={onClose}>

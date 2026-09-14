@@ -107,7 +107,7 @@ export function EntityCreatePage() {
         <div className="min-h-0 flex-1 overflow-auto overscroll-contain px-4 py-4">
           <div className={CONTENT_MEASURE}>
             <h1 className="mb-8 text-2xl leading-tight font-semibold tracking-tight">
-              <Trans>Add entity</Trans>
+              <Trans>Add manually</Trans>
             </h1>
 
             {!contentWritable ? <Alert className="mb-6">{CONTENT_WRITES_DISABLED}</Alert> : null}

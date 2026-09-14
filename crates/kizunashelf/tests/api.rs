@@ -63,7 +63,6 @@ fn build_inline_router(
         .unwrap_or_else(|| PathBuf::from(".tokens.json"));
     router_native(
         ApiOptions {
-            config_path: PathBuf::new(),
             cache_ttl,
             web_dist_path: None,
             settings_writable,

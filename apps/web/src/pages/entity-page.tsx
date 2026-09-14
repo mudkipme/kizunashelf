@@ -3,7 +3,6 @@ import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2Icon,
-  CheckIcon,
   CircleIcon,
   DownloadIcon,
   FilePenLineIcon,
@@ -40,6 +39,7 @@ import { QuickLogDialog } from "@/components/assets/quick-log-dialog";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
 import { useExternalMatch } from "@/components/entities/use-external-match";
 import { AppFrame } from "@/components/layout/app-frame";
+import { RenameDialog } from "@/components/rename-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,7 +98,6 @@ export function EntityPage() {
   const language = useTitleLanguage();
   const { saving, run } = useEntityMutation();
   const [renameOpen, setRenameOpen] = useState(false);
-  const [renameBasename, setRenameBasename] = useState("");
   const [manageListsOpen, setManageListsOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [episodesSaving, setEpisodesSaving] = useState(false);
@@ -159,21 +158,11 @@ export function EntityPage() {
 
   useEffect(() => {
     if (!entity) return;
-    setRenameBasename(entity.basename);
     setMatchQuery(entityTitle(entity, language));
   }, [entity, language, setMatchQuery]);
 
-  async function saveRename() {
-    if (!entity) return;
-    const nextBasename = normalizeBasename(renameBasename);
-    const validationError = basenameValidationError(nextBasename);
-    setRenameBasename(nextBasename);
-    // The rename dialog already renders this inline and disables its submit.
-    if (validationError) return;
-    if (nextBasename === entity.basename) {
-      setRenameOpen(false);
-      return;
-    }
+  async function saveRename(nextBasename: string) {
+    if (!entity || !contentWritable) return;
     await run(
       async () => {
         const result = await saveEntity(entity.id, {
@@ -329,16 +318,13 @@ export function EntityPage() {
           <>
             <RenameDialog
               open={renameOpen}
-              onOpenChange={(open) => {
-                setRenameOpen(open);
-                if (!open) setRenameBasename(entity.basename);
-              }}
-              currentBasename={entity.basename}
-              basename={renameBasename}
+              onOpenChange={setRenameOpen}
+              title={t`Rename`}
+              label={t`File name`}
+              currentName={entity.basename}
               saving={saving}
               disabled={!contentWritable}
-              onBasenameChange={setRenameBasename}
-              onSave={saveRename}
+              onRename={saveRename}
             />
             <ExternalMatchDialog
               open={external.open}
@@ -352,6 +338,7 @@ export function EntityPage() {
               selectedBodySections={external.selectedBodySections}
               providerCatalog={providerCatalog.data}
               providerOptions={external.providerOptions}
+              providers={external.providers}
               externalSearchEnabled={external.externalSearchEnabled}
               existingExternalRefs={external.existingExternalRefs}
               currentValues={entity.frontmatter as Record<string, unknown>}
@@ -699,78 +686,6 @@ function ManageListsDialog({
             <Trans>Done</Trans>
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function RenameDialog({
-  open,
-  onOpenChange,
-  currentBasename,
-  basename,
-  saving,
-  disabled,
-  onBasenameChange,
-  onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentBasename: string;
-  basename: string;
-  saving: boolean;
-  disabled: boolean;
-  onBasenameChange: (value: string) => void;
-  onSave: () => void;
-}) {
-  const normalizedBasename = normalizeBasename(basename);
-  const validationError = basenameValidationError(basename);
-  const unchanged = normalizedBasename === currentBasename;
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>Rename</Trans>
-          </DialogTitle>
-        </DialogHeader>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSave();
-          }}
-          className="flex flex-col gap-2"
-        >
-          <label className="text-sm font-medium">
-            <Trans>Basename</Trans>
-            <Input
-              value={basename}
-              onChange={(event) => onBasenameChange(event.target.value)}
-              onBlur={() => onBasenameChange(normalizedBasename)}
-              disabled={disabled || saving}
-              aria-invalid={Boolean(validationError)}
-            />
-          </label>
-          {validationError ? <p className="text-xs text-destructive">{validationError}</p> : null}
-          <DialogFooter className="mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={saving}
-            >
-              <XIcon data-icon="inline-start" />
-              <Trans>Cancel</Trans>
-            </Button>
-            <Button
-              type="submit"
-              disabled={disabled || saving || Boolean(validationError) || unchanged}
-            >
-              <CheckIcon data-icon="inline-start" />
-              {saving ? <Trans>Renaming…</Trans> : <Trans>Rename</Trans>}
-            </Button>
-          </DialogFooter>
-        </form>
       </DialogContent>
     </Dialog>
   );

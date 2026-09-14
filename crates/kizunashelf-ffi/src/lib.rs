@@ -105,7 +105,6 @@ impl KizunaEngine {
             content_writable: Some(options.content_writable),
         };
         let core_options = CoreApiOptions {
-            config_path: PathBuf::new(),
             cache_ttl: Duration::from_millis(options.cache_ttl_ms.unwrap_or(10_000)),
             web_dist_path: None,
             // The vault config (schema) is editable on iOS via the VFS-aware
