@@ -4,20 +4,25 @@ description: "Turn remote cover URLs into files in your vault — one entity at 
 sidebar_position: 12
 ---
 
-A cover referenced by URL disappears when the remote host does. Downloading covers **into the vault** (under the configured `assetRoot`) makes them yours: they sync with the vault, show up offline, and survive the provider.
+Download covers into your vault to keep them available offline. A local copy also stays available if the original image URL stops working.
 
-## How covers get local
+## Download a cover
 
-- **[Quick Capture](./adding.mdx)** downloads the matched candidate's cover at creation time (fail-safe — a failed download never blocks the entity).
-- **[Matching](./editing.mdx#matching-external-metadata)** an existing entity offers the cover among the metadata to apply.
-- **The batch cover downloader** sweeps many at once: it finds image fields still holding remote URLs and downloads them, over one type or the whole library. You'll meet it on the [import](./import.mdx) Review page (imports deliberately keep remote URLs) and from the [cleanup queues](./statistics.mdx#review-cleanup-queues--library-diagnosis).
+[Quick Capture](./adding.mdx) tries to download the cover when it creates an entity. You can also apply a cover while [matching an existing entity](./editing.mdx#matching-external-metadata).
 
-<Screenshot caption="The batch cover downloader working through a library of remote URLs." />
+## Download several covers
 
-The downloaded file lands in `assetRoot`, the image field is updated to the vault-relative path, and the write is atomic like every other content write.
+After an [import](./import.mdx), open **Download remote covers** on the Review page. Choose one type or the whole library. The downloader finds image fields with online URLs and saves local copies.
 
-## Safety rails
+If a cover is missing entirely, [match the entity to a provider](./editing.mdx#matching-external-metadata) or add an image first.
 
-Download URLs are validated against an **SSRF guard**: private, loopback, and link-local addresses are blocked, and redirects are re-validated per hop. If your covers legitimately live on a LAN host (a NAS, a self-hosted image server), opt in with `KIZUNASHELF_ALLOW_PRIVATE_ASSET_HOSTS` on the self-hosted web app.
+<Screenshot
+  desktop="/images/desktop/review.png"
+  desktopAlt="Review page with Download remote covers, a type selector, and a Start button above the cleanup queues"
+  caption="Choose which collection to download covers for."
+  platforms="both"
+/>
 
-Covers can be the largest part of a vault — worth remembering when picking a [sync method](../guides/syncing.md).
+The image fields then point to files in your vault's assets folder. Include that folder when you [sync or back up your library](../guides/syncing.md).
+
+For images hosted on your own network, see the [self-hosted server setting](../reference/web-server.md#configuration) for private asset hosts.

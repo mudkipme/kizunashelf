@@ -1,47 +1,41 @@
 ---
 title: "iOS features"
-description: "The fully native app: widgets, notifications, Spotlight, share-sheet capture, Siri & Shortcuts, and the Action button."
+description: "Use widgets, reminders, Spotlight, sharing, and Shortcuts on iPhone and iPad."
 sidebar_position: 14
 ---
 
-The iOS app is fully native SwiftUI with the entire Rust core running **in-process** — no server, no round trips, and everything works offline (the network is only for provider metadata, cover downloads, and whatever syncing you already use). Vaults live on-device under On My iPhone or open from Files/iCloud Drive; provider credentials live in the Keychain.
-
-Beyond feature parity with web and desktop, iOS adds the platform integrations below.
+Use KizunaShelf on iPhone or iPad to browse and edit your vault without running a server. Keep the vault on your device or open a folder from Files. For offline use, make sure cloud files have downloaded first; searches, imports, and remote covers still need a connection.
 
 ## Coming Up widget
 
-A Home Screen widget for [what's coming up](./calendar.mdx#whats-coming-up): upcoming releases and next episodes, straight from your calendar data.
+Add the Coming Up widget to your Home Screen to see [upcoming releases and episodes](./calendar.mdx#whats-coming-up).
 
-<Screenshot platforms="ios" caption="The Coming Up widget on the Home Screen." />
+<Screenshot platforms="ios" caption="The Coming Up widget on the iPhone Home Screen." />
 
 ## Notifications & reminders
 
-Opt-in reminders for the dates you're waiting on — releases and airing episodes from your `planning` dates. Reminder preferences are device-local (they're a *you-on-this-device* choice, not vault data).
-
-<Screenshot platforms="ios" caption="A release reminder." />
+Turn on reminders for releases and airing episodes you are waiting for. Your reminder preferences stay on this device.
 
 ## Spotlight search
 
-Your entities are indexed into system Spotlight: search from the Home Screen and jump straight to a detail page, without opening the app first.
+Search for an entity from the iPhone or iPad Home Screen and open its detail page directly.
 
-<Screenshot platforms="ios" caption="An entity in Spotlight results." />
+<Screenshot platforms="ios" caption="Find Steins;Gate 0 through Spotlight." />
 
 ## Share-sheet capture
 
-Found something in Safari? Share a provider page to KizunaShelf and it lands in [Quick Capture](./adding.mdx) pre-filled — from browsing to on-the-shelf in two taps.
+Share a provider page from Safari to KizunaShelf to open [Quick Capture](./adding.mdx) with the URL already filled in.
 
-<Screenshot platforms="ios" caption="Capturing from Safari via the share sheet." />
+<Screenshot platforms="ios" caption="Share an anime page from Safari to Quick Capture." />
 
 ## Siri, Shortcuts & the Action button
 
-App Intents expose [Log activity](./log.mdx) and capture to Siri and the Shortcuts app — so "log an episode" can be a sentence, a Shortcut automation, or the **Action button** on recent iPhones. Check off an episode from the couch; it's still just a line of Markdown.
+Use KizunaShelf's actions in Shortcuts to capture an entity or [log activity](./log.mdx). You can run a shortcut with Siri or assign it to a supported iPhone's Action button.
 
-<Screenshot platforms="ios" caption="A Log activity shortcut on the Action button." />
+<Screenshot platforms="ios" caption="A shortcut for logging an episode." />
 
 ## Background downloads
 
-Cover and asset downloads run through background `URLSession` transfers, so a batch keeps going when you leave the app.
+Cover downloads can continue when you leave the app. You can return later to check their progress.
 
----
-
-The iOS app is on [TestFlight](https://testflight.apple.com/join/hE7k3sWd).
+To get started, follow the [iOS quickstart](../start/quickstart.md#ios). For cloud folders and offline access, see [Syncing your vault](../guides/syncing.md#ios).

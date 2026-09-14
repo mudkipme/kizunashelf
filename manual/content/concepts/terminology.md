@@ -4,26 +4,26 @@ description: "The standard names for things, used consistently across the manual
 sidebar_position: 3
 ---
 
-These are the name of concepts building KizunaShelf.
+A few names you will see in the app and this manual:
 
 | Term | Meaning |
 | --- | --- |
-| **entity** | One thing in your library — one Markdown file in a type's folder. |
-| **entity type** (or just **type**) | A kind of entity your schema declares (`anime`, `games`, …), mapped to one folder. |
-| **vault** | The folder that holds everything: entities, daily notes, assets, and the schema. Same word as Obsidian's. |
-| **library** | The whole indexed collection KizunaShelf reads from the vault what you browse. |
-| **schema** (or **vault config**) | `KizunaShelf/config.yaml` — the declaration of types, fields, and roles. |
-| **field** | One frontmatter key an entity carries, declared in the schema with a `fieldType`. |
-| **role** | The semantic job of a field beyond its type: `titleRole`, `dateRole`, `enumRole`. Meaning always comes from roles, never from field names. |
-| **frontmatter** | The YAML block at the top of an entity's Markdown file. |
-| **body** | Everything below the frontmatter: notes, body sections, episode lists. |
-| **relation** | A `[[wikilink]]` connecting two entities, read in both directions. |
-| **item** | One entry *inside* a checklist, list, or queue: an episode, a track, an issue, a list-page line, an import-queue row. |
-| **daily note** | A dated Markdown note (Obsidian-style); mentions and log lines live here. |
-| **provider** | An external metadata source (Bangumi, TMDB, …) from the [provider catalog](../reference/providers.md). |
-| **match** | Connecting an entity to a provider result and applying mapped metadata. |
-| **Quick Capture** | The search-a-provider-and-create-in-one-action flow. |
-| **Log activity** | The one-line write-to-today's-daily-note action, the *Log* button on an entity. |
-| **activity** | The dated record of what happened: episode check-offs, completion dates, daily-note mentions, logs. |
-| **smart list** | A saved `.base` file of criteria whose items are computed, partly compatible with Obsidian Bases. |
-| **Home row** | A preview of a pinned smart list’s first supported view. |
+| **vault** | The folder holding your library, notes, covers, lists, and settings. |
+| **library** | The collection you browse in KizunaShelf. |
+| **entity** | One thing in the library, such as an anime, game, album, or character. It has its own Markdown file. |
+| **type** | A collection of similar entities, such as Anime or Games. |
+| **schema** | The settings that define your types and their fields. |
+| **field** | A detail such as title, status, cover, or release date. |
+| **role** | What a field means: for example, whether a date is a release or a completion. |
+| **frontmatter** | The details between the `---` lines at the top of a Markdown file. |
+| **body** | The rest of the file: summaries, checklists, and your own notes. |
+| **relation** | A link between entities. |
+| **item** | One row inside a list, checklist, or import queue. |
+| **provider** | A service that supplies titles, covers, and other metadata. |
+| **import source** | A service or export file you bring your existing collection from. |
+| **match** | A connection between an entity and a provider result. |
+| **daily note** | A Markdown note for a particular day. |
+| **activity** | A dated record, such as finishing an episode or mentioning an entity in a daily note. |
+| **smart list** | A saved list that updates automatically as entities match its filters. |
+
+See the [feature guides](../features/index.md) for the actions behind these terms.

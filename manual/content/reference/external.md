@@ -6,7 +6,7 @@ sidebar_position: 5
 
 ## External Metadata
 
-External metadata support has two pieces:
+External metadata uses three settings:
 
 1. `externalRef` fields store links/ids to providers.
 2. `externalFields` map provider metadata into local fields.
@@ -75,7 +75,7 @@ For example:
 
 ### `bodySections`
 
-`bodySections` declares named sections of an entity's Markdown **body**, each addressed by its heading. A section's `kind` chooses its behavior. (This generalizes the former `bodyMappings`.)
+`bodySections` declares named sections of an entity's Markdown **body**, each addressed by its heading. A section's `kind` chooses its behavior.
 
 | Key | Required | Type | Description |
 | --- | --- | --- | --- |
@@ -102,34 +102,21 @@ When an external section is applied, KizunaShelf replaces the matching heading s
 
 ### Episodes / tracks / chapters
 
-An `episodes` body section is the built-in episode tracker. The section's body is an ordered Markdown list, optionally grouped by **season/disc sub-headings**, with the item number written in the item text (so `0`, `12.5`, specials work — Markdown ordered-list markers can't). With `tracking: checklist`, items are task-list checkboxes that record exactly which are watched (handling skips a `progress` field can't); the engine derives a watched/total roll-up shown in the library and on the detail page.
+An `episodes` body section is a Markdown list, optionally grouped by season or disc subheadings. With `tracking: checklist`, task checkboxes record completed items and contribute to the watched/total count. With `tracking: none`, the section remains a plain list. Item numbers are part of each line's text, so specials such as `12.5` are supported.
 
-```markdown
-## Episodes
-### Season 1
-- [x] 1 · Pilot
-- [ ] 12.5 · Recap (special)
-### Season 2
-- [ ] 1 · New Dawn
-```
-
-Multiple seasons can live as sub-headings in **one** entity, or as **separate** entities linked by relations — the engine mirrors whatever the files contain and never merges or splits them. The list is plain Markdown: edit it directly in Obsidian, or toggle items on the detail page.
-
-**Syncing from a provider.** When an entity links an `externalRef` to a source that exposes a list, the detail page's episodes panel offers a **Sync** action that pulls the provider's list into a checkable preview and merges the ticked items in — new items are added and ticked existing ones have their title updated, while your watched ticks and hand-added entries are always kept. Which providers can supply a list is the *Episode/track sync* column of the [External providers](./providers.md) table; series providers map episodes, music providers map tracks (grouped by disc), and Comic Vine maps a volume's issues. The provider must be configured (credentials set, if it needs any) and linked on the entity; when more than one such source is linked, the dialog lets you choose which to sync from.
+The app preserves watched marks and hand-added items when merging selected provider episodes. See [Managing episodes & tracks](../features/episodes.mdx) for the editing and sync workflow, and the [provider catalog](./providers.md) for supported sources.
 
 ## Quick Capture and Import
 
-The external-metadata wiring above powers two ways to create entities from provider data. Both create real Markdown files and are gated by content-write mode; both reuse the same **"in library" detection** so they never make a duplicate.
-
 ### Quick Capture
 
-Quick Capture (`/entities/new`) is the single-add flow: search the providers a type maps (or paste a provider URL), pick a match, and one click creates the entity. The server re-runs the schema mapping (it never trusts client-sent values), fills every mapped field and body section, downloads covers, and imports the episode list — covers and episodes are fail-safe, so a flaky provider never blocks the creation. If the candidate already resolves to a library entity (by external ref or a loose title match), Quick Capture opens that entity instead of adding a copy.
+[Quick Capture](../features/adding.mdx#quick-capture) creates one entity from a provider result. The core applies the type's field and body mappings; cover and episode downloads are best-effort. Existing-entity detection uses external references and title matching.
 
 ### Import
 
-Import (`/entities/import`) brings in a whole library from another service. It is a three-step, **review-before-write** job: *fetch & plan* (pull the source and resolve every item against your schema), *review* (see what will be created, skipped as already-in-library, or needs manual attention — and pick a target type where a bucket maps to more than one), then *commit* (create the approved entities). Nothing is written until you commit, and re-running the same import is safe — anything already created is skipped.
+[Batch import](../features/import.mdx) creates entities from a collection after review. It uses the same existing-entity detection as Quick Capture. The source requirements and schema mappings are listed below.
 
-Only **public profiles** are supported. Each source resolves its items to one of the built-in providers, so **a type must declare an `externalRef` field for that provider** to receive them (e.g. an `externalRef: myanimelist` field to import MyAnimeList/AniList/Kitsu, `externalRef: tmdb` for Trakt/IMDb, `externalRef: steam` for Steam, `externalRef: openlibrary` for Goodreads, `externalRef: bangumi` for Bangumi). The item's provider *type* (anime, movie, game, …) is matched against that field's `externalTypes`.
+Profile imports support **public profiles** only; CSV sources use the file supplied by the user. Each source resolves its items to one of the built-in providers, so **a type must declare an `externalRef` field for that provider** to receive them (e.g. an `externalRef: myanimelist` field to import MyAnimeList/AniList/Kitsu, `externalRef: tmdb` for Trakt/IMDb, `externalRef: steam` for Steam, `externalRef: openlibrary` for Goodreads, `externalRef: bangumi` for Bangumi). The item's provider *type* (anime, movie, game, …) is matched against that field's `externalTypes`.
 
 | Source | Input | Resolves to | Credential |
 | --- | --- | --- | --- |
@@ -147,4 +134,4 @@ Import credentials are supplied like provider credentials — `KIZUNASHELF_*` en
 
 **Your data maps through schema roles, not field names.** For each imported item, the source's status is translated to a canonical (`planning`/`ongoing`/`paused`/`completed`/`dropped`) and written to the type's [`enumRole: status`](./titles-dates-status.md#status) field via its `statusValues`; the score goes to the first [`rating`](./field-types.md) field (normalized to 0–10); started/finished dates go to the [`dateRole`](./titles-dates-status.md#dates-and-calendar-design) `started`/`completed` fields; notes become an unmanaged `## Notes` body section; and watched progress ticks the first *N* items of the [episodes](#episodes--tracks--chapters) section. A role you haven't wired is simply skipped. Which of these run is controlled by per-import toggles (import user data, import episodes, mark progress).
 
-Import does **not** download covers — imported image fields keep their remote URLs. Fetch the local copies afterward with the batch cover downloader (the *Download remote covers* panel on the Review page), which runs one job over a type or the whole library.
+Imported image fields keep remote URLs. See [Downloading covers locally](../features/covers.mdx) for the separate download workflow.

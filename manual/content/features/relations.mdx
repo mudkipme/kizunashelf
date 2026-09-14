@@ -1,23 +1,32 @@
 ---
 title: "Relations"
-description: "Ordinary wikilinks read in both directions — the network around each entity, with no separate graph store."
+description: "Connect entities with links and follow them in either direction."
 sidebar_position: 6
 ---
 
-A game belongs to a franchise; an anime adapts a novel; a character connects to her voice actor. In KizunaShelf those relations are ordinary `[[wikilinks]]` written in your files — there is no proprietary graph database to export from or lose.
+Connect an anime to its franchise, a character to a voice actor, or a game to another game you want to play next.
+
+For example, *Steins;Gate 0 (Anime)* and *Steins;Gate (Game)* can both link to a *Steins;Gate* franchise entity. Opening the franchise shows the works connected to it.
 
 ## Where relations come from
 
-- **Frontmatter relation fields** — a schema field with `fieldType: relation` holds one wikilink or a list of them; `relationType` restricts matching to a target type. These are the *typed* relations shown in the detail page's panels.
-- **Body links** — any `[[wikilink]]` in an entity's body that points at a known entity is indexed as a `body` relation.
-- **Daily-note mentions** — wikilinks in daily notes become `daily-note` relations, tying days to entities.
+Add a link in a relation field, such as **Franchise**, or write a wikilink in your notes:
 
-The index stores **both directions**: the detail page shows outgoing relations (what this entity points at) and incoming ones (what points at it) separately.
+```markdown
+Play [[Steins;Gate (Game)]] before revisiting [[Steins;Gate 0 (Anime)]].
+```
 
-<Screenshot caption="The relations panel: typed relations, backlinks, and mentions around one entity." />
+The detail page shows links in both directions: what this entity links to, and what links back to it. Mentions in daily notes also appear here.
+
+<Screenshot
+  desktop="/images/desktop/relations.png"
+  desktopAlt="Steins;Gate game showing Links to its franchise and Linked from a soundtrack and franchise note"
+  caption="Follow the connections around Steins;Gate."
+  platforms="both"
+/>
 
 ## Renames repoint links
 
-Renaming an entity from KizunaShelf rewrites inbound `[[wikilinks]]` across type folders, daily notes, and list pages, so the network survives renames. (Matching normalizes Unicode NFC/NFD, so *Pokémon* and *ポケモン* filenames are safe across macOS/iOS and other platforms.)
+Rename an entity in KizunaShelf to update links to it in your entity folders, daily notes, and list pages. Use distinct filenames for different entities so the app can tell which one a link means.
 
-Relations also power [browse criteria](./browse.mdx#criteria) ("everything linked to this franchise", either from one field or from anywhere in the note) and the relation columns in [smart lists](./lists.mdx).
+You can also [filter your library](./browse.mdx#criteria) by a relation, such as everything linked to *Pokémon*. For field settings, see the [relation reference](../reference/schema.md#relation-fields).

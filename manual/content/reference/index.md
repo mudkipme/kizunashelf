@@ -3,6 +3,6 @@ title: "Reference"
 sidebar_position: 6
 ---
 
-The exact behavior of every schema option and field role. Start at the [configuration overview](./config.md) — it explains the two kinds of configuration and maps the per-topic pages that make up the narrative reference: [Types & fields](./schema.md), [Titles, dates & status](./titles-dates-status.md), [External metadata & import](./external.md), and [Home, tags & daily notes](./home-tags-daily-notes.md).
+The [configuration overview](./config.md) maps the vault schema reference. For environment variables, authentication, and logging, see [Web server](./web-server.md).
 
-Three catalogs: [Field types & roles](./field-types.md), [External providers](./providers.md), and [Type presets](./presets.md), are generated directly from the app, so they always match the version you're running.
+The [field](./field-types.md), [provider](./providers.md), and [preset](./presets.md) catalogs are generated from the app. For step-by-step instructions, use the [feature guides](../features/index.md).

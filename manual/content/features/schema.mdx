@@ -4,23 +4,35 @@ description: "The Settings editor: structured form, raw YAML, and the built-in t
 sidebar_position: 13
 ---
 
-The schema — `KizunaShelf/config.yaml`, the source of truth for what everything *means* — is edited in **Settings** on web/desktop and **More → Vault Schema** on iOS. Because the schema lives in the vault, an edit on one device reaches every device with the next sync.
-
-## Two editors, one file
-
-- **The structured form** works with the typed schema: types, ordered field lists, enum options, roles, provider wiring — validated as you go, with vault-path autocomplete for folder fields (desktop adds a native folder picker).
-- **The raw YAML editor** (web/desktop) edits the document directly. It validates the complete document strictly and writes your text **verbatim, preserving comments and formatting** — the editor for hand-tuned configs. (On iOS, edit the file in a text editor when you need comment-level control.)
-
-<Screenshot caption="Settings: the structured schema editor and the raw YAML view." />
-
-The form covers the whole config: vault paths (`taxonomyRoot`, `assetRoot`), [daily notes](./log.mdx#configuring-daily-notes), and every type with its fields. What each option means is the [reference](../reference/config.md)'s job; how to design a type well is the [Defining your own type](../guides/defining-a-type.md) guide.
+Open **Settings** on web or desktop, or **More → Vault Schema** on iOS, to change your collections and their fields. These settings are saved inside the vault and shared by devices that sync it.
 
 ## Adding a built-in type
 
-**Add a built-in type** opens the same [preset picker](../reference/presets.md) as onboarding: pick *Anime*, *Games*, *Books*, …, and a fully-wired type is merged into your schema — fields, roles, provider mappings, seeded in your language. Presets whose relation targets you also have (or add together) keep those relations; colliding ids get suffixed rather than overwriting. Everything a preset adds is ordinary schema you can immediately edit. After adding types, use **Add suggested lists** on [Home](./home.mdx) to create matching smart lists.
+Choose **Add a built-in type** and pick a collection, such as Anime or Games. Its fields and provider connections are ready to use, and you can edit them afterward.
 
-## Guardrails
+After adding types, visit [Home](./home.mdx#suggested-lists) to add suggested smart lists for them.
 
-- Settings writes are gated separately from content writes: self-hosted web disables them for non-loopback hosts unless `KIZUNASHELF_SETTINGS_WRITABLE=true`; desktop and iOS treat an opened vault as schema-writable.
-- Schema edits never rewrite your entities. Removing a field's declaration stops the UI from *interpreting* it — the frontmatter itself stays in every file, and re-declaring the field brings its meaning back.
-- Be careful with simultaneous schema edits from two devices; the config is one shared file. See [Avoiding sync conflicts](../guides/syncing.md#avoiding-sync-conflicts).
+## Two editors, one file
+
+The **Form** editor lets you change types, fields, folders, and daily-note settings without writing YAML.
+
+<Screenshot
+  desktop="/images/desktop/schema.png"
+  desktopAlt="Settings type overview listing collections with field counts and provider connections"
+  caption="Manage your collections in Settings."
+  platforms="both"
+/>
+
+Open a type to edit its fields and provider connections. On web and desktop, **Apply** updates the draft; choose **Save** in Settings to write your changes.
+
+<Screenshot
+  desktop="/images/desktop/type-editor.png"
+  desktopAlt="Anime type dialog showing its ID, label, folder, provider priority, body-section mappings, and Apply button"
+  caption="Edit a collection’s fields and provider connections."
+/>
+
+The **YAML** editor on web and desktop is for editing the settings file directly. It preserves comments and formatting. On iOS, use a text editor if you need that control.
+
+Changing the schema does not rewrite existing entity files. Removing a field from Settings leaves its values in your notes; renaming a field requires updating the notes that use it.
+
+For a walkthrough, see [Defining your own type](../guides/defining-a-type.md). The [reference](../reference/config.md) explains each option, and [Self-hosting](../start/self-hosting.md) explains how to enable Settings writes on a server.

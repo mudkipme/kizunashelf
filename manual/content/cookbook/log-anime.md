@@ -4,15 +4,19 @@ description: "Seasons, episode check-ins, airing calendar, and Japanese/English 
 sidebar_position: 1
 ---
 
-<!-- TODO: full recipe. Outline (write from the Anime preset in presets.rs so docs and preset agree):
-     1. The type definition — YAML from the resolved Anime preset, annotated.
-     2. A sample entity — frontmatter for one show; call out multi-language titles
-        (titles map, bare `zh` keys), season field, status enum, progress.
-     3. What the UI derives — airing dates on the calendar, episode check-ins as
-        dated activity, progress against episode counts from the provider.
-     4. External metadata — recommended providers (Bangumi, TMDB, TheTVDB, AniList…),
-        credentials needed, how matching fills covers + episode lists.
-     5. Best practices — one entry per season vs per franchise, relating adaptations
-        to source novels/manga, using Quick Capture for airing-season additions. -->
+Start with the **Anime** preset and add *Steins;Gate 0* through [Quick Capture](../features/adding.mdx#quick-capture). Use `Steins;Gate 0 (Anime)` as its filename to distinguish it from a game.
 
-*This recipe is being written. Start from the **Anime** type preset during onboarding (or Settings → add a built-in type) — it wires titles, cover, season, status, progress, and provider mappings for you.*
+## Track a rewatch
+
+1. Mark the entity **Watching**.
+2. [Sync its episode list](../features/episodes.mdx#syncing-from-a-provider), then check off episodes as you watch.
+3. Use **Log** for thoughts you want to keep in a daily note, such as “the game makes this scene feel different.”
+4. When finished, set a completion date and your rating.
+
+A checklist is useful if you skip specials or watch out of order. A numeric progress field is enough when you only need a count. Choose the one you actually want to maintain.
+
+## Keep related works together
+
+Link the anime and *Steins;Gate (Game)* to a **Steins;Gate** franchise entity. Separate entities let you rate and track each work independently.
+
+Pin a *Watching Anime* [smart list to Home](../features/home.mdx) to keep your current shows close at hand. See [Inside an entity file](../concepts/anatomy-of-an-entity.md) for the Markdown behind this example.

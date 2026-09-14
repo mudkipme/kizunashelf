@@ -1,58 +1,23 @@
 ---
-title: "Schema-Driven by design"
-description: "Field names are yours; meaning comes from the schema. The one concept everything else builds on."
+title: "Types, fields & your schema"
+description: "Choose the details each collection keeps, without changing how you write your notes."
 sidebar_position: 1
 ---
 
-To help you get started quickly, KizunaShelf includes built-in presets for common media types like movies, anime, TV shows, video games, podcasts, and music albums.
+A **type** is a collection such as Anime or Games. Its **fields** are the details you keep about each entity: title, cover, status, dates, or anything else you find useful. The **schema** is the set of instructions that tells KizunaShelf how to display and edit those details.
 
-Under the hood, however, these are not rigid, hardcoded rules, and they are simply ready-to-use schemas. KizunaShelf is built on the belief that **any personal collection or interest, no matter how niche, can be cleanly modeled and organized through a schema you control.**
-
-## Markdown first
-
-KizunaShelf treats Markdown files as the durable source of truth. The configuration file does not create a database schema; it describes how to read and edit Markdown files that already exist in an Obsidian-style vault.
-
-Presets give you a zero-friction start, but you can customize every field of a preset or create brand-new entity types from scratch, whether that’s vintage tea, retro synth hardware, or local restaurants from a niche food manga.
-
-The model consists of four layers:
-
-1. `vaultRoot` points to the vault directory on disk.
-2. `taxonomyRoot` points to the collection root inside the vault.
-3. `types` maps subfolders under `taxonomyRoot` to entity types.
-4. `fields` maps frontmatter keys to semantic roles such as title, cover, date, external reference, or relation.
-
-For example, with the following configuration:
-
-```yaml
-taxonomyRoot: Taxonomy
-types:
-- id: anime
-  path: Anime
-```
-
-KizunaShelf reads Markdown files from `<vault>/Taxonomy/Anime/*.md`, and each file becomes one entity.
+The built-in presets give you a starting point. You can use them as they are, change them, or create a type for a different collection — Pokémon cards or BanG Dream! concert goods, for example.
 
 ## Names are yours, roles carry meaning
 
-Your cover field can be named `cover_url`, `poster`, or `画像`. KizunaShelf never guesses meaning from a field's literal name. Instead, every field in the schema declares a **field type** (`title`, `image`, `date`, `enum`, `progress`, `rating`, `relation`, `externalRef`, etc.), and the app derives all features—titles, covers, calendars, progress bars, and relation graphs—from those declared roles.
+Suppose your Markdown files call their cover field `poster`. In the schema, set that field's type to **Image**, and KizunaShelf uses it as a cover. You do not have to rename it to `cover`.
 
-This design has two practical consequences:
+Some fields also have a **role**. A date can mean a release date or a completion date; a status can mean planned, in progress, or completed. Those choices determine where an entity appears in the calendar, activity feed, and suggested lists.
 
-- **Renaming a field is safe** as long as the schema entry is updated alongside it; nothing in the app relies on the literal field name.
-- **Hand-edited values are preserved.** Frontmatter the app doesn't recognize is kept intact rather than silently dropped. Your vault stays yours, even when edited outside KizunaShelf.
+Changing a field's name in Settings does not rename that property in your existing notes. If you change it, update the notes too. Values the app does not recognize remain in the files.
 
 ## Where the schema lives
 
-The schema is stored in a single file inside the vault:
+The schema is saved in `KizunaShelf/config.yaml` inside your vault. It travels with the rest of your library when you [sync the folder](../guides/syncing.md).
 
-```text
-<vaultRoot>/KizunaShelf/config.yaml
-```
-
-Because it lives *inside* the vault, it syncs with the vault automatically: every device pointing at the folder shares the exact same schema. It uses a **visible** folder on purpose, as most Obsidian sync methods skip hidden dot-folders. See [Syncing your vault](../guides/syncing.md).
-
-## Where to go from here
-
-- [Anatomy of an entity](./anatomy-of-an-entity.md): An annotated example file line by line.
-- [Defining your own type](../guides/defining-a-type.md): A step-by-step walkthrough.
-- [Schema reference](../reference/config.md): A complete reference of every available option.
+You usually edit it through [Settings](../features/schema.mdx). For a concrete example, see [Inside an entity file](./anatomy-of-an-entity.md); to make a new collection, follow [Defining your own type](../guides/defining-a-type.md).

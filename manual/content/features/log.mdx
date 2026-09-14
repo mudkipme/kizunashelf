@@ -1,49 +1,36 @@
 ---
 title: "Log activity & daily notes"
-description: "One tap writes a line into today's daily note, in a format you define — and can flip the entity's status."
+description: "Record a session in your daily notes, including something you did on an earlier day."
 sidebar_position: 4
 ---
 
-**Log activity** is the smallest unit of remembering: the **Log** button writes one line into **today's daily note**, connecting the day to the entity. Months later, that line is what the [activity feed](./calendar.mdx) and the entity's history are made of.
+Choose **Log** on an entity to record a viewing session, a game milestone, or a thought you want to remember. The date defaults to today; change it to record something you did earlier. Add a note, check the preview and destination, then choose **Log** to save it.
 
-## What a log writes
+For example, logging a rewatch might add:
 
-The line's shape is schema-driven. A type opts into logging by declaring a `log` block, and the line template comes from `lineFormat`:
-
-```yaml
-types:
-- id: anime
-  log:
-    lineFormat: "- {title} {note} #Anime"   # → "- [[星辰远航]] 12 #Anime"
+```markdown
+- [[Steins;Gate 0 (Anime)]] — finished my rewatch #Anime
 ```
 
-- `{title}` always renders as a `[[wikilink]]` — that link is what makes the line show up as activity and as a backlink on the entity.
-- `{note}` is whatever you type in the log dialog (an episode number, a thought, or nothing — empty tokens collapse cleanly).
-- The type's hashtag is a literal in the template, never inferred from the type name.
+That link connects the day to the entity. You can find it later in the entity's history and the [activity feed](./calendar.mdx).
 
-<Screenshot caption="Log activity: one line into today's daily note." />
+<Screenshot
+  desktop="/images/desktop/log.png"
+  desktopAlt="Log activity dialog with activity choices, an editable date, a note field, and a daily-note preview"
+  caption="Preview a log and its destination before saving."
+  platforms="both"
+/>
 
-## Status flips
+## Status changes
 
-If the type's status field maps [canonical statuses](../reference/field-types.md#canonical-statuses-statusvalues), a log can flip the status — logging "completed" writes the first option mapped to `completed` (e.g. `看完`). Flips are **monotonic** along planning → ongoing → completed: a log never demotes, a `paused` entity resumes, and a `dropped` entity is never auto-resumed.
+A **Started** or **Completed** log can also record the corresponding date and update the entity's status when its type supports it. Starting something resumes a paused entity, but does not move a completed entity back to in progress. Dropped entities are left as they are.
 
-Logging is deliberately **independent of the episode checklist**: checking an episode stamps that item's ✅ date but never writes a daily-note line, and logging never ticks episodes. The two meet only in the read-only activity feed.
+Logging and [episode checklists](./episodes.mdx) are separate: a log does not tick episodes, and ticking an episode does not add a daily-note line.
 
 ## Configuring daily notes
 
-Daily notes are ordinary Obsidian-style dated notes; KizunaShelf needs to know where they live:
+In the schema settings, choose your daily-notes folder and date format. You can also choose a template for new notes, a heading for log lines, and the wording of each type's log.
 
-```yaml
-dailyNotes:
-  paths:
-  - Daily Notes
-  dateFormat: YYYY-MM-DD          # Moment-style, same syntax as Obsidian's Daily Notes
-  template: Templates/Daily Note.md   # optional; seeds a note that doesn't exist yet
-  log:
-    section: Log                  # the heading log lines are appended under
-    lineFormat: "- {title} {note}"  # global default; per-type log blocks override
-```
+If you already use daily notes in Obsidian, use the same folder and date format in both apps. Mentions you write by hand count as activity too.
 
-`dateFormat` describes the file path relative to the daily-notes folder and supports subfolders (`YYYY/MM/YYYY-MM-DD`). Beyond logging, KizunaShelf scans these notes for entity `[[wikilinks]]` — every mention ties that day to the entity, whether KizunaShelf wrote the line or you did. Full options: [Daily Notes](../reference/home-tags-daily-notes.md#daily-notes).
-
-On iOS, a log is one tap away via the entity page, Siri/Shortcuts, or the Action button — see [iOS features](./ios.mdx).
+For the available settings and template tokens, see the [daily-note reference](../reference/home-tags-daily-notes.md#daily-notes). On iOS, logging is also available through [Siri and Shortcuts](./ios.mdx#siri-shortcuts--the-action-button).

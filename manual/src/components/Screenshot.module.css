@@ -8,7 +8,7 @@
 
 .desktopSlot {
   flex: 2 1 20rem;
-  min-width: 16rem;
+  min-width: 0;
 }
 
 .iosSlot {
@@ -19,7 +19,9 @@
 
 .desktopImage,
 .iosImage {
+  display: block;
   width: 100%;
+  height: auto;
   border: 1px solid var(--ifm-color-emphasis-300);
 }
 

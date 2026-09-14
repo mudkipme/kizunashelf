@@ -6,23 +6,28 @@ sidebar_position: 11
 
 ## Statistics
 
-The analytics views aggregate what the schema knows: how your library breaks down by type and status, how ratings distribute, and how activity lays out over time — the timeline of what you watched, played, and read, built from the same dated events as the [activity feed](./calendar.mdx#what-have-i-done-recently).
+See totals for entities and their connections, how your library breaks down by type, and where its links come from. The activity heatmap shows dates across your library, including plans and releases as well as past activity.
 
-Because everything derives from your schema's roles, statistics work for custom types too: any type with a status field, a rating field, or dated fields participates automatically.
+<Screenshot
+  desktop="/images/desktop/statistics.png"
+  desktopAlt="Statistics showing library totals, type and connection-field distributions, and an activity heatmap"
+  caption="Library totals and dates at a glance."
+  platforms="both"
+/>
 
-<Screenshot caption="Analytics: the library in aggregate, and your activity over time." />
-
-{/* TODO: enumerate the exact charts/tiles once the analytics page settles; keep this page in
-     sync with analytics/api. */}
+For the individual entries behind your history, open the [activity feed](./calendar.mdx#what-have-i-done-recently).
 
 ## Review: cleanup queues & library diagnosis
 
-A big catalog drifts: covers go missing, entities never got matched, frontmatter accumulates oddities. The review tools surface that drift as **queues you can work through** instead of problems you discover by accident:
+Use Review to find missing covers, broken assets, unmatched or unlinked entities, and duplicate filenames. Open a queue to work through its notes. To save covers that already have online URLs, use [Download remote covers](./covers.mdx).
 
-- entities missing a cover (fix en masse with the [batch cover downloader](./covers.mdx)),
-- entities without an external match for a wired provider,
-- **library diagnosis** — a bounded list of things the indexer noticed while reading your vault (unparseable frontmatter, unresolved relations, files it had to skip), also exposed on the server's health check.
+Library diagnosis also reports files the app could not read and links it could not resolve. These reports help you locate the affected notes; they do not change the files for you.
 
-<Screenshot caption="Cleanup queues: the catalog's to-do list." />
+<Screenshot
+  desktop="/images/desktop/review.png"
+  desktopAlt="Review queues for missing covers, broken assets, unmatched and unlinked entities, unresolved relations, status mismatches, and duplicate filenames"
+  caption="Find notes that need attention in Review."
+  platforms="both"
+/>
 
-Nothing in a queue is ever auto-"fixed" behind your back — queues point, you decide. The [FAQ](../faq.md) covers the most common findings.
+See the [FAQ](../faq.md) for common problems.

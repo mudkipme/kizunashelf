@@ -1,34 +1,39 @@
 ---
 title: "Adding an entity"
-description: "Quick Capture creates a fully populated entity from a provider search in one action, while Manual Add starts from a blank form."
+description: "Find an entity in an external catalog or add it by hand."
 sidebar_position: 1
 ---
 
-There are two ways to add a new entity to your library: **Quick Capture** (search a provider and add in one click) and **Manual Add** (a blank, schema-driven form). Both create a real Markdown file in the entity type's folder.
+Use **Quick Capture** to find something in an external catalog, or **Manual Add** to fill in the details yourself. Both create a Markdown file in your vault.
 
 ## Quick Capture
 
-Quick Capture is only available when the entity type has at least one `externalRef` field. Select a type, then enter a search query or paste a provider URL or ID. The search runs across the providers mapped to that type in order of their `externalPriority`. Select a result, and create the entity with a single click:
+1. Choose a type, such as **Anime**.
+2. Search for *Steins;Gate 0*, or paste a provider URL or ID.
+3. Select the right result and add it to your library.
 
-- The entity title mapped to filename via `filename.titleLanguage` or `filename.titleRole`, and normalized to strip or replace characters not allowed be in filenames.
-- Every mapped field and body section is populated from the provider.
-- The cover image is downloaded into the vault's `assetRoot`, and the episode or track list is imported into the `episodes` body section.
-- If the item already resolves to an existing library entity (via external reference or title match), Quick Capture opens that entity instead of creating a duplicate.
+KizunaShelf fills in the details your type is set up to receive, including a cover and episode list when available. If it finds the entity already in your library, it opens that entity instead.
 
-<Screenshot caption="Quick Capture: search a provider and create in one action." />
+<Screenshot
+  desktop="/images/desktop/quick-capture.png"
+  desktopAlt="Quick Capture showing Bangumi results for Steins;Gate, with Steins;Gate 0 marked In library"
+  caption="Find an anime in Quick Capture."
+  platforms="both"
+/>
 
-Statuses, ratings, and dates are yours to log afterward at your own pace; Quick Capture only populates what the provider supplies.
+You can record your own status, rating, and notes afterward. If a cover or episode download fails, the entity is still created; you can retry from its detail page.
 
-On iOS, sharing a provider page from Safari to KizunaShelf pre-fills the search query automatically. See [iOS features](./ios.mdx).
+Quick Capture appears for types connected to a metadata provider. The built-in media presets include those connections. Some providers need credentials or accept only a pasted URL; see the [provider reference](../reference/providers.md).
 
 ## Manual Add
 
-When the thing you're adding isn't in any provider's catalog, such as a figure, a concert, or a restaurant from a food manga, you can use the manual form. It renders exactly the fields your schema declares for that type, using the appropriate editor for each `fieldType`.
+Choose **Manual Add**, select a type, and fill in the fields you need. This works for things a catalog may not cover, such as a Pokémon card or concert souvenir. You can [match it to a provider later](./editing.mdx#matching-external-metadata).
 
-<Screenshot caption="Manual add: a blank form derived from your schema." />
+<Screenshot
+  desktop="/images/desktop/manual-add.png"
+  desktopAlt="Add entity form with Anime selected and Steins;Gate entered as the file name"
+  caption="Choose a filename and fill in your own details."
+  platforms="both"
+/>
 
-A manually added entity can be [matched to a provider later](./editing.mdx#matching-external-metadata).
-
-## Whole Libraries
-
-To import an existing collection from another service (such as MyAnimeList, Bangumi, Trakt, Steam, or Goodreads), you can also use [Batch import](./import.mdx).
+To move a whole collection from another service, use [Batch import](./import.mdx). On iOS, you can also [share a provider page from Safari](./ios.mdx#share-sheet-capture).

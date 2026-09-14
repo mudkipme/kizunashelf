@@ -4,11 +4,20 @@ description: "Playtime, platforms, franchises, and importing a Steam library."
 sidebar_position: 4
 ---
 
-<!-- TODO: full recipe. Outline:
-     1. Type definition from the Games preset, annotated.
-     2. Sample entity — platform enum, status, played dates.
-     3. Derived UI — release dates on the calendar, activity history.
-     4. External metadata — Steam batch import; provider wiring for covers.
-     5. Best practices — franchise relations, editions/DLC, backlog statuses. -->
+Start with the **Games** preset. Add *Pokémon Emerald* or *Steins;Gate* through [Quick Capture](../features/adding.mdx#quick-capture), or use Manual Add if you prefer to enter your own details.
 
-*This recipe is being written. Start from the **Games** type preset, and see [Batch import](../features/import.mdx) for importing a Steam library.*
+## Keep a playthrough record
+
+Mark a game **Playing** while it is in progress. Use [Log activity](../features/log.mdx) for milestones:
+
+```markdown
+- [[Pokémon Emerald]] — reached the next gym #Games
+```
+
+When you finish, record the completion date and a rating. A new playthrough can have new daily-note entries without replacing your older notes.
+
+## Series and editions
+
+Link Pokémon games to a **Pokémon** franchise entity. Keep editions separate only when you want separate progress, notes, or ratings. For similarly named works, use filenames such as `Steins;Gate (Game)` and `Steins;Gate 0 (Anime)`.
+
+If your collection is already on Steam, use [Batch import](../features/import.mdx). To choose what to play next, save a filtered backlog as a [smart list](../features/lists.mdx).

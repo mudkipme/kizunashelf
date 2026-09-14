@@ -3,4 +3,4 @@ title: "Start here"
 sidebar_position: 1
 ---
 
-Get a vault created and understand what KizunaShelf is in ten minutes.
+Start with the [Quickstart](./quickstart.md). If you want to run KizunaShelf on your own server, see [Self-hosting](./self-hosting.md).

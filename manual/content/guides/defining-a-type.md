@@ -1,20 +1,34 @@
 ---
 title: "Defining your own type"
-description: "From a folder of Markdown to a fully-wired entity type: fields, roles, titles, relations, external refs."
+description: "Build a small Pokémon card collection with fields you choose."
 sidebar_position: 1
 ---
 
-<!-- TODO: the full walkthrough. Outline:
-     1. When to define a type by hand vs starting from a preset.
-     2. The type entry — id, label, icon, path, filename config, externalPriority.
-     3. Choosing fields and roles — walk through each fieldType (id, title, image,
-        imageList, enum, enumList, progress, totalProgress, rating, bool, season,
-        date, externalRef, relation, text, textList) with a one-line "use this when".
-     4. Titles and languages — the titles map, title language, bare `zh` keys.
-     5. Date roles and what lands on the calendar.
-     6. Relations — pointing at another type, wikilinks in frontmatter and body.
-     7. External refs — wiring a provider so matching and Quick Capture work.
-     8. Editing safely — the Form vs raw YAML editor, validation, what happens to
-        existing files when the schema changes (nothing is rewritten until you edit). -->
+Start from a built-in type when it is close to what you need. Create your own when the collection needs different details. Here is a small **Cards** type for Pokémon cards.
 
-*This guide is being written. The [Schema reference](../reference/config.md) already documents every option, and the Settings editor validates as you go — a safe way to experiment.*
+## Create the type
+
+Open the [schema editor](../features/schema.mdx) and add a type. Give it the label **Cards**, the ID `cards`, and the folder `Cards`.
+
+Choose a title language for filenames. A name such as `Pikachu (My Collection).md` will then serve as the entity's title and link target.
+
+## Add a few fields
+
+Start with only the details you want to record:
+
+| Field name | Field type | Use it for |
+| --- | --- | --- |
+| `photo` | Image | Your own photo of the card. |
+| `set` | Text | The set it belongs to. |
+| `condition` | Enum | Your own choices, such as Mint, Good, or Worn. |
+| `franchise` | Relation | A link to a Franchise entity, such as Pokémon. |
+
+For the relation field, choose **Franchise** as the target type. Add that type first if your vault does not have it.
+
+Save the schema, then create an entity with [Manual Add](../features/adding.mdx#manual-add). Check that the photo and fields appear as you expected before adding the rest of your collection.
+
+## Change it as you go
+
+You can add fields later. Removing a field from the schema leaves its values in existing notes. If you rename a field, update the corresponding properties in your notes too.
+
+Use [date and status roles](../reference/titles-dates-status.md) when you want calendar or progress behavior. Otherwise, a simple text field may be all you need. The [field reference](../reference/field-types.md) lists the available choices.

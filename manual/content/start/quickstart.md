@@ -4,37 +4,33 @@ description: "Create your first vault on desktop, iOS, or self-hosted web."
 sidebar_position: 1
 ---
 
-A **vault** is simply a folder of Markdown files accompanied by a schema file at `KizunaShelf/config.yaml`. This guide walks you through setting up a working library on your platform of choice.
-
-## Desktop
-
-1. Download and launch KizunaShelf Desktop (coming soon).
-2. Onboarding opens a native vault chooser: select an existing folder (an Obsidian vault works as-is) or create a new, empty vault.
-3. Select your preferred language, then choose from the built-in type presets (movies, TV, anime, manga, games, books, music, etc.). Each preset comes fully configured with titles, covers, dates, statuses, and external-provider mappings.
-4. Click **Create Vault**. KizunaShelf writes `KizunaShelf/config.yaml` to your vault and opens your library.
-
-Everything configured by a preset is standard schema data that you can edit at any time in **Settings**.
+A **vault** is the folder where KizunaShelf keeps your library. You can create an empty one or use a folder you already keep in Obsidian.
 
 ## iOS
 
 1. Install KizunaShelf from [TestFlight](https://testflight.apple.com/join/hE7k3sWd).
-2. Create a vault under **On My iPhone** (or **On My iPad**), or select an existing folder using the **Files** app.
-3. If the selected folder does not contain a schema yet, the type-preset picker will launch automatically.
+2. Create a vault under **On My iPhone** or **On My iPad**, or open an existing folder from Files.
+3. For a new vault, choose your preferred language and the types you want to collect. Start with **Anime**, **Games**, or **Music Albums**, for example.
+4. Finish setup. Your library opens with suggested smart lists on Home.
+
+You can add types and change their fields later in **More → Vault Schema**. An existing KizunaShelf vault opens directly, without repeating setup.
+
+## Desktop
+
+Desktop releases are coming soon. The desktop app lets you open or create a folder, then use the same language and type picker. Schema settings are under **Settings**.
 
 ## Self-hosted web
 
-The web app serves **one vault per instance** and is configured entirely through environment variables:
+Follow [Self-hosting](./self-hosting.md) to connect the web app to your vault. Open it in a browser and complete the same setup if the vault is new.
 
-```bash
-docker run -p 8787:8787 -v /path/to/vault:/vault ghcr.io/mudkipme/kizunashelf:latest # coming soon
-```
+## Add your first entity
 
-The published image binds beyond loopback, so writes default to off — add `-e KIZUNASHELF_CONTENT_WRITABLE=true -e KIZUNASHELF_SETTINGS_WRITABLE=true` to let onboarding write the schema and the app edit your library.
+An **entity** is one thing in your library, such as *Steins;Gate 0 (Anime)*.
 
-Open the app in your browser. If the vault does not contain `KizunaShelf/config.yaml` yet, onboarding will launch the preset picker and create suggested smart lists pinned to Home. Existing vaults can add the same suggestions with **Add suggested lists** on Home. See [Self-hosting](./self-hosting.md) for the complete deployment guide, including write modes and setting up authentication.
+1. Open **Quick Capture** and choose **Anime**.
+2. Search for *Steins;Gate 0*, then select the matching result.
+3. Add it to your library. Open it to record your status, rating, or notes.
 
-## Next steps
+See [Adding an entity](../features/adding.mdx) for manual entry and search requirements. To bring in an existing collection instead, use [Batch import](../features/import.mdx).
 
-- Read [Schema-driven by design](../concepts/schema-driven.md): explaining how the system works under the hood.
-- Add your first entries with **Quick Capture**: search an external provider and create an entity in a single action.
-- Browse the [Cookbook](../cookbook/index.md) for recipes tailored to the media types you track most.
+Your Home lists update as you add and edit entities. You can [pin your own smart lists or recreate suggestions](../features/home.mdx) at any time.

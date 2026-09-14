@@ -3,6 +3,12 @@ title: "Cookbook"
 sidebar_position: 4
 ---
 
-Recipes for the question that matters most in a schema-driven app: **"how should I log X?"**
+Short examples for the things you collect. Start with a built-in type, then adapt the workflow to your habits.
 
-Each recipe shows a working type definition, a sample entity, what the UI derives from it, and which external provider to wire up. The built-in type presets follow these recipes — you can start from a preset and refine, or build the type by hand.
+- [Anime](./log-anime.md): a Steins;Gate 0 rewatch.
+- [Movies & TV](./log-movies.md): a LoveLive! movie and a later rewatch.
+- [Books & manga](./log-books.md): reading Pokémon Adventures.
+- [Games](./log-games.md): Pokémon and Steins;Gate playthroughs.
+- [Music](./log-music.md): BanG Dream! albums and concert notes.
+
+The examples use illustrative personal notes and dates. The [preset reference](../reference/presets.md) lists the fields included with each type.

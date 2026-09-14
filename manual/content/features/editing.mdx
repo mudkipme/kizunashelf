@@ -1,38 +1,48 @@
 ---
-title: "Editing & Matching"
-description: "Edit frontmatter through the schema-driven form, by applying matched provider metadata, or in any external editor."
+title: "Editing & matching"
+description: "Change details, write notes, and choose which information to bring in from a provider."
 sidebar_position: 2
 ---
 
 ## Editing in KizunaShelf
 
-The detail page lets you edit frontmatter through the same schema-driven form used for [Manual Add](./adding.mdx#manual-add): every declared field receives an editor appropriate to its `fieldType`, while undeclared frontmatter is displayed as additional properties without being altered. There is also a text area for the main body of the Markdown file, allowing you to add or edit sections like episode, chapter, or track lists, summaries, or personal notes.
+Open an entity and choose **Edit** to change its details or Markdown notes. The fields follow that entity's type. Additional properties already in the file are kept too.
 
-<Screenshot caption="The detail page's schema-driven frontmatter editor." />
+<Screenshot
+  desktop="/images/desktop/editing.png"
+  desktopAlt="Anime editor showing title, cover, Watching status, season, and provider links"
+  caption="Edit an entity’s details."
+  platforms="both"
+/>
 
 ## Ticking tasks in your notes
 
-Any `- [ ]` task list you write in an entity's body is live on the detail page: click a checkbox and KizunaShelf rewrites that one line in the file, stamping a ✅ completion date in your device's timezone (and clearing it when you untick). This is the same [Obsidian Tasks emoji format](https://publish.obsidian.md/tasks/Reference/Task+Formats/Tasks+Emoji+Format) the [episode checklist](./episodes.mdx) uses, so a 📅 due date on the line is kept and the Tasks plugin reads these items natively.
+Markdown checkboxes in your notes are clickable. Checking one adds the date; unchecking it removes the completion date. A due date already on the line is kept.
 
 ```markdown
-- [ ] rewatch with subtitles
-- [x] read the manga ✅ 2026-08-31
-- [ ] find the OST 📅 2026-09-10
+- [ ] Rewatch Steins;Gate 0 with a friend
+- [x] Revisit the game's ending ✅ 2023-07-08
 ```
 
-Nothing else in the file is touched — indentation, list markers, nested items and surrounding prose all round-trip byte-for-byte, and a `- [ ]` inside a fenced code block stays a code sample. Items in a declared `kind: episodes` section are excluded here: they have [their own panel](./episodes.mdx) above the notes.
+Episode lists have their [own panel](./episodes.mdx), where you can track each episode separately.
 
-## Matching External Metadata
+## Matching external metadata
 
-If the entity type has an `externalRef` field, the entity can be connected to a [provider](../reference/providers.md) to add or update its metadata:
+Use **Match** on an entity's detail page to add or refresh information from a provider:
 
-1. **Match** — Search the entity type's providers (or paste a URL or ID) from the detail page and select the correct candidate. The match is stored in the entity's `externalRef` field as a standard URL.
-2. **Apply selected metadata** — Choose which mapped values to write. Fields and body sections declared in `externalFields` are populated from the matched provider, while everything else remains untouched. An external body section replaces only its own heading, preserving the rest of the body content.
+1. Search by title, or paste a provider URL or ID.
+2. Choose the matching result.
+3. Review the fields and sections, then apply the ones you want.
 
-<Screenshot caption="Matching an entity and choosing which metadata to apply." />
+<Screenshot
+  desktop="/images/desktop/matching.png"
+  desktopAlt="External Match dialog comparing a Bangumi result with saved fields and body sections"
+  caption="Choose which provider details to apply."
+  platforms="both"
+/>
 
-A stored match also unlocks [episode/track list sync](./episodes.mdx#syncing-from-a-provider) and helps detect duplicates in [Quick Capture](./adding.mdx) and [Batch import](./import.mdx).
+Only your selected details are updated. A provider summary replaces its own section, leaving your personal notes in place. The stored match also lets you [refresh an episode or track list](./episodes.mdx#syncing-from-a-provider).
 
-## Editing Outside KizunaShelf
+## Editing outside KizunaShelf
 
-You can open the same file in Obsidian, a text editor, or a terminal and make changes directly. KizunaShelf re-reads the file upon rescanning and preserves any unrecognized elements, such as custom fields, unmapped status values, or handwritten body content. See [Using KizunaShelf with Obsidian](../guides/obsidian.md).
+You can edit the same Markdown file in Obsidian or another editor. Refresh KizunaShelf to see the changes. If a file changes while you are editing it in the app, you may be asked to reload before saving; see [save conflicts](../faq.md#i-got-a-conflict-error-when-saving).

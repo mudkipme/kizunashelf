@@ -86,6 +86,54 @@ struct TestServer {
 }
 
 #[tokio::test]
+async fn manual_example_schema_and_entity_work_together() {
+    // Execute the published examples themselves so renamed fields and roles
+    // cannot silently drift between the introductory guide and reference.
+    let config_page = include_str!("../../../manual/content/reference/config.md");
+    let entity_page = include_str!("../../../manual/content/concepts/anatomy-of-an-entity.md");
+    let fenced = |text: &'static str, language: &str| {
+        text.split_once(&format!("```{language}\n"))
+            .unwrap()
+            .1
+            .split_once("```")
+            .unwrap()
+            .0
+    };
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path();
+    write_file(
+        &vault.join("KizunaShelf/config.yaml"),
+        fenced(config_page, "yaml"),
+    );
+    write_file(
+        &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+        fenced(entity_page, "markdown"),
+    );
+    write_file(
+        &vault.join("Taxonomy/Franchise/Steins;Gate.md"),
+        "Notes about this franchise.\n",
+    );
+    let app = inline_router(vault, true, true);
+    let (status, detail) = request_json(
+        &app,
+        Method::GET,
+        &format!(
+            "/api/entities/{}",
+            urlencoding::encode("anime:Steins;Gate 0 (Anime)")
+        ),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["entity"]["titles"]["en"], "Steins;Gate 0 (Anime)");
+    assert_eq!(detail["entity"]["titles"]["zh"], "命运石之门0");
+    assert_eq!(detail["entity"]["title"], "シュタインズ・ゲート ゼロ");
+    assert!(has_entity_title(&detail["relatedEntities"], "Steins;Gate"));
+    let (_, settings) = request_json(&app, Method::GET, "/api/settings/config", None).await;
+    assert!(settings["error"].is_null(), "{settings}");
+}
+
+#[tokio::test]
 async fn system_and_entity_endpoints_read_a_temp_vault() {
     let server = TestServer::new();
 
@@ -2646,6 +2694,8 @@ async fn request_json(
     (status, value)
 }
 
+// Titles, dates, relations, and provider hosts below are synthetic fixtures for
+// search, filtering, and network isolation; they are not release metadata.
 fn write_fixture_vault(vault: &Path) {
     write_file(
         &vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),

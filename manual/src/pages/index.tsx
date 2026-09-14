@@ -3,13 +3,15 @@ import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import type { CSSProperties, ReactNode } from "react";
 
+import Screenshot from "../components/Screenshot";
+
 import "../css/home.css";
 
 const TITLE = "KizunaShelf — a shelf for everything you love";
 const DESCRIPTION =
   "KizunaShelf is a personal library for everything you watch, play, read, and listen to, kept as plain Markdown files that stay yours.";
 
-const PROVIDERS = [
+const METADATA_SOURCES = [
   "TMDB",
   "TheTVDB",
   "AniList",
@@ -28,15 +30,19 @@ const PROVIDERS = [
   "Hardcover",
   "MangaUpdates",
   "Comic Vine",
-  "IMDb imoprt",
-  "Goodreads import",
-  "Yamtrack import",
-  "Kitsu import",
-  "Trakt import",
 ];
 
-const ICON_ALT =
-  "KizunaShelf icon: a small wooden shelf of colorful books beneath a constellation of connected dots";
+const IMPORT_SOURCES = [
+  "Bangumi",
+  "MyAnimeList",
+  "AniList",
+  "Kitsu",
+  "Trakt",
+  "Steam",
+  "IMDb CSV",
+  "Goodreads CSV",
+  "Yamtrack CSV",
+];
 
 /**
  * The landing page. Deliberately rendered *without* the Docusaurus <Layout>: it
@@ -119,11 +125,9 @@ export default function Home(): ReactNode {
                 <span className="stays">— and it stays yours.</span>
               </h1>
               <p className="lede">
-                KizunaShelf is a personal library for everything you watch, play, read, and love. It
-                works like a media tracker, but you shape it: you decide what kinds of things live
-                on your shelf, what details they carry, and how they connect. Underneath, it&rsquo;s
-                all plain Markdown files in a folder you own. KizunaShelf helps you browse them like
-                a living shelf, without locking them into one app.
+                Keep what you watch, play, read, and listen to in one personal library. Connect
+                stories, games, music, and the people behind them. Your collection stays in plain
+                Markdown files, ready to open in Obsidian or any text editor.
               </p>
               <div className="hero-ctas">
                 <a className="btn primary" href="https://testflight.apple.com/join/hE7k3sWd">
@@ -141,7 +145,7 @@ export default function Home(): ReactNode {
               <div className="phone">
                 <img
                   src="/assets/screenshot.webp"
-                  alt="KizunaShelf home screen on iPhone: Coming Up, In Progress, Recent and Planned tiles above shelves for Watching Anime and Playing Games"
+                  alt="KizunaShelf on iPhone, with activity tiles and Watching Anime and Playing Games shelves"
                   width={720}
                   height={1561}
                 />
@@ -156,10 +160,8 @@ export default function Home(): ReactNode {
               <h2>It starts familiar. It ends up yours.</h2>
             </div>
             <p>
-              KizunaShelf begins with the familiar things waiting on a media shelf: shows, movies,
-              books, games, anime, and albums. But it does not decide what a &ldquo;thing&rdquo;
-              must be. You define the types in your library, their titles, covers, statuses, dates,
-              ratings, progress, and relationships.
+              Start with anime, games, books, movies, and albums. Choose the details you want to
+              keep: a status, a rating, a cover, a date, or a note for later.
             </p>
             <p>
               If your world needs goods, cards, voice actors, live events, or trains, shoes,
@@ -189,20 +191,19 @@ export default function Home(): ReactNode {
         <section id="files">
           <div className="wrap split">
             <div>
-              <h2>Underneath, every entry is a text file.</h2>
+              <h2>Your library is a folder of text files.</h2>
               <p>
-                Each thing on your shelf is a Markdown file with a little front&nbsp;matter, sitting
-                in a folder you own. Open it in Obsidian. Read it in a terminal. Sync it however you
-                already sync things. Back it up like anything else you&rsquo;d hate to lose.
+                Each entity has a Markdown file for its details and your notes. Open it in Obsidian,
+                sync the folder between devices, and back it up with your other files.
               </p>
               <p>
-                KizunaShelf reads those files as a living shelf, with covers, filters, search, and
-                statistics, without ever turning them into data only one app understands.
+                KizunaShelf adds covers, search, filters, and a calendar to those same notes. Your
+                files remain readable without the app.
               </p>
             </div>
             <figure className="filecard tilt" style={{ "--dot": "var(--teal)" } as CSSProperties}>
               <div className="bar">Anime/BanG Dream! YUME∞MITA.md</div>
-              <pre>
+              <pre tabIndex={0}>
                 <span className="dim">---</span>
                 {"\n"}
                 <span className="k">title_original</span>
@@ -235,19 +236,16 @@ export default function Home(): ReactNode {
               <h2>Things belong to each other.</h2>
             </div>
             <p>
-              The shelf is not flat. A game can belong to a franchise. An anime can be based on a
-              novel. A character can point to a voice actor. A remake can look back at the original.
-              Ordinary{" "}
-              <span style={{ fontFamily: "var(--mono)", fontSize: ".9em" }}>[[wikilinks]]</span>{" "}
-              become a map of the relationships running through your library, and grouped into the
-              quiet shape of the things you care about.
+              Keep Steins;Gate games and anime together under a franchise. Link Kurisu Makise to her
+              voice actor, Asami Imai. Follow those connections through your library — they are
+              ordinary <span className="inline-link-example">[[wikilinks]]</span> in your notes.
             </p>
 
-            <figure className="graph-fig">
+            <figure className="graph-fig" tabIndex={0}>
               <svg
                 viewBox="0 0 660 320"
                 role="img"
-                aria-label="A small relation graph: an anime connects to the novel it adapts, the studio, its opening song, and a character, who connects to her voice actor"
+                aria-label="Steins;Gate connects to Steins;Gate Re：Boot, Steins;Gate 0 (Anime), Hacking to the Gate, and Kurisu Makise. Kurisu links to voice actor Asami Imai."
               >
                 <path className="edge" d="M 330 150 C 280 110, 220 80, 160 72" />
                 <path className="edge" d="M 330 150 C 360 100, 420 68, 480 60" />
@@ -308,7 +306,7 @@ export default function Home(): ReactNode {
               style={{ "--dot": "var(--purple)" } as CSSProperties}
             >
               <div className="bar">Daily Notes/2026-01-03.md</div>
-              <pre>
+              <pre tabIndex={0}>
                 <span className="prose-line">Speedrun trip in Tokyo. What a big day!</span>
                 {"\n"}
                 <span className="dim">-</span> <span className="v">08:30</span> Arrived at Tokyo Big
@@ -337,11 +335,9 @@ export default function Home(): ReactNode {
                 It remembers <em>when</em>.
               </h2>
               <p>
-                Time gives that map a history. Releases and plans appear on a calendar. Mentions in
-                daily notes connect an ordinary day back to the things you care about. Episode
-                check-ins become dated activity, while a quick log can write a line to your daily
-                note in a format you choose. The activity feed gathers those moments into a record
-                of what you watched, played and read; and when they became part of your life.
+                See releases and plans on a calendar. Check off an episode or log a session, then
+                find it again in your history. A link in your daily note is enough to connect an
+                ordinary day with something you loved.
               </p>
             </div>
           </div>
@@ -355,13 +351,9 @@ export default function Home(): ReactNode {
             <div>
               <span className="reading">kizuna — きずな</span>
               <p>
-                The word means <em>bond</em>: the quiet tie between things that stay connected.
-                Between a story and the people who made it. Between a rainy Friday and the episode
-                you watched that night. Between you and the things you keep.
-              </p>
-              <p>
-                That&rsquo;s the whole idea: a shelf for what matters to you, and a record book for
-                the life that gathered around it.
+                <em>Kizuna</em> means bond. Between a story and the people who made it. Between a
+                rainy Friday and the episode you watched that night. Between you and the things you
+                keep.
               </p>
               <p className="fine" style={{ marginTop: "1.4rem" }}>
                 <a href="https://mudkip.me/2026/07/16/Introduction-to-KizunaShelf/">
@@ -375,7 +367,7 @@ export default function Home(): ReactNode {
         <section id="apps">
           <div className="wrap">
             <div className="section-head">
-              <h2>Wherever the quiet hours find you.</h2>
+              <h2>At your desk or in your pocket.</h2>
             </div>
             <ul className="app-list">
               <li>
@@ -384,9 +376,8 @@ export default function Home(): ReactNode {
                 </div>
                 <div>
                   <p>
-                    A fully native app in your pocket. Keep your vault on-device or in iCloud Drive.
-                    A Coming&nbsp;Up widget on your Home Screen, Spotlight search, share-sheet
-                    capture from Safari, Shortcuts for quick logs.
+                    Browse and edit on iPhone or iPad. Use widgets, reminders, Spotlight, Safari
+                    sharing, and Shortcuts to keep your library close.
                   </p>
                   <p>
                     <a href="https://testflight.apple.com/join/hE7k3sWd">
@@ -422,32 +413,59 @@ export default function Home(): ReactNode {
                   Android <span className="status planned">planned</span>
                 </div>
                 <div>
-                  <p>
-                    An Android app is on the roadmap with same files, same shelf, and a beautiful M3
-                    Expressive design.
-                  </p>
+                  <p>An Android app is planned.</p>
                 </div>
               </li>
             </ul>
           </div>
         </section>
 
-        <section id="imports">
+        <section id="sources">
           <div className="wrap">
             <div className="section-head">
-              <h2>Bring the years you&rsquo;ve already logged.</h2>
+              <h2>Fill in the details. Bring your history.</h2>
             </div>
-            <p>
-              Quick Capture searches the metadata sources and creates an entry in one motion, with
-              the cover, episodes, and tracks filled in when available. And whole libraries can move
-              in from the places you&rsquo;ve been keeping score:
-            </p>
-            <div className="stickers" role="list">
-              {PROVIDERS.map((provider) => (
-                <span role="listitem" key={provider}>
-                  {provider}
-                </span>
-              ))}
+            <div className="source-groups">
+              <div>
+                <h3>Find titles, covers, and more</h3>
+                <p>
+                  Use metadata sources to add an entity or refresh its details. Search by title, or
+                  paste a supported link. Some sources need an API key or a direct URL.
+                </p>
+                <ul className="stickers" aria-label="Metadata sources">
+                  {METADATA_SOURCES.map((source) => (
+                    <li key={source}>{source}</li>
+                  ))}
+                </ul>
+                <Link to="/reference/providers/">Metadata sources and requirements →</Link>
+              </div>
+              <div id="imports">
+                <h3>Import a collection you already keep</h3>
+                <p>
+                  Bring in a public profile or an exported library, with supported ratings,
+                  progress, and notes. Review the additions before anything is saved.
+                </p>
+                <ul className="stickers" aria-label="Import sources">
+                  {IMPORT_SOURCES.map((source) => (
+                    <li key={source}>{source}</li>
+                  ))}
+                </ul>
+                <Link to="/features/import/">How importing works →</Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="closer-look">
+          <div className="wrap">
+            <div className="section-head">
+              <h2>A closer look on iPhone.</h2>
+            </div>
+            <div className="ios-gallery">
+              {/* Add ios image paths and matching iosAlt descriptions when captures are ready. */}
+              <Screenshot platforms="ios" caption="Your library, ready to browse." />
+              <Screenshot platforms="ios" caption="Episode tracking and your notes." />
+              <Screenshot platforms="ios" caption="Your activity history." />
             </div>
           </div>
         </section>
@@ -455,8 +473,8 @@ export default function Home(): ReactNode {
 
       <footer className="site">
         <div className="wrap">
-          <img src="/assets/icon.webp" alt={ICON_ALT} className="only-light" />
-          <img src="/assets/icon-dark.webp" alt={ICON_ALT} className="only-dark" />
+          <img src="/assets/icon.webp" alt="" className="only-light" />
+          <img src="/assets/icon-dark.webp" alt="" className="only-dark" />
           <p className="foot-small">KizunaShelf · Forever for dreaming</p>
         </div>
       </footer>

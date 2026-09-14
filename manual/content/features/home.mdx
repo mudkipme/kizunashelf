@@ -4,24 +4,27 @@ description: "Pin smart lists to Home and recreate suggestions from your schema.
 sidebar_position: 9
 ---
 
-Home previews the [smart lists](./lists.mdx) you pin to it. Each row uses the list's first supported view, including its criteria, sorting, and view limit. Home shows up to 12 items per list; **See all** opens that saved list and view.
+Home shows previews of the smart lists you pin to it. Each row shows up to 12 entities from the list's first supported view; **See all** opens that saved list and view.
+
+<Screenshot
+  desktop="/images/desktop/home.png"
+  desktopAlt="Desktop Home showing Coming up and a Watching Anime cover grid"
+  caption="Upcoming plans and your watching list on Home."
+  platforms="both"
+/>
 
 ## Add a list to Home
 
-Open a smart list in **Lists** and choose **Add to Home** (in the list's menu on iOS). Choose **Remove from Home** to hide its preview while keeping the list. Renaming or editing a pinned list also updates Home.
+Open a smart list in **Lists** and choose **Add to Home**. On iOS, this action is in the list's menu.
 
-To turn a library filter into a Home row, choose **Save as smart list** in the Library, then open the saved list and choose **Add to Home**.
+Choose **Remove from Home** to hide the preview while keeping the list. Renaming or editing a pinned list updates Home too. Rows follow filename order.
 
 ## Suggested lists
 
-Onboarding creates and pins suggestions after saving your schema, such as *Watching Anime* or *Upcoming Events*. Suggestions use your configured status and date roles, so they work with customized field names and status values too. Types with no suitable status or date roles have no suggestion.
+Setup creates suggestions such as *Watching Anime* or *Upcoming Events*. Choose **Add suggested lists** on Home to add more later, including after adding a type.
 
-Choose **Add suggested lists** on Home whenever you want to add missing suggestions, including after adding types in Settings. Select the ones you want. Lists already on Home are marked; existing suggestions are reused even if you renamed them or changed their criteria. Deleted suggestions can be recreated. A same-named list you created yourself is kept separately.
-
-If setup cannot create the suggested files, your schema is still saved. You can retry from Home.
+Select the suggestions you want. Existing lists keep their names and edits; deleted suggestions can be recreated. If setup could not create the lists, this is also where you can retry.
 
 ## Stored in your vault
 
-Home membership is stored in each `.base` file under `KizunaShelf/Lists/`, so it syncs with the list. Rows are ordered by filename. See the [Home metadata reference](../reference/home-tags-daily-notes.md#home-page) for the file format.
-
-Older test vaults may still contain a `home` block in `config.yaml`. It is ignored when opening the vault; those sections are not migrated. Use **Add suggested lists** or pin your own lists to populate Home. Saving through the structured schema editor removes the obsolete block; remove it manually before saving with the strict YAML editor.
+Home membership travels with each smart list, so it syncs across devices. The [Home reference](../reference/home-tags-daily-notes.md#home-page) covers the file format and older test vaults.

@@ -267,7 +267,7 @@ fn providers_page() -> String {
     let _ = writeln!(out);
     let _ = writeln!(out, "Generated directly from the app's provider catalog — the same one that powers matching, Quick Capture, and the Settings credential editors — so it always matches the version you're running. A provider is wired into a type through an `externalRef` field (and optionally `externalFields` / external body sections); see [External Metadata](./external.md#external-metadata).");
     let _ = writeln!(out);
-    let _ = writeln!(out, "On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment variables; on desktop and iOS they are entered under **Settings → Provider Credentials** and stored in the OS keychain.");
+    let _ = writeln!(out, "On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment variables; on desktop use **Settings → Provider Credentials**, and on iOS use **More → Provider Credentials**. Both store credentials in the OS keychain.");
     let _ = writeln!(out);
 
     let _ = writeln!(
@@ -296,11 +296,12 @@ fn providers_page() -> String {
             item.credentials
                 .iter()
                 .map(|credential| {
-                    let optional = if credential.required {
-                        ""
-                    } else {
-                        " (optional)"
-                    };
+                    let optional =
+                        if credential.required || credential.label.ends_with(" (optional)") {
+                            ""
+                        } else {
+                            " (optional)"
+                        };
                     format!("{}{optional}", cell(&credential.label))
                 })
                 .collect::<Vec<_>>()

@@ -8,13 +8,13 @@ sidebar_position: 9
 
 Generated directly from the app's provider catalog — the same one that powers matching, Quick Capture, and the Settings credential editors — so it always matches the version you're running. A provider is wired into a type through an `externalRef` field (and optionally `externalFields` / external body sections); see [External Metadata](./external.md#external-metadata).
 
-On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment variables; on desktop and iOS they are entered under **Settings → Provider Credentials** and stored in the OS keychain.
+On self-hosted web, credentials come from the listed `KIZUNASHELF_*` environment variables; on desktop use **Settings → Provider Credentials**, and on iOS use **More → Provider Credentials**. Both store credentials in the OS keychain.
 
 | Provider | `externalRef` id | Search | Episode/track sync | Credentials |
 | --- | --- | --- | --- | --- |
 | [Bangumi](#bangumi) | `bangumi` | search + resolve | yes | none |
 | [IGDB](#igdb) | `igdb` | search + resolve | — | IGDB Client ID, IGDB Client Secret |
-| [TheTVDB](#thetvdb) | `thetvdb` | search + resolve | yes | TheTVDB API Key, TheTVDB PIN (optional) (optional) |
+| [TheTVDB](#thetvdb) | `thetvdb` | search + resolve | yes | TheTVDB API Key, TheTVDB PIN (optional) |
 | [Google Books](#googlebooks) | `googlebooks` | search + resolve | — | Google Books API Key |
 | [Open Library](#openlibrary) | `openlibrary` | search + resolve | — | none |
 | [Apple Podcasts](#applepodcast) | `applepodcast` | search + resolve | yes | none |

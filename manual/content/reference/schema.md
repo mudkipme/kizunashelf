@@ -4,7 +4,7 @@ description: "The vault config document: top-level keys, entity types, filename 
 sidebar_position: 2
 ---
 
-This page documents the vault config document itself — the top-level keys of `KizunaShelf/config.yaml`, the `types` array, and the `fields` that give frontmatter keys their meaning. For the concept behind the model — Markdown first, names are yours, roles carry meaning — see [Schema-Driven by design](../concepts/schema-driven.md). How each role *behaves* is covered by the sibling pages: [Titles, dates & status](./titles-dates-status.md), [External metadata & import](./external.md), and [Home, tags & daily notes](./home-tags-daily-notes.md).
+This page documents the vault config document itself — the top-level keys of `KizunaShelf/config.yaml`, the `types` array, and the `fields` that give frontmatter keys their meaning. For the concept behind the model — Markdown first, names are yours, roles carry meaning — see [Types, fields & your schema](../concepts/schema-driven.md). How each role *behaves* is covered by the sibling pages: [Titles, dates & status](./titles-dates-status.md), [External metadata & import](./external.md), and [Home, tags & daily notes](./home-tags-daily-notes.md).
 
 ## Top-Level Schema
 
