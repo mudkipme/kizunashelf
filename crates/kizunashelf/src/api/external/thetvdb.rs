@@ -921,6 +921,7 @@ fn thetvdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
         }
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: "thetvdb".to_string(),
         source_id,
         url,

@@ -252,6 +252,7 @@ fn google_books_candidate(item: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: GoogleBooksProvider::ID.to_string(),
         source_id: id,
         url,

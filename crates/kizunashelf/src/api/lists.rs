@@ -4,7 +4,8 @@
 //! by [`require_content_writes`], and full rewrites are revision-guarded.
 
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, move_to_trash, sanitize_basename, write_entity_raw};
+use super::list_files::{SMART_LIST, STATIC_LIST};
+use super::mutations::{check_revision, write_entity_raw};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     AddListItemRequest, CreateListRequest, DeleteListResponse, ListDetail, ListItem, ListKind,
@@ -15,7 +16,6 @@ use crate::lists::{
     basename_ambiguous, compose_document, entity_wikilink, item_target, parse_list, render_list,
     split_frontmatter, ListMarker as CoreMarker, ParsedItem, ParsedList, ParsedSection, LISTS_DIR,
 };
-use crate::smart_lists::SMART_LIST_EXTENSION;
 use crate::types::{EntityRecord, Library};
 use crate::vfs::{Vfs, VfsResult};
 use axum::extract::{Path as AxumPath, Query, State};
@@ -88,7 +88,7 @@ pub(crate) async fn get_lists(
         .map(|(path, raw)| {
             let (_, body) = split_frontmatter(&raw);
             let parsed = parse_list(&body);
-            let id = list_id(&path);
+            let id = STATIC_LIST.id(&path);
             let all_items: Vec<&String> = parsed
                 .sections
                 .iter()
@@ -129,17 +129,8 @@ pub(crate) async fn create_list(
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let basename = sanitize_basename(&request.name)
-        .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let path = format!("{LISTS_DIR}/{basename}.md");
-    if vfs
-        .exists(&path)
-        .await
-        .map_err(|err| anyhow::anyhow!("failed to check list path: {err}"))?
-    {
-        return Err(ApiError::conflict("List already exists"));
-    }
+    let path = STATIC_LIST.new_path(vfs.as_ref(), &request.name).await?;
     write_entity_raw(&mutation, vfs.as_ref(), &path, "").await?;
     Ok(Json(detail_from_raw(&path, "", &library)))
 }
@@ -149,9 +140,9 @@ pub(crate) async fn get_list(
     AxumPath(path_param): AxumPath<ListPath>,
 ) -> ApiResult<ListDetail> {
     let library = get_library(&state).await?;
-    let path = list_path(&path_param.id)?;
+    let path = STATIC_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = read_list_raw(vfs.as_ref(), &path).await?;
+    let raw = STATIC_LIST.read_raw(vfs.as_ref(), &path).await?;
     Ok(Json(detail_from_raw(&path, &raw, &library)))
 }
 
@@ -162,10 +153,10 @@ pub(crate) async fn update_list(
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let source_path = list_path(&path_param.id)?;
+    let source_path = STATIC_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
-    let raw = read_list_raw(vfs.as_ref(), &source_path).await?;
+    let raw = STATIC_LIST.read_raw(vfs.as_ref(), &source_path).await?;
     check_revision(&request.revision, &file_revision(&raw))?;
 
     // Preserve any frontmatter verbatim; rewrite the body from the request parts.
@@ -190,30 +181,19 @@ pub(crate) async fn update_list(
     let body = render_list(&request.description, &sections, &request.trailing);
     let new_raw = compose_document(&frontmatter, &body);
 
-    let target_path = match &request.rename_to {
-        Some(rename_to) => {
-            let basename = sanitize_basename(rename_to)
-                .map_err(|error| ApiError::bad_request(&error.to_string()))?;
-            let target = format!("{LISTS_DIR}/{basename}.md");
-            if target != source_path
-                && vfs
-                    .exists(&target)
-                    .await
-                    .map_err(|err| anyhow::anyhow!("failed to check list path: {err}"))?
-            {
-                return Err(ApiError::conflict("Target list already exists"));
-            }
-            target
-        }
-        None => source_path.clone(),
-    };
-
-    write_entity_raw(&mutation, vfs.as_ref(), &target_path, &new_raw).await?;
-    if target_path != source_path {
-        vfs.remove_file(&source_path)
-            .await
-            .map_err(|err| anyhow::anyhow!("failed to remove old list {source_path}: {err}"))?;
-    }
+    let target_path = STATIC_LIST
+        .rename_target(vfs.as_ref(), &source_path, request.rename_to.as_deref())
+        .await?;
+    STATIC_LIST
+        .write_replacing(
+            &mutation,
+            vfs.as_ref(),
+            &source_path,
+            &target_path,
+            &request.revision,
+            &new_raw,
+        )
+        .await?;
 
     Ok(Json(detail_from_raw(&target_path, &new_raw, &library)))
 }
@@ -224,16 +204,9 @@ pub(crate) async fn delete_list(
 ) -> ApiResult<DeleteListResponse> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let path = list_path(&path_param.id)?;
+    let path = STATIC_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    if !vfs
-        .exists(&path)
-        .await
-        .map_err(|err| anyhow::anyhow!("failed to check list path: {err}"))?
-    {
-        return Err(ApiError::not_found("List not found"));
-    }
-    let backup_path = move_to_trash(&mutation, vfs.as_ref(), &path).await?;
+    let backup_path = STATIC_LIST.trash(&mutation, vfs.as_ref(), &path).await?;
     Ok(Json(DeleteListResponse {
         deleted_id: path_param.id,
         backup_path,
@@ -247,14 +220,14 @@ pub(crate) async fn add_list_item(
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let path = list_path(&path_param.id)?;
+    let path = STATIC_LIST.path(&path_param.id)?;
     let Some(record) = library.record_by_id(&request.entity_id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
     let vfs = state.vault_vfs(&library.config.vault_root);
     reject_smart_list(vfs.as_ref(), &path_param.id).await?;
 
-    let raw = read_list_raw(vfs.as_ref(), &path).await?;
+    let raw = STATIC_LIST.read_raw(vfs.as_ref(), &path).await?;
     let (frontmatter, body) = split_frontmatter(&raw);
     let mut parsed = parse_list(&body);
 
@@ -303,11 +276,11 @@ pub(crate) async fn remove_list_item(
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let path = list_path(&path_param.id)?;
+    let path = STATIC_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     reject_smart_list(vfs.as_ref(), &path_param.id).await?;
 
-    let raw = read_list_raw(vfs.as_ref(), &path).await?;
+    let raw = STATIC_LIST.read_raw(vfs.as_ref(), &path).await?;
     let (frontmatter, body) = split_frontmatter(&raw);
     let mut parsed = parse_list(&body);
 
@@ -377,43 +350,18 @@ pub(crate) async fn list_file_paths(vfs: &dyn Vfs) -> VfsResult<Vec<String>> {
         .collect())
 }
 
-/// Vault-relative path of a list from its id, validated for containment.
-fn list_path(id: &str) -> Result<String, ApiError> {
-    let basename = sanitize_basename(id).map_err(|_| ApiError::bad_request("Invalid list id"))?;
-    Ok(format!("{LISTS_DIR}/{basename}.md"))
-}
-
 /// Rejects an id that names a smart list. Smart-list membership is derived from
 /// filters, so it can't be edited by hand — and because a `.base` and a `.md`
 /// can share a basename, this also stops a smart-list id from silently mutating
 /// a same-named static list.
 async fn reject_smart_list(vfs: &dyn Vfs, id: &str) -> Result<(), ApiError> {
-    let basename = sanitize_basename(id).map_err(|_| ApiError::bad_request("Invalid list id"))?;
-    let base_path = format!("{LISTS_DIR}/{basename}.{SMART_LIST_EXTENSION}");
+    let base_path = SMART_LIST.path(id)?;
     if vfs.exists(&base_path).await.unwrap_or(false) {
         return Err(ApiError::bad_request(
             "Smart list membership is derived from its filters and can't be edited",
         ));
     }
     Ok(())
-}
-
-/// The list id (basename without `.md`) from a vault-relative path.
-fn list_id(path: &str) -> String {
-    path.rsplit('/')
-        .next()
-        .unwrap_or(path)
-        .strip_suffix(".md")
-        .unwrap_or(path)
-        .to_string()
-}
-
-async fn read_list_raw(vfs: &dyn Vfs, path: &str) -> Result<String, ApiError> {
-    match vfs.read_to_string(path).await {
-        Ok(raw) => Ok(raw),
-        Err(err) if err.is_not_found() => Err(ApiError::not_found("List not found")),
-        Err(err) => Err(anyhow::anyhow!("failed to read list {path}: {err}").into()),
-    }
 }
 
 fn detail_from_raw(path: &str, raw: &str, library: &Library) -> ListDetail {
@@ -429,7 +377,7 @@ fn detail_from_parts(
     raw: &str,
     index: &HashMap<String, Vec<&EntityRecord>>,
 ) -> ListDetail {
-    let id = list_id(path);
+    let id = STATIC_LIST.id(path);
     ListDetail {
         name: id.clone(),
         id,

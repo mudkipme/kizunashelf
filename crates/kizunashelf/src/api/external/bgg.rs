@@ -552,6 +552,7 @@ fn bgg_candidate(item: &BggItem) -> Option<ExternalCandidate> {
         );
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: BoardGameGeekProvider::ID.to_string(),
         source_id: id,
         url,

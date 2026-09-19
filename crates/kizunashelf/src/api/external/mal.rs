@@ -333,6 +333,7 @@ fn mal_search_node(node: &Value, media_type: &str) -> Option<ExternalCandidate> 
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: MyAnimeListProvider::ID.to_string(),
         source_id: id.clone(),
         url: format!("https://myanimelist.net/{media_type}/{id}"),
@@ -431,6 +432,7 @@ fn mal_detail(media_type: &str, id: &str, response: &Value) -> Option<ExternalCa
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: MyAnimeListProvider::ID.to_string(),
         source_id: id.to_string(),
         url: format!("https://myanimelist.net/{media_type}/{id}"),

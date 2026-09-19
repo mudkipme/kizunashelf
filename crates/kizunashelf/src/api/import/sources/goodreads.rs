@@ -87,6 +87,7 @@ fn build_item(parsed: ParsedRow, resolved: Option<(String, String)>) -> ImportIt
     let (refs, candidate) = match resolved {
         Some((olid, url)) => {
             let candidate = ExternalCandidate {
+                needs_detail: false,
                 provider: "openlibrary".to_string(),
                 source_id: olid.clone(),
                 url: url.clone(),

@@ -122,6 +122,7 @@ fn game_item(game: &Value) -> Option<ImportItem> {
     let titles = BTreeMap::new();
 
     let candidate = ExternalCandidate {
+        needs_detail: false,
         provider: "steam".to_string(),
         source_id: appid.clone(),
         url: url.clone(),

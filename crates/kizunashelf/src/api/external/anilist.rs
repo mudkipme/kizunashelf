@@ -389,6 +389,7 @@ fn anilist_candidate(media: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: AniListProvider::ID.to_string(),
         source_id: id.clone(),
         url: format!("https://anilist.co/{kind}/{id}"),

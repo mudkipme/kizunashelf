@@ -395,6 +395,7 @@ fn neodb_item(value: &Value) -> Option<ExternalCandidate> {
     }
 
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: NeoDbProvider::ID.to_string(),
         source_id: uuid.to_string(),
         url,

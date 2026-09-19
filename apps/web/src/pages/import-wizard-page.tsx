@@ -14,7 +14,7 @@ import {
   stopImportJob,
 } from "@/api/imports";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
-import { configQuery, providerCatalogQuery } from "@/api/queries";
+import { configQuery, providerCatalogQuery, queryKeys } from "@/api/queries";
 import { ConfigureStep } from "@/components/import/configure-step";
 import { isActive } from "@/components/import/import-labels";
 import { JobProgress, OptionToggles } from "@/components/import/import-status";
@@ -56,7 +56,7 @@ export function ImportWizardPage() {
   const source = sources.data?.sources.find((item) => item.id === sourceId);
 
   const job = useQuery({
-    queryKey: ["importJob", jobId],
+    queryKey: queryKeys.importJob(jobId),
     queryFn: () => fetchImportJob(jobId as string),
     enabled: Boolean(jobId),
     refetchInterval: (query) =>
@@ -75,7 +75,7 @@ export function ImportWizardPage() {
   // clears `jobId` and would otherwise re-enable this query mid-session).
   const recoveredRef = useRef(false);
   const runningJobs = useQuery({
-    queryKey: ["importJobs"],
+    queryKey: queryKeys.importJobs,
     queryFn: () => fetchImportJobs(),
     enabled: !jobId,
     refetchOnWindowFocus: false,
@@ -87,7 +87,7 @@ export function ImportWizardPage() {
       (item) => isActive(item.status) || item.status === "planned",
     );
     if (resumable) {
-      queryClient.setQueryData(["importJob", resumable.id], resumable);
+      queryClient.setQueryData(queryKeys.importJob(resumable.id), resumable);
       setJobId(resumable.id);
     }
   }, [jobId, runningJobs.data, queryClient]);
@@ -146,7 +146,8 @@ export function ImportWizardPage() {
   // Seed the returned job into the poll cache so `refetchInterval` resumes: the
   // job sits at `planned` with polling stopped, and commit/cancel move it to an
   // active/terminal state the poll must pick up.
-  const applyJob = (updated: ImportJob) => queryClient.setQueryData(["importJob", jobId], updated);
+  const applyJob = (updated: ImportJob) =>
+    queryClient.setQueryData(queryKeys.importJob(jobId), updated);
 
   const commit = useMutation({
     mutationFn: () => {

@@ -7,6 +7,7 @@ pub(crate) mod external;
 mod frontmatter_draft;
 mod handlers;
 mod import;
+mod list_files;
 mod lists;
 mod log;
 mod mutations;

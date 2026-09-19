@@ -21,7 +21,8 @@ export const ApplyExternalCandidateBody = zod.object({
   "brief": zod.string().nullish(),
   "coverUrl": zod.string().nullish(),
   "titles": zod.record(zod.string(), zod.string()).default(applyExternalCandidateBodyCandidateTitlesDefault),
-  "metadata": zod.record(zod.string(), zod.unknown()).default(applyExternalCandidateBodyCandidateMetadataDefault)
+  "metadata": zod.record(zod.string(), zod.unknown()).default(applyExternalCandidateBodyCandidateMetadataDefault),
+  "needsDetail": zod.boolean().optional().describe('Set on free-text search results, which providers return deliberately\nthin: before the candidate is reviewed, applied, or quick-added, the\nserver re-resolves its full detail (once — the flag is cleared then).\nClients pass it back unchanged with the candidate.')
 }),
   "fields": zod.array(zod.string()).default(applyExternalCandidateBodyFieldsDefault).describe('Field keys to apply, from the review\'s `fields`.'),
   "sections": zod.array(zod.string()).default(applyExternalCandidateBodySectionsDefault).describe('Body-section keys to apply, from the review\'s `sections`.')

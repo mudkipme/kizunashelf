@@ -10,9 +10,8 @@
 //! ([`FilterNode`]) — the core stays contract-free, like `crate::lists`.
 
 use super::error::{ApiError, ApiResult};
-use super::mutations::{
-    check_revision, derive_basename, move_to_trash, sanitize_basename, write_entity_raw,
-};
+use super::list_files::{basename_is_free, SMART_LIST};
+use super::mutations::{check_revision, derive_basename, write_entity_raw};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CreateSmartListRequest, DeleteListResponse, EntityListResponse, ListKind, ListSummary,
@@ -71,9 +70,9 @@ pub(crate) async fn get_smart_list(
     AxumPath(path_param): AxumPath<SmartListPath>,
 ) -> ApiResult<SmartListDetail> {
     let library = get_library(&state).await?;
-    let path = smart_list_path(&path_param.id)?;
+    let path = SMART_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = read_smart_list_raw(vfs.as_ref(), &path).await?;
+    let raw = SMART_LIST.read_raw(vfs.as_ref(), &path).await?;
     let list = parse_list_raw(&path, &raw)?;
     Ok(Json(detail_from_list(&path, &list, &raw, &library.config)))
 }
@@ -84,22 +83,13 @@ pub(crate) async fn create_smart_list(
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let basename = sanitize_basename(&request.name)
-        .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let scope_folder = resolve_scope(&library.config, request.scope.as_deref())?;
     let image = request
         .scope
         .as_deref()
         .and_then(|type_id| cover_property(&library.config, type_id));
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let path = format!("{LISTS_DIR}/{basename}.{SMART_LIST_EXTENSION}");
-    if vfs
-        .exists(&path)
-        .await
-        .map_err(|err| anyhow::anyhow!("failed to check smart list path: {err}"))?
-    {
-        return Err(ApiError::conflict("Smart list already exists"));
-    }
+    let path = SMART_LIST.new_path(vfs.as_ref(), &request.name).await?;
     let doc = default_smart_list_doc(scope_folder.as_deref(), image.as_deref());
     let raw = render_smart_list(&doc);
     write_entity_raw(&mutation, vfs.as_ref(), &path, &raw).await?;
@@ -114,10 +104,10 @@ pub(crate) async fn update_smart_list(
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let source_path = smart_list_path(&path_param.id)?;
+    let source_path = SMART_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
-    let raw = read_smart_list_raw(vfs.as_ref(), &source_path).await?;
+    let raw = SMART_LIST.read_raw(vfs.as_ref(), &source_path).await?;
     check_revision(&request.revision, &file_revision(&raw))?;
     let mut doc = parse_list_raw(&source_path, &raw)?.doc;
 
@@ -137,33 +127,20 @@ pub(crate) async fn update_smart_list(
         .collect::<Result<Vec<_>, _>>()?;
     apply_views(&mut doc, &specs);
 
-    let target_path = match &request.rename_to {
-        Some(rename_to) => {
-            let basename = sanitize_basename(rename_to)
-                .map_err(|error| ApiError::bad_request(&error.to_string()))?;
-            let target = format!("{LISTS_DIR}/{basename}.{SMART_LIST_EXTENSION}");
-            if target != source_path
-                && vfs
-                    .exists(&target)
-                    .await
-                    .map_err(|err| anyhow::anyhow!("failed to check smart list path: {err}"))?
-            {
-                return Err(ApiError::conflict("Target smart list already exists"));
-            }
-            target
-        }
-        None => source_path.clone(),
-    };
-
+    let target_path = SMART_LIST
+        .rename_target(vfs.as_ref(), &source_path, request.rename_to.as_deref())
+        .await?;
     let new_raw = render_smart_list(&doc);
-    let latest = read_smart_list_raw(vfs.as_ref(), &source_path).await?;
-    check_revision(&request.revision, &file_revision(&latest))?;
-    write_entity_raw(&mutation, vfs.as_ref(), &target_path, &new_raw).await?;
-    if target_path != source_path {
-        vfs.remove_file(&source_path).await.map_err(|err| {
-            anyhow::anyhow!("failed to remove old smart list {source_path}: {err}")
-        })?;
-    }
+    SMART_LIST
+        .write_replacing(
+            &mutation,
+            vfs.as_ref(),
+            &source_path,
+            &target_path,
+            &request.revision,
+            &new_raw,
+        )
+        .await?;
 
     let list = parse_list_raw(&target_path, &new_raw)?;
     Ok(Json(detail_from_list(
@@ -180,16 +157,9 @@ pub(crate) async fn delete_smart_list(
 ) -> ApiResult<DeleteListResponse> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let path = smart_list_path(&path_param.id)?;
+    let path = SMART_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    if !vfs
-        .exists(&path)
-        .await
-        .map_err(|err| anyhow::anyhow!("failed to check smart list path: {err}"))?
-    {
-        return Err(ApiError::not_found("Smart list not found"));
-    }
-    let backup_path = move_to_trash(&mutation, vfs.as_ref(), &path).await?;
+    let backup_path = SMART_LIST.trash(&mutation, vfs.as_ref(), &path).await?;
     Ok(Json(DeleteListResponse {
         deleted_id: path_param.id,
         backup_path,
@@ -202,9 +172,9 @@ pub(crate) async fn smart_list_results(
     Query(query): Query<SmartListResultsQuery>,
 ) -> ApiResult<EntityListResponse> {
     let library = get_library(&state).await?;
-    let path = smart_list_path(&path_param.id)?;
+    let path = SMART_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = read_smart_list_raw(vfs.as_ref(), &path).await?;
+    let raw = SMART_LIST.read_raw(vfs.as_ref(), &path).await?;
     let list = parse_list_raw(&path, &raw)?;
 
     let view = match query.view.as_deref() {
@@ -286,14 +256,14 @@ pub(crate) async fn set_smart_list_home(
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
     let mutation = state.content_mutation_lock().await;
-    let path = smart_list_path(&path_param.id)?;
+    let path = SMART_LIST.path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let raw = read_smart_list_raw(vfs.as_ref(), &path).await?;
+    let raw = SMART_LIST.read_raw(vfs.as_ref(), &path).await?;
     check_revision(&request.revision, &file_revision(&raw))?;
     let mut doc = parse_list_raw(&path, &raw)?.doc;
     smart_lists::set_home_visibility(&mut doc, request.show_on_home)
         .map_err(|error| ApiError::bad_request(&error))?;
-    let latest = read_smart_list_raw(vfs.as_ref(), &path).await?;
+    let latest = SMART_LIST.read_raw(vfs.as_ref(), &path).await?;
     check_revision(&request.revision, &file_revision(&latest))?;
     let raw = render_smart_list(&doc);
     write_entity_raw(&mutation, vfs.as_ref(), &path, &raw).await?;
@@ -320,10 +290,10 @@ pub(crate) async fn smart_list_suggestions(
                 crate::contract::SmartListSuggestion {
                     id: suggestion.id,
                     name: existing
-                        .map(|(path, _, _)| smart_list_id(path))
+                        .map(|(path, _, _)| SMART_LIST.id(path))
                         .unwrap_or(suggestion.title),
                     entity_type: suggestion.entity_type,
-                    existing_list_id: existing.map(|(path, _, _)| smart_list_id(path)),
+                    existing_list_id: existing.map(|(path, _, _)| SMART_LIST.id(path)),
                     show_on_home: existing
                         .is_some_and(|(_, _, list)| smart_lists::shows_on_home(list)),
                 }
@@ -371,7 +341,7 @@ pub(crate) async fn create_suggested_smart_lists(
             let mut doc = list.doc.clone();
             smart_lists::set_home_visibility(&mut doc, true)
                 .map_err(|error| ApiError::bad_request(&error))?;
-            let latest = read_smart_list_raw(vfs.as_ref(), path).await?;
+            let latest = SMART_LIST.read_raw(vfs.as_ref(), path).await?;
             check_revision(&file_revision(raw), &file_revision(&latest))?;
             let raw = render_smart_list(&doc);
             write_entity_raw(&mutation, vfs.as_ref(), path, &raw).await?;
@@ -382,17 +352,14 @@ pub(crate) async fn create_suggested_smart_lists(
         let basename = derive_basename(&suggestion.title)
             .or_else(|| derive_basename(&suggestion.id))
             .ok_or_else(|| ApiError::bad_request("Cannot derive a filename for this suggestion"))?;
-        let mut path = format!("{LISTS_DIR}/{basename}.{SMART_LIST_EXTENSION}");
+        // A same-named list of either kind is never replaced or shadowed.
+        let mut name = basename.clone();
         let mut suffix = 2;
-        // A same-named hand-authored list is never replaced.
-        while vfs
-            .exists(&path)
-            .await
-            .map_err(|error| anyhow::anyhow!(error))?
-        {
-            path = format!("{LISTS_DIR}/{basename} {suffix}.{SMART_LIST_EXTENSION}");
+        while !basename_is_free(vfs.as_ref(), &name, None).await? {
+            name = format!("{basename} {suffix}");
             suffix += 1;
         }
+        let path = SMART_LIST.path(&name)?;
         let scope = resolve_scope(&library.config, Some(&suggestion.entity_type))?;
         let image = cover_property(&library.config, &suggestion.entity_type);
         let mut doc = default_smart_list_doc(scope.as_deref(), image.as_deref());
@@ -473,8 +440,8 @@ pub(crate) async fn home_lists(
                 },
             );
             crate::contract::HomeListResponse {
-                id: smart_list_id(path),
-                name: smart_list_id(path),
+                id: SMART_LIST.id(path),
+                name: SMART_LIST.id(path),
                 view: view.map(|view| view.name.clone()),
                 total: records.len(),
                 items: records
@@ -583,7 +550,7 @@ pub(crate) async fn smart_list_summaries(
                     .iter()
                     .filter(|record| smart_lists::record_matches(&list.filters, record, &ctx))
                     .count();
-                let id = smart_list_id(&path);
+                let id = SMART_LIST.id(&path);
                 Some(CachedSmartListSummary {
                     summary: ListSummary {
                         name: id.clone(),
@@ -695,29 +662,6 @@ pub(crate) fn resolve_today(client_today: Option<&str>) -> chrono::NaiveDate {
         .unwrap_or_else(|| chrono::Local::now().date_naive())
 }
 
-/// Vault-relative path of a smart list from its id, validated for containment.
-fn smart_list_path(id: &str) -> Result<String, ApiError> {
-    let basename =
-        sanitize_basename(id).map_err(|_| ApiError::bad_request("Invalid smart list id"))?;
-    Ok(format!("{LISTS_DIR}/{basename}.{SMART_LIST_EXTENSION}"))
-}
-
-/// The smart list id (basename without `.base`) from a vault-relative path.
-fn smart_list_id(path: &str) -> String {
-    let name = path.rsplit('/').next().unwrap_or(path);
-    name.strip_suffix(&format!(".{SMART_LIST_EXTENSION}"))
-        .unwrap_or(name)
-        .to_string()
-}
-
-async fn read_smart_list_raw(vfs: &dyn Vfs, path: &str) -> Result<String, ApiError> {
-    match vfs.read_to_string(path).await {
-        Ok(raw) => Ok(raw),
-        Err(err) if err.is_not_found() => Err(ApiError::not_found("Smart list not found")),
-        Err(err) => Err(anyhow::anyhow!("failed to read smart list {path}: {err}").into()),
-    }
-}
-
 fn parse_list_raw(path: &str, raw: &str) -> Result<SmartList, ApiError> {
     parse_smart_list(raw)
         .map_err(|error| ApiError::bad_request(&format!("Cannot parse {path}: {error}")))
@@ -777,7 +721,7 @@ fn detail_from_list(
     config: &KizunaConfig,
 ) -> SmartListDetail {
     let scope = scope_from_filters(&list.filters, config);
-    let id = smart_list_id(path);
+    let id = SMART_LIST.id(path);
     SmartListDetail {
         show_on_home: smart_lists::shows_on_home(list),
         name: id.clone(),

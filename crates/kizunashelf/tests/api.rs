@@ -3867,6 +3867,57 @@ async fn concurrent_list_item_adds_are_not_lost() {
 }
 
 #[tokio::test]
+async fn static_and_smart_lists_share_one_name_space() {
+    // Item edits refuse any id that also names a smart list, so a static list
+    // sharing a smart list's name could be created but never edited. Creating
+    // or renaming into a name either kind holds is a conflict instead.
+    let server = TestServer::new();
+    let app = &server.app;
+    let smart = request_json(
+        app,
+        Method::POST,
+        "/api/smart-lists",
+        Some(json!({ "name": "Shared", "scope": "anime" })),
+    )
+    .await;
+    assert_eq!(smart.0, StatusCode::OK, "{}", smart.1);
+
+    let clash = request_json(
+        app,
+        Method::POST,
+        "/api/lists",
+        Some(json!({ "name": "Shared" })),
+    )
+    .await;
+    assert_eq!(clash.0, StatusCode::CONFLICT, "{}", clash.1);
+    assert_eq!(clash.1["error"], "List already exists");
+
+    let other = request_json(
+        app,
+        Method::POST,
+        "/api/lists",
+        Some(json!({ "name": "Other" })),
+    )
+    .await;
+    assert_eq!(other.0, StatusCode::OK, "{}", other.1);
+    let rename = request_json(
+        app,
+        Method::POST,
+        "/api/lists/Other",
+        Some(json!({
+            "revision": other.1["revision"],
+            "renameTo": "Shared",
+            "description": "",
+            "trailing": "",
+            "sections": [],
+        })),
+    )
+    .await;
+    assert_eq!(rename.0, StatusCode::CONFLICT, "{}", rename.1);
+    assert_eq!(rename.1["error"], "Target list already exists");
+}
+
+#[tokio::test]
 async fn lists_crud_add_reorder_and_delete() {
     let server = TestServer::new();
     let app = &server.app;

@@ -23,7 +23,8 @@ export const ImportDecision = zod.object({
   "brief": zod.string().nullish(),
   "coverUrl": zod.string().nullish(),
   "titles": zod.record(zod.string(), zod.string()).default(importDecisionCandidateOverrideOneTitlesDefault),
-  "metadata": zod.record(zod.string(), zod.unknown()).default(importDecisionCandidateOverrideOneMetadataDefault)
+  "metadata": zod.record(zod.string(), zod.unknown()).default(importDecisionCandidateOverrideOneMetadataDefault),
+  "needsDetail": zod.boolean().optional().describe('Set on free-text search results, which providers return deliberately\nthin: before the candidate is reviewed, applied, or quick-added, the\nserver re-resolves its full detail (once — the flag is cleared then).\nClients pass it back unchanged with the candidate.')
 }),zod.null()]).optional()
 }).describe('A per-item override applied at commit: force a create\/skip, choose a target\ntype (for ambiguous buckets), or supply a hand-picked candidate for a\n`needsReview` item.')
 

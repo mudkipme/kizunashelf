@@ -387,6 +387,7 @@ fn musicbrainz_release(item: &Value, entity: &str) -> Option<ExternalCandidate> 
     }
     let original_title = title.clone();
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: MusicBrainzProvider::ID.to_string(),
         source_id: id,
         url,
@@ -439,6 +440,7 @@ fn musicbrainz_artist(item: &Value) -> Option<ExternalCandidate> {
     // Locale-tagged display aliases (requested via inc) populate the title map.
     let titles = artist_alias_titles(item);
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: MusicBrainzProvider::ID.to_string(),
         source_id: id,
         url,

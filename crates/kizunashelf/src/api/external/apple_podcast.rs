@@ -293,6 +293,7 @@ fn apple_podcast_candidate(item: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: ApplePodcastProvider::ID.to_string(),
         source_id: id,
         url,

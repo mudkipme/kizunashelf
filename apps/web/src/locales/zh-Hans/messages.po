@@ -13,11 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:218
+#: src/components/assets/quick-log-dialog.tsx:219
 msgid " (already logged)"
 msgstr "（已记录）"
 
-#: src/components/assets/quick-log-dialog.tsx:220
+#: src/components/assets/quick-log-dialog.tsx:221
 msgid " (new note)"
 msgstr "（新建笔记）"
 
@@ -89,8 +89,8 @@ msgid "{0, plural, one {# needs review} other {# need review}}"
 msgstr "{0, plural, other {# 项待检查}}"
 
 #. placeholder {0}: (config.dailyNotes.paths ?? []).length
-#: src/components/settings/settings-editor.tsx:107
-#: src/components/settings/settings-editor.tsx:283
+#: src/components/settings/settings-editor.tsx:109
+#: src/components/settings/settings-editor.tsx:286
 msgid "{0, plural, one {# path} other {# paths}}"
 msgstr "{0, plural, other {# 个路径}}"
 
@@ -124,8 +124,8 @@ msgstr "{0, plural, other {待创建 # 项}}"
 #. placeholder {0}: config.types.length
 #. placeholder {0}: plan.types.length
 #: src/components/settings/preset-picker.tsx:130
-#: src/components/settings/settings-editor.tsx:118
-#: src/components/settings/settings-editor.tsx:359
+#: src/components/settings/settings-editor.tsx:120
+#: src/components/settings/settings-editor.tsx:362
 msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 个类型}}"
 
@@ -192,7 +192,7 @@ msgstr "已跳过 {0}"
 msgid "{ariaLabel} new property"
 msgstr "{ariaLabel} 新建属性"
 
-#: src/components/settings/settings-editor.tsx:361
+#: src/components/settings/settings-editor.tsx:364
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
 
@@ -214,7 +214,7 @@ msgstr "{monthLabel}：{0}"
 msgid "{monthLabel}: {0} — open in calendar"
 msgstr "{monthLabel}：{0} — 在日历中打开"
 
-#: src/pages/import-wizard-page.tsx:263
+#: src/pages/import-wizard-page.tsx:264
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {导入 # 项}}"
 
@@ -231,7 +231,7 @@ msgstr "{total, plural, other {# 条}} · 第 {0}/{totalPages} 页"
 msgid "{total, plural, one {# match} other {# matches}}"
 msgstr "{total, plural, other {# 项匹配}}"
 
-#: src/components/settings/settings-editor.tsx:360
+#: src/components/settings/settings-editor.tsx:363
 msgid "{totalFields, plural, one {# field} other {# fields}}"
 msgstr "{totalFields, plural, other {# 个字段}}"
 
@@ -298,7 +298,7 @@ msgstr "同名列表已存在，或文件已在磁盘上被修改。"
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "已存在同名类型，因此改用了 {assignedIds}。添加后可重命名。"
 
-#: src/components/settings/settings-editor.tsx:321
+#: src/components/settings/settings-editor.tsx:324
 msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
 msgstr "所有条目通用的标签列表，带有专属编辑器、筛选器和规则支持。按需启用：指定保存标签列表的前置元数据键即可启用。"
 
@@ -308,7 +308,7 @@ msgstr "所有条目通用的标签列表，带有专属编辑器、筛选器和
 msgid "Actions"
 msgstr "操作"
 
-#: src/components/assets/quick-log-dialog.tsx:110
+#: src/components/assets/quick-log-dialog.tsx:111
 #: src/components/layout/nav-destinations.ts:41
 #: src/pages/statistics-page.tsx:81
 msgid "Activity"
@@ -394,8 +394,8 @@ msgstr "添加季度"
 msgid "Add section"
 msgstr "添加板块"
 
-#: src/components/smart-lists/suggested-lists-dialog.tsx:28
-#: src/components/smart-lists/suggested-lists-dialog.tsx:65
+#: src/components/smart-lists/suggested-lists-dialog.tsx:29
+#: src/components/smart-lists/suggested-lists-dialog.tsx:66
 msgid "Add suggested lists"
 msgstr "添加推荐列表"
 
@@ -404,7 +404,7 @@ msgid "Add suggested lists, or open a smart list and choose Add to Home."
 msgstr "添加推荐列表，或打开智能列表并选择「添加到首页」。"
 
 #: src/components/smart-lists/home-toggle.tsx:31
-#: src/components/smart-lists/suggested-lists-dialog.tsx:126
+#: src/components/smart-lists/suggested-lists-dialog.tsx:127
 msgid "Add to Home"
 msgstr "添加到首页"
 
@@ -432,7 +432,7 @@ msgid "Added, but episode import failed: {0}"
 msgstr "已添加，但剧集导入失败：{0}"
 
 #: src/components/settings/preset-picker.tsx:201
-#: src/components/smart-lists/suggested-lists-dialog.tsx:126
+#: src/components/smart-lists/suggested-lists-dialog.tsx:127
 #: src/pages/quick-capture-page.tsx:379
 msgid "Adding…"
 msgstr "正在添加…"
@@ -479,7 +479,7 @@ msgstr "所有类型"
 msgid "All types ({0})"
 msgstr "所有类型（{0}）"
 
-#: src/components/smart-lists/suggested-lists-dialog.tsx:109
+#: src/components/smart-lists/suggested-lists-dialog.tsx:110
 msgid "Already on Home"
 msgstr "已在首页"
 
@@ -505,7 +505,7 @@ msgstr "任意链接"
 msgid "any of"
 msgstr "任一满足"
 
-#: src/components/assets/quick-log-dialog.tsx:143
+#: src/components/assets/quick-log-dialog.tsx:144
 msgid "Anything worth remembering"
 msgstr "任何值得记录的内容"
 
@@ -525,19 +525,19 @@ msgstr "正在应用…"
 msgid "Ascending"
 msgstr "升序"
 
-#: src/components/settings/settings-editor.tsx:267
+#: src/components/settings/settings-editor.tsx:270
 msgid "Asset root"
 msgstr "资源根目录"
 
 #. placeholder {0}: config.assetRoot || "Assets"
-#: src/components/settings/settings-editor.tsx:257
+#: src/components/settings/settings-editor.tsx:260
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
 #: src/components/layout/app-frame.tsx:227
 #: src/components/settings/preset-picker.tsx:186
 #: src/components/settings/settings-dialogs.tsx:72
-#: src/components/settings/settings-editor.tsx:199
+#: src/components/settings/settings-editor.tsx:202
 msgid "Back"
 msgstr "返回"
 
@@ -579,15 +579,15 @@ msgstr "日历"
 
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/components/assets/quick-log-dialog.tsx:167
+#: src/components/assets/quick-log-dialog.tsx:168
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
-#: src/components/smart-lists/suggested-lists-dialog.tsx:119
+#: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:169
 #: src/pages/entity-page.tsx:540
-#: src/pages/import-wizard-page.tsx:238
-#: src/pages/import-wizard-page.tsx:279
+#: src/pages/import-wizard-page.tsx:239
+#: src/pages/import-wizard-page.tsx:280
 #: src/pages/list-detail-page.tsx:543
 #: src/pages/lists-page.tsx:233
 #: src/pages/smart-list-page.tsx:254
@@ -637,7 +637,7 @@ msgstr "选择表情符号"
 msgid "Choose icon"
 msgstr "选择图标"
 
-#: src/components/smart-lists/suggested-lists-dialog.tsx:68
+#: src/components/smart-lists/suggested-lists-dialog.tsx:69
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "选择要添加到首页的列表。已有列表的修改会保留。"
 
@@ -663,7 +663,7 @@ msgstr "关闭导航"
 msgid "Command palette"
 msgstr ""
 
-#: src/components/assets/quick-log-dialog.tsx:30
+#: src/components/assets/quick-log-dialog.tsx:31
 #: src/components/import/import-labels.ts:34
 #: src/components/settings/settings-field-form.tsx:150
 #: src/components/settings/settings-field-form.tsx:185
@@ -673,7 +673,7 @@ msgid "Completed"
 msgstr "已完成"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
-#: src/components/settings/raw-config-editor.tsx:132
+#: src/components/settings/raw-config-editor.tsx:134
 msgid "config.yaml changed on disk. Your unsaved edits are still here."
 msgstr "config.yaml 已在磁盘上更改。你未保存的编辑仍保留在这里。"
 
@@ -681,7 +681,7 @@ msgstr "config.yaml 已在磁盘上更改。你未保存的编辑仍保留在这
 msgid "Configure the new field, then choose Done to add it. Going back discards it."
 msgstr "配置新字段，然后选择「完成」以添加。返回将丢弃它。"
 
-#: src/components/settings/settings-editor.tsx:193
+#: src/components/settings/settings-editor.tsx:196
 msgid "Configure Vault"
 msgstr "配置保管库"
 
@@ -733,7 +733,7 @@ msgstr "继续（{0}）"
 msgid "Could not read this CSV file."
 msgstr "无法读取此 CSV 文件。"
 
-#: src/components/settings/settings-editor.tsx:173
+#: src/components/settings/settings-editor.tsx:175
 #: src/pages/onboarding-page.tsx:200
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "无法添加推荐列表。你可以在首页重试。"
@@ -756,7 +756,7 @@ msgstr "创建并添加"
 msgid "Create new vault"
 msgstr "新建保管库"
 
-#: src/components/settings/settings-editor.tsx:208
+#: src/components/settings/settings-editor.tsx:211
 #: src/components/settings/vault-switcher.tsx:168
 #: src/pages/onboarding-page.tsx:254
 msgid "Create vault"
@@ -791,12 +791,12 @@ msgstr "自定义字段"
 msgid "Custom field name"
 msgstr "自定义字段名"
 
-#: src/components/settings/settings-editor.tsx:313
+#: src/components/settings/settings-editor.tsx:316
 msgid "Daily note indexing is disabled."
 msgstr "每日笔记索引已禁用。"
 
-#: src/components/settings/settings-editor.tsx:105
-#: src/components/settings/settings-editor.tsx:277
+#: src/components/settings/settings-editor.tsx:107
+#: src/components/settings/settings-editor.tsx:280
 #: src/pages/statistics-page.tsx:36
 msgid "Daily Notes"
 msgstr "每日笔记"
@@ -817,7 +817,7 @@ msgstr "深色主题。切换到跟随系统。"
 msgid "date"
 msgstr "日期"
 
-#: src/components/assets/quick-log-dialog.tsx:133
+#: src/components/assets/quick-log-dialog.tsx:134
 #: src/components/smart-lists/rule-value-input.tsx:71
 #: src/pages/activity-page.tsx:257
 msgid "Date"
@@ -958,7 +958,7 @@ msgstr "编辑"
 msgid "Edit {0}"
 msgstr "编辑 {0}"
 
-#: src/components/settings/raw-config-editor.tsx:101
+#: src/components/settings/raw-config-editor.tsx:103
 msgid "Edit config.yaml"
 msgstr "编辑 config.yaml"
 
@@ -1076,7 +1076,7 @@ msgid "Fetching episodes…"
 msgstr "正在获取剧集…"
 
 #. placeholder {0}: source?.label ?? sourceId
-#: src/pages/import-wizard-page.tsx:230
+#: src/pages/import-wizard-page.tsx:231
 msgid "Fetching your library from {0}…"
 msgstr "正在从 {0} 获取你的库…"
 
@@ -1130,7 +1130,7 @@ msgstr "筛选"
 msgid "Filter by type"
 msgstr "按类型筛选"
 
-#: src/components/assets/quick-log-dialog.tsx:147
+#: src/components/assets/quick-log-dialog.tsx:148
 msgid "For example, an episode number."
 msgstr "例如：集数。"
 
@@ -1146,7 +1146,7 @@ msgstr ""
 msgid "Frontmatter"
 msgstr "前置元数据"
 
-#: src/components/settings/settings-editor.tsx:338
+#: src/components/settings/settings-editor.tsx:341
 msgid "Frontmatter key"
 msgstr "前置元数据键"
 
@@ -1166,7 +1166,7 @@ msgstr ""
 msgid "Go to"
 msgstr ""
 
-#: src/pages/import-wizard-page.tsx:284
+#: src/pages/import-wizard-page.tsx:285
 msgid "Go to library"
 msgstr "前往库"
 
@@ -1228,7 +1228,7 @@ msgstr "导入（{0} 新增 · {already} 更新）"
 msgid "Import ({incoming})"
 msgstr "导入（{incoming}）"
 
-#: src/pages/import-wizard-page.tsx:287
+#: src/pages/import-wizard-page.tsx:288
 msgid "Import another"
 msgstr "再导入一个"
 
@@ -1236,7 +1236,7 @@ msgstr "再导入一个"
 msgid "Import complete"
 msgstr "导入完成"
 
-#: src/pages/import-wizard-page.tsx:196
+#: src/pages/import-wizard-page.tsx:197
 msgid "Importing creates files, so it is unavailable here."
 msgstr "导入会创建文件，因此在此不可用。"
 
@@ -1500,14 +1500,14 @@ msgstr "正在加载分类"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
 #: src/components/lists/add-items-dialog.tsx:73
-#: src/components/settings/raw-config-editor.tsx:149
-#: src/components/smart-lists/suggested-lists-dialog.tsx:73
+#: src/components/settings/raw-config-editor.tsx:151
+#: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:208
 #: src/pages/entity-page.tsx:314
 #: src/pages/entity-page.tsx:622
 #: src/pages/home-page.tsx:55
-#: src/pages/import-wizard-page.tsx:217
+#: src/pages/import-wizard-page.tsx:218
 #: src/pages/list-detail-page.tsx:365
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:84
@@ -1518,12 +1518,12 @@ msgstr "正在加载分类"
 msgid "Loading…"
 msgstr "正在加载…"
 
-#: src/components/assets/quick-log-dialog.tsx:175
+#: src/components/assets/quick-log-dialog.tsx:176
 #: src/pages/entity-page.tsx:406
 msgid "Log"
 msgstr "记录"
 
-#: src/components/assets/quick-log-dialog.tsx:102
+#: src/components/assets/quick-log-dialog.tsx:103
 msgid "Log activity"
 msgstr "记录活动"
 
@@ -1539,7 +1539,7 @@ msgstr "记录到每日笔记"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "记录默认值 — 记录行写入的标题下方，以及后备的行格式。每个类型都可覆盖这些设置并添加自己的标签。"
 
-#: src/components/assets/quick-log-dialog.tsx:175
+#: src/components/assets/quick-log-dialog.tsx:176
 msgid "Logging…"
 msgstr "正在记录…"
 
@@ -1569,7 +1569,7 @@ msgid "Markdown body sections"
 msgstr "Markdown 正文板块"
 
 #. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:234
+#: src/components/assets/quick-log-dialog.tsx:235
 msgid "Marks as {0}"
 msgstr "标记为 {0}"
 
@@ -1820,7 +1820,7 @@ msgstr "此类型没有可用的搜索数据源 — 请在设置中检查数据�
 msgid "No smart lists on Home yet"
 msgstr "首页还没有智能列表"
 
-#: src/components/smart-lists/suggested-lists-dialog.tsx:79
+#: src/components/smart-lists/suggested-lists-dialog.tsx:80
 msgid "No suggestions for your current types. You can create a smart list in Lists."
 msgstr "当前类型没有推荐列表。你可以在「列表」中创建智能列表。"
 
@@ -1868,7 +1868,7 @@ msgstr "全部不满足"
 msgid "not"
 msgstr "非:"
 
-#: src/components/assets/quick-log-dialog.tsx:138
+#: src/components/assets/quick-log-dialog.tsx:139
 msgid "Note <0>(optional)</0>"
 msgstr "笔记 <0>（可选）</0>"
 
@@ -1892,7 +1892,7 @@ msgstr "显示在条目下方的笔记…"
 msgid "Nothing here yet"
 msgstr "这里还什么都没有"
 
-#: src/components/assets/quick-log-dialog.tsx:211
+#: src/components/assets/quick-log-dialog.tsx:212
 msgid "Nothing to log for this type."
 msgstr "此类型没有可记录的内容。"
 
@@ -1901,13 +1901,13 @@ msgstr "此类型没有可记录的内容。"
 msgid "of the following match:"
 msgstr "满足以下条件:"
 
-#: src/components/settings/settings-editor.tsx:288
-#: src/components/settings/settings-editor.tsx:323
+#: src/components/settings/settings-editor.tsx:291
+#: src/components/settings/settings-editor.tsx:326
 msgid "off"
 msgstr "关"
 
-#: src/components/settings/settings-editor.tsx:108
-#: src/components/settings/settings-editor.tsx:113
+#: src/components/settings/settings-editor.tsx:110
+#: src/components/settings/settings-editor.tsx:115
 msgid "Off"
 msgstr "关"
 
@@ -1916,11 +1916,11 @@ msgstr "关"
 msgid "older than"
 msgstr "早于过去"
 
-#: src/components/settings/settings-editor.tsx:323
+#: src/components/settings/settings-editor.tsx:326
 msgid "on"
 msgstr "开"
 
-#: src/components/settings/settings-editor.tsx:113
+#: src/components/settings/settings-editor.tsx:115
 msgid "On"
 msgstr "开"
 
@@ -1973,7 +1973,7 @@ msgstr "原始"
 msgid "Original (filename is the title)"
 msgstr "原始（文件名即标题）"
 
-#: src/components/settings/settings-editor.tsx:389
+#: src/components/settings/settings-editor.tsx:392
 msgid "Overview"
 msgstr "概览"
 
@@ -2022,11 +2022,11 @@ msgstr "上个月"
 msgid "Preview"
 msgstr "预览"
 
-#: src/components/assets/quick-log-dialog.tsx:201
+#: src/components/assets/quick-log-dialog.tsx:202
 msgid "Previewing…"
 msgstr "正在预览…"
 
-#: src/components/assets/quick-log-dialog.tsx:28
+#: src/components/assets/quick-log-dialog.tsx:29
 msgid "Progress"
 msgstr "进度"
 
@@ -2091,8 +2091,8 @@ msgstr "相关度"
 msgid "Reload"
 msgstr "重新加载"
 
-#: src/components/settings/raw-config-editor.tsx:142
-#: src/components/settings/settings-editor.tsx:236
+#: src/components/settings/raw-config-editor.tsx:144
+#: src/components/settings/settings-editor.tsx:239
 #: src/pages/entity-edit-page.tsx:201
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:334
@@ -2226,8 +2226,8 @@ msgstr "功能完善、开箱即用的类型，具备完整的元数据匹配。
 msgid "Running…"
 msgstr "运行中…"
 
-#: src/components/settings/raw-config-editor.tsx:112
-#: src/components/settings/settings-editor.tsx:208
+#: src/components/settings/raw-config-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:211
 #: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
@@ -2248,7 +2248,7 @@ msgstr "保存凭据"
 msgid "Saved"
 msgstr "已保存"
 
-#: src/components/settings/raw-config-editor.tsx:164
+#: src/components/settings/raw-config-editor.tsx:166
 msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
 msgstr "原样保存。整个文件在保存时都会经过校验 — 未知字段和格式错误的值会被拒绝。"
 
@@ -2261,8 +2261,8 @@ msgid "Saves the current type, criteria, and sort as a smart list. Your search i
 msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不会被保存。"
 
 #: src/components/settings/provider-credentials.tsx:83
-#: src/components/settings/raw-config-editor.tsx:112
-#: src/components/settings/settings-editor.tsx:208
+#: src/components/settings/raw-config-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:211
 #: src/pages/entity-create-page.tsx:103
 #: src/pages/entity-edit-page.tsx:178
 #: src/pages/list-detail-page.tsx:406
@@ -2270,8 +2270,8 @@ msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不
 msgid "Saving…"
 msgstr "正在保存…"
 
-#: src/components/settings/raw-config-editor.tsx:119
-#: src/components/settings/settings-editor.tsx:215
+#: src/components/settings/raw-config-editor.tsx:121
+#: src/components/settings/settings-editor.tsx:218
 msgid "Schema editing is disabled on this instance (read-only). Set<0>KIZUNASHELF_SETTINGS_WRITABLE=true</0>to enable it."
 msgstr "此实例已禁用 schema 编辑（只读）。设置 <0>KIZUNASHELF_SETTINGS_WRITABLE=true</0> 以启用。"
 
@@ -2404,12 +2404,12 @@ msgid "Selected Metadata"
 msgstr "所选元数据"
 
 #: src/components/layout/nav-destinations.ts:46
-#: src/components/settings/settings-editor.tsx:193
+#: src/components/settings/settings-editor.tsx:196
 msgid "Settings"
 msgstr "设置"
 
-#: src/components/settings/raw-config-editor.tsx:84
-#: src/components/settings/settings-editor.tsx:177
+#: src/components/settings/raw-config-editor.tsx:85
+#: src/components/settings/settings-editor.tsx:179
 msgid "Settings saved"
 msgstr "设置已保存"
 
@@ -2494,7 +2494,7 @@ msgstr "来源"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:226
+#: src/components/assets/quick-log-dialog.tsx:227
 msgid "Stamps {0} = {1}"
 msgstr "标记 {0} = {1}"
 
@@ -2502,12 +2502,12 @@ msgstr "标记 {0} = {1}"
 msgid "Start"
 msgstr "开始"
 
-#: src/pages/import-wizard-page.tsx:188
-#: src/pages/import-wizard-page.tsx:225
+#: src/pages/import-wizard-page.tsx:189
+#: src/pages/import-wizard-page.tsx:226
 msgid "Start over"
 msgstr "重新开始"
 
-#: src/components/assets/quick-log-dialog.tsx:29
+#: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/settings/settings-field-form.tsx:184
 #: src/pages/activity-page.tsx:41
 msgid "Started"
@@ -2544,11 +2544,11 @@ msgstr "状态不匹配"
 msgid "Status, score & dates"
 msgstr "状态、评分和日期"
 
-#: src/components/settings/settings-editor.tsx:254
+#: src/components/settings/settings-editor.tsx:257
 msgid "Stored in the vault at {vaultPath}. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "存储在 {vaultPath} 的仓库中。分类、资源、日记和类型随仓库同步。"
 
-#: src/components/settings/settings-editor.tsx:255
+#: src/components/settings/settings-editor.tsx:258
 msgid "Stored in the vault. Taxonomy, assets, daily notes, and types — synced with the vault."
 msgstr "存储在仓库中。分类、资源、日记和类型随仓库同步。"
 
@@ -2586,13 +2586,13 @@ msgstr "跟随系统主题。切换到浅色主题。"
 
 #. Field name for the built-in tags field in the rule builder
 #: src/components/entities/metadata-editor.tsx:81
-#: src/components/settings/settings-editor.tsx:112
-#: src/components/settings/settings-editor.tsx:320
+#: src/components/settings/settings-editor.tsx:114
+#: src/components/settings/settings-editor.tsx:323
 #: src/components/smart-lists/rule-field-meta.ts:64
 msgid "Tags"
 msgstr "标签"
 
-#: src/components/settings/settings-editor.tsx:348
+#: src/components/settings/settings-editor.tsx:351
 msgid "Tags are disabled."
 msgstr "标签已禁用。"
 
@@ -2600,12 +2600,12 @@ msgstr "标签已禁用。"
 msgid "Task"
 msgstr "任务"
 
-#: src/components/settings/settings-editor.tsx:261
+#: src/components/settings/settings-editor.tsx:264
 msgid "Taxonomy root"
 msgstr "分类根目录"
 
 #. placeholder {0}: config.taxonomyRoot || "Taxonomy"
-#: src/components/settings/settings-editor.tsx:101
+#: src/components/settings/settings-editor.tsx:103
 msgid "taxonomy: {0}"
 msgstr "分类：{0}"
 
@@ -2617,7 +2617,7 @@ msgstr ".base 文件将移至保管库的回收站文件夹。匹配的条目不
 msgid "The file is read in your browser. Nothing is written until you review the plan."
 msgstr "文件将在浏览器中读取。在您检查导入计划之前，不会写入任何内容。"
 
-#: src/pages/import-wizard-page.tsx:222
+#: src/pages/import-wizard-page.tsx:223
 msgid "The import failed."
 msgstr "导入失败。"
 
@@ -2626,7 +2626,7 @@ msgid "The page hit an unexpected error. You can try again, or reload the app."
 msgstr "页面遇到意外错误。你可以重试，或重新加载应用。"
 
 #. Warning banner in the structured schema editor after another app changes the vault config; the local draft has been preserved
-#: src/components/settings/settings-editor.tsx:226
+#: src/components/settings/settings-editor.tsx:229
 msgid "The vault schema changed on disk. Your unsaved edits are still here."
 msgstr "保管库 schema 已在磁盘上更改。你未保存的编辑仍保留在这里。"
 
@@ -2720,8 +2720,8 @@ msgid "Type Distribution"
 msgstr "类型分布"
 
 #: src/components/settings/settings-dialogs.tsx:211
-#: src/components/settings/settings-editor.tsx:117
-#: src/components/settings/settings-editor.tsx:355
+#: src/components/settings/settings-editor.tsx:119
+#: src/components/settings/settings-editor.tsx:358
 msgid "Types"
 msgstr "类型"
 
@@ -2804,8 +2804,8 @@ msgstr "值"
 msgid "Values"
 msgstr "值"
 
-#: src/components/settings/settings-editor.tsx:100
-#: src/components/settings/settings-editor.tsx:251
+#: src/components/settings/settings-editor.tsx:102
+#: src/components/settings/settings-editor.tsx:254
 msgid "Vault"
 msgstr "保管库"
 

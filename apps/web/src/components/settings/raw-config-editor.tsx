@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SaveIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ type RawConfigEditorProps = {
  */
 export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawConfigEditorProps) {
   const { t } = useLingui();
+  const queryClient = useQueryClient();
   const raw = useQuery(rawSettingsConfigQuery());
   const [content, setContent] = useState("");
   // The last saved/loaded text; the editor is "dirty" when `content` differs.
@@ -82,7 +83,8 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
       // Echo back exactly what the server stored, and reset the dirty baseline.
       seedContent(response.content, response.revision);
       toast.success(t`Settings saved`);
-      window.dispatchEvent(new Event("kizunashelf-config-saved"));
+      // The schema every other query derives from just changed.
+      void queryClient.invalidateQueries();
     } catch (saveError) {
       if (isConflictError(saveError)) setExternalChange(true);
       setError(errorMessage(saveError));

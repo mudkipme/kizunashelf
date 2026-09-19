@@ -233,6 +233,7 @@ fn build_item(
         Some(mal_id) => {
             let url = format!("https://myanimelist.net/{kind}/{mal_id}");
             let candidate = ExternalCandidate {
+                needs_detail: false,
                 provider: "myanimelist".to_string(),
                 source_id: mal_id.to_string(),
                 url: url.clone(),

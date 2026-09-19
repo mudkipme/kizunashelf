@@ -1465,6 +1465,12 @@ pub struct ExternalCandidate {
     pub titles: std::collections::BTreeMap<String, String>,
     #[serde(default)]
     pub metadata: Map<String, Value>,
+    /// Set on free-text search results, which providers return deliberately
+    /// thin: before the candidate is reviewed, applied, or quick-added, the
+    /// server re-resolves its full detail (once — the flag is cleared then).
+    /// Clients pass it back unchanged with the candidate.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub needs_detail: bool,
 }
 
 /// One field's value resolved from a candidate against the entity-type schema.

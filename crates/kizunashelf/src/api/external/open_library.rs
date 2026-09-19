@@ -303,6 +303,7 @@ fn open_library_record(
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: OpenLibraryProvider::ID.to_string(),
         source_id: olid.to_string(),
         url,
@@ -377,6 +378,7 @@ fn open_library_search_doc(doc: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: OpenLibraryProvider::ID.to_string(),
         source_id,
         url,

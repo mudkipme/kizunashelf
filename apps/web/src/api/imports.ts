@@ -11,6 +11,7 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
+import { queryKeys } from "@/api/queries";
 
 export function fetchImportSources(init?: RequestInit) {
   return listImportSources(init, apiFetch);
@@ -43,7 +44,7 @@ export function stopImportJob(id: string) {
 // changes within a session, so a long staleTime avoids refetching on remount.
 export function importSourcesQuery() {
   return queryOptions({
-    queryKey: ["importSources"],
+    queryKey: queryKeys.importSources,
     queryFn: ({ signal }) => fetchImportSources({ signal }),
     staleTime: 60_000,
   });

@@ -500,6 +500,7 @@ fn igdb_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCandid
         }
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: "igdb".to_string(),
         source_id,
         url,

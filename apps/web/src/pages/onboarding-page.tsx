@@ -200,7 +200,7 @@ function OnboardingWizard({
         toast.warning(t`Couldn't add suggested lists. You can retry from Home.`);
       }
       toast.success(t`Vault created`);
-      window.dispatchEvent(new Event("kizunashelf-config-saved"));
+      // `onCreated` refetches every query (the new config) and lands on Home.
       onCreated();
     } catch (error) {
       toast.error(errorMessage(error));

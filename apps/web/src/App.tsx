@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
@@ -97,17 +97,8 @@ function RoutedErrorBoundary() {
 
 function ConfigGate() {
   const location = useLocation();
-  const queryClient = useQueryClient();
   const settings = useQuery(settingsConfigQuery());
   const pathname = location.pathname;
-
-  useEffect(() => {
-    function reload() {
-      void queryClient.invalidateQueries();
-    }
-    window.addEventListener("kizunashelf-config-saved", reload);
-    return () => window.removeEventListener("kizunashelf-config-saved", reload);
-  }, [queryClient]);
 
   // Desktop replies 503 until a vault is open. That error never resolves on its
   // own, so route to onboarding for any non-success state (error *or* the

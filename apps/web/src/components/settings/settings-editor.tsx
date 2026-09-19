@@ -1,5 +1,6 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import { SaveIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -61,6 +62,7 @@ export function SettingsEditor({
   onSaved,
 }: SettingsEditorProps) {
   const { t } = useLingui();
+  const queryClient = useQueryClient();
   const language = useLanguagePreference();
   // The editor edits the vault config (the schema) only. The vault root is owned
   // by the runtime (env / native switcher / @AppStorage) and is read-only here —
@@ -175,7 +177,8 @@ export function SettingsEditor({
       }
 
       toast.success(t`Settings saved`);
-      window.dispatchEvent(new Event("kizunashelf-config-saved"));
+      // The schema every other query derives from just changed.
+      void queryClient.invalidateQueries();
       onSaved?.();
     } catch (error) {
       if (isConflictError(error)) setExternalChange(true);

@@ -134,6 +134,7 @@ impl ImportItem {
     /// `reference` is the ref the item resolved to ([`Self::ref_for_config`]).
     pub(super) fn lookup_candidate(&self, reference: Option<&ProviderRef>) -> ExternalCandidate {
         ExternalCandidate {
+            needs_detail: false,
             provider: reference.map(|r| r.provider.clone()).unwrap_or_default(),
             source_id: reference.map(|r| r.id.clone()).unwrap_or_default(),
             url: reference.map(|r| r.url.clone()).unwrap_or_default(),

@@ -115,6 +115,7 @@ fn build_item(parsed: ParsedRow, resolved: Option<(String, &'static str)>) -> Im
         Some((tmdb_id, media_type)) => {
             let url = format!("https://www.themoviedb.org/{media_type}/{tmdb_id}");
             let candidate = ExternalCandidate {
+                needs_detail: false,
                 provider: "tmdb".to_string(),
                 source_id: tmdb_id.clone(),
                 url: url.clone(),

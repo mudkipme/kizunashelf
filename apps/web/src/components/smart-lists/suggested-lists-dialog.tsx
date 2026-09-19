@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { errorMessage } from "@/api/client";
 import { invalidateSmartListData } from "@/api/invalidate-smart-list-data";
+import { queryKeys } from "@/api/queries";
 import { addSuggestedSmartLists, fetchSmartListSuggestions } from "@/api/smart-lists";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ function SuggestedListsDialog({ onClose }: { onClose: () => void }) {
   const language = useLanguagePreference();
   const queryClient = useQueryClient();
   const suggestions = useQuery({
-    queryKey: ["smartListSuggestions", language],
+    queryKey: queryKeys.smartListSuggestions(language),
     queryFn: ({ signal }) => fetchSmartListSuggestions(language, { signal }),
   });
   const [selected, setSelected] = useState<Set<string> | null>(null);

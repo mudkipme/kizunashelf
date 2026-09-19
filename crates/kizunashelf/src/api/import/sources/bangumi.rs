@@ -205,6 +205,7 @@ fn collection_item(entry: &Value, language: Option<&str>) -> Option<ImportItem> 
 
     let url = format!("https://bgm.tv/subject/{subject_id}");
     let candidate = ExternalCandidate {
+        needs_detail: false,
         provider: "bangumi".to_string(),
         source_id: subject_id.clone(),
         url: url.clone(),

@@ -184,6 +184,7 @@ fn anilist_item(entry: &Value, media_type: &str) -> ImportItem {
         // commit discards it when the item resolves to another provider's ref
         // and detail-fetches that provider instead.
         candidate = Some(ExternalCandidate {
+            needs_detail: false,
             provider: "anilist".to_string(),
             source_id: id.clone(),
             url: url.clone(),

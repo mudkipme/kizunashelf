@@ -620,6 +620,7 @@ fn bangumi_people_candidate(
         metadata.insert("summary".to_string(), Value::String(summary.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: "bangumi".to_string(),
         source_id: id,
         url,
@@ -888,6 +889,7 @@ fn bangumi_candidate(item: &Value, language: Option<&str>) -> Option<ExternalCan
         }
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: "bangumi".to_string(),
         source_id: id,
         url,

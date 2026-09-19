@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { errorMessage } from "@/api/client";
 import { fetchAssetJob, startAssetJob, stopAssetJob } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
-import { configQuery } from "@/api/queries";
+import { configQuery, queryKeys } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -29,7 +29,7 @@ export function AssetDownloadPanel() {
   const [error, setError] = useState<string>();
 
   const job = useQuery({
-    queryKey: ["assetJob", jobId],
+    queryKey: queryKeys.assetJob(jobId),
     queryFn: ({ signal }) => fetchAssetJob(jobId as string, { signal }),
     enabled: Boolean(jobId),
     refetchInterval: (query) =>

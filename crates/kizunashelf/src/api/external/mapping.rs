@@ -333,6 +333,7 @@ mod tests {
 
     fn candidate(provider: &str, metadata: Value) -> ExternalCandidate {
         ExternalCandidate {
+            needs_detail: false,
             provider: provider.to_string(),
             source_id: "1".to_string(),
             url: "https://example.test/1".to_string(),

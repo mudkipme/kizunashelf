@@ -6576,6 +6576,10 @@
             "type": "object",
             "additionalProperties": true,
             "default": {}
+          },
+          "needsDetail": {
+            "description": "Set on free-text search results, which providers return deliberately\nthin: before the candidate is reviewed, applied, or quick-added, the\nserver re-resolves its full detail (once — the flag is cleared then).\nClients pass it back unchanged with the candidate.",
+            "type": "boolean"
           }
         },
         "required": [

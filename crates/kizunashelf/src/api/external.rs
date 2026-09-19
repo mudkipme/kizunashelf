@@ -56,7 +56,6 @@ use super::state::{get_library, require_content_writes, AppState, CachedAccessTo
 
 pub(super) const USER_AGENT: &str = concat!("KizunaShelf/", env!("CARGO_PKG_VERSION"));
 const EXTERNAL_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
-const ENRICH_BEFORE_APPLY_METADATA_KEY: &str = "__kizunashelf_enrich_before_apply";
 
 trait ExternalProvider {
     const ID: &'static str;
@@ -496,7 +495,7 @@ pub(crate) async fn external_search(
         if enrich_before_apply {
             // Keep search latency bounded: return the provider's result now and
             // resolve detail only for the one candidate the user chooses.
-            mark_candidate_for_enrichment(&mut candidate);
+            candidate.needs_detail = true;
         }
         let mut item = mapping::match_candidate(candidate.clone(), type_config);
         item.existing = lookup_existing(&existing_index, &candidate, &type_config.id);
@@ -983,8 +982,8 @@ pub(super) async fn resolve_candidate(
 /// Re-resolves a marked free-text search candidate by its canonical URL before
 /// review/apply. Provider search endpoints commonly omit detail-only fields
 /// (credits, descriptions, counts, and relations), so applying the echoed search
-/// result directly would silently miss schema mappings. URL-resolved and
-/// unmarked candidates pass through without another network call. The original
+/// result directly would silently miss schema mappings. URL-resolved candidates
+/// (no `needs_detail`) pass through without another network call. The original
 /// result's localized display title is retained while detail metadata wins for
 /// mapped values.
 pub(super) async fn enrich_candidate_for_type(
@@ -993,7 +992,8 @@ pub(super) async fn enrich_candidate_for_type(
     type_config: &EntityTypeConfig,
     language: Option<&str>,
 ) -> Result<ExternalCandidate, ApiError> {
-    if !take_candidate_enrichment_marker(&mut candidate) {
+    // One-shot: cleared here, so the resolved candidate is never re-fetched.
+    if !std::mem::take(&mut candidate.needs_detail) {
         return Ok(candidate);
     }
     let provider = provider_for_external_ref(&candidate.provider)
@@ -1008,21 +1008,6 @@ pub(super) async fn enrich_candidate_for_type(
         .await?
         .ok_or_else(|| ApiError::bad_gateway("External provider returned no candidate detail"))?;
     Ok(merge_enriched_candidate(candidate, detail))
-}
-
-fn mark_candidate_for_enrichment(candidate: &mut ExternalCandidate) {
-    candidate.metadata.insert(
-        ENRICH_BEFORE_APPLY_METADATA_KEY.to_string(),
-        Value::Bool(true),
-    );
-}
-
-fn take_candidate_enrichment_marker(candidate: &mut ExternalCandidate) -> bool {
-    candidate
-        .metadata
-        .remove(ENRICH_BEFORE_APPLY_METADATA_KEY)
-        .and_then(|value| value.as_bool())
-        .unwrap_or(false)
 }
 
 fn candidate_external_types(type_config: &EntityTypeConfig, provider: &str) -> Vec<String> {
@@ -2121,6 +2106,7 @@ mod tests {
 
     fn candidate(provider: &str, source_id: &str, url: &str) -> ExternalCandidate {
         ExternalCandidate {
+            needs_detail: false,
             provider: provider.to_string(),
             source_id: source_id.to_string(),
             url: url.to_string(),
@@ -2139,6 +2125,7 @@ mod tests {
         titles: &[(&str, &str)],
     ) -> ExternalCandidate {
         ExternalCandidate {
+            needs_detail: false,
             provider: "bangumi".to_string(),
             source_id: "x".to_string(),
             url: "https://bgm.tv/subject/x".to_string(),
@@ -2245,16 +2232,21 @@ mod tests {
     }
 
     #[test]
-    fn free_text_enrichment_marker_is_one_shot_and_not_applied_as_metadata() {
+    fn needs_detail_is_a_typed_flag_not_provider_metadata() {
+        // The flag rides as its own contract field — never inside the provider's
+        // free-form metadata, where schema mappings could read it — and is only
+        // serialized when set, so resolved candidates keep their old shape.
         let mut candidate = candidate("mangaupdates", "123", "https://mangaupdates.com/123");
-        assert!(!take_candidate_enrichment_marker(&mut candidate));
+        let plain = serde_json::to_value(&candidate).unwrap();
+        assert!(plain.get("needsDetail").is_none());
 
-        mark_candidate_for_enrichment(&mut candidate);
-        assert!(take_candidate_enrichment_marker(&mut candidate));
-        assert!(!candidate
-            .metadata
-            .contains_key(ENRICH_BEFORE_APPLY_METADATA_KEY));
-        assert!(!take_candidate_enrichment_marker(&mut candidate));
+        candidate.needs_detail = true;
+        let flagged = serde_json::to_value(&candidate).unwrap();
+        assert_eq!(flagged["needsDetail"], serde_json::json!(true));
+        assert_eq!(flagged["metadata"], serde_json::json!({}));
+
+        let echoed: ExternalCandidate = serde_json::from_value(flagged).unwrap();
+        assert!(echoed.needs_detail);
     }
 
     #[test]

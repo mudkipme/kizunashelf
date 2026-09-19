@@ -17,7 +17,8 @@ export const ExternalCandidate = zod.object({
   "brief": zod.string().nullish(),
   "coverUrl": zod.string().nullish(),
   "titles": zod.record(zod.string(), zod.string()).default(externalCandidateTitlesDefault),
-  "metadata": zod.record(zod.string(), zod.unknown()).default(externalCandidateMetadataDefault)
+  "metadata": zod.record(zod.string(), zod.unknown()).default(externalCandidateMetadataDefault),
+  "needsDetail": zod.boolean().optional().describe('Set on free-text search results, which providers return deliberately\nthin: before the candidate is reviewed, applied, or quick-added, the\nserver re-resolves its full detail (once — the flag is cleared then).\nClients pass it back unchanged with the candidate.')
 })
 
 export type ExternalCandidate = zod.input<typeof ExternalCandidate>;

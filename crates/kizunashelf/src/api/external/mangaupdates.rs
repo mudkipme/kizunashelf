@@ -171,6 +171,7 @@ fn mangaupdates_search_record(record: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: MangaUpdatesProvider::ID.to_string(),
         source_id: id,
         url,
@@ -245,6 +246,7 @@ fn mangaupdates_detail(series: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: MangaUpdatesProvider::ID.to_string(),
         source_id: id,
         url,

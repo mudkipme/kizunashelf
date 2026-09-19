@@ -277,6 +277,7 @@ fn hardcover_search_hit(document: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: HardcoverProvider::ID.to_string(),
         source_id: id,
         url,
@@ -401,6 +402,7 @@ fn hardcover_book(book: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: HardcoverProvider::ID.to_string(),
         source_id: id,
         url,

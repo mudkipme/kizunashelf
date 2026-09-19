@@ -556,6 +556,7 @@ fn tmdb_search_result(
         item.get("original_language").and_then(Value::as_str),
     );
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: TmdbProvider::ID.to_string(),
         source_id: id,
         url,
@@ -779,6 +780,7 @@ fn tmdb_detail(
         data.get("original_language").and_then(Value::as_str),
     );
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: TmdbProvider::ID.to_string(),
         source_id: id.to_string(),
         url,
@@ -855,6 +857,7 @@ fn tmdb_person(id: &str, data: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: TmdbProvider::ID.to_string(),
         source_id: id.to_string(),
         url,

@@ -368,6 +368,7 @@ fn comicvine_volume(id: &str, volume: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: ComicVineProvider::ID.to_string(),
         source_id: id.to_string(),
         url,

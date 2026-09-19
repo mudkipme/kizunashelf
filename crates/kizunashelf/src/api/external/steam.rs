@@ -226,6 +226,7 @@ fn steam_candidate(appid: &str, data: &Value) -> Option<ExternalCandidate> {
         metadata.insert("cover_url".to_string(), Value::String(cover_url.clone()));
     }
     Some(ExternalCandidate {
+        needs_detail: false,
         provider: SteamProvider::ID.to_string(),
         source_id: appid.to_string(),
         url,

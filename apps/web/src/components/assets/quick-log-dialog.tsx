@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { errorMessage } from "@/api/client";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { postLogActivity } from "@/api/log";
+import { queryKeys } from "@/api/queries";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -73,7 +74,7 @@ export function QuickLogDialog({
   };
 
   const preview = useQuery({
-    queryKey: ["logPreview", entityId, date, activeKind, note],
+    queryKey: queryKeys.logPreview(entityId, date, activeKind, note),
     queryFn: () => postLogActivity(entityId, request, true),
     enabled: open && Boolean(date.trim()),
     retry: false,

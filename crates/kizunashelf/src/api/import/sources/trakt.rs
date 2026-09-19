@@ -201,6 +201,7 @@ fn media_item(node: Option<&Value>, media_type: &str, user: ImportUserData) -> O
             let id = tmdb.to_string();
             let url = format!("https://www.themoviedb.org/{media_type}/{id}");
             let candidate = ExternalCandidate {
+                needs_detail: false,
                 provider: "tmdb".to_string(),
                 source_id: id.clone(),
                 url: url.clone(),

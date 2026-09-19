@@ -97,6 +97,7 @@ fn build_items(rows: &[CsvRow]) -> Vec<ImportItem> {
         // untagged rather than mislabeled `en`.
         let titles = BTreeMap::new();
         let candidate = reference.first().map(|reference| ExternalCandidate {
+            needs_detail: false,
             provider: reference.provider.clone(),
             source_id: reference.id.clone(),
             url: reference.url.clone(),

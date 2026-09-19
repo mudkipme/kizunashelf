@@ -22,7 +22,12 @@ import {
   type SearchExternalSourcesParams,
   type SmartListPreviewRequest,
 } from "@kizunashelf/api-contract";
-import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
+import {
+  infiniteQueryOptions,
+  keepPreviousData,
+  type QueryClient,
+  queryOptions,
+} from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import { searchSources } from "@/api/entities";
@@ -37,8 +42,12 @@ import {
 import { fetchSmartList, fetchSmartListPreview, fetchSmartListResults } from "@/api/smart-lists";
 import { todayLocal } from "@/lib/date";
 
+// Every query key lives here, and each entry's first segment is its own property
+// name (a test enforces it). That root is what the invalidation helpers target,
+// so a family is addressed by one typed name — see `invalidateQueryRoots`.
 export const queryKeys = {
   activity: (params: Omit<GetActivityParams, "cursor">) => ["activity", params] as const,
+  assetJob: (jobId: string | undefined) => ["assetJob", jobId] as const,
   upcoming: (params: GetUpcomingParams) => ["upcoming", params] as const,
   analytics: ["analytics"] as const,
   calendar: (params: GetCalendarParams) => ["calendar", params] as const,
@@ -48,17 +57,25 @@ export const queryKeys = {
   entities: (params: GetEntitiesParams) => ["entities", params] as const,
   entity: (id: string) => ["entity", id] as const,
   entityDates: (id: string) => ["entityDates", id] as const,
+  episodeSources: (entityId: string, provider: string, language: string) =>
+    ["episodeSources", entityId, provider, language] as const,
   externalSearch: (params: SearchExternalSourcesParams) => ["externalSearch", params] as const,
   externalProviders: (type: string) => ["externalProviders", type] as const,
   home: ["home"] as const,
   health: ["health"] as const,
+  importJob: (jobId: string | undefined) => ["importJob", jobId] as const,
+  importJobs: ["importJobs"] as const,
+  importSources: ["importSources"] as const,
   languages: ["languages"] as const,
   lists: ["lists"] as const,
   list: (id: string) => ["list", id] as const,
+  logPreview: (entityId: string, date: string, kind: string, note: string) =>
+    ["logPreview", entityId, date, kind, note] as const,
   smartList: (id: string) => ["smartList", id] as const,
   smartListResults: (id: string, params: GetSmartListResultsParams) =>
     ["smartListResults", id, params] as const,
   smartListPreview: (request: SmartListPreviewRequest) => ["smartListPreview", request] as const,
+  smartListSuggestions: (language: string) => ["smartListSuggestions", language] as const,
   providerCatalog: ["providerCatalog"] as const,
   settingsConfig: ["settingsConfig"] as const,
   rawSettingsConfig: ["rawSettingsConfig"] as const,
@@ -66,6 +83,14 @@ export const queryKeys = {
   tags: ["tags"] as const,
   typePresets: (language?: string) => ["typePresets", language ?? "en"] as const,
 };
+
+/** A query family: the root segment shared by every key a `queryKeys` entry makes. */
+export type QueryRoot = keyof typeof queryKeys;
+
+/** Invalidates every cached query in the given families (all their params). */
+export function invalidateQueryRoots(queryClient: QueryClient, roots: readonly QueryRoot[]) {
+  return Promise.all(roots.map((root) => queryClient.invalidateQueries({ queryKey: [root] })));
+}
 
 // Both capture and matching use the same cancellable, contract-typed search.
 // Keep results scoped to their query: old candidates must not remain actionable

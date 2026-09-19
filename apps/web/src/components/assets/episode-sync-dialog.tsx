@@ -73,7 +73,7 @@ export function EpisodeSyncDialog({
   const [importing, setImporting] = useState(false);
 
   const sources = useQuery({
-    queryKey: ["episodeSources", entityId, provider ?? "", language],
+    queryKey: queryKeys.episodeSources(entityId, provider ?? "", language),
     queryFn: ({ signal }) =>
       fetchEpisodeSources(entityId, { ...(provider ? { provider } : {}), language }, { signal }),
     enabled: open,
