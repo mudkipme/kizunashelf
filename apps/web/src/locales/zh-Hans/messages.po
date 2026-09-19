@@ -534,7 +534,7 @@ msgstr "资源根目录"
 msgid "assets: {0}"
 msgstr "资源：{0}"
 
-#: src/components/layout/app-frame.tsx:227
+#: src/components/layout/app-frame.tsx:211
 #: src/components/settings/preset-picker.tsx:186
 #: src/components/settings/settings-dialogs.tsx:72
 #: src/components/settings/settings-editor.tsx:202
@@ -654,8 +654,8 @@ msgstr "全部清除"
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/layout/app-frame.tsx:491
-#: src/components/layout/app-frame.tsx:517
+#: src/components/layout/app-frame.tsx:473
+#: src/components/layout/app-frame.tsx:499
 msgid "Close navigation"
 msgstr "关闭导航"
 
@@ -1138,7 +1138,7 @@ msgstr "例如：集数。"
 msgid "Form"
 msgstr "表单"
 
-#: src/components/layout/app-frame.tsx:238
+#: src/components/layout/app-frame.tsx:222
 msgid "Forward"
 msgstr ""
 
@@ -1154,11 +1154,11 @@ msgstr "前置元数据键"
 msgid "Game"
 msgstr "游戏"
 
-#: src/components/layout/app-frame.tsx:226
+#: src/components/layout/app-frame.tsx:210
 msgid "Go back"
 msgstr "返回"
 
-#: src/components/layout/app-frame.tsx:237
+#: src/components/layout/app-frame.tsx:221
 msgid "Go forward"
 msgstr ""
 
@@ -1199,7 +1199,7 @@ msgstr "不含以下任何"
 msgid "Heading"
 msgstr "标题"
 
-#: src/components/layout/app-frame.tsx:196
+#: src/components/layout/app-frame.tsx:180
 msgid "Hide sidebar"
 msgstr ""
 
@@ -1494,7 +1494,7 @@ msgstr "正在加载活动…"
 msgid "Loading built-in types…"
 msgstr "正在加载内置类型…"
 
-#: src/components/layout/app-frame.tsx:605
+#: src/components/layout/app-frame.tsx:587
 msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
@@ -1642,7 +1642,7 @@ msgstr "我的保管库"
 msgid "Name"
 msgstr "名称"
 
-#: src/components/layout/app-frame.tsx:496
+#: src/components/layout/app-frame.tsx:478
 msgid "Navigation"
 msgstr "导航"
 
@@ -1780,7 +1780,7 @@ msgid "No matched provider"
 msgstr "无匹配数据源"
 
 #: src/components/layout/command-palette.tsx:268
-#: src/components/layout/header-search.tsx:208
+#: src/components/layout/header-search.tsx:189
 msgid "No matches"
 msgstr "无匹配项"
 
@@ -1949,7 +1949,7 @@ msgstr "打开现有保管库"
 msgid "Open folder"
 msgstr "打开文件夹"
 
-#: src/components/layout/app-frame.tsx:208
+#: src/components/layout/app-frame.tsx:192
 msgid "Open navigation"
 msgstr "打开导航"
 
@@ -2200,8 +2200,8 @@ msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
-#: src/components/layout/app-frame.tsx:369
-#: src/components/layout/app-frame.tsx:370
+#: src/components/layout/app-frame.tsx:351
+#: src/components/layout/app-frame.tsx:352
 #: src/components/layout/command-palette.tsx:151
 msgid "Rescan vault"
 msgstr "重新扫描保管库"
@@ -2287,7 +2287,7 @@ msgstr "范围"
 msgid "Search"
 msgstr "搜索"
 
-#: src/components/layout/app-frame.tsx:92
+#: src/components/layout/app-frame.tsx:91
 msgid "Search {activeTypeLabel}"
 msgstr "搜索 {activeTypeLabel}"
 
@@ -2308,9 +2308,9 @@ msgstr "搜索条目…"
 msgid "Search for a match"
 msgstr "搜索匹配项"
 
-#: src/components/layout/app-frame.tsx:93
-#: src/components/layout/app-frame.tsx:259
-#: src/components/layout/header-search.tsx:159
+#: src/components/layout/app-frame.tsx:92
+#: src/components/layout/app-frame.tsx:241
+#: src/components/layout/header-search.tsx:150
 msgid "Search library"
 msgstr "搜索库"
 
@@ -2367,11 +2367,11 @@ msgstr "板块覆盖"
 msgid "See all"
 msgstr "查看全部"
 
-#: src/components/layout/header-search.tsx:117
+#: src/components/layout/header-search.tsx:109
 msgid "See all results"
 msgstr "查看全部结果"
 
-#: src/components/layout/header-search.tsx:185
+#: src/components/layout/header-search.tsx:166
 msgid "See all results for “{query}”"
 msgstr "查看“{query}”的全部结果"
 
@@ -2417,7 +2417,7 @@ msgstr "设置已保存"
 msgid "Show all"
 msgstr "显示全部"
 
-#: src/components/layout/app-frame.tsx:196
+#: src/components/layout/app-frame.tsx:180
 msgid "Show sidebar"
 msgstr ""
 

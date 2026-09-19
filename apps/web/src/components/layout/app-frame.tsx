@@ -12,7 +12,7 @@ import {
   XIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { statsQuery } from "@/api/queries";
@@ -67,7 +67,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
   // ease toward every intermediate width and leave the edge trailing the
   // pointer. The handle says when it is being dragged so the easing can go.
   const [resizing, setResizing] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const { canGoBack, canGoForward } = useHistoryPosition();
   const sidebarWidth = useSidebarStore((state) => state.width);
   const sidebarCollapsed = useSidebarStore((state) => state.collapsed);
@@ -116,24 +115,9 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
     if (desktop) void setWindowTitle(title);
   }, [desktop, location.pathname, i18n]);
 
-  // Below `sm` the header search is not rendered at all, so the shortcut opens
-  // the sheet that holds it — which autofocuses its own field.
-  const focusSearch = useCallback(() => {
-    const input = searchInputRef.current;
-    if (!input || input.offsetParent === null) {
-      setMobileSearchOpen(true);
-      return;
-    }
-    input.focus();
-    // Selecting the existing query means the next keystroke replaces it, the
-    // way re-invoking find does in a native app.
-    input.select();
-  }, []);
-
   useAppShortcuts({
     paletteOpen,
     onTogglePalette: useCallback(() => setPaletteOpen((open) => !open), []),
-    onFocusSearch: focusSearch,
     onToggleSidebar: toggleSidebar,
   });
 
@@ -247,8 +231,6 @@ export function AppFrame({ error, children }: { error?: string; children: ReactN
         type={activeType || allTypes}
         className="ml-auto hidden min-w-0 items-center gap-2 sm:flex sm:max-w-sm"
         placeholder={searchPlaceholder}
-        inputRef={searchInputRef}
-        showShortcutHint
       />
       <Button
         type="button"

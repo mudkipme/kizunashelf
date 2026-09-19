@@ -9,7 +9,6 @@ import {
   forwardChord,
   matchesChord,
   paletteChord,
-  searchChord,
   settingsChord,
   sidebarChord,
 } from "@/lib/shortcuts";
@@ -28,19 +27,17 @@ import {
 export function useAppShortcuts({
   paletteOpen,
   onTogglePalette,
-  onFocusSearch,
   onToggleSidebar,
 }: {
   paletteOpen: boolean;
   onTogglePalette: () => void;
-  onFocusSearch: () => void;
   onToggleSidebar: () => void;
 }) {
   const navigate = useNavigate();
   // Held in a ref so the listener is bound once instead of being torn down and
   // re-added on every render of the shell.
-  const handlers = useRef({ paletteOpen, onTogglePalette, onFocusSearch, onToggleSidebar });
-  handlers.current = { paletteOpen, onTogglePalette, onFocusSearch, onToggleSidebar };
+  const handlers = useRef({ paletteOpen, onTogglePalette, onToggleSidebar });
+  handlers.current = { paletteOpen, onTogglePalette, onToggleSidebar };
 
   useEffect(() => {
     function handle(event: KeyboardEvent) {
@@ -53,15 +50,10 @@ export function useAppShortcuts({
         handlers.current.onTogglePalette();
         return;
       }
-      // With the palette open it owns the keyboard: focusing the field behind
-      // it or navigating out from under it would both be wrong.
+      // With the palette open it owns the keyboard: navigating out from under it
+      // would be wrong.
       if (handlers.current.paletteOpen) return;
 
-      if (matchesChord(event, searchChord)) {
-        event.preventDefault();
-        handlers.current.onFocusSearch();
-        return;
-      }
       if (matchesChord(event, sidebarChord)) {
         event.preventDefault();
         handlers.current.onToggleSidebar();

@@ -4,7 +4,7 @@ import { vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
 import { AppFrame } from "@/components/layout/app-frame";
-import { formatChord, isAppleKeyboard, searchChord } from "@/lib/shortcuts";
+import { isAppleKeyboard } from "@/lib/shortcuts";
 import { stubApi, testEntity } from "@/test/api-stub";
 import { render } from "@/test/render";
 
@@ -136,22 +136,24 @@ describe("command palette", () => {
 });
 
 describe("app shortcuts", () => {
-  it("focuses the library search and selects what is already there", async () => {
+  it("leaves mod+F to the browser's find", async () => {
+    // Search lives in the palette (mod+K); taking over mod+F would cost the user
+    // find-in-page on long notes for no gain.
     await page.viewport(1280, 800);
     const screen = await shell("/library?q=frieren");
-
     const search = screen.getByRole("combobox", { name: "Search library" });
-    await expect.element(search).toHaveValue("frieren");
-    // The field advertises the key that reaches it.
-    await expect.element(screen.getByText(formatChord(searchChord))).toBeVisible();
 
-    await userEvent.keyboard(chord("f"));
+    const event = new KeyboardEvent("keydown", {
+      key: "f",
+      metaKey: isAppleKeyboard(),
+      ctrlKey: !isAppleKeyboard(),
+      bubbles: true,
+      cancelable: true,
+    });
+    window.dispatchEvent(event);
 
-    await expect.element(search).toHaveFocus();
-    const input = search.element() as HTMLInputElement;
-    // Selected, not just focused, so the next keystroke replaces the query the
-    // way re-invoking find does natively.
-    expect([input.selectionStart, input.selectionEnd]).toEqual([0, "frieren".length]);
+    expect(event.defaultPrevented).toBe(false);
+    await expect.element(search).not.toHaveFocus();
   });
 
   it("opens settings on its chord", async () => {
