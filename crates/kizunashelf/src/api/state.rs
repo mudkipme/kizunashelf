@@ -63,6 +63,11 @@ impl Drop for VaultWatchTask {
     }
 }
 
+/// Proof that the router-wide vault-content mutation lock is held. Only
+/// [`AppState::content_mutation_lock`] can construct one (the field is private
+/// to this module); every vault write helper takes `&ContentMutationGuard`.
+pub(crate) struct ContentMutationGuard<'a>(#[allow(dead_code)] tokio::sync::MutexGuard<'a, ()>);
+
 /// A value memoized on the library's `content_revision`, with a single-flight
 /// build lock. Several endpoints derive an expensive whole-library view
 /// (analytics, cleanup queues, the tag vocabulary) that only changes when the
@@ -567,8 +572,14 @@ impl AppState {
     /// Acquires the router-wide vault-content mutation lock. Callers hold this
     /// across the authoritative fresh read, revision check, and every related
     /// write. Network/provider preparation should happen before taking it.
-    pub(crate) async fn content_mutation_lock(&self) -> tokio::sync::MutexGuard<'_, ()> {
-        self.content_mutation.lock().await
+    ///
+    /// The returned guard is also the proof the vault write helpers
+    /// (`write_entity_raw`, `write_new_entity_file`, `move_to_trash`, …) demand,
+    /// so a handler that forgets the lock fails to compile instead of racing.
+    /// The lock is not reentrant: release it before calling a helper that
+    /// acquires it itself (e.g. `edit_entity_document`).
+    pub(crate) async fn content_mutation_lock(&self) -> ContentMutationGuard<'_> {
+        ContentMutationGuard(self.content_mutation.lock().await)
     }
 
     /// Returns the per-provider lock used to single-flight token acquisition.

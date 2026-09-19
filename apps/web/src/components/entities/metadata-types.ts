@@ -14,7 +14,6 @@ export type FieldKind =
   | "text"
   | "select"
   | "number"
-  | "progress"
   | "boolean"
   | "list"
   | "relation"

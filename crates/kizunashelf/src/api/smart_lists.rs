@@ -83,7 +83,7 @@ pub(crate) async fn create_smart_list(
     Json(request): Json<CreateSmartListRequest>,
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let basename = sanitize_basename(&request.name)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let scope_folder = resolve_scope(&library.config, request.scope.as_deref())?;
@@ -102,7 +102,7 @@ pub(crate) async fn create_smart_list(
     }
     let doc = default_smart_list_doc(scope_folder.as_deref(), image.as_deref());
     let raw = render_smart_list(&doc);
-    write_entity_raw(vfs.as_ref(), &path, &raw).await?;
+    write_entity_raw(&mutation, vfs.as_ref(), &path, &raw).await?;
     let list = parse_list_raw(&path, &raw)?;
     Ok(Json(detail_from_list(&path, &list, &raw, &library.config)))
 }
@@ -113,7 +113,7 @@ pub(crate) async fn update_smart_list(
     Json(request): Json<UpdateSmartListRequest>,
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let source_path = smart_list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
@@ -158,7 +158,7 @@ pub(crate) async fn update_smart_list(
     let new_raw = render_smart_list(&doc);
     let latest = read_smart_list_raw(vfs.as_ref(), &source_path).await?;
     check_revision(&request.revision, &file_revision(&latest))?;
-    write_entity_raw(vfs.as_ref(), &target_path, &new_raw).await?;
+    write_entity_raw(&mutation, vfs.as_ref(), &target_path, &new_raw).await?;
     if target_path != source_path {
         vfs.remove_file(&source_path).await.map_err(|err| {
             anyhow::anyhow!("failed to remove old smart list {source_path}: {err}")
@@ -179,7 +179,7 @@ pub(crate) async fn delete_smart_list(
     AxumPath(path_param): AxumPath<SmartListPath>,
 ) -> ApiResult<DeleteListResponse> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let path = smart_list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     if !vfs
@@ -189,7 +189,7 @@ pub(crate) async fn delete_smart_list(
     {
         return Err(ApiError::not_found("Smart list not found"));
     }
-    let backup_path = move_to_trash(vfs.as_ref(), &path).await?;
+    let backup_path = move_to_trash(&mutation, vfs.as_ref(), &path).await?;
     Ok(Json(DeleteListResponse {
         deleted_id: path_param.id,
         backup_path,
@@ -285,7 +285,7 @@ pub(crate) async fn set_smart_list_home(
     Json(request): Json<crate::contract::SetSmartListHomeRequest>,
 ) -> ApiResult<SmartListDetail> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let path = smart_list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     let raw = read_smart_list_raw(vfs.as_ref(), &path).await?;
@@ -296,7 +296,7 @@ pub(crate) async fn set_smart_list_home(
     let latest = read_smart_list_raw(vfs.as_ref(), &path).await?;
     check_revision(&request.revision, &file_revision(&latest))?;
     let raw = render_smart_list(&doc);
-    write_entity_raw(vfs.as_ref(), &path, &raw).await?;
+    write_entity_raw(&mutation, vfs.as_ref(), &path, &raw).await?;
     let list = parse_list_raw(&path, &raw)?;
     Ok(Json(detail_from_list(&path, &list, &raw, &library.config)))
 }
@@ -339,7 +339,7 @@ pub(crate) async fn create_suggested_smart_lists(
     Json(request): Json<crate::contract::CreateSuggestedSmartListsRequest>,
 ) -> ApiResult<crate::contract::CreateSuggestedSmartListsResponse> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let vfs = state.vault_vfs(&library.config.vault_root);
     let files = read_smart_list_files(vfs.as_ref()).await?;
     let suggestions =
@@ -374,7 +374,7 @@ pub(crate) async fn create_suggested_smart_lists(
             let latest = read_smart_list_raw(vfs.as_ref(), path).await?;
             check_revision(&file_revision(raw), &file_revision(&latest))?;
             let raw = render_smart_list(&doc);
-            write_entity_raw(vfs.as_ref(), path, &raw).await?;
+            write_entity_raw(&mutation, vfs.as_ref(), path, &raw).await?;
             let list = parse_list_raw(path, &raw)?;
             lists.push(detail_from_list(path, &list, &raw, &library.config));
             continue;
@@ -418,7 +418,7 @@ pub(crate) async fn create_suggested_smart_lists(
         smart_lists::set_home_visibility(&mut doc, true)
             .map_err(|error| ApiError::bad_request(&error))?;
         let raw = render_smart_list(&doc);
-        write_entity_raw(vfs.as_ref(), &path, &raw).await?;
+        write_entity_raw(&mutation, vfs.as_ref(), &path, &raw).await?;
         let list = parse_list_raw(&path, &raw)?;
         lists.push(detail_from_list(&path, &list, &raw, &library.config));
     }

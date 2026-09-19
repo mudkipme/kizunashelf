@@ -32,7 +32,7 @@ use crate::dates::clamp_number;
 use crate::library::load_entity;
 use crate::status::status_field;
 use crate::types::{
-    BodySectionKind, CanonicalStatus, EntityTypeConfig, FieldType, KizunaConfig, Library,
+    BodySectionKind, CanonicalStatus, EntityTypeConfig, FieldType, KizunaConfig, Library, TitleRole,
 };
 use axum::extract::{Query, State};
 use axum::Json;
@@ -668,6 +668,30 @@ pub(super) fn lookup_existing(
     None
 }
 
+/// The `alreadyExisted` quick-add response when `candidate` already resolves to
+/// an entity of `entity_type` in `library`, else `None`.
+async fn existing_quick_add_response(
+    library: &Library,
+    vfs: &dyn crate::vfs::Vfs,
+    candidate: &ExternalCandidate,
+    entity_type: &str,
+) -> Result<Option<QuickAddResponse>, ApiError> {
+    let existing_index = build_existing_index(library);
+    let Some(record) = lookup_existing(&existing_index, candidate, entity_type)
+        .and_then(|existing| library.record_by_id(&existing.id))
+    else {
+        return Ok(None);
+    };
+    let entity = load_entity(&library.config, vfs, &record.summary).await?;
+    Ok(Some(QuickAddResponse {
+        entity,
+        already_existed: true,
+        basename_adjusted: false,
+        cover: Vec::new(),
+        episodes: None,
+    }))
+}
+
 /// Quick-add: create a library entity straight from an external search candidate.
 /// Re-runs the schema mapping server-side, derives a safe filename (full-width
 /// forbidden chars, collision-disambiguated), writes the entity, then downloads
@@ -684,19 +708,12 @@ pub(crate) async fn quick_add_entity(
     let vfs = state.vault_vfs(&library.config.vault_root);
 
     // Already in the library (external ref or a loose title match for this type)?
-    // Return it, create nothing.
-    let existing_index = build_existing_index(&library);
-    if let Some(existing) = lookup_existing(&existing_index, candidate, &request.entity_type) {
-        if let Some(record) = library.record_by_id(&existing.id) {
-            let entity = load_entity(&library.config, vfs.as_ref(), &record.summary).await?;
-            return Ok(Json(QuickAddResponse {
-                entity,
-                already_existed: true,
-                basename_adjusted: false,
-                cover: Vec::new(),
-                episodes: None,
-            }));
-        }
+    // Return it, create nothing. A cheap pre-check before any provider traffic;
+    // it's repeated under the lock below, where it is authoritative.
+    if let Some(response) =
+        existing_quick_add_response(&library, vfs.as_ref(), candidate, &request.entity_type).await?
+    {
+        return Ok(Json(response));
     }
 
     // Free-text provider results are often deliberately thin. Resolve the
@@ -720,6 +737,20 @@ pub(crate) async fn quick_add_entity(
         type_config,
         request.default_status.unwrap_or(CanonicalStatus::Planning),
     );
+
+    // Hold the content lock from the authoritative "already exists?" check through
+    // the write, so concurrent quick-adds (a double-click, or the share extension
+    // racing the app) serialize: the second sees the first's entity and returns
+    // it rather than minting a disambiguated duplicate or overwriting the file.
+    // Released before the cover/episode steps, which take the lock themselves.
+    let mutation = state.content_mutation_lock().await;
+    let library = get_library(&state).await?;
+    if let Some(response) =
+        existing_quick_add_response(&library, vfs.as_ref(), &candidate, &request.entity_type)
+            .await?
+    {
+        return Ok(Json(response));
+    }
 
     // Filename: the type's filename title language, falling back to the candidate
     // title, then the provider id. Collisions with a *different* work of the same
@@ -752,6 +783,7 @@ pub(crate) async fn quick_add_entity(
     };
 
     let path = write_new_entity_file(
+        &mutation,
         vfs.as_ref(),
         &library.config.taxonomy_root,
         type_config,
@@ -761,6 +793,7 @@ pub(crate) async fn quick_add_entity(
     )
     .await?;
     state.invalidate_cache().await;
+    drop(mutation);
 
     let reloaded = get_library(&state).await?;
     let entity_id = reloaded
@@ -798,19 +831,33 @@ pub(crate) async fn quick_add_entity(
     }))
 }
 
-/// The title a new entity's filename is derived from: the type's filename title
-/// language, else the candidate title, else the provider id. Returns a validated
+/// The title a new entity's filename is derived from, mirroring the web's
+/// manual-create derivation (`filenameTitleField`): the filename's own title
+/// claim when it has one (`titleLanguage` → that language's title, `titleRole:
+/// original` → the original title); otherwise the language of the type's first
+/// title field that has one (the frontmatter title the file is named after).
+/// Falls back to the candidate title, then the source id. Returns a validated
 /// basename or 400 if nothing usable remains.
 pub(super) fn candidate_basename_base(
     candidate: &ExternalCandidate,
     type_config: &EntityTypeConfig,
 ) -> Result<String, ApiError> {
-    let title = type_config
-        .filename
-        .as_ref()
-        .and_then(|filename| filename.title_language.as_deref())
-        .and_then(|language| candidate.titles.get(language))
-        .map(String::as_str)
+    let language_title = |language: &str| candidate.titles.get(language).map(String::as_str);
+    let filename = type_config.filename.as_ref();
+    let preferred = match (
+        filename.and_then(|filename| filename.title_language.as_deref()),
+        filename.and_then(|filename| filename.title_role),
+    ) {
+        (Some(language), _) => language_title(language),
+        (None, Some(TitleRole::Original)) => candidate.original_title.as_deref(),
+        (None, None) => type_config
+            .fields
+            .iter()
+            .filter(|field| field.field_type == FieldType::Title)
+            .find_map(|field| field.title_language.as_deref())
+            .and_then(language_title),
+    };
+    let title = preferred
         .filter(|value| !value.trim().is_empty())
         .unwrap_or(candidate.title.as_str());
     derive_basename(title)
@@ -2060,7 +2107,6 @@ mod tests {
                 enum_options: Vec::new(),
                 enum_role: None,
                 status_values: None,
-                total_progress_field: None,
                 date_role: None,
                 season_language: None,
                 external_ref: Some(external_ref.to_string()),

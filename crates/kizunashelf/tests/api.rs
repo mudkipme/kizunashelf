@@ -972,6 +972,47 @@ async fn external_search_lists_providers_without_querying_network_for_empty_sear
     assert_eq!(unknown_type.1["error"], "Unknown entity type");
 }
 
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn concurrent_quick_adds_of_one_candidate_create_one_entity() {
+    // A double-click (or the share extension racing the app) must not mint a
+    // disambiguated duplicate: the "already exists?" check and the write happen
+    // under one lock, so every other request returns the first one's entity.
+    let server = TestServer::new();
+    let candidate = json!({
+        "provider": "bangumi",
+        "sourceId": "556677",
+        "url": "https://bgm.tv/subject/556677",
+        "title": "Raced Show",
+        "titles": { "zh": "竞速番" },
+        "metadata": {}
+    });
+    let adds: Vec<_> = (0..4)
+        .map(|_| {
+            let app = server.app.clone();
+            let payload = json!({ "type": "anime", "candidate": candidate.clone() });
+            tokio::spawn(async move {
+                request_json(&app, Method::POST, "/api/external/quick-add", Some(payload)).await
+            })
+        })
+        .collect();
+    let mut ids = HashSet::new();
+    let mut created = 0;
+    for add in adds {
+        let (status, body) = add.await.unwrap();
+        assert_eq!(status, StatusCode::OK, "{body}");
+        ids.insert(body["entity"]["id"].as_str().unwrap().to_string());
+        if body["alreadyExisted"] == false {
+            created += 1;
+        }
+    }
+    assert_eq!(created, 1, "exactly one request creates the entity");
+    assert_eq!(
+        ids.len(),
+        1,
+        "every request resolves to that entity: {ids:?}"
+    );
+}
+
 #[tokio::test]
 async fn quick_add_creates_entity_from_candidate_and_dedupes_on_second_add() {
     let server = TestServer::new();
@@ -3770,6 +3811,59 @@ async fn broken_asset_cleanup_queue_flags_missing_files() {
         .unwrap()
         .iter()
         .any(|queue| queue["id"] == "broken-asset"));
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn concurrent_list_item_adds_are_not_lost() {
+    // Each add is a read-modify-write of the same list file. Without the content
+    // mutation lock, concurrent adds read the same bytes and the last write wins,
+    // silently dropping the other entities.
+    let server = TestServer::new();
+    let app = &server.app;
+    let created = request_json(
+        app,
+        Method::POST,
+        "/api/lists",
+        Some(json!({ "name": "Race" })),
+    )
+    .await;
+    assert_eq!(created.0, StatusCode::OK, "{}", created.1);
+
+    let entities = server.ok_json("/api/entities").await;
+    let ids: Vec<String> = entities["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|item| item["id"].as_str().unwrap().to_string())
+        .collect();
+    assert!(ids.len() >= 3, "fixture needs several entities: {ids:?}");
+
+    // Separate tasks on a multi-threaded runtime, so the handlers really overlap.
+    let adds: Vec<_> = ids
+        .iter()
+        .map(|id| {
+            let app = app.clone();
+            let payload = json!({ "entityId": id });
+            tokio::spawn(async move {
+                request_json(&app, Method::POST, "/api/lists/Race/items", Some(payload)).await
+            })
+        })
+        .collect();
+    for add in adds {
+        let (status, body) = add.await.unwrap();
+        assert_eq!(status, StatusCode::OK, "{body}");
+    }
+
+    let detail = server.ok_json("/api/lists/Race").await;
+    let listed: HashSet<&str> = detail["sections"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|section| section["items"].as_array().unwrap())
+        .filter_map(|item| item["entity"]["id"].as_str())
+        .collect();
+    let expected: HashSet<&str> = ids.iter().map(String::as_str).collect();
+    assert_eq!(listed, expected);
 }
 
 #[tokio::test]

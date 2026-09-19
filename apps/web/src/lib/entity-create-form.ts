@@ -7,10 +7,13 @@ import { type FieldConfig, fieldsByType } from "@/lib/type-config";
 import type { TypeConfig } from "@/types/api";
 
 /**
- * The title field a new entity's filename derives from, per the schema: the
- * type's `filename.titleLanguage` (mirroring the core's quick-add derivation),
- * else its `filename.titleRole`, else the `original`-role title field, else the
- * first title field. `undefined` when the type declares no title field.
+ * The title field a new entity's filename derives from, per the schema
+ * (mirroring the core's quick-add `candidate_basename_base`): a field matching
+ * the type's `filename.titleLanguage`, else its `filename.titleRole`, else the
+ * first title field that has a `titleLanguage` (a filename with no title claim
+ * is named after the localized frontmatter title), else the `original`-role
+ * title field, else the first title field. `undefined` when the type declares
+ * no title field.
  */
 export function filenameTitleField(typeConfig: TypeConfig | undefined): FieldConfig | undefined {
   const titleFields = fieldsByType(typeConfig, "title");
@@ -22,8 +25,9 @@ export function filenameTitleField(typeConfig: TypeConfig | undefined): FieldCon
   const byRole = filename?.titleRole
     ? titleFields.find((field) => field.titleRole === filename.titleRole)
     : undefined;
+  const localized = titleFields.find((field) => field.titleLanguage);
   const original = titleFields.find((field) => field.titleRole === "original");
-  return byLanguage ?? byRole ?? original ?? titleFields[0];
+  return byLanguage ?? byRole ?? localized ?? original ?? titleFields[0];
 }
 
 export type CreateBasenameResolution = {

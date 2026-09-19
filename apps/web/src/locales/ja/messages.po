@@ -41,7 +41,7 @@ msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, other {# 件}}"
 
 #. placeholder {0}: field.externalTypes.length
-#: src/components/settings/settings-field-descriptors.ts:79
+#: src/components/settings/settings-field-descriptors.ts:74
 msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, other {# 件の外部タイプ}}"
 
@@ -79,7 +79,7 @@ msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 件のリンク}}"
 
 #. placeholder {0}: field.externalFields.length
-#: src/components/settings/settings-field-descriptors.ts:67
+#: src/components/settings/settings-field-descriptors.ts:65
 msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, other {# 件のマッピング}}"
 
@@ -130,7 +130,7 @@ msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 件のタイプ}}"
 
 #. placeholder {0}: field.enumOptions.length
-#: src/components/settings/settings-field-descriptors.ts:63
+#: src/components/settings/settings-field-descriptors.ts:61
 msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, other {# 件の値}}"
 
@@ -355,7 +355,7 @@ msgstr "組み込みタイプを追加"
 msgid "Add custom type"
 msgstr "カスタムタイプを追加"
 
-#: src/components/settings/settings-field-form.tsx:372
+#: src/components/settings/settings-field-form.tsx:362
 msgid "Add enum options above to map them to statuses."
 msgstr "上に列挙オプションを追加してステータスに割り当てます。"
 
@@ -408,7 +408,7 @@ msgstr "おすすめリストを追加するか、スマートリストを開い
 msgid "Add to Home"
 msgstr "ホームに追加"
 
-#: src/components/entities/metadata-inputs.tsx:138
+#: src/components/entities/metadata-inputs.tsx:126
 #: src/components/smart-lists/rule-value-input.tsx:135
 msgid "Add value"
 msgstr "値を追加"
@@ -612,7 +612,7 @@ msgstr "変更はスキーマ全体と一緒に保存されます。"
 msgid "Checklist (per-item checkboxes)"
 msgstr "チェックリスト（アイテムごとのチェックボックス）"
 
-#: src/components/settings/settings-field-form.tsx:216
+#: src/components/settings/settings-field-form.tsx:206
 msgid "Chinese"
 msgstr "中国語"
 
@@ -666,8 +666,8 @@ msgstr ""
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/import/import-labels.ts:34
 #: src/components/settings/settings-field-form.tsx:150
-#: src/components/settings/settings-field-form.tsx:195
-#: src/components/settings/settings-field-form.tsx:276
+#: src/components/settings/settings-field-form.tsx:185
+#: src/components/settings/settings-field-form.tsx:266
 #: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "完了"
@@ -940,7 +940,7 @@ msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
 #: src/components/import/import-labels.ts:35
-#: src/components/settings/settings-field-form.tsx:277
+#: src/components/settings/settings-field-form.tsx:267
 msgid "Dropped"
 msgstr "中止"
 
@@ -974,7 +974,7 @@ msgstr "アイテムを編集"
 #: src/components/assets/frontmatter-panel.tsx:230
 #: src/components/assets/frontmatter-panel.tsx:252
 #: src/components/entities/metadata-inputs.tsx:61
-#: src/components/entities/metadata-inputs.tsx:116
+#: src/components/entities/metadata-inputs.tsx:104
 msgid "Empty"
 msgstr "空"
 
@@ -997,7 +997,7 @@ msgstr "有効にする"
 msgid "ends with"
 msgstr "が次で終わる:"
 
-#: src/components/settings/settings-field-form.tsx:218
+#: src/components/settings/settings-field-form.tsx:208
 msgid "English"
 msgstr "英語"
 
@@ -1037,7 +1037,7 @@ msgstr "エピソード"
 msgid "esc to close"
 msgstr ""
 
-#: src/components/settings/settings-field-form.tsx:196
+#: src/components/settings/settings-field-form.tsx:186
 #: src/pages/activity-page.tsx:44
 msgid "Event"
 msgstr "イベント"
@@ -1356,7 +1356,7 @@ msgstr "アイテム"
 msgid "Items <0>({totalItems})</0>"
 msgstr "アイテム <0>({totalItems})</0>"
 
-#: src/components/settings/settings-field-form.tsx:217
+#: src/components/settings/settings-field-form.tsx:207
 msgid "Japanese"
 msgstr "日本語"
 
@@ -1378,7 +1378,7 @@ msgid "Label"
 msgstr "ラベル"
 
 #. placeholder {0}: field.titleLanguage
-#: src/components/settings/settings-field-descriptors.ts:59
+#: src/components/settings/settings-field-descriptors.ts:57
 msgid "lang {0}"
 msgstr "言語 {0}"
 
@@ -1548,7 +1548,7 @@ msgstr "記録中…"
 msgid "Manage lists"
 msgstr "リストを管理"
 
-#: src/components/settings/settings-field-form.tsx:345
+#: src/components/settings/settings-field-form.tsx:335
 msgid "Map each option to a status"
 msgstr "各オプションをステータスに割り当て"
 
@@ -1684,7 +1684,7 @@ msgstr "いいえ"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:118
+#: src/components/entities/metadata-inputs.tsx:106
 msgid "No"
 msgstr "いいえ"
 
@@ -1847,8 +1847,8 @@ msgstr "まだ保管庫がありません。"
 
 #: src/components/settings/settings-entity-type.tsx:130
 #: src/components/settings/settings-field-form.tsx:136
-#: src/components/settings/settings-field-form.tsx:192
-#: src/components/settings/settings-field-form.tsx:239
+#: src/components/settings/settings-field-form.tsx:182
+#: src/components/settings/settings-field-form.tsx:229
 #: src/components/settings/settings-shared.tsx:33
 #: src/components/smart-lists/rule-subgroup.tsx:99
 msgid "None"
@@ -1925,7 +1925,7 @@ msgid "On"
 msgstr "オン"
 
 #: src/components/import/import-labels.ts:32
-#: src/components/settings/settings-field-form.tsx:274
+#: src/components/settings/settings-field-form.tsx:264
 msgid "Ongoing"
 msgstr "進行中"
 
@@ -1995,11 +1995,11 @@ msgid "Paths"
 msgstr "パス"
 
 #: src/components/import/import-labels.ts:33
-#: src/components/settings/settings-field-form.tsx:275
+#: src/components/settings/settings-field-form.tsx:265
 msgid "Paused"
 msgstr "中断"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:250
+#: src/components/entities/metadata-scalar-inputs.tsx:230
 msgid "Pick a date"
 msgstr "日付を選択"
 
@@ -2008,8 +2008,8 @@ msgid "Planned"
 msgstr "予定"
 
 #: src/components/import/import-labels.ts:31
-#: src/components/settings/settings-field-form.tsx:193
-#: src/components/settings/settings-field-form.tsx:273
+#: src/components/settings/settings-field-form.tsx:183
+#: src/components/settings/settings-field-form.tsx:263
 msgid "Planning"
 msgstr "計画中"
 
@@ -2037,7 +2037,7 @@ msgstr "プロパティ"
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
 #: src/components/settings/settings-external-mappings.tsx:67
-#: src/components/settings/settings-field-form.tsx:227
+#: src/components/settings/settings-field-form.tsx:217
 #: src/pages/quick-capture-page.tsx:290
 msgid "Provider"
 msgstr "プロバイダー"
@@ -2075,11 +2075,11 @@ msgstr "最近"
 msgid "Refresh {0}"
 msgstr "{0} を更新"
 
-#: src/components/settings/settings-field-form.tsx:337
+#: src/components/settings/settings-field-form.tsx:327
 msgid "Regular enum"
 msgstr "通常の列挙"
 
-#: src/components/settings/settings-field-form.tsx:262
+#: src/components/settings/settings-field-form.tsx:252
 msgid "Relation type"
 msgstr "関連タイプ"
 
@@ -2314,11 +2314,11 @@ msgstr "一致する項目を検索"
 msgid "Search library"
 msgstr "ライブラリを検索"
 
-#: src/components/entities/metadata-inputs.tsx:136
+#: src/components/entities/metadata-inputs.tsx:124
 msgid "Search or add {relationType}"
 msgstr "{relationType} を検索または追加"
 
-#: src/components/entities/metadata-inputs.tsx:137
+#: src/components/entities/metadata-inputs.tsx:125
 msgid "Search or add relation"
 msgstr "関連を検索または追加"
 
@@ -2338,11 +2338,11 @@ msgid "Searching…"
 msgstr "検索中…"
 
 #. placeholder {0}: field.seasonLanguage
-#: src/components/settings/settings-field-descriptors.ts:74
+#: src/components/settings/settings-field-descriptors.ts:69
 msgid "season {0}"
 msgstr "シーズン {0}"
 
-#: src/components/settings/settings-field-form.tsx:208
+#: src/components/settings/settings-field-form.tsx:198
 msgid "Season language"
 msgstr "シーズンの言語"
 
@@ -2508,7 +2508,7 @@ msgid "Start over"
 msgstr "最初からやり直す"
 
 #: src/components/assets/quick-log-dialog.tsx:29
-#: src/components/settings/settings-field-form.tsx:194
+#: src/components/settings/settings-field-form.tsx:184
 #: src/pages/activity-page.tsx:41
 msgid "Started"
 msgstr "開始済み"
@@ -2528,11 +2528,11 @@ msgstr "が次で始まる:"
 msgid "Statistics"
 msgstr "統計"
 
-#: src/components/settings/settings-field-descriptors.ts:65
+#: src/components/settings/settings-field-descriptors.ts:63
 msgid "status"
 msgstr "ステータス"
 
-#: src/components/settings/settings-field-form.tsx:338
+#: src/components/settings/settings-field-form.tsx:328
 msgid "Status field"
 msgstr "ステータスフィールド"
 
@@ -2696,15 +2696,6 @@ msgstr "未対応"
 msgid "Tomorrow"
 msgstr "明日"
 
-#. placeholder {0}: field.totalProgressField
-#: src/components/settings/settings-field-descriptors.ts:70
-msgid "total {0}"
-msgstr "合計 {0}"
-
-#: src/components/settings/settings-field-form.tsx:172
-msgid "Total progress field"
-msgstr "合計進捗フィールド"
-
 #: src/components/settings/settings-entity-type.tsx:366
 msgid "Tracking"
 msgstr "トラッキング"
@@ -2750,7 +2741,7 @@ msgstr "単位"
 msgid "Unlinked entities"
 msgstr "リンクされていないアイテム"
 
-#: src/components/settings/settings-field-form.tsx:360
+#: src/components/settings/settings-field-form.tsx:350
 msgid "Unmapped"
 msgstr "未マッピング"
 
@@ -2797,8 +2788,8 @@ msgid "Upload failed."
 msgstr "アップロードに失敗しました。"
 
 #: src/components/settings/settings-field-form.tsx:125
-#: src/components/settings/settings-field-form.tsx:181
-#: src/components/settings/settings-field-form.tsx:324
+#: src/components/settings/settings-field-form.tsx:171
+#: src/components/settings/settings-field-form.tsx:314
 msgid "Used as"
 msgstr "用途"
 
@@ -2901,7 +2892,7 @@ msgstr "はい"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:117
+#: src/components/entities/metadata-inputs.tsx:105
 msgid "Yes"
 msgstr "はい"
 

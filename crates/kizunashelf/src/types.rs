@@ -68,8 +68,6 @@ pub struct FieldConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status_values: Option<StatusValues>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub total_progress_field: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub date_role: Option<DateRole>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub season_language: Option<SeasonLanguage>,
@@ -90,8 +88,13 @@ pub enum FieldType {
     ImageList,
     Enum,
     EnumList,
-    Progress,
-    TotalProgress,
+    // A plain number (counts, page numbers, a hand-kept progress tally). Also
+    // reads the retired `progress`/`totalProgress` types, so older vault configs
+    // keep loading; they're written back as `number` on the next save. (A plain
+    // comment, not `///`: a variant doc makes schemars emit `oneOf` instead of a
+    // string enum, which changes both generated clients' FieldType.)
+    #[serde(alias = "progress", alias = "totalProgress")]
+    Number,
     Rating,
     Bool,
     Season,

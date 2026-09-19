@@ -359,7 +359,6 @@ mod tests {
             enum_options: Vec::new(),
             enum_role: None,
             status_values: None,
-            total_progress_field: None,
             date_role: None,
             season_language: None,
             external_ref: None,

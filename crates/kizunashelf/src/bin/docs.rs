@@ -128,8 +128,7 @@ fn field_type_meaning(field_type: &FieldType) -> &'static str {
         FieldType::ImageList => "List of image URLs. The first useful image may be used as the cover.",
         FieldType::Enum => "Single value from a known option set.",
         FieldType::EnumList => "Multiple values from a known option set.",
-        FieldType::Progress => "Current progress count, usually paired with a `totalProgress` field.",
-        FieldType::TotalProgress => "Total count for a progress field.",
+        FieldType::Number => "A plain number: a count such as episodes or pages, or a hand-kept tally. (The retired `progress` / `totalProgress` types still load as `number`.)",
         FieldType::Rating => "Numeric rating.",
         FieldType::Bool => "Boolean flag.",
         FieldType::Season => "Season or release window such as `2025`, `2025 Spring`, or localized season strings. Can be used in date views.",
@@ -623,9 +622,6 @@ fn field_wiring(field: &FieldConfig) -> String {
             .collect::<Vec<_>>()
             .join(" / ");
         notes.push(format!("options: {options}"));
-    }
-    if let Some(total) = &field.total_progress_field {
-        notes.push(format!("total from `{}`", cell(total)));
     }
     if let Some(provider) = &field.external_ref {
         let types = if field.external_types.is_empty() {

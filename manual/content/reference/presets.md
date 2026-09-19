@@ -17,7 +17,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `anime` (アニメ · 动画 · 動畫) — Track what you're watching and where you left off.
 
 - **Provider priority**: `anilist` → `myanimelist` → `tmdb` → `thetvdb` → `bangumi`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `anilist.synopsis`, `myanimelist.synopsis`, `tmdb.overview`, `thetvdb.overview`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Anime`
@@ -31,8 +30,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `cover_url` | `image` | filled from `bangumi.cover_url`, `anilist.cover_url`, `myanimelist.cover_url`, `tmdb.cover_url`, `thetvdb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `progress` | `progress` | total from `episodes` | Progress |
-| `episodes` | `totalProgress` | filled from `bangumi.eps`, `anilist.episodes`, `myanimelist.episodes`, `tmdb.episode_count` | Episodes |
+| `episodes` | `number` | filled from `bangumi.eps`, `anilist.episodes`, `myanimelist.episodes`, `tmdb.episode_count` | Episodes |
 | `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `bangumi.date`, `anilist.season`, `myanimelist.season`, `tmdb.release_date`, `thetvdb.first_air_time` | Season |
 | `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
@@ -48,7 +46,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `drama` (ドラマ · 剧集 · 影集) — TV series and dramas, episode by episode.
 
 - **Provider priority**: `tmdb` → `thetvdb` → `neodb`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`, `neodb.description`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Drama`
@@ -62,8 +59,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `cover_url` | `image` | filled from `tmdb.cover_url`, `thetvdb.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `progress` | `progress` | total from `episodes` | Progress |
-| `episodes` | `totalProgress` | filled from `tmdb.episode_count`, `neodb.episode_count` | Episodes |
+| `episodes` | `number` | filled from `tmdb.episode_count`, `neodb.episode_count` | Episodes |
 | `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `tmdb.release_date`, `thetvdb.first_air_time`, `neodb.release_date` | Season |
 | `started_date` | `date` | dateRole `started` | Started date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
@@ -77,7 +73,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `movie` (映画 · 电影 · 電影) — Films you've seen or want to see.
 
 - **Provider priority**: `tmdb` → `thetvdb` → `neodb`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `tmdb.overview`, `thetvdb.overview`, `neodb.description`
 - **Daily-note log**: `- {title} {note} #Movie`
 - **Suggested smart list**: "Watching Movies", sorted by `note.release_date`
@@ -104,7 +99,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `games` (ゲーム · 游戏 · 遊戲) — Your backlog, what you're playing, and what you've beaten.
 
 - **Provider priority**: `igdb` → `steam` → `neodb` → `bangumi`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `igdb.summary`, `steam.description`, `neodb.description`
 - **Daily-note log**: `- {title} {note} #Game`
 - **Suggested smart list**: "Playing Games", sorted by `note.release_date`
@@ -132,7 +126,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `board` (ボードゲーム · 桌游 · 桌遊) — Board games and tabletop, with player count and playtime.
 
 - **Provider priority**: `bgg`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `bgg.description`
 - **Daily-note log**: `- {title} {note} #BoardGame`
 - **Suggested smart list**: "Playing Board Games", sorted by `note.release_date`
@@ -157,7 +150,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `books` (本 · 书籍 · 書籍) — Books you're reading, with authors and ISBNs.
 
 - **Provider priority**: `openlibrary` → `googlebooks` → `hardcover` → `neodb`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `neodb.description`, `openlibrary.description`, `googlebooks.description`, `hardcover.synopsis`
 - **Daily-note log**: `- {title} {note} #Book`
 - **Suggested smart list**: "Reading Books", sorted by `note.release_date`
@@ -170,8 +162,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `cover_url` | `image` | filled from `neodb.cover_url`, `openlibrary.cover_url`, `googlebooks.cover_url`, `hardcover.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `progress` | `progress` | total from `pages` | Progress |
-| `pages` | `totalProgress` | filled from `neodb.pages`, `openlibrary.pages`, `googlebooks.pages`, `hardcover.pages` | Pages |
+| `pages` | `number` | filled from `neodb.pages`, `openlibrary.pages`, `googlebooks.pages`, `hardcover.pages` | Pages |
 | `author` | `textList` | filled from `neodb.authors`, `openlibrary.authors`, `googlebooks.authors`, `hardcover.authors` | Author |
 | `isbn` | `text` | filled from `neodb.isbn`, `openlibrary.isbn`, `googlebooks.isbn`, `hardcover.isbn` | ISBN |
 | `release_date` | `date` | dateRole `planning`; filled from `neodb.published_date`, `openlibrary.published_date`, `googlebooks.published_date`, `hardcover.publish_date` | Release date |
@@ -188,7 +179,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `manga` (マンガ · 漫画 · 漫畫) — Manga and comics, tracked by chapter.
 
 - **Provider priority**: `mangaupdates` → `anilist` → `myanimelist` → `comicvine` → `bangumi`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `mangaupdates.synopsis`, `anilist.synopsis`, `myanimelist.synopsis`, `comicvine.description`
 - **Body section** "Chapters": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Manga`
@@ -202,8 +192,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `cover_url` | `image` | filled from `bangumi.cover_url`, `mangaupdates.cover_url`, `anilist.cover_url`, `myanimelist.cover_url`, `comicvine.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
-| `progress` | `progress` | total from `chapters` | Progress |
-| `chapters` | `totalProgress` | filled from `bangumi.eps`, `mangaupdates.latest_chapter`, `anilist.chapters`, `myanimelist.chapters`, `comicvine.issues_count` | Chapters |
+| `chapters` | `number` | filled from `bangumi.eps`, `mangaupdates.latest_chapter`, `anilist.chapters`, `myanimelist.chapters`, `comicvine.issues_count` | Chapters |
 | `author` | `textList` | filled from `bangumi.author`, `mangaupdates.authors` | Author |
 | `release_date` | `date` | dateRole `planning`; filled from `bangumi.date`, `anilist.start_date`, `myanimelist.start_date` | Release date |
 | `started_date` | `date` | dateRole `started` | Started date |
@@ -222,7 +211,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `music` (音楽アルバム · 音乐专辑 · 音樂專輯) — Albums and CDs — the music you own and love.
 
 - **Provider priority**: `musicbrainz` → `applemusic` → `discogs` → `neodb` → `bangumi`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `neodb.description`
 - **Body section** "Tracks": episodes, tracking `none`
 - **Daily-note log**: `- {title} {note} #Music`
@@ -236,7 +224,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `status` | `enum` | enumRole `status`; options: Wishlist / Listening / Listened / Paused / Dropped | Status |
 | `rating` | `rating` |  | Rating |
 | `owned` | `textList` | filled from `discogs.format`, `neodb.format` | Owned |
-| `track_count` | `totalProgress` | filled from `applemusic.track_count` | Track count |
+| `track_count` | `number` | filled from `applemusic.track_count` | Track count |
 | `genres` | `textList` | filled from `musicbrainz.genres`, `applemusic.genre`, `discogs.genres`, `bangumi.genre`, `neodb.genres` | Genres |
 | `styles` | `textList` | filled from `discogs.styles` | Styles |
 | `release_date` | `date` | dateRole `planning`; filled from `musicbrainz.release_date`, `applemusic.release_date`, `bangumi.date`, `neodb.release_date` | Release date |
@@ -253,7 +241,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `podcast` (ポッドキャスト · 播客 · Podcast) — Podcasts you follow.
 
 - **Provider priority**: `applepodcast` → `neodb`
-- **Filename**: titleLanguage `en`
 - **Body section** "Summary": external: `neodb.description`
 - **Body section** "Episodes": episodes, tracking `checklist`
 - **Daily-note log**: `- {title} {note} #Podcast`
@@ -279,7 +266,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `artist` (アーティスト・クリエイター · 艺术家与创作者 · 藝術家與創作者) — Artists, authors, studios — the people behind your library.
 
 - **Provider priority**: `musicbrainz` → `bangumi`
-- **Filename**: titleRole `original`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -296,7 +282,6 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `franchise` (シリーズ · 系列 · 系列) — Group related entries — a series, saga, or shared universe.
 
-- **Filename**: titleRole `original`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -309,7 +294,6 @@ The tables below show each preset resolved with **English** as the picker langua
 `character` (キャラクター · 角色 · 角色) — Characters, with who voices or portrays them.
 
 - **Provider priority**: `bangumi`
-- **Filename**: titleRole `original`
 
 | Field | `fieldType` | Wiring | Display name |
 | --- | --- | --- | --- |
@@ -327,7 +311,6 @@ The tables below show each preset resolved with **English** as the picker langua
 
 `event` (イベント · 活动 · 活動) — Concerts, exhibitions, and events you attend.
 
-- **Filename**: titleLanguage `en`
 - **Daily-note log**: `- {title} {note} #Event`
 - **Suggested smart list**: "Upcoming Events", sorted by `note.date`
 

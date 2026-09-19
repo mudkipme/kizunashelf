@@ -9,7 +9,6 @@ export type FieldOptionKey =
   | "enumOptions"
   | "statusRole"
   | "externalMappings"
-  | "progressTotal"
   | "dateRole"
   | "seasonLanguage"
   | "externalRef"
@@ -29,8 +28,7 @@ const fieldTypeDescriptors: FieldTypeDescriptor[] = [
   { type: "imageList", options: commonMappedFieldOptions },
   { type: "enum", options: ["enumOptions", "statusRole", ...commonMappedFieldOptions] },
   { type: "enumList", options: ["enumOptions", ...commonMappedFieldOptions] },
-  { type: "progress", options: ["progressTotal", ...commonMappedFieldOptions] },
-  { type: "totalProgress", options: commonMappedFieldOptions },
+  { type: "number", options: commonMappedFieldOptions },
   { type: "rating", options: commonMappedFieldOptions },
   { type: "bool", options: commonMappedFieldOptions },
   { type: "season", options: ["dateRole", "seasonLanguage", ...commonMappedFieldOptions] },
@@ -65,9 +63,6 @@ export function fieldConfigSummary(field: FieldConfig): string[] {
   if (options.has("statusRole") && field.enumRole === "status") summary.push(i18n._(msg`status`));
   if (options.has("externalMappings") && field.externalFields?.length) {
     summary.push(plural(field.externalFields.length, { one: "# mapping", other: "# mappings" }));
-  }
-  if (options.has("progressTotal") && field.totalProgressField) {
-    summary.push(i18n._(msg`total ${field.totalProgressField}`));
   }
   if (options.has("dateRole") && field.dateRole) summary.push(field.dateRole);
   if (options.has("seasonLanguage") && field.seasonLanguage) {

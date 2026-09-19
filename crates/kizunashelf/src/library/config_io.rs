@@ -269,7 +269,6 @@ mod schema_tests {
             enum_options: Vec::new(),
             enum_role,
             status_values: None,
-            total_progress_field: None,
             date_role: None,
             season_language: None,
             external_ref: None,
@@ -321,5 +320,43 @@ mod schema_tests {
         ]);
         let error = validate_config_schema(&config).unwrap_err().to_string();
         assert!(error.contains("only one enumRole: status field"), "{error}");
+    }
+
+    const LEGACY_PROGRESS_CONFIG: &str = "taxonomyRoot: Taxonomy
+types:
+- id: books
+  label: Books
+  path: Books
+  fields:
+  - field: progress
+    fieldType: progress
+    totalProgressField: pages
+  - field: pages
+    fieldType: totalProgress
+";
+
+    #[test]
+    fn retired_progress_types_load_as_number() {
+        // Older vaults keep loading: both retired types read as `number`, and the
+        // stale `totalProgressField` is dropped (so the next save writes it out).
+        let config = parse_vault_config(LEGACY_PROGRESS_CONFIG).unwrap();
+        let types: Vec<FieldType> = config.types[0]
+            .fields
+            .iter()
+            .map(|field| field.field_type)
+            .collect();
+        assert_eq!(types, vec![FieldType::Number, FieldType::Number]);
+        let saved = serde_yaml::to_string(&config).unwrap();
+        assert!(
+            !saved.contains("fieldType: progress") && !saved.contains("totalProgress"),
+            "{saved}"
+        );
+        assert!(saved.contains("fieldType: number"), "{saved}");
+
+        // The raw editor's strict parse still points at the leftover key.
+        let error = parse_vault_config_strict(LEGACY_PROGRESS_CONFIG)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("totalProgressField"), "{error}");
     }
 }

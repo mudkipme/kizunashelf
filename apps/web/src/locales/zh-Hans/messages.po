@@ -41,7 +41,7 @@ msgid "{0, plural, one {# entry} other {# entries}}"
 msgstr "{0, plural, other {# 条}}"
 
 #. placeholder {0}: field.externalTypes.length
-#: src/components/settings/settings-field-descriptors.ts:79
+#: src/components/settings/settings-field-descriptors.ts:74
 msgid "{0, plural, one {# external type} other {# external types}}"
 msgstr "{0, plural, other {# 个外部类型}}"
 
@@ -79,7 +79,7 @@ msgid "{0, plural, one {# link} other {# links}}"
 msgstr "{0, plural, other {# 个关联}}"
 
 #. placeholder {0}: field.externalFields.length
-#: src/components/settings/settings-field-descriptors.ts:67
+#: src/components/settings/settings-field-descriptors.ts:65
 msgid "{0, plural, one {# mapping} other {# mappings}}"
 msgstr "{0, plural, other {# 个映射}}"
 
@@ -130,7 +130,7 @@ msgid "{0, plural, one {# type} other {# types}}"
 msgstr "{0, plural, other {# 个类型}}"
 
 #. placeholder {0}: field.enumOptions.length
-#: src/components/settings/settings-field-descriptors.ts:63
+#: src/components/settings/settings-field-descriptors.ts:61
 msgid "{0, plural, one {# value} other {# values}}"
 msgstr "{0, plural, other {# 个值}}"
 
@@ -355,7 +355,7 @@ msgstr "添加内置类型"
 msgid "Add custom type"
 msgstr "添加自定义类型"
 
-#: src/components/settings/settings-field-form.tsx:372
+#: src/components/settings/settings-field-form.tsx:362
 msgid "Add enum options above to map them to statuses."
 msgstr "在上方添加枚举选项以将其映射到状态。"
 
@@ -408,7 +408,7 @@ msgstr "添加推荐列表，或打开智能列表并选择「添加到首页」
 msgid "Add to Home"
 msgstr "添加到首页"
 
-#: src/components/entities/metadata-inputs.tsx:138
+#: src/components/entities/metadata-inputs.tsx:126
 #: src/components/smart-lists/rule-value-input.tsx:135
 msgid "Add value"
 msgstr "添加值"
@@ -612,7 +612,7 @@ msgstr "更改将随整个结构配置一起保存。"
 msgid "Checklist (per-item checkboxes)"
 msgstr "清单（逐项复选框）"
 
-#: src/components/settings/settings-field-form.tsx:216
+#: src/components/settings/settings-field-form.tsx:206
 msgid "Chinese"
 msgstr "中文"
 
@@ -666,8 +666,8 @@ msgstr ""
 #: src/components/assets/quick-log-dialog.tsx:30
 #: src/components/import/import-labels.ts:34
 #: src/components/settings/settings-field-form.tsx:150
-#: src/components/settings/settings-field-form.tsx:195
-#: src/components/settings/settings-field-form.tsx:276
+#: src/components/settings/settings-field-form.tsx:185
+#: src/components/settings/settings-field-form.tsx:266
 #: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "已完成"
@@ -940,7 +940,7 @@ msgid "Drag to reorder"
 msgstr "拖动以重新排序"
 
 #: src/components/import/import-labels.ts:35
-#: src/components/settings/settings-field-form.tsx:277
+#: src/components/settings/settings-field-form.tsx:267
 msgid "Dropped"
 msgstr "弃坑"
 
@@ -974,7 +974,7 @@ msgstr "编辑条目"
 #: src/components/assets/frontmatter-panel.tsx:230
 #: src/components/assets/frontmatter-panel.tsx:252
 #: src/components/entities/metadata-inputs.tsx:61
-#: src/components/entities/metadata-inputs.tsx:116
+#: src/components/entities/metadata-inputs.tsx:104
 msgid "Empty"
 msgstr "空"
 
@@ -997,7 +997,7 @@ msgstr "启用"
 msgid "ends with"
 msgstr "结尾为:"
 
-#: src/components/settings/settings-field-form.tsx:218
+#: src/components/settings/settings-field-form.tsx:208
 msgid "English"
 msgstr "英语"
 
@@ -1037,7 +1037,7 @@ msgstr "剧集"
 msgid "esc to close"
 msgstr ""
 
-#: src/components/settings/settings-field-form.tsx:196
+#: src/components/settings/settings-field-form.tsx:186
 #: src/pages/activity-page.tsx:44
 msgid "Event"
 msgstr "事件"
@@ -1356,7 +1356,7 @@ msgstr "项目"
 msgid "Items <0>({totalItems})</0>"
 msgstr "项目 <0>（{totalItems}）</0>"
 
-#: src/components/settings/settings-field-form.tsx:217
+#: src/components/settings/settings-field-form.tsx:207
 msgid "Japanese"
 msgstr "日语"
 
@@ -1378,7 +1378,7 @@ msgid "Label"
 msgstr "标签"
 
 #. placeholder {0}: field.titleLanguage
-#: src/components/settings/settings-field-descriptors.ts:59
+#: src/components/settings/settings-field-descriptors.ts:57
 msgid "lang {0}"
 msgstr "语言 {0}"
 
@@ -1548,7 +1548,7 @@ msgstr "正在记录…"
 msgid "Manage lists"
 msgstr "管理列表"
 
-#: src/components/settings/settings-field-form.tsx:345
+#: src/components/settings/settings-field-form.tsx:335
 msgid "Map each option to a status"
 msgstr "将每个选项映射到状态"
 
@@ -1684,7 +1684,7 @@ msgstr "否"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:118
+#: src/components/entities/metadata-inputs.tsx:106
 msgid "No"
 msgstr "否"
 
@@ -1847,8 +1847,8 @@ msgstr "暂无保管库。"
 
 #: src/components/settings/settings-entity-type.tsx:130
 #: src/components/settings/settings-field-form.tsx:136
-#: src/components/settings/settings-field-form.tsx:192
-#: src/components/settings/settings-field-form.tsx:239
+#: src/components/settings/settings-field-form.tsx:182
+#: src/components/settings/settings-field-form.tsx:229
 #: src/components/settings/settings-shared.tsx:33
 #: src/components/smart-lists/rule-subgroup.tsx:99
 msgid "None"
@@ -1925,7 +1925,7 @@ msgid "On"
 msgstr "开"
 
 #: src/components/import/import-labels.ts:32
-#: src/components/settings/settings-field-form.tsx:274
+#: src/components/settings/settings-field-form.tsx:264
 msgid "Ongoing"
 msgstr "进行中"
 
@@ -1995,11 +1995,11 @@ msgid "Paths"
 msgstr "路径"
 
 #: src/components/import/import-labels.ts:33
-#: src/components/settings/settings-field-form.tsx:275
+#: src/components/settings/settings-field-form.tsx:265
 msgid "Paused"
 msgstr "暂停"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:250
+#: src/components/entities/metadata-scalar-inputs.tsx:230
 msgid "Pick a date"
 msgstr "选择日期"
 
@@ -2008,8 +2008,8 @@ msgid "Planned"
 msgstr "计划中"
 
 #: src/components/import/import-labels.ts:31
-#: src/components/settings/settings-field-form.tsx:193
-#: src/components/settings/settings-field-form.tsx:273
+#: src/components/settings/settings-field-form.tsx:183
+#: src/components/settings/settings-field-form.tsx:263
 msgid "Planning"
 msgstr "计划中"
 
@@ -2037,7 +2037,7 @@ msgstr "属性"
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
 #: src/components/settings/settings-external-mappings.tsx:67
-#: src/components/settings/settings-field-form.tsx:227
+#: src/components/settings/settings-field-form.tsx:217
 #: src/pages/quick-capture-page.tsx:290
 msgid "Provider"
 msgstr "数据源"
@@ -2075,11 +2075,11 @@ msgstr "最近"
 msgid "Refresh {0}"
 msgstr "刷新 {0}"
 
-#: src/components/settings/settings-field-form.tsx:337
+#: src/components/settings/settings-field-form.tsx:327
 msgid "Regular enum"
 msgstr "常规枚举"
 
-#: src/components/settings/settings-field-form.tsx:262
+#: src/components/settings/settings-field-form.tsx:252
 msgid "Relation type"
 msgstr "关联类型"
 
@@ -2314,11 +2314,11 @@ msgstr "搜索匹配项"
 msgid "Search library"
 msgstr "搜索库"
 
-#: src/components/entities/metadata-inputs.tsx:136
+#: src/components/entities/metadata-inputs.tsx:124
 msgid "Search or add {relationType}"
 msgstr "搜索或添加 {relationType}"
 
-#: src/components/entities/metadata-inputs.tsx:137
+#: src/components/entities/metadata-inputs.tsx:125
 msgid "Search or add relation"
 msgstr "搜索或添加关联"
 
@@ -2338,11 +2338,11 @@ msgid "Searching…"
 msgstr "正在搜索…"
 
 #. placeholder {0}: field.seasonLanguage
-#: src/components/settings/settings-field-descriptors.ts:74
+#: src/components/settings/settings-field-descriptors.ts:69
 msgid "season {0}"
 msgstr "季 {0}"
 
-#: src/components/settings/settings-field-form.tsx:208
+#: src/components/settings/settings-field-form.tsx:198
 msgid "Season language"
 msgstr "季语言"
 
@@ -2508,7 +2508,7 @@ msgid "Start over"
 msgstr "重新开始"
 
 #: src/components/assets/quick-log-dialog.tsx:29
-#: src/components/settings/settings-field-form.tsx:194
+#: src/components/settings/settings-field-form.tsx:184
 #: src/pages/activity-page.tsx:41
 msgid "Started"
 msgstr "已开始"
@@ -2528,11 +2528,11 @@ msgstr "开头为:"
 msgid "Statistics"
 msgstr "统计"
 
-#: src/components/settings/settings-field-descriptors.ts:65
+#: src/components/settings/settings-field-descriptors.ts:63
 msgid "status"
 msgstr "状态"
 
-#: src/components/settings/settings-field-form.tsx:338
+#: src/components/settings/settings-field-form.tsx:328
 msgid "Status field"
 msgstr "状态字段"
 
@@ -2696,15 +2696,6 @@ msgstr "待办"
 msgid "Tomorrow"
 msgstr "明天"
 
-#. placeholder {0}: field.totalProgressField
-#: src/components/settings/settings-field-descriptors.ts:70
-msgid "total {0}"
-msgstr "总计 {0}"
-
-#: src/components/settings/settings-field-form.tsx:172
-msgid "Total progress field"
-msgstr "总进度字段"
-
 #: src/components/settings/settings-entity-type.tsx:366
 msgid "Tracking"
 msgstr "追踪"
@@ -2750,7 +2741,7 @@ msgstr "单位"
 msgid "Unlinked entities"
 msgstr "未关联的条目"
 
-#: src/components/settings/settings-field-form.tsx:360
+#: src/components/settings/settings-field-form.tsx:350
 msgid "Unmapped"
 msgstr "未映射"
 
@@ -2797,8 +2788,8 @@ msgid "Upload failed."
 msgstr "上传失败。"
 
 #: src/components/settings/settings-field-form.tsx:125
-#: src/components/settings/settings-field-form.tsx:181
-#: src/components/settings/settings-field-form.tsx:324
+#: src/components/settings/settings-field-form.tsx:171
+#: src/components/settings/settings-field-form.tsx:314
 msgid "Used as"
 msgstr "用作"
 
@@ -2901,7 +2892,7 @@ msgstr "是"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:117
+#: src/components/entities/metadata-inputs.tsx:105
 msgid "Yes"
 msgstr "是"
 

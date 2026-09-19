@@ -227,7 +227,7 @@ pub(crate) async fn ingest_entity_asset(
     let _ = tokio::fs::remove_file(&request.source_path).await;
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let asset_dir = resolve_entity_asset_dir(vfs.as_ref(), &asset_root, &entity_path).await;
     let raw = vfs
         .read_to_string(&entity_path)
@@ -261,7 +261,7 @@ pub(crate) async fn ingest_entity_asset(
 
     if changed {
         let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
-        write_entity_raw(vfs.as_ref(), &entity_path, &new_raw).await?;
+        write_entity_raw(&mutation, vfs.as_ref(), &entity_path, &new_raw).await?;
         state.invalidate_cache().await;
     }
 

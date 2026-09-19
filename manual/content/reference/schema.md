@@ -39,8 +39,6 @@ types:
   path: Anime
   externalPriority:
   - bangumi
-  filename:
-    titleLanguage: zh
   bodySections:
   - heading: Summary
     kind: external
@@ -81,7 +79,11 @@ filename:
 | `titleLanguage` | string | Adds the filename basename to `entity.titles` under this language key. Use ISO-like language keys such as `zh`, `ja`, or `en`. |
 | `titleRole` | enum | Currently only `original`. Marks the filename basename as the `original` title — i.e. the language-agnostic fallback for `entity.title`. Use this for "the filename is the canonical/original title." |
 
-Setting `filename.titleLanguage` makes the file basename selectable as that language's title (it is added to `entity.titles`). Setting `filename.titleRole: original` makes the basename the original-title fallback (it then wins over a `titleRole: original` field). If neither a title field nor the filename is marked `original`, `entity.title` falls back to the first title field, then any title, then the basename.
+Setting `filename.titleLanguage` makes the file basename selectable as that language's title (it is added to `entity.titles`). Setting `filename.titleRole: original` makes the basename the original-title fallback. If neither a title field nor the filename is marked `original`, `entity.title` falls back to the first title field, then any title, then the basename.
+
+A filename with a `titleLanguage` or `titleRole` **is** a title, exactly like a title field — so don't also give a title field the same `titleLanguage` (or a second `titleRole: original`). That would be two sources for one title; the filename wins and the field is ignored. Pick one: name files after that title, or keep the title in frontmatter and leave `filename` without a claim.
+
+Without a `titleLanguage` or `titleRole`, the filename is **not** a title — it only identifies the file (and is shown when an entity has no title at all). New files are then named from the type's first title field that has a `titleLanguage`, else its `original`-role title field, else its first title field. The built-in presets use this form: titles live in frontmatter, and the file is named after the title in the vault's language.
 
 ## Fields
 
@@ -105,7 +107,6 @@ fields:
 | `enumOptions` | no | string[] | `enum`, `enumList` | Allowed or suggested values in editors and filters. |
 | `enumRole` | no | enum | `enum` | Semantic role of the enum field. Currently only `status` — marks the one field that represents the entity's lifecycle status. See [Status](./titles-dates-status.md#status). |
 | `statusValues` | no | object | `enum` (with `enumRole: status`) | Maps each canonical status (`planning`, `ongoing`, `paused`, `completed`, `dropped`) to the user option strings that mean it. See [Status](./titles-dates-status.md#status). |
-| `totalProgressField` | no | string | `progress` | Field that stores the total count for progress. |
 | `dateRole` | no | enum | `date`, `season` | Whether the date is for planning, started, or completion. |
 | `seasonLanguage` | no | enum | `season` | Season display/parser language: `zh`, `ja`, or `en`. |
 | `externalRef` | no | string | `externalRef` | External provider represented by this URL/id field. |

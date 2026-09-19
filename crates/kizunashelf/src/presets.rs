@@ -15,7 +15,7 @@
 //!
 //! - **Language.** Presets are language-neutral, and the request's single
 //!   `language` choice drives two derivations at resolve time. Its bare primary
-//!   subtag is stamped onto title fields, `filename`, and `seasonLanguage`. And
+//!   subtag is stamped onto title fields and `seasonLanguage`. And
 //!   it picks the language of all seeded *text* — type labels, folder names,
 //!   field display names, status values, shelf titles, descriptions — which
 //!   ships in the registry in every language the presets are written in
@@ -50,8 +50,8 @@ use crate::contract::{
 use crate::languages::primary_language;
 use crate::types::{
     BodySection, BodySectionKind, CanonicalStatus, DateRole, EntityTypeConfig, EnumRole,
-    EpisodeTracking, ExternalFieldMapping, FieldConfig, FieldType, FilenameConfig, SeasonLanguage,
-    SortDirection, StatusValues, TitleRole, TypeLogConfig,
+    EpisodeTracking, ExternalFieldMapping, FieldConfig, FieldType, SeasonLanguage, SortDirection,
+    StatusValues, TitleRole, TypeLogConfig,
 };
 use std::collections::HashSet;
 
@@ -522,9 +522,8 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::Season,
                 started_date: true,
                 completed_date: true,
-                progress: Some(&ANIME_PROGRESS),
                 list: Some(&EPISODES_LIST),
-                extras: &[],
+                extras: &[ANIME_EPISODES],
                 relations: &[FRANCHISE_REL],
                 log_hashtag: Some(l("Anime", "アニメ", "动画", "動畫")),
             },
@@ -575,9 +574,8 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::Season,
                 started_date: true,
                 completed_date: true,
-                progress: Some(&DRAMA_PROGRESS),
                 list: Some(&EPISODES_LIST),
-                extras: &[],
+                extras: &[DRAMA_EPISODES],
                 relations: &[FRANCHISE_REL],
                 log_hashtag: Some(l("Drama", "ドラマ", "剧集", "影集")),
             },
@@ -628,7 +626,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::ReleaseDate,
                 started_date: false,
                 completed_date: true,
-                progress: None,
                 list: None,
                 extras: &[],
                 relations: &[FRANCHISE_REL],
@@ -707,7 +704,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::ReleaseDate,
                 started_date: true,
                 completed_date: true,
-                progress: None,
                 list: None,
                 extras: GAMES_EXTRAS,
                 relations: &[GAMES_FRANCHISE_REL],
@@ -741,7 +737,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::ReleaseDate,
                 started_date: false,
                 completed_date: false,
-                progress: None,
                 list: None,
                 extras: BOARD_EXTRAS,
                 relations: &[FRANCHISE_REL],
@@ -804,7 +799,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::ReleaseDate,
                 started_date: true,
                 completed_date: true,
-                progress: Some(&BOOK_PROGRESS),
                 list: None,
                 extras: BOOKS_EXTRAS,
                 relations: &[BOOKS_FRANCHISE_REL],
@@ -915,7 +909,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::ReleaseDate,
                 started_date: true,
                 completed_date: true,
-                progress: Some(&MANGA_PROGRESS),
                 list: Some(&CHAPTERS_LIST),
                 extras: MANGA_EXTRAS,
                 relations: &[FRANCHISE_REL],
@@ -994,7 +987,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::ReleaseDate,
                 started_date: false,
                 completed_date: false,
-                progress: None,
                 list: Some(&TRACKS_LIST),
                 extras: MUSIC_EXTRAS,
                 relations: &[MUSIC_ARTIST_REL, FRANCHISE_REL],
@@ -1027,7 +1019,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::None,
                 started_date: false,
                 completed_date: false,
-                progress: None,
                 list: Some(&PODCAST_EPISODES_LIST),
                 extras: PODCAST_EXTRAS,
                 relations: &[PODCAST_HOST_REL],
@@ -1077,7 +1068,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::None,
                 started_date: false,
                 completed_date: false,
-                progress: None,
                 list: None,
                 extras: PERSON_EXTRAS,
                 relations: &[FRANCHISE_REL, GROUPS_REL],
@@ -1110,7 +1100,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::None,
                 started_date: false,
                 completed_date: false,
-                progress: None,
                 list: None,
                 extras: &[],
                 relations: &[],
@@ -1147,7 +1136,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::None,
                 started_date: false,
                 completed_date: false,
-                progress: None,
                 list: None,
                 extras: PERSON_EXTRAS,
                 relations: &[FRANCHISE_REL, VOICE_BY_REL],
@@ -1188,7 +1176,6 @@ fn built_presets(ctx: &BuildCtx) -> Vec<Preset> {
                 primary_date: PrimaryDate::EventDate,
                 started_date: false,
                 completed_date: false,
-                progress: None,
                 list: None,
                 extras: EVENT_EXTRAS,
                 relations: ctx.pick(
@@ -1458,38 +1445,39 @@ const TRACKS_LIST: ListSpec = ListSpec {
     tracking: EpisodeTracking::None,
 };
 
-// Numeric frontmatter progress is deliberately independent from provider-backed
-// body lists. A type may seed both (Anime), progress only (Books), list only
-// (Podcasts/Music), or neither.
-const ANIME_PROGRESS: ProgressSpec = ProgressSpec {
-    total_field: "episodes",
-    total_label: l("Episodes", "話数", "总集数", "總集數"),
-    total_sources: &[
+// Provider-supplied counts (episodes, pages, chapters) are plain `number`
+// fields — metadata, not progress. Progress is tracked by the provider-backed
+// episode checklist in the body (Anime, Drama, Manga); a type without one
+// (Books) leaves manual counting to the user, e.g. with their own number field.
+const ANIME_EPISODES: Extra = Extra::Number {
+    field: "episodes",
+    label: l("Episodes", "話数", "总集数", "總集數"),
+    sources: &[
         ("bangumi", "eps"),
         ("anilist", "episodes"),
         ("myanimelist", "episodes"),
         ("tmdb", "episode_count"),
     ],
 };
-const DRAMA_PROGRESS: ProgressSpec = ProgressSpec {
-    total_field: "episodes",
-    total_label: l("Episodes", "話数", "总集数", "總集數"),
-    total_sources: &[("tmdb", "episode_count"), ("neodb", "episode_count")],
+const DRAMA_EPISODES: Extra = Extra::Number {
+    field: "episodes",
+    label: l("Episodes", "話数", "总集数", "總集數"),
+    sources: &[("tmdb", "episode_count"), ("neodb", "episode_count")],
 };
-const BOOK_PROGRESS: ProgressSpec = ProgressSpec {
-    total_field: "pages",
-    total_label: l("Pages", "ページ数", "总页数", "總頁數"),
-    total_sources: &[
+const BOOK_PAGES: Extra = Extra::Number {
+    field: "pages",
+    label: l("Pages", "ページ数", "总页数", "總頁數"),
+    sources: &[
         ("neodb", "pages"),
         ("openlibrary", "pages"),
         ("googlebooks", "pages"),
         ("hardcover", "pages"),
     ],
 };
-const MANGA_PROGRESS: ProgressSpec = ProgressSpec {
-    total_field: "chapters",
-    total_label: l("Chapters", "話数", "话数", "話數"),
-    total_sources: &[
+const MANGA_CHAPTERS: Extra = Extra::Number {
+    field: "chapters",
+    label: l("Chapters", "話数", "话数", "話數"),
+    sources: &[
         ("bangumi", "eps"),
         ("mangaupdates", "latest_chapter"),
         ("anilist", "chapters"),
@@ -1580,7 +1568,7 @@ enum Extra {
         label: L,
         sources: Sources,
     },
-    TotalProgress {
+    Number {
         field: &'static str,
         label: L,
         sources: Sources,
@@ -1623,6 +1611,7 @@ const BOARD_EXTRAS: &[Extra] = &[
 ];
 
 const BOOKS_EXTRAS: &[Extra] = &[
+    BOOK_PAGES,
     Extra::TextList {
         field: "author",
         label: l("Author", "著者", "作者", "作者"),
@@ -1645,11 +1634,14 @@ const BOOKS_EXTRAS: &[Extra] = &[
     },
 ];
 
-const MANGA_EXTRAS: &[Extra] = &[Extra::TextList {
-    field: "author",
-    label: l("Author", "著者", "作者", "作者"),
-    sources: &[("bangumi", "author"), ("mangaupdates", "authors")],
-}];
+const MANGA_EXTRAS: &[Extra] = &[
+    MANGA_CHAPTERS,
+    Extra::TextList {
+        field: "author",
+        label: l("Author", "著者", "作者", "作者"),
+        sources: &[("bangumi", "author"), ("mangaupdates", "authors")],
+    },
+];
 
 /// Artists and characters share the one Bangumi-backed birthday field.
 const PERSON_EXTRAS: &[Extra] = &[Extra::Date {
@@ -1670,7 +1662,7 @@ const MUSIC_EXTRAS: &[Extra] = &[
         label: l("Owned", "所持形式", "收藏形式", "收藏形式"),
         sources: &[("discogs", "format"), ("neodb", "format")],
     },
-    Extra::TotalProgress {
+    Extra::Number {
         field: "track_count",
         label: l("Track count", "曲数", "曲目数", "曲目數"),
         sources: &[("applemusic", "track_count")],
@@ -1714,12 +1706,6 @@ struct ListSpec {
     tracking: EpisodeTracking,
 }
 
-struct ProgressSpec {
-    total_field: &'static str,
-    total_label: L,
-    total_sources: Sources,
-}
-
 struct TypeSpec {
     id: &'static str,
     category: TypePresetCategory,
@@ -1755,7 +1741,7 @@ struct TypeSpec {
     date_sources: Sources,
     /// `None` → no status field (people/hub types).
     statuses: Option<&'static StatusVocab>,
-    /// People/hub types: the filename and primary title use the
+    /// People/hub types: the primary title (which also names new files) uses the
     /// language-neutral *original* name instead of the chosen title language,
     /// and there is no rating field. Explicit — meaning is never inferred from
     /// the shape of the other fields.
@@ -1764,11 +1750,8 @@ struct TypeSpec {
     /// Whether logging a `started` activity stamps a dedicated date field.
     started_date: bool,
     completed_date: bool,
-    /// Optional scalar `progress` + total field pair. Independent from `list`:
-    /// this is for users who prefer a simple number over checking every item.
-    progress: Option<&'static ProgressSpec>,
     /// Optional provider-backed episode/chapter/track section in the Markdown
-    /// body. This does not imply or derive any scalar progress fields.
+    /// body — the one progress mechanism (checked items).
     list: Option<&'static ListSpec>,
     extras: &'static [Extra],
     relations: &'static [RelationSpec],
@@ -1832,23 +1815,6 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
             FieldType::Rating,
             ctx.text(l("Rating", "評価", "评分", "評分")),
         ));
-    }
-
-    if let Some(progress) = spec.progress {
-        let mut progress_field = field(
-            "progress",
-            FieldType::Progress,
-            ctx.text(l("Progress", "進捗", "进度", "進度")),
-        );
-        progress_field.total_progress_field = Some(progress.total_field.to_string());
-        fields.push(progress_field);
-        let mut total = field(
-            progress.total_field,
-            FieldType::TotalProgress,
-            ctx.text(progress.total_label),
-        );
-        total.external_fields = source_mappings(progress.total_sources);
-        fields.push(total);
     }
 
     for extra in spec.extras {
@@ -1947,17 +1913,11 @@ fn build_type(ctx: &BuildCtx, spec: &TypeSpec) -> EntityTypeConfig {
         icon: Some(spec.icon.to_string()),
         path: ctx.text(spec.path).to_string(),
         external_priority: spec.providers.iter().map(|p| (*p).to_string()).collect(),
-        filename: Some(if spec.name_based {
-            FilenameConfig {
-                title_language: None,
-                title_role: Some(TitleRole::Original),
-            }
-        } else {
-            FilenameConfig {
-                title_language: Some(ctx.lang.clone()),
-                title_role: None,
-            }
-        }),
+        // The `title` field above already claims the vault-language (or, for
+        // name-based types, the original) title. The filename makes no title
+        // claim of its own — two sources for one title would shadow the field —
+        // and new files are named after that `title` field instead.
+        filename: None,
         body_sections,
         log: spec.log_hashtag.map(|tag| TypeLogConfig {
             section: None,
@@ -2010,11 +1970,11 @@ fn extra_field(ctx: &BuildCtx, extra: Extra) -> FieldConfig {
             label,
             sources,
         } => (field, FieldType::Date, label, sources),
-        Extra::TotalProgress {
+        Extra::Number {
             field,
             label,
             sources,
-        } => (field, FieldType::TotalProgress, label, sources),
+        } => (field, FieldType::Number, label, sources),
     };
     let mut f = field(name, field_type, ctx.text(label));
     f.external_fields = source_mappings(sources);
@@ -2202,7 +2162,6 @@ fn field(name: &str, field_type: FieldType, display_name: &str) -> FieldConfig {
         enum_options: Vec::new(),
         enum_role: None,
         status_values: None,
-        total_progress_field: None,
         date_role: None,
         season_language: None,
         external_ref: None,
@@ -2665,10 +2624,7 @@ mod tests {
         assert_eq!(title.display_name.as_deref(), Some("標題"));
         let season = find_field(anime, "season").unwrap();
         assert_eq!(season.season_language, Some(SeasonLanguage::Zh));
-        assert_eq!(
-            anime.filename.as_ref().unwrap().title_language.as_deref(),
-            Some("zh")
-        );
+        assert!(anime.filename.is_none(), "the title field owns the title");
         let status = find_field(anime, "status").unwrap();
         assert!(status.enum_options.contains(&"想看".to_string()));
         assert!(status.enum_options.contains(&"看過".to_string()));
@@ -2697,6 +2653,50 @@ mod tests {
             suggested_lists(&ja.types, Some("ja"))[0].title,
             "プレイ中のゲーム"
         );
+    }
+
+    #[test]
+    fn no_preset_claims_one_title_twice() {
+        // A filename with a titleLanguage/titleRole *is* a title, so a preset must
+        // never give the filename and a title field (or two title fields) the same
+        // language or the original role — one would silently shadow the other.
+        let ids: Vec<String> = type_presets_response(None)
+            .presets
+            .into_iter()
+            .map(|preset| preset.id)
+            .collect();
+        let ids: Vec<&str> = ids.iter().map(String::as_str).collect();
+        for language in [
+            None,
+            Some("en"),
+            Some("ja"),
+            Some("zh-Hans"),
+            Some("zh-Hant"),
+            Some("ko"),
+        ] {
+            for entity_type in resolve(vec![], &ids, language).types {
+                let mut claims: Vec<String> = Vec::new();
+                if let Some(filename) = &entity_type.filename {
+                    claims.extend(filename.title_language.iter().map(|l| format!("lang:{l}")));
+                    claims.extend(filename.title_role.iter().map(|r| format!("role:{r:?}")));
+                }
+                for field in entity_type
+                    .fields
+                    .iter()
+                    .filter(|field| field.field_type == FieldType::Title)
+                {
+                    claims.extend(field.title_language.iter().map(|l| format!("lang:{l}")));
+                    claims.extend(field.title_role.iter().map(|r| format!("role:{r:?}")));
+                }
+                let unique: std::collections::BTreeSet<&String> = claims.iter().collect();
+                assert_eq!(
+                    unique.len(),
+                    claims.len(),
+                    "{} ({language:?}) claims a title twice: {claims:?}",
+                    entity_type.id
+                );
+            }
+        }
     }
 
     #[test]
@@ -3030,7 +3030,7 @@ mod tests {
     }
 
     #[test]
-    fn progress_totals_are_mapped_from_each_presets_providers() {
+    fn counts_are_mapped_from_each_presets_providers() {
         // The season field pulls from providers' air dates (coerced to a season)
         // and MAL's explicit season; the total-episodes field pulls the count.
         let anime = resolve(vec![], &["anime"], None).types.remove(0);
@@ -3070,14 +3070,10 @@ mod tests {
             .any(|m| m.source == "mangaupdates" && m.field == "latest_chapter"));
         assert_mapping(chapters, "comicvine", "issues_count");
 
-        // Books use the same scalar pair for current/total pages without
-        // declaring a provider-backed chapter list.
+        // Books carry a page count without declaring a provider-backed list.
         let books = resolve(vec![], &["books"], None).types.remove(0);
-        let progress = find_field(&books, "progress").expect("book progress field");
-        assert_eq!(progress.field_type, FieldType::Progress);
-        assert_eq!(progress.total_progress_field.as_deref(), Some("pages"));
         let pages = find_field(&books, "pages").expect("book pages field");
-        assert_eq!(pages.field_type, FieldType::TotalProgress);
+        assert_eq!(pages.field_type, FieldType::Number);
         for provider in ["neodb", "googlebooks", "openlibrary", "hardcover"] {
             assert_mapping(pages, provider, "pages");
         }
@@ -3088,32 +3084,44 @@ mod tests {
     }
 
     #[test]
-    fn scalar_progress_and_provider_lists_are_independent() {
-        // Anime opts into both independent features.
+    fn progress_is_the_episode_list_and_counts_are_plain_numbers() {
+        // No preset seeds a scalar progress field: progress is the provider-backed
+        // checklist. Counts from providers are plain `number` metadata.
+        let all: Vec<String> = type_presets_response(None)
+            .presets
+            .into_iter()
+            .map(|preset| preset.id)
+            .collect();
+        let all: Vec<&str> = all.iter().map(String::as_str).collect();
+        for entity_type in resolve(vec![], &all, None).types {
+            assert!(
+                find_field(&entity_type, "progress").is_none(),
+                "{} seeds a progress field",
+                entity_type.id
+            );
+        }
+
         let anime = resolve(vec![], &["anime"], None).types.remove(0);
         assert_eq!(
-            find_field(&anime, "progress").and_then(|field| field.total_progress_field.as_deref()),
-            Some("episodes")
+            find_field(&anime, "episodes").map(|field| field.field_type),
+            Some(FieldType::Number)
         );
         assert!(anime
             .body_sections
             .iter()
             .any(|section| section.kind == BodySectionKind::Episodes));
 
-        // Books opt into scalar page progress only; this is asserted in detail
-        // above, and should remain list-free even though they have a total.
+        // Books have a page count but no list.
         let books = resolve(vec![], &["books"], None).types.remove(0);
-        assert!(find_field(&books, "progress").is_some());
         assert!(find_field(&books, "pages").is_some());
         assert!(!books
             .body_sections
             .iter()
             .any(|section| section.kind == BodySectionKind::Episodes));
 
-        // Podcasts opt into a provider-backed checklist only. Being open-ended
-        // does not create scalar "x of y" fields.
+        // Podcasts opt into a provider-backed checklist only; being open-ended
+        // they have no count.
         let podcast = resolve(vec![], &["podcast"], None).types.remove(0);
-        assert!(find_field(&podcast, "progress").is_none());
         assert!(find_field(&podcast, "episodes").is_none());
         let list = podcast
             .body_sections
@@ -3122,10 +3130,9 @@ mod tests {
             .expect("episodes section");
         assert_eq!(list.tracking, Some(EpisodeTracking::Checklist));
 
-        // Music also opts into a list only: imported tracks are plain rows, and
-        // Apple Music's standalone track_count is not paired to a progress field.
+        // Music's list is plain rows (not a checklist); Apple Music's
+        // track_count is just a number.
         let music = resolve(vec![], &["music"], None).types.remove(0);
-        assert!(find_field(&music, "progress").is_none());
         assert!(find_field(&music, "tracks").is_none());
         assert!(find_field(&music, "track_count").is_some());
         let list = music
@@ -3135,9 +3142,8 @@ mod tests {
             .expect("tracks section");
         assert_eq!(list.tracking, Some(EpisodeTracking::None));
 
-        // Movies opt into neither feature.
+        // Movies have neither a list nor a count.
         let movie = resolve(vec![], &["movie"], None).types.remove(0);
-        assert!(find_field(&movie, "progress").is_none());
         assert!(!movie
             .body_sections
             .iter()

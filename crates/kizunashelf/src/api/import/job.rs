@@ -404,6 +404,10 @@ pub(super) async fn run_commit_job(
             }
         };
         let year = candidate_year(&type_config, &mapped_fields);
+        // Lock just this item's free-name pick + write (never the provider fetch
+        // above, nor the whole run) so the name can't be taken between the check
+        // and the write by a concurrent in-app create.
+        let mutation = state.content_mutation_lock().await;
         let basename = match resolve_free_basename(
             vfs.as_ref(),
             &taxonomy_root,
@@ -422,7 +426,8 @@ pub(super) async fn run_commit_job(
             }
         };
 
-        match write_new_entity_file(
+        let written = write_new_entity_file(
+            &mutation,
             vfs.as_ref(),
             &taxonomy_root,
             &type_config,
@@ -430,8 +435,9 @@ pub(super) async fn run_commit_job(
             &frontmatter,
             &body,
         )
-        .await
-        {
+        .await;
+        drop(mutation);
+        match written {
             Ok(path) => {
                 created_refs.insert(created_key);
                 let watched = request

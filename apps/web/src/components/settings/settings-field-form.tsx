@@ -166,16 +166,6 @@ function FieldOptionEditor({
     );
   }
 
-  if (optionKey === "progressTotal") {
-    return (
-      <TextField
-        label={t`Total progress field`}
-        value={field.totalProgressField ?? ""}
-        onChange={(totalProgressField) => onChange({ ...field, totalProgressField })}
-      />
-    );
-  }
-
   if (optionKey === "dateRole") {
     return (
       <Field label={t`Used as`}>

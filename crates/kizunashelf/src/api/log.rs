@@ -6,7 +6,7 @@ use crate::contract::{
     FlippedStatus, LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate,
 };
 use crate::daily_notes::{remove_log_line, render_log_line, write_log_line, LogWriteError};
-use crate::library::file_revision;
+use crate::library::{file_revision, MarkdownDocument};
 use crate::types::{CanonicalStatus, DateRole, EntityTypeConfig, ResolvedStatus};
 use axum::extract::{Path as AxumPath, Query, State};
 use axum::Json;
@@ -50,7 +50,7 @@ pub(crate) async fn log_activity(
     } else {
         require_content_writes(&state).await?
     };
-    let _mutation = if dry_run {
+    let mutation = if dry_run {
         None
     } else {
         Some(state.content_mutation_lock().await)
@@ -169,18 +169,26 @@ pub(crate) async fn log_activity(
     //     note write widened the window since the preflight). On failure, undo the
     //     daily-note line so nothing is left half-applied.
     let mut entity = None;
-    if let Some(revision) = &revision {
-        if let Err(error) = stamp_entity_date(
+    // `revision` is only set for a real (non-dry-run) request, which holds the lock.
+    if let (Some(revision), Some(mutation)) = (&revision, &mutation) {
+        let stamped = edit_entity_document_locked(
+            mutation,
             vfs.as_ref(),
             &source_rel,
             revision,
-            stamp_field.as_deref(),
-            &date,
-            op,
-            status_flip.as_ref(),
+            |document| {
+                stamp_entity_date(
+                    document,
+                    stamp_field.as_deref(),
+                    &date,
+                    op,
+                    status_flip.as_ref(),
+                );
+                Ok(())
+            },
         )
-        .await
-        {
+        .await;
+        if let Err(error) = stamped {
             if line_applied {
                 if let (Some(line), Some(heading)) = (&line, &log_section) {
                     let undone = match op {
@@ -243,34 +251,28 @@ pub(crate) async fn log_activity(
     }))
 }
 
-/// Applies the `started`/`completed` date stamp to the entity through the
-/// already-locked guarded Markdown edit primitive. The caller holds the content
-/// mutation lock across both the daily-note side effect and this entity write.
-async fn stamp_entity_date(
-    vfs: &dyn crate::vfs::Vfs,
-    source_rel: &str,
-    revision: &str,
+/// Applies the `started`/`completed` date stamp (and any planned status flip) to
+/// the entity document. Runs inside `edit_entity_document_locked`, under the
+/// content mutation lock the caller holds across both the daily-note side effect
+/// and this entity write.
+fn stamp_entity_date(
+    document: &mut MarkdownDocument,
     field: Option<&str>,
     date: &str,
     op: LogOp,
     status_flip: Option<&FlippedStatus>,
-) -> Result<(), ApiError> {
-    edit_entity_document_locked(vfs, source_rel, revision, |document| {
-        if let Some(field) = field {
-            apply_date_stamp(&mut document.frontmatter, field, date, op);
-        }
-        // The status flip (`add` only, precomputed as a promotion) writes the
-        // mapped value directly into the status field, alongside any date stamp
-        // — one atomic entity write.
-        if let Some(flip) = status_flip {
-            document
-                .frontmatter
-                .insert(flip.field.clone(), Value::String(flip.value.clone()));
-        }
-        Ok(())
-    })
-    .await?;
-    Ok(())
+) {
+    if let Some(field) = field {
+        apply_date_stamp(&mut document.frontmatter, field, date, op);
+    }
+    // The status flip (`add` only, precomputed as a promotion) writes the mapped
+    // value directly into the status field, alongside any date stamp — one atomic
+    // entity write.
+    if let Some(flip) = status_flip {
+        document
+            .frontmatter
+            .insert(flip.field.clone(), Value::String(flip.value.clone()));
+    }
 }
 
 /// Plans the monotonic status flip for a `started`/`completed` log, or `None` when

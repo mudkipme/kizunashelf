@@ -1,5 +1,5 @@
 //! The scalar value editors: the nested-object editor for map-shaped
-//! frontmatter, the +/- stepper used by progress and rating fields, and the date
+//! frontmatter, the +/- stepper used by number and rating fields, and the date
 //! picker.
 
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -129,22 +129,18 @@ export function ObjectValueInput({
   );
 }
 
-/// A +/- stepper over a non-negative integer held as a string. `display="input"`
-/// (the default) renders an editable number field; `display="output"` renders a
-/// read-only value (used for progress, where the count is only nudged via the
-/// buttons). Only the editable variant maps Enter/Space on the buttons to a step.
+/// A +/- stepper over a non-negative integer held as a string: an editable
+/// number field flanked by buttons that also step on Enter/Space.
 export function NumberStepper({
   value,
   onChange,
   disabled = false,
   ariaLabel,
-  display = "input",
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   ariaLabel: string;
-  display?: "input" | "output";
 }) {
   const number = Number(value || 0);
   const current = Number.isFinite(number) ? number : 0;
@@ -154,52 +150,36 @@ export function NumberStepper({
     event.preventDefault();
     step(delta);
   };
-  const isOutput = display === "output";
   return (
-    <div
-      className={
-        isOutput
-          ? "grid min-w-0 grid-cols-[auto_minmax(4rem,1fr)_auto] items-center gap-1"
-          : "flex min-w-0 items-center gap-1"
-      }
-    >
+    <div className="flex min-w-0 items-center gap-1">
       <Button
         type="button"
         variant="outline"
         size="icon"
         disabled={disabled}
         onClick={() => step(-1)}
-        onKeyDown={isOutput ? undefined : (event) => keyStep(event, -1)}
+        onKeyDown={(event) => keyStep(event, -1)}
         aria-label={`Decrease ${ariaLabel}`}
       >
         <MinusIcon />
       </Button>
-      {isOutput ? (
-        <output
-          className="flex h-(--control-height) min-w-0 items-center justify-center rounded-md border border-input bg-muted px-3 text-center text-sm text-foreground tabular-nums"
-          aria-label={ariaLabel}
-        >
-          {value || "0"}
-        </output>
-      ) : (
-        <Input
-          type="number"
-          min={0}
-          step={1}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          disabled={disabled}
-          className="min-w-0 text-center tabular-nums"
-          aria-label={ariaLabel}
-        />
-      )}
+      <Input
+        type="number"
+        min={0}
+        step={1}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        className="min-w-0 text-center tabular-nums"
+        aria-label={ariaLabel}
+      />
       <Button
         type="button"
         variant="outline"
         size="icon"
         disabled={disabled}
         onClick={() => step(1)}
-        onKeyDown={isOutput ? undefined : (event) => keyStep(event, 1)}
+        onKeyDown={(event) => keyStep(event, 1)}
         aria-label={`Increase ${ariaLabel}`}
       >
         <PlusIcon />

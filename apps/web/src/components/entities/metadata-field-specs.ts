@@ -54,7 +54,7 @@ export function editableFieldSpecs(
 
   for (const field of configFields(typeConfig)) {
     const key = field.field.trim();
-    if (!key || seen.has(key) || isVirtualTitleField(key)) continue;
+    if (!key || seen.has(key)) continue;
     seen.add(key);
     specs.push({
       key,
@@ -124,10 +124,7 @@ function fieldKind(field: FieldConfig, value: FrontmatterValue | undefined): Fie
   if (isListFieldType(field.fieldType) || Array.isArray(value)) return "list";
   if (field.fieldType === "enum") return "select";
   if (field.fieldType === "bool") return "boolean";
-  if (field.fieldType === "progress") return "progress";
-  if (field.fieldType === "totalProgress" || field.fieldType === "rating") {
-    return "number";
-  }
+  if (field.fieldType === "number" || field.fieldType === "rating") return "number";
   return "text";
 }
 
@@ -176,8 +173,4 @@ function normalizeSeasonLanguage(
 
 function humanizeField(key: string) {
   return key.replace(/[_-]+/g, " ");
-}
-
-function isVirtualTitleField(key: string) {
-  return ["filename", "basename", "$filename", "$basename"].includes(key);
 }

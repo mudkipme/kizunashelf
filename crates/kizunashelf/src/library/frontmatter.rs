@@ -212,7 +212,7 @@ pub(super) fn title_languages(
         if titles.contains_key(key) {
             continue;
         }
-        if let Some(title) = normalize_title_field(frontmatter, &field.field, basename) {
+        if let Some(title) = normalize_value(frontmatter.get(&field.field)) {
             titles.insert(key.clone(), title);
         }
     }
@@ -246,27 +246,16 @@ pub(super) fn resolve_title(
         .find(|field| {
             field.field_type == FieldType::Title && field.title_role == Some(TitleRole::Original)
         })
-        .and_then(|field| normalize_title_field(frontmatter, &field.field, basename))
+        .and_then(|field| normalize_value(frontmatter.get(&field.field)))
         .or_else(|| {
             type_config
                 .fields
                 .iter()
                 .find(|field| field.field_type == FieldType::Title)
-                .and_then(|field| normalize_title_field(frontmatter, &field.field, basename))
+                .and_then(|field| normalize_value(frontmatter.get(&field.field)))
         })
         .or_else(|| titles.values().next().cloned())
         .unwrap_or_else(|| basename.to_string())
-}
-
-fn normalize_title_field(
-    frontmatter: &Map<String, Value>,
-    key: &str,
-    basename: &str,
-) -> Option<String> {
-    if matches!(key, "filename" | "basename" | "$filename" | "$basename") {
-        return Some(basename.to_string());
-    }
-    normalize_value(frontmatter.get(key))
 }
 
 fn normalize_value(value: Option<&Value>) -> Option<String> {
@@ -392,7 +381,6 @@ mod tests {
             enum_options: Vec::new(),
             enum_role: None,
             status_values: None,
-            total_progress_field: None,
             date_role: None,
             season_language: None,
             external_ref: None,
@@ -603,6 +591,37 @@ mod tests {
         );
         let titles = title_languages(&fm(json!({"name_zh": "中文标题"})), "星旅", &tc);
         assert_eq!(titles.get("zh"), Some(&"星旅".to_string()));
+    }
+
+    #[test]
+    fn a_filename_without_a_title_claim_is_not_a_title() {
+        // No `filename.titleLanguage`/`titleRole`: the basename never enters
+        // `titles` — not even through a title field whose *name* is `filename`
+        // (field names carry no meaning; that field reads its frontmatter value).
+        let tc = type_config(
+            Some(FilenameConfig {
+                title_language: None,
+                title_role: None,
+            }),
+            vec![
+                title_field("title", Some("en"), None),
+                title_field("filename", Some("ja"), None),
+            ],
+        );
+        let titles = title_languages(&fm(json!({"title": "Frieren: Beyond"})), "Frieren", &tc);
+        assert_eq!(
+            titles,
+            BTreeMap::from([("en".to_string(), "Frieren: Beyond".to_string())])
+        );
+        assert_eq!(
+            resolve_title(
+                &fm(json!({"title": "Frieren: Beyond"})),
+                &titles,
+                "Frieren",
+                &tc
+            ),
+            "Frieren: Beyond"
+        );
     }
 
     #[test]

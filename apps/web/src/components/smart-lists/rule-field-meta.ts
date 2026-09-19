@@ -187,8 +187,7 @@ export function ruleFieldMetas(
         metas.set(field.field, { ...base, kind: "bool" });
         break;
       case "rating":
-      case "progress":
-      case "totalProgress":
+      case "number":
         metas.set(field.field, { ...base, kind: "number" });
         break;
       case "date":

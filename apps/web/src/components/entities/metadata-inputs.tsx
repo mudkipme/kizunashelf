@@ -79,18 +79,6 @@ export function FieldValueInput({
     );
   }
 
-  if (field.kind === "progress") {
-    return (
-      <NumberStepper
-        value={valueToText(value)}
-        onChange={(next) => onChange(numberOrString(next))}
-        ariaLabel={field.label}
-        disabled={disabled}
-        display="output"
-      />
-    );
-  }
-
   if (field.kind === "date") {
     return (
       <DatePickerInput

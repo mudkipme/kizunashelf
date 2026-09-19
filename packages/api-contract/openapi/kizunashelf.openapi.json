@@ -4332,12 +4332,6 @@
               }
             ]
           },
-          "totalProgressField": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "dateRole": {
             "anyOf": [
               {
@@ -4391,8 +4385,7 @@
           "imageList",
           "enum",
           "enumList",
-          "progress",
-          "totalProgress",
+          "number",
           "rating",
           "bool",
           "season",

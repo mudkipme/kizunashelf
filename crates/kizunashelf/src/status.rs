@@ -83,7 +83,6 @@ mod tests {
                 completed: vec!["看完".to_string(), "刷过".to_string()],
                 dropped: vec!["抛弃".to_string()],
             }),
-            total_progress_field: None,
             date_role: None,
             season_language: None,
             external_ref: None,

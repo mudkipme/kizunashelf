@@ -18,8 +18,7 @@ The complete set of field types and role enums, generated directly from the app'
 | `imageList` | List of image URLs. The first useful image may be used as the cover. |
 | `enum` | Single value from a known option set. |
 | `enumList` | Multiple values from a known option set. |
-| `progress` | Current progress count, usually paired with a `totalProgress` field. |
-| `totalProgress` | Total count for a progress field. |
+| `number` | A plain number: a count such as episodes or pages, or a hand-kept tally. (The retired `progress` / `totalProgress` types still load as `number`.) |
 | `rating` | Numeric rating. |
 | `bool` | Boolean flag. |
 | `season` | Season or release window such as `2025`, `2025 Spring`, or localized season strings. Can be used in date views. |

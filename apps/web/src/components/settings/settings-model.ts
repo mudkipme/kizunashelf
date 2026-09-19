@@ -82,7 +82,6 @@ function normalizeField(field: FieldConfig): FieldConfig {
     enumOptions: field.enumOptions ?? [],
     enumRole: field.enumRole ?? undefined,
     statusValues: field.statusValues ?? undefined,
-    totalProgressField: field.totalProgressField ?? "",
     dateRole: field.dateRole ?? null,
     seasonLanguage: field.seasonLanguage ?? "zh",
     externalRef: field.externalRef ?? "",
@@ -271,8 +270,6 @@ function cleanField(
       field.fieldType === "enum" && field.enumRole === "status"
         ? cleanStatusValues(field.statusValues)
         : undefined,
-    totalProgressField:
-      field.fieldType === "progress" ? emptyToUndefined(field.totalProgressField) : undefined,
     dateRole:
       field.fieldType === "date" || field.fieldType === "season"
         ? field.dateRole || undefined
@@ -337,7 +334,6 @@ export function defaultEntityType(): EntityTypeConfig {
           dropped: ["Dropped"],
         },
       },
-      { field: "progress", fieldType: "progress", displayName: "Progress" },
     ],
   };
 }

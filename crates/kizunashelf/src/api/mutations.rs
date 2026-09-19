@@ -1,7 +1,7 @@
 use super::assets::entity_asset_dir;
 use super::error::{ApiError, ApiResult};
 use super::lists::list_file_paths;
-use super::state::{get_library, require_content_writes, AppState};
+use super::state::{get_library, require_content_writes, AppState, ContentMutationGuard};
 use crate::contract::{
     CreateEntityRequest, DeleteEntityRequest, DeleteEntityResponse, EntityMutationResponse,
     RenameLinkUpdate, UpdateEntityRequest,
@@ -35,7 +35,7 @@ pub(crate) async fn update_entity(
     Json(request): Json<UpdateEntityRequest>,
 ) -> ApiResult<EntityMutationResponse> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
@@ -100,7 +100,7 @@ pub(crate) async fn update_entity(
     };
 
     let raw = serialize_markdown_document(&document.frontmatter, &document.body);
-    write_entity_raw(vfs.as_ref(), &target_rel, &raw).await?;
+    write_entity_raw(&mutation, vfs.as_ref(), &target_rel, &raw).await?;
     if target_rel != source_rel {
         vfs.remove_file(&source_rel).await.map_err(|error| {
             anyhow::anyhow!("failed to remove old entity {source_rel}: {error}")
@@ -144,7 +144,7 @@ pub(crate) async fn create_entity(
     Json(request): Json<CreateEntityRequest>,
 ) -> ApiResult<EntityMutationResponse> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let type_config = type_config_or_err(&library.config, &request.entity_type)?;
     let basename = sanitize_basename(&request.basename)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
@@ -154,6 +154,7 @@ pub(crate) async fn create_entity(
     };
     let vfs = state.vault_vfs(&library.config.vault_root);
     let path = write_new_entity_file(
+        &mutation,
         vfs.as_ref(),
         &library.config.taxonomy_root,
         type_config,
@@ -180,7 +181,7 @@ pub(crate) async fn delete_entity(
     Json(request): Json<DeleteEntityRequest>,
 ) -> ApiResult<DeleteEntityResponse> {
     let library = require_content_writes(&state).await?;
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
     };
@@ -195,7 +196,7 @@ pub(crate) async fn delete_entity(
     // the client's revision when another editor changed the file behind a long
     // cache TTL. Never trash those newer bytes under a stale confirmation.
     check_revision(&request.revision, &file_revision(&raw))?;
-    let trash_path = move_to_trash(vfs.as_ref(), &source_rel).await?;
+    let trash_path = move_to_trash(&mutation, vfs.as_ref(), &source_rel).await?;
     let asset_dir = entity_asset_dir(library.config.resolved_asset_root(), &source_rel);
     trash_entity_assets(vfs.as_ref(), &asset_dir).await;
     state.invalidate_cache().await;
@@ -270,7 +271,11 @@ fn rewrite_asset_prefix(frontmatter: &mut Map<String, Value>, old_dir: &str, new
 /// Moves an entity's Markdown file into the vault's `.trash` folder, mirroring
 /// Obsidian's local trash. Returns the vault-relative trash path. Disambiguates
 /// name collisions by appending ` 1`, ` 2`, … before the extension.
-pub(super) async fn move_to_trash(vfs: &dyn Vfs, source_relative: &str) -> Result<String> {
+pub(super) async fn move_to_trash(
+    _guard: &ContentMutationGuard<'_>,
+    vfs: &dyn Vfs,
+    source_relative: &str,
+) -> Result<String> {
     let file_name = source_relative
         .rsplit('/')
         .next()
@@ -356,9 +361,9 @@ pub(super) async fn edit_entity_document<T, F>(
 where
     F: FnOnce(&mut MarkdownDocument) -> Result<T, ApiError>,
 {
-    let _mutation = state.content_mutation_lock().await;
+    let mutation = state.content_mutation_lock().await;
     let (value, changed) =
-        edit_entity_document_locked(vfs, relative, expected_revision, edit).await?;
+        edit_entity_document_locked(&mutation, vfs, relative, expected_revision, edit).await?;
     if changed {
         state.invalidate_cache().await;
     }
@@ -368,6 +373,7 @@ where
 /// The guarded Markdown edit primitive for callers that already hold the
 /// AppState content-mutation lock across a larger multi-file transaction.
 pub(super) async fn edit_entity_document_locked<T, F>(
+    guard: &ContentMutationGuard<'_>,
     vfs: &dyn Vfs,
     relative: &str,
     expected_revision: &str,
@@ -387,7 +393,7 @@ where
     let new_raw = serialize_markdown_document(&document.frontmatter, &document.body);
     let changed = new_raw != raw;
     if changed {
-        write_entity_raw(vfs, relative, &new_raw).await?;
+        write_entity_raw(guard, vfs, relative, &new_raw).await?;
     }
 
     Ok((value, changed))
@@ -587,6 +593,7 @@ fn entity_create_path(
 /// exists. Shared by the manual create handler and quick-add (which resolves a
 /// free basename first). Assumes `basename` is already validated.
 pub(super) async fn write_new_entity_file(
+    guard: &ContentMutationGuard<'_>,
     vfs: &dyn Vfs,
     taxonomy_root: &str,
     type_config: &EntityTypeConfig,
@@ -603,7 +610,7 @@ pub(super) async fn write_new_entity_file(
         return Err(ApiError::conflict("Entity file already exists"));
     }
     let raw = serialize_markdown_document(frontmatter, body);
-    write_entity_raw(vfs, &path, &raw).await?;
+    write_entity_raw(guard, vfs, &path, &raw).await?;
     Ok(path)
 }
 
@@ -655,7 +662,12 @@ pub(super) async fn resolve_free_basename(
 ///
 /// The active VFS supplies the atomic replacement mechanism, so a crash or a
 /// concurrent reader never observes a truncated half-written Markdown file.
-pub(super) async fn write_entity_raw(vfs: &dyn Vfs, relative: &str, raw: &str) -> Result<()> {
+pub(super) async fn write_entity_raw(
+    _guard: &ContentMutationGuard<'_>,
+    vfs: &dyn Vfs,
+    relative: &str,
+    raw: &str,
+) -> Result<()> {
     if let Some(parent) = parent_dir(relative) {
         vfs.create_dir_all(parent).await.map_err(|error| {
             anyhow::anyhow!("failed to create entity directory {parent}: {error}")

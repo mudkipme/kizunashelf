@@ -98,10 +98,7 @@ fn normalize_value(
             if field_type == Some(FieldType::Relation) {
                 return Some(Value::String(to_wikilink(trimmed)));
             }
-            if matches!(
-                field_type,
-                Some(FieldType::Progress | FieldType::TotalProgress | FieldType::Rating)
-            ) {
+            if matches!(field_type, Some(FieldType::Number | FieldType::Rating)) {
                 return Some(coerce_number(trimmed));
             }
             // Editors that flatten values to text (iOS) round-trip an untouched
@@ -184,7 +181,6 @@ mod tests {
             enum_options: Vec::new(),
             enum_role: None,
             status_values: None,
-            total_progress_field: None,
             date_role: None,
             season_language: None,
             external_ref: None,
@@ -217,9 +213,9 @@ mod tests {
     #[test]
     fn numeric_fields_coerce_round_trippable_text() {
         let config = config(vec![
-            field("progress", FieldType::Progress),
+            field("progress", FieldType::Number),
             field("rating", FieldType::Rating),
-            field("total", FieldType::TotalProgress),
+            field("total", FieldType::Number),
         ]);
         let normalized = normalize_draft(
             draft(json!({

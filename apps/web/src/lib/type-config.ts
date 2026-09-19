@@ -206,8 +206,7 @@ export function fieldTypeLabel(fieldType: FieldType) {
   if (fieldType === "imageList") return "Image list";
   if (fieldType === "enum") return "Enum";
   if (fieldType === "enumList") return "Enum list";
-  if (fieldType === "progress") return "Progress";
-  if (fieldType === "totalProgress") return "Total progress";
+  if (fieldType === "number") return "Number";
   if (fieldType === "rating") return "Rating";
   if (fieldType === "bool") return "Bool";
   if (fieldType === "season") return "Season";
@@ -233,6 +232,5 @@ export function configuredFieldLabel(field: FieldConfig) {
           : "Planning date";
     return `${role}: ${field.field}`;
   }
-  if (field.fieldType === "totalProgress") return `Total progress: ${field.field}`;
   return `${fieldTypeLabel(field.fieldType)}: ${field.field}`;
 }

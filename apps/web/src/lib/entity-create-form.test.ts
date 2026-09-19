@@ -21,7 +21,7 @@ describe("filenameTitleField", () => {
     expect(filenameTitleField(config)?.field).toBe("名前");
   });
 
-  it("prefers the type's filename.titleLanguage, then titleRole, then the original-role field", () => {
+  it("prefers the type's filename.titleLanguage, then titleRole, then a localized title field", () => {
     const jp = field({ field: "name_jp", fieldType: "title", titleLanguage: "ja" });
     const original = field({ field: "name", fieldType: "title", titleRole: "original" });
     expect(
@@ -31,7 +31,15 @@ describe("filenameTitleField", () => {
       filenameTitleField(typeConfig([jp, original], { filename: { titleRole: "original" } }))
         ?.field,
     ).toBe("name");
-    expect(filenameTitleField(typeConfig([jp, original]))?.field).toBe("name");
+    // No filename claim (the preset shape): named after the localized title.
+    expect(filenameTitleField(typeConfig([original, jp]))?.field).toBe("name_jp");
+  });
+
+  it("falls back to the original-role field, then the first title field", () => {
+    const original = field({ field: "name", fieldType: "title", titleRole: "original" });
+    const plain = field({ field: "alias", fieldType: "title" });
+    expect(filenameTitleField(typeConfig([plain, original]))?.field).toBe("name");
+    expect(filenameTitleField(typeConfig([plain]))?.field).toBe("alias");
   });
 
   it("returns undefined when the type has no title field", () => {

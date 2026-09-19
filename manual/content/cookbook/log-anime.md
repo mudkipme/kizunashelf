@@ -13,7 +13,7 @@ Start with the **Anime** preset and add *Steins;Gate 0* through [Quick Capture](
 3. Use **Log** for thoughts you want to keep in a daily note, such as “the game makes this scene feel different.”
 4. When finished, set a completion date and your rating.
 
-A checklist is useful if you skip specials or watch out of order. A numeric progress field is enough when you only need a count. Choose the one you actually want to maintain.
+The checklist is how KizunaShelf tracks progress, and it copes with skipped specials or out-of-order watching. If you would rather keep a bare count, add a `number` field of your own in Settings and bump it by hand.
 
 ## Keep related works together
 

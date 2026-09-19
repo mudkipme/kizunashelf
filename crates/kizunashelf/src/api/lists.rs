@@ -128,6 +128,7 @@ pub(crate) async fn create_list(
     Json(request): Json<CreateListRequest>,
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
+    let mutation = state.content_mutation_lock().await;
     let basename = sanitize_basename(&request.name)
         .map_err(|error| ApiError::bad_request(&error.to_string()))?;
     let vfs = state.vault_vfs(&library.config.vault_root);
@@ -139,7 +140,7 @@ pub(crate) async fn create_list(
     {
         return Err(ApiError::conflict("List already exists"));
     }
-    write_entity_raw(vfs.as_ref(), &path, "").await?;
+    write_entity_raw(&mutation, vfs.as_ref(), &path, "").await?;
     Ok(Json(detail_from_raw(&path, "", &library)))
 }
 
@@ -160,6 +161,7 @@ pub(crate) async fn update_list(
     Json(request): Json<UpdateListRequest>,
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
+    let mutation = state.content_mutation_lock().await;
     let source_path = list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
 
@@ -206,7 +208,7 @@ pub(crate) async fn update_list(
         None => source_path.clone(),
     };
 
-    write_entity_raw(vfs.as_ref(), &target_path, &new_raw).await?;
+    write_entity_raw(&mutation, vfs.as_ref(), &target_path, &new_raw).await?;
     if target_path != source_path {
         vfs.remove_file(&source_path)
             .await
@@ -221,6 +223,7 @@ pub(crate) async fn delete_list(
     AxumPath(path_param): AxumPath<ListPath>,
 ) -> ApiResult<DeleteListResponse> {
     let library = require_content_writes(&state).await?;
+    let mutation = state.content_mutation_lock().await;
     let path = list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     if !vfs
@@ -230,7 +233,7 @@ pub(crate) async fn delete_list(
     {
         return Err(ApiError::not_found("List not found"));
     }
-    let backup_path = move_to_trash(vfs.as_ref(), &path).await?;
+    let backup_path = move_to_trash(&mutation, vfs.as_ref(), &path).await?;
     Ok(Json(DeleteListResponse {
         deleted_id: path_param.id,
         backup_path,
@@ -243,6 +246,7 @@ pub(crate) async fn add_list_item(
     Json(request): Json<AddListItemRequest>,
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
+    let mutation = state.content_mutation_lock().await;
     let path = list_path(&path_param.id)?;
     let Some(record) = library.record_by_id(&request.entity_id) else {
         return Err(ApiError::not_found("Entity not found"));
@@ -287,7 +291,7 @@ pub(crate) async fn add_list_item(
         }
         let new_body = render_list(&parsed.description, &parsed.sections, &parsed.trailing);
         let new_raw = compose_document(&frontmatter, &new_body);
-        write_entity_raw(vfs.as_ref(), &path, &new_raw).await?;
+        write_entity_raw(&mutation, vfs.as_ref(), &path, &new_raw).await?;
         return Ok(Json(detail_from_parts(&path, parsed, &new_raw, &index)));
     }
     Ok(Json(detail_from_parts(&path, parsed, &raw, &index)))
@@ -298,6 +302,7 @@ pub(crate) async fn remove_list_item(
     AxumPath(path_param): AxumPath<ListItemPath>,
 ) -> ApiResult<ListDetail> {
     let library = require_content_writes(&state).await?;
+    let mutation = state.content_mutation_lock().await;
     let path = list_path(&path_param.id)?;
     let vfs = state.vault_vfs(&library.config.vault_root);
     reject_smart_list(vfs.as_ref(), &path_param.id).await?;
@@ -321,7 +326,7 @@ pub(crate) async fn remove_list_item(
     if after != before {
         let new_body = render_list(&parsed.description, &parsed.sections, &parsed.trailing);
         let new_raw = compose_document(&frontmatter, &new_body);
-        write_entity_raw(vfs.as_ref(), &path, &new_raw).await?;
+        write_entity_raw(&mutation, vfs.as_ref(), &path, &new_raw).await?;
         return Ok(Json(detail_from_parts(&path, parsed, &new_raw, &index)));
     }
     Ok(Json(detail_from_parts(&path, parsed, &raw, &index)))

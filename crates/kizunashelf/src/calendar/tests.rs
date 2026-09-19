@@ -169,7 +169,6 @@ fn date_field(name: &str, role: Option<DateRole>) -> FieldConfig {
         enum_options: Vec::new(),
         enum_role: None,
         status_values: None,
-        total_progress_field: None,
         date_role: role,
         season_language: None,
         external_ref: None,
