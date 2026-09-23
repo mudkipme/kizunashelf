@@ -12,7 +12,7 @@ export const AssetIngestRequest = zod.object({
   "sourceUrl": zod.string(),
   "sourcePath": zod.string().describe('Absolute host path of the file the client already downloaded. The core\nreads it directly (like `indexCacheDir`) and deletes it afterward.'),
   "contentType": zod.string().nullish().describe('Content-Type the host observed, used as an image sniff hint.'),
-  "revision": zod.string().nullish().describe('Advisory; ingest re-reads the entity rather than enforcing this.')
+  "revision": zod.string().nullish().describe('Optional expected entity revision, checked against fresh bytes under the\ncontent mutation lock. Omit for source-URL-conditional background merges.')
 }).describe('Hands the core one externally-downloaded image to validate, place under the\nvault, and write into a single frontmatter field.')
 
 export type AssetIngestRequest = zod.input<typeof AssetIngestRequest>;

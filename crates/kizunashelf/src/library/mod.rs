@@ -16,6 +16,7 @@ mod read;
 mod relations;
 mod wikilink_rewrite;
 
+pub(crate) use config_io::inspect_vault_config_text;
 pub(crate) use index_cache::{IndexCacheContext, MemoryIndexCache};
 
 pub use collation::{compare_optional_string, compare_string, compare_string_for_title_language};

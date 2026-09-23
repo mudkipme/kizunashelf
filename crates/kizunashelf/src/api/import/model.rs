@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 /// One external reference an item carries, in preference order. `provider` is a
 /// registry id (e.g. `myanimelist`); `url` is the canonical URL an `externalRef`
 /// field stores.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub(super) struct ProviderRef {
     pub provider: String,
     pub id: String,
@@ -25,7 +25,7 @@ pub(super) struct ProviderRef {
 /// The per-item user data an import carries, already normalized: status to a
 /// canonical, score to a 0–10 scale, dates to ISO strings. The target type's
 /// schema roles decide which fields these land on (see [`apply_user_data`]).
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub(super) struct ImportUserData {
     pub status: Option<CanonicalStatus>,
     pub score10: Option<f64>,
@@ -37,7 +37,7 @@ pub(super) struct ImportUserData {
 
 /// A normalized import unit. `candidate` may be partial (or absent) — commit
 /// detail-fetches only when the target type maps a metadata key it lacks.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub(super) struct ImportItem {
     pub refs: Vec<ProviderRef>,
     /// The source's own media kind (e.g. Bangumi `anime`), matched against a

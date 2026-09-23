@@ -131,18 +131,28 @@ pub async fn inspect_vault_config_via_vfs(
     vfs: &dyn Vfs,
     app: &crate::types::AppConfig,
 ) -> Result<VaultConfigInspection> {
-    let Some(raw) = read_raw_vault_config_via_vfs(vfs).await? else {
-        return Ok(VaultConfigInspection::Missing);
+    let raw = read_raw_vault_config_via_vfs(vfs).await?;
+    Ok(inspect_vault_config_text(raw.as_deref(), app))
+}
+
+/// Inspect the same bytes used for a settings revision. A second VFS read could
+/// pair an old schema with a new revision when another device edits the file.
+pub(crate) fn inspect_vault_config_text(
+    raw: Option<&str>,
+    app: &crate::types::AppConfig,
+) -> VaultConfigInspection {
+    let Some(raw) = raw else {
+        return VaultConfigInspection::Missing;
     };
-    let vault = match parse_vault_config(&raw) {
+    let vault = match parse_vault_config(raw) {
         Ok(vault) => vault,
-        Err(error) => return Ok(VaultConfigInspection::Invalid(format!("{error:#}"))),
+        Err(error) => return VaultConfigInspection::Invalid(format!("{error:#}")),
     };
     let merged = KizunaConfig::from_parts(app.clone(), vault.clone());
     if let Err(error) = validate_config_paths(&merged) {
-        return Ok(VaultConfigInspection::Invalid(error.to_string()));
+        return VaultConfigInspection::Invalid(error.to_string());
     }
-    Ok(VaultConfigInspection::Ready(Box::new(vault)))
+    VaultConfigInspection::Ready(Box::new(vault))
 }
 
 fn parse_vault_config(content: &str) -> Result<VaultConfig> {

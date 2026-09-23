@@ -922,9 +922,9 @@ pub(super) fn build_mapped_document(
 /// Seeds the type's status field with the first option mapped to `canonical` when
 /// the candidate supplied none. Meaning is schema-driven: this only fires when the
 /// type has an `enumRole: status` field with a write target for that canonical, and
-/// it never overwrites a value the candidate already mapped. Scoped to Quick
-/// Capture — batch import takes the status from the user's per-item choice instead.
-fn apply_default_status(
+/// it never overwrites a value the candidate already mapped. Also used to expose
+/// manual-creation draft seeds; batch import keeps its per-item status policy.
+pub(super) fn apply_default_status(
     frontmatter: &mut Map<String, Value>,
     type_config: &EntityTypeConfig,
     canonical: CanonicalStatus,

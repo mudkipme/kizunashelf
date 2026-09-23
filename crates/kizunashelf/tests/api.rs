@@ -57,6 +57,24 @@ fn build_inline_router(
     host_asset_ingest: bool,
     cache_ttl: Duration,
 ) -> Router {
+    build_inline_router_with_identity(
+        vault_root,
+        settings_writable,
+        content_writable,
+        host_asset_ingest,
+        cache_ttl,
+        None,
+    )
+}
+
+fn build_inline_router_with_identity(
+    vault_root: &Path,
+    settings_writable: bool,
+    content_writable: bool,
+    host_asset_ingest: bool,
+    cache_ttl: Duration,
+    identity: Option<String>,
+) -> Router {
     let token_path = vault_root
         .parent()
         .map(|parent| parent.join(".tokens.json"))
@@ -68,7 +86,7 @@ fn build_inline_router(
             settings_writable,
             content_writable,
             index_cache_dir: None,
-            index_cache_identity: None,
+            index_cache_identity: identity,
             host_asset_ingest,
         },
         AppConfig {
@@ -3240,6 +3258,153 @@ async fn ingest_places_host_downloaded_file_and_rewrites_single_field() {
 }
 
 #[tokio::test]
+async fn ingest_checks_expected_revision_against_fresh_file_before_asset_writes() {
+    let (_, temp, vault) = asset_test_app(true, |vault| {
+        write_file(&vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: https://img.example/cover.jpg\n---\nOriginal notes\n");
+    });
+    let app = build_inline_router(&vault, true, true, true, Duration::from_secs(3600));
+    let id = "anime:Steins;Gate 0 (Anime)";
+    let revision = entity_revision(&app, id).await;
+    let path = vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md");
+    let changed = fs::read_to_string(&path)
+        .unwrap()
+        .replace("Original notes", "External edit to keep");
+    fs::write(&path, &changed).unwrap();
+    let source = temp.path().join("stale-cover.png");
+    fs::write(&source, PNG_1X1).unwrap();
+    let result = request_json(
+        &app,
+        Method::POST,
+        &format!("/api/entities/{}/assets/ingest", urlencoding::encode(id)),
+        Some(
+            json!({ "field": "cover_url", "sourceUrl": "https://img.example/cover.jpg",
+            "sourcePath": source, "contentType": "image/png", "revision": revision }),
+        ),
+    )
+    .await;
+    assert_eq!(result.0, StatusCode::CONFLICT, "{}", result.1);
+    assert_eq!(fs::read_to_string(&path).unwrap(), changed);
+    assert!(
+        !vault.join("Assets").exists(),
+        "Rejected ingest must not stage vault assets"
+    );
+    assert!(!source.exists(), "The host staging file was consumed");
+}
+
+#[tokio::test]
+async fn host_routers_with_one_identity_cannot_ingest_the_same_revision_twice() {
+    let (_, temp, vault) = asset_test_app(true, |vault| {
+        write_file(&vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            "---\ntitle: Steins;Gate 0\ncover_url: https://img.example/cover.jpg\nshots: [https://img.example/a.png]\n---\nKeep notes\n");
+    });
+    let identity = format!("host-ingest:{}", temp.path().display());
+    let front = build_inline_router_with_identity(
+        &vault,
+        true,
+        true,
+        true,
+        Duration::from_secs(3600),
+        Some(identity.clone()),
+    );
+    let back = build_inline_router_with_identity(
+        &vault,
+        true,
+        true,
+        true,
+        Duration::from_secs(3600),
+        Some(identity),
+    );
+    let id = "anime:Steins;Gate 0 (Anime)";
+    let revision = entity_revision(&front, id).await;
+    assert_eq!(entity_revision(&back, id).await, revision);
+    let endpoint = format!("/api/entities/{}/assets/ingest", urlencoding::encode(id));
+    let first = temp.path().join("front.png");
+    let second = temp.path().join("back.png");
+    fs::write(&first, PNG_1X1).unwrap();
+    fs::write(&second, PNG_1X1).unwrap();
+    let payload = |source: &Path| {
+        json!({ "field": "cover_url", "sourceUrl": "https://img.example/cover.jpg",
+        "sourcePath": source, "contentType": "image/png", "revision": revision })
+    };
+    let (a, b) = tokio::join!(
+        request_json(&front, Method::POST, &endpoint, Some(payload(&first))),
+        request_json(&back, Method::POST, &endpoint, Some(payload(&second)))
+    );
+    assert_eq!(
+        [a.0, b.0].iter().filter(|s| **s == StatusCode::OK).count(),
+        1,
+        "{a:?} {b:?}"
+    );
+    assert_eq!(
+        [a.0, b.0]
+            .iter()
+            .filter(|s| **s == StatusCode::CONFLICT)
+            .count(),
+        1,
+        "{a:?} {b:?}"
+    );
+    let successful = if a.0 == StatusCode::OK { a.1 } else { b.1 };
+    let next_revision = successful["entity"]["revision"].as_str().unwrap();
+    assert_ne!(next_revision, revision);
+    // A later field in the same batch carries the revision returned by its own previous commit.
+    let source = temp.path().join("next.png");
+    fs::write(&source, PNG_1X1).unwrap();
+    let result = request_json(
+        &back,
+        Method::POST,
+        &endpoint,
+        Some(json!({ "field": "shots",
+        "listKey": "https://img.example/a.png", "sourceUrl": "https://img.example/a.png",
+        "sourcePath": source, "revision": next_revision, "contentType": "image/png" })),
+    )
+    .await;
+    assert_eq!(result.0, StatusCode::OK, "{}", result.1);
+    assert_eq!(result.1["result"]["status"], "downloaded");
+    assert_eq!(
+        entity_revision(&front, id).await,
+        result.1["entity"]["revision"].as_str().unwrap()
+    );
+    assert!(
+        fs::read_to_string(vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"))
+            .unwrap()
+            .contains("Keep notes")
+    );
+}
+
+#[tokio::test]
+async fn ingest_preserves_an_existing_asset_referenced_by_the_same_entity() {
+    let existing = "Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png";
+    let old_bytes = [PNG_1X1, b"original"].concat();
+    let (app, temp, vault) = asset_test_app(true, |vault| {
+        write_file(&vault.join("Taxonomy/Anime/Steins;Gate 0 (Anime).md"),
+            &format!("---\ntitle: Steins;Gate 0\ncover_url: https://img.example/cover.png\nshots: [\"{existing}\"]\n---\nBody\n"));
+        let path = vault.join(existing);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, &old_bytes).unwrap();
+    });
+    let id = "anime:Steins;Gate 0 (Anime)";
+    let revision = entity_revision(&app, id).await;
+    let source = temp.path().join("new.png");
+    fs::write(&source, PNG_1X1).unwrap();
+    let result = request_json(&app, Method::POST,
+        &format!("/api/entities/{}/assets/ingest", urlencoding::encode(id)),
+        Some(json!({ "field": "cover_url", "sourceUrl": "https://img.example/cover.png", "sourcePath": source, "revision": revision }))).await;
+    assert_eq!(result.0, StatusCode::OK, "{}", result.1);
+    assert_eq!(result.1["result"]["status"], "downloaded");
+    assert_eq!(fs::read(vault.join(existing)).unwrap(), old_bytes);
+    let saved = result.1["entity"]["frontmatter"]["cover_url"]
+        .as_str()
+        .unwrap();
+    assert_ne!(saved, existing);
+    assert_eq!(fs::read(vault.join(saved)).unwrap(), PNG_1X1);
+    assert_eq!(
+        result.1["entity"]["frontmatter"]["shots"],
+        json!([existing])
+    );
+}
+
+#[tokio::test]
 async fn ingest_rewrites_one_list_element() {
     let (app, temp, _vault) = asset_test_app(true, |vault| {
         write_file(
@@ -3342,10 +3507,8 @@ async fn upload_places_single_image_and_leaves_frontmatter_for_save() {
     assert_eq!(status, StatusCode::OK, "{body}");
 
     let path = body["path"].as_str().unwrap();
-    assert_eq!(
-        path,
-        "Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url.png"
-    );
+    assert!(path.starts_with("Assets/Taxonomy/Anime/Steins;Gate 0 (Anime)/cover_url-"));
+    assert!(path.ends_with(".png"));
     assert_eq!(body["conflictResolved"], false);
     // The file is placed under the vault.
     assert_eq!(fs::read(vault.join(path)).unwrap(), PNG_1X1);
@@ -3362,6 +3525,50 @@ async fn upload_places_single_image_and_leaves_frontmatter_for_save() {
     assert_eq!(
         detail.1["entity"]["frontmatter"]["cover_url"],
         "https://img.example/cover.jpg"
+    );
+}
+
+#[tokio::test]
+async fn upload_preserves_saved_and_pending_assets_and_rejects_path_collisions() {
+    let old_path = "Assets/Taxonomy/Anime/Show/cover_url.png";
+    let original = format!("---\ntitle: Show\ncover_url: {old_path}\n---\nKeep notes\n");
+    let (app, _temp, vault) = asset_test_app(true, |vault| {
+        write_file(&vault.join("Taxonomy/Anime/Show.md"), &original);
+        write_file(&vault.join(old_path), "saved cover bytes");
+    });
+    let payload =
+        json!({"field": "cover_url", "dataBase64": b64(PNG_1X1), "contentType": "image/png"});
+    let (status, first) = upload_asset(&app, "anime:Show", payload.clone()).await;
+    assert_eq!(status, StatusCode::OK);
+    let path = first["path"].as_str().unwrap();
+    assert_ne!(path, old_path);
+    assert_eq!(
+        fs::read(vault.join(old_path)).unwrap(),
+        b"saved cover bytes"
+    );
+    assert_eq!(
+        fs::read_to_string(vault.join("Taxonomy/Anime/Show.md")).unwrap(),
+        original
+    );
+    let (_, repeated) = upload_asset(&app, "anime:Show", payload.clone()).await;
+    assert_eq!(first["path"], repeated["path"]);
+    let mut second_bytes = PNG_1X1.to_vec();
+    second_bytes.extend_from_slice(b"another image payload");
+    let (status, second) = upload_asset(
+        &app,
+        "anime:Show",
+        json!({"field": "cover_url", "dataBase64": b64(&second_bytes), "contentType": "image/png"}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_ne!(first["path"], second["path"]);
+    assert_eq!(fs::read(vault.join(path)).unwrap(), PNG_1X1);
+    fs::write(vault.join(path), b"unrelated existing file").unwrap();
+    let (status, _) = upload_asset(&app, "anime:Show", payload).await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(
+        fs::read(vault.join(path)).unwrap(),
+        b"unrelated existing file"
     );
 }
 
@@ -5441,4 +5648,439 @@ async fn import_is_forbidden_in_read_only_mode() {
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
     assert_eq!(body["error"], "Content writes are disabled");
+}
+
+#[tokio::test]
+async fn import_cancel_planned_job_is_terminal_and_cannot_be_committed() {
+    let (app, vault, _temp) = build_import_server(true);
+    let (status, job) = request_json(
+        &app,
+        Method::POST,
+        "/api/import-jobs",
+        Some(json!({ "source": "yamtrack", "input": { "csvText": YAMTRACK_CSV } })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let id = job["id"].as_str().unwrap();
+    let planned = await_import_status(&app, id, "planned").await;
+    let (status, cancelled) = request_json(
+        &app,
+        Method::POST,
+        &format!("/api/import-jobs/{id}/cancel"),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(cancelled["status"], "cancelled");
+    assert!(cancelled["finishedAt"].is_string());
+    assert_eq!(cancelled["plan"], planned["plan"]);
+    let (_, again) = request_json(
+        &app,
+        Method::POST,
+        &format!("/api/import-jobs/{id}/cancel"),
+        None,
+    )
+    .await;
+    assert_eq!(again, cancelled);
+    let (status, _) = request_json(
+        &app, Method::POST, &format!("/api/import-jobs/{id}/commit"),
+        Some(json!({ "options": { "importUserData": true, "importEpisodes": false, "markProgress": false } })),
+    ).await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(
+        fs::read_dir(vault.join("Taxonomy/Anime")).unwrap().count(),
+        0
+    );
+    let (status, _) = request_json(
+        &app,
+        Method::POST,
+        "/api/import-jobs",
+        Some(json!({ "source": "yamtrack", "input": { "csvText": YAMTRACK_CSV } })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+}
+
+#[tokio::test]
+async fn config_creation_defaults_follow_status_roles_without_writing() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path().join("vault");
+    write_vault_config(
+        &vault,
+        &json!({
+            "taxonomyRoot": "Taxonomy",
+            "types": [
+                { "id": "books", "label": "Books", "path": "Books", "fields": [
+                    { "field": "lifecycle", "fieldType": "enum", "enumRole": "status",
+                      "enumOptions": ["Reading", "Rereading", "Later"],
+                      "statusValues": {"ongoing": ["Reading", "Rereading"], "planning": ["Later"]} },
+                    { "field": "status", "fieldType": "text" }
+                ]},
+                { "id": "notes", "label": "Notes", "path": "Notes", "fields": [
+                    { "field": "status", "fieldType": "text" }
+                ]}
+            ]
+        }),
+    );
+    let app = inline_router(&vault, true, true);
+    let (status, config) = request_json(&app, Method::GET, "/api/config", None).await;
+    assert_eq!(status, StatusCode::OK, "{config}");
+    assert_eq!(
+        config["creationDefaults"],
+        json!([
+            {"type":"books", "canonicalStatus":"planning", "frontmatter":{"lifecycle":"Later"}},
+            {"type":"books", "canonicalStatus":"ongoing", "frontmatter":{"lifecycle":"Reading"}}
+        ])
+    );
+    let (_, entities) = request_json(&app, Method::GET, "/api/entities", None).await;
+    assert_eq!(entities["total"], 0);
+}
+
+#[tokio::test]
+async fn import_review_snapshot_survives_host_restart_but_not_commit_or_schema_change() {
+    let (_, vault, _temp) = build_import_server(true);
+    let host = |identity: &str| {
+        build_inline_router_with_identity(
+            &vault,
+            true,
+            true,
+            true,
+            Duration::from_secs(3600),
+            Some(identity.to_owned()),
+        )
+    };
+    let first = host("durable-import-vault");
+    let (_, job) = request_json(
+        &first,
+        Method::POST,
+        "/api/import-jobs",
+        Some(json!({"source":"yamtrack", "input":{"csvText": YAMTRACK_CSV}})),
+    )
+    .await;
+    let id = job["id"].as_str().unwrap();
+    let planned = await_import_status(&first, id, "planned").await;
+    let (status, snapshot) = request_json(
+        &first,
+        Method::GET,
+        &format!("/api/import-jobs/{id}/snapshot"),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{snapshot}");
+    drop(first);
+    let second = host("durable-import-vault");
+    let (status, restored) = request_json(
+        &second,
+        Method::POST,
+        "/api/import-jobs/restore-plan",
+        Some(snapshot.clone()),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{restored}");
+    assert_eq!(restored, planned);
+    let (status, repeated) = request_json(
+        &second,
+        Method::POST,
+        "/api/import-jobs/restore-plan",
+        Some(snapshot.clone()),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(repeated, planned);
+    // A new job in a fresh engine must not overwrite the restored job's ID.
+    let (_, newer) = request_json(
+        &second,
+        Method::POST,
+        "/api/import-jobs",
+        Some(json!({"source":"yamtrack", "input":{"csvText": YAMTRACK_CSV}})),
+    )
+    .await;
+    assert_ne!(newer["id"], planned["id"]);
+    await_import_status(&second, newer["id"].as_str().unwrap(), "planned").await;
+    let (status, _) = request_json(
+        &host("different-vault"),
+        Method::POST,
+        "/api/import-jobs/restore-plan",
+        Some(snapshot.clone()),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    let (status, _) = request_json(
+        &inline_router(&vault, true, true),
+        Method::POST,
+        "/api/import-jobs/restore-plan",
+        Some(snapshot.clone()),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    let (status, _) = request_json(
+        &second,
+        Method::POST,
+        "/api/import-jobs/restore-plan",
+        Some(json!({"snapshot":"broken"})),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    let (status, _) = request_json(
+        &second,
+        Method::POST,
+        &format!("/api/import-jobs/{id}/commit"),
+        Some(
+            json!({"options":{"importUserData":true,"importEpisodes":false,"markProgress":false}}),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let done = await_import_status(&second, id, "completed").await;
+    assert_eq!(done["created"], 1);
+    let (status, _) = request_json(
+        &second,
+        Method::POST,
+        "/api/import-jobs/restore-plan",
+        Some(snapshot.clone()),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    let (status, _) = request_json(
+        &second,
+        Method::GET,
+        &format!("/api/import-jobs/{id}/snapshot"),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    // External config edits behind a long-lived cache cannot restore a stale plan.
+    let config_path = vault.join("KizunaShelf/config.yaml");
+    let raw = fs::read_to_string(&config_path).unwrap();
+    fs::write(&config_path, raw.replace("Anime", "Changed")).unwrap();
+    let (status, _) = request_json(
+        &host("durable-import-vault"),
+        Method::POST,
+        "/api/import-jobs/restore-plan",
+        Some(snapshot),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+}
+
+fn edit_snapshot(entity: &Value) -> Value {
+    json!({"basename": entity["basename"], "body": entity["body"], "frontmatter": entity["frontmatter"]})
+}
+
+#[tokio::test]
+async fn edit_review_merges_only_local_changes_and_reports_overlap_without_writing() {
+    let server = TestServer::new();
+    let (status, created) = request_json(&server.app, Method::POST, "/api/entities", Some(json!({
+        "type":"anime", "basename":"Review item", "body":"Base notes", "frontmatter": {
+            "status":"Backlog", "franchise":["[[Base]]"], "opaque":{"x":false}, "cleared":"old", "number":2020
+        }
+    }))).await;
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let base = &created["entity"];
+    let path = format!(
+        "/api/entities/{}",
+        urlencoding::encode(base["id"].as_str().unwrap())
+    );
+    let (status, changed) = request_json(&server.app, Method::POST, &path, Some(json!({
+        "revision":base["revision"], "frontmatter":{"status":"Watching","opaque":{"x":true},"newExtra":{"keep":[null,2]}},"body":"Remote notes"
+    }))).await;
+    assert_eq!(status, StatusCode::OK);
+    let note = server
+        .vault
+        .join(changed["entity"]["path"].as_str().unwrap());
+    let bytes = fs::read(&note).unwrap();
+    let mut draft = edit_snapshot(base);
+    draft["body"] = json!("Local notes");
+    draft["frontmatter"]["status"] = json!(" Completed ");
+    draft["frontmatter"]["franchise"] = json!([" New target "]);
+    draft["frontmatter"]["number"] = json!("2020");
+    draft["frontmatter"]
+        .as_object_mut()
+        .unwrap()
+        .remove("cleared");
+    let (status, review) = request_json(
+        &server.app,
+        Method::POST,
+        &format!("{path}/edit/review"),
+        Some(json!({"type":"anime","baseline":edit_snapshot(base),"draft":draft})),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{review}");
+    assert_eq!(review["entity"]["revision"], changed["entity"]["revision"]);
+    assert_eq!(review["conflictFields"], json!(["status"]));
+    assert_eq!(review["bodyConflict"], true);
+    assert_eq!(review["nameConflict"], false);
+    assert_eq!(review["merged"]["body"], "Remote notes");
+    assert_eq!(review["merged"]["frontmatter"]["status"], "Watching");
+    assert_eq!(review["local"]["frontmatter"]["status"], "Completed");
+    assert_eq!(
+        review["merged"]["frontmatter"]["franchise"],
+        json!(["[[New target]]"])
+    );
+    assert_eq!(review["merged"]["frontmatter"]["opaque"], json!({"x":true}));
+    assert_eq!(
+        review["merged"]["frontmatter"]["newExtra"],
+        json!({"keep":[null,2]})
+    );
+    assert_eq!(review["merged"]["frontmatter"]["number"], 2020);
+    assert!(review["merged"]["frontmatter"].get("cleared").is_none());
+    assert_eq!(bytes, fs::read(&note).unwrap());
+    // Explicitly choose the local status/body; save still goes through the guarded mutation.
+    let mut fields = review["merged"]["frontmatter"].clone();
+    fields["status"] = review["local"]["frontmatter"]["status"].clone();
+    let (status, saved) = request_json(
+        &server.app,
+        Method::POST,
+        &path,
+        Some(json!({
+            "revision":review["entity"]["revision"], "schemaRevision":review["schemaRevision"],
+            "frontmatterDraft":fields, "body":review["local"]["body"]
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{saved}");
+    assert_eq!(
+        saved["entity"]["frontmatter"]["newExtra"],
+        json!({"keep":[null,2]})
+    );
+    assert_eq!(saved["entity"]["body"], "Local notes");
+    let saved_bytes = fs::read(&note).unwrap();
+    let (status, _) = request_json(&server.app, Method::POST, &path, Some(json!({
+        "revision":review["entity"]["revision"],"schemaRevision":review["schemaRevision"],"body":"Stale review"
+    }))).await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(saved_bytes, fs::read(&note).unwrap());
+}
+
+#[tokio::test]
+async fn edit_review_is_fresh_read_only_and_schema_guard_rejects_changed_interpretation() {
+    let server = TestServer::new();
+    let path = format!(
+        "/api/entities/{}",
+        urlencoding::encode("anime:Steins;Gate 0 (Anime)")
+    );
+    let base = server.ok_json(&path).await["entity"].clone();
+    let read_only = cached_inline_router(&server.vault, false, false);
+    let _ = request_json(&read_only, Method::GET, &path, None).await;
+    let file = server.vault.join(base["path"].as_str().unwrap());
+    fs::write(&file, "---\ntitle: External title\n---\nExternal notes\n").unwrap();
+    let bytes = fs::read(&file).unwrap();
+    let request =
+        json!({"type":"anime","baseline":edit_snapshot(&base),"draft":edit_snapshot(&base)});
+    let (status, review) = request_json(
+        &read_only,
+        Method::POST,
+        &format!("{path}/edit/review"),
+        Some(request.clone()),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{review}");
+    assert_eq!(review["merged"]["frontmatter"]["title"], "External title");
+    assert_eq!(review["merged"]["body"], "External notes");
+    assert_eq!(review["conflictFields"], json!([]));
+    assert_eq!(bytes, fs::read(&file).unwrap());
+    let payload = json!({"revision":review["entity"]["revision"],"schemaRevision":review["schemaRevision"],"frontmatterDraft":review["merged"]["frontmatter"],"body":"Reviewed"});
+    assert_eq!(
+        request_json(&read_only, Method::POST, &path, Some(payload.clone()))
+            .await
+            .0,
+        StatusCode::FORBIDDEN
+    );
+    let config_file = server.vault.join("KizunaShelf/config.yaml");
+    let mut config: Value =
+        serde_yaml::from_str(&fs::read_to_string(&config_file).unwrap()).unwrap();
+    config["types"][0]["fields"][0]["displayName"] = json!("Changed field label");
+    write_vault_config(&server.vault, &config);
+    let (status, error) = request_json(&server.app, Method::POST, &path, Some(payload)).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{error}");
+    assert_eq!(bytes, fs::read(&file).unwrap());
+    assert_eq!(
+        request_json(
+            &server.app,
+            Method::POST,
+            "/api/entities/missing/edit/review",
+            Some(request.clone())
+        )
+        .await
+        .0,
+        StatusCode::NOT_FOUND
+    );
+    let mut wrong = request;
+    wrong["type"] = json!("game");
+    assert_eq!(
+        request_json(
+            &server.app,
+            Method::POST,
+            &format!("{path}/edit/review"),
+            Some(wrong)
+        )
+        .await
+        .0,
+        StatusCode::BAD_REQUEST
+    );
+}
+
+#[tokio::test]
+async fn edit_review_preserves_atomic_unknown_values_and_distinguishes_concurrent_deletion() {
+    let server = TestServer::new();
+    let (_, created) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/entities",
+        Some(json!({
+            "type":"anime","basename":"Opaque review","body":"Base", "frontmatter":{
+                "object":{"nested":[false,1]},"list":["a",2],"delete":"base","same":"base"
+            }
+        })),
+    )
+    .await;
+    let base = &created["entity"];
+    let path = format!(
+        "/api/entities/{}",
+        urlencoding::encode(base["id"].as_str().unwrap())
+    );
+    let (_,latest)=request_json(&server.app,Method::POST,&path,Some(json!({
+        "revision":base["revision"],"frontmatter":{"object":{"nested":[true,2]},"list":null,"delete":"remote","same":"agreed"}
+    }))).await;
+    let mut draft = edit_snapshot(base);
+    draft["frontmatter"] = json!({"object":{"nested":[false,9]},"list":["local"],"same":"agreed"});
+    draft["body"] = json!("Local only");
+    draft["basename"] = json!("New name");
+    let bytes = fs::read(
+        server
+            .vault
+            .join(latest["entity"]["path"].as_str().unwrap()),
+    )
+    .unwrap();
+    let (status, review) = request_json(
+        &server.app,
+        Method::POST,
+        &format!("{path}/edit/review"),
+        Some(json!({"type":"anime","baseline":edit_snapshot(base),"draft":draft})),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{review}");
+    assert_eq!(
+        review["conflictFields"],
+        json!(["delete", "list", "object"])
+    );
+    assert_eq!(review["local"]["frontmatter"].get("delete"), None);
+    assert_eq!(review["merged"]["frontmatter"].get("list"), None);
+    assert_eq!(review["merged"]["frontmatter"]["same"], "agreed");
+    assert_eq!(
+        review["merged"]["frontmatter"]["object"],
+        json!({"nested":[true,2]})
+    );
+    assert_eq!(review["merged"]["body"], "Local only");
+    assert_eq!(review["merged"]["basename"], "New name");
+    assert_eq!(review["bodyConflict"], false);
+    assert_eq!(
+        bytes,
+        fs::read(
+            server
+                .vault
+                .join(latest["entity"]["path"].as_str().unwrap())
+        )
+        .unwrap()
+    );
 }

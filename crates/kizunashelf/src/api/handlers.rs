@@ -118,12 +118,34 @@ pub(crate) async fn vault_changes(
 
 pub(crate) async fn config(State(state): State<AppState>) -> ApiResult<ConfigResponse> {
     let library = get_library(&state).await?;
+    use crate::types::CanonicalStatus;
+    let mut creation_defaults = Vec::new();
+    for type_config in &library.config.types {
+        for canonical in [
+            CanonicalStatus::Planning,
+            CanonicalStatus::Ongoing,
+            CanonicalStatus::Paused,
+            CanonicalStatus::Completed,
+            CanonicalStatus::Dropped,
+        ] {
+            let mut frontmatter = serde_json::Map::new();
+            super::external::apply_default_status(&mut frontmatter, type_config, canonical);
+            if !frontmatter.is_empty() {
+                creation_defaults.push(crate::contract::EntityCreationDefaults {
+                    entity_type: type_config.id.clone(),
+                    canonical_status: canonical,
+                    frontmatter,
+                });
+            }
+        }
+    }
     Ok(Json(ConfigResponse {
         taxonomy_root: library.config.taxonomy_root.clone(),
         vault_root: library.config.vault_root.clone(),
         asset_root: library.config.resolved_asset_root().to_string(),
         tags_field: library.config.tags_field().map(str::to_string),
         types: library.config.types.clone(),
+        creation_defaults,
     }))
 }
 
@@ -143,12 +165,10 @@ async fn settings_config_response(
 ) -> ApiResult<SettingsConfigResponse> {
     use crate::library::VaultConfigInspection;
 
-    let inspection = crate::library::inspect_vault_config_via_vfs(vfs, &app)
-        .await
-        .map_err(ApiError::from)?;
     let raw = crate::library::read_raw_vault_config_via_vfs(vfs)
         .await
         .map_err(ApiError::from)?;
+    let inspection = crate::library::inspect_vault_config_text(raw.as_deref(), &app);
     let revision = raw.as_deref().map(file_revision);
     let (vault_exists, vault, error) = match inspection {
         VaultConfigInspection::Missing => (false, None, None),

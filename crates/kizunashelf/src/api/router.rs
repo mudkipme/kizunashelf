@@ -4,6 +4,7 @@ use super::assets::{
     list_asset_jobs, plan_asset_downloads, serve_asset, upload_entity_asset,
 };
 use super::entities::{entities, entity_dates, entity_detail};
+use super::entity_edit_review::review_entity_edit;
 use super::episodes::{fetch_episodes, import_episodes, toggle_episode};
 use super::error::ApiErrorLogged;
 use super::external::{
@@ -16,8 +17,8 @@ use super::handlers::{
     type_presets, upcoming, vault_changes,
 };
 use super::import::{
-    cancel_import_job, commit_import_job, create_import_job, get_import_job, list_import_jobs,
-    list_import_sources,
+    cancel_import_job, commit_import_job, create_import_job, export_import_plan, get_import_job,
+    list_import_jobs, list_import_sources, restore_import_plan,
 };
 use super::lists::{
     add_list_item, create_list, delete_list, get_list, get_lists, remove_list_item, update_list,
@@ -34,18 +35,19 @@ use super::state::{ApiOptions, AppState};
 use super::tags::tags;
 use super::tasks::toggle_task;
 use crate::calendar::{ActivityResponse, EntityDatesResponse, UpcomingResponse};
+use crate::contract::ImportPlanSnapshot;
 use crate::contract::{
     AnalyticsResponse, AssetDownloadJob, AssetDownloadJobListResponse, AssetDownloadPlan,
     AssetDownloadResponse, AssetIngestResponse, AssetUploadResponse, CalendarResponse,
     CapabilitiesResponse, CleanupQueuesResponse, ConfigResponse, CreateSuggestedSmartListsResponse,
-    DeleteEntityResponse, DeleteListResponse, EntityDetailResponse, EntityListResponse,
-    EntityMutationResponse, EpisodeSyncResponse, ErrorResponse, ExternalProviderCatalogResponse,
-    ExternalReviewResponse, ExternalSearchResponse, HealthResponse, HomeResponse, ImportJob,
-    ImportJobListResponse, ImportSourceCatalogResponse, LanguagesResponse, ListDetail,
-    ListsResponse, LogActivityResponse, PathSuggestionsResponse, QuickAddResponse,
-    RawConfigResponse, ResolveTypePresetsResponse, SettingsConfigResponse, SmartListDetail,
-    SmartListSuggestionsResponse, StatsResponse, TagsResponse, TypePresetsResponse,
-    VaultChangesResponse,
+    DeleteEntityResponse, DeleteListResponse, EntityDetailResponse, EntityEditReviewResponse,
+    EntityListResponse, EntityMutationResponse, EpisodeSyncResponse, ErrorResponse,
+    ExternalProviderCatalogResponse, ExternalReviewResponse, ExternalSearchResponse,
+    HealthResponse, HomeResponse, ImportJob, ImportJobListResponse, ImportSourceCatalogResponse,
+    LanguagesResponse, ListDetail, ListsResponse, LogActivityResponse, PathSuggestionsResponse,
+    QuickAddResponse, RawConfigResponse, ResolveTypePresetsResponse, SettingsConfigResponse,
+    SmartListDetail, SmartListSuggestionsResponse, StatsResponse, TagsResponse,
+    TypePresetsResponse, VaultChangesResponse,
 };
 use crate::secrets::SecretStore;
 use crate::types::AppConfig;
@@ -378,6 +380,17 @@ fn api_router() -> ApiRouter<AppState> {
             }),
         )
         .api_route(
+            "/api/entities/{id}/edit/review",
+            post_with(review_entity_edit, |op| {
+                op.id("reviewEntityEdit")
+                    .response::<200, Json<EntityEditReviewResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
             "/api/entities/{id}/external/review",
             post_with(review_external_candidate, |op| {
                 op.id("reviewExternalCandidate")
@@ -535,6 +548,29 @@ fn api_router() -> ApiRouter<AppState> {
                     .response::<404, Json<ErrorResponse>>()
                     .response::<500, Json<ErrorResponse>>()
             }),
+        )
+        .api_route(
+            "/api/import-jobs/{id}/snapshot",
+            get_with(export_import_plan, |op| {
+                op.id("exportImportPlan")
+                    .response::<200, Json<ImportPlanSnapshot>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/import-jobs/restore-plan",
+            post_with(restore_import_plan, |op| {
+                op.id("restoreImportPlan")
+                    .response::<200, Json<ImportJob>>()
+                    .response::<400, Json<ErrorResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            })
+            .layer(axum::extract::DefaultBodyLimit::max(64 * 1024 * 1024)),
         )
         .api_route(
             "/api/import-jobs/{id}/commit",

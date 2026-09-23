@@ -10,11 +10,11 @@ use super::util::{
 };
 use crate::api::error::ApiError;
 use crate::api::mutations::{check_revision, edit_entity_document, parent_dir};
-use crate::api::state::AppState;
+use crate::api::state::{AppState, ContentMutationGuard};
 use crate::contract::{AssetDownloadItemResult, AssetDownloadStatus};
 use crate::library::{file_revision, split_markdown_document};
 use crate::types::{EntityRecord, EntityTypeConfig, FieldType};
-use crate::vfs::Vfs;
+use crate::vfs::{Vfs, VfsError};
 use axum::http::header;
 use serde_json::{Map, Value};
 use std::collections::HashSet;
@@ -65,14 +65,8 @@ pub(super) async fn download_entity_core(
     let mut results = Vec::new();
     let mut changed = false;
     for field in fields {
-        let field_changed = process_field(
-            state.http_client(),
-            &ctx,
-            &mut document.frontmatter,
-            &field,
-            &mut results,
-        )
-        .await?;
+        let field_changed =
+            process_field(state, &ctx, &mut document.frontmatter, &field, &mut results).await?;
         changed = changed || field_changed;
     }
 
@@ -93,7 +87,7 @@ pub(super) struct DownloadContext<'a> {
     pub(super) asset_dir: &'a str,
     /// All local asset paths across the library (collision detection).
     pub(super) referenced: &'a HashSet<String>,
-    /// Local asset paths owned by the current entity (safe to overwrite).
+    /// Local asset paths owned by the current entity (may reuse identical bytes).
     pub(super) owned: &'a HashSet<String>,
     pub(super) entity_id: &'a str,
 }
@@ -119,7 +113,7 @@ fn image_fields(type_config: &EntityTypeConfig, only: Option<&[String]>) -> Vec<
 /// Downloads remote URLs for one field, rewriting `frontmatter` in place.
 /// Returns whether the frontmatter value changed.
 async fn process_field(
-    client: &reqwest::Client,
+    state: &AppState,
     ctx: &DownloadContext<'_>,
     frontmatter: &mut Map<String, Value>,
     field: &ImageField,
@@ -143,7 +137,7 @@ async fn process_field(
                 rewritten.push(element);
                 continue;
             }
-            match download_to_asset(client, ctx, &field.name, Some(url), url).await {
+            match download_to_asset(state, ctx, &field.name, Some(url), url).await {
                 Ok(outcome) => {
                     results.push(downloaded(&field.name, url, &outcome));
                     rewritten.push(outcome.path);
@@ -174,7 +168,7 @@ async fn process_field(
             results.push(skipped(&field.name, &url, skip_reason(&url)));
             return Ok(false);
         }
-        match download_to_asset(client, ctx, &field.name, None, &url).await {
+        match download_to_asset(state, ctx, &field.name, None, &url).await {
             Ok(outcome) => {
                 results.push(downloaded(&field.name, &url, &outcome));
                 frontmatter.insert(field.name.clone(), Value::String(outcome.path));
@@ -197,20 +191,22 @@ pub(super) struct AssetOutcome {
 /// Downloads a single URL and writes it under the entity's asset directory,
 /// applying the cross-entity collision rule.
 async fn download_to_asset(
-    client: &reqwest::Client,
+    state: &AppState,
     ctx: &DownloadContext<'_>,
     field_name: &str,
     list_key: Option<&str>,
     url: &str,
 ) -> Result<AssetOutcome, DownloadError> {
-    let asset = download_one(client, url).await?;
-    place_asset(ctx, field_name, list_key, asset).await
+    let asset = download_one(state.http_client(), url).await?;
+    let mutation = state.content_mutation_lock().await;
+    place_asset(&mutation, ctx, field_name, list_key, asset).await
 }
 
 /// Writes an already-fetched asset under the entity's asset directory, applying
 /// the cross-entity collision rule. Shared by the reqwest path and the ingest
 /// path (where an iOS client fetched the bytes via a background URLSession).
 async fn place_asset(
+    mutation: &ContentMutationGuard<'_>,
     ctx: &DownloadContext<'_>,
     field_name: &str,
     list_key: Option<&str>,
@@ -225,7 +221,7 @@ async fn place_asset(
     let mut conflict_resolved = false;
 
     // Never overwrite a file referenced by another entity (a path is safe if it
-    // is unreferenced or owned by this entity).
+    // is unreferenced or owned by this entity). Existing bytes remain immutable below.
     if ctx.referenced.contains(&relative) && !ctx.owned.contains(&relative) {
         let disambiguated = format!("{dir}/{stem}-{}.{}", short_hash(ctx.entity_id), asset.ext);
         if ctx.referenced.contains(&disambiguated) && !ctx.owned.contains(&disambiguated) {
@@ -235,7 +231,35 @@ async fn place_asset(
         conflict_resolved = true;
     }
 
-    write_asset_file(ctx.vfs, &relative, &asset.bytes).await?;
+    // The note commit can still fail after placing this asset. Even a path
+    // owned by this entity may be used by another image field or a saved draft,
+    // so never replace different bytes. Reuse identical data or choose an
+    // immutable content suffix under the same mutation guard.
+    match ctx.vfs.read(&relative).await {
+        Ok(existing) if existing == asset.bytes => {}
+        Ok(_) => {
+            let suffix = format!(".{}", asset.ext);
+            let stem = relative.strip_suffix(&suffix).unwrap_or(&relative);
+            let candidate = format!("{stem}-{}.{}", short_hash_bytes(&asset.bytes), asset.ext);
+            if ctx.referenced.contains(&candidate) && !ctx.owned.contains(&candidate) {
+                return Err(DownloadError::Collision);
+            }
+            match ctx.vfs.read(&candidate).await {
+                Ok(existing) if existing == asset.bytes => {}
+                Ok(_) => return Err(DownloadError::Collision),
+                Err(VfsError::NotFound) => {
+                    write_asset_file(mutation, ctx.vfs, &candidate, &asset.bytes).await?
+                }
+                Err(error) => return Err(DownloadError::Io(error.to_string())),
+            }
+            relative = candidate;
+            conflict_resolved = true;
+        }
+        Err(VfsError::NotFound) => {
+            write_asset_file(mutation, ctx.vfs, &relative, &asset.bytes).await?
+        }
+        Err(error) => return Err(DownloadError::Io(error.to_string())),
+    }
     Ok(AssetOutcome {
         path: relative,
         conflict_resolved,
@@ -244,11 +268,12 @@ async fn place_asset(
 
 /// Places raw bytes a client uploaded from the device under the entity's asset
 /// directory: validates they are an image, resolves the extension, and applies
-/// the cross-entity collision rule. Does **not** rewrite frontmatter — the caller
-/// stages the returned path into the editor draft. Image-list elements are named
-/// by a content hash (they have no source URL to key on) so identical re-uploads
-/// dedup; single image fields use the field name as the stem.
+/// a content-based filename. Does **not** rewrite frontmatter or overwrite an
+/// existing asset: the caller stages the returned path into the editor draft.
+/// Identical uploads reuse their bytes; even an unexpected hash collision fails
+/// closed rather than changing a saved cover or another pending draft.
 pub(super) async fn place_uploaded_asset(
+    mutation: &ContentMutationGuard<'_>,
     ctx: &DownloadContext<'_>,
     field_name: &str,
     is_list: bool,
@@ -257,8 +282,24 @@ pub(super) async fn place_uploaded_asset(
     filename: &str,
 ) -> Result<AssetOutcome, DownloadError> {
     let asset = process_downloaded_bytes(bytes, content_type, filename)?;
-    let list_key = is_list.then(|| short_hash_bytes(&asset.bytes));
-    place_asset(ctx, field_name, list_key.as_deref(), asset).await
+    let hash = short_hash_bytes(&asset.bytes);
+    let relative = if is_list {
+        format!("{}/{field_name}/{hash}.{}", ctx.asset_dir, asset.ext)
+    } else {
+        format!("{}/{field_name}-{hash}.{}", ctx.asset_dir, asset.ext)
+    };
+    match ctx.vfs.read(&relative).await {
+        Ok(existing) if existing == asset.bytes => {}
+        Ok(_) => return Err(DownloadError::Collision),
+        Err(VfsError::NotFound) => {
+            write_asset_file(mutation, ctx.vfs, &relative, &asset.bytes).await?
+        }
+        Err(error) => return Err(DownloadError::Io(error.to_string())),
+    }
+    Ok(AssetOutcome {
+        path: relative,
+        conflict_resolved: false,
+    })
 }
 
 /// Maps a placement failure onto an `ApiError` for the upload handler (which,
@@ -290,6 +331,7 @@ pub(super) struct IngestField<'a> {
 /// replayed or out-of-order ingest won't clobber a value the user has since
 /// changed. Returns whether the frontmatter changed and the per-field result.
 pub(super) async fn ingest_field_bytes(
+    mutation: &ContentMutationGuard<'_>,
     ctx: &DownloadContext<'_>,
     frontmatter: &mut Map<String, Value>,
     field: &IngestField<'_>,
@@ -318,7 +360,7 @@ pub(super) async fn ingest_field_bytes(
         Ok(asset) => asset,
         Err(error) => return (false, failed(field.name, source_url, &error.to_string())),
     };
-    let outcome = match place_asset(ctx, field.name, field.list_key, asset).await {
+    let outcome = match place_asset(mutation, ctx, field.name, field.list_key, asset).await {
         Ok(outcome) => outcome,
         Err(error) => return (false, failed(field.name, source_url, &error.to_string())),
     };
@@ -438,6 +480,7 @@ fn process_downloaded_bytes(
 /// Writes bytes atomically under the vault. Containment and the backend-specific
 /// replacement mechanism are owned by the VFS.
 async fn write_asset_file(
+    _mutation: &ContentMutationGuard<'_>,
     vfs: &dyn Vfs,
     relative: &str,
     bytes: &[u8],

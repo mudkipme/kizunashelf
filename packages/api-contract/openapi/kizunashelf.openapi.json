@@ -1391,6 +1391,84 @@
         }
       }
     },
+    "/api/entities/{id}/edit/review": {
+      "post": {
+        "operationId": "reviewEntityEdit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntityEditReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Read-only three-way review. Conflicts retain the latest value until the host\nexplicitly chooses a side. Accepting a review is not a vault mutation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityEditReviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/external/review": {
       "post": {
         "operationId": "reviewExternalCandidate",
@@ -2394,6 +2472,142 @@
             }
           },
           "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs/{id}/snapshot": {
+      "get": {
+        "operationId": "exportImportPlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Opaque, versioned core-owned review state for an in-process host's private\ndurable journal. Contains normalized source data, including private notes.\nHosts must preserve this string intact and exclude it from backups/logs.\nIt is not a commit authorization and cannot restore an executing job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPlanSnapshot"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-jobs/restore-plan": {
+      "post": {
+        "operationId": "restoreImportPlan",
+        "requestBody": {
+          "description": "Opaque, versioned core-owned review state for an in-process host's private\ndurable journal. Contains normalized source data, including private notes.\nHosts must preserve this string intact and exclude it from backups/logs.\nIt is not a commit authorization and cannot restore an executing job.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPlanSnapshot"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "An in-memory batch import job. Like the asset-download job it does not survive\na restart; re-running is safe because the dedup gate skips already-created\nentities. `plan` is populated once `status` reaches `planned`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "",
             "content": {
               "application/json": {
@@ -4083,6 +4297,14 @@
             "items": {
               "$ref": "#/components/schemas/EntityTypeConfig"
             }
+          },
+          "creationDefaults": {
+            "description": "Reviewed creation seeds derived from each type's status-role mapping.\nClients copy a matching seed into a new draft only, keeping user edits.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityCreationDefaults"
+            },
+            "default": []
           }
         },
         "required": [
@@ -4454,6 +4676,37 @@
           "zh",
           "ja",
           "en"
+        ]
+      },
+      "EntityCreationDefaults": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "canonicalStatus": {
+            "$ref": "#/components/schemas/CanonicalStatus"
+          },
+          "frontmatter": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "type",
+          "canonicalStatus",
+          "frontmatter"
+        ]
+      },
+      "CanonicalStatus": {
+        "description": "The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity's own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n*outside* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused/dropped\nthing isn't something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.",
+        "type": "string",
+        "enum": [
+          "planning",
+          "ongoing",
+          "paused",
+          "completed",
+          "dropped"
         ]
       },
       "SettingsConfigResponse": {
@@ -5328,17 +5581,6 @@
         "required": [
           "field",
           "value"
-        ]
-      },
-      "CanonicalStatus": {
-        "description": "The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity's own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n*outside* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused/dropped\nthing isn't something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.",
-        "type": "string",
-        "enum": [
-          "planning",
-          "ongoing",
-          "paused",
-          "completed",
-          "dropped"
         ]
       },
       "StatsQuery": {
@@ -7393,6 +7635,13 @@
           "revision": {
             "type": "string"
           },
+          "schemaRevision": {
+            "description": "Optional schema precondition from an edit review. Prevents applying that\nreview under a changed field interpretation; older clients may omit it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "frontmatter": {
             "type": [
               "object",
@@ -7449,6 +7698,85 @@
         "required": [
           "deletedId",
           "backupPath"
+        ]
+      },
+      "EntityEditReviewRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/EntityEditDraft"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/EntityEditDraft"
+          }
+        },
+        "required": [
+          "type",
+          "baseline",
+          "draft"
+        ]
+      },
+      "EntityEditDraft": {
+        "description": "An editor snapshot. Values are normalized only by the shared draft policy.",
+        "type": "object",
+        "properties": {
+          "basename": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "frontmatter": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "basename",
+          "body",
+          "frontmatter"
+        ]
+      },
+      "EntityEditReviewResponse": {
+        "description": "Read-only three-way review. Conflicts retain the latest value until the host\nexplicitly chooses a side. Accepting a review is not a vault mutation.",
+        "type": "object",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          },
+          "local": {
+            "$ref": "#/components/schemas/EntityEditDraft"
+          },
+          "merged": {
+            "$ref": "#/components/schemas/EntityEditDraft"
+          },
+          "conflictFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bodyConflict": {
+            "type": "boolean"
+          },
+          "nameConflict": {
+            "type": "boolean"
+          },
+          "schemaRevision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity",
+          "local",
+          "merged",
+          "conflictFields",
+          "bodyConflict",
+          "nameConflict",
+          "schemaRevision"
         ]
       },
       "ExternalReviewRequest": {
@@ -7722,6 +8050,17 @@
             "items": {
               "$ref": "#/components/schemas/ProviderEpisodeGroup"
             }
+          },
+          "review": {
+            "description": "Merge matching and default selection computed by the shared core.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeSyncReview"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -7785,6 +8124,60 @@
         "required": [
           "key",
           "title"
+        ]
+      },
+      "EpisodeSyncReview": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "description": "Revision of the exact local episode snapshot used for this review.",
+            "type": "string"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeSyncRow"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "grouped",
+          "rows"
+        ]
+      },
+      "EpisodeSyncRow": {
+        "type": "object",
+        "properties": {
+          "groupIndex": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "itemIndex": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0
+          },
+          "existingGrouped": {
+            "type": "boolean"
+          },
+          "existingFlat": {
+            "type": "boolean"
+          },
+          "selected": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "groupIndex",
+          "itemIndex",
+          "existingGrouped",
+          "existingFlat",
+          "selected"
         ]
       },
       "ImportEpisodesRequest": {
@@ -8609,6 +9002,18 @@
           "id"
         ]
       },
+      "ImportPlanSnapshot": {
+        "description": "Opaque, versioned core-owned review state for an in-process host's private\ndurable journal. Contains normalized source data, including private notes.\nHosts must preserve this string intact and exclude it from backups/logs.\nIt is not a commit authorization and cannot restore an executing job.",
+        "type": "object",
+        "properties": {
+          "snapshot": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot"
+        ]
+      },
       "CommitImportJobRequest": {
         "type": "object",
         "properties": {
@@ -8793,7 +9198,7 @@
             ]
           },
           "revision": {
-            "description": "Advisory; ingest re-reads the entity rather than enforcing this.",
+            "description": "Optional expected entity revision, checked against fresh bytes under the\ncontent mutation lock. Omit for source-URL-conditional background merges.",
             "type": [
               "string",
               "null"

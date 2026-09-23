@@ -15,9 +15,37 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock, Weak};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
+
+/// Native hosts can open a foreground and a headless router for the same vault.
+/// Coordinate their commits and invalidate cached reads by the stable host identity,
+/// never the display name or index-cache directory. Weak entries don't retain closed vaults indefinitely.
+#[derive(Default)]
+struct VaultCoordination {
+    mutation: Mutex<()>,
+    generation: Arc<AtomicU64>,
+}
+
+fn content_mutation_for_identity(identity: Option<&str>) -> Arc<VaultCoordination> {
+    let Some(identity) = identity else {
+        return Arc::new(VaultCoordination::default());
+    };
+    static LOCKS: OnceLock<std::sync::Mutex<HashMap<String, Weak<VaultCoordination>>>> =
+        OnceLock::new();
+    let mut locks = LOCKS
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    locks.retain(|_, value| value.strong_count() > 0);
+    if let Some(lock) = locks.get(identity).and_then(Weak::upgrade) {
+        return lock;
+    }
+    let lock = Arc::new(VaultCoordination::default());
+    locks.insert(identity.to_owned(), Arc::downgrade(&lock));
+    lock
+}
 
 /// Maximum number of finished asset-download jobs kept in memory.
 const MAX_RETAINED_JOBS: usize = 20;
@@ -63,7 +91,7 @@ impl Drop for VaultWatchTask {
     }
 }
 
-/// Proof that the router-wide vault-content mutation lock is held. Only
+/// Proof that the vault-content mutation lock is held. Only
 /// [`AppState::content_mutation_lock`] can construct one (the field is private
 /// to this module); every vault write helper takes `&ContentMutationGuard`.
 pub(crate) struct ContentMutationGuard<'a>(#[allow(dead_code)] tokio::sync::MutexGuard<'a, ()>);
@@ -178,6 +206,7 @@ pub struct ApiOptions {
     /// Stable host-provided identity for the active vault. Native hosts that use
     /// a display label in `AppConfig::vault_root` (notably iOS) set this to the
     /// remembered vault UUID so two same-named vaults never share an index cache.
+    /// Also coordinates content commits across same-identity native routers.
     /// Network/desktop runtimes leave it `None` and use the real vault root.
     pub index_cache_identity: Option<String>,
 }
@@ -221,11 +250,12 @@ pub(crate) struct AppState {
     /// clone/replace inside the cache load/save, never across an `.await`.
     index_cache_memory: Arc<std::sync::Mutex<MemoryIndexCache>>,
     reload: Arc<Mutex<()>>,
-    /// Serializes vault content mutations within this router. Atomic VFS writes
+    /// Serializes vault content mutations across routers sharing a host identity.
+    /// Without a host identity the lock is router-local. Atomic VFS writes
     /// prevent torn files; this lock additionally prevents two in-process
     /// read-check-write requests from both accepting the same revision and
     /// silently overwriting one another.
-    content_mutation: Arc<Mutex<()>>,
+    coordination: Arc<VaultCoordination>,
     external_tokens: Arc<Mutex<HashMap<String, CachedAccessToken>>>,
     /// Per-provider locks that single-flight token acquisition so a cold cache
     /// under concurrent searches does not stampede the upstream token endpoint.
@@ -344,6 +374,7 @@ impl AppState {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         let (vault_changes, _) = tokio::sync::watch::channel(0);
+        let coordination = content_mutation_for_identity(options.index_cache_identity.as_deref());
         Self {
             options,
             vault_fs,
@@ -352,14 +383,14 @@ impl AppState {
             secret_store,
             cache: Arc::new(Mutex::new(None)),
             index_cache_memory: Arc::new(std::sync::Mutex::new(MemoryIndexCache::default())),
-            cache_generation: Arc::new(AtomicU64::new(0)),
+            cache_generation: Arc::clone(&coordination.generation),
             vault_watch_started: Arc::new(Mutex::new(false)),
             vault_watch_task: Arc::new(VaultWatchTask::new()),
             vault_change_generation: Arc::new(AtomicU64::new(0)),
             vault_changes,
             reload: Arc::new(Mutex::new(())),
             external_tokens: Arc::new(Mutex::new(HashMap::new())),
-            content_mutation: Arc::new(Mutex::new(())),
+            coordination,
             token_locks: Arc::new(Mutex::new(HashMap::new())),
             token_disk_lock: Arc::new(Mutex::new(())),
             analytics: Arc::new(RevisionMemo::new()),
@@ -511,7 +542,14 @@ impl AppState {
 
     pub(crate) fn next_import_job_id(&self) -> String {
         let counter = self.import_job_counter.fetch_add(1, Ordering::Relaxed);
-        format!("import-{}-{}", unix_seconds_now(), counter)
+        format!(
+            "import-{}-{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos(),
+            counter
+        )
     }
 
     /// Inserts a new import job unless one is already actively fetching or
@@ -522,12 +560,16 @@ impl AppState {
     /// nothing) when a job is already in flight.
     pub(crate) async fn insert_import_job_if_idle(&self, record: ImportJobRecord) -> bool {
         let mut jobs = self.import_jobs.lock().await;
-        if jobs.values().any(|existing| {
-            matches!(
-                existing.job.status,
-                ImportJobStatus::Queued | ImportJobStatus::Fetching | ImportJobStatus::Committing
-            )
-        }) {
+        if jobs.contains_key(&record.job.id)
+            || jobs.values().any(|existing| {
+                matches!(
+                    existing.job.status,
+                    ImportJobStatus::Queued
+                        | ImportJobStatus::Fetching
+                        | ImportJobStatus::Committing
+                )
+            })
+        {
             return false;
         }
         jobs.insert(record.job.id.clone(), record);
@@ -579,7 +621,7 @@ impl AppState {
     /// The lock is not reentrant: release it before calling a helper that
     /// acquires it itself (e.g. `edit_entity_document`).
     pub(crate) async fn content_mutation_lock(&self) -> ContentMutationGuard<'_> {
-        ContentMutationGuard(self.content_mutation.lock().await)
+        ContentMutationGuard(self.coordination.mutation.lock().await)
     }
 
     /// Returns the per-provider lock used to single-flight token acquisition.
@@ -958,6 +1000,10 @@ mod tests {
     use crate::vfs::InMemoryVfs;
 
     fn test_state(vfs: Arc<InMemoryVfs>) -> AppState {
+        test_state_with_identity(vfs, None)
+    }
+
+    fn test_state_with_identity(vfs: Arc<InMemoryVfs>, identity: Option<String>) -> AppState {
         AppState::with_vault(
             ApiOptions {
                 cache_ttl: Duration::from_secs(60 * 60),
@@ -966,7 +1012,7 @@ mod tests {
                 content_writable: true,
                 host_asset_ingest: false,
                 index_cache_dir: None,
-                index_cache_identity: None,
+                index_cache_identity: identity,
             },
             vfs as Arc<dyn Vfs>,
             AppConfig {
@@ -977,6 +1023,51 @@ mod tests {
                 "/tmp/kizunashelf-state-test-tokens.json",
             ))),
         )
+    }
+
+    #[tokio::test]
+    async fn host_identity_coordinates_only_the_matching_vault() {
+        let first = content_mutation_for_identity(Some("host-lock-test:first"));
+        let held = first.mutation.lock().await;
+        let same = content_mutation_for_identity(Some("host-lock-test:first"));
+        assert!(same.mutation.try_lock().is_err());
+        let other = content_mutation_for_identity(Some("host-lock-test:other"));
+        assert!(other.mutation.try_lock().is_ok());
+        assert!(content_mutation_for_identity(None)
+            .mutation
+            .try_lock()
+            .is_ok());
+        drop(held);
+        assert!(same.mutation.try_lock().is_ok());
+    }
+
+    #[tokio::test]
+    async fn host_identity_invalidates_other_router_without_a_watcher() {
+        let vfs = Arc::new(InMemoryVfs::new());
+        vfs.insert_file("KizunaShelf/config.yaml", "taxonomyRoot: Taxonomy\ntypes:\n  - id: note\n    label: Note\n    path: Notes\n    fields:\n      - field: title\n        fieldType: title\n");
+        let path = "Taxonomy/Notes/Example.md";
+        vfs.insert_file(path, "---\ntitle: Before\n---\n");
+        let identity = Some("host-cache-test".to_string());
+        let front = test_state_with_identity(Arc::clone(&vfs), identity.clone());
+        let back = test_state_with_identity(Arc::clone(&vfs), identity);
+        let unrelated =
+            test_state_with_identity(Arc::clone(&vfs), Some("host-cache-unrelated".to_string()));
+        for state in [&front, &back, &unrelated] {
+            assert_eq!(
+                get_library(state).await.unwrap().records[0].frontmatter["title"],
+                "Before"
+            );
+        }
+        vfs.insert_file(path, "---\ntitle: After\n---\n");
+        back.invalidate_cache().await;
+        assert_eq!(
+            get_library(&front).await.unwrap().records[0].frontmatter["title"],
+            "After"
+        );
+        assert_eq!(
+            get_library(&unrelated).await.unwrap().records[0].frontmatter["title"],
+            "Before"
+        );
     }
 
     #[tokio::test]

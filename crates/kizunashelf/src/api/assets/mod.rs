@@ -23,7 +23,9 @@ use crate::contract::{
     AssetDownloadResponse, AssetIngestRequest, AssetIngestResponse, AssetUploadRequest,
     AssetUploadResponse,
 };
-use crate::library::{load_entity, serialize_markdown_document, split_markdown_document};
+use crate::library::{
+    file_revision, load_entity, serialize_markdown_document, split_markdown_document,
+};
 use crate::types::{FieldType, Library};
 use crate::vfs::{normalize_relative, read_nfc_tolerant};
 use axum::body::Body;
@@ -196,6 +198,10 @@ pub(crate) async fn ingest_entity_asset(
     // Reading + deleting a client-supplied host path is a host-only capability;
     // reject it before any content-write or filesystem work on every other runtime.
     require_host_asset_ingest(&state)?;
+    // Native foreground and background routers share this guard and cache
+    // generation. Resolve the schema inside it so another router cannot change
+    // an image field's meaning between this read and the conditional commit.
+    let mutation = state.content_mutation_lock().await;
     let library = require_content_writes(&state).await?;
     let Some(entity) = library.record_by_id(&path.id) else {
         return Err(ApiError::not_found("Entity not found"));
@@ -227,12 +233,14 @@ pub(crate) async fn ingest_entity_asset(
     let _ = tokio::fs::remove_file(&request.source_path).await;
 
     let vfs = state.vault_vfs(&library.config.vault_root);
-    let mutation = state.content_mutation_lock().await;
     let asset_dir = resolve_entity_asset_dir(vfs.as_ref(), &asset_root, &entity_path).await;
     let raw = vfs
         .read_to_string(&entity_path)
         .await
         .map_err(|error| anyhow::anyhow!("failed to read entity {entity_path}: {error}"))?;
+    if let Some(revision) = request.revision.as_deref() {
+        check_revision(revision, &file_revision(&raw))?;
+    }
     let mut document = split_markdown_document(&raw);
     let owned = entity_local_asset_paths(&document.frontmatter, type_config);
 
@@ -251,6 +259,7 @@ pub(crate) async fn ingest_entity_asset(
         source_url: &request.source_url,
     };
     let (changed, result) = ingest_field_bytes(
+        &mutation,
         &ctx,
         &mut document.frontmatter,
         &field,
@@ -317,8 +326,10 @@ pub(crate) async fn upload_entity_asset(
     let asset_root = library.config.resolved_asset_root().to_string();
     let all_local = all_local_asset_paths(&library);
 
-    // Read the entity's current frontmatter only to learn which assets it already
-    // owns (safe to overwrite); we never write it back.
+    // Serialize placement with other content writes. Upload paths are immutable
+    // and never replace a saved cover, even when the editor is later discarded.
+    let mutation = state.content_mutation_lock().await;
+    // Read current frontmatter without rewriting the entity.
     let vfs = state.vault_vfs(&library.config.vault_root);
     let asset_dir = resolve_entity_asset_dir(vfs.as_ref(), &asset_root, &entity_path).await;
     let raw = vfs
@@ -338,6 +349,7 @@ pub(crate) async fn upload_entity_asset(
     let content_type = request.content_type.unwrap_or_default();
     let filename = request.filename.unwrap_or_default();
     let outcome = place_uploaded_asset(
+        &mutation,
         &ctx,
         &request.field,
         is_list,

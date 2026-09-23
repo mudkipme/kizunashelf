@@ -6,6 +6,7 @@
  */
 import * as zod from 'zod';
 
+export const configResponseCreationDefaultsDefault = [];
 export const ConfigResponse = zod.object({
   "taxonomyRoot": zod.string(),
   "vaultRoot": zod.string().describe('Absolute vault root, used by the desktop runtime to resolve local assets\ndirectly from disk (the web runtime uses the `\/api\/assets` route instead).'),
@@ -59,7 +60,12 @@ export const ConfigResponse = zod.object({
   "externalTypes": zod.array(zod.string()).optional(),
   "relationType": zod.string().nullish()
 }))
-}))
+})),
+  "creationDefaults": zod.array(zod.object({
+  "type": zod.string(),
+  "canonicalStatus": zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),
+  "frontmatter": zod.record(zod.string(), zod.unknown())
+})).default(configResponseCreationDefaultsDefault).describe('Reviewed creation seeds derived from each type\'s status-role mapping.\nClients copy a matching seed into a new draft only, keeping user edits.')
 })
 
 export type ConfigResponse = zod.input<typeof ConfigResponse>;

@@ -8,6 +8,7 @@ import * as zod from 'zod';
 
 export const UpdateEntityBody = zod.object({
   "revision": zod.string(),
+  "schemaRevision": zod.string().nullish().describe('Optional schema precondition from an edit review. Prevents applying that\nreview under a changed field interpretation; older clients may omit it.'),
   "frontmatter": zod.record(zod.string(), zod.unknown()).nullish(),
   "frontmatterDraft": zod.record(zod.string(), zod.unknown()).nullish().describe('An entity-editor draft: every value the way the user entered it (strings,\nbools, string lists). The core serializes it against the schema — trims,\ndrops empties, coerces progress\/rating text to numbers, wraps relations in\n`[[wikilinks]]` — and deletes every currently-present key the draft no\nlonger carries, so a cleared field is removed rather than kept stale.\nEditors send this instead of hand-building a `frontmatter` merge patch.'),
   "body": zod.string().nullish(),

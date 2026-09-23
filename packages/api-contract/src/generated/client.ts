@@ -120,6 +120,14 @@ import {
   EntityDetailResponse
 } from './entityDetailResponse.zod';
 
+import type {
+  EntityEditReviewRequest
+} from './entityEditReviewRequest.zod';
+
+import {
+  EntityEditReviewResponse
+} from './entityEditReviewResponse.zod';
+
 import {
   EntityListResponse
 } from './entityListResponse.zod';
@@ -227,6 +235,10 @@ import {
 import {
   ImportJobListResponse
 } from './importJobListResponse.zod';
+
+import {
+  ImportPlanSnapshot
+} from './importPlanSnapshot.zod';
 
 import {
   ImportSourceCatalogResponse
@@ -1318,6 +1330,42 @@ const res = await (fetchFn ?? fetch)(getDeleteEntityUrl(id),
 
 
 
+export const getReviewEntityEditUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/edit/review`
+}
+
+export const reviewEntityEdit = async (id: string,
+    entityEditReviewRequest: EntityEditReviewRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<EntityEditReviewResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+const res = await (fetchFn ?? fetch)(getReviewEntityEditUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(entityEditReviewRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? EntityEditReviewResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
 export const getReviewExternalCandidateUrl = (id: string,) => {
 
 
@@ -1846,6 +1894,70 @@ export const getImportJob = async (id: string, options?: RequestInit, fetchFn?: 
     method: 'GET'
 
 
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportJob.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getExportImportPlanUrl = (id: string,) => {
+
+
+
+
+  return `/api/import-jobs/${encodeURIComponent(String(id))}/snapshot`
+}
+
+export const exportImportPlan = async (id: string, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportPlanSnapshot> => {
+
+  const res = await (fetchFn ?? fetch)(getExportImportPlanUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? ImportPlanSnapshot.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getRestoreImportPlanUrl = () => {
+
+
+
+
+  return `/api/import-jobs/restore-plan`
+}
+
+export const restoreImportPlan = async (importPlanSnapshot: ImportPlanSnapshot, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<ImportJob> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+const res = await (fetchFn ?? fetch)(getRestoreImportPlanUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(importPlanSnapshot)
   }
 )
 

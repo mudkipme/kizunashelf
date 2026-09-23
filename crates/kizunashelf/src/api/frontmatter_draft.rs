@@ -39,6 +39,14 @@ pub(super) fn draft_update_patch(
     patch
 }
 
+pub(super) fn normalize_existing_draft(
+    draft: Map<String, Value>,
+    type_config: &EntityTypeConfig,
+    current: &Map<String, Value>,
+) -> Map<String, Value> {
+    normalize(draft, type_config, Some(current))
+}
+
 fn normalize(
     draft: Map<String, Value>,
     type_config: &EntityTypeConfig,

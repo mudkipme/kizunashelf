@@ -17,6 +17,7 @@ use crate::contract::{
 };
 use crate::library::load_entity;
 use crate::markdown::{find_section, splice_section};
+use crate::types::FieldType;
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
 use serde_json::Value;
@@ -43,7 +44,10 @@ pub(crate) async fn review_external_candidate(
         .into_iter()
         .map(|entry| {
             let current = entity.frontmatter.get(&entry.field);
-            let (selected, locked) = field_selection(&entry, current);
+            let is_external_ref = type_config.fields.iter().any(|field| {
+                field.field == entry.field && field.field_type == FieldType::ExternalRef
+            });
+            let (selected, locked) = field_selection(&entry, current, is_external_ref);
             ExternalReviewField {
                 current: current.cloned().unwrap_or(Value::Null),
                 field: entry.field,
@@ -157,16 +161,20 @@ pub(crate) async fn apply_external_candidate(
 /// Default checked/locked state for a candidate field against the current value.
 /// Equality is checked before the external-ref rule, so re-matching the same
 /// candidate leaves an already-set ref locked *off* rather than on.
-fn field_selection(entry: &MappedFieldValue, current: Option<&Value>) -> (bool, bool) {
+fn field_selection(
+    entry: &MappedFieldValue,
+    current: Option<&Value>,
+    is_external_ref: bool,
+) -> (bool, bool) {
     if !entry.has_value {
         return (false, true);
     }
     if values_equal(&entry.value, current) {
         return (false, true);
     }
-    // The external ref (no source metadata field — its value is the candidate
-    // URL) anchors future refreshes, so applying a match always applies it.
-    if entry.external_field.is_none() {
+    // Only a schema-declared external ref anchors future refreshes. Fallback
+    // titles and covers also lack a source metadata field, but stay optional.
+    if is_external_ref {
         return (true, true);
     }
     // Fill blanks by default; leave populated fields for the user to opt into.
@@ -245,16 +253,20 @@ mod tests {
     #[test]
     fn valueless_and_no_op_fields_are_locked_off() {
         assert_eq!(
-            field_selection(&entry(Value::Null, Some("f")), None),
+            field_selection(&entry(Value::Null, Some("f")), None, false),
             (false, true)
         );
         assert_eq!(
-            field_selection(&entry(json!("same"), Some("f")), Some(&json!("same"))),
+            field_selection(
+                &entry(json!("same"), Some("f")),
+                Some(&json!("same")),
+                false
+            ),
             (false, true)
         );
         // Both-empty counts as equal even across shapes.
         assert_eq!(
-            field_selection(&entry(json!([]), Some("f")), Some(&json!(""))),
+            field_selection(&entry(json!([]), Some("f")), Some(&json!("")), false),
             (false, true)
         );
     }
@@ -262,10 +274,10 @@ mod tests {
     #[test]
     fn the_external_ref_is_locked_on_unless_already_set() {
         let ref_entry = entry(json!("https://example.test/1"), None);
-        assert_eq!(field_selection(&ref_entry, None), (true, true));
+        assert_eq!(field_selection(&ref_entry, None, true), (true, true));
         // Re-matching the same candidate: equality wins, so the ref locks off.
         assert_eq!(
-            field_selection(&ref_entry, Some(&json!("https://example.test/1"))),
+            field_selection(&ref_entry, Some(&json!("https://example.test/1")), true),
             (false, true)
         );
     }
@@ -273,12 +285,31 @@ mod tests {
     #[test]
     fn blanks_default_on_and_populated_fields_default_off() {
         let incoming = entry(json!("New Value"), Some("f"));
-        assert_eq!(field_selection(&incoming, None), (true, false));
-        assert_eq!(field_selection(&incoming, Some(&json!(""))), (true, false));
+        assert_eq!(field_selection(&incoming, None, false), (true, false));
         assert_eq!(
-            field_selection(&incoming, Some(&json!("Hand-entered"))),
+            field_selection(&incoming, Some(&json!("")), false),
+            (true, false)
+        );
+        assert_eq!(
+            field_selection(&incoming, Some(&json!("Hand-entered")), false),
             (false, false)
         );
+    }
+
+    #[test]
+    fn fallback_titles_and_covers_are_not_required_overwrites() {
+        for value in ["Candidate title", "https://example.test/cover.jpg"] {
+            let incoming = entry(json!(value), None);
+            assert_eq!(field_selection(&incoming, None, false), (true, false));
+            assert_eq!(
+                field_selection(&incoming, Some(&json!("Hand-entered")), false),
+                (false, false)
+            );
+            assert_eq!(
+                field_selection(&incoming, Some(&json!(value)), false),
+                (false, true)
+            );
+        }
     }
 
     #[test]

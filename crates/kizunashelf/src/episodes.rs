@@ -10,7 +10,9 @@
 use crate::body_tasks::{
     done_date_regex, due_date_regex, emoji_suffix, strip_emoji_date, DONE_EMOJI, DUE_EMOJI,
 };
-use crate::contract::{EntityEpisodes, Episode, EpisodeGroup};
+use crate::contract::{
+    EntityEpisodes, Episode, EpisodeGroup, EpisodeSyncReview, EpisodeSyncRow, ProviderEpisodeGroup,
+};
 use crate::markdown::{find_section, headings, remove_section, splice_section, FenceState};
 use crate::types::{
     BodySection, BodySectionKind, EntityTypeConfig, EpisodeDate, EpisodeDateRole, EpisodeProgress,
@@ -572,9 +574,11 @@ pub fn merge_episodes(
         {
             Some(group) => {
                 for item in &incoming_group.items {
-                    match group.items.iter_mut().find(|existing_item| {
-                        !item.key.trim().is_empty() && existing_item.key.trim() == item.key.trim()
-                    }) {
+                    match group
+                        .items
+                        .iter_mut()
+                        .find(|existing_item| same_episode_key(&item.key, &existing_item.key))
+                    {
                         Some(existing_item) => {
                             // Fill an empty title always; overwrite a non-empty one only
                             // when asked and the incoming title isn't itself empty.
@@ -617,6 +621,62 @@ pub fn merge_episodes(
         }
     }
     result
+}
+
+fn same_episode_key(incoming: &str, existing: &str) -> bool {
+    !incoming.trim().is_empty() && incoming.trim() == existing.trim()
+}
+
+/// Selection hints use exactly the merge's group/key policy. Keyless items never
+/// match; source row offsets remain unique even when provider keys/labels repeat.
+pub fn review_episode_import(
+    existing: &EntityEpisodes,
+    incoming: &[ProviderEpisodeGroup],
+    revision: String,
+) -> EpisodeSyncReview {
+    let seasoned =
+        incoming.len() > 1 || incoming.first().is_some_and(|g| !g.label.trim().is_empty());
+    let flat = existing.groups.len() == 1
+        && existing.groups[0].label.trim().is_empty()
+        && !existing.groups[0].items.is_empty();
+    let grouped = seasoned && !flat;
+    let matched = |label: &str, key: &str| {
+        existing
+            .groups
+            .iter()
+            .find(|g| same_label(&g.label, label))
+            .is_some_and(|g| g.items.iter().any(|item| same_episode_key(key, &item.key)))
+    };
+    let rows = incoming
+        .iter()
+        .enumerate()
+        .flat_map(|(group_index, group)| {
+            group
+                .items
+                .iter()
+                .enumerate()
+                .map(move |(item_index, item)| {
+                    let existing_grouped = matched(&group.label, &item.key);
+                    let existing_flat = matched("", &item.key);
+                    EpisodeSyncRow {
+                        group_index,
+                        item_index,
+                        existing_grouped,
+                        existing_flat,
+                        selected: !(if grouped {
+                            existing_grouped
+                        } else {
+                            existing_flat
+                        }) && !(seasoned && flat && group_index > 0),
+                    }
+                })
+        })
+        .collect();
+    EpisodeSyncReview {
+        revision,
+        grouped,
+        rows,
+    }
 }
 
 fn same_label(a: &str, b: &str) -> bool {
@@ -1080,5 +1140,124 @@ mod tests {
         let progress = episode_progress(body, &section());
         assert_eq!(progress.total, 3);
         assert_eq!(progress.watched, 2);
+    }
+}
+
+#[cfg(test)]
+mod review_tests {
+    use super::*;
+    use crate::contract::ProviderEpisodeItem;
+    fn existing(label: &str) -> EntityEpisodes {
+        EntityEpisodes {
+            heading: "Episodes".into(),
+            tracking: EpisodeTracking::Checklist,
+            groups: vec![EpisodeGroup {
+                label: label.into(),
+                items: vec![
+                    Episode {
+                        key: " 1 ".into(),
+                        title: "My title".into(),
+                        watched: true,
+                        date: None,
+                        done: Some("2026-09-01".into()),
+                    },
+                    Episode {
+                        key: "".into(),
+                        title: "Unnumbered".into(),
+                        watched: false,
+                        date: None,
+                        done: None,
+                    },
+                ],
+            }],
+            total: 2,
+            watched: 1,
+            description: String::new(),
+            trailing: String::new(),
+        }
+    }
+    fn incoming() -> Vec<ProviderEpisodeGroup> {
+        vec![
+            ProviderEpisodeGroup {
+                label: " season 1 ".into(),
+                items: vec![
+                    ProviderEpisodeItem {
+                        key: "1".into(),
+                        title: "Provider title".into(),
+                        date: None,
+                    },
+                    ProviderEpisodeItem {
+                        key: "".into(),
+                        title: "Unnumbered A".into(),
+                        date: None,
+                    },
+                    ProviderEpisodeItem {
+                        key: "".into(),
+                        title: "Unnumbered B".into(),
+                        date: None,
+                    },
+                ],
+            },
+            ProviderEpisodeGroup {
+                label: "Season 2".into(),
+                items: vec![ProviderEpisodeItem {
+                    key: "1".into(),
+                    title: "Next season".into(),
+                    date: None,
+                }],
+            },
+        ]
+    }
+    #[test]
+    fn hints_follow_merge_matching_and_keep_keyless_rows_independent() {
+        let current = existing("Season 1");
+        let review = review_episode_import(&current, &incoming(), "revision".into());
+        assert!(review.grouped);
+        assert_eq!(review.revision, "revision");
+        assert!(review.rows[0].existing_grouped);
+        assert!(!review.rows[0].selected);
+        assert!(review.rows[1].selected && review.rows[2].selected && review.rows[3].selected);
+        assert_eq!(review.rows[1].item_index, 1);
+        assert_eq!(review.rows[2].item_index, 2);
+        let groups = incoming()
+            .iter()
+            .map(|g| EpisodeGroup {
+                label: g.label.clone(),
+                items: g
+                    .items
+                    .iter()
+                    .map(|i| Episode {
+                        key: i.key.clone(),
+                        title: i.title.clone(),
+                        watched: false,
+                        date: i.date.clone(),
+                        done: None,
+                    })
+                    .collect(),
+            })
+            .collect::<Vec<_>>();
+        let merged = merge_episodes(&current, &groups, true);
+        assert_eq!(merged[0].items[0].title, "Provider title");
+        assert!(merged[0].items[0].watched);
+        assert_eq!(merged[0].items[0].done.as_deref(), Some("2026-09-01"));
+        assert_eq!(merged[0].items.len(), 4);
+    }
+    #[test]
+    fn flat_lists_default_to_first_season_but_empty_lists_keep_all_groups() {
+        let current = existing("");
+        let review = review_episode_import(&current, &incoming(), "revision".into());
+        assert!(!review.grouped);
+        assert!(review.rows[0].existing_flat);
+        assert!(!review.rows[0].selected && !review.rows[3].selected);
+        assert!(review.rows[1].selected && review.rows[2].selected);
+        let empty = EntityEpisodes {
+            groups: vec![],
+            total: 0,
+            watched: 0,
+            ..current
+        };
+        let review = review_episode_import(&empty, &incoming(), "revision".into());
+        assert!(review.grouped);
+        assert!(review.rows.iter().all(|row| row.selected));
     }
 }

@@ -6,6 +6,11 @@
  */
 import * as zod from 'zod';
 
+export const episodeSyncResponseReviewOneRowsItemGroupIndexMin = 0;
+
+export const episodeSyncResponseReviewOneRowsItemItemIndexMin = 0;
+
+
 export const EpisodeSyncResponse = zod.object({
   "sources": zod.array(zod.object({
   "provider": zod.string(),
@@ -19,7 +24,18 @@ export const EpisodeSyncResponse = zod.object({
   "title": zod.string(),
   "date": zod.string().nullish().describe('The item\'s air\/release date (`YYYY-MM-DD`) when the provider exposes one;\nabsent otherwise (e.g. CD tracks).')
 }))
+})),
+  "review": zod.union([zod.object({
+  "revision": zod.string().describe('Revision of the exact local episode snapshot used for this review.'),
+  "grouped": zod.boolean(),
+  "rows": zod.array(zod.object({
+  "groupIndex": zod.int().min(episodeSyncResponseReviewOneRowsItemGroupIndexMin),
+  "itemIndex": zod.int().min(episodeSyncResponseReviewOneRowsItemItemIndexMin),
+  "existingGrouped": zod.boolean(),
+  "existingFlat": zod.boolean(),
+  "selected": zod.boolean()
 }))
+}),zod.null()]).optional().describe('Merge matching and default selection computed by the shared core.')
 }).describe('Response of the episodes `fetch`: the providers that can supply episodes for\nthis entity, plus the structured episodes from the chosen one.')
 
 export type EpisodeSyncResponse = zod.input<typeof EpisodeSyncResponse>;

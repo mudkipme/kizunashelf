@@ -138,6 +138,19 @@ pub struct ConfigResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tags_field: Option<String>,
     pub types: Vec<EntityTypeConfig>,
+    /// Reviewed creation seeds derived from each type's status-role mapping.
+    /// Clients copy a matching seed into a new draft only, keeping user edits.
+    #[serde(default)]
+    pub creation_defaults: Vec<EntityCreationDefaults>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityCreationDefaults {
+    #[serde(rename = "type")]
+    pub entity_type: String,
+    pub canonical_status: CanonicalStatus,
+    pub frontmatter: Map<String, Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -552,6 +565,28 @@ pub struct EpisodeSyncResponse {
     /// The provider these `groups` came from (empty when there are no sources).
     pub provider: String,
     pub groups: Vec<ProviderEpisodeGroup>,
+    /// Merge matching and default selection computed by the shared core.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review: Option<EpisodeSyncReview>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeSyncReview {
+    /// Revision of the exact local episode snapshot used for this review.
+    pub revision: String,
+    pub grouped: bool,
+    pub rows: Vec<EpisodeSyncRow>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EpisodeSyncRow {
+    pub group_index: usize,
+    pub item_index: usize,
+    pub existing_grouped: bool,
+    pub existing_flat: bool,
+    pub selected: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -649,10 +684,46 @@ pub struct RenameLinkUpdate {
     pub links: u32,
 }
 
+/// An editor snapshot. Values are normalized only by the shared draft policy.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityEditDraft {
+    pub basename: String,
+    pub body: String,
+    pub frontmatter: Map<String, Value>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityEditReviewRequest {
+    #[serde(rename = "type")]
+    pub entity_type: String,
+    pub baseline: EntityEditDraft,
+    pub draft: EntityEditDraft,
+}
+
+/// Read-only three-way review. Conflicts retain the latest value until the host
+/// explicitly chooses a side. Accepting a review is not a vault mutation.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityEditReviewResponse {
+    pub entity: Entity,
+    pub local: EntityEditDraft,
+    pub merged: EntityEditDraft,
+    pub conflict_fields: Vec<String>,
+    pub body_conflict: bool,
+    pub name_conflict: bool,
+    pub schema_revision: String,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateEntityRequest {
     pub revision: String,
+    /// Optional schema precondition from an edit review. Prevents applying that
+    /// review under a changed field interpretation; older clients may omit it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schema_revision: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frontmatter: Option<Map<String, Value>>,
     /// An entity-editor draft: every value the way the user entered it (strings,
@@ -1385,7 +1456,8 @@ pub struct AssetIngestRequest {
     /// Content-Type the host observed, used as an image sniff hint.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_type: Option<String>,
-    /// Advisory; ingest re-reads the entity rather than enforcing this.
+    /// Optional expected entity revision, checked against fresh bytes under the
+    /// content mutation lock. Omit for source-URL-conditional background merges.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub revision: Option<String>,
 }
@@ -1786,6 +1858,16 @@ pub struct ImportPlanItem {
 pub struct ImportPlan {
     pub buckets: Vec<ImportPlanBucket>,
     pub items: Vec<ImportPlanItem>,
+}
+
+/// Opaque, versioned core-owned review state for an in-process host's private
+/// durable journal. Contains normalized source data, including private notes.
+/// Hosts must preserve this string intact and exclude it from backups/logs.
+/// It is not a commit authorization and cannot restore an executing job.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportPlanSnapshot {
+    pub snapshot: String,
 }
 
 /// An in-memory batch import job. Like the asset-download job it does not survive

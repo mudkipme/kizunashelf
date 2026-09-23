@@ -13,7 +13,7 @@ use crate::api::external::{
     lookup_existing, resolve_candidate,
 };
 use crate::api::mutations::{resolve_free_basename, write_new_entity_file};
-use crate::api::state::{get_library, AppState};
+use crate::api::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     CommitImportJobRequest, ExistingEntityRef, ImportDecisionAction, ImportInput, ImportJob,
     ImportJobStatus, ImportPlan, ImportPlanBucket, ImportPlanItem, ImportPlanItemState,
@@ -28,7 +28,7 @@ const MAX_IMPORT_ERRORS: usize = 50;
 
 /// A resolved item held on the job record for commit. The wire [`ImportPlanItem`]
 /// is a projection of this.
-#[derive(Clone)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub(super) struct PlannedItem {
     pub item: ImportItem,
     pub state: ImportPlanItemState,
@@ -72,6 +72,13 @@ pub(super) async fn run_plan_job(
 
     let library = match get_library(&state).await {
         Ok(library) => library,
+        Err(error) => {
+            fail_plan(&state, &job_id, &error.to_string()).await;
+            return;
+        }
+    };
+    let schema = match serde_json::to_value(library.config.clone().into_parts().1) {
+        Ok(schema) => schema,
         Err(error) => {
             fail_plan(&state, &job_id, &error.to_string()).await;
             return;
@@ -123,6 +130,7 @@ pub(super) async fn run_plan_job(
             return;
         }
         record.items = planned;
+        record.schema = Some(schema);
         record.job.status = ImportJobStatus::Planned;
         record.job.total = total;
         record.job.processed = total;
@@ -261,12 +269,42 @@ pub(super) async fn run_commit_job(
             return;
         }
     };
+    let reviewed_schema = state
+        .import_jobs()
+        .lock()
+        .await
+        .get(&job_id)
+        .and_then(|record| record.schema.clone());
+    if reviewed_schema.is_some()
+        && serde_json::to_value(library.config.clone().into_parts().1).ok() != reviewed_schema
+    {
+        fail_commit(
+            &state,
+            &job_id,
+            "The vault schema changed since this plan was reviewed. Review a new import plan.",
+            cancel.load(Ordering::Relaxed),
+        )
+        .await;
+        return;
+    }
     let vfs = state.vault_vfs(&library.config.vault_root);
     let taxonomy_root = library.config.taxonomy_root.clone();
-    let index = build_existing_index(&library);
+    let schema = match serde_json::to_value(&library.config) {
+        Ok(schema) => schema,
+        Err(error) => {
+            fail_commit(
+                &state,
+                &job_id,
+                &error.to_string(),
+                cancel.load(Ordering::Relaxed),
+            )
+            .await;
+            return;
+        }
+    };
 
-    // Refs created this run, so a second item can't re-create the same work
-    // against the (pre-run) library index.
+    // Retain in-batch dedup even when a custom mapping does not index the
+    // external reference on the created file.
     let mut created_refs: HashSet<(String, String)> = HashSet::new();
     // (path, watched_count) for episode enrichment after the create pass.
     let mut created: Vec<(String, Option<u32>)> = Vec::new();
@@ -376,15 +414,6 @@ pub(super) async fn run_commit_job(
             continue;
         };
 
-        // Already in the library (or created earlier this run)? Skip, create nothing.
-        let created_key = (provider.to_lowercase(), candidate.source_id.to_lowercase());
-        if lookup_existing(&index, &candidate, &type_config.id).is_some()
-            || created_refs.contains(&created_key)
-        {
-            mark_skipped(&state, &job_id).await;
-            continue;
-        }
-
         let (mut frontmatter, mut body, mapped_fields) =
             build_mapped_document(&candidate, &type_config);
         if request.options.import_user_data {
@@ -404,15 +433,50 @@ pub(super) async fn run_commit_job(
             }
         };
         let year = candidate_year(&type_config, &mapped_fields);
-        // Lock just this item's free-name pick + write (never the provider fetch
-        // above, nor the whole run) so the name can't be taken between the check
-        // and the write by a concurrent in-app create.
+        // Provider traffic stays outside the mutation lock. Everything that
+        // authorizes a write is checked again inside it: cancellation, current
+        // schema/access, duplicates and filename availability. SAF has no native
+        // watcher, so the earlier library snapshot is not authoritative here.
         let mutation = state.content_mutation_lock().await;
+        if cancel.load(Ordering::Relaxed) {
+            break;
+        }
+        state.invalidate_cache().await;
+        let current = match require_content_writes(&state).await {
+            Ok(library) => library,
+            Err(error) => {
+                fail_commit(
+                    &state,
+                    &job_id,
+                    error.message(),
+                    cancel.load(Ordering::Relaxed),
+                )
+                .await;
+                return;
+            }
+        };
+        match serde_json::to_value(&current.config) {
+            Ok(current_schema) if current_schema == schema => {}
+            _ => {
+                fail_commit(&state, &job_id, "The vault schema changed during import. Review a new plan before importing the remaining items.", cancel.load(Ordering::Relaxed)).await;
+                return;
+            }
+        }
+        if cancel.load(Ordering::Relaxed) {
+            break;
+        }
+        let created_key = (provider.to_lowercase(), candidate.source_id.to_lowercase());
+        if lookup_existing(&build_existing_index(&current), &candidate, &type_config.id).is_some()
+            || created_refs.contains(&created_key)
+        {
+            mark_skipped(&state, &job_id).await;
+            continue;
+        }
         let basename = match resolve_free_basename(
             vfs.as_ref(),
             &taxonomy_root,
             &type_config,
-            &library,
+            &current,
             &base,
             year.as_deref(),
             Some(&provider),
@@ -426,6 +490,9 @@ pub(super) async fn run_commit_job(
             }
         };
 
+        if cancel.load(Ordering::Relaxed) {
+            break;
+        }
         let written = write_new_entity_file(
             &mutation,
             vfs.as_ref(),
@@ -436,6 +503,9 @@ pub(super) async fn run_commit_job(
             &body,
         )
         .await;
+        // Publish each item before releasing the shared gate so another host
+        // engine cannot retain an index from before this creation.
+        state.invalidate_cache().await;
         drop(mutation);
         match written {
             Ok(path) => {
@@ -582,5 +652,144 @@ async fn finish_cancelled(state: &AppState, job_id: &str) {
 fn push_error(job: &mut ImportJob, message: String) {
     if job.errors.len() < MAX_IMPORT_ERRORS {
         job.errors.push(message);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api::import::{create_import_job, ImportJobRecord};
+    use crate::api::ApiOptions;
+    use crate::contract::CreateImportJobRequest;
+    use crate::secrets::NativeSecretStore;
+    use crate::types::AppConfig;
+    use crate::vfs::{InMemoryVfs, Vfs};
+    use axum::{extract::State, Json};
+    use serde_json::json;
+    use std::time::Duration;
+
+    const CONFIG: &str = "taxonomyRoot: Shelf\ntypes:\n  - id: anime\n    label: Anime\n    path: Anime\n    fields:\n      - field: title\n        fieldType: title\n        externalFields:\n          - source: myanimelist\n            field: title\n      - field: source\n        fieldType: externalRef\n        externalRef: myanimelist\n        externalTypes: [anime]\n";
+
+    async fn fixture() -> (
+        AppState,
+        Arc<InMemoryVfs>,
+        String,
+        Vec<PlannedItem>,
+        Arc<AtomicBool>,
+    ) {
+        let fs = Arc::new(InMemoryVfs::new());
+        fs.insert_file("KizunaShelf/config.yaml", CONFIG);
+        let state = AppState::with_vault(
+            ApiOptions {
+                cache_ttl: Duration::from_secs(3600),
+                web_dist_path: None,
+                settings_writable: true,
+                content_writable: true,
+                host_asset_ingest: false,
+                index_cache_dir: None,
+                index_cache_identity: None,
+            },
+            fs.clone(),
+            AppConfig {
+                vault_root: "test".into(),
+                content_writable: Some(true),
+            },
+            Arc::new(NativeSecretStore::with_token_path(
+                std::path::PathBuf::from("/tmp/import-race-unused-tokens.json"),
+            )),
+        );
+        let request: CreateImportJobRequest = serde_json::from_value(json!({"source":"yamtrack","input":{"csvText":"media_id,source,media_type,title,status\n1,mal,anime,Imported title,Planning\n"}})).unwrap();
+        let job = create_import_job(State(state.clone()), Json(request))
+            .await
+            .unwrap_or_else(|error| panic!("{}", error.message()))
+            .0;
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                if state.import_jobs().lock().await[&job.id].job.status == ImportJobStatus::Planned
+                {
+                    break;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        let (items, cancel) = {
+            let mut jobs = state.import_jobs().lock().await;
+            let ImportJobRecord {
+                job, items, cancel, ..
+            } = jobs.get_mut(&job.id).unwrap();
+            job.status = ImportJobStatus::Committing;
+            (items.clone(), cancel.clone())
+        };
+        (state, fs, job.id, items, cancel)
+    }
+
+    async fn race(change: &str) -> (ImportJob, Vec<String>) {
+        let (state, fs, id, items, cancel) = fixture().await;
+        let held = state.content_mutation_lock().await;
+        let request = serde_json::from_value(
+            json!({"options":{"importUserData":true,"importEpisodes":false,"markProgress":false}}),
+        )
+        .unwrap();
+        let worker = run_commit_job(state.clone(), id.clone(), items, request, cancel.clone());
+        tokio::pin!(worker);
+        // The worker has a warm library and a complete offline CSV candidate.
+        // Drive it until it is waiting for the held mutation lock.
+        assert!(
+            tokio::time::timeout(Duration::from_millis(20), worker.as_mut())
+                .await
+                .is_err()
+        );
+        match change {
+            "duplicate" => fs.insert_file("Shelf/Anime/Kept.md", "---\ntitle: Different local title\nsource: https://myanimelist.net/anime/1\n---\nKeep original notes\n"),
+            "schema" => fs.insert_file("KizunaShelf/config.yaml", &CONFIG.replace("path: Anime", "path: Changed")),
+            "malformed" => fs.insert_file("KizunaShelf/config.yaml", "types: ["),
+            "cancel" => cancel.store(true, Ordering::Relaxed),
+            _ => unreachable!(),
+        }
+        // No manual cache invalidation: SAF/cloud changes have no native watcher.
+        drop(held);
+        tokio::time::timeout(Duration::from_secs(5), worker)
+            .await
+            .unwrap();
+        let files = fs
+            .read_dir("Shelf/Anime")
+            .await
+            .unwrap_or_default()
+            .into_iter()
+            .map(|f| f.name)
+            .collect();
+        let job = state.import_jobs().lock().await[&id].job.clone();
+        (job, files)
+    }
+
+    #[tokio::test]
+    async fn import_rechecks_duplicates_after_waiting_for_mutation() {
+        let (job, files) = race("duplicate").await;
+        assert_eq!(job.created, 0);
+        assert_eq!(job.skipped, 1);
+        assert_eq!(files, vec!["Kept.md"]);
+    }
+    #[tokio::test]
+    async fn import_rejects_schema_changes_while_waiting_for_mutation() {
+        let (job, files) = race("schema").await;
+        assert_eq!(job.status, ImportJobStatus::Failed);
+        assert_eq!(job.created, 0);
+        assert!(files.is_empty());
+    }
+    #[tokio::test]
+    async fn import_rejects_malformed_config_after_waiting_for_mutation() {
+        let (job, files) = race("malformed").await;
+        assert_eq!(job.status, ImportJobStatus::Failed);
+        assert_eq!(job.created, 0);
+        assert!(files.is_empty());
+    }
+    #[tokio::test]
+    async fn import_cancelled_while_waiting_never_starts_a_write() {
+        let (job, files) = race("cancel").await;
+        assert_eq!(job.status, ImportJobStatus::Cancelled);
+        assert_eq!(job.created, 0);
+        assert!(files.is_empty());
     }
 }

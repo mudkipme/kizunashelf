@@ -2,14 +2,17 @@
 //! profile) or a file export (CSV) and create vault entities, reusing the
 //! quick-capture pipeline (schema mapping, "in library" dedup, atomic writes,
 //! episode import). A `plan` job fetches + resolves items; a `commit` job then
-//! creates the approved ones. Jobs live in memory like asset-download jobs;
-//! re-running is safe because the dedup gate skips already-created entities.
+//! creates the approved ones. Executing jobs live in memory; in-process hosts
+//! can save and restore uncommitted reviews through opaque snapshots. Replanning
+//! after an interrupted run uses the dedup gate to skip already-created entities.
 //! See `docs/batch-import-plan.md`.
 
 mod csv_util;
 mod job;
 mod model;
+mod snapshot;
 mod sources;
+pub(crate) use snapshot::{export_import_plan, restore_import_plan};
 
 use self::job::PlannedItem;
 use super::error::{ApiError, ApiResult};
@@ -28,11 +31,12 @@ use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
 /// In-memory record for a batch import job: the wire job plus the resolved items
-/// commit needs (the wire `plan` is a projection of `items`). Like the asset job,
-/// it does not survive a restart.
+/// commit needs (the wire `plan` is a projection of `items`). A host can restore
+/// an uncommitted review from a snapshot; executing jobs remain in memory.
 pub(crate) struct ImportJobRecord {
     pub(crate) job: ImportJob,
     pub(in crate::api::import) items: Vec<PlannedItem>,
+    pub(in crate::api::import) schema: Option<serde_json::Value>,
     pub(in crate::api::import) cancel: Arc<AtomicBool>,
 }
 
@@ -134,6 +138,7 @@ pub(crate) async fn create_import_job(
         .insert_import_job_if_idle(ImportJobRecord {
             job: job.clone(),
             items: Vec::new(),
+            schema: None,
             cancel: Arc::clone(&cancel),
         })
         .await;
@@ -216,9 +221,13 @@ pub(crate) async fn cancel_import_job(
     record.cancel.store(true, Ordering::Relaxed);
     if matches!(
         record.job.status,
-        ImportJobStatus::Queued | ImportJobStatus::Fetching | ImportJobStatus::Committing
+        ImportJobStatus::Queued
+            | ImportJobStatus::Fetching
+            | ImportJobStatus::Planned
+            | ImportJobStatus::Committing
     ) {
         record.job.status = ImportJobStatus::Cancelled;
+        record.job.finished_at = Some(now_iso());
     }
     Ok(Json(record.job.clone()))
 }

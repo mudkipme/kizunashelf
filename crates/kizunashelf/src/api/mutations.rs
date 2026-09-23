@@ -42,6 +42,18 @@ pub(crate) async fn update_entity(
     check_revision(&request.revision, &entity.revision)?;
 
     let vfs = state.vault_vfs(&library.config.vault_root);
+    let reviewed_schema = if let Some(expected) = &request.schema_revision {
+        let (revision, schema) =
+            super::entity_edit_review::read_schema(&state, vfs.as_ref()).await?;
+        if &revision != expected {
+            return Err(ApiError::conflict(
+                "The vault schema changed. Review your edits again.",
+            ));
+        }
+        Some(schema)
+    } else {
+        None
+    };
     let source_rel = entity.summary.path.clone();
     let raw = vfs
         .read_to_string(&source_rel)
@@ -57,7 +69,14 @@ pub(crate) async fn update_entity(
         apply_frontmatter_patch(&mut document.frontmatter, frontmatter);
     }
     if let Some(draft) = request.frontmatter_draft {
-        let type_config = type_config_or_err(&library.config, &entity.summary.entity_type)?;
+        let type_config = match &reviewed_schema {
+            Some(schema) => schema
+                .types
+                .iter()
+                .find(|config| config.id == entity.summary.entity_type)
+                .ok_or_else(|| ApiError::conflict("This collection is no longer configured"))?,
+            None => type_config_or_err(&library.config, &entity.summary.entity_type)?,
+        };
         let patch =
             super::frontmatter_draft::draft_update_patch(draft, type_config, &document.frontmatter);
         apply_frontmatter_patch(&mut document.frontmatter, patch);

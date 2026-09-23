@@ -16,7 +16,8 @@ use crate::contract::{
     FetchEpisodesRequest, ImportEpisodesRequest, QuickAddEpisodeResult, ToggleEpisodeRequest,
 };
 use crate::episodes::{
-    apply_episodes, episode_section, merge_episodes, parse_episodes, set_episode_watched,
+    apply_episodes, episode_section, merge_episodes, parse_episodes, review_episode_import,
+    set_episode_watched,
 };
 use crate::types::{BodySection, EntityRecord, EntityTypeConfig, FieldType, Library};
 use axum::extract::{Path as AxumPath, State};
@@ -152,7 +153,9 @@ pub(crate) async fn fetch_episodes(
         return Err(ApiError::not_found("Entity not found"));
     };
     let type_config = type_config_or_err(&library.config, &record.summary.entity_type)?;
-    let sources = episode_sources(&state, type_config, &record.frontmatter);
+    // Resolve provider references and review revision from the same fresh file.
+    let detail = build_entity_detail(&state, &library, &record.summary).await?;
+    let sources = episode_sources(&state, type_config, &detail.entity.frontmatter);
     let source_list: Vec<EpisodeSource> = sources
         .iter()
         .map(|source| EpisodeSource {
@@ -171,8 +174,10 @@ pub(crate) async fn fetch_episodes(
             sources: source_list,
             provider: String::new(),
             groups: Vec::new(),
+            review: None,
         }));
     };
+    // A later edit is rejected by the revision guard when this review is imported.
     let episodes = provider_fetch_episodes(
         &state,
         chosen.provider,
@@ -183,6 +188,9 @@ pub(crate) async fn fetch_episodes(
     Ok(Json(EpisodeSyncResponse {
         sources: source_list,
         provider: chosen.provider.to_string(),
+        review: detail.episodes.as_ref().map(|existing| {
+            review_episode_import(existing, &episodes.groups, detail.entity.revision)
+        }),
         groups: episodes.groups,
     }))
 }
