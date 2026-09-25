@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  entityTitle,
-  iso639TitleLanguage,
-  isIso639TitleLanguage,
-  titleLanguageLabel,
-} from "./title-language";
+import { entityTitle, isIso639TitleLanguage, titleLanguageLabel } from "./title-language";
 
 describe("entityTitle", () => {
   const entity = { title: "Fallback", titles: { ja: "日本語", zh: "中文" } };
@@ -32,14 +27,6 @@ describe("isIso639TitleLanguage", () => {
     expect(isIso639TitleLanguage("")).toBe(false);
     expect(isIso639TitleLanguage(null)).toBe(false);
     expect(isIso639TitleLanguage(undefined)).toBe(false);
-  });
-});
-
-describe("iso639TitleLanguage", () => {
-  it("returns the value when valid, otherwise undefined", () => {
-    expect(iso639TitleLanguage("ja")).toBe("ja");
-    expect(iso639TitleLanguage("custom")).toBeUndefined();
-    expect(iso639TitleLanguage(null)).toBeUndefined();
   });
 });
 

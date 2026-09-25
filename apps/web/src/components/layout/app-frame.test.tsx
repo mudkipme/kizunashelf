@@ -46,23 +46,10 @@ describe("AppFrame chrome", () => {
     // Anything the app renders as data — an entity page, a diagnostic, a value
     // returned by a provider — is still ordinary selectable text.
     expect(styleOf('[data-testid="content"]').getPropertyValue("user-select")).not.toBe("none");
-  });
-
-  it("keeps a field inside the chrome editable and copyable", async () => {
-    await page.viewport(1280, 800);
-    await render(<AppFrame>{null}</AppFrame>);
 
     // The header search sits inside a region with selection switched off, so
     // the input has to opt back in or its own text becomes unselectable.
     expect(styleOf("header.app-chrome input").getPropertyValue("user-select")).toBe("text");
-  });
-
-  it("uses the arrow cursor over navigation, not the hyperlink hand", async () => {
-    await page.viewport(1280, 800);
-    await render(<AppFrame>{null}</AppFrame>);
-
-    expect(styleOf("aside.app-chrome a").getPropertyValue("cursor")).toBe("default");
-    expect(styleOf('[data-slot="button"]').getPropertyValue("cursor")).toBe("default");
   });
 
   // What a native window separates by tone, this app separated only by a

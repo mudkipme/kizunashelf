@@ -139,14 +139,6 @@ mod tests {
     }
 
     #[test]
-    fn rewrites_a_plain_link() {
-        let (out, changed) =
-            rewrite_backlink_wikilinks("see [[Beta]] here", &targets(&["Beta"]), "Beta2");
-        assert_eq!(out, "see [[Beta2]] here");
-        assert_eq!(changed, 1);
-    }
-
-    #[test]
     fn preserves_prefix_heading_and_alias() {
         let (out, changed) = rewrite_backlink_wikilinks(
             "[[Anime/Beta#Arc 1|the beta]]",

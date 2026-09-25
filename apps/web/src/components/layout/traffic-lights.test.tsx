@@ -27,7 +27,7 @@ const firstControlLeft = () =>
   document.querySelector("header.app-chrome button")!.getBoundingClientRect().left;
 
 describe("macOS traffic lights", () => {
-  it("keeps the header's leading control clear of them once the sidebar is collapsed", async () => {
+  it("reserves a draggable corner when the sidebar is collapsed", async () => {
     await page.viewport(1280, 800);
     const screen = await render(<AppFrame>{null}</AppFrame>);
     await expect.element(screen.getByRole("button", { name: "Hide sidebar" })).toBeVisible();
@@ -42,13 +42,6 @@ describe("macOS traffic lights", () => {
     // padding this silently did nothing: `pl-*` loses to the `sm:px-*` on the
     // same element, so the lights sat on top of the toggle and back buttons.
     expect(firstControlLeft()).toBeGreaterThanOrEqual(TRAFFIC_LIGHTS_WIDTH);
-  });
-
-  it("leaves the reserved corner draggable", async () => {
-    await page.viewport(1280, 800);
-    const screen = await render(<AppFrame>{null}</AppFrame>);
-    await screen.getByRole("button", { name: "Hide sidebar" }).click();
-    await expect.element(screen.getByRole("button", { name: "Show sidebar" })).toBeVisible();
 
     // The strip beside the lights is part of the title bar, so dragging it
     // should move the window rather than do nothing.

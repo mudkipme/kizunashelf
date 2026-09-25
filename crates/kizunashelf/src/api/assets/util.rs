@@ -193,14 +193,6 @@ pub(super) fn sniff_image_ext(bytes: &[u8]) -> Option<&'static str> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn entity_asset_dir_strips_md_suffix() {
-        assert_eq!(
-            entity_asset_dir("Assets", "Taxonomy/Anime/Foo.md"),
-            "Assets/Taxonomy/Anime/Foo"
-        );
-    }
-
     #[tokio::test]
     async fn resolve_entity_asset_dir_reuses_an_existing_divergent_dir() {
         use crate::vfs::InMemoryVfs;

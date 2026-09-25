@@ -16,46 +16,21 @@ import {
   joinPath,
   normalizeVaultConfig,
   relativeToBase,
-  replaceArray,
 } from "./settings-model";
 
-describe("replaceArray", () => {
-  it("replaces the item at the index without mutating the input", () => {
-    const input = [1, 2, 3];
-    expect(replaceArray(input, 1, 9)).toEqual([1, 9, 3]);
-    expect(input).toEqual([1, 2, 3]);
-  });
-
-  it("returns an equivalent array when the index is out of range", () => {
-    expect(replaceArray([1, 2, 3], 5, 9)).toEqual([1, 2, 3]);
-  });
-});
-
 describe("arrayEditor", () => {
-  it("append calls onChange with the item added at the end", () => {
-    const onChange = vi.fn();
-    arrayEditor([1, 2], onChange).append(3);
-    expect(onChange).toHaveBeenCalledWith([1, 2, 3]);
-  });
-
-  it("update calls onChange with the item replaced at the index", () => {
-    const onChange = vi.fn();
-    arrayEditor([1, 2, 3], onChange).update(1, 9);
-    expect(onChange).toHaveBeenCalledWith([1, 9, 3]);
-  });
-
-  it("remove calls onChange with the item at the index dropped", () => {
-    const onChange = vi.fn();
-    arrayEditor([1, 2, 3], onChange).remove(0);
-    expect(onChange).toHaveBeenCalledWith([2, 3]);
-  });
-
-  it("does not mutate the bound array", () => {
+  it("edits the list without mutating its input", () => {
     const values = [1, 2, 3];
-    const editor = arrayEditor(values, () => {});
+    const onChange = vi.fn();
+    const editor = arrayEditor(values, onChange);
     editor.append(4);
-    editor.update(0, 9);
-    editor.remove(1);
+    editor.update(1, 9);
+    editor.remove(0);
+    expect(onChange.mock.calls.map(([next]) => next)).toEqual([
+      [1, 2, 3, 4],
+      [1, 9, 3],
+      [2, 3],
+    ]);
     expect(values).toEqual([1, 2, 3]);
   });
 });

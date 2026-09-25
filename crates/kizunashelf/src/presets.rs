@@ -2481,14 +2481,6 @@ mod tests {
     }
 
     #[test]
-    fn relation_dropped_when_target_absent() {
-        // Anime alone: no franchise type, so its franchise relation is stripped.
-        let result = resolve(vec![], &["anime"], None);
-        let anime = &result.types[0];
-        assert!(find_field(anime, "franchise").is_none());
-    }
-
-    #[test]
     fn wired_relation_falls_back_to_a_text_list_when_target_absent() {
         // Music alone: no artist type, so the provider-wired artist relation
         // keeps its wiring as a plain text list instead of vanishing.

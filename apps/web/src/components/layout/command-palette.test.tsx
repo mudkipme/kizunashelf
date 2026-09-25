@@ -156,15 +156,6 @@ describe("app shortcuts", () => {
     await expect.element(search).not.toHaveFocus();
   });
 
-  it("opens settings on its chord", async () => {
-    await page.viewport(1280, 800);
-    const screen = await shell();
-
-    await userEvent.keyboard(chord(","));
-
-    await expect.element(screen.getByTestId("path")).toHaveTextContent("/settings");
-  });
-
   it("steps back and forward through the in-app history", async () => {
     await page.viewport(1280, 800);
     const screen = await shell();

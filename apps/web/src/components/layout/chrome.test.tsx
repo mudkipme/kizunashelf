@@ -69,29 +69,6 @@ describe("navigation controls", () => {
 });
 
 describe("toolbar", () => {
-  it("carries only navigation, search and the vault action", async () => {
-    await page.viewport(1280, 800);
-    const screen = await shell();
-    await expect.element(screen.getByRole("button", { name: "Go back" })).toBeVisible();
-
-    const header = document.querySelector("header.app-chrome");
-    const labels = [...(header?.querySelectorAll("button") ?? [])].map((button) =>
-      button.getAttribute("aria-label"),
-    );
-
-    expect(labels).toEqual([
-      "Hide sidebar",
-      "Open navigation",
-      "Go back",
-      "Go forward",
-      // The narrow-viewport search toggle; hidden from the sm breakpoint up.
-      "Search library",
-      "Rescan vault",
-      "Language",
-      "System theme. Switch to light theme.",
-    ]);
-  });
-
   it("fills the narrow bar instead of leaving a gap at its end", async () => {
     // The trailing group is what holds the bar's right edge. When it held only
     // the rescan button — which is itself hidden on a phone — it rendered

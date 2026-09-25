@@ -336,18 +336,7 @@ mod tests {
             candidate.url,
             "https://www.mangaupdates.com/series.html?id=12345"
         );
-    }
-
-    #[test]
-    fn search_url_round_trips_through_resolve() {
-        let candidate = mangaupdates_search_record(&json!({
-            "series_id": 12345, "title": "One Piece"
-        }))
-        .unwrap();
-        assert_eq!(
-            super::mangaupdates_id(&candidate.url),
-            Some("12345".to_string())
-        );
+        assert_eq!(mangaupdates_id(&candidate.url), Some("12345".to_string()));
     }
 
     #[test]

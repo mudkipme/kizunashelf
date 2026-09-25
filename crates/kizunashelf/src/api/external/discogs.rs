@@ -585,6 +585,10 @@ mod tests {
         assert_eq!(candidate.source_id, "249504");
         // Canonical id-based URL regardless of the slug-decorated search `uri`.
         assert_eq!(candidate.url, "https://www.discogs.com/release/249504");
+        assert_eq!(
+            discogs_ref(&candidate.url),
+            Some(("release", "249504".to_string()))
+        );
         assert_eq!(candidate.metadata.get("year"), Some(&json!("1987")));
         assert_eq!(candidate.metadata.get("format"), Some(&json!("Vinyl")));
         assert_eq!(
@@ -616,20 +620,6 @@ mod tests {
         );
         assert_eq!(candidate.metadata.get("label"), Some(&json!(["RCA"])));
         assert_eq!(candidate.metadata.get("year"), Some(&json!("1987")));
-    }
-
-    #[test]
-    fn search_url_round_trips_through_resolve() {
-        // The canonical URL a search candidate carries must parse back to the
-        // same (kind, id) — the property dedup/externalRef relies on.
-        let candidate = discogs_search_result(&json!({
-            "id": 249504, "type": "release", "title": "X", "uri": "/release/249504-X"
-        }))
-        .unwrap();
-        assert_eq!(
-            super::discogs_ref(&candidate.url),
-            Some(("release", "249504".to_string()))
-        );
     }
 
     #[test]

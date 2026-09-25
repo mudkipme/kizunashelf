@@ -154,31 +154,7 @@ async fn read_library_skips_an_unparseable_file_instead_of_failing() {
 }
 
 #[tokio::test]
-async fn read_library_reads_entities_from_an_in_memory_vfs() {
-    let config = test_config("/virtual-vault");
-    let vfs = Arc::new(InMemoryVfs::new());
-    vfs.insert_dir("Taxonomy/Anime");
-    vfs.insert_file(
-        "Taxonomy/Anime/Steins;Gate 0 (Anime).md",
-        "---\ntitle: Steins;Gate 0\nstatus: Watching\n---\n\nBody.\n",
-    );
-
-    let library = read_library(config, vfs).await.unwrap();
-
-    assert_eq!(library.summaries().count(), 1);
-    let summary = library.summaries().next().unwrap();
-    assert_eq!(summary.title, "Steins;Gate 0");
-    assert_eq!(summary.path, "Taxonomy/Anime/Steins;Gate 0 (Anime).md");
-    // Revision is derived from content + metadata, both supplied by the VFS.
-    assert!(!library.records[0].revision.is_empty());
-    // The resident record keeps frontmatter (for in-memory filtering) but the
-    // body/raw are not part of it — they are loaded on demand. (The absence of
-    // `body`/`raw` on `EntityRecord` is enforced at compile time.)
-    assert!(library.records[0].frontmatter.contains_key("status"));
-}
-
-#[tokio::test]
-async fn load_entity_reads_full_body_and_raw_on_demand() {
+async fn in_memory_library_indexes_metadata_and_loads_full_entities_on_demand() {
     let config = test_config("/virtual-vault");
     let vfs = Arc::new(InMemoryVfs::new());
     vfs.insert_dir("Taxonomy/Anime");
@@ -190,7 +166,17 @@ async fn load_entity_reads_full_body_and_raw_on_demand() {
     let library = read_library(config, Arc::clone(&vfs) as Arc<dyn Vfs>)
         .await
         .unwrap();
+
+    assert_eq!(library.summaries().count(), 1);
     let summary = library.summaries().next().unwrap();
+    assert_eq!(summary.title, "Steins;Gate 0");
+    assert_eq!(summary.path, "Taxonomy/Anime/Steins;Gate 0 (Anime).md");
+    // Revision is derived from content + metadata, both supplied by the VFS.
+    assert!(!library.records[0].revision.is_empty());
+    // The resident record keeps frontmatter (for in-memory filtering) but the
+    // body/raw are not part of it — they are loaded on demand. (The absence of
+    // `body`/`raw` on `EntityRecord` is enforced at compile time.)
+    assert!(library.records[0].frontmatter.contains_key("status"));
 
     let entity = load_entity(&library.config, vfs.as_ref(), summary)
         .await

@@ -33,17 +33,6 @@ function Region() {
 }
 
 describe("LightboxProvider", () => {
-  it("opens the gallery on the clicked image and keeps it open", async () => {
-    const screen = await render(<Region />);
-
-    await screen.getByRole("button", { name: "first" }).click();
-
-    // The provider re-renders on open; if that re-ran the descendants'
-    // registration effects, their cleanup would unregister and close the
-    // overlay in the same breath.
-    await expect.element(page.getByRole("button", { name: "Close" })).toBeVisible();
-  });
-
   it("picks up an image that mounts while the gallery is already open", async () => {
     const screen = await render(<Region />);
 

@@ -434,6 +434,7 @@ mod tests {
             candidate.url,
             "https://comicvine.gamespot.com/volume/4050-18166/"
         );
+        assert_eq!(comicvine_id(&candidate.url), Some("18166".to_string()));
         let metadata = &candidate.metadata;
         assert_eq!(metadata.get("publisher"), Some(&json!("Image Comics")));
         assert_eq!(metadata.get("start_year"), Some(&json!("2012")));
@@ -446,15 +447,6 @@ mod tests {
         assert_eq!(
             metadata.get("description"),
             Some(&json!("An epic space opera."))
-        );
-    }
-
-    #[test]
-    fn volume_url_round_trips_through_resolve() {
-        let candidate = comicvine_volume("18166", &json!({ "id": 18166, "name": "Saga" })).unwrap();
-        assert_eq!(
-            super::comicvine_id(&candidate.url),
-            Some("18166".to_string())
         );
     }
 

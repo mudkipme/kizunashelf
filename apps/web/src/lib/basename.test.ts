@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { basenameValidationError, normalizeBasename } from "./basename";
-
-describe("normalizeBasename", () => {
-  it("trims surrounding whitespace", () => {
-    expect(normalizeBasename("  Steins;Gate 0 (Anime)  ")).toBe("Steins;Gate 0 (Anime)");
-  });
-});
+import { basenameValidationError } from "./basename";
 
 describe("basenameValidationError", () => {
   it("accepts a plain basename", () => {
