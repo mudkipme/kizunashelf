@@ -188,6 +188,12 @@ msgstr "顯示 {0} 項，共 {1} 項"
 msgid "{0} skipped"
 msgstr "略過 {0}"
 
+#. placeholder {0}: field.titleLanguage
+#. placeholder {1}: field.field
+#: src/lib/type-config.ts:219
+msgid "{0} title: {1}"
+msgstr "{0}標題：{1}"
+
 #: src/components/settings/settings-editor.tsx:364
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 個資料來源}}"
@@ -210,18 +216,17 @@ msgstr "{monthLabel}：{0}"
 msgid "{monthLabel}: {0} — open in calendar"
 msgstr "{monthLabel}：{0} — 在日曆中開啟"
 
+#: src/components/assets/pagination-bar.tsx:30
+msgid "{start}–{end} of {total}"
+msgstr "共 {total} 項，第 {start}–{end} 項"
+
 #: src/pages/import-wizard-page.tsx:264
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {匯入 # 個項目}}"
 
-#: src/pages/library-page.tsx:338
+#: src/pages/library-page.tsx:332
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 件}}"
-
-#. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:333
-msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
-msgstr "{total, plural, other {# 件}} · 第 {0}/{totalPages} 頁"
 
 #: src/pages/smart-list-page.tsx:239
 msgid "{total, plural, one {# match} other {# matches}}"
@@ -294,10 +299,6 @@ msgstr "同名清單已存在，或檔案已在磁碟上被修改。"
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "已存在同名類型，因此改用 {assignedIds}。新增後可再重新命名。"
 
-#: src/components/settings/settings-editor.tsx:324
-msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
-msgstr "所有條目通用的標籤清單，具有專屬編輯器、篩選器與規則支援。選擇性啟用：指定保存標籤清單的前置中繼資料鍵即可啟用。"
-
 #: src/components/layout/command-palette.tsx:191
 #: src/pages/entity-page.tsx:481
 #: src/pages/entity-page.tsx:484
@@ -317,16 +318,22 @@ msgstr "活動"
 #: src/pages/home-page.tsx:36
 #: src/pages/home-page.tsx:42
 #: src/pages/home-page.tsx:47
-#: src/pages/library-page.tsx:358
-#: src/pages/library-page.tsx:364
-#: src/pages/library-page.tsx:369
+#: src/pages/library-page.tsx:351
+#: src/pages/library-page.tsx:357
+#: src/pages/library-page.tsx:362
 #: src/pages/quick-capture-page.tsx:226
+#: src/pages/quick-capture-page.tsx:386
 msgid "Add"
 msgstr "新增"
 
 #: src/components/ui/multi-value-combobox.tsx:168
 msgid "Add \"{item}\""
 msgstr "新增「{item}」"
+
+#. placeholder {0}: match.candidate.title
+#: src/pages/quick-capture-page.tsx:383
+msgid "Add {0}"
+msgstr "新增 {0}"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
@@ -428,7 +435,7 @@ msgstr "已新增，但劇集匯入失敗：{0}"
 
 #: src/components/settings/preset-picker.tsx:201
 #: src/components/smart-lists/suggested-lists-dialog.tsx:127
-#: src/pages/quick-capture-page.tsx:379
+#: src/pages/quick-capture-page.tsx:386
 msgid "Adding…"
 msgstr "新增中…"
 
@@ -601,6 +608,10 @@ msgstr "補進度"
 msgid "Change completion date"
 msgstr "變更完成日期"
 
+#: src/components/settings/raw-config-editor.tsx:166
+msgid "Changes are validated before saving. Comments and formatting are preserved."
+msgstr "儲存前會驗證變更，並保留註解和格式。"
+
 #: src/components/settings/settings-dialogs.tsx:382
 msgid "Changes save with the rest of the schema."
 msgstr "變更將隨整個結構設定一起儲存。"
@@ -638,6 +649,10 @@ msgstr "選擇圖示"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "選擇要加入首頁的清單。現有清單的修改會保留。"
 
+#: src/components/settings/settings-editor.tsx:324
+msgid "Choose the frontmatter key used for tags."
+msgstr "選擇用於儲存標籤的 frontmatter 鍵。"
+
 #: src/pages/onboarding-page.tsx:227
 msgid "Choose what to track. You can add more later."
 msgstr "選擇想要記錄的內容。之後可以繼續新增。"
@@ -668,6 +683,10 @@ msgstr ""
 #: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "已完成"
+
+#: src/lib/type-config.ts:234
+msgid "Completed date"
+msgstr "完成日期"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
 #: src/components/settings/raw-config-editor.tsx:134
@@ -741,7 +760,7 @@ msgstr "無法加入建議清單。你可以在首頁重試。"
 msgid "Create"
 msgstr "建立"
 
-#: src/pages/quick-capture-page.tsx:405
+#: src/pages/quick-capture-page.tsx:400
 msgid "Create “{query}” manually →"
 msgstr "手動建立「{query}」 →"
 
@@ -816,6 +835,8 @@ msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:134
 #: src/components/smart-lists/rule-value-input.tsx:71
+#: src/lib/type-config.ts:207
+#: src/lib/type-config.ts:238
 #: src/pages/activity-page.tsx:257
 msgid "Date"
 msgstr "日期"
@@ -1029,6 +1050,14 @@ msgstr "找不到項目"
 msgid "Entity type"
 msgstr "項目類型"
 
+#: src/lib/type-config.ts:201
+msgid "Enum"
+msgstr "單選"
+
+#: src/lib/type-config.ts:202
+msgid "Enum list"
+msgstr "多選"
+
 #: src/components/settings/settings-field-form.tsx:148
 msgid "Enum options"
 msgstr "列舉選項"
@@ -1051,6 +1080,10 @@ msgstr ""
 msgid "Event"
 msgstr "事件"
 
+#: src/lib/type-config.ts:236
+msgid "Event date"
+msgstr "活動日期"
+
 #: src/components/settings/settings-external-mappings.tsx:78
 msgid "External field"
 msgstr "外部欄位"
@@ -1069,6 +1102,10 @@ msgstr "外部中繼資料"
 
 #: src/components/entities/external-match-dialog.tsx:350
 msgid "external ref"
+msgstr "外部參照"
+
+#: src/lib/type-config.ts:208
+msgid "External reference"
 msgstr "外部參照"
 
 #: src/components/settings/settings-external-mappings.tsx:120
@@ -1221,8 +1258,17 @@ msgid "Icon"
 msgstr "圖示"
 
 #: src/components/settings/settings-entity-type.tsx:61
+#: src/lib/type-config.ts:197
 msgid "ID"
 msgstr "ID"
+
+#: src/lib/type-config.ts:199
+msgid "Image"
+msgstr "圖片"
+
+#: src/lib/type-config.ts:200
+msgid "Image list"
+msgstr "圖片清單"
 
 #: src/components/layout/nav-destinations.ts:43
 msgid "Import"
@@ -1273,7 +1319,7 @@ msgstr "{weeks} 週後"
 
 #: src/components/import/plan-review.tsx:241
 #: src/components/import/plan-review.tsx:245
-#: src/pages/quick-capture-page.tsx:357
+#: src/pages/quick-capture-page.tsx:352
 msgid "In library ✓"
 msgstr "已在庫中 ✓"
 
@@ -1686,6 +1732,7 @@ msgid "New: {newValue}"
 msgstr "新：{newValue}"
 
 #. Calendar navigation button for the next month
+#: src/components/assets/pagination-bar.tsx:68
 #: src/pages/calendar-page.tsx:102
 msgid "Next"
 msgstr "下個月"
@@ -1735,7 +1782,7 @@ msgstr "未設定任何項目類型。"
 
 #: src/pages/calendar-page.tsx:160
 #: src/pages/calendar-page.tsx:175
-#: src/pages/library-page.tsx:385
+#: src/pages/library-page.tsx:378
 msgid "No entries"
 msgstr "無項目"
 
@@ -1892,6 +1939,7 @@ msgstr "筆記"
 #: src/components/assets/entity-detail.tsx:258
 #: src/components/entities/metadata-editor.tsx:163
 #: src/components/entities/metadata-editor.tsx:170
+#: src/lib/type-config.ts:10
 #: src/pages/list-detail-page.tsx:502
 #: src/pages/statistics-page.tsx:35
 msgid "Notes"
@@ -1908,6 +1956,10 @@ msgstr "這裡尚無內容"
 #: src/components/assets/quick-log-dialog.tsx:212
 msgid "Nothing to log for this type."
 msgstr "此類型沒有可記錄的內容。"
+
+#: src/lib/type-config.ts:203
+msgid "Number"
+msgstr "數字"
 
 #: src/components/smart-lists/rule-builder.tsx:52
 #: src/components/smart-lists/rule-subgroup.tsx:42
@@ -1951,8 +2003,14 @@ msgid "Only public profiles are supported. Nothing is written until you review t
 msgstr "僅支援公開個人檔案。在你檢查規劃前不會寫入任何內容。"
 
 #: src/components/settings/vault-switcher.tsx:102
+#: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "開啟"
+
+#. placeholder {0}: match.candidate.title
+#: src/pages/quick-capture-page.tsx:382
+msgid "Open {0}"
+msgstr "開啟 {0}"
 
 #: src/components/settings/vault-switcher.tsx:127
 msgid "Open existing vault"
@@ -1986,13 +2044,26 @@ msgstr "原始"
 msgid "Original (filename is the title)"
 msgstr "原始（檔名即為標題）"
 
+#. placeholder {0}: field.field
+#: src/lib/type-config.ts:217
+msgid "Original title: {0}"
+msgstr "原始標題：{0}"
+
 #: src/components/settings/settings-editor.tsx:392
 msgid "Overview"
 msgstr "總覽"
 
+#: src/components/assets/pagination-bar.tsx:52
+msgid "Page {item}"
+msgstr "第 {item} 頁"
+
 #: src/pages/not-found-page.tsx:17
 msgid "Page not found"
 msgstr "頁面不存在"
+
+#: src/components/assets/pagination-bar.tsx:34
+msgid "Pagination"
+msgstr "分頁"
 
 #: src/components/settings/vault-switcher.tsx:138
 msgid "Parent folder"
@@ -2026,6 +2097,10 @@ msgstr "計劃中"
 msgid "Planning"
 msgstr "計劃中"
 
+#: src/lib/type-config.ts:230
+msgid "Planning date"
+msgstr "計畫日期"
+
 #. Calendar navigation button for the previous month
 #: src/pages/calendar-page.tsx:96
 msgid "Prev"
@@ -2038,6 +2113,10 @@ msgstr "預覽"
 #: src/components/assets/quick-log-dialog.tsx:202
 msgid "Previewing…"
 msgstr "預覽中…"
+
+#: src/components/assets/pagination-bar.tsx:42
+msgid "Previous"
+msgstr "上一頁"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 msgid "Progress"
@@ -2071,6 +2150,10 @@ msgstr "資料來源"
 msgid "Public profile"
 msgstr "公開個人檔案"
 
+#: src/lib/type-config.ts:204
+msgid "Rating"
+msgstr "評分"
+
 #: src/components/import/import-labels.ts:23
 msgid "Real"
 msgstr "實際"
@@ -2087,6 +2170,10 @@ msgstr "重新整理 {0}"
 #: src/components/settings/settings-field-form.tsx:327
 msgid "Regular enum"
 msgstr "一般列舉"
+
+#: src/lib/type-config.ts:209
+msgid "Relation"
+msgstr "關聯"
 
 #: src/components/settings/settings-field-form.tsx:252
 msgid "Relation type"
@@ -2244,8 +2331,8 @@ msgid "Save"
 msgstr "儲存"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:85
-#: src/pages/library-page.tsx:347
-#: src/pages/library-page.tsx:351
+#: src/pages/library-page.tsx:340
+#: src/pages/library-page.tsx:344
 msgid "Save as smart list"
 msgstr "儲存為智慧清單"
 
@@ -2256,10 +2343,6 @@ msgstr "儲存憑證"
 #: src/components/settings/provider-credentials.tsx:45
 msgid "Saved"
 msgstr "已儲存"
-
-#: src/components/settings/raw-config-editor.tsx:166
-msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
-msgstr "原樣儲存。整個檔案會在儲存時驗證 — 未知欄位與格式錯誤的值會被拒絕。"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:94
 msgid "Saves the current type, criteria, and sort as a smart list."
@@ -2335,16 +2418,16 @@ msgstr "搜尋或新增關聯"
 msgid "Search queue"
 msgstr "搜尋佇列"
 
-#: src/pages/quick-capture-page.tsx:393
-msgid "Search results come from third-party providers and are not affiliated with KizunaShelf."
-msgstr "搜尋結果來自第三方資料來源，與 KizunaShelf 無關聯。"
-
 #: src/components/entities/external-match-dialog.tsx:152
 #: src/components/entities/use-external-match.ts:80
 #: src/components/ui/multi-value-combobox.tsx:163
 #: src/pages/quick-capture-page.tsx:321
 msgid "Searching…"
 msgstr "搜尋中…"
+
+#: src/lib/type-config.ts:206
+msgid "Season"
+msgstr "季度"
 
 #. placeholder {0}: field.seasonLanguage
 #: src/components/settings/settings-field-descriptors.ts:69
@@ -2522,6 +2605,10 @@ msgstr "重新開始"
 msgid "Started"
 msgstr "已開始"
 
+#: src/lib/type-config.ts:232
+msgid "Started date"
+msgstr "開始日期"
+
 #: src/components/import/configure-step.tsx:104
 msgid "Starting…"
 msgstr "開始中…"
@@ -2618,6 +2705,14 @@ msgstr "分類根目錄"
 msgid "taxonomy: {0}"
 msgstr "分類：{0}"
 
+#: src/lib/type-config.ts:211
+msgid "Text"
+msgstr "文字"
+
+#: src/lib/type-config.ts:210
+msgid "Text list"
+msgstr "文字清單"
+
 #: src/pages/smart-list-page.tsx:398
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base 檔案將移至保管庫的垃圾桶資料夾。符合的項目不受影響。"
@@ -2680,6 +2775,7 @@ msgid "This week"
 msgstr "本週"
 
 #: src/components/smart-lists/sort-picker.tsx:40
+#: src/lib/type-config.ts:198
 #: src/pages/entity-create-page.tsx:141
 msgid "Title"
 msgstr "標題"
@@ -2904,6 +3000,10 @@ msgstr "是"
 #: src/components/entities/metadata-inputs.tsx:122
 msgid "Yes"
 msgstr "是"
+
+#: src/lib/type-config.ts:205
+msgid "Yes/No"
+msgstr "是/否"
 
 #: src/pages/quick-capture-page.tsx:240
 msgid "You can still open entities already in your library."

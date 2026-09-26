@@ -1,19 +1,13 @@
-import { i18n } from "@lingui/core";
+import { i18n, setupI18n, type MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 
 import { iso639TitleLanguage } from "@/lib/title-language";
 import type { TypeConfig } from "@/types/api";
 
-// The untyped body-wikilink pseudo-field ("body") reads as "Notes", matching the
-// detail page's Notes section. Localized against the active catalog by message
-// id: this module is imported by unit tests, whose standalone Vitest config omits
-// the `@lingui/*/macro` transform, so it must stay macro-free. The id is held in a
-// variable (not a string literal at the call site) so Lingui doesn't extract a
-// second, explicit-id "Notes" entry — the message is already registered by the
-// `t`Notes`` usages in the detail/statistics UI, which is what `i18n._` resolves.
-// The `i18n.locale` guard keeps it working before i18n is activated (unit tests
-// never activate it); the app activates `en` at startup.
-const NOTES_MESSAGE_ID = "Notes";
-const bodyPseudoFieldLabel = () => (i18n.locale ? i18n._(NOTES_MESSAGE_ID) : "Notes");
+// Translate at call time so changing the app language updates shared labels.
+const fallbackI18n = setupI18n({ locale: "en", messages: { en: {} } });
+const label = (message: MessageDescriptor) => (i18n.locale ? i18n : fallbackI18n)._(message);
+const bodyPseudoFieldLabel = () => label(msg`Notes`);
 
 export type FieldConfig = NonNullable<TypeConfig["fields"]>[number];
 export type FieldType = FieldConfig["fieldType"];
@@ -200,37 +194,47 @@ export function supportsDateRole(fieldType: FieldType) {
 }
 
 export function fieldTypeLabel(fieldType: FieldType) {
-  if (fieldType === "id") return "ID";
-  if (fieldType === "title") return "Title";
-  if (fieldType === "image") return "Image";
-  if (fieldType === "imageList") return "Image list";
-  if (fieldType === "enum") return "Enum";
-  if (fieldType === "enumList") return "Enum list";
-  if (fieldType === "number") return "Number";
-  if (fieldType === "rating") return "Rating";
-  if (fieldType === "bool") return "Bool";
-  if (fieldType === "season") return "Season";
-  if (fieldType === "date") return "Date";
-  if (fieldType === "externalRef") return "External ref";
-  if (fieldType === "relation") return "Relation";
-  if (fieldType === "textList") return "Text list";
-  return "Text";
+  if (fieldType === "id") return label(msg`ID`);
+  if (fieldType === "title") return label(msg`Title`);
+  if (fieldType === "image") return label(msg`Image`);
+  if (fieldType === "imageList") return label(msg`Image list`);
+  if (fieldType === "enum") return label(msg`Enum`);
+  if (fieldType === "enumList") return label(msg`Enum list`);
+  if (fieldType === "number") return label(msg`Number`);
+  if (fieldType === "rating") return label(msg`Rating`);
+  if (fieldType === "bool") return label(msg`Yes/No`);
+  if (fieldType === "season") return label(msg`Season`);
+  if (fieldType === "date") return label(msg`Date`);
+  if (fieldType === "externalRef") return label(msg`External reference`);
+  if (fieldType === "relation") return label(msg`Relation`);
+  if (fieldType === "textList") return label(msg`Text list`);
+  return label(msg`Text`);
 }
 
 export function configuredFieldLabel(field: FieldConfig) {
   if (field.displayName?.trim()) return field.displayName.trim();
   if (field.fieldType === "title" && field.titleRole === "original")
-    return `Original title: ${field.field}`;
+    return label(msg`Original title: ${field.field}`);
   if (field.fieldType === "title" && field.titleLanguage)
-    return `${field.titleLanguage} title: ${field.field}`;
+    return label(msg`${field.titleLanguage} title: ${field.field}`);
   if (field.fieldType === "date") {
-    const role =
-      field.dateRole === "completed"
-        ? "Completed date"
-        : field.dateRole === "started"
-          ? "Started date"
-          : "Planning date";
+    const role = dateRoleLabel(field.dateRole);
     return `${role}: ${field.field}`;
   }
   return `${fieldTypeLabel(field.fieldType)}: ${field.field}`;
+}
+
+export function dateRoleLabel(role: FieldConfig["dateRole"]) {
+  switch (role) {
+    case "planning":
+      return label(msg`Planning date`);
+    case "started":
+      return label(msg`Started date`);
+    case "completed":
+      return label(msg`Completed date`);
+    case "event":
+      return label(msg`Event date`);
+    default:
+      return label(msg`Date`);
+  }
 }

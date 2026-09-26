@@ -163,10 +163,7 @@ export function RawConfigEditor({ settingsWritable = true, onDirtyChange }: RawC
       )}
 
       <p className="text-xs text-muted-foreground">
-        <Trans>
-          Saved verbatim. The whole file is validated on save — unknown fields and malformed values
-          are rejected.
-        </Trans>
+        <Trans>Changes are validated before saving. Comments and formatting are preserved.</Trans>
       </p>
     </div>
   );

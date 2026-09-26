@@ -188,6 +188,12 @@ msgstr "{0} of {1} shown"
 msgid "{0} skipped"
 msgstr "{0} skipped"
 
+#. placeholder {0}: field.titleLanguage
+#. placeholder {1}: field.field
+#: src/lib/type-config.ts:219
+msgid "{0} title: {1}"
+msgstr "{0} title: {1}"
+
 #: src/components/settings/settings-editor.tsx:364
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
@@ -210,18 +216,17 @@ msgstr "{monthLabel}: {0}"
 msgid "{monthLabel}: {0} — open in calendar"
 msgstr "{monthLabel}: {0} — open in calendar"
 
+#: src/components/assets/pagination-bar.tsx:30
+msgid "{start}–{end} of {total}"
+msgstr "{start}–{end} of {total}"
+
 #: src/pages/import-wizard-page.tsx:264
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, one {Import # item} other {Import # items}}"
 
-#: src/pages/library-page.tsx:338
+#: src/pages/library-page.tsx:332
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, one {# entry} other {# entries}}"
-
-#. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:333
-msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
-msgstr "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
 
 #: src/pages/smart-list-page.tsx:239
 msgid "{total, plural, one {# match} other {# matches}}"
@@ -294,10 +299,6 @@ msgstr "A list with this name already exists, or the file changed on disk."
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 
-#: src/components/settings/settings-editor.tsx:324
-msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
-msgstr "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
-
 #: src/components/layout/command-palette.tsx:191
 #: src/pages/entity-page.tsx:481
 #: src/pages/entity-page.tsx:484
@@ -317,16 +318,22 @@ msgstr "Activity"
 #: src/pages/home-page.tsx:36
 #: src/pages/home-page.tsx:42
 #: src/pages/home-page.tsx:47
-#: src/pages/library-page.tsx:358
-#: src/pages/library-page.tsx:364
-#: src/pages/library-page.tsx:369
+#: src/pages/library-page.tsx:351
+#: src/pages/library-page.tsx:357
+#: src/pages/library-page.tsx:362
 #: src/pages/quick-capture-page.tsx:226
+#: src/pages/quick-capture-page.tsx:386
 msgid "Add"
 msgstr "Add"
 
 #: src/components/ui/multi-value-combobox.tsx:168
 msgid "Add \"{item}\""
 msgstr "Add \"{item}\""
+
+#. placeholder {0}: match.candidate.title
+#: src/pages/quick-capture-page.tsx:383
+msgid "Add {0}"
+msgstr "Add {0}"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
@@ -428,7 +435,7 @@ msgstr "Added, but episode import failed: {0}"
 
 #: src/components/settings/preset-picker.tsx:201
 #: src/components/smart-lists/suggested-lists-dialog.tsx:127
-#: src/pages/quick-capture-page.tsx:379
+#: src/pages/quick-capture-page.tsx:386
 msgid "Adding…"
 msgstr "Adding…"
 
@@ -601,6 +608,10 @@ msgstr "Catch up"
 msgid "Change completion date"
 msgstr "Change completion date"
 
+#: src/components/settings/raw-config-editor.tsx:166
+msgid "Changes are validated before saving. Comments and formatting are preserved."
+msgstr "Changes are validated before saving. Comments and formatting are preserved."
+
 #: src/components/settings/settings-dialogs.tsx:382
 msgid "Changes save with the rest of the schema."
 msgstr "Changes save with the rest of the schema."
@@ -638,6 +649,10 @@ msgstr "Choose icon"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "Choose lists to add to Home. Existing lists keep their changes."
 
+#: src/components/settings/settings-editor.tsx:324
+msgid "Choose the frontmatter key used for tags."
+msgstr "Choose the frontmatter key used for tags."
+
 #: src/pages/onboarding-page.tsx:227
 msgid "Choose what to track. You can add more later."
 msgstr "Choose what to track. You can add more later."
@@ -668,6 +683,10 @@ msgstr "Command palette"
 #: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "Completed"
+
+#: src/lib/type-config.ts:234
+msgid "Completed date"
+msgstr "Completed date"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
 #: src/components/settings/raw-config-editor.tsx:134
@@ -741,7 +760,7 @@ msgstr "Couldn't add suggested lists. You can retry from Home."
 msgid "Create"
 msgstr "Create"
 
-#: src/pages/quick-capture-page.tsx:405
+#: src/pages/quick-capture-page.tsx:400
 msgid "Create “{query}” manually →"
 msgstr "Create “{query}” manually →"
 
@@ -816,6 +835,8 @@ msgstr "date"
 
 #: src/components/assets/quick-log-dialog.tsx:134
 #: src/components/smart-lists/rule-value-input.tsx:71
+#: src/lib/type-config.ts:207
+#: src/lib/type-config.ts:238
 #: src/pages/activity-page.tsx:257
 msgid "Date"
 msgstr "Date"
@@ -1029,6 +1050,14 @@ msgstr "Entity not found"
 msgid "Entity type"
 msgstr "Entity type"
 
+#: src/lib/type-config.ts:201
+msgid "Enum"
+msgstr "Enum"
+
+#: src/lib/type-config.ts:202
+msgid "Enum list"
+msgstr "Enum list"
+
 #: src/components/settings/settings-field-form.tsx:148
 msgid "Enum options"
 msgstr "Enum options"
@@ -1051,6 +1080,10 @@ msgstr "esc to close"
 msgid "Event"
 msgstr "Event"
 
+#: src/lib/type-config.ts:236
+msgid "Event date"
+msgstr "Event date"
+
 #: src/components/settings/settings-external-mappings.tsx:78
 msgid "External field"
 msgstr "External field"
@@ -1070,6 +1103,10 @@ msgstr "External metadata"
 #: src/components/entities/external-match-dialog.tsx:350
 msgid "external ref"
 msgstr "external ref"
+
+#: src/lib/type-config.ts:208
+msgid "External reference"
+msgstr "External reference"
 
 #: src/components/settings/settings-external-mappings.tsx:120
 #: src/components/settings/settings-external-mappings.tsx:127
@@ -1221,8 +1258,17 @@ msgid "Icon"
 msgstr "Icon"
 
 #: src/components/settings/settings-entity-type.tsx:61
+#: src/lib/type-config.ts:197
 msgid "ID"
 msgstr "ID"
+
+#: src/lib/type-config.ts:199
+msgid "Image"
+msgstr "Image"
+
+#: src/lib/type-config.ts:200
+msgid "Image list"
+msgstr "Image list"
 
 #: src/components/layout/nav-destinations.ts:43
 msgid "Import"
@@ -1273,7 +1319,7 @@ msgstr "in {weeks} wk"
 
 #: src/components/import/plan-review.tsx:241
 #: src/components/import/plan-review.tsx:245
-#: src/pages/quick-capture-page.tsx:357
+#: src/pages/quick-capture-page.tsx:352
 msgid "In library ✓"
 msgstr "In library ✓"
 
@@ -1686,6 +1732,7 @@ msgid "New: {newValue}"
 msgstr "New: {newValue}"
 
 #. Calendar navigation button for the next month
+#: src/components/assets/pagination-bar.tsx:68
 #: src/pages/calendar-page.tsx:102
 msgid "Next"
 msgstr "Next"
@@ -1735,7 +1782,7 @@ msgstr "No entity types configured."
 
 #: src/pages/calendar-page.tsx:160
 #: src/pages/calendar-page.tsx:175
-#: src/pages/library-page.tsx:385
+#: src/pages/library-page.tsx:378
 msgid "No entries"
 msgstr "No entries"
 
@@ -1892,6 +1939,7 @@ msgstr "notes"
 #: src/components/assets/entity-detail.tsx:258
 #: src/components/entities/metadata-editor.tsx:163
 #: src/components/entities/metadata-editor.tsx:170
+#: src/lib/type-config.ts:10
 #: src/pages/list-detail-page.tsx:502
 #: src/pages/statistics-page.tsx:35
 msgid "Notes"
@@ -1908,6 +1956,10 @@ msgstr "Nothing here yet"
 #: src/components/assets/quick-log-dialog.tsx:212
 msgid "Nothing to log for this type."
 msgstr "Nothing to log for this type."
+
+#: src/lib/type-config.ts:203
+msgid "Number"
+msgstr "Number"
 
 #: src/components/smart-lists/rule-builder.tsx:52
 #: src/components/smart-lists/rule-subgroup.tsx:42
@@ -1951,8 +2003,14 @@ msgid "Only public profiles are supported. Nothing is written until you review t
 msgstr "Only public profiles are supported. Nothing is written until you review the plan."
 
 #: src/components/settings/vault-switcher.tsx:102
+#: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "Open"
+
+#. placeholder {0}: match.candidate.title
+#: src/pages/quick-capture-page.tsx:382
+msgid "Open {0}"
+msgstr "Open {0}"
 
 #: src/components/settings/vault-switcher.tsx:127
 msgid "Open existing vault"
@@ -1986,13 +2044,26 @@ msgstr "Original"
 msgid "Original (filename is the title)"
 msgstr "Original (filename is the title)"
 
+#. placeholder {0}: field.field
+#: src/lib/type-config.ts:217
+msgid "Original title: {0}"
+msgstr "Original title: {0}"
+
 #: src/components/settings/settings-editor.tsx:392
 msgid "Overview"
 msgstr "Overview"
 
+#: src/components/assets/pagination-bar.tsx:52
+msgid "Page {item}"
+msgstr "Page {item}"
+
 #: src/pages/not-found-page.tsx:17
 msgid "Page not found"
 msgstr "Page not found"
+
+#: src/components/assets/pagination-bar.tsx:34
+msgid "Pagination"
+msgstr "Pagination"
 
 #: src/components/settings/vault-switcher.tsx:138
 msgid "Parent folder"
@@ -2026,6 +2097,10 @@ msgstr "Planned"
 msgid "Planning"
 msgstr "Planning"
 
+#: src/lib/type-config.ts:230
+msgid "Planning date"
+msgstr "Planning date"
+
 #. Calendar navigation button for the previous month
 #: src/pages/calendar-page.tsx:96
 msgid "Prev"
@@ -2038,6 +2113,10 @@ msgstr "Preview"
 #: src/components/assets/quick-log-dialog.tsx:202
 msgid "Previewing…"
 msgstr "Previewing…"
+
+#: src/components/assets/pagination-bar.tsx:42
+msgid "Previous"
+msgstr "Previous"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 msgid "Progress"
@@ -2071,6 +2150,10 @@ msgstr "Providers"
 msgid "Public profile"
 msgstr "Public profile"
 
+#: src/lib/type-config.ts:204
+msgid "Rating"
+msgstr "Rating"
+
 #: src/components/import/import-labels.ts:23
 msgid "Real"
 msgstr "Real"
@@ -2087,6 +2170,10 @@ msgstr "Refresh {0}"
 #: src/components/settings/settings-field-form.tsx:327
 msgid "Regular enum"
 msgstr "Regular enum"
+
+#: src/lib/type-config.ts:209
+msgid "Relation"
+msgstr "Relation"
 
 #: src/components/settings/settings-field-form.tsx:252
 msgid "Relation type"
@@ -2244,8 +2331,8 @@ msgid "Save"
 msgstr "Save"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:85
-#: src/pages/library-page.tsx:347
-#: src/pages/library-page.tsx:351
+#: src/pages/library-page.tsx:340
+#: src/pages/library-page.tsx:344
 msgid "Save as smart list"
 msgstr "Save as smart list"
 
@@ -2256,10 +2343,6 @@ msgstr "Save credentials"
 #: src/components/settings/provider-credentials.tsx:45
 msgid "Saved"
 msgstr "Saved"
-
-#: src/components/settings/raw-config-editor.tsx:166
-msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
-msgstr "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:94
 msgid "Saves the current type, criteria, and sort as a smart list."
@@ -2335,16 +2418,16 @@ msgstr "Search or add relation"
 msgid "Search queue"
 msgstr "Search queue"
 
-#: src/pages/quick-capture-page.tsx:393
-msgid "Search results come from third-party providers and are not affiliated with KizunaShelf."
-msgstr "Search results come from third-party providers and are not affiliated with KizunaShelf."
-
 #: src/components/entities/external-match-dialog.tsx:152
 #: src/components/entities/use-external-match.ts:80
 #: src/components/ui/multi-value-combobox.tsx:163
 #: src/pages/quick-capture-page.tsx:321
 msgid "Searching…"
 msgstr "Searching…"
+
+#: src/lib/type-config.ts:206
+msgid "Season"
+msgstr "Season"
 
 #. placeholder {0}: field.seasonLanguage
 #: src/components/settings/settings-field-descriptors.ts:69
@@ -2522,6 +2605,10 @@ msgstr "Start over"
 msgid "Started"
 msgstr "Started"
 
+#: src/lib/type-config.ts:232
+msgid "Started date"
+msgstr "Started date"
+
 #: src/components/import/configure-step.tsx:104
 msgid "Starting…"
 msgstr "Starting…"
@@ -2618,6 +2705,14 @@ msgstr "Taxonomy root"
 msgid "taxonomy: {0}"
 msgstr "taxonomy: {0}"
 
+#: src/lib/type-config.ts:211
+msgid "Text"
+msgstr "Text"
+
+#: src/lib/type-config.ts:210
+msgid "Text list"
+msgstr "Text list"
+
 #: src/pages/smart-list-page.tsx:398
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr "The .base file moves to the vault's trash folder. Entities it matches are not touched."
@@ -2680,6 +2775,7 @@ msgid "This week"
 msgstr "This week"
 
 #: src/components/smart-lists/sort-picker.tsx:40
+#: src/lib/type-config.ts:198
 #: src/pages/entity-create-page.tsx:141
 msgid "Title"
 msgstr "Title"
@@ -2904,6 +3000,10 @@ msgstr "yes"
 #: src/components/entities/metadata-inputs.tsx:122
 msgid "Yes"
 msgstr "Yes"
+
+#: src/lib/type-config.ts:205
+msgid "Yes/No"
+msgstr "Yes/No"
 
 #: src/pages/quick-capture-page.tsx:240
 msgid "You can still open entities already in your library."

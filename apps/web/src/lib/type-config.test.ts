@@ -43,7 +43,7 @@ describe("fieldTypeLabel", () => {
   it("maps known types and falls back to Text", () => {
     expect(fieldTypeLabel("id")).toBe("ID");
     expect(fieldTypeLabel("imageList")).toBe("Image list");
-    expect(fieldTypeLabel("externalRef")).toBe("External ref");
+    expect(fieldTypeLabel("externalRef")).toBe("External reference");
     expect(fieldTypeLabel("text")).toBe("Text");
   });
 });
@@ -69,8 +69,12 @@ describe("configuredFieldLabel", () => {
     expect(
       configuredFieldLabel(field({ field: "watched", fieldType: "date", dateRole: "completed" })),
     ).toBe("Completed date: watched");
-    expect(configuredFieldLabel(field({ field: "plan", fieldType: "date" }))).toBe(
-      "Planning date: plan",
+    expect(configuredFieldLabel(field({ field: "plan", fieldType: "date" }))).toBe("Date: plan");
+    expect(
+      configuredFieldLabel(field({ field: "a", fieldType: "date", dateRole: "started" })),
+    ).toBe("Started date: a");
+    expect(configuredFieldLabel(field({ field: "b", fieldType: "date", dateRole: "event" }))).toBe(
+      "Event date: b",
     );
   });
 

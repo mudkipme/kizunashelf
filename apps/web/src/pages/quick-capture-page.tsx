@@ -165,11 +165,11 @@ export function QuickCapturePage() {
   });
 
   async function add(match: ExternalMatch) {
-    if (!contentWritable) return;
     if (match.existing) {
       navigate(`/entities/${encodeURIComponent(match.existing.id)}`);
       return;
     }
+    if (!contentWritable || addingKey) return;
     const key = matchKey(match);
     setAddingKey(key);
     try {
@@ -333,12 +333,7 @@ export function QuickCapturePage() {
                 const inLibrary = Boolean(match.existing);
                 return (
                   <li key={key}>
-                    <button
-                      type="button"
-                      onClick={() => void add(match)}
-                      disabled={(!contentWritable && !inLibrary) || Boolean(addingKey)}
-                      className="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-60"
-                    >
+                    <div className="flex w-full items-start gap-3 rounded-md border p-3">
                       {match.candidate.coverUrl ? (
                         <img
                           src={match.candidate.coverUrl}
@@ -374,28 +369,28 @@ export function QuickCapturePage() {
                             {providerLabels.get(match.candidate.provider) ??
                               match.candidate.provider}
                           </span>
-                          {addingKey === key ? (
-                            <span>
-                              <Trans>Adding…</Trans>
-                            </span>
-                          ) : null}
                         </div>
                       </div>
-                    </button>
+                      <Button
+                        type="button"
+                        variant={inLibrary ? "outline" : "default"}
+                        size="sm"
+                        onClick={() => void add(match)}
+                        disabled={(!contentWritable && !inLibrary) || Boolean(addingKey)}
+                        aria-label={
+                          inLibrary
+                            ? t`Open ${match.candidate.title}`
+                            : t`Add ${match.candidate.title}`
+                        }
+                      >
+                        {addingKey === key ? t`Adding…` : inLibrary ? t`Open` : t`Add`}
+                      </Button>
+                    </div>
                   </li>
                 );
               })}
             </ul>
           )}
-
-          {searchEnabled && (results.data?.items.length ?? 0) > 0 ? (
-            <p className="text-center text-xs text-muted-foreground">
-              <Trans>
-                Search results come from third-party providers and are not affiliated with
-                KizunaShelf.
-              </Trans>
-            </p>
-          ) : null}
 
           {searchEnabled ? (
             <Link

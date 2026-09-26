@@ -12,8 +12,7 @@ const alias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
 // Two suites, split by file extension so each gets only the machinery it needs.
 //
 // `unit` (*.test.ts) covers the pure helpers — rule models, title-language
-// derivation, pagination — in plain Node with no plugins at all, which keeps it
-// near-instant.
+// derivation, pagination — in Node, with Lingui macros for shared labels.
 //
 // `ui` (*.test.tsx) renders components in a real Chromium via Vitest's browser
 // mode. This app leans on base-ui/radix comboboxes, popovers and dnd-kit, whose
@@ -25,6 +24,7 @@ export default defineConfig({
   test: {
     projects: [
       {
+        plugins: [babel({ presets: [linguiTransformerBabelPreset()] })],
         resolve: { alias },
         test: {
           name: "unit",

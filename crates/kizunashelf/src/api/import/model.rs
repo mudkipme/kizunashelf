@@ -5,9 +5,8 @@
 
 use crate::api::external::provider_for_external_ref;
 use crate::contract::{ExternalCandidate, ImportPlanUserData};
-use crate::types::{
-    CanonicalStatus, DateRole, EntityTypeConfig, EnumRole, FieldType, KizunaConfig,
-};
+use crate::status::status_field;
+use crate::types::{CanonicalStatus, DateRole, EntityTypeConfig, FieldType, KizunaConfig};
 use serde_json::Map;
 use serde_json::{Number, Value};
 use std::collections::BTreeMap;
@@ -314,13 +313,6 @@ pub(super) fn apply_user_data(
             *body = format!("{}\n\n{section}", body.trim_end());
         }
     }
-}
-
-fn status_field(type_config: &EntityTypeConfig) -> Option<&crate::types::FieldConfig> {
-    type_config
-        .fields
-        .iter()
-        .find(|field| field.enum_role == Some(EnumRole::Status))
 }
 
 fn date_field(

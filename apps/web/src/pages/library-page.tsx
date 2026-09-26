@@ -329,14 +329,7 @@ export function LibraryPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs text-muted-foreground">
               <span>
-                {total > 0 ? (
-                  <Trans>
-                    <Plural value={total} one="# entry" other="# entries" /> · page{" "}
-                    {list.data?.page ?? page}/{totalPages}
-                  </Trans>
-                ) : (
-                  <Plural value={total} one="# entry" other="# entries" />
-                )}
+                <Plural value={total} one="# entry" other="# entries" />
               </span>
               <div className="flex items-center gap-2">
                 <Button

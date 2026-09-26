@@ -321,7 +321,7 @@ export function SettingsEditor({
           <SettingsSection
             id="tags"
             title={t`Tags`}
-            description={t`A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list.`}
+            description={t`Choose the frontmatter key used for tags.`}
             summary={
               <SummaryBadges items={[config.tags ? config.tags.field?.trim() || t`on` : t`off`]} />
             }

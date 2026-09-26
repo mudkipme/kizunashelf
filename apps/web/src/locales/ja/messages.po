@@ -188,6 +188,12 @@ msgstr "{1} 件中 {0} 件を表示"
 msgid "{0} skipped"
 msgstr "{0} 件スキップ"
 
+#. placeholder {0}: field.titleLanguage
+#. placeholder {1}: field.field
+#: src/lib/type-config.ts:219
+msgid "{0} title: {1}"
+msgstr "{0}のタイトル: {1}"
+
 #: src/components/settings/settings-editor.tsx:364
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
@@ -210,18 +216,17 @@ msgstr "{monthLabel}: {0}"
 msgid "{monthLabel}: {0} — open in calendar"
 msgstr "{monthLabel}: {0} — カレンダーで開く"
 
+#: src/components/assets/pagination-bar.tsx:30
+msgid "{start}–{end} of {total}"
+msgstr "{total} 件中 {start}–{end} 件"
+
 #: src/pages/import-wizard-page.tsx:264
 msgid "{toCreate, plural, one {Import # item} other {Import # items}}"
 msgstr "{toCreate, plural, other {# 件のアイテムをインポート}}"
 
-#: src/pages/library-page.tsx:338
+#: src/pages/library-page.tsx:332
 msgid "{total, plural, one {# entry} other {# entries}}"
 msgstr "{total, plural, other {# 件}}"
-
-#. placeholder {0}: list.data?.page ?? page
-#: src/pages/library-page.tsx:333
-msgid "{total, plural, one {# entry} other {# entries}} · page {0}/{totalPages}"
-msgstr "{total, plural, other {# 件}} · ページ {0}/{totalPages}"
 
 #: src/pages/smart-list-page.tsx:239
 msgid "{total, plural, one {# match} other {# matches}}"
@@ -294,10 +299,6 @@ msgstr "同名のリストが既に存在するか、ファイルがディスク
 msgid "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 msgstr "同名のタイプがすでに存在するため、代わりに {assignedIds} を使用しました。追加後に名前を変更できます。"
 
-#: src/components/settings/settings-editor.tsx:324
-msgid "A universal label list every entity can have, with its own editor, filter, and rule support. Opt-in: enabled by naming the frontmatter key that holds the list."
-msgstr "すべてのエントリに付けられる共通のラベルリストです。専用のエディタ・フィルタ・ルールに対応します。オプトイン方式: リストを保持するフロントマターのキー名を指定すると有効になります。"
-
 #: src/components/layout/command-palette.tsx:191
 #: src/pages/entity-page.tsx:481
 #: src/pages/entity-page.tsx:484
@@ -317,16 +318,22 @@ msgstr "アクティビティ"
 #: src/pages/home-page.tsx:36
 #: src/pages/home-page.tsx:42
 #: src/pages/home-page.tsx:47
-#: src/pages/library-page.tsx:358
-#: src/pages/library-page.tsx:364
-#: src/pages/library-page.tsx:369
+#: src/pages/library-page.tsx:351
+#: src/pages/library-page.tsx:357
+#: src/pages/library-page.tsx:362
 #: src/pages/quick-capture-page.tsx:226
+#: src/pages/quick-capture-page.tsx:386
 msgid "Add"
 msgstr "追加"
 
 #: src/components/ui/multi-value-combobox.tsx:168
 msgid "Add \"{item}\""
 msgstr "「{item}」を追加"
+
+#. placeholder {0}: match.candidate.title
+#: src/pages/quick-capture-page.tsx:383
+msgid "Add {0}"
+msgstr "{0}を追加"
 
 #. placeholder {0}: backfill.presetLabel
 #. placeholder {1}: backfill.typeLabel
@@ -428,7 +435,7 @@ msgstr "追加しましたが、エピソードのインポートに失敗しま
 
 #: src/components/settings/preset-picker.tsx:201
 #: src/components/smart-lists/suggested-lists-dialog.tsx:127
-#: src/pages/quick-capture-page.tsx:379
+#: src/pages/quick-capture-page.tsx:386
 msgid "Adding…"
 msgstr "追加中…"
 
@@ -601,6 +608,10 @@ msgstr "追いつく"
 msgid "Change completion date"
 msgstr "完了日を変更"
 
+#: src/components/settings/raw-config-editor.tsx:166
+msgid "Changes are validated before saving. Comments and formatting are preserved."
+msgstr "保存前に変更内容を検証します。コメントと書式は保持されます。"
+
 #: src/components/settings/settings-dialogs.tsx:382
 msgid "Changes save with the rest of the schema."
 msgstr "変更はスキーマ全体と一緒に保存されます。"
@@ -638,6 +649,10 @@ msgstr "アイコンを選択"
 msgid "Choose lists to add to Home. Existing lists keep their changes."
 msgstr "ホームに追加するリストを選んでください。既存のリストへの変更は保持されます。"
 
+#: src/components/settings/settings-editor.tsx:324
+msgid "Choose the frontmatter key used for tags."
+msgstr "タグを保存するフロントマターのキーを指定します。"
+
 #: src/pages/onboarding-page.tsx:227
 msgid "Choose what to track. You can add more later."
 msgstr "記録したいものを選んでください。後から追加できます。"
@@ -668,6 +683,10 @@ msgstr ""
 #: src/pages/activity-page.tsx:42
 msgid "Completed"
 msgstr "完了"
+
+#: src/lib/type-config.ts:234
+msgid "Completed date"
+msgstr "完了日"
 
 #. Warning banner in the raw YAML editor after another app changes config.yaml; the local draft has been preserved
 #: src/components/settings/raw-config-editor.tsx:134
@@ -741,7 +760,7 @@ msgstr "おすすめリストを追加できませんでした。ホームから
 msgid "Create"
 msgstr "作成"
 
-#: src/pages/quick-capture-page.tsx:405
+#: src/pages/quick-capture-page.tsx:400
 msgid "Create “{query}” manually →"
 msgstr "「{query}」を手動で作成 →"
 
@@ -816,6 +835,8 @@ msgstr "日付"
 
 #: src/components/assets/quick-log-dialog.tsx:134
 #: src/components/smart-lists/rule-value-input.tsx:71
+#: src/lib/type-config.ts:207
+#: src/lib/type-config.ts:238
 #: src/pages/activity-page.tsx:257
 msgid "Date"
 msgstr "日付"
@@ -1029,6 +1050,14 @@ msgstr "アイテムが見つかりません"
 msgid "Entity type"
 msgstr "アイテムのタイプ"
 
+#: src/lib/type-config.ts:201
+msgid "Enum"
+msgstr "選択肢"
+
+#: src/lib/type-config.ts:202
+msgid "Enum list"
+msgstr "複数選択"
+
 #: src/components/settings/settings-field-form.tsx:148
 msgid "Enum options"
 msgstr "列挙オプション"
@@ -1051,6 +1080,10 @@ msgstr ""
 msgid "Event"
 msgstr "イベント"
 
+#: src/lib/type-config.ts:236
+msgid "Event date"
+msgstr "イベント日"
+
 #: src/components/settings/settings-external-mappings.tsx:78
 msgid "External field"
 msgstr "外部フィールド"
@@ -1069,6 +1102,10 @@ msgstr "外部メタデータ"
 
 #: src/components/entities/external-match-dialog.tsx:350
 msgid "external ref"
+msgstr "外部参照"
+
+#: src/lib/type-config.ts:208
+msgid "External reference"
 msgstr "外部参照"
 
 #: src/components/settings/settings-external-mappings.tsx:120
@@ -1221,8 +1258,17 @@ msgid "Icon"
 msgstr "アイコン"
 
 #: src/components/settings/settings-entity-type.tsx:61
+#: src/lib/type-config.ts:197
 msgid "ID"
 msgstr "ID"
+
+#: src/lib/type-config.ts:199
+msgid "Image"
+msgstr "画像"
+
+#: src/lib/type-config.ts:200
+msgid "Image list"
+msgstr "画像リスト"
 
 #: src/components/layout/nav-destinations.ts:43
 msgid "Import"
@@ -1273,7 +1319,7 @@ msgstr "{weeks} 週間後"
 
 #: src/components/import/plan-review.tsx:241
 #: src/components/import/plan-review.tsx:245
-#: src/pages/quick-capture-page.tsx:357
+#: src/pages/quick-capture-page.tsx:352
 msgid "In library ✓"
 msgstr "ライブラリに登録済み ✓"
 
@@ -1686,6 +1732,7 @@ msgid "New: {newValue}"
 msgstr "新規: {newValue}"
 
 #. Calendar navigation button for the next month
+#: src/components/assets/pagination-bar.tsx:68
 #: src/pages/calendar-page.tsx:102
 msgid "Next"
 msgstr "次月"
@@ -1735,7 +1782,7 @@ msgstr "アイテムのタイプが設定されていません。"
 
 #: src/pages/calendar-page.tsx:160
 #: src/pages/calendar-page.tsx:175
-#: src/pages/library-page.tsx:385
+#: src/pages/library-page.tsx:378
 msgid "No entries"
 msgstr "エントリなし"
 
@@ -1892,6 +1939,7 @@ msgstr "ノート"
 #: src/components/assets/entity-detail.tsx:258
 #: src/components/entities/metadata-editor.tsx:163
 #: src/components/entities/metadata-editor.tsx:170
+#: src/lib/type-config.ts:10
 #: src/pages/list-detail-page.tsx:502
 #: src/pages/statistics-page.tsx:35
 msgid "Notes"
@@ -1908,6 +1956,10 @@ msgstr "まだ何もありません"
 #: src/components/assets/quick-log-dialog.tsx:212
 msgid "Nothing to log for this type."
 msgstr "このタイプに記録するものがありません。"
+
+#: src/lib/type-config.ts:203
+msgid "Number"
+msgstr "数値"
 
 #: src/components/smart-lists/rule-builder.tsx:52
 #: src/components/smart-lists/rule-subgroup.tsx:42
@@ -1951,8 +2003,14 @@ msgid "Only public profiles are supported. Nothing is written until you review t
 msgstr "公開プロフィールのみ対応しています。計画を確認するまで何も書き込まれません。"
 
 #: src/components/settings/vault-switcher.tsx:102
+#: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "開く"
+
+#. placeholder {0}: match.candidate.title
+#: src/pages/quick-capture-page.tsx:382
+msgid "Open {0}"
+msgstr "{0}を開く"
 
 #: src/components/settings/vault-switcher.tsx:127
 msgid "Open existing vault"
@@ -1986,13 +2044,26 @@ msgstr "オリジナル"
 msgid "Original (filename is the title)"
 msgstr "オリジナル（ファイル名がタイトル）"
 
+#. placeholder {0}: field.field
+#: src/lib/type-config.ts:217
+msgid "Original title: {0}"
+msgstr "原題: {0}"
+
 #: src/components/settings/settings-editor.tsx:392
 msgid "Overview"
 msgstr "概要"
 
+#: src/components/assets/pagination-bar.tsx:52
+msgid "Page {item}"
+msgstr "{item} ページ"
+
 #: src/pages/not-found-page.tsx:17
 msgid "Page not found"
 msgstr "ページが見つかりません"
+
+#: src/components/assets/pagination-bar.tsx:34
+msgid "Pagination"
+msgstr "ページ切り替え"
 
 #: src/components/settings/vault-switcher.tsx:138
 msgid "Parent folder"
@@ -2026,6 +2097,10 @@ msgstr "予定"
 msgid "Planning"
 msgstr "計画中"
 
+#: src/lib/type-config.ts:230
+msgid "Planning date"
+msgstr "予定日"
+
 #. Calendar navigation button for the previous month
 #: src/pages/calendar-page.tsx:96
 msgid "Prev"
@@ -2038,6 +2113,10 @@ msgstr "プレビュー"
 #: src/components/assets/quick-log-dialog.tsx:202
 msgid "Previewing…"
 msgstr "プレビュー中…"
+
+#: src/components/assets/pagination-bar.tsx:42
+msgid "Previous"
+msgstr "前へ"
 
 #: src/components/assets/quick-log-dialog.tsx:29
 msgid "Progress"
@@ -2071,6 +2150,10 @@ msgstr "プロバイダー"
 msgid "Public profile"
 msgstr "公開プロフィール"
 
+#: src/lib/type-config.ts:204
+msgid "Rating"
+msgstr "評価"
+
 #: src/components/import/import-labels.ts:23
 msgid "Real"
 msgstr "実際"
@@ -2087,6 +2170,10 @@ msgstr "{0} を更新"
 #: src/components/settings/settings-field-form.tsx:327
 msgid "Regular enum"
 msgstr "通常の列挙"
+
+#: src/lib/type-config.ts:209
+msgid "Relation"
+msgstr "関連"
 
 #: src/components/settings/settings-field-form.tsx:252
 msgid "Relation type"
@@ -2244,8 +2331,8 @@ msgid "Save"
 msgstr "保存"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:85
-#: src/pages/library-page.tsx:347
-#: src/pages/library-page.tsx:351
+#: src/pages/library-page.tsx:340
+#: src/pages/library-page.tsx:344
 msgid "Save as smart list"
 msgstr "スマートリストとして保存"
 
@@ -2256,10 +2343,6 @@ msgstr "認証情報を保存"
 #: src/components/settings/provider-credentials.tsx:45
 msgid "Saved"
 msgstr "保存しました"
-
-#: src/components/settings/raw-config-editor.tsx:166
-msgid "Saved verbatim. The whole file is validated on save — unknown fields and malformed values are rejected."
-msgstr "そのまま保存されます。ファイル全体は保存時に検証され、不明なフィールドや不正な値は拒否されます。"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:94
 msgid "Saves the current type, criteria, and sort as a smart list."
@@ -2335,16 +2418,16 @@ msgstr "関連を検索または追加"
 msgid "Search queue"
 msgstr "キューを検索"
 
-#: src/pages/quick-capture-page.tsx:393
-msgid "Search results come from third-party providers and are not affiliated with KizunaShelf."
-msgstr "検索結果はサードパーティのプロバイダーによるもので、KizunaShelf とは提携していません。"
-
 #: src/components/entities/external-match-dialog.tsx:152
 #: src/components/entities/use-external-match.ts:80
 #: src/components/ui/multi-value-combobox.tsx:163
 #: src/pages/quick-capture-page.tsx:321
 msgid "Searching…"
 msgstr "検索中…"
+
+#: src/lib/type-config.ts:206
+msgid "Season"
+msgstr "シーズン"
 
 #. placeholder {0}: field.seasonLanguage
 #: src/components/settings/settings-field-descriptors.ts:69
@@ -2522,6 +2605,10 @@ msgstr "最初からやり直す"
 msgid "Started"
 msgstr "開始済み"
 
+#: src/lib/type-config.ts:232
+msgid "Started date"
+msgstr "開始日"
+
 #: src/components/import/configure-step.tsx:104
 msgid "Starting…"
 msgstr "開始中…"
@@ -2618,6 +2705,14 @@ msgstr "分類のルート"
 msgid "taxonomy: {0}"
 msgstr "分類: {0}"
 
+#: src/lib/type-config.ts:211
+msgid "Text"
+msgstr "テキスト"
+
+#: src/lib/type-config.ts:210
+msgid "Text list"
+msgstr "テキストリスト"
+
 #: src/pages/smart-list-page.tsx:398
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base ファイルは保管庫のゴミ箱フォルダに移動します。一致するアイテムには影響しません。"
@@ -2680,6 +2775,7 @@ msgid "This week"
 msgstr "今週"
 
 #: src/components/smart-lists/sort-picker.tsx:40
+#: src/lib/type-config.ts:198
 #: src/pages/entity-create-page.tsx:141
 msgid "Title"
 msgstr "タイトル"
@@ -2904,6 +3000,10 @@ msgstr "はい"
 #: src/components/entities/metadata-inputs.tsx:122
 msgid "Yes"
 msgstr "はい"
+
+#: src/lib/type-config.ts:205
+msgid "Yes/No"
+msgstr "はい／いいえ"
 
 #: src/pages/quick-capture-page.tsx:240
 msgid "You can still open entities already in your library."
