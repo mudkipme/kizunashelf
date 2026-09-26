@@ -188,10 +188,6 @@ msgstr "{0} of {1} shown"
 msgid "{0} skipped"
 msgstr "{0} skipped"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:116
-msgid "{ariaLabel} new property"
-msgstr "{ariaLabel} new property"
-
 #: src/components/settings/settings-editor.tsx:364
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
@@ -314,7 +310,6 @@ msgstr "Actions"
 msgid "Activity"
 msgstr "Activity"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:125
 #: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
 #: src/components/settings/settings-controls.tsx:65
@@ -408,7 +403,7 @@ msgstr "Add suggested lists, or open a smart list and choose Add to Home."
 msgid "Add to Home"
 msgstr "Add to Home"
 
-#: src/components/entities/metadata-inputs.tsx:126
+#: src/components/entities/metadata-inputs.tsx:143
 #: src/components/smart-lists/rule-value-input.tsx:135
 msgid "Add value"
 msgstr "Add value"
@@ -509,6 +504,7 @@ msgstr "any of"
 msgid "Anything worth remembering"
 msgstr "Anything worth remembering"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:108
 #: src/components/settings/settings-dialogs.tsx:389
 msgid "Apply"
 msgstr "Apply"
@@ -580,6 +576,7 @@ msgstr "Calendar"
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
 #: src/components/assets/quick-log-dialog.tsx:168
+#: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
@@ -958,6 +955,10 @@ msgstr "Edit"
 msgid "Edit {0}"
 msgstr "Edit {0}"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:84
+msgid "Edit as JSON to preserve nested values and their types."
+msgstr "Edit as JSON to preserve nested values and their types."
+
 #: src/components/settings/raw-config-editor.tsx:103
 msgid "Edit config.yaml"
 msgstr "Edit config.yaml"
@@ -970,11 +971,15 @@ msgstr "Edit criteria"
 msgid "Edit entity"
 msgstr "Edit entity"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:77
+msgid "Edit structured value"
+msgstr "Edit structured value"
+
 #: src/components/assets/frontmatter-panel.tsx:128
 #: src/components/assets/frontmatter-panel.tsx:230
 #: src/components/assets/frontmatter-panel.tsx:252
-#: src/components/entities/metadata-inputs.tsx:61
-#: src/components/entities/metadata-inputs.tsx:104
+#: src/components/entities/metadata-inputs.tsx:78
+#: src/components/entities/metadata-inputs.tsx:121
 msgid "Empty"
 msgstr "Empty"
 
@@ -1000,6 +1005,10 @@ msgstr "ends with"
 #: src/components/settings/settings-field-form.tsx:208
 msgid "English"
 msgstr "English"
+
+#: src/components/entities/metadata-scalar-inputs.tsx:55
+msgid "Enter a valid JSON object or array."
+msgstr "Enter a valid JSON object or array."
 
 #: src/components/layout/command-palette.tsx:188
 #: src/pages/statistics-page.tsx:52
@@ -1360,6 +1369,10 @@ msgstr "Items <0>({totalItems})</0>"
 msgid "Japanese"
 msgstr "Japanese"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:93
+msgid "JSON value"
+msgstr "JSON value"
+
 #: src/pages/entity-edit-page.tsx:245
 #: src/pages/settings-page.tsx:142
 msgid "Keep editing"
@@ -1684,7 +1697,7 @@ msgstr "no"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:106
+#: src/components/entities/metadata-inputs.tsx:123
 msgid "No"
 msgstr "No"
 
@@ -1999,7 +2012,7 @@ msgstr "Paths"
 msgid "Paused"
 msgstr "Paused"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:230
+#: src/components/entities/metadata-scalar-inputs.tsx:215
 msgid "Pick a date"
 msgstr "Pick a date"
 
@@ -2029,10 +2042,6 @@ msgstr "Previewing…"
 #: src/components/assets/quick-log-dialog.tsx:29
 msgid "Progress"
 msgstr "Progress"
-
-#: src/components/entities/metadata-scalar-inputs.tsx:113
-msgid "property"
-msgstr "property"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
@@ -2314,11 +2323,11 @@ msgstr "Search for a match"
 msgid "Search library"
 msgstr "Search library"
 
-#: src/components/entities/metadata-inputs.tsx:124
+#: src/components/entities/metadata-inputs.tsx:141
 msgid "Search or add {relationType}"
 msgstr "Search or add {relationType}"
 
-#: src/components/entities/metadata-inputs.tsx:125
+#: src/components/entities/metadata-inputs.tsx:142
 msgid "Search or add relation"
 msgstr "Search or add relation"
 
@@ -2892,7 +2901,7 @@ msgstr "yes"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:105
+#: src/components/entities/metadata-inputs.tsx:122
 msgid "Yes"
 msgstr "Yes"
 

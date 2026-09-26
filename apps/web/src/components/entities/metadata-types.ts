@@ -19,7 +19,6 @@ export type FieldKind =
   | "relation"
   | "season"
   | "date"
-  | "object"
   | "image"
   | "imageList";
 

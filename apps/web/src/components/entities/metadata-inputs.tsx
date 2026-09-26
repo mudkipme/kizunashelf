@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
 import {
+  isFrontmatterObject,
   listDisplayValues,
   numberOrString,
   toWikilink,
@@ -18,7 +19,7 @@ import {
 } from "./frontmatter-utils";
 import { ImageFieldInput } from "./metadata-image-input";
 import { MultiValueInput, SeasonListInput } from "./metadata-list-inputs";
-import { DatePickerInput, NumberStepper, ObjectValueInput } from "./metadata-scalar-inputs";
+import { DatePickerInput, NumberStepper, StructuredValueInput } from "./metadata-scalar-inputs";
 import type { EditableFieldSpec, FrontmatterValue } from "./metadata-types";
 
 export function FieldValueInput({
@@ -35,6 +36,22 @@ export function FieldValueInput({
   onChange: (value: FrontmatterValue) => void;
 }) {
   const { t } = useLingui();
+
+  // A stale schema must not coerce a hand-authored object/mixed list through
+  // a scalar or string-list control either.
+  if (
+    isFrontmatterObject(value) ||
+    (Array.isArray(value) && value.some((item) => typeof item !== "string"))
+  ) {
+    return (
+      <StructuredValueInput
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        ariaLabel={field.label}
+      />
+    );
+  }
 
   if (field.kind === "image" || field.kind === "imageList") {
     return (
@@ -141,17 +158,6 @@ export function FieldValueInput({
         ariaLabel={field.label}
         disabled={disabled}
         onChange={onChange}
-      />
-    );
-  }
-
-  if (field.kind === "object") {
-    return (
-      <ObjectValueInput
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        ariaLabel={field.label}
       />
     );
   }

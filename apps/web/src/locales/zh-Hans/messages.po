@@ -188,10 +188,6 @@ msgstr "显示 {0} 项，共 {1} 项"
 msgid "{0} skipped"
 msgstr "已跳过 {0}"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:116
-msgid "{ariaLabel} new property"
-msgstr "{ariaLabel} 新建属性"
-
 #: src/components/settings/settings-editor.tsx:364
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 个数据源}}"
@@ -314,7 +310,6 @@ msgstr "操作"
 msgid "Activity"
 msgstr "活动"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:125
 #: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
 #: src/components/settings/settings-controls.tsx:65
@@ -408,7 +403,7 @@ msgstr "添加推荐列表，或打开智能列表并选择「添加到首页」
 msgid "Add to Home"
 msgstr "添加到首页"
 
-#: src/components/entities/metadata-inputs.tsx:126
+#: src/components/entities/metadata-inputs.tsx:143
 #: src/components/smart-lists/rule-value-input.tsx:135
 msgid "Add value"
 msgstr "添加值"
@@ -509,6 +504,7 @@ msgstr "任一满足"
 msgid "Anything worth remembering"
 msgstr "任何值得记录的内容"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:108
 #: src/components/settings/settings-dialogs.tsx:389
 msgid "Apply"
 msgstr "应用"
@@ -580,6 +576,7 @@ msgstr "日历"
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
 #: src/components/assets/quick-log-dialog.tsx:168
+#: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
@@ -958,6 +955,10 @@ msgstr "编辑"
 msgid "Edit {0}"
 msgstr "编辑 {0}"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:84
+msgid "Edit as JSON to preserve nested values and their types."
+msgstr "以 JSON 格式编辑，保留嵌套值及其类型。"
+
 #: src/components/settings/raw-config-editor.tsx:103
 msgid "Edit config.yaml"
 msgstr "编辑 config.yaml"
@@ -970,11 +971,15 @@ msgstr "编辑条件"
 msgid "Edit entity"
 msgstr "编辑条目"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:77
+msgid "Edit structured value"
+msgstr "编辑结构化值"
+
 #: src/components/assets/frontmatter-panel.tsx:128
 #: src/components/assets/frontmatter-panel.tsx:230
 #: src/components/assets/frontmatter-panel.tsx:252
-#: src/components/entities/metadata-inputs.tsx:61
-#: src/components/entities/metadata-inputs.tsx:104
+#: src/components/entities/metadata-inputs.tsx:78
+#: src/components/entities/metadata-inputs.tsx:121
 msgid "Empty"
 msgstr "空"
 
@@ -1000,6 +1005,10 @@ msgstr "结尾为:"
 #: src/components/settings/settings-field-form.tsx:208
 msgid "English"
 msgstr "英语"
+
+#: src/components/entities/metadata-scalar-inputs.tsx:55
+msgid "Enter a valid JSON object or array."
+msgstr "请输入有效的 JSON 对象或数组。"
 
 #: src/components/layout/command-palette.tsx:188
 #: src/pages/statistics-page.tsx:52
@@ -1360,6 +1369,10 @@ msgstr "项目 <0>（{totalItems}）</0>"
 msgid "Japanese"
 msgstr "日语"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:93
+msgid "JSON value"
+msgstr "JSON 值"
+
 #: src/pages/entity-edit-page.tsx:245
 #: src/pages/settings-page.tsx:142
 msgid "Keep editing"
@@ -1684,7 +1697,7 @@ msgstr "否"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:106
+#: src/components/entities/metadata-inputs.tsx:123
 msgid "No"
 msgstr "否"
 
@@ -1999,7 +2012,7 @@ msgstr "路径"
 msgid "Paused"
 msgstr "暂停"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:230
+#: src/components/entities/metadata-scalar-inputs.tsx:215
 msgid "Pick a date"
 msgstr "选择日期"
 
@@ -2029,10 +2042,6 @@ msgstr "正在预览…"
 #: src/components/assets/quick-log-dialog.tsx:29
 msgid "Progress"
 msgstr "进度"
-
-#: src/components/entities/metadata-scalar-inputs.tsx:113
-msgid "property"
-msgstr "属性"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
@@ -2314,11 +2323,11 @@ msgstr "搜索匹配项"
 msgid "Search library"
 msgstr "搜索库"
 
-#: src/components/entities/metadata-inputs.tsx:124
+#: src/components/entities/metadata-inputs.tsx:141
 msgid "Search or add {relationType}"
 msgstr "搜索或添加 {relationType}"
 
-#: src/components/entities/metadata-inputs.tsx:125
+#: src/components/entities/metadata-inputs.tsx:142
 msgid "Search or add relation"
 msgstr "搜索或添加关联"
 
@@ -2892,7 +2901,7 @@ msgstr "是"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:105
+#: src/components/entities/metadata-inputs.tsx:122
 msgid "Yes"
 msgstr "是"
 

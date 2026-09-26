@@ -188,10 +188,6 @@ msgstr "{1} 件中 {0} 件を表示"
 msgid "{0} skipped"
 msgstr "{0} 件スキップ"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:116
-msgid "{ariaLabel} new property"
-msgstr "{ariaLabel} の新しいプロパティ"
-
 #: src/components/settings/settings-editor.tsx:364
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, other {# 件のプロバイダー}}"
@@ -314,7 +310,6 @@ msgstr "操作"
 msgid "Activity"
 msgstr "アクティビティ"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:125
 #: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
 #: src/components/settings/settings-controls.tsx:65
@@ -408,7 +403,7 @@ msgstr "おすすめリストを追加するか、スマートリストを開い
 msgid "Add to Home"
 msgstr "ホームに追加"
 
-#: src/components/entities/metadata-inputs.tsx:126
+#: src/components/entities/metadata-inputs.tsx:143
 #: src/components/smart-lists/rule-value-input.tsx:135
 msgid "Add value"
 msgstr "値を追加"
@@ -509,6 +504,7 @@ msgstr "いずれかが一致"
 msgid "Anything worth remembering"
 msgstr "覚えておきたいこと"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:108
 #: src/components/settings/settings-dialogs.tsx:389
 msgid "Apply"
 msgstr "適用"
@@ -580,6 +576,7 @@ msgstr "カレンダー"
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
 #: src/components/assets/quick-log-dialog.tsx:168
+#: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
@@ -958,6 +955,10 @@ msgstr "編集"
 msgid "Edit {0}"
 msgstr "{0} を編集"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:84
+msgid "Edit as JSON to preserve nested values and their types."
+msgstr "入れ子の値と型を保持するため、JSON として編集します。"
+
 #: src/components/settings/raw-config-editor.tsx:103
 msgid "Edit config.yaml"
 msgstr "config.yaml を編集"
@@ -970,11 +971,15 @@ msgstr "条件を編集"
 msgid "Edit entity"
 msgstr "アイテムを編集"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:77
+msgid "Edit structured value"
+msgstr "構造化された値を編集"
+
 #: src/components/assets/frontmatter-panel.tsx:128
 #: src/components/assets/frontmatter-panel.tsx:230
 #: src/components/assets/frontmatter-panel.tsx:252
-#: src/components/entities/metadata-inputs.tsx:61
-#: src/components/entities/metadata-inputs.tsx:104
+#: src/components/entities/metadata-inputs.tsx:78
+#: src/components/entities/metadata-inputs.tsx:121
 msgid "Empty"
 msgstr "空"
 
@@ -1000,6 +1005,10 @@ msgstr "が次で終わる:"
 #: src/components/settings/settings-field-form.tsx:208
 msgid "English"
 msgstr "英語"
+
+#: src/components/entities/metadata-scalar-inputs.tsx:55
+msgid "Enter a valid JSON object or array."
+msgstr "有効な JSON オブジェクトまたは配列を入力してください。"
 
 #: src/components/layout/command-palette.tsx:188
 #: src/pages/statistics-page.tsx:52
@@ -1360,6 +1369,10 @@ msgstr "アイテム <0>({totalItems})</0>"
 msgid "Japanese"
 msgstr "日本語"
 
+#: src/components/entities/metadata-scalar-inputs.tsx:93
+msgid "JSON value"
+msgstr "JSON 値"
+
 #: src/pages/entity-edit-page.tsx:245
 #: src/pages/settings-page.tsx:142
 msgid "Keep editing"
@@ -1684,7 +1697,7 @@ msgstr "いいえ"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:106
+#: src/components/entities/metadata-inputs.tsx:123
 msgid "No"
 msgstr "いいえ"
 
@@ -1999,7 +2012,7 @@ msgstr "パス"
 msgid "Paused"
 msgstr "中断"
 
-#: src/components/entities/metadata-scalar-inputs.tsx:230
+#: src/components/entities/metadata-scalar-inputs.tsx:215
 msgid "Pick a date"
 msgstr "日付を選択"
 
@@ -2029,10 +2042,6 @@ msgstr "プレビュー中…"
 #: src/components/assets/quick-log-dialog.tsx:29
 msgid "Progress"
 msgstr "進捗"
-
-#: src/components/entities/metadata-scalar-inputs.tsx:113
-msgid "property"
-msgstr "プロパティ"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
@@ -2314,11 +2323,11 @@ msgstr "一致する項目を検索"
 msgid "Search library"
 msgstr "ライブラリを検索"
 
-#: src/components/entities/metadata-inputs.tsx:124
+#: src/components/entities/metadata-inputs.tsx:141
 msgid "Search or add {relationType}"
 msgstr "{relationType} を検索または追加"
 
-#: src/components/entities/metadata-inputs.tsx:125
+#: src/components/entities/metadata-inputs.tsx:142
 msgid "Search or add relation"
 msgstr "関連を検索または追加"
 
@@ -2892,7 +2901,7 @@ msgstr "はい"
 
 #: src/components/assets/frontmatter-panel.tsx:136
 #: src/components/assets/frontmatter-panel.tsx:253
-#: src/components/entities/metadata-inputs.tsx:105
+#: src/components/entities/metadata-inputs.tsx:122
 msgid "Yes"
 msgstr "はい"
 

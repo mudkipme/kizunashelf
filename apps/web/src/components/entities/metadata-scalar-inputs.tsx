@@ -3,129 +3,114 @@
 //! picker.
 
 import { Trans, useLingui } from "@lingui/react/macro";
-import { CalendarIcon, MinusIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { CalendarIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import { useIsoDateFormat } from "@/lib/locale";
 
-import {
-  formatDateValue,
-  isFrontmatterObject,
-  isScalarFrontmatterValue,
-  parseDateValue,
-  parseScalarValue,
-  valueToText,
-} from "./frontmatter-utils";
-import type { FrontmatterObject, FrontmatterValue } from "./metadata-types";
+import { formatDateValue, parseDateValue } from "./frontmatter-utils";
+import type { FrontmatterValue } from "./metadata-types";
 
-export function ObjectValueInput({
+/** Structured values stay typed; incomplete JSON is confined to this dialog. */
+export function StructuredValueInput({
   value,
   disabled,
   onChange,
   ariaLabel,
 }: {
-  value: FrontmatterValue | undefined;
+  value: FrontmatterValue;
   disabled: boolean;
   onChange: (value: FrontmatterValue) => void;
   ariaLabel: string;
 }) {
   const { t } = useLingui();
-  const [newKey, setNewKey] = useState("");
-  const object = isFrontmatterObject(value) ? value : {};
-  const entries = Object.entries(object);
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [error, setError] = useState<string>();
 
-  function updateObject(next: FrontmatterObject) {
-    onChange(next);
-  }
-
-  function renameKey(oldKey: string, nextKey: string) {
-    const key = nextKey.trim();
-    if (!key || key === oldKey || key in object) return;
-    const next = { ...object, [key]: object[oldKey] };
-    delete next[oldKey];
-    updateObject(next);
-  }
-
-  function updateValue(key: string, nextValue: string) {
-    updateObject({ ...object, [key]: parseScalarValue(nextValue) });
-  }
-
-  function removeKey(key: string) {
-    const next = { ...object };
-    delete next[key];
-    updateObject(next);
-  }
-
-  function addKey() {
-    const key = newKey.trim();
-    if (!key || key in object) return;
-    updateObject({ ...object, [key]: "" });
-    setNewKey("");
+  function apply() {
+    try {
+      const parsed: FrontmatterValue = JSON.parse(text, (_key, item) => {
+        if (typeof item === "number" && !Number.isFinite(item)) throw new Error();
+        return item;
+      });
+      if (parsed === null || typeof parsed !== "object") throw new Error();
+      onChange(parsed);
+      setOpen(false);
+    } catch {
+      setError(t`Enter a valid JSON object or array.`);
+    }
   }
 
   return (
-    <div className="flex flex-col gap-2" aria-label={ariaLabel}>
-      {entries.map(([key, item]) => (
-        <div
-          key={key}
-          className="grid min-w-0 grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_auto] gap-2"
-        >
-          <Input
-            value={key}
-            onChange={(event) => renameKey(key, event.target.value)}
-            className="font-mono text-code"
-            disabled={disabled}
-            aria-label={`${ariaLabel} key`}
+    <>
+      <pre
+        className="max-h-40 overflow-auto rounded-md border bg-muted p-3 text-xs"
+        aria-label={ariaLabel}
+      >
+        {JSON.stringify(value, null, 2)}
+      </pre>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={disabled}
+        onClick={() => {
+          setText(JSON.stringify(value, null, 2));
+          setError(undefined);
+          setOpen(true);
+        }}
+      >
+        <Trans>Edit structured value</Trans>
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{ariaLabel}</DialogTitle>
+            <DialogDescription>
+              <Trans>Edit as JSON to preserve nested values and their types.</Trans>
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={text}
+            onChange={(event) => {
+              setText(event.target.value);
+              setError(undefined);
+            }}
+            aria-label={t`JSON value`}
+            aria-invalid={Boolean(error)}
+            className="min-h-48 font-mono"
+            spellCheck={false}
           />
-          {isScalarFrontmatterValue(item) ? (
-            <Input
-              value={valueToText(item)}
-              onChange={(event) => updateValue(key, event.target.value)}
-              disabled={disabled}
-              aria-label={`${ariaLabel} value`}
-            />
-          ) : (
-            <div className="min-w-0 truncate rounded-md border bg-muted px-3 py-2 text-xs text-muted-foreground">
-              Nested value
-            </div>
-          )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => removeKey(key)}
-            disabled={disabled}
-            aria-label={`Remove ${key}`}
-          >
-            <Trash2Icon />
-          </Button>
-        </div>
-      ))}
-      <div className="flex min-w-0 gap-2">
-        <Input
-          value={newKey}
-          onChange={(event) => setNewKey(event.target.value)}
-          placeholder={t`property`}
-          className="font-mono text-code"
-          disabled={disabled}
-          aria-label={t`${ariaLabel} new property`}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={addKey}
-          disabled={disabled || !newKey.trim()}
-        >
-          <PlusIcon data-icon="inline-start" />
-          <Trans>Add</Trans>
-        </Button>
-      </div>
-    </div>
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Trans>Cancel</Trans>
+            </Button>
+            <Button type="button" onClick={apply} disabled={disabled}>
+              <Trans>Apply</Trans>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

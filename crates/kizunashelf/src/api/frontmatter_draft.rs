@@ -31,8 +31,12 @@ pub(super) fn draft_update_patch(
     current: &Map<String, Value>,
 ) -> Map<String, Value> {
     let mut patch = normalize(draft, type_config, Some(current));
-    for key in current.keys() {
-        if !patch.contains_key(key) {
+    for (key, value) in current {
+        if patch.get(key) == Some(value) {
+            // In particular, an unchanged null must not become a merge-patch
+            // deletion. Only omitted/cleared keys are removed.
+            patch.remove(key);
+        } else if !patch.contains_key(key) {
             patch.insert(key.clone(), Value::Null);
         }
     }
@@ -60,6 +64,12 @@ fn normalize(
             .find(|field| field.field == key)
             .map(|field| field.field_type);
         let current_value = current.and_then(|map| map.get(&key));
+        if current_value == Some(&value) {
+            // A Notes-only save must not trim strings, strip relation aliases,
+            // or drop nulls/empty lists elsewhere in the document.
+            result.insert(key, value);
+            continue;
+        }
         if let Some(normalized) = normalize_value(value, field_type, current_value) {
             result.insert(key, normalized);
         }
@@ -78,6 +88,11 @@ fn normalize_value(
         Value::Null => None,
         Value::Bool(_) | Value::Number(_) | Value::Object(_) => Some(value),
         Value::Array(items) => {
+            // Unknown lists and heterogeneous JSON arrays have no safe string-
+            // list coercion. Keep their element types and nulls intact.
+            if field_type.is_none() || items.iter().any(|item| !item.is_string()) {
+                return Some(Value::Array(items));
+            }
             let relation = field_type == Some(FieldType::Relation);
             let normalized: Vec<Value> = items
                 .into_iter()
@@ -274,7 +289,7 @@ mod tests {
         // Cleared and absent keys are marked for deletion; kept keys pass through.
         assert_eq!(patch["note"], Value::Null);
         assert_eq!(patch["gone"], Value::Null);
-        assert_eq!(patch["kept"], json!("value"));
+        assert!(!patch.contains_key("kept"));
     }
 
     #[test]
@@ -286,8 +301,8 @@ mod tests {
             &config,
             &current,
         );
-        assert_eq!(patch["year"], json!(2020));
-        assert_eq!(patch["flag"], json!(true));
+        assert!(!patch.contains_key("year"));
+        assert!(!patch.contains_key("flag"));
         // A genuinely edited value stays what the user typed.
         let edited = draft_update_patch(draft(json!({ "year": "2021" })), &config, &current);
         assert_eq!(edited["year"], json!("2021"));
@@ -304,5 +319,36 @@ mod tests {
         assert_eq!(normalized["tags"], json!(["a", "b"]));
         let empty_list = normalize_draft(draft(json!({ "tags": ["", " "] })), &config);
         assert!(!empty_list.contains_key("tags"));
+    }
+    #[test]
+    fn unchanged_values_produce_no_patch_including_nulls_and_empty_values() {
+        let config = config(vec![field("related", FieldType::Relation)]);
+        let current = draft(json!({
+            "nested": {"values": [1, true, null, {"code": "007"}]},
+            "mixed": [1, false, null, "  text  "],
+            "empty": null, "empty_list": [], "empty_text": "",
+            "related": ["[[Other|Alias]]"], "padded": "  unchanged  "
+        }));
+        assert!(draft_update_patch(current.clone(), &config, &current).is_empty());
+        assert_eq!(
+            normalize_existing_draft(current.clone(), &config, &current),
+            current
+        );
+        // Absence, unlike an unchanged null, explicitly removes an existing key.
+        let mut edited = current.clone();
+        edited.remove("empty");
+        assert_eq!(
+            draft_update_patch(edited, &config, &current),
+            draft(json!({"empty": null}))
+        );
+    }
+
+    #[test]
+    fn edited_structured_arrays_preserve_element_types_and_nulls() {
+        let config = config(vec![field("mixed", FieldType::TextList)]);
+        let edited = draft(
+            json!({"mixed": [2, false, null, {"nested": [1, null]}], "custom": [null, " padded "]}),
+        );
+        assert_eq!(normalize_draft(edited.clone(), &config), edited);
     }
 }

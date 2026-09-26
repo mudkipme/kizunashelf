@@ -182,3 +182,53 @@ describe("FieldValueInput dispatch", () => {
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 });
+
+describe("structured frontmatter preservation", () => {
+  it.each([
+    { publisher: "Example", nested: { values: [1, true, null, { code: "007" }] } },
+    [1, false, null, { edition: 2 }, ["nested", 3]],
+  ])("edits structured JSON without converting it to text: %j", async (initial) => {
+    const onChange = vi.fn();
+    const screen = await render(
+      <Controlled field={spec({ kind: "text" })} initial={initial} onChange={onChange} />,
+    );
+    expect(onChange).not.toHaveBeenCalled();
+    await screen.getByRole("button", { name: "Edit structured value" }).click();
+    const next = { changed: [false, 2, null, { nested: "value" }] };
+    await screen.getByRole("textbox", { name: "JSON value" }).fill(JSON.stringify(next));
+    await screen.getByRole("button", { name: "Apply", exact: true }).click();
+    expect(onChange).toHaveBeenLastCalledWith(next);
+  });
+
+  it("keeps invalid/scalar JSON out of the draft and allows cancellation", async () => {
+    const onChange = vi.fn();
+    const screen = await render(
+      <Controlled field={spec({ kind: "list" })} initial={[1, null]} onChange={onChange} />,
+    );
+    await screen.getByRole("button", { name: "Edit structured value" }).click();
+    for (const invalid of ["{", '"text"', "null", "[1e400]"]) {
+      await screen.getByRole("textbox", { name: "JSON value" }).fill(invalid);
+      await screen.getByRole("button", { name: "Apply", exact: true }).click();
+      await expect
+        .element(screen.getByRole("alert"))
+        .toHaveTextContent("Enter a valid JSON object or array.");
+      expect(onChange).not.toHaveBeenCalled();
+    }
+    await screen.getByRole("button", { name: "Cancel", exact: true }).click();
+    await screen.getByRole("button", { name: "Edit structured value" }).click();
+    await expect
+      .element(screen.getByRole("textbox", { name: "JSON value" }))
+      .toHaveValue(JSON.stringify([1, null], null, 2));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("preserves unexpected structured values even when the schema specifies a scalar", async () => {
+    const screen = await render(
+      <Controlled field={spec({ kind: "number" })} initial={{ nested: 2 }} />,
+    );
+    await expect
+      .element(screen.getByRole("button", { name: "Edit structured value" }))
+      .toBeVisible();
+    expect(screen.getByRole("spinbutton").elements()).toHaveLength(0);
+  });
+});

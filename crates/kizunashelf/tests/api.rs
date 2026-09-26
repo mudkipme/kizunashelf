@@ -1239,6 +1239,39 @@ async fn entity_update_serializes_a_frontmatter_draft() {
 }
 
 #[tokio::test]
+async fn notes_only_draft_save_preserves_frontmatter_values_on_disk() {
+    let server = TestServer::new();
+    let original = json!({
+        "title": "Preservation", "nested": {"edition": 2, "optional": null},
+        "mixed": [1, true, null, {"code": "007"}], "empty": null,
+        "empty_list": [], "empty_text": "", "padded": "  unchanged  ",
+        "franchise": ["[[Steins;Gate|Alias]]"]
+    });
+    let (status, created) = request_json(
+        &server.app,
+        Method::POST,
+        "/api/entities",
+        Some(json!({
+            "type": "anime", "basename": "Preservation", "frontmatter": original, "body": "Before"
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let path = format!(
+        "/api/entities/{}",
+        urlencoding::encode(created["entity"]["id"].as_str().unwrap())
+    );
+    let (status, updated) = request_json(&server.app, Method::POST, &path, Some(json!({
+        "revision": created["entity"]["revision"], "frontmatterDraft": created["entity"]["frontmatter"], "body": "After"
+    }))).await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    assert_eq!(updated["entity"]["frontmatter"], original);
+    let reread = server.ok_json(&path).await;
+    assert_eq!(reread["entity"]["frontmatter"], original);
+    assert_eq!(reread["entity"]["body"].as_str().unwrap().trim(), "After");
+}
+
+#[tokio::test]
 async fn entity_create_serializes_a_frontmatter_draft() {
     let server = TestServer::new();
     let (status, created) = request_json(
