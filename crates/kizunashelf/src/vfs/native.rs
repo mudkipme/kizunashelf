@@ -36,12 +36,23 @@ impl NativeVfs {
 
     #[cfg(feature = "native-vfs-watch")]
     fn watch_root(&self) -> VfsResult<PathBuf> {
-        if self.root.is_absolute() {
-            Ok(self.root.clone())
+        let root = if self.root.is_absolute() {
+            self.root.clone()
         } else {
-            std::env::current_dir()
-                .map(|current| current.join(&self.root))
-                .map_err(map_io)
+            std::env::current_dir().map_err(map_io)?.join(&self.root)
+        };
+        // FSEvents reports physical paths: /var/... becomes /private/var/...,
+        // and a symlinked vault uses its target. Match that spelling both when
+        // subscribing and when stripping the event's root. This resolves only
+        // the native watch root, not vault I/O or its lexical containment rules.
+        // Never canonicalize event paths: removed/renamed files may be gone.
+        #[cfg(target_os = "macos")]
+        {
+            root.canonicalize().map_err(map_io)
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            Ok(root)
         }
     }
 }
@@ -212,6 +223,54 @@ mod tests {
     use super::*;
     use std::time::Duration;
 
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn watch_reports_changes_through_a_symlinked_vault_root() {
+        let temp = tempfile::tempdir().unwrap();
+        let physical = temp.path().join("vault");
+        let alias = temp.path().join("vault-link");
+        let physical_vfs = NativeVfs::new(&physical);
+        physical_vfs.create_dir_all("Taxonomy/Notes").await.unwrap();
+        physical_vfs
+            .write("Taxonomy/Notes/Example.md", b"before")
+            .await
+            .unwrap();
+        std::os::unix::fs::symlink(&physical, &alias).unwrap();
+        let vfs = NativeVfs::new(alias);
+        let mut watch = vfs.watch().unwrap();
+
+        // An external editor may reach the same file via its physical path.
+        physical_vfs
+            .write("Taxonomy/Notes/Example.md", b"after")
+            .await
+            .unwrap();
+        expect_change(&mut watch, "Taxonomy/Notes/Example.md").await;
+    }
+
+    #[test]
+    fn removed_paths_are_relative_without_requiring_the_file_to_exist() {
+        let root = std::path::Path::new("/vault");
+        let event = Event::new(EventKind::Remove(notify::event::RemoveKind::File))
+            .add_path(root.join("Taxonomy/Notes/Removed.md"))
+            .add_path(PathBuf::from("/vault-other/Outside.md"));
+        let change = event_to_vfs_change(root, event).unwrap();
+        assert_eq!(change.paths, ["Taxonomy/Notes/Removed.md"]);
+        assert_eq!(change.kind, VfsChangeKind::Remove);
+    }
+
+    async fn expect_change(watch: &mut VfsWatch, expected: &str) -> VfsChange {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let change = watch.recv().await.expect("watch remains open");
+                if change.paths.iter().any(|path| path == expected) {
+                    break change;
+                }
+            }
+        })
+        .await
+        .expect("native watcher delivered a file event")
+    }
+
     #[tokio::test]
     async fn watch_reports_normalized_vault_relative_changes() {
         let temp = tempfile::tempdir().unwrap();
@@ -224,20 +283,7 @@ mod tests {
             .await
             .unwrap();
 
-        let changed = tokio::time::timeout(Duration::from_secs(5), async {
-            loop {
-                let change = watch.recv().await.expect("watch remains open");
-                if change
-                    .paths
-                    .iter()
-                    .any(|path| path == "Taxonomy/Notes/Example.md")
-                {
-                    break change;
-                }
-            }
-        })
-        .await
-        .expect("native watcher delivered a file event");
+        let changed = expect_change(&mut watch, "Taxonomy/Notes/Example.md").await;
 
         assert!(matches!(
             changed.kind,
