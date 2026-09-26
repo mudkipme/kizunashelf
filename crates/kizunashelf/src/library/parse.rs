@@ -111,6 +111,7 @@ pub(super) fn parse_entity(
         episode_progress: crate::episodes::episode_section(type_config)
             .map(|section| crate::episodes::episode_progress(&parsed.body, section)),
         status: crate::status::resolve_status(type_config, &parsed.frontmatter),
+        ratings: crate::ratings::resolve_ratings(type_config, &parsed.frontmatter),
         relation_count: 0,
     };
 
@@ -221,6 +222,7 @@ mod tests {
             external_ref: None,
             external_types: Vec::new(),
             relation_type: None,
+            rating_max: None,
         }
     }
 

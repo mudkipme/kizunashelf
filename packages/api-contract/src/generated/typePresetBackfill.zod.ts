@@ -34,7 +34,8 @@ export const TypePresetBackfill = zod.object({
   "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
-  "relationType": zod.string().nullish()
+  "relationType": zod.string().nullish(),
+  "ratingMax": zod.number().nullish().describe('Upper bound of a 0-based rating scale. Omit for legacy, unscaled scores.')
 })
 }).describe('A proposed relation field to add to an existing type.')
 

@@ -45,6 +45,7 @@ export function QuickLogDialog({
   revision,
   kinds = ["progress"],
   fieldLabel,
+  onCompleted,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,6 +55,7 @@ export function QuickLogDialog({
   /// Resolves a frontmatter field name to its schema display label (for the
   /// "Stamps …" preview line). Falls back to the raw name when absent.
   fieldLabel?: (field: string) => string;
+  onCompleted?: () => void;
 }) {
   const { t, i18n } = useLingui();
   const invalidateEntityData = useInvalidateEntityData();
@@ -86,6 +88,7 @@ export function QuickLogDialog({
       await postLogActivity(entityId, request);
       await invalidateEntityData();
       onOpenChange(false);
+      if (activeKind === "completed") onCompleted?.();
     } catch (logError) {
       toast.error(errorMessage(logError));
     } finally {
@@ -191,6 +194,7 @@ function LogPreview({
   data?: Awaited<ReturnType<typeof postLogActivity>>;
   pending: boolean;
   fieldLabel?: (field: string) => string;
+  onCompleted?: () => void;
 }) {
   const { t } = useLingui();
   if (reason) {

@@ -100,6 +100,7 @@ export function EntityPage() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [manageListsOpen, setManageListsOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [ratingField, setRatingField] = useState<string | null>(null);
   const [episodesSaving, setEpisodesSaving] = useState(false);
   const [tasksSaving, setTasksSaving] = useState(false);
 
@@ -363,6 +364,8 @@ export function EntityPage() {
               onApply={applyCandidate}
             />
             <EntityDetail
+              ratingField={ratingField}
+              onRatingFieldChange={setRatingField}
               entity={entity}
               relations={detail.data?.relations ?? []}
               relatedEntities={detail.data?.relatedEntities ?? []}
@@ -422,6 +425,15 @@ export function EntityPage() {
             />
             {canLog ? (
               <QuickLogDialog
+                onCompleted={() => {
+                  const field =
+                    entity.ratings?.find((rating) => rating.value == null)?.field ??
+                    entity.ratings?.[0]?.field;
+                  if (field)
+                    toast.success(t`Completed`, {
+                      action: { label: t`Rate`, onClick: () => setRatingField(field) },
+                    });
+                }}
                 open={logOpen}
                 onOpenChange={setLogOpen}
                 entityId={entity.id}

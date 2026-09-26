@@ -271,6 +271,7 @@ mod tests {
             tags: Vec::new(),
             episode_progress: None,
             status: None,
+            ratings: Vec::new(),
             relation_count: 0,
         }
     }
@@ -322,6 +323,7 @@ mod tests {
             tags: Vec::new(),
             episode_progress: None,
             status: None,
+            ratings: Vec::new(),
             relation_count: 0,
         }
     }
@@ -373,6 +375,7 @@ mod tests {
                 external_ref: None,
                 external_types: Vec::new(),
                 relation_type: None,
+                rating_max: None,
             });
         }
         EntityTypeConfig {

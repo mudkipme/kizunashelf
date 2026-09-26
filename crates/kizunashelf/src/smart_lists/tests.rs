@@ -32,6 +32,7 @@ fn field(name: &str, field_type: FieldType) -> FieldConfig {
         external_ref: None,
         external_types: Vec::new(),
         relation_type: None,
+        rating_max: None,
     }
 }
 
@@ -92,6 +93,7 @@ fn record(id: &str, title: &str, frontmatter: serde_json::Value) -> EntityRecord
             tags: Vec::new(),
             episode_progress: None,
             status: None,
+            ratings: Vec::new(),
             relation_count: 0,
         },
         revision: "rev".to_string(),

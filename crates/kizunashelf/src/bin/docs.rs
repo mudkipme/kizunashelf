@@ -129,7 +129,7 @@ fn field_type_meaning(field_type: &FieldType) -> &'static str {
         FieldType::Enum => "Single value from a known option set.",
         FieldType::EnumList => "Multiple values from a known option set.",
         FieldType::Number => "A plain number: a count such as episodes or pages, or a hand-kept tally. (The retired `progress` / `totalProgress` types still load as `number`.)",
-        FieldType::Rating => "Numeric rating.",
+        FieldType::Rating => "Numeric rating. Optional `ratingMax` declares a scale from zero to that maximum; absent means unscaled. Existing values are never rescaled automatically.",
         FieldType::Bool => "Boolean flag.",
         FieldType::Season => "Season or release window such as `2025`, `2025 Spring`, or localized season strings. Can be used in date views.",
         FieldType::Date => "Date-like field. Exact dates are normalized for calendar links.",
@@ -599,6 +599,9 @@ fn write_preset(
 /// The role/wiring summary column for one preset field.
 fn field_wiring(field: &FieldConfig) -> String {
     let mut notes: Vec<String> = Vec::new();
+    if let Some(max) = field.rating_max {
+        notes.push(format!("ratingMax `{max}`"));
+    }
     if let Some(language) = &field.title_language {
         notes.push(format!("titleLanguage `{language}`"));
     }

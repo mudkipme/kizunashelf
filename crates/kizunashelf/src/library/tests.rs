@@ -104,6 +104,7 @@ async fn read_library_uses_configured_id_fields_and_reports_frontmatter_errors()
             external_ref: None,
             external_types: Vec::new(),
             relation_type: None,
+            rating_max: None,
         },
     );
 
@@ -286,6 +287,7 @@ fn relation_field(name: &str, field_type: FieldType) -> FieldConfig {
         external_ref: None,
         external_types: Vec::new(),
         relation_type: None,
+        rating_max: None,
     }
 }
 
@@ -374,6 +376,7 @@ fn test_config(vault_root: &str) -> KizunaConfig {
                 external_ref: None,
                 external_types: Vec::new(),
                 relation_type: None,
+                rating_max: None,
             }],
         }],
     }

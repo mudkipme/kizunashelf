@@ -77,6 +77,9 @@ pub struct FieldConfig {
     pub external_types: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub relation_type: Option<String>,
+    /// Upper bound of a 0-based rating scale. Omit for legacy, unscaled scores.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rating_max: Option<f64>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, JsonSchema)]
@@ -587,7 +590,20 @@ pub struct EntitySummary {
     /// read it without re-deriving. `None` for types without a status field.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<ResolvedStatus>,
+    /// Every configured rating field, including unrated fields, in schema order.
+    #[serde(default)]
+    pub ratings: Vec<EntityRating>,
     pub relation_count: u32,
+}
+
+/// A schema-derived rating, without rounding or inferred scale.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct EntityRating {
+    pub field: String,
+    pub label: String,
+    pub value: Option<f64>,
+    pub max: Option<f64>,
 }
 
 /// A watched/total count for an entity's episodes/tracks section.

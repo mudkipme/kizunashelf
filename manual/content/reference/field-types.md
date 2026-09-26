@@ -19,7 +19,7 @@ The complete set of field types and role enums, generated directly from the app'
 | `enum` | Single value from a known option set. |
 | `enumList` | Multiple values from a known option set. |
 | `number` | A plain number: a count such as episodes or pages, or a hand-kept tally. (The retired `progress` / `totalProgress` types still load as `number`.) |
-| `rating` | Numeric rating. |
+| `rating` | Numeric rating. Optional `ratingMax` declares a scale from zero to that maximum; absent means unscaled. Existing values are never rescaled automatically. |
 | `bool` | Boolean flag. |
 | `season` | Season or release window such as `2025`, `2025 Spring`, or localized season strings. Can be used in date views. |
 | `date` | Date-like field. Exact dates are normalized for calendar links. |

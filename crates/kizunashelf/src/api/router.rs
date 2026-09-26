@@ -26,6 +26,7 @@ use super::lists::{
 use super::log::log_activity;
 use super::mutations::{create_entity, delete_entity, update_entity};
 use super::path_suggestions::path_suggestions;
+use super::ratings::set_entity_rating;
 use super::smart_lists::{
     create_smart_list, create_suggested_smart_lists, delete_smart_list, get_smart_list,
     preview_smart_list, set_smart_list_home, smart_list_results, smart_list_suggestions,
@@ -373,6 +374,18 @@ fn api_router() -> ApiRouter<AppState> {
             .delete_with(delete_entity, |op| {
                 op.id("deleteEntity")
                     .response::<200, Json<DeleteEntityResponse>>()
+                    .response::<403, Json<ErrorResponse>>()
+                    .response::<404, Json<ErrorResponse>>()
+                    .response::<409, Json<ErrorResponse>>()
+                    .response::<500, Json<ErrorResponse>>()
+            }),
+        )
+        .api_route(
+            "/api/entities/{id}/rating",
+            post_with(set_entity_rating, |op| {
+                op.id("setEntityRating")
+                    .response::<200, Json<crate::contract::SetEntityRatingResponse>>()
+                    .response::<400, Json<ErrorResponse>>()
                     .response::<403, Json<ErrorResponse>>()
                     .response::<404, Json<ErrorResponse>>()
                     .response::<409, Json<ErrorResponse>>()

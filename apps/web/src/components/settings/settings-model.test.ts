@@ -382,3 +382,19 @@ describe("cleanVaultConfig", () => {
     });
   });
 });
+
+it("preserves declared and unscaled ratings through the schema editor", () => {
+  const original = vault({
+    types: [
+      type({
+        fields: [
+          field({ field: "legacy", fieldType: "rating" }),
+          field({ field: "personal", fieldType: "rating", ratingMax: 5 }),
+          field({ field: "custom", fieldType: "rating", ratingMax: 100 }),
+        ],
+      }),
+    ],
+  });
+  const { vault: cleaned } = cleanVaultConfig(normalizeVaultConfig(original));
+  expect(cleaned?.types[0].fields?.map((field) => field.ratingMax)).toEqual([undefined, 5, 100]);
+});

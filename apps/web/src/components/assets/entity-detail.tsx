@@ -14,6 +14,7 @@ import {
 } from "@/components/assets/frontmatter-panel";
 import { LightboxProvider } from "@/components/assets/image-lightbox";
 import { MarkdownView } from "@/components/assets/markdown-view";
+import { EntityRatings } from "@/components/entities/entity-ratings";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { CONTENT_MEASURE } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +74,11 @@ export function EntityDetail({
   onSetEpisodeDate,
   onToggleTask,
   actions,
+  ratingField,
+  onRatingFieldChange,
 }: {
+  ratingField?: string | null;
+  onRatingFieldChange?: (field: string | null) => void;
   entity: Entity;
   relations: Relation[];
   relatedEntities: EntitySummary[];
@@ -161,6 +166,13 @@ export function EntityDetail({
                   >
                     {displayTitle}
                   </h1>
+                  <div className="mt-2">
+                    <EntityRatings
+                      entity={entity}
+                      openField={ratingField}
+                      onOpenFieldChange={onRatingFieldChange}
+                    />
+                  </div>
                   {subtitleTitles.length > 0 ? (
                     <dl className="mt-2 flex flex-col gap-0.5 text-xs">
                       {subtitleTitles.map((item) => (

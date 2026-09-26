@@ -15,6 +15,7 @@ export const analyticsDataQualityMissingCoverItemEpisodeProgressOneWatchedMin = 
 
 export const analyticsDataQualityMissingCoverItemEpisodeProgressOneTotalMin = 0;
 
+export const analyticsDataQualityMissingCoverItemRatingsDefault = [];
 export const analyticsDataQualityMissingCoverItemRelationCountMin = 0;
 
 export const analyticsDataQualityMissingExternalRefsItemDatesItemParsedOneMonthMin = 0;
@@ -26,6 +27,7 @@ export const analyticsDataQualityMissingExternalRefsItemEpisodeProgressOneWatche
 
 export const analyticsDataQualityMissingExternalRefsItemEpisodeProgressOneTotalMin = 0;
 
+export const analyticsDataQualityMissingExternalRefsItemRatingsDefault = [];
 export const analyticsDataQualityMissingExternalRefsItemRelationCountMin = 0;
 
 export const analyticsDataQualityIsolatedItemDatesItemParsedOneMonthMin = 0;
@@ -37,6 +39,7 @@ export const analyticsDataQualityIsolatedItemEpisodeProgressOneWatchedMin = 0;
 
 export const analyticsDataQualityIsolatedItemEpisodeProgressOneTotalMin = 0;
 
+export const analyticsDataQualityIsolatedItemRatingsDefault = [];
 export const analyticsDataQualityIsolatedItemRelationCountMin = 0;
 
 
@@ -74,6 +77,12 @@ export const AnalyticsDataQuality = zod.object({
   "value": zod.string(),
   "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
 }).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
+  "ratings": zod.array(zod.object({
+  "field": zod.string(),
+  "label": zod.string(),
+  "value": zod.number().nullish(),
+  "max": zod.number().nullish()
+}).describe('A schema-derived rating, without rounding or inferred scale.')).default(analyticsDataQualityMissingCoverItemRatingsDefault).describe('Every configured rating field, including unrated fields, in schema order.'),
   "relationCount": zod.int().min(analyticsDataQualityMissingCoverItemRelationCountMin)
 })),
   "missingExternalRefs": zod.array(zod.object({
@@ -109,6 +118,12 @@ export const AnalyticsDataQuality = zod.object({
   "value": zod.string(),
   "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
 }).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
+  "ratings": zod.array(zod.object({
+  "field": zod.string(),
+  "label": zod.string(),
+  "value": zod.number().nullish(),
+  "max": zod.number().nullish()
+}).describe('A schema-derived rating, without rounding or inferred scale.')).default(analyticsDataQualityMissingExternalRefsItemRatingsDefault).describe('Every configured rating field, including unrated fields, in schema order.'),
   "relationCount": zod.int().min(analyticsDataQualityMissingExternalRefsItemRelationCountMin)
 })),
   "isolated": zod.array(zod.object({
@@ -144,6 +159,12 @@ export const AnalyticsDataQuality = zod.object({
   "value": zod.string(),
   "canonical": zod.union([zod.enum(['planning', 'ongoing', 'paused', 'completed', 'dropped']).describe('The small fixed set of lifecycle statuses the engine can reason about. User\noption strings map onto these via [`StatusValues`]; an entity\'s own value may\nresolve to `None` (unmapped) and is still preserved. `Paused` and `Dropped` sit\n\*outside\* the planning→ongoing→completed progression (see\n[`CanonicalStatus::rank`]); both are suppressed from \"up next\" (a paused\/dropped\nthing isn\'t something to act on now), but `Paused` still auto-resumes on a log\nwhile `Dropped` never does.'),zod.null()]).optional()
 }).describe('An entity\'s resolved status: the status field\'s name, the raw user value, and\nthe canonical it maps to (`None` when the value is unmapped or no mapping is\nconfigured). Present on [`EntitySummary`] only when the type declares a status\nfield and the entity carries a value for it.'),zod.null()]).optional().describe('The entity\'s resolved lifecycle status — present only when the type declares\nan `enumRole: status` field and the entity carries a value for it. Resolved\nat parse time (see [`crate::status::resolve_status`]) so feed\/filters\/badges\nread it without re-deriving. `None` for types without a status field.'),
+  "ratings": zod.array(zod.object({
+  "field": zod.string(),
+  "label": zod.string(),
+  "value": zod.number().nullish(),
+  "max": zod.number().nullish()
+}).describe('A schema-derived rating, without rounding or inferred scale.')).default(analyticsDataQualityIsolatedItemRatingsDefault).describe('Every configured rating field, including unrated fields, in schema order.'),
   "relationCount": zod.int().min(analyticsDataQualityIsolatedItemRelationCountMin)
 }))
 })

@@ -222,6 +222,14 @@ fn validate_config_schema(config: &KizunaConfig) -> Result<()> {
     for type_config in &config.types {
         let mut status_fields = 0usize;
         for field in &type_config.fields {
+            if let Some(max) = field.rating_max {
+                if field.field_type != FieldType::Rating || !max.is_finite() || max <= 0.0 {
+                    anyhow::bail!(
+                        "ratingMax on '{}' must be positive and used only on a rating field",
+                        field.field
+                    );
+                }
+            }
             if field.enum_role == Some(EnumRole::Status) {
                 status_fields += 1;
                 if field.field_type != FieldType::Enum {
@@ -284,6 +292,7 @@ mod schema_tests {
             external_ref: None,
             external_types: Vec::new(),
             relation_type: None,
+            rating_max: None,
         }
     }
 

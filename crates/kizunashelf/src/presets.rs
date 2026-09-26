@@ -2167,6 +2167,7 @@ fn field(name: &str, field_type: FieldType, display_name: &str) -> FieldConfig {
         external_ref: None,
         external_types: Vec::new(),
         relation_type: None,
+        rating_max: (field_type == FieldType::Rating).then_some(10.0),
     }
 }
 

@@ -10,6 +10,7 @@ import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { useContext } from "react";
 
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { externalSourceOptions, externalTypesForSource } from "@/lib/external-metadata";
 import { fieldTypeLabel } from "@/lib/type-config";
@@ -53,7 +54,13 @@ export function FieldForm({
       <Field label={t`Type`}>
         <Select
           value={field.fieldType}
-          onChange={(event) => onChange({ ...field, fieldType: event.target.value as FieldType })}
+          onChange={(event) =>
+            onChange({
+              ...field,
+              fieldType: event.target.value as FieldType,
+              ratingMax: event.target.value === "rating" ? (field.ratingMax ?? 10) : undefined,
+            })
+          }
           className="w-full"
         >
           {fieldTypeOptions.map((option) => (
@@ -68,6 +75,28 @@ export function FieldForm({
         value={field.displayName ?? ""}
         onChange={(displayName) => onChange({ ...field, displayName })}
       />
+      {field.fieldType === "rating" ? (
+        <Field label={t`Rating maximum`}>
+          <Input
+            type="number"
+            min="0"
+            step="any"
+            placeholder={t`Unscaled`}
+            value={field.ratingMax ?? ""}
+            onChange={(event) =>
+              onChange({
+                ...field,
+                ratingMax: event.target.value ? Number(event.target.value) : undefined,
+              })
+            }
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            <Trans>
+              Leave blank for raw scores. Changing the scale does not convert existing ratings.
+            </Trans>
+          </p>
+        </Field>
+      ) : null}
       <FieldOptionEditors providerCatalog={providerCatalog} field={field} onChange={onChange} />
     </div>
   );

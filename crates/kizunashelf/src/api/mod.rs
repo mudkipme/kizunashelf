@@ -13,6 +13,7 @@ mod lists;
 mod log;
 mod mutations;
 mod path_suggestions;
+mod ratings;
 mod router;
 mod smart_lists;
 mod state;

@@ -1391,6 +1391,94 @@
         }
       }
     },
+    "/api/entities/{id}/rating": {
+      "post": {
+        "operationId": "setEntityRating",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetEntityRatingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetEntityRatingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entities/{id}/edit/review": {
       "post": {
         "operationId": "reviewEntityEdit",
@@ -4591,6 +4679,14 @@
               "string",
               "null"
             ]
+          },
+          "ratingMax": {
+            "description": "Upper bound of a 0-based rating scale. Omit for legacy, unscaled scores.",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
           }
         },
         "required": [
@@ -5447,6 +5543,14 @@
               }
             ]
           },
+          "ratings": {
+            "description": "Every configured rating field, including unrated fields, in schema order.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityRating"
+            },
+            "default": []
+          },
           "relationCount": {
             "type": "integer",
             "format": "uint32",
@@ -5581,6 +5685,36 @@
         "required": [
           "field",
           "value"
+        ]
+      },
+      "EntityRating": {
+        "description": "A schema-derived rating, without rounding or inferred scale.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "max": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        },
+        "required": [
+          "field",
+          "label"
         ]
       },
       "StatsQuery": {
@@ -7073,6 +7207,14 @@
               }
             ]
           },
+          "ratings": {
+            "description": "Every configured rating field, including unrated fields, in schema order.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityRating"
+            },
+            "default": []
+          },
           "relationCount": {
             "type": "integer",
             "format": "uint32",
@@ -7698,6 +7840,79 @@
         "required": [
           "deletedId",
           "backupPath"
+        ]
+      },
+      "SetEntityRatingRequest": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "max": {
+            "description": "The scale the user saw. A changed schema rejects the write.",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "value": {
+            "description": "Null clears the rating. Mutually exclusive with restore.",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "restore": {
+            "description": "Explicit Undo can restore legacy values outside the current scale losslessly.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RatingSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "revision",
+          "field"
+        ]
+      },
+      "RatingSnapshot": {
+        "description": "One field's exact previous state, used only by explicit revision-guarded Undo.",
+        "type": "object",
+        "properties": {
+          "present": {
+            "type": "boolean"
+          },
+          "value": {
+            "description": "Exact frontmatter value, including null or unrecognized legacy data."
+          }
+        },
+        "required": [
+          "present",
+          "value"
+        ]
+      },
+      "SetEntityRatingResponse": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/RatingSnapshot"
+          }
+        },
+        "required": [
+          "entity",
+          "previous"
         ]
       },
       "EntityEditReviewRequest": {

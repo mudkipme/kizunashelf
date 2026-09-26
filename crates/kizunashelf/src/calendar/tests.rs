@@ -77,6 +77,7 @@ fn summary(entity_type: &str, type_label: &str, basename: &str) -> EntitySummary
         tags: Vec::new(),
         episode_progress: None,
         status: None,
+        ratings: Vec::new(),
         relation_count: 0,
     }
 }
@@ -174,6 +175,7 @@ fn date_field(name: &str, role: Option<DateRole>) -> FieldConfig {
         external_ref: None,
         external_types: Vec::new(),
         relation_type: None,
+        rating_max: None,
     }
 }
 

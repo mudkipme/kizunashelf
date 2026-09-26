@@ -6117,3 +6117,111 @@ async fn edit_review_preserves_atomic_unknown_values_and_distinguishes_concurren
         .unwrap()
     );
 }
+
+#[tokio::test]
+async fn rating_mutations_preserve_other_data_and_restore_exact_legacy_values() {
+    let temp = TempDir::new().unwrap();
+    let vault = temp.path();
+    let mut config = json!({"taxonomyRoot":"Taxonomy", "types":[{
+        "id":"books", "label":"Books", "path":"Books", "fields":[
+            {"field":"感想", "fieldType":"rating", "displayName":"My score", "ratingMax":10},
+            {"field":"critic", "fieldType":"rating"},
+            {"field":"other", "fieldType":"text"}
+        ]
+    }]});
+    write_vault_config(vault, &config);
+    let file = vault.join("Taxonomy/Books/Example.md");
+    write_file(&file, "---\n感想: '87.25'\ncritic: 0\nother: {nested: [one, two]}\nunknown: true\n---\n\nHandwritten **notes**.\n");
+    let app = cached_inline_router(vault, true, true);
+    let path = "/api/entities/books%3AExample";
+    let rating_path = format!("{path}/rating");
+    let original = request_json(&app, Method::GET, path, None).await.1["entity"].clone();
+    assert_eq!(original["ratings"][0]["value"], 87.25);
+    assert_eq!(original["ratings"][0]["max"], 10.0);
+    assert_eq!(original["ratings"][1]["value"], 0.0);
+    assert!(original["ratings"][1]["max"].is_null());
+    let request = json!({"revision": original["revision"], "field":"感想", "max":10, "value":8.25});
+    let (status, result) =
+        request_json(&app, Method::POST, &rating_path, Some(request.clone())).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(result["entity"]["frontmatter"]["感想"], 8.25);
+    assert_eq!(result["entity"]["body"], original["body"]);
+    for key in ["critic", "other", "unknown"] {
+        assert_eq!(
+            result["entity"]["frontmatter"][key],
+            original["frontmatter"][key]
+        );
+    }
+    assert_eq!(result["previous"], json!({"present":true,"value":"87.25"}));
+    assert_eq!(
+        request_json(&app, Method::POST, &rating_path, Some(request))
+            .await
+            .0,
+        StatusCode::CONFLICT
+    );
+    let (status, restored) = request_json(&app, Method::POST, &rating_path, Some(json!({
+        "revision":result["entity"]["revision"], "field":"感想", "max":10, "restore":result["previous"]
+    }))).await;
+    assert_eq!(status, StatusCode::OK, "{restored}");
+    assert_eq!(restored["entity"]["frontmatter"], original["frontmatter"]);
+    let revision = restored["entity"]["revision"].clone();
+    for (field, value) in [
+        ("感想", json!(11)),
+        ("感想", json!(-1)),
+        ("other", json!(5)),
+    ] {
+        assert_eq!(
+            request_json(
+                &app,
+                Method::POST,
+                &rating_path,
+                Some(json!({"revision":revision, "field":field,"max":10,"value":value}))
+            )
+            .await
+            .0,
+            StatusCode::BAD_REQUEST
+        );
+    }
+    let cleared = request_json(
+        &app,
+        Method::POST,
+        &rating_path,
+        Some(json!({"revision":revision, "field":"感想", "max":10, "value":null})),
+    )
+    .await;
+    assert_eq!(cleared.0, StatusCode::OK, "{}", cleared.1);
+    assert!(cleared.1["entity"]["frontmatter"].get("感想").is_none());
+    assert!(cleared.1["entity"]["ratings"][0]["value"].is_null());
+    let zero = request_json(&app, Method::POST, &rating_path, Some(json!({"revision":cleared.1["entity"]["revision"], "field":"感想", "max":10, "value":0}))).await;
+    assert_eq!(zero.0, StatusCode::OK, "{}", zero.1);
+    assert_eq!(zero.1["entity"]["ratings"][0]["value"], 0.0);
+    assert_eq!(zero.1["previous"], json!({"present":false,"value":null}));
+    // Undo cannot erase a later edit, even with a long-lived resident index.
+    let undo = json!({"revision":zero.1["entity"]["revision"], "field":"感想", "max":10, "restore":zero.1["previous"]});
+    let current = fs::read_to_string(&file).unwrap();
+    write_file(&file, &format!("{current}\nAn external edit."));
+    assert_eq!(
+        request_json(&app, Method::POST, &rating_path, Some(undo))
+            .await
+            .0,
+        StatusCode::CONFLICT
+    );
+    // Scale changes must also be checked from freshly read config.
+    config["types"][0]["fields"][0]["ratingMax"] = json!(5);
+    write_vault_config(vault, &config);
+    assert_eq!(request_json(&app, Method::POST, &rating_path, Some(json!({"revision":zero.1["entity"]["revision"], "field":"感想", "max":10, "value":4}))).await.0, StatusCode::CONFLICT);
+    let fresh = request_json(&app, Method::GET, path, None).await;
+    assert_eq!(fresh.1["entity"]["ratings"][0]["max"], 5.0);
+    let readonly = inline_router(vault, true, false);
+    assert_eq!(
+        request_json(
+            &readonly,
+            Method::POST,
+            &rating_path,
+            Some(json!({"revision":"unused", "field":"感想", "max":5,"value":4}))
+        )
+        .await
+        .0,
+        StatusCode::FORBIDDEN
+    );
+}

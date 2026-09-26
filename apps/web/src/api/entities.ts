@@ -12,6 +12,8 @@ import {
   reviewExternalCandidate,
   searchExternalSources,
   updateEntity,
+  setEntityRating,
+  type SetEntityRatingRequest,
   uploadEntityAsset,
   type AssetDownloadJobRequest,
   type AssetDownloadRequest,
@@ -86,4 +88,8 @@ export function fetchAssetJobs(init?: RequestInit) {
 
 export function stopAssetJob(id: string) {
   return cancelAssetJob(id, undefined, apiFetch);
+}
+
+export function saveRating(id: string, request: SetEntityRatingRequest) {
+  return setEntityRating(id, request, undefined, apiFetch);
 }

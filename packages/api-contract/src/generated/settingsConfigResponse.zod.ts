@@ -75,7 +75,8 @@ export const SettingsConfigResponse = zod.object({
   "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
-  "relationType": zod.string().nullish()
+  "relationType": zod.string().nullish(),
+  "ratingMax": zod.number().nullish().describe('Upper bound of a 0-based rating scale. Omit for legacy, unscaled scores.')
 }))
 }))
 }).describe('Vault-level configuration. Describes the vault\'s content schema (taxonomy,\nassets, entity types, daily notes). Stored inside the vault\nat `<vaultRoot>\/KizunaShelf\/config.yaml` so it travels with the vault and is\nsynced by the vault\'s own syncing method.'),zod.null()]).optional(),

@@ -12,6 +12,7 @@ pub mod library;
 pub mod lists;
 pub mod markdown;
 pub mod presets;
+pub mod ratings;
 pub mod relations;
 pub mod secrets;
 pub mod smart_lists;

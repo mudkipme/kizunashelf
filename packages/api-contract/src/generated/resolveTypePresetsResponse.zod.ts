@@ -53,7 +53,8 @@ export const ResolveTypePresetsResponse = zod.object({
   "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
-  "relationType": zod.string().nullish()
+  "relationType": zod.string().nullish(),
+  "ratingMax": zod.number().nullish().describe('Upper bound of a 0-based rating scale. Omit for legacy, unscaled scores.')
 }))
 })).describe('New entity types to append, with relations to absent types stripped and\nrelations to co-selected\/existing types kept, and any id\/path collisions\nalready suffixed (see `collisions`).'),
   "backfills": zod.array(zod.object({
@@ -84,7 +85,8 @@ export const ResolveTypePresetsResponse = zod.object({
   "seasonLanguage": zod.union([zod.enum(['zh', 'ja', 'en']),zod.null()]).optional(),
   "externalRef": zod.string().nullish(),
   "externalTypes": zod.array(zod.string()).optional(),
-  "relationType": zod.string().nullish()
+  "relationType": zod.string().nullish(),
+  "ratingMax": zod.number().nullish().describe('Upper bound of a 0-based rating scale. Omit for legacy, unscaled scores.')
 })
 }).describe('A proposed relation field to add to an existing type.')).optional().describe('Proposed relation fields to add to \*existing\* types so they can link to a\nnewly added type (the \"add one, then another later\" case). Proposals only —\nthe client applies the ones the user accepts.'),
   "collisions": zod.array(zod.object({

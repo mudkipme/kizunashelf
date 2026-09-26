@@ -29,7 +29,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `anilist.native_title`, `tmdb.original_title`, `thetvdb.name` | Title (original) |
 | `cover_url` | `image` | filled from `bangumi.cover_url`, `anilist.cover_url`, `myanimelist.cover_url`, `tmdb.cover_url`, `thetvdb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `episodes` | `number` | filled from `bangumi.eps`, `anilist.episodes`, `myanimelist.episodes`, `tmdb.episode_count` | Episodes |
 | `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `bangumi.date`, `anilist.season`, `myanimelist.season`, `tmdb.release_date`, `thetvdb.first_air_time` | Season |
 | `started_date` | `date` | dateRole `started` | Started date |
@@ -58,7 +58,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title_original` | `title` | titleRole `original`; filled from `tmdb.original_title`, `thetvdb.name`, `neodb.original_title` | Title (original) |
 | `cover_url` | `image` | filled from `tmdb.cover_url`, `thetvdb.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `episodes` | `number` | filled from `tmdb.episode_count`, `neodb.episode_count` | Episodes |
 | `season` | `season` | dateRole `planning`; seasonLanguage `en`; filled from `tmdb.release_date`, `thetvdb.first_air_time`, `neodb.release_date` | Season |
 | `started_date` | `date` | dateRole `started` | Started date |
@@ -84,7 +84,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title_original` | `title` | titleRole `original`; filled from `tmdb.original_title`, `thetvdb.name`, `neodb.original_title` | Title (original) |
 | `cover_url` | `image` | filled from `tmdb.cover_url`, `thetvdb.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Watching / Watched / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `release_date` | `date` | dateRole `planning`; filled from `tmdb.release_date`, `thetvdb.first_air_time`, `neodb.release_date` | Release date |
 | `complete_date` | `date` | dateRole `completed` | Completed date |
 | `tmdb_url` | `externalRef` | externalRef `tmdb` (types movie) | TMDB |
@@ -109,7 +109,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title` | `title` | titleLanguage `en`; filled from `igdb.name`, `steam.name`, `neodb.title` | Title |
 | `cover_url` | `image` | filled from `igdb.cover_url`, `steam.cover_url`, `bangumi.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Playing / Completed / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `platform` | `textList` | filled from `igdb.platforms`, `steam.platform`, `neodb.platforms` | Platform |
 | `genre` | `textList` | filled from `igdb.genres`, `steam.genres`, `bangumi.genre`, `neodb.genres` | Genre |
 | `release_date` | `date` | dateRole `planning`; filled from `igdb.first_release_date`, `steam.release_date`, `bangumi.date`, `neodb.release_date` | Release date |
@@ -136,7 +136,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title` | `title` | titleLanguage `en`; filled from `bgg.name` | Title |
 | `cover_url` | `image` | filled from `bgg.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Playing / Completed / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `players` | `text` | filled from `bgg.players` | Players |
 | `playtime` | `text` | filled from `bgg.playtime` | Playtime |
 | `release_date` | `date` | dateRole `planning` | Release date |
@@ -161,7 +161,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title_original` | `title` | titleRole `original`; filled from `neodb.original_title` | Title (original) |
 | `cover_url` | `image` | filled from `neodb.cover_url`, `openlibrary.cover_url`, `googlebooks.cover_url`, `hardcover.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `pages` | `number` | filled from `neodb.pages`, `openlibrary.pages`, `googlebooks.pages`, `hardcover.pages` | Pages |
 | `author` | `textList` | filled from `neodb.authors`, `openlibrary.authors`, `googlebooks.authors`, `hardcover.authors` | Author |
 | `isbn` | `text` | filled from `neodb.isbn`, `openlibrary.isbn`, `googlebooks.isbn`, `hardcover.isbn` | ISBN |
@@ -191,7 +191,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title_original` | `title` | titleRole `original`; filled from `bangumi.name`, `anilist.native_title` | Title (original) |
 | `cover_url` | `image` | filled from `bangumi.cover_url`, `mangaupdates.cover_url`, `anilist.cover_url`, `myanimelist.cover_url`, `comicvine.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Backlog / Reading / Finished / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `chapters` | `number` | filled from `bangumi.eps`, `mangaupdates.latest_chapter`, `anilist.chapters`, `myanimelist.chapters`, `comicvine.issues_count` | Chapters |
 | `author` | `textList` | filled from `bangumi.author`, `mangaupdates.authors` | Author |
 | `release_date` | `date` | dateRole `planning`; filled from `bangumi.date`, `anilist.start_date`, `myanimelist.start_date` | Release date |
@@ -222,7 +222,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title` | `title` | titleLanguage `en`; filled from `musicbrainz.title`, `applemusic.title`, `discogs.title`, `neodb.title` | Title |
 | `cover_url` | `image` | filled from `musicbrainz.cover_url`, `applemusic.cover_url`, `discogs.cover_url`, `bangumi.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Listening / Listened / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `owned` | `textList` | filled from `discogs.format`, `neodb.format` | Owned |
 | `track_count` | `number` | filled from `applemusic.track_count` | Track count |
 | `genres` | `textList` | filled from `musicbrainz.genres`, `applemusic.genre`, `discogs.genres`, `bangumi.genre`, `neodb.genres` | Genres |
@@ -252,7 +252,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title` | `title` | titleLanguage `en`; filled from `applepodcast.title`, `neodb.title` | Title |
 | `cover_url` | `image` | filled from `applepodcast.cover_url`, `neodb.cover_url` | Cover |
 | `status` | `enum` | enumRole `status`; options: Wishlist / Listening / Listened / Paused / Dropped | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `genres` | `textList` | filled from `applepodcast.genre`, `neodb.genres` | Genres |
 | `feed_url` | `text` | filled from `applepodcast.feed_url` | Feed URL |
 | `applepodcast_url` | `externalRef` | externalRef `applepodcast` (types podcast) | Apple Podcasts |
@@ -320,7 +320,7 @@ The tables below show each preset resolved with **English** as the picker langua
 | `title` | `title` | titleLanguage `en` | Title |
 | `cover_url` | `image` |  | Cover |
 | `status` | `enum` | enumRole `status`; options: Planned / Attended | Status |
-| `rating` | `rating` |  | Rating |
+| `rating` | `rating` | ratingMax `10` | Rating |
 | `location` | `text` |  | Location |
 | `date` | `date` | dateRole `event` | Date |
 | `artist` | `relation` | relation → `artist` | Artist |

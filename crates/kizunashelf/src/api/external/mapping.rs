@@ -48,7 +48,19 @@ fn map_fields(
         if !used.insert(field.field.as_str()) {
             continue;
         }
-        let value = normalize_value_for_field(field, mapped.value);
+        // Provider `score` is normalized to 0–10 by each adapter. Other
+        // metadata mapped to a rating is kept as supplied, without guessing.
+        let raw = if field.field_type == FieldType::Rating
+            && mapped.external_field.as_deref() == Some("score")
+        {
+            crate::ratings::number(&mapped.value)
+                .and_then(|score| crate::ratings::from_ten(score, field))
+                .map(Value::from)
+                .unwrap_or(mapped.value)
+        } else {
+            mapped.value
+        };
+        let value = normalize_value_for_field(field, raw);
         entries.push(MappedFieldValue {
             field: field.field.clone(),
             has_value: value_has_content(&value),
@@ -365,6 +377,7 @@ mod tests {
             external_ref: None,
             external_types: Vec::new(),
             relation_type: None,
+            rating_max: None,
         }
     }
 
@@ -401,6 +414,24 @@ mod tests {
             .find(|entry| entry.field == name)
             .map(|entry| entry.value)
             .unwrap_or(Value::Null)
+    }
+
+    #[test]
+    fn rating_mapping_converts_only_the_normalized_provider_score() {
+        let mut personal = mapped("arbitrary", "tmdb", "score");
+        personal.field_type = FieldType::Rating;
+        personal.rating_max = Some(5.0);
+        let mut legacy = personal.clone();
+        legacy.field = "legacy".to_string();
+        legacy.rating_max = None;
+        let mut other = personal.clone();
+        other.field = "other".to_string();
+        other.external_fields[0].field = "unknown_scale".to_string();
+        let config = type_with(vec![personal, legacy, other]);
+        let cand = candidate("tmdb", json!({ "score": 8.5, "unknown_scale": 87.25 }));
+        assert_eq!(field_value(&cand, &config, "arbitrary"), json!(4.25));
+        assert_eq!(field_value(&cand, &config, "legacy"), json!(8.5));
+        assert_eq!(field_value(&cand, &config, "other"), json!(87.25));
     }
 
     #[test]

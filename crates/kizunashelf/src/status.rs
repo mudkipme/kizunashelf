@@ -88,6 +88,7 @@ mod tests {
             external_ref: None,
             external_types: Vec::new(),
             relation_type: None,
+            rating_max: None,
         }
     }
 

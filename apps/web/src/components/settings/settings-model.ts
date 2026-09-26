@@ -87,6 +87,7 @@ function normalizeField(field: FieldConfig): FieldConfig {
     externalRef: field.externalRef ?? "",
     externalTypes: field.externalTypes ?? [],
     relationType: field.relationType ?? "",
+    ratingMax: field.ratingMax ?? undefined,
   };
 }
 
@@ -282,6 +283,7 @@ function cleanField(
         ? cleanExternalTypes(providerCatalog, field.externalRef, field.externalTypes ?? [])
         : undefined,
     relationType: field.fieldType === "relation" ? emptyToUndefined(field.relationType) : undefined,
+    ratingMax: field.fieldType === "rating" ? (field.ratingMax ?? undefined) : undefined,
   };
 }
 

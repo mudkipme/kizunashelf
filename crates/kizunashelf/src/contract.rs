@@ -716,6 +716,35 @@ pub struct EntityEditReviewResponse {
     pub schema_revision: String,
 }
 
+/// One field's exact previous state, used only by explicit revision-guarded Undo.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RatingSnapshot {
+    pub present: bool,
+    /// Exact frontmatter value, including null or unrecognized legacy data.
+    pub value: Value,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SetEntityRatingRequest {
+    pub revision: String,
+    pub field: String,
+    /// The scale the user saw. A changed schema rejects the write.
+    pub max: Option<f64>,
+    /// Null clears the rating. Mutually exclusive with restore.
+    pub value: Option<f64>,
+    /// Explicit Undo can restore legacy values outside the current scale losslessly.
+    pub restore: Option<RatingSnapshot>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SetEntityRatingResponse {
+    pub entity: Entity,
+    pub previous: RatingSnapshot,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateEntityRequest {

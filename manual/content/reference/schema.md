@@ -111,11 +111,27 @@ fields:
 | `seasonLanguage` | no | enum | `season` | Season display/parser language: `zh`, `ja`, or `en`. |
 | `externalRef` | no | string | `externalRef` | External provider represented by this URL/id field. |
 | `externalTypes` | no | string[] | `externalRef` | Provider-specific type filters for external search. |
+| `ratingMax` | no | number | `rating` | Positive finite maximum for a zero-based rating scale. Omit for unscaled scores. |
 | `relationType` | no | string | `relation` | Target entity type expected for this relation field. |
 
 ### Field Types
 
 Every `fieldType` — and every role enum's value set (`dateRole`, `titleRole`, `enumRole`, canonical statuses, `seasonLanguage`) — is enumerated with its meaning in [Field types & roles](./field-types.md), generated directly from the app so it always matches the version you're running.
+
+### Rating fields
+
+```yaml
+- field: my_score
+  fieldType: rating
+  displayName: My rating
+  ratingMax: 10
+```
+
+Ratings are optional numeric values, including zero and decimals. `ratingMax` declares the scale explicitly; a score of `4` never implies a five-point scale. New presets use a maximum of `10`. Existing fields without `ratingMax` stay unscaled and show their raw score. Changing the scale never converts existing frontmatter values automatically.
+
+Rate directly from the entity header or a library shortcut. Selecting a score saves only that field; **Clear rating** removes it, and **Undo** restores its exact previous value. A conflicting file or scale change requires a reload before retrying. Completion logging can offer **Rate** afterward, but rating is always optional.
+
+Imported user ratings and provider metadata mapped from the normalized `score` field convert from their ten-point representation to the declared maximum. Unscaled fields keep the existing import convention of ten-point scores. Other provider fields keep their supplied values because their scales are unknown.
 
 ### Relation fields
 

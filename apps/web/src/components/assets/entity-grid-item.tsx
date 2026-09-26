@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { AssetImage } from "@/components/assets/asset-image";
 import { CoverFallback } from "@/components/assets/cover-fallback";
 import { EntityDateList } from "@/components/assets/entity-date-list";
+import { EntityRatings } from "@/components/entities/entity-ratings";
 import { EntityTitle } from "@/components/entities/entity-title";
 import { StatusBadge } from "@/components/entities/status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -37,51 +38,58 @@ export function EntityGridItem({
   const showLinks = entity.relationCount > 0;
 
   return (
-    <Link
-      to={`/entities/${encodeURIComponent(entity.id)}`}
-      className="flex min-h-64 flex-col overflow-hidden rounded-md border bg-background transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-    >
-      {showCover ? (
-        <div className="flex aspect-[4/3] items-center justify-center bg-muted">
-          <AssetImage
-            src={entity.image}
-            className="size-full object-cover"
-            fallback={<CoverFallback type={entity.type} />}
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-md border bg-background">
+      <Link
+        to={`/entities/${encodeURIComponent(entity.id)}`}
+        className="flex min-h-64 flex-1 flex-col overflow-hidden bg-background transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+      >
+        {showCover ? (
+          <div className="flex aspect-[4/3] items-center justify-center bg-muted">
+            <AssetImage
+              src={entity.image}
+              className="size-full object-cover"
+              fallback={<CoverFallback type={entity.type} />}
+            />
+          </div>
+        ) : null}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+          {showType || entity.status ? (
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {showType ? <Badge variant="outline">{entity.typeLabel}</Badge> : null}
+              <StatusBadge status={entity.status} />
+            </div>
+          ) : null}
+          <EntityTitle
+            as="div"
+            entity={entity}
+            language={language}
+            className="line-clamp-2 text-sm leading-5 font-medium"
           />
+          {entity.summary ? (
+            <div className="line-clamp-3 text-sm leading-5 text-muted-foreground">
+              {entity.summary}
+            </div>
+          ) : null}
+          <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span className="min-w-0">
+              {entity.dates.length > 0 ? (
+                <EntityDateList entity={entity} compact labelsByType={labelsByType} />
+              ) : null}
+            </span>
+            <span className="shrink-0">
+              {progressLabel ??
+                (showLinks ? (
+                  <Plural value={entity.relationCount} one="# link" other="# links" />
+                ) : null)}
+            </span>
+          </div>
+        </div>
+      </Link>
+      {(entity.ratings?.length ?? 0) > 0 ? (
+        <div className="px-2 py-1">
+          <EntityRatings entity={entity} />
         </div>
       ) : null}
-      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-        {showType || entity.status ? (
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {showType ? <Badge variant="outline">{entity.typeLabel}</Badge> : null}
-            <StatusBadge status={entity.status} />
-          </div>
-        ) : null}
-        <EntityTitle
-          as="div"
-          entity={entity}
-          language={language}
-          className="line-clamp-2 text-sm leading-5 font-medium"
-        />
-        {entity.summary ? (
-          <div className="line-clamp-3 text-sm leading-5 text-muted-foreground">
-            {entity.summary}
-          </div>
-        ) : null}
-        <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span className="min-w-0">
-            {entity.dates.length > 0 ? (
-              <EntityDateList entity={entity} compact labelsByType={labelsByType} />
-            ) : null}
-          </span>
-          <span className="shrink-0">
-            {progressLabel ??
-              (showLinks ? (
-                <Plural value={entity.relationCount} one="# link" other="# links" />
-              ) : null)}
-          </span>
-        </div>
-      </div>
-    </Link>
+    </div>
   );
 }

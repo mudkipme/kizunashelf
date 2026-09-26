@@ -309,6 +309,14 @@ import type {
 } from './searchExternalSourcesParams.zod';
 
 import type {
+  SetEntityRatingRequest
+} from './setEntityRatingRequest.zod';
+
+import {
+  SetEntityRatingResponse
+} from './setEntityRatingResponse.zod';
+
+import type {
   SetSmartListHomeRequest
 } from './setSmartListHomeRequest.zod';
 
@@ -1325,6 +1333,42 @@ const res = await (fetchFn ?? fetch)(getDeleteEntityUrl(id),
 
   const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
   const data = contentType.includes('json') ? DeleteEntityResponse.parse(parsedBody) : parsedBody
+  return data
+}
+
+
+
+export const getSetEntityRatingUrl = (id: string,) => {
+
+
+
+
+  return `/api/entities/${encodeURIComponent(String(id))}/rating`
+}
+
+export const setEntityRating = async (id: string,
+    setEntityRatingRequest: SetEntityRatingRequest, options?: RequestInit, fetchFn?: typeof globalThis.fetch): Promise<SetEntityRatingResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+const res = await (fetchFn ?? fetch)(getSetEntityRatingUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setEntityRatingRequest)
+  }
+)
+
+  const contentType = (res.headers.get('content-type') ?? '').toLowerCase();
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const parsedBody = body ? (contentType.includes('json') ? JSON.parse(body) : body) : {}
+  const data = contentType.includes('json') ? SetEntityRatingResponse.parse(parsedBody) : parsedBody
   return data
 }
 

@@ -2100,6 +2100,7 @@ mod tests {
                     .map(|value| value.to_string())
                     .collect(),
                 relation_type: None,
+                rating_max: None,
             }],
         }
     }

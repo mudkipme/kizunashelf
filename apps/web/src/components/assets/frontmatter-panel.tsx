@@ -4,7 +4,7 @@ import { ExternalLinkIcon } from "lucide-react";
 
 import { configQuery } from "@/api/queries";
 import { Badge } from "@/components/ui/badge";
-import { RatingStars, ratingNumber } from "@/components/ui/rating-stars";
+import { RatingScore, ratingNumber } from "@/components/ui/rating-score";
 import { configFields, fieldsByType, fieldLabelForKey, type FieldType } from "@/lib/type-config";
 import { cn } from "@/lib/utils";
 import type { Entity, Relation, TypeConfig } from "@/types/api";
@@ -78,6 +78,9 @@ function visibleFrontmatterEntries(
     ...configFields(typeConfig)
       .filter((field) => field.enumRole === "status")
       .map((field) => field.field),
+    ...(entity.ratings ?? [])
+      .filter((rating) => rating.value != null)
+      .map((rating) => rating.field),
     ...entity.dates.map((date) => date.field),
     ...Object.keys(entity.externalRefs),
     ...relationGroups.map((group) => group.field),
@@ -139,13 +142,13 @@ function FrontmatterValueView({
   }
 
   if (typeof value === "number") {
-    if (fieldType === "rating") return <RatingStars value={value} />;
+    if (fieldType === "rating") return <RatingScore value={value} />;
     return <span className="tabular-nums">{value}</span>;
   }
 
   if (typeof value === "string") {
     if (fieldType === "rating" && ratingNumber(value) !== undefined)
-      return <RatingStars value={value} />;
+      return <RatingScore value={value} />;
     return <StringValue value={value} />;
   }
 

@@ -6,23 +6,21 @@
  */
 import * as zod from 'zod';
 
-export const entityListResponseItemsItemDatesItemParsedOneMonthMin = 0;
+export const setEntityRatingResponseEntityDatesItemParsedOneMonthMin = 0;
 
-export const entityListResponseItemsItemDatesItemParsedOneDayMin = 0;
+export const setEntityRatingResponseEntityDatesItemParsedOneDayMin = 0;
 
-export const entityListResponseItemsItemTagsDefault = [];
-export const entityListResponseItemsItemEpisodeProgressOneWatchedMin = 0;
+export const setEntityRatingResponseEntityTagsDefault = [];
+export const setEntityRatingResponseEntityEpisodeProgressOneWatchedMin = 0;
 
-export const entityListResponseItemsItemEpisodeProgressOneTotalMin = 0;
+export const setEntityRatingResponseEntityEpisodeProgressOneTotalMin = 0;
 
-export const entityListResponseItemsItemRatingsDefault = [];
-export const entityListResponseItemsItemRelationCountMin = 0;
-
-export const entityListResponseTotalMin = 0;
+export const setEntityRatingResponseEntityRatingsDefault = [];
+export const setEntityRatingResponseEntityRelationCountMin = 0;
 
 
-export const EntityListResponse = zod.object({
-  "items": zod.array(zod.object({
+export const SetEntityRatingResponse = zod.object({
+  "entity": zod.object({
   "id": zod.string(),
   "type": zod.string(),
   "typeLabel": zod.string(),
@@ -33,8 +31,8 @@ export const EntityListResponse = zod.object({
   "value": zod.string(),
   "parsed": zod.union([zod.object({
   "year": zod.int(),
-  "month": zod.int().min(entityListResponseItemsItemDatesItemParsedOneMonthMin).nullish(),
-  "day": zod.int().min(entityListResponseItemsItemDatesItemParsedOneDayMin).nullish(),
+  "month": zod.int().min(setEntityRatingResponseEntityDatesItemParsedOneMonthMin).nullish(),
+  "day": zod.int().min(setEntityRatingResponseEntityDatesItemParsedOneDayMin).nullish(),
   "season": zod.string().nullish(),
   "seasonKey": zod.string().nullish()
 }),zod.null()]).optional(),
@@ -45,10 +43,10 @@ export const EntityListResponse = zod.object({
   "path": zod.string(),
   "basename": zod.string(),
   "externalRefs": zod.record(zod.string(), zod.string()),
-  "tags": zod.array(zod.string()).default(entityListResponseItemsItemTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
+  "tags": zod.array(zod.string()).default(setEntityRatingResponseEntityTagsDefault).describe('The entity\'s built-in tags (the frontmatter `tags` list). Always present\n(empty when none) so clients can render it without a null check.'),
   "episodeProgress": zod.union([zod.object({
-  "watched": zod.int().min(entityListResponseItemsItemEpisodeProgressOneWatchedMin),
-  "total": zod.int().min(entityListResponseItemsItemEpisodeProgressOneTotalMin)
+  "watched": zod.int().min(setEntityRatingResponseEntityEpisodeProgressOneWatchedMin),
+  "total": zod.int().min(setEntityRatingResponseEntityEpisodeProgressOneTotalMin)
 }).describe('A watched\/total count for an entity\'s episodes\/tracks section.'),zod.null()]).optional().describe('Watched\/total for the type\'s episodes section, when it declares one — a\nresident derived stat (computed at parse time) so list\/grid views can show\nprogress without reading bodies. `None` for types without episodes.'),
   "status": zod.union([zod.object({
   "field": zod.string(),
@@ -60,14 +58,18 @@ export const EntityListResponse = zod.object({
   "label": zod.string(),
   "value": zod.number().nullish(),
   "max": zod.number().nullish()
-}).describe('A schema-derived rating, without rounding or inferred scale.')).default(entityListResponseItemsItemRatingsDefault).describe('Every configured rating field, including unrated fields, in schema order.'),
-  "relationCount": zod.int().min(entityListResponseItemsItemRelationCountMin)
-})),
-  "total": zod.int().min(entityListResponseTotalMin),
-  "page": zod.int(),
-  "pageSize": zod.int(),
-  "totalPages": zod.int()
+}).describe('A schema-derived rating, without rounding or inferred scale.')).default(setEntityRatingResponseEntityRatingsDefault).describe('Every configured rating field, including unrated fields, in schema order.'),
+  "relationCount": zod.int().min(setEntityRatingResponseEntityRelationCountMin),
+  "revision": zod.string(),
+  "frontmatter": zod.record(zod.string(), zod.unknown()),
+  "body": zod.string(),
+  "raw": zod.string()
+}),
+  "previous": zod.object({
+  "present": zod.boolean(),
+  "value": zod.unknown().describe('Exact frontmatter value, including null or unrecognized legacy data.')
+}).describe('One field\'s exact previous state, used only by explicit revision-guarded Undo.')
 })
 
-export type EntityListResponse = zod.input<typeof EntityListResponse>;
-export type EntityListResponseOutput = zod.output<typeof EntityListResponse>;
+export type SetEntityRatingResponse = zod.input<typeof SetEntityRatingResponse>;
+export type SetEntityRatingResponseOutput = zod.output<typeof SetEntityRatingResponse>;

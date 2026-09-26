@@ -577,6 +577,7 @@ mod tests {
             external_ref: None,
             external_types: Vec::new(),
             relation_type: None,
+            rating_max: None,
         }
     }
 
@@ -883,6 +884,7 @@ mod tests {
                 value: "value".to_string(),
                 canonical: Some(canonical),
             }),
+            ratings: Vec::new(),
             relation_count: 0,
         };
         let mut unmapped = with_status("U", Some(CanonicalStatus::Ongoing));

@@ -273,7 +273,7 @@ pub(super) fn apply_user_data(
             .iter()
             .find(|field| field.field_type == FieldType::Rating)
         {
-            if let Some(value) = number_value(score) {
+            if let Some(value) = crate::ratings::from_ten(score, field).and_then(number_value) {
                 frontmatter.insert(field.field.clone(), value);
             }
         }
