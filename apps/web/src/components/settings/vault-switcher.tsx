@@ -1,8 +1,20 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, FolderOpenIcon, FolderPlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +26,7 @@ import {
   switchVault,
   type VaultInfo,
 } from "@/lib/desktop";
+import { resetVaultSession } from "@/lib/vault-session";
 
 import { Field, SettingsSection } from "./settings-controls";
 import { joinPath } from "./settings-model";
@@ -27,11 +40,19 @@ import { joinPath } from "./settings-model";
 export function VaultSwitcher({
   onboarding = false,
   onChanged,
+  hasUnsavedChanges = false,
 }: {
   onboarding?: boolean;
+  hasUnsavedChanges?: boolean;
   onChanged?: () => void;
 }) {
   const { t } = useLingui();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [pending, setPending] = useState<{
+    action: () => Promise<VaultInfo[]>;
+    success: string;
+  } | null>(null);
   const [vaults, setVaults] = useState<VaultInfo[]>([]);
   const [parent, setParent] = useState("");
   const [name, setName] = useState("");
@@ -46,11 +67,26 @@ export function VaultSwitcher({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function run(action: () => Promise<VaultInfo[]>, success: string) {
+  async function run(
+    action: () => Promise<VaultInfo[]>,
+    success: string,
+    changesActive = true,
+    confirmed = false,
+  ) {
+    if (changesActive && hasUnsavedChanges && !confirmed) {
+      setPending({ action, success });
+      return;
+    }
     setBusy(true);
     try {
-      setVaults(await action());
-      onChanged?.();
+      const next = await action();
+      if (next.find((vault) => vault.active)?.path !== vaults.find((vault) => vault.active)?.path) {
+        navigate("/", { replace: true });
+        await resetVaultSession(queryClient);
+      } else {
+        setVaults(next);
+        onChanged?.();
+      }
       toast.success(success);
     } catch (reason) {
       toast.error(message(reason, t`Something went wrong`));
@@ -72,105 +108,142 @@ export function VaultSwitcher({
   const newRoot = parent && name.trim() ? joinPath(parent, name.trim()) : "";
 
   return (
-    <SettingsSection
-      title={t`Vaults`}
-      description={
-        onboarding
-          ? t`Open or create a vault to get started.`
-          : t`Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk.`
-      }
-    >
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          {vaults.map((vault) => (
-            <div key={vault.path} className="flex items-center gap-2 rounded-md border px-3 py-2">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 text-sm">
-                  {vault.active ? <CheckIcon className="size-4 text-primary" /> : null}
-                  <span className="truncate font-medium">{vault.name}</span>
+    <>
+      <SettingsSection
+        title={t`Vaults`}
+        description={
+          onboarding
+            ? t`Open or create a vault to get started.`
+            : t`Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk.`
+        }
+      >
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            {vaults.map((vault) => (
+              <div key={vault.path} className="flex items-center gap-2 rounded-md border px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 text-sm">
+                    {vault.active ? <CheckIcon className="size-4 text-primary" /> : null}
+                    <span className="truncate font-medium">{vault.name}</span>
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">{vault.path}</div>
                 </div>
-                <div className="truncate text-xs text-muted-foreground">{vault.path}</div>
-              </div>
-              {!vault.active ? (
+                {!vault.active ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => void run(() => switchVault(vault.path), t`Switched vault`)}
+                  >
+                    <Trans>Open</Trans>
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
-                  size="sm"
-                  variant="outline"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={t`Remove ${vault.name}`}
                   disabled={busy}
-                  onClick={() => void run(() => switchVault(vault.path), t`Switched vault`)}
+                  onClick={() =>
+                    void run(() => removeVault(vault.path), t`Vault removed`, vault.active)
+                  }
                 >
-                  <Trans>Open</Trans>
+                  <Trash2Icon />
                 </Button>
-              ) : null}
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="ghost"
-                aria-label={t`Remove ${vault.name}`}
-                disabled={busy}
-                onClick={() => void run(() => removeVault(vault.path), t`Vault removed`)}
-              >
-                <Trash2Icon />
+              </div>
+            ))}
+            {vaults.length === 0 ? (
+              <div className="rounded-md border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">
+                <Trans>No vaults yet.</Trans>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="flex flex-col gap-2 rounded-md border p-3">
+              <div className="text-sm font-medium">
+                <Trans>Open existing vault</Trans>
+              </div>
+              <Button type="button" variant="outline" disabled={busy} onClick={openExisting}>
+                <FolderOpenIcon data-icon="inline-start" />
+                <Trans>Open folder</Trans>
               </Button>
             </div>
-          ))}
-          {vaults.length === 0 ? (
-            <div className="rounded-md border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">
-              <Trans>No vaults yet.</Trans>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="flex flex-col gap-2 rounded-md border p-3">
-            <div className="text-sm font-medium">
-              <Trans>Open existing vault</Trans>
-            </div>
-            <Button type="button" variant="outline" disabled={busy} onClick={openExisting}>
-              <FolderOpenIcon data-icon="inline-start" />
-              <Trans>Open folder</Trans>
-            </Button>
-          </div>
-          <div className="flex flex-col gap-2 rounded-md border p-3">
-            <div className="text-sm font-medium">
-              <Trans>Create new vault</Trans>
-            </div>
-            <Field label={t`Parent folder`}>
-              <div className="flex items-center gap-2">
-                <Input value={parent} readOnly placeholder={t`No folder selected`} />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={t`Select parent folder`}
-                  onClick={chooseParent}
-                >
-                  <FolderPlusIcon />
-                </Button>
+            <div className="flex flex-col gap-2 rounded-md border p-3">
+              <div className="text-sm font-medium">
+                <Trans>Create new vault</Trans>
               </div>
-            </Field>
-            <Field label={t`Vault name`}>
-              <Input
-                value={name}
-                placeholder={t`My Vault`}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </Field>
-            <Button
-              type="button"
-              disabled={busy || !newRoot}
+              <Field label={t`Parent folder`}>
+                <div className="flex items-center gap-2">
+                  <Input value={parent} readOnly placeholder={t`No folder selected`} />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={t`Select parent folder`}
+                    onClick={chooseParent}
+                  >
+                    <FolderPlusIcon />
+                  </Button>
+                </div>
+              </Field>
+              <Field label={t`Vault name`}>
+                <Input
+                  value={name}
+                  placeholder={t`My Vault`}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </Field>
+              <Button
+                type="button"
+                disabled={busy || !newRoot}
+                onClick={() => {
+                  const vaultName = name.trim();
+                  setName("");
+                  void run(() => createVault(parent, vaultName), t`Vault created`);
+                }}
+              >
+                <Trans>Create vault</Trans>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SettingsSection>
+      <AlertDialog
+        open={pending !== null}
+        onOpenChange={(open) => {
+          if (!open) setPending(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              <Trans>Discard unsaved changes?</Trans>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <Trans>Switching vaults will discard your unsaved edits.</Trans>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              <Trans>Keep editing</Trans>
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={() => {
-                const vaultName = name.trim();
-                setName("");
-                void run(() => createVault(parent, vaultName), t`Vault created`);
+                if (pending) {
+                  const { action, success } = pending;
+                  setPending(null);
+                  void run(action, success, true, true);
+                }
               }}
             >
-              <Trans>Create vault</Trans>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </SettingsSection>
+              <Trans>Discard and switch</Trans>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

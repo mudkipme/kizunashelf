@@ -13,11 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:223
+#: src/components/assets/quick-log-dialog.tsx:279
 msgid " (already logged)"
 msgstr "（已记录）"
 
-#: src/components/assets/quick-log-dialog.tsx:225
+#: src/components/assets/quick-log-dialog.tsx:281
 msgid " (new note)"
 msgstr "（新建笔记）"
 
@@ -305,7 +305,7 @@ msgstr "已存在同名类型，因此改用了 {assignedIds}。添加后可重�
 msgid "Actions"
 msgstr "操作"
 
-#: src/components/assets/quick-log-dialog.tsx:114
+#: src/components/assets/quick-log-dialog.tsx:155
 #: src/components/layout/nav-destinations.ts:41
 #: src/pages/statistics-page.tsx:81
 msgid "Activity"
@@ -374,7 +374,7 @@ msgstr "添加分组"
 msgid "Add items"
 msgstr "添加项目"
 
-#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-create-page.tsx:122
 #: src/pages/quick-capture-page.tsx:232
 msgid "Add manually"
 msgstr "手动添加"
@@ -507,7 +507,7 @@ msgstr "任意链接"
 msgid "any of"
 msgstr "任一满足"
 
-#: src/components/assets/quick-log-dialog.tsx:147
+#: src/components/assets/quick-log-dialog.tsx:195
 msgid "Anything worth remembering"
 msgstr "任何值得记录的内容"
 
@@ -582,13 +582,13 @@ msgstr "日历"
 
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/components/assets/quick-log-dialog.tsx:171
+#: src/components/assets/quick-log-dialog.tsx:225
 #: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
-#: src/pages/entity-edit-page.tsx:169
+#: src/pages/entity-edit-page.tsx:208
 #: src/pages/entity-page.tsx:552
 #: src/pages/import-wizard-page.tsx:239
 #: src/pages/import-wizard-page.tsx:280
@@ -661,7 +661,7 @@ msgstr "选择想要记录的内容。以后可以继续添加。"
 msgid "Clear all"
 msgstr "全部清除"
 
-#: src/components/entities/entity-ratings.tsx:253
+#: src/components/entities/entity-ratings.tsx:254
 msgid "Clear rating"
 msgstr "清除评分"
 
@@ -759,8 +759,12 @@ msgstr "无法读取此 CSV 文件。"
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "无法添加推荐列表。你可以在首页重试。"
 
+#: src/components/vault-change-sync.tsx:34
+msgid "Couldn't refresh. Showing the last loaded version."
+msgstr "无法刷新。正在显示上次加载的内容。"
+
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-create-page.tsx:103
+#: src/pages/entity-create-page.tsx:110
 #: src/pages/lists-page.tsx:240
 msgid "Create"
 msgstr "创建"
@@ -773,12 +777,12 @@ msgstr "手动创建「{query}」 →"
 msgid "Create & add"
 msgstr "创建并添加"
 
-#: src/components/settings/vault-switcher.tsx:136
+#: src/components/settings/vault-switcher.tsx:175
 msgid "Create new vault"
 msgstr "新建保管库"
 
 #: src/components/settings/settings-editor.tsx:211
-#: src/components/settings/vault-switcher.tsx:168
+#: src/components/settings/vault-switcher.tsx:207
 #: src/pages/onboarding-page.tsx:254
 msgid "Create vault"
 msgstr "创建保管库"
@@ -838,7 +842,7 @@ msgstr "深色主题。切换到跟随系统。"
 msgid "date"
 msgstr "日期"
 
-#: src/components/assets/quick-log-dialog.tsx:137
+#: src/components/assets/quick-log-dialog.tsx:179
 #: src/components/smart-lists/rule-value-input.tsx:71
 #: src/lib/type-config.ts:207
 #: src/lib/type-config.ts:238
@@ -907,13 +911,18 @@ msgstr "方向"
 msgid "Disable"
 msgstr "禁用"
 
-#: src/pages/entity-edit-page.tsx:253
-#: src/pages/settings-page.tsx:150
+#: src/pages/entity-edit-page.tsx:310
+#: src/pages/settings-page.tsx:153
 msgid "Discard"
 msgstr "丢弃"
 
-#: src/pages/entity-edit-page.tsx:235
-#: src/pages/settings-page.tsx:126
+#: src/components/settings/vault-switcher.tsx:241
+msgid "Discard and switch"
+msgstr "放弃并切换"
+
+#: src/components/settings/vault-switcher.tsx:222
+#: src/pages/entity-edit-page.tsx:292
+#: src/pages/settings-page.tsx:129
 msgid "Discard unsaved changes?"
 msgstr "丢弃未保存的更改？"
 
@@ -977,7 +986,7 @@ msgid "Edit"
 msgstr "编辑"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:186
+#: src/pages/entity-edit-page.tsx:225
 msgid "Edit {0}"
 msgstr "编辑 {0}"
 
@@ -993,7 +1002,7 @@ msgstr "编辑 config.yaml"
 msgid "Edit criteria"
 msgstr "编辑条件"
 
-#: src/pages/entity-edit-page.tsx:186
+#: src/pages/entity-edit-page.tsx:225
 msgid "Edit entity"
 msgstr "编辑条目"
 
@@ -1045,7 +1054,7 @@ msgstr "条目"
 msgid "Entity name"
 msgstr "条目名称"
 
-#: src/pages/entity-edit-page.tsx:224
+#: src/pages/entity-edit-page.tsx:272
 #: src/pages/entity-page.tsx:455
 msgid "Entity not found"
 msgstr "未找到条目"
@@ -1089,8 +1098,8 @@ msgstr "事件"
 msgid "Event date"
 msgstr "活动日期"
 
-#: src/components/entities/entity-ratings.tsx:223
-#: src/components/entities/entity-ratings.tsx:234
+#: src/components/entities/entity-ratings.tsx:224
+#: src/components/entities/entity-ratings.tsx:235
 msgid "Exact score"
 msgstr "精确评分"
 
@@ -1148,18 +1157,19 @@ msgstr "字段"
 msgid "Fields"
 msgstr "字段"
 
-#: src/pages/entity-create-page.tsx:115
+#: src/pages/entity-create-page.tsx:127
 #: src/pages/review-page.tsx:276
 msgid "File"
 msgstr "文件"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:68
-#: src/pages/entity-create-page.tsx:135
+#: src/pages/entity-create-page.tsx:147
 #: src/pages/entity-page.tsx:324
 msgid "File name"
 msgstr "文件名"
 
+#: src/components/entities/edit-conflict-review.tsx:97
 #: src/components/settings/settings-entity-type.tsx:99
 msgid "Filename"
 msgstr "文件名"
@@ -1186,11 +1196,11 @@ msgstr "筛选"
 msgid "Filter by type"
 msgstr "按类型筛选"
 
-#: src/components/assets/quick-log-dialog.tsx:151
+#: src/components/assets/quick-log-dialog.tsx:199
 msgid "For example, an episode number."
 msgstr "例如：集数。"
 
-#: src/pages/settings-page.tsx:85
+#: src/pages/settings-page.tsx:88
 msgid "Form"
 msgstr "表单"
 
@@ -1429,8 +1439,10 @@ msgstr "日语"
 msgid "JSON value"
 msgstr "JSON 值"
 
-#: src/pages/entity-edit-page.tsx:245
-#: src/pages/settings-page.tsx:142
+#: src/components/entities/edit-conflict-review.tsx:112
+#: src/components/settings/vault-switcher.tsx:230
+#: src/pages/entity-edit-page.tsx:302
+#: src/pages/settings-page.tsx:145
 msgid "Keep editing"
 msgstr "继续编辑"
 
@@ -1460,6 +1472,10 @@ msgstr "语言"
 #: src/components/home/coming-up-section.tsx:203
 msgid "Later"
 msgstr "稍后"
+
+#: src/components/entities/edit-conflict-review.tsx:150
+msgid "Latest version"
+msgstr "最新版本"
 
 #: src/components/settings/settings-field-form.tsx:94
 msgid "Leave blank for raw scores. Changing the scale does not convert existing ratings."
@@ -1572,12 +1588,12 @@ msgid "Loading taxonomy"
 msgstr "正在加载分类"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
-#: src/components/entities/entity-ratings.tsx:183
+#: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:151
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
-#: src/pages/entity-edit-page.tsx:208
+#: src/pages/entity-edit-page.tsx:256
 #: src/pages/entity-page.tsx:315
 #: src/pages/entity-page.tsx:634
 #: src/pages/home-page.tsx:55
@@ -1586,18 +1602,18 @@ msgstr "正在加载分类"
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:84
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:101
+#: src/pages/settings-page.tsx:104
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
 msgstr "正在加载…"
 
-#: src/components/assets/quick-log-dialog.tsx:179
+#: src/components/assets/quick-log-dialog.tsx:240
 #: src/pages/entity-page.tsx:409
 msgid "Log"
 msgstr "记录"
 
-#: src/components/assets/quick-log-dialog.tsx:106
+#: src/components/assets/quick-log-dialog.tsx:147
 msgid "Log activity"
 msgstr "记录活动"
 
@@ -1613,7 +1629,7 @@ msgstr "记录到每日笔记"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "记录默认值 — 记录行写入的标题下方，以及后备的行格式。每个类型都可覆盖这些设置并添加自己的标签。"
 
-#: src/components/assets/quick-log-dialog.tsx:179
+#: src/components/assets/quick-log-dialog.tsx:240
 msgid "Logging…"
 msgstr "正在记录…"
 
@@ -1643,7 +1659,7 @@ msgid "Markdown body sections"
 msgstr "Markdown 正文板块"
 
 #. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:239
+#: src/components/assets/quick-log-dialog.tsx:295
 msgid "Marks as {0}"
 msgstr "标记为 {0}"
 
@@ -1706,7 +1722,11 @@ msgstr "已移到回收站"
 msgid "Music"
 msgstr "音乐"
 
-#: src/components/settings/vault-switcher.tsx:155
+#: src/components/entities/edit-conflict-review.tsx:150
+msgid "My edits"
+msgstr "我的编辑"
+
+#: src/components/settings/vault-switcher.tsx:194
 msgid "My Vault"
 msgstr "我的保管库"
 
@@ -1817,7 +1837,7 @@ msgstr "无外部匹配"
 msgid "No fields configured."
 msgstr "未配置字段。"
 
-#: src/components/settings/vault-switcher.tsx:140
+#: src/components/settings/vault-switcher.tsx:179
 msgid "No folder selected"
 msgstr "未选择文件夹"
 
@@ -1916,9 +1936,13 @@ msgstr "未返回值"
 msgid "No values."
 msgstr "无值。"
 
-#: src/components/settings/vault-switcher.tsx:119
+#: src/components/settings/vault-switcher.tsx:158
 msgid "No vaults yet."
 msgstr "暂无保管库。"
+
+#: src/components/entities/edit-conflict-review.tsx:68
+msgid "Non-conflicting changes are combined. Choose which value to keep where both versions changed. Nothing is saved until you press Save."
+msgstr "不冲突的更改已合并。对于两边都修改过的内容，请选择要保留的值。点击“保存”后才会写入。"
 
 #: src/components/settings/settings-entity-type.tsx:130
 #: src/components/settings/settings-field-form.tsx:165
@@ -1943,7 +1967,7 @@ msgstr "全部不满足"
 msgid "not"
 msgstr "非:"
 
-#: src/components/assets/quick-log-dialog.tsx:142
+#: src/components/assets/quick-log-dialog.tsx:189
 msgid "Note <0>(optional)</0>"
 msgstr "笔记 <0>（可选）</0>"
 
@@ -1952,6 +1976,7 @@ msgid "notes"
 msgstr "笔记"
 
 #: src/components/assets/entity-detail.tsx:270
+#: src/components/entities/edit-conflict-review.tsx:88
 #: src/components/entities/metadata-editor.tsx:163
 #: src/components/entities/metadata-editor.tsx:170
 #: src/lib/type-config.ts:10
@@ -1968,7 +1993,7 @@ msgstr "显示在条目下方的笔记…"
 msgid "Nothing here yet"
 msgstr "这里还什么都没有"
 
-#: src/components/assets/quick-log-dialog.tsx:216
+#: src/components/assets/quick-log-dialog.tsx:272
 msgid "Nothing to log for this type."
 msgstr "此类型没有可记录的内容。"
 
@@ -2017,7 +2042,7 @@ msgstr "只能上传图片文件。"
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "仅支持公开的个人资料。在你检查计划之前不会写入任何内容。"
 
-#: src/components/settings/vault-switcher.tsx:102
+#: src/components/settings/vault-switcher.tsx:139
 #: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "打开"
@@ -2027,11 +2052,11 @@ msgstr "打开"
 msgid "Open {0}"
 msgstr "打开 {0}"
 
-#: src/components/settings/vault-switcher.tsx:127
+#: src/components/settings/vault-switcher.tsx:166
 msgid "Open existing vault"
 msgstr "打开现有保管库"
 
-#: src/components/settings/vault-switcher.tsx:131
+#: src/components/settings/vault-switcher.tsx:170
 msgid "Open folder"
 msgstr "打开文件夹"
 
@@ -2039,7 +2064,7 @@ msgstr "打开文件夹"
 msgid "Open navigation"
 msgstr "打开导航"
 
-#: src/components/settings/vault-switcher.tsx:79
+#: src/components/settings/vault-switcher.tsx:116
 msgid "Open or create a vault to get started."
 msgstr "打开或创建保管库以开始。"
 
@@ -2080,7 +2105,7 @@ msgstr "页面未找到"
 msgid "Pagination"
 msgstr "分页"
 
-#: src/components/settings/vault-switcher.tsx:138
+#: src/components/settings/vault-switcher.tsx:177
 msgid "Parent folder"
 msgstr "父文件夹"
 
@@ -2125,7 +2150,7 @@ msgstr "上个月"
 msgid "Preview"
 msgstr "预览"
 
-#: src/components/assets/quick-log-dialog.tsx:206
+#: src/components/assets/quick-log-dialog.tsx:262
 msgid "Previewing…"
 msgstr "正在预览…"
 
@@ -2165,13 +2190,13 @@ msgstr "数据源"
 msgid "Public profile"
 msgstr "公开个人资料"
 
-#: src/components/entities/entity-ratings.tsx:72
+#: src/components/entities/entity-ratings.tsx:73
 #: src/pages/entity-page.tsx:434
 msgid "Rate"
 msgstr "评分"
 
 #. placeholder {0}: rating.label
-#: src/components/entities/entity-ratings.tsx:84
+#: src/components/entities/entity-ratings.tsx:85
 msgid "Rate {0}"
 msgstr "为{0}评分"
 
@@ -2179,7 +2204,7 @@ msgstr "为{0}评分"
 msgid "Rating"
 msgstr "评分"
 
-#: src/components/entities/entity-ratings.tsx:144
+#: src/components/entities/entity-ratings.tsx:145
 msgid "Rating cleared"
 msgstr "已清除评分"
 
@@ -2187,11 +2212,11 @@ msgstr "已清除评分"
 msgid "Rating maximum"
 msgstr "评分上限"
 
-#: src/components/entities/entity-ratings.tsx:156
+#: src/components/entities/entity-ratings.tsx:157
 msgid "Rating restored"
 msgstr "已恢复评分"
 
-#: src/components/entities/entity-ratings.tsx:144
+#: src/components/entities/entity-ratings.tsx:145
 msgid "Rating saved"
 msgstr "已保存评分"
 
@@ -2224,14 +2249,13 @@ msgstr "关联类型"
 msgid "Relevance"
 msgstr "相关度"
 
-#: src/components/entities/entity-ratings.tsx:270
 #: src/components/error-boundary.tsx:69
+#: src/components/save-failure.tsx:34
 msgid "Reload"
 msgstr "重新加载"
 
 #: src/components/settings/raw-config-editor.tsx:144
 #: src/components/settings/settings-editor.tsx:239
-#: src/pages/entity-edit-page.tsx:201
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:334
 msgid "Reload latest version"
@@ -2240,7 +2264,7 @@ msgstr "重新加载最新版本"
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
 #: src/components/entities/metadata-editor.tsx:228
-#: src/components/settings/vault-switcher.tsx:109
+#: src/components/settings/vault-switcher.tsx:146
 msgid "Remove {0}"
 msgstr "移除 {0}"
 
@@ -2290,6 +2314,10 @@ msgstr "移除规则"
 msgid "Remove type"
 msgstr "移除类型"
 
+#: src/components/entities/edit-conflict-review.tsx:154
+msgid "Removed"
+msgstr "已移除"
+
 #: src/components/lists/section-block.tsx:117
 #: src/components/rename-dialog.tsx:94
 #: src/pages/entity-page.tsx:323
@@ -2329,12 +2357,12 @@ msgid "replaces existing section"
 msgstr "替换现有板块"
 
 #. Hint below the empty file-name field on the entity create page; the Create button stays disabled until a file name or a title is entered
-#: src/pages/entity-create-page.tsx:156
+#: src/pages/entity-create-page.tsx:168
 msgid "Required — enter a file name here or fill in the title below."
 msgstr "必填 — 在此输入文件名，或填写下方的标题。"
 
 #. Hint below the empty file-name field on the entity create page for a type with no title field; the Create button stays disabled until a file name is entered
-#: src/pages/entity-create-page.tsx:160
+#: src/pages/entity-create-page.tsx:172
 msgid "Required — enter a file name."
 msgstr "必填 — 请输入文件名。"
 
@@ -2352,13 +2380,19 @@ msgstr ""
 msgid "Results"
 msgstr ""
 
-#: src/components/entities/entity-ratings.tsx:179
+#: src/components/entities/entity-ratings.tsx:180
+#: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "重试"
 
 #: src/components/layout/nav-destinations.ts:45
 msgid "Review"
 msgstr "检查"
+
+#: src/components/entities/edit-conflict-review.tsx:64
+#: src/pages/entity-edit-page.tsx:244
+msgid "Review changes"
+msgstr "查看更改"
 
 #: src/components/settings/preset-picker.tsx:142
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
@@ -2368,10 +2402,10 @@ msgstr "功能完善、开箱即用的类型，具备完整的元数据匹配。
 msgid "Running…"
 msgstr "运行中…"
 
-#: src/components/entities/entity-ratings.tsx:243
+#: src/components/entities/entity-ratings.tsx:244
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-edit-page.tsx:178
+#: src/pages/entity-edit-page.tsx:217
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Save"
@@ -2402,8 +2436,8 @@ msgstr "将当前类型、条件和排序保存为智能列表。搜索内容不
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-create-page.tsx:103
-#: src/pages/entity-edit-page.tsx:178
+#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-edit-page.tsx:217
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
@@ -2530,7 +2564,7 @@ msgstr "选择文件夹"
 msgid "Select group"
 msgstr "选择分组"
 
-#: src/components/settings/vault-switcher.tsx:145
+#: src/components/settings/vault-switcher.tsx:184
 msgid "Select parent folder"
 msgstr "选择父文件夹"
 
@@ -2612,8 +2646,8 @@ msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "此文件的部分语法不受支持，将被忽略:"
 
 #: src/components/error-boundary.tsx:55
-#: src/components/settings/vault-switcher.tsx:43
-#: src/components/settings/vault-switcher.tsx:56
+#: src/components/settings/vault-switcher.tsx:64
+#: src/components/settings/vault-switcher.tsx:92
 msgid "Something went wrong"
 msgstr "出了点问题"
 
@@ -2633,7 +2667,7 @@ msgstr "来源"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:231
+#: src/components/assets/quick-log-dialog.tsx:287
 msgid "Stamps {0} = {1}"
 msgstr "标记 {0} = {1}"
 
@@ -2703,13 +2737,17 @@ msgstr "存储在你的系统密钥链中。此处列出的数据源需要凭据
 msgid "Summary"
 msgstr "摘要"
 
-#: src/components/settings/vault-switcher.tsx:80
+#: src/components/settings/vault-switcher.tsx:117
 msgid "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
 msgstr "在保管库之间切换或管理你的列表。移除保管库只是在此处将其遗忘 — 其文件夹仍保留在磁盘上。"
 
-#: src/components/settings/vault-switcher.tsx:100
+#: src/components/settings/vault-switcher.tsx:137
 msgid "Switched vault"
 msgstr "已切换保管库"
+
+#: src/components/settings/vault-switcher.tsx:225
+msgid "Switching vaults will discard your unsaved edits."
+msgstr "切换资料库将放弃未保存的编辑。"
 
 #: src/components/assets/entity-episodes.tsx:39
 msgid "Sync"
@@ -2785,6 +2823,18 @@ msgstr "保管库 schema 已在磁盘上更改。你未保存的编辑仍保留�
 msgid "These existing types can link to what you're adding."
 msgstr "这些现有类型可以关联到你正在添加的内容。"
 
+#: src/pages/entity-edit-page.tsx:233
+msgid "This changed elsewhere. Review the latest version to keep your edits."
+msgstr "此内容已在其他地方更改。请查看最新版本以保留你的编辑。"
+
+#: src/components/save-failure.tsx:24
+msgid "This changed elsewhere. Your edits are kept. Load the latest version before trying again."
+msgstr "此内容已在其他地方更改。你的编辑已保留。请加载最新版本后重试。"
+
+#: src/hooks/use-entity-mutation.ts:31
+msgid "This entity changed elsewhere. Reload the latest version before trying again."
+msgstr "此条目已在其他地方更改。请重新加载最新版本后重试。"
+
 #. Warning banner in the static-list editor after another app changes its Markdown file; the local draft has been preserved
 #: src/pages/list-detail-page.tsx:413
 msgid "This list changed on disk. Your unsaved edits are still here."
@@ -2808,7 +2858,7 @@ msgstr "这会将 <0>{0}</0> 移到回收站。其中包含的项目不受影响
 msgid "This page doesn’t exist or may have moved."
 msgstr "此页面不存在或可能已被移动。"
 
-#: src/components/entities/entity-ratings.tsx:185
+#: src/components/entities/entity-ratings.tsx:186
 msgid "This rating field is no longer available."
 msgstr "此评分字段已不可用。"
 
@@ -2827,7 +2877,7 @@ msgstr "本周"
 
 #: src/components/smart-lists/sort-picker.tsx:40
 #: src/lib/type-config.ts:198
-#: src/pages/entity-create-page.tsx:141
+#: src/pages/entity-create-page.tsx:153
 msgid "Title"
 msgstr "标题"
 
@@ -2861,7 +2911,7 @@ msgid "Try again"
 msgstr "重试"
 
 #: src/components/settings/settings-field-form.tsx:54
-#: src/pages/entity-create-page.tsx:119
+#: src/pages/entity-create-page.tsx:131
 #: src/pages/library-page.tsx:248
 #: src/pages/quick-capture-page.tsx:245
 msgid "Type"
@@ -2885,7 +2935,7 @@ msgstr "类型"
 msgid "UI in English"
 msgstr "英文界面"
 
-#: src/components/entities/entity-ratings.tsx:146
+#: src/components/entities/entity-ratings.tsx:147
 msgid "Undo"
 msgstr "撤销"
 
@@ -2913,7 +2963,7 @@ msgstr "未匹配"
 msgid "Unordered"
 msgstr "无序"
 
-#: src/components/entities/entity-ratings.tsx:197
+#: src/components/entities/entity-ratings.tsx:198
 msgid "Unrated"
 msgstr "未评分"
 
@@ -2955,6 +3005,10 @@ msgstr "更新时间"
 msgid "Upload failed."
 msgstr "上传失败。"
 
+#: src/components/entities/edit-conflict-review.tsx:115
+msgid "Use reviewed draft"
+msgstr "使用确认后的草稿"
+
 #: src/components/settings/settings-field-form.tsx:154
 #: src/components/settings/settings-field-form.tsx:200
 #: src/components/settings/settings-field-form.tsx:343
@@ -2977,16 +3031,16 @@ msgstr "值"
 msgid "Vault"
 msgstr "保管库"
 
-#: src/components/settings/vault-switcher.tsx:64
+#: src/components/settings/vault-switcher.tsx:100
 msgid "Vault added"
 msgstr "已添加保管库"
 
-#: src/components/settings/vault-switcher.tsx:165
+#: src/components/settings/vault-switcher.tsx:204
 #: src/pages/onboarding-page.tsx:202
 msgid "Vault created"
 msgstr "已创建保管库"
 
-#: src/components/settings/vault-switcher.tsx:152
+#: src/components/settings/vault-switcher.tsx:191
 msgid "Vault name"
 msgstr "保管库名称"
 
@@ -2994,7 +3048,7 @@ msgstr "保管库名称"
 msgid "Vault path or URL"
 msgstr "保管库路径或 URL"
 
-#: src/components/settings/vault-switcher.tsx:111
+#: src/components/settings/vault-switcher.tsx:149
 msgid "Vault removed"
 msgstr "已移除保管库"
 
@@ -3002,7 +3056,7 @@ msgstr "已移除保管库"
 msgid "Vault rescanned"
 msgstr "已重新扫描保管库"
 
-#: src/components/settings/vault-switcher.tsx:76
+#: src/components/settings/vault-switcher.tsx:113
 msgid "Vaults"
 msgstr "保管库"
 
@@ -3030,7 +3084,7 @@ msgstr "开启后，勾选剧集或点击「记录」按钮会在每日笔记中
 
 #. Hint below the empty file-name field on the entity create page; the placeholder is the file name derived from the entity's title field
 #. placeholder {0}: filename.basename
-#: src/pages/entity-create-page.tsx:149
+#: src/pages/entity-create-page.tsx:161
 msgid "Will be created as “{0}.md”, from the title."
 msgstr "将根据标题创建为“{0}.md”。"
 
@@ -3039,7 +3093,7 @@ msgstr "将根据标题创建为“{0}.md”。"
 msgid "within the next"
 msgstr "未来"
 
-#: src/pages/settings-page.tsx:93
+#: src/pages/settings-page.tsx:96
 msgid "YAML"
 msgstr "YAML"
 
@@ -3072,15 +3126,19 @@ msgstr "是/否"
 msgid "You can still open entities already in your library."
 msgstr "你仍可以打开库中已有的条目。"
 
-#: src/pages/settings-page.tsx:130
+#: src/pages/settings-page.tsx:133
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "表单编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 
-#: src/pages/settings-page.tsx:134
+#: src/pages/settings-page.tsx:137
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "YAML 编辑器中有未保存的更改。切换编辑器将丢弃它们。"
 
 #. Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes
-#: src/pages/entity-edit-page.tsx:238
+#: src/pages/entity-edit-page.tsx:295
 msgid "You have unsaved edits to this entity. Leaving will discard them."
 msgstr "此条目有未保存的编辑。离开将丢弃这些更改。"
+
+#: src/components/entities/edit-conflict-review.tsx:106
+msgid "Your edits can be combined with the latest version."
+msgstr "你的编辑可以与最新版本合并。"

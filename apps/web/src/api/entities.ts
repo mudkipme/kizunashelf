@@ -13,6 +13,8 @@ import {
   searchExternalSources,
   updateEntity,
   setEntityRating,
+  reviewEntityEdit,
+  type EntityEditReviewRequest,
   type SetEntityRatingRequest,
   uploadEntityAsset,
   type AssetDownloadJobRequest,
@@ -92,4 +94,8 @@ export function stopAssetJob(id: string) {
 
 export function saveRating(id: string, request: SetEntityRatingRequest) {
   return setEntityRating(id, request, undefined, apiFetch);
+}
+
+export function reviewEntityDraft(id: string, request: EntityEditReviewRequest) {
+  return reviewEntityEdit(id, request, undefined, apiFetch);
 }

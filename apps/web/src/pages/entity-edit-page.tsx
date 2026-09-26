@@ -1,14 +1,16 @@
+import type { EntityEditReviewResponse, EntityEditDraft } from "@kizunashelf/api-contract";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { errorMessage } from "@/api/client";
-import { saveEntity } from "@/api/entities";
+import { errorMessage, isConflictError } from "@/api/client";
+import { saveEntity, reviewEntityDraft } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { configQuery, entityQuery } from "@/api/queries";
 import { useRelationSearch } from "@/api/use-relation-search";
+import { EditConflictReview } from "@/components/entities/edit-conflict-review";
 import {
   type FrontmatterDraft,
   MetadataEditor,
@@ -16,6 +18,7 @@ import {
 } from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
 import { CONTENT_MEASURE } from "@/components/layout/page-container";
+import { SaveFailure } from "@/components/save-failure";
 import { Alert } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -29,11 +32,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Placeholder } from "@/components/ui/placeholder";
-import { ENTITY_EDIT_CONFLICT_MESSAGE, useEntityMutation } from "@/hooks/use-entity-mutation";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
 import { useTitleLanguage } from "@/lib/language";
 import { entityTitle } from "@/lib/title-language";
+import { fieldLabelForKey } from "@/lib/type-config";
 
 export function EntityEditPage() {
   const { t } = useLingui();
@@ -43,7 +46,14 @@ export function EntityEditPage() {
   const detail = useQuery({ ...entityQuery(id ?? ""), enabled: Boolean(id) });
   const config = useQuery(configQuery());
   const capabilities = useCapabilities();
-  const { saving, run } = useEntityMutation();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<unknown>();
+  const [reviewing, setReviewing] = useState(false);
+  const [review, setReview] = useState<EntityEditReviewResponse>();
+  const baselineRef = useRef<NonNullable<typeof entity> | undefined>(undefined);
+  const draftBasenameRef = useRef<string | undefined>(undefined);
+  const schemaRevisionRef = useRef<string | undefined>(undefined);
   const [conflict, setConflict] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
@@ -69,6 +79,9 @@ export function EntityEditPage() {
     [config.data, entity?.type],
   );
   const seedDraft = useCallback((source: NonNullable<typeof entity>) => {
+    baselineRef.current = source;
+    draftBasenameRef.current = source.basename;
+    schemaRevisionRef.current = undefined;
     seededEntityIdRef.current = source.id;
     seededRevisionRef.current = source.revision;
     const seeded = normalizeFrontmatter(source.frontmatter);
@@ -100,42 +113,68 @@ export function EntityEditPage() {
     else seedDraft(entity);
   }, [dirty, entity, seedDraft]);
 
-  // Reloads the latest server version, replacing the local draft. Used to
-  // recover from a 409 conflict after the entity changed on disk.
-  async function reloadLatest() {
-    const refreshed = await detail.refetch();
-    const fresh = refreshed.data?.entity;
-    if (!fresh) return;
-    seedDraft(fresh);
-    setConflict(false);
+  async function reviewLatest() {
+    const baseline = baselineRef.current;
+    if (!baseline || reviewing || saving) return;
+    setReviewing(true);
+    setSaveError(undefined);
+    try {
+      const result = await reviewEntityDraft(baseline.id, {
+        type: baseline.type,
+        baseline: {
+          basename: baseline.basename,
+          body: baseline.body,
+          frontmatter: baseline.frontmatter,
+        },
+        draft: { basename: draftBasenameRef.current ?? baseline.basename, body, frontmatter },
+      });
+      setReview(result);
+    } catch (error) {
+      setSaveError(error);
+    } finally {
+      setReviewing(false);
+    }
+  }
+
+  function applyReviewedDraft(draft: EntityEditDraft) {
+    if (!review) return;
+    queryClient.setQueryData(entityQuery(review.entity.id).queryKey, (current) =>
+      current ? { ...current, entity: review.entity } : current,
+    );
+    seedDraft(review.entity);
+    schemaRevisionRef.current = review.schemaRevision;
+    draftBasenameRef.current = draft.basename;
+    setFrontmatter(normalizeFrontmatter(draft.frontmatter));
+    setBody(draft.body);
+    setReview(undefined);
+    setSaveError(undefined);
+    void queryClient.invalidateQueries({ queryKey: configQuery().queryKey });
   }
 
   const searchRelations = useRelationSearch();
 
   async function save() {
-    if (!entity || !contentWritable) return;
-    setConflict(false);
-    await run(
-      async () => {
-        // The draft goes to the core verbatim; it serializes against the schema
-        // and deletes keys the draft no longer carries (cleared fields).
-        const result = await saveEntity(entity.id, {
-          revision: seededRevisionRef.current ?? entity.revision,
-          frontmatterDraft: frontmatter,
-          body,
-        });
-        await invalidateEntityData();
-        navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
-      },
-      {
-        // A 409 means the file changed on disk since it was loaded. Keep the
-        // user's edits and offer a reload so they can reapply them — via the
-        // inline banner below, so the conflict toast is suppressed here.
-        conflictMessage: ENTITY_EDIT_CONFLICT_MESSAGE,
-        onConflict: () => setConflict(true),
-        silentConflict: true,
-      },
-    );
+    if (!entity || !contentWritable || saving || reviewing || conflict) return;
+    setSaving(true);
+    setSaveError(undefined);
+    try {
+      const result = await saveEntity(entity.id, {
+        revision: seededRevisionRef.current ?? entity.revision,
+        schemaRevision: schemaRevisionRef.current,
+        ...(draftBasenameRef.current !== baselineRef.current?.basename
+          ? { renameTo: draftBasenameRef.current }
+          : {}),
+        frontmatterDraft: frontmatter,
+        body,
+      });
+      await invalidateEntityData();
+      navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
+    } catch (error) {
+      setSaveError(error);
+      if (isConflictError(error)) setConflict(true);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function leave() {
@@ -172,7 +211,7 @@ export function EntityEditPage() {
               type="button"
               size="sm"
               onClick={save}
-              disabled={saving || !contentWritable || !entity}
+              disabled={saving || reviewing || conflict || !contentWritable || !entity}
             >
               <CheckIcon data-icon="inline-start" />
               {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
@@ -190,19 +229,28 @@ export function EntityEditPage() {
 
             {conflict ? (
               <Alert className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <span className="min-w-0">{ENTITY_EDIT_CONFLICT_MESSAGE}</span>
+                <span className="min-w-0">
+                  <Trans>
+                    This changed elsewhere. Review the latest version to keep your edits.
+                  </Trans>
+                </span>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => void reloadLatest()}
-                  disabled={saving}
+                  onClick={() => void reviewLatest()}
+                  disabled={saving || reviewing}
                 >
-                  <Trans>Reload latest version</Trans>
+                  <Trans>Review changes</Trans>
                 </Button>
               </Alert>
             ) : null}
 
+            {saveError && !isConflictError(saveError) ? (
+              <div className="mb-4">
+                <SaveFailure error={saveError} />
+              </div>
+            ) : null}
             {loading ? (
               <Placeholder>
                 <Trans>Loading…</Trans>
@@ -213,7 +261,7 @@ export function EntityEditPage() {
                 typeConfig={typeConfig}
                 frontmatter={frontmatter}
                 bodyText={body}
-                disabled={!contentWritable}
+                disabled={!contentWritable || saving || reviewing || Boolean(review)}
                 relationSuggestions={[]}
                 onRelationSearch={searchRelations}
                 onFrontmatterChange={setFrontmatter}
@@ -228,6 +276,15 @@ export function EntityEditPage() {
         </div>
       </div>
 
+      {review ? (
+        <EditConflictReview
+          key={review.entity.revision}
+          review={review}
+          label={(field) => fieldLabelForKey(typeConfig, field)}
+          onAccept={applyReviewedDraft}
+          onCancel={() => setReview(undefined)}
+        />
+      ) : null}
       <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <AlertDialogContent>
           <AlertDialogHeader>

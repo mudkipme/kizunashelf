@@ -13,11 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:223
+#: src/components/assets/quick-log-dialog.tsx:279
 msgid " (already logged)"
 msgstr " (already logged)"
 
-#: src/components/assets/quick-log-dialog.tsx:225
+#: src/components/assets/quick-log-dialog.tsx:281
 msgid " (new note)"
 msgstr " (new note)"
 
@@ -305,7 +305,7 @@ msgstr "A type with the same name already exists, so {assignedIds} was used inst
 msgid "Actions"
 msgstr "Actions"
 
-#: src/components/assets/quick-log-dialog.tsx:114
+#: src/components/assets/quick-log-dialog.tsx:155
 #: src/components/layout/nav-destinations.ts:41
 #: src/pages/statistics-page.tsx:81
 msgid "Activity"
@@ -374,7 +374,7 @@ msgstr "Add group"
 msgid "Add items"
 msgstr "Add items"
 
-#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-create-page.tsx:122
 #: src/pages/quick-capture-page.tsx:232
 msgid "Add manually"
 msgstr "Add manually"
@@ -507,7 +507,7 @@ msgstr "Any link"
 msgid "any of"
 msgstr "any of"
 
-#: src/components/assets/quick-log-dialog.tsx:147
+#: src/components/assets/quick-log-dialog.tsx:195
 msgid "Anything worth remembering"
 msgstr "Anything worth remembering"
 
@@ -582,13 +582,13 @@ msgstr "Calendar"
 
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/components/assets/quick-log-dialog.tsx:171
+#: src/components/assets/quick-log-dialog.tsx:225
 #: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
-#: src/pages/entity-edit-page.tsx:169
+#: src/pages/entity-edit-page.tsx:208
 #: src/pages/entity-page.tsx:552
 #: src/pages/import-wizard-page.tsx:239
 #: src/pages/import-wizard-page.tsx:280
@@ -661,7 +661,7 @@ msgstr "Choose what to track. You can add more later."
 msgid "Clear all"
 msgstr "Clear all"
 
-#: src/components/entities/entity-ratings.tsx:253
+#: src/components/entities/entity-ratings.tsx:254
 msgid "Clear rating"
 msgstr "Clear rating"
 
@@ -759,8 +759,12 @@ msgstr "Could not read this CSV file."
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "Couldn't add suggested lists. You can retry from Home."
 
+#: src/components/vault-change-sync.tsx:34
+msgid "Couldn't refresh. Showing the last loaded version."
+msgstr "Couldn't refresh. Showing the last loaded version."
+
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-create-page.tsx:103
+#: src/pages/entity-create-page.tsx:110
 #: src/pages/lists-page.tsx:240
 msgid "Create"
 msgstr "Create"
@@ -773,12 +777,12 @@ msgstr "Create “{query}” manually →"
 msgid "Create & add"
 msgstr "Create & add"
 
-#: src/components/settings/vault-switcher.tsx:136
+#: src/components/settings/vault-switcher.tsx:175
 msgid "Create new vault"
 msgstr "Create new vault"
 
 #: src/components/settings/settings-editor.tsx:211
-#: src/components/settings/vault-switcher.tsx:168
+#: src/components/settings/vault-switcher.tsx:207
 #: src/pages/onboarding-page.tsx:254
 msgid "Create vault"
 msgstr "Create vault"
@@ -838,7 +842,7 @@ msgstr "Dark theme. Switch to system theme."
 msgid "date"
 msgstr "date"
 
-#: src/components/assets/quick-log-dialog.tsx:137
+#: src/components/assets/quick-log-dialog.tsx:179
 #: src/components/smart-lists/rule-value-input.tsx:71
 #: src/lib/type-config.ts:207
 #: src/lib/type-config.ts:238
@@ -907,13 +911,18 @@ msgstr "Direction"
 msgid "Disable"
 msgstr "Disable"
 
-#: src/pages/entity-edit-page.tsx:253
-#: src/pages/settings-page.tsx:150
+#: src/pages/entity-edit-page.tsx:310
+#: src/pages/settings-page.tsx:153
 msgid "Discard"
 msgstr "Discard"
 
-#: src/pages/entity-edit-page.tsx:235
-#: src/pages/settings-page.tsx:126
+#: src/components/settings/vault-switcher.tsx:241
+msgid "Discard and switch"
+msgstr "Discard and switch"
+
+#: src/components/settings/vault-switcher.tsx:222
+#: src/pages/entity-edit-page.tsx:292
+#: src/pages/settings-page.tsx:129
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
@@ -977,7 +986,7 @@ msgid "Edit"
 msgstr "Edit"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:186
+#: src/pages/entity-edit-page.tsx:225
 msgid "Edit {0}"
 msgstr "Edit {0}"
 
@@ -993,7 +1002,7 @@ msgstr "Edit config.yaml"
 msgid "Edit criteria"
 msgstr "Edit criteria"
 
-#: src/pages/entity-edit-page.tsx:186
+#: src/pages/entity-edit-page.tsx:225
 msgid "Edit entity"
 msgstr "Edit entity"
 
@@ -1045,7 +1054,7 @@ msgstr "Entities"
 msgid "Entity name"
 msgstr "Entity name"
 
-#: src/pages/entity-edit-page.tsx:224
+#: src/pages/entity-edit-page.tsx:272
 #: src/pages/entity-page.tsx:455
 msgid "Entity not found"
 msgstr "Entity not found"
@@ -1089,8 +1098,8 @@ msgstr "Event"
 msgid "Event date"
 msgstr "Event date"
 
-#: src/components/entities/entity-ratings.tsx:223
-#: src/components/entities/entity-ratings.tsx:234
+#: src/components/entities/entity-ratings.tsx:224
+#: src/components/entities/entity-ratings.tsx:235
 msgid "Exact score"
 msgstr "Exact score"
 
@@ -1148,18 +1157,19 @@ msgstr "Field"
 msgid "Fields"
 msgstr "Fields"
 
-#: src/pages/entity-create-page.tsx:115
+#: src/pages/entity-create-page.tsx:127
 #: src/pages/review-page.tsx:276
 msgid "File"
 msgstr "File"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:68
-#: src/pages/entity-create-page.tsx:135
+#: src/pages/entity-create-page.tsx:147
 #: src/pages/entity-page.tsx:324
 msgid "File name"
 msgstr "File name"
 
+#: src/components/entities/edit-conflict-review.tsx:97
 #: src/components/settings/settings-entity-type.tsx:99
 msgid "Filename"
 msgstr "Filename"
@@ -1186,11 +1196,11 @@ msgstr "Filter"
 msgid "Filter by type"
 msgstr "Filter by type"
 
-#: src/components/assets/quick-log-dialog.tsx:151
+#: src/components/assets/quick-log-dialog.tsx:199
 msgid "For example, an episode number."
 msgstr "For example, an episode number."
 
-#: src/pages/settings-page.tsx:85
+#: src/pages/settings-page.tsx:88
 msgid "Form"
 msgstr "Form"
 
@@ -1429,8 +1439,10 @@ msgstr "Japanese"
 msgid "JSON value"
 msgstr "JSON value"
 
-#: src/pages/entity-edit-page.tsx:245
-#: src/pages/settings-page.tsx:142
+#: src/components/entities/edit-conflict-review.tsx:112
+#: src/components/settings/vault-switcher.tsx:230
+#: src/pages/entity-edit-page.tsx:302
+#: src/pages/settings-page.tsx:145
 msgid "Keep editing"
 msgstr "Keep editing"
 
@@ -1460,6 +1472,10 @@ msgstr "Language"
 #: src/components/home/coming-up-section.tsx:203
 msgid "Later"
 msgstr "Later"
+
+#: src/components/entities/edit-conflict-review.tsx:150
+msgid "Latest version"
+msgstr "Latest version"
 
 #: src/components/settings/settings-field-form.tsx:94
 msgid "Leave blank for raw scores. Changing the scale does not convert existing ratings."
@@ -1572,12 +1588,12 @@ msgid "Loading taxonomy"
 msgstr "Loading taxonomy"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
-#: src/components/entities/entity-ratings.tsx:183
+#: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:151
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
-#: src/pages/entity-edit-page.tsx:208
+#: src/pages/entity-edit-page.tsx:256
 #: src/pages/entity-page.tsx:315
 #: src/pages/entity-page.tsx:634
 #: src/pages/home-page.tsx:55
@@ -1586,18 +1602,18 @@ msgstr "Loading taxonomy"
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:84
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:101
+#: src/pages/settings-page.tsx:104
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
 msgstr "Loading…"
 
-#: src/components/assets/quick-log-dialog.tsx:179
+#: src/components/assets/quick-log-dialog.tsx:240
 #: src/pages/entity-page.tsx:409
 msgid "Log"
 msgstr "Log"
 
-#: src/components/assets/quick-log-dialog.tsx:106
+#: src/components/assets/quick-log-dialog.tsx:147
 msgid "Log activity"
 msgstr "Log activity"
 
@@ -1613,7 +1629,7 @@ msgstr "Log to daily note"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 
-#: src/components/assets/quick-log-dialog.tsx:179
+#: src/components/assets/quick-log-dialog.tsx:240
 msgid "Logging…"
 msgstr "Logging…"
 
@@ -1643,7 +1659,7 @@ msgid "Markdown body sections"
 msgstr "Markdown body sections"
 
 #. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:239
+#: src/components/assets/quick-log-dialog.tsx:295
 msgid "Marks as {0}"
 msgstr "Marks as {0}"
 
@@ -1706,7 +1722,11 @@ msgstr "Moved to trash"
 msgid "Music"
 msgstr "Music"
 
-#: src/components/settings/vault-switcher.tsx:155
+#: src/components/entities/edit-conflict-review.tsx:150
+msgid "My edits"
+msgstr "My edits"
+
+#: src/components/settings/vault-switcher.tsx:194
 msgid "My Vault"
 msgstr "My Vault"
 
@@ -1817,7 +1837,7 @@ msgstr "No external matches"
 msgid "No fields configured."
 msgstr "No fields configured."
 
-#: src/components/settings/vault-switcher.tsx:140
+#: src/components/settings/vault-switcher.tsx:179
 msgid "No folder selected"
 msgstr "No folder selected"
 
@@ -1916,9 +1936,13 @@ msgstr "No value returned"
 msgid "No values."
 msgstr "No values."
 
-#: src/components/settings/vault-switcher.tsx:119
+#: src/components/settings/vault-switcher.tsx:158
 msgid "No vaults yet."
 msgstr "No vaults yet."
+
+#: src/components/entities/edit-conflict-review.tsx:68
+msgid "Non-conflicting changes are combined. Choose which value to keep where both versions changed. Nothing is saved until you press Save."
+msgstr "Non-conflicting changes are combined. Choose which value to keep where both versions changed. Nothing is saved until you press Save."
 
 #: src/components/settings/settings-entity-type.tsx:130
 #: src/components/settings/settings-field-form.tsx:165
@@ -1943,7 +1967,7 @@ msgstr "none of"
 msgid "not"
 msgstr "not"
 
-#: src/components/assets/quick-log-dialog.tsx:142
+#: src/components/assets/quick-log-dialog.tsx:189
 msgid "Note <0>(optional)</0>"
 msgstr "Note <0>(optional)</0>"
 
@@ -1952,6 +1976,7 @@ msgid "notes"
 msgstr "notes"
 
 #: src/components/assets/entity-detail.tsx:270
+#: src/components/entities/edit-conflict-review.tsx:88
 #: src/components/entities/metadata-editor.tsx:163
 #: src/components/entities/metadata-editor.tsx:170
 #: src/lib/type-config.ts:10
@@ -1968,7 +1993,7 @@ msgstr "Notes shown below the items…"
 msgid "Nothing here yet"
 msgstr "Nothing here yet"
 
-#: src/components/assets/quick-log-dialog.tsx:216
+#: src/components/assets/quick-log-dialog.tsx:272
 msgid "Nothing to log for this type."
 msgstr "Nothing to log for this type."
 
@@ -2017,7 +2042,7 @@ msgstr "Only image files can be uploaded."
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "Only public profiles are supported. Nothing is written until you review the plan."
 
-#: src/components/settings/vault-switcher.tsx:102
+#: src/components/settings/vault-switcher.tsx:139
 #: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "Open"
@@ -2027,11 +2052,11 @@ msgstr "Open"
 msgid "Open {0}"
 msgstr "Open {0}"
 
-#: src/components/settings/vault-switcher.tsx:127
+#: src/components/settings/vault-switcher.tsx:166
 msgid "Open existing vault"
 msgstr "Open existing vault"
 
-#: src/components/settings/vault-switcher.tsx:131
+#: src/components/settings/vault-switcher.tsx:170
 msgid "Open folder"
 msgstr "Open folder"
 
@@ -2039,7 +2064,7 @@ msgstr "Open folder"
 msgid "Open navigation"
 msgstr "Open navigation"
 
-#: src/components/settings/vault-switcher.tsx:79
+#: src/components/settings/vault-switcher.tsx:116
 msgid "Open or create a vault to get started."
 msgstr "Open or create a vault to get started."
 
@@ -2080,7 +2105,7 @@ msgstr "Page not found"
 msgid "Pagination"
 msgstr "Pagination"
 
-#: src/components/settings/vault-switcher.tsx:138
+#: src/components/settings/vault-switcher.tsx:177
 msgid "Parent folder"
 msgstr "Parent folder"
 
@@ -2125,7 +2150,7 @@ msgstr "Prev"
 msgid "Preview"
 msgstr "Preview"
 
-#: src/components/assets/quick-log-dialog.tsx:206
+#: src/components/assets/quick-log-dialog.tsx:262
 msgid "Previewing…"
 msgstr "Previewing…"
 
@@ -2165,13 +2190,13 @@ msgstr "Providers"
 msgid "Public profile"
 msgstr "Public profile"
 
-#: src/components/entities/entity-ratings.tsx:72
+#: src/components/entities/entity-ratings.tsx:73
 #: src/pages/entity-page.tsx:434
 msgid "Rate"
 msgstr "Rate"
 
 #. placeholder {0}: rating.label
-#: src/components/entities/entity-ratings.tsx:84
+#: src/components/entities/entity-ratings.tsx:85
 msgid "Rate {0}"
 msgstr "Rate {0}"
 
@@ -2179,7 +2204,7 @@ msgstr "Rate {0}"
 msgid "Rating"
 msgstr "Rating"
 
-#: src/components/entities/entity-ratings.tsx:144
+#: src/components/entities/entity-ratings.tsx:145
 msgid "Rating cleared"
 msgstr "Rating cleared"
 
@@ -2187,11 +2212,11 @@ msgstr "Rating cleared"
 msgid "Rating maximum"
 msgstr "Rating maximum"
 
-#: src/components/entities/entity-ratings.tsx:156
+#: src/components/entities/entity-ratings.tsx:157
 msgid "Rating restored"
 msgstr "Rating restored"
 
-#: src/components/entities/entity-ratings.tsx:144
+#: src/components/entities/entity-ratings.tsx:145
 msgid "Rating saved"
 msgstr "Rating saved"
 
@@ -2224,14 +2249,13 @@ msgstr "Relation type"
 msgid "Relevance"
 msgstr "Relevance"
 
-#: src/components/entities/entity-ratings.tsx:270
 #: src/components/error-boundary.tsx:69
+#: src/components/save-failure.tsx:34
 msgid "Reload"
 msgstr "Reload"
 
 #: src/components/settings/raw-config-editor.tsx:144
 #: src/components/settings/settings-editor.tsx:239
-#: src/pages/entity-edit-page.tsx:201
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:334
 msgid "Reload latest version"
@@ -2240,7 +2264,7 @@ msgstr "Reload latest version"
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
 #: src/components/entities/metadata-editor.tsx:228
-#: src/components/settings/vault-switcher.tsx:109
+#: src/components/settings/vault-switcher.tsx:146
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
@@ -2290,6 +2314,10 @@ msgstr "Remove rule"
 msgid "Remove type"
 msgstr "Remove type"
 
+#: src/components/entities/edit-conflict-review.tsx:154
+msgid "Removed"
+msgstr "Removed"
+
 #: src/components/lists/section-block.tsx:117
 #: src/components/rename-dialog.tsx:94
 #: src/pages/entity-page.tsx:323
@@ -2329,12 +2357,12 @@ msgid "replaces existing section"
 msgstr "replaces existing section"
 
 #. Hint below the empty file-name field on the entity create page; the Create button stays disabled until a file name or a title is entered
-#: src/pages/entity-create-page.tsx:156
+#: src/pages/entity-create-page.tsx:168
 msgid "Required — enter a file name here or fill in the title below."
 msgstr "Required — enter a file name here or fill in the title below."
 
 #. Hint below the empty file-name field on the entity create page for a type with no title field; the Create button stays disabled until a file name is entered
-#: src/pages/entity-create-page.tsx:160
+#: src/pages/entity-create-page.tsx:172
 msgid "Required — enter a file name."
 msgstr "Required — enter a file name."
 
@@ -2352,13 +2380,19 @@ msgstr "Resize sidebar"
 msgid "Results"
 msgstr "Results"
 
-#: src/components/entities/entity-ratings.tsx:179
+#: src/components/entities/entity-ratings.tsx:180
+#: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "Retry"
 
 #: src/components/layout/nav-destinations.ts:45
 msgid "Review"
 msgstr "Review"
+
+#: src/components/entities/edit-conflict-review.tsx:64
+#: src/pages/entity-edit-page.tsx:244
+msgid "Review changes"
+msgstr "Review changes"
 
 #: src/components/settings/preset-picker.tsx:142
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
@@ -2368,10 +2402,10 @@ msgstr "Robust, ready-to-use types with full metadata matching. Edit or rename e
 msgid "Running…"
 msgstr "Running…"
 
-#: src/components/entities/entity-ratings.tsx:243
+#: src/components/entities/entity-ratings.tsx:244
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-edit-page.tsx:178
+#: src/pages/entity-edit-page.tsx:217
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Save"
@@ -2402,8 +2436,8 @@ msgstr "Saves the current type, criteria, and sort as a smart list. Your search 
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-create-page.tsx:103
-#: src/pages/entity-edit-page.tsx:178
+#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-edit-page.tsx:217
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
@@ -2530,7 +2564,7 @@ msgstr "Select folder"
 msgid "Select group"
 msgstr "Select group"
 
-#: src/components/settings/vault-switcher.tsx:145
+#: src/components/settings/vault-switcher.tsx:184
 msgid "Select parent folder"
 msgstr "Select parent folder"
 
@@ -2612,8 +2646,8 @@ msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "Some of this file's syntax isn't supported here and is ignored:"
 
 #: src/components/error-boundary.tsx:55
-#: src/components/settings/vault-switcher.tsx:43
-#: src/components/settings/vault-switcher.tsx:56
+#: src/components/settings/vault-switcher.tsx:64
+#: src/components/settings/vault-switcher.tsx:92
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
@@ -2633,7 +2667,7 @@ msgstr "Source"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:231
+#: src/components/assets/quick-log-dialog.tsx:287
 msgid "Stamps {0} = {1}"
 msgstr "Stamps {0} = {1}"
 
@@ -2703,13 +2737,17 @@ msgstr "Stored in your system keychain. Providers listed here require credential
 msgid "Summary"
 msgstr "Summary"
 
-#: src/components/settings/vault-switcher.tsx:80
+#: src/components/settings/vault-switcher.tsx:117
 msgid "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
 msgstr "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
 
-#: src/components/settings/vault-switcher.tsx:100
+#: src/components/settings/vault-switcher.tsx:137
 msgid "Switched vault"
 msgstr "Switched vault"
+
+#: src/components/settings/vault-switcher.tsx:225
+msgid "Switching vaults will discard your unsaved edits."
+msgstr "Switching vaults will discard your unsaved edits."
 
 #: src/components/assets/entity-episodes.tsx:39
 msgid "Sync"
@@ -2785,6 +2823,18 @@ msgstr "The vault schema changed on disk. Your unsaved edits are still here."
 msgid "These existing types can link to what you're adding."
 msgstr "These existing types can link to what you're adding."
 
+#: src/pages/entity-edit-page.tsx:233
+msgid "This changed elsewhere. Review the latest version to keep your edits."
+msgstr "This changed elsewhere. Review the latest version to keep your edits."
+
+#: src/components/save-failure.tsx:24
+msgid "This changed elsewhere. Your edits are kept. Load the latest version before trying again."
+msgstr "This changed elsewhere. Your edits are kept. Load the latest version before trying again."
+
+#: src/hooks/use-entity-mutation.ts:31
+msgid "This entity changed elsewhere. Reload the latest version before trying again."
+msgstr "This entity changed elsewhere. Reload the latest version before trying again."
+
 #. Warning banner in the static-list editor after another app changes its Markdown file; the local draft has been preserved
 #: src/pages/list-detail-page.tsx:413
 msgid "This list changed on disk. Your unsaved edits are still here."
@@ -2808,7 +2858,7 @@ msgstr "This moves <0>{0}</0> to the Trash. The items it contains are untouched.
 msgid "This page doesn’t exist or may have moved."
 msgstr "This page doesn’t exist or may have moved."
 
-#: src/components/entities/entity-ratings.tsx:185
+#: src/components/entities/entity-ratings.tsx:186
 msgid "This rating field is no longer available."
 msgstr "This rating field is no longer available."
 
@@ -2827,7 +2877,7 @@ msgstr "This week"
 
 #: src/components/smart-lists/sort-picker.tsx:40
 #: src/lib/type-config.ts:198
-#: src/pages/entity-create-page.tsx:141
+#: src/pages/entity-create-page.tsx:153
 msgid "Title"
 msgstr "Title"
 
@@ -2861,7 +2911,7 @@ msgid "Try again"
 msgstr "Try again"
 
 #: src/components/settings/settings-field-form.tsx:54
-#: src/pages/entity-create-page.tsx:119
+#: src/pages/entity-create-page.tsx:131
 #: src/pages/library-page.tsx:248
 #: src/pages/quick-capture-page.tsx:245
 msgid "Type"
@@ -2885,7 +2935,7 @@ msgstr "Types"
 msgid "UI in English"
 msgstr "UI in English"
 
-#: src/components/entities/entity-ratings.tsx:146
+#: src/components/entities/entity-ratings.tsx:147
 msgid "Undo"
 msgstr "Undo"
 
@@ -2913,7 +2963,7 @@ msgstr "Unmatched"
 msgid "Unordered"
 msgstr "Unordered"
 
-#: src/components/entities/entity-ratings.tsx:197
+#: src/components/entities/entity-ratings.tsx:198
 msgid "Unrated"
 msgstr "Unrated"
 
@@ -2955,6 +3005,10 @@ msgstr "Updated"
 msgid "Upload failed."
 msgstr "Upload failed."
 
+#: src/components/entities/edit-conflict-review.tsx:115
+msgid "Use reviewed draft"
+msgstr "Use reviewed draft"
+
 #: src/components/settings/settings-field-form.tsx:154
 #: src/components/settings/settings-field-form.tsx:200
 #: src/components/settings/settings-field-form.tsx:343
@@ -2977,16 +3031,16 @@ msgstr "Values"
 msgid "Vault"
 msgstr "Vault"
 
-#: src/components/settings/vault-switcher.tsx:64
+#: src/components/settings/vault-switcher.tsx:100
 msgid "Vault added"
 msgstr "Vault added"
 
-#: src/components/settings/vault-switcher.tsx:165
+#: src/components/settings/vault-switcher.tsx:204
 #: src/pages/onboarding-page.tsx:202
 msgid "Vault created"
 msgstr "Vault created"
 
-#: src/components/settings/vault-switcher.tsx:152
+#: src/components/settings/vault-switcher.tsx:191
 msgid "Vault name"
 msgstr "Vault name"
 
@@ -2994,7 +3048,7 @@ msgstr "Vault name"
 msgid "Vault path or URL"
 msgstr "Vault path or URL"
 
-#: src/components/settings/vault-switcher.tsx:111
+#: src/components/settings/vault-switcher.tsx:149
 msgid "Vault removed"
 msgstr "Vault removed"
 
@@ -3002,7 +3056,7 @@ msgstr "Vault removed"
 msgid "Vault rescanned"
 msgstr "Vault rescanned"
 
-#: src/components/settings/vault-switcher.tsx:76
+#: src/components/settings/vault-switcher.tsx:113
 msgid "Vaults"
 msgstr "Vaults"
 
@@ -3030,7 +3084,7 @@ msgstr "When on, checking an episode or the Log button writes a line to the dail
 
 #. Hint below the empty file-name field on the entity create page; the placeholder is the file name derived from the entity's title field
 #. placeholder {0}: filename.basename
-#: src/pages/entity-create-page.tsx:149
+#: src/pages/entity-create-page.tsx:161
 msgid "Will be created as “{0}.md”, from the title."
 msgstr "Will be created as “{0}.md”, from the title."
 
@@ -3039,7 +3093,7 @@ msgstr "Will be created as “{0}.md”, from the title."
 msgid "within the next"
 msgstr "within the next"
 
-#: src/pages/settings-page.tsx:93
+#: src/pages/settings-page.tsx:96
 msgid "YAML"
 msgstr "YAML"
 
@@ -3072,15 +3126,19 @@ msgstr "Yes/No"
 msgid "You can still open entities already in your library."
 msgstr "You can still open entities already in your library."
 
-#: src/pages/settings-page.tsx:130
+#: src/pages/settings-page.tsx:133
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the form editor. Switching editors will discard them."
 
-#: src/pages/settings-page.tsx:134
+#: src/pages/settings-page.tsx:137
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "You have unsaved changes in the YAML editor. Switching editors will discard them."
 
 #. Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes
-#: src/pages/entity-edit-page.tsx:238
+#: src/pages/entity-edit-page.tsx:295
 msgid "You have unsaved edits to this entity. Leaving will discard them."
 msgstr "You have unsaved edits to this entity. Leaving will discard them."
+
+#: src/components/entities/edit-conflict-review.tsx:106
+msgid "Your edits can be combined with the latest version."
+msgstr "Your edits can be combined with the latest version."

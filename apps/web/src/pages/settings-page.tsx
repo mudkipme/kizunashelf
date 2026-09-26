@@ -69,7 +69,10 @@ export function SettingsPage() {
         {/* Desktop manages vaults + credentials natively (multi-vault, OS keychain). */}
         {desktop ? (
           <>
-            <VaultSwitcher onChanged={() => void queryClient.invalidateQueries()} />
+            <VaultSwitcher
+              hasUnsavedChanges={dirty}
+              onChanged={() => void queryClient.invalidateQueries()}
+            />
             <ProviderCredentials providers={providerCatalog.data?.providers ?? []} />
           </>
         ) : null}

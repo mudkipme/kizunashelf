@@ -225,3 +225,7 @@ export * from "./generated/setSmartListHomeRequest.zod.js";
 
 export * from "./generated/setEntityRatingRequest.zod.js";
 export * from "./generated/setEntityRatingResponse.zod.js";
+
+export * from "./generated/entityEditReviewRequest.zod.js";
+export * from "./generated/entityEditReviewResponse.zod.js";
+export * from "./generated/entityEditDraft.zod.js";

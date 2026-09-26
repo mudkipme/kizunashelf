@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { settingsConfigQuery } from "@/api/queries";
@@ -10,6 +10,7 @@ import { isDesktopRuntime } from "@/lib/desktop";
 import { activateUiLocale } from "@/lib/i18n";
 import { useUiLocale } from "@/lib/language";
 import { useSystemThemeSync } from "@/lib/theme";
+import { useVaultSession } from "@/lib/vault-session";
 
 // Pages are lazy-loaded so each route ships as its own chunk; heavy
 // page-specific deps (markdown, lightbox, day-picker, dnd-kit) then only load
@@ -63,10 +64,11 @@ const StatisticsPage = lazy(() =>
 );
 
 export default function App() {
+  const vaultSession = useVaultSession();
   return (
     <BrowserRouter>
       <LocaleSync />
-      <RoutedErrorBoundary />
+      <RoutedErrorBoundary key={vaultSession} />
     </BrowserRouter>
   );
 }
@@ -99,30 +101,34 @@ function ConfigGate() {
   const location = useLocation();
   const settings = useQuery(settingsConfigQuery());
   const pathname = location.pathname;
+  const opened = useRef(false);
+  if (settings.data?.vaultExists && !settings.data.error) opened.current = true;
 
-  // Desktop replies 503 until a vault is open. That error never resolves on its
-  // own, so route to onboarding for any non-success state (error *or* the
-  // pending blips of a background refetch). Gating on `isPending`/`error`
-  // individually would flip the onboarding route in and out as the query
-  // oscillates, and each remount re-fires the request — an endless loop. Once a
-  // vault is opened the query succeeds and we fall through to the checks below.
+  // Initial failures route to setup. Once opened, keep the mounted screens and
+  // drafts through background failures; their reads/writes surface the problem.
+  // A vault switch resets this gate through the session key above.
   if (isDesktopRuntime()) {
-    if (settings.status !== "success") {
+    if (!settings.data) {
       return pathname === "/onboarding" ? <AppRoutes /> : <Navigate to="/onboarding" replace />;
     }
   } else if (settings.isPending) {
     return <AppShellFallback />;
-  } else if (settings.error) {
+  } else if (settings.error && !settings.data) {
     // On the web a settings error is a real server error → settings page.
     return pathname === "/settings" ? <AppRoutes /> : <Navigate to="/settings" replace />;
   }
   // The app config is always present (inline: env on web, the vault switcher on
   // desktop, @AppStorage on iOS), so vault config presence alone gates readiness.
   const configReady = Boolean(settings.data?.vaultExists);
-  if (settings.data && !configReady && pathname !== "/onboarding") {
+  if (!opened.current && settings.data && !configReady && pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
-  if (settings.data?.error && pathname !== "/settings" && pathname !== "/onboarding") {
+  if (
+    !opened.current &&
+    settings.data?.error &&
+    pathname !== "/settings" &&
+    pathname !== "/onboarding"
+  ) {
     return <Navigate to="/settings" replace />;
   }
   if (configReady && pathname === "/onboarding" && !settings.data?.error) {
@@ -132,7 +138,7 @@ function ConfigGate() {
   return (
     <>
       <VaultChangeSync key={settings.data?.app?.vaultRoot ?? "vault"} />
-      <AppRoutes />
+      <AppRoutes key={settings.data?.app?.vaultRoot ?? "vault"} />
     </>
   );
 }

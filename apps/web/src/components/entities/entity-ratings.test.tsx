@@ -85,7 +85,7 @@ it("preserves a decimal draft on conflict and requires explicit reload before re
   await screen.getByText("Exact score", { exact: true }).click();
   await screen.getByRole("spinbutton", { name: "Exact score" }).fill("8.75");
   await screen.getByRole("button", { name: "Save", exact: true }).click();
-  await expect.element(screen.getByRole("alert")).toHaveTextContent("Changed elsewhere");
+  await expect.element(screen.getByRole("alert")).toHaveTextContent("Your edits are kept");
   await expect.element(screen.getByRole("spinbutton", { name: "Exact score" })).toHaveValue(8.75);
   await expect.element(screen.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
   state.revision = "r3";

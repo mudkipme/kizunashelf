@@ -8,6 +8,7 @@ import { errorMessage, isConflictError } from "@/api/client";
 import { saveRating } from "@/api/entities";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { entityQuery } from "@/api/queries";
+import { SaveFailure } from "@/components/save-failure";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -253,25 +254,18 @@ function RatingEditor({
           <Trans>Clear rating</Trans>
         </Button>
       </fieldset>
-      {error ? (
-        <div className="text-sm">
-          <p role="alert" className="text-destructive">
-            {errorMessage(error)}
-          </p>
-          {isConflictError(error) ? (
-            <Button
-              variant="outline"
-              className="mt-2"
-              onClick={async () => {
+      <SaveFailure
+        error={error}
+        recovering={detail.isFetching}
+        recover={
+          isConflictError(error)
+            ? async () => {
                 const refreshed = await detail.refetch();
                 if (!refreshed.error) setError(undefined);
-              }}
-            >
-              <Trans>Reload</Trans>
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

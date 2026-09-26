@@ -13,11 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:223
+#: src/components/assets/quick-log-dialog.tsx:279
 msgid " (already logged)"
 msgstr "（記録済み）"
 
-#: src/components/assets/quick-log-dialog.tsx:225
+#: src/components/assets/quick-log-dialog.tsx:281
 msgid " (new note)"
 msgstr "（新規ノート）"
 
@@ -305,7 +305,7 @@ msgstr "同名のタイプがすでに存在するため、代わりに {assigne
 msgid "Actions"
 msgstr "操作"
 
-#: src/components/assets/quick-log-dialog.tsx:114
+#: src/components/assets/quick-log-dialog.tsx:155
 #: src/components/layout/nav-destinations.ts:41
 #: src/pages/statistics-page.tsx:81
 msgid "Activity"
@@ -374,7 +374,7 @@ msgstr "グループを追加"
 msgid "Add items"
 msgstr "アイテムを追加"
 
-#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-create-page.tsx:122
 #: src/pages/quick-capture-page.tsx:232
 msgid "Add manually"
 msgstr "手動で追加"
@@ -507,7 +507,7 @@ msgstr "任意のリンク"
 msgid "any of"
 msgstr "いずれかが一致"
 
-#: src/components/assets/quick-log-dialog.tsx:147
+#: src/components/assets/quick-log-dialog.tsx:195
 msgid "Anything worth remembering"
 msgstr "覚えておきたいこと"
 
@@ -582,13 +582,13 @@ msgstr "カレンダー"
 
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/components/assets/quick-log-dialog.tsx:171
+#: src/components/assets/quick-log-dialog.tsx:225
 #: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
-#: src/pages/entity-edit-page.tsx:169
+#: src/pages/entity-edit-page.tsx:208
 #: src/pages/entity-page.tsx:552
 #: src/pages/import-wizard-page.tsx:239
 #: src/pages/import-wizard-page.tsx:280
@@ -661,7 +661,7 @@ msgstr "記録したいものを選んでください。後から追加できま
 msgid "Clear all"
 msgstr "すべてクリア"
 
-#: src/components/entities/entity-ratings.tsx:253
+#: src/components/entities/entity-ratings.tsx:254
 msgid "Clear rating"
 msgstr "評価をクリア"
 
@@ -759,8 +759,12 @@ msgstr "この CSV ファイルを読み込めませんでした。"
 msgid "Couldn't add suggested lists. You can retry from Home."
 msgstr "おすすめリストを追加できませんでした。ホームから再試行できます。"
 
+#: src/components/vault-change-sync.tsx:34
+msgid "Couldn't refresh. Showing the last loaded version."
+msgstr "更新できませんでした。前回読み込んだ内容を表示しています。"
+
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-create-page.tsx:103
+#: src/pages/entity-create-page.tsx:110
 #: src/pages/lists-page.tsx:240
 msgid "Create"
 msgstr "作成"
@@ -773,12 +777,12 @@ msgstr "「{query}」を手動で作成 →"
 msgid "Create & add"
 msgstr "作成して追加"
 
-#: src/components/settings/vault-switcher.tsx:136
+#: src/components/settings/vault-switcher.tsx:175
 msgid "Create new vault"
 msgstr "新しい保管庫を作成"
 
 #: src/components/settings/settings-editor.tsx:211
-#: src/components/settings/vault-switcher.tsx:168
+#: src/components/settings/vault-switcher.tsx:207
 #: src/pages/onboarding-page.tsx:254
 msgid "Create vault"
 msgstr "保管庫を作成"
@@ -838,7 +842,7 @@ msgstr "ダークテーマ。システムテーマに切り替えます。"
 msgid "date"
 msgstr "日付"
 
-#: src/components/assets/quick-log-dialog.tsx:137
+#: src/components/assets/quick-log-dialog.tsx:179
 #: src/components/smart-lists/rule-value-input.tsx:71
 #: src/lib/type-config.ts:207
 #: src/lib/type-config.ts:238
@@ -907,13 +911,18 @@ msgstr "方向"
 msgid "Disable"
 msgstr "無効にする"
 
-#: src/pages/entity-edit-page.tsx:253
-#: src/pages/settings-page.tsx:150
+#: src/pages/entity-edit-page.tsx:310
+#: src/pages/settings-page.tsx:153
 msgid "Discard"
 msgstr "破棄"
 
-#: src/pages/entity-edit-page.tsx:235
-#: src/pages/settings-page.tsx:126
+#: src/components/settings/vault-switcher.tsx:241
+msgid "Discard and switch"
+msgstr "破棄して切り替え"
+
+#: src/components/settings/vault-switcher.tsx:222
+#: src/pages/entity-edit-page.tsx:292
+#: src/pages/settings-page.tsx:129
 msgid "Discard unsaved changes?"
 msgstr "保存していない変更を破棄しますか？"
 
@@ -977,7 +986,7 @@ msgid "Edit"
 msgstr "編集"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:186
+#: src/pages/entity-edit-page.tsx:225
 msgid "Edit {0}"
 msgstr "{0} を編集"
 
@@ -993,7 +1002,7 @@ msgstr "config.yaml を編集"
 msgid "Edit criteria"
 msgstr "条件を編集"
 
-#: src/pages/entity-edit-page.tsx:186
+#: src/pages/entity-edit-page.tsx:225
 msgid "Edit entity"
 msgstr "アイテムを編集"
 
@@ -1045,7 +1054,7 @@ msgstr "アイテム"
 msgid "Entity name"
 msgstr "アイテム名"
 
-#: src/pages/entity-edit-page.tsx:224
+#: src/pages/entity-edit-page.tsx:272
 #: src/pages/entity-page.tsx:455
 msgid "Entity not found"
 msgstr "アイテムが見つかりません"
@@ -1089,8 +1098,8 @@ msgstr "イベント"
 msgid "Event date"
 msgstr "イベント日"
 
-#: src/components/entities/entity-ratings.tsx:223
-#: src/components/entities/entity-ratings.tsx:234
+#: src/components/entities/entity-ratings.tsx:224
+#: src/components/entities/entity-ratings.tsx:235
 msgid "Exact score"
 msgstr "数値を入力"
 
@@ -1148,18 +1157,19 @@ msgstr "フィールド"
 msgid "Fields"
 msgstr "フィールド"
 
-#: src/pages/entity-create-page.tsx:115
+#: src/pages/entity-create-page.tsx:127
 #: src/pages/review-page.tsx:276
 msgid "File"
 msgstr "ファイル"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:68
-#: src/pages/entity-create-page.tsx:135
+#: src/pages/entity-create-page.tsx:147
 #: src/pages/entity-page.tsx:324
 msgid "File name"
 msgstr "ファイル名"
 
+#: src/components/entities/edit-conflict-review.tsx:97
 #: src/components/settings/settings-entity-type.tsx:99
 msgid "Filename"
 msgstr "ファイル名"
@@ -1186,11 +1196,11 @@ msgstr "絞り込み"
 msgid "Filter by type"
 msgstr "タイプで絞り込む"
 
-#: src/components/assets/quick-log-dialog.tsx:151
+#: src/components/assets/quick-log-dialog.tsx:199
 msgid "For example, an episode number."
 msgstr "例：エピソード番号"
 
-#: src/pages/settings-page.tsx:85
+#: src/pages/settings-page.tsx:88
 msgid "Form"
 msgstr "フォーム"
 
@@ -1429,8 +1439,10 @@ msgstr "日本語"
 msgid "JSON value"
 msgstr "JSON 値"
 
-#: src/pages/entity-edit-page.tsx:245
-#: src/pages/settings-page.tsx:142
+#: src/components/entities/edit-conflict-review.tsx:112
+#: src/components/settings/vault-switcher.tsx:230
+#: src/pages/entity-edit-page.tsx:302
+#: src/pages/settings-page.tsx:145
 msgid "Keep editing"
 msgstr "編集を続ける"
 
@@ -1460,6 +1472,10 @@ msgstr "言語"
 #: src/components/home/coming-up-section.tsx:203
 msgid "Later"
 msgstr "後で"
+
+#: src/components/entities/edit-conflict-review.tsx:150
+msgid "Latest version"
+msgstr "最新の内容"
 
 #: src/components/settings/settings-field-form.tsx:94
 msgid "Leave blank for raw scores. Changing the scale does not convert existing ratings."
@@ -1572,12 +1588,12 @@ msgid "Loading taxonomy"
 msgstr "分類を読み込み中"
 
 #: src/components/assets/episode-sync-dialog.tsx:277
-#: src/components/entities/entity-ratings.tsx:183
+#: src/components/entities/entity-ratings.tsx:184
 #: src/components/lists/add-items-dialog.tsx:73
 #: src/components/settings/raw-config-editor.tsx:151
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
-#: src/pages/entity-edit-page.tsx:208
+#: src/pages/entity-edit-page.tsx:256
 #: src/pages/entity-page.tsx:315
 #: src/pages/entity-page.tsx:634
 #: src/pages/home-page.tsx:55
@@ -1586,18 +1602,18 @@ msgstr "分類を読み込み中"
 #: src/pages/lists-page.tsx:54
 #: src/pages/onboarding-page.tsx:84
 #: src/pages/review-page.tsx:148
-#: src/pages/settings-page.tsx:101
+#: src/pages/settings-page.tsx:104
 #: src/pages/smart-list-page.tsx:226
 #: src/pages/statistics-page.tsx:45
 msgid "Loading…"
 msgstr "読み込み中…"
 
-#: src/components/assets/quick-log-dialog.tsx:179
+#: src/components/assets/quick-log-dialog.tsx:240
 #: src/pages/entity-page.tsx:409
 msgid "Log"
 msgstr "記録"
 
-#: src/components/assets/quick-log-dialog.tsx:106
+#: src/components/assets/quick-log-dialog.tsx:147
 msgid "Log activity"
 msgstr "アクティビティを記録"
 
@@ -1613,7 +1629,7 @@ msgstr "デイリーノートに記録"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "記録のデフォルト — 記録行を書き込む見出しと、フォールバックの行フォーマット。各タイプはこれらを上書きでき、独自のタグを追加します。"
 
-#: src/components/assets/quick-log-dialog.tsx:179
+#: src/components/assets/quick-log-dialog.tsx:240
 msgid "Logging…"
 msgstr "記録中…"
 
@@ -1643,7 +1659,7 @@ msgid "Markdown body sections"
 msgstr "Markdown 本文セクション"
 
 #. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:239
+#: src/components/assets/quick-log-dialog.tsx:295
 msgid "Marks as {0}"
 msgstr "{0} にする"
 
@@ -1706,7 +1722,11 @@ msgstr "ゴミ箱に移動しました"
 msgid "Music"
 msgstr "音楽"
 
-#: src/components/settings/vault-switcher.tsx:155
+#: src/components/entities/edit-conflict-review.tsx:150
+msgid "My edits"
+msgstr "自分の編集"
+
+#: src/components/settings/vault-switcher.tsx:194
 msgid "My Vault"
 msgstr "マイ保管庫"
 
@@ -1817,7 +1837,7 @@ msgstr "外部マッチがありません"
 msgid "No fields configured."
 msgstr "フィールドが設定されていません。"
 
-#: src/components/settings/vault-switcher.tsx:140
+#: src/components/settings/vault-switcher.tsx:179
 msgid "No folder selected"
 msgstr "フォルダーが選択されていません"
 
@@ -1916,9 +1936,13 @@ msgstr "値が返されませんでした"
 msgid "No values."
 msgstr "値がありません。"
 
-#: src/components/settings/vault-switcher.tsx:119
+#: src/components/settings/vault-switcher.tsx:158
 msgid "No vaults yet."
 msgstr "まだ保管庫がありません。"
+
+#: src/components/entities/edit-conflict-review.tsx:68
+msgid "Non-conflicting changes are combined. Choose which value to keep where both versions changed. Nothing is saved until you press Save."
+msgstr "競合しない変更は統合されます。両方で変更された項目は、残す値を選んでください。「保存」を押すまで保存されません。"
 
 #: src/components/settings/settings-entity-type.tsx:130
 #: src/components/settings/settings-field-form.tsx:165
@@ -1943,7 +1967,7 @@ msgstr "いずれも不一致"
 msgid "not"
 msgstr "除外:"
 
-#: src/components/assets/quick-log-dialog.tsx:142
+#: src/components/assets/quick-log-dialog.tsx:189
 msgid "Note <0>(optional)</0>"
 msgstr "ノート <0>(任意)</0>"
 
@@ -1952,6 +1976,7 @@ msgid "notes"
 msgstr "ノート"
 
 #: src/components/assets/entity-detail.tsx:270
+#: src/components/entities/edit-conflict-review.tsx:88
 #: src/components/entities/metadata-editor.tsx:163
 #: src/components/entities/metadata-editor.tsx:170
 #: src/lib/type-config.ts:10
@@ -1968,7 +1993,7 @@ msgstr "アイテムの下に表示されるノート…"
 msgid "Nothing here yet"
 msgstr "まだ何もありません"
 
-#: src/components/assets/quick-log-dialog.tsx:216
+#: src/components/assets/quick-log-dialog.tsx:272
 msgid "Nothing to log for this type."
 msgstr "このタイプに記録するものがありません。"
 
@@ -2017,7 +2042,7 @@ msgstr "画像ファイルのみアップロードできます。"
 msgid "Only public profiles are supported. Nothing is written until you review the plan."
 msgstr "公開プロフィールのみ対応しています。計画を確認するまで何も書き込まれません。"
 
-#: src/components/settings/vault-switcher.tsx:102
+#: src/components/settings/vault-switcher.tsx:139
 #: src/pages/quick-capture-page.tsx:386
 msgid "Open"
 msgstr "開く"
@@ -2027,11 +2052,11 @@ msgstr "開く"
 msgid "Open {0}"
 msgstr "{0}を開く"
 
-#: src/components/settings/vault-switcher.tsx:127
+#: src/components/settings/vault-switcher.tsx:166
 msgid "Open existing vault"
 msgstr "既存の保管庫を開く"
 
-#: src/components/settings/vault-switcher.tsx:131
+#: src/components/settings/vault-switcher.tsx:170
 msgid "Open folder"
 msgstr "フォルダーを開く"
 
@@ -2039,7 +2064,7 @@ msgstr "フォルダーを開く"
 msgid "Open navigation"
 msgstr "ナビゲーションを開く"
 
-#: src/components/settings/vault-switcher.tsx:79
+#: src/components/settings/vault-switcher.tsx:116
 msgid "Open or create a vault to get started."
 msgstr "保管庫を開くか作成して始めましょう。"
 
@@ -2080,7 +2105,7 @@ msgstr "ページが見つかりません"
 msgid "Pagination"
 msgstr "ページ切り替え"
 
-#: src/components/settings/vault-switcher.tsx:138
+#: src/components/settings/vault-switcher.tsx:177
 msgid "Parent folder"
 msgstr "親フォルダー"
 
@@ -2125,7 +2150,7 @@ msgstr "前月"
 msgid "Preview"
 msgstr "プレビュー"
 
-#: src/components/assets/quick-log-dialog.tsx:206
+#: src/components/assets/quick-log-dialog.tsx:262
 msgid "Previewing…"
 msgstr "プレビュー中…"
 
@@ -2165,13 +2190,13 @@ msgstr "プロバイダー"
 msgid "Public profile"
 msgstr "公開プロフィール"
 
-#: src/components/entities/entity-ratings.tsx:72
+#: src/components/entities/entity-ratings.tsx:73
 #: src/pages/entity-page.tsx:434
 msgid "Rate"
 msgstr "評価する"
 
 #. placeholder {0}: rating.label
-#: src/components/entities/entity-ratings.tsx:84
+#: src/components/entities/entity-ratings.tsx:85
 msgid "Rate {0}"
 msgstr "{0}を評価"
 
@@ -2179,7 +2204,7 @@ msgstr "{0}を評価"
 msgid "Rating"
 msgstr "評価"
 
-#: src/components/entities/entity-ratings.tsx:144
+#: src/components/entities/entity-ratings.tsx:145
 msgid "Rating cleared"
 msgstr "評価をクリアしました"
 
@@ -2187,11 +2212,11 @@ msgstr "評価をクリアしました"
 msgid "Rating maximum"
 msgstr "評価の上限"
 
-#: src/components/entities/entity-ratings.tsx:156
+#: src/components/entities/entity-ratings.tsx:157
 msgid "Rating restored"
 msgstr "評価を元に戻しました"
 
-#: src/components/entities/entity-ratings.tsx:144
+#: src/components/entities/entity-ratings.tsx:145
 msgid "Rating saved"
 msgstr "評価を保存しました"
 
@@ -2224,14 +2249,13 @@ msgstr "関連タイプ"
 msgid "Relevance"
 msgstr "関連度"
 
-#: src/components/entities/entity-ratings.tsx:270
 #: src/components/error-boundary.tsx:69
+#: src/components/save-failure.tsx:34
 msgid "Reload"
 msgstr "再読み込み"
 
 #: src/components/settings/raw-config-editor.tsx:144
 #: src/components/settings/settings-editor.tsx:239
-#: src/pages/entity-edit-page.tsx:201
 #: src/pages/list-detail-page.tsx:427
 #: src/pages/smart-list-page.tsx:334
 msgid "Reload latest version"
@@ -2240,7 +2264,7 @@ msgstr "最新バージョンを再読み込み"
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
 #: src/components/entities/metadata-editor.tsx:228
-#: src/components/settings/vault-switcher.tsx:109
+#: src/components/settings/vault-switcher.tsx:146
 msgid "Remove {0}"
 msgstr "{0} を削除"
 
@@ -2290,6 +2314,10 @@ msgstr "ルールを削除"
 msgid "Remove type"
 msgstr "タイプを削除"
 
+#: src/components/entities/edit-conflict-review.tsx:154
+msgid "Removed"
+msgstr "削除済み"
+
 #: src/components/lists/section-block.tsx:117
 #: src/components/rename-dialog.tsx:94
 #: src/pages/entity-page.tsx:323
@@ -2329,12 +2357,12 @@ msgid "replaces existing section"
 msgstr "既存のセクションを置き換え"
 
 #. Hint below the empty file-name field on the entity create page; the Create button stays disabled until a file name or a title is entered
-#: src/pages/entity-create-page.tsx:156
+#: src/pages/entity-create-page.tsx:168
 msgid "Required — enter a file name here or fill in the title below."
 msgstr "必須 — ここにファイル名を入力するか、下のタイトルを入力してください。"
 
 #. Hint below the empty file-name field on the entity create page for a type with no title field; the Create button stays disabled until a file name is entered
-#: src/pages/entity-create-page.tsx:160
+#: src/pages/entity-create-page.tsx:172
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
@@ -2352,13 +2380,19 @@ msgstr ""
 msgid "Results"
 msgstr ""
 
-#: src/components/entities/entity-ratings.tsx:179
+#: src/components/entities/entity-ratings.tsx:180
+#: src/components/vault-change-sync.tsx:36
 msgid "Retry"
 msgstr "再試行"
 
 #: src/components/layout/nav-destinations.ts:45
 msgid "Review"
 msgstr "レビュー"
+
+#: src/components/entities/edit-conflict-review.tsx:64
+#: src/pages/entity-edit-page.tsx:244
+msgid "Review changes"
+msgstr "変更を確認"
 
 #: src/components/settings/preset-picker.tsx:142
 msgid "Robust, ready-to-use types with full metadata matching. Edit or rename everything after adding."
@@ -2368,10 +2402,10 @@ msgstr "完全なメタデータマッチングに対応した、堅牢ですぐ
 msgid "Running…"
 msgstr "実行中…"
 
-#: src/components/entities/entity-ratings.tsx:243
+#: src/components/entities/entity-ratings.tsx:244
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-edit-page.tsx:178
+#: src/pages/entity-edit-page.tsx:217
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Save"
@@ -2402,8 +2436,8 @@ msgstr "現在のタイプ・条件・並び順をスマートリストとして
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-create-page.tsx:103
-#: src/pages/entity-edit-page.tsx:178
+#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-edit-page.tsx:217
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
@@ -2530,7 +2564,7 @@ msgstr "フォルダーを選択"
 msgid "Select group"
 msgstr "グループを選択"
 
-#: src/components/settings/vault-switcher.tsx:145
+#: src/components/settings/vault-switcher.tsx:184
 msgid "Select parent folder"
 msgstr "親フォルダーを選択"
 
@@ -2612,8 +2646,8 @@ msgid "Some of this file's syntax isn't supported here and is ignored:"
 msgstr "このファイルの一部の構文はサポートされていないため無視されます:"
 
 #: src/components/error-boundary.tsx:55
-#: src/components/settings/vault-switcher.tsx:43
-#: src/components/settings/vault-switcher.tsx:56
+#: src/components/settings/vault-switcher.tsx:64
+#: src/components/settings/vault-switcher.tsx:92
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
@@ -2633,7 +2667,7 @@ msgstr "ソース"
 
 #. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
 #. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:231
+#: src/components/assets/quick-log-dialog.tsx:287
 msgid "Stamps {0} = {1}"
 msgstr "{0} = {1} を記録"
 
@@ -2703,13 +2737,17 @@ msgstr "システムのキーチェーンに保存されます。ここに表示
 msgid "Summary"
 msgstr "サマリー"
 
-#: src/components/settings/vault-switcher.tsx:80
+#: src/components/settings/vault-switcher.tsx:117
 msgid "Switch between vaults or manage your list. Removing a vault only forgets it here — its folder is left on disk."
 msgstr "保管庫を切り替えたり、リストを管理したりします。保管庫を削除してもここから忘れるだけで、フォルダーはディスク上に残ります。"
 
-#: src/components/settings/vault-switcher.tsx:100
+#: src/components/settings/vault-switcher.tsx:137
 msgid "Switched vault"
 msgstr "保管庫を切り替えました"
+
+#: src/components/settings/vault-switcher.tsx:225
+msgid "Switching vaults will discard your unsaved edits."
+msgstr "保管庫を切り替えると、未保存の編集内容は破棄されます。"
 
 #: src/components/assets/entity-episodes.tsx:39
 msgid "Sync"
@@ -2785,6 +2823,18 @@ msgstr "保管庫のスキーマがディスク上で変更されました。未
 msgid "These existing types can link to what you're adding."
 msgstr "これらの既存のタイプは、追加するものにリンクできます。"
 
+#: src/pages/entity-edit-page.tsx:233
+msgid "This changed elsewhere. Review the latest version to keep your edits."
+msgstr "別の場所で変更されました。編集内容を残すため、最新の内容を確認してください。"
+
+#: src/components/save-failure.tsx:24
+msgid "This changed elsewhere. Your edits are kept. Load the latest version before trying again."
+msgstr "別の場所で変更されました。編集内容は保持されています。最新の内容を読み込んでから、もう一度お試しください。"
+
+#: src/hooks/use-entity-mutation.ts:31
+msgid "This entity changed elsewhere. Reload the latest version before trying again."
+msgstr "この項目は別の場所で変更されました。最新の内容を読み込み直してから、もう一度お試しください。"
+
 #. Warning banner in the static-list editor after another app changes its Markdown file; the local draft has been preserved
 #: src/pages/list-detail-page.tsx:413
 msgid "This list changed on disk. Your unsaved edits are still here."
@@ -2808,7 +2858,7 @@ msgstr "<0>{0}</0> をゴミ箱に移動します。含まれるアイテムは�
 msgid "This page doesn’t exist or may have moved."
 msgstr "このページは存在しないか、移動された可能性があります。"
 
-#: src/components/entities/entity-ratings.tsx:185
+#: src/components/entities/entity-ratings.tsx:186
 msgid "This rating field is no longer available."
 msgstr "この評価フィールドは利用できなくなりました。"
 
@@ -2827,7 +2877,7 @@ msgstr "今週"
 
 #: src/components/smart-lists/sort-picker.tsx:40
 #: src/lib/type-config.ts:198
-#: src/pages/entity-create-page.tsx:141
+#: src/pages/entity-create-page.tsx:153
 msgid "Title"
 msgstr "タイトル"
 
@@ -2861,7 +2911,7 @@ msgid "Try again"
 msgstr "もう一度試す"
 
 #: src/components/settings/settings-field-form.tsx:54
-#: src/pages/entity-create-page.tsx:119
+#: src/pages/entity-create-page.tsx:131
 #: src/pages/library-page.tsx:248
 #: src/pages/quick-capture-page.tsx:245
 msgid "Type"
@@ -2885,7 +2935,7 @@ msgstr "タイプ"
 msgid "UI in English"
 msgstr "UI を英語で表示"
 
-#: src/components/entities/entity-ratings.tsx:146
+#: src/components/entities/entity-ratings.tsx:147
 msgid "Undo"
 msgstr "元に戻す"
 
@@ -2913,7 +2963,7 @@ msgstr "未マッチ"
 msgid "Unordered"
 msgstr "順序なし"
 
-#: src/components/entities/entity-ratings.tsx:197
+#: src/components/entities/entity-ratings.tsx:198
 msgid "Unrated"
 msgstr "未評価"
 
@@ -2955,6 +3005,10 @@ msgstr "更新日時"
 msgid "Upload failed."
 msgstr "アップロードに失敗しました。"
 
+#: src/components/entities/edit-conflict-review.tsx:115
+msgid "Use reviewed draft"
+msgstr "確認した下書きを使う"
+
 #: src/components/settings/settings-field-form.tsx:154
 #: src/components/settings/settings-field-form.tsx:200
 #: src/components/settings/settings-field-form.tsx:343
@@ -2977,16 +3031,16 @@ msgstr "値"
 msgid "Vault"
 msgstr "保管庫"
 
-#: src/components/settings/vault-switcher.tsx:64
+#: src/components/settings/vault-switcher.tsx:100
 msgid "Vault added"
 msgstr "保管庫を追加しました"
 
-#: src/components/settings/vault-switcher.tsx:165
+#: src/components/settings/vault-switcher.tsx:204
 #: src/pages/onboarding-page.tsx:202
 msgid "Vault created"
 msgstr "保管庫を作成しました"
 
-#: src/components/settings/vault-switcher.tsx:152
+#: src/components/settings/vault-switcher.tsx:191
 msgid "Vault name"
 msgstr "保管庫名"
 
@@ -2994,7 +3048,7 @@ msgstr "保管庫名"
 msgid "Vault path or URL"
 msgstr "保管庫のパスまたは URL"
 
-#: src/components/settings/vault-switcher.tsx:111
+#: src/components/settings/vault-switcher.tsx:149
 msgid "Vault removed"
 msgstr "保管庫を削除しました"
 
@@ -3002,7 +3056,7 @@ msgstr "保管庫を削除しました"
 msgid "Vault rescanned"
 msgstr "保管庫を再スキャンしました"
 
-#: src/components/settings/vault-switcher.tsx:76
+#: src/components/settings/vault-switcher.tsx:113
 msgid "Vaults"
 msgstr "保管庫"
 
@@ -3030,7 +3084,7 @@ msgstr "オンにすると、エピソードにチェックを入れるか「記
 
 #. Hint below the empty file-name field on the entity create page; the placeholder is the file name derived from the entity's title field
 #. placeholder {0}: filename.basename
-#: src/pages/entity-create-page.tsx:149
+#: src/pages/entity-create-page.tsx:161
 msgid "Will be created as “{0}.md”, from the title."
 msgstr "タイトルから「{0}.md」として作成されます。"
 
@@ -3039,7 +3093,7 @@ msgstr "タイトルから「{0}.md」として作成されます。"
 msgid "within the next"
 msgstr "今後"
 
-#: src/pages/settings-page.tsx:93
+#: src/pages/settings-page.tsx:96
 msgid "YAML"
 msgstr "YAML"
 
@@ -3072,15 +3126,19 @@ msgstr "はい／いいえ"
 msgid "You can still open entities already in your library."
 msgstr "すでにライブラリにあるアイテムは引き続き開けます。"
 
-#: src/pages/settings-page.tsx:130
+#: src/pages/settings-page.tsx:133
 msgid "You have unsaved changes in the form editor. Switching editors will discard them."
 msgstr "フォームエディターに保存していない変更があります。エディターを切り替えると破棄されます。"
 
-#: src/pages/settings-page.tsx:134
+#: src/pages/settings-page.tsx:137
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "YAML エディターに保存していない変更があります。エディターを切り替えると破棄されます。"
 
 #. Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes
-#: src/pages/entity-edit-page.tsx:238
+#: src/pages/entity-edit-page.tsx:295
 msgid "You have unsaved edits to this entity. Leaving will discard them."
 msgstr "このアイテムに保存していない編集があります。ページを離れると破棄されます。"
+
+#: src/components/entities/edit-conflict-review.tsx:106
+msgid "Your edits can be combined with the latest version."
+msgstr "編集内容を最新の内容と統合できます。"

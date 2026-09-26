@@ -13,11 +13,11 @@ import { DetailSection } from "@/components/assets/detail-section";
 import { type FrontmatterDraft, MetadataEditor } from "@/components/entities/metadata-editor";
 import { AppFrame } from "@/components/layout/app-frame";
 import { CONTENT_MEASURE } from "@/components/layout/page-container";
+import { SaveFailure } from "@/components/save-failure";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { useEntityMutation } from "@/hooks/use-entity-mutation";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { normalizeBasename } from "@/lib/basename";
 import { CONTENT_WRITES_DISABLED, useCapabilities } from "@/lib/capabilities";
@@ -32,7 +32,8 @@ export function EntityCreatePage() {
   const invalidateEntityData = useInvalidateEntityData();
   const config = useQuery(configQuery());
   const capabilities = useCapabilities();
-  const { saving: creating, run } = useEntityMutation();
+  const [creating, setCreating] = useState(false);
+  const [saveError, setSaveError] = useState<unknown>();
   const [typeId, setTypeId] = useState("");
   const [basename, setBasename] = useState(requestedTitle ?? "");
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
@@ -71,8 +72,10 @@ export function EntityCreatePage() {
   const searchRelations = useRelationSearch();
 
   async function create() {
-    if (!contentWritable || !filename.canCreate) return;
-    await run(async () => {
+    if (creating || !contentWritable || !filename.canCreate) return;
+    setCreating(true);
+    setSaveError(undefined);
+    try {
       const result = await addEntity({
         type: typeId,
         basename: filename.basename,
@@ -81,7 +84,11 @@ export function EntityCreatePage() {
       });
       await invalidateEntityData();
       navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
-    });
+    } catch (error) {
+      setSaveError(error);
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
@@ -106,6 +113,11 @@ export function EntityCreatePage() {
 
         <div className="min-h-0 flex-1 overflow-auto overscroll-contain px-4 py-4">
           <div className={CONTENT_MEASURE}>
+            {saveError ? (
+              <div className="mb-4">
+                <SaveFailure error={saveError} revisionConflict={false} />
+              </div>
+            ) : null}
             <h1 className="mb-8 text-2xl leading-tight font-semibold tracking-tight">
               <Trans>Add manually</Trans>
             </h1>

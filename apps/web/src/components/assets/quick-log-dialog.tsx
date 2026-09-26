@@ -1,15 +1,15 @@
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PencilLineIcon, XIcon } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
-import { errorMessage } from "@/api/client";
+import { errorMessage, isConflictError } from "@/api/client";
 import { useInvalidateEntityData } from "@/api/invalidate-entity-data";
 import { postLogActivity } from "@/api/log";
-import { queryKeys } from "@/api/queries";
+import { queryKeys, entityQuery } from "@/api/queries";
+import { SaveFailure } from "@/components/save-failure";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,6 +63,34 @@ export function QuickLogDialog({
   const [kind, setKind] = useState<Kind>("progress");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
+  const [draftRevision, setDraftRevision] = useState(revision);
+  const [saveError, setSaveError] = useState<unknown>();
+  const [recovering, setRecovering] = useState(false);
+  const [conflict, setConflict] = useState(false);
+  // A background refresh must not silently authorize writing over a newer entity.
+  useEffect(() => {
+    if (!open) {
+      setDraftRevision(revision);
+      setConflict(false);
+      setSaveError(undefined);
+    }
+  }, [open, revision]);
+
+  async function reloadLatest() {
+    if (recovering) return;
+    setRecovering(true);
+    try {
+      const latest = await queryClient.fetchQuery({ ...entityQuery(entityId), staleTime: 0 });
+      setDraftRevision(latest.entity.revision);
+      setConflict(false);
+      setSaveError(undefined);
+    } catch (error) {
+      setSaveError(error);
+    } finally {
+      setRecovering(false);
+    }
+  }
 
   // Keep the picker in range if the entity (and so its supported kinds) changes
   // while this dialog instance is reused.
@@ -71,26 +99,34 @@ export function QuickLogDialog({
   const request: LogActivityRequest = {
     date,
     kind: activeKind,
-    revision,
+    revision: draftRevision,
     ...(note.trim() ? { note: note.trim() } : {}),
   };
 
   const preview = useQuery({
-    queryKey: queryKeys.logPreview(entityId, date, activeKind, note),
+    queryKey: [...queryKeys.logPreview(entityId, date, activeKind, note), draftRevision],
     queryFn: () => postLogActivity(entityId, request, true),
     enabled: open && Boolean(date.trim()),
     retry: false,
   });
 
+  useEffect(() => {
+    if (isConflictError(preview.error)) setConflict(true);
+  }, [preview.error]);
+
   async function submit() {
+    if (saving || recovering || preview.isFetching || preview.error || conflict || !date.trim())
+      return;
     setSaving(true);
+    setSaveError(undefined);
     try {
       await postLogActivity(entityId, request);
       await invalidateEntityData();
       onOpenChange(false);
       if (activeKind === "completed") onCompleted?.();
     } catch (logError) {
-      toast.error(errorMessage(logError));
+      setSaveError(logError);
+      if (isConflictError(logError)) setConflict(true);
     } finally {
       setSaving(false);
     }
@@ -99,7 +135,12 @@ export function QuickLogDialog({
   const preventReason = preview.error ? errorMessage(preview.error) : undefined;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!saving && !recovering) onOpenChange(next);
+      }}
+    >
       <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -118,6 +159,7 @@ export function QuickLogDialog({
                   <button
                     key={option}
                     type="button"
+                    disabled={saving || recovering}
                     onClick={() => setKind(option)}
                     className={cn(
                       "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
@@ -135,7 +177,12 @@ export function QuickLogDialog({
 
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             <Trans>Date</Trans>
-            <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+            <Input
+              disabled={saving || recovering}
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+            />
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm font-medium">
@@ -143,6 +190,7 @@ export function QuickLogDialog({
               Note <span className="font-normal text-muted-foreground">(optional)</span>
             </Trans>
             <Input
+              disabled={saving || recovering}
               value={note}
               placeholder={t`Anything worth remembering`}
               onChange={(event) => setNote(event.target.value)}
@@ -152,12 +200,18 @@ export function QuickLogDialog({
             </span>
           </label>
 
-          <LogPreview
-            reason={preventReason}
-            data={preview.data}
-            pending={preview.isFetching}
-            fieldLabel={fieldLabel}
+          <SaveFailure
+            error={saveError ?? preview.error}
+            recover={
+              conflict
+                ? () => void reloadLatest()
+                : preview.error
+                  ? () => void preview.refetch()
+                  : undefined
+            }
+            recovering={recovering || preview.isFetching}
           />
+          <LogPreview data={preview.data} pending={preview.isFetching} fieldLabel={fieldLabel} />
         </div>
 
         <DialogFooter>
@@ -165,7 +219,7 @@ export function QuickLogDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={saving}
+            disabled={saving || recovering}
           >
             <XIcon data-icon="inline-start" />
             <Trans>Cancel</Trans>
@@ -173,7 +227,14 @@ export function QuickLogDialog({
           <Button
             type="button"
             onClick={() => void submit()}
-            disabled={saving || Boolean(preventReason)}
+            disabled={
+              saving ||
+              recovering ||
+              preview.isFetching ||
+              Boolean(preventReason) ||
+              conflict ||
+              !date.trim()
+            }
           >
             <PencilLineIcon data-icon="inline-start" />
             {saving ? t`Logging…` : t`Log`}
@@ -185,21 +246,16 @@ export function QuickLogDialog({
 }
 
 function LogPreview({
-  reason,
   data,
   pending,
   fieldLabel,
 }: {
-  reason?: string;
   data?: Awaited<ReturnType<typeof postLogActivity>>;
   pending: boolean;
   fieldLabel?: (field: string) => string;
   onCompleted?: () => void;
 }) {
   const { t } = useLingui();
-  if (reason) {
-    return <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">{reason}</p>;
-  }
   if (!data) {
     return (
       <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">

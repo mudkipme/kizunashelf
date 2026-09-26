@@ -1,17 +1,8 @@
+import { t } from "@lingui/core/macro";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { errorMessage, isAbortError, isConflictError } from "@/api/client";
-
-/** Shown after a 409 on a detail-page action: the page auto-refetches and the
- * user just retries. */
-export const ENTITY_CONFLICT_MESSAGE =
-  "This entity changed on disk since it was loaded. Reloaded the latest version — please try again.";
-
-/** Shown after a 409 while editing: the in-progress draft is kept and the user
- * reloads the latest version manually (no auto-refetch that would clobber it). */
-export const ENTITY_EDIT_CONFLICT_MESSAGE =
-  "This entity changed on disk since you opened it. Your edits are kept here — reload the latest version, then reapply them.";
 
 type ReportOptions = {
   /** Extra recovery to run on a 409, e.g. refetching the entity or flagging a
@@ -35,7 +26,10 @@ export function reportEntityError(error: unknown, options?: ReportOptions) {
   if (isConflictError(error)) {
     options?.onConflict?.();
     if (!options?.silentConflict) {
-      toast.error(options?.conflictMessage ?? ENTITY_CONFLICT_MESSAGE);
+      toast.error(
+        options?.conflictMessage ??
+          t`This entity changed elsewhere. Reload the latest version before trying again.`,
+      );
     }
   } else {
     toast.error(errorMessage(error));
