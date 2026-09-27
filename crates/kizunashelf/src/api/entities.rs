@@ -3,7 +3,7 @@
 //! sorting, pagination, and relation walks are pure domain code there.
 
 use super::error::{ApiError, ApiResult};
-use super::state::{get_library, AppState};
+use super::state::{content_writes_enabled, get_library, AppState};
 use crate::calendar::{build_entity_dates, EntityDatesResponse};
 use crate::contract::{EntityDetailResponse, EntityListResponse};
 use crate::entities::{
@@ -116,7 +116,12 @@ pub(super) async fn build_entity_detail(
         .and_then(crate::episodes::episode_section);
     let episodes = section.map(|section| crate::episodes::parse_episodes(&entity.body, section));
     let notes_body = crate::episodes::notes_body(&entity.body, section);
+    let mut log_actions = super::log::available_actions(&library.config, summary);
+    if !content_writes_enabled(state, library) {
+        log_actions.kinds.clear();
+    }
     Ok(EntityDetailResponse {
+        log_actions,
         entity,
         relations,
         related_entities,

@@ -458,6 +458,8 @@ pub struct EntityListResponse {
 #[serde(rename_all = "camelCase")]
 pub struct EntityDetailResponse {
     pub entity: Entity,
+    // Concrete actions derived by the shared log policy and write capabilities.
+    pub log_actions: LogActions,
     pub relations: Vec<Relation>,
     pub related_entities: Vec<EntitySummary>,
     /// The parsed episodes/tracks list, when the entity's type declares an
@@ -2148,13 +2150,22 @@ pub struct LogActivityRequest {
     pub note: Option<String>,
 }
 
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum LogKind {
     #[default]
     Progress,
     Started,
     Completed,
+}
+
+/// Availability for the activity sheet. `progress` records a journal entry;
+/// it does not increment numeric fields or mark episodes watched.
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct LogActions {
+    pub kinds: Vec<LogKind>,
+    pub writes_note: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]

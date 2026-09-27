@@ -3,7 +3,7 @@ use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, edit_entity_document_locked};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
-    FlippedStatus, LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate,
+    FlippedStatus, LogActions, LogActivityRequest, LogActivityResponse, LogKind, LogOp, StampedDate,
 };
 use crate::daily_notes::{remove_log_line, render_log_line, write_log_line, LogWriteError};
 use crate::library::{file_revision, MarkdownDocument};
@@ -273,6 +273,29 @@ fn stamp_entity_date(
             .frontmatter
             .insert(flip.field.clone(), Value::String(flip.value.clone()));
     }
+}
+
+/// Use the same effect planners as the write endpoint. In particular, a
+/// status-only action must not be offered when it would preserve a custom or
+/// already-completed status and do nothing at all.
+pub(super) fn available_actions(
+    config: &crate::types::KizunaConfig,
+    summary: &crate::types::EntitySummary,
+) -> LogActions {
+    let type_config = config.type_config(&summary.entity_type);
+    let writes_note = config.resolve_log_config(&summary.entity_type).is_some();
+    let mut kinds = Vec::new();
+    if writes_note {
+        kinds.push(LogKind::Progress);
+    }
+    for kind in [LogKind::Started, LogKind::Completed] {
+        if stamp_target_field(type_config, kind).is_some()
+            || plan_status_flip(type_config, summary.status.as_ref(), kind).is_some()
+        {
+            kinds.push(kind);
+        }
+    }
+    LogActions { kinds, writes_note }
 }
 
 /// Plans the monotonic status flip for a `started`/`completed` log, or `None` when

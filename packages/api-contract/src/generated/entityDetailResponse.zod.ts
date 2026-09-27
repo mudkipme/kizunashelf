@@ -81,6 +81,10 @@ export const EntityDetailResponse = zod.object({
   "body": zod.string(),
   "raw": zod.string()
 }),
+  "logActions": zod.object({
+  "kinds": zod.array(zod.enum(['progress', 'started', 'completed'])),
+  "writesNote": zod.boolean()
+}).describe('Availability for the activity sheet. `progress` records a journal entry;\nit does not increment numeric fields or mark episodes watched.'),
   "relations": zod.array(zod.object({
   "sourceId": zod.string(),
   "targetId": zod.string().nullish(),

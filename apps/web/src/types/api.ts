@@ -165,3 +165,5 @@ export type DateRole = NonNullable<FieldConfig["dateRole"]>;
 export type SeasonLanguage = NonNullable<FieldConfig["seasonLanguage"]>;
 export type TitleRole = NonNullable<FieldConfig["titleRole"]>;
 export type DailyNotesConfig = NonNullable<VaultConfig["dailyNotes"]>;
+
+export type LogKind = NonNullable<import("@kizunashelf/api-contract").LogActivityRequest["kind"]>;

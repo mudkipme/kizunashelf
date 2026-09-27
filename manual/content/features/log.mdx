@@ -4,7 +4,7 @@ description: "Record a session in your daily notes, including something you did 
 sidebar_position: 4
 ---
 
-Choose **Log** on an entity to record a viewing session, a game milestone, or a thought you want to remember. The date defaults to today; change it to record something you did earlier. Add a note, check the preview and destination, then choose **Log** to save it.
+Choose **Log activity** on an entity to record a viewing session, a game milestone, or a thought you want to remember. The date defaults to today; change it to record something you did earlier. Add an optional note, check the summary, then choose **Log** to save it. Expand **Journal preview** to see the Markdown line and destination.
 
 For example, logging a rewatch might add:
 
@@ -23,9 +23,11 @@ That link connects the day to the entity. You can find it later in the entity's 
 
 ## Status changes
 
-A **Started** or **Completed** log can also record the corresponding date and update the entity's status when its type supports it. Starting something resumes a paused entity, but does not move a completed entity back to in progress. Dropped entities are left as they are.
+Choose **Start** or **Finish** from the activity actions to open the same sheet with **Started** or **Completed** selected. These actions are available when they can update a configured date or advance the entity's status, even when daily-note logging is not enabled. The summary shows exactly which fields will change; the note field appears only when a journal entry will be written.
 
-Logging and [episode checklists](./episodes.mdx) are separate: a log does not tick episodes, and ticking an episode does not add a daily-note line.
+Starting something resumes a paused entity, but does not move a completed entity back to in progress. Dropped and unrecognized custom statuses are preserved.
+
+**Activity** records a journal entry; it does not increment a progress counter. Use [episode checklists](./episodes.mdx) for episodes or chapters, and an ordinary `number` field for a value such as pages read. A log does not tick episodes, and ticking an episode does not add a daily-note line.
 
 ## Configuring daily notes
 

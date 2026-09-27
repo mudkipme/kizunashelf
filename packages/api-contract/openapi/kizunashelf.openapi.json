@@ -7627,6 +7627,9 @@
           "entity": {
             "$ref": "#/components/schemas/Entity"
           },
+          "logActions": {
+            "$ref": "#/components/schemas/LogActions"
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -7657,9 +7660,37 @@
         },
         "required": [
           "entity",
+          "logActions",
           "relations",
           "relatedEntities",
           "notesBody"
+        ]
+      },
+      "LogActions": {
+        "description": "Availability for the activity sheet. `progress` records a journal entry;\nit does not increment numeric fields or mark episodes watched.",
+        "type": "object",
+        "properties": {
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LogKind"
+            }
+          },
+          "writesNote": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kinds",
+          "writesNote"
+        ]
+      },
+      "LogKind": {
+        "type": "string",
+        "enum": [
+          "progress",
+          "started",
+          "completed"
         ]
       },
       "EntityEpisodes": {
@@ -8496,14 +8527,6 @@
         "enum": [
           "add",
           "remove"
-        ]
-      },
-      "LogKind": {
-        "type": "string",
-        "enum": [
-          "progress",
-          "started",
-          "completed"
         ]
       },
       "LogActivityResponse": {

@@ -13,14 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/assets/quick-log-dialog.tsx:279
-msgid " (already logged)"
-msgstr " (already logged)"
-
-#: src/components/assets/quick-log-dialog.tsx:281
-msgid " (new note)"
-msgstr " (new note)"
-
 #: src/components/settings/settings-entity-type.tsx:188
 msgid "(daily-notes default)"
 msgstr "(daily-notes default)"
@@ -66,7 +58,7 @@ msgid "{0, plural, one {# issue} other {# issues}}"
 msgstr "{0, plural, one {# issue} other {# issues}}"
 
 #. placeholder {0}: list.itemCount
-#: src/pages/entity-page.tsx:654
+#: src/pages/entity-page.tsx:634
 #: src/pages/lists-page.tsx:87
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
@@ -198,7 +190,7 @@ msgstr "{0} title: {1}"
 msgid "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 msgstr "{configuredProviderCount, plural, one {# provider} other {# providers}}"
 
-#: src/pages/entity-page.tsx:532
+#: src/pages/entity-page.tsx:512
 msgid "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 msgstr "{CONTENT_WRITES_DISABLED} Editing actions are unavailable."
 
@@ -300,16 +292,21 @@ msgid "A type with the same name already exists, so {assignedIds} was used inste
 msgstr "A type with the same name already exists, so {assignedIds} was used instead. You can rename it after adding."
 
 #: src/components/layout/command-palette.tsx:191
-#: src/pages/entity-page.tsx:493
-#: src/pages/entity-page.tsx:496
+#: src/pages/entity-page.tsx:473
+#: src/pages/entity-page.tsx:476
 msgid "Actions"
 msgstr "Actions"
 
-#: src/components/assets/quick-log-dialog.tsx:155
+#: src/components/assets/quick-log-dialog.tsx:29
+#: src/components/assets/quick-log-dialog.tsx:176
 #: src/components/layout/nav-destinations.ts:41
 #: src/pages/statistics-page.tsx:81
 msgid "Activity"
 msgstr "Activity"
+
+#: src/components/assets/activity-actions.tsx:38
+msgid "Activity actions"
+msgstr "Activity actions"
 
 #: src/components/layout/command-palette.tsx:145
 #: src/components/lists/add-items-dialog.tsx:109
@@ -405,6 +402,10 @@ msgstr "Add suggested lists"
 msgid "Add suggested lists, or open a smart list and choose Add to Home."
 msgstr "Add suggested lists, or open a smart list and choose Add to Home."
 
+#: src/components/assets/quick-log-dialog.tsx:320
+msgid "Add to daily note"
+msgstr "Add to daily note"
+
 #: src/components/smart-lists/home-toggle.tsx:31
 #: src/components/smart-lists/suggested-lists-dialog.tsx:127
 msgid "Add to Home"
@@ -481,6 +482,10 @@ msgstr "All types"
 msgid "All types ({0})"
 msgstr "All types ({0})"
 
+#: src/components/assets/quick-log-dialog.tsx:318
+msgid "Already in daily note"
+msgstr "Already in daily note"
+
 #: src/components/smart-lists/suggested-lists-dialog.tsx:110
 msgid "Already on Home"
 msgstr "Already on Home"
@@ -507,7 +512,7 @@ msgstr "Any link"
 msgid "any of"
 msgstr "any of"
 
-#: src/components/assets/quick-log-dialog.tsx:195
+#: src/components/assets/quick-log-dialog.tsx:218
 msgid "Anything worth remembering"
 msgstr "Anything worth remembering"
 
@@ -582,14 +587,14 @@ msgstr "Calendar"
 
 #: src/components/assets/asset-download-panel.tsx:107
 #: src/components/assets/episode-sync-dialog.tsx:343
-#: src/components/assets/quick-log-dialog.tsx:225
+#: src/components/assets/quick-log-dialog.tsx:255
 #: src/components/entities/metadata-scalar-inputs.tsx:105
 #: src/components/rename-dialog.tsx:90
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
 #: src/pages/entity-edit-page.tsx:208
-#: src/pages/entity-page.tsx:552
+#: src/pages/entity-page.tsx:532
 #: src/pages/import-wizard-page.tsx:239
 #: src/pages/import-wizard-page.tsx:280
 #: src/pages/list-detail-page.tsx:543
@@ -685,7 +690,7 @@ msgstr "Command palette"
 #: src/components/settings/settings-field-form.tsx:214
 #: src/components/settings/settings-field-form.tsx:295
 #: src/pages/activity-page.tsx:42
-#: src/pages/entity-page.tsx:433
+#: src/pages/entity-page.tsx:408
 msgid "Completed"
 msgstr "Completed"
 
@@ -773,7 +778,7 @@ msgstr "Create"
 msgid "Create “{query}” manually →"
 msgstr "Create “{query}” manually →"
 
-#: src/pages/entity-page.tsx:690
+#: src/pages/entity-page.tsx:670
 msgid "Create & add"
 msgstr "Create & add"
 
@@ -793,7 +798,7 @@ msgid "Create vault ({0})"
 msgstr "Create vault ({0})"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-page.tsx:690
+#: src/pages/entity-page.tsx:670
 #: src/pages/lists-page.tsx:240
 #: src/pages/onboarding-page.tsx:251
 msgid "Creating…"
@@ -842,7 +847,7 @@ msgstr "Dark theme. Switch to system theme."
 msgid "date"
 msgstr "date"
 
-#: src/components/assets/quick-log-dialog.tsx:179
+#: src/components/assets/quick-log-dialog.tsx:201
 #: src/components/smart-lists/rule-value-input.tsx:71
 #: src/lib/type-config.ts:207
 #: src/lib/type-config.ts:238
@@ -872,7 +877,7 @@ msgid "Default line format"
 msgstr "Default line format"
 
 #: src/components/lists/section-block.tsx:121
-#: src/pages/entity-page.tsx:526
+#: src/pages/entity-page.tsx:506
 #: src/pages/list-detail-page.tsx:394
 #: src/pages/smart-list-page.tsx:297
 #: src/pages/smart-list-page.tsx:409
@@ -943,11 +948,11 @@ msgstr "does not link to"
 #: src/components/lists/add-items-dialog.tsx:120
 #: src/components/settings/settings-dialogs.tsx:325
 #: src/components/settings/settings-dialogs.tsx:361
-#: src/pages/entity-page.tsx:698
+#: src/pages/entity-page.tsx:678
 msgid "Done"
 msgstr "Done"
 
-#: src/pages/entity-page.tsx:516
+#: src/pages/entity-page.tsx:496
 msgid "Download cover"
 msgstr "Download cover"
 
@@ -980,7 +985,7 @@ msgstr "Dropped"
 msgid "Duplicate Filenames"
 msgstr "Duplicate Filenames"
 
-#: src/pages/entity-page.tsx:399
+#: src/pages/entity-page.tsx:382
 #: src/pages/list-detail-page.tsx:593
 msgid "Edit"
 msgstr "Edit"
@@ -1055,7 +1060,7 @@ msgid "Entity name"
 msgstr "Entity name"
 
 #: src/pages/entity-edit-page.tsx:272
-#: src/pages/entity-page.tsx:455
+#: src/pages/entity-page.tsx:435
 msgid "Entity not found"
 msgstr "Entity not found"
 
@@ -1165,7 +1170,7 @@ msgstr "File"
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:68
 #: src/pages/entity-create-page.tsx:147
-#: src/pages/entity-page.tsx:324
+#: src/pages/entity-page.tsx:307
 msgid "File name"
 msgstr "File name"
 
@@ -1196,9 +1201,12 @@ msgstr "Filter"
 msgid "Filter by type"
 msgstr "Filter by type"
 
-#: src/components/assets/quick-log-dialog.tsx:199
-msgid "For example, an episode number."
-msgstr "For example, an episode number."
+#: src/components/assets/activity-actions.tsx:30
+#: src/components/assets/activity-actions.tsx:48
+#: src/components/assets/quick-log-dialog.tsx:165
+#: src/components/assets/quick-log-dialog.tsx:276
+msgid "Finish"
+msgstr "Finish"
 
 #: src/pages/settings-page.tsx:88
 msgid "Form"
@@ -1435,6 +1443,10 @@ msgstr "Items <0>({totalItems})</0>"
 msgid "Japanese"
 msgstr "Japanese"
 
+#: src/components/assets/quick-log-dialog.tsx:325
+msgid "Journal preview"
+msgstr "Journal preview"
+
 #: src/components/entities/metadata-scalar-inputs.tsx:93
 msgid "JSON value"
 msgstr "JSON value"
@@ -1546,7 +1558,7 @@ msgstr "Links to"
 msgid "List"
 msgstr "List"
 
-#: src/pages/entity-page.tsx:615
+#: src/pages/entity-page.tsx:595
 #: src/pages/lists-page.tsx:148
 msgid "List created"
 msgstr "List created"
@@ -1594,8 +1606,8 @@ msgstr "Loading taxonomy"
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
 #: src/pages/entity-edit-page.tsx:256
-#: src/pages/entity-page.tsx:315
-#: src/pages/entity-page.tsx:634
+#: src/pages/entity-page.tsx:298
+#: src/pages/entity-page.tsx:614
 #: src/pages/home-page.tsx:55
 #: src/pages/import-wizard-page.tsx:218
 #: src/pages/list-detail-page.tsx:365
@@ -1608,12 +1620,13 @@ msgstr "Loading taxonomy"
 msgid "Loading…"
 msgstr "Loading…"
 
-#: src/components/assets/quick-log-dialog.tsx:240
-#: src/pages/entity-page.tsx:409
+#: src/components/assets/quick-log-dialog.tsx:277
 msgid "Log"
 msgstr "Log"
 
-#: src/components/assets/quick-log-dialog.tsx:147
+#: src/components/assets/activity-actions.tsx:32
+#: src/components/assets/activity-actions.tsx:50
+#: src/components/assets/quick-log-dialog.tsx:167
 msgid "Log activity"
 msgstr "Log activity"
 
@@ -1629,18 +1642,19 @@ msgstr "Log to daily note"
 msgid "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 msgstr "Logging defaults — the heading log lines are written under, and the fallback line format. Each type can override these and adds its own tag."
 
-#: src/components/assets/quick-log-dialog.tsx:240
-msgid "Logging…"
-msgstr "Logging…"
-
-#: src/pages/entity-page.tsx:507
-#: src/pages/entity-page.tsx:628
+#: src/pages/entity-page.tsx:487
+#: src/pages/entity-page.tsx:608
 msgid "Manage lists"
 msgstr "Manage lists"
 
 #: src/components/settings/settings-field-form.tsx:364
 msgid "Map each option to a status"
 msgstr "Map each option to a status"
+
+#. placeholder {0}: data.willFlipStatus.value
+#: src/components/assets/quick-log-dialog.tsx:303
+msgid "Mark as {0}"
+msgstr "Mark as {0}"
 
 #: src/components/lists/section-block.tsx:244
 msgid "Mark as done"
@@ -1658,12 +1672,7 @@ msgstr "Mark watched progress"
 msgid "Markdown body sections"
 msgstr "Markdown body sections"
 
-#. placeholder {0}: data.willFlipStatus.value
-#: src/components/assets/quick-log-dialog.tsx:295
-msgid "Marks as {0}"
-msgstr "Marks as {0}"
-
-#: src/pages/entity-page.tsx:511
+#: src/pages/entity-page.tsx:491
 msgid "Match"
 msgstr "Match"
 
@@ -1705,16 +1714,16 @@ msgstr "Move {label} up"
 msgid "Move list to trash?"
 msgstr "Move list to trash?"
 
-#: src/pages/entity-page.tsx:555
+#: src/pages/entity-page.tsx:535
 #: src/pages/list-detail-page.tsx:552
 msgid "Move to Trash"
 msgstr "Move to Trash"
 
-#: src/pages/entity-page.tsx:541
+#: src/pages/entity-page.tsx:521
 msgid "Move to trash?"
 msgstr "Move to trash?"
 
-#: src/pages/entity-page.tsx:239
+#: src/pages/entity-page.tsx:222
 msgid "Moved to trash"
 msgstr "Moved to trash"
 
@@ -1748,7 +1757,7 @@ msgstr "Needs review"
 msgid "New field"
 msgstr "New field"
 
-#: src/pages/entity-page.tsx:675
+#: src/pages/entity-page.tsx:655
 #: src/pages/lists-page.tsx:48
 #: src/pages/lists-page.tsx:168
 msgid "New list"
@@ -1782,6 +1791,10 @@ msgstr "no"
 #: src/components/entities/metadata-inputs.tsx:123
 msgid "No"
 msgstr "No"
+
+#: src/components/assets/quick-log-dialog.tsx:226
+msgid "No activity actions are available."
+msgstr "No activity actions are available."
 
 #: src/pages/activity-page.tsx:141
 msgid "No activity yet. Dated entities, episode air/completion dates, and daily-note mentions show up here."
@@ -1858,7 +1871,7 @@ msgstr "No items yet. Use “Add items” to put entities on this list, or “Ad
 msgid "No limit"
 msgstr "No limit"
 
-#: src/pages/entity-page.tsx:638
+#: src/pages/entity-page.tsx:618
 msgid "No lists yet. Create one below."
 msgstr "No lists yet. Create one below."
 
@@ -1967,7 +1980,7 @@ msgstr "none of"
 msgid "not"
 msgstr "not"
 
-#: src/components/assets/quick-log-dialog.tsx:189
+#: src/components/assets/quick-log-dialog.tsx:212
 msgid "Note <0>(optional)</0>"
 msgstr "Note <0>(optional)</0>"
 
@@ -1992,10 +2005,6 @@ msgstr "Notes shown below the items…"
 #: src/components/home/home-smart-list.tsx:30
 msgid "Nothing here yet"
 msgstr "Nothing here yet"
-
-#: src/components/assets/quick-log-dialog.tsx:272
-msgid "Nothing to log for this type."
-msgstr "Nothing to log for this type."
 
 #: src/lib/type-config.ts:203
 msgid "Number"
@@ -2150,17 +2159,13 @@ msgstr "Prev"
 msgid "Preview"
 msgstr "Preview"
 
-#: src/components/assets/quick-log-dialog.tsx:262
+#: src/components/assets/quick-log-dialog.tsx:297
 msgid "Previewing…"
 msgstr "Previewing…"
 
 #: src/components/assets/pagination-bar.tsx:42
 msgid "Previous"
 msgstr "Previous"
-
-#: src/components/assets/quick-log-dialog.tsx:29
-msgid "Progress"
-msgstr "Progress"
 
 #: src/components/assets/episode-sync-dialog.tsx:242
 #: src/components/entities/external-match-dialog.tsx:132
@@ -2191,7 +2196,7 @@ msgid "Public profile"
 msgstr "Public profile"
 
 #: src/components/entities/entity-ratings.tsx:73
-#: src/pages/entity-page.tsx:434
+#: src/pages/entity-page.tsx:409
 msgid "Rate"
 msgstr "Rate"
 
@@ -2320,8 +2325,8 @@ msgstr "Removed"
 
 #: src/components/lists/section-block.tsx:117
 #: src/components/rename-dialog.tsx:94
-#: src/pages/entity-page.tsx:323
-#: src/pages/entity-page.tsx:503
+#: src/pages/entity-page.tsx:306
+#: src/pages/entity-page.tsx:483
 #: src/pages/list-detail-page.tsx:384
 #: src/pages/smart-list-page.tsx:287
 msgid "Rename"
@@ -2335,11 +2340,11 @@ msgstr "Rename list"
 msgid "Rename smart list"
 msgstr "Rename smart list"
 
-#: src/pages/entity-page.tsx:179
+#: src/pages/entity-page.tsx:162
 msgid "Renamed"
 msgstr "Renamed"
 
-#: src/pages/entity-page.tsx:178
+#: src/pages/entity-page.tsx:161
 msgid "Renamed — updated {updated, plural, one {# link} other {# links}}"
 msgstr "Renamed — updated {updated, plural, one {# link} other {# links}}"
 
@@ -2433,6 +2438,7 @@ msgstr "Saves the current type, criteria, and sort as a smart list."
 msgid "Saves the current type, criteria, and sort as a smart list. Your search isn't part of it."
 msgstr "Saves the current type, criteria, and sort as a smart list. Your search isn't part of it."
 
+#: src/components/assets/quick-log-dialog.tsx:272
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
@@ -2576,6 +2582,12 @@ msgstr "Select type"
 msgid "Selected Metadata"
 msgstr "Selected Metadata"
 
+#. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
+#. placeholder {1}: data.willStampDate.value
+#: src/components/assets/quick-log-dialog.tsx:308
+msgid "Set {0} to {1}"
+msgstr "Set {0} to {1}"
+
 #: src/components/layout/nav-destinations.ts:46
 #: src/components/settings/settings-editor.tsx:196
 msgid "Settings"
@@ -2633,11 +2645,11 @@ msgstr "Smart list renamed"
 msgid "Smart list saved"
 msgstr "Smart list saved"
 
-#: src/pages/entity-page.tsx:225
+#: src/pages/entity-page.tsx:208
 msgid "Some images could not be downloaded"
 msgstr "Some images could not be downloaded"
 
-#: src/pages/entity-page.tsx:224
+#: src/pages/entity-page.tsx:207
 msgid "Some images could not be downloaded: {reasons}"
 msgstr "Some images could not be downloaded: {reasons}"
 
@@ -2665,13 +2677,11 @@ msgstr "Sort {0} by"
 msgid "Source"
 msgstr "Source"
 
-#. placeholder {0}: fieldLabel?.(data.willStampDate.field) ?? data.willStampDate.field
-#. placeholder {1}: data.willStampDate.value
-#: src/components/assets/quick-log-dialog.tsx:287
-msgid "Stamps {0} = {1}"
-msgstr "Stamps {0} = {1}"
-
+#: src/components/assets/activity-actions.tsx:28
+#: src/components/assets/activity-actions.tsx:46
 #: src/components/assets/asset-download-panel.tsx:97
+#: src/components/assets/quick-log-dialog.tsx:163
+#: src/components/assets/quick-log-dialog.tsx:274
 msgid "Start"
 msgstr "Start"
 
@@ -2845,7 +2855,7 @@ msgid "This month"
 msgstr "This month"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-page.tsx:544
+#: src/pages/entity-page.tsx:524
 msgid "This moves {0} to the Trash. You can restore it later if you need it."
 msgstr "This moves {0} to the Trash. You can restore it later if you need it."
 
@@ -3064,7 +3074,7 @@ msgstr "Vaults"
 msgid "Watching now"
 msgstr "Watching now"
 
-#: src/pages/entity-page.tsx:681
+#: src/pages/entity-page.tsx:661
 #: src/pages/lists-page.tsx:202
 msgid "Watchlist"
 msgstr "Watchlist"

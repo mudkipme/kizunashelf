@@ -8,7 +8,6 @@ import {
   FilePenLineIcon,
   ListChecksIcon,
   MoreHorizontalIcon,
-  NotebookPenIcon,
   PencilIcon,
   PlusIcon,
   SearchIcon,
@@ -34,6 +33,7 @@ import {
   queryKeys,
 } from "@/api/queries";
 import { setTaskDone } from "@/api/tasks";
+import { ActivityActions } from "@/components/assets/activity-actions";
 import { EntityDetail } from "@/components/assets/entity-detail";
 import { QuickLogDialog } from "@/components/assets/quick-log-dialog";
 import { ExternalMatchDialog } from "@/components/entities/external-match-dialog";
@@ -82,6 +82,7 @@ import {
   fieldLabelsByType,
   typeLabelsById,
 } from "@/lib/type-config";
+import type { LogKind } from "@/types/api";
 import type { Entity } from "@/types/api";
 
 export function EntityPage() {
@@ -99,7 +100,7 @@ export function EntityPage() {
   const { saving, run } = useEntityMutation();
   const [renameOpen, setRenameOpen] = useState(false);
   const [manageListsOpen, setManageListsOpen] = useState(false);
-  const [logOpen, setLogOpen] = useState(false);
+  const [logKind, setLogKind] = useState<LogKind | null>(null);
   const [ratingField, setRatingField] = useState<string | null>(null);
   const [episodesSaving, setEpisodesSaving] = useState(false);
   const [tasksSaving, setTasksSaving] = useState(false);
@@ -117,26 +118,8 @@ export function EntityPage() {
   const canDownloadCover =
     contentWritable && capabilities.assetDownloadEnabled && isRemoteAsset(entity?.image);
   const typeConfig = config.data?.types.find((type) => type.id === entity?.type);
-  // The activities offered in the log dialog: always "progress", plus
-  // "started"/"completed" when the log would *do* something for that kind —
-  // either stamp a matching `dateRole` field, or flip a mapped `enumRole: status`
-  // field (started → ongoing, completed → completed).
-  const statusField = typeConfig?.fields.find((field) => field.enumRole === "status");
-  const logKinds: ("progress" | "started" | "completed")[] = [
-    "progress",
-    ...(typeConfig?.fields.some((field) => field.dateRole === "started") ||
-    (statusField?.statusValues?.ongoing?.length ?? 0) > 0
-      ? (["started"] as const)
-      : []),
-    ...(typeConfig?.fields.some((field) => field.dateRole === "completed") ||
-    (statusField?.statusValues?.completed?.length ?? 0) > 0
-      ? (["completed"] as const)
-      : []),
-  ];
-  // The Log button is shown only when the type is configured for daily-note
-  // logging. Episode check-offs are independent — they only stamp the ✅
-  // completion date via `/episodes/watch` and never write a daily-note line.
-  const canLog = contentWritable && Boolean(entity) && Boolean(typeConfig?.log);
+  const logActions = detail.data?.logActions;
+  const canLog = contentWritable && Boolean(logActions?.kinds.length);
   const external = useExternalMatch({
     typeConfig,
     providerCatalog: providerCatalog.data,
@@ -398,16 +381,8 @@ export function EntityPage() {
                     <PencilIcon data-icon="inline-start" />
                     <Trans>Edit</Trans>
                   </Button>
-                  {canLog ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setLogOpen(true)}
-                    >
-                      <NotebookPenIcon data-icon="inline-start" />
-                      <Trans>Log</Trans>
-                    </Button>
+                  {canLog && logActions ? (
+                    <ActivityActions kinds={logActions.kinds} onSelect={setLogKind} />
                   ) : null}
                   <EntityActions
                     entity={entity}
@@ -423,7 +398,7 @@ export function EntityPage() {
                 </div>
               }
             />
-            {canLog ? (
+            {logKind && logActions ? (
               <QuickLogDialog
                 onCompleted={() => {
                   const field =
@@ -434,11 +409,16 @@ export function EntityPage() {
                       action: { label: t`Rate`, onClick: () => setRatingField(field) },
                     });
                 }}
-                open={logOpen}
-                onOpenChange={setLogOpen}
+                key={entity.id}
+                open
+                onOpenChange={(open) => {
+                  if (!open) setLogKind(null);
+                }}
+                initialKind={logKind}
+                writesNote={logActions.writesNote}
                 entityId={entity.id}
                 revision={entity.revision}
-                kinds={logKinds}
+                kinds={logActions.kinds}
                 fieldLabel={(field) => entityFieldLabel(labelsByType, entity.type, field)}
               />
             ) : null}
