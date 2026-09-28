@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
@@ -17,12 +17,19 @@ function Probe() {
   return <span data-testid="path">{useLocation().pathname}</span>;
 }
 
-const shell = () =>
-  render(
-    <AppFrame>
+function RoutedShell() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Each real route owns its AppFrame, so page changes remount the toolbar.
+  return (
+    <AppFrame key={location.pathname}>
       <Probe />
-    </AppFrame>,
+      <button onClick={() => navigate("/activity", { replace: true })}>Replace page</button>
+    </AppFrame>
   );
+}
+
+const shell = () => render(<RoutedShell />);
 
 describe("navigation controls", () => {
   it("enables forward only once there is somewhere to go forward to", async () => {
@@ -65,6 +72,30 @@ describe("navigation controls", () => {
     await expect.element(screen.getByTestId("path")).toHaveTextContent("/lists");
     await expect.element(screen.getByRole("button", { name: "Go forward" })).toBeDisabled();
     await expect.element(screen.getByRole("button", { name: "Go back" })).not.toBeDisabled();
+  });
+
+  it("preserves forward history when the current page is replaced", async () => {
+    await page.viewport(1280, 800);
+    const screen = await shell();
+    const back = screen.getByRole("button", { name: "Go back" });
+    const forward = screen.getByRole("button", { name: "Go forward" });
+
+    await screen.getByRole("link", { name: "Calendar" }).click();
+    await screen.getByRole("link", { name: "Lists" }).click();
+    await back.click();
+    await expect.element(screen.getByTestId("path")).toHaveTextContent("/calendar");
+    await screen.getByRole("button", { name: "Replace page" }).click();
+    await expect.element(screen.getByTestId("path")).toHaveTextContent("/activity");
+    await expect.element(forward).not.toBeDisabled();
+
+    await forward.click();
+    await expect.element(screen.getByTestId("path")).toHaveTextContent("/lists");
+    await expect.element(forward).toBeDisabled();
+    await back.click();
+    await expect.element(screen.getByTestId("path")).toHaveTextContent("/activity");
+    await back.click();
+    await expect.element(screen.getByTestId("path")).toHaveTextContent("/");
+    await expect.element(back).toBeDisabled();
   });
 });
 

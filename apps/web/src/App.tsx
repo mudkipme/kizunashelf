@@ -6,6 +6,7 @@ import { settingsConfigQuery } from "@/api/queries";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AppShellFallback } from "@/components/layout/app-frame";
 import { VaultChangeSync } from "@/components/vault-change-sync";
+import { HistoryPositionProvider } from "@/hooks/use-history-position";
 import { isDesktopRuntime } from "@/lib/desktop";
 import { activateUiLocale } from "@/lib/i18n";
 import { useUiLocale } from "@/lib/language";
@@ -68,7 +69,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <LocaleSync />
-      <RoutedErrorBoundary key={vaultSession} />
+      <HistoryPositionProvider>
+        <RoutedErrorBoundary key={vaultSession} />
+      </HistoryPositionProvider>
     </BrowserRouter>
   );
 }

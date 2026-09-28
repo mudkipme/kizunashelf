@@ -1,9 +1,10 @@
 import { I18nProvider } from "@lingui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { type ReactNode, StrictMode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { render as renderComponent } from "vitest-browser-react";
 
+import { HistoryPositionProvider } from "@/hooks/use-history-position";
 import { i18n } from "@/lib/i18n";
 
 /**
@@ -30,7 +31,11 @@ export function render(ui: ReactNode, { route = "/" }: { route?: string } = {}) 
     return (
       <I18nProvider i18n={i18n}>
         <QueryClientProvider client={queryClient}>
-          <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+          <MemoryRouter initialEntries={[route]}>
+            <StrictMode>
+              <HistoryPositionProvider>{children}</HistoryPositionProvider>
+            </StrictMode>
+          </MemoryRouter>
         </QueryClientProvider>
       </I18nProvider>
     );
