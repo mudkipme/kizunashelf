@@ -19,7 +19,7 @@ export function ActivityActions({
   onSelect: (kind: LogKind) => void;
 }) {
   const { t } = useLingui();
-  const primary = kinds[0];
+  const [primary, ...secondary] = kinds;
   if (!primary) return null;
   return (
     <div className="flex items-center gap-1">
@@ -32,7 +32,7 @@ export function ActivityActions({
           <Trans>Log activity</Trans>
         )}
       </Button>
-      {kinds.length > 1 ? (
+      {secondary.length > 0 ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon-sm" aria-label={t`Activity actions`}>
@@ -40,7 +40,7 @@ export function ActivityActions({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {kinds.map((kind) => (
+            {secondary.map((kind) => (
               <DropdownMenuItem key={kind} onSelect={() => onSelect(kind)}>
                 {kind === "started" ? (
                   <Trans>Start</Trans>
