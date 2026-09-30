@@ -3,7 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useBlocker, useNavigate, useParams } from "react-router-dom";
 
 import { errorMessage, isConflictError } from "@/api/client";
 import { saveEntity, reviewEntityDraft } from "@/api/entities";
@@ -22,7 +22,6 @@ import { SaveFailure } from "@/components/save-failure";
 import { Alert } from "@/components/ui/alert";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -55,7 +54,8 @@ export function EntityEditPage() {
   const draftBasenameRef = useRef<string | undefined>(undefined);
   const schemaRevisionRef = useRef<string | undefined>(undefined);
   const [conflict, setConflict] = useState(false);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  // A successful write may leave before React has rendered the clean draft.
+  const savedRef = useRef(false);
   const [frontmatter, setFrontmatter] = useState<FrontmatterDraft>({});
   const [body, setBody] = useState("");
   // Tracks which entity the local draft was seeded from, so a background refetch
@@ -66,8 +66,7 @@ export function EntityEditPage() {
   // saving must submit the old revision and receive a 409 instead of silently
   // overwriting the external edit.
   const seededRevisionRef = useRef<string | undefined>(undefined);
-  // Snapshot of the seeded draft, for dirty detection (Back/Cancel confirmation
-  // and the tab-close warning).
+  // Snapshot of the seeded draft, for navigation and tab-close protection.
   const seededSnapshotRef = useRef<{ frontmatter: string; body: string } | null>(null);
   const loading = detail.isPending || config.isPending || capabilities.isPending;
   const queryError = detail.error ?? config.error ?? capabilities.error;
@@ -84,6 +83,7 @@ export function EntityEditPage() {
     schemaRevisionRef.current = undefined;
     seededEntityIdRef.current = source.id;
     seededRevisionRef.current = source.revision;
+    savedRef.current = false;
     const seeded = normalizeFrontmatter(source.frontmatter);
     seededSnapshotRef.current = { frontmatter: JSON.stringify(seeded), body: source.body };
     setFrontmatter(seeded);
@@ -96,9 +96,18 @@ export function EntityEditPage() {
     snapshot && (JSON.stringify(frontmatter) !== snapshot.frontmatter || body !== snapshot.body),
   );
 
-  // Warn on tab close/reload while edits are unsaved. In-app leaving (Back/
-  // Cancel) is confirmed via the discard dialog below.
+  // Tab close/reload uses the native prompt; routes and history use the dialog.
   useUnsavedChangesWarning(dirty);
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      dirty &&
+      !savedRef.current &&
+      (currentLocation.pathname !== nextLocation.pathname ||
+        currentLocation.search !== nextLocation.search),
+  );
+  // History navigation can change the pending destination during a save.
+  const blockerRef = useRef(blocker);
+  blockerRef.current = blocker;
 
   useEffect(() => {
     if (!entity) return;
@@ -168,7 +177,10 @@ export function EntityEditPage() {
         body,
       });
       await invalidateEntityData();
-      navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
+      savedRef.current = true;
+      const pending = blockerRef.current;
+      if (pending.state === "blocked") pending.proceed();
+      else navigate(`/entities/${encodeURIComponent(result.entity.id)}`);
     } catch (error) {
       setSaveError(error);
       if (isConflictError(error)) setConflict(true);
@@ -182,20 +194,9 @@ export function EntityEditPage() {
     else navigate("/library");
   }
 
-  // Leaving discards the draft, so confirm first when dirty.
-  function cancel() {
-    if (dirty) {
-      setConfirmDiscard(true);
-      return;
-    }
-    leave();
-  }
-
   return (
     <AppFrame error={queryError ? errorMessage(queryError) : undefined}>
-      {/* The same shape as the detail page: a toolbar that stays put, and one
-          scrolling column beneath it. Cancel is the only way back — the old
-          header carried a "Back" button that called the very same handler. */}
+      {/* A fixed toolbar and one scrolling column, matching the detail page. */}
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <div className="flex min-h-(--toolbar-height) shrink-0 flex-wrap items-center gap-2 border-b px-3 py-1.5">
           {/* What is being edited, kept on screen while the form scrolls. */}
@@ -203,7 +204,7 @@ export function EntityEditPage() {
             {entity?.path}
           </span>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={cancel} disabled={saving}>
+            <Button type="button" variant="outline" size="sm" onClick={leave} disabled={saving}>
               <XIcon data-icon="inline-start" />
               <Trans>Cancel</Trans>
             </Button>
@@ -285,30 +286,53 @@ export function EntityEditPage() {
           onCancel={() => setReview(undefined)}
         />
       ) : null}
-      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+      <AlertDialog
+        open={blocker.state === "blocked"}
+        onOpenChange={(open) => {
+          if (!open && !saving && !reviewing && blocker.state === "blocked") blocker.reset();
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              <Trans>Discard unsaved changes?</Trans>
+              <Trans comment="Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft">
+                Unsaved changes
+              </Trans>
             </AlertDialogTitle>
             <AlertDialogDescription>
-              <Trans comment="Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes">
-                You have unsaved edits to this entity. Leaving will discard them.
+              <Trans comment="Explains the options for leaving an entity editor with an unsaved draft">
+                Save your edits before leaving, or discard them.
               </Trans>
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {saveError ? <SaveFailure error={saveError} /> : null}
           <AlertDialogFooter>
-            <AlertDialogCancel>
+            <AlertDialogCancel disabled={saving || reviewing}>
               <Trans>Keep editing</Trans>
             </AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving || reviewing}
               onClick={() => {
-                setConfirmDiscard(false);
-                leave();
+                if (blocker.state === "blocked") blocker.proceed();
               }}
             >
               <Trans>Discard</Trans>
-            </AlertDialogAction>
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving || reviewing || conflict || !contentWritable || !entity}
+            >
+              {saving ? (
+                <Trans>Saving…</Trans>
+              ) : (
+                <Trans comment="Saves the entity draft and then continues the navigation the user requested">
+                  Save and leave
+                </Trans>
+              )}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -593,7 +593,7 @@ msgstr "日曆"
 #: src/components/settings/settings-dialogs.tsx:386
 #: src/components/smart-lists/save-smart-list-dialog.tsx:125
 #: src/components/smart-lists/suggested-lists-dialog.tsx:120
-#: src/pages/entity-edit-page.tsx:208
+#: src/pages/entity-edit-page.tsx:209
 #: src/pages/entity-page.tsx:532
 #: src/pages/import-wizard-page.tsx:239
 #: src/pages/import-wizard-page.tsx:280
@@ -916,7 +916,7 @@ msgstr "方向"
 msgid "Disable"
 msgstr "停用"
 
-#: src/pages/entity-edit-page.tsx:310
+#: src/pages/entity-edit-page.tsx:321
 #: src/pages/settings-page.tsx:153
 msgid "Discard"
 msgstr "捨棄"
@@ -926,7 +926,6 @@ msgid "Discard and switch"
 msgstr "捨棄並切換"
 
 #: src/components/settings/vault-switcher.tsx:222
-#: src/pages/entity-edit-page.tsx:292
 #: src/pages/settings-page.tsx:129
 msgid "Discard unsaved changes?"
 msgstr "捨棄未儲存的變更？"
@@ -991,7 +990,7 @@ msgid "Edit"
 msgstr "編輯"
 
 #. placeholder {0}: entityTitle(entity, language)
-#: src/pages/entity-edit-page.tsx:225
+#: src/pages/entity-edit-page.tsx:226
 msgid "Edit {0}"
 msgstr "編輯 {0}"
 
@@ -1007,7 +1006,7 @@ msgstr "編輯 config.yaml"
 msgid "Edit criteria"
 msgstr "編輯條件"
 
-#: src/pages/entity-edit-page.tsx:225
+#: src/pages/entity-edit-page.tsx:226
 msgid "Edit entity"
 msgstr "編輯項目"
 
@@ -1059,7 +1058,7 @@ msgstr "項目"
 msgid "Entity name"
 msgstr "項目名稱"
 
-#: src/pages/entity-edit-page.tsx:272
+#: src/pages/entity-edit-page.tsx:273
 #: src/pages/entity-page.tsx:435
 msgid "Entity not found"
 msgstr "找不到項目"
@@ -1453,7 +1452,7 @@ msgstr "JSON 值"
 
 #: src/components/entities/edit-conflict-review.tsx:112
 #: src/components/settings/vault-switcher.tsx:230
-#: src/pages/entity-edit-page.tsx:302
+#: src/pages/entity-edit-page.tsx:311
 #: src/pages/settings-page.tsx:145
 msgid "Keep editing"
 msgstr "繼續編輯"
@@ -1605,7 +1604,7 @@ msgstr "正在載入分類"
 #: src/components/settings/raw-config-editor.tsx:151
 #: src/components/smart-lists/suggested-lists-dialog.tsx:74
 #: src/pages/activity-page.tsx:177
-#: src/pages/entity-edit-page.tsx:256
+#: src/pages/entity-edit-page.tsx:257
 #: src/pages/entity-page.tsx:298
 #: src/pages/entity-page.tsx:614
 #: src/pages/home-page.tsx:55
@@ -2395,7 +2394,7 @@ msgid "Review"
 msgstr "檢查"
 
 #: src/components/entities/edit-conflict-review.tsx:64
-#: src/pages/entity-edit-page.tsx:244
+#: src/pages/entity-edit-page.tsx:245
 msgid "Review changes"
 msgstr "檢視變更"
 
@@ -2410,11 +2409,16 @@ msgstr "執行中…"
 #: src/components/entities/entity-ratings.tsx:244
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-edit-page.tsx:217
+#: src/pages/entity-edit-page.tsx:218
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Save"
 msgstr "儲存"
+
+#. Saves the entity draft and then continues the navigation the user requested
+#: src/pages/entity-edit-page.tsx:331
+msgid "Save and leave"
+msgstr "儲存並離開"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:85
 #: src/pages/library-page.tsx:340
@@ -2425,6 +2429,11 @@ msgstr "儲存為智慧清單"
 #: src/components/settings/provider-credentials.tsx:83
 msgid "Save credentials"
 msgstr "儲存憑證"
+
+#. Explains the options for leaving an entity editor with an unsaved draft
+#: src/pages/entity-edit-page.tsx:303
+msgid "Save your edits before leaving, or discard them."
+msgstr "離開前儲存編輯內容，或捨棄這些變更。"
 
 #: src/components/settings/provider-credentials.tsx:45
 msgid "Saved"
@@ -2443,7 +2452,8 @@ msgstr "將目前類型、條件與排序儲存為智慧清單。搜尋內容不
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
 #: src/pages/entity-create-page.tsx:110
-#: src/pages/entity-edit-page.tsx:217
+#: src/pages/entity-edit-page.tsx:218
+#: src/pages/entity-edit-page.tsx:329
 #: src/pages/list-detail-page.tsx:406
 #: src/pages/smart-list-page.tsx:263
 msgid "Saving…"
@@ -2833,7 +2843,7 @@ msgstr "保管庫結構描述已在磁碟上變更。你未儲存的編輯仍保
 msgid "These existing types can link to what you're adding."
 msgstr "這些現有類型可以連結到你正在新增的內容。"
 
-#: src/pages/entity-edit-page.tsx:233
+#: src/pages/entity-edit-page.tsx:234
 msgid "This changed elsewhere. Review the latest version to keep your edits."
 msgstr "此內容已在其他地方變更。請檢視最新版本以保留你的編輯。"
 
@@ -2989,6 +2999,11 @@ msgstr "未解析的連結"
 msgid "Unresolved Relations"
 msgstr "未解析的關聯"
 
+#. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
+#: src/pages/entity-edit-page.tsx:298
+msgid "Unsaved changes"
+msgstr "尚未儲存的變更"
+
 #: src/components/settings/settings-field-form.tsx:84
 msgid "Unscaled"
 msgstr "無上限"
@@ -3143,11 +3158,6 @@ msgstr "你在表單編輯器中有未儲存的變更。切換編輯器將捨棄
 #: src/pages/settings-page.tsx:137
 msgid "You have unsaved changes in the YAML editor. Switching editors will discard them."
 msgstr "你在 YAML 編輯器中有未儲存的變更。切換編輯器將捨棄這些變更。"
-
-#. Description in the confirmation dialog shown when leaving the entity edit page with unsaved changes
-#: src/pages/entity-edit-page.tsx:295
-msgid "You have unsaved edits to this entity. Leaving will discard them."
-msgstr "此項目有未儲存的編輯。離開將捨棄這些變更。"
 
 #: src/components/entities/edit-conflict-review.tsx:106
 msgid "Your edits can be combined with the latest version."

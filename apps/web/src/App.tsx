@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  Route,
+  RouterProvider,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 
 import { settingsConfigQuery } from "@/api/queries";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -64,15 +71,23 @@ const StatisticsPage = lazy(() =>
   import("@/pages/statistics-page").then((m) => ({ default: m.StatisticsPage })),
 );
 
+// A data router lets editors block every in-app exit, including history POPs.
+// Keep the instance outside React so rerenders never reset its history/blockers.
+const router = createBrowserRouter([{ path: "*", element: <AppContent /> }]);
+
 export default function App() {
+  return <RouterProvider router={router} />;
+}
+
+function AppContent() {
   const vaultSession = useVaultSession();
   return (
-    <BrowserRouter>
+    <>
       <LocaleSync />
       <HistoryPositionProvider>
         <RoutedErrorBoundary key={vaultSession} />
       </HistoryPositionProvider>
-    </BrowserRouter>
+    </>
   );
 }
 
