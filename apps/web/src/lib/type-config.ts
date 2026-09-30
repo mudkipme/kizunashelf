@@ -181,18 +181,6 @@ export function isDateFieldType(fieldType: FieldType) {
   return fieldType === "date" || fieldType === "season";
 }
 
-export function supportsEnumOptions(fieldType: FieldType) {
-  return fieldType === "enum" || fieldType === "enumList";
-}
-
-export function supportsTitleOptions(fieldType: FieldType) {
-  return fieldType === "title";
-}
-
-export function supportsDateRole(fieldType: FieldType) {
-  return isDateFieldType(fieldType);
-}
-
 export function fieldTypeLabel(fieldType: FieldType) {
   if (fieldType === "id") return label(msg`ID`);
   if (fieldType === "title") return label(msg`Title`);

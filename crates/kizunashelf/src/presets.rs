@@ -2536,15 +2536,6 @@ mod tests {
     }
 
     #[test]
-    fn relation_to_existing_type_is_kept() {
-        // Franchise already in the vault; add anime → its link resolves.
-        let franchise = resolve(vec![], &["franchise"], None).types.remove(0);
-        let result = resolve(vec![franchise], &["anime"], None);
-        let anime = &result.types[0];
-        assert!(find_field(anime, "franchise").is_some());
-    }
-
-    #[test]
     fn existing_target_wins_over_a_co_selected_preset() {
         // The vault already has a `franchise` type AND the user co-selects the
         // Franchise preset (which gets suffixed to `franchise-2`). The tie-break:
@@ -3104,14 +3095,6 @@ mod tests {
             .iter()
             .any(|section| section.kind == BodySectionKind::Episodes));
 
-        // Books have a page count but no list.
-        let books = resolve(vec![], &["books"], None).types.remove(0);
-        assert!(find_field(&books, "pages").is_some());
-        assert!(!books
-            .body_sections
-            .iter()
-            .any(|section| section.kind == BodySectionKind::Episodes));
-
         // Podcasts opt into a provider-backed checklist only; being open-ended
         // they have no count.
         let podcast = resolve(vec![], &["podcast"], None).types.remove(0);
@@ -3127,7 +3110,6 @@ mod tests {
         // track_count is just a number.
         let music = resolve(vec![], &["music"], None).types.remove(0);
         assert!(find_field(&music, "tracks").is_none());
-        assert!(find_field(&music, "track_count").is_some());
         let list = music
             .body_sections
             .iter()

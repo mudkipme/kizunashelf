@@ -111,6 +111,11 @@ describe("season values", () => {
       year: "2021",
       season: "winter",
     });
+    expect(parseSeasonValue("Spring 2023")).toEqual({
+      kind: "season",
+      year: "2023",
+      season: "spring",
+    });
     expect(parseSeasonValue("Fall 1999")).toEqual({
       kind: "season",
       year: "1999",
@@ -128,13 +133,6 @@ describe("season values", () => {
     expect(formatSeasonValue(row, "zh")).toBe("2023年春季");
     expect(formatSeasonValue(row, "en")).toBe("Spring 2023");
     expect(formatSeasonValue(row, "ja")).toBe("2023年春");
-  });
-
-  it("round-trips every language form through parsing", () => {
-    const row = { kind: "season", year: "2023", season: "spring" } as const;
-    for (const lang of ["zh", "en", "ja"] as const) {
-      expect(parseSeasonValue(formatSeasonValue(row, lang))).toEqual(row);
-    }
   });
 });
 

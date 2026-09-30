@@ -181,6 +181,5 @@ describe("app shortcuts", () => {
     // mod+2 is Library in the desktop shell. In a browser it switches tabs, and
     // the palette already reaches every destination — so nothing is bound here.
     await expect.element(screen.getByTestId("path")).toHaveTextContent("/");
-    expect(screen.getByTestId("path").element().textContent).toBe("/");
   });
 });

@@ -10,8 +10,6 @@ import {
   fieldTypeLabel,
   isDateFieldType,
   isListFieldType,
-  supportsDateRole,
-  supportsEnumOptions,
   typeExternalRefs,
   typeSupportsQuickCapture,
 } from "./type-config";
@@ -24,18 +22,10 @@ describe("field-type role predicates", () => {
     for (const type of scalar) expect(isListFieldType(type)).toBe(false);
   });
 
-  it("isDateFieldType / supportsDateRole cover date and season", () => {
+  it("isDateFieldType covers date and season", () => {
     expect(isDateFieldType("date")).toBe(true);
     expect(isDateFieldType("season")).toBe(true);
     expect(isDateFieldType("text")).toBe(false);
-    expect(supportsDateRole("season")).toBe(true);
-    expect(supportsDateRole("text")).toBe(false);
-  });
-
-  it("supportsEnumOptions covers enum and enumList", () => {
-    expect(supportsEnumOptions("enum")).toBe(true);
-    expect(supportsEnumOptions("enumList")).toBe(true);
-    expect(supportsEnumOptions("text")).toBe(false);
   });
 });
 

@@ -182,7 +182,7 @@ msgstr "已跳过 {0}"
 
 #. placeholder {0}: field.titleLanguage
 #. placeholder {1}: field.field
-#: src/lib/type-config.ts:219
+#: src/lib/type-config.ts:207
 msgid "{0} title: {1}"
 msgstr "{0}标题：{1}"
 
@@ -694,7 +694,7 @@ msgstr ""
 msgid "Completed"
 msgstr "已完成"
 
-#: src/lib/type-config.ts:234
+#: src/lib/type-config.ts:222
 msgid "Completed date"
 msgstr "完成日期"
 
@@ -849,8 +849,8 @@ msgstr "日期"
 
 #: src/components/assets/quick-log-dialog.tsx:201
 #: src/components/smart-lists/rule-value-input.tsx:71
-#: src/lib/type-config.ts:207
-#: src/lib/type-config.ts:238
+#: src/lib/type-config.ts:195
+#: src/lib/type-config.ts:226
 #: src/pages/activity-page.tsx:257
 msgid "Date"
 msgstr "日期"
@@ -1068,11 +1068,11 @@ msgstr "未找到条目"
 msgid "Entity type"
 msgstr "条目类型"
 
-#: src/lib/type-config.ts:201
+#: src/lib/type-config.ts:189
 msgid "Enum"
 msgstr "单选"
 
-#: src/lib/type-config.ts:202
+#: src/lib/type-config.ts:190
 msgid "Enum list"
 msgstr "多选"
 
@@ -1098,7 +1098,7 @@ msgstr ""
 msgid "Event"
 msgstr "事件"
 
-#: src/lib/type-config.ts:236
+#: src/lib/type-config.ts:224
 msgid "Event date"
 msgstr "活动日期"
 
@@ -1127,7 +1127,7 @@ msgstr "外部元数据"
 msgid "external ref"
 msgstr "外部引用"
 
-#: src/lib/type-config.ts:208
+#: src/lib/type-config.ts:196
 msgid "External reference"
 msgstr "外部引用"
 
@@ -1285,15 +1285,15 @@ msgid "Icon"
 msgstr "图标"
 
 #: src/components/settings/settings-entity-type.tsx:61
-#: src/lib/type-config.ts:197
+#: src/lib/type-config.ts:185
 msgid "ID"
 msgstr "ID"
 
-#: src/lib/type-config.ts:199
+#: src/lib/type-config.ts:187
 msgid "Image"
 msgstr "图片"
 
-#: src/lib/type-config.ts:200
+#: src/lib/type-config.ts:188
 msgid "Image list"
 msgstr "图片列表"
 
@@ -2005,7 +2005,7 @@ msgstr "显示在条目下方的笔记…"
 msgid "Nothing here yet"
 msgstr "这里还什么都没有"
 
-#: src/lib/type-config.ts:203
+#: src/lib/type-config.ts:191
 msgid "Number"
 msgstr "数字"
 
@@ -2093,7 +2093,7 @@ msgid "Original (filename is the title)"
 msgstr "原始（文件名即标题）"
 
 #. placeholder {0}: field.field
-#: src/lib/type-config.ts:217
+#: src/lib/type-config.ts:205
 msgid "Original title: {0}"
 msgstr "原始标题：{0}"
 
@@ -2145,7 +2145,7 @@ msgstr "计划中"
 msgid "Planning"
 msgstr "计划中"
 
-#: src/lib/type-config.ts:230
+#: src/lib/type-config.ts:218
 msgid "Planning date"
 msgstr "计划日期"
 
@@ -2204,7 +2204,7 @@ msgstr "评分"
 msgid "Rate {0}"
 msgstr "为{0}评分"
 
-#: src/lib/type-config.ts:204
+#: src/lib/type-config.ts:192
 msgid "Rating"
 msgstr "评分"
 
@@ -2241,7 +2241,7 @@ msgstr "刷新 {0}"
 msgid "Regular enum"
 msgstr "常规枚举"
 
-#: src/lib/type-config.ts:209
+#: src/lib/type-config.ts:197
 msgid "Relation"
 msgstr "关联"
 
@@ -2522,7 +2522,7 @@ msgstr "搜索队列"
 msgid "Searching…"
 msgstr "正在搜索…"
 
-#: src/lib/type-config.ts:206
+#: src/lib/type-config.ts:194
 msgid "Season"
 msgstr "季度"
 
@@ -2706,7 +2706,7 @@ msgstr "重新开始"
 msgid "Started"
 msgstr "已开始"
 
-#: src/lib/type-config.ts:232
+#: src/lib/type-config.ts:220
 msgid "Started date"
 msgstr "开始日期"
 
@@ -2810,11 +2810,11 @@ msgstr "分类根目录"
 msgid "taxonomy: {0}"
 msgstr "分类：{0}"
 
-#: src/lib/type-config.ts:211
+#: src/lib/type-config.ts:199
 msgid "Text"
 msgstr "文本"
 
-#: src/lib/type-config.ts:210
+#: src/lib/type-config.ts:198
 msgid "Text list"
 msgstr "文本列表"
 
@@ -2896,7 +2896,7 @@ msgid "This week"
 msgstr "本周"
 
 #: src/components/smart-lists/sort-picker.tsx:40
-#: src/lib/type-config.ts:198
+#: src/lib/type-config.ts:186
 #: src/pages/entity-create-page.tsx:153
 msgid "Title"
 msgstr "标题"
@@ -3143,7 +3143,7 @@ msgstr "是"
 msgid "Yes"
 msgstr "是"
 
-#: src/lib/type-config.ts:205
+#: src/lib/type-config.ts:193
 msgid "Yes/No"
 msgstr "是/否"
 

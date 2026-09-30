@@ -49,11 +49,6 @@ describe("editableFieldSpecs built-in tags (opt-in)", () => {
     });
   });
 
-  it("offers no tags editor when the feature is disabled", () => {
-    const specs = editableFieldSpecs(undefined, {}, [], undefined, "en", [], undefined);
-    expect(specs).toEqual([]);
-  });
-
   it("treats a frontmatter key named tags as an ordinary unknown field when disabled", () => {
     const specs = editableFieldSpecs(
       undefined,

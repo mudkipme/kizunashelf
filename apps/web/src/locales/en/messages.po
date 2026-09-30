@@ -182,7 +182,7 @@ msgstr "{0} skipped"
 
 #. placeholder {0}: field.titleLanguage
 #. placeholder {1}: field.field
-#: src/lib/type-config.ts:219
+#: src/lib/type-config.ts:207
 msgid "{0} title: {1}"
 msgstr "{0} title: {1}"
 
@@ -694,7 +694,7 @@ msgstr "Command palette"
 msgid "Completed"
 msgstr "Completed"
 
-#: src/lib/type-config.ts:234
+#: src/lib/type-config.ts:222
 msgid "Completed date"
 msgstr "Completed date"
 
@@ -849,8 +849,8 @@ msgstr "date"
 
 #: src/components/assets/quick-log-dialog.tsx:201
 #: src/components/smart-lists/rule-value-input.tsx:71
-#: src/lib/type-config.ts:207
-#: src/lib/type-config.ts:238
+#: src/lib/type-config.ts:195
+#: src/lib/type-config.ts:226
 #: src/pages/activity-page.tsx:257
 msgid "Date"
 msgstr "Date"
@@ -1068,11 +1068,11 @@ msgstr "Entity not found"
 msgid "Entity type"
 msgstr "Entity type"
 
-#: src/lib/type-config.ts:201
+#: src/lib/type-config.ts:189
 msgid "Enum"
 msgstr "Enum"
 
-#: src/lib/type-config.ts:202
+#: src/lib/type-config.ts:190
 msgid "Enum list"
 msgstr "Enum list"
 
@@ -1098,7 +1098,7 @@ msgstr "esc to close"
 msgid "Event"
 msgstr "Event"
 
-#: src/lib/type-config.ts:236
+#: src/lib/type-config.ts:224
 msgid "Event date"
 msgstr "Event date"
 
@@ -1127,7 +1127,7 @@ msgstr "External metadata"
 msgid "external ref"
 msgstr "external ref"
 
-#: src/lib/type-config.ts:208
+#: src/lib/type-config.ts:196
 msgid "External reference"
 msgstr "External reference"
 
@@ -1285,15 +1285,15 @@ msgid "Icon"
 msgstr "Icon"
 
 #: src/components/settings/settings-entity-type.tsx:61
-#: src/lib/type-config.ts:197
+#: src/lib/type-config.ts:185
 msgid "ID"
 msgstr "ID"
 
-#: src/lib/type-config.ts:199
+#: src/lib/type-config.ts:187
 msgid "Image"
 msgstr "Image"
 
-#: src/lib/type-config.ts:200
+#: src/lib/type-config.ts:188
 msgid "Image list"
 msgstr "Image list"
 
@@ -2005,7 +2005,7 @@ msgstr "Notes shown below the items…"
 msgid "Nothing here yet"
 msgstr "Nothing here yet"
 
-#: src/lib/type-config.ts:203
+#: src/lib/type-config.ts:191
 msgid "Number"
 msgstr "Number"
 
@@ -2093,7 +2093,7 @@ msgid "Original (filename is the title)"
 msgstr "Original (filename is the title)"
 
 #. placeholder {0}: field.field
-#: src/lib/type-config.ts:217
+#: src/lib/type-config.ts:205
 msgid "Original title: {0}"
 msgstr "Original title: {0}"
 
@@ -2145,7 +2145,7 @@ msgstr "Planned"
 msgid "Planning"
 msgstr "Planning"
 
-#: src/lib/type-config.ts:230
+#: src/lib/type-config.ts:218
 msgid "Planning date"
 msgstr "Planning date"
 
@@ -2204,7 +2204,7 @@ msgstr "Rate"
 msgid "Rate {0}"
 msgstr "Rate {0}"
 
-#: src/lib/type-config.ts:204
+#: src/lib/type-config.ts:192
 msgid "Rating"
 msgstr "Rating"
 
@@ -2241,7 +2241,7 @@ msgstr "Refresh {0}"
 msgid "Regular enum"
 msgstr "Regular enum"
 
-#: src/lib/type-config.ts:209
+#: src/lib/type-config.ts:197
 msgid "Relation"
 msgstr "Relation"
 
@@ -2522,7 +2522,7 @@ msgstr "Search queue"
 msgid "Searching…"
 msgstr "Searching…"
 
-#: src/lib/type-config.ts:206
+#: src/lib/type-config.ts:194
 msgid "Season"
 msgstr "Season"
 
@@ -2706,7 +2706,7 @@ msgstr "Start over"
 msgid "Started"
 msgstr "Started"
 
-#: src/lib/type-config.ts:232
+#: src/lib/type-config.ts:220
 msgid "Started date"
 msgstr "Started date"
 
@@ -2810,11 +2810,11 @@ msgstr "Taxonomy root"
 msgid "taxonomy: {0}"
 msgstr "taxonomy: {0}"
 
-#: src/lib/type-config.ts:211
+#: src/lib/type-config.ts:199
 msgid "Text"
 msgstr "Text"
 
-#: src/lib/type-config.ts:210
+#: src/lib/type-config.ts:198
 msgid "Text list"
 msgstr "Text list"
 
@@ -2896,7 +2896,7 @@ msgid "This week"
 msgstr "This week"
 
 #: src/components/smart-lists/sort-picker.tsx:40
-#: src/lib/type-config.ts:198
+#: src/lib/type-config.ts:186
 #: src/pages/entity-create-page.tsx:153
 msgid "Title"
 msgstr "Title"
@@ -3143,7 +3143,7 @@ msgstr "yes"
 msgid "Yes"
 msgstr "Yes"
 
-#: src/lib/type-config.ts:205
+#: src/lib/type-config.ts:193
 msgid "Yes/No"
 msgstr "Yes/No"
 
