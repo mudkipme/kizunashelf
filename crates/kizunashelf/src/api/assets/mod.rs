@@ -15,8 +15,9 @@ mod util;
 pub(crate) use job::{cancel_asset_job, create_asset_job, get_asset_job, list_asset_jobs};
 pub(crate) use util::entity_asset_dir;
 
+use super::entities::EntityPath;
 use super::error::{ApiError, ApiResult};
-use super::mutations::{check_revision, type_config_or_err, write_entity_raw, EntityPath};
+use super::mutations::{check_revision, type_config_or_err, write_entity_raw};
 use super::state::{get_library, require_content_writes, require_host_asset_ingest, AppState};
 use crate::contract::{
     AssetDownloadItemResult, AssetDownloadPlan, AssetDownloadPlanItem, AssetDownloadRequest,

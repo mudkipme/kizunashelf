@@ -1,4 +1,5 @@
 use super::assets::entity_asset_dir;
+use super::entities::EntityPath;
 use super::error::{ApiError, ApiResult};
 use super::lists::list_file_paths;
 use super::state::{get_library, require_content_writes, AppState, ContentMutationGuard};
@@ -18,16 +19,9 @@ use crate::vfs::Vfs;
 use anyhow::Result;
 use axum::extract::{Path as AxumPath, State};
 use axum::Json;
-use schemars::JsonSchema;
-use serde::Deserialize;
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
-
-#[derive(Deserialize, JsonSchema)]
-pub(crate) struct EntityPath {
-    pub(super) id: String,
-}
 
 pub(crate) async fn update_entity(
     State(state): State<AppState>,

@@ -4,12 +4,12 @@
 //! provider's structured episodes. All writes splice only the episodes section and
 //! are revision-guarded, like entity edits.
 
-use super::entities::build_entity_detail;
+use super::entities::{build_entity_detail, load_entity_detail, EntityPath};
 use super::error::{ApiError, ApiResult};
 use super::external::{
     provider_fetch_episodes, provider_for_external_ref, provider_label, provider_supports_episodes,
 };
-use super::mutations::{edit_entity_document, type_config_or_err, EntityPath};
+use super::mutations::{edit_entity_document, type_config_or_err};
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{
     EntityDetailResponse, Episode, EpisodeGroup, EpisodeSource, EpisodeSyncResponse,
@@ -76,13 +76,7 @@ pub(crate) async fn toggle_episode(
         },
     )
     .await?;
-    let reloaded = get_library(&state).await?;
-    let Some(record) = reloaded.record_by_id(&entity_id) else {
-        return Err(ApiError::not_found("Entity not found"));
-    };
-    Ok(Json(
-        build_entity_detail(&state, &reloaded, &record.summary).await?,
-    ))
+    Ok(Json(load_entity_detail(&state, &entity_id).await?))
 }
 
 /// One episode source resolved for an entity: provider id, label, and the entity's
@@ -347,11 +341,5 @@ pub(crate) async fn import_episodes(
         },
     )
     .await?;
-    let reloaded = get_library(&state).await?;
-    let Some(record) = reloaded.record_by_id(&entity_id) else {
-        return Err(ApiError::not_found("Entity not found"));
-    };
-    Ok(Json(
-        build_entity_detail(&state, &reloaded, &record.summary).await?,
-    ))
+    Ok(Json(load_entity_detail(&state, &entity_id).await?))
 }

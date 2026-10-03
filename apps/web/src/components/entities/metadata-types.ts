@@ -9,6 +9,7 @@ export type FrontmatterValue =
   | FrontmatterObject;
 export type FrontmatterObject = { [key: string]: FrontmatterValue | undefined };
 export type FrontmatterDraft = Record<string, FrontmatterValue>;
+export type PickImage = (field: string, file: File) => Promise<string>;
 
 export type FieldKind =
   | "text"

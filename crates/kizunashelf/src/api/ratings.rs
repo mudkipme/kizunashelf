@@ -1,6 +1,7 @@
+use super::entities::EntityPath;
 use super::entity_edit_review::read_schema;
 use super::error::{ApiError, ApiResult};
-use super::mutations::{edit_entity_document_locked, EntityPath};
+use super::mutations::edit_entity_document_locked;
 use super::state::{get_library, require_content_writes, AppState};
 use crate::contract::{RatingSnapshot, SetEntityRatingRequest, SetEntityRatingResponse};
 use crate::library::load_entity;

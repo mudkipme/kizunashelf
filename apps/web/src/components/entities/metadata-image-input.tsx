@@ -2,24 +2,25 @@
 //!
 //! Images can arrive three ways — a vault-relative path, a remote URL, or bytes
 //! dropped/picked from the host — and all three end up as the same frontmatter
-//! value. Uploading stages the returned vault path into the draft; nothing is
-//! written until the normal Save.
+//! value. Existing entries upload assets immediately and save their paths with
+//! the draft; creation keeps device images local until Create.
 
-import { useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ImageIcon, Loader2Icon, UploadIcon, XIcon } from "lucide-react";
 import type { DragEvent } from "react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { uploadAsset } from "@/api/entities";
 import { AssetImage } from "@/components/assets/asset-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadImageFile } from "@/lib/image-upload";
 import { cn } from "@/lib/utils";
 
+import { FormDisclosure } from "./form-disclosure";
 import { listDisplayValues, uniqueStrings, valueToText } from "./frontmatter-utils";
 import { MultiValueInput } from "./metadata-list-inputs";
-import type { EditableFieldSpec, FrontmatterValue } from "./metadata-types";
+import type { EditableFieldSpec, FrontmatterValue, PickImage } from "./metadata-types";
 
 const IMAGE_ACCEPT = "image/*";
 const IMAGE_EXTENSION = /\.(png|jpe?g|gif|webp|avif|bmp|svg|tiff?)$/i;
@@ -28,36 +29,25 @@ function isImageFile(file: File): boolean {
   return file.type.startsWith("image/") || IMAGE_EXTENSION.test(file.name);
 }
 
-/** Encode file bytes as base64 for the upload endpoint, chunked to keep large
- * images off the call stack (`String.fromCharCode(...bytes)` overflows). */
-async function fileToBase64(file: File): Promise<string> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  let binary = "";
-  const chunk = 0x8000;
-  for (let offset = 0; offset < bytes.length; offset += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunk));
-  }
-  return btoa(binary);
-}
-
 /**
  * Editor for `image` / `imageList` fields: shows thumbnails of the current
  * value(s), keeps the raw path/URL entry (so vault assets and remote URLs still
- * work), and — for an existing entity with writes enabled — adds a file picker /
- * drag-and-drop that uploads bytes into the vault and stages the returned path
- * into the draft (persisted on the normal Save).
+ * work). Existing entries upload files into the vault; creation supplies a
+ * picker callback that keeps them local until the entry is created.
  */
 export function ImageFieldInput({
   field,
   value,
   disabled,
   entityId,
+  onPickImage,
   onChange,
 }: {
   field: EditableFieldSpec;
   value: FrontmatterValue | undefined;
   disabled: boolean;
   entityId?: string;
+  onPickImage?: PickImage;
   onChange: (value: FrontmatterValue) => void;
 }) {
   const { t } = useLingui();
@@ -67,10 +57,12 @@ export function ImageFieldInput({
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const canUpload = Boolean(entityId) && !disabled;
+  const canUpload = Boolean(entityId || onPickImage) && !disabled;
+  const busy = disabled || uploading;
+  const isPreview = (value: string) => Boolean(onPickImage) && value.startsWith("blob:");
 
   async function uploadFiles(files: File[]) {
-    if (!entityId || uploading) return;
+    if (!canUpload || uploading) return;
     const images = files.filter(isImageFile);
     if (images.length === 0) {
       if (files.length > 0) toast.error(t`Only image files can be uploaded.`);
@@ -80,16 +72,13 @@ export function ImageFieldInput({
     try {
       const added: string[] = [];
       for (const file of multiple ? images : images.slice(0, 1)) {
-        const result = await uploadAsset(entityId, {
-          field: field.key,
-          dataBase64: await fileToBase64(file),
-          contentType: file.type || undefined,
-          filename: file.name || undefined,
-        });
-        added.push(result.path);
+        const path = onPickImage
+          ? await onPickImage(field.key, file)
+          : await uploadImageFile(entityId!, field.key, file);
+        added.push(path);
+        // Keep each completed upload if a later file in the batch fails.
+        onChange(multiple ? uniqueStrings([...values, ...added]) : path);
       }
-      if (multiple) onChange(uniqueStrings([...values, ...added]));
-      else if (added[0]) onChange(added[0]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t`Upload failed.`);
     } finally {
@@ -100,7 +89,7 @@ export function ImageFieldInput({
   function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragging(false);
-    if (canUpload) void uploadFiles(Array.from(event.dataTransfer.files));
+    if (canUpload && !uploading) void uploadFiles(Array.from(event.dataTransfer.files));
   }
 
   return (
@@ -120,12 +109,12 @@ export function ImageFieldInput({
                     fallback={<ImageThumbFallback />}
                     lightbox
                   />
-                  {!disabled ? (
+                  {!busy ? (
                     <button
                       type="button"
                       onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
                       aria-label={t`Remove image`}
-                      className="absolute top-0.5 right-0.5 rounded-full border bg-background p-0.5 text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
+                      className="absolute top-0.5 right-0.5 rounded-full border bg-background p-0.5 text-muted-foreground shadow-sm transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 pointer-coarse:opacity-100"
                     >
                       <XIcon className="size-3" />
                     </button>
@@ -135,37 +124,56 @@ export function ImageFieldInput({
             </div>
           )
         : single && (
-            <div className="size-24 overflow-hidden rounded-md border">
-              <AssetImage
-                src={single}
-                alt=""
-                className="size-full object-cover"
-                fallback={<ImageThumbFallback />}
-                lightbox
-              />
+            <div className="flex items-start gap-2">
+              <div className="size-24 overflow-hidden rounded-md border">
+                <AssetImage
+                  src={single}
+                  alt=""
+                  className="size-full object-cover"
+                  fallback={<ImageThumbFallback />}
+                  lightbox
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t`Remove image`}
+                disabled={busy}
+                onClick={() => onChange(null)}
+              >
+                <XIcon />
+              </Button>
             </div>
           )}
 
-      {multiple ? (
-        <MultiValueInput
-          values={values}
-          options={[]}
-          placeholder={t`Add path or URL`}
-          ariaLabel={field.label}
-          wikilinks={false}
-          disabled={disabled}
-          onChange={onChange}
-        />
-      ) : (
-        <Input
-          value={single}
-          onChange={(event) => onChange(event.target.value || null)}
-          placeholder={t`Vault path or URL`}
-          aria-label={field.label}
-          disabled={disabled}
-        />
-      )}
-
+      <FormDisclosure
+        title={t({
+          message: "Use a path or URL",
+          comment:
+            "Disclosure button revealing manual image path/URL entry as an alternative to the device image picker",
+        })}
+      >
+        {multiple ? (
+          <MultiValueInput
+            values={values.filter((item) => !isPreview(item))}
+            options={[]}
+            placeholder={t`Add path or URL`}
+            ariaLabel={field.label}
+            wikilinks={false}
+            disabled={busy}
+            onChange={(next) => onChange([...values.filter(isPreview), ...next])}
+          />
+        ) : (
+          <Input
+            value={isPreview(single) ? "" : single}
+            onChange={(event) => onChange(event.target.value || null)}
+            placeholder={t`Vault path or URL`}
+            aria-label={field.label}
+            disabled={busy}
+          />
+        )}
+      </FormDisclosure>
       {canUpload ? (
         <div
           onDragOver={(event) => {
@@ -180,7 +188,11 @@ export function ImageFieldInput({
           )}
         >
           <span className="truncate">
-            {uploading ? "Uploading…" : "Drop an image or upload from your device"}
+            {uploading ? (
+              <Trans>Preparing image…</Trans>
+            ) : (
+              <Trans>Drop an image or choose from your device</Trans>
+            )}
           </span>
           <input
             ref={inputRef}
@@ -188,6 +200,9 @@ export function ImageFieldInput({
             accept={IMAGE_ACCEPT}
             multiple={multiple}
             className="hidden"
+            tabIndex={-1}
+            aria-label={t`Upload ${field.label}`}
+            disabled={busy}
             onChange={(event) => {
               void uploadFiles(Array.from(event.target.files ?? []));
               event.target.value = "";
@@ -205,9 +220,16 @@ export function ImageFieldInput({
             ) : (
               <UploadIcon data-icon="inline-start" />
             )}
-            Upload
+            <Trans comment="Button that opens the device image picker in an entity form">
+              Upload
+            </Trans>
           </Button>
         </div>
+      ) : null}
+      {onPickImage && values.some(isPreview) ? (
+        <p className="text-xs text-muted-foreground">
+          <Trans>Selected images will be saved when you create the entry.</Trans>
+        </p>
       ) : null}
     </div>
   );

@@ -1,4 +1,4 @@
-use super::entities::build_entity_detail;
+use super::entities::{build_entity_detail, EntityPath};
 use super::error::{ApiError, ApiResult};
 use super::mutations::{check_revision, edit_entity_document_locked};
 use super::state::{get_library, require_content_writes, AppState};
@@ -13,11 +13,6 @@ use axum::Json;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Map, Value};
-
-#[derive(Deserialize, JsonSchema)]
-pub(crate) struct LogPath {
-    pub(super) id: String,
-}
 
 #[derive(Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -38,7 +33,7 @@ pub(crate) struct LogQuery {
 /// (`/episodes/watch`); logging never reads or writes the episode list.
 pub(crate) async fn log_activity(
     State(state): State<AppState>,
-    AxumPath(path): AxumPath<LogPath>,
+    AxumPath(path): AxumPath<EntityPath>,
     Query(query): Query<LogQuery>,
     Json(request): Json<LogActivityRequest>,
 ) -> ApiResult<LogActivityResponse> {

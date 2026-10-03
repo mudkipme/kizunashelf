@@ -20,19 +20,21 @@ import {
 import { ImageFieldInput } from "./metadata-image-input";
 import { MultiValueInput, SeasonListInput } from "./metadata-list-inputs";
 import { DatePickerInput, NumberStepper, StructuredValueInput } from "./metadata-scalar-inputs";
-import type { EditableFieldSpec, FrontmatterValue } from "./metadata-types";
+import type { EditableFieldSpec, FrontmatterValue, PickImage } from "./metadata-types";
 
 export function FieldValueInput({
   field,
   value,
   disabled,
   entityId,
+  onPickImage,
   onChange,
 }: {
   field: EditableFieldSpec;
   value: FrontmatterValue | undefined;
   disabled: boolean;
   entityId?: string;
+  onPickImage?: PickImage;
   onChange: (value: FrontmatterValue) => void;
 }) {
   const { t } = useLingui();
@@ -60,6 +62,7 @@ export function FieldValueInput({
         value={value}
         disabled={disabled}
         entityId={entityId}
+        onPickImage={onPickImage}
         onChange={onChange}
       />
     );

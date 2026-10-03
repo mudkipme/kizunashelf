@@ -1,9 +1,10 @@
 //! Schema-aware three-way editor review. Never writes vault content or guesses
 //! which file replaced a missing entity. Arrays/objects and the note body are
 //! indivisible conflict values, so overlap always requires an explicit choice.
+use super::entities::EntityPath;
 use super::error::{ApiError, ApiResult};
 use super::frontmatter_draft::normalize_existing_draft;
-use super::mutations::{sanitize_basename, EntityPath};
+use super::mutations::sanitize_basename;
 use super::state::{get_library, AppState};
 use crate::contract::{EntityEditDraft, EntityEditReviewRequest, EntityEditReviewResponse};
 use crate::library::{

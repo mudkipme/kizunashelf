@@ -44,27 +44,27 @@ export function EntityGridItem({
         className="flex min-h-64 flex-1 flex-col overflow-hidden bg-background transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
       >
         {showCover ? (
-          <div className="flex aspect-[4/3] items-center justify-center bg-muted">
+          <div className="relative aspect-[2/3] w-full shrink-0 overflow-hidden bg-muted">
             <AssetImage
               src={entity.image}
-              className="size-full object-cover"
-              fallback={<CoverFallback type={entity.type} />}
+              className="absolute inset-0 size-full object-cover"
+              fallback={<CoverFallback type={entity.type} className="absolute inset-0 size-full" />}
             />
           </div>
         ) : null}
         <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-          {showType || entity.status ? (
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              {showType ? <Badge variant="outline">{entity.typeLabel}</Badge> : null}
-              <StatusBadge status={entity.status} />
-            </div>
-          ) : null}
           <EntityTitle
             as="div"
             entity={entity}
             language={language}
             className="line-clamp-2 text-sm leading-5 font-medium"
           />
+          {showType || entity.status ? (
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {showType ? <Badge variant="outline">{entity.typeLabel}</Badge> : null}
+              <StatusBadge status={entity.status} />
+            </div>
+          ) : null}
           {entity.summary ? (
             <div className="line-clamp-3 text-sm leading-5 text-muted-foreground">
               {entity.summary}

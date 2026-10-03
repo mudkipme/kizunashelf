@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 import { invalidateQueryRoots, type QueryRoot } from "@/api/queries";
@@ -12,6 +12,8 @@ import { invalidateQueryRoots, type QueryRoot } from "@/api/queries";
 const ENTITY_DATA_ROOTS: readonly QueryRoot[] = [
   "entity",
   "entityDates",
+  "episodeSources",
+  "logPreview",
   "entities",
   "home",
   "upcoming",
@@ -29,6 +31,12 @@ const ENTITY_DATA_ROOTS: readonly QueryRoot[] = [
   "externalSearch",
 ];
 
+/** Also expires mutation previews: their provider refs, dates, and status come
+ * from entity content even when the preview's query parameters haven't changed. */
+export async function invalidateEntityData(queryClient: QueryClient) {
+  await invalidateQueryRoots(queryClient, ENTITY_DATA_ROOTS);
+}
+
 /**
  * Returns a stable callback that invalidates exactly the entity-derived
  * queries, rather than the entire cache. Shared by every entity mutation flow
@@ -36,7 +44,5 @@ const ENTITY_DATA_ROOTS: readonly QueryRoot[] = [
  */
 export function useInvalidateEntityData() {
   const queryClient = useQueryClient();
-  return useCallback(async () => {
-    await invalidateQueryRoots(queryClient, ENTITY_DATA_ROOTS);
-  }, [queryClient]);
+  return useCallback(() => invalidateEntityData(queryClient), [queryClient]);
 }

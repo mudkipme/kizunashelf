@@ -3,10 +3,10 @@
 //! other entity edit. The episodes list has its own section-aware write path
 //! (`api/episodes.rs`); this one deliberately never touches it.
 
-use super::entities::build_entity_detail;
+use super::entities::{load_entity_detail, EntityPath};
 use super::error::{ApiError, ApiResult};
-use super::mutations::{edit_entity_document, EntityPath};
-use super::state::{get_library, require_content_writes, AppState};
+use super::mutations::edit_entity_document;
+use super::state::{require_content_writes, AppState};
 use crate::body_tasks::set_task_done;
 use crate::contract::{EntityDetailResponse, ToggleTaskRequest};
 use axum::extract::{Path as AxumPath, State};
@@ -68,11 +68,5 @@ pub(crate) async fn toggle_task(
     )
     .await?;
 
-    let reloaded = get_library(&state).await?;
-    let Some(record) = reloaded.record_by_id(&entity_id) else {
-        return Err(ApiError::not_found("Entity not found"));
-    };
-    Ok(Json(
-        build_entity_detail(&state, &reloaded, &record.summary).await?,
-    ))
+    Ok(Json(load_entity_detail(&state, &entity_id).await?))
 }

@@ -7791,17 +7791,6 @@
           "watched"
         ]
       },
-      "EntityPath2": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
       "UpdateEntityRequest": {
         "type": "object",
         "properties": {
@@ -8448,17 +8437,6 @@
         "required": [
           "revision",
           "groups"
-        ]
-      },
-      "LogPath": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id"
         ]
       },
       "LogQuery": {

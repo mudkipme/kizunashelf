@@ -358,7 +358,7 @@ msgstr "カスタムタイプを追加"
 msgid "Add enum options above to map them to statuses."
 msgstr "上に列挙オプションを追加してステータスに割り当てます。"
 
-#: src/components/entities/metadata-editor.tsx:158
+#: src/components/entities/metadata-editor.tsx:181
 msgid "Add Field"
 msgstr "フィールドを追加"
 
@@ -371,12 +371,12 @@ msgstr "グループを追加"
 msgid "Add items"
 msgstr "アイテムを追加"
 
-#: src/pages/entity-create-page.tsx:122
+#: src/pages/entity-create-page.tsx:198
 #: src/pages/quick-capture-page.tsx:232
 msgid "Add manually"
 msgstr "手動で追加"
 
-#: src/components/entities/metadata-image-input.tsx:153
+#: src/components/entities/metadata-image-input.tsx:161
 msgid "Add path or URL"
 msgstr "パスまたは URL を追加"
 
@@ -411,7 +411,7 @@ msgstr "デイリーノートに追加"
 msgid "Add to Home"
 msgstr "ホームに追加"
 
-#: src/components/entities/metadata-inputs.tsx:143
+#: src/components/entities/metadata-inputs.tsx:146
 #: src/components/smart-lists/rule-value-input.tsx:135
 msgid "Add value"
 msgstr "値を追加"
@@ -769,7 +769,7 @@ msgid "Couldn't refresh. Showing the last loaded version."
 msgstr "更新できませんでした。前回読み込んだ内容を表示しています。"
 
 #: src/components/smart-lists/save-smart-list-dialog.tsx:132
-#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-create-page.tsx:168
 #: src/pages/lists-page.tsx:240
 msgid "Create"
 msgstr "作成"
@@ -813,11 +813,11 @@ msgstr "CSV エクスポート"
 msgid "Current: {0}"
 msgstr "現在: {0}"
 
-#: src/components/entities/metadata-editor.tsx:142
+#: src/components/entities/metadata-editor.tsx:165
 msgid "Custom field"
 msgstr "カスタムフィールド"
 
-#: src/components/entities/metadata-editor.tsx:212
+#: src/components/entities/metadata-editor.tsx:238
 msgid "Custom field name"
 msgstr "カスタムフィールド名"
 
@@ -916,6 +916,7 @@ msgstr "方向"
 msgid "Disable"
 msgstr "無効にする"
 
+#: src/pages/entity-create-page.tsx:320
 #: src/pages/entity-edit-page.tsx:321
 #: src/pages/settings-page.tsx:153
 msgid "Discard"
@@ -975,6 +976,10 @@ msgstr "ここにアイテムをドラッグ"
 msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
+#: src/components/entities/metadata-image-input.tsx:194
+msgid "Drop an image or choose from your device"
+msgstr "画像をドロップするか、デバイスから選択"
+
 #: src/components/import/import-labels.ts:35
 #: src/components/settings/settings-field-form.tsx:296
 msgid "Dropped"
@@ -1010,6 +1015,10 @@ msgstr "条件を編集"
 msgid "Edit entity"
 msgstr "アイテムを編集"
 
+#: src/pages/entity-create-page.tsx:192
+msgid "Edit saved entry"
+msgstr "保存済みの項目を編集"
+
 #: src/components/entities/metadata-scalar-inputs.tsx:77
 msgid "Edit structured value"
 msgstr "構造化された値を編集"
@@ -1017,8 +1026,8 @@ msgstr "構造化された値を編集"
 #: src/components/assets/frontmatter-panel.tsx:131
 #: src/components/assets/frontmatter-panel.tsx:233
 #: src/components/assets/frontmatter-panel.tsx:255
-#: src/components/entities/metadata-inputs.tsx:78
-#: src/components/entities/metadata-inputs.tsx:121
+#: src/components/entities/metadata-inputs.tsx:81
+#: src/components/entities/metadata-inputs.tsx:124
 msgid "Empty"
 msgstr "空"
 
@@ -1161,14 +1170,16 @@ msgstr "フィールド"
 msgid "Fields"
 msgstr "フィールド"
 
-#: src/pages/entity-create-page.tsx:127
+#: src/pages/entity-create-page.tsx:203
 #: src/pages/review-page.tsx:276
 msgid "File"
 msgstr "ファイル"
 
 #. Rule-builder field for the note's file name (its title)
 #: src/components/smart-lists/rule-field-meta.ts:68
-#: src/pages/entity-create-page.tsx:147
+#: src/pages/entity-create-page.tsx:233
+#: src/pages/entity-create-page.tsx:241
+#: src/pages/entity-create-page.tsx:244
 #: src/pages/entity-page.tsx:307
 msgid "File name"
 msgstr "ファイル名"
@@ -1206,6 +1217,10 @@ msgstr "タイプで絞り込む"
 #: src/components/assets/quick-log-dialog.tsx:276
 msgid "Finish"
 msgstr "完了"
+
+#: src/pages/entity-create-page.tsx:166
+msgid "Finish saving"
+msgstr "保存を完了"
 
 #: src/pages/settings-page.tsx:88
 msgid "Form"
@@ -1288,6 +1303,11 @@ msgstr "アイコン"
 #: src/lib/type-config.ts:185
 msgid "ID"
 msgstr "ID"
+
+#. Disclosure button in entity create/edit forms revealing schema IDs, external provider references, and custom metadata
+#: src/components/entities/metadata-editor.tsx:153
+msgid "IDs, sources & custom fields"
+msgstr "ID・参照元・カスタムフィールド"
 
 #: src/lib/type-config.ts:187
 msgid "Image"
@@ -1452,6 +1472,7 @@ msgstr "JSON 値"
 
 #: src/components/entities/edit-conflict-review.tsx:112
 #: src/components/settings/vault-switcher.tsx:230
+#: src/pages/entity-create-page.tsx:310
 #: src/pages/entity-edit-page.tsx:311
 #: src/pages/settings-page.tsx:145
 msgid "Keep editing"
@@ -1680,7 +1701,7 @@ msgid "Match mode"
 msgstr "一致モード"
 
 #: src/components/assets/entity-dates.tsx:33
-#: src/components/entities/metadata-editor.tsx:120
+#: src/components/entities/metadata-editor.tsx:147
 msgid "Metadata"
 msgstr "メタデータ"
 
@@ -1787,7 +1808,7 @@ msgstr "いいえ"
 
 #: src/components/assets/frontmatter-panel.tsx:139
 #: src/components/assets/frontmatter-panel.tsx:256
-#: src/components/entities/metadata-inputs.tsx:123
+#: src/components/entities/metadata-inputs.tsx:126
 msgid "No"
 msgstr "いいえ"
 
@@ -1989,8 +2010,8 @@ msgstr "ノート"
 
 #: src/components/assets/entity-detail.tsx:270
 #: src/components/entities/edit-conflict-review.tsx:88
-#: src/components/entities/metadata-editor.tsx:163
-#: src/components/entities/metadata-editor.tsx:170
+#: src/components/entities/metadata-editor.tsx:187
+#: src/components/entities/metadata-editor.tsx:194
 #: src/lib/type-config.ts:10
 #: src/pages/list-detail-page.tsx:502
 #: src/pages/statistics-page.tsx:35
@@ -2042,7 +2063,7 @@ msgstr "オン"
 msgid "Ongoing"
 msgstr "進行中"
 
-#: src/components/entities/metadata-image-input.tsx:76
+#: src/components/entities/metadata-image-input.tsx:68
 msgid "Only image files can be uploaded."
 msgstr "画像ファイルのみアップロードできます。"
 
@@ -2148,6 +2169,10 @@ msgstr "計画中"
 #: src/lib/type-config.ts:218
 msgid "Planning date"
 msgstr "予定日"
+
+#: src/components/entities/metadata-image-input.tsx:192
+msgid "Preparing image…"
+msgstr "画像を準備中…"
 
 #. Calendar navigation button for the previous month
 #: src/pages/calendar-page.tsx:96
@@ -2267,7 +2292,7 @@ msgstr "最新バージョンを再読み込み"
 
 #. placeholder {0}: field.key
 #. placeholder {0}: vault.name
-#: src/components/entities/metadata-editor.tsx:228
+#: src/components/entities/metadata-editor.tsx:254
 #: src/components/settings/vault-switcher.tsx:146
 msgid "Remove {0}"
 msgstr "{0} を削除"
@@ -2301,7 +2326,8 @@ msgstr "グループを削除"
 msgid "Remove icon"
 msgstr "アイコンを削除"
 
-#: src/components/entities/metadata-image-input.tsx:127
+#: src/components/entities/metadata-image-input.tsx:116
+#: src/components/entities/metadata-image-input.tsx:141
 msgid "Remove image"
 msgstr "画像を削除"
 
@@ -2313,6 +2339,10 @@ msgstr "アイテムを削除"
 #: src/components/smart-lists/rule-row.tsx:110
 msgid "Remove rule"
 msgstr "ルールを削除"
+
+#: src/pages/entity-create-page.tsx:228
+msgid "Remove selected images before changing the type."
+msgstr "種類を変更するには、選択した画像を削除してください。"
 
 #: src/components/settings/settings-dialogs.tsx:240
 msgid "Remove type"
@@ -2361,12 +2391,12 @@ msgid "replaces existing section"
 msgstr "既存のセクションを置き換え"
 
 #. Hint below the empty file-name field on the entity create page; the Create button stays disabled until a file name or a title is entered
-#: src/pages/entity-create-page.tsx:168
+#: src/pages/entity-create-page.tsx:263
 msgid "Required — enter a file name here or fill in the title below."
 msgstr "必須 — ここにファイル名を入力するか、下のタイトルを入力してください。"
 
 #. Hint below the empty file-name field on the entity create page for a type with no title field; the Create button stays disabled until a file name is entered
-#: src/pages/entity-create-page.tsx:172
+#: src/pages/entity-create-page.tsx:267
 msgid "Required — enter a file name."
 msgstr "必須 — ファイル名を入力してください。"
 
@@ -2431,6 +2461,7 @@ msgid "Save credentials"
 msgstr "認証情報を保存"
 
 #. Explains the options for leaving an entity editor with an unsaved draft
+#: src/pages/entity-create-page.tsx:305
 #: src/pages/entity-edit-page.tsx:303
 msgid "Save your edits before leaving, or discard them."
 msgstr "移動する前に編集内容を保存するか、破棄してください。"
@@ -2451,7 +2482,7 @@ msgstr "現在のタイプ・条件・並び順をスマートリストとして
 #: src/components/settings/provider-credentials.tsx:83
 #: src/components/settings/raw-config-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:211
-#: src/pages/entity-create-page.tsx:110
+#: src/pages/entity-create-page.tsx:164
 #: src/pages/entity-edit-page.tsx:218
 #: src/pages/entity-edit-page.tsx:329
 #: src/pages/list-detail-page.tsx:406
@@ -2503,11 +2534,11 @@ msgstr "一致する項目を検索"
 msgid "Search library"
 msgstr "ライブラリを検索"
 
-#: src/components/entities/metadata-inputs.tsx:141
+#: src/components/entities/metadata-inputs.tsx:144
 msgid "Search or add {relationType}"
 msgstr "{relationType} を検索または追加"
 
-#: src/components/entities/metadata-inputs.tsx:142
+#: src/components/entities/metadata-inputs.tsx:145
 msgid "Search or add relation"
 msgstr "関連を検索または追加"
 
@@ -2587,6 +2618,10 @@ msgstr "親フォルダーを選択"
 #: src/components/settings/settings-external-mappings.tsx:126
 msgid "Select type"
 msgstr "タイプを選択"
+
+#: src/components/entities/metadata-image-input.tsx:231
+msgid "Selected images will be saved when you create the entry."
+msgstr "選択した画像は、項目の作成時に保存されます。"
 
 #: src/components/entities/external-match-dialog.tsx:326
 msgid "Selected Metadata"
@@ -2786,7 +2821,7 @@ msgid "System theme. Switch to light theme."
 msgstr "システムテーマ。ライトテーマに切り替えます。"
 
 #. Field name for the built-in tags field in the rule builder
-#: src/components/entities/metadata-editor.tsx:81
+#: src/components/entities/metadata-editor.tsx:85
 #: src/components/settings/settings-editor.tsx:114
 #: src/components/settings/settings-editor.tsx:323
 #: src/components/smart-lists/rule-field-meta.ts:64
@@ -2821,6 +2856,10 @@ msgstr "テキストリスト"
 #: src/pages/smart-list-page.tsx:398
 msgid "The .base file moves to the vault's trash folder. Entities it matches are not touched."
 msgstr ".base ファイルは保管庫のゴミ箱フォルダに移動します。一致するアイテムには影響しません。"
+
+#: src/pages/entity-create-page.tsx:179
+msgid "The entry was created. Your selected images and edits are kept here. Retry to finish saving."
+msgstr "項目は作成されました。選択した画像と編集内容はここに保持されています。再試行して保存を完了してください。"
 
 #: src/components/import/configure-step.tsx:93
 msgid "The file is read in your browser. Nothing is written until you review the plan."
@@ -2897,7 +2936,7 @@ msgstr "今週"
 
 #: src/components/smart-lists/sort-picker.tsx:40
 #: src/lib/type-config.ts:186
-#: src/pages/entity-create-page.tsx:153
+#: src/pages/entity-create-page.tsx:248
 msgid "Title"
 msgstr "タイトル"
 
@@ -2931,7 +2970,8 @@ msgid "Try again"
 msgstr "もう一度試す"
 
 #: src/components/settings/settings-field-form.tsx:54
-#: src/pages/entity-create-page.tsx:131
+#: src/pages/entity-create-page.tsx:207
+#: src/pages/entity-create-page.tsx:210
 #: src/pages/library-page.tsx:248
 #: src/pages/quick-capture-page.tsx:245
 msgid "Type"
@@ -3000,6 +3040,7 @@ msgid "Unresolved Relations"
 msgstr "未解決の関連"
 
 #. Title of the confirmation dialog when navigating away from an entity editor with an unsaved draft
+#: src/pages/entity-create-page.tsx:302
 #: src/pages/entity-edit-page.tsx:298
 msgid "Unsaved changes"
 msgstr "未保存の変更"
@@ -3026,9 +3067,24 @@ msgstr "更新日時"
 msgid "Updated"
 msgstr "更新日時"
 
-#: src/components/entities/metadata-image-input.tsx:94
+#. Button that opens the device image picker in an entity form
+#: src/components/entities/metadata-image-input.tsx:223
+msgid "Upload"
+msgstr "アップロード"
+
+#. placeholder {0}: field.label
+#: src/components/entities/metadata-image-input.tsx:204
+msgid "Upload {0}"
+msgstr "{0}をアップロード"
+
+#: src/components/entities/metadata-image-input.tsx:83
 msgid "Upload failed."
 msgstr "アップロードに失敗しました。"
+
+#. Disclosure button revealing manual image path/URL entry as an alternative to the device image picker
+#: src/components/entities/metadata-image-input.tsx:151
+msgid "Use a path or URL"
+msgstr "パスまたはURLを入力"
 
 #: src/components/entities/edit-conflict-review.tsx:115
 msgid "Use reviewed draft"
@@ -3069,7 +3125,7 @@ msgstr "保管庫を作成しました"
 msgid "Vault name"
 msgstr "保管庫名"
 
-#: src/components/entities/metadata-image-input.tsx:163
+#: src/components/entities/metadata-image-input.tsx:171
 msgid "Vault path or URL"
 msgstr "保管庫のパスまたは URL"
 
@@ -3109,7 +3165,7 @@ msgstr "オンにすると、エピソードにチェックを入れるか「記
 
 #. Hint below the empty file-name field on the entity create page; the placeholder is the file name derived from the entity's title field
 #. placeholder {0}: filename.basename
-#: src/pages/entity-create-page.tsx:161
+#: src/pages/entity-create-page.tsx:256
 msgid "Will be created as “{0}.md”, from the title."
 msgstr "タイトルから「{0}.md」として作成されます。"
 
@@ -3139,7 +3195,7 @@ msgstr "はい"
 
 #: src/components/assets/frontmatter-panel.tsx:139
 #: src/components/assets/frontmatter-panel.tsx:256
-#: src/components/entities/metadata-inputs.tsx:122
+#: src/components/entities/metadata-inputs.tsx:125
 msgid "Yes"
 msgstr "はい"
 

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTitleLanguage } from "@/lib/language";
 import type { EntitySummary, TypeConfig } from "@/types/api";
 
+import { FormDisclosure } from "./form-disclosure";
 import { editableFieldSpecs } from "./metadata-field-specs";
 import { FieldValueInput } from "./metadata-inputs";
 import type {
@@ -18,6 +19,7 @@ import type {
   FrontmatterDraft,
   FrontmatterValue,
   RelationSuggestionSearch,
+  PickImage,
 } from "./metadata-types";
 
 export type {
@@ -41,6 +43,7 @@ export { NumberStepper } from "./metadata-scalar-inputs";
  */
 export function MetadataEditor({
   entityId,
+  onPickImage,
   typeConfig,
   frontmatter,
   bodyText,
@@ -53,6 +56,7 @@ export function MetadataEditor({
   /** The entity's id, present only when editing an existing entity. Enables the
    * image-field upload control (uploads place assets under the entity's dir). */
   entityId?: string;
+  onPickImage?: PickImage;
   typeConfig?: TypeConfig;
   frontmatter: FrontmatterDraft;
   bodyText: string;
@@ -92,6 +96,29 @@ export function MetadataEditor({
     ],
   );
 
+  const technicalKeys = new Set(
+    (typeConfig?.fields ?? [])
+      .filter((field) => field.fieldType === "id" || field.fieldType === "externalRef")
+      .map((field) => field.field.trim()),
+  );
+  const isTechnical = (field: EditableFieldSpec) =>
+    !field.configured || (field.key !== tagsFieldName && technicalKeys.has(field.key));
+  function renderField(field: EditableFieldSpec) {
+    return (
+      <EditableFieldRow
+        key={field.key}
+        field={field}
+        value={frontmatter[field.key]}
+        disabled={disabled}
+        entityId={entityId}
+        onPickImage={onPickImage}
+        onChange={(value) => updateField(field.key, value)}
+        onRemove={field.configured ? undefined : () => updateField(field.key, undefined)}
+        onRename={field.configured ? undefined : (key) => renameField(field.key, key)}
+      />
+    );
+  }
+
   function updateField(key: string, value: FrontmatterValue | undefined) {
     const next = { ...frontmatter };
     if (value === undefined) delete next[key];
@@ -119,45 +146,42 @@ export function MetadataEditor({
     <>
       <DetailSection title={t`Metadata`}>
         <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">
-          {fieldSpecs.map((field) => (
-            <EditableFieldRow
-              key={field.key}
-              field={field}
-              value={frontmatter[field.key]}
-              disabled={disabled}
-              entityId={entityId}
-              onChange={(value) => updateField(field.key, value)}
-              onRemove={field.configured ? undefined : () => updateField(field.key, undefined)}
-              onRename={field.configured ? undefined : (key) => renameField(field.key, key)}
-            />
-          ))}
+          {fieldSpecs.filter((field) => !isTechnical(field)).map(renderField)}
         </div>
 
-        {/* Adding a key the schema doesn't declare is a different act from
-            filling one in, so it sits apart — by space, below the grid, rather
-            than inside a dashed box of its own. */}
-        <div className="mt-2 flex flex-wrap items-end gap-2">
-          <label className="flex min-w-48 flex-1 flex-col gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              <Trans>Custom field</Trans>
-            </span>
-            <Input
-              value={newFieldName}
-              onChange={(event) => setNewFieldName(event.target.value)}
-              placeholder="field_name"
-              disabled={disabled}
-            />
-          </label>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addCustomField}
-            disabled={disabled || !newFieldName.trim()}
-          >
-            <PlusIcon data-icon="inline-start" />
-            <Trans>Add Field</Trans>
-          </Button>
-        </div>
+        <FormDisclosure
+          title={t({
+            message: "IDs, sources & custom fields",
+            comment:
+              "Disclosure button in entity create/edit forms revealing schema IDs, external provider references, and custom metadata",
+          })}
+        >
+          <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">
+            {fieldSpecs.filter(isTechnical).map(renderField)}
+          </div>
+          <div className="mt-2 flex flex-wrap items-end gap-2">
+            <label className="flex min-w-48 flex-1 flex-col gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                <Trans>Custom field</Trans>
+              </span>
+              <Input
+                value={newFieldName}
+                onChange={(event) => setNewFieldName(event.target.value)}
+                placeholder="field_name"
+                disabled={disabled}
+              />
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addCustomField}
+              disabled={disabled || !newFieldName.trim()}
+            >
+              <PlusIcon data-icon="inline-start" />
+              <Trans>Add Field</Trans>
+            </Button>
+          </div>
+        </FormDisclosure>
       </DetailSection>
 
       <DetailSection title={t`Notes`}>
@@ -179,6 +203,7 @@ function EditableFieldRow({
   value,
   disabled,
   entityId,
+  onPickImage,
   onChange,
   onRemove,
   onRename,
@@ -187,6 +212,7 @@ function EditableFieldRow({
   value: FrontmatterValue | undefined;
   disabled: boolean;
   entityId?: string;
+  onPickImage?: PickImage;
   onChange: (value: FrontmatterValue) => void;
   onRemove?: () => void;
   onRename?: (key: string) => void;
@@ -237,6 +263,7 @@ function EditableFieldRow({
         value={value}
         disabled={disabled}
         entityId={entityId}
+        onPickImage={onPickImage}
         onChange={onChange}
       />
     </div>

@@ -63,7 +63,7 @@ pub(crate) async fn entities(
 
 #[derive(Deserialize, JsonSchema)]
 pub(crate) struct EntityPath {
-    id: String,
+    pub(super) id: String,
 }
 
 pub(crate) async fn entity_dates(
@@ -84,18 +84,26 @@ pub(crate) async fn entity_detail(
     State(state): State<AppState>,
     AxumPath(path): AxumPath<EntityPath>,
 ) -> ApiResult<EntityDetailResponse> {
-    let library = get_library(&state).await?;
-    let Some(record) = library.record_by_id(&path.id) else {
-        return Err(ApiError::not_found("Entity not found"));
-    };
-    Ok(Json(
-        build_entity_detail(&state, &library, &record.summary).await?,
-    ))
+    Ok(Json(load_entity_detail(&state, &path.id).await?))
+}
+
+/// Loads detail from the current library snapshot. Mutation callers invalidate
+/// the cache before reaching this path, so GET and write responses use the same
+/// lookup and assembly without each handler repeating them.
+pub(super) async fn load_entity_detail(
+    state: &AppState,
+    id: &str,
+) -> Result<EntityDetailResponse, ApiError> {
+    let library = get_library(state).await?;
+    let record = library
+        .record_by_id(id)
+        .ok_or_else(|| ApiError::not_found("Entity not found"))?;
+    build_entity_detail(state, &library, &record.summary).await
 }
 
 /// Assembles the full entity-detail response (relations, related entities, the
 /// on-demand-loaded body, and the parsed episodes section). Shared by the detail
-/// `GET` and the episodes write so both return the identical shape.
+/// `GET`, episode writes, and task writes so they return the identical shape.
 pub(super) async fn build_entity_detail(
     state: &AppState,
     library: &crate::types::Library,
